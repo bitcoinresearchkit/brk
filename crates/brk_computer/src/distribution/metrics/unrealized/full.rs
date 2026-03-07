@@ -1,13 +1,12 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, CentsSigned, Indexes, Version};
+use brk_types::{Cents, CentsSats, CentsSigned, Height, Indexes, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{Exit, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Exit, Rw, StorageMode, WritableVec};
 
+use crate::distribution::state::UnrealizedState;
 use crate::internal::{CentsSubtractToCentsSigned, FiatFromHeight};
-use crate::prices;
-
-use crate::distribution::metrics::ImportConfig;
+use crate::{distribution::metrics::ImportConfig, prices};
 
 use super::UnrealizedBase;
 
@@ -18,6 +17,10 @@ pub struct UnrealizedFull<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub inner: UnrealizedBase<M>,
 
+    pub gross_pnl: FiatFromHeight<Cents, M>,
+    pub invested_capital_in_profit: FiatFromHeight<Cents, M>,
+    pub invested_capital_in_loss: FiatFromHeight<Cents, M>,
+
     pub pain_index: FiatFromHeight<Cents, M>,
     pub greed_index: FiatFromHeight<Cents, M>,
     pub net_sentiment: FiatFromHeight<CentsSigned, M>,
@@ -25,28 +28,95 @@ pub struct UnrealizedFull<M: StorageMode = Rw> {
 
 impl UnrealizedFull {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
+        let v0 = Version::ZERO;
         let inner = UnrealizedBase::forced_import(cfg)?;
 
-        let pain_index = cfg.import("pain_index", Version::ZERO)?;
-        let greed_index = cfg.import("greed_index", Version::ZERO)?;
+        let gross_pnl = cfg.import("unrealized_gross_pnl", v0)?;
+        let invested_capital_in_profit = cfg.import("invested_capital_in_profit", v0)?;
+        let invested_capital_in_loss = cfg.import("invested_capital_in_loss", v0)?;
+
+        let pain_index = cfg.import("pain_index", v0)?;
+        let greed_index = cfg.import("greed_index", v0)?;
         let net_sentiment = cfg.import("net_sentiment", Version::ONE)?;
 
         Ok(Self {
             inner,
+            gross_pnl,
+            invested_capital_in_profit,
+            invested_capital_in_loss,
             pain_index,
             greed_index,
             net_sentiment,
         })
     }
 
-    pub(crate) fn compute_rest(
+    pub(crate) fn truncate_push_all(
+        &mut self,
+        height: Height,
+        state: &UnrealizedState,
+    ) -> Result<()> {
+        self.inner.truncate_push(height, state)?;
+        self.invested_capital_in_profit
+            .cents
+            .height
+            .truncate_push(height, state.invested_capital_in_profit)?;
+        self.invested_capital_in_loss
+            .cents
+            .height
+            .truncate_push(height, state.invested_capital_in_loss)?;
+        Ok(())
+    }
+
+    pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        let mut vecs = self.inner.collect_vecs_mut();
+        vecs.push(&mut self.gross_pnl.cents.height as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.invested_capital_in_profit.cents.height as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.invested_capital_in_loss.cents.height as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.pain_index.cents.height as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.greed_index.cents.height as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.net_sentiment.cents.height as &mut dyn AnyStoredVec);
+        vecs
+    }
+
+    pub(crate) fn compute_rest_all(
         &mut self,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.inner.compute_rest(prices, starting_indexes, exit)?;
+        self.inner.compute_rest(starting_indexes, exit)?;
 
+        self.gross_pnl.cents.height.compute_add(
+            starting_indexes.height,
+            &self.inner.core.unrealized_profit.cents.height,
+            &self.inner.core.unrealized_loss.cents.height,
+            exit,
+        )?;
+
+        self.invested_capital_in_profit.cents.height.compute_transform(
+            starting_indexes.height,
+            &self.inner.invested_capital_in_profit_raw,
+            |(h, raw, ..)| (h, CentsSats::to_cents(raw)),
+            exit,
+        )?;
+
+        self.invested_capital_in_loss.cents.height.compute_transform(
+            starting_indexes.height,
+            &self.inner.invested_capital_in_loss_raw,
+            |(h, raw, ..)| (h, CentsSats::to_cents(raw)),
+            exit,
+        )?;
+
+        self.compute_rest_extended(prices, starting_indexes, exit)?;
+        Ok(())
+    }
+
+    fn compute_rest_extended(
+        &mut self,
+        prices: &prices::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
         self.pain_index.cents.height.compute_transform3(
             starting_indexes.height,
             &self.inner.investor_cap_in_loss_raw,

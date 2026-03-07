@@ -1,14 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, CentsSats, CentsSquaredSats, Height, Indexes, Version};
+use brk_types::{CentsSats, CentsSquaredSats, Height, Indexes, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, BytesVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
-use crate::{
-    distribution::state::UnrealizedState,
-    internal::FiatFromHeight,
-    prices,
-};
+use crate::distribution::state::UnrealizedState;
 
 use crate::distribution::metrics::ImportConfig;
 
@@ -20,11 +16,6 @@ pub struct UnrealizedBase<M: StorageMode = Rw> {
     #[deref_mut]
     #[traversable(flatten)]
     pub core: UnrealizedCore<M>,
-
-    pub gross_pnl: FiatFromHeight<Cents, M>,
-
-    pub invested_capital_in_profit: FiatFromHeight<Cents, M>,
-    pub invested_capital_in_loss: FiatFromHeight<Cents, M>,
 
     pub invested_capital_in_profit_raw: M::Stored<BytesVec<Height, CentsSats>>,
     pub invested_capital_in_loss_raw: M::Stored<BytesVec<Height, CentsSats>>,
@@ -38,11 +29,6 @@ impl UnrealizedBase {
 
         let core = UnrealizedCore::forced_import(cfg)?;
 
-        let gross_pnl = cfg.import("unrealized_gross_pnl", v0)?;
-
-        let invested_capital_in_profit = cfg.import("invested_capital_in_profit", v0)?;
-        let invested_capital_in_loss = cfg.import("invested_capital_in_loss", v0)?;
-
         let invested_capital_in_profit_raw =
             cfg.import("invested_capital_in_profit_raw", v0)?;
         let invested_capital_in_loss_raw = cfg.import("invested_capital_in_loss_raw", v0)?;
@@ -51,9 +37,6 @@ impl UnrealizedBase {
 
         Ok(Self {
             core,
-            gross_pnl,
-            invested_capital_in_profit,
-            invested_capital_in_loss,
             invested_capital_in_profit_raw,
             invested_capital_in_loss_raw,
             investor_cap_in_profit_raw,
@@ -64,8 +47,6 @@ impl UnrealizedBase {
     pub(crate) fn min_stateful_height_len(&self) -> usize {
         self.core
             .min_stateful_height_len()
-            .min(self.invested_capital_in_profit.cents.height.len())
-            .min(self.invested_capital_in_loss.cents.height.len())
             .min(self.invested_capital_in_profit_raw.len())
             .min(self.invested_capital_in_loss_raw.len())
             .min(self.investor_cap_in_profit_raw.len())
@@ -78,15 +59,6 @@ impl UnrealizedBase {
         height_state: &UnrealizedState,
     ) -> Result<()> {
         self.core.truncate_push(height, height_state)?;
-
-        self.invested_capital_in_profit
-            .cents
-            .height
-            .truncate_push(height, height_state.invested_capital_in_profit)?;
-        self.invested_capital_in_loss
-            .cents
-            .height
-            .truncate_push(height, height_state.invested_capital_in_loss)?;
 
         self.invested_capital_in_profit_raw.truncate_push(
             height,
@@ -110,8 +82,6 @@ impl UnrealizedBase {
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.core.collect_vecs_mut();
-        vecs.push(&mut self.invested_capital_in_profit.cents.height as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.invested_capital_in_loss.cents.height as &mut dyn AnyStoredVec);
         vecs.push(&mut self.invested_capital_in_profit_raw as &mut dyn AnyStoredVec);
         vecs.push(&mut self.invested_capital_in_loss_raw as &mut dyn AnyStoredVec);
         vecs.push(&mut self.investor_cap_in_profit_raw as &mut dyn AnyStoredVec);
@@ -129,9 +99,6 @@ impl UnrealizedBase {
             others.iter().map(|o| &o.core).collect();
         self.core
             .compute_from_stateful(starting_indexes, &core_refs, exit)?;
-
-        sum_others!(self, starting_indexes, others, exit; invested_capital_in_profit.cents.height);
-        sum_others!(self, starting_indexes, others, exit; invested_capital_in_loss.cents.height);
 
         let start = self
             .invested_capital_in_profit_raw
@@ -196,19 +163,10 @@ impl UnrealizedBase {
 
     pub(crate) fn compute_rest(
         &mut self,
-        _prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.core.compute_rest(starting_indexes, exit)?;
-
-        self.gross_pnl.cents.height.compute_add(
-            starting_indexes.height,
-            &self.core.unrealized_profit.cents.height,
-            &self.core.unrealized_loss.cents.height,
-            exit,
-        )?;
-
         Ok(())
     }
 }

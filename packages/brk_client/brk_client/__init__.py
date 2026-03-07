@@ -2188,29 +2188,6 @@ class Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct7
         self.pct90: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct90'))
         self.pct95: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct95'))
 
-class InvestedNetNuplSupplyUnrealizedPattern3:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.invested_capital_in_loss_rel_to_realized_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'invested_capital_in_loss_rel_to_realized_cap'))
-        self.invested_capital_in_profit_rel_to_realized_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'invested_capital_in_profit_rel_to_realized_cap'))
-        self.net_unrealized_pnl_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'net_unrealized_pnl_rel_to_market_cap'))
-        self.net_unrealized_pnl_rel_to_own_gross_pnl: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'net_unrealized_pnl_rel_to_own_gross_pnl'))
-        self.net_unrealized_pnl_rel_to_own_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'net_unrealized_pnl_rel_to_own_market_cap'))
-        self.nupl: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'nupl'))
-        self.supply_in_loss_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_loss_rel_to_circulating_supply'))
-        self.supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_loss_rel_to_own_supply'))
-        self.supply_in_profit_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_profit_rel_to_circulating_supply'))
-        self.supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_profit_rel_to_own_supply'))
-        self.supply_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_rel_to_circulating_supply'))
-        self.unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_loss_rel_to_market_cap'))
-        self.unrealized_loss_rel_to_own_gross_pnl: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_loss_rel_to_own_gross_pnl'))
-        self.unrealized_loss_rel_to_own_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_loss_rel_to_own_market_cap'))
-        self.unrealized_profit_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_profit_rel_to_market_cap'))
-        self.unrealized_profit_rel_to_own_gross_pnl: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_profit_rel_to_own_gross_pnl'))
-        self.unrealized_profit_rel_to_own_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_profit_rel_to_own_market_cap'))
-
 class MvrvNegNetRealizedSentSoprValuePattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2278,6 +2255,27 @@ class GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern:
         self.unrealized_loss: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'unrealized_loss'))
         self.unrealized_profit: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'unrealized_profit'))
 
+class NetNuplSupplyUnrealizedPattern2:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.net_unrealized_pnl_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'net_unrealized_pnl_rel_to_market_cap'))
+        self.net_unrealized_pnl_rel_to_own_gross_pnl: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'net_unrealized_pnl_rel_to_own_gross_pnl'))
+        self.net_unrealized_pnl_rel_to_own_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'net_unrealized_pnl_rel_to_own_market_cap'))
+        self.nupl: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'nupl'))
+        self.supply_in_loss_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_loss_rel_to_circulating_supply'))
+        self.supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_loss_rel_to_own_supply'))
+        self.supply_in_profit_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_profit_rel_to_circulating_supply'))
+        self.supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_profit_rel_to_own_supply'))
+        self.supply_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_rel_to_circulating_supply'))
+        self.unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_loss_rel_to_market_cap'))
+        self.unrealized_loss_rel_to_own_gross_pnl: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_loss_rel_to_own_gross_pnl'))
+        self.unrealized_loss_rel_to_own_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_loss_rel_to_own_market_cap'))
+        self.unrealized_profit_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_profit_rel_to_market_cap'))
+        self.unrealized_profit_rel_to_own_gross_pnl: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_profit_rel_to_own_gross_pnl'))
+        self.unrealized_profit_rel_to_own_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_profit_rel_to_own_market_cap'))
+
 class RatioPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2297,25 +2295,6 @@ class RatioPattern:
         self.ratio_pct99_price: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct99'))
         self.ratio_sma_1m: BpsRatioPattern = BpsRatioPattern(client, _m(acc, 'sma_1m'))
         self.ratio_sma_1w: BpsRatioPattern = BpsRatioPattern(client, _m(acc, 'sma_1w'))
-
-class GrossInvestedInvestorNegNetSupplyUnrealizedPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.gross_pnl: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'unrealized_gross_pnl'))
-        self.invested_capital_in_loss: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'invested_capital_in_loss'))
-        self.invested_capital_in_loss_raw: MetricPattern18[CentsSats] = MetricPattern18(client, _m(acc, 'invested_capital_in_loss_raw'))
-        self.invested_capital_in_profit: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'invested_capital_in_profit'))
-        self.invested_capital_in_profit_raw: MetricPattern18[CentsSats] = MetricPattern18(client, _m(acc, 'invested_capital_in_profit_raw'))
-        self.investor_cap_in_loss_raw: MetricPattern18[CentsSquaredSats] = MetricPattern18(client, _m(acc, 'investor_cap_in_loss_raw'))
-        self.investor_cap_in_profit_raw: MetricPattern18[CentsSquaredSats] = MetricPattern18(client, _m(acc, 'investor_cap_in_profit_raw'))
-        self.neg_unrealized_loss: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'neg_unrealized_loss'))
-        self.net_unrealized_pnl: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'net_unrealized_pnl'))
-        self.supply_in_loss: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_loss'))
-        self.supply_in_profit: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_profit'))
-        self.unrealized_loss: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'unrealized_loss'))
-        self.unrealized_profit: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'unrealized_profit'))
 
 class _10y1m1w1y2y3m3y4y5y6m6y8yPattern2:
     """Pattern struct for repeated tree structure."""
@@ -2404,23 +2383,6 @@ class AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
         self.pct90: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, _m(acc, 'p90'))
         self.sum: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, _m(acc, 'sum'))
 
-class InvestedNetNuplSupplyUnrealizedPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.invested_capital_in_loss_rel_to_realized_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'invested_capital_in_loss_rel_to_realized_cap'))
-        self.invested_capital_in_profit_rel_to_realized_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'invested_capital_in_profit_rel_to_realized_cap'))
-        self.net_unrealized_pnl_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'net_unrealized_pnl_rel_to_market_cap'))
-        self.nupl: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'nupl'))
-        self.supply_in_loss_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_loss_rel_to_circulating_supply'))
-        self.supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_loss_rel_to_own_supply'))
-        self.supply_in_profit_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_profit_rel_to_circulating_supply'))
-        self.supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_profit_rel_to_own_supply'))
-        self.supply_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_rel_to_circulating_supply'))
-        self.unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_loss_rel_to_market_cap'))
-        self.unrealized_profit_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_profit_rel_to_market_cap'))
-
 class AverageGainsLossesRsiStochPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2436,6 +2398,22 @@ class AverageGainsLossesRsiStochPattern:
         self.stoch_rsi: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'stoch_24h'))
         self.stoch_rsi_d: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'stoch_d_24h'))
         self.stoch_rsi_k: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'stoch_k_24h'))
+
+class InvestedInvestorNegNetSupplyUnrealizedPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.invested_capital_in_loss_raw: MetricPattern18[CentsSats] = MetricPattern18(client, _m(acc, 'invested_capital_in_loss_raw'))
+        self.invested_capital_in_profit_raw: MetricPattern18[CentsSats] = MetricPattern18(client, _m(acc, 'invested_capital_in_profit_raw'))
+        self.investor_cap_in_loss_raw: MetricPattern18[CentsSquaredSats] = MetricPattern18(client, _m(acc, 'investor_cap_in_loss_raw'))
+        self.investor_cap_in_profit_raw: MetricPattern18[CentsSquaredSats] = MetricPattern18(client, _m(acc, 'investor_cap_in_profit_raw'))
+        self.neg_unrealized_loss: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'neg_unrealized_loss'))
+        self.net_unrealized_pnl: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'net_unrealized_pnl'))
+        self.supply_in_loss: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_loss'))
+        self.supply_in_profit: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_profit'))
+        self.unrealized_loss: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'unrealized_loss'))
+        self.unrealized_profit: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'unrealized_profit'))
 
 class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern:
     """Pattern struct for repeated tree structure."""
@@ -2496,20 +2474,6 @@ class _1m1w1y24hBtcCentsSatsUsdPattern:
         self.sats: MetricPattern18[Sats] = MetricPattern18(client, acc)
         self.usd: MetricPattern18[Dollars] = MetricPattern18(client, _m(acc, 'usd'))
 
-class ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.activity: SentPattern = SentPattern(client, _m(acc, 'sent'))
-        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, _m(acc, 'addr_count'))
-        self.addr_count_change_1m: MetricPattern1[StoredF64] = MetricPattern1(client, _m(acc, 'addr_count_change_1m'))
-        self.outputs: UtxoPattern = UtxoPattern(client, _m(acc, 'utxo_count'))
-        self.realized: MvrvRealizedPattern = MvrvRealizedPattern(client, acc)
-        self.relative: SupplyPattern = SupplyPattern(client, _m(acc, 'supply_in'))
-        self.supply: ChangeHalvedTotalPattern = ChangeHalvedTotalPattern(client, _m(acc, 'supply'))
-        self.unrealized: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply_in'))
-
 class AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
@@ -2546,9 +2510,22 @@ class ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern:
         self.cost_basis: MaxMinPattern = MaxMinPattern(client, _m(acc, 'cost_basis'))
         self.outputs: UtxoPattern = UtxoPattern(client, _m(acc, 'utxo_count'))
         self.realized: MvrvNegNetRealizedSentSoprValuePattern = MvrvNegNetRealizedSentSoprValuePattern(client, acc)
-        self.relative: InvestedNetNuplSupplyUnrealizedPattern = InvestedNetNuplSupplyUnrealizedPattern(client, acc)
+        self.relative: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
         self.supply: ChangeHalvedTotalPattern = ChangeHalvedTotalPattern(client, _m(acc, 'supply'))
-        self.unrealized: GrossInvestedInvestorNegNetSupplyUnrealizedPattern = GrossInvestedInvestorNegNetSupplyUnrealizedPattern(client, acc)
+        self.unrealized: InvestedInvestorNegNetSupplyUnrealizedPattern = InvestedInvestorNegNetSupplyUnrealizedPattern(client, acc)
+
+class ActivityAddrOutputsRealizedSupplyUnrealizedPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.activity: SentPattern = SentPattern(client, _m(acc, 'sent'))
+        self.addr_count: MetricPattern1[StoredU64] = MetricPattern1(client, _m(acc, 'addr_count'))
+        self.addr_count_change_1m: MetricPattern1[StoredF64] = MetricPattern1(client, _m(acc, 'addr_count_change_1m'))
+        self.outputs: UtxoPattern = UtxoPattern(client, _m(acc, 'utxo_count'))
+        self.realized: MvrvRealizedPattern = MvrvRealizedPattern(client, acc)
+        self.supply: ChangeHalvedTotalPattern = ChangeHalvedTotalPattern(client, _m(acc, 'supply'))
+        self.unrealized: SupplyPattern = SupplyPattern(client, _m(acc, 'supply_in'))
 
 class MvrvRealizedPattern:
     """Pattern struct for repeated tree structure."""
@@ -2563,18 +2540,6 @@ class MvrvRealizedPattern:
         self.realized_price_ratio: BpsRatioPattern = BpsRatioPattern(client, _m(acc, 'realized_price_ratio'))
         self.realized_profit: CumulativeHeightPattern[Cents] = CumulativeHeightPattern(client, _m(acc, 'realized_profit'))
 
-class ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.activity: SentPattern = SentPattern(client, _m(acc, 'sent'))
-        self.outputs: UtxoPattern = UtxoPattern(client, _m(acc, 'utxo_count'))
-        self.realized: MvrvNegNetRealizedSentSoprValuePattern = MvrvNegNetRealizedSentSoprValuePattern(client, acc)
-        self.relative: SupplyPattern3 = SupplyPattern3(client, _m(acc, 'supply'))
-        self.supply: ChangeHalvedTotalPattern = ChangeHalvedTotalPattern(client, _m(acc, 'supply'))
-        self.unrealized: NegNetSupplyUnrealizedPattern = NegNetSupplyUnrealizedPattern(client, acc)
-
 class ActivityOutputsRealizedRelativeSupplyUnrealizedPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2582,10 +2547,10 @@ class ActivityOutputsRealizedRelativeSupplyUnrealizedPattern:
         """Create pattern node with accumulated metric name."""
         self.activity: SentPattern = SentPattern(client, _m(acc, 'sent'))
         self.outputs: UtxoPattern = UtxoPattern(client, _m(acc, 'utxo_count'))
-        self.realized: MvrvRealizedPattern = MvrvRealizedPattern(client, acc)
-        self.relative: SupplyPattern = SupplyPattern(client, _m(acc, 'supply_in'))
+        self.realized: MvrvNegNetRealizedSentSoprValuePattern = MvrvNegNetRealizedSentSoprValuePattern(client, acc)
+        self.relative: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
         self.supply: ChangeHalvedTotalPattern = ChangeHalvedTotalPattern(client, _m(acc, 'supply'))
-        self.unrealized: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply_in'))
+        self.unrealized: NegNetSupplyUnrealizedPattern = NegNetSupplyUnrealizedPattern(client, acc)
 
 class NegNetSupplyUnrealizedPattern:
     """Pattern struct for repeated tree structure."""
@@ -2598,6 +2563,17 @@ class NegNetSupplyUnrealizedPattern:
         self.supply_in_profit: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_profit'))
         self.unrealized_loss: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'unrealized_loss'))
         self.unrealized_profit: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'unrealized_profit'))
+
+class ActivityOutputsRealizedSupplyUnrealizedPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.activity: SentPattern = SentPattern(client, _m(acc, 'sent'))
+        self.outputs: UtxoPattern = UtxoPattern(client, _m(acc, 'utxo_count'))
+        self.realized: MvrvRealizedPattern = MvrvRealizedPattern(client, acc)
+        self.supply: ChangeHalvedTotalPattern = ChangeHalvedTotalPattern(client, _m(acc, 'supply'))
+        self.unrealized: SupplyPattern = SupplyPattern(client, _m(acc, 'supply_in'))
 
 class BaseBtcCentsSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
@@ -2621,7 +2597,7 @@ class EmaHistogramLineSignalPattern:
         self.line: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'line_24h'))
         self.signal: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'signal_24h'))
 
-class SupplyPattern3:
+class SupplyPattern2:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
@@ -2894,21 +2870,13 @@ class SentPattern:
         self.sent: BaseCumulativePattern = BaseCumulativePattern(client, acc)
         self.sent_ema: _2wPattern = _2wPattern(client, _m(acc, 'ema_2w'))
 
-class SupplyPattern2:
+class SupplyPattern:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
         self.supply_in_loss: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'loss'))
         self.supply_in_profit: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'profit'))
-
-class SupplyPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'loss_rel_to_own_supply'))
-        self.supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'profit_rel_to_own_supply'))
 
 class UtxoPattern:
     """Pattern struct for repeated tree structure."""
@@ -4277,8 +4245,6 @@ class MetricsTree_Distribution_UtxoCohorts_All_Relative:
         self.unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'unrealized_loss_rel_to_market_cap')
         self.net_unrealized_pnl_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'net_unrealized_pnl_rel_to_market_cap')
         self.nupl: MetricPattern1[StoredF32] = MetricPattern1(client, 'nupl')
-        self.invested_capital_in_profit_rel_to_realized_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'invested_capital_in_profit_rel_to_realized_cap')
-        self.invested_capital_in_loss_rel_to_realized_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'invested_capital_in_loss_rel_to_realized_cap')
         self.supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'supply_in_profit_rel_to_own_supply')
         self.supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'supply_in_loss_rel_to_own_supply')
         self.unrealized_profit_rel_to_own_gross_pnl: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'unrealized_profit_rel_to_own_gross_pnl')
@@ -4310,7 +4276,7 @@ class MetricsTree_Distribution_UtxoCohorts_Sth:
         self.realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern = CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern(client, 'sth')
         self.cost_basis: InvestedMaxMinPercentilesPattern = InvestedMaxMinPercentilesPattern(client, 'sth')
         self.unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern = GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern(client, 'sth')
-        self.relative: InvestedNetNuplSupplyUnrealizedPattern3 = InvestedNetNuplSupplyUnrealizedPattern3(client, 'sth')
+        self.relative: NetNuplSupplyUnrealizedPattern2 = NetNuplSupplyUnrealizedPattern2(client, 'sth')
         self.dormancy: MetricPattern1[StoredF32] = MetricPattern1(client, 'sth_dormancy')
         self.velocity: MetricPattern1[StoredF32] = MetricPattern1(client, 'sth_velocity')
         self.adjusted_value_created: MetricPattern1[Cents] = MetricPattern1(client, 'sth_adjusted_value_created')
@@ -4330,7 +4296,7 @@ class MetricsTree_Distribution_UtxoCohorts_Lth:
         self.realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern = CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern(client, 'lth')
         self.cost_basis: InvestedMaxMinPercentilesPattern = InvestedMaxMinPercentilesPattern(client, 'lth')
         self.unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern = GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern(client, 'lth')
-        self.relative: InvestedNetNuplSupplyUnrealizedPattern3 = InvestedNetNuplSupplyUnrealizedPattern3(client, 'lth')
+        self.relative: NetNuplSupplyUnrealizedPattern2 = NetNuplSupplyUnrealizedPattern2(client, 'lth')
         self.dormancy: MetricPattern1[StoredF32] = MetricPattern1(client, 'lth_dormancy')
         self.velocity: MetricPattern1[StoredF32] = MetricPattern1(client, 'lth_velocity')
 
@@ -4364,152 +4330,152 @@ class MetricsTree_Distribution_UtxoCohorts_MaxAge:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_1w_old')
-        self._1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_1m_old')
-        self._2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_2m_old')
-        self._3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_3m_old')
-        self._4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_4m_old')
-        self._5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_5m_old')
-        self._6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_6m_old')
-        self._1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_1y_old')
-        self._2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_2y_old')
-        self._3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_3y_old')
-        self._4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_4y_old')
-        self._5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_5y_old')
-        self._6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_6y_old')
-        self._7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_7y_old')
-        self._8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_8y_old')
-        self._10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_10y_old')
-        self._12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_12y_old')
-        self._15y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_15y_old')
+        self._1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_1w_old')
+        self._1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_1m_old')
+        self._2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_2m_old')
+        self._3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_3m_old')
+        self._4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_4m_old')
+        self._5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_5m_old')
+        self._6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_6m_old')
+        self._1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_1y_old')
+        self._2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_2y_old')
+        self._3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_3y_old')
+        self._4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_4y_old')
+        self._5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_5y_old')
+        self._6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_6y_old')
+        self._7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_7y_old')
+        self._8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_8y_old')
+        self._10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_10y_old')
+        self._12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_12y_old')
+        self._15y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_15y_old')
 
 class MetricsTree_Distribution_UtxoCohorts_MinAge:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._1d: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_1d_old')
-        self._1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_1w_old')
-        self._1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_1m_old')
-        self._2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_2m_old')
-        self._3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_3m_old')
-        self._4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_4m_old')
-        self._5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_5m_old')
-        self._6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_6m_old')
-        self._1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_1y_old')
-        self._2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_2y_old')
-        self._3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_3y_old')
-        self._4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_4y_old')
-        self._5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_5y_old')
-        self._6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_6y_old')
-        self._7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_7y_old')
-        self._8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_8y_old')
-        self._10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_10y_old')
-        self._12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_12y_old')
+        self._1d: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_1d_old')
+        self._1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_1w_old')
+        self._1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_1m_old')
+        self._2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_2m_old')
+        self._3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_3m_old')
+        self._4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_4m_old')
+        self._5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_5m_old')
+        self._6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_6m_old')
+        self._1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_1y_old')
+        self._2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_2y_old')
+        self._3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_3y_old')
+        self._4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_4y_old')
+        self._5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_5y_old')
+        self._6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_6y_old')
+        self._7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_7y_old')
+        self._8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_8y_old')
+        self._10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_10y_old')
+        self._12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_12y_old')
 
 class MetricsTree_Distribution_UtxoCohorts_Epoch:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._0: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'epoch_0')
-        self._1: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'epoch_1')
-        self._2: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'epoch_2')
-        self._3: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'epoch_3')
-        self._4: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'epoch_4')
+        self._0: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'epoch_0')
+        self._1: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'epoch_1')
+        self._2: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'epoch_2')
+        self._3: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'epoch_3')
+        self._4: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'epoch_4')
 
 class MetricsTree_Distribution_UtxoCohorts_Class:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._2009: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2009')
-        self._2010: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2010')
-        self._2011: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2011')
-        self._2012: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2012')
-        self._2013: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2013')
-        self._2014: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2014')
-        self._2015: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2015')
-        self._2016: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2016')
-        self._2017: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2017')
-        self._2018: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2018')
-        self._2019: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2019')
-        self._2020: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2020')
-        self._2021: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2021')
-        self._2022: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2022')
-        self._2023: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2023')
-        self._2024: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2024')
-        self._2025: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2025')
-        self._2026: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2026')
+        self._2009: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2009')
+        self._2010: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2010')
+        self._2011: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2011')
+        self._2012: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2012')
+        self._2013: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2013')
+        self._2014: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2014')
+        self._2015: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2015')
+        self._2016: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2016')
+        self._2017: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2017')
+        self._2018: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2018')
+        self._2019: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2019')
+        self._2020: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2020')
+        self._2021: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2021')
+        self._2022: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2022')
+        self._2023: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2023')
+        self._2024: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2024')
+        self._2025: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2025')
+        self._2026: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2026')
 
 class MetricsTree_Distribution_UtxoCohorts_GeAmount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._1sat: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_1sat')
-        self._10sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_10sats')
-        self._100sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_100sats')
-        self._1k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_1k_sats')
-        self._10k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_10k_sats')
-        self._100k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_100k_sats')
-        self._1m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_1m_sats')
-        self._10m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_10m_sats')
-        self._1btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_1btc')
-        self._10btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_10btc')
-        self._100btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_100btc')
-        self._1k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_1k_btc')
-        self._10k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_10k_btc')
+        self._1sat: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_1sat')
+        self._10sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_10sats')
+        self._100sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_100sats')
+        self._1k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_1k_sats')
+        self._10k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_10k_sats')
+        self._100k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_100k_sats')
+        self._1m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_1m_sats')
+        self._10m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_10m_sats')
+        self._1btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_1btc')
+        self._10btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_10btc')
+        self._100btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_100btc')
+        self._1k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_1k_btc')
+        self._10k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_10k_btc')
 
 class MetricsTree_Distribution_UtxoCohorts_AmountRange:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._0sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_with_0sats')
-        self._1sat_to_10sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_above_1sat_under_10sats')
-        self._10sats_to_100sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_above_10sats_under_100sats')
-        self._100sats_to_1k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_above_100sats_under_1k_sats')
-        self._1k_sats_to_10k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_above_1k_sats_under_10k_sats')
-        self._10k_sats_to_100k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_above_10k_sats_under_100k_sats')
-        self._100k_sats_to_1m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_above_100k_sats_under_1m_sats')
-        self._1m_sats_to_10m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_above_1m_sats_under_10m_sats')
-        self._10m_sats_to_1btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_above_10m_sats_under_1btc')
-        self._1btc_to_10btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_above_1btc_under_10btc')
-        self._10btc_to_100btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_above_10btc_under_100btc')
-        self._100btc_to_1k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_above_100btc_under_1k_btc')
-        self._1k_btc_to_10k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_above_1k_btc_under_10k_btc')
-        self._10k_btc_to_100k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_above_10k_btc_under_100k_btc')
-        self._100k_btc_or_more: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_above_100k_btc')
+        self._0sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_with_0sats')
+        self._1sat_to_10sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_above_1sat_under_10sats')
+        self._10sats_to_100sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_above_10sats_under_100sats')
+        self._100sats_to_1k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_above_100sats_under_1k_sats')
+        self._1k_sats_to_10k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_above_1k_sats_under_10k_sats')
+        self._10k_sats_to_100k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_above_10k_sats_under_100k_sats')
+        self._100k_sats_to_1m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_above_100k_sats_under_1m_sats')
+        self._1m_sats_to_10m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_above_1m_sats_under_10m_sats')
+        self._10m_sats_to_1btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_above_10m_sats_under_1btc')
+        self._1btc_to_10btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_above_1btc_under_10btc')
+        self._10btc_to_100btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_above_10btc_under_100btc')
+        self._100btc_to_1k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_above_100btc_under_1k_btc')
+        self._1k_btc_to_10k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_above_1k_btc_under_10k_btc')
+        self._10k_btc_to_100k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_above_10k_btc_under_100k_btc')
+        self._100k_btc_or_more: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_above_100k_btc')
 
 class MetricsTree_Distribution_UtxoCohorts_LtAmount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._10sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_10sats')
-        self._100sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_100sats')
-        self._1k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_1k_sats')
-        self._10k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_10k_sats')
-        self._100k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_100k_sats')
-        self._1m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_1m_sats')
-        self._10m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_10m_sats')
-        self._1btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_1btc')
-        self._10btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_10btc')
-        self._100btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_100btc')
-        self._1k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_1k_btc')
-        self._10k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_10k_btc')
-        self._100k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_100k_btc')
+        self._10sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_10sats')
+        self._100sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_100sats')
+        self._1k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_1k_sats')
+        self._10k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_10k_sats')
+        self._100k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_100k_sats')
+        self._1m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_1m_sats')
+        self._10m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_10m_sats')
+        self._1btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_1btc')
+        self._10btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_10btc')
+        self._100btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_100btc')
+        self._1k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_1k_btc')
+        self._10k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_10k_btc')
+        self._100k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_100k_btc')
 
 class MetricsTree_Distribution_UtxoCohorts_Type:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.p2pk65: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'p2pk65')
-        self.p2pk33: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'p2pk33')
-        self.p2pkh: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'p2pkh')
-        self.p2ms: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'p2ms')
-        self.p2sh: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'p2sh')
-        self.p2wpkh: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'p2wpkh')
-        self.p2wsh: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'p2wsh')
-        self.p2tr: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'p2tr')
-        self.p2a: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'p2a')
-        self.unknown: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'unknown_outputs')
-        self.empty: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'empty_outputs')
+        self.p2pk65: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'p2pk65')
+        self.p2pk33: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'p2pk33')
+        self.p2pkh: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'p2pkh')
+        self.p2ms: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'p2ms')
+        self.p2sh: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'p2sh')
+        self.p2wpkh: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'p2wpkh')
+        self.p2wsh: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'p2wsh')
+        self.p2tr: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'p2tr')
+        self.p2a: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'p2a')
+        self.unknown: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'unknown_outputs')
+        self.empty: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'empty_outputs')
 
 class MetricsTree_Distribution_UtxoCohorts:
     """Metrics tree node."""
@@ -4532,57 +4498,57 @@ class MetricsTree_Distribution_AddressCohorts_GeAmount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._1sat: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_over_1sat')
-        self._10sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_over_10sats')
-        self._100sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_over_100sats')
-        self._1k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_over_1k_sats')
-        self._10k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_over_10k_sats')
-        self._100k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_over_100k_sats')
-        self._1m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_over_1m_sats')
-        self._10m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_over_10m_sats')
-        self._1btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_over_1btc')
-        self._10btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_over_10btc')
-        self._100btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_over_100btc')
-        self._1k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_over_1k_btc')
-        self._10k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_over_10k_btc')
+        self._1sat: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1sat')
+        self._10sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10sats')
+        self._100sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_100sats')
+        self._1k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1k_sats')
+        self._10k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10k_sats')
+        self._100k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_100k_sats')
+        self._1m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1m_sats')
+        self._10m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10m_sats')
+        self._1btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1btc')
+        self._10btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10btc')
+        self._100btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_100btc')
+        self._1k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1k_btc')
+        self._10k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10k_btc')
 
 class MetricsTree_Distribution_AddressCohorts_AmountRange:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._0sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_with_0sats')
-        self._1sat_to_10sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_above_1sat_under_10sats')
-        self._10sats_to_100sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_above_10sats_under_100sats')
-        self._100sats_to_1k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_above_100sats_under_1k_sats')
-        self._1k_sats_to_10k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_above_1k_sats_under_10k_sats')
-        self._10k_sats_to_100k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_above_10k_sats_under_100k_sats')
-        self._100k_sats_to_1m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_above_100k_sats_under_1m_sats')
-        self._1m_sats_to_10m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_above_1m_sats_under_10m_sats')
-        self._10m_sats_to_1btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_above_10m_sats_under_1btc')
-        self._1btc_to_10btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_above_1btc_under_10btc')
-        self._10btc_to_100btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_above_10btc_under_100btc')
-        self._100btc_to_1k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_above_100btc_under_1k_btc')
-        self._1k_btc_to_10k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_above_1k_btc_under_10k_btc')
-        self._10k_btc_to_100k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_above_10k_btc_under_100k_btc')
-        self._100k_btc_or_more: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_above_100k_btc')
+        self._0sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_with_0sats')
+        self._1sat_to_10sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_above_1sat_under_10sats')
+        self._10sats_to_100sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_above_10sats_under_100sats')
+        self._100sats_to_1k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_above_100sats_under_1k_sats')
+        self._1k_sats_to_10k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_above_1k_sats_under_10k_sats')
+        self._10k_sats_to_100k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_above_10k_sats_under_100k_sats')
+        self._100k_sats_to_1m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_above_100k_sats_under_1m_sats')
+        self._1m_sats_to_10m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_above_1m_sats_under_10m_sats')
+        self._10m_sats_to_1btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_above_10m_sats_under_1btc')
+        self._1btc_to_10btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_above_1btc_under_10btc')
+        self._10btc_to_100btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_above_10btc_under_100btc')
+        self._100btc_to_1k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_above_100btc_under_1k_btc')
+        self._1k_btc_to_10k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_above_1k_btc_under_10k_btc')
+        self._10k_btc_to_100k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_above_10k_btc_under_100k_btc')
+        self._100k_btc_or_more: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_above_100k_btc')
 
 class MetricsTree_Distribution_AddressCohorts_LtAmount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._10sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_under_10sats')
-        self._100sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_under_100sats')
-        self._1k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_under_1k_sats')
-        self._10k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_under_10k_sats')
-        self._100k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_under_100k_sats')
-        self._1m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_under_1m_sats')
-        self._10m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_under_10m_sats')
-        self._1btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_under_1btc')
-        self._10btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_under_10btc')
-        self._100btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_under_100btc')
-        self._1k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_under_1k_btc')
-        self._10k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_under_10k_btc')
-        self._100k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'addrs_under_100k_btc')
+        self._10sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10sats')
+        self._100sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_100sats')
+        self._1k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_1k_sats')
+        self._10k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10k_sats')
+        self._100k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_100k_sats')
+        self._1m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_1m_sats')
+        self._10m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10m_sats')
+        self._1btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_1btc')
+        self._10btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10btc')
+        self._100btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_100btc')
+        self._1k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_1k_btc')
+        self._10k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10k_btc')
+        self._100k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_100k_btc')
 
 class MetricsTree_Distribution_AddressCohorts:
     """Metrics tree node."""

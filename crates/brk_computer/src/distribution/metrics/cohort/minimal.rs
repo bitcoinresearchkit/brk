@@ -1,17 +1,12 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{
-    BasisPoints16, Height, Indexes, Sats, Version,
-};
-use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
+use brk_types::{Height, Indexes, Version};
+use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{blocks, prices};
 
-use crate::internal::{
-    PercentFromHeight, RatioSatsBp16,
-    ValueFromHeight,
-};
+use crate::internal::ValueFromHeight;
 
 use crate::distribution::{
     metrics::{ActivityBase, ImportConfig, OutputsMetrics, RealizedMinimal, SupplyMetrics},
@@ -25,15 +20,8 @@ pub struct MinimalUnrealized<M: StorageMode = Rw> {
     pub supply_in_loss: ValueFromHeight<M>,
 }
 
-/// Minimal relative metrics: supply in profit/loss relative to own supply.
-#[derive(Traversable)]
-pub struct MinimalRelative<M: StorageMode = Rw> {
-    pub supply_in_profit_rel_to_own_supply: PercentFromHeight<BasisPoints16, M>,
-    pub supply_in_loss_rel_to_own_supply: PercentFromHeight<BasisPoints16, M>,
-}
-
 /// MinimalCohortMetrics: supply, outputs, sent+ema, realized cap/price/mvrv/profit/loss,
-/// supply in profit/loss, relative to own supply.
+/// supply in profit/loss.
 ///
 /// Used for type_, amount, and address cohorts.
 /// Does NOT implement CohortMetricsBase — standalone, not aggregatable via trait.
@@ -46,7 +34,6 @@ pub struct MinimalCohortMetrics<M: StorageMode = Rw> {
     pub activity: Box<ActivityBase<M>>,
     pub realized: Box<RealizedMinimal<M>>,
     pub unrealized: Box<MinimalUnrealized<M>>,
-    pub relative: Box<MinimalRelative<M>>,
 }
 
 impl MinimalUnrealized {
@@ -113,42 +100,6 @@ impl MinimalUnrealized {
     }
 }
 
-impl MinimalRelative {
-    pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        Ok(Self {
-            supply_in_profit_rel_to_own_supply: cfg
-                .import("supply_in_profit_rel_to_own_supply", Version::ONE)?,
-            supply_in_loss_rel_to_own_supply: cfg
-                .import("supply_in_loss_rel_to_own_supply", Version::ONE)?,
-        })
-    }
-
-    pub(crate) fn compute(
-        &mut self,
-        max_from: Height,
-        supply_in_profit_sats: &impl ReadableVec<Height, Sats>,
-        supply_in_loss_sats: &impl ReadableVec<Height, Sats>,
-        supply_total_sats: &impl ReadableVec<Height, Sats>,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.supply_in_profit_rel_to_own_supply
-            .compute_binary::<Sats, Sats, RatioSatsBp16>(
-                max_from,
-                supply_in_profit_sats,
-                supply_total_sats,
-                exit,
-            )?;
-        self.supply_in_loss_rel_to_own_supply
-            .compute_binary::<Sats, Sats, RatioSatsBp16>(
-                max_from,
-                supply_in_loss_sats,
-                supply_total_sats,
-                exit,
-            )?;
-        Ok(())
-    }
-}
-
 impl MinimalCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
@@ -158,7 +109,6 @@ impl MinimalCohortMetrics {
             activity: Box::new(ActivityBase::forced_import(cfg)?),
             realized: Box::new(RealizedMinimal::forced_import(cfg)?),
             unrealized: Box::new(MinimalUnrealized::forced_import(cfg)?),
-            relative: Box::new(MinimalRelative::forced_import(cfg)?),
         })
     }
 
@@ -259,14 +209,6 @@ impl MinimalCohortMetrics {
             prices,
             starting_indexes,
             &self.supply.total.btc.height,
-            exit,
-        )?;
-
-        self.relative.compute(
-            starting_indexes.height,
-            &self.unrealized.supply_in_profit.sats.height,
-            &self.unrealized.supply_in_loss.sats.height,
-            &self.supply.total.sats.height,
             exit,
         )?;
 

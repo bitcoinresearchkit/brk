@@ -10,7 +10,7 @@ use crate::internal::{
     Bps32ToFloat, LazyFromHeight, PercentFromHeight, RatioDollarsBp16, RatioDollarsBps32,
 };
 
-use crate::distribution::metrics::{ImportConfig, RealizedBase, UnrealizedBase};
+use crate::distribution::metrics::{ImportConfig, UnrealizedCore};
 
 use super::RelativeBase;
 
@@ -26,9 +26,6 @@ pub struct RelativeFull<M: StorageMode = Rw> {
     pub unrealized_loss_rel_to_market_cap: PercentFromHeight<BasisPoints16, M>,
     pub net_unrealized_pnl_rel_to_market_cap: PercentFromHeight<BasisPointsSigned32, M>,
     pub nupl: LazyFromHeight<StoredF32, BasisPointsSigned32>,
-
-    pub invested_capital_in_profit_rel_to_realized_cap: PercentFromHeight<BasisPoints16, M>,
-    pub invested_capital_in_loss_rel_to_realized_cap: PercentFromHeight<BasisPoints16, M>,
 }
 
 impl RelativeFull {
@@ -59,29 +56,20 @@ impl RelativeFull {
                 .import("unrealized_loss_rel_to_market_cap", v2)?,
             net_unrealized_pnl_rel_to_market_cap,
             nupl,
-            invested_capital_in_profit_rel_to_realized_cap: cfg.import(
-                "invested_capital_in_profit_rel_to_realized_cap",
-                Version::ZERO,
-            )?,
-            invested_capital_in_loss_rel_to_realized_cap: cfg.import(
-                "invested_capital_in_loss_rel_to_realized_cap",
-                Version::ZERO,
-            )?,
         })
     }
 
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        unrealized: &UnrealizedBase,
-        realized: &RealizedBase,
+        unrealized: &UnrealizedCore,
         supply_total_sats: &impl ReadableVec<Height, Sats>,
         market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
         self.base.compute(
             max_from,
-            &unrealized.core,
+            unrealized,
             supply_total_sats,
             exit,
         )?;
@@ -105,20 +93,6 @@ impl RelativeFull {
                 max_from,
                 &unrealized.net_unrealized_pnl.usd.height,
                 market_cap,
-                exit,
-            )?;
-        self.invested_capital_in_profit_rel_to_realized_cap
-            .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
-                max_from,
-                &unrealized.invested_capital_in_profit.usd.height,
-                &realized.realized_cap.height,
-                exit,
-            )?;
-        self.invested_capital_in_loss_rel_to_realized_cap
-            .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
-                max_from,
-                &unrealized.invested_capital_in_loss.usd.height,
-                &realized.realized_cap.height,
                 exit,
             )?;
         Ok(())

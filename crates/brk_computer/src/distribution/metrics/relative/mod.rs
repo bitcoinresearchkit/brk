@@ -6,7 +6,6 @@ mod full;
 mod to_all;
 mod with_extended;
 mod with_rel_to_all;
-mod with_rel_to_all_base;
 
 pub use base::RelativeBase;
 pub use extended_own_market_cap::RelativeExtendedOwnMarketCap;
@@ -15,5 +14,4 @@ pub use for_all::RelativeForAll;
 pub use full::RelativeFull;
 pub use to_all::RelativeToAll;
 pub use with_extended::RelativeWithExtended;
-pub use with_rel_to_all::RelativeWithRelToAll;
-pub use with_rel_to_all_base::RelativeBaseWithRelToAll;
+pub use with_rel_to_all::RelativeBaseWithRelToAll;

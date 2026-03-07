@@ -1,50 +1,45 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Sats};
+use brk_types::{Height, Sats};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::distribution::metrics::{ImportConfig, RealizedBase, UnrealizedBase};
+use crate::distribution::metrics::{ImportConfig, UnrealizedCore};
 
-use super::{RelativeFull, RelativeToAll};
+use super::{RelativeBase, RelativeToAll};
 
-/// Relative metrics with rel_to_all (no extended, no peak_regret).
-/// Used by: epoch, year, type, amount, address cohorts.
+/// Base relative metrics with rel_to_all.
+/// Used by: age_range, epoch, class, min_age, max_age cohorts.
 #[derive(Deref, DerefMut, Traversable)]
-pub struct RelativeWithRelToAll<M: StorageMode = Rw> {
+pub struct RelativeBaseWithRelToAll<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub base: RelativeFull<M>,
+    pub base: RelativeBase<M>,
     #[traversable(flatten)]
     pub rel_to_all: RelativeToAll<M>,
 }
 
-impl RelativeWithRelToAll {
+impl RelativeBaseWithRelToAll {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            base: RelativeFull::forced_import(cfg)?,
+            base: RelativeBase::forced_import(cfg)?,
             rel_to_all: RelativeToAll::forced_import(cfg)?,
         })
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        unrealized: &UnrealizedBase,
-        realized: &RealizedBase,
+        unrealized: &UnrealizedCore,
         supply_total_sats: &impl ReadableVec<Height, Sats>,
-        market_cap: &impl ReadableVec<Height, Dollars>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {
         self.base.compute(
             max_from,
             unrealized,
-            realized,
             supply_total_sats,
-            market_cap,
             exit,
         )?;
         self.rel_to_all.compute(

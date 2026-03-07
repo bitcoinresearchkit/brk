@@ -1184,52 +1184,6 @@ impl Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct InvestedNetNuplSupplyUnrealizedPattern3 {
-    pub invested_capital_in_loss_rel_to_realized_cap: BpsPercentRatioPattern,
-    pub invested_capital_in_profit_rel_to_realized_cap: BpsPercentRatioPattern,
-    pub net_unrealized_pnl_rel_to_market_cap: BpsPercentRatioPattern,
-    pub net_unrealized_pnl_rel_to_own_gross_pnl: BpsPercentRatioPattern,
-    pub net_unrealized_pnl_rel_to_own_market_cap: BpsPercentRatioPattern,
-    pub nupl: MetricPattern1<StoredF32>,
-    pub supply_in_loss_rel_to_circulating_supply: BpsPercentRatioPattern,
-    pub supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern,
-    pub supply_in_profit_rel_to_circulating_supply: BpsPercentRatioPattern,
-    pub supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern,
-    pub supply_rel_to_circulating_supply: BpsPercentRatioPattern,
-    pub unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern,
-    pub unrealized_loss_rel_to_own_gross_pnl: BpsPercentRatioPattern,
-    pub unrealized_loss_rel_to_own_market_cap: BpsPercentRatioPattern,
-    pub unrealized_profit_rel_to_market_cap: BpsPercentRatioPattern,
-    pub unrealized_profit_rel_to_own_gross_pnl: BpsPercentRatioPattern,
-    pub unrealized_profit_rel_to_own_market_cap: BpsPercentRatioPattern,
-}
-
-impl InvestedNetNuplSupplyUnrealizedPattern3 {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            invested_capital_in_loss_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "invested_capital_in_loss_rel_to_realized_cap")),
-            invested_capital_in_profit_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "invested_capital_in_profit_rel_to_realized_cap")),
-            net_unrealized_pnl_rel_to_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "net_unrealized_pnl_rel_to_market_cap")),
-            net_unrealized_pnl_rel_to_own_gross_pnl: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "net_unrealized_pnl_rel_to_own_gross_pnl")),
-            net_unrealized_pnl_rel_to_own_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "net_unrealized_pnl_rel_to_own_market_cap")),
-            nupl: MetricPattern1::new(client.clone(), _m(&acc, "nupl")),
-            supply_in_loss_rel_to_circulating_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_in_loss_rel_to_circulating_supply")),
-            supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_in_loss_rel_to_own_supply")),
-            supply_in_profit_rel_to_circulating_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_in_profit_rel_to_circulating_supply")),
-            supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_in_profit_rel_to_own_supply")),
-            supply_rel_to_circulating_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_rel_to_circulating_supply")),
-            unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_market_cap")),
-            unrealized_loss_rel_to_own_gross_pnl: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_own_gross_pnl")),
-            unrealized_loss_rel_to_own_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_own_market_cap")),
-            unrealized_profit_rel_to_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_market_cap")),
-            unrealized_profit_rel_to_own_gross_pnl: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_own_gross_pnl")),
-            unrealized_profit_rel_to_own_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_own_market_cap")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct MvrvNegNetRealizedSentSoprValuePattern {
     pub mvrv: MetricPattern1<StoredF32>,
     pub neg_realized_loss: MetricPattern1<Dollars>,
@@ -1364,6 +1318,48 @@ impl GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct NetNuplSupplyUnrealizedPattern2 {
+    pub net_unrealized_pnl_rel_to_market_cap: BpsPercentRatioPattern,
+    pub net_unrealized_pnl_rel_to_own_gross_pnl: BpsPercentRatioPattern,
+    pub net_unrealized_pnl_rel_to_own_market_cap: BpsPercentRatioPattern,
+    pub nupl: MetricPattern1<StoredF32>,
+    pub supply_in_loss_rel_to_circulating_supply: BpsPercentRatioPattern,
+    pub supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern,
+    pub supply_in_profit_rel_to_circulating_supply: BpsPercentRatioPattern,
+    pub supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern,
+    pub supply_rel_to_circulating_supply: BpsPercentRatioPattern,
+    pub unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern,
+    pub unrealized_loss_rel_to_own_gross_pnl: BpsPercentRatioPattern,
+    pub unrealized_loss_rel_to_own_market_cap: BpsPercentRatioPattern,
+    pub unrealized_profit_rel_to_market_cap: BpsPercentRatioPattern,
+    pub unrealized_profit_rel_to_own_gross_pnl: BpsPercentRatioPattern,
+    pub unrealized_profit_rel_to_own_market_cap: BpsPercentRatioPattern,
+}
+
+impl NetNuplSupplyUnrealizedPattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            net_unrealized_pnl_rel_to_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "net_unrealized_pnl_rel_to_market_cap")),
+            net_unrealized_pnl_rel_to_own_gross_pnl: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "net_unrealized_pnl_rel_to_own_gross_pnl")),
+            net_unrealized_pnl_rel_to_own_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "net_unrealized_pnl_rel_to_own_market_cap")),
+            nupl: MetricPattern1::new(client.clone(), _m(&acc, "nupl")),
+            supply_in_loss_rel_to_circulating_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_in_loss_rel_to_circulating_supply")),
+            supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_in_loss_rel_to_own_supply")),
+            supply_in_profit_rel_to_circulating_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_in_profit_rel_to_circulating_supply")),
+            supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_in_profit_rel_to_own_supply")),
+            supply_rel_to_circulating_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_rel_to_circulating_supply")),
+            unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_market_cap")),
+            unrealized_loss_rel_to_own_gross_pnl: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_own_gross_pnl")),
+            unrealized_loss_rel_to_own_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_own_market_cap")),
+            unrealized_profit_rel_to_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_market_cap")),
+            unrealized_profit_rel_to_own_gross_pnl: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_own_gross_pnl")),
+            unrealized_profit_rel_to_own_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_own_market_cap")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct RatioPattern {
     pub ratio_pct1: BpsRatioPattern,
     pub ratio_pct1_price: CentsSatsUsdPattern,
@@ -1399,44 +1395,6 @@ impl RatioPattern {
             ratio_pct99_price: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct99")),
             ratio_sma_1m: BpsRatioPattern::new(client.clone(), _m(&acc, "sma_1m")),
             ratio_sma_1w: BpsRatioPattern::new(client.clone(), _m(&acc, "sma_1w")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct GrossInvestedInvestorNegNetSupplyUnrealizedPattern {
-    pub gross_pnl: CentsUsdPattern,
-    pub invested_capital_in_loss: CentsUsdPattern,
-    pub invested_capital_in_loss_raw: MetricPattern18<CentsSats>,
-    pub invested_capital_in_profit: CentsUsdPattern,
-    pub invested_capital_in_profit_raw: MetricPattern18<CentsSats>,
-    pub investor_cap_in_loss_raw: MetricPattern18<CentsSquaredSats>,
-    pub investor_cap_in_profit_raw: MetricPattern18<CentsSquaredSats>,
-    pub neg_unrealized_loss: MetricPattern1<Dollars>,
-    pub net_unrealized_pnl: CentsUsdPattern,
-    pub supply_in_loss: BtcCentsSatsUsdPattern,
-    pub supply_in_profit: BtcCentsSatsUsdPattern,
-    pub unrealized_loss: CentsUsdPattern,
-    pub unrealized_profit: CentsUsdPattern,
-}
-
-impl GrossInvestedInvestorNegNetSupplyUnrealizedPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            gross_pnl: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_gross_pnl")),
-            invested_capital_in_loss: CentsUsdPattern::new(client.clone(), _m(&acc, "invested_capital_in_loss")),
-            invested_capital_in_loss_raw: MetricPattern18::new(client.clone(), _m(&acc, "invested_capital_in_loss_raw")),
-            invested_capital_in_profit: CentsUsdPattern::new(client.clone(), _m(&acc, "invested_capital_in_profit")),
-            invested_capital_in_profit_raw: MetricPattern18::new(client.clone(), _m(&acc, "invested_capital_in_profit_raw")),
-            investor_cap_in_loss_raw: MetricPattern18::new(client.clone(), _m(&acc, "investor_cap_in_loss_raw")),
-            investor_cap_in_profit_raw: MetricPattern18::new(client.clone(), _m(&acc, "investor_cap_in_profit_raw")),
-            neg_unrealized_loss: MetricPattern1::new(client.clone(), _m(&acc, "neg_unrealized_loss")),
-            net_unrealized_pnl: CentsUsdPattern::new(client.clone(), _m(&acc, "net_unrealized_pnl")),
-            supply_in_loss: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "supply_in_loss")),
-            supply_in_profit: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "supply_in_profit")),
-            unrealized_loss: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_loss")),
-            unrealized_profit: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_profit")),
         }
     }
 }
@@ -1616,40 +1574,6 @@ impl AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct InvestedNetNuplSupplyUnrealizedPattern {
-    pub invested_capital_in_loss_rel_to_realized_cap: BpsPercentRatioPattern,
-    pub invested_capital_in_profit_rel_to_realized_cap: BpsPercentRatioPattern,
-    pub net_unrealized_pnl_rel_to_market_cap: BpsPercentRatioPattern,
-    pub nupl: MetricPattern1<StoredF32>,
-    pub supply_in_loss_rel_to_circulating_supply: BpsPercentRatioPattern,
-    pub supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern,
-    pub supply_in_profit_rel_to_circulating_supply: BpsPercentRatioPattern,
-    pub supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern,
-    pub supply_rel_to_circulating_supply: BpsPercentRatioPattern,
-    pub unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern,
-    pub unrealized_profit_rel_to_market_cap: BpsPercentRatioPattern,
-}
-
-impl InvestedNetNuplSupplyUnrealizedPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            invested_capital_in_loss_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "invested_capital_in_loss_rel_to_realized_cap")),
-            invested_capital_in_profit_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "invested_capital_in_profit_rel_to_realized_cap")),
-            net_unrealized_pnl_rel_to_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "net_unrealized_pnl_rel_to_market_cap")),
-            nupl: MetricPattern1::new(client.clone(), _m(&acc, "nupl")),
-            supply_in_loss_rel_to_circulating_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_in_loss_rel_to_circulating_supply")),
-            supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_in_loss_rel_to_own_supply")),
-            supply_in_profit_rel_to_circulating_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_in_profit_rel_to_circulating_supply")),
-            supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_in_profit_rel_to_own_supply")),
-            supply_rel_to_circulating_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_rel_to_circulating_supply")),
-            unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_market_cap")),
-            unrealized_profit_rel_to_market_cap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_profit_rel_to_market_cap")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct AverageGainsLossesRsiStochPattern {
     pub average_gain: MetricPattern1<StoredF32>,
     pub average_loss: MetricPattern1<StoredF32>,
@@ -1677,6 +1601,38 @@ impl AverageGainsLossesRsiStochPattern {
             stoch_rsi: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "stoch_24h")),
             stoch_rsi_d: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "stoch_d_24h")),
             stoch_rsi_k: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "stoch_k_24h")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct InvestedInvestorNegNetSupplyUnrealizedPattern {
+    pub invested_capital_in_loss_raw: MetricPattern18<CentsSats>,
+    pub invested_capital_in_profit_raw: MetricPattern18<CentsSats>,
+    pub investor_cap_in_loss_raw: MetricPattern18<CentsSquaredSats>,
+    pub investor_cap_in_profit_raw: MetricPattern18<CentsSquaredSats>,
+    pub neg_unrealized_loss: MetricPattern1<Dollars>,
+    pub net_unrealized_pnl: CentsUsdPattern,
+    pub supply_in_loss: BtcCentsSatsUsdPattern,
+    pub supply_in_profit: BtcCentsSatsUsdPattern,
+    pub unrealized_loss: CentsUsdPattern,
+    pub unrealized_profit: CentsUsdPattern,
+}
+
+impl InvestedInvestorNegNetSupplyUnrealizedPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            invested_capital_in_loss_raw: MetricPattern18::new(client.clone(), _m(&acc, "invested_capital_in_loss_raw")),
+            invested_capital_in_profit_raw: MetricPattern18::new(client.clone(), _m(&acc, "invested_capital_in_profit_raw")),
+            investor_cap_in_loss_raw: MetricPattern18::new(client.clone(), _m(&acc, "investor_cap_in_loss_raw")),
+            investor_cap_in_profit_raw: MetricPattern18::new(client.clone(), _m(&acc, "investor_cap_in_profit_raw")),
+            neg_unrealized_loss: MetricPattern1::new(client.clone(), _m(&acc, "neg_unrealized_loss")),
+            net_unrealized_pnl: CentsUsdPattern::new(client.clone(), _m(&acc, "net_unrealized_pnl")),
+            supply_in_loss: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "supply_in_loss")),
+            supply_in_profit: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "supply_in_profit")),
+            unrealized_loss: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_loss")),
+            unrealized_profit: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_profit")),
         }
     }
 }
@@ -1800,34 +1756,6 @@ impl _1m1w1y24hBtcCentsSatsUsdPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern {
-    pub activity: SentPattern,
-    pub addr_count: MetricPattern1<StoredU64>,
-    pub addr_count_change_1m: MetricPattern1<StoredF64>,
-    pub outputs: UtxoPattern,
-    pub realized: MvrvRealizedPattern,
-    pub relative: SupplyPattern,
-    pub supply: ChangeHalvedTotalPattern,
-    pub unrealized: SupplyPattern2,
-}
-
-impl ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            activity: SentPattern::new(client.clone(), _m(&acc, "sent")),
-            addr_count: MetricPattern1::new(client.clone(), _m(&acc, "addr_count")),
-            addr_count_change_1m: MetricPattern1::new(client.clone(), _m(&acc, "addr_count_change_1m")),
-            outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: MvrvRealizedPattern::new(client.clone(), acc.clone()),
-            relative: SupplyPattern::new(client.clone(), _m(&acc, "supply_in")),
-            supply: ChangeHalvedTotalPattern::new(client.clone(), _m(&acc, "supply")),
-            unrealized: SupplyPattern2::new(client.clone(), _m(&acc, "supply_in")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T> {
     pub average: MetricPattern18<T>,
     pub max: MetricPattern18<T>,
@@ -1887,9 +1815,9 @@ pub struct ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern {
     pub cost_basis: MaxMinPattern,
     pub outputs: UtxoPattern,
     pub realized: MvrvNegNetRealizedSentSoprValuePattern,
-    pub relative: InvestedNetNuplSupplyUnrealizedPattern,
+    pub relative: SupplyPattern2,
     pub supply: ChangeHalvedTotalPattern,
-    pub unrealized: GrossInvestedInvestorNegNetSupplyUnrealizedPattern,
+    pub unrealized: InvestedInvestorNegNetSupplyUnrealizedPattern,
 }
 
 impl ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern {
@@ -1900,9 +1828,35 @@ impl ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern {
             cost_basis: MaxMinPattern::new(client.clone(), _m(&acc, "cost_basis")),
             outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
             realized: MvrvNegNetRealizedSentSoprValuePattern::new(client.clone(), acc.clone()),
-            relative: InvestedNetNuplSupplyUnrealizedPattern::new(client.clone(), acc.clone()),
+            relative: SupplyPattern2::new(client.clone(), _m(&acc, "supply")),
             supply: ChangeHalvedTotalPattern::new(client.clone(), _m(&acc, "supply")),
-            unrealized: GrossInvestedInvestorNegNetSupplyUnrealizedPattern::new(client.clone(), acc.clone()),
+            unrealized: InvestedInvestorNegNetSupplyUnrealizedPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct ActivityAddrOutputsRealizedSupplyUnrealizedPattern {
+    pub activity: SentPattern,
+    pub addr_count: MetricPattern1<StoredU64>,
+    pub addr_count_change_1m: MetricPattern1<StoredF64>,
+    pub outputs: UtxoPattern,
+    pub realized: MvrvRealizedPattern,
+    pub supply: ChangeHalvedTotalPattern,
+    pub unrealized: SupplyPattern,
+}
+
+impl ActivityAddrOutputsRealizedSupplyUnrealizedPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            activity: SentPattern::new(client.clone(), _m(&acc, "sent")),
+            addr_count: MetricPattern1::new(client.clone(), _m(&acc, "addr_count")),
+            addr_count_change_1m: MetricPattern1::new(client.clone(), _m(&acc, "addr_count_change_1m")),
+            outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
+            realized: MvrvRealizedPattern::new(client.clone(), acc.clone()),
+            supply: ChangeHalvedTotalPattern::new(client.clone(), _m(&acc, "supply")),
+            unrealized: SupplyPattern::new(client.clone(), _m(&acc, "supply_in")),
         }
     }
 }
@@ -1934,37 +1888,13 @@ impl MvrvRealizedPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 {
-    pub activity: SentPattern,
-    pub outputs: UtxoPattern,
-    pub realized: MvrvNegNetRealizedSentSoprValuePattern,
-    pub relative: SupplyPattern3,
-    pub supply: ChangeHalvedTotalPattern,
-    pub unrealized: NegNetSupplyUnrealizedPattern,
-}
-
-impl ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            activity: SentPattern::new(client.clone(), _m(&acc, "sent")),
-            outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: MvrvNegNetRealizedSentSoprValuePattern::new(client.clone(), acc.clone()),
-            relative: SupplyPattern3::new(client.clone(), _m(&acc, "supply")),
-            supply: ChangeHalvedTotalPattern::new(client.clone(), _m(&acc, "supply")),
-            unrealized: NegNetSupplyUnrealizedPattern::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct ActivityOutputsRealizedRelativeSupplyUnrealizedPattern {
     pub activity: SentPattern,
     pub outputs: UtxoPattern,
-    pub realized: MvrvRealizedPattern,
-    pub relative: SupplyPattern,
+    pub realized: MvrvNegNetRealizedSentSoprValuePattern,
+    pub relative: SupplyPattern2,
     pub supply: ChangeHalvedTotalPattern,
-    pub unrealized: SupplyPattern2,
+    pub unrealized: NegNetSupplyUnrealizedPattern,
 }
 
 impl ActivityOutputsRealizedRelativeSupplyUnrealizedPattern {
@@ -1973,10 +1903,10 @@ impl ActivityOutputsRealizedRelativeSupplyUnrealizedPattern {
         Self {
             activity: SentPattern::new(client.clone(), _m(&acc, "sent")),
             outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
-            realized: MvrvRealizedPattern::new(client.clone(), acc.clone()),
-            relative: SupplyPattern::new(client.clone(), _m(&acc, "supply_in")),
+            realized: MvrvNegNetRealizedSentSoprValuePattern::new(client.clone(), acc.clone()),
+            relative: SupplyPattern2::new(client.clone(), _m(&acc, "supply")),
             supply: ChangeHalvedTotalPattern::new(client.clone(), _m(&acc, "supply")),
-            unrealized: SupplyPattern2::new(client.clone(), _m(&acc, "supply_in")),
+            unrealized: NegNetSupplyUnrealizedPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -2001,6 +1931,28 @@ impl NegNetSupplyUnrealizedPattern {
             supply_in_profit: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "supply_in_profit")),
             unrealized_loss: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_loss")),
             unrealized_profit: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_profit")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct ActivityOutputsRealizedSupplyUnrealizedPattern {
+    pub activity: SentPattern,
+    pub outputs: UtxoPattern,
+    pub realized: MvrvRealizedPattern,
+    pub supply: ChangeHalvedTotalPattern,
+    pub unrealized: SupplyPattern,
+}
+
+impl ActivityOutputsRealizedSupplyUnrealizedPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            activity: SentPattern::new(client.clone(), _m(&acc, "sent")),
+            outputs: UtxoPattern::new(client.clone(), _m(&acc, "utxo_count")),
+            realized: MvrvRealizedPattern::new(client.clone(), acc.clone()),
+            supply: ChangeHalvedTotalPattern::new(client.clone(), _m(&acc, "supply")),
+            unrealized: SupplyPattern::new(client.clone(), _m(&acc, "supply_in")),
         }
     }
 }
@@ -2050,7 +2002,7 @@ impl EmaHistogramLineSignalPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct SupplyPattern3 {
+pub struct SupplyPattern2 {
     pub supply_in_loss_rel_to_circulating_supply: BpsPercentRatioPattern,
     pub supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern,
     pub supply_in_profit_rel_to_circulating_supply: BpsPercentRatioPattern,
@@ -2058,7 +2010,7 @@ pub struct SupplyPattern3 {
     pub supply_rel_to_circulating_supply: BpsPercentRatioPattern,
 }
 
-impl SupplyPattern3 {
+impl SupplyPattern2 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
@@ -2596,33 +2548,17 @@ impl SentPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct SupplyPattern2 {
+pub struct SupplyPattern {
     pub supply_in_loss: BtcCentsSatsUsdPattern,
     pub supply_in_profit: BtcCentsSatsUsdPattern,
-}
-
-impl SupplyPattern2 {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            supply_in_loss: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "loss")),
-            supply_in_profit: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "profit")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct SupplyPattern {
-    pub supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern,
-    pub supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern,
 }
 
 impl SupplyPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "loss_rel_to_own_supply")),
-            supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "profit_rel_to_own_supply")),
+            supply_in_loss: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "loss")),
+            supply_in_profit: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "profit")),
         }
     }
 }
@@ -5601,8 +5537,6 @@ pub struct MetricsTree_Distribution_UtxoCohorts_All_Relative {
     pub unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern,
     pub net_unrealized_pnl_rel_to_market_cap: BpsPercentRatioPattern,
     pub nupl: MetricPattern1<StoredF32>,
-    pub invested_capital_in_profit_rel_to_realized_cap: BpsPercentRatioPattern,
-    pub invested_capital_in_loss_rel_to_realized_cap: BpsPercentRatioPattern,
     pub supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern,
     pub supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern,
     pub unrealized_profit_rel_to_own_gross_pnl: BpsPercentRatioPattern,
@@ -5617,8 +5551,6 @@ impl MetricsTree_Distribution_UtxoCohorts_All_Relative {
             unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern::new(client.clone(), "unrealized_loss_rel_to_market_cap".to_string()),
             net_unrealized_pnl_rel_to_market_cap: BpsPercentRatioPattern::new(client.clone(), "net_unrealized_pnl_rel_to_market_cap".to_string()),
             nupl: MetricPattern1::new(client.clone(), "nupl".to_string()),
-            invested_capital_in_profit_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), "invested_capital_in_profit_rel_to_realized_cap".to_string()),
-            invested_capital_in_loss_rel_to_realized_cap: BpsPercentRatioPattern::new(client.clone(), "invested_capital_in_loss_rel_to_realized_cap".to_string()),
             supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern::new(client.clone(), "supply_in_profit_rel_to_own_supply".to_string()),
             supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern::new(client.clone(), "supply_in_loss_rel_to_own_supply".to_string()),
             unrealized_profit_rel_to_own_gross_pnl: BpsPercentRatioPattern::new(client.clone(), "unrealized_profit_rel_to_own_gross_pnl".to_string()),
@@ -5636,7 +5568,7 @@ pub struct MetricsTree_Distribution_UtxoCohorts_Sth {
     pub realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern,
     pub cost_basis: InvestedMaxMinPercentilesPattern,
     pub unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern,
-    pub relative: InvestedNetNuplSupplyUnrealizedPattern3,
+    pub relative: NetNuplSupplyUnrealizedPattern2,
     pub dormancy: MetricPattern1<StoredF32>,
     pub velocity: MetricPattern1<StoredF32>,
     pub adjusted_value_created: MetricPattern1<Cents>,
@@ -5656,7 +5588,7 @@ impl MetricsTree_Distribution_UtxoCohorts_Sth {
             realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern::new(client.clone(), "sth".to_string()),
             cost_basis: InvestedMaxMinPercentilesPattern::new(client.clone(), "sth".to_string()),
             unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern::new(client.clone(), "sth".to_string()),
-            relative: InvestedNetNuplSupplyUnrealizedPattern3::new(client.clone(), "sth".to_string()),
+            relative: NetNuplSupplyUnrealizedPattern2::new(client.clone(), "sth".to_string()),
             dormancy: MetricPattern1::new(client.clone(), "sth_dormancy".to_string()),
             velocity: MetricPattern1::new(client.clone(), "sth_velocity".to_string()),
             adjusted_value_created: MetricPattern1::new(client.clone(), "sth_adjusted_value_created".to_string()),
@@ -5677,7 +5609,7 @@ pub struct MetricsTree_Distribution_UtxoCohorts_Lth {
     pub realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern,
     pub cost_basis: InvestedMaxMinPercentilesPattern,
     pub unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern,
-    pub relative: InvestedNetNuplSupplyUnrealizedPattern3,
+    pub relative: NetNuplSupplyUnrealizedPattern2,
     pub dormancy: MetricPattern1<StoredF32>,
     pub velocity: MetricPattern1<StoredF32>,
 }
@@ -5691,7 +5623,7 @@ impl MetricsTree_Distribution_UtxoCohorts_Lth {
             realized: CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern::new(client.clone(), "lth".to_string()),
             cost_basis: InvestedMaxMinPercentilesPattern::new(client.clone(), "lth".to_string()),
             unrealized: GreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern::new(client.clone(), "lth".to_string()),
-            relative: InvestedNetNuplSupplyUnrealizedPattern3::new(client.clone(), "lth".to_string()),
+            relative: NetNuplSupplyUnrealizedPattern2::new(client.clone(), "lth".to_string()),
             dormancy: MetricPattern1::new(client.clone(), "lth_dormancy".to_string()),
             velocity: MetricPattern1::new(client.clone(), "lth_velocity".to_string()),
         }
@@ -5753,310 +5685,310 @@ impl MetricsTree_Distribution_UtxoCohorts_AgeRange {
 
 /// Metrics tree node.
 pub struct MetricsTree_Distribution_UtxoCohorts_MaxAge {
-    pub _1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _15y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
+    pub _1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _15y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
 }
 
 impl MetricsTree_Distribution_UtxoCohorts_MaxAge {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_1w_old".to_string()),
-            _1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_1m_old".to_string()),
-            _2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_2m_old".to_string()),
-            _3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_3m_old".to_string()),
-            _4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_4m_old".to_string()),
-            _5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_5m_old".to_string()),
-            _6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_6m_old".to_string()),
-            _1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_1y_old".to_string()),
-            _2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_2y_old".to_string()),
-            _3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_3y_old".to_string()),
-            _4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_4y_old".to_string()),
-            _5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_5y_old".to_string()),
-            _6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_6y_old".to_string()),
-            _7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_7y_old".to_string()),
-            _8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_8y_old".to_string()),
-            _10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_10y_old".to_string()),
-            _12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_12y_old".to_string()),
-            _15y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_under_15y_old".to_string()),
+            _1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_1w_old".to_string()),
+            _1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_1m_old".to_string()),
+            _2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_2m_old".to_string()),
+            _3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_3m_old".to_string()),
+            _4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_4m_old".to_string()),
+            _5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_5m_old".to_string()),
+            _6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_6m_old".to_string()),
+            _1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_1y_old".to_string()),
+            _2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_2y_old".to_string()),
+            _3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_3y_old".to_string()),
+            _4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_4y_old".to_string()),
+            _5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_5y_old".to_string()),
+            _6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_6y_old".to_string()),
+            _7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_7y_old".to_string()),
+            _8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_8y_old".to_string()),
+            _10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_10y_old".to_string()),
+            _12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_12y_old".to_string()),
+            _15y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_15y_old".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Distribution_UtxoCohorts_MinAge {
-    pub _1d: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
+    pub _1d: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
 }
 
 impl MetricsTree_Distribution_UtxoCohorts_MinAge {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _1d: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_1d_old".to_string()),
-            _1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_1w_old".to_string()),
-            _1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_1m_old".to_string()),
-            _2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_2m_old".to_string()),
-            _3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_3m_old".to_string()),
-            _4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_4m_old".to_string()),
-            _5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_5m_old".to_string()),
-            _6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_6m_old".to_string()),
-            _1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_1y_old".to_string()),
-            _2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_2y_old".to_string()),
-            _3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_3y_old".to_string()),
-            _4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_4y_old".to_string()),
-            _5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_5y_old".to_string()),
-            _6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_6y_old".to_string()),
-            _7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_7y_old".to_string()),
-            _8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_8y_old".to_string()),
-            _10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_10y_old".to_string()),
-            _12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "utxos_over_12y_old".to_string()),
+            _1d: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_1d_old".to_string()),
+            _1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_1w_old".to_string()),
+            _1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_1m_old".to_string()),
+            _2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_2m_old".to_string()),
+            _3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_3m_old".to_string()),
+            _4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_4m_old".to_string()),
+            _5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_5m_old".to_string()),
+            _6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_6m_old".to_string()),
+            _1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_1y_old".to_string()),
+            _2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_2y_old".to_string()),
+            _3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_3y_old".to_string()),
+            _4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_4y_old".to_string()),
+            _5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_5y_old".to_string()),
+            _6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_6y_old".to_string()),
+            _7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_7y_old".to_string()),
+            _8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_8y_old".to_string()),
+            _10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_10y_old".to_string()),
+            _12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_12y_old".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Distribution_UtxoCohorts_Epoch {
-    pub _0: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _1: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _3: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _4: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
+    pub _0: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _1: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _3: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _4: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
 }
 
 impl MetricsTree_Distribution_UtxoCohorts_Epoch {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _0: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "epoch_0".to_string()),
-            _1: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "epoch_1".to_string()),
-            _2: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "epoch_2".to_string()),
-            _3: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "epoch_3".to_string()),
-            _4: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "epoch_4".to_string()),
+            _0: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "epoch_0".to_string()),
+            _1: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "epoch_1".to_string()),
+            _2: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "epoch_2".to_string()),
+            _3: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "epoch_3".to_string()),
+            _4: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "epoch_4".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Distribution_UtxoCohorts_Class {
-    pub _2009: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2010: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2011: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2012: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2013: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2014: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2015: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2016: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2017: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2018: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2019: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2020: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2021: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2022: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2023: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2024: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2025: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
-    pub _2026: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2,
+    pub _2009: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2010: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2011: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2012: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2013: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2014: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2015: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2016: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2017: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2018: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2019: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2020: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2021: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2022: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2023: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2024: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2025: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _2026: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
 }
 
 impl MetricsTree_Distribution_UtxoCohorts_Class {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _2009: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2009".to_string()),
-            _2010: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2010".to_string()),
-            _2011: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2011".to_string()),
-            _2012: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2012".to_string()),
-            _2013: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2013".to_string()),
-            _2014: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2014".to_string()),
-            _2015: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2015".to_string()),
-            _2016: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2016".to_string()),
-            _2017: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2017".to_string()),
-            _2018: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2018".to_string()),
-            _2019: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2019".to_string()),
-            _2020: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2020".to_string()),
-            _2021: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2021".to_string()),
-            _2022: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2022".to_string()),
-            _2023: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2023".to_string()),
-            _2024: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2024".to_string()),
-            _2025: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2025".to_string()),
-            _2026: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2::new(client.clone(), "class_2026".to_string()),
+            _2009: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2009".to_string()),
+            _2010: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2010".to_string()),
+            _2011: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2011".to_string()),
+            _2012: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2012".to_string()),
+            _2013: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2013".to_string()),
+            _2014: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2014".to_string()),
+            _2015: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2015".to_string()),
+            _2016: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2016".to_string()),
+            _2017: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2017".to_string()),
+            _2018: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2018".to_string()),
+            _2019: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2019".to_string()),
+            _2020: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2020".to_string()),
+            _2021: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2021".to_string()),
+            _2022: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2022".to_string()),
+            _2023: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2023".to_string()),
+            _2024: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2024".to_string()),
+            _2025: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2025".to_string()),
+            _2026: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "class_2026".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Distribution_UtxoCohorts_GeAmount {
-    pub _1sat: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _1sat: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _10sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _100sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _100k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _1m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _10m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _1btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _10btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _100btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
 }
 
 impl MetricsTree_Distribution_UtxoCohorts_GeAmount {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _1sat: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_1sat".to_string()),
-            _10sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_10sats".to_string()),
-            _100sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_100sats".to_string()),
-            _1k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_1k_sats".to_string()),
-            _10k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_10k_sats".to_string()),
-            _100k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_100k_sats".to_string()),
-            _1m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_1m_sats".to_string()),
-            _10m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_10m_sats".to_string()),
-            _1btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_1btc".to_string()),
-            _10btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_10btc".to_string()),
-            _100btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_100btc".to_string()),
-            _1k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_1k_btc".to_string()),
-            _10k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_over_10k_btc".to_string()),
+            _1sat: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_over_1sat".to_string()),
+            _10sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_over_10sats".to_string()),
+            _100sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_over_100sats".to_string()),
+            _1k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_over_1k_sats".to_string()),
+            _10k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_over_10k_sats".to_string()),
+            _100k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_over_100k_sats".to_string()),
+            _1m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_over_1m_sats".to_string()),
+            _10m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_over_10m_sats".to_string()),
+            _1btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_over_1btc".to_string()),
+            _10btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_over_10btc".to_string()),
+            _100btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_over_100btc".to_string()),
+            _1k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_over_1k_btc".to_string()),
+            _10k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_over_10k_btc".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Distribution_UtxoCohorts_AmountRange {
-    pub _0sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1sat_to_10sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10sats_to_100sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100sats_to_1k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1k_sats_to_10k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10k_sats_to_100k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100k_sats_to_1m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1m_sats_to_10m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10m_sats_to_1btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1btc_to_10btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10btc_to_100btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100btc_to_1k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1k_btc_to_10k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10k_btc_to_100k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100k_btc_or_more: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _0sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _1sat_to_10sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _10sats_to_100sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _100sats_to_1k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_sats_to_10k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_sats_to_100k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _100k_sats_to_1m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _1m_sats_to_10m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _10m_sats_to_1btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _1btc_to_10btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _10btc_to_100btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _100btc_to_1k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_btc_to_10k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_btc_to_100k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _100k_btc_or_more: ActivityOutputsRealizedSupplyUnrealizedPattern,
 }
 
 impl MetricsTree_Distribution_UtxoCohorts_AmountRange {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _0sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_with_0sats".to_string()),
-            _1sat_to_10sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_above_1sat_under_10sats".to_string()),
-            _10sats_to_100sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_above_10sats_under_100sats".to_string()),
-            _100sats_to_1k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_above_100sats_under_1k_sats".to_string()),
-            _1k_sats_to_10k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_above_1k_sats_under_10k_sats".to_string()),
-            _10k_sats_to_100k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_above_10k_sats_under_100k_sats".to_string()),
-            _100k_sats_to_1m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_above_100k_sats_under_1m_sats".to_string()),
-            _1m_sats_to_10m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_above_1m_sats_under_10m_sats".to_string()),
-            _10m_sats_to_1btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_above_10m_sats_under_1btc".to_string()),
-            _1btc_to_10btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_above_1btc_under_10btc".to_string()),
-            _10btc_to_100btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_above_10btc_under_100btc".to_string()),
-            _100btc_to_1k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_above_100btc_under_1k_btc".to_string()),
-            _1k_btc_to_10k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_above_1k_btc_under_10k_btc".to_string()),
-            _10k_btc_to_100k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_above_10k_btc_under_100k_btc".to_string()),
-            _100k_btc_or_more: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_above_100k_btc".to_string()),
+            _0sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_with_0sats".to_string()),
+            _1sat_to_10sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_above_1sat_under_10sats".to_string()),
+            _10sats_to_100sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_above_10sats_under_100sats".to_string()),
+            _100sats_to_1k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_above_100sats_under_1k_sats".to_string()),
+            _1k_sats_to_10k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_above_1k_sats_under_10k_sats".to_string()),
+            _10k_sats_to_100k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_above_10k_sats_under_100k_sats".to_string()),
+            _100k_sats_to_1m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_above_100k_sats_under_1m_sats".to_string()),
+            _1m_sats_to_10m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_above_1m_sats_under_10m_sats".to_string()),
+            _10m_sats_to_1btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_above_10m_sats_under_1btc".to_string()),
+            _1btc_to_10btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_above_1btc_under_10btc".to_string()),
+            _10btc_to_100btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_above_10btc_under_100btc".to_string()),
+            _100btc_to_1k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_above_100btc_under_1k_btc".to_string()),
+            _1k_btc_to_10k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_above_1k_btc_under_10k_btc".to_string()),
+            _10k_btc_to_100k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_above_10k_btc_under_100k_btc".to_string()),
+            _100k_btc_or_more: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_above_100k_btc".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Distribution_UtxoCohorts_LtAmount {
-    pub _10sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _10sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _100sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _100k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _1m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _10m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _1btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _10btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _100btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub _100k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern,
 }
 
 impl MetricsTree_Distribution_UtxoCohorts_LtAmount {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _10sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_10sats".to_string()),
-            _100sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_100sats".to_string()),
-            _1k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_1k_sats".to_string()),
-            _10k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_10k_sats".to_string()),
-            _100k_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_100k_sats".to_string()),
-            _1m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_1m_sats".to_string()),
-            _10m_sats: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_10m_sats".to_string()),
-            _1btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_1btc".to_string()),
-            _10btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_10btc".to_string()),
-            _100btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_100btc".to_string()),
-            _1k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_1k_btc".to_string()),
-            _10k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_10k_btc".to_string()),
-            _100k_btc: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "utxos_under_100k_btc".to_string()),
+            _10sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_under_10sats".to_string()),
+            _100sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_under_100sats".to_string()),
+            _1k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_under_1k_sats".to_string()),
+            _10k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_under_10k_sats".to_string()),
+            _100k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_under_100k_sats".to_string()),
+            _1m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_under_1m_sats".to_string()),
+            _10m_sats: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_under_10m_sats".to_string()),
+            _1btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_under_1btc".to_string()),
+            _10btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_under_10btc".to_string()),
+            _100btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_under_100btc".to_string()),
+            _1k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_under_1k_btc".to_string()),
+            _10k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_under_10k_btc".to_string()),
+            _100k_btc: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "utxos_under_100k_btc".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Distribution_UtxoCohorts_Type {
-    pub p2pk65: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub p2pk33: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub p2pkh: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub p2ms: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub p2sh: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub p2wpkh: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub p2wsh: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub p2tr: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub p2a: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub unknown: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub empty: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub p2pk65: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub p2pk33: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub p2pkh: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub p2ms: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub p2sh: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub p2wpkh: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub p2wsh: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub p2tr: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub p2a: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub unknown: ActivityOutputsRealizedSupplyUnrealizedPattern,
+    pub empty: ActivityOutputsRealizedSupplyUnrealizedPattern,
 }
 
 impl MetricsTree_Distribution_UtxoCohorts_Type {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            p2pk65: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "p2pk65".to_string()),
-            p2pk33: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "p2pk33".to_string()),
-            p2pkh: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "p2pkh".to_string()),
-            p2ms: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "p2ms".to_string()),
-            p2sh: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "p2sh".to_string()),
-            p2wpkh: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "p2wpkh".to_string()),
-            p2wsh: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "p2wsh".to_string()),
-            p2tr: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "p2tr".to_string()),
-            p2a: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "p2a".to_string()),
-            unknown: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "unknown_outputs".to_string()),
-            empty: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "empty_outputs".to_string()),
+            p2pk65: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "p2pk65".to_string()),
+            p2pk33: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "p2pk33".to_string()),
+            p2pkh: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "p2pkh".to_string()),
+            p2ms: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "p2ms".to_string()),
+            p2sh: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "p2sh".to_string()),
+            p2wpkh: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "p2wpkh".to_string()),
+            p2wsh: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "p2wsh".to_string()),
+            p2tr: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "p2tr".to_string()),
+            p2a: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "p2a".to_string()),
+            unknown: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "unknown_outputs".to_string()),
+            empty: ActivityOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "empty_outputs".to_string()),
         }
     }
 }
@@ -6080,115 +6012,115 @@ impl MetricsTree_Distribution_AddressCohorts {
 
 /// Metrics tree node.
 pub struct MetricsTree_Distribution_AddressCohorts_GeAmount {
-    pub _1sat: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _1sat: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
 }
 
 impl MetricsTree_Distribution_AddressCohorts_GeAmount {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _1sat: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1sat".to_string()),
-            _10sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10sats".to_string()),
-            _100sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_over_100sats".to_string()),
-            _1k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1k_sats".to_string()),
-            _10k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10k_sats".to_string()),
-            _100k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_over_100k_sats".to_string()),
-            _1m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1m_sats".to_string()),
-            _10m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10m_sats".to_string()),
-            _1btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1btc".to_string()),
-            _10btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10btc".to_string()),
-            _100btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_over_100btc".to_string()),
-            _1k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1k_btc".to_string()),
-            _10k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10k_btc".to_string()),
+            _1sat: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1sat".to_string()),
+            _10sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10sats".to_string()),
+            _100sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_100sats".to_string()),
+            _1k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1k_sats".to_string()),
+            _10k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10k_sats".to_string()),
+            _100k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_100k_sats".to_string()),
+            _1m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1m_sats".to_string()),
+            _10m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10m_sats".to_string()),
+            _1btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1btc".to_string()),
+            _10btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10btc".to_string()),
+            _100btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_100btc".to_string()),
+            _1k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1k_btc".to_string()),
+            _10k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10k_btc".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Distribution_AddressCohorts_AmountRange {
-    pub _0sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1sat_to_10sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10sats_to_100sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100sats_to_1k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1k_sats_to_10k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10k_sats_to_100k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100k_sats_to_1m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1m_sats_to_10m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10m_sats_to_1btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1btc_to_10btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10btc_to_100btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100btc_to_1k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1k_btc_to_10k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10k_btc_to_100k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100k_btc_or_more: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _0sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1sat_to_10sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10sats_to_100sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100sats_to_1k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_sats_to_10k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_sats_to_100k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100k_sats_to_1m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1m_sats_to_10m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10m_sats_to_1btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1btc_to_10btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10btc_to_100btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100btc_to_1k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_btc_to_10k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_btc_to_100k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100k_btc_or_more: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
 }
 
 impl MetricsTree_Distribution_AddressCohorts_AmountRange {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _0sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_with_0sats".to_string()),
-            _1sat_to_10sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_above_1sat_under_10sats".to_string()),
-            _10sats_to_100sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_above_10sats_under_100sats".to_string()),
-            _100sats_to_1k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_above_100sats_under_1k_sats".to_string()),
-            _1k_sats_to_10k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_above_1k_sats_under_10k_sats".to_string()),
-            _10k_sats_to_100k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_above_10k_sats_under_100k_sats".to_string()),
-            _100k_sats_to_1m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_above_100k_sats_under_1m_sats".to_string()),
-            _1m_sats_to_10m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_above_1m_sats_under_10m_sats".to_string()),
-            _10m_sats_to_1btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_above_10m_sats_under_1btc".to_string()),
-            _1btc_to_10btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_above_1btc_under_10btc".to_string()),
-            _10btc_to_100btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_above_10btc_under_100btc".to_string()),
-            _100btc_to_1k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_above_100btc_under_1k_btc".to_string()),
-            _1k_btc_to_10k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_above_1k_btc_under_10k_btc".to_string()),
-            _10k_btc_to_100k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_above_10k_btc_under_100k_btc".to_string()),
-            _100k_btc_or_more: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_above_100k_btc".to_string()),
+            _0sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_with_0sats".to_string()),
+            _1sat_to_10sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_above_1sat_under_10sats".to_string()),
+            _10sats_to_100sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_above_10sats_under_100sats".to_string()),
+            _100sats_to_1k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_above_100sats_under_1k_sats".to_string()),
+            _1k_sats_to_10k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_above_1k_sats_under_10k_sats".to_string()),
+            _10k_sats_to_100k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_above_10k_sats_under_100k_sats".to_string()),
+            _100k_sats_to_1m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_above_100k_sats_under_1m_sats".to_string()),
+            _1m_sats_to_10m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_above_1m_sats_under_10m_sats".to_string()),
+            _10m_sats_to_1btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_above_10m_sats_under_1btc".to_string()),
+            _1btc_to_10btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_above_1btc_under_10btc".to_string()),
+            _10btc_to_100btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_above_10btc_under_100btc".to_string()),
+            _100btc_to_1k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_above_100btc_under_1k_btc".to_string()),
+            _1k_btc_to_10k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_above_1k_btc_under_10k_btc".to_string()),
+            _10k_btc_to_100k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_above_10k_btc_under_100k_btc".to_string()),
+            _100k_btc_or_more: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_above_100k_btc".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Distribution_AddressCohorts_LtAmount {
-    pub _10sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _1k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _10k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
-    pub _100k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern,
+    pub _10sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern,
 }
 
 impl MetricsTree_Distribution_AddressCohorts_LtAmount {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _10sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10sats".to_string()),
-            _100sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100sats".to_string()),
-            _1k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1k_sats".to_string()),
-            _10k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10k_sats".to_string()),
-            _100k_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100k_sats".to_string()),
-            _1m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1m_sats".to_string()),
-            _10m_sats: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10m_sats".to_string()),
-            _1btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1btc".to_string()),
-            _10btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10btc".to_string()),
-            _100btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100btc".to_string()),
-            _1k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1k_btc".to_string()),
-            _10k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10k_btc".to_string()),
-            _100k_btc: ActivityAddrOutputsRealizedRelativeSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100k_btc".to_string()),
+            _10sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10sats".to_string()),
+            _100sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100sats".to_string()),
+            _1k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1k_sats".to_string()),
+            _10k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10k_sats".to_string()),
+            _100k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100k_sats".to_string()),
+            _1m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1m_sats".to_string()),
+            _10m_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10m_sats".to_string()),
+            _1btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1btc".to_string()),
+            _10btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10btc".to_string()),
+            _100btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100btc".to_string()),
+            _1k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1k_btc".to_string()),
+            _10k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10k_btc".to_string()),
+            _100k_btc: ActivityAddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100k_btc".to_string()),
         }
     }
 }

@@ -1,14 +1,14 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Indexes, Sats};
+use brk_types::{Height, Indexes, Sats};
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
     ActivityFull, CohortMetricsBase, CostBasisBase, ImportConfig, OutputsMetrics, RealizedBase,
-    RelativeWithRelToAll, SupplyMetrics, UnrealizedBase,
+    RelativeBaseWithRelToAll, SupplyMetrics, UnrealizedBase,
 };
 
 /// Basic cohort metrics: no extensions, with relative (rel_to_all).
@@ -23,7 +23,7 @@ pub struct BasicCohortMetrics<M: StorageMode = Rw> {
     pub realized: Box<RealizedBase<M>>,
     pub cost_basis: Box<CostBasisBase<M>>,
     pub unrealized: Box<UnrealizedBase<M>>,
-    pub relative: Box<RelativeWithRelToAll<M>>,
+    pub relative: Box<RelativeBaseWithRelToAll<M>>,
 }
 
 impl CohortMetricsBase for BasicCohortMetrics {
@@ -51,7 +51,7 @@ impl BasicCohortMetrics {
         let unrealized = UnrealizedBase::forced_import(cfg)?;
         let realized = RealizedBase::forced_import(cfg)?;
 
-        let relative = RelativeWithRelToAll::forced_import(cfg)?;
+        let relative = RelativeBaseWithRelToAll::forced_import(cfg)?;
 
         Ok(Self {
             filter: cfg.filter.clone(),
@@ -70,7 +70,6 @@ impl BasicCohortMetrics {
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
-        height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {
@@ -84,10 +83,8 @@ impl BasicCohortMetrics {
 
         self.relative.compute(
             starting_indexes.height,
-            &self.unrealized,
-            &self.realized,
+            &self.unrealized.core,
             &self.supply.total.sats.height,
-            height_to_market_cap,
             all_supply_sats,
             exit,
         )?;

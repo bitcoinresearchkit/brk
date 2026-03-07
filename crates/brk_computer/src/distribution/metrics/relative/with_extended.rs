@@ -4,12 +4,12 @@ use brk_types::{Dollars, Height, Sats};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::distribution::metrics::{ImportConfig, RealizedBase, UnrealizedBase};
+use crate::distribution::metrics::{ImportConfig, UnrealizedFull};
 
 use super::{RelativeFull, RelativeExtendedOwnMarketCap, RelativeExtendedOwnPnl, RelativeToAll};
 
 /// Full extended relative metrics (base + rel_to_all + own_market_cap + own_pnl).
-/// Used by: sth, lth, age_range cohorts.
+/// Used by: sth, lth cohorts.
 #[derive(Deref, DerefMut, Traversable)]
 pub struct RelativeWithExtended<M: StorageMode = Rw> {
     #[deref]
@@ -38,8 +38,7 @@ impl RelativeWithExtended {
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        unrealized: &UnrealizedBase,
-        realized: &RealizedBase,
+        unrealized: &UnrealizedFull,
         supply_total_sats: &impl ReadableVec<Height, Sats>,
         market_cap: &impl ReadableVec<Height, Dollars>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
@@ -48,8 +47,7 @@ impl RelativeWithExtended {
     ) -> Result<()> {
         self.base.compute(
             max_from,
-            unrealized,
-            realized,
+            &unrealized.inner.core,
             supply_total_sats,
             market_cap,
             exit,
@@ -63,8 +61,9 @@ impl RelativeWithExtended {
             exit,
         )?;
         self.extended_own_market_cap
-            .compute(max_from, unrealized, own_market_cap, exit)?;
-        self.extended_own_pnl.compute(max_from, unrealized, exit)?;
+            .compute(max_from, &unrealized.inner.core, own_market_cap, exit)?;
+        self.extended_own_pnl
+            .compute(max_from, &unrealized.inner.core, &unrealized.gross_pnl.usd.height, exit)?;
         Ok(())
     }
 }

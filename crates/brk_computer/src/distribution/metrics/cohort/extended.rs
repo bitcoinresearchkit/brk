@@ -95,7 +95,6 @@ impl ExtendedCohortMetrics {
         self.relative.compute(
             starting_indexes.height,
             &self.unrealized,
-            &self.realized,
             &self.supply.total.sats.height,
             height_to_market_cap,
             all_supply_sats,
