@@ -56,6 +56,9 @@ pub struct RealizedFull<M: StorageMode = Rw> {
 
     pub gross_pnl_sum: RollingWindows<Cents, M>,
 
+    pub net_realized_pnl_cumulative: ComputedFromHeight<CentsSigned, M>,
+    pub net_realized_pnl_sum_extended: RollingWindowsFrom1w<CentsSigned, M>,
+
     pub net_pnl_delta: RollingDelta1m<CentsSigned, CentsSigned, M>,
     pub net_pnl_delta_extended: RollingDeltaExcept1m<CentsSigned, CentsSigned, M>,
     pub net_pnl_change_1m_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned32, M>,
@@ -179,6 +182,8 @@ impl RealizedFull {
             capitulation_flow,
             profit_flow,
             gross_pnl_sum,
+            net_realized_pnl_cumulative: cfg.import("net_realized_pnl_cumulative", Version::ONE)?,
+            net_realized_pnl_sum_extended: cfg.import("net_realized_pnl", Version::ONE)?,
             net_pnl_delta: cfg.import("net_pnl_delta", Version::new(5))?,
             net_pnl_delta_extended: cfg.import("net_pnl_delta", Version::new(5))?,
             net_pnl_change_1m_rel_to_realized_cap: cfg
@@ -300,6 +305,15 @@ impl RealizedFull {
         exit: &Exit,
     ) -> Result<()> {
         self.base.compute_rest_part1(blocks, starting_indexes, exit)?;
+
+        self.net_realized_pnl_cumulative
+            .height
+            .compute_cumulative(
+                starting_indexes.height,
+                &self.base.core.net_realized_pnl.height,
+                exit,
+            )?;
+
         self.peak_regret
             .compute_rest(starting_indexes.height, exit)?;
         Ok(())
@@ -323,6 +337,14 @@ impl RealizedFull {
         )?;
 
         let window_starts = blocks.count.window_starts();
+
+        // Extended rolling sum (1w, 1m, 1y) for net_realized_pnl
+        self.net_realized_pnl_sum_extended.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.base.core.net_realized_pnl.height,
+            exit,
+        )?;
 
         // Extended rolling windows (1w, 1m, 1y) for value_created/destroyed/sopr
         self.value_created_sum_extended.compute_rolling_sum(
@@ -434,13 +456,13 @@ impl RealizedFull {
         self.net_pnl_delta.compute(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
-            &self.base.core.net_realized_pnl.cumulative.height,
+            &self.net_realized_pnl_cumulative.height,
             exit,
         )?;
         self.net_pnl_delta_extended.compute(
             starting_indexes.height,
             &window_starts,
-            &self.base.core.net_realized_pnl.cumulative.height,
+            &self.net_realized_pnl_cumulative.height,
             exit,
         )?;
         self.net_pnl_change_1m_rel_to_realized_cap

@@ -1595,8 +1595,11 @@ function createMetricPattern35(client, name) { return /** @type {MetricPattern35
  * @property {BpsPercentRatioPattern} netPnlChange1mRelToRealizedCap
  * @property {ChangeRatePattern<CentsSigned>} netPnlDelta
  * @property {_24hChangeRatePattern<CentsSigned>} netPnlDeltaExtended
- * @property {CumulativeHeightPattern<CentsSigned>} netRealizedPnl
+ * @property {MetricPattern1<CentsSigned>} netRealizedPnl
+ * @property {MetricPattern1<CentsSigned>} netRealizedPnlCumulative
  * @property {BpsPercentRatioPattern} netRealizedPnlRelToRealizedCap
+ * @property {_24hPattern<CentsSigned>} netRealizedPnlSum
+ * @property {_1m1w1yPattern<CentsSigned>} netRealizedPnlSumExtended
  * @property {CumulativeHeightPattern<Cents>} peakRegret
  * @property {BpsPercentRatioPattern} peakRegretRelToRealizedCap
  * @property {MetricPattern1<Dollars>} profitFlow
@@ -1667,8 +1670,11 @@ function createCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealized
     netPnlChange1mRelToRealizedCap: createBpsPercentRatioPattern(client, _m(acc, 'net_pnl_change_1m_rel_to_realized_cap')),
     netPnlDelta: createChangeRatePattern(client, _m(acc, 'net_pnl_delta')),
     netPnlDeltaExtended: create_24hChangeRatePattern(client, _m(acc, 'net_pnl_delta')),
-    netRealizedPnl: createCumulativeHeightPattern(client, _m(acc, 'net_realized_pnl')),
+    netRealizedPnl: createMetricPattern1(client, _m(acc, 'net_realized_pnl')),
+    netRealizedPnlCumulative: createMetricPattern1(client, _m(acc, 'net_realized_pnl_cumulative')),
     netRealizedPnlRelToRealizedCap: createBpsPercentRatioPattern(client, _m(acc, 'net_realized_pnl_rel_to_realized_cap')),
+    netRealizedPnlSum: create_24hPattern(client, _m(acc, 'net_realized_pnl_24h')),
+    netRealizedPnlSumExtended: create_1m1w1yPattern(client, _m(acc, 'net_realized_pnl')),
     peakRegret: createCumulativeHeightPattern(client, _m(acc, 'realized_peak_regret')),
     peakRegretRelToRealizedCap: createBpsPercentRatioPattern(client, _m(acc, 'realized_peak_regret_rel_to_realized_cap')),
     profitFlow: createMetricPattern1(client, _m(acc, 'profit_flow')),
@@ -1788,7 +1794,8 @@ function create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern(client
  * @typedef {Object} MvrvNegNetRealizedSentSoprValuePattern
  * @property {MetricPattern1<StoredF32>} mvrv
  * @property {MetricPattern1<Dollars>} negRealizedLoss
- * @property {CumulativeHeightPattern<CentsSigned>} netRealizedPnl
+ * @property {MetricPattern1<CentsSigned>} netRealizedPnl
+ * @property {_24hPattern<CentsSigned>} netRealizedPnlSum
  * @property {MetricPattern1<Dollars>} realizedCap
  * @property {MetricPattern1<Cents>} realizedCapCents
  * @property {ChangeRatePattern<CentsSigned>} realizedCapDelta
@@ -1819,7 +1826,8 @@ function createMvrvNegNetRealizedSentSoprValuePattern(client, acc) {
   return {
     mvrv: createMetricPattern1(client, _m(acc, 'mvrv')),
     negRealizedLoss: createMetricPattern1(client, _m(acc, 'neg_realized_loss')),
-    netRealizedPnl: createCumulativeHeightPattern(client, _m(acc, 'net_realized_pnl')),
+    netRealizedPnl: createMetricPattern1(client, _m(acc, 'net_realized_pnl')),
+    netRealizedPnlSum: create_24hPattern(client, _m(acc, 'net_realized_pnl_24h')),
     realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
     realizedCapCents: createMetricPattern1(client, _m(acc, 'realized_cap_cents')),
     realizedCapDelta: createChangeRatePattern(client, _m(acc, 'realized_cap_delta')),
@@ -1898,7 +1906,8 @@ function createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65
  * @typedef {Object} MvrvNegNetRealizedSoprValuePattern
  * @property {MetricPattern1<StoredF32>} mvrv
  * @property {MetricPattern1<Dollars>} negRealizedLoss
- * @property {CumulativeHeightPattern<CentsSigned>} netRealizedPnl
+ * @property {MetricPattern1<CentsSigned>} netRealizedPnl
+ * @property {_24hPattern<CentsSigned>} netRealizedPnlSum
  * @property {MetricPattern1<Dollars>} realizedCap
  * @property {MetricPattern1<Cents>} realizedCapCents
  * @property {ChangeRatePattern<CentsSigned>} realizedCapDelta
@@ -1925,7 +1934,8 @@ function createMvrvNegNetRealizedSoprValuePattern(client, acc) {
   return {
     mvrv: createMetricPattern1(client, _m(acc, 'mvrv')),
     negRealizedLoss: createMetricPattern1(client, _m(acc, 'neg_realized_loss')),
-    netRealizedPnl: createCumulativeHeightPattern(client, _m(acc, 'net_realized_pnl')),
+    netRealizedPnl: createMetricPattern1(client, _m(acc, 'net_realized_pnl')),
+    netRealizedPnlSum: create_24hPattern(client, _m(acc, 'net_realized_pnl_24h')),
     realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
     realizedCapCents: createMetricPattern1(client, _m(acc, 'realized_cap_cents')),
     realizedCapDelta: createChangeRatePattern(client, _m(acc, 'realized_cap_delta')),
