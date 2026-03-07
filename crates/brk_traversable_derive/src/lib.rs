@@ -646,10 +646,9 @@ fn find_bare_field_params<'a>(
             && type_path.path.segments.len() == 1
             && let Some(seg) = type_path.path.segments.first()
             && seg.arguments.is_empty()
+            && let Some(tp) = type_params.iter().find(|tp| tp.ident == seg.ident)
         {
-            if let Some(tp) = type_params.iter().find(|tp| tp.ident == seg.ident) {
-                bare.push(&tp.ident);
-            }
+            bare.push(&tp.ident);
         }
     }
     bare
@@ -845,7 +844,7 @@ fn gen_read_only_clone_generics(
         return quote! {};
     }
 
-    let is_container = |ident: &syn::Ident| container_params.iter().any(|cp| *cp == ident);
+    let is_container = |ident: &syn::Ident| container_params.contains(&ident);
 
     // Impl params: containers get ReadOnlyClone (+ original bounds), others keep their bounds.
     let impl_params: Vec<proc_macro2::TokenStream> = generics

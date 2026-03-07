@@ -125,6 +125,7 @@ impl Formattable for HalvingEpoch {
 impl From<f64> for HalvingEpoch {
     #[inline]
     fn from(value: f64) -> Self {
+        debug_assert!(value >= 0.0);
         Self(value.round() as u8)
     }
 }

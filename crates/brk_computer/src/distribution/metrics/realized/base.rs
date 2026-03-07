@@ -10,9 +10,8 @@ use crate::{
     blocks,
     distribution::state::RealizedOps,
     internal::{
-        ByUnit, ComputedFromHeight, ComputedFromHeightCumulative, LazyFromHeight,
-        NegCentsUnsignedToDollars, RatioCents64, RollingWindows, SatsToCents,
-        ValueFromHeightCumulative,
+        ComputedFromHeight, ComputedFromHeightCumulative, LazyFromHeight,
+        NegCentsUnsignedToDollars, RatioCents64, RollingWindow24h, ValueFromHeightCumulative,
     },
     prices,
 };
@@ -35,9 +34,9 @@ pub struct RealizedBase<M: StorageMode = Rw> {
 
     pub value_created: ComputedFromHeight<Cents, M>,
     pub value_destroyed: ComputedFromHeight<Cents, M>,
-    pub value_created_sum: RollingWindows<Cents, M>,
-    pub value_destroyed_sum: RollingWindows<Cents, M>,
-    pub sopr: RollingWindows<StoredF64, M>,
+    pub value_created_sum: RollingWindow24h<Cents, M>,
+    pub value_destroyed_sum: RollingWindow24h<Cents, M>,
+    pub sopr: RollingWindow24h<StoredF64, M>,
 
     pub sent_in_profit: ValueFromHeightCumulative<M>,
     pub sent_in_loss: ValueFromHeightCumulative<M>,
@@ -182,35 +181,26 @@ impl RealizedBase {
             exit,
         )?;
 
-        // SOPR: rolling sums of stateful value_created/destroyed, then ratio, then EMAs
-        let window_starts = blocks.count.window_starts();
+        // SOPR 24h: rolling sum of stateful value_created/destroyed, then ratio
         self.value_created_sum.compute_rolling_sum(
             starting_indexes.height,
-            &window_starts,
+            &blocks.count.height_24h_ago,
             &self.value_created.height,
             exit,
         )?;
         self.value_destroyed_sum.compute_rolling_sum(
             starting_indexes.height,
-            &window_starts,
+            &blocks.count.height_24h_ago,
             &self.value_destroyed.height,
             exit,
         )?;
 
-        for ((sopr, vc), vd) in self
-            .sopr
-            .as_mut_array()
-            .into_iter()
-            .zip(self.value_created_sum.as_array())
-            .zip(self.value_destroyed_sum.as_array())
-        {
-            sopr.compute_binary::<Cents, Cents, RatioCents64>(
-                starting_indexes.height,
-                &vc.height,
-                &vd.height,
-                exit,
-            )?;
-        }
+        self.sopr._24h.compute_binary::<Cents, Cents, RatioCents64>(
+            starting_indexes.height,
+            &self.value_created_sum._24h.height,
+            &self.value_destroyed_sum._24h.height,
+            exit,
+        )?;
 
         Ok(())
     }

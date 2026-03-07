@@ -2118,13 +2118,16 @@ class CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentS
         self.sent_in_loss_ema: _2wPattern = _2wPattern(client, _m(acc, 'sent_in_loss_ema_2w'))
         self.sent_in_profit: BaseCumulativePattern = BaseCumulativePattern(client, _m(acc, 'sent_in_profit'))
         self.sent_in_profit_ema: _2wPattern = _2wPattern(client, _m(acc, 'sent_in_profit_ema_2w'))
-        self.sopr: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, _m(acc, 'sopr'))
+        self.sopr: _24hPattern[StoredF64] = _24hPattern(client, _m(acc, 'sopr_24h'))
         self.sopr_24h_ema: _1m1wPattern = _1m1wPattern(client, _m(acc, 'sopr_24h_ema'))
+        self.sopr_extended: _1m1w1yPattern[StoredF64] = _1m1w1yPattern(client, _m(acc, 'sopr'))
         self.upper_price_band: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'upper_price_band'))
         self.value_created: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'value_created'))
-        self.value_created_sum: _1m1w1y24hPattern[Cents] = _1m1w1y24hPattern(client, _m(acc, 'value_created'))
+        self.value_created_sum: _24hPattern[Cents] = _24hPattern(client, _m(acc, 'value_created_24h'))
+        self.value_created_sum_extended: _1m1w1yPattern[Cents] = _1m1w1yPattern(client, _m(acc, 'value_created'))
         self.value_destroyed: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'value_destroyed'))
-        self.value_destroyed_sum: _1m1w1y24hPattern[Cents] = _1m1w1y24hPattern(client, _m(acc, 'value_destroyed'))
+        self.value_destroyed_sum: _24hPattern[Cents] = _24hPattern(client, _m(acc, 'value_destroyed_24h'))
+        self.value_destroyed_sum_extended: _1m1w1yPattern[Cents] = _1m1w1yPattern(client, _m(acc, 'value_destroyed'))
 
 class _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern:
     """Pattern struct for repeated tree structure."""
@@ -2225,11 +2228,11 @@ class MvrvNegNetRealizedSentSoprValuePattern:
         self.realized_profit: CumulativeHeightPattern[Cents] = CumulativeHeightPattern(client, _m(acc, 'realized_profit'))
         self.sent_in_loss: BaseCumulativePattern = BaseCumulativePattern(client, _m(acc, 'sent_in_loss'))
         self.sent_in_profit: BaseCumulativePattern = BaseCumulativePattern(client, _m(acc, 'sent_in_profit'))
-        self.sopr: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, _m(acc, 'sopr'))
+        self.sopr: _24hPattern[StoredF64] = _24hPattern(client, _m(acc, 'sopr_24h'))
         self.value_created: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'value_created'))
-        self.value_created_sum: _1m1w1y24hPattern[Cents] = _1m1w1y24hPattern(client, _m(acc, 'value_created'))
+        self.value_created_sum: _24hPattern[Cents] = _24hPattern(client, _m(acc, 'value_created_24h'))
         self.value_destroyed: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'value_destroyed'))
-        self.value_destroyed_sum: _1m1w1y24hPattern[Cents] = _1m1w1y24hPattern(client, _m(acc, 'value_destroyed'))
+        self.value_destroyed_sum: _24hPattern[Cents] = _24hPattern(client, _m(acc, 'value_destroyed_24h'))
 
 class BpsRatioPattern2:
     """Pattern struct for repeated tree structure."""
@@ -2784,6 +2787,15 @@ class ChangeHalvedTotalPattern:
         self.halved: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'halved'))
         self.total: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, acc)
 
+class _1m1w1yPattern(Generic[T]):
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self._1m: MetricPattern1[T] = MetricPattern1(client, _m(acc, '1m'))
+        self._1w: MetricPattern1[T] = MetricPattern1(client, _m(acc, '1w'))
+        self._1y: MetricPattern1[T] = MetricPattern1(client, _m(acc, '1y'))
+
 class _6bBlockTxindexPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
@@ -2920,6 +2932,13 @@ class _2wPattern:
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
         self._2w: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, acc)
+
+class _24hPattern(Generic[T]):
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self._24h: MetricPattern1[T] = MetricPattern1(client, acc)
 
 # Metrics tree classes
 

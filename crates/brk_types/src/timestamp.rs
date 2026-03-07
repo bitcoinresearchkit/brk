@@ -165,9 +165,7 @@ impl AddAssign for Timestamp {
 impl From<f64> for Timestamp {
     #[inline]
     fn from(value: f64) -> Self {
-        if value < 0.0 || value > u32::MAX as f64 {
-            panic!()
-        }
+        debug_assert!(value >= 0.0 && value <= u32::MAX as f64);
         Self(value as u32)
     }
 }

@@ -19,7 +19,7 @@ use crate::{
         ComputedFromHeightRatioStdDevBands, LazyFromHeight, PercentFromHeight,
         PercentRollingEmas1w1m, PercentRollingWindows, Price, RatioCents64, RatioCentsBp32,
         RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32, RatioDollarsBp32,
-        RollingEmas1w1m, RollingEmas2w, RollingWindows,
+        RollingEmas1w1m, RollingEmas2w, RollingWindows, RollingWindowsFrom1w,
     },
     prices,
 };
@@ -81,6 +81,10 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     pub net_realized_pnl_ema_1w: ComputedFromHeight<CentsSigned, M>,
 
     pub sopr_24h_ema: RollingEmas1w1m<StoredF64, M>,
+
+    pub value_created_sum_extended: RollingWindowsFrom1w<Cents, M>,
+    pub value_destroyed_sum_extended: RollingWindowsFrom1w<Cents, M>,
+    pub sopr_extended: RollingWindowsFrom1w<StoredF64, M>,
 
     pub sent_in_profit_ema: RollingEmas2w<M>,
     pub sent_in_loss_ema: RollingEmas2w<M>,
@@ -154,6 +158,9 @@ impl RealizedFull {
         let realized_loss_ema_1w = cfg.import("realized_loss_ema_1w", v0)?;
         let net_realized_pnl_ema_1w = cfg.import("net_realized_pnl_ema_1w", v0)?;
         let sopr_24h_ema = cfg.import("sopr_24h", v1)?;
+        let value_created_sum_extended = cfg.import("value_created", v1)?;
+        let value_destroyed_sum_extended = cfg.import("value_destroyed", v1)?;
+        let sopr_extended = cfg.import("sopr", v1)?;
         let sent_in_profit_ema = cfg.import("sent_in_profit", v0)?;
         let sent_in_loss_ema = cfg.import("sent_in_loss", v0)?;
 
@@ -195,6 +202,9 @@ impl RealizedFull {
             realized_loss_ema_1w,
             net_realized_pnl_ema_1w,
             sopr_24h_ema,
+            value_created_sum_extended,
+            value_destroyed_sum_extended,
+            sopr_extended,
             sent_in_profit_ema,
             sent_in_loss_ema,
             realized_price_ratio_percentiles: ComputedFromHeightRatioPercentiles::forced_import(
@@ -313,6 +323,35 @@ impl RealizedFull {
             height_to_supply,
             exit,
         )?;
+
+        // Extended rolling windows (1w, 1m, 1y) for value_created/destroyed/sopr
+        let window_starts = blocks.count.window_starts();
+        self.value_created_sum_extended.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.core.value_created.height,
+            exit,
+        )?;
+        self.value_destroyed_sum_extended.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.core.value_destroyed.height,
+            exit,
+        )?;
+        for ((sopr, vc), vd) in self
+            .sopr_extended
+            .as_mut_array()
+            .into_iter()
+            .zip(self.value_created_sum_extended.as_array())
+            .zip(self.value_destroyed_sum_extended.as_array())
+        {
+            sopr.compute_binary::<Cents, Cents, RatioCents64>(
+                starting_indexes.height,
+                &vc.height,
+                &vd.height,
+                exit,
+            )?;
+        }
 
         // Realized P/L rel to realized cap
         self.realized_profit_rel_to_realized_cap

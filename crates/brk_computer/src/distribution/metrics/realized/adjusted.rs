@@ -26,17 +26,15 @@ impl RealizedAdjusted {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(RealizedAdjusted {
             adjusted_value_created: cfg.import("adjusted_value_created", Version::ZERO)?,
-            adjusted_value_destroyed: cfg
-                .import("adjusted_value_destroyed", Version::ZERO)?,
-            adjusted_value_created_sum: cfg
-                .import("adjusted_value_created", Version::ONE)?,
-            adjusted_value_destroyed_sum: cfg
-                .import("adjusted_value_destroyed", Version::ONE)?,
+            adjusted_value_destroyed: cfg.import("adjusted_value_destroyed", Version::ZERO)?,
+            adjusted_value_created_sum: cfg.import("adjusted_value_created", Version::ONE)?,
+            adjusted_value_destroyed_sum: cfg.import("adjusted_value_destroyed", Version::ONE)?,
             adjusted_sopr: cfg.import("adjusted_sopr", Version::ONE)?,
             adjusted_sopr_ema: cfg.import("adjusted_sopr_24h", Version::ONE)?,
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_rest_part2(
         &mut self,
         blocks: &blocks::Vecs,

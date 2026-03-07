@@ -83,9 +83,7 @@ impl AddAssign for StoredU16 {
 impl From<f64> for StoredU16 {
     #[inline]
     fn from(value: f64) -> Self {
-        if value < 0.0 || value > u16::MAX as f64 {
-            panic!()
-        }
+        debug_assert!(value >= 0.0 && value <= u16::MAX as f64);
         Self(value as u16)
     }
 }

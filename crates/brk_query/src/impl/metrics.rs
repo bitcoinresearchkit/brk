@@ -63,6 +63,15 @@ impl Query {
             num_cols * CSV_HEADER_BYTES_PER_COL + num_rows * num_cols * CSV_CELL_BYTES;
         let mut csv = String::with_capacity(estimated_size);
 
+        // Single-column fast path: stream directly, no Vec<T> materialization
+        if num_cols == 1 {
+            let col = columns[0];
+            csv.push_str(col.name());
+            csv.push('\n');
+            col.write_csv_column(Some(start), Some(end), &mut csv)?;
+            return Ok(csv);
+        }
+
         for (i, col) in columns.iter().enumerate() {
             if i > 0 {
                 csv.push(',');
