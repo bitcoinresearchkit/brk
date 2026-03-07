@@ -16,8 +16,7 @@ use crate::{
         ComputedFromHeight, ComputedFromHeightCumulative,
         ComputedFromHeightRatioPercentiles, FiatFromHeight,
         LazyFromHeight, NegCentsUnsignedToDollars, PercentFromHeight, RatioCents64,
-        RatioCentsBp32, RatioCentsSignedCentsBps32, RollingEmas1w1m, RollingEmas2w,
-        RollingWindows, ValueFromHeightCumulative,
+        RatioCentsBp32, RatioCentsSignedCentsBps32, RollingWindows, ValueFromHeightCumulative,
     },
     prices,
 };
@@ -37,11 +36,7 @@ pub struct RealizedBase<M: StorageMode = Rw> {
 
     pub neg_realized_loss: LazyFromHeight<Dollars, Cents>,
     pub net_realized_pnl: ComputedFromHeightCumulative<CentsSigned, M>,
-    pub net_realized_pnl_ema_1w: ComputedFromHeight<CentsSigned, M>,
     pub gross_pnl: FiatFromHeight<Cents, M>,
-
-    pub realized_profit_ema_1w: ComputedFromHeight<Cents, M>,
-    pub realized_loss_ema_1w: ComputedFromHeight<Cents, M>,
 
     pub realized_profit_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
     pub realized_loss_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
@@ -52,14 +47,11 @@ pub struct RealizedBase<M: StorageMode = Rw> {
     pub value_created_sum: RollingWindows<Cents, M>,
     pub value_destroyed_sum: RollingWindows<Cents, M>,
     pub sopr: RollingWindows<StoredF64, M>,
-    pub sopr_24h_ema: RollingEmas1w1m<StoredF64, M>,
 
     pub realized_price_ratio_percentiles: ComputedFromHeightRatioPercentiles<M>,
 
     pub sent_in_profit: ValueFromHeightCumulative<M>,
     pub sent_in_loss: ValueFromHeightCumulative<M>,
-    pub sent_in_profit_ema: RollingEmas2w<M>,
-    pub sent_in_loss_ema: RollingEmas2w<M>,
 }
 
 impl RealizedBase {
@@ -76,11 +68,7 @@ impl RealizedBase {
             cfg.indexes,
         );
 
-        let realized_profit_ema_1w = cfg.import("realized_profit_ema_1w", v0)?;
-        let realized_loss_ema_1w = cfg.import("realized_loss_ema_1w", v0)?;
-
         let net_realized_pnl = cfg.import("net_realized_pnl", v0)?;
-        let net_realized_pnl_ema_1w = cfg.import("net_realized_pnl_ema_1w", v0)?;
         let gross_pnl = cfg.import("realized_gross_pnl", v0)?;
 
         let realized_profit_rel_to_realized_cap =
@@ -95,7 +83,6 @@ impl RealizedBase {
         let value_created_sum = cfg.import("value_created", v1)?;
         let value_destroyed_sum = cfg.import("value_destroyed", v1)?;
         let sopr = cfg.import("sopr", v1)?;
-        let sopr_24h_ema = cfg.import("sopr_24h", v1)?;
 
         let realized_price_ratio_percentiles =
             ComputedFromHeightRatioPercentiles::forced_import(
@@ -110,10 +97,7 @@ impl RealizedBase {
             realized_cap_change_1m: cfg.import("realized_cap_change_1m", v0)?,
             neg_realized_loss,
             net_realized_pnl,
-            net_realized_pnl_ema_1w,
             gross_pnl,
-            realized_profit_ema_1w,
-            realized_loss_ema_1w,
             realized_profit_rel_to_realized_cap,
             realized_loss_rel_to_realized_cap,
             net_realized_pnl_rel_to_realized_cap,
@@ -122,12 +106,9 @@ impl RealizedBase {
             value_created_sum,
             value_destroyed_sum,
             sopr,
-            sopr_24h_ema,
             realized_price_ratio_percentiles,
             sent_in_profit: cfg.import("sent_in_profit", v0)?,
             sent_in_loss: cfg.import("sent_in_loss", v0)?,
-            sent_in_profit_ema: cfg.import("sent_in_profit", v0)?,
-            sent_in_loss_ema: cfg.import("sent_in_loss", v0)?,
         })
     }
 
@@ -240,25 +221,6 @@ impl RealizedBase {
             exit,
         )?;
 
-        self.realized_profit_ema_1w.height.compute_rolling_ema(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            &self.minimal.realized_profit.height,
-            exit,
-        )?;
-        self.realized_loss_ema_1w.height.compute_rolling_ema(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            &self.minimal.realized_loss.height,
-            exit,
-        )?;
-        self.net_realized_pnl_ema_1w.height.compute_rolling_ema(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            &self.net_realized_pnl.height,
-            exit,
-        )?;
-
         self.realized_profit_rel_to_realized_cap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
@@ -311,14 +273,6 @@ impl RealizedBase {
             )?;
         }
 
-        self.sopr_24h_ema.compute_from_24h(
-            starting_indexes.height,
-            &blocks.count.height_1w_ago,
-            &blocks.count.height_1m_ago,
-            &self.sopr._24h.height,
-            exit,
-        )?;
-
         // Realized price ratio percentiles
         self.realized_price_ratio_percentiles.compute(
             blocks,
@@ -326,22 +280,6 @@ impl RealizedBase {
             exit,
             &self.minimal.realized_price_ratio.ratio.height,
             &self.minimal.realized_price.cents.height,
-        )?;
-
-        // Sent in profit/loss EMAs
-        self.sent_in_profit_ema.compute(
-            starting_indexes.height,
-            &blocks.count.height_2w_ago,
-            &self.sent_in_profit.base.sats.height,
-            &self.sent_in_profit.base.cents.height,
-            exit,
-        )?;
-        self.sent_in_loss_ema.compute(
-            starting_indexes.height,
-            &blocks.count.height_2w_ago,
-            &self.sent_in_loss.base.sats.height,
-            &self.sent_in_loss.base.cents.height,
-            exit,
         )?;
 
         Ok(())
