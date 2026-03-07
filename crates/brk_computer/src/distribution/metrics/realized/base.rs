@@ -1,9 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{
-    BasisPoints32, BasisPointsSigned32, Bitcoin, Cents, CentsSigned, Dollars, Height, Indexes,
-    StoredF64, Version,
-};
+use brk_types::{Bitcoin, Cents, CentsSigned, Dollars, Height, Indexes, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
     AnyStoredVec, AnyVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec,
@@ -15,8 +12,8 @@ use crate::{
     internal::{
         ComputedFromHeight, ComputedFromHeightCumulative,
         ComputedFromHeightRatioPercentiles, FiatFromHeight,
-        LazyFromHeight, NegCentsUnsignedToDollars, PercentFromHeight, RatioCents64,
-        RatioCentsBp32, RatioCentsSignedCentsBps32, RollingWindows, ValueFromHeightCumulative,
+        LazyFromHeight, NegCentsUnsignedToDollars, RatioCents64,
+        RollingWindows, ValueFromHeightCumulative,
     },
     prices,
 };
@@ -37,10 +34,6 @@ pub struct RealizedBase<M: StorageMode = Rw> {
     pub neg_realized_loss: LazyFromHeight<Dollars, Cents>,
     pub net_realized_pnl: ComputedFromHeightCumulative<CentsSigned, M>,
     pub gross_pnl: FiatFromHeight<Cents, M>,
-
-    pub realized_profit_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
-    pub realized_loss_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
-    pub net_realized_pnl_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned32, M>,
 
     pub value_created: ComputedFromHeight<Cents, M>,
     pub value_destroyed: ComputedFromHeight<Cents, M>,
@@ -71,13 +64,6 @@ impl RealizedBase {
         let net_realized_pnl = cfg.import("net_realized_pnl", v0)?;
         let gross_pnl = cfg.import("realized_gross_pnl", v0)?;
 
-        let realized_profit_rel_to_realized_cap =
-            cfg.import("realized_profit_rel_to_realized_cap", Version::new(2))?;
-        let realized_loss_rel_to_realized_cap =
-            cfg.import("realized_loss_rel_to_realized_cap", Version::new(2))?;
-        let net_realized_pnl_rel_to_realized_cap =
-            cfg.import("net_realized_pnl_rel_to_realized_cap", Version::new(2))?;
-
         let value_created = cfg.import("value_created", v0)?;
         let value_destroyed = cfg.import("value_destroyed", v0)?;
         let value_created_sum = cfg.import("value_created", v1)?;
@@ -98,9 +84,6 @@ impl RealizedBase {
             neg_realized_loss,
             net_realized_pnl,
             gross_pnl,
-            realized_profit_rel_to_realized_cap,
-            realized_loss_rel_to_realized_cap,
-            net_realized_pnl_rel_to_realized_cap,
             value_created,
             value_destroyed,
             value_created_sum,
@@ -220,28 +203,6 @@ impl RealizedBase {
             &self.minimal.realized_cap_cents.height,
             exit,
         )?;
-
-        self.realized_profit_rel_to_realized_cap
-            .compute_binary::<Cents, Cents, RatioCentsBp32>(
-                starting_indexes.height,
-                &self.minimal.realized_profit.height,
-                &self.minimal.realized_cap_cents.height,
-                exit,
-            )?;
-        self.realized_loss_rel_to_realized_cap
-            .compute_binary::<Cents, Cents, RatioCentsBp32>(
-                starting_indexes.height,
-                &self.minimal.realized_loss.height,
-                &self.minimal.realized_cap_cents.height,
-                exit,
-            )?;
-        self.net_realized_pnl_rel_to_realized_cap
-            .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
-                starting_indexes.height,
-                &self.net_realized_pnl.height,
-                &self.minimal.realized_cap_cents.height,
-                exit,
-            )?;
 
         // SOPR: rolling sums of stateful value_created/destroyed, then ratio, then EMAs
         let window_starts = blocks.count.window_starts();

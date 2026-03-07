@@ -376,6 +376,90 @@ pub enum PoolSlug {
     Dummy255,
 }
 
+impl PoolSlug {
+    /// Pools with ≥0.01% all-time dominance get full metrics (rolling windows, rewards, etc.).
+    pub fn is_major(&self) -> bool {
+        matches!(
+            self,
+            Self::Unknown
+                | Self::AntPool
+                | Self::AsicMiner
+                | Self::BatPool
+                | Self::BinancePool
+                | Self::BitClub
+                | Self::BitcoinAffiliateNetwork
+                | Self::BitcoinCom
+                | Self::BitcoinIndia
+                | Self::BitcoinRussia
+                | Self::BitFury
+                | Self::BitMinter
+                | Self::Bitparking
+                | Self::Bixin
+                | Self::BraiinsPool
+                | Self::Btcc
+                | Self::BtcCom
+                | Self::BtcGuild
+                | Self::BtcTop
+                | Self::BtPool
+                | Self::BwPool
+                | Self::BytePool
+                | Self::CanoePool
+                | Self::CoinLab
+                | Self::ConnectBtc
+                | Self::DigitalBtc
+                | Self::DPool
+                | Self::EclipseMc
+                | Self::Eligius
+                | Self::EmcdPool
+                | Self::ExxBw
+                | Self::F2Pool
+                | Self::FiftyEightCoin
+                | Self::FoundryUsa
+                | Self::GbMiners
+                | Self::GhashIo
+                | Self::Hhtt
+                | Self::HuobiPool
+                | Self::KanoPool
+                | Self::KncMiner
+                | Self::KuCoinPool
+                | Self::LubianCom
+                | Self::Luxor
+                | Self::MaraPool
+                | Self::MaxBtc
+                | Self::MegaBigPower
+                | Self::NiceHash
+                | Self::NmcBit
+                | Self::NovaBlock
+                | Self::Ocean
+                | Self::OkExPool
+                | Self::Okkong
+                | Self::OkpoolTop
+                | Self::OneThash
+                | Self::OzCoin
+                | Self::PegaPool
+                | Self::Polmine
+                | Self::Pool50btc
+                | Self::Poolin
+                | Self::SbiCrypto
+                | Self::SecPool
+                | Self::SecretSuperstar
+                | Self::SigmapoolCom
+                | Self::SoloCk
+                | Self::SpiderPool
+                | Self::Tangpool
+                | Self::TatmasPool
+                | Self::TerraPool
+                | Self::TigerpoolNet
+                | Self::TripleMining
+                | Self::UltimusPool
+                | Self::ViaBtc
+                | Self::WayiCn
+                | Self::WhitePool
+                | Self::YourbtcNet
+        )
+    }
+}
+
 impl Formattable for PoolSlug {
     #[inline(always)]
     fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {

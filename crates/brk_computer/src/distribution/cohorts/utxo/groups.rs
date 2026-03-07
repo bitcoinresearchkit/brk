@@ -528,7 +528,6 @@ impl UTXOCohorts<Rw> {
                         blocks,
                         prices,
                         starting_indexes,
-                        height_to_market_cap,
                         ss,
                         exit,
                     )
@@ -540,7 +539,6 @@ impl UTXOCohorts<Rw> {
                         blocks,
                         prices,
                         starting_indexes,
-                        height_to_market_cap,
                         ss,
                         exit,
                     )
@@ -557,7 +555,6 @@ impl UTXOCohorts<Rw> {
                         blocks,
                         prices,
                         starting_indexes,
-                        height_to_market_cap,
                         ss,
                         exit,
                     )
@@ -569,7 +566,6 @@ impl UTXOCohorts<Rw> {
                         blocks,
                         prices,
                         starting_indexes,
-                        height_to_market_cap,
                         ss,
                         exit,
                     )

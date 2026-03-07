@@ -29,9 +29,19 @@ impl Query {
         let mut pool_data: Vec<(&'static brk_types::Pool, u32)> = Vec::new();
 
         // For each pool, get cumulative count at end and start, subtract to get range count
-        for (pool_id, pool_vecs) in &computer.pools.vecs {
-            let cumulative = &pool_vecs.blocks_mined.cumulative.height;
-
+        for (pool_id, cumulative) in computer
+            .pools
+            .major
+            .iter()
+            .map(|(id, v)| (id, &v.blocks_mined.cumulative.height))
+            .chain(
+                computer
+                    .pools
+                    .minor
+                    .iter()
+                    .map(|(id, v)| (id, &v.blocks_mined.cumulative.height)),
+            )
+        {
             let count_at_end: u32 = *cumulative.collect_one(current_height).unwrap_or_default();
 
             let count_at_start: u32 = if start == 0 {
@@ -44,7 +54,6 @@ impl Query {
 
             let block_count = count_at_end.saturating_sub(count_at_start);
 
-            // Only include pools that mined at least one block in the period
             if block_count > 0 {
                 pool_data.push((pools.get(*pool_id), block_count));
             }
@@ -91,14 +100,20 @@ impl Query {
         let pools_list = pools();
         let pool = pools_list.get(slug);
 
-        // Get pool vecs for this specific pool
-        let pool_vecs = computer
+        // Get cumulative blocks for this pool (works for both major and minor)
+        let cumulative = computer
             .pools
-            .vecs
+            .major
             .get(&slug)
+            .map(|v| &v.blocks_mined.cumulative.height)
+            .or_else(|| {
+                computer
+                    .pools
+                    .minor
+                    .get(&slug)
+                    .map(|v| &v.blocks_mined.cumulative.height)
+            })
             .ok_or_else(|| Error::NotFound("Pool data not found".into()))?;
-
-        let cumulative = &pool_vecs.blocks_mined.cumulative.height;
 
         // Get total blocks (all time)
         let total_all: u32 = *cumulative.collect_one(current_height).unwrap_or_default();

@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Sats};
+use brk_types::{Height, Sats};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
@@ -33,7 +33,6 @@ impl RelativeBaseWithRelToAll {
         max_from: Height,
         unrealized: &UnrealizedBase,
         supply_total_sats: &impl ReadableVec<Height, Sats>,
-        market_cap: &impl ReadableVec<Height, Dollars>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {
@@ -41,7 +40,6 @@ impl RelativeBaseWithRelToAll {
             max_from,
             unrealized,
             supply_total_sats,
-            market_cap,
             exit,
         )?;
         self.rel_to_all.compute(

@@ -35,6 +35,10 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub core: RealizedBase<M>,
 
+    pub realized_profit_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
+    pub realized_loss_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
+    pub net_realized_pnl_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned32, M>,
+
     pub profit_value_created: ComputedFromHeight<Cents, M>,
     pub profit_value_destroyed: ComputedFromHeight<Cents, M>,
     pub loss_value_created: ComputedFromHeight<Cents, M>,
@@ -134,6 +138,13 @@ impl RealizedFull {
         let investor_price_name = cfg.name("investor_price");
         let investor_price_version = cfg.version;
 
+        let realized_profit_rel_to_realized_cap =
+            cfg.import("realized_profit_rel_to_realized_cap", Version::new(2))?;
+        let realized_loss_rel_to_realized_cap =
+            cfg.import("realized_loss_rel_to_realized_cap", Version::new(2))?;
+        let net_realized_pnl_rel_to_realized_cap =
+            cfg.import("net_realized_pnl_rel_to_realized_cap", Version::new(2))?;
+
         let realized_profit_ema_1w = cfg.import("realized_profit_ema_1w", v0)?;
         let realized_loss_ema_1w = cfg.import("realized_loss_ema_1w", v0)?;
         let net_realized_pnl_ema_1w = cfg.import("net_realized_pnl_ema_1w", v0)?;
@@ -143,6 +154,9 @@ impl RealizedFull {
 
         Ok(Self {
             core,
+            realized_profit_rel_to_realized_cap,
+            realized_loss_rel_to_realized_cap,
+            net_realized_pnl_rel_to_realized_cap,
             profit_value_created,
             profit_value_destroyed,
             loss_value_created,
@@ -287,6 +301,29 @@ impl RealizedFull {
             height_to_supply,
             exit,
         )?;
+
+        // Realized P/L rel to realized cap
+        self.realized_profit_rel_to_realized_cap
+            .compute_binary::<Cents, Cents, RatioCentsBp32>(
+                starting_indexes.height,
+                &self.core.minimal.realized_profit.height,
+                &self.core.minimal.realized_cap_cents.height,
+                exit,
+            )?;
+        self.realized_loss_rel_to_realized_cap
+            .compute_binary::<Cents, Cents, RatioCentsBp32>(
+                starting_indexes.height,
+                &self.core.minimal.realized_loss.height,
+                &self.core.minimal.realized_cap_cents.height,
+                exit,
+            )?;
+        self.net_realized_pnl_rel_to_realized_cap
+            .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
+                starting_indexes.height,
+                &self.core.net_realized_pnl.height,
+                &self.core.minimal.realized_cap_cents.height,
+                exit,
+            )?;
 
         // EMAs
         self.realized_profit_ema_1w.height.compute_rolling_ema(

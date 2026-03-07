@@ -2158,34 +2158,6 @@ class _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern:
         self.sma: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'sma_4y'))
         self.zscore: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'zscore_4y'))
 
-class GrossMvrvNegNetRealizedSentSoprValuePattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.gross_pnl: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'realized_gross_pnl'))
-        self.mvrv: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'mvrv'))
-        self.neg_realized_loss: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'neg_realized_loss'))
-        self.net_realized_pnl: CumulativeHeightPattern[CentsSigned] = CumulativeHeightPattern(client, _m(acc, 'net_realized_pnl'))
-        self.net_realized_pnl_rel_to_realized_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'net_realized_pnl_rel_to_realized_cap'))
-        self.realized_cap: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'realized_cap'))
-        self.realized_cap_cents: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'realized_cap_cents'))
-        self.realized_cap_change_1m: MetricPattern1[CentsSigned] = MetricPattern1(client, _m(acc, 'realized_cap_change_1m'))
-        self.realized_loss: CumulativeHeightPattern[Cents] = CumulativeHeightPattern(client, _m(acc, 'realized_loss'))
-        self.realized_loss_rel_to_realized_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'realized_loss_rel_to_realized_cap'))
-        self.realized_price: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'realized_price'))
-        self.realized_price_ratio: BpsRatioPattern = BpsRatioPattern(client, _m(acc, 'realized_price_ratio'))
-        self.realized_price_ratio_percentiles: RatioPattern = RatioPattern(client, _m(acc, 'realized_price_ratio'))
-        self.realized_profit: CumulativeHeightPattern[Cents] = CumulativeHeightPattern(client, _m(acc, 'realized_profit'))
-        self.realized_profit_rel_to_realized_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'realized_profit_rel_to_realized_cap'))
-        self.sent_in_loss: BaseCumulativePattern = BaseCumulativePattern(client, _m(acc, 'sent_in_loss'))
-        self.sent_in_profit: BaseCumulativePattern = BaseCumulativePattern(client, _m(acc, 'sent_in_profit'))
-        self.sopr: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, _m(acc, 'sopr'))
-        self.value_created: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'value_created'))
-        self.value_created_sum: _1m1w1y24hPattern[Cents] = _1m1w1y24hPattern(client, _m(acc, 'value_created'))
-        self.value_destroyed: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'value_destroyed'))
-        self.value_destroyed_sum: _1m1w1y24hPattern[Cents] = _1m1w1y24hPattern(client, _m(acc, 'value_destroyed'))
-
 class InvestedNegNetNuplSupplyUnrealizedPattern3:
     """Pattern struct for repeated tree structure."""
     
@@ -2211,6 +2183,31 @@ class InvestedNegNetNuplSupplyUnrealizedPattern3:
         self.unrealized_profit_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_profit_rel_to_market_cap'))
         self.unrealized_profit_rel_to_own_gross_pnl: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_profit_rel_to_own_gross_pnl'))
         self.unrealized_profit_rel_to_own_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_profit_rel_to_own_market_cap'))
+
+class GrossMvrvNegNetRealizedSentSoprValuePattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.gross_pnl: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'realized_gross_pnl'))
+        self.mvrv: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'mvrv'))
+        self.neg_realized_loss: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'neg_realized_loss'))
+        self.net_realized_pnl: CumulativeHeightPattern[CentsSigned] = CumulativeHeightPattern(client, _m(acc, 'net_realized_pnl'))
+        self.realized_cap: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'realized_cap'))
+        self.realized_cap_cents: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'realized_cap_cents'))
+        self.realized_cap_change_1m: MetricPattern1[CentsSigned] = MetricPattern1(client, _m(acc, 'realized_cap_change_1m'))
+        self.realized_loss: CumulativeHeightPattern[Cents] = CumulativeHeightPattern(client, _m(acc, 'realized_loss'))
+        self.realized_price: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'realized_price'))
+        self.realized_price_ratio: BpsRatioPattern = BpsRatioPattern(client, _m(acc, 'realized_price_ratio'))
+        self.realized_price_ratio_percentiles: RatioPattern = RatioPattern(client, _m(acc, 'realized_price_ratio'))
+        self.realized_profit: CumulativeHeightPattern[Cents] = CumulativeHeightPattern(client, _m(acc, 'realized_profit'))
+        self.sent_in_loss: BaseCumulativePattern = BaseCumulativePattern(client, _m(acc, 'sent_in_loss'))
+        self.sent_in_profit: BaseCumulativePattern = BaseCumulativePattern(client, _m(acc, 'sent_in_profit'))
+        self.sopr: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, _m(acc, 'sopr'))
+        self.value_created: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'value_created'))
+        self.value_created_sum: _1m1w1y24hPattern[Cents] = _1m1w1y24hPattern(client, _m(acc, 'value_created'))
+        self.value_destroyed: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'value_destroyed'))
+        self.value_destroyed_sum: _1m1w1y24hPattern[Cents] = _1m1w1y24hPattern(client, _m(acc, 'value_destroyed'))
 
 class Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern:
     """Pattern struct for repeated tree structure."""
@@ -2355,6 +2352,23 @@ class InvestedNegNetNuplSupplyUnrealizedPattern:
         self.unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_loss_rel_to_market_cap'))
         self.unrealized_profit_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_profit_rel_to_market_cap'))
 
+class _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self._1m: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'dominance_1m'))
+        self._1w: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'dominance_1w'))
+        self._1y: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'dominance_1y'))
+        self._24h: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'dominance_24h'))
+        self.base: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'rewards'))
+        self.bps: MetricPattern1[BasisPoints16] = MetricPattern1(client, _m(acc, 'dominance_bps'))
+        self.cumulative: BaseBtcCentsSatsUsdPattern = BaseBtcCentsSatsUsdPattern(client, acc)
+        self.height: MetricPattern18[StoredU32] = MetricPattern18(client, _m(acc, 'blocks_mined'))
+        self.percent: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'dominance'))
+        self.ratio: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'dominance_ratio'))
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, acc)
+
 class AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2404,22 +2418,6 @@ class AverageGainsLossesRsiStochPattern:
         self.stoch_rsi: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'stoch_24h'))
         self.stoch_rsi_d: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'stoch_d_24h'))
         self.stoch_rsi_k: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'stoch_k_24h'))
-
-class NegNetNuplSupplyUnrealizedPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.neg_unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'neg_unrealized_loss_rel_to_market_cap'))
-        self.net_unrealized_pnl_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'net_unrealized_pnl_rel_to_market_cap'))
-        self.nupl: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'nupl'))
-        self.supply_in_loss_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_loss_rel_to_circulating_supply'))
-        self.supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_loss_rel_to_own_supply'))
-        self.supply_in_profit_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_profit_rel_to_circulating_supply'))
-        self.supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_in_profit_rel_to_own_supply'))
-        self.supply_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'supply_rel_to_circulating_supply'))
-        self.unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_loss_rel_to_market_cap'))
-        self.unrealized_profit_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'unrealized_profit_rel_to_market_cap'))
 
 class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern:
     """Pattern struct for repeated tree structure."""
@@ -2595,7 +2593,7 @@ class ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2:
         self.activity: SentPattern = SentPattern(client, _m(acc, 'sent'))
         self.outputs: UtxoPattern = UtxoPattern(client, _m(acc, 'utxo_count'))
         self.realized: GrossMvrvNegNetRealizedSentSoprValuePattern = GrossMvrvNegNetRealizedSentSoprValuePattern(client, acc)
-        self.relative: NegNetNuplSupplyUnrealizedPattern = NegNetNuplSupplyUnrealizedPattern(client, acc)
+        self.relative: SupplyPattern3 = SupplyPattern3(client, _m(acc, 'supply'))
         self.supply: ChangeHalvedTotalPattern = ChangeHalvedTotalPattern(client, _m(acc, 'supply'))
         self.unrealized: GrossNegNetSupplyUnrealizedPattern = GrossNegNetSupplyUnrealizedPattern(client, acc)
 
@@ -2623,6 +2621,17 @@ class BalanceBothReactivatedReceivingSendingPattern:
         self.receiving: AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern[StoredU32] = AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, 'receiving'))
         self.sending: AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern[StoredU32] = AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, 'sending'))
 
+class BaseBtcCentsSatsUsdPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.base: MetricPattern1[StoredU32] = MetricPattern1(client, _m(acc, 'blocks_mined_cumulative'))
+        self.btc: MetricPattern1[Bitcoin] = MetricPattern1(client, _m(acc, 'rewards_cumulative_btc'))
+        self.cents: MetricPattern1[Cents] = MetricPattern1(client, _m(acc, 'rewards_cumulative_cents'))
+        self.sats: MetricPattern1[Sats] = MetricPattern1(client, _m(acc, 'rewards_cumulative'))
+        self.usd: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'rewards_cumulative_usd'))
+
 class EmaHistogramLineSignalPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2633,6 +2642,27 @@ class EmaHistogramLineSignalPattern:
         self.histogram: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'histogram_24h'))
         self.line: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'line_24h'))
         self.signal: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'signal_24h'))
+
+class SupplyPattern3:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.supply_in_loss_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'in_loss_rel_to_circulating_supply'))
+        self.supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'in_loss_rel_to_own_supply'))
+        self.supply_in_profit_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'in_profit_rel_to_circulating_supply'))
+        self.supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'in_profit_rel_to_own_supply'))
+        self.supply_rel_to_circulating_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'rel_to_circulating_supply'))
+
+class _1m1w1y24hPattern6:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self._1m: BaseBtcCentsSatsUsdPattern = BaseBtcCentsSatsUsdPattern(client, acc)
+        self._1w: BaseBtcCentsSatsUsdPattern = BaseBtcCentsSatsUsdPattern(client, acc)
+        self._1y: BaseBtcCentsSatsUsdPattern = BaseBtcCentsSatsUsdPattern(client, acc)
+        self._24h: BaseBtcCentsSatsUsdPattern = BaseBtcCentsSatsUsdPattern(client, acc)
 
 class _1m1w1y24hPattern2:
     """Pattern struct for repeated tree structure."""
@@ -2653,16 +2683,6 @@ class _1m1w1y24hPattern5:
         self._1w: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, '1w'))
         self._1y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, '1y'))
         self._24h: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, '24h'))
-
-class BlocksDominanceRewardsPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.blocks_mined: CumulativeHeightSumPattern[StoredU32] = CumulativeHeightSumPattern(client, _m(acc, 'blocks_mined'))
-        self.dominance: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'dominance'))
-        self.dominance_rolling: _1m1w1y24hPattern2 = _1m1w1y24hPattern2(client, _m(acc, 'dominance'))
-        self.rewards: BaseCumulativeSumPattern = BaseCumulativeSumPattern(client, _m(acc, 'rewards'))
 
 class BtcCentsSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
@@ -2818,6 +2838,14 @@ class BaseCumulativePattern:
         """Create pattern node with accumulated metric name."""
         self.base: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, acc)
         self.cumulative: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'cumulative'))
+
+class BlocksDominancePattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.blocks_mined: CumulativeHeightPattern[StoredU32] = CumulativeHeightPattern(client, _m(acc, 'blocks_mined'))
+        self.dominance: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'dominance'))
 
 class BpsRatioPattern:
     """Pattern struct for repeated tree structure."""
@@ -3964,179 +3992,185 @@ class MetricsTree_Market:
         self.dca: MetricsTree_Market_Dca = MetricsTree_Market_Dca(client)
         self.indicators: MetricsTree_Market_Indicators = MetricsTree_Market_Indicators(client)
 
-class MetricsTree_Pools_Vecs:
+class MetricsTree_Pools_Major:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.unknown: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'unknown')
-        self.blockfills: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'blockfills')
-        self.ultimuspool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'ultimuspool')
-        self.terrapool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'terrapool')
-        self.luxor: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'luxor')
-        self.onethash: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'onethash')
-        self.btccom: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'btccom')
-        self.bitfarms: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bitfarms')
-        self.huobipool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'huobipool')
-        self.wayicn: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'wayicn')
-        self.canoepool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'canoepool')
-        self.btctop: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'btctop')
-        self.bitcoincom: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bitcoincom')
-        self.pool175btc: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'pool175btc')
-        self.gbminers: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'gbminers')
-        self.axbt: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'axbt')
-        self.asicminer: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'asicminer')
-        self.bitminter: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bitminter')
-        self.bitcoinrussia: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bitcoinrussia')
-        self.btcserv: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'btcserv')
-        self.simplecoinus: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'simplecoinus')
-        self.btcguild: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'btcguild')
-        self.eligius: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'eligius')
-        self.ozcoin: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'ozcoin')
-        self.eclipsemc: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'eclipsemc')
-        self.maxbtc: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'maxbtc')
-        self.triplemining: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'triplemining')
-        self.coinlab: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'coinlab')
-        self.pool50btc: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'pool50btc')
-        self.ghashio: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'ghashio')
-        self.stminingcorp: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'stminingcorp')
-        self.bitparking: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bitparking')
-        self.mmpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'mmpool')
-        self.polmine: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'polmine')
-        self.kncminer: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'kncminer')
-        self.bitalo: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bitalo')
-        self.f2pool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'f2pool')
-        self.hhtt: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'hhtt')
-        self.megabigpower: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'megabigpower')
-        self.mtred: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'mtred')
-        self.nmcbit: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'nmcbit')
-        self.yourbtcnet: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'yourbtcnet')
-        self.givemecoins: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'givemecoins')
-        self.braiinspool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'braiinspool')
-        self.antpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'antpool')
-        self.multicoinco: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'multicoinco')
-        self.bcpoolio: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bcpoolio')
-        self.cointerra: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'cointerra')
-        self.kanopool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'kanopool')
-        self.solock: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'solock')
-        self.ckpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'ckpool')
-        self.nicehash: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'nicehash')
-        self.bitclub: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bitclub')
-        self.bitcoinaffiliatenetwork: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bitcoinaffiliatenetwork')
-        self.btcc: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'btcc')
-        self.bwpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bwpool')
-        self.exxbw: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'exxbw')
-        self.bitsolo: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bitsolo')
-        self.bitfury: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bitfury')
-        self.twentyoneinc: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'twentyoneinc')
-        self.digitalbtc: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'digitalbtc')
-        self.eightbaochi: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'eightbaochi')
-        self.mybtccoinpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'mybtccoinpool')
-        self.tbdice: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'tbdice')
-        self.hashpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'hashpool')
-        self.nexious: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'nexious')
-        self.bravomining: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bravomining')
-        self.hotpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'hotpool')
-        self.okexpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'okexpool')
-        self.bcmonster: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bcmonster')
-        self.onehash: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'onehash')
-        self.bixin: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bixin')
-        self.tatmaspool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'tatmaspool')
-        self.viabtc: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'viabtc')
-        self.connectbtc: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'connectbtc')
-        self.batpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'batpool')
-        self.waterhole: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'waterhole')
-        self.dcexploration: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'dcexploration')
-        self.dcex: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'dcex')
-        self.btpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'btpool')
-        self.fiftyeightcoin: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'fiftyeightcoin')
-        self.bitcoinindia: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bitcoinindia')
-        self.shawnp0wers: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'shawnp0wers')
-        self.phashio: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'phashio')
-        self.rigpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'rigpool')
-        self.haozhuzhu: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'haozhuzhu')
-        self.sevenpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'sevenpool')
-        self.miningkings: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'miningkings')
-        self.hashbx: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'hashbx')
-        self.dpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'dpool')
-        self.rawpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'rawpool')
-        self.haominer: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'haominer')
-        self.helix: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'helix')
-        self.bitcoinukraine: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bitcoinukraine')
-        self.poolin: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'poolin')
-        self.secretsuperstar: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'secretsuperstar')
-        self.tigerpoolnet: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'tigerpoolnet')
-        self.sigmapoolcom: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'sigmapoolcom')
-        self.okpooltop: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'okpooltop')
-        self.hummerpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'hummerpool')
-        self.tangpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'tangpool')
-        self.bytepool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bytepool')
-        self.spiderpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'spiderpool')
-        self.novablock: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'novablock')
-        self.miningcity: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'miningcity')
-        self.binancepool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'binancepool')
-        self.minerium: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'minerium')
-        self.lubiancom: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'lubiancom')
-        self.okkong: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'okkong')
-        self.aaopool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'aaopool')
-        self.emcdpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'emcdpool')
-        self.foundryusa: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'foundryusa')
-        self.sbicrypto: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'sbicrypto')
-        self.arkpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'arkpool')
-        self.purebtccom: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'purebtccom')
-        self.marapool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'marapool')
-        self.kucoinpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'kucoinpool')
-        self.entrustcharitypool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'entrustcharitypool')
-        self.okminer: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'okminer')
-        self.titan: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'titan')
-        self.pegapool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'pegapool')
-        self.btcnuggets: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'btcnuggets')
-        self.cloudhashing: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'cloudhashing')
-        self.digitalxmintsy: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'digitalxmintsy')
-        self.telco214: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'telco214')
-        self.btcpoolparty: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'btcpoolparty')
-        self.multipool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'multipool')
-        self.transactioncoinmining: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'transactioncoinmining')
-        self.btcdig: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'btcdig')
-        self.trickysbtcpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'trickysbtcpool')
-        self.btcmp: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'btcmp')
-        self.eobot: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'eobot')
-        self.unomp: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'unomp')
-        self.patels: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'patels')
-        self.gogreenlight: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'gogreenlight')
-        self.bitcoinindiapool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bitcoinindiapool')
-        self.ekanembtc: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'ekanembtc')
-        self.canoe: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'canoe')
-        self.tiger: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'tiger')
-        self.onem1x: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'onem1x')
-        self.zulupool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'zulupool')
-        self.secpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'secpool')
-        self.ocean: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'ocean')
-        self.whitepool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'whitepool')
-        self.wiz: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'wiz')
-        self.wk057: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'wk057')
-        self.futurebitapollosolo: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'futurebitapollosolo')
-        self.carbonnegative: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'carbonnegative')
-        self.portlandhodl: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'portlandhodl')
-        self.phoenix: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'phoenix')
-        self.neopool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'neopool')
-        self.maxipool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'maxipool')
-        self.bitfufupool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'bitfufupool')
-        self.gdpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'gdpool')
-        self.miningdutch: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'miningdutch')
-        self.publicpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'publicpool')
-        self.miningsquared: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'miningsquared')
-        self.innopolistech: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'innopolistech')
-        self.btclab: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'btclab')
-        self.parasite: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'parasite')
-        self.redrockpool: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'redrockpool')
-        self.est3lar: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'est3lar')
+        self.unknown: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'unknown')
+        self.ultimuspool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'ultimuspool')
+        self.terrapool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'terrapool')
+        self.luxor: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'luxor')
+        self.onethash: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'onethash')
+        self.btccom: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'btccom')
+        self.huobipool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'huobipool')
+        self.wayicn: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'wayicn')
+        self.canoepool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'canoepool')
+        self.btctop: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'btctop')
+        self.bitcoincom: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'bitcoincom')
+        self.gbminers: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'gbminers')
+        self.asicminer: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'asicminer')
+        self.bitminter: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'bitminter')
+        self.bitcoinrussia: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'bitcoinrussia')
+        self.btcguild: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'btcguild')
+        self.eligius: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'eligius')
+        self.ozcoin: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'ozcoin')
+        self.eclipsemc: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'eclipsemc')
+        self.maxbtc: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'maxbtc')
+        self.triplemining: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'triplemining')
+        self.coinlab: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'coinlab')
+        self.pool50btc: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'pool50btc')
+        self.ghashio: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'ghashio')
+        self.bitparking: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'bitparking')
+        self.polmine: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'polmine')
+        self.kncminer: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'kncminer')
+        self.f2pool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'f2pool')
+        self.hhtt: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'hhtt')
+        self.megabigpower: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'megabigpower')
+        self.nmcbit: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'nmcbit')
+        self.yourbtcnet: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'yourbtcnet')
+        self.braiinspool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'braiinspool')
+        self.antpool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'antpool')
+        self.kanopool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'kanopool')
+        self.solock: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'solock')
+        self.nicehash: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'nicehash')
+        self.bitclub: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'bitclub')
+        self.bitcoinaffiliatenetwork: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'bitcoinaffiliatenetwork')
+        self.btcc: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'btcc')
+        self.bwpool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'bwpool')
+        self.exxbw: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'exxbw')
+        self.bitfury: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'bitfury')
+        self.digitalbtc: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'digitalbtc')
+        self.okexpool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'okexpool')
+        self.bixin: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'bixin')
+        self.tatmaspool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'tatmaspool')
+        self.viabtc: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'viabtc')
+        self.connectbtc: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'connectbtc')
+        self.batpool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'batpool')
+        self.btpool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'btpool')
+        self.fiftyeightcoin: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'fiftyeightcoin')
+        self.bitcoinindia: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'bitcoinindia')
+        self.dpool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'dpool')
+        self.poolin: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'poolin')
+        self.secretsuperstar: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'secretsuperstar')
+        self.tigerpoolnet: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'tigerpoolnet')
+        self.sigmapoolcom: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'sigmapoolcom')
+        self.okpooltop: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'okpooltop')
+        self.tangpool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'tangpool')
+        self.bytepool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'bytepool')
+        self.spiderpool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'spiderpool')
+        self.novablock: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'novablock')
+        self.binancepool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'binancepool')
+        self.lubiancom: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'lubiancom')
+        self.okkong: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'okkong')
+        self.emcdpool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'emcdpool')
+        self.foundryusa: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'foundryusa')
+        self.sbicrypto: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'sbicrypto')
+        self.marapool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'marapool')
+        self.kucoinpool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'kucoinpool')
+        self.pegapool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'pegapool')
+        self.secpool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'secpool')
+        self.ocean: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'ocean')
+        self.whitepool: _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern = _1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(client, 'whitepool')
+
+class MetricsTree_Pools_Minor:
+    """Metrics tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.blockfills: BlocksDominancePattern = BlocksDominancePattern(client, 'blockfills')
+        self.bitfarms: BlocksDominancePattern = BlocksDominancePattern(client, 'bitfarms')
+        self.pool175btc: BlocksDominancePattern = BlocksDominancePattern(client, 'pool175btc')
+        self.axbt: BlocksDominancePattern = BlocksDominancePattern(client, 'axbt')
+        self.btcserv: BlocksDominancePattern = BlocksDominancePattern(client, 'btcserv')
+        self.simplecoinus: BlocksDominancePattern = BlocksDominancePattern(client, 'simplecoinus')
+        self.stminingcorp: BlocksDominancePattern = BlocksDominancePattern(client, 'stminingcorp')
+        self.mmpool: BlocksDominancePattern = BlocksDominancePattern(client, 'mmpool')
+        self.bitalo: BlocksDominancePattern = BlocksDominancePattern(client, 'bitalo')
+        self.mtred: BlocksDominancePattern = BlocksDominancePattern(client, 'mtred')
+        self.givemecoins: BlocksDominancePattern = BlocksDominancePattern(client, 'givemecoins')
+        self.multicoinco: BlocksDominancePattern = BlocksDominancePattern(client, 'multicoinco')
+        self.bcpoolio: BlocksDominancePattern = BlocksDominancePattern(client, 'bcpoolio')
+        self.cointerra: BlocksDominancePattern = BlocksDominancePattern(client, 'cointerra')
+        self.ckpool: BlocksDominancePattern = BlocksDominancePattern(client, 'ckpool')
+        self.bitsolo: BlocksDominancePattern = BlocksDominancePattern(client, 'bitsolo')
+        self.twentyoneinc: BlocksDominancePattern = BlocksDominancePattern(client, 'twentyoneinc')
+        self.eightbaochi: BlocksDominancePattern = BlocksDominancePattern(client, 'eightbaochi')
+        self.mybtccoinpool: BlocksDominancePattern = BlocksDominancePattern(client, 'mybtccoinpool')
+        self.tbdice: BlocksDominancePattern = BlocksDominancePattern(client, 'tbdice')
+        self.hashpool: BlocksDominancePattern = BlocksDominancePattern(client, 'hashpool')
+        self.nexious: BlocksDominancePattern = BlocksDominancePattern(client, 'nexious')
+        self.bravomining: BlocksDominancePattern = BlocksDominancePattern(client, 'bravomining')
+        self.hotpool: BlocksDominancePattern = BlocksDominancePattern(client, 'hotpool')
+        self.bcmonster: BlocksDominancePattern = BlocksDominancePattern(client, 'bcmonster')
+        self.onehash: BlocksDominancePattern = BlocksDominancePattern(client, 'onehash')
+        self.waterhole: BlocksDominancePattern = BlocksDominancePattern(client, 'waterhole')
+        self.dcexploration: BlocksDominancePattern = BlocksDominancePattern(client, 'dcexploration')
+        self.dcex: BlocksDominancePattern = BlocksDominancePattern(client, 'dcex')
+        self.shawnp0wers: BlocksDominancePattern = BlocksDominancePattern(client, 'shawnp0wers')
+        self.phashio: BlocksDominancePattern = BlocksDominancePattern(client, 'phashio')
+        self.rigpool: BlocksDominancePattern = BlocksDominancePattern(client, 'rigpool')
+        self.haozhuzhu: BlocksDominancePattern = BlocksDominancePattern(client, 'haozhuzhu')
+        self.sevenpool: BlocksDominancePattern = BlocksDominancePattern(client, 'sevenpool')
+        self.miningkings: BlocksDominancePattern = BlocksDominancePattern(client, 'miningkings')
+        self.hashbx: BlocksDominancePattern = BlocksDominancePattern(client, 'hashbx')
+        self.rawpool: BlocksDominancePattern = BlocksDominancePattern(client, 'rawpool')
+        self.haominer: BlocksDominancePattern = BlocksDominancePattern(client, 'haominer')
+        self.helix: BlocksDominancePattern = BlocksDominancePattern(client, 'helix')
+        self.bitcoinukraine: BlocksDominancePattern = BlocksDominancePattern(client, 'bitcoinukraine')
+        self.hummerpool: BlocksDominancePattern = BlocksDominancePattern(client, 'hummerpool')
+        self.miningcity: BlocksDominancePattern = BlocksDominancePattern(client, 'miningcity')
+        self.minerium: BlocksDominancePattern = BlocksDominancePattern(client, 'minerium')
+        self.aaopool: BlocksDominancePattern = BlocksDominancePattern(client, 'aaopool')
+        self.arkpool: BlocksDominancePattern = BlocksDominancePattern(client, 'arkpool')
+        self.purebtccom: BlocksDominancePattern = BlocksDominancePattern(client, 'purebtccom')
+        self.entrustcharitypool: BlocksDominancePattern = BlocksDominancePattern(client, 'entrustcharitypool')
+        self.okminer: BlocksDominancePattern = BlocksDominancePattern(client, 'okminer')
+        self.titan: BlocksDominancePattern = BlocksDominancePattern(client, 'titan')
+        self.btcnuggets: BlocksDominancePattern = BlocksDominancePattern(client, 'btcnuggets')
+        self.cloudhashing: BlocksDominancePattern = BlocksDominancePattern(client, 'cloudhashing')
+        self.digitalxmintsy: BlocksDominancePattern = BlocksDominancePattern(client, 'digitalxmintsy')
+        self.telco214: BlocksDominancePattern = BlocksDominancePattern(client, 'telco214')
+        self.btcpoolparty: BlocksDominancePattern = BlocksDominancePattern(client, 'btcpoolparty')
+        self.multipool: BlocksDominancePattern = BlocksDominancePattern(client, 'multipool')
+        self.transactioncoinmining: BlocksDominancePattern = BlocksDominancePattern(client, 'transactioncoinmining')
+        self.btcdig: BlocksDominancePattern = BlocksDominancePattern(client, 'btcdig')
+        self.trickysbtcpool: BlocksDominancePattern = BlocksDominancePattern(client, 'trickysbtcpool')
+        self.btcmp: BlocksDominancePattern = BlocksDominancePattern(client, 'btcmp')
+        self.eobot: BlocksDominancePattern = BlocksDominancePattern(client, 'eobot')
+        self.unomp: BlocksDominancePattern = BlocksDominancePattern(client, 'unomp')
+        self.patels: BlocksDominancePattern = BlocksDominancePattern(client, 'patels')
+        self.gogreenlight: BlocksDominancePattern = BlocksDominancePattern(client, 'gogreenlight')
+        self.bitcoinindiapool: BlocksDominancePattern = BlocksDominancePattern(client, 'bitcoinindiapool')
+        self.ekanembtc: BlocksDominancePattern = BlocksDominancePattern(client, 'ekanembtc')
+        self.canoe: BlocksDominancePattern = BlocksDominancePattern(client, 'canoe')
+        self.tiger: BlocksDominancePattern = BlocksDominancePattern(client, 'tiger')
+        self.onem1x: BlocksDominancePattern = BlocksDominancePattern(client, 'onem1x')
+        self.zulupool: BlocksDominancePattern = BlocksDominancePattern(client, 'zulupool')
+        self.wiz: BlocksDominancePattern = BlocksDominancePattern(client, 'wiz')
+        self.wk057: BlocksDominancePattern = BlocksDominancePattern(client, 'wk057')
+        self.futurebitapollosolo: BlocksDominancePattern = BlocksDominancePattern(client, 'futurebitapollosolo')
+        self.carbonnegative: BlocksDominancePattern = BlocksDominancePattern(client, 'carbonnegative')
+        self.portlandhodl: BlocksDominancePattern = BlocksDominancePattern(client, 'portlandhodl')
+        self.phoenix: BlocksDominancePattern = BlocksDominancePattern(client, 'phoenix')
+        self.neopool: BlocksDominancePattern = BlocksDominancePattern(client, 'neopool')
+        self.maxipool: BlocksDominancePattern = BlocksDominancePattern(client, 'maxipool')
+        self.bitfufupool: BlocksDominancePattern = BlocksDominancePattern(client, 'bitfufupool')
+        self.gdpool: BlocksDominancePattern = BlocksDominancePattern(client, 'gdpool')
+        self.miningdutch: BlocksDominancePattern = BlocksDominancePattern(client, 'miningdutch')
+        self.publicpool: BlocksDominancePattern = BlocksDominancePattern(client, 'publicpool')
+        self.miningsquared: BlocksDominancePattern = BlocksDominancePattern(client, 'miningsquared')
+        self.innopolistech: BlocksDominancePattern = BlocksDominancePattern(client, 'innopolistech')
+        self.btclab: BlocksDominancePattern = BlocksDominancePattern(client, 'btclab')
+        self.parasite: BlocksDominancePattern = BlocksDominancePattern(client, 'parasite')
+        self.redrockpool: BlocksDominancePattern = BlocksDominancePattern(client, 'redrockpool')
+        self.est3lar: BlocksDominancePattern = BlocksDominancePattern(client, 'est3lar')
 
 class MetricsTree_Pools:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.height_to_pool: MetricPattern18[PoolSlug] = MetricPattern18(client, 'pool')
-        self.vecs: MetricsTree_Pools_Vecs = MetricsTree_Pools_Vecs(client)
+        self.major: MetricsTree_Pools_Major = MetricsTree_Pools_Major(client)
+        self.minor: MetricsTree_Pools_Minor = MetricsTree_Pools_Minor(client)
 
 class MetricsTree_Prices_Split_Close:
     """Metrics tree node."""
@@ -4214,15 +4248,15 @@ class MetricsTree_Distribution_UtxoCohorts_All_Relative:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.invested_capital_in_profit_rel_to_realized_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'invested_capital_in_profit_rel_to_realized_cap')
-        self.invested_capital_in_loss_rel_to_realized_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'invested_capital_in_loss_rel_to_realized_cap')
-        self.supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'supply_in_profit_rel_to_own_supply')
-        self.supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'supply_in_loss_rel_to_own_supply')
         self.unrealized_profit_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'unrealized_profit_rel_to_market_cap')
         self.unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'unrealized_loss_rel_to_market_cap')
         self.net_unrealized_pnl_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'net_unrealized_pnl_rel_to_market_cap')
         self.neg_unrealized_loss_rel_to_market_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'neg_unrealized_loss_rel_to_market_cap')
         self.nupl: MetricPattern1[StoredF32] = MetricPattern1(client, 'nupl')
+        self.invested_capital_in_profit_rel_to_realized_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'invested_capital_in_profit_rel_to_realized_cap')
+        self.invested_capital_in_loss_rel_to_realized_cap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'invested_capital_in_loss_rel_to_realized_cap')
+        self.supply_in_profit_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'supply_in_profit_rel_to_own_supply')
+        self.supply_in_loss_rel_to_own_supply: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'supply_in_loss_rel_to_own_supply')
         self.unrealized_profit_rel_to_own_gross_pnl: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'unrealized_profit_rel_to_own_gross_pnl')
         self.unrealized_loss_rel_to_own_gross_pnl: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'unrealized_loss_rel_to_own_gross_pnl')
         self.neg_unrealized_loss_rel_to_own_gross_pnl: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'neg_unrealized_loss_rel_to_own_gross_pnl')

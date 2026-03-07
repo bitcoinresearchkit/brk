@@ -13,7 +13,8 @@ use vecdb::{
     VecIndex, Version, WritableVec,
 };
 
-mod vecs;
+pub mod major;
+pub mod minor;
 
 use crate::{
     blocks, indexes,
@@ -29,7 +30,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     pools: &'static Pools,
 
     pub height_to_pool: M::Stored<BytesVec<Height, PoolSlug>>,
-    pub vecs: BTreeMap<PoolSlug, vecs::Vecs<M>>,
+    pub major: BTreeMap<PoolSlug, major::Vecs<M>>,
+    pub minor: BTreeMap<PoolSlug, minor::Vecs<M>>,
 }
 
 impl Vecs {
@@ -43,15 +45,27 @@ impl Vecs {
 
         let version = parent_version + Version::new(3) + Version::new(pools.len() as u32);
 
+        let mut major_map = BTreeMap::new();
+        let mut minor_map = BTreeMap::new();
+
+        for pool in pools.iter() {
+            if pool.slug.is_major() {
+                major_map.insert(
+                    pool.slug,
+                    major::Vecs::forced_import(&db, pool.slug, version, indexes)?,
+                );
+            } else {
+                minor_map.insert(
+                    pool.slug,
+                    minor::Vecs::forced_import(&db, pool.slug, version, indexes)?,
+                );
+            }
+        }
+
         let this = Self {
             height_to_pool: BytesVec::forced_import(&db, "pool", version)?,
-            vecs: pools
-                .iter()
-                .map(|pool| {
-                    vecs::Vecs::forced_import(&db, pool.slug, version, indexes)
-                        .map(|vecs| (pool.slug, vecs))
-                })
-                .collect::<Result<BTreeMap<_, _>>>()?,
+            major: major_map,
+            minor: minor_map,
             pools,
             db,
         };
@@ -73,7 +87,7 @@ impl Vecs {
     ) -> Result<()> {
         self.compute_height_to_pool(indexer, indexes, starting_indexes, exit)?;
 
-        self.vecs.par_iter_mut().try_for_each(|(_, vecs)| {
+        self.major.par_iter_mut().try_for_each(|(_, vecs)| {
             vecs.compute(
                 starting_indexes,
                 &self.height_to_pool,
@@ -82,6 +96,10 @@ impl Vecs {
                 mining,
                 exit,
             )
+        })?;
+
+        self.minor.par_iter_mut().try_for_each(|(_, vecs)| {
+            vecs.compute(starting_indexes, &self.height_to_pool, blocks, exit)
         })?;
 
         let _lock = exit.lock();
