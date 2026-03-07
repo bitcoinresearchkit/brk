@@ -6,10 +6,11 @@ use brk_types::{
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
+    blocks,
     distribution::state::RealizedOps,
     internal::{
         CentsUnsignedToDollars, ComputedFromHeight, ComputedFromHeightCumulative,
-        ComputedFromHeightRatio, Identity, LazyFromHeight, Price,
+        ComputedFromHeightRatio, Identity, LazyFromHeight, Price, RollingWindow24h,
     },
     prices,
 };
@@ -25,6 +26,9 @@ pub struct RealizedMinimal<M: StorageMode = Rw> {
     pub realized_price: Price<ComputedFromHeight<Cents, M>>,
     pub realized_price_ratio: ComputedFromHeightRatio<M>,
     pub mvrv: LazyFromHeight<StoredF32>,
+
+    pub realized_profit_sum: RollingWindow24h<Cents, M>,
+    pub realized_loss_sum: RollingWindow24h<Cents, M>,
 }
 
 impl RealizedMinimal {
@@ -50,6 +54,9 @@ impl RealizedMinimal {
             &realized_price_ratio.ratio,
         );
 
+        let realized_profit_sum = cfg.import("realized_profit", Version::ONE)?;
+        let realized_loss_sum = cfg.import("realized_loss", Version::ONE)?;
+
         Ok(Self {
             realized_cap_cents,
             realized_profit,
@@ -58,6 +65,8 @@ impl RealizedMinimal {
             realized_price,
             realized_price_ratio,
             mvrv,
+            realized_profit_sum,
+            realized_loss_sum,
         })
     }
 
@@ -108,6 +117,7 @@ impl RealizedMinimal {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
+        blocks: &blocks::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -115,6 +125,18 @@ impl RealizedMinimal {
             .compute_rest(starting_indexes.height, exit)?;
         self.realized_loss
             .compute_rest(starting_indexes.height, exit)?;
+        self.realized_profit_sum.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_24h_ago,
+            &self.realized_profit.height,
+            exit,
+        )?;
+        self.realized_loss_sum.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_24h_ago,
+            &self.realized_loss.height,
+            exit,
+        )?;
         Ok(())
     }
 

@@ -1585,7 +1585,9 @@ function createMetricPattern35(client, name) { return /** @type {MetricPattern35
  * @property {BpsRatioPattern} investorPriceRatio
  * @property {RatioPattern} investorPriceRatioPercentiles
  * @property {MetricPattern1<Cents>} lossValueCreated
+ * @property {_1m1w1y24hPattern<Cents>} lossValueCreatedSum
  * @property {MetricPattern1<Cents>} lossValueDestroyed
+ * @property {_1m1w1y24hPattern<Cents>} lossValueDestroyedSum
  * @property {CentsSatsUsdPattern} lowerPriceBand
  * @property {MetricPattern1<StoredF32>} mvrv
  * @property {MetricPattern1<Dollars>} negRealizedLoss
@@ -1593,38 +1595,39 @@ function createMetricPattern35(client, name) { return /** @type {MetricPattern35
  * @property {BpsPercentRatioPattern} netPnlChange1mRelToMarketCap
  * @property {BpsPercentRatioPattern} netPnlChange1mRelToRealizedCap
  * @property {CumulativeHeightPattern<CentsSigned>} netRealizedPnl
- * @property {MetricPattern1<CentsSigned>} netRealizedPnlEma1w
  * @property {BpsPercentRatioPattern} netRealizedPnlRelToRealizedCap
  * @property {CumulativeHeightPattern<Cents>} peakRegret
  * @property {BpsPercentRatioPattern} peakRegretRelToRealizedCap
  * @property {MetricPattern1<Dollars>} profitFlow
  * @property {MetricPattern1<Cents>} profitValueCreated
+ * @property {_1m1w1y24hPattern<Cents>} profitValueCreatedSum
  * @property {MetricPattern1<Cents>} profitValueDestroyed
+ * @property {_1m1w1y24hPattern<Cents>} profitValueDestroyedSum
  * @property {MetricPattern1<Dollars>} realizedCap
  * @property {MetricPattern1<Cents>} realizedCapCents
  * @property {MetricPattern1<CentsSigned>} realizedCapChange1m
  * @property {BpsPercentRatioPattern} realizedCapRelToOwnMarketCap
  * @property {CumulativeHeightPattern<Cents>} realizedLoss
- * @property {MetricPattern1<Cents>} realizedLossEma1w
  * @property {BpsPercentRatioPattern} realizedLossRelToRealizedCap
- * @property {_1m1w1y24hPattern<Cents>} realizedLossSum
+ * @property {_24hPattern<Cents>} realizedLossSum
+ * @property {_1m1w1yPattern<Cents>} realizedLossSumExtended
  * @property {CentsSatsUsdPattern} realizedPrice
  * @property {BpsRatioPattern} realizedPriceRatio
  * @property {RatioPattern} realizedPriceRatioPercentiles
  * @property {RatioPattern2} realizedPriceRatioStdDev
  * @property {CumulativeHeightPattern<Cents>} realizedProfit
- * @property {MetricPattern1<Cents>} realizedProfitEma1w
  * @property {BpsPercentRatioPattern} realizedProfitRelToRealizedCap
- * @property {_1m1w1y24hPattern<Cents>} realizedProfitSum
+ * @property {_24hPattern<Cents>} realizedProfitSum
+ * @property {_1m1w1yPattern<Cents>} realizedProfitSumExtended
  * @property {_1m1w1y24hPattern<StoredF64>} realizedProfitToLossRatio
  * @property {_1m1w1y24hPattern2} sellSideRiskRatio
- * @property {_1m1wPattern2} sellSideRiskRatio24hEma
  * @property {MetricPattern1<Sats>} sentInLoss
- * @property {_1m1w1y24hPattern<Sats>} sentInLossSum
+ * @property {_24hPattern<Sats>} sentInLossSum
+ * @property {_1m1w1yPattern<Sats>} sentInLossSumExtended
  * @property {MetricPattern1<Sats>} sentInProfit
- * @property {_1m1w1y24hPattern<Sats>} sentInProfitSum
+ * @property {_24hPattern<Sats>} sentInProfitSum
+ * @property {_1m1w1yPattern<Sats>} sentInProfitSumExtended
  * @property {_24hPattern<StoredF64>} sopr
- * @property {_1m1wPattern} sopr24hEma
  * @property {_1m1w1yPattern<StoredF64>} soprExtended
  * @property {CentsSatsUsdPattern} upperPriceBand
  * @property {MetricPattern1<Cents>} valueCreated
@@ -1652,7 +1655,9 @@ function createCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealized
     investorPriceRatio: createBpsRatioPattern(client, _m(acc, 'investor_price_ratio')),
     investorPriceRatioPercentiles: createRatioPattern(client, _m(acc, 'investor_price_ratio')),
     lossValueCreated: createMetricPattern1(client, _m(acc, 'loss_value_created')),
+    lossValueCreatedSum: create_1m1w1y24hPattern(client, _m(acc, 'loss_value_created')),
     lossValueDestroyed: createMetricPattern1(client, _m(acc, 'loss_value_destroyed')),
+    lossValueDestroyedSum: create_1m1w1y24hPattern(client, _m(acc, 'loss_value_destroyed')),
     lowerPriceBand: createCentsSatsUsdPattern(client, _m(acc, 'lower_price_band')),
     mvrv: createMetricPattern1(client, _m(acc, 'mvrv')),
     negRealizedLoss: createMetricPattern1(client, _m(acc, 'neg_realized_loss')),
@@ -1660,38 +1665,39 @@ function createCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealized
     netPnlChange1mRelToMarketCap: createBpsPercentRatioPattern(client, _m(acc, 'net_pnl_change_1m_rel_to_market_cap')),
     netPnlChange1mRelToRealizedCap: createBpsPercentRatioPattern(client, _m(acc, 'net_pnl_change_1m_rel_to_realized_cap')),
     netRealizedPnl: createCumulativeHeightPattern(client, _m(acc, 'net_realized_pnl')),
-    netRealizedPnlEma1w: createMetricPattern1(client, _m(acc, 'net_realized_pnl_ema_1w')),
     netRealizedPnlRelToRealizedCap: createBpsPercentRatioPattern(client, _m(acc, 'net_realized_pnl_rel_to_realized_cap')),
     peakRegret: createCumulativeHeightPattern(client, _m(acc, 'realized_peak_regret')),
     peakRegretRelToRealizedCap: createBpsPercentRatioPattern(client, _m(acc, 'realized_peak_regret_rel_to_realized_cap')),
     profitFlow: createMetricPattern1(client, _m(acc, 'profit_flow')),
     profitValueCreated: createMetricPattern1(client, _m(acc, 'profit_value_created')),
+    profitValueCreatedSum: create_1m1w1y24hPattern(client, _m(acc, 'profit_value_created')),
     profitValueDestroyed: createMetricPattern1(client, _m(acc, 'profit_value_destroyed')),
+    profitValueDestroyedSum: create_1m1w1y24hPattern(client, _m(acc, 'profit_value_destroyed')),
     realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
     realizedCapCents: createMetricPattern1(client, _m(acc, 'realized_cap_cents')),
     realizedCapChange1m: createMetricPattern1(client, _m(acc, 'realized_cap_change_1m')),
     realizedCapRelToOwnMarketCap: createBpsPercentRatioPattern(client, _m(acc, 'realized_cap_rel_to_own_market_cap')),
     realizedLoss: createCumulativeHeightPattern(client, _m(acc, 'realized_loss')),
-    realizedLossEma1w: createMetricPattern1(client, _m(acc, 'realized_loss_ema_1w')),
     realizedLossRelToRealizedCap: createBpsPercentRatioPattern(client, _m(acc, 'realized_loss_rel_to_realized_cap')),
-    realizedLossSum: create_1m1w1y24hPattern(client, _m(acc, 'realized_loss')),
+    realizedLossSum: create_24hPattern(client, _m(acc, 'realized_loss_24h')),
+    realizedLossSumExtended: create_1m1w1yPattern(client, _m(acc, 'realized_loss')),
     realizedPrice: createCentsSatsUsdPattern(client, _m(acc, 'realized_price')),
     realizedPriceRatio: createBpsRatioPattern(client, _m(acc, 'realized_price_ratio')),
     realizedPriceRatioPercentiles: createRatioPattern(client, _m(acc, 'realized_price_ratio')),
     realizedPriceRatioStdDev: createRatioPattern2(client, _m(acc, 'realized_price_ratio')),
     realizedProfit: createCumulativeHeightPattern(client, _m(acc, 'realized_profit')),
-    realizedProfitEma1w: createMetricPattern1(client, _m(acc, 'realized_profit_ema_1w')),
     realizedProfitRelToRealizedCap: createBpsPercentRatioPattern(client, _m(acc, 'realized_profit_rel_to_realized_cap')),
-    realizedProfitSum: create_1m1w1y24hPattern(client, _m(acc, 'realized_profit')),
+    realizedProfitSum: create_24hPattern(client, _m(acc, 'realized_profit_24h')),
+    realizedProfitSumExtended: create_1m1w1yPattern(client, _m(acc, 'realized_profit')),
     realizedProfitToLossRatio: create_1m1w1y24hPattern(client, _m(acc, 'realized_profit_to_loss_ratio')),
     sellSideRiskRatio: create_1m1w1y24hPattern2(client, _m(acc, 'sell_side_risk_ratio')),
-    sellSideRiskRatio24hEma: create_1m1wPattern2(client, _m(acc, 'sell_side_risk_ratio_24h_ema')),
     sentInLoss: createMetricPattern1(client, _m(acc, 'sent_in_loss')),
-    sentInLossSum: create_1m1w1y24hPattern(client, _m(acc, 'sent_in_loss')),
+    sentInLossSum: create_24hPattern(client, _m(acc, 'sent_in_loss_24h')),
+    sentInLossSumExtended: create_1m1w1yPattern(client, _m(acc, 'sent_in_loss')),
     sentInProfit: createMetricPattern1(client, _m(acc, 'sent_in_profit')),
-    sentInProfitSum: create_1m1w1y24hPattern(client, _m(acc, 'sent_in_profit')),
+    sentInProfitSum: create_24hPattern(client, _m(acc, 'sent_in_profit_24h')),
+    sentInProfitSumExtended: create_1m1w1yPattern(client, _m(acc, 'sent_in_profit')),
     sopr: create_24hPattern(client, _m(acc, 'sopr_24h')),
-    sopr24hEma: create_1m1wPattern(client, _m(acc, 'sopr_24h_ema')),
     soprExtended: create_1m1w1yPattern(client, _m(acc, 'sopr')),
     upperPriceBand: createCentsSatsUsdPattern(client, _m(acc, 'upper_price_band')),
     valueCreated: createMetricPattern1(client, _m(acc, 'value_created')),
@@ -1775,6 +1781,63 @@ function create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern(client
 }
 
 /**
+ * @typedef {Object} MvrvNegNetRealizedSentSoprValuePattern
+ * @property {MetricPattern1<StoredF32>} mvrv
+ * @property {MetricPattern1<Dollars>} negRealizedLoss
+ * @property {CumulativeHeightPattern<CentsSigned>} netRealizedPnl
+ * @property {MetricPattern1<Dollars>} realizedCap
+ * @property {MetricPattern1<Cents>} realizedCapCents
+ * @property {MetricPattern1<CentsSigned>} realizedCapChange1m
+ * @property {CumulativeHeightPattern<Cents>} realizedLoss
+ * @property {_24hPattern<Cents>} realizedLossSum
+ * @property {CentsSatsUsdPattern} realizedPrice
+ * @property {BpsRatioPattern} realizedPriceRatio
+ * @property {CumulativeHeightPattern<Cents>} realizedProfit
+ * @property {_24hPattern<Cents>} realizedProfitSum
+ * @property {MetricPattern1<Sats>} sentInLoss
+ * @property {_24hPattern<Sats>} sentInLossSum
+ * @property {MetricPattern1<Sats>} sentInProfit
+ * @property {_24hPattern<Sats>} sentInProfitSum
+ * @property {_24hPattern<StoredF64>} sopr
+ * @property {MetricPattern1<Cents>} valueCreated
+ * @property {_24hPattern<Cents>} valueCreatedSum
+ * @property {MetricPattern1<Cents>} valueDestroyed
+ * @property {_24hPattern<Cents>} valueDestroyedSum
+ */
+
+/**
+ * Create a MvrvNegNetRealizedSentSoprValuePattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {MvrvNegNetRealizedSentSoprValuePattern}
+ */
+function createMvrvNegNetRealizedSentSoprValuePattern(client, acc) {
+  return {
+    mvrv: createMetricPattern1(client, _m(acc, 'mvrv')),
+    negRealizedLoss: createMetricPattern1(client, _m(acc, 'neg_realized_loss')),
+    netRealizedPnl: createCumulativeHeightPattern(client, _m(acc, 'net_realized_pnl')),
+    realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
+    realizedCapCents: createMetricPattern1(client, _m(acc, 'realized_cap_cents')),
+    realizedCapChange1m: createMetricPattern1(client, _m(acc, 'realized_cap_change_1m')),
+    realizedLoss: createCumulativeHeightPattern(client, _m(acc, 'realized_loss')),
+    realizedLossSum: create_24hPattern(client, _m(acc, 'realized_loss_24h')),
+    realizedPrice: createCentsSatsUsdPattern(client, _m(acc, 'realized_price')),
+    realizedPriceRatio: createBpsRatioPattern(client, _m(acc, 'realized_price_ratio')),
+    realizedProfit: createCumulativeHeightPattern(client, _m(acc, 'realized_profit')),
+    realizedProfitSum: create_24hPattern(client, _m(acc, 'realized_profit_24h')),
+    sentInLoss: createMetricPattern1(client, _m(acc, 'sent_in_loss')),
+    sentInLossSum: create_24hPattern(client, _m(acc, 'sent_in_loss_24h')),
+    sentInProfit: createMetricPattern1(client, _m(acc, 'sent_in_profit')),
+    sentInProfitSum: create_24hPattern(client, _m(acc, 'sent_in_profit_24h')),
+    sopr: create_24hPattern(client, _m(acc, 'sopr_24h')),
+    valueCreated: createMetricPattern1(client, _m(acc, 'value_created')),
+    valueCreatedSum: create_24hPattern(client, _m(acc, 'value_created_24h')),
+    valueDestroyed: createMetricPattern1(client, _m(acc, 'value_destroyed')),
+    valueDestroyedSum: create_24hPattern(client, _m(acc, 'value_destroyed_24h')),
+  };
+}
+
+/**
  * @typedef {Object} Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern
  * @property {CentsSatsUsdPattern} pct05
  * @property {CentsSatsUsdPattern} pct10
@@ -1828,7 +1891,7 @@ function createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65
 }
 
 /**
- * @typedef {Object} MvrvNegNetRealizedSentSoprValuePattern
+ * @typedef {Object} MvrvNegNetRealizedSoprValuePattern
  * @property {MetricPattern1<StoredF32>} mvrv
  * @property {MetricPattern1<Dollars>} negRealizedLoss
  * @property {CumulativeHeightPattern<CentsSigned>} netRealizedPnl
@@ -1836,11 +1899,11 @@ function createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65
  * @property {MetricPattern1<Cents>} realizedCapCents
  * @property {MetricPattern1<CentsSigned>} realizedCapChange1m
  * @property {CumulativeHeightPattern<Cents>} realizedLoss
+ * @property {_24hPattern<Cents>} realizedLossSum
  * @property {CentsSatsUsdPattern} realizedPrice
  * @property {BpsRatioPattern} realizedPriceRatio
  * @property {CumulativeHeightPattern<Cents>} realizedProfit
- * @property {MetricPattern1<Sats>} sentInLoss
- * @property {MetricPattern1<Sats>} sentInProfit
+ * @property {_24hPattern<Cents>} realizedProfitSum
  * @property {_24hPattern<StoredF64>} sopr
  * @property {MetricPattern1<Cents>} valueCreated
  * @property {_24hPattern<Cents>} valueCreatedSum
@@ -1849,12 +1912,12 @@ function createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65
  */
 
 /**
- * Create a MvrvNegNetRealizedSentSoprValuePattern pattern node
+ * Create a MvrvNegNetRealizedSoprValuePattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {MvrvNegNetRealizedSentSoprValuePattern}
+ * @returns {MvrvNegNetRealizedSoprValuePattern}
  */
-function createMvrvNegNetRealizedSentSoprValuePattern(client, acc) {
+function createMvrvNegNetRealizedSoprValuePattern(client, acc) {
   return {
     mvrv: createMetricPattern1(client, _m(acc, 'mvrv')),
     negRealizedLoss: createMetricPattern1(client, _m(acc, 'neg_realized_loss')),
@@ -1863,11 +1926,11 @@ function createMvrvNegNetRealizedSentSoprValuePattern(client, acc) {
     realizedCapCents: createMetricPattern1(client, _m(acc, 'realized_cap_cents')),
     realizedCapChange1m: createMetricPattern1(client, _m(acc, 'realized_cap_change_1m')),
     realizedLoss: createCumulativeHeightPattern(client, _m(acc, 'realized_loss')),
+    realizedLossSum: create_24hPattern(client, _m(acc, 'realized_loss_24h')),
     realizedPrice: createCentsSatsUsdPattern(client, _m(acc, 'realized_price')),
     realizedPriceRatio: createBpsRatioPattern(client, _m(acc, 'realized_price_ratio')),
     realizedProfit: createCumulativeHeightPattern(client, _m(acc, 'realized_profit')),
-    sentInLoss: createMetricPattern1(client, _m(acc, 'sent_in_loss')),
-    sentInProfit: createMetricPattern1(client, _m(acc, 'sent_in_profit')),
+    realizedProfitSum: create_24hPattern(client, _m(acc, 'realized_profit_24h')),
     sopr: create_24hPattern(client, _m(acc, 'sopr_24h')),
     valueCreated: createMetricPattern1(client, _m(acc, 'value_created')),
     valueCreatedSum: create_24hPattern(client, _m(acc, 'value_created_24h')),
@@ -1967,51 +2030,6 @@ function createGreedGrossInvestedInvestorNegNetPainSupplyUnrealizedPattern(clien
     supplyInProfit: createBtcCentsSatsUsdPattern(client, _m(acc, 'supply_in_profit')),
     unrealizedLoss: createCentsUsdPattern(client, _m(acc, 'unrealized_loss')),
     unrealizedProfit: createCentsUsdPattern(client, _m(acc, 'unrealized_profit')),
-  };
-}
-
-/**
- * @typedef {Object} MvrvNegNetRealizedSoprValuePattern
- * @property {MetricPattern1<StoredF32>} mvrv
- * @property {MetricPattern1<Dollars>} negRealizedLoss
- * @property {CumulativeHeightPattern<CentsSigned>} netRealizedPnl
- * @property {MetricPattern1<Dollars>} realizedCap
- * @property {MetricPattern1<Cents>} realizedCapCents
- * @property {MetricPattern1<CentsSigned>} realizedCapChange1m
- * @property {CumulativeHeightPattern<Cents>} realizedLoss
- * @property {CentsSatsUsdPattern} realizedPrice
- * @property {BpsRatioPattern} realizedPriceRatio
- * @property {CumulativeHeightPattern<Cents>} realizedProfit
- * @property {_24hPattern<StoredF64>} sopr
- * @property {MetricPattern1<Cents>} valueCreated
- * @property {_24hPattern<Cents>} valueCreatedSum
- * @property {MetricPattern1<Cents>} valueDestroyed
- * @property {_24hPattern<Cents>} valueDestroyedSum
- */
-
-/**
- * Create a MvrvNegNetRealizedSoprValuePattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {MvrvNegNetRealizedSoprValuePattern}
- */
-function createMvrvNegNetRealizedSoprValuePattern(client, acc) {
-  return {
-    mvrv: createMetricPattern1(client, _m(acc, 'mvrv')),
-    negRealizedLoss: createMetricPattern1(client, _m(acc, 'neg_realized_loss')),
-    netRealizedPnl: createCumulativeHeightPattern(client, _m(acc, 'net_realized_pnl')),
-    realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
-    realizedCapCents: createMetricPattern1(client, _m(acc, 'realized_cap_cents')),
-    realizedCapChange1m: createMetricPattern1(client, _m(acc, 'realized_cap_change_1m')),
-    realizedLoss: createCumulativeHeightPattern(client, _m(acc, 'realized_loss')),
-    realizedPrice: createCentsSatsUsdPattern(client, _m(acc, 'realized_price')),
-    realizedPriceRatio: createBpsRatioPattern(client, _m(acc, 'realized_price_ratio')),
-    realizedProfit: createCumulativeHeightPattern(client, _m(acc, 'realized_profit')),
-    sopr: create_24hPattern(client, _m(acc, 'sopr_24h')),
-    valueCreated: createMetricPattern1(client, _m(acc, 'value_created')),
-    valueCreatedSum: create_24hPattern(client, _m(acc, 'value_created_24h')),
-    valueDestroyed: createMetricPattern1(client, _m(acc, 'value_destroyed')),
-    valueDestroyedSum: create_24hPattern(client, _m(acc, 'value_destroyed_24h')),
   };
 }
 
@@ -2462,6 +2480,39 @@ function createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} MvrvRealizedPattern
+ * @property {MetricPattern1<StoredF32>} mvrv
+ * @property {MetricPattern1<Dollars>} realizedCap
+ * @property {MetricPattern1<Cents>} realizedCapCents
+ * @property {CumulativeHeightPattern<Cents>} realizedLoss
+ * @property {_24hPattern<Cents>} realizedLossSum
+ * @property {CentsSatsUsdPattern} realizedPrice
+ * @property {BpsRatioPattern} realizedPriceRatio
+ * @property {CumulativeHeightPattern<Cents>} realizedProfit
+ * @property {_24hPattern<Cents>} realizedProfitSum
+ */
+
+/**
+ * Create a MvrvRealizedPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {MvrvRealizedPattern}
+ */
+function createMvrvRealizedPattern(client, acc) {
+  return {
+    mvrv: createMetricPattern1(client, _m(acc, 'mvrv')),
+    realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
+    realizedCapCents: createMetricPattern1(client, _m(acc, 'realized_cap_cents')),
+    realizedLoss: createCumulativeHeightPattern(client, _m(acc, 'realized_loss')),
+    realizedLossSum: create_24hPattern(client, _m(acc, 'realized_loss_24h')),
+    realizedPrice: createCentsSatsUsdPattern(client, _m(acc, 'realized_price')),
+    realizedPriceRatio: createBpsRatioPattern(client, _m(acc, 'realized_price_ratio')),
+    realizedProfit: createCumulativeHeightPattern(client, _m(acc, 'realized_profit')),
+    realizedProfitSum: create_24hPattern(client, _m(acc, 'realized_profit_24h')),
+  };
+}
+
+/**
  * @typedef {Object} _1m1w1y24hBtcCentsSatsUsdPattern
  * @property {BtcCentsSatsUsdPattern} _1m
  * @property {BtcCentsSatsUsdPattern} _1w
@@ -2640,35 +2691,6 @@ function createActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, acc) {
     realized: createMvrvRealizedPattern(client, acc),
     supply: createChangeHalvedTotalPattern(client, _m(acc, 'supply')),
     unrealized: createSupplyPattern(client, _m(acc, 'supply_in')),
-  };
-}
-
-/**
- * @typedef {Object} MvrvRealizedPattern
- * @property {MetricPattern1<StoredF32>} mvrv
- * @property {MetricPattern1<Dollars>} realizedCap
- * @property {MetricPattern1<Cents>} realizedCapCents
- * @property {CumulativeHeightPattern<Cents>} realizedLoss
- * @property {CentsSatsUsdPattern} realizedPrice
- * @property {BpsRatioPattern} realizedPriceRatio
- * @property {CumulativeHeightPattern<Cents>} realizedProfit
- */
-
-/**
- * Create a MvrvRealizedPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {MvrvRealizedPattern}
- */
-function createMvrvRealizedPattern(client, acc) {
-  return {
-    mvrv: createMetricPattern1(client, _m(acc, 'mvrv')),
-    realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
-    realizedCapCents: createMetricPattern1(client, _m(acc, 'realized_cap_cents')),
-    realizedLoss: createCumulativeHeightPattern(client, _m(acc, 'realized_loss')),
-    realizedPrice: createCentsSatsUsdPattern(client, _m(acc, 'realized_price')),
-    realizedPriceRatio: createBpsRatioPattern(client, _m(acc, 'realized_price_ratio')),
-    realizedProfit: createCumulativeHeightPattern(client, _m(acc, 'realized_profit')),
   };
 }
 
@@ -3250,44 +3272,6 @@ function createCumulativeHeightSumPattern(client, acc) {
     cumulative: createMetricPattern1(client, _m(acc, 'cumulative')),
     height: createMetricPattern18(client, acc),
     sum: create_1m1w1y24hPattern(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} _1m1wPattern2
- * @property {BpsPercentRatioPattern} _1m
- * @property {BpsPercentRatioPattern} _1w
- */
-
-/**
- * Create a _1m1wPattern2 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_1m1wPattern2}
- */
-function create_1m1wPattern2(client, acc) {
-  return {
-    _1m: createBpsPercentRatioPattern(client, _m(acc, '1m')),
-    _1w: createBpsPercentRatioPattern(client, _m(acc, '1w')),
-  };
-}
-
-/**
- * @typedef {Object} _1m1wPattern
- * @property {MetricPattern1<StoredF64>} _1m
- * @property {MetricPattern1<StoredF64>} _1w
- */
-
-/**
- * Create a _1m1wPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {_1m1wPattern}
- */
-function create_1m1wPattern(client, acc) {
-  return {
-    _1m: createMetricPattern1(client, _m(acc, '1m')),
-    _1w: createMetricPattern1(client, _m(acc, '1w')),
   };
 }
 
@@ -4808,7 +4792,6 @@ function create_24hPattern(client, acc) {
  * @property {_1m1w1y24hPattern<Cents>} adjustedValueCreatedSum
  * @property {_1m1w1y24hPattern<Cents>} adjustedValueDestroyedSum
  * @property {_1m1w1y24hPattern<StoredF64>} adjustedSopr
- * @property {_1m1wPattern} adjustedSoprEma
  */
 
 /**
@@ -4840,7 +4823,6 @@ function create_24hPattern(client, acc) {
  * @property {_1m1w1y24hPattern<Cents>} adjustedValueCreatedSum
  * @property {_1m1w1y24hPattern<Cents>} adjustedValueDestroyedSum
  * @property {_1m1w1y24hPattern<StoredF64>} adjustedSopr
- * @property {_1m1wPattern} adjustedSoprEma
  */
 
 /**
@@ -7021,7 +7003,6 @@ class BrkClient extends BrkClientBase {
               adjustedValueCreatedSum: create_1m1w1y24hPattern(this, 'adjusted_value_created'),
               adjustedValueDestroyedSum: create_1m1w1y24hPattern(this, 'adjusted_value_destroyed'),
               adjustedSopr: create_1m1w1y24hPattern(this, 'adjusted_sopr'),
-              adjustedSoprEma: create_1m1wPattern(this, 'adjusted_sopr_24h_ema'),
             },
             relative: {
               supplyInProfitRelToOwnSupply: createBpsPercentRatioPattern(this, 'supply_in_profit_rel_to_own_supply'),
@@ -7052,7 +7033,6 @@ class BrkClient extends BrkClientBase {
             adjustedValueCreatedSum: create_1m1w1y24hPattern(this, 'sth_adjusted_value_created'),
             adjustedValueDestroyedSum: create_1m1w1y24hPattern(this, 'sth_adjusted_value_destroyed'),
             adjustedSopr: create_1m1w1y24hPattern(this, 'sth_adjusted_sopr'),
-            adjustedSoprEma: create_1m1wPattern(this, 'sth_adjusted_sopr_24h_ema'),
           },
           lth: {
             supply: createChangeHalvedTotalPattern(this, 'lth_supply'),

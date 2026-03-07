@@ -14,7 +14,7 @@ use brk_error::Result;
 use brk_types::{Height, Indexes};
 use vecdb::Exit;
 
-use crate::distribution::state::RealizedState;
+use crate::{blocks, distribution::state::RealizedState};
 
 /// Polymorphic dispatch for realized metric types.
 ///
@@ -26,7 +26,7 @@ pub trait RealizedLike: Send + Sync {
     fn as_base_mut(&mut self) -> &mut RealizedBase;
     fn min_stateful_height_len(&self) -> usize;
     fn truncate_push(&mut self, height: Height, state: &RealizedState) -> Result<()>;
-    fn compute_rest_part1(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()>;
+    fn compute_rest_part1(&mut self, blocks: &blocks::Vecs, starting_indexes: &Indexes, exit: &Exit) -> Result<()>;
     fn compute_from_stateful(
         &mut self,
         starting_indexes: &Indexes,
@@ -42,8 +42,8 @@ impl RealizedLike for RealizedBase {
     fn truncate_push(&mut self, height: Height, state: &RealizedState) -> Result<()> {
         self.truncate_push(height, state)
     }
-    fn compute_rest_part1(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
-        self.compute_rest_part1(starting_indexes, exit)
+    fn compute_rest_part1(&mut self, blocks: &blocks::Vecs, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
+        self.compute_rest_part1(blocks, starting_indexes, exit)
     }
     fn compute_from_stateful(&mut self, starting_indexes: &Indexes, others: &[&RealizedBase], exit: &Exit) -> Result<()> {
         self.compute_from_stateful(starting_indexes, others, exit)
@@ -57,8 +57,8 @@ impl RealizedLike for RealizedFull {
     fn truncate_push(&mut self, height: Height, state: &RealizedState) -> Result<()> {
         self.truncate_push(height, state)
     }
-    fn compute_rest_part1(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
-        self.compute_rest_part1(starting_indexes, exit)
+    fn compute_rest_part1(&mut self, blocks: &blocks::Vecs, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
+        self.compute_rest_part1(blocks, starting_indexes, exit)
     }
     fn compute_from_stateful(&mut self, starting_indexes: &Indexes, others: &[&RealizedBase], exit: &Exit) -> Result<()> {
         self.compute_from_stateful(starting_indexes, others, exit)

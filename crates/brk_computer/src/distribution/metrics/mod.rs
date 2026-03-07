@@ -208,7 +208,7 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
             .compute_rest_part1(blocks, starting_indexes, exit)?;
 
         self.realized_mut()
-            .compute_rest_part1(starting_indexes, exit)?;
+            .compute_rest_part1(blocks, starting_indexes, exit)?;
 
         self.unrealized_mut()
             .compute_rest(prices, starting_indexes, exit)?;

@@ -33,4 +33,8 @@ impl<A> Windows<A> {
     pub fn as_mut_array(&mut self) -> [&mut A; 4] {
         [&mut self._24h, &mut self._1w, &mut self._1m, &mut self._1y]
     }
+
+    pub fn as_mut_array_from_1w(&mut self) -> [&mut A; 3] {
+        [&mut self._1w, &mut self._1m, &mut self._1y]
+    }
 }

@@ -46,6 +46,11 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     pub loss_value_created: ComputedFromHeight<Cents, M>,
     pub loss_value_destroyed: ComputedFromHeight<Cents, M>,
 
+    pub profit_value_created_sum: RollingWindows<Cents, M>,
+    pub profit_value_destroyed_sum: RollingWindows<Cents, M>,
+    pub loss_value_created_sum: RollingWindows<Cents, M>,
+    pub loss_value_destroyed_sum: RollingWindows<Cents, M>,
+
     pub capitulation_flow: LazyFromHeight<Dollars, Cents>,
     pub profit_flow: LazyFromHeight<Dollars, Cents>,
 
@@ -71,16 +76,16 @@ pub struct RealizedFull<M: StorageMode = Rw> {
 
     pub realized_cap_rel_to_own_market_cap: PercentFromHeight<BasisPoints32, M>,
 
-    pub realized_profit_sum: RollingWindows<Cents, M>,
-    pub realized_loss_sum: RollingWindows<Cents, M>,
+    pub realized_profit_sum_extended: RollingWindowsFrom1w<Cents, M>,
+    pub realized_loss_sum_extended: RollingWindowsFrom1w<Cents, M>,
     pub realized_profit_to_loss_ratio: RollingWindows<StoredF64, M>,
 
     pub value_created_sum_extended: RollingWindowsFrom1w<Cents, M>,
     pub value_destroyed_sum_extended: RollingWindowsFrom1w<Cents, M>,
     pub sopr_extended: RollingWindowsFrom1w<StoredF64, M>,
 
-    pub sent_in_profit_sum: RollingWindows<Sats, M>,
-    pub sent_in_loss_sum: RollingWindows<Sats, M>,
+    pub sent_in_profit_sum_extended: RollingWindowsFrom1w<Sats, M>,
+    pub sent_in_loss_sum_extended: RollingWindowsFrom1w<Sats, M>,
 
     pub realized_price_ratio_percentiles: ComputedFromHeightRatioPercentiles<M>,
     pub realized_price_ratio_std_dev: ComputedFromHeightRatioStdDevBands<M>,
@@ -102,6 +107,11 @@ impl RealizedFull {
         let loss_value_created = cfg.import("loss_value_created", v0)?;
         let loss_value_destroyed: ComputedFromHeight<Cents> =
             cfg.import("loss_value_destroyed", v0)?;
+
+        let profit_value_created_sum = cfg.import("profit_value_created", v1)?;
+        let profit_value_destroyed_sum = cfg.import("profit_value_destroyed", v1)?;
+        let loss_value_created_sum = cfg.import("loss_value_created", v1)?;
+        let loss_value_destroyed_sum = cfg.import("loss_value_destroyed", v1)?;
 
         let capitulation_flow = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
             &cfg.name("capitulation_flow"),
@@ -159,6 +169,10 @@ impl RealizedFull {
             profit_value_destroyed,
             loss_value_created,
             loss_value_destroyed,
+            profit_value_created_sum,
+            profit_value_destroyed_sum,
+            loss_value_created_sum,
+            loss_value_destroyed_sum,
             capitulation_flow,
             profit_flow,
             gross_pnl_sum,
@@ -178,15 +192,15 @@ impl RealizedFull {
             peak_regret_rel_to_realized_cap,
             realized_cap_rel_to_own_market_cap: cfg
                 .import("realized_cap_rel_to_own_market_cap", v1)?,
-            realized_profit_sum: cfg.import("realized_profit", v1)?,
-            realized_loss_sum: cfg.import("realized_loss", v1)?,
+            realized_profit_sum_extended: cfg.import("realized_profit", v1)?,
+            realized_loss_sum_extended: cfg.import("realized_loss", v1)?,
             realized_profit_to_loss_ratio: cfg
                 .import("realized_profit_to_loss_ratio", v1)?,
             value_created_sum_extended,
             value_destroyed_sum_extended,
             sopr_extended,
-            sent_in_profit_sum: cfg.import("sent_in_profit", v1)?,
-            sent_in_loss_sum: cfg.import("sent_in_loss", v1)?,
+            sent_in_profit_sum_extended: cfg.import("sent_in_profit", v1)?,
+            sent_in_loss_sum_extended: cfg.import("sent_in_loss", v1)?,
             realized_price_ratio_percentiles: ComputedFromHeightRatioPercentiles::forced_import(
                 cfg.db,
                 &realized_price_name,
@@ -276,10 +290,11 @@ impl RealizedFull {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
+        blocks: &blocks::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.base.compute_rest_part1(starting_indexes, exit)?;
+        self.base.compute_rest_part1(blocks, starting_indexes, exit)?;
         self.peak_regret
             .compute_rest(starting_indexes.height, exit)?;
         Ok(())
@@ -302,8 +317,9 @@ impl RealizedFull {
             exit,
         )?;
 
-        // Extended rolling windows (1w, 1m, 1y) for value_created/destroyed/sopr
         let window_starts = blocks.count.window_starts();
+
+        // Extended rolling windows (1w, 1m, 1y) for value_created/destroyed/sopr
         self.value_created_sum_extended.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
@@ -354,18 +370,43 @@ impl RealizedFull {
                 exit,
             )?;
 
-        // Sent in profit/loss rolling sums
-        let window_starts = blocks.count.window_starts();
-        self.sent_in_profit_sum.compute_rolling_sum(
+        // Sent in profit/loss extended rolling sums (1w, 1m, 1y)
+        self.sent_in_profit_sum_extended.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
             &self.base.sent_in_profit.height,
             exit,
         )?;
-        self.sent_in_loss_sum.compute_rolling_sum(
+        self.sent_in_loss_sum_extended.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
             &self.base.sent_in_loss.height,
+            exit,
+        )?;
+
+        // Profit/loss value created/destroyed rolling sums
+        self.profit_value_created_sum.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.profit_value_created.height,
+            exit,
+        )?;
+        self.profit_value_destroyed_sum.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.profit_value_destroyed.height,
+            exit,
+        )?;
+        self.loss_value_created_sum.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.loss_value_created.height,
+            exit,
+        )?;
+        self.loss_value_destroyed_sum.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.loss_value_destroyed.height,
             exit,
         )?;
 
@@ -377,7 +418,6 @@ impl RealizedFull {
             exit,
         )?;
 
-        let window_starts = blocks.count.window_starts();
         self.gross_pnl_sum.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
@@ -471,15 +511,14 @@ impl RealizedFull {
             )?;
         }
 
-        // Extended: realized profit/loss rolling sums
-        let window_starts = blocks.count.window_starts();
-        self.realized_profit_sum.compute_rolling_sum(
+        // Extended: realized profit/loss rolling sums (1w, 1m, 1y)
+        self.realized_profit_sum_extended.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
             &self.base.core.minimal.realized_profit.height,
             exit,
         )?;
-        self.realized_loss_sum.compute_rolling_sum(
+        self.realized_loss_sum_extended.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
             &self.base.core.minimal.realized_loss.height,
@@ -496,12 +535,18 @@ impl RealizedFull {
             )?;
 
         // Realized profit to loss ratios
+        self.realized_profit_to_loss_ratio._24h.compute_binary::<Cents, Cents, RatioCents64>(
+            starting_indexes.height,
+            &self.base.core.minimal.realized_profit_sum._24h.height,
+            &self.base.core.minimal.realized_loss_sum._24h.height,
+            exit,
+        )?;
         for ((ratio, profit), loss) in self
             .realized_profit_to_loss_ratio
-            .as_mut_array()
+            .as_mut_array_from_1w()
             .into_iter()
-            .zip(self.realized_profit_sum.as_array())
-            .zip(self.realized_loss_sum.as_array())
+            .zip(self.realized_profit_sum_extended.as_array())
+            .zip(self.realized_loss_sum_extended.as_array())
         {
             ratio.compute_binary::<Cents, Cents, RatioCents64>(
                 starting_indexes.height,

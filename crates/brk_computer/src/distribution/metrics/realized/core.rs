@@ -117,10 +117,11 @@ impl RealizedCore {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
+        blocks: &blocks::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.minimal.compute_rest_part1(starting_indexes, exit)?;
+        self.minimal.compute_rest_part1(blocks, starting_indexes, exit)?;
 
         self.net_realized_pnl
             .compute(starting_indexes.height, exit, |vec| {

@@ -5,8 +5,9 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
+    blocks,
     distribution::state::RealizedOps,
-    internal::ComputedFromHeight,
+    internal::{ComputedFromHeight, RollingWindow24h},
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -22,6 +23,9 @@ pub struct RealizedBase<M: StorageMode = Rw> {
 
     pub sent_in_profit: ComputedFromHeight<Sats, M>,
     pub sent_in_loss: ComputedFromHeight<Sats, M>,
+
+    pub sent_in_profit_sum: RollingWindow24h<Sats, M>,
+    pub sent_in_loss_sum: RollingWindow24h<Sats, M>,
 }
 
 impl RealizedBase {
@@ -32,6 +36,8 @@ impl RealizedBase {
             core: RealizedCore::forced_import(cfg)?,
             sent_in_profit: cfg.import("sent_in_profit", v1)?,
             sent_in_loss: cfg.import("sent_in_loss", v1)?,
+            sent_in_profit_sum: cfg.import("sent_in_profit", v1)?,
+            sent_in_loss_sum: cfg.import("sent_in_loss", v1)?,
         })
     }
 
@@ -78,9 +84,23 @@ impl RealizedBase {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
+        blocks: &blocks::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.core.compute_rest_part1(starting_indexes, exit)
+        self.core.compute_rest_part1(blocks, starting_indexes, exit)?;
+        self.sent_in_profit_sum.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_24h_ago,
+            &self.sent_in_profit.height,
+            exit,
+        )?;
+        self.sent_in_loss_sum.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.count.height_24h_ago,
+            &self.sent_in_loss.height,
+            exit,
+        )?;
+        Ok(())
     }
 }
