@@ -724,6 +724,11 @@
  *
  * @typedef {number} StoredF64
  */
+/**
+ * Fixed-size 64-bit signed integer optimized for on-disk storage
+ *
+ * @typedef {number} StoredI64
+ */
 /** @typedef {number} StoredI8 */
 /** @typedef {number} StoredU16 */
 /**
@@ -2934,7 +2939,7 @@ function createBtcCentsSatsUsdPattern(client, acc) {
 
 /**
  * @typedef {Object} CoinblocksCoindaysSentPattern
- * @property {CumulativeHeightSumPattern<StoredF64>} coinblocksDestroyed
+ * @property {CumulativeHeightPattern<StoredF64>} coinblocksDestroyed
  * @property {CumulativeHeightSumPattern<StoredF64>} coindaysDestroyed
  * @property {BaseCumulativePattern} sent
  * @property {_2wPattern} sentEma
@@ -2948,7 +2953,7 @@ function createBtcCentsSatsUsdPattern(client, acc) {
  */
 function createCoinblocksCoindaysSentPattern(client, acc) {
   return {
-    coinblocksDestroyed: createCumulativeHeightSumPattern(client, _m(acc, 'coinblocks_destroyed')),
+    coinblocksDestroyed: createCumulativeHeightPattern(client, _m(acc, 'coinblocks_destroyed')),
     coindaysDestroyed: createCumulativeHeightSumPattern(client, _m(acc, 'coindays_destroyed')),
     sent: createBaseCumulativePattern(client, _m(acc, 'sent')),
     sentEma: create_2wPattern(client, _m(acc, 'sent_ema_2w')),
@@ -3314,7 +3319,7 @@ function createCentsUsdPattern(client, acc) {
 
 /**
  * @typedef {Object} ChangeRatePattern
- * @property {_1m1w1y24hPattern<StoredU64>} change
+ * @property {_1m1w1y24hPattern<StoredI64>} change
  * @property {_1m1w1y24hPattern2} rate
  */
 
@@ -4495,77 +4500,24 @@ function create_2wPattern(client, acc) {
 /**
  * @typedef {Object} MetricsTree_Pools_Major
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} unknown
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} ultimuspool
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} terrapool
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} luxor
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} onethash
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} btccom
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} huobipool
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} wayicn
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} canoepool
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} btctop
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} bitcoincom
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} gbminers
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} asicminer
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} bitminter
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} bitcoinrussia
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} btcguild
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} eligius
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} ozcoin
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} eclipsemc
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} maxbtc
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} triplemining
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} coinlab
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} pool50btc
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} ghashio
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} bitparking
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} polmine
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} kncminer
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} f2pool
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} hhtt
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} megabigpower
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} nmcbit
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} yourbtcnet
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} braiinspool
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} antpool
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} kanopool
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} solock
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} nicehash
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} bitclub
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} bitcoinaffiliatenetwork
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} btcc
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} bwpool
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} exxbw
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} bitfury
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} digitalbtc
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} okexpool
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} bixin
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} tatmaspool
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} viabtc
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} connectbtc
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} batpool
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} btpool
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} fiftyeightcoin
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} bitcoinindia
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} dpool
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} poolin
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} secretsuperstar
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} tigerpoolnet
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} sigmapoolcom
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} okpooltop
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} tangpool
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} bytepool
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} spiderpool
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} novablock
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} binancepool
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} lubiancom
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} okkong
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} emcdpool
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} foundryusa
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} sbicrypto
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} marapool
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} kucoinpool
- * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} pegapool
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} secpool
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} ocean
  * @property {_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern} whitepool
@@ -4574,22 +4526,54 @@ function create_2wPattern(client, acc) {
 /**
  * @typedef {Object} MetricsTree_Pools_Minor
  * @property {BlocksDominancePattern} blockfills
+ * @property {BlocksDominancePattern} ultimuspool
+ * @property {BlocksDominancePattern} terrapool
+ * @property {BlocksDominancePattern} onethash
  * @property {BlocksDominancePattern} bitfarms
+ * @property {BlocksDominancePattern} huobipool
+ * @property {BlocksDominancePattern} wayicn
+ * @property {BlocksDominancePattern} canoepool
+ * @property {BlocksDominancePattern} bitcoincom
  * @property {BlocksDominancePattern} pool175btc
+ * @property {BlocksDominancePattern} gbminers
  * @property {BlocksDominancePattern} axbt
+ * @property {BlocksDominancePattern} asicminer
+ * @property {BlocksDominancePattern} bitminter
+ * @property {BlocksDominancePattern} bitcoinrussia
  * @property {BlocksDominancePattern} btcserv
  * @property {BlocksDominancePattern} simplecoinus
+ * @property {BlocksDominancePattern} ozcoin
+ * @property {BlocksDominancePattern} eclipsemc
+ * @property {BlocksDominancePattern} maxbtc
+ * @property {BlocksDominancePattern} triplemining
+ * @property {BlocksDominancePattern} coinlab
+ * @property {BlocksDominancePattern} pool50btc
+ * @property {BlocksDominancePattern} ghashio
  * @property {BlocksDominancePattern} stminingcorp
+ * @property {BlocksDominancePattern} bitparking
  * @property {BlocksDominancePattern} mmpool
+ * @property {BlocksDominancePattern} polmine
+ * @property {BlocksDominancePattern} kncminer
  * @property {BlocksDominancePattern} bitalo
+ * @property {BlocksDominancePattern} hhtt
+ * @property {BlocksDominancePattern} megabigpower
  * @property {BlocksDominancePattern} mtred
+ * @property {BlocksDominancePattern} nmcbit
+ * @property {BlocksDominancePattern} yourbtcnet
  * @property {BlocksDominancePattern} givemecoins
  * @property {BlocksDominancePattern} multicoinco
  * @property {BlocksDominancePattern} bcpoolio
  * @property {BlocksDominancePattern} cointerra
+ * @property {BlocksDominancePattern} kanopool
+ * @property {BlocksDominancePattern} solock
  * @property {BlocksDominancePattern} ckpool
+ * @property {BlocksDominancePattern} nicehash
+ * @property {BlocksDominancePattern} bitclub
+ * @property {BlocksDominancePattern} bitcoinaffiliatenetwork
+ * @property {BlocksDominancePattern} exxbw
  * @property {BlocksDominancePattern} bitsolo
  * @property {BlocksDominancePattern} twentyoneinc
+ * @property {BlocksDominancePattern} digitalbtc
  * @property {BlocksDominancePattern} eightbaochi
  * @property {BlocksDominancePattern} mybtccoinpool
  * @property {BlocksDominancePattern} tbdice
@@ -4597,11 +4581,19 @@ function create_2wPattern(client, acc) {
  * @property {BlocksDominancePattern} nexious
  * @property {BlocksDominancePattern} bravomining
  * @property {BlocksDominancePattern} hotpool
+ * @property {BlocksDominancePattern} okexpool
  * @property {BlocksDominancePattern} bcmonster
  * @property {BlocksDominancePattern} onehash
+ * @property {BlocksDominancePattern} bixin
+ * @property {BlocksDominancePattern} tatmaspool
+ * @property {BlocksDominancePattern} connectbtc
+ * @property {BlocksDominancePattern} batpool
  * @property {BlocksDominancePattern} waterhole
  * @property {BlocksDominancePattern} dcexploration
  * @property {BlocksDominancePattern} dcex
+ * @property {BlocksDominancePattern} btpool
+ * @property {BlocksDominancePattern} fiftyeightcoin
+ * @property {BlocksDominancePattern} bitcoinindia
  * @property {BlocksDominancePattern} shawnp0wers
  * @property {BlocksDominancePattern} phashio
  * @property {BlocksDominancePattern} rigpool
@@ -4609,19 +4601,32 @@ function create_2wPattern(client, acc) {
  * @property {BlocksDominancePattern} sevenpool
  * @property {BlocksDominancePattern} miningkings
  * @property {BlocksDominancePattern} hashbx
+ * @property {BlocksDominancePattern} dpool
  * @property {BlocksDominancePattern} rawpool
  * @property {BlocksDominancePattern} haominer
  * @property {BlocksDominancePattern} helix
  * @property {BlocksDominancePattern} bitcoinukraine
+ * @property {BlocksDominancePattern} secretsuperstar
+ * @property {BlocksDominancePattern} tigerpoolnet
+ * @property {BlocksDominancePattern} sigmapoolcom
+ * @property {BlocksDominancePattern} okpooltop
  * @property {BlocksDominancePattern} hummerpool
+ * @property {BlocksDominancePattern} tangpool
+ * @property {BlocksDominancePattern} bytepool
+ * @property {BlocksDominancePattern} novablock
  * @property {BlocksDominancePattern} miningcity
  * @property {BlocksDominancePattern} minerium
+ * @property {BlocksDominancePattern} lubiancom
+ * @property {BlocksDominancePattern} okkong
  * @property {BlocksDominancePattern} aaopool
+ * @property {BlocksDominancePattern} emcdpool
  * @property {BlocksDominancePattern} arkpool
  * @property {BlocksDominancePattern} purebtccom
+ * @property {BlocksDominancePattern} kucoinpool
  * @property {BlocksDominancePattern} entrustcharitypool
  * @property {BlocksDominancePattern} okminer
  * @property {BlocksDominancePattern} titan
+ * @property {BlocksDominancePattern} pegapool
  * @property {BlocksDominancePattern} btcnuggets
  * @property {BlocksDominancePattern} cloudhashing
  * @property {BlocksDominancePattern} digitalxmintsy
@@ -6768,99 +6773,78 @@ class BrkClient extends BrkClientBase {
         heightToPool: createMetricPattern18(this, 'pool'),
         major: {
           unknown: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'unknown'),
-          ultimuspool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'ultimuspool'),
-          terrapool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'terrapool'),
           luxor: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'luxor'),
-          onethash: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'onethash'),
           btccom: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'btccom'),
-          huobipool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'huobipool'),
-          wayicn: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'wayicn'),
-          canoepool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'canoepool'),
           btctop: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'btctop'),
-          bitcoincom: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'bitcoincom'),
-          gbminers: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'gbminers'),
-          asicminer: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'asicminer'),
-          bitminter: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'bitminter'),
-          bitcoinrussia: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'bitcoinrussia'),
           btcguild: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'btcguild'),
           eligius: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'eligius'),
-          ozcoin: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'ozcoin'),
-          eclipsemc: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'eclipsemc'),
-          maxbtc: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'maxbtc'),
-          triplemining: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'triplemining'),
-          coinlab: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'coinlab'),
-          pool50btc: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'pool50btc'),
-          ghashio: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'ghashio'),
-          bitparking: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'bitparking'),
-          polmine: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'polmine'),
-          kncminer: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'kncminer'),
           f2pool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'f2pool'),
-          hhtt: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'hhtt'),
-          megabigpower: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'megabigpower'),
-          nmcbit: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'nmcbit'),
-          yourbtcnet: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'yourbtcnet'),
           braiinspool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'braiinspool'),
           antpool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'antpool'),
-          kanopool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'kanopool'),
-          solock: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'solock'),
-          nicehash: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'nicehash'),
-          bitclub: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'bitclub'),
-          bitcoinaffiliatenetwork: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'bitcoinaffiliatenetwork'),
           btcc: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'btcc'),
           bwpool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'bwpool'),
-          exxbw: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'exxbw'),
           bitfury: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'bitfury'),
-          digitalbtc: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'digitalbtc'),
-          okexpool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'okexpool'),
-          bixin: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'bixin'),
-          tatmaspool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'tatmaspool'),
           viabtc: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'viabtc'),
-          connectbtc: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'connectbtc'),
-          batpool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'batpool'),
-          btpool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'btpool'),
-          fiftyeightcoin: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'fiftyeightcoin'),
-          bitcoinindia: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'bitcoinindia'),
-          dpool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'dpool'),
           poolin: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'poolin'),
-          secretsuperstar: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'secretsuperstar'),
-          tigerpoolnet: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'tigerpoolnet'),
-          sigmapoolcom: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'sigmapoolcom'),
-          okpooltop: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'okpooltop'),
-          tangpool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'tangpool'),
-          bytepool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'bytepool'),
           spiderpool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'spiderpool'),
-          novablock: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'novablock'),
           binancepool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'binancepool'),
-          lubiancom: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'lubiancom'),
-          okkong: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'okkong'),
-          emcdpool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'emcdpool'),
           foundryusa: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'foundryusa'),
           sbicrypto: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'sbicrypto'),
           marapool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'marapool'),
-          kucoinpool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'kucoinpool'),
-          pegapool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'pegapool'),
           secpool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'secpool'),
           ocean: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'ocean'),
           whitepool: create_1m1w1y24hBaseBpsCumulativeHeightPercentRatioSumPattern(this, 'whitepool'),
         },
         minor: {
           blockfills: createBlocksDominancePattern(this, 'blockfills'),
+          ultimuspool: createBlocksDominancePattern(this, 'ultimuspool'),
+          terrapool: createBlocksDominancePattern(this, 'terrapool'),
+          onethash: createBlocksDominancePattern(this, 'onethash'),
           bitfarms: createBlocksDominancePattern(this, 'bitfarms'),
+          huobipool: createBlocksDominancePattern(this, 'huobipool'),
+          wayicn: createBlocksDominancePattern(this, 'wayicn'),
+          canoepool: createBlocksDominancePattern(this, 'canoepool'),
+          bitcoincom: createBlocksDominancePattern(this, 'bitcoincom'),
           pool175btc: createBlocksDominancePattern(this, 'pool175btc'),
+          gbminers: createBlocksDominancePattern(this, 'gbminers'),
           axbt: createBlocksDominancePattern(this, 'axbt'),
+          asicminer: createBlocksDominancePattern(this, 'asicminer'),
+          bitminter: createBlocksDominancePattern(this, 'bitminter'),
+          bitcoinrussia: createBlocksDominancePattern(this, 'bitcoinrussia'),
           btcserv: createBlocksDominancePattern(this, 'btcserv'),
           simplecoinus: createBlocksDominancePattern(this, 'simplecoinus'),
+          ozcoin: createBlocksDominancePattern(this, 'ozcoin'),
+          eclipsemc: createBlocksDominancePattern(this, 'eclipsemc'),
+          maxbtc: createBlocksDominancePattern(this, 'maxbtc'),
+          triplemining: createBlocksDominancePattern(this, 'triplemining'),
+          coinlab: createBlocksDominancePattern(this, 'coinlab'),
+          pool50btc: createBlocksDominancePattern(this, 'pool50btc'),
+          ghashio: createBlocksDominancePattern(this, 'ghashio'),
           stminingcorp: createBlocksDominancePattern(this, 'stminingcorp'),
+          bitparking: createBlocksDominancePattern(this, 'bitparking'),
           mmpool: createBlocksDominancePattern(this, 'mmpool'),
+          polmine: createBlocksDominancePattern(this, 'polmine'),
+          kncminer: createBlocksDominancePattern(this, 'kncminer'),
           bitalo: createBlocksDominancePattern(this, 'bitalo'),
+          hhtt: createBlocksDominancePattern(this, 'hhtt'),
+          megabigpower: createBlocksDominancePattern(this, 'megabigpower'),
           mtred: createBlocksDominancePattern(this, 'mtred'),
+          nmcbit: createBlocksDominancePattern(this, 'nmcbit'),
+          yourbtcnet: createBlocksDominancePattern(this, 'yourbtcnet'),
           givemecoins: createBlocksDominancePattern(this, 'givemecoins'),
           multicoinco: createBlocksDominancePattern(this, 'multicoinco'),
           bcpoolio: createBlocksDominancePattern(this, 'bcpoolio'),
           cointerra: createBlocksDominancePattern(this, 'cointerra'),
+          kanopool: createBlocksDominancePattern(this, 'kanopool'),
+          solock: createBlocksDominancePattern(this, 'solock'),
           ckpool: createBlocksDominancePattern(this, 'ckpool'),
+          nicehash: createBlocksDominancePattern(this, 'nicehash'),
+          bitclub: createBlocksDominancePattern(this, 'bitclub'),
+          bitcoinaffiliatenetwork: createBlocksDominancePattern(this, 'bitcoinaffiliatenetwork'),
+          exxbw: createBlocksDominancePattern(this, 'exxbw'),
           bitsolo: createBlocksDominancePattern(this, 'bitsolo'),
           twentyoneinc: createBlocksDominancePattern(this, 'twentyoneinc'),
+          digitalbtc: createBlocksDominancePattern(this, 'digitalbtc'),
           eightbaochi: createBlocksDominancePattern(this, 'eightbaochi'),
           mybtccoinpool: createBlocksDominancePattern(this, 'mybtccoinpool'),
           tbdice: createBlocksDominancePattern(this, 'tbdice'),
@@ -6868,11 +6852,19 @@ class BrkClient extends BrkClientBase {
           nexious: createBlocksDominancePattern(this, 'nexious'),
           bravomining: createBlocksDominancePattern(this, 'bravomining'),
           hotpool: createBlocksDominancePattern(this, 'hotpool'),
+          okexpool: createBlocksDominancePattern(this, 'okexpool'),
           bcmonster: createBlocksDominancePattern(this, 'bcmonster'),
           onehash: createBlocksDominancePattern(this, 'onehash'),
+          bixin: createBlocksDominancePattern(this, 'bixin'),
+          tatmaspool: createBlocksDominancePattern(this, 'tatmaspool'),
+          connectbtc: createBlocksDominancePattern(this, 'connectbtc'),
+          batpool: createBlocksDominancePattern(this, 'batpool'),
           waterhole: createBlocksDominancePattern(this, 'waterhole'),
           dcexploration: createBlocksDominancePattern(this, 'dcexploration'),
           dcex: createBlocksDominancePattern(this, 'dcex'),
+          btpool: createBlocksDominancePattern(this, 'btpool'),
+          fiftyeightcoin: createBlocksDominancePattern(this, 'fiftyeightcoin'),
+          bitcoinindia: createBlocksDominancePattern(this, 'bitcoinindia'),
           shawnp0wers: createBlocksDominancePattern(this, 'shawnp0wers'),
           phashio: createBlocksDominancePattern(this, 'phashio'),
           rigpool: createBlocksDominancePattern(this, 'rigpool'),
@@ -6880,19 +6872,32 @@ class BrkClient extends BrkClientBase {
           sevenpool: createBlocksDominancePattern(this, 'sevenpool'),
           miningkings: createBlocksDominancePattern(this, 'miningkings'),
           hashbx: createBlocksDominancePattern(this, 'hashbx'),
+          dpool: createBlocksDominancePattern(this, 'dpool'),
           rawpool: createBlocksDominancePattern(this, 'rawpool'),
           haominer: createBlocksDominancePattern(this, 'haominer'),
           helix: createBlocksDominancePattern(this, 'helix'),
           bitcoinukraine: createBlocksDominancePattern(this, 'bitcoinukraine'),
+          secretsuperstar: createBlocksDominancePattern(this, 'secretsuperstar'),
+          tigerpoolnet: createBlocksDominancePattern(this, 'tigerpoolnet'),
+          sigmapoolcom: createBlocksDominancePattern(this, 'sigmapoolcom'),
+          okpooltop: createBlocksDominancePattern(this, 'okpooltop'),
           hummerpool: createBlocksDominancePattern(this, 'hummerpool'),
+          tangpool: createBlocksDominancePattern(this, 'tangpool'),
+          bytepool: createBlocksDominancePattern(this, 'bytepool'),
+          novablock: createBlocksDominancePattern(this, 'novablock'),
           miningcity: createBlocksDominancePattern(this, 'miningcity'),
           minerium: createBlocksDominancePattern(this, 'minerium'),
+          lubiancom: createBlocksDominancePattern(this, 'lubiancom'),
+          okkong: createBlocksDominancePattern(this, 'okkong'),
           aaopool: createBlocksDominancePattern(this, 'aaopool'),
+          emcdpool: createBlocksDominancePattern(this, 'emcdpool'),
           arkpool: createBlocksDominancePattern(this, 'arkpool'),
           purebtccom: createBlocksDominancePattern(this, 'purebtccom'),
+          kucoinpool: createBlocksDominancePattern(this, 'kucoinpool'),
           entrustcharitypool: createBlocksDominancePattern(this, 'entrustcharitypool'),
           okminer: createBlocksDominancePattern(this, 'okminer'),
           titan: createBlocksDominancePattern(this, 'titan'),
+          pegapool: createBlocksDominancePattern(this, 'pegapool'),
           btcnuggets: createBlocksDominancePattern(this, 'btcnuggets'),
           cloudhashing: createBlocksDominancePattern(this, 'cloudhashing'),
           digitalxmintsy: createBlocksDominancePattern(this, 'digitalxmintsy'),

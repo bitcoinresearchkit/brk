@@ -6,9 +6,9 @@
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Height, Version};
+use brk_types::{BasisPoints32, Height, Version};
 use schemars::JsonSchema;
-use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
+use vecdb::{AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, VecIndex};
 
 use crate::{
     indexes,
@@ -22,7 +22,7 @@ where
     C: NumericValue + JsonSchema,
 {
     pub change: RollingWindows<C, M>,
-    pub rate: PercentRollingWindows<BasisPoints16, M>,
+    pub rate: PercentRollingWindows<BasisPoints32, M>,
     _phantom: std::marker::PhantomData<S>,
 }
 
@@ -67,12 +67,22 @@ where
         // Step 1: change = current - ago
         for (change_w, starts) in self.change.0.as_mut_array().into_iter().zip(windows.as_array())
         {
+            // Pre-collect source from earliest ago_h to end for fast array indexing
+            let skip = change_w.height.len();
+            let source_len = source.len();
+            let offset = if skip > 0 && skip < starts.len() {
+                starts.collect_one_at(skip).unwrap().to_usize()
+            } else {
+                0
+            };
+            let source_data = source.collect_range_at(offset, source_len);
+
             change_w.height.compute_transform(
                 max_from,
                 *starts,
                 |(h, ago_h, ..)| {
-                    let current: f64 = source.collect_one(h).unwrap_or_default().into();
-                    let ago: f64 = source.collect_one(ago_h).unwrap_or_default().into();
+                    let current: f64 = source_data[h.to_usize() - offset].into();
+                    let ago: f64 = source_data[ago_h.to_usize() - offset].into();
                     (h, C::from(current - ago))
                 },
                 exit,
@@ -96,7 +106,7 @@ where
                     let change_f: f64 = change.into();
                     let ago = current_f - change_f;
                     let rate = if ago == 0.0 { 0.0 } else { change_f / ago };
-                    (h, BasisPoints16::from(rate))
+                    (h, BasisPoints32::from(rate))
                 },
                 exit,
             )?;

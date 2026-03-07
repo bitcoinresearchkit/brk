@@ -71,7 +71,7 @@ impl std::fmt::Display for StoredBool {
 impl Formattable for StoredBool {
     #[inline(always)]
     fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
-        use std::fmt::Write;
-        write!(f, "{}", self)
+        f.push_str(if self.is_true() { "true" } else { "false" });
+        Ok(())
     }
 }

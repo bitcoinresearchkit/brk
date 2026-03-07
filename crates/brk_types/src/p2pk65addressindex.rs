@@ -105,7 +105,6 @@ impl std::fmt::Display for P2PK65AddressIndex {
 impl Formattable for P2PK65AddressIndex {
     #[inline(always)]
     fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
-        use std::fmt::Write;
-        write!(f, "{}", self)
+        self.0.fmt_csv(f)
     }
 }

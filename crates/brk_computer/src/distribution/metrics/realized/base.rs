@@ -12,6 +12,7 @@ use crate::{
     internal::{
         ByUnit, ComputedFromHeight, ComputedFromHeightCumulative, LazyFromHeight,
         NegCentsUnsignedToDollars, RatioCents64, RollingWindows, SatsToCents,
+        ValueFromHeightCumulative,
     },
     prices,
 };

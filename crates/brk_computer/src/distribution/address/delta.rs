@@ -24,7 +24,7 @@ impl DeltaVecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let version = version + Version::ONE;
+        let version = version + Version::TWO;
 
         let all = RollingDelta::forced_import(db, "addr_count", version, indexes)?;
 

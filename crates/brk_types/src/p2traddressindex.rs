@@ -106,8 +106,6 @@ impl std::fmt::Display for P2TRAddressIndex {
 impl Formattable for P2TRAddressIndex {
     #[inline(always)]
     fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
-        f.push_str(buf.format((self.0).0));
-        Ok(())
+        self.0.fmt_csv(f)
     }
 }
