@@ -2562,19 +2562,6 @@ class _10y2y3y4y5y6y8yPattern:
         self._6y: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, '6y'))
         self._8y: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, '8y'))
 
-class ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.activity: CoinblocksCoindaysSentPattern = CoinblocksCoindaysSentPattern(client, acc)
-        self.cost_basis: MaxMinPattern = MaxMinPattern(client, _m(acc, 'cost_basis'))
-        self.outputs: UtxoPattern = UtxoPattern(client, _m(acc, 'utxo_count'))
-        self.realized: MvrvNegNetRealizedSentSoprValuePattern = MvrvNegNetRealizedSentSoprValuePattern(client, acc)
-        self.relative: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
-        self.supply: DeltaHalvedTotalPattern = DeltaHalvedTotalPattern(client, _m(acc, 'supply'))
-        self.unrealized: InvestedInvestorNegNetSupplyUnrealizedPattern = InvestedInvestorNegNetSupplyUnrealizedPattern(client, acc)
-
 class ActivityAddrOutputsRealizedSupplyUnrealizedPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2589,6 +2576,18 @@ class ActivityAddrOutputsRealizedSupplyUnrealizedPattern:
         self.unrealized: SupplyPattern = SupplyPattern(client, _m(acc, 'supply_in'))
 
 class ActivityOutputsRealizedRelativeSupplyUnrealizedPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.activity: CoinblocksCoindaysSentPattern = CoinblocksCoindaysSentPattern(client, acc)
+        self.outputs: UtxoPattern = UtxoPattern(client, _m(acc, 'utxo_count'))
+        self.realized: MvrvNegNetRealizedSentSoprValuePattern = MvrvNegNetRealizedSentSoprValuePattern(client, acc)
+        self.relative: SupplyPattern2 = SupplyPattern2(client, _m(acc, 'supply'))
+        self.supply: DeltaHalvedTotalPattern = DeltaHalvedTotalPattern(client, _m(acc, 'supply'))
+        self.unrealized: InvestedInvestorNegNetSupplyUnrealizedPattern = InvestedInvestorNegNetSupplyUnrealizedPattern(client, acc)
+
+class ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
@@ -2897,13 +2896,13 @@ class ChangeRatePattern2:
         self.change: _1m1w1y24hPattern[StoredI64] = _1m1w1y24hPattern(client, _m(acc, 'change'))
         self.rate: _1m1w1y24hPattern2 = _1m1w1y24hPattern2(client, _m(acc, 'rate'))
 
-class MaxMinPattern:
+class HeightSumPattern:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.max: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'max'))
-        self.min: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'min'))
+        self.height: MetricPattern18[StoredU64] = MetricPattern18(client, acc)
+        self.sum: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, _m(acc, 'sum'))
 
 class SdSmaPattern:
     """Pattern struct for repeated tree structure."""
@@ -4360,106 +4359,106 @@ class MetricsTree_Distribution_UtxoCohorts_AgeRange:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.up_to_1h: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_1h_old')
-        self._1h_to_1d: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_1h_to_1d_old')
-        self._1d_to_1w: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_1d_to_1w_old')
-        self._1w_to_1m: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_1w_to_1m_old')
-        self._1m_to_2m: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_1m_to_2m_old')
-        self._2m_to_3m: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_2m_to_3m_old')
-        self._3m_to_4m: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_3m_to_4m_old')
-        self._4m_to_5m: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_4m_to_5m_old')
-        self._5m_to_6m: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_5m_to_6m_old')
-        self._6m_to_1y: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_6m_to_1y_old')
-        self._1y_to_2y: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_1y_to_2y_old')
-        self._2y_to_3y: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_2y_to_3y_old')
-        self._3y_to_4y: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_3y_to_4y_old')
-        self._4y_to_5y: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_4y_to_5y_old')
-        self._5y_to_6y: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_5y_to_6y_old')
-        self._6y_to_7y: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_6y_to_7y_old')
-        self._7y_to_8y: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_7y_to_8y_old')
-        self._8y_to_10y: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_8y_to_10y_old')
-        self._10y_to_12y: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_10y_to_12y_old')
-        self._12y_to_15y: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_12y_to_15y_old')
-        self.from_15y: ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_15y_old')
+        self.up_to_1h: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_1h_old')
+        self._1h_to_1d: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_1h_to_1d_old')
+        self._1d_to_1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_1d_to_1w_old')
+        self._1w_to_1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_1w_to_1m_old')
+        self._1m_to_2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_1m_to_2m_old')
+        self._2m_to_3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_2m_to_3m_old')
+        self._3m_to_4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_3m_to_4m_old')
+        self._4m_to_5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_4m_to_5m_old')
+        self._5m_to_6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_5m_to_6m_old')
+        self._6m_to_1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_6m_to_1y_old')
+        self._1y_to_2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_1y_to_2y_old')
+        self._2y_to_3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_2y_to_3y_old')
+        self._3y_to_4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_3y_to_4y_old')
+        self._4y_to_5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_4y_to_5y_old')
+        self._5y_to_6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_5y_to_6y_old')
+        self._6y_to_7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_6y_to_7y_old')
+        self._7y_to_8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_7y_to_8y_old')
+        self._8y_to_10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_8y_to_10y_old')
+        self._10y_to_12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_10y_to_12y_old')
+        self._12y_to_15y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_12y_to_15y_old')
+        self.from_15y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_15y_old')
 
 class MetricsTree_Distribution_UtxoCohorts_MaxAge:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_1w_old')
-        self._1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_1m_old')
-        self._2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_2m_old')
-        self._3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_3m_old')
-        self._4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_4m_old')
-        self._5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_5m_old')
-        self._6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_6m_old')
-        self._1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_1y_old')
-        self._2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_2y_old')
-        self._3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_3y_old')
-        self._4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_4y_old')
-        self._5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_5y_old')
-        self._6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_6y_old')
-        self._7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_7y_old')
-        self._8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_8y_old')
-        self._10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_10y_old')
-        self._12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_12y_old')
-        self._15y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_under_15y_old')
+        self._1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_1w_old')
+        self._1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_1m_old')
+        self._2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_2m_old')
+        self._3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_3m_old')
+        self._4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_4m_old')
+        self._5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_5m_old')
+        self._6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_6m_old')
+        self._1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_1y_old')
+        self._2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_2y_old')
+        self._3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_3y_old')
+        self._4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_4y_old')
+        self._5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_5y_old')
+        self._6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_6y_old')
+        self._7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_7y_old')
+        self._8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_8y_old')
+        self._10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_10y_old')
+        self._12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_12y_old')
+        self._15y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_under_15y_old')
 
 class MetricsTree_Distribution_UtxoCohorts_MinAge:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._1d: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_1d_old')
-        self._1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_1w_old')
-        self._1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_1m_old')
-        self._2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_2m_old')
-        self._3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_3m_old')
-        self._4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_4m_old')
-        self._5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_5m_old')
-        self._6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_6m_old')
-        self._1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_1y_old')
-        self._2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_2y_old')
-        self._3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_3y_old')
-        self._4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_4y_old')
-        self._5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_5y_old')
-        self._6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_6y_old')
-        self._7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_7y_old')
-        self._8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_8y_old')
-        self._10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_10y_old')
-        self._12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'utxos_over_12y_old')
+        self._1d: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_1d_old')
+        self._1w: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_1w_old')
+        self._1m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_1m_old')
+        self._2m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_2m_old')
+        self._3m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_3m_old')
+        self._4m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_4m_old')
+        self._5m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_5m_old')
+        self._6m: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_6m_old')
+        self._1y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_1y_old')
+        self._2y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_2y_old')
+        self._3y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_3y_old')
+        self._4y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_4y_old')
+        self._5y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_5y_old')
+        self._6y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_6y_old')
+        self._7y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_7y_old')
+        self._8y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_8y_old')
+        self._10y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_10y_old')
+        self._12y: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'utxos_over_12y_old')
 
 class MetricsTree_Distribution_UtxoCohorts_Epoch:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._0: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'epoch_0')
-        self._1: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'epoch_1')
-        self._2: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'epoch_2')
-        self._3: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'epoch_3')
-        self._4: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'epoch_4')
+        self._0: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'epoch_0')
+        self._1: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'epoch_1')
+        self._2: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'epoch_2')
+        self._3: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'epoch_3')
+        self._4: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'epoch_4')
 
 class MetricsTree_Distribution_UtxoCohorts_Class:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._2009: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2009')
-        self._2010: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2010')
-        self._2011: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2011')
-        self._2012: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2012')
-        self._2013: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2013')
-        self._2014: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2014')
-        self._2015: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2015')
-        self._2016: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2016')
-        self._2017: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2017')
-        self._2018: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2018')
-        self._2019: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2019')
-        self._2020: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2020')
-        self._2021: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2021')
-        self._2022: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2022')
-        self._2023: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2023')
-        self._2024: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2024')
-        self._2025: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2025')
-        self._2026: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, 'class_2026')
+        self._2009: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2009')
+        self._2010: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2010')
+        self._2011: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2011')
+        self._2012: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2012')
+        self._2013: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2013')
+        self._2014: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2014')
+        self._2015: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2015')
+        self._2016: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2016')
+        self._2017: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2017')
+        self._2018: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2018')
+        self._2019: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2019')
+        self._2020: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2020')
+        self._2021: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2021')
+        self._2022: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2022')
+        self._2023: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2023')
+        self._2024: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2024')
+        self._2025: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2025')
+        self._2026: ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 = ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, 'class_2026')
 
 class MetricsTree_Distribution_UtxoCohorts_GeAmount:
     """Metrics tree node."""
@@ -4632,15 +4631,15 @@ class MetricsTree_Distribution_NewAddrCount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.all: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'new_addr_count')
-        self.p2pk65: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2pk65_new_addr_count')
-        self.p2pk33: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2pk33_new_addr_count')
-        self.p2pkh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2pkh_new_addr_count')
-        self.p2sh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2sh_new_addr_count')
-        self.p2wpkh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2wpkh_new_addr_count')
-        self.p2wsh: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2wsh_new_addr_count')
-        self.p2tr: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2tr_new_addr_count')
-        self.p2a: AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'p2a_new_addr_count')
+        self.all: HeightSumPattern = HeightSumPattern(client, 'new_addr_count')
+        self.p2pk65: HeightSumPattern = HeightSumPattern(client, 'p2pk65_new_addr_count')
+        self.p2pk33: HeightSumPattern = HeightSumPattern(client, 'p2pk33_new_addr_count')
+        self.p2pkh: HeightSumPattern = HeightSumPattern(client, 'p2pkh_new_addr_count')
+        self.p2sh: HeightSumPattern = HeightSumPattern(client, 'p2sh_new_addr_count')
+        self.p2wpkh: HeightSumPattern = HeightSumPattern(client, 'p2wpkh_new_addr_count')
+        self.p2wsh: HeightSumPattern = HeightSumPattern(client, 'p2wsh_new_addr_count')
+        self.p2tr: HeightSumPattern = HeightSumPattern(client, 'p2tr_new_addr_count')
+        self.p2a: HeightSumPattern = HeightSumPattern(client, 'p2a_new_addr_count')
 
 class MetricsTree_Distribution_Delta:
     """Metrics tree node."""

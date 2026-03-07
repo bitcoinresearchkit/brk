@@ -14,7 +14,7 @@ mod activity;
 /// Accessor methods for `CohortMetricsBase` implementations.
 ///
 /// All cohort metric types share the same field names (`filter`, `supply`, `outputs`,
-/// `activity`, `realized`, `unrealized`, `cost_basis`). For wrapper types like
+/// `activity`, `realized`, `unrealized`). For wrapper types like
 /// `ExtendedAdjustedCohortMetrics`, Rust's auto-deref resolves these through `Deref`.
 macro_rules! impl_cohort_accessors {
     () => {
@@ -29,8 +29,6 @@ macro_rules! impl_cohort_accessors {
         fn realized_mut(&mut self) -> &mut Self::RealizedVecs { &mut self.realized }
         fn unrealized(&self) -> &Self::UnrealizedVecs { &self.unrealized }
         fn unrealized_mut(&mut self) -> &mut Self::UnrealizedVecs { &mut self.unrealized }
-        fn cost_basis(&self) -> &Self::CostBasisVecs { &self.cost_basis }
-        fn cost_basis_mut(&mut self) -> &mut Self::CostBasisVecs { &mut self.cost_basis }
     };
 }
 
@@ -49,7 +47,7 @@ pub use cohort::{
     ExtendedCohortMetrics, MinimalCohortMetrics,
 };
 pub use config::ImportConfig;
-pub use cost_basis::{CostBasisBase, CostBasisExtended, CostBasisLike, CostBasisWithExtended};
+pub use cost_basis::CostBasis;
 pub use outputs::OutputsMetrics;
 pub use realized::{
     RealizedAdjusted, RealizedBase, RealizedCore, RealizedFull, RealizedLike, RealizedMinimal,
@@ -94,7 +92,6 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
     type ActivityVecs: ActivityLike;
     type RealizedVecs: RealizedLike;
     type UnrealizedVecs: UnrealizedLike;
-    type CostBasisVecs: CostBasisLike;
 
     fn filter(&self) -> &Filter;
     fn supply(&self) -> &SupplyMetrics;
@@ -107,8 +104,6 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
     fn realized_mut(&mut self) -> &mut Self::RealizedVecs;
     fn unrealized(&self) -> &Self::UnrealizedVecs;
     fn unrealized_mut(&mut self) -> &mut Self::UnrealizedVecs;
-    fn cost_basis(&self) -> &Self::CostBasisVecs;
-    fn cost_basis_mut(&mut self) -> &mut Self::CostBasisVecs;
 
     /// Convenience: access activity as `&ActivityBase` (via `ActivityLike::as_base`).
     fn activity_base(&self) -> &ActivityBase { self.activity().as_base() }
@@ -122,43 +117,23 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
     fn unrealized_base(&self) -> &UnrealizedBase { self.unrealized().as_base() }
     fn unrealized_base_mut(&mut self) -> &mut UnrealizedBase { self.unrealized_mut().as_base_mut() }
 
-    /// Convenience: access cost basis as `&CostBasisBase` (via `CostBasisLike::as_base`).
-    fn cost_basis_base(&self) -> &CostBasisBase { self.cost_basis().as_base() }
-    fn cost_basis_base_mut(&mut self) -> &mut CostBasisBase { self.cost_basis_mut().as_base_mut() }
-
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.supply_mut().validate_computed_versions(base_version)?;
         self.activity_mut().validate_computed_versions(base_version)?;
-        self.cost_basis_mut().validate_computed_versions(base_version)?;
         Ok(())
     }
 
-    /// Apply pending, push min/max cost basis, compute and push unrealized state.
-    fn compute_and_push_unrealized_base(
+    /// Apply pending state, compute and push unrealized state.
+    fn compute_and_push_unrealized(
         &mut self,
         height: Height,
         height_price: Cents,
         state: &mut CohortState<RealizedState>,
     ) -> Result<()> {
         state.apply_pending();
-        self.cost_basis_base_mut()
-            .truncate_push_minmax(height, state)?;
         let unrealized_state = state.compute_unrealized_state(height_price);
         self.unrealized_mut()
             .truncate_push(height, &unrealized_state)?;
-        Ok(())
-    }
-
-    /// Compute and push unrealized states + cost basis percentiles (no-op for base types).
-    fn compute_then_truncate_push_unrealized_states(
-        &mut self,
-        height: Height,
-        height_price: Cents,
-        state: &mut CohortState<RealizedState>,
-        is_day_boundary: bool,
-    ) -> Result<()> {
-        self.compute_and_push_unrealized_base(height, height_price, state)?;
-        self.cost_basis_mut().truncate_push_percentiles(height, state, is_day_boundary)?;
         Ok(())
     }
 
@@ -171,7 +146,6 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
             .min(self.activity().min_len())
             .min(self.realized().min_stateful_height_len())
             .min(self.unrealized().min_stateful_height_len())
-            .min(self.cost_basis_base().min_stateful_height_len())
     }
 
     fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState>) -> Result<()> {
@@ -256,11 +230,6 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
         self.unrealized_base_mut().compute_from_stateful(
             starting_indexes,
             &others.iter().map(|v| v.unrealized_base()).collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.cost_basis_base_mut().compute_from_stateful(
-            starting_indexes,
-            &others.iter().map(|v| v.cost_basis_base()).collect::<Vec<_>>(),
             exit,
         )?;
         Ok(())

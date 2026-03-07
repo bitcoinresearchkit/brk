@@ -12,7 +12,7 @@ use crate::{blocks, prices};
 use crate::internal::{ComputedFromHeight, RollingDeltaExcept1m};
 
 use crate::distribution::metrics::{
-    ActivityFull, CohortMetricsBase, CostBasisWithExtended, ImportConfig, OutputsMetrics,
+    ActivityFull, CohortMetricsBase, CostBasis, ImportConfig, OutputsMetrics,
     RealizedFull, RelativeWithExtended, SupplyMetrics, UnrealizedFull,
 };
 
@@ -26,7 +26,7 @@ pub struct ExtendedCohortMetrics<M: StorageMode = Rw> {
     pub outputs: Box<OutputsMetrics<M>>,
     pub activity: Box<ActivityFull<M>>,
     pub realized: Box<RealizedFull<M>>,
-    pub cost_basis: Box<CostBasisWithExtended<M>>,
+    pub cost_basis: Box<CostBasis<M>>,
     pub unrealized: Box<UnrealizedFull<M>>,
     pub relative: Box<RelativeWithExtended<M>>,
     pub dormancy: ComputedFromHeight<StoredF32, M>,
@@ -40,9 +40,25 @@ impl CohortMetricsBase for ExtendedCohortMetrics {
     type ActivityVecs = ActivityFull;
     type RealizedVecs = RealizedFull;
     type UnrealizedVecs = UnrealizedFull;
-    type CostBasisVecs = CostBasisWithExtended;
 
     impl_cohort_accessors!();
+
+    fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
+        self.supply.validate_computed_versions(base_version)?;
+        self.activity.validate_computed_versions(base_version)?;
+        self.cost_basis.validate_computed_versions(base_version)?;
+        Ok(())
+    }
+
+    fn min_stateful_height_len(&self) -> usize {
+        self.supply
+            .min_len()
+            .min(self.outputs.min_len())
+            .min(self.activity.min_len())
+            .min(self.realized.min_stateful_height_len())
+            .min(self.unrealized.min_stateful_height_len())
+            .min(self.cost_basis.min_stateful_height_len())
+    }
 
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
@@ -72,7 +88,7 @@ impl ExtendedCohortMetrics {
             outputs: Box::new(OutputsMetrics::forced_import(cfg)?),
             activity: Box::new(ActivityFull::forced_import(cfg)?),
             realized: Box::new(realized),
-            cost_basis: Box::new(CostBasisWithExtended::forced_import(cfg)?),
+            cost_basis: Box::new(CostBasis::forced_import(cfg)?),
             unrealized: Box::new(unrealized),
             relative: Box::new(relative),
             dormancy: cfg.import("dormancy", Version::ONE)?,

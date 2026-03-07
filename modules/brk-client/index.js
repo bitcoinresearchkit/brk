@@ -2641,35 +2641,6 @@ function create_10y2y3y4y5y6y8yPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern
- * @property {CoinblocksCoindaysSentPattern} activity
- * @property {MaxMinPattern} costBasis
- * @property {UtxoPattern} outputs
- * @property {MvrvNegNetRealizedSentSoprValuePattern} realized
- * @property {SupplyPattern2} relative
- * @property {DeltaHalvedTotalPattern} supply
- * @property {InvestedInvestorNegNetSupplyUnrealizedPattern} unrealized
- */
-
-/**
- * Create a ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern}
- */
-function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client, acc) {
-  return {
-    activity: createCoinblocksCoindaysSentPattern(client, acc),
-    costBasis: createMaxMinPattern(client, _m(acc, 'cost_basis')),
-    outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
-    realized: createMvrvNegNetRealizedSentSoprValuePattern(client, acc),
-    relative: createSupplyPattern2(client, _m(acc, 'supply')),
-    supply: createDeltaHalvedTotalPattern(client, _m(acc, 'supply')),
-    unrealized: createInvestedInvestorNegNetSupplyUnrealizedPattern(client, acc),
-  };
-}
-
-/**
  * @typedef {Object} ActivityAddrOutputsRealizedSupplyUnrealizedPattern
  * @property {SentPattern} activity
  * @property {MetricPattern1<StoredU64>} addrCount
@@ -2700,12 +2671,12 @@ function createActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, acc) {
 
 /**
  * @typedef {Object} ActivityOutputsRealizedRelativeSupplyUnrealizedPattern
- * @property {SentPattern} activity
+ * @property {CoinblocksCoindaysSentPattern} activity
  * @property {UtxoPattern} outputs
- * @property {MvrvNegNetRealizedSoprValuePattern} realized
+ * @property {MvrvNegNetRealizedSentSoprValuePattern} realized
  * @property {SupplyPattern2} relative
  * @property {DeltaHalvedTotalPattern} supply
- * @property {NegNetSupplyUnrealizedPattern} unrealized
+ * @property {InvestedInvestorNegNetSupplyUnrealizedPattern} unrealized
  */
 
 /**
@@ -2715,6 +2686,33 @@ function createActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, acc) {
  * @returns {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern}
  */
 function createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, acc) {
+  return {
+    activity: createCoinblocksCoindaysSentPattern(client, acc),
+    outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
+    realized: createMvrvNegNetRealizedSentSoprValuePattern(client, acc),
+    relative: createSupplyPattern2(client, _m(acc, 'supply')),
+    supply: createDeltaHalvedTotalPattern(client, _m(acc, 'supply')),
+    unrealized: createInvestedInvestorNegNetSupplyUnrealizedPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2
+ * @property {SentPattern} activity
+ * @property {UtxoPattern} outputs
+ * @property {MvrvNegNetRealizedSoprValuePattern} realized
+ * @property {SupplyPattern2} relative
+ * @property {DeltaHalvedTotalPattern} supply
+ * @property {NegNetSupplyUnrealizedPattern} unrealized
+ */
+
+/**
+ * Create a ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2}
+ */
+function createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(client, acc) {
   return {
     activity: createSentPattern(client, _m(acc, 'sent')),
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
@@ -3425,21 +3423,21 @@ function createChangeRatePattern2(client, acc) {
 }
 
 /**
- * @typedef {Object} MaxMinPattern
- * @property {CentsSatsUsdPattern} max
- * @property {CentsSatsUsdPattern} min
+ * @typedef {Object} HeightSumPattern
+ * @property {MetricPattern18<StoredU64>} height
+ * @property {_1m1w1y24hPattern<StoredU64>} sum
  */
 
 /**
- * Create a MaxMinPattern pattern node
+ * Create a HeightSumPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {MaxMinPattern}
+ * @returns {HeightSumPattern}
  */
-function createMaxMinPattern(client, acc) {
+function createHeightSumPattern(client, acc) {
   return {
-    max: createCentsSatsUsdPattern(client, _m(acc, 'max')),
-    min: createCentsSatsUsdPattern(client, _m(acc, 'min')),
+    height: createMetricPattern18(client, acc),
+    sum: create_1m1w1y24hPattern(client, _m(acc, 'sum')),
   };
 }
 
@@ -4921,102 +4919,102 @@ function create_24hPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_AgeRange
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} upTo1h
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _1hTo1d
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _1dTo1w
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _1wTo1m
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _1mTo2m
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _2mTo3m
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _3mTo4m
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _4mTo5m
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _5mTo6m
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _6mTo1y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _1yTo2y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _2yTo3y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _3yTo4y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _4yTo5y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _5yTo6y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _6yTo7y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _7yTo8y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _8yTo10y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _10yTo12y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} _12yTo15y
- * @property {ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} from15y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} upTo1h
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _1hTo1d
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _1dTo1w
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _1wTo1m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _1mTo2m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2mTo3m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _3mTo4m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _4mTo5m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _5mTo6m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _6mTo1y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _1yTo2y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2yTo3y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _3yTo4y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _4yTo5y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _5yTo6y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _6yTo7y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _7yTo8y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _8yTo10y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _10yTo12y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _12yTo15y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} from15y
  */
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MaxAge
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _1w
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _1m
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2m
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _3m
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _4m
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _5m
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _6m
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _1y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _3y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _4y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _5y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _6y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _7y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _8y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _10y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _12y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _15y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _1w
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _1m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _3m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _4m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _5m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _6m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _1y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _3y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _4y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _5y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _6y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _7y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _8y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _10y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _12y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _15y
  */
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_MinAge
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _1d
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _1w
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _1m
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2m
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _3m
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _4m
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _5m
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _6m
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _1y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _3y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _4y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _5y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _6y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _7y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _8y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _10y
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _12y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _1d
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _1w
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _1m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _3m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _4m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _5m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _6m
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _1y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _3y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _4y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _5y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _6y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _7y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _8y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _10y
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _12y
  */
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Epoch
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _0
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _1
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _3
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _4
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _0
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _1
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _3
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _4
  */
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Class
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2009
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2010
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2011
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2012
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2013
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2014
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2015
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2016
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2017
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2018
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2019
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2020
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2021
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2022
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2023
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2024
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2025
- * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern} _2026
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2009
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2010
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2011
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2012
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2013
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2014
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2015
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2016
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2017
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2018
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2019
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2020
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2021
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2022
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2023
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2024
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2025
+ * @property {ActivityOutputsRealizedRelativeSupplyUnrealizedPattern2} _2026
  */
 
 /**
@@ -5162,15 +5160,15 @@ function create_24hPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution_NewAddrCount
- * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} all
- * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2pk65
- * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2pk33
- * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2pkh
- * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2sh
- * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2wpkh
- * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2wsh
- * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2tr
- * @property {AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} p2a
+ * @property {HeightSumPattern} all
+ * @property {HeightSumPattern} p2pk65
+ * @property {HeightSumPattern} p2pk33
+ * @property {HeightSumPattern} p2pkh
+ * @property {HeightSumPattern} p2sh
+ * @property {HeightSumPattern} p2wpkh
+ * @property {HeightSumPattern} p2wsh
+ * @property {HeightSumPattern} p2tr
+ * @property {HeightSumPattern} p2a
  */
 
 /**
@@ -7133,94 +7131,94 @@ class BrkClient extends BrkClientBase {
             utxoCountDeltaExtended: create_24hChangeRatePattern(this, 'lth_utxo_count_delta'),
           },
           ageRange: {
-            upTo1h: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_1h_old'),
-            _1hTo1d: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_1h_to_1d_old'),
-            _1dTo1w: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_1d_to_1w_old'),
-            _1wTo1m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_1w_to_1m_old'),
-            _1mTo2m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_1m_to_2m_old'),
-            _2mTo3m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_2m_to_3m_old'),
-            _3mTo4m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_3m_to_4m_old'),
-            _4mTo5m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_4m_to_5m_old'),
-            _5mTo6m: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_5m_to_6m_old'),
-            _6mTo1y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_6m_to_1y_old'),
-            _1yTo2y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_1y_to_2y_old'),
-            _2yTo3y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_2y_to_3y_old'),
-            _3yTo4y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_3y_to_4y_old'),
-            _4yTo5y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_4y_to_5y_old'),
-            _5yTo6y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_5y_to_6y_old'),
-            _6yTo7y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_6y_to_7y_old'),
-            _7yTo8y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_7y_to_8y_old'),
-            _8yTo10y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_8y_to_10y_old'),
-            _10yTo12y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_10y_to_12y_old'),
-            _12yTo15y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_12y_to_15y_old'),
-            from15y: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_15y_old'),
+            upTo1h: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_1h_old'),
+            _1hTo1d: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_1h_to_1d_old'),
+            _1dTo1w: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_1d_to_1w_old'),
+            _1wTo1m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_1w_to_1m_old'),
+            _1mTo2m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_1m_to_2m_old'),
+            _2mTo3m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_2m_to_3m_old'),
+            _3mTo4m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_3m_to_4m_old'),
+            _4mTo5m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_4m_to_5m_old'),
+            _5mTo6m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_5m_to_6m_old'),
+            _6mTo1y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_6m_to_1y_old'),
+            _1yTo2y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_1y_to_2y_old'),
+            _2yTo3y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_2y_to_3y_old'),
+            _3yTo4y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_3y_to_4y_old'),
+            _4yTo5y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_4y_to_5y_old'),
+            _5yTo6y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_5y_to_6y_old'),
+            _6yTo7y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_6y_to_7y_old'),
+            _7yTo8y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_7y_to_8y_old'),
+            _8yTo10y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_8y_to_10y_old'),
+            _10yTo12y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_10y_to_12y_old'),
+            _12yTo15y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_12y_to_15y_old'),
+            from15y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_15y_old'),
           },
           maxAge: {
-            _1w: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_1w_old'),
-            _1m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_1m_old'),
-            _2m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_2m_old'),
-            _3m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_3m_old'),
-            _4m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_4m_old'),
-            _5m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_5m_old'),
-            _6m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_6m_old'),
-            _1y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_1y_old'),
-            _2y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_2y_old'),
-            _3y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_3y_old'),
-            _4y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_4y_old'),
-            _5y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_5y_old'),
-            _6y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_6y_old'),
-            _7y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_7y_old'),
-            _8y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_8y_old'),
-            _10y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_10y_old'),
-            _12y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_12y_old'),
-            _15y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_15y_old'),
+            _1w: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_1w_old'),
+            _1m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_1m_old'),
+            _2m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_2m_old'),
+            _3m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_3m_old'),
+            _4m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_4m_old'),
+            _5m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_5m_old'),
+            _6m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_6m_old'),
+            _1y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_1y_old'),
+            _2y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_2y_old'),
+            _3y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_3y_old'),
+            _4y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_4y_old'),
+            _5y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_5y_old'),
+            _6y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_6y_old'),
+            _7y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_7y_old'),
+            _8y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_8y_old'),
+            _10y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_10y_old'),
+            _12y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_12y_old'),
+            _15y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_under_15y_old'),
           },
           minAge: {
-            _1d: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_1d_old'),
-            _1w: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_1w_old'),
-            _1m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_1m_old'),
-            _2m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_2m_old'),
-            _3m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_3m_old'),
-            _4m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_4m_old'),
-            _5m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_5m_old'),
-            _6m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_6m_old'),
-            _1y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_1y_old'),
-            _2y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_2y_old'),
-            _3y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_3y_old'),
-            _4y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_4y_old'),
-            _5y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_5y_old'),
-            _6y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_6y_old'),
-            _7y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_7y_old'),
-            _8y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_8y_old'),
-            _10y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_10y_old'),
-            _12y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_over_12y_old'),
+            _1d: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_1d_old'),
+            _1w: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_1w_old'),
+            _1m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_1m_old'),
+            _2m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_2m_old'),
+            _3m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_3m_old'),
+            _4m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_4m_old'),
+            _5m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_5m_old'),
+            _6m: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_6m_old'),
+            _1y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_1y_old'),
+            _2y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_2y_old'),
+            _3y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_3y_old'),
+            _4y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_4y_old'),
+            _5y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_5y_old'),
+            _6y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_6y_old'),
+            _7y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_7y_old'),
+            _8y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_8y_old'),
+            _10y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_10y_old'),
+            _12y: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'utxos_over_12y_old'),
           },
           epoch: {
-            _0: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'epoch_0'),
-            _1: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'epoch_1'),
-            _2: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'epoch_2'),
-            _3: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'epoch_3'),
-            _4: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'epoch_4'),
+            _0: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'epoch_0'),
+            _1: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'epoch_1'),
+            _2: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'epoch_2'),
+            _3: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'epoch_3'),
+            _4: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'epoch_4'),
           },
           class: {
-            _2009: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2009'),
-            _2010: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2010'),
-            _2011: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2011'),
-            _2012: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2012'),
-            _2013: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2013'),
-            _2014: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2014'),
-            _2015: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2015'),
-            _2016: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2016'),
-            _2017: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2017'),
-            _2018: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2018'),
-            _2019: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2019'),
-            _2020: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2020'),
-            _2021: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2021'),
-            _2022: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2022'),
-            _2023: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2023'),
-            _2024: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2024'),
-            _2025: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2025'),
-            _2026: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'class_2026'),
+            _2009: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2009'),
+            _2010: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2010'),
+            _2011: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2011'),
+            _2012: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2012'),
+            _2013: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2013'),
+            _2014: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2014'),
+            _2015: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2015'),
+            _2016: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2016'),
+            _2017: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2017'),
+            _2018: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2018'),
+            _2019: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2019'),
+            _2020: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2020'),
+            _2021: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2021'),
+            _2022: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2022'),
+            _2023: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2023'),
+            _2024: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2024'),
+            _2025: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2025'),
+            _2026: createActivityOutputsRealizedRelativeSupplyUnrealizedPattern2(this, 'class_2026'),
           },
           geAmount: {
             _1sat: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_1sat'),
@@ -7347,15 +7345,15 @@ class BrkClient extends BrkClientBase {
         },
         totalAddrCount: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern(this, 'total_addr_count'),
         newAddrCount: {
-          all: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'new_addr_count'),
-          p2pk65: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2pk65_new_addr_count'),
-          p2pk33: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2pk33_new_addr_count'),
-          p2pkh: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2pkh_new_addr_count'),
-          p2sh: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2sh_new_addr_count'),
-          p2wpkh: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2wpkh_new_addr_count'),
-          p2wsh: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2wsh_new_addr_count'),
-          p2tr: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2tr_new_addr_count'),
-          p2a: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2a_new_addr_count'),
+          all: createHeightSumPattern(this, 'new_addr_count'),
+          p2pk65: createHeightSumPattern(this, 'p2pk65_new_addr_count'),
+          p2pk33: createHeightSumPattern(this, 'p2pk33_new_addr_count'),
+          p2pkh: createHeightSumPattern(this, 'p2pkh_new_addr_count'),
+          p2sh: createHeightSumPattern(this, 'p2sh_new_addr_count'),
+          p2wpkh: createHeightSumPattern(this, 'p2wpkh_new_addr_count'),
+          p2wsh: createHeightSumPattern(this, 'p2wsh_new_addr_count'),
+          p2tr: createHeightSumPattern(this, 'p2tr_new_addr_count'),
+          p2a: createHeightSumPattern(this, 'p2a_new_addr_count'),
         },
         delta: {
           all: createChangeRatePattern2(this, 'addr_count'),

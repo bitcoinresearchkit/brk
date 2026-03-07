@@ -3,7 +3,7 @@ use std::{collections::BTreeMap, path::Path};
 use brk_error::Result;
 use brk_types::{Age, Cents, CentsCompact, CentsSats, CentsSquaredSats, CostBasisSnapshot, Height, Sats, SupplyState};
 
-use super::super::cost_basis::{CostBasisData, Percentiles, RealizedOps, UnrealizedState};
+use super::super::cost_basis::{CostBasisData, RealizedOps, UnrealizedState};
 
 pub struct SendPrecomputed {
     pub sats: Sats,
@@ -95,18 +95,6 @@ impl<R: RealizedOps> CohortState<R> {
 
     pub(crate) fn apply_pending(&mut self) {
         self.cost_basis_data.apply_pending();
-    }
-
-    pub(crate) fn cost_basis_data_first_key_value(&self) -> Option<(Cents, &Sats)> {
-        self.cost_basis_data
-            .first_key_value()
-            .map(|(k, v)| (k.into(), v))
-    }
-
-    pub(crate) fn cost_basis_data_last_key_value(&self) -> Option<(Cents, &Sats)> {
-        self.cost_basis_data
-            .last_key_value()
-            .map(|(k, v)| (k.into(), v))
     }
 
     pub(crate) fn reset_single_iteration_values(&mut self) {
@@ -286,14 +274,6 @@ impl<R: RealizedOps> CohortState<R> {
                 );
             }
         }
-    }
-
-    pub(crate) fn compute_percentiles(&mut self) -> Option<Percentiles> {
-        self.cost_basis_data.compute_percentiles()
-    }
-
-    pub(crate) fn cached_percentiles(&self) -> Option<Percentiles> {
-        self.cost_basis_data.cached_percentiles()
     }
 
     pub(crate) fn compute_unrealized_state(&mut self, height_price: Cents) -> UnrealizedState {

@@ -11,7 +11,7 @@ use brk_types::{
 use rustc_hash::FxHashMap;
 use vecdb::{Bytes, unlikely};
 
-use super::{CachedUnrealizedState, Percentiles, UnrealizedState};
+use super::{CachedUnrealizedState, UnrealizedState};
 
 /// Type alias for the price-to-sats map used in cost basis data.
 pub(super) type CostBasisMap = BTreeMap<CentsCompact, Sats>;
@@ -31,8 +31,6 @@ pub struct CostBasisData {
     pending: FxHashMap<CentsCompact, (Sats, Sats)>,
     pending_raw: PendingRaw,
     cache: Option<CachedUnrealizedState>,
-    percentiles_dirty: bool,
-    cached_percentiles: Option<Percentiles>,
     rounding_digits: Option<i32>,
     /// Monotonically increasing counter, bumped on each apply_pending with actual changes.
     generation: u64,
@@ -48,8 +46,6 @@ impl CostBasisData {
             pending: FxHashMap::default(),
             pending_raw: PendingRaw::default(),
             cache: None,
-            percentiles_dirty: true,
-            cached_percentiles: None,
             rounding_digits: None,
             generation: 0,
         }
@@ -77,8 +73,6 @@ impl CostBasisData {
         self.pending.clear();
         self.pending_raw = PendingRaw::default();
         self.cache = None;
-        self.percentiles_dirty = true;
-        self.cached_percentiles = None;
         Ok(height)
     }
 
@@ -103,28 +97,6 @@ impl CostBasisData {
 
     pub(crate) fn is_empty(&self) -> bool {
         self.pending.is_empty() && self.state.as_ref().unwrap().base.map.is_empty()
-    }
-
-    pub(crate) fn first_key_value(&self) -> Option<(CentsCompact, &Sats)> {
-        self.assert_pending_empty();
-        self.state
-            .as_ref()
-            .unwrap()
-            .base
-            .map
-            .first_key_value()
-            .map(|(&k, v)| (k, v))
-    }
-
-    pub(crate) fn last_key_value(&self) -> Option<(CentsCompact, &Sats)> {
-        self.assert_pending_empty();
-        self.state
-            .as_ref()
-            .unwrap()
-            .base
-            .map
-            .last_key_value()
-            .map(|(&k, v)| (k, v))
     }
 
     /// Get the exact cap_raw value (not recomputed from map).
@@ -184,7 +156,6 @@ impl CostBasisData {
             return;
         }
         self.generation = self.generation.wrapping_add(1);
-        self.percentiles_dirty = true;
         let map = &mut self.state.as_mut().unwrap().base.map;
         for (cents, (inc, dec)) in self.pending.drain() {
             match map.entry(cents) {
@@ -273,23 +244,6 @@ impl CostBasisData {
         self.pending.clear();
         self.pending_raw = PendingRaw::default();
         self.cache = None;
-        self.percentiles_dirty = true;
-        self.cached_percentiles = None;
-    }
-
-    pub(crate) fn cached_percentiles(&self) -> Option<Percentiles> {
-        self.cached_percentiles
-    }
-
-    pub(crate) fn compute_percentiles(&mut self) -> Option<Percentiles> {
-        self.assert_pending_empty();
-        if !self.percentiles_dirty {
-            return self.cached_percentiles;
-        }
-        self.cached_percentiles =
-            Percentiles::compute_from_map(&self.state.as_ref().unwrap().base.map);
-        self.percentiles_dirty = false;
-        self.cached_percentiles
     }
 
     pub(crate) fn compute_unrealized_state(&mut self, height_price: Cents) -> UnrealizedState {

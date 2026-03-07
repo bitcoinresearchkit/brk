@@ -136,14 +136,13 @@ impl<M: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<M> {
         &mut self,
         height: Height,
         height_price: Cents,
-        is_day_boundary: bool,
+        _is_day_boundary: bool,
     ) -> Result<()> {
         if let Some(state) = self.state.as_mut() {
-            self.metrics.compute_then_truncate_push_unrealized_states(
+            self.metrics.compute_and_push_unrealized(
                 height,
                 height_price,
                 state,
-                is_day_boundary,
             )?;
         }
         Ok(())

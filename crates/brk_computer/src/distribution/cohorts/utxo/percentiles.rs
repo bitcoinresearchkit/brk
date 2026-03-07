@@ -6,7 +6,7 @@ use brk_types::{Cents, CentsCompact, CostBasisDistribution, Date, Height, Sats};
 
 use crate::internal::{PERCENTILES, PERCENTILES_LEN};
 
-use crate::distribution::metrics::{CohortMetricsBase, CostBasisExtended};
+use crate::distribution::metrics::{CohortMetricsBase, CostBasis};
 
 use super::groups::UTXOCohorts;
 
@@ -16,11 +16,14 @@ const COST_BASIS_PRICE_DIGITS: i32 = 5;
 pub(super) struct CachedPercentiles {
     sat_result: [Cents; PERCENTILES_LEN],
     usd_result: [Cents; PERCENTILES_LEN],
+    min_price: Cents,
+    max_price: Cents,
 }
 
 impl CachedPercentiles {
-    fn push(&self, height: Height, ext: &mut CostBasisExtended) -> Result<()> {
-        ext.push_arrays(height, &self.sat_result, &self.usd_result)
+    fn push(&self, height: Height, cost_basis: &mut CostBasis) -> Result<()> {
+        cost_basis.truncate_push_minmax(height, self.min_price, self.max_price)?;
+        cost_basis.truncate_push_percentiles(height, &self.sat_result, &self.usd_result)
     }
 }
 
@@ -114,13 +117,13 @@ impl UTXOCohorts {
 
         self.percentile_cache
             .all
-            .push(height, &mut self.all.metrics.cost_basis.extended)?;
+            .push(height, &mut self.all.metrics.cost_basis)?;
         self.percentile_cache
             .sth
-            .push(height, &mut self.sth.metrics.cost_basis.extended)?;
+            .push(height, &mut self.sth.metrics.cost_basis)?;
         self.percentile_cache
             .lth
-            .push(height, &mut self.lth.metrics.cost_basis.extended)?;
+            .push(height, &mut self.lth.metrics.cost_basis)?;
 
         // Serialize full distribution at day boundaries
         if let Some(date) = date_opt {
@@ -136,13 +139,13 @@ impl UTXOCohorts {
     fn push_cached_percentiles(&mut self, height: Height) -> Result<()> {
         self.percentile_cache
             .all
-            .push(height, &mut self.all.metrics.cost_basis.extended)?;
+            .push(height, &mut self.all.metrics.cost_basis)?;
         self.percentile_cache
             .sth
-            .push(height, &mut self.sth.metrics.cost_basis.extended)?;
+            .push(height, &mut self.sth.metrics.cost_basis)?;
         self.percentile_cache
             .lth
-            .push(height, &mut self.lth.metrics.cost_basis.extended)?;
+            .push(height, &mut self.lth.metrics.cost_basis)?;
         Ok(())
     }
 }
@@ -269,6 +272,8 @@ struct PercTarget {
     usd_result: [Cents; PERCENTILES_LEN],
     price_sats: u64,
     price_usd: u128,
+    min_price: Cents,
+    max_price: Cents,
     merged: Vec<(CentsCompact, Sats)>,
 }
 
@@ -295,6 +300,8 @@ impl PercTarget {
             usd_result: [Cents::ZERO; PERCENTILES_LEN],
             price_sats: 0,
             price_usd: 0,
+            min_price: Cents::ZERO,
+            max_price: Cents::ZERO,
             merged: Vec::with_capacity(merged_cap),
         }
     }
@@ -303,6 +310,8 @@ impl PercTarget {
         CachedPercentiles {
             sat_result: self.sat_result,
             usd_result: self.usd_result,
+            min_price: self.min_price,
+            max_price: self.max_price,
         }
     }
 
@@ -313,14 +322,21 @@ impl PercTarget {
     }
 
     fn finalize_price(&mut self, price: Cents, collect_merged: bool) {
-        if collect_merged && self.price_sats > 0 {
-            let rounded: CentsCompact = price.round_to_dollar(COST_BASIS_PRICE_DIGITS).into();
-            if let Some((lp, ls)) = self.merged.last_mut()
-                && *lp == rounded
-            {
-                *ls += Sats::from(self.price_sats);
-            } else {
-                self.merged.push((rounded, Sats::from(self.price_sats)));
+        if self.price_sats > 0 {
+            if self.min_price == Cents::ZERO {
+                self.min_price = price;
+            }
+            self.max_price = price;
+
+            if collect_merged {
+                let rounded: CentsCompact = price.round_to_dollar(COST_BASIS_PRICE_DIGITS).into();
+                if let Some((lp, ls)) = self.merged.last_mut()
+                    && *lp == rounded
+                {
+                    *ls += Sats::from(self.price_sats);
+                } else {
+                    self.merged.push((rounded, Sats::from(self.price_sats)));
+                }
             }
         }
 

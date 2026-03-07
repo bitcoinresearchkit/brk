@@ -1,13 +1,13 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Height, Indexes, Sats};
+use brk_types::{Cents, Dollars, Height, Indexes, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
-    ActivityFull, CohortMetricsBase, CostBasisWithExtended, ImportConfig, RealizedAdjusted,
+    ActivityFull, CohortMetricsBase, ImportConfig, RealizedAdjusted,
     RealizedFull, UnrealizedFull,
 };
 
@@ -30,9 +30,16 @@ impl CohortMetricsBase for ExtendedAdjustedCohortMetrics {
     type ActivityVecs = ActivityFull;
     type RealizedVecs = RealizedFull;
     type UnrealizedVecs = UnrealizedFull;
-    type CostBasisVecs = CostBasisWithExtended;
 
     impl_cohort_accessors!();
+
+    fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
+        self.inner.validate_computed_versions(base_version)
+    }
+
+    fn min_stateful_height_len(&self) -> usize {
+        self.inner.min_stateful_height_len()
+    }
 
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         self.inner.collect_all_vecs_mut()
