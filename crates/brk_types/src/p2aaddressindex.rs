@@ -105,7 +105,7 @@ impl std::fmt::Display for P2AAddressIndex {
 
 impl Formattable for P2AAddressIndex {
     #[inline(always)]
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
-        self.0.fmt_csv(f)
+    fn write_to(&self, buf: &mut Vec<u8>) {
+        self.0.write_to(buf);
     }
 }

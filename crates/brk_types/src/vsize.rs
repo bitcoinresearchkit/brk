@@ -121,9 +121,8 @@ impl std::fmt::Display for VSize {
 
 impl Formattable for VSize {
     #[inline(always)]
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
-        f.push_str(buf.format(self.0));
-        Ok(())
+    fn write_to(&self, buf: &mut Vec<u8>) {
+        let mut b = itoa::Buffer::new();
+        buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

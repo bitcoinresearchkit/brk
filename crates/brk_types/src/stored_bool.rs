@@ -70,8 +70,7 @@ impl std::fmt::Display for StoredBool {
 
 impl Formattable for StoredBool {
     #[inline(always)]
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
-        f.push_str(if self.is_true() { "true" } else { "false" });
-        Ok(())
+    fn write_to(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(if self.is_true() { b"true" } else { b"false" });
     }
 }

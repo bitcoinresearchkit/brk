@@ -128,15 +128,27 @@ impl Display for OHLCCents {
 }
 
 impl Formattable for OHLCCents {
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn write_to(&self, buf: &mut Vec<u8>) {
         use std::fmt::Write;
+        let mut s = String::new();
+        write!(s, "{}", self).unwrap();
+        buf.extend_from_slice(s.as_bytes());
+    }
+
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
         let start = f.len();
-        write!(f, "{}", self)?;
+        self.fmt_into(f);
         if f.as_bytes()[start..].contains(&b',') {
             f.insert(start, '"');
             f.push('"');
         }
         Ok(())
+    }
+
+    fn fmt_json(&self, buf: &mut Vec<u8>) {
+        buf.push(b'"');
+        self.write_to(buf);
+        buf.push(b'"');
     }
 }
 
@@ -259,15 +271,27 @@ impl Display for OHLCDollars {
 }
 
 impl Formattable for OHLCDollars {
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn write_to(&self, buf: &mut Vec<u8>) {
         use std::fmt::Write;
+        let mut s = String::new();
+        write!(s, "{}", self).unwrap();
+        buf.extend_from_slice(s.as_bytes());
+    }
+
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
         let start = f.len();
-        write!(f, "{}", self)?;
+        self.fmt_into(f);
         if f.as_bytes()[start..].contains(&b',') {
             f.insert(start, '"');
             f.push('"');
         }
         Ok(())
+    }
+
+    fn fmt_json(&self, buf: &mut Vec<u8>) {
+        buf.push(b'"');
+        self.write_to(buf);
+        buf.push(b'"');
     }
 }
 
@@ -359,15 +383,27 @@ impl Display for OHLCSats {
 }
 
 impl Formattable for OHLCSats {
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn write_to(&self, buf: &mut Vec<u8>) {
         use std::fmt::Write;
+        let mut s = String::new();
+        write!(s, "{}", self).unwrap();
+        buf.extend_from_slice(s.as_bytes());
+    }
+
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
         let start = f.len();
-        write!(f, "{}", self)?;
+        self.fmt_into(f);
         if f.as_bytes()[start..].contains(&b',') {
             f.insert(start, '"');
             f.push('"');
         }
         Ok(())
+    }
+
+    fn fmt_json(&self, buf: &mut Vec<u8>) {
+        buf.push(b'"');
+        self.write_to(buf);
+        buf.push(b'"');
     }
 }
 
@@ -518,10 +554,17 @@ impl<T> Formattable for Open<T>
 where
     T: Display,
 {
-    #[inline(always)]
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn write_to(&self, buf: &mut Vec<u8>) {
         use std::fmt::Write;
-        write!(f, "{}", self)
+        let mut s = String::new();
+        write!(s, "{}", self).unwrap();
+        buf.extend_from_slice(s.as_bytes());
+    }
+
+    fn fmt_json(&self, buf: &mut Vec<u8>) {
+        buf.push(b'"');
+        self.write_to(buf);
+        buf.push(b'"');
     }
 }
 
@@ -650,10 +693,17 @@ impl<T> Formattable for High<T>
 where
     T: Display,
 {
-    #[inline(always)]
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn write_to(&self, buf: &mut Vec<u8>) {
         use std::fmt::Write;
-        write!(f, "{}", self)
+        let mut s = String::new();
+        write!(s, "{}", self).unwrap();
+        buf.extend_from_slice(s.as_bytes());
+    }
+
+    fn fmt_json(&self, buf: &mut Vec<u8>) {
+        buf.push(b'"');
+        self.write_to(buf);
+        buf.push(b'"');
     }
 }
 
@@ -782,10 +832,17 @@ impl<T> Formattable for Low<T>
 where
     T: Display,
 {
-    #[inline(always)]
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn write_to(&self, buf: &mut Vec<u8>) {
         use std::fmt::Write;
-        write!(f, "{}", self)
+        let mut s = String::new();
+        write!(s, "{}", self).unwrap();
+        buf.extend_from_slice(s.as_bytes());
+    }
+
+    fn fmt_json(&self, buf: &mut Vec<u8>) {
+        buf.push(b'"');
+        self.write_to(buf);
+        buf.push(b'"');
     }
 }
 
@@ -937,9 +994,16 @@ impl<T> Formattable for Close<T>
 where
     T: Display,
 {
-    #[inline(always)]
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn write_to(&self, buf: &mut Vec<u8>) {
         use std::fmt::Write;
-        write!(f, "{}", self)
+        let mut s = String::new();
+        write!(s, "{}", self).unwrap();
+        buf.extend_from_slice(s.as_bytes());
+    }
+
+    fn fmt_json(&self, buf: &mut Vec<u8>) {
+        buf.push(b'"');
+        self.write_to(buf);
+        buf.push(b'"');
     }
 }

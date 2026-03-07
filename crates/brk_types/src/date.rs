@@ -260,10 +260,17 @@ impl FromStr for Date {
 }
 
 impl Formattable for Date {
-    #[inline(always)]
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn write_to(&self, buf: &mut Vec<u8>) {
         use std::fmt::Write;
-        write!(f, "{}", self)
+        let mut s = String::new();
+        write!(s, "{}", self).unwrap();
+        buf.extend_from_slice(s.as_bytes());
+    }
+
+    fn fmt_json(&self, buf: &mut Vec<u8>) {
+        buf.push(b'"');
+        self.write_to(buf);
+        buf.push(b'"');
     }
 }
 

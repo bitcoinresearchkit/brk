@@ -44,14 +44,26 @@ impl fmt::Display for P2WPKHBytes {
 }
 
 impl Formattable for P2WPKHBytes {
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn write_to(&self, buf: &mut Vec<u8>) {
         use std::fmt::Write;
+        let mut s = String::new();
+        write!(s, "{}", self).unwrap();
+        buf.extend_from_slice(s.as_bytes());
+    }
+
+    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
         let start = f.len();
-        write!(f, "{}", self)?;
+        self.fmt_into(f);
         if f.as_bytes()[start..].contains(&b',') {
             f.insert(start, '"');
             f.push('"');
         }
         Ok(())
+    }
+
+    fn fmt_json(&self, buf: &mut Vec<u8>) {
+        buf.push(b'"');
+        self.write_to(buf);
+        buf.push(b'"');
     }
 }

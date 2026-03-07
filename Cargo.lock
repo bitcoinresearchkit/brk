@@ -3291,12 +3291,14 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 name = "vecdb"
 version = "0.6.8"
 dependencies = [
+ "itoa",
  "libc",
  "log",
  "lz4_flex 0.12.0",
  "parking_lot",
  "pco",
  "rawdb",
+ "ryu",
  "schemars",
  "serde",
  "serde_json",

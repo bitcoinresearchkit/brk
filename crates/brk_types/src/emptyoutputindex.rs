@@ -79,7 +79,7 @@ impl fmt::Display for EmptyOutputIndex {
 
 impl Formattable for EmptyOutputIndex {
     #[inline(always)]
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
-        self.0.fmt_csv(f)
+    fn write_to(&self, buf: &mut Vec<u8>) {
+        self.0.write_to(buf);
     }
 }
