@@ -21,7 +21,7 @@ impl Vecs {
             .compute(indexer, &blocks.count, starting_indexes, exit)?;
 
         self.value
-            .compute(indexer, &blocks.count, prices, starting_indexes, exit)?;
+            .compute(indexer, prices, starting_indexes, exit)?;
 
         self.adoption
             .compute(&self.count, &outputs.count, starting_indexes, exit)?;

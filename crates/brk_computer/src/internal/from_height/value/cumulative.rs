@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, Height, Sats, Version};
-use vecdb::{Database, Exit, Rw, StorageMode};
+use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
@@ -30,6 +30,17 @@ impl ValueFromHeightCumulative {
             base: ByUnit::forced_import(db, name, v, indexes)?,
             cumulative: ByUnit::forced_import(db, &format!("{name}_cumulative"), v, indexes)?,
         })
+    }
+
+    pub(crate) fn compute_with(
+        &mut self,
+        max_from: Height,
+        prices: &prices::Vecs,
+        exit: &Exit,
+        compute_sats: impl FnOnce(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
+    ) -> Result<()> {
+        compute_sats(&mut self.base.sats.height)?;
+        self.compute(prices, max_from, exit)
     }
 
     pub(crate) fn compute(

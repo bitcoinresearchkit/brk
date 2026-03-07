@@ -76,29 +76,21 @@ impl Vecs {
             },
         )?;
 
-        self.subsidy.compute(
+        self.subsidy.base.sats.height.compute_transform2(
             starting_indexes.height,
-            &window_starts,
-            prices,
-            exit,
-            |vec| {
-                vec.compute_transform2(
-                    starting_indexes.height,
-                    &self.coinbase.base.sats.height,
-                    &self.fees.base.sats.height,
-                    |(height, coinbase, fees, ..)| {
-                        (
-                            height,
-                            coinbase.checked_sub(fees).unwrap_or_else(|| {
-                                panic!("coinbase {coinbase:?} < fees {fees:?} at {height:?}")
-                            }),
-                        )
-                    },
-                    exit,
-                )?;
-                Ok(())
+            &self.coinbase.base.sats.height,
+            &self.fees.base.sats.height,
+            |(height, coinbase, fees, ..)| {
+                (
+                    height,
+                    coinbase.checked_sub(fees).unwrap_or_else(|| {
+                        panic!("coinbase {coinbase:?} < fees {fees:?} at {height:?}")
+                    }),
+                )
             },
+            exit,
         )?;
+        self.subsidy.compute(prices, starting_indexes.height, exit)?;
 
         self.unclaimed_rewards.compute(
             starting_indexes.height,
@@ -135,12 +127,12 @@ impl Vecs {
             .as_mut_array()
             .into_iter()
             .zip(self.fees.rolling.as_array())
-            .zip(self.coinbase.rolling.as_array())
+            .zip(self.coinbase.sum.as_array())
         {
             fee_dom.compute_binary::<Sats, Sats, RatioSatsBp16>(
                 starting_indexes.height,
                 &fees_w.sum.sats.height,
-                &coinbase_w.sum.sats.height,
+                &coinbase_w.sats.height,
                 exit,
             )?;
         }

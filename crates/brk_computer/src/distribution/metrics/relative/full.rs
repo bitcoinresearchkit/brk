@@ -7,8 +7,7 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{
-    Bps32ToFloat, LazyFromHeight, NegRatioDollarsBps32, PercentFromHeight, RatioDollarsBp16,
-    RatioDollarsBps32,
+    Bps32ToFloat, LazyFromHeight, PercentFromHeight, RatioDollarsBp16, RatioDollarsBps32,
 };
 
 use crate::distribution::metrics::{ImportConfig, RealizedBase, UnrealizedFull};
@@ -26,7 +25,6 @@ pub struct RelativeFull<M: StorageMode = Rw> {
     pub unrealized_profit_rel_to_market_cap: PercentFromHeight<BasisPoints16, M>,
     pub unrealized_loss_rel_to_market_cap: PercentFromHeight<BasisPoints16, M>,
     pub net_unrealized_pnl_rel_to_market_cap: PercentFromHeight<BasisPointsSigned32, M>,
-    pub neg_unrealized_loss_rel_to_market_cap: PercentFromHeight<BasisPointsSigned32, M>,
     pub nupl: LazyFromHeight<StoredF32, BasisPointsSigned32>,
 
     pub invested_capital_in_profit_rel_to_realized_cap: PercentFromHeight<BasisPoints16, M>,
@@ -60,8 +58,6 @@ impl RelativeFull {
             unrealized_loss_rel_to_market_cap: cfg
                 .import("unrealized_loss_rel_to_market_cap", v2)?,
             net_unrealized_pnl_rel_to_market_cap,
-            neg_unrealized_loss_rel_to_market_cap: cfg
-                .import("neg_unrealized_loss_rel_to_market_cap", v3)?,
             nupl,
             invested_capital_in_profit_rel_to_realized_cap: cfg.import(
                 "invested_capital_in_profit_rel_to_realized_cap",
@@ -111,14 +107,6 @@ impl RelativeFull {
                 market_cap,
                 exit,
             )?;
-        self.neg_unrealized_loss_rel_to_market_cap
-            .compute_binary::<Dollars, Dollars, NegRatioDollarsBps32>(
-                max_from,
-                &unrealized.unrealized_loss.usd.height,
-                market_cap,
-                exit,
-            )?;
-
         self.invested_capital_in_profit_rel_to_realized_cap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,

@@ -3,14 +3,14 @@ use brk_types::{BasisPoints16, Cents};
 use vecdb::{Rw, StorageMode};
 
 use crate::internal::{
-    FiatFromHeight, PercentFromHeight, PercentRollingWindows, ValueFromHeightCumulativeSum,
-    ValueFromHeightFull,
+    FiatFromHeight, PercentFromHeight, PercentRollingWindows, ValueFromHeightCumulative,
+    ValueFromHeightCumulativeSum, ValueFromHeightFull,
 };
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub coinbase: ValueFromHeightFull<M>,
-    pub subsidy: ValueFromHeightFull<M>,
+    pub coinbase: ValueFromHeightCumulativeSum<M>,
+    pub subsidy: ValueFromHeightCumulative<M>,
     pub fees: ValueFromHeightFull<M>,
     pub unclaimed_rewards: ValueFromHeightCumulativeSum<M>,
     pub fee_dominance: PercentFromHeight<BasisPoints16, M>,

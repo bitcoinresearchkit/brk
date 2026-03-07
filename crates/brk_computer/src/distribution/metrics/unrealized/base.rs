@@ -29,8 +29,6 @@ pub struct UnrealizedBase<M: StorageMode = Rw> {
 
     pub neg_unrealized_loss: LazyFromHeight<Dollars, Cents>,
 
-    pub gross_pnl: FiatFromHeight<Cents, M>,
-
     pub net_unrealized_pnl: FiatFromHeight<CentsSigned, M>,
 }
 
@@ -50,8 +48,6 @@ impl UnrealizedBase {
             &unrealized_loss.cents,
         );
 
-        let gross_pnl = cfg.import("unrealized_gross_pnl", v0)?;
-
         let net_unrealized_pnl = cfg.import("net_unrealized_pnl", v0)?;
 
         Ok(Self {
@@ -60,7 +56,6 @@ impl UnrealizedBase {
             unrealized_profit,
             unrealized_loss,
             neg_unrealized_loss,
-            gross_pnl,
             net_unrealized_pnl,
         })
     }
@@ -131,13 +126,6 @@ impl UnrealizedBase {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.gross_pnl.cents.height.compute_add(
-            starting_indexes.height,
-            &self.unrealized_profit.cents.height,
-            &self.unrealized_loss.cents.height,
-            exit,
-        )?;
-
         self.net_unrealized_pnl
             .cents
             .height

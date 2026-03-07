@@ -3,9 +3,7 @@ use brk_traversable::Traversable;
 use brk_types::{BasisPoints16, BasisPoints32, BasisPointsSigned32, Dollars, Height, Version};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::internal::{
-    NegRatioDollarsBps32, PercentFromHeight, RatioDollarsBp16, RatioDollarsBp32, RatioDollarsBps32,
-};
+use crate::internal::{PercentFromHeight, RatioDollarsBp16, RatioDollarsBp32, RatioDollarsBps32};
 
 use crate::distribution::metrics::{ImportConfig, UnrealizedFull};
 
@@ -14,7 +12,6 @@ use crate::distribution::metrics::{ImportConfig, UnrealizedFull};
 pub struct RelativeExtendedOwnMarketCap<M: StorageMode = Rw> {
     pub unrealized_profit_rel_to_own_market_cap: PercentFromHeight<BasisPoints16, M>,
     pub unrealized_loss_rel_to_own_market_cap: PercentFromHeight<BasisPoints32, M>,
-    pub neg_unrealized_loss_rel_to_own_market_cap: PercentFromHeight<BasisPointsSigned32, M>,
     pub net_unrealized_pnl_rel_to_own_market_cap: PercentFromHeight<BasisPointsSigned32, M>,
 }
 
@@ -27,8 +24,6 @@ impl RelativeExtendedOwnMarketCap {
                 .import("unrealized_profit_rel_to_own_market_cap", v2)?,
             unrealized_loss_rel_to_own_market_cap: cfg
                 .import("unrealized_loss_rel_to_own_market_cap", Version::new(3))?,
-            neg_unrealized_loss_rel_to_own_market_cap: cfg
-                .import("neg_unrealized_loss_rel_to_own_market_cap", Version::new(3))?,
             net_unrealized_pnl_rel_to_own_market_cap: cfg
                 .import("net_unrealized_pnl_rel_to_own_market_cap", Version::new(3))?,
         })
@@ -50,13 +45,6 @@ impl RelativeExtendedOwnMarketCap {
             )?;
         self.unrealized_loss_rel_to_own_market_cap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
-                max_from,
-                &unrealized.unrealized_loss.usd.height,
-                own_market_cap,
-                exit,
-            )?;
-        self.neg_unrealized_loss_rel_to_own_market_cap
-            .compute_binary::<Dollars, Dollars, NegRatioDollarsBps32>(
                 max_from,
                 &unrealized.unrealized_loss.usd.height,
                 own_market_cap,

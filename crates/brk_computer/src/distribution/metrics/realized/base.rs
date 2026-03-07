@@ -11,7 +11,6 @@ use crate::{
     distribution::state::RealizedOps,
     internal::{
         ComputedFromHeight, ComputedFromHeightCumulative,
-        ComputedFromHeightRatioPercentiles, FiatFromHeight,
         LazyFromHeight, NegCentsUnsignedToDollars, RatioCents64,
         RollingWindows, ValueFromHeightCumulative,
     },
@@ -33,15 +32,12 @@ pub struct RealizedBase<M: StorageMode = Rw> {
 
     pub neg_realized_loss: LazyFromHeight<Dollars, Cents>,
     pub net_realized_pnl: ComputedFromHeightCumulative<CentsSigned, M>,
-    pub gross_pnl: FiatFromHeight<Cents, M>,
 
     pub value_created: ComputedFromHeight<Cents, M>,
     pub value_destroyed: ComputedFromHeight<Cents, M>,
     pub value_created_sum: RollingWindows<Cents, M>,
     pub value_destroyed_sum: RollingWindows<Cents, M>,
     pub sopr: RollingWindows<StoredF64, M>,
-
-    pub realized_price_ratio_percentiles: ComputedFromHeightRatioPercentiles<M>,
 
     pub sent_in_profit: ValueFromHeightCumulative<M>,
     pub sent_in_loss: ValueFromHeightCumulative<M>,
@@ -62,7 +58,6 @@ impl RealizedBase {
         );
 
         let net_realized_pnl = cfg.import("net_realized_pnl", v0)?;
-        let gross_pnl = cfg.import("realized_gross_pnl", v0)?;
 
         let value_created = cfg.import("value_created", v0)?;
         let value_destroyed = cfg.import("value_destroyed", v0)?;
@@ -70,26 +65,16 @@ impl RealizedBase {
         let value_destroyed_sum = cfg.import("value_destroyed", v1)?;
         let sopr = cfg.import("sopr", v1)?;
 
-        let realized_price_ratio_percentiles =
-            ComputedFromHeightRatioPercentiles::forced_import(
-                cfg.db,
-                &cfg.name("realized_price"),
-                cfg.version + v1,
-                cfg.indexes,
-            )?;
-
         Ok(Self {
             minimal,
             realized_cap_change_1m: cfg.import("realized_cap_change_1m", v0)?,
             neg_realized_loss,
             net_realized_pnl,
-            gross_pnl,
             value_created,
             value_destroyed,
             value_created_sum,
             value_destroyed_sum,
             sopr,
-            realized_price_ratio_percentiles,
             sent_in_profit: cfg.import("sent_in_profit", v0)?,
             sent_in_loss: cfg.import("sent_in_loss", v0)?,
         })
@@ -176,13 +161,6 @@ impl RealizedBase {
                 Ok(())
             })?;
 
-        self.gross_pnl.cents.height.compute_add(
-            starting_indexes.height,
-            &self.minimal.realized_profit.height,
-            &self.minimal.realized_loss.height,
-            exit,
-        )?;
-
         Ok(())
     }
 
@@ -233,15 +211,6 @@ impl RealizedBase {
                 exit,
             )?;
         }
-
-        // Realized price ratio percentiles
-        self.realized_price_ratio_percentiles.compute(
-            blocks,
-            starting_indexes,
-            exit,
-            &self.minimal.realized_price_ratio.ratio.height,
-            &self.minimal.realized_price.cents.height,
-        )?;
 
         Ok(())
     }

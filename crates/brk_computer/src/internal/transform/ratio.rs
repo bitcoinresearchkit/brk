@@ -84,20 +84,6 @@ impl BinaryTransform<Dollars, Dollars, BasisPointsSigned32> for RatioDollarsBps3
     }
 }
 
-pub struct NegRatioDollarsBps32;
-
-impl BinaryTransform<Dollars, Dollars, BasisPointsSigned32> for NegRatioDollarsBps32 {
-    #[inline(always)]
-    fn apply(numerator: Dollars, denominator: Dollars) -> BasisPointsSigned32 {
-        let ratio = *(numerator / denominator);
-        if ratio.is_finite() {
-            BasisPointsSigned32::from(-ratio)
-        } else {
-            BasisPointsSigned32::ZERO
-        }
-    }
-}
-
 pub struct RatioCentsSignedCentsBps32;
 
 impl BinaryTransform<CentsSigned, Cents, BasisPointsSigned32> for RatioCentsSignedCentsBps32 {

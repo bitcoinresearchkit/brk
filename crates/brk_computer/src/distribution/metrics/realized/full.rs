@@ -14,7 +14,7 @@ use crate::{
     blocks,
     distribution::state::RealizedState,
     internal::{
-        CentsUnsignedToDollars, ComputedFromHeight, ComputedFromHeightCumulative,
+        CentsUnsignedToDollars, ComputedFromHeight, ComputedFromHeightCumulative, FiatFromHeight,
         ComputedFromHeightRatio, ComputedFromHeightRatioPercentiles,
         ComputedFromHeightRatioStdDevBands, LazyFromHeight, PercentFromHeight,
         PercentRollingEmas1w1m, PercentRollingWindows, Price, RatioCents64, RatioCentsBp32,
@@ -34,6 +34,8 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     #[deref_mut]
     #[traversable(flatten)]
     pub core: RealizedBase<M>,
+
+    pub gross_pnl: FiatFromHeight<Cents, M>,
 
     pub realized_profit_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
     pub realized_loss_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
@@ -83,6 +85,7 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     pub sent_in_profit_ema: RollingEmas2w<M>,
     pub sent_in_loss_ema: RollingEmas2w<M>,
 
+    pub realized_price_ratio_percentiles: ComputedFromHeightRatioPercentiles<M>,
     pub realized_price_ratio_std_dev: ComputedFromHeightRatioStdDevBands<M>,
     pub investor_price_ratio_percentiles: ComputedFromHeightRatioPercentiles<M>,
 }
@@ -93,6 +96,8 @@ impl RealizedFull {
         let v1 = Version::ONE;
 
         let core = RealizedBase::forced_import(cfg)?;
+
+        let gross_pnl = cfg.import("realized_gross_pnl", v0)?;
 
         let profit_value_created = cfg.import("profit_value_created", v0)?;
         let profit_value_destroyed: ComputedFromHeight<Cents> =
@@ -154,6 +159,7 @@ impl RealizedFull {
 
         Ok(Self {
             core,
+            gross_pnl,
             realized_profit_rel_to_realized_cap,
             realized_loss_rel_to_realized_cap,
             net_realized_pnl_rel_to_realized_cap,
@@ -191,6 +197,12 @@ impl RealizedFull {
             sopr_24h_ema,
             sent_in_profit_ema,
             sent_in_loss_ema,
+            realized_price_ratio_percentiles: ComputedFromHeightRatioPercentiles::forced_import(
+                cfg.db,
+                &realized_price_name,
+                realized_price_version,
+                cfg.indexes,
+            )?,
             realized_price_ratio_std_dev: ComputedFromHeightRatioStdDevBands::forced_import(
                 cfg.db,
                 &realized_price_name,
@@ -366,12 +378,19 @@ impl RealizedFull {
             exit,
         )?;
 
-        // Gross PnL rolling sum
+        // Gross PnL
+        self.gross_pnl.cents.height.compute_add(
+            starting_indexes.height,
+            &self.core.minimal.realized_profit.height,
+            &self.core.minimal.realized_loss.height,
+            exit,
+        )?;
+
         let window_starts = blocks.count.window_starts();
         self.gross_pnl_sum.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.core.gross_pnl.cents.height,
+            &self.gross_pnl.cents.height,
             exit,
         )?;
 
@@ -510,7 +529,14 @@ impl RealizedFull {
             )?;
         }
 
-        // Realized price stddev bands
+        self.realized_price_ratio_percentiles.compute(
+            blocks,
+            starting_indexes,
+            exit,
+            &self.core.minimal.realized_price_ratio.ratio.height,
+            &self.core.minimal.realized_price.cents.height,
+        )?;
+
         self.realized_price_ratio_std_dev.compute(
             blocks,
             starting_indexes,

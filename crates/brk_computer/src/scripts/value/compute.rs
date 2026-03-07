@@ -4,22 +4,18 @@ use brk_types::{Height, Indexes, OutputType, Sats, TxOutIndex};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
 use super::Vecs;
-use crate::{blocks, prices};
+use crate::prices;
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        count_vecs: &blocks::CountVecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let window_starts = count_vecs.window_starts();
-
-        self.opreturn.compute(
+        self.opreturn.compute_with(
             starting_indexes.height,
-            &window_starts,
             prices,
             exit,
             |height_vec| {

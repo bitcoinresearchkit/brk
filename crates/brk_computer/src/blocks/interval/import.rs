@@ -3,7 +3,7 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::ComputedFromHeightDistribution};
+use crate::{indexes, internal::ComputedFromHeightRollingAverage};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -11,8 +11,12 @@ impl Vecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let interval =
-            ComputedFromHeightDistribution::forced_import(db, "block_interval", version, indexes)?;
+        let interval = ComputedFromHeightRollingAverage::forced_import(
+            db,
+            "block_interval",
+            version,
+            indexes,
+        )?;
 
         Ok(Self(interval))
     }

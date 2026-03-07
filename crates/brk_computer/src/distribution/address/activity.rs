@@ -8,11 +8,6 @@
 //! | `sending` | Unique addresses that sent this block |
 //! | `reactivated` | Addresses that were empty and now have funds |
 //! | `both` | Addresses that both sent AND received same block |
-//! | `balance_increased` | Receive-only addresses (balance definitely increased) |
-//! | `balance_decreased` | Send-only addresses (balance definitely decreased) |
-//!
-//! Note: `balance_increased` and `balance_decreased` exclude "both" addresses
-//! since their net balance change requires more complex tracking.
 
 use brk_cohort::ByAddressType;
 use brk_error::Result;
@@ -24,14 +19,10 @@ use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
     indexes,
-    internal::{ComputedFromHeightDistribution, WindowStarts},
+    internal::{ComputedFromHeightRollingAverage, WindowStarts},
 };
 
 /// Per-block activity counts - reset each block.
-///
-/// Note: `balance_increased` and `balance_decreased` are derived:
-/// - `balance_increased = receiving - both` (receive-only addresses)
-/// - `balance_decreased = sending - both` (send-only addresses)
 #[derive(Debug, Default, Clone)]
 pub struct BlockActivityCounts {
     pub reactivated: u32,
@@ -74,12 +65,10 @@ impl AddressTypeToActivityCounts {
 /// Activity count vectors for a single category (e.g., one address type or "all").
 #[derive(Traversable)]
 pub struct ActivityCountVecs<M: StorageMode = Rw> {
-    pub reactivated: ComputedFromHeightDistribution<StoredU32, M>,
-    pub sending: ComputedFromHeightDistribution<StoredU32, M>,
-    pub receiving: ComputedFromHeightDistribution<StoredU32, M>,
-    pub balance_increased: ComputedFromHeightDistribution<StoredU32, M>,
-    pub balance_decreased: ComputedFromHeightDistribution<StoredU32, M>,
-    pub both: ComputedFromHeightDistribution<StoredU32, M>,
+    pub reactivated: ComputedFromHeightRollingAverage<StoredU32, M>,
+    pub sending: ComputedFromHeightRollingAverage<StoredU32, M>,
+    pub receiving: ComputedFromHeightRollingAverage<StoredU32, M>,
+    pub both: ComputedFromHeightRollingAverage<StoredU32, M>,
 }
 
 impl ActivityCountVecs {
@@ -90,37 +79,25 @@ impl ActivityCountVecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            reactivated: ComputedFromHeightDistribution::forced_import(
+            reactivated: ComputedFromHeightRollingAverage::forced_import(
                 db,
                 &format!("{name}_reactivated"),
                 version,
                 indexes,
             )?,
-            sending: ComputedFromHeightDistribution::forced_import(
+            sending: ComputedFromHeightRollingAverage::forced_import(
                 db,
                 &format!("{name}_sending"),
                 version,
                 indexes,
             )?,
-            receiving: ComputedFromHeightDistribution::forced_import(
+            receiving: ComputedFromHeightRollingAverage::forced_import(
                 db,
                 &format!("{name}_receiving"),
                 version,
                 indexes,
             )?,
-            balance_increased: ComputedFromHeightDistribution::forced_import(
-                db,
-                &format!("{name}_balance_increased"),
-                version,
-                indexes,
-            )?,
-            balance_decreased: ComputedFromHeightDistribution::forced_import(
-                db,
-                &format!("{name}_balance_decreased"),
-                version,
-                indexes,
-            )?,
-            both: ComputedFromHeightDistribution::forced_import(
+            both: ComputedFromHeightRollingAverage::forced_import(
                 db,
                 &format!("{name}_both"),
                 version,
@@ -135,8 +112,6 @@ impl ActivityCountVecs {
             .len()
             .min(self.sending.height.len())
             .min(self.receiving.height.len())
-            .min(self.balance_increased.height.len())
-            .min(self.balance_decreased.height.len())
             .min(self.both.height.len())
     }
 
@@ -147,8 +122,6 @@ impl ActivityCountVecs {
             &mut self.reactivated.height as &mut dyn AnyStoredVec,
             &mut self.sending.height as &mut dyn AnyStoredVec,
             &mut self.receiving.height as &mut dyn AnyStoredVec,
-            &mut self.balance_increased.height as &mut dyn AnyStoredVec,
-            &mut self.balance_decreased.height as &mut dyn AnyStoredVec,
             &mut self.both.height as &mut dyn AnyStoredVec,
         ]
         .into_par_iter()
@@ -158,8 +131,6 @@ impl ActivityCountVecs {
         self.reactivated.height.reset()?;
         self.sending.height.reset()?;
         self.receiving.height.reset()?;
-        self.balance_increased.height.reset()?;
-        self.balance_decreased.height.reset()?;
         self.both.height.reset()?;
         Ok(())
     }
@@ -178,14 +149,6 @@ impl ActivityCountVecs {
         self.receiving
             .height
             .truncate_push(height, counts.receiving.into())?;
-        // Derived: balance_increased = receiving - both (receive-only addresses)
-        self.balance_increased
-            .height
-            .truncate_push(height, (counts.receiving - counts.both).into())?;
-        // Derived: balance_decreased = sending - both (send-only addresses)
-        self.balance_decreased
-            .height
-            .truncate_push(height, (counts.sending - counts.both).into())?;
         self.both.height.truncate_push(height, counts.both.into())?;
         Ok(())
     }
@@ -199,10 +162,6 @@ impl ActivityCountVecs {
         self.reactivated.compute_rest(max_from, windows, exit)?;
         self.sending.compute_rest(max_from, windows, exit)?;
         self.receiving.compute_rest(max_from, windows, exit)?;
-        self.balance_increased
-            .compute_rest(max_from, windows, exit)?;
-        self.balance_decreased
-            .compute_rest(max_from, windows, exit)?;
         self.both.compute_rest(max_from, windows, exit)?;
         Ok(())
     }
@@ -254,8 +213,6 @@ impl AddressTypeToActivityCountVecs {
             vecs.push(&mut type_vecs.reactivated.height);
             vecs.push(&mut type_vecs.sending.height);
             vecs.push(&mut type_vecs.receiving.height);
-            vecs.push(&mut type_vecs.balance_increased.height);
-            vecs.push(&mut type_vecs.balance_decreased.height);
             vecs.push(&mut type_vecs.both.height);
         }
         vecs.into_par_iter()

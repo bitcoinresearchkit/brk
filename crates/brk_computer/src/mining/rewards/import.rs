@@ -6,8 +6,8 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        FiatFromHeight, PercentFromHeight, PercentRollingWindows, ValueFromHeightCumulativeSum,
-        ValueFromHeightFull,
+        FiatFromHeight, PercentFromHeight, PercentRollingWindows, ValueFromHeightCumulative,
+        ValueFromHeightCumulativeSum, ValueFromHeightFull,
     },
 };
 
@@ -18,8 +18,8 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            coinbase: ValueFromHeightFull::forced_import(db, "coinbase", version, indexes)?,
-            subsidy: ValueFromHeightFull::forced_import(db, "subsidy", version, indexes)?,
+            coinbase: ValueFromHeightCumulativeSum::forced_import(db, "coinbase", version, indexes)?,
+            subsidy: ValueFromHeightCumulative::forced_import(db, "subsidy", version, indexes)?,
             fees: ValueFromHeightFull::forced_import(db, "fees", version, indexes)?,
             unclaimed_rewards: ValueFromHeightCumulativeSum::forced_import(
                 db,

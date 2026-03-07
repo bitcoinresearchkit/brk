@@ -26,7 +26,8 @@ pub struct UnrealizedFull<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub base: UnrealizedBase<M>,
 
-    // --- Source-only fields ---
+    pub gross_pnl: FiatFromHeight<Cents, M>,
+
     pub invested_capital_in_profit: FiatFromHeight<Cents, M>,
     pub invested_capital_in_loss: FiatFromHeight<Cents, M>,
 
@@ -47,6 +48,8 @@ impl UnrealizedFull {
 
         let base = UnrealizedBase::forced_import(cfg)?;
 
+        let gross_pnl = cfg.import("unrealized_gross_pnl", v0)?;
+
         let invested_capital_in_profit = cfg.import("invested_capital_in_profit", v0)?;
         let invested_capital_in_loss = cfg.import("invested_capital_in_loss", v0)?;
 
@@ -62,6 +65,7 @@ impl UnrealizedFull {
 
         Ok(Self {
             base,
+            gross_pnl,
             invested_capital_in_profit,
             invested_capital_in_loss,
             invested_capital_in_profit_raw,
@@ -218,10 +222,16 @@ impl UnrealizedFull {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        // Complete-tier: net_unrealized_pnl
         self.base.compute_rest(starting_indexes, exit)?;
 
-        // Extended-only: Pain index (investor_price_of_losers - spot)
+        self.gross_pnl.cents.height.compute_add(
+            starting_indexes.height,
+            &self.base.unrealized_profit.cents.height,
+            &self.base.unrealized_loss.cents.height,
+            exit,
+        )?;
+
+        // Pain index (investor_price_of_losers - spot)
         self.pain_index.cents.height.compute_transform3(
             starting_indexes.height,
             &self.investor_cap_in_loss_raw,
