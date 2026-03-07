@@ -11,9 +11,9 @@ use crate::{
     internal::{
         CentsType, ComputedFromHeight, ComputedFromHeightCumulative,
         ComputedFromHeightCumulativeSum, ComputedFromHeightRatio, FiatFromHeight, NumericValue,
-        PercentFromHeight, PercentRollingWindows, Price,
+        PercentFromHeight, PercentRollingWindows, Price, RollingDelta1m, RollingDeltaExcept1m,
         RollingWindow24h, RollingWindows, RollingWindowsFrom1w,
-        ValueFromHeight, ValueFromHeightChange, ValueFromHeightCumulative,
+        ValueFromHeight, ValueFromHeightCumulative,
     },
 };
 
@@ -39,7 +39,6 @@ macro_rules! impl_config_import {
 impl_config_import!(
     ValueFromHeight,
     ValueFromHeightCumulative,
-    ValueFromHeightChange,
     ComputedFromHeightRatio,
     PercentFromHeight<BasisPoints16>,
     PercentFromHeight<BasisPoints32>,
@@ -80,6 +79,19 @@ impl<T: NumericValue + JsonSchema> ConfigImport for RollingWindowsFrom1w<T> {
     }
 }
 impl<C: CentsType> ConfigImport for FiatFromHeight<C> {
+    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
+        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
+    }
+}
+impl<S: NumericValue + JsonSchema, C: NumericValue + JsonSchema> ConfigImport for RollingDelta1m<S, C>
+{
+    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
+        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
+    }
+}
+impl<S: NumericValue + JsonSchema, C: NumericValue + JsonSchema> ConfigImport
+    for RollingDeltaExcept1m<S, C>
+{
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }

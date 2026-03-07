@@ -11,7 +11,7 @@ use crate::{
     distribution::state::RealizedOps,
     internal::{
         ComputedFromHeight, ComputedFromHeightCumulative, LazyFromHeight,
-        NegCentsUnsignedToDollars, RatioCents64, RollingWindow24h,
+        NegCentsUnsignedToDollars, RatioCents64, RollingDelta1m, RollingWindow24h,
     },
     prices,
 };
@@ -27,7 +27,7 @@ pub struct RealizedCore<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub minimal: RealizedMinimal<M>,
 
-    pub realized_cap_change_1m: ComputedFromHeight<CentsSigned, M>,
+    pub realized_cap_delta: RollingDelta1m<Cents, CentsSigned, M>,
 
     pub neg_realized_loss: LazyFromHeight<Dollars, Cents>,
     pub net_realized_pnl: ComputedFromHeightCumulative<CentsSigned, M>,
@@ -63,7 +63,7 @@ impl RealizedCore {
 
         Ok(Self {
             minimal,
-            realized_cap_change_1m: cfg.import("realized_cap_change_1m", v0)?,
+            realized_cap_delta: cfg.import("realized_cap_delta", v1)?,
             neg_realized_loss,
             net_realized_pnl,
             value_created,
@@ -154,7 +154,7 @@ impl RealizedCore {
         self.minimal
             .compute_rest_part2(prices, starting_indexes, height_to_supply, exit)?;
 
-        self.realized_cap_change_1m.height.compute_rolling_change(
+        self.realized_cap_delta.compute(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
             &self.minimal.realized_cap_cents.height,

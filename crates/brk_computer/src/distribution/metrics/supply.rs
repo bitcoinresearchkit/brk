@@ -1,13 +1,13 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, Sats, Version};
+use brk_types::{Height, Indexes, Sats, SatsSigned, Version};
 
 use crate::{blocks, prices};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::internal::{
-    HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyValueFromHeight, ValueFromHeight,
-    ValueFromHeightChange,
+    HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyValueFromHeight,
+    RollingDelta1m, ValueFromHeight,
 };
 
 use super::ImportConfig;
@@ -17,8 +17,7 @@ use super::ImportConfig;
 pub struct SupplyMetrics<M: StorageMode = Rw> {
     pub total: ValueFromHeight<M>,
     pub halved: LazyValueFromHeight,
-    /// 1-month change in supply (net position change) - sats, btc, usd
-    pub change_1m: ValueFromHeightChange<M>,
+    pub delta: RollingDelta1m<Sats, SatsSigned, M>,
 }
 
 impl SupplyMetrics {
@@ -33,12 +32,12 @@ impl SupplyMetrics {
             HalveDollars,
         >(&cfg.name("supply_halved"), &supply, cfg.version);
 
-        let change_1m = cfg.import("supply_change_1m", Version::ZERO)?;
+        let delta = cfg.import("supply_delta", Version::ONE)?;
 
         Ok(Self {
             total: supply,
             halved: supply_halved,
-            change_1m,
+            delta,
         })
     }
 
@@ -101,11 +100,10 @@ impl SupplyMetrics {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.change_1m.compute_rolling(
+        self.delta.compute(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
             &self.total.sats.height,
-            &self.total.cents.height,
             exit,
         )
     }

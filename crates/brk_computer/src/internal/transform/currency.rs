@@ -1,4 +1,4 @@
-use brk_types::{Bitcoin, Cents, CentsSigned, Dollars, Sats, SatsFract, SatsSigned};
+use brk_types::{Bitcoin, Cents, CentsSigned, Dollars, Sats, SatsFract};
 use vecdb::{BinaryTransform, UnaryTransform};
 
 pub struct SatsToBitcoin;
@@ -6,15 +6,6 @@ pub struct SatsToBitcoin;
 impl UnaryTransform<Sats, Bitcoin> for SatsToBitcoin {
     #[inline(always)]
     fn apply(sats: Sats) -> Bitcoin {
-        Bitcoin::from(sats)
-    }
-}
-
-pub struct SatsSignedToBitcoin;
-
-impl UnaryTransform<SatsSigned, Bitcoin> for SatsSignedToBitcoin {
-    #[inline(always)]
-    fn apply(sats: SatsSigned) -> Bitcoin {
         Bitcoin::from(sats)
     }
 }

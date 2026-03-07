@@ -1,9 +1,9 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, StoredF64, StoredU64, Version};
+use brk_types::{Height, Indexes, StoredI64, StoredU64, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
-use crate::{blocks, internal::ComputedFromHeight};
+use crate::{blocks, internal::{ComputedFromHeight, RollingDelta1m}};
 
 use super::ImportConfig;
 
@@ -11,7 +11,7 @@ use super::ImportConfig;
 #[derive(Traversable)]
 pub struct OutputsMetrics<M: StorageMode = Rw> {
     pub utxo_count: ComputedFromHeight<StoredU64, M>,
-    pub utxo_count_change_1m: ComputedFromHeight<StoredF64, M>,
+    pub utxo_count_delta: RollingDelta1m<StoredU64, StoredI64, M>,
 }
 
 impl OutputsMetrics {
@@ -19,7 +19,7 @@ impl OutputsMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
             utxo_count: cfg.import("utxo_count", Version::ZERO)?,
-            utxo_count_change_1m: cfg.import("utxo_count_change_1m", Version::ZERO)?,
+            utxo_count_delta: cfg.import("utxo_count_delta", Version::ONE)?,
         })
     }
 
@@ -65,7 +65,7 @@ impl OutputsMetrics {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.utxo_count_change_1m.height.compute_rolling_change(
+        self.utxo_count_delta.compute(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
             &self.utxo_count.height,

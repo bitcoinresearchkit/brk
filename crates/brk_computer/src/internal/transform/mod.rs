@@ -16,7 +16,7 @@ pub use bps::{
 pub use currency::{
     CentsSignedToDollars, CentsSubtractToCentsSigned, CentsTimesTenths,
     CentsUnsignedToDollars, CentsUnsignedToSats, DollarsToSatsFract, NegCentsUnsignedToDollars,
-    SatsSignedToBitcoin, SatsToBitcoin, SatsToCents,
+    SatsToBitcoin, SatsToCents,
 };
 pub use derived::{
     Days7, Days30, Days365, DaysToYears, PerSec, PriceTimesRatioBp32Cents, PriceTimesRatioCents,

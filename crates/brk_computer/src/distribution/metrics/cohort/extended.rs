@@ -1,13 +1,15 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Dollars, Height, Indexes, Sats, StoredF32, Version};
+use brk_types::{
+    Bitcoin, Dollars, Height, Indexes, Sats, SatsSigned, StoredF32, StoredI64, StoredU64, Version,
+};
 use vecdb::AnyStoredVec;
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, prices};
 
-use crate::internal::ComputedFromHeight;
+use crate::internal::{ComputedFromHeight, RollingDeltaExcept1m};
 
 use crate::distribution::metrics::{
     ActivityFull, CohortMetricsBase, CostBasisWithExtended, ImportConfig, OutputsMetrics,
@@ -29,6 +31,9 @@ pub struct ExtendedCohortMetrics<M: StorageMode = Rw> {
     pub relative: Box<RelativeWithExtended<M>>,
     pub dormancy: ComputedFromHeight<StoredF32, M>,
     pub velocity: ComputedFromHeight<StoredF32, M>,
+
+    pub supply_delta_extended: RollingDeltaExcept1m<Sats, SatsSigned, M>,
+    pub utxo_count_delta_extended: RollingDeltaExcept1m<StoredU64, StoredI64, M>,
 }
 
 impl CohortMetricsBase for ExtendedCohortMetrics {
@@ -72,6 +77,8 @@ impl ExtendedCohortMetrics {
             relative: Box::new(relative),
             dormancy: cfg.import("dormancy", Version::ONE)?,
             velocity: cfg.import("velocity", Version::ONE)?,
+            supply_delta_extended: cfg.import("supply_delta", Version::ONE)?,
+            utxo_count_delta_extended: cfg.import("utxo_count_delta", Version::ONE)?,
         })
     }
 
@@ -100,6 +107,20 @@ impl ExtendedCohortMetrics {
             height_to_market_cap,
             all_supply_sats,
             &self.supply.total.usd.height,
+            exit,
+        )?;
+
+        let window_starts = blocks.count.window_starts();
+        self.supply_delta_extended.compute(
+            starting_indexes.height,
+            &window_starts,
+            &self.supply.total.sats.height,
+            exit,
+        )?;
+        self.utxo_count_delta_extended.compute(
+            starting_indexes.height,
+            &window_starts,
+            &self.outputs.utxo_count.height,
             exit,
         )?;
 

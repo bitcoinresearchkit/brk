@@ -1591,9 +1591,10 @@ function createMetricPattern35(client, name) { return /** @type {MetricPattern35
  * @property {CentsSatsUsdPattern} lowerPriceBand
  * @property {MetricPattern1<StoredF32>} mvrv
  * @property {MetricPattern1<Dollars>} negRealizedLoss
- * @property {MetricPattern1<CentsSigned>} netPnlChange1m
  * @property {BpsPercentRatioPattern} netPnlChange1mRelToMarketCap
  * @property {BpsPercentRatioPattern} netPnlChange1mRelToRealizedCap
+ * @property {ChangeRatePattern<CentsSigned>} netPnlDelta
+ * @property {_24hChangeRatePattern<CentsSigned>} netPnlDeltaExtended
  * @property {CumulativeHeightPattern<CentsSigned>} netRealizedPnl
  * @property {BpsPercentRatioPattern} netRealizedPnlRelToRealizedCap
  * @property {CumulativeHeightPattern<Cents>} peakRegret
@@ -1605,7 +1606,8 @@ function createMetricPattern35(client, name) { return /** @type {MetricPattern35
  * @property {_1m1w1y24hPattern<Cents>} profitValueDestroyedSum
  * @property {MetricPattern1<Dollars>} realizedCap
  * @property {MetricPattern1<Cents>} realizedCapCents
- * @property {MetricPattern1<CentsSigned>} realizedCapChange1m
+ * @property {ChangeRatePattern<CentsSigned>} realizedCapDelta
+ * @property {_24hChangeRatePattern<CentsSigned>} realizedCapDeltaExtended
  * @property {BpsPercentRatioPattern} realizedCapRelToOwnMarketCap
  * @property {CumulativeHeightPattern<Cents>} realizedLoss
  * @property {BpsPercentRatioPattern} realizedLossRelToRealizedCap
@@ -1661,9 +1663,10 @@ function createCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealized
     lowerPriceBand: createCentsSatsUsdPattern(client, _m(acc, 'lower_price_band')),
     mvrv: createMetricPattern1(client, _m(acc, 'mvrv')),
     negRealizedLoss: createMetricPattern1(client, _m(acc, 'neg_realized_loss')),
-    netPnlChange1m: createMetricPattern1(client, _m(acc, 'net_pnl_change_1m')),
     netPnlChange1mRelToMarketCap: createBpsPercentRatioPattern(client, _m(acc, 'net_pnl_change_1m_rel_to_market_cap')),
     netPnlChange1mRelToRealizedCap: createBpsPercentRatioPattern(client, _m(acc, 'net_pnl_change_1m_rel_to_realized_cap')),
+    netPnlDelta: createChangeRatePattern(client, _m(acc, 'net_pnl_delta')),
+    netPnlDeltaExtended: create_24hChangeRatePattern(client, _m(acc, 'net_pnl_delta')),
     netRealizedPnl: createCumulativeHeightPattern(client, _m(acc, 'net_realized_pnl')),
     netRealizedPnlRelToRealizedCap: createBpsPercentRatioPattern(client, _m(acc, 'net_realized_pnl_rel_to_realized_cap')),
     peakRegret: createCumulativeHeightPattern(client, _m(acc, 'realized_peak_regret')),
@@ -1675,7 +1678,8 @@ function createCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealized
     profitValueDestroyedSum: create_1m1w1y24hPattern(client, _m(acc, 'profit_value_destroyed')),
     realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
     realizedCapCents: createMetricPattern1(client, _m(acc, 'realized_cap_cents')),
-    realizedCapChange1m: createMetricPattern1(client, _m(acc, 'realized_cap_change_1m')),
+    realizedCapDelta: createChangeRatePattern(client, _m(acc, 'realized_cap_delta')),
+    realizedCapDeltaExtended: create_24hChangeRatePattern(client, _m(acc, 'realized_cap_delta')),
     realizedCapRelToOwnMarketCap: createBpsPercentRatioPattern(client, _m(acc, 'realized_cap_rel_to_own_market_cap')),
     realizedLoss: createCumulativeHeightPattern(client, _m(acc, 'realized_loss')),
     realizedLossRelToRealizedCap: createBpsPercentRatioPattern(client, _m(acc, 'realized_loss_rel_to_realized_cap')),
@@ -1787,7 +1791,7 @@ function create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern(client
  * @property {CumulativeHeightPattern<CentsSigned>} netRealizedPnl
  * @property {MetricPattern1<Dollars>} realizedCap
  * @property {MetricPattern1<Cents>} realizedCapCents
- * @property {MetricPattern1<CentsSigned>} realizedCapChange1m
+ * @property {ChangeRatePattern<CentsSigned>} realizedCapDelta
  * @property {CumulativeHeightPattern<Cents>} realizedLoss
  * @property {_24hPattern<Cents>} realizedLossSum
  * @property {CentsSatsUsdPattern} realizedPrice
@@ -1818,7 +1822,7 @@ function createMvrvNegNetRealizedSentSoprValuePattern(client, acc) {
     netRealizedPnl: createCumulativeHeightPattern(client, _m(acc, 'net_realized_pnl')),
     realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
     realizedCapCents: createMetricPattern1(client, _m(acc, 'realized_cap_cents')),
-    realizedCapChange1m: createMetricPattern1(client, _m(acc, 'realized_cap_change_1m')),
+    realizedCapDelta: createChangeRatePattern(client, _m(acc, 'realized_cap_delta')),
     realizedLoss: createCumulativeHeightPattern(client, _m(acc, 'realized_loss')),
     realizedLossSum: create_24hPattern(client, _m(acc, 'realized_loss_24h')),
     realizedPrice: createCentsSatsUsdPattern(client, _m(acc, 'realized_price')),
@@ -1897,7 +1901,7 @@ function createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65
  * @property {CumulativeHeightPattern<CentsSigned>} netRealizedPnl
  * @property {MetricPattern1<Dollars>} realizedCap
  * @property {MetricPattern1<Cents>} realizedCapCents
- * @property {MetricPattern1<CentsSigned>} realizedCapChange1m
+ * @property {ChangeRatePattern<CentsSigned>} realizedCapDelta
  * @property {CumulativeHeightPattern<Cents>} realizedLoss
  * @property {_24hPattern<Cents>} realizedLossSum
  * @property {CentsSatsUsdPattern} realizedPrice
@@ -1924,7 +1928,7 @@ function createMvrvNegNetRealizedSoprValuePattern(client, acc) {
     netRealizedPnl: createCumulativeHeightPattern(client, _m(acc, 'net_realized_pnl')),
     realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
     realizedCapCents: createMetricPattern1(client, _m(acc, 'realized_cap_cents')),
-    realizedCapChange1m: createMetricPattern1(client, _m(acc, 'realized_cap_change_1m')),
+    realizedCapDelta: createChangeRatePattern(client, _m(acc, 'realized_cap_delta')),
     realizedLoss: createCumulativeHeightPattern(client, _m(acc, 'realized_loss')),
     realizedLossSum: create_24hPattern(client, _m(acc, 'realized_loss_24h')),
     realizedPrice: createCentsSatsUsdPattern(client, _m(acc, 'realized_price')),
@@ -2643,7 +2647,7 @@ function create_10y2y3y4y5y6y8yPattern(client, acc) {
  * @property {UtxoPattern} outputs
  * @property {MvrvNegNetRealizedSentSoprValuePattern} realized
  * @property {SupplyPattern2} relative
- * @property {ChangeHalvedTotalPattern} supply
+ * @property {DeltaHalvedTotalPattern} supply
  * @property {InvestedInvestorNegNetSupplyUnrealizedPattern} unrealized
  */
 
@@ -2660,7 +2664,7 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
     realized: createMvrvNegNetRealizedSentSoprValuePattern(client, acc),
     relative: createSupplyPattern2(client, _m(acc, 'supply')),
-    supply: createChangeHalvedTotalPattern(client, _m(acc, 'supply')),
+    supply: createDeltaHalvedTotalPattern(client, _m(acc, 'supply')),
     unrealized: createInvestedInvestorNegNetSupplyUnrealizedPattern(client, acc),
   };
 }
@@ -2669,10 +2673,10 @@ function createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(client
  * @typedef {Object} ActivityAddrOutputsRealizedSupplyUnrealizedPattern
  * @property {SentPattern} activity
  * @property {MetricPattern1<StoredU64>} addrCount
- * @property {MetricPattern1<StoredF64>} addrCountChange1m
+ * @property {ChangeRatePattern<StoredI64>} addrCountDelta
  * @property {UtxoPattern} outputs
  * @property {MvrvRealizedPattern} realized
- * @property {ChangeHalvedTotalPattern} supply
+ * @property {DeltaHalvedTotalPattern} supply
  * @property {SupplyPattern} unrealized
  */
 
@@ -2686,10 +2690,10 @@ function createActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, acc) {
   return {
     activity: createSentPattern(client, _m(acc, 'sent')),
     addrCount: createMetricPattern1(client, _m(acc, 'addr_count')),
-    addrCountChange1m: createMetricPattern1(client, _m(acc, 'addr_count_change_1m')),
+    addrCountDelta: createChangeRatePattern(client, _m(acc, 'addr_count_delta')),
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
     realized: createMvrvRealizedPattern(client, acc),
-    supply: createChangeHalvedTotalPattern(client, _m(acc, 'supply')),
+    supply: createDeltaHalvedTotalPattern(client, _m(acc, 'supply')),
     unrealized: createSupplyPattern(client, _m(acc, 'supply_in')),
   };
 }
@@ -2700,7 +2704,7 @@ function createActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, acc) {
  * @property {UtxoPattern} outputs
  * @property {MvrvNegNetRealizedSoprValuePattern} realized
  * @property {SupplyPattern2} relative
- * @property {ChangeHalvedTotalPattern} supply
+ * @property {DeltaHalvedTotalPattern} supply
  * @property {NegNetSupplyUnrealizedPattern} unrealized
  */
 
@@ -2716,7 +2720,7 @@ function createActivityOutputsRealizedRelativeSupplyUnrealizedPattern(client, ac
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
     realized: createMvrvNegNetRealizedSoprValuePattern(client, acc),
     relative: createSupplyPattern2(client, _m(acc, 'supply')),
-    supply: createChangeHalvedTotalPattern(client, _m(acc, 'supply')),
+    supply: createDeltaHalvedTotalPattern(client, _m(acc, 'supply')),
     unrealized: createNegNetSupplyUnrealizedPattern(client, acc),
   };
 }
@@ -2753,7 +2757,7 @@ function createNegNetSupplyUnrealizedPattern(client, acc) {
  * @property {SentPattern} activity
  * @property {UtxoPattern} outputs
  * @property {MvrvRealizedPattern} realized
- * @property {ChangeHalvedTotalPattern} supply
+ * @property {DeltaHalvedTotalPattern} supply
  * @property {SupplyPattern} unrealized
  */
 
@@ -2768,7 +2772,7 @@ function createActivityOutputsRealizedSupplyUnrealizedPattern(client, acc) {
     activity: createSentPattern(client, _m(acc, 'sent')),
     outputs: createUtxoPattern(client, _m(acc, 'utxo_count')),
     realized: createMvrvRealizedPattern(client, acc),
-    supply: createChangeHalvedTotalPattern(client, _m(acc, 'supply')),
+    supply: createDeltaHalvedTotalPattern(client, _m(acc, 'supply')),
     unrealized: createSupplyPattern(client, _m(acc, 'supply_in')),
   };
 }
@@ -2851,6 +2855,33 @@ function create_1m1w1y24hHeightPattern(client, acc) {
 }
 
 /**
+ * @template T
+ * @typedef {Object} _24hChangeRatePattern
+ * @property {BaseBpsPercentRatioPattern} _24h
+ * @property {MetricPattern1<T>} change1w
+ * @property {MetricPattern1<T>} change1y
+ * @property {BpsPercentRatioPattern} rate1w
+ * @property {BpsPercentRatioPattern} rate1y
+ */
+
+/**
+ * Create a _24hChangeRatePattern pattern node
+ * @template T
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {_24hChangeRatePattern<T>}
+ */
+function create_24hChangeRatePattern(client, acc) {
+  return {
+    _24h: createBaseBpsPercentRatioPattern(client, acc),
+    change1w: createMetricPattern1(client, _m(acc, 'change_1w')),
+    change1y: createMetricPattern1(client, _m(acc, 'change_1y')),
+    rate1w: createBpsPercentRatioPattern(client, _m(acc, 'rate_1w')),
+    rate1y: createBpsPercentRatioPattern(client, _m(acc, 'rate_1y')),
+  };
+}
+
+/**
  * @typedef {Object} _1m1w1y24hPattern6
  * @property {BaseBtcCentsSatsUsdPattern} _1m
  * @property {BaseBtcCentsSatsUsdPattern} _1w
@@ -2916,6 +2947,29 @@ function create_1m1w1y24hPattern5(client, acc) {
     _1w: createBtcCentsSatsUsdPattern(client, _m(acc, '1w')),
     _1y: createBtcCentsSatsUsdPattern(client, _m(acc, '1y')),
     _24h: createBtcCentsSatsUsdPattern(client, _m(acc, '24h')),
+  };
+}
+
+/**
+ * @typedef {Object} BaseBpsPercentRatioPattern
+ * @property {MetricPattern1<CentsSigned>} base
+ * @property {MetricPattern1<BasisPointsSigned32>} bps
+ * @property {MetricPattern1<StoredF32>} percent
+ * @property {MetricPattern1<StoredF32>} ratio
+ */
+
+/**
+ * Create a BaseBpsPercentRatioPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {BaseBpsPercentRatioPattern}
+ */
+function createBaseBpsPercentRatioPattern(client, acc) {
+  return {
+    base: createMetricPattern1(client, _m(acc, 'change_24h')),
+    bps: createMetricPattern1(client, _m(acc, 'rate_24h_bps')),
+    percent: createMetricPattern1(client, _m(acc, 'rate_24h')),
+    ratio: createMetricPattern1(client, _m(acc, 'rate_24h_ratio')),
   };
 }
 
@@ -3165,21 +3219,21 @@ function createCentsSatsUsdPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} ChangeHalvedTotalPattern
- * @property {BtcCentsSatsUsdPattern} change1m
+ * @typedef {Object} DeltaHalvedTotalPattern
+ * @property {ChangeRatePattern<SatsSigned>} delta
  * @property {BtcCentsSatsUsdPattern} halved
  * @property {BtcCentsSatsUsdPattern} total
  */
 
 /**
- * Create a ChangeHalvedTotalPattern pattern node
+ * Create a DeltaHalvedTotalPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {ChangeHalvedTotalPattern}
+ * @returns {DeltaHalvedTotalPattern}
  */
-function createChangeHalvedTotalPattern(client, acc) {
+function createDeltaHalvedTotalPattern(client, acc) {
   return {
-    change1m: createBtcCentsSatsUsdPattern(client, _m(acc, 'change_1m')),
+    delta: createChangeRatePattern(client, _m(acc, 'delta')),
     halved: createBtcCentsSatsUsdPattern(client, _m(acc, 'halved')),
     total: createBtcCentsSatsUsdPattern(client, acc),
   };
@@ -3352,18 +3406,18 @@ function createCentsUsdPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} ChangeRatePattern
+ * @typedef {Object} ChangeRatePattern2
  * @property {_1m1w1y24hPattern<StoredI64>} change
  * @property {_1m1w1y24hPattern2} rate
  */
 
 /**
- * Create a ChangeRatePattern pattern node
+ * Create a ChangeRatePattern2 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {ChangeRatePattern}
+ * @returns {ChangeRatePattern2}
  */
-function createChangeRatePattern(client, acc) {
+function createChangeRatePattern2(client, acc) {
   return {
     change: create_1m1w1y24hPattern(client, _m(acc, 'change')),
     rate: create_1m1w1y24hPattern2(client, _m(acc, 'rate')),
@@ -3449,7 +3503,7 @@ function createSupplyPattern(client, acc) {
 /**
  * @typedef {Object} UtxoPattern
  * @property {MetricPattern1<StoredU64>} utxoCount
- * @property {MetricPattern1<StoredF64>} utxoCountChange1m
+ * @property {ChangeRatePattern<StoredI64>} utxoCountDelta
  */
 
 /**
@@ -3461,7 +3515,28 @@ function createSupplyPattern(client, acc) {
 function createUtxoPattern(client, acc) {
   return {
     utxoCount: createMetricPattern1(client, acc),
-    utxoCountChange1m: createMetricPattern1(client, _m(acc, 'change_1m')),
+    utxoCountDelta: createChangeRatePattern(client, _m(acc, 'delta')),
+  };
+}
+
+/**
+ * @template T
+ * @typedef {Object} ChangeRatePattern
+ * @property {MetricPattern1<T>} change1m
+ * @property {BpsPercentRatioPattern} rate1m
+ */
+
+/**
+ * Create a ChangeRatePattern pattern node
+ * @template T
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {ChangeRatePattern<T>}
+ */
+function createChangeRatePattern(client, acc) {
+  return {
+    change1m: createMetricPattern1(client, _m(acc, 'change_1m')),
+    rate1m: createBpsPercentRatioPattern(client, _m(acc, 'rate_1m')),
   };
 }
 
@@ -4773,7 +4848,7 @@ function create_24hPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_All
- * @property {ChangeHalvedTotalPattern} supply
+ * @property {DeltaHalvedTotalPattern} supply
  * @property {UtxoPattern} outputs
  * @property {CoinblocksCoindaysSentPattern2} activity
  * @property {CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern} realized
@@ -4783,6 +4858,8 @@ function create_24hPattern(client, acc) {
  * @property {MetricsTree_Distribution_UtxoCohorts_All_Relative} relative
  * @property {MetricPattern1<StoredF32>} dormancy
  * @property {MetricPattern1<StoredF32>} velocity
+ * @property {_24hChangeRatePattern<SatsSigned>} supplyDeltaExtended
+ * @property {_24hChangeRatePattern<StoredI64>} utxoCountDeltaExtended
  */
 
 /**
@@ -4809,7 +4886,7 @@ function create_24hPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Sth
- * @property {ChangeHalvedTotalPattern} supply
+ * @property {DeltaHalvedTotalPattern} supply
  * @property {UtxoPattern} outputs
  * @property {CoinblocksCoindaysSentPattern2} activity
  * @property {CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern} realized
@@ -4818,6 +4895,8 @@ function create_24hPattern(client, acc) {
  * @property {NetNuplSupplyUnrealizedPattern2} relative
  * @property {MetricPattern1<StoredF32>} dormancy
  * @property {MetricPattern1<StoredF32>} velocity
+ * @property {_24hChangeRatePattern<SatsSigned>} supplyDeltaExtended
+ * @property {_24hChangeRatePattern<StoredI64>} utxoCountDeltaExtended
  * @property {MetricPattern1<Cents>} adjustedValueCreated
  * @property {MetricPattern1<Cents>} adjustedValueDestroyed
  * @property {_1m1w1y24hPattern<Cents>} adjustedValueCreatedSum
@@ -4827,7 +4906,7 @@ function create_24hPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Lth
- * @property {ChangeHalvedTotalPattern} supply
+ * @property {DeltaHalvedTotalPattern} supply
  * @property {UtxoPattern} outputs
  * @property {CoinblocksCoindaysSentPattern2} activity
  * @property {CapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern} realized
@@ -4836,6 +4915,8 @@ function create_24hPattern(client, acc) {
  * @property {NetNuplSupplyUnrealizedPattern2} relative
  * @property {MetricPattern1<StoredF32>} dormancy
  * @property {MetricPattern1<StoredF32>} velocity
+ * @property {_24hChangeRatePattern<SatsSigned>} supplyDeltaExtended
+ * @property {_24hChangeRatePattern<StoredI64>} utxoCountDeltaExtended
  */
 
 /**
@@ -5094,15 +5175,15 @@ function create_24hPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution_Delta
- * @property {ChangeRatePattern} all
- * @property {ChangeRatePattern} p2pk65
- * @property {ChangeRatePattern} p2pk33
- * @property {ChangeRatePattern} p2pkh
- * @property {ChangeRatePattern} p2sh
- * @property {ChangeRatePattern} p2wpkh
- * @property {ChangeRatePattern} p2wsh
- * @property {ChangeRatePattern} p2tr
- * @property {ChangeRatePattern} p2a
+ * @property {ChangeRatePattern2} all
+ * @property {ChangeRatePattern2} p2pk65
+ * @property {ChangeRatePattern2} p2pk33
+ * @property {ChangeRatePattern2} p2pkh
+ * @property {ChangeRatePattern2} p2sh
+ * @property {ChangeRatePattern2} p2wpkh
+ * @property {ChangeRatePattern2} p2wsh
+ * @property {ChangeRatePattern2} p2tr
+ * @property {ChangeRatePattern2} p2a
  */
 
 /**
@@ -5112,9 +5193,9 @@ function create_24hPattern(client, acc) {
  * @property {BpsPercentRatioPattern} inflationRate
  * @property {MetricsTree_Supply_Velocity} velocity
  * @property {MetricPattern1<Dollars>} marketCap
- * @property {BpsPercentRatioPattern} marketCapGrowthRate
- * @property {BpsPercentRatioPattern} realizedCapGrowthRate
- * @property {MetricPattern1<BasisPointsSigned32>} marketMinusRealizedCapGrowthRate
+ * @property {_1m1w1y24hPattern2} marketCapGrowthRate
+ * @property {_1m1w1y24hPattern2} realizedCapGrowthRate
+ * @property {_1m1w1y24hPattern<BasisPointsSigned32>} marketMinusRealizedCapGrowthRate
  */
 
 /**
@@ -6991,7 +7072,7 @@ class BrkClient extends BrkClientBase {
         },
         utxoCohorts: {
           all: {
-            supply: createChangeHalvedTotalPattern(this, 'supply'),
+            supply: createDeltaHalvedTotalPattern(this, 'supply'),
             outputs: createUtxoPattern(this, 'utxo_count'),
             activity: createCoinblocksCoindaysSentPattern2(this, ''),
             realized: createCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern(this, ''),
@@ -7017,9 +7098,11 @@ class BrkClient extends BrkClientBase {
             },
             dormancy: createMetricPattern1(this, 'dormancy'),
             velocity: createMetricPattern1(this, 'velocity'),
+            supplyDeltaExtended: create_24hChangeRatePattern(this, 'supply_delta'),
+            utxoCountDeltaExtended: create_24hChangeRatePattern(this, 'utxo_count_delta'),
           },
           sth: {
-            supply: createChangeHalvedTotalPattern(this, 'sth_supply'),
+            supply: createDeltaHalvedTotalPattern(this, 'sth_supply'),
             outputs: createUtxoPattern(this, 'sth_utxo_count'),
             activity: createCoinblocksCoindaysSentPattern2(this, 'sth'),
             realized: createCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern(this, 'sth'),
@@ -7028,6 +7111,8 @@ class BrkClient extends BrkClientBase {
             relative: createNetNuplSupplyUnrealizedPattern2(this, 'sth'),
             dormancy: createMetricPattern1(this, 'sth_dormancy'),
             velocity: createMetricPattern1(this, 'sth_velocity'),
+            supplyDeltaExtended: create_24hChangeRatePattern(this, 'sth_supply_delta'),
+            utxoCountDeltaExtended: create_24hChangeRatePattern(this, 'sth_utxo_count_delta'),
             adjustedValueCreated: createMetricPattern1(this, 'sth_adjusted_value_created'),
             adjustedValueDestroyed: createMetricPattern1(this, 'sth_adjusted_value_destroyed'),
             adjustedValueCreatedSum: create_1m1w1y24hPattern(this, 'sth_adjusted_value_created'),
@@ -7035,7 +7120,7 @@ class BrkClient extends BrkClientBase {
             adjustedSopr: create_1m1w1y24hPattern(this, 'sth_adjusted_sopr'),
           },
           lth: {
-            supply: createChangeHalvedTotalPattern(this, 'lth_supply'),
+            supply: createDeltaHalvedTotalPattern(this, 'lth_supply'),
             outputs: createUtxoPattern(this, 'lth_utxo_count'),
             activity: createCoinblocksCoindaysSentPattern2(this, 'lth'),
             realized: createCapCapitulationGrossInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprUpperValuePattern(this, 'lth'),
@@ -7044,6 +7129,8 @@ class BrkClient extends BrkClientBase {
             relative: createNetNuplSupplyUnrealizedPattern2(this, 'lth'),
             dormancy: createMetricPattern1(this, 'lth_dormancy'),
             velocity: createMetricPattern1(this, 'lth_velocity'),
+            supplyDeltaExtended: create_24hChangeRatePattern(this, 'lth_supply_delta'),
+            utxoCountDeltaExtended: create_24hChangeRatePattern(this, 'lth_utxo_count_delta'),
           },
           ageRange: {
             upTo1h: createActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern(this, 'utxos_under_1h_old'),
@@ -7271,15 +7358,15 @@ class BrkClient extends BrkClientBase {
           p2a: createAverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'p2a_new_addr_count'),
         },
         delta: {
-          all: createChangeRatePattern(this, 'addr_count'),
-          p2pk65: createChangeRatePattern(this, 'p2pk65_addr_count'),
-          p2pk33: createChangeRatePattern(this, 'p2pk33_addr_count'),
-          p2pkh: createChangeRatePattern(this, 'p2pkh_addr_count'),
-          p2sh: createChangeRatePattern(this, 'p2sh_addr_count'),
-          p2wpkh: createChangeRatePattern(this, 'p2wpkh_addr_count'),
-          p2wsh: createChangeRatePattern(this, 'p2wsh_addr_count'),
-          p2tr: createChangeRatePattern(this, 'p2tr_addr_count'),
-          p2a: createChangeRatePattern(this, 'p2a_addr_count'),
+          all: createChangeRatePattern2(this, 'addr_count'),
+          p2pk65: createChangeRatePattern2(this, 'p2pk65_addr_count'),
+          p2pk33: createChangeRatePattern2(this, 'p2pk33_addr_count'),
+          p2pkh: createChangeRatePattern2(this, 'p2pkh_addr_count'),
+          p2sh: createChangeRatePattern2(this, 'p2sh_addr_count'),
+          p2wpkh: createChangeRatePattern2(this, 'p2wpkh_addr_count'),
+          p2wsh: createChangeRatePattern2(this, 'p2wsh_addr_count'),
+          p2tr: createChangeRatePattern2(this, 'p2tr_addr_count'),
+          p2a: createChangeRatePattern2(this, 'p2a_addr_count'),
         },
         fundedaddressindex: createMetricPattern34(this, 'fundedaddressindex'),
         emptyaddressindex: createMetricPattern35(this, 'emptyaddressindex'),
@@ -7296,9 +7383,9 @@ class BrkClient extends BrkClientBase {
           usd: createMetricPattern1(this, 'velocity_usd'),
         },
         marketCap: createMetricPattern1(this, 'market_cap'),
-        marketCapGrowthRate: createBpsPercentRatioPattern(this, 'market_cap_growth_rate'),
-        realizedCapGrowthRate: createBpsPercentRatioPattern(this, 'realized_cap_growth_rate'),
-        marketMinusRealizedCapGrowthRate: createMetricPattern1(this, 'market_minus_realized_cap_growth_rate'),
+        marketCapGrowthRate: create_1m1w1y24hPattern2(this, 'market_cap_growth_rate'),
+        realizedCapGrowthRate: create_1m1w1y24hPattern2(this, 'realized_cap_growth_rate'),
+        marketMinusRealizedCapGrowthRate: create_1m1w1y24hPattern(this, 'market_minus_realized_cap_growth_rate'),
       },
     };
   }

@@ -19,7 +19,7 @@ use crate::{
         ComputedFromHeightRatioStdDevBands, LazyFromHeight, PercentFromHeight,
         PercentRollingWindows, Price, RatioCents64, RatioCentsBp32,
         RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32, RatioDollarsBp32,
-        RollingWindows, RollingWindowsFrom1w,
+        RollingDelta1m, RollingDeltaExcept1m, RollingWindows, RollingWindowsFrom1w,
     },
     prices,
 };
@@ -56,9 +56,12 @@ pub struct RealizedFull<M: StorageMode = Rw> {
 
     pub gross_pnl_sum: RollingWindows<Cents, M>,
 
-    pub net_pnl_change_1m: ComputedFromHeight<CentsSigned, M>,
+    pub net_pnl_delta: RollingDelta1m<CentsSigned, CentsSigned, M>,
+    pub net_pnl_delta_extended: RollingDeltaExcept1m<CentsSigned, CentsSigned, M>,
     pub net_pnl_change_1m_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned32, M>,
     pub net_pnl_change_1m_rel_to_market_cap: PercentFromHeight<BasisPointsSigned32, M>,
+
+    pub realized_cap_delta_extended: RollingDeltaExcept1m<Cents, CentsSigned, M>,
 
     pub investor_price: Price<ComputedFromHeight<Cents, M>>,
     pub investor_price_ratio: ComputedFromHeightRatio<M>,
@@ -176,11 +179,13 @@ impl RealizedFull {
             capitulation_flow,
             profit_flow,
             gross_pnl_sum,
-            net_pnl_change_1m: cfg.import("net_pnl_change_1m", Version::new(3))?,
+            net_pnl_delta: cfg.import("net_pnl_delta", Version::new(5))?,
+            net_pnl_delta_extended: cfg.import("net_pnl_delta", Version::new(5))?,
             net_pnl_change_1m_rel_to_realized_cap: cfg
                 .import("net_pnl_change_1m_rel_to_realized_cap", Version::new(4))?,
             net_pnl_change_1m_rel_to_market_cap: cfg
                 .import("net_pnl_change_1m_rel_to_market_cap", Version::new(4))?,
+            realized_cap_delta_extended: cfg.import("realized_cap_delta", Version::new(5))?,
             investor_price,
             investor_price_ratio,
             lower_price_band,
@@ -425,27 +430,41 @@ impl RealizedFull {
             exit,
         )?;
 
-        // Net PnL change 1m
-        self.net_pnl_change_1m.height.compute_rolling_change(
+        // Net PnL delta (1m base + 24h/1w/1y extended)
+        self.net_pnl_delta.compute(
             starting_indexes.height,
             &blocks.count.height_1m_ago,
+            &self.base.core.net_realized_pnl.cumulative.height,
+            exit,
+        )?;
+        self.net_pnl_delta_extended.compute(
+            starting_indexes.height,
+            &window_starts,
             &self.base.core.net_realized_pnl.cumulative.height,
             exit,
         )?;
         self.net_pnl_change_1m_rel_to_realized_cap
             .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
                 starting_indexes.height,
-                &self.net_pnl_change_1m.height,
+                &self.net_pnl_delta.change_1m.height,
                 &self.base.core.minimal.realized_cap_cents.height,
                 exit,
             )?;
         self.net_pnl_change_1m_rel_to_market_cap
             .compute_binary::<CentsSigned, Dollars, RatioCentsSignedDollarsBps32>(
                 starting_indexes.height,
-                &self.net_pnl_change_1m.height,
+                &self.net_pnl_delta.change_1m.height,
                 height_to_market_cap,
                 exit,
             )?;
+
+        // Realized cap delta extended (24h/1w/1y — 1m is in RealizedCore)
+        self.realized_cap_delta_extended.compute(
+            starting_indexes.height,
+            &window_starts,
+            &self.base.core.minimal.realized_cap_cents.height,
+            exit,
+        )?;
 
         // Peak regret
         self.peak_regret_rel_to_realized_cap

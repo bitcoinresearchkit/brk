@@ -6,8 +6,8 @@ use brk_types::{Cents, Dollars, Sats, Version};
 use crate::{
     distribution, indexes,
     internal::{
-        ComputedFromHeight, Identity, LazyFromHeight, LazyValueFromHeight, PercentFromHeight,
-        SatsToBitcoin, finalize_db, open_db,
+        Identity, LazyFromHeight, LazyValueFromHeight, PercentFromHeight, PercentRollingWindows,
+        RollingWindows, SatsToBitcoin, finalize_db, open_db,
     },
 };
 
@@ -52,23 +52,23 @@ impl Vecs {
             &supply_metrics.total.usd,
         );
 
-        // Growth rates
-        let market_cap_growth_rate = PercentFromHeight::forced_import(
+        // Growth rates (4 windows: 24h, 1w, 1m, 1y)
+        let market_cap_growth_rate = PercentRollingWindows::forced_import(
             &db,
             "market_cap_growth_rate",
-            version + Version::ONE,
+            version + Version::TWO,
             indexes,
         )?;
-        let realized_cap_growth_rate = PercentFromHeight::forced_import(
+        let realized_cap_growth_rate = PercentRollingWindows::forced_import(
             &db,
             "realized_cap_growth_rate",
-            version + Version::ONE,
+            version + Version::TWO,
             indexes,
         )?;
-        let market_minus_realized_cap_growth_rate = ComputedFromHeight::forced_import(
+        let market_minus_realized_cap_growth_rate = RollingWindows::forced_import(
             &db,
             "market_minus_realized_cap_growth_rate",
-            version,
+            version + Version::ONE,
             indexes,
         )?;
 

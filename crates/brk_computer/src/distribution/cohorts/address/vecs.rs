@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_cohort::{CohortContext, Filter, Filtered};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Indexes, StoredF64, StoredU64, Version};
+use brk_types::{Cents, Height, Indexes, StoredI64, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
@@ -11,7 +11,7 @@ use crate::{
     blocks,
     distribution::state::{AddressCohortState, MinimalRealizedState},
     indexes,
-    internal::ComputedFromHeight,
+    internal::{ComputedFromHeight, RollingDelta1m},
     prices,
 };
 
@@ -29,7 +29,7 @@ pub struct AddressCohortVecs<M: StorageMode = Rw> {
     pub metrics: MinimalCohortMetrics<M>,
 
     pub addr_count: ComputedFromHeight<StoredU64, M>,
-    pub addr_count_change_1m: ComputedFromHeight<StoredF64, M>,
+    pub addr_count_delta: RollingDelta1m<StoredU64, StoredI64, M>,
 }
 
 impl AddressCohortVecs {
@@ -64,10 +64,10 @@ impl AddressCohortVecs {
                 version,
                 indexes,
             )?,
-            addr_count_change_1m: ComputedFromHeight::forced_import(
+            addr_count_delta: RollingDelta1m::forced_import(
                 db,
-                &cfg.name("addr_count_change_1m"),
-                version,
+                &cfg.name("addr_count_delta"),
+                version + Version::ONE,
                 indexes,
             )?,
         })
