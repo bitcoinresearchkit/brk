@@ -207,6 +207,9 @@ pub(crate) fn process_blocks(
     let mut cache = AddressCache::new();
     debug!("AddressCache created, entering main loop");
 
+    // Initialize Fenwick tree from imported BTreeMap state (one-time)
+    vecs.utxo_cohorts.init_fenwick_if_needed();
+
     // Reusable hashsets (avoid per-block allocation)
     let mut received_addresses = ByAddressType::<FxHashSet<TypeIndex>>::default();
     let mut seen_senders = ByAddressType::<FxHashSet<TypeIndex>>::default();
@@ -413,6 +416,9 @@ pub(crate) fn process_blocks(
             },
         );
         addr_result?;
+
+        // Update Fenwick tree from pending deltas (must happen before push_cohort_states drains pending)
+        vecs.utxo_cohorts.update_fenwick_from_pending();
 
         // Push to height-indexed vectors
         vecs.addr_count

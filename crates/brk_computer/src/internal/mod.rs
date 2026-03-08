@@ -1,5 +1,5 @@
 mod aggregate;
-pub(crate) mod algo;
+mod algo;
 mod containers;
 mod db_utils;
 mod derived;
@@ -8,7 +8,7 @@ mod from_tx;
 mod indexes;
 mod rolling;
 mod traits;
-pub mod transform;
+mod transform;
 mod value;
 
 pub(crate) use aggregate::*;

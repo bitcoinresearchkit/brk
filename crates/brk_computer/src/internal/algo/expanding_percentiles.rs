@@ -1,5 +1,7 @@
 use brk_types::StoredF32;
 
+use super::fenwick::FenwickTree;
+
 /// Fast expanding percentile tracker using a Fenwick tree (Binary Indexed Tree).
 ///
 /// Values are discretized to 10 BPS (0.1%) resolution and tracked in
@@ -9,9 +11,7 @@ use brk_types::StoredF32;
 /// - 0.1% value resolution (10 BPS granularity)
 #[derive(Clone)]
 pub(crate) struct ExpandingPercentiles {
-    /// Fenwick tree storing cumulative frequency counts.
-    /// 1-indexed: tree[0] is unused, tree[1..=TREE_SIZE] hold data.
-    tree: Vec<u32>,
+    tree: FenwickTree<u32>,
     count: u32,
 }
 
@@ -24,7 +24,7 @@ const TREE_SIZE: usize = (MAX_BPS / BUCKET_BPS) as usize + 1;
 impl Default for ExpandingPercentiles {
     fn default() -> Self {
         Self {
-            tree: vec![0u32; TREE_SIZE + 1], // 1-indexed
+            tree: FenwickTree::new(TREE_SIZE),
             count: 0,
         }
     }
@@ -36,16 +36,15 @@ impl ExpandingPercentiles {
     }
 
     pub fn reset(&mut self) {
-        self.tree.iter_mut().for_each(|v| *v = 0);
+        self.tree.reset();
         self.count = 0;
     }
 
-    /// Convert f32 ratio to bucket index (1-indexed for Fenwick).
+    /// Convert f32 ratio to 0-indexed bucket.
     #[inline]
     fn to_bucket(value: f32) -> usize {
         let bps = (value as f64 * 10000.0).round() as i32;
-        let bucket = (bps / BUCKET_BPS).clamp(0, TREE_SIZE as i32 - 1);
-        bucket as usize + 1
+        (bps / BUCKET_BPS).clamp(0, TREE_SIZE as i32 - 1) as usize
     }
 
     /// Bulk-load values in O(n + N) instead of O(n log N).
@@ -57,16 +56,9 @@ impl ExpandingPercentiles {
                 continue;
             }
             self.count += 1;
-            self.tree[Self::to_bucket(v)] += 1;
+            self.tree.add_raw(Self::to_bucket(v), &1);
         }
-        // Convert flat frequencies to Fenwick tree in O(N)
-        for i in 1..=TREE_SIZE {
-            let parent = i + (i & i.wrapping_neg());
-            if parent <= TREE_SIZE {
-                let val = self.tree[i];
-                self.tree[parent] += val;
-            }
-        }
+        self.tree.build_in_place();
     }
 
     /// Add a value. O(log N).
@@ -76,28 +68,7 @@ impl ExpandingPercentiles {
             return;
         }
         self.count += 1;
-        let mut i = Self::to_bucket(value);
-        while i <= TREE_SIZE {
-            self.tree[i] += 1;
-            i += i & i.wrapping_neg();
-        }
-    }
-
-    /// Find the bucket containing the k-th element (1-indexed k).
-    /// Uses the standard Fenwick tree walk-down in O(log N).
-    #[inline]
-    fn kth(&self, mut k: u32) -> usize {
-        let mut pos = 0;
-        let mut bit = 1 << (usize::BITS - 1 - TREE_SIZE.leading_zeros());
-        while bit > 0 {
-            let next = pos + bit;
-            if next <= TREE_SIZE && self.tree[next] < k {
-                k -= self.tree[next];
-                pos = next;
-            }
-            bit >>= 1;
-        }
-        pos + 1
+        self.tree.add(Self::to_bucket(value), &1);
     }
 
     /// Compute 6 percentiles in one call. O(6 × log N).
@@ -109,7 +80,9 @@ impl ExpandingPercentiles {
         }
         for (i, &q) in qs.iter().enumerate() {
             let k = ((q * self.count as f64).ceil() as u32).clamp(1, self.count);
-            out[i] = (self.kth(k) as u32 - 1) * BUCKET_BPS as u32;
+            // kth with 0-indexed k: k-1; result is 0-indexed bucket
+            let bucket = self.tree.kth(k - 1, |n| *n);
+            out[i] = bucket as u32 * BUCKET_BPS as u32;
         }
     }
 }

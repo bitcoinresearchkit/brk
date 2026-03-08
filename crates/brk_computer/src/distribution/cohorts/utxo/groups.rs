@@ -2,7 +2,7 @@ use std::path::Path;
 
 use brk_cohort::{
     ByAgeRange, ByAmountRange, ByClass, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge,
-    ByMinAge, BySpendableType, CohortContext, Filter, Term,
+    ByMinAge, BySpendableType, CohortContext, Filter, Filtered, Term,
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -26,7 +26,7 @@ use crate::{
     prices,
 };
 
-use super::{percentiles::PercentileCache, vecs::UTXOCohortVecs};
+use super::{fenwick::CostBasisFenwick, vecs::UTXOCohortVecs};
 
 const VERSION: Version = Version::new(0);
 
@@ -48,7 +48,7 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     pub profitability: ProfitabilityMetrics<M>,
     pub matured: ByAgeRange<ValueFromHeight<M>>,
     #[traversable(skip)]
-    pub(super) percentile_cache: PercentileCache,
+    pub(super) fenwick: CostBasisFenwick,
     /// Cached partition_point positions for tick_tock boundary searches.
     /// Avoids O(log n) binary search per boundary per block; scans forward
     /// from last known position (typically O(1) per boundary).
@@ -244,9 +244,55 @@ impl UTXOCohorts<Rw> {
             ge_amount,
             profitability,
             matured,
-            percentile_cache: PercentileCache::default(),
+            fenwick: CostBasisFenwick::new(),
             tick_tock_cached_positions: [0; 20],
         })
+    }
+
+    /// Initialize the Fenwick tree from all age-range BTreeMaps.
+    /// Call after state import when all pending maps have been drained.
+    pub(crate) fn init_fenwick_if_needed(&mut self) {
+        if self.fenwick.is_initialized() {
+            return;
+        }
+        let Self {
+            sth, fenwick, age_range, ..
+        } = self;
+        fenwick.compute_is_sth(&sth.metrics.filter, age_range.iter().map(|v| v.filter()));
+
+        let maps: Vec<_> = age_range
+            .iter()
+            .enumerate()
+            .filter_map(|(i, sub)| {
+                let state = sub.state.as_ref()?;
+                let map = state.cost_basis_map();
+                if map.is_empty() {
+                    return None;
+                }
+                Some((map, fenwick.is_sth_at(i)))
+            })
+            .collect();
+        fenwick.bulk_init(maps.into_iter());
+    }
+
+    /// Apply pending deltas from all age-range cohorts to the Fenwick tree.
+    /// Call after receive/send, before push_cohort_states.
+    pub(crate) fn update_fenwick_from_pending(&mut self) {
+        if !self.fenwick.is_initialized() {
+            return;
+        }
+        // Destructure to get separate borrows on fenwick and age_range
+        let Self {
+            fenwick, age_range, ..
+        } = self;
+        for (i, sub) in age_range.iter().enumerate() {
+            if let Some(state) = sub.state.as_ref() {
+                let is_sth = fenwick.is_sth_at(i);
+                state.for_each_cost_basis_pending(|&price, delta| {
+                    fenwick.apply_delta(price, delta, is_sth);
+                });
+            }
+        }
     }
 
     /// Push maturation sats to the matured vecs for the given height.

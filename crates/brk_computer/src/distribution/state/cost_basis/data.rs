@@ -24,11 +24,18 @@ struct PendingRaw {
     investor_cap_dec: CentsSquaredSats,
 }
 
+/// Pending increments and decrements for a single price bucket.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct PendingDelta {
+    pub inc: Sats,
+    pub dec: Sats,
+}
+
 #[derive(Clone, Debug)]
 pub struct CostBasisData {
     pathbuf: PathBuf,
     state: Option<State>,
-    pending: FxHashMap<CentsCompact, (Sats, Sats)>,
+    pending: FxHashMap<CentsCompact, PendingDelta>,
     pending_raw: PendingRaw,
     cache: Option<CachedUnrealizedState>,
     rounding_digits: Option<i32>,
@@ -121,7 +128,7 @@ impl CostBasisData {
         investor_cap: CentsSquaredSats,
     ) {
         let price = self.round_price(price);
-        self.pending.entry(price.into()).or_default().0 += sats;
+        self.pending.entry(price.into()).or_default().inc += sats;
         self.pending_raw.cap_inc += price_sats;
         if investor_cap != CentsSquaredSats::ZERO {
             self.pending_raw.investor_cap_inc += investor_cap;
@@ -141,7 +148,7 @@ impl CostBasisData {
         investor_cap: CentsSquaredSats,
     ) {
         let price = self.round_price(price);
-        self.pending.entry(price.into()).or_default().1 += sats;
+        self.pending.entry(price.into()).or_default().dec += sats;
         self.pending_raw.cap_dec += price_sats;
         if investor_cap != CentsSquaredSats::ZERO {
             self.pending_raw.investor_cap_dec += investor_cap;
@@ -151,13 +158,17 @@ impl CostBasisData {
         }
     }
 
+    pub(crate) fn for_each_pending(&self, mut f: impl FnMut(&CentsCompact, &PendingDelta)) {
+        self.pending.iter().for_each(|(k, v)| f(k, v));
+    }
+
     pub(crate) fn apply_pending(&mut self) {
         if self.pending.is_empty() {
             return;
         }
         self.generation = self.generation.wrapping_add(1);
         let map = &mut self.state.as_mut().unwrap().base.map;
-        for (cents, (inc, dec)) in self.pending.drain() {
+        for (cents, PendingDelta { inc, dec }) in self.pending.drain() {
             match map.entry(cents) {
                 Entry::Occupied(mut e) => {
                     *e.get_mut() += inc;

@@ -3,7 +3,7 @@ use std::{collections::BTreeMap, path::Path};
 use brk_error::Result;
 use brk_types::{Age, Cents, CentsCompact, CentsSats, CentsSquaredSats, CostBasisSnapshot, Height, Sats, SupplyState};
 
-use super::super::cost_basis::{CostBasisData, RealizedOps, UnrealizedState};
+use super::super::cost_basis::{CostBasisData, PendingDelta, RealizedOps, UnrealizedState};
 
 pub struct SendPrecomputed {
     pub sats: Sats,
@@ -91,6 +91,10 @@ impl<R: RealizedOps> CohortState<R> {
         self.cost_basis_data.clean()?;
         self.cost_basis_data.init();
         Ok(())
+    }
+
+    pub(crate) fn for_each_cost_basis_pending(&self, f: impl FnMut(&CentsCompact, &PendingDelta)) {
+        self.cost_basis_data.for_each_pending(f);
     }
 
     pub(crate) fn apply_pending(&mut self) {

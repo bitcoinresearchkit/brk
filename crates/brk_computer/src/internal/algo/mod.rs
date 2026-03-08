@@ -1,12 +1,15 @@
 mod aggregation;
 mod drawdown;
+mod expanding_percentiles;
+mod fenwick;
 mod sliding_distribution;
 mod sliding_median;
-pub(crate) mod sliding_window;
-mod expanding_percentiles;
+mod sliding_window;
 
 pub(crate) use aggregation::*;
 pub(crate) use drawdown::*;
+pub(crate) use expanding_percentiles::*;
+pub(crate) use fenwick::*;
 pub(crate) use sliding_distribution::*;
 pub(crate) use sliding_median::*;
-pub(crate) use expanding_percentiles::*;
+pub(crate) use sliding_window::*;
