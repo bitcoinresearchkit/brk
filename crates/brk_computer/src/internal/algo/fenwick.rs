@@ -29,11 +29,6 @@ impl<N: FenwickNode> FenwickTree<N> {
         }
     }
 
-    #[inline]
-    pub fn size(&self) -> usize {
-        self.size
-    }
-
     pub fn reset(&mut self) {
         self.tree.fill(N::default());
     }
@@ -73,7 +68,7 @@ impl<N: FenwickNode> FenwickTree<N> {
         debug_assert!(self.size > 0);
         let mut pos = 0usize;
         let mut remaining = k;
-        let mut bit = 1usize << (usize::BITS - 1 - self.size.leading_zeros() as u32);
+        let mut bit = 1usize << (usize::BITS - 1 - self.size.leading_zeros());
         while bit > 0 {
             let next = pos + bit;
             if next <= self.size {
@@ -105,7 +100,7 @@ impl<N: FenwickNode> FenwickTree<N> {
         out.fill(0);
         // Copy targets so we can subtract in-place
         let mut remaining: smallvec::SmallVec<[V; 24]> = sorted_targets.into();
-        let mut bit = 1usize << (usize::BITS - 1 - self.size.leading_zeros() as u32);
+        let mut bit = 1usize << (usize::BITS - 1 - self.size.leading_zeros());
         while bit > 0 {
             for i in 0..k {
                 let next = out[i] + bit;

@@ -1,24 +1,15 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, Version};
-use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
+use brk_types::{Indexes, Version};
+use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
 
+use crate::distribution::metrics::unrealized::UnrealizedMinimal;
 use crate::{blocks, prices};
 
-use crate::internal::ValueFromHeight;
-
-use crate::distribution::{
-    metrics::{ActivityCore, ImportConfig, OutputsMetrics, RealizedMinimal, SupplyMetrics},
-    state::UnrealizedState,
+use crate::distribution::metrics::{
+    ActivityCore, ImportConfig, OutputsMetrics, RealizedMinimal, SupplyMetrics,
 };
-
-/// Minimal unrealized metrics: supply in profit/loss only.
-#[derive(Traversable)]
-pub struct MinimalUnrealized<M: StorageMode = Rw> {
-    pub supply_in_profit: ValueFromHeight<M>,
-    pub supply_in_loss: ValueFromHeight<M>,
-}
 
 /// MinimalCohortMetrics: supply, outputs, sent+ema, realized cap/price/mvrv/profit/loss,
 /// supply in profit/loss.
@@ -33,71 +24,7 @@ pub struct MinimalCohortMetrics<M: StorageMode = Rw> {
     pub outputs: Box<OutputsMetrics<M>>,
     pub activity: Box<ActivityCore<M>>,
     pub realized: Box<RealizedMinimal<M>>,
-    pub unrealized: Box<MinimalUnrealized<M>>,
-}
-
-impl MinimalUnrealized {
-    pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        Ok(Self {
-            supply_in_profit: cfg.import("supply_in_profit", Version::ZERO)?,
-            supply_in_loss: cfg.import("supply_in_loss", Version::ZERO)?,
-        })
-    }
-
-    pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.supply_in_profit
-            .sats
-            .height
-            .len()
-            .min(self.supply_in_loss.sats.height.len())
-    }
-
-    pub(crate) fn truncate_push(
-        &mut self,
-        height: Height,
-        state: &UnrealizedState,
-    ) -> Result<()> {
-        self.supply_in_profit
-            .sats
-            .height
-            .truncate_push(height, state.supply_in_profit)?;
-        self.supply_in_loss
-            .sats
-            .height
-            .truncate_push(height, state.supply_in_loss)?;
-        Ok(())
-    }
-
-    pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        vec![
-            &mut self.supply_in_profit.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_profit.base.cents.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_loss.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_loss.base.cents.height as &mut dyn AnyStoredVec,
-        ]
-    }
-
-    pub(crate) fn compute_from_sources(
-        &mut self,
-        starting_indexes: &Indexes,
-        others: &[&Self],
-        exit: &Exit,
-    ) -> Result<()> {
-        sum_others!(self, starting_indexes, others, exit; supply_in_profit.base.sats.height);
-        sum_others!(self, starting_indexes, others, exit; supply_in_loss.base.sats.height);
-        Ok(())
-    }
-
-    pub(crate) fn compute_rest(
-        &mut self,
-        prices: &prices::Vecs,
-        max_from: Height,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.supply_in_profit.compute(prices, max_from, exit)?;
-        self.supply_in_loss.compute(prices, max_from, exit)?;
-        Ok(())
-    }
+    pub unrealized: Box<UnrealizedMinimal<M>>,
 }
 
 impl MinimalCohortMetrics {
@@ -108,7 +35,7 @@ impl MinimalCohortMetrics {
             outputs: Box::new(OutputsMetrics::forced_import(cfg)?),
             activity: Box::new(ActivityCore::forced_import(cfg)?),
             realized: Box::new(RealizedMinimal::forced_import(cfg)?),
-            unrealized: Box::new(MinimalUnrealized::forced_import(cfg)?),
+            unrealized: Box::new(UnrealizedMinimal::forced_import(cfg)?),
         })
     }
 
@@ -150,12 +77,18 @@ impl MinimalCohortMetrics {
         )?;
         self.outputs.compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| v.outputs.as_ref()).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| v.outputs.as_ref())
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.activity.compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| v.activity.as_ref()).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| v.activity.as_ref())
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.realized.compute_from_stateful(
@@ -184,12 +117,10 @@ impl MinimalCohortMetrics {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.supply
-            .compute(prices, starting_indexes.height, exit)?;
+        self.supply.compute(prices, starting_indexes.height, exit)?;
         self.supply
             .compute_rest_part1(blocks, starting_indexes, exit)?;
-        self.outputs
-            .compute_rest(blocks, starting_indexes, exit)?;
+        self.outputs.compute_rest(blocks, starting_indexes, exit)?;
         self.activity
             .compute_rest_part1(blocks, starting_indexes, exit)?;
         self.realized

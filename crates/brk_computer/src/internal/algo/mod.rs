@@ -12,4 +12,3 @@ pub(crate) use expanding_percentiles::*;
 pub(crate) use fenwick::*;
 pub(crate) use sliding_distribution::*;
 pub(crate) use sliding_median::*;
-pub(crate) use sliding_window::*;

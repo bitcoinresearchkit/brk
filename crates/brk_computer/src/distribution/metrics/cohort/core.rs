@@ -117,7 +117,7 @@ impl CoreCohortMetrics {
         self.realized
             .compute_rest_part1(blocks, starting_indexes, exit)?;
 
-        self.unrealized.compute_rest(starting_indexes, exit)?;
+        self.unrealized.compute_rest(prices, starting_indexes, exit)?;
 
         Ok(())
     }

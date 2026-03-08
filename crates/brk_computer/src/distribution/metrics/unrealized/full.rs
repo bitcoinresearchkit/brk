@@ -84,7 +84,7 @@ impl UnrealizedFull {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.inner.compute_rest(starting_indexes, exit)?;
+        self.inner.compute_rest(prices, starting_indexes, exit)?;
 
         self.gross_pnl.cents.height.compute_add(
             starting_indexes.height,

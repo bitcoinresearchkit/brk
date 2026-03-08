@@ -5,7 +5,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{BasisPointsSigned32, Height, Version};
 use schemars::JsonSchema;
-use vecdb::{AnyVec, Database, Exit, ReadableVec, Rw, StorageMode};
+use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
@@ -152,8 +152,11 @@ where
         source: &impl ReadableVec<Height, S>,
         exit: &Exit,
     ) -> Result<()> {
-        let changes: [&mut FiatFromHeight<C>; 3] =
-            [&mut self.change_24h, &mut self.change_1w, &mut self.change_1y];
+        let changes: [&mut FiatFromHeight<C>; 3] = [
+            &mut self.change_24h,
+            &mut self.change_1w,
+            &mut self.change_1y,
+        ];
         let rates = [&mut self.rate_24h, &mut self.rate_1w, &mut self.rate_1y];
         let starts = [windows._24h, windows._1w, windows._1y];
 

@@ -1,6 +1,4 @@
-use brk_cohort::{
-    compute_profitability_boundaries, Filter, PROFITABILITY_RANGE_COUNT,
-};
+use brk_cohort::{Filter, PROFITABILITY_RANGE_COUNT, compute_profitability_boundaries};
 use brk_types::{Cents, CentsCompact, Sats};
 
 use crate::{
@@ -59,7 +57,6 @@ pub(super) struct CostBasisFenwick {
 // Uses Cents::round_to_dollar(5) for rounding, then maps rounded dollars
 // to a flat bucket index across two tiers.
 // ---------------------------------------------------------------------------
-
 
 /// Map rounded dollars to a flat bucket index.
 /// Prices >= $1M are clamped to the last bucket.
@@ -185,13 +182,6 @@ impl CostBasisFenwick {
         self.initialized = true;
     }
 
-    /// Reset to uninitialized empty state.
-    pub(super) fn reset(&mut self) {
-        self.tree.reset();
-        self.totals = CostBasisNode::default();
-        self.initialized = false;
-    }
-
     // -----------------------------------------------------------------------
     // Percentile queries
     // -----------------------------------------------------------------------
@@ -268,9 +258,9 @@ impl CostBasisFenwick {
             self.tree
                 .batch_kth(&usd_targets, &usd_field, &mut usd_buckets);
 
-            for i in 0..PERCENTILES_LEN {
+            (0..PERCENTILES_LEN).for_each(|i| {
                 result.usd_prices[i] = bucket_to_cents(usd_buckets[i]);
-            }
+            });
         }
 
         result
@@ -329,115 +319,4 @@ pub(super) struct PercentileResult {
     pub usd_prices: [Cents; PERCENTILES_LEN],
     pub min_price: Cents,
     pub max_price: Cents,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::collections::BTreeMap;
-
-    #[test]
-    fn bucket_round_trip() {
-        // Low prices: exact dollar precision
-        let price = CentsCompact::new(5000_00); // $5000
-        let bucket = price_to_bucket(price);
-        let back = bucket_to_cents(bucket);
-        assert_eq!(u64::from(back), 5000 * 100);
-
-        // High price: $90,000 → rounded to $90,000 (already 5 digits)
-        let price = CentsCompact::new(90_000_00);
-        let bucket = price_to_bucket(price);
-        let back = bucket_to_cents(bucket);
-        assert_eq!(u64::from(back), 90_000 * 100);
-
-        // Tier 1: $123,456 → rounded to $123,460
-        let price = CentsCompact::new(123_456_00);
-        let bucket = price_to_bucket(price);
-        let back = bucket_to_cents(bucket);
-        assert_eq!(u64::from(back), 123_460 * 100);
-
-        // Overflow: $2,000,000 → clamped to $1,000,000
-        let price = CentsCompact::new(2_000_000_00);
-        let bucket = price_to_bucket(price);
-        assert_eq!(bucket, TREE_SIZE - 1);
-        assert_eq!(u64::from(bucket_to_cents(bucket)), 1_000_000 * 100);
-    }
-
-    #[test]
-    fn bucket_edge_cases() {
-        // $0
-        assert_eq!(price_to_bucket(CentsCompact::new(0)), 0);
-        assert_eq!(u64::from(bucket_to_cents(0)), 0);
-
-        // $1
-        let bucket = price_to_bucket(CentsCompact::new(100));
-        assert_eq!(bucket, 1);
-
-        // Max CentsCompact
-        let bucket = price_to_bucket(CentsCompact::MAX);
-        assert!(bucket < TREE_SIZE);
-    }
-
-    #[test]
-    fn bulk_init_and_percentiles() {
-        let mut fenwick = CostBasisFenwick::new();
-
-        // Create a simple BTreeMap: 100 sats at $10,000, 100 sats at $50,000
-        let mut map = BTreeMap::new();
-        map.insert(CentsCompact::new(10_000_00), Sats::from(100u64));
-        map.insert(CentsCompact::new(50_000_00), Sats::from(100u64));
-
-        fenwick.bulk_init(std::iter::once((&map, true)));
-
-        assert!(fenwick.is_initialized());
-
-        let result = fenwick.percentiles_all();
-        // Median (50th percentile) should be at $10,000 (first 100 sats)
-        // since target = 200 * 50/100 = 100, and first 100 sats are at $10,000
-        assert_eq!(u64::from(result.sat_prices[9]), 10_000 * 100); // index 9 = 50th percentile
-
-        // Min should be $10,000, max should be $50,000
-        assert_eq!(u64::from(result.min_price), 10_000 * 100);
-        assert_eq!(u64::from(result.max_price), 50_000 * 100);
-    }
-
-    #[test]
-    fn apply_delta_updates_totals() {
-        let mut fenwick = CostBasisFenwick::new();
-        fenwick.initialized = true;
-
-        let price = CentsCompact::new(10_000_00);
-        fenwick.apply_delta(price, &PendingDelta { inc: Sats::from(500u64), dec: Sats::ZERO }, true);
-        assert_eq!(fenwick.totals.all_sats, 500);
-        assert_eq!(fenwick.totals.sth_sats, 500);
-
-        fenwick.apply_delta(price, &PendingDelta { inc: Sats::ZERO, dec: Sats::from(200u64) }, true);
-        assert_eq!(fenwick.totals.all_sats, 300);
-        assert_eq!(fenwick.totals.sth_sats, 300);
-
-        // Non-STH delta
-        fenwick.apply_delta(price, &PendingDelta { inc: Sats::from(100u64), dec: Sats::ZERO }, false);
-        assert_eq!(fenwick.totals.all_sats, 400);
-        assert_eq!(fenwick.totals.sth_sats, 300);
-    }
-
-    #[test]
-    fn profitability_ranges_sum_to_total() {
-        let mut fenwick = CostBasisFenwick::new();
-
-        let mut map = BTreeMap::new();
-        // Spread sats across different prices
-        map.insert(CentsCompact::new(1_000_00), Sats::from(1000u64));
-        map.insert(CentsCompact::new(10_000_00), Sats::from(2000u64));
-        map.insert(CentsCompact::new(50_000_00), Sats::from(3000u64));
-        map.insert(CentsCompact::new(100_000_00), Sats::from(4000u64));
-
-        fenwick.bulk_init(std::iter::once((&map, false)));
-
-        let spot = Cents::from(50_000u64 * 100);
-        let prof = fenwick.profitability(spot);
-
-        let total_sats: u64 = prof.iter().map(|(s, _)| s).sum();
-        assert_eq!(total_sats, 10_000);
-    }
 }

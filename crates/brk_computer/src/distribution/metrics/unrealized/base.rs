@@ -4,9 +4,7 @@ use brk_types::{CentsSats, CentsSquaredSats, Height, Indexes, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, BytesVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
-use crate::distribution::state::UnrealizedState;
-
-use crate::distribution::metrics::ImportConfig;
+use crate::{distribution::{metrics::ImportConfig, state::UnrealizedState}, prices};
 
 use super::UnrealizedCore;
 
@@ -163,10 +161,11 @@ impl UnrealizedBase {
 
     pub(crate) fn compute_rest(
         &mut self,
+        prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.core.compute_rest(starting_indexes, exit)?;
+        self.core.compute_rest(prices, starting_indexes, exit)?;
         Ok(())
     }
 }

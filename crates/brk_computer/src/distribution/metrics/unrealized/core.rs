@@ -1,24 +1,28 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, CentsSigned, Height, Indexes, Version};
+use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableCloneableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
-    distribution::state::UnrealizedState,
+    distribution::{
+        metrics::{ImportConfig, unrealized::UnrealizedMinimal},
+        state::UnrealizedState,
+    },
     internal::{
         CentsSubtractToCentsSigned, FiatFromHeight, LazyFromHeight, NegCentsUnsignedToDollars,
-        ValueFromHeight,
     },
+    prices,
 };
 
 use brk_types::Dollars;
 
-use crate::distribution::metrics::ImportConfig;
-
-#[derive(Traversable)]
+#[derive(Deref, DerefMut, Traversable)]
 pub struct UnrealizedCore<M: StorageMode = Rw> {
-    pub supply_in_profit: ValueFromHeight<M>,
-    pub supply_in_loss: ValueFromHeight<M>,
+    #[deref]
+    #[deref_mut]
+    #[traversable(flatten)]
+    pub minimal: UnrealizedMinimal<M>,
 
     pub unrealized_profit: FiatFromHeight<Cents, M>,
     pub unrealized_loss: FiatFromHeight<Cents, M>,
@@ -31,8 +35,8 @@ pub struct UnrealizedCore<M: StorageMode = Rw> {
 impl UnrealizedCore {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v0 = Version::ZERO;
-        let supply_in_profit = cfg.import("supply_in_profit", v0)?;
-        let supply_in_loss = cfg.import("supply_in_loss", v0)?;
+
+        let minimal = UnrealizedMinimal::forced_import(cfg)?;
 
         let unrealized_profit = cfg.import("unrealized_profit", v0)?;
         let unrealized_loss: FiatFromHeight<Cents> = cfg.import("unrealized_loss", v0)?;
@@ -47,8 +51,7 @@ impl UnrealizedCore {
         let net_unrealized_pnl = cfg.import("net_unrealized_pnl", v0)?;
 
         Ok(Self {
-            supply_in_profit,
-            supply_in_loss,
+            minimal,
             unrealized_profit,
             unrealized_loss,
             neg_unrealized_loss,
@@ -57,11 +60,8 @@ impl UnrealizedCore {
     }
 
     pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.supply_in_profit
-            .sats
-            .height
-            .len()
-            .min(self.supply_in_loss.sats.height.len())
+        self.minimal
+            .min_stateful_height_len()
             .min(self.unrealized_profit.cents.height.len())
             .min(self.unrealized_loss.cents.height.len())
     }
@@ -71,14 +71,7 @@ impl UnrealizedCore {
         height: Height,
         height_state: &UnrealizedState,
     ) -> Result<()> {
-        self.supply_in_profit
-            .sats
-            .height
-            .truncate_push(height, height_state.supply_in_profit)?;
-        self.supply_in_loss
-            .sats
-            .height
-            .truncate_push(height, height_state.supply_in_loss)?;
+        self.minimal.truncate_push(height, height_state)?;
         self.unrealized_profit
             .cents
             .height
@@ -92,14 +85,10 @@ impl UnrealizedCore {
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        vec![
-            &mut self.supply_in_profit.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_profit.base.cents.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_loss.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_loss.base.cents.height as &mut dyn AnyStoredVec,
-            &mut self.unrealized_profit.cents.height,
-            &mut self.unrealized_loss.cents.height,
-        ]
+        let mut vecs = self.minimal.collect_vecs_mut();
+        vecs.push(&mut self.unrealized_profit.cents.height);
+        vecs.push(&mut self.unrealized_loss.cents.height);
+        vecs
     }
 
     pub(crate) fn compute_from_stateful(
@@ -108,8 +97,10 @@ impl UnrealizedCore {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        sum_others!(self, starting_indexes, others, exit; supply_in_profit.sats.height);
-        sum_others!(self, starting_indexes, others, exit; supply_in_loss.sats.height);
+        let minimal_refs: Vec<&UnrealizedMinimal> = others.iter().map(|o| &o.minimal).collect();
+        self.minimal
+            .compute_from_sources(starting_indexes, &minimal_refs, exit)?;
+
         sum_others!(self, starting_indexes, others, exit; unrealized_profit.cents.height);
         sum_others!(self, starting_indexes, others, exit; unrealized_loss.cents.height);
 
@@ -119,9 +110,13 @@ impl UnrealizedCore {
     /// Compute derived metrics from stored values.
     pub(crate) fn compute_rest(
         &mut self,
+        prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.minimal
+            .compute_rest(prices, starting_indexes.height, exit)?;
+
         self.net_unrealized_pnl
             .cents
             .height
