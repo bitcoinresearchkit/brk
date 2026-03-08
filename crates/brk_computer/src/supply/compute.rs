@@ -44,39 +44,34 @@ impl Vecs {
         self.velocity
             .compute(blocks, transactions, distribution, starting_indexes, exit)?;
 
-        // 4. Compute cap growth rates across 4 windows
+        // 4. Compute market cap delta (change + rate across 4 windows)
         let window_starts = blocks.count.window_starts();
 
-        let realized_cap = &distribution
-            .utxo_cohorts
-            .all
-            .metrics
-            .realized
-            .realized_cap
-            .height;
+        self.market_cap_delta.compute(
+            starting_indexes.height,
+            &window_starts,
+            &self.market_cap.cents.height,
+            exit,
+        )?;
 
-        let mcgr_arr = self.market_cap_growth_rate.0.as_mut_array();
-        let rcgr_arr = self.realized_cap_growth_rate.0.as_mut_array();
+        // 5. market_cap_rate - realized_cap_rate per window
+        let all_realized = &distribution.utxo_cohorts.all.metrics.realized;
+        let mcr_arr = self.market_cap_delta.rate.0.as_array();
         let diff_arr = self.market_minus_realized_cap_growth_rate.0.as_mut_array();
-        let starts_arr = window_starts.as_array();
+
+        // 24h, 1w, 1y from extended; 1m from core delta
+        let rcr_rates = [
+            &all_realized.realized_cap_delta_extended.rate_24h.bps.height,
+            &all_realized.realized_cap_delta_extended.rate_1w.bps.height,
+            &all_realized.realized_cap_delta.rate_1m.bps.height,
+            &all_realized.realized_cap_delta_extended.rate_1y.bps.height,
+        ];
 
         for i in 0..4 {
-            mcgr_arr[i].bps.height.compute_rolling_ratio_change(
-                starting_indexes.height,
-                *starts_arr[i],
-                &self.market_cap.height,
-                exit,
-            )?;
-            rcgr_arr[i].bps.height.compute_rolling_ratio_change(
-                starting_indexes.height,
-                *starts_arr[i],
-                realized_cap,
-                exit,
-            )?;
             diff_arr[i].height.compute_subtract(
                 starting_indexes.height,
-                &mcgr_arr[i].bps.height,
-                &rcgr_arr[i].bps.height,
+                &mcr_arr[i].bps.height,
+                rcr_rates[i],
                 exit,
             )?;
         }

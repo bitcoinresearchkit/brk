@@ -10,8 +10,8 @@ use crate::{
     blocks,
     distribution::state::RealizedOps,
     internal::{
-        ComputedFromHeight, LazyFromHeight, NegCentsUnsignedToDollars, RatioCents64,
-        RollingDelta1m, RollingWindow24h,
+        ComputedFromHeight, FiatRollingDelta1m, LazyFromHeight, NegCentsUnsignedToDollars,
+        RatioCents64, RollingWindow24h,
     },
     prices,
 };
@@ -27,7 +27,7 @@ pub struct RealizedCore<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub minimal: RealizedMinimal<M>,
 
-    pub realized_cap_delta: RollingDelta1m<Cents, CentsSigned, M>,
+    pub realized_cap_delta: FiatRollingDelta1m<Cents, CentsSigned, M>,
 
     pub neg_realized_loss: LazyFromHeight<Dollars, Cents>,
     pub net_realized_pnl: ComputedFromHeight<CentsSigned, M>,

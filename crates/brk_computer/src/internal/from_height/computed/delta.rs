@@ -25,7 +25,7 @@ use crate::{
 
 /// Pre-collect source data from the earliest needed offset.
 /// Returns (source_data, offset) for use in compute_delta_window.
-fn collect_source<S: NumericValue>(
+pub(super) fn collect_source<S: NumericValue>(
     source: &impl ReadableVec<Height, S>,
     skip: usize,
     earliest_starts: &impl ReadableVec<Height, Height>,
@@ -40,7 +40,7 @@ fn collect_source<S: NumericValue>(
 }
 
 /// Shared computation: change = current - ago, rate = change / ago.
-fn compute_delta_window<S, C, B>(
+pub(super) fn compute_delta_window<S, C, B>(
     change_h: &mut EagerVec<PcoVec<Height, C>>,
     rate_bps_h: &mut EagerVec<PcoVec<Height, B>>,
     max_from: Height,

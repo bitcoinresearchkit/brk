@@ -15,7 +15,7 @@ use crate::{blocks, distribution::DynCohortVecs, indexes, prices};
 use crate::distribution::metrics::{
     AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase, CoreCohortMetrics,
     ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig, MinimalCohortMetrics,
-    SupplyMetrics,
+    ProfitabilityMetrics, SupplyMetrics,
 };
 
 use super::{percentiles::PercentileCache, vecs::UTXOCohortVecs};
@@ -39,6 +39,7 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     pub amount_range: ByAmountRange<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
     pub lt_amount: ByLowerThanAmount<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
     pub type_: BySpendableType<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
+    pub profitability: ProfitabilityMetrics<M>,
     #[traversable(skip)]
     pub(super) percentile_cache: PercentileCache,
     /// Cached partition_point positions for tick_tock boundary searches.
@@ -141,6 +142,9 @@ impl UTXOCohorts<Rw> {
             AllCohortMetrics::forced_import_with_supply(&all_cfg, all_supply)?,
         );
 
+        // Phase 3b: Import profitability metrics (derived from "all" during k-way merge).
+        let profitability = ProfitabilityMetrics::forced_import(db, v, indexes)?;
+
         // Phase 4: Import aggregate cohorts.
 
         // sth: ExtendedAdjustedCohortMetrics
@@ -227,6 +231,7 @@ impl UTXOCohorts<Rw> {
             amount_range,
             lt_amount,
             ge_amount,
+            profitability,
             percentile_cache: PercentileCache::default(),
             tick_tock_cached_positions: [0; 20],
         })
@@ -590,6 +595,7 @@ impl UTXOCohorts<Rw> {
         for v in self.type_.iter_mut() {
             vecs.extend(v.metrics.collect_all_vecs_mut());
         }
+        vecs.extend(self.profitability.collect_all_vecs_mut());
         vecs.into_par_iter()
     }
 
@@ -599,12 +605,13 @@ impl UTXOCohorts<Rw> {
             .try_for_each(|v| v.write_state(height, cleanup))
     }
 
-    /// Get minimum height from all separate cohorts' height-indexed vectors.
+    /// Get minimum height from all separate cohorts' + profitability height-indexed vectors.
     pub(crate) fn min_separate_stateful_height_len(&self) -> Height {
         self.iter_separate()
             .map(|v| Height::from(v.min_stateful_height_len()))
             .min()
             .unwrap_or_default()
+            .min(Height::from(self.profitability.min_stateful_height_len()))
     }
 
     /// Import state for all separate cohorts at or before given height.
@@ -650,7 +657,6 @@ impl UTXOCohorts<Rw> {
         for v in self.lt_amount.iter_mut() {
             v.metrics.validate_computed_versions(base_version)?;
         }
-
         Ok(())
     }
 }

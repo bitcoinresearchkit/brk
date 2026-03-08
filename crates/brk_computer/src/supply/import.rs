@@ -6,7 +6,7 @@ use brk_types::{Cents, Dollars, Sats, Version};
 use crate::{
     distribution, indexes,
     internal::{
-        Identity, LazyFromHeight, LazyValueFromHeight, PercentFromHeight, PercentRollingWindows,
+        FiatRollingDelta, Identity, LazyFiatFromHeight, LazyValueFromHeight, PercentFromHeight,
         RollingWindows, SatsToBitcoin, finalize_db, open_db,
     },
 };
@@ -45,30 +45,22 @@ impl Vecs {
         // Velocity
         let velocity = super::velocity::Vecs::forced_import(&db, version, indexes)?;
 
-        // Market cap - lazy identity from distribution supply in USD
-        let market_cap = LazyFromHeight::from_lazy::<Identity<Dollars>, Cents>(
-            "market_cap",
-            version,
-            &supply_metrics.total.usd,
-        );
+        // Market cap - lazy fiat (cents + usd) from distribution supply
+        let market_cap =
+            LazyFiatFromHeight::from_computed("market_cap", version, &supply_metrics.total.cents);
 
-        // Growth rates (4 windows: 24h, 1w, 1m, 1y)
-        let market_cap_growth_rate = PercentRollingWindows::forced_import(
+        // Market cap delta (change + rate across 4 windows)
+        let market_cap_delta = FiatRollingDelta::forced_import(
             &db,
-            "market_cap_growth_rate",
-            version + Version::TWO,
+            "market_cap_delta",
+            version + Version::new(3),
             indexes,
         )?;
-        let realized_cap_growth_rate = PercentRollingWindows::forced_import(
-            &db,
-            "realized_cap_growth_rate",
-            version + Version::TWO,
-            indexes,
-        )?;
+
         let market_minus_realized_cap_growth_rate = RollingWindows::forced_import(
             &db,
             "market_minus_realized_cap_growth_rate",
-            version + Version::ONE,
+            version + Version::TWO,
             indexes,
         )?;
 
@@ -79,8 +71,7 @@ impl Vecs {
             inflation_rate,
             velocity,
             market_cap,
-            market_cap_growth_rate,
-            realized_cap_growth_rate,
+            market_cap_delta,
             market_minus_realized_cap_growth_rate,
         };
         finalize_db(&this.db, &this)?;

@@ -438,6 +438,7 @@ pub(crate) fn process_blocks(
 
         vecs.utxo_cohorts.truncate_push_aggregate_percentiles(
             height,
+            block_price,
             date_opt,
             &vecs.states_path,
         )?;

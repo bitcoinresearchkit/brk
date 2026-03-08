@@ -36,6 +36,7 @@ mod cohort;
 mod config;
 mod cost_basis;
 mod outputs;
+mod profitability;
 mod realized;
 mod relative;
 mod supply;
@@ -48,6 +49,7 @@ pub use cohort::{
 };
 pub use config::ImportConfig;
 pub use cost_basis::CostBasis;
+pub use profitability::ProfitabilityMetrics;
 pub use outputs::OutputsMetrics;
 pub use realized::{
     RealizedAdjusted, RealizedBase, RealizedCore, RealizedFull, RealizedLike, RealizedMinimal,

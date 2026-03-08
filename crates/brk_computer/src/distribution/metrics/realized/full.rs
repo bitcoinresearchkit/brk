@@ -14,12 +14,12 @@ use crate::{
     blocks,
     distribution::state::RealizedState,
     internal::{
-        CentsUnsignedToDollars, ComputedFromHeight, ComputedFromHeightCumulative, FiatFromHeight,
+        CentsUnsignedToDollars, ComputedFromHeight, ComputedFromHeightCumulative,
         ComputedFromHeightRatio, ComputedFromHeightRatioPercentiles,
-        ComputedFromHeightRatioStdDevBands, LazyFromHeight, PercentFromHeight,
-        PercentRollingWindows, Price, RatioCents64, RatioCentsBp32,
-        RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32, RatioDollarsBp32,
-        RollingDelta1m, RollingDeltaExcept1m, RollingWindows, RollingWindowsFrom1w,
+        ComputedFromHeightRatioStdDevBands, FiatFromHeight, FiatRollingDelta1m,
+        FiatRollingDeltaExcept1m, LazyFromHeight, PercentFromHeight, PercentRollingWindows, Price,
+        RatioCents64, RatioCentsBp32, RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32,
+        RatioDollarsBp32, RollingWindows, RollingWindowsFrom1w,
     },
     prices,
 };
@@ -59,12 +59,12 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     pub net_realized_pnl_cumulative: ComputedFromHeight<CentsSigned, M>,
     pub net_realized_pnl_sum_extended: RollingWindowsFrom1w<CentsSigned, M>,
 
-    pub net_pnl_delta: RollingDelta1m<CentsSigned, CentsSigned, M>,
-    pub net_pnl_delta_extended: RollingDeltaExcept1m<CentsSigned, CentsSigned, M>,
+    pub net_pnl_delta: FiatRollingDelta1m<CentsSigned, CentsSigned, M>,
+    pub net_pnl_delta_extended: FiatRollingDeltaExcept1m<CentsSigned, CentsSigned, M>,
     pub net_pnl_change_1m_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned32, M>,
     pub net_pnl_change_1m_rel_to_market_cap: PercentFromHeight<BasisPointsSigned32, M>,
 
-    pub realized_cap_delta_extended: RollingDeltaExcept1m<Cents, CentsSigned, M>,
+    pub realized_cap_delta_extended: FiatRollingDeltaExcept1m<Cents, CentsSigned, M>,
 
     pub investor_price: Price<ComputedFromHeight<Cents, M>>,
     pub investor_price_ratio: ComputedFromHeightRatio<M>,
@@ -468,14 +468,14 @@ impl RealizedFull {
         self.net_pnl_change_1m_rel_to_realized_cap
             .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
                 starting_indexes.height,
-                &self.net_pnl_delta.change_1m.height,
+                &self.net_pnl_delta.change_1m.cents.height,
                 &self.base.core.minimal.realized_cap_cents.height,
                 exit,
             )?;
         self.net_pnl_change_1m_rel_to_market_cap
             .compute_binary::<CentsSigned, Dollars, RatioCentsSignedDollarsBps32>(
                 starting_indexes.height,
-                &self.net_pnl_delta.change_1m.height,
+                &self.net_pnl_delta.change_1m.cents.height,
                 height_to_market_cap,
                 exit,
             )?;
