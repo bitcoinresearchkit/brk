@@ -1,5 +1,5 @@
-use brk_cohort::AGE_BOUNDARIES;
-use brk_types::{CostBasisSnapshot, ONE_HOUR_IN_SEC, Timestamp};
+use brk_cohort::{AGE_BOUNDARIES, ByAgeRange};
+use brk_types::{CostBasisSnapshot, ONE_HOUR_IN_SEC, Sats, Timestamp};
 use vecdb::{Rw, unlikely};
 
 use crate::distribution::state::BlockState;
@@ -15,13 +15,16 @@ impl UTXOCohorts<Rw> {
     /// Uses cached positions per boundary to avoid binary search.
     /// Since timestamps are monotonic, positions only advance forward.
     /// Complexity: O(k * c) where k = 20 boundaries, c = ~1 (forward scan steps).
+    ///
+    /// Returns how many sats matured INTO each cohort from the younger adjacent one.
+    /// `up_to_1h` is always zero since nothing ages into the youngest cohort.
     pub(crate) fn tick_tock_next_block(
         &mut self,
         chain_state: &[BlockState],
         timestamp: Timestamp,
-    ) {
+    ) -> ByAgeRange<Sats> {
         if chain_state.is_empty() {
-            return;
+            return ByAgeRange::default();
         }
 
         let prev_timestamp = chain_state.last().unwrap().timestamp;
@@ -29,8 +32,10 @@ impl UTXOCohorts<Rw> {
 
         // Skip if no time has passed
         if elapsed == 0 {
-            return;
+            return ByAgeRange::default();
         }
+
+        let mut matured = [Sats::ZERO; 21];
 
         // Get age_range cohort states (indexed 0..21)
         // Cohort i covers hours [BOUNDARIES[i-1], BOUNDARIES[i])
@@ -87,7 +92,10 @@ impl UTXOCohorts<Rw> {
                 if let Some(state) = age_cohorts[boundary_idx + 1].as_mut() {
                     state.increment_snapshot(&snapshot);
                 }
+                matured[boundary_idx + 1] += block_state.supply.value;
             }
         }
+
+        ByAgeRange::from_array(matured)
     }
 }

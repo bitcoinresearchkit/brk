@@ -6,21 +6,27 @@ use brk_cohort::{
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Indexes, Version};
+use brk_types::{Dollars, Height, Indexes, Sats, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode, WritableVec};
 
-use crate::{blocks, distribution::DynCohortVecs, indexes, prices};
-
-use crate::distribution::metrics::{
-    AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase, CoreCohortMetrics,
-    ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig, MinimalCohortMetrics,
-    ProfitabilityMetrics, SupplyMetrics,
+use crate::{
+    blocks,
+    distribution::{
+        DynCohortVecs,
+        metrics::{
+            AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase, CoreCohortMetrics,
+            ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig,
+            MinimalCohortMetrics, ProfitabilityMetrics, SupplyMetrics,
+        },
+        state::UTXOCohortState,
+    },
+    indexes,
+    internal::ValueFromHeight,
+    prices,
 };
 
 use super::{percentiles::PercentileCache, vecs::UTXOCohortVecs};
-
-use crate::distribution::state::UTXOCohortState;
 
 const VERSION: Version = Version::new(0);
 
@@ -40,6 +46,7 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     pub lt_amount: ByLowerThanAmount<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
     pub type_: BySpendableType<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
     pub profitability: ProfitabilityMetrics<M>,
+    pub matured: ByAgeRange<ValueFromHeight<M>>,
     #[traversable(skip)]
     pub(super) percentile_cache: PercentileCache,
     /// Cached partition_point positions for tick_tock boundary searches.
@@ -218,6 +225,10 @@ impl UTXOCohorts<Rw> {
         let lt_amount = ByLowerThanAmount::try_new(&minimal_no_state)?;
         let ge_amount = ByGreatEqualAmount::try_new(&minimal_no_state)?;
 
+        let matured = ByAgeRange::try_new(&|_f: Filter, name: &'static str| -> Result<ValueFromHeight> {
+            ValueFromHeight::forced_import(db, &format!("utxo_{name}_matured"), v, indexes)
+        })?;
+
         Ok(Self {
             all,
             sth,
@@ -232,9 +243,22 @@ impl UTXOCohorts<Rw> {
             lt_amount,
             ge_amount,
             profitability,
+            matured,
             percentile_cache: PercentileCache::default(),
             tick_tock_cached_positions: [0; 20],
         })
+    }
+
+    /// Push maturation sats to the matured vecs for the given height.
+    pub(crate) fn push_maturation(
+        &mut self,
+        height: Height,
+        matured: &ByAgeRange<Sats>,
+    ) -> Result<()> {
+        for (v, &sats) in self.matured.iter_mut().zip(matured.iter()) {
+            v.sats.height.truncate_push(height, sats)?;
+        }
+        Ok(())
     }
 
     pub(crate) fn par_iter_separate_mut(
@@ -382,6 +406,11 @@ impl UTXOCohorts<Rw> {
             all.into_par_iter()
                 .try_for_each(|v| v.compute_rest_part1(blocks, prices, starting_indexes, exit))?;
         }
+
+        // Compute matured cents from sats × price
+        self.matured
+            .par_iter_mut()
+            .try_for_each(|v| v.compute(prices, starting_indexes.height, exit))?;
 
         Ok(())
     }
@@ -596,6 +625,11 @@ impl UTXOCohorts<Rw> {
             vecs.extend(v.metrics.collect_all_vecs_mut());
         }
         vecs.extend(self.profitability.collect_all_vecs_mut());
+        for v in self.matured.iter_mut() {
+            let base = &mut v.base;
+            vecs.push(&mut base.sats.height);
+            vecs.push(&mut base.cents.height);
+        }
         vecs.into_par_iter()
     }
 
@@ -609,6 +643,7 @@ impl UTXOCohorts<Rw> {
     pub(crate) fn min_separate_stateful_height_len(&self) -> Height {
         self.iter_separate()
             .map(|v| Height::from(v.min_stateful_height_len()))
+            .chain(self.matured.iter().map(|v| Height::from(v.min_stateful_len())))
             .min()
             .unwrap_or_default()
             .min(Height::from(self.profitability.min_stateful_height_len()))

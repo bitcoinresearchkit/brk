@@ -4648,6 +4648,32 @@ class MetricsTree_Distribution_UtxoCohorts_Profitability:
         self.profit: MetricsTree_Distribution_UtxoCohorts_Profitability_Profit = MetricsTree_Distribution_UtxoCohorts_Profitability_Profit(client)
         self.loss: MetricsTree_Distribution_UtxoCohorts_Profitability_Loss = MetricsTree_Distribution_UtxoCohorts_Profitability_Loss(client)
 
+class MetricsTree_Distribution_UtxoCohorts_Matured:
+    """Metrics tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.up_to_1h: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_under_1h_old_matured')
+        self._1h_to_1d: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_1h_to_1d_old_matured')
+        self._1d_to_1w: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_1d_to_1w_old_matured')
+        self._1w_to_1m: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_1w_to_1m_old_matured')
+        self._1m_to_2m: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_1m_to_2m_old_matured')
+        self._2m_to_3m: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_2m_to_3m_old_matured')
+        self._3m_to_4m: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_3m_to_4m_old_matured')
+        self._4m_to_5m: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_4m_to_5m_old_matured')
+        self._5m_to_6m: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_5m_to_6m_old_matured')
+        self._6m_to_1y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_6m_to_1y_old_matured')
+        self._1y_to_2y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_1y_to_2y_old_matured')
+        self._2y_to_3y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_2y_to_3y_old_matured')
+        self._3y_to_4y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_3y_to_4y_old_matured')
+        self._4y_to_5y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_4y_to_5y_old_matured')
+        self._5y_to_6y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_5y_to_6y_old_matured')
+        self._6y_to_7y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_6y_to_7y_old_matured')
+        self._7y_to_8y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_7y_to_8y_old_matured')
+        self._8y_to_10y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_8y_to_10y_old_matured')
+        self._10y_to_12y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_10y_to_12y_old_matured')
+        self._12y_to_15y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_12y_to_15y_old_matured')
+        self.from_15y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxo_over_15y_old_matured')
+
 class MetricsTree_Distribution_UtxoCohorts:
     """Metrics tree node."""
     
@@ -4665,6 +4691,7 @@ class MetricsTree_Distribution_UtxoCohorts:
         self.lt_amount: MetricsTree_Distribution_UtxoCohorts_LtAmount = MetricsTree_Distribution_UtxoCohorts_LtAmount(client)
         self.type_: MetricsTree_Distribution_UtxoCohorts_Type = MetricsTree_Distribution_UtxoCohorts_Type(client)
         self.profitability: MetricsTree_Distribution_UtxoCohorts_Profitability = MetricsTree_Distribution_UtxoCohorts_Profitability(client)
+        self.matured: MetricsTree_Distribution_UtxoCohorts_Matured = MetricsTree_Distribution_UtxoCohorts_Matured(client)
 
 class MetricsTree_Distribution_AddressCohorts_GeAmount:
     """Metrics tree node."""

@@ -268,11 +268,8 @@ pub(crate) fn process_blocks(
             };
 
         // Process outputs, inputs, and tick-tock in parallel via rayon::join
-        let (_, oi_result) = rayon::join(
-            || {
-                vecs.utxo_cohorts
-                    .tick_tock_next_block(chain_state, timestamp);
-            },
+        let (matured, oi_result) = rayon::join(
+            || vecs.utxo_cohorts.tick_tock_next_block(chain_state, timestamp),
             || -> Result<_> {
                 let (outputs_result, inputs_result) = rayon::join(
                     || {
@@ -354,6 +351,9 @@ pub(crate) fn process_blocks(
             price: block_price,
             timestamp,
         });
+
+        // Record maturation (sats crossing age boundaries)
+        vecs.utxo_cohorts.push_maturation(height, &matured)?;
 
         // Build set of addresses that received this block (for detecting "both" in sent)
         // Reuse pre-allocated hashsets: clear preserves capacity, avoiding reallocation

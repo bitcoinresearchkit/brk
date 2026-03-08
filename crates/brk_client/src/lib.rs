@@ -5645,6 +5645,7 @@ pub struct MetricsTree_Distribution_UtxoCohorts {
     pub lt_amount: MetricsTree_Distribution_UtxoCohorts_LtAmount,
     pub type_: MetricsTree_Distribution_UtxoCohorts_Type,
     pub profitability: MetricsTree_Distribution_UtxoCohorts_Profitability,
+    pub matured: MetricsTree_Distribution_UtxoCohorts_Matured,
 }
 
 impl MetricsTree_Distribution_UtxoCohorts {
@@ -5663,6 +5664,7 @@ impl MetricsTree_Distribution_UtxoCohorts {
             lt_amount: MetricsTree_Distribution_UtxoCohorts_LtAmount::new(client.clone(), format!("{base_path}_lt_amount")),
             type_: MetricsTree_Distribution_UtxoCohorts_Type::new(client.clone(), format!("{base_path}_type_")),
             profitability: MetricsTree_Distribution_UtxoCohorts_Profitability::new(client.clone(), format!("{base_path}_profitability")),
+            matured: MetricsTree_Distribution_UtxoCohorts_Matured::new(client.clone(), format!("{base_path}_matured")),
         }
     }
 }
@@ -6337,6 +6339,59 @@ impl MetricsTree_Distribution_UtxoCohorts_Profitability_Loss {
             _70pct: RealizedSupplyPattern::new(client.clone(), "loss_ge_70pct".to_string()),
             _80pct: RealizedSupplyPattern::new(client.clone(), "loss_ge_80pct".to_string()),
             _90pct: RealizedSupplyPattern::new(client.clone(), "loss_ge_90pct".to_string()),
+        }
+    }
+}
+
+/// Metrics tree node.
+pub struct MetricsTree_Distribution_UtxoCohorts_Matured {
+    pub up_to_1h: BtcCentsSatsUsdPattern,
+    pub _1h_to_1d: BtcCentsSatsUsdPattern,
+    pub _1d_to_1w: BtcCentsSatsUsdPattern,
+    pub _1w_to_1m: BtcCentsSatsUsdPattern,
+    pub _1m_to_2m: BtcCentsSatsUsdPattern,
+    pub _2m_to_3m: BtcCentsSatsUsdPattern,
+    pub _3m_to_4m: BtcCentsSatsUsdPattern,
+    pub _4m_to_5m: BtcCentsSatsUsdPattern,
+    pub _5m_to_6m: BtcCentsSatsUsdPattern,
+    pub _6m_to_1y: BtcCentsSatsUsdPattern,
+    pub _1y_to_2y: BtcCentsSatsUsdPattern,
+    pub _2y_to_3y: BtcCentsSatsUsdPattern,
+    pub _3y_to_4y: BtcCentsSatsUsdPattern,
+    pub _4y_to_5y: BtcCentsSatsUsdPattern,
+    pub _5y_to_6y: BtcCentsSatsUsdPattern,
+    pub _6y_to_7y: BtcCentsSatsUsdPattern,
+    pub _7y_to_8y: BtcCentsSatsUsdPattern,
+    pub _8y_to_10y: BtcCentsSatsUsdPattern,
+    pub _10y_to_12y: BtcCentsSatsUsdPattern,
+    pub _12y_to_15y: BtcCentsSatsUsdPattern,
+    pub from_15y: BtcCentsSatsUsdPattern,
+}
+
+impl MetricsTree_Distribution_UtxoCohorts_Matured {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            up_to_1h: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_under_1h_old_matured".to_string()),
+            _1h_to_1d: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_1h_to_1d_old_matured".to_string()),
+            _1d_to_1w: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_1d_to_1w_old_matured".to_string()),
+            _1w_to_1m: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_1w_to_1m_old_matured".to_string()),
+            _1m_to_2m: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_1m_to_2m_old_matured".to_string()),
+            _2m_to_3m: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_2m_to_3m_old_matured".to_string()),
+            _3m_to_4m: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_3m_to_4m_old_matured".to_string()),
+            _4m_to_5m: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_4m_to_5m_old_matured".to_string()),
+            _5m_to_6m: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_5m_to_6m_old_matured".to_string()),
+            _6m_to_1y: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_6m_to_1y_old_matured".to_string()),
+            _1y_to_2y: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_1y_to_2y_old_matured".to_string()),
+            _2y_to_3y: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_2y_to_3y_old_matured".to_string()),
+            _3y_to_4y: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_3y_to_4y_old_matured".to_string()),
+            _4y_to_5y: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_4y_to_5y_old_matured".to_string()),
+            _5y_to_6y: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_5y_to_6y_old_matured".to_string()),
+            _6y_to_7y: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_6y_to_7y_old_matured".to_string()),
+            _7y_to_8y: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_7y_to_8y_old_matured".to_string()),
+            _8y_to_10y: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_8y_to_10y_old_matured".to_string()),
+            _10y_to_12y: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_10y_to_12y_old_matured".to_string()),
+            _12y_to_15y: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_12y_to_15y_old_matured".to_string()),
+            from_15y: BtcCentsSatsUsdPattern::new(client.clone(), "utxo_over_15y_old_matured".to_string()),
         }
     }
 }

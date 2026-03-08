@@ -200,6 +200,33 @@ impl<T> ByAgeRange<T> {
         }
     }
 
+    pub fn from_array(arr: [T; 21]) -> Self {
+        let [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20] = arr;
+        Self {
+            up_to_1h: a0,
+            _1h_to_1d: a1,
+            _1d_to_1w: a2,
+            _1w_to_1m: a3,
+            _1m_to_2m: a4,
+            _2m_to_3m: a5,
+            _3m_to_4m: a6,
+            _4m_to_5m: a7,
+            _5m_to_6m: a8,
+            _6m_to_1y: a9,
+            _1y_to_2y: a10,
+            _2y_to_3y: a11,
+            _3y_to_4y: a12,
+            _4y_to_5y: a13,
+            _5y_to_6y: a14,
+            _6y_to_7y: a15,
+            _7y_to_8y: a16,
+            _8y_to_10y: a17,
+            _10y_to_12y: a18,
+            _12y_to_15y: a19,
+            from_15y: a20,
+        }
+    }
+
     pub fn new<F>(mut create: F) -> Self
     where
         F: FnMut(Filter, &'static str) -> T,

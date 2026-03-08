@@ -4,7 +4,7 @@ mod rolling_sum;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Sats, Version};
-use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
+use vecdb::{AnyVec, Database, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
@@ -56,6 +56,10 @@ impl ByUnit {
             cents,
             usd,
         })
+    }
+
+    pub(crate) fn min_stateful_len(&self) -> usize {
+        self.sats.height.len()
     }
 }
 

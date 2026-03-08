@@ -4941,6 +4941,7 @@ function create_24hPattern(client, acc) {
  * @property {MetricsTree_Distribution_UtxoCohorts_LtAmount} ltAmount
  * @property {MetricsTree_Distribution_UtxoCohorts_Type} type
  * @property {MetricsTree_Distribution_UtxoCohorts_Profitability} profitability
+ * @property {MetricsTree_Distribution_UtxoCohorts_Matured} matured
  */
 
 /**
@@ -5251,6 +5252,31 @@ function create_24hPattern(client, acc) {
  * @property {RealizedSupplyPattern} _70pct
  * @property {RealizedSupplyPattern} _80pct
  * @property {RealizedSupplyPattern} _90pct
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Distribution_UtxoCohorts_Matured
+ * @property {BtcCentsSatsUsdPattern} upTo1h
+ * @property {BtcCentsSatsUsdPattern} _1hTo1d
+ * @property {BtcCentsSatsUsdPattern} _1dTo1w
+ * @property {BtcCentsSatsUsdPattern} _1wTo1m
+ * @property {BtcCentsSatsUsdPattern} _1mTo2m
+ * @property {BtcCentsSatsUsdPattern} _2mTo3m
+ * @property {BtcCentsSatsUsdPattern} _3mTo4m
+ * @property {BtcCentsSatsUsdPattern} _4mTo5m
+ * @property {BtcCentsSatsUsdPattern} _5mTo6m
+ * @property {BtcCentsSatsUsdPattern} _6mTo1y
+ * @property {BtcCentsSatsUsdPattern} _1yTo2y
+ * @property {BtcCentsSatsUsdPattern} _2yTo3y
+ * @property {BtcCentsSatsUsdPattern} _3yTo4y
+ * @property {BtcCentsSatsUsdPattern} _4yTo5y
+ * @property {BtcCentsSatsUsdPattern} _5yTo6y
+ * @property {BtcCentsSatsUsdPattern} _6yTo7y
+ * @property {BtcCentsSatsUsdPattern} _7yTo8y
+ * @property {BtcCentsSatsUsdPattern} _8yTo10y
+ * @property {BtcCentsSatsUsdPattern} _10yTo12y
+ * @property {BtcCentsSatsUsdPattern} _12yTo15y
+ * @property {BtcCentsSatsUsdPattern} from15y
  */
 
 /**
@@ -7513,6 +7539,29 @@ class BrkClient extends BrkClientBase {
               _80pct: createRealizedSupplyPattern(this, 'loss_ge_80pct'),
               _90pct: createRealizedSupplyPattern(this, 'loss_ge_90pct'),
             },
+          },
+          matured: {
+            upTo1h: createBtcCentsSatsUsdPattern(this, 'utxo_under_1h_old_matured'),
+            _1hTo1d: createBtcCentsSatsUsdPattern(this, 'utxo_1h_to_1d_old_matured'),
+            _1dTo1w: createBtcCentsSatsUsdPattern(this, 'utxo_1d_to_1w_old_matured'),
+            _1wTo1m: createBtcCentsSatsUsdPattern(this, 'utxo_1w_to_1m_old_matured'),
+            _1mTo2m: createBtcCentsSatsUsdPattern(this, 'utxo_1m_to_2m_old_matured'),
+            _2mTo3m: createBtcCentsSatsUsdPattern(this, 'utxo_2m_to_3m_old_matured'),
+            _3mTo4m: createBtcCentsSatsUsdPattern(this, 'utxo_3m_to_4m_old_matured'),
+            _4mTo5m: createBtcCentsSatsUsdPattern(this, 'utxo_4m_to_5m_old_matured'),
+            _5mTo6m: createBtcCentsSatsUsdPattern(this, 'utxo_5m_to_6m_old_matured'),
+            _6mTo1y: createBtcCentsSatsUsdPattern(this, 'utxo_6m_to_1y_old_matured'),
+            _1yTo2y: createBtcCentsSatsUsdPattern(this, 'utxo_1y_to_2y_old_matured'),
+            _2yTo3y: createBtcCentsSatsUsdPattern(this, 'utxo_2y_to_3y_old_matured'),
+            _3yTo4y: createBtcCentsSatsUsdPattern(this, 'utxo_3y_to_4y_old_matured'),
+            _4yTo5y: createBtcCentsSatsUsdPattern(this, 'utxo_4y_to_5y_old_matured'),
+            _5yTo6y: createBtcCentsSatsUsdPattern(this, 'utxo_5y_to_6y_old_matured'),
+            _6yTo7y: createBtcCentsSatsUsdPattern(this, 'utxo_6y_to_7y_old_matured'),
+            _7yTo8y: createBtcCentsSatsUsdPattern(this, 'utxo_7y_to_8y_old_matured'),
+            _8yTo10y: createBtcCentsSatsUsdPattern(this, 'utxo_8y_to_10y_old_matured'),
+            _10yTo12y: createBtcCentsSatsUsdPattern(this, 'utxo_10y_to_12y_old_matured'),
+            _12yTo15y: createBtcCentsSatsUsdPattern(this, 'utxo_12y_to_15y_old_matured'),
+            from15y: createBtcCentsSatsUsdPattern(this, 'utxo_over_15y_old_matured'),
           },
         },
         addressCohorts: {
