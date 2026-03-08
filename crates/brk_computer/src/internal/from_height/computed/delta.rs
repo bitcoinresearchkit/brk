@@ -25,7 +25,7 @@ use crate::{
 
 /// Pre-collect source data from the earliest needed offset.
 /// Returns (source_data, offset) for use in compute_delta_window.
-pub(super) fn collect_source<S: NumericValue>(
+fn collect_source<S: NumericValue>(
     source: &impl ReadableVec<Height, S>,
     skip: usize,
     earliest_starts: &impl ReadableVec<Height, Height>,
@@ -45,8 +45,7 @@ pub(super) fn compute_delta_window<S, C, B>(
     rate_bps_h: &mut EagerVec<PcoVec<Height, B>>,
     max_from: Height,
     starts: &impl ReadableVec<Height, Height>,
-    source_data: &[S],
-    offset: usize,
+    source: &impl ReadableVec<Height, S>,
     exit: &Exit,
 ) -> Result<()>
 where
@@ -54,10 +53,18 @@ where
     C: NumericValue,
     B: NumericValue,
 {
+    let skip = change_h.len();
+    let (mut source_data, mut offset) = collect_source(source, skip, starts);
+
     change_h.compute_transform(
         max_from,
         starts,
         |(h, ago_h, ..)| {
+            if h.to_usize() < offset || ago_h.to_usize() < offset {
+                // Version reset cleared the vec — re-collect from scratch
+                source_data = source.collect();
+                offset = 0;
+            }
             let current: f64 = source_data[h.to_usize() - offset].into();
             let ago: f64 = source_data[ago_h.to_usize() - offset].into();
             (h, C::from(current - ago))
@@ -69,6 +76,11 @@ where
         max_from,
         &*change_h,
         |(h, change, ..)| {
+            if h.to_usize() < offset {
+                // Version reset cleared the vec — re-collect from scratch
+                source_data = source.collect();
+                offset = 0;
+            }
             let current_f: f64 = source_data[h.to_usize() - offset].into();
             let change_f: f64 = change.into();
             let ago = current_f - change_f;
@@ -127,10 +139,6 @@ where
         source: &impl ReadableVec<Height, S>,
         exit: &Exit,
     ) -> Result<()> {
-        // Pre-collect once using the widest window (1y has earliest ago heights)
-        let skip = self.change.0._24h.height.len();
-        let (source_data, offset) = collect_source(source, skip, windows._1y);
-
         for ((change_w, rate_w), starts) in self
             .change
             .0
@@ -144,8 +152,7 @@ where
                 &mut rate_w.bps.height,
                 max_from,
                 *starts,
-                &source_data,
-                offset,
+                source,
                 exit,
             )?;
         }
@@ -201,16 +208,12 @@ where
         source: &impl ReadableVec<Height, S>,
         exit: &Exit,
     ) -> Result<()> {
-        let skip = self.change_1m.height.len();
-        let (source_data, offset) = collect_source(source, skip, height_1m_ago);
-
         compute_delta_window(
             &mut self.change_1m.height,
             &mut self.rate_1m.bps.height,
             max_from,
             height_1m_ago,
-            &source_data,
-            offset,
+            source,
             exit,
         )
     }
@@ -294,10 +297,6 @@ where
         source: &impl ReadableVec<Height, S>,
         exit: &Exit,
     ) -> Result<()> {
-        // Pre-collect once using the widest window (1y has earliest ago heights)
-        let skip = self.change_24h.height.len();
-        let (source_data, offset) = collect_source(source, skip, windows._1y);
-
         let changes = [&mut self.change_24h, &mut self.change_1w, &mut self.change_1y];
         let rates = [&mut self.rate_24h, &mut self.rate_1w, &mut self.rate_1y];
         let starts = [windows._24h, windows._1w, windows._1y];
@@ -308,8 +307,7 @@ where
                 &mut rate_w.bps.height,
                 max_from,
                 starts,
-                &source_data,
-                offset,
+                source,
                 exit,
             )?;
         }

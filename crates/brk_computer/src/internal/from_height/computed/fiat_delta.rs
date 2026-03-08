@@ -15,7 +15,7 @@ use crate::{
     },
 };
 
-use super::delta::{collect_source, compute_delta_window};
+use super::delta::compute_delta_window;
 
 /// Fiat 1m-only delta: fiat change (cents + usd) + rate for the 1-month window.
 #[derive(Traversable)]
@@ -64,16 +64,12 @@ where
         source: &impl ReadableVec<Height, S>,
         exit: &Exit,
     ) -> Result<()> {
-        let skip = self.change_1m.cents.height.len();
-        let (source_data, offset) = collect_source(source, skip, height_1m_ago);
-
         compute_delta_window(
             &mut self.change_1m.cents.height,
             &mut self.rate_1m.bps.height,
             max_from,
             height_1m_ago,
-            &source_data,
-            offset,
+            source,
             exit,
         )
     }
@@ -156,9 +152,6 @@ where
         source: &impl ReadableVec<Height, S>,
         exit: &Exit,
     ) -> Result<()> {
-        let skip = self.change_24h.cents.height.len();
-        let (source_data, offset) = collect_source(source, skip, windows._1y);
-
         let changes: [&mut FiatFromHeight<C>; 3] =
             [&mut self.change_24h, &mut self.change_1w, &mut self.change_1y];
         let rates = [&mut self.rate_24h, &mut self.rate_1w, &mut self.rate_1y];
@@ -170,8 +163,7 @@ where
                 &mut rate_w.bps.height,
                 max_from,
                 starts,
-                &source_data,
-                offset,
+                source,
                 exit,
             )?;
         }
@@ -247,9 +239,6 @@ where
         source: &impl ReadableVec<Height, S>,
         exit: &Exit,
     ) -> Result<()> {
-        let skip = self.change_24h.cents.height.len();
-        let (source_data, offset) = collect_source(source, skip, windows._1y);
-
         let changes: [&mut FiatFromHeight<C>; 4] = [
             &mut self.change_24h,
             &mut self.change_1w,
@@ -265,8 +254,7 @@ where
                 &mut rate_w.bps.height,
                 max_from,
                 *starts,
-                &source_data,
-                offset,
+                source,
                 exit,
             )?;
         }
