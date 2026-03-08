@@ -88,6 +88,39 @@ impl<N: FenwickNode> FenwickTree<N> {
         pos // 0-indexed bucket
     }
 
+    /// Batch kth for sorted targets. Processes all targets at each tree level
+    /// for better cache locality vs individual kth() calls.
+    ///
+    /// `sorted_targets` must be sorted ascending. `out` receives the 0-indexed bucket
+    /// for each target. Both slices must have the same length.
+    #[inline]
+    pub fn batch_kth<V, F>(&self, sorted_targets: &[V], field_fn: &F, out: &mut [usize])
+    where
+        V: Copy + PartialOrd + std::ops::SubAssign,
+        F: Fn(&N) -> V,
+    {
+        let k = sorted_targets.len();
+        debug_assert_eq!(out.len(), k);
+        debug_assert!(self.size > 0);
+        out.fill(0);
+        // Copy targets so we can subtract in-place
+        let mut remaining: smallvec::SmallVec<[V; 24]> = sorted_targets.into();
+        let mut bit = 1usize << (usize::BITS - 1 - self.size.leading_zeros() as u32);
+        while bit > 0 {
+            for i in 0..k {
+                let next = out[i] + bit;
+                if next <= self.size {
+                    let val = field_fn(&self.tree[next]);
+                    if remaining[i] >= val {
+                        remaining[i] -= val;
+                        out[i] = next;
+                    }
+                }
+            }
+            bit >>= 1;
+        }
+    }
+
     /// Write a raw frequency delta at a bucket. Does NOT maintain the Fenwick invariant.
     /// Call [`build_in_place`] after all raw writes.
     #[inline]

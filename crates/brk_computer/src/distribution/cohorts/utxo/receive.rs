@@ -46,18 +46,22 @@ impl UTXOCohorts<Rw> {
             .unwrap()
             .receive_utxo_snapshot(&supply_state, &snapshot);
 
-        // Update output type cohorts
+        // Update output type cohorts (skip types with no outputs this block)
         self.type_.iter_typed_mut().for_each(|(output_type, vecs)| {
-            vecs.state
-                .as_mut()
-                .unwrap()
-                .receive_utxo(received.by_type.get(output_type), price)
+            let supply_state = received.by_type.get(output_type);
+            if supply_state.utxo_count > 0 {
+                vecs.state
+                    .as_mut()
+                    .unwrap()
+                    .receive_utxo(supply_state, price)
+            }
         });
 
-        // Update amount range cohorts
+        // Update amount range cohorts (skip empty ranges)
         received
             .by_size_group
             .iter_typed()
+            .filter(|(_, supply_state)| supply_state.utxo_count > 0)
             .for_each(|(group, supply_state)| {
                 self.amount_range
                     .get_mut(group)

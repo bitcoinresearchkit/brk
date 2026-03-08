@@ -94,10 +94,11 @@ impl UTXOCohorts<Rw> {
                     .supply -= &sent.spendable_supply;
             }
 
-            // Update output type cohorts
+            // Update output type cohorts (skip zero-supply entries)
             sent.by_type
                 .spendable
                 .iter_typed()
+                .filter(|(_, supply_state)| supply_state.utxo_count > 0)
                 .for_each(|(output_type, supply_state)| {
                     self.type_
                         .get_mut(output_type)
@@ -107,9 +108,10 @@ impl UTXOCohorts<Rw> {
                         .send_utxo(supply_state, current_price, prev_price, peak_price, age)
                 });
 
-            // Update amount range cohorts
+            // Update amount range cohorts (skip zero-supply entries)
             sent.by_size_group
                 .iter_typed()
+                .filter(|(_, supply_state)| supply_state.utxo_count > 0)
                 .for_each(|(group, supply_state)| {
                     self.amount_range
                         .get_mut(group)

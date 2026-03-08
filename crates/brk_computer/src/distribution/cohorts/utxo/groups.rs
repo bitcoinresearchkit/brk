@@ -331,6 +331,28 @@ impl UTXOCohorts<Rw> {
             .chain(type_.par_iter_mut().map(|x| x as &mut dyn DynCohortVecs))
     }
 
+    /// Sequential mutable iterator over all separate (stateful) cohorts.
+    /// Use instead of `par_iter_separate_mut` when per-item work is trivial.
+    pub(crate) fn iter_separate_mut(
+        &mut self,
+    ) -> impl Iterator<Item = &mut dyn DynCohortVecs> {
+        let Self {
+            age_range,
+            epoch,
+            class,
+            amount_range,
+            type_,
+            ..
+        } = self;
+        age_range
+            .iter_mut()
+            .map(|x| x as &mut dyn DynCohortVecs)
+            .chain(epoch.iter_mut().map(|x| x as &mut dyn DynCohortVecs))
+            .chain(class.iter_mut().map(|x| x as &mut dyn DynCohortVecs))
+            .chain(amount_range.iter_mut().map(|x| x as &mut dyn DynCohortVecs))
+            .chain(type_.iter_mut().map(|x| x as &mut dyn DynCohortVecs))
+    }
+
     /// Immutable iterator over all separate (stateful) cohorts.
     pub(crate) fn iter_separate(&self) -> impl Iterator<Item = &dyn DynCohortVecs> {
         self.age_range
@@ -705,21 +727,20 @@ impl UTXOCohorts<Rw> {
 
     /// Reset state heights for all separate cohorts.
     pub(crate) fn reset_separate_state_heights(&mut self) {
-        self.par_iter_separate_mut().for_each(|v| {
-            v.reset_state_starting_height();
-        });
+        self.iter_separate_mut()
+            .for_each(|v| v.reset_state_starting_height());
     }
 
     /// Reset cost_basis_data for all separate cohorts (called during fresh start).
     pub(crate) fn reset_separate_cost_basis_data(&mut self) -> Result<()> {
-        self.par_iter_separate_mut()
+        self.iter_separate_mut()
             .try_for_each(|v| v.reset_cost_basis_data_if_needed())
     }
 
     /// Validate computed versions for all cohorts.
     pub(crate) fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         // Validate separate cohorts
-        self.par_iter_separate_mut()
+        self.iter_separate_mut()
             .try_for_each(|v| v.validate_computed_versions(base_version))?;
 
         // Validate aggregate cohorts

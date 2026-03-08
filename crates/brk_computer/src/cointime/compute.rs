@@ -21,25 +21,36 @@ impl Vecs {
         self.activity
             .compute(starting_indexes, blocks, distribution, exit)?;
 
-        // Supply computes next (depends on activity)
-        self.supply
-            .compute(starting_indexes, distribution, &self.activity, exit)?;
+        // Phase 2: supply, adjusted, value are independent (all depend only on activity)
+        let (r1, r2) = rayon::join(
+            || {
+                self.supply
+                    .compute(starting_indexes, distribution, &self.activity, exit)
+            },
+            || {
+                rayon::join(
+                    || {
+                        self.adjusted
+                            .compute(starting_indexes, supply_vecs, &self.activity, exit)
+                    },
+                    || {
+                        self.value.compute(
+                            starting_indexes,
+                            prices,
+                            blocks,
+                            distribution,
+                            &self.activity,
+                            exit,
+                        )
+                    },
+                )
+            },
+        );
+        r1?;
+        r2.0?;
+        r2.1?;
 
-        // Adjusted velocity metrics (BTC) - can compute without price
-        self.adjusted
-            .compute(starting_indexes, supply_vecs, &self.activity, exit)?;
-
-        // Value computes (cointime value destroyed/created/stored, VOCDD)
-        self.value.compute(
-            starting_indexes,
-            prices,
-            blocks,
-            distribution,
-            &self.activity,
-            exit,
-        )?;
-
-        // Cap computes (thermo, investor, vaulted, active, cointime caps)
+        // Cap depends on activity + value
         self.cap.compute(
             starting_indexes,
             mining,
@@ -49,21 +60,27 @@ impl Vecs {
             exit,
         )?;
 
-        // Pricing computes (all prices derived from caps)
-        self.pricing.compute(
-            starting_indexes,
-            prices,
-            blocks,
-            distribution,
-            &self.activity,
-            &self.supply,
-            &self.cap,
-            exit,
-        )?;
-
-        // Reserve Risk computes (depends on value.vocdd and price)
-        self.reserve_risk
-            .compute(starting_indexes, blocks, prices, &self.value, exit)?;
+        // Phase 4: pricing and reserve_risk are independent
+        let (r3, r4) = rayon::join(
+            || {
+                self.pricing.compute(
+                    starting_indexes,
+                    prices,
+                    blocks,
+                    distribution,
+                    &self.activity,
+                    &self.supply,
+                    &self.cap,
+                    exit,
+                )
+            },
+            || {
+                self.reserve_risk
+                    .compute(starting_indexes, blocks, prices, &self.value, exit)
+            },
+        );
+        r3?;
+        r4?;
 
         let _lock = exit.lock();
         self.db.compact()?;

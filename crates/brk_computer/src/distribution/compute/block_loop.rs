@@ -238,12 +238,6 @@ pub(crate) fn process_blocks(
         debug_assert_eq!(ctx.timestamp_at(height), timestamp);
         debug_assert_eq!(ctx.price_at(height), block_price);
 
-        // Build txindex mappings for this block (reuses internal buffers)
-        let txoutindex_to_txindex =
-            txout_to_txindex_buf.build(first_txindex, tx_count, txindex_to_output_count);
-        let txinindex_to_txindex =
-            txin_to_txindex_buf.build(first_txindex, tx_count, txindex_to_input_count);
-
         // Get first address indexes for this height from pre-collected vecs
         let first_addressindexes = ByAddressType {
             p2a: TypeIndex::from(first_p2a_vec[offset].to_usize()),
@@ -259,23 +253,19 @@ pub(crate) fn process_blocks(
         // Reset per-block activity counts
         activity_counts.reset();
 
-        // Collect output/input data using reusable iterators (16KB buffered reads)
-        // Must be done before rayon::join since iterators aren't Send
-        let txoutdata_vec = txout_iters.collect_block_outputs(first_txoutindex, output_count);
-
-        let (input_values, input_prev_heights, input_outputtypes, input_typeindexes) =
-            if input_count > 1 {
-                txin_iters.collect_block_inputs(first_txinindex + 1, input_count - 1, height)
-            } else {
-                (&[][..], &[][..], &[][..], &[][..])
-            };
-
-        // Process outputs, inputs, and tick-tock in parallel via rayon::join
+        // Process outputs, inputs, and tick-tock in parallel via rayon::join.
+        // Collection (build txindex mappings + bulk mmap reads) is merged into the
+        // processing closures so outputs and inputs collection overlap each other
+        // and tick-tock, instead of running sequentially before the join.
         let (matured, oi_result) = rayon::join(
             || vecs.utxo_cohorts.tick_tock_next_block(chain_state, timestamp),
             || -> Result<_> {
                 let (outputs_result, inputs_result) = rayon::join(
                     || {
+                        let txoutindex_to_txindex = txout_to_txindex_buf
+                            .build(first_txindex, tx_count, txindex_to_output_count);
+                        let txoutdata_vec =
+                            txout_iters.collect_block_outputs(first_txoutindex, output_count);
                         process_outputs(
                             txoutindex_to_txindex,
                             txoutdata_vec,
@@ -288,6 +278,14 @@ pub(crate) fn process_blocks(
                     },
                     || -> Result<_> {
                         if input_count > 1 {
+                            let txinindex_to_txindex = txin_to_txindex_buf
+                                .build(first_txindex, tx_count, txindex_to_input_count);
+                            let (input_values, input_prev_heights, input_outputtypes, input_typeindexes) =
+                                txin_iters.collect_block_inputs(
+                                    first_txinindex + 1,
+                                    input_count - 1,
+                                    height,
+                                );
                             process_inputs(
                                 input_count - 1,
                                 &txinindex_to_txindex[1..],

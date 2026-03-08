@@ -239,25 +239,39 @@ impl CostBasisFenwick {
             return result;
         }
 
-        // Sat-weighted percentiles: find first bucket where cumulative >= target
+        // Build sorted sat targets: [min=0, percentiles..., max=total-1]
+        let mut sat_targets = [0i64; PERCENTILES_LEN + 2];
+        sat_targets[0] = 0; // min
         for (i, &p) in PERCENTILES.iter().enumerate() {
-            let target = (total_sats * i64::from(p) / 100 - 1).max(0);
-            let bucket = self.tree.kth(target, &sat_field);
-            result.sat_prices[i] = bucket_to_cents(bucket);
+            sat_targets[i + 1] = (total_sats * i64::from(p) / 100 - 1).max(0);
         }
+        sat_targets[PERCENTILES_LEN + 1] = total_sats - 1; // max
 
-        // USD-weighted percentiles
+        let mut sat_buckets = [0usize; PERCENTILES_LEN + 2];
+        self.tree
+            .batch_kth(&sat_targets, &sat_field, &mut sat_buckets);
+
+        result.min_price = bucket_to_cents(sat_buckets[0]);
+        for i in 0..PERCENTILES_LEN {
+            result.sat_prices[i] = bucket_to_cents(sat_buckets[i + 1]);
+        }
+        result.max_price = bucket_to_cents(sat_buckets[PERCENTILES_LEN + 1]);
+
+        // USD-weighted percentiles (batch)
         if total_usd > 0 {
+            let mut usd_targets = [0i128; PERCENTILES_LEN];
             for (i, &p) in PERCENTILES.iter().enumerate() {
-                let target = (total_usd * i128::from(p) / 100 - 1).max(0);
-                let bucket = self.tree.kth(target, &usd_field);
-                result.usd_prices[i] = bucket_to_cents(bucket);
+                usd_targets[i] = (total_usd * i128::from(p) / 100 - 1).max(0);
+            }
+
+            let mut usd_buckets = [0usize; PERCENTILES_LEN];
+            self.tree
+                .batch_kth(&usd_targets, &usd_field, &mut usd_buckets);
+
+            for i in 0..PERCENTILES_LEN {
+                result.usd_prices[i] = bucket_to_cents(usd_buckets[i]);
             }
         }
-
-        // Min/max via kth(0) and kth(total-1)
-        result.min_price = bucket_to_cents(self.tree.kth(0i64, &sat_field));
-        result.max_price = bucket_to_cents(self.tree.kth(total_sats - 1, &sat_field));
 
         result
     }

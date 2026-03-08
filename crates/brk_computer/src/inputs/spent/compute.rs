@@ -42,10 +42,14 @@ impl Vecs {
         let value_reader = indexer.vecs.outputs.value.reader();
         let actual_total = target - min;
         let mut entries: Vec<Entry> = Vec::with_capacity(actual_total.min(BATCH_SIZE));
+        // Pre-allocate output buffers for scatter-write pattern
+        let mut out_txoutindex: Vec<TxOutIndex> = Vec::new();
+        let mut out_value: Vec<Sats> = Vec::new();
 
         let mut batch_start = min;
         while batch_start < target {
             let batch_end = (batch_start + BATCH_SIZE).min(target);
+            let batch_len = batch_end - batch_start;
 
             entries.clear();
             let mut j = 0usize;
@@ -55,7 +59,7 @@ impl Vecs {
                 .outpoint
                 .for_each_range_at(batch_start, batch_end, |outpoint| {
                     entries.push(Entry {
-                        txinindex: TxInIndex::from(batch_start + j),
+                        original_idx: j,
                         txindex: outpoint.txindex(),
                         vout: outpoint.vout(),
                         txoutindex: TxOutIndex::COINBASE,
@@ -64,7 +68,7 @@ impl Vecs {
                     j += 1;
                 });
 
-            // Coinbase entries (txindex MAX) sorted to end
+            // Sort 1: by txindex (group by transaction for sequential first_txoutindex reads)
             entries.sort_unstable_by_key(|e| e.txindex);
             for entry in &mut entries {
                 if entry.txindex.is_coinbase() {
@@ -74,6 +78,7 @@ impl Vecs {
                     first_txoutindex_reader.get(entry.txindex.to_usize()) + entry.vout;
             }
 
+            // Sort 2: by txoutindex (sequential value reads)
             entries.sort_unstable_by_key(|e| e.txoutindex);
             for entry in &mut entries {
                 if entry.txoutindex.is_coinbase() {
@@ -82,11 +87,22 @@ impl Vecs {
                 entry.value = value_reader.get(entry.txoutindex.to_usize());
             }
 
-            entries.sort_unstable_by_key(|e| e.txinindex);
+            // Scatter-write to output buffers using original_idx (avoids Sort 3)
+            out_txoutindex.clear();
+            out_txoutindex.resize(batch_len, TxOutIndex::COINBASE);
+            out_value.clear();
+            out_value.resize(batch_len, Sats::MAX);
+
             for entry in &entries {
+                out_txoutindex[entry.original_idx] = entry.txoutindex;
+                out_value[entry.original_idx] = entry.value;
+            }
+
+            for i in 0..batch_len {
+                let txinindex = TxInIndex::from(batch_start + i);
                 self.txoutindex
-                    .truncate_push(entry.txinindex, entry.txoutindex)?;
-                self.value.truncate_push(entry.txinindex, entry.value)?;
+                    .truncate_push(txinindex, out_txoutindex[i])?;
+                self.value.truncate_push(txinindex, out_value[i])?;
             }
 
             if batch_end < target {
@@ -106,7 +122,7 @@ impl Vecs {
 }
 
 struct Entry {
-    txinindex: TxInIndex,
+    original_idx: usize,
     txindex: TxIndex,
     vout: Vout,
     txoutindex: TxOutIndex,

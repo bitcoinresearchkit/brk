@@ -19,33 +19,50 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.ath.compute(prices, blocks, starting_indexes, exit)?;
+        // Phase 1: Independent sub-modules in parallel
+        let (r1, r2) = rayon::join(
+            || {
+                rayon::join(
+                    || self.ath.compute(prices, blocks, starting_indexes, exit),
+                    || self.lookback.compute(blocks, prices, starting_indexes, exit),
+                )
+            },
+            || {
+                rayon::join(
+                    || self.range.compute(prices, blocks, starting_indexes, exit),
+                    || {
+                        self.moving_average
+                            .compute(blocks, prices, starting_indexes, exit)
+                    },
+                )
+            },
+        );
+        r1.0?;
+        r1.1?;
+        r2.0?;
+        r2.1?;
 
-        // Lookback metrics (independent)
-        self.lookback
-            .compute(blocks, prices, starting_indexes, exit)?;
+        // Phase 2: Depend on lookback
+        let (r3, r4) = rayon::join(
+            || {
+                self.returns
+                    .compute(prices, blocks, &self.lookback, starting_indexes, exit)
+            },
+            || {
+                self.dca.compute(
+                    indexes,
+                    prices,
+                    blocks,
+                    &self.lookback,
+                    starting_indexes,
+                    exit,
+                )
+            },
+        );
+        r3?;
+        r4?;
 
-        // Returns metrics (depends on lookback)
-        self.returns
-            .compute(prices, blocks, &self.lookback, starting_indexes, exit)?;
-
-        // Range metrics (independent)
-        self.range.compute(prices, blocks, starting_indexes, exit)?;
-
-        // Moving average metrics (independent)
-        self.moving_average
-            .compute(blocks, prices, starting_indexes, exit)?;
-
-        // DCA metrics (depends on lookback for lump sum comparison)
-        self.dca.compute(
-            indexes,
-            prices,
-            blocks,
-            &self.lookback,
-            starting_indexes,
-            exit,
-        )?;
-
+        // Phase 3: Depends on returns, range, moving_average
         self.indicators.compute(
             &mining.rewards,
             &self.returns,

@@ -150,6 +150,14 @@ impl Computer {
                         )?))
                     })?;
 
+                    let pools_handle = big_thread().spawn_scoped(s, || -> Result<_> {
+                        Ok(Box::new(pools::Vecs::forced_import(
+                            &computed_path,
+                            VERSION,
+                            &indexes,
+                        )?))
+                    })?;
+
                     let cointime = Box::new(cointime::Vecs::forced_import(
                         &computed_path,
                         VERSION,
@@ -160,23 +168,33 @@ impl Computer {
                     let mining = mining_handle.join().unwrap()?;
                     let transactions = transactions_handle.join().unwrap()?;
                     let scripts = scripts_handle.join().unwrap()?;
-
-                    let pools = Box::new(pools::Vecs::forced_import(
-                        &computed_path,
-                        VERSION,
-                        &indexes,
-                    )?);
+                    let pools = pools_handle.join().unwrap()?;
 
                     Ok((blocks, mining, transactions, scripts, pools, cointime))
                 })
             })?;
 
-        let distribution = timed("Imported distribution", || -> Result<_> {
-            Ok(Box::new(distribution::Vecs::forced_import(
-                &computed_path,
-                VERSION,
-                &indexes,
-            )?))
+        // Market and distribution are independent; import in parallel.
+        // Supply depends on distribution so it runs after.
+        let (distribution, market) = timed("Imported distribution/market", || {
+            thread::scope(|s| -> Result<_> {
+                let market_handle = big_thread().spawn_scoped(s, || -> Result<_> {
+                    Ok(Box::new(market::Vecs::forced_import(
+                        &computed_path,
+                        VERSION,
+                        &indexes,
+                    )?))
+                })?;
+
+                let distribution = Box::new(distribution::Vecs::forced_import(
+                    &computed_path,
+                    VERSION,
+                    &indexes,
+                )?);
+
+                let market = market_handle.join().unwrap()?;
+                Ok((distribution, market))
+            })
         })?;
 
         let supply = timed("Imported supply", || -> Result<_> {
@@ -185,14 +203,6 @@ impl Computer {
                 VERSION,
                 &indexes,
                 &distribution,
-            )?))
-        })?;
-
-        let market = timed("Imported market", || -> Result<_> {
-            Ok(Box::new(market::Vecs::forced_import(
-                &computed_path,
-                VERSION,
-                &indexes,
             )?))
         })?;
 

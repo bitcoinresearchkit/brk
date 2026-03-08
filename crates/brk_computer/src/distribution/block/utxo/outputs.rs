@@ -48,38 +48,46 @@ pub(crate) fn process_outputs(
 ) -> Result<OutputsResult> {
     let output_count = txoutdata_vec.len();
 
-    // Phase 1: Parallel address lookups (mmap reads)
-    let items: Vec<_> = (0..output_count)
-        .into_par_iter()
-        .map(|local_idx| -> Result<_> {
-            let txoutdata = &txoutdata_vec[local_idx];
-            let value = txoutdata.value;
-            let output_type = txoutdata.outputtype;
+    // Phase 1: Address lookups (mmap reads) — parallel for large blocks, sequential for small
+    let map_fn = |local_idx: usize| -> Result<_> {
+        let txoutdata = &txoutdata_vec[local_idx];
+        let value = txoutdata.value;
+        let output_type = txoutdata.outputtype;
 
-            if output_type.is_not_address() {
-                return Ok((value, output_type, None));
-            }
+        if output_type.is_not_address() {
+            return Ok((value, output_type, None));
+        }
 
-            let typeindex = txoutdata.typeindex;
-            let txindex = txoutindex_to_txindex[local_idx];
+        let typeindex = txoutdata.typeindex;
+        let txindex = txoutindex_to_txindex[local_idx];
 
-            let addr_data_opt = load_uncached_address_data(
-                output_type,
-                typeindex,
-                first_addressindexes,
-                cache,
-                vr,
-                any_address_indexes,
-                addresses_data,
-            )?;
+        let addr_data_opt = load_uncached_address_data(
+            output_type,
+            typeindex,
+            first_addressindexes,
+            cache,
+            vr,
+            any_address_indexes,
+            addresses_data,
+        )?;
 
-            Ok((
-                value,
-                output_type,
-                Some((typeindex, txindex, value, addr_data_opt)),
-            ))
-        })
-        .collect::<Result<Vec<_>>>()?;
+        Ok((
+            value,
+            output_type,
+            Some((typeindex, txindex, value, addr_data_opt)),
+        ))
+    };
+
+    let items: Vec<_> = if output_count < 128 {
+        (0..output_count)
+            .map(map_fn)
+            .collect::<Result<Vec<_>>>()?
+    } else {
+        (0..output_count)
+            .into_par_iter()
+            .map(map_fn)
+            .collect::<Result<Vec<_>>>()?
+    };
 
     // Phase 2: Sequential accumulation
     let estimated_per_type = (output_count / 8).max(8);

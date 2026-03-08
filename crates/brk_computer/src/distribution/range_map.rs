@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 
-/// Number of ranges to cache. Small enough for O(1) linear scan,
-/// large enough to cover the "hot" source blocks in a typical block.
-const CACHE_SIZE: usize = 8;
+/// Direct-mapped cache size. Power of 2 for fast masking.
+const CACHE_SIZE: usize = 128;
+const CACHE_MASK: usize = CACHE_SIZE - 1;
 
 /// Maps ranges of indices to values for efficient reverse lookups.
 ///
@@ -10,15 +10,13 @@ const CACHE_SIZE: usize = 8;
 /// in a sorted Vec and uses binary search to find the value for any index.
 /// The value is derived from the position in the Vec.
 ///
-/// Includes an LRU cache of recently accessed ranges to avoid binary search
-/// when there's locality in access patterns.
+/// Includes a direct-mapped cache for O(1) lookups when there's locality.
 #[derive(Debug, Clone)]
 pub struct RangeMap<I, V> {
     /// Sorted vec of first_index values. Position in vec = value.
     first_indexes: Vec<I>,
-    /// LRU cache: (range_low, range_high, value, age). Lower age = more recent.
-    cache: [(I, I, V, u8); CACHE_SIZE],
-    cache_len: u8,
+    /// Direct-mapped cache: (range_low, range_high, value, occupied). Inline for zero indirection.
+    cache: [(I, I, V, bool); CACHE_SIZE],
     _phantom: PhantomData<V>,
 }
 
@@ -26,14 +24,13 @@ impl<I: Default + Copy, V: Default + Copy> Default for RangeMap<I, V> {
     fn default() -> Self {
         Self {
             first_indexes: Vec::new(),
-            cache: [(I::default(), I::default(), V::default(), 0); CACHE_SIZE],
-            cache_len: 0,
+            cache: [(I::default(), I::default(), V::default(), false); CACHE_SIZE],
             _phantom: PhantomData,
         }
     }
 }
 
-impl<I: Ord + Copy + Default, V: From<usize> + Copy + Default> RangeMap<I, V> {
+impl<I: Ord + Copy + Default + Into<usize>, V: From<usize> + Copy + Default> RangeMap<I, V> {
     /// Number of ranges stored.
     pub(crate) fn len(&self) -> usize {
         self.first_indexes.len()
@@ -42,7 +39,7 @@ impl<I: Ord + Copy + Default, V: From<usize> + Copy + Default> RangeMap<I, V> {
     /// Truncate to `new_len` ranges and clear the cache.
     pub(crate) fn truncate(&mut self, new_len: usize) {
         self.first_indexes.truncate(new_len);
-        self.cache_len = 0;
+        self.clear_cache();
     }
 
     /// Push a new first_index. Value is implicitly the current length.
@@ -66,21 +63,11 @@ impl<I: Ord + Copy + Default, V: From<usize> + Copy + Default> RangeMap<I, V> {
             return None;
         }
 
-        let cache_len = self.cache_len as usize;
-
-        // Check cache first (linear scan of small array)
-        for i in 0..cache_len {
-            let (low, high, value, _) = self.cache[i];
-            if index >= low && index < high {
-                // Cache hit - mark as most recently used
-                if self.cache[i].3 != 0 {
-                    for j in 0..cache_len {
-                        self.cache[j].3 = self.cache[j].3.saturating_add(1);
-                    }
-                    self.cache[i].3 = 0;
-                }
-                return Some(value);
-            }
+        // Direct-mapped cache lookup: O(1), no aging
+        let slot = Self::cache_slot(&index);
+        let entry = &self.cache[slot];
+        if entry.3 && index >= entry.0 && index < entry.1 {
+            return Some(entry.2);
         }
 
         // Cache miss - binary search
@@ -88,15 +75,12 @@ impl<I: Ord + Copy + Default, V: From<usize> + Copy + Default> RangeMap<I, V> {
         if pos > 0 {
             let value = V::from(pos - 1);
             let low = self.first_indexes[pos - 1];
-
-            // For last range, use low as high (special marker)
-            // The check `index < high` will fail, but `index >= low` handles it
-            let high = self.first_indexes.get(pos).copied().unwrap_or(low);
             let is_last = pos == self.first_indexes.len();
 
-            // Add to cache (skip if last range - unbounded high is tricky)
+            // Cache non-last ranges (last range has unbounded high)
             if !is_last {
-                self.add_to_cache(low, high, value);
+                let high = self.first_indexes[pos];
+                self.cache[slot] = (low, high, value, true);
             }
 
             Some(value)
@@ -106,29 +90,14 @@ impl<I: Ord + Copy + Default, V: From<usize> + Copy + Default> RangeMap<I, V> {
     }
 
     #[inline]
-    fn add_to_cache(&mut self, low: I, high: I, value: V) {
-        let cache_len = self.cache_len as usize;
+    fn cache_slot(index: &I) -> usize {
+        let v: usize = (*index).into();
+        v & CACHE_MASK
+    }
 
-        // Age all entries
-        for i in 0..cache_len {
-            self.cache[i].3 = self.cache[i].3.saturating_add(1);
-        }
-
-        if cache_len < CACHE_SIZE {
-            // Not full - append
-            self.cache[cache_len] = (low, high, value, 0);
-            self.cache_len += 1;
-        } else {
-            // Full - evict oldest (highest age)
-            let mut oldest_idx = 0;
-            let mut oldest_age = 0u8;
-            for i in 0..CACHE_SIZE {
-                if self.cache[i].3 > oldest_age {
-                    oldest_age = self.cache[i].3;
-                    oldest_idx = i;
-                }
-            }
-            self.cache[oldest_idx] = (low, high, value, 0);
+    fn clear_cache(&mut self) {
+        for entry in self.cache.iter_mut() {
+            entry.3 = false;
         }
     }
 }

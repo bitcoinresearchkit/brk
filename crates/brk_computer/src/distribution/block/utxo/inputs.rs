@@ -57,40 +57,48 @@ pub(crate) fn process_inputs(
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
 ) -> Result<InputsResult> {
-    let items: Vec<_> = (0..input_count)
-        .into_par_iter()
-        .map(|local_idx| -> Result<_> {
-            let txindex = txinindex_to_txindex[local_idx];
+    let map_fn = |local_idx: usize| -> Result<_> {
+        let txindex = txinindex_to_txindex[local_idx];
 
-            let prev_height = txinindex_to_prev_height[local_idx];
-            let value = txinindex_to_value[local_idx];
-            let input_type = txinindex_to_outputtype[local_idx];
+        let prev_height = txinindex_to_prev_height[local_idx];
+        let value = txinindex_to_value[local_idx];
+        let input_type = txinindex_to_outputtype[local_idx];
 
-            if input_type.is_not_address() {
-                return Ok((prev_height, value, input_type, None));
-            }
+        if input_type.is_not_address() {
+            return Ok((prev_height, value, input_type, None));
+        }
 
-            let typeindex = txinindex_to_typeindex[local_idx];
+        let typeindex = txinindex_to_typeindex[local_idx];
 
-            // Look up address data
-            let addr_data_opt = load_uncached_address_data(
-                input_type,
-                typeindex,
-                first_addressindexes,
-                cache,
-                vr,
-                any_address_indexes,
-                addresses_data,
-            )?;
+        // Look up address data
+        let addr_data_opt = load_uncached_address_data(
+            input_type,
+            typeindex,
+            first_addressindexes,
+            cache,
+            vr,
+            any_address_indexes,
+            addresses_data,
+        )?;
 
-            Ok((
-                prev_height,
-                value,
-                input_type,
-                Some((typeindex, txindex, value, addr_data_opt)),
-            ))
-        })
-        .collect::<Result<Vec<_>>>()?;
+        Ok((
+            prev_height,
+            value,
+            input_type,
+            Some((typeindex, txindex, value, addr_data_opt)),
+        ))
+    };
+
+    let items: Vec<_> = if input_count < 128 {
+        (0..input_count)
+            .map(map_fn)
+            .collect::<Result<Vec<_>>>()?
+    } else {
+        (0..input_count)
+            .into_par_iter()
+            .map(map_fn)
+            .collect::<Result<Vec<_>>>()?
+    };
 
     // Phase 2: Sequential accumulation - no merge overhead
     // Estimate: unique heights bounded by block depth, addresses spread across ~8 types

@@ -89,6 +89,8 @@ impl CachedStateRaw {
 pub struct CachedUnrealizedState {
     state: CachedStateRaw,
     at_price: CentsCompact,
+    /// Cached output to skip redundant u128 divisions when nothing changed.
+    cached_output: Option<UnrealizedState>,
 }
 
 impl CachedUnrealizedState {
@@ -98,6 +100,7 @@ impl CachedUnrealizedState {
         Self {
             state,
             at_price: price,
+            cached_output: None,
         }
     }
 
@@ -110,11 +113,18 @@ impl CachedUnrealizedState {
         let new_price: CentsCompact = new_price.into();
         if new_price != self.at_price {
             self.update_for_price_change(new_price, map);
+            self.cached_output = None;
         }
-        self.state.to_output()
+        if let Some(ref output) = self.cached_output {
+            return output.clone();
+        }
+        let output = self.state.to_output();
+        self.cached_output = Some(output.clone());
+        output
     }
 
     pub(crate) fn on_receive(&mut self, price: Cents, sats: Sats) {
+        self.cached_output = None;
         let price: CentsCompact = price.into();
         let sats_u128 = sats.as_u128();
         let price_u128 = price.as_u128();
@@ -139,6 +149,7 @@ impl CachedUnrealizedState {
     }
 
     pub(crate) fn on_send(&mut self, price: Cents, sats: Sats) {
+        self.cached_output = None;
         let price: CentsCompact = price.into();
         let sats_u128 = sats.as_u128();
         let price_u128 = price.as_u128();
