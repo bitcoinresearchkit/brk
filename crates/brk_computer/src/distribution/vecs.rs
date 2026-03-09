@@ -414,7 +414,7 @@ impl Vecs {
             exit,
         )?;
 
-        let window_starts = blocks.count.window_starts();
+        let window_starts = blocks.lookback.window_starts();
 
         self.address_activity
             .compute_rest(starting_indexes.height, &window_starts, exit)?;

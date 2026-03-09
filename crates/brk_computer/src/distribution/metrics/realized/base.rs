@@ -91,13 +91,13 @@ impl RealizedBase {
         self.core.compute_rest_part1(blocks, starting_indexes, exit)?;
         self.sent_in_profit_sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.count.height_24h_ago,
+            &blocks.lookback.height_24h_ago,
             &self.sent_in_profit.height,
             exit,
         )?;
         self.sent_in_loss_sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.count.height_24h_ago,
+            &blocks.lookback.height_24h_ago,
             &self.sent_in_loss.height,
             exit,
         )?;

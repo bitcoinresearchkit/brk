@@ -10,11 +10,11 @@ impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        count_vecs: &blocks::CountVecs,
+        lookback: &blocks::LookbackVecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let window_starts = count_vecs.window_starts();
+        let window_starts = lookback.window_starts();
         self.tx_count
             .compute(starting_indexes.height, &window_starts, exit, |height| {
                 Ok(height.compute_count_from_indexes(

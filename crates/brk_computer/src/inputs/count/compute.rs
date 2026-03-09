@@ -15,7 +15,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let window_starts = blocks.count.window_starts();
+        let window_starts = blocks.lookback.window_starts();
         self.0
             .compute(starting_indexes.height, &window_starts, exit, |full| {
                 full.compute_with_skip(

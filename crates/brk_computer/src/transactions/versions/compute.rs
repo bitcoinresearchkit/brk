@@ -10,11 +10,11 @@ impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        count_vecs: &blocks::CountVecs,
+        lookback: &blocks::LookbackVecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let window_starts = count_vecs.window_starts();
+        let window_starts = lookback.window_starts();
 
         let tx_vany = |tx_vany: &mut ComputedFromHeightCumulativeSum<StoredU64>,
                        txversion: TxVersion| {

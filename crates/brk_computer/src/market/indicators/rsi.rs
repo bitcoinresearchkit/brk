@@ -14,8 +14,8 @@ pub(super) fn compute(
     starting_indexes: &Indexes,
     exit: &Exit,
 ) -> Result<()> {
-    let ws_rma = blocks.count.start_vec(rma_days);
-    let ws_sma = blocks.count.start_vec(stoch_sma_days);
+    let ws_rma = blocks.lookback.start_vec(rma_days);
+    let ws_sma = blocks.lookback.start_vec(stoch_sma_days);
 
     // Gains = max(return, 0)
     chain.gains.height.compute_transform(

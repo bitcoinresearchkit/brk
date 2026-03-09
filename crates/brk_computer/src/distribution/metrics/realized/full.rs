@@ -57,13 +57,16 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     pub gross_pnl_sum: RollingWindows<Cents, M>,
 
     pub net_realized_pnl_cumulative: ComputedFromHeight<CentsSigned, M>,
+    #[traversable(rename = "net_realized_pnl_sum")]
     pub net_realized_pnl_sum_extended: RollingWindowsFrom1w<CentsSigned, M>,
 
     pub net_pnl_delta: FiatRollingDelta1m<CentsSigned, CentsSigned, M>,
+    #[traversable(rename = "net_pnl_delta")]
     pub net_pnl_delta_extended: FiatRollingDeltaExcept1m<CentsSigned, CentsSigned, M>,
     pub net_pnl_change_1m_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned32, M>,
     pub net_pnl_change_1m_rel_to_market_cap: PercentFromHeight<BasisPointsSigned32, M>,
 
+    #[traversable(rename = "realized_cap_delta")]
     pub realized_cap_delta_extended: FiatRollingDeltaExcept1m<Cents, CentsSigned, M>,
 
     pub investor_price: Price<ComputedFromHeight<Cents, M>>,
@@ -82,15 +85,22 @@ pub struct RealizedFull<M: StorageMode = Rw> {
 
     pub realized_cap_rel_to_own_market_cap: PercentFromHeight<BasisPoints32, M>,
 
+    #[traversable(rename = "realized_profit_sum")]
     pub realized_profit_sum_extended: RollingWindowsFrom1w<Cents, M>,
+    #[traversable(rename = "realized_loss_sum")]
     pub realized_loss_sum_extended: RollingWindowsFrom1w<Cents, M>,
     pub realized_profit_to_loss_ratio: RollingWindows<StoredF64, M>,
 
+    #[traversable(rename = "value_created_sum")]
     pub value_created_sum_extended: RollingWindowsFrom1w<Cents, M>,
+    #[traversable(rename = "value_destroyed_sum")]
     pub value_destroyed_sum_extended: RollingWindowsFrom1w<Cents, M>,
+    #[traversable(rename = "sopr")]
     pub sopr_extended: RollingWindowsFrom1w<StoredF64, M>,
 
+    #[traversable(rename = "sent_in_profit_sum")]
     pub sent_in_profit_sum_extended: RollingWindowsFrom1w<Sats, M>,
+    #[traversable(rename = "sent_in_loss_sum")]
     pub sent_in_loss_sum_extended: RollingWindowsFrom1w<Sats, M>,
 
     pub realized_price_ratio_percentiles: ComputedFromHeightRatioPercentiles<M>,
@@ -377,7 +387,7 @@ impl RealizedFull {
             exit,
         )?;
 
-        let window_starts = blocks.count.window_starts();
+        let window_starts = blocks.lookback.window_starts();
 
         // Extended rolling sum (1w, 1m, 1y) for net_realized_pnl
         self.net_realized_pnl_sum_extended.compute_rolling_sum(
@@ -496,7 +506,7 @@ impl RealizedFull {
         // Net PnL delta (1m base + 24h/1w/1y extended)
         self.net_pnl_delta.compute(
             starting_indexes.height,
-            &blocks.count.height_1m_ago,
+            &blocks.lookback.height_1m_ago,
             &self.net_realized_pnl_cumulative.height,
             exit,
         )?;

@@ -31,7 +31,7 @@ impl<C: CentsType> LazyFiatFromHeight<C> {
             source,
         );
         let usd = LazyFromHeight::from_computed::<C::ToDollars>(
-            &format!("{name}_usd"),
+            name,
             version,
             source.height.read_only_boxed_clone(),
             source,

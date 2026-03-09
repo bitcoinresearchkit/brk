@@ -18,14 +18,16 @@ impl Vecs {
         self.time
             .timestamp
             .compute(indexer, indexes, starting_indexes, exit)?;
+        self.lookback
+            .compute(&self.time, starting_indexes, exit)?;
         self.count
-            .compute(indexer, &self.time, starting_indexes, exit)?;
+            .compute(indexer, &self.lookback, starting_indexes, exit)?;
         self.interval
-            .compute(indexer, &self.count, starting_indexes, exit)?;
+            .compute(indexer, &self.lookback, starting_indexes, exit)?;
         self.size
-            .compute(indexer, &self.count, starting_indexes, exit)?;
+            .compute(indexer, &self.lookback, starting_indexes, exit)?;
         self.weight
-            .compute(indexer, &self.count, starting_indexes, exit)?;
+            .compute(indexer, &self.lookback, starting_indexes, exit)?;
         self.difficulty
             .compute(indexer, indexes, starting_indexes, exit)?;
         self.halving.compute(indexes, starting_indexes, exit)?;

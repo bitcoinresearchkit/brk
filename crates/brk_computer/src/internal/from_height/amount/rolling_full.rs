@@ -7,18 +7,18 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        ByUnit, DistributionStats, WindowStarts, Windows, compute_rolling_distribution_from_starts,
+        AmountFromHeight, DistributionStats, WindowStarts, Windows, compute_rolling_distribution_from_starts,
     },
 };
 
-/// One window slot: sum + 8 distribution stats, each a ByUnit.
+/// One window slot: sum + 8 distribution stats, each a AmountFromHeight.
 ///
 /// Tree: `sum.sats.height`, `average.sats.height`, etc.
 #[derive(Traversable)]
 pub struct RollingFullSlot<M: StorageMode = Rw> {
-    pub sum: ByUnit<M>,
+    pub sum: AmountFromHeight<M>,
     #[traversable(flatten)]
-    pub distribution: DistributionStats<ByUnit<M>>,
+    pub distribution: DistributionStats<AmountFromHeight<M>>,
 }
 
 impl RollingFullSlot {
@@ -29,9 +29,9 @@ impl RollingFullSlot {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            sum: ByUnit::forced_import(db, &format!("{name}_sum"), version, indexes)?,
+            sum: AmountFromHeight::forced_import(db, &format!("{name}_sum"), version, indexes)?,
             distribution: DistributionStats::try_from_fn(|suffix| {
-                ByUnit::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
+                AmountFromHeight::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
             })?,
         })
     }
@@ -85,9 +85,9 @@ impl RollingFullSlot {
 /// Tree: `_24h.sum.sats.height`, `_24h.average.sats.height`, etc.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct RollingFullByUnit<M: StorageMode = Rw>(pub Windows<RollingFullSlot<M>>);
+pub struct RollingFullAmountFromHeight<M: StorageMode = Rw>(pub Windows<RollingFullSlot<M>>);
 
-impl RollingFullByUnit {
+impl RollingFullAmountFromHeight {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,

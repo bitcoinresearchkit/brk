@@ -14,7 +14,7 @@ pub struct DistributionStats<A> {
 
 impl<A> DistributionStats<A> {
     pub const SUFFIXES: [&'static str; 8] = [
-        "average", "min", "max", "p10", "p25", "median", "p75", "p90",
+        "average", "min", "max", "pct10", "pct25", "median", "pct75", "pct90",
     ];
 
     pub fn try_from_fn<E>(

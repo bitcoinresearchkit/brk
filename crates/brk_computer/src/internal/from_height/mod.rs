@@ -1,5 +1,5 @@
 mod base;
-mod by_unit;
+mod amount;
 mod computed;
 mod constant;
 mod fiat;
@@ -10,10 +10,9 @@ mod percentiles;
 mod price;
 mod ratio;
 mod stddev;
-mod value;
 
 pub use base::*;
-pub use by_unit::*;
+pub use amount::*;
 pub use computed::*;
 pub use constant::*;
 pub use fiat::*;
@@ -24,4 +23,3 @@ pub use percentiles::*;
 pub use price::*;
 pub use ratio::*;
 pub use stddev::*;
-pub use value::*;

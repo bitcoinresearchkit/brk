@@ -127,13 +127,13 @@ impl RealizedMinimal {
             .compute_rest(starting_indexes.height, exit)?;
         self.realized_profit_sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.count.height_24h_ago,
+            &blocks.lookback.height_24h_ago,
             &self.realized_profit.height,
             exit,
         )?;
         self.realized_loss_sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.count.height_24h_ago,
+            &blocks.lookback.height_24h_ago,
             &self.realized_loss.height,
             exit,
         )?;

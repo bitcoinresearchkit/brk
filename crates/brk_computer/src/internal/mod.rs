@@ -9,7 +9,7 @@ mod indexes;
 mod rolling;
 mod traits;
 mod transform;
-mod value;
+mod amount;
 
 pub(crate) use aggregate::*;
 pub(crate) use algo::*;
@@ -22,4 +22,4 @@ pub(crate) use indexes::*;
 pub(crate) use rolling::*;
 pub(crate) use traits::*;
 pub use transform::*;
-pub(crate) use value::*;
+pub(crate) use amount::*;

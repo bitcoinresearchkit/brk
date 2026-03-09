@@ -12,13 +12,13 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        count_vecs: &blocks::CountVecs,
+        lookback: &blocks::LookbackVecs,
         transactions_fees: &transactions::FeesVecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let window_starts = count_vecs.window_starts();
+        let window_starts = lookback.window_starts();
 
         self.coinbase.compute(
             starting_indexes.height,
@@ -163,7 +163,7 @@ impl Vecs {
 
         self.subsidy_sma_1y.cents.height.compute_rolling_average(
             starting_indexes.height,
-            &count_vecs.height_1y_ago,
+            &lookback.height_1y_ago,
             &self.subsidy.base.cents.height,
             exit,
         )?;

@@ -10,12 +10,12 @@ impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        count_vecs: &blocks::CountVecs,
+        lookback: &blocks::LookbackVecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         let mut prev_timestamp = None;
-        let window_starts = count_vecs.window_starts();
+        let window_starts = lookback.window_starts();
         self.0
             .compute(starting_indexes.height, &window_starts, exit, |vec| {
                 vec.compute_transform(

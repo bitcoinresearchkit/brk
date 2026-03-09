@@ -8,7 +8,9 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Dollars, Height, Indexes, Sats, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode, WritableVec};
+use vecdb::{
+    AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode, WritableVec,
+};
 
 use crate::{
     blocks,
@@ -22,7 +24,7 @@ use crate::{
         state::UTXOCohortState,
     },
     indexes,
-    internal::ValueFromHeight,
+    internal::AmountFromHeight,
     prices,
 };
 
@@ -47,7 +49,7 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     #[traversable(rename = "type")]
     pub type_: BySpendableType<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
     pub profitability: ProfitabilityMetrics<M>,
-    pub matured: ByAgeRange<ValueFromHeight<M>>,
+    pub matured: ByAgeRange<AmountFromHeight<M>>,
     #[traversable(skip)]
     pub(super) fenwick: CostBasisFenwick,
     /// Cached partition_point positions for tick_tock boundary searches.
@@ -226,8 +228,10 @@ impl UTXOCohorts<Rw> {
         let lt_amount = ByLowerThanAmount::try_new(&minimal_no_state)?;
         let ge_amount = ByGreatEqualAmount::try_new(&minimal_no_state)?;
 
-        let matured = ByAgeRange::try_new(&|_f: Filter, name: &'static str| -> Result<ValueFromHeight> {
-            ValueFromHeight::forced_import(db, &format!("utxo_{name}_matured"), v, indexes)
+        let matured = ByAgeRange::try_new(&|_f: Filter,
+                                            name: &'static str|
+         -> Result<AmountFromHeight> {
+            AmountFromHeight::forced_import(db, &format!("utxo_{name}_matured"), v, indexes)
         })?;
 
         Ok(Self {
@@ -257,7 +261,10 @@ impl UTXOCohorts<Rw> {
             return;
         }
         let Self {
-            sth, fenwick, age_range, ..
+            sth,
+            fenwick,
+            age_range,
+            ..
         } = self;
         fenwick.compute_is_sth(&sth.metrics.filter, age_range.iter().map(|v| v.filter()));
 
@@ -334,9 +341,7 @@ impl UTXOCohorts<Rw> {
 
     /// Sequential mutable iterator over all separate (stateful) cohorts.
     /// Use instead of `par_iter_separate_mut` when per-item work is trivial.
-    pub(crate) fn iter_separate_mut(
-        &mut self,
-    ) -> impl Iterator<Item = &mut dyn DynCohortVecs> {
+    pub(crate) fn iter_separate_mut(&mut self) -> impl Iterator<Item = &mut dyn DynCohortVecs> {
         let Self {
             age_range,
             epoch,
@@ -575,35 +580,20 @@ impl UTXOCohorts<Rw> {
             }),
             Box::new(|| {
                 age_range.par_iter_mut().try_for_each(|v| {
-                    v.metrics.compute_rest_part2(
-                        blocks,
-                        prices,
-                        starting_indexes,
-                        ss,
-                        exit,
-                    )
+                    v.metrics
+                        .compute_rest_part2(blocks, prices, starting_indexes, ss, exit)
                 })
             }),
             Box::new(|| {
                 max_age.par_iter_mut().try_for_each(|v| {
-                    v.metrics.compute_rest_part2(
-                        blocks,
-                        prices,
-                        starting_indexes,
-                        ss,
-                        exit,
-                    )
+                    v.metrics
+                        .compute_rest_part2(blocks, prices, starting_indexes, ss, exit)
                 })
             }),
             Box::new(|| {
                 min_age.par_iter_mut().try_for_each(|v| {
-                    v.metrics.compute_rest_part2(
-                        blocks,
-                        prices,
-                        starting_indexes,
-                        ss,
-                        exit,
-                    )
+                    v.metrics
+                        .compute_rest_part2(blocks, prices, starting_indexes, ss, exit)
                 })
             }),
             Box::new(|| {
@@ -613,24 +603,14 @@ impl UTXOCohorts<Rw> {
             }),
             Box::new(|| {
                 epoch.par_iter_mut().try_for_each(|v| {
-                    v.metrics.compute_rest_part2(
-                        blocks,
-                        prices,
-                        starting_indexes,
-                        ss,
-                        exit,
-                    )
+                    v.metrics
+                        .compute_rest_part2(blocks, prices, starting_indexes, ss, exit)
                 })
             }),
             Box::new(|| {
                 class.par_iter_mut().try_for_each(|v| {
-                    v.metrics.compute_rest_part2(
-                        blocks,
-                        prices,
-                        starting_indexes,
-                        ss,
-                        exit,
-                    )
+                    v.metrics
+                        .compute_rest_part2(blocks, prices, starting_indexes, ss, exit)
                 })
             }),
             Box::new(|| {
@@ -695,9 +675,8 @@ impl UTXOCohorts<Rw> {
         }
         vecs.extend(self.profitability.collect_all_vecs_mut());
         for v in self.matured.iter_mut() {
-            let base = &mut v.base;
-            vecs.push(&mut base.sats.height);
-            vecs.push(&mut base.cents.height);
+            vecs.push(&mut v.sats.height);
+            vecs.push(&mut v.cents.height);
         }
         vecs.into_par_iter()
     }
@@ -712,13 +691,23 @@ impl UTXOCohorts<Rw> {
     pub(crate) fn min_separate_stateful_height_len(&self) -> Height {
         self.iter_separate()
             .map(|v| Height::from(v.min_stateful_height_len()))
-            .chain(self.matured.iter().map(|v| Height::from(v.min_stateful_len())))
+            .chain(
+                self.matured
+                    .iter()
+                    .map(|v| Height::from(v.min_stateful_len())),
+            )
             .min()
             .unwrap_or_default()
             .min(Height::from(self.profitability.min_stateful_height_len()))
-            .min(Height::from(self.all.metrics.realized.min_stateful_height_len()))
-            .min(Height::from(self.sth.metrics.realized.min_stateful_height_len()))
-            .min(Height::from(self.lth.metrics.realized.min_stateful_height_len()))
+            .min(Height::from(
+                self.all.metrics.realized.min_stateful_height_len(),
+            ))
+            .min(Height::from(
+                self.sth.metrics.realized.min_stateful_height_len(),
+            ))
+            .min(Height::from(
+                self.lth.metrics.realized.min_stateful_height_len(),
+            ))
     }
 
     /// Import state for all separate cohorts at or before given height.
@@ -770,7 +759,11 @@ impl UTXOCohorts<Rw> {
     /// Called during the block loop after separate cohorts' truncate_push but before reset.
     pub(crate) fn push_overlapping_realized_full(&mut self, height: Height) -> Result<()> {
         let Self {
-            all, sth, lth, age_range, ..
+            all,
+            sth,
+            lth,
+            age_range,
+            ..
         } = self;
 
         let sth_filter = &sth.metrics.filter;

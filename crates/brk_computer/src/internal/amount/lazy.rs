@@ -2,20 +2,20 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
 use vecdb::{LazyVecFrom1, ReadableCloneableVec, UnaryTransform, VecIndex};
 
-use crate::internal::ValueFromHeight;
+use crate::internal::AmountFromHeight;
 
 /// Fully lazy value type at height level.
 ///
 /// All fields are lazy transforms from existing sources - no storage.
 #[derive(Clone, Traversable)]
-pub struct LazyValue<I: VecIndex> {
+pub struct LazyAmount<I: VecIndex> {
     pub sats: LazyVecFrom1<I, Sats, I, Sats>,
     pub btc: LazyVecFrom1<I, Bitcoin, I, Sats>,
     pub cents: LazyVecFrom1<I, Cents, I, Cents>,
     pub usd: LazyVecFrom1<I, Dollars, I, Dollars>,
 }
 
-impl LazyValue<Height> {
+impl LazyAmount<Height> {
     pub(crate) fn from_block_source<
         SatsTransform,
         BitcoinTransform,
@@ -23,7 +23,7 @@ impl LazyValue<Height> {
         DollarsTransform,
     >(
         name: &str,
-        source: &ValueFromHeight,
+        source: &AmountFromHeight,
         version: Version,
     ) -> Self
     where
@@ -33,13 +33,13 @@ impl LazyValue<Height> {
         DollarsTransform: UnaryTransform<Dollars, Dollars>,
     {
         let sats = LazyVecFrom1::transformed::<SatsTransform>(
-            name,
+            &format!("{name}_sats"),
             version,
             source.sats.height.read_only_boxed_clone(),
         );
 
         let btc = LazyVecFrom1::transformed::<BitcoinTransform>(
-            &format!("{name}_btc"),
+            name,
             version,
             source.sats.height.read_only_boxed_clone(),
         );

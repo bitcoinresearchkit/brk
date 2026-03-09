@@ -6,8 +6,8 @@ use crate::{blocks, prices};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::internal::{
-    HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyValueFromHeight,
-    RollingDelta1m, ValueFromHeight,
+    AmountFromHeight, HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin,
+    LazyAmountFromHeight, RollingDelta1m,
 };
 
 use super::ImportConfig;
@@ -15,8 +15,8 @@ use super::ImportConfig;
 /// Supply metrics for a cohort.
 #[derive(Traversable)]
 pub struct SupplyMetrics<M: StorageMode = Rw> {
-    pub total: ValueFromHeight<M>,
-    pub halved: LazyValueFromHeight,
+    pub total: AmountFromHeight<M>,
+    pub halved: LazyAmountFromHeight,
     pub delta: RollingDelta1m<Sats, SatsSigned, M>,
 }
 
@@ -25,7 +25,7 @@ impl SupplyMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let supply = cfg.import("supply", Version::ZERO)?;
 
-        let supply_halved = LazyValueFromHeight::from_block_source::<
+        let supply_halved = LazyAmountFromHeight::from_block_source::<
             HalveSats,
             HalveSatsToBitcoin,
             HalveCents,
@@ -54,8 +54,8 @@ impl SupplyMetrics {
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
-            &mut self.total.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.total.base.cents.height as &mut dyn AnyStoredVec,
+            &mut self.total.sats.height as &mut dyn AnyStoredVec,
+            &mut self.total.cents.height as &mut dyn AnyStoredVec,
         ]
     }
 
@@ -102,7 +102,7 @@ impl SupplyMetrics {
     ) -> Result<()> {
         self.delta.compute(
             starting_indexes.height,
-            &blocks.count.height_1m_ago,
+            &blocks.lookback.height_1m_ago,
             &self.total.sats.height,
             exit,
         )

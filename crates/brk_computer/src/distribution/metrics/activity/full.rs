@@ -21,6 +21,7 @@ pub struct ActivityFull<M: StorageMode = Rw> {
     pub coindays_destroyed_cumulative: ComputedFromHeight<StoredF64, M>,
     pub coindays_destroyed_sum: RollingWindows<StoredF64, M>,
 
+    #[traversable(rename = "sent_sum")]
     pub sent_sum_extended: RollingWindowsFrom1w<Sats, M>,
 }
 
@@ -72,7 +73,7 @@ impl ActivityFull {
                 exit,
             )?;
 
-        let window_starts = blocks.count.window_starts();
+        let window_starts = blocks.lookback.window_starts();
         self.coindays_destroyed_sum.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,

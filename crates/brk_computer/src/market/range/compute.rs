@@ -19,22 +19,22 @@ impl Vecs {
             (
                 &mut self.price_min_1w.cents.height,
                 &mut self.price_max_1w.cents.height,
-                &blocks.count.height_1w_ago,
+                &blocks.lookback.height_1w_ago,
             ),
             (
                 &mut self.price_min_2w.cents.height,
                 &mut self.price_max_2w.cents.height,
-                &blocks.count.height_2w_ago,
+                &blocks.lookback.height_2w_ago,
             ),
             (
                 &mut self.price_min_1m.cents.height,
                 &mut self.price_max_1m.cents.height,
-                &blocks.count.height_1m_ago,
+                &blocks.lookback.height_1m_ago,
             ),
             (
                 &mut self.price_min_1y.cents.height,
                 &mut self.price_max_1y.cents.height,
-                &blocks.count.height_1y_ago,
+                &blocks.lookback.height_1y_ago,
             ),
         ] {
             min_vec.compute_rolling_min_from_starts(
@@ -75,7 +75,7 @@ impl Vecs {
         // 2w rolling sum of true range
         self.price_true_range_sum_2w.height.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.count.height_2w_ago,
+            &blocks.lookback.height_2w_ago,
             &self.price_true_range.height,
             exit,
         )?;
@@ -88,7 +88,7 @@ impl Vecs {
                 &self.price_true_range_sum_2w.height,
                 &self.price_max_2w.cents.height,
                 &self.price_min_2w.cents.height,
-                &blocks.count.height_2w_ago,
+                &blocks.lookback.height_2w_ago,
                 |(h, tr_sum, max, min, window_start, ..)| {
                     let range = f64::from(max) - f64::from(min);
                     let n = (h.to_usize() - window_start.to_usize() + 1) as f32;

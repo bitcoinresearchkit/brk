@@ -22,7 +22,7 @@ impl Vecs {
         self.burned.compute(
             scripts,
             mining,
-            &blocks.count,
+            &blocks.lookback,
             prices,
             starting_indexes,
             exit,
@@ -35,7 +35,7 @@ impl Vecs {
             .height
             .compute_rolling_ratio_change(
                 starting_indexes.height,
-                &blocks.count.height_1y_ago,
+                &blocks.lookback.height_1y_ago,
                 &circulating_supply.height,
                 exit,
             )?;
@@ -45,7 +45,7 @@ impl Vecs {
             .compute(blocks, transactions, distribution, starting_indexes, exit)?;
 
         // 4. Compute market cap delta (change + rate across 4 windows)
-        let window_starts = blocks.count.window_starts();
+        let window_starts = blocks.lookback.window_starts();
 
         self.market_cap_delta.compute(
             starting_indexes.height,

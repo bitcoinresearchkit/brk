@@ -2,6 +2,7 @@ pub mod count;
 pub mod difficulty;
 pub mod halving;
 pub mod interval;
+pub mod lookback;
 pub mod size;
 pub mod time;
 pub mod weight;
@@ -16,6 +17,7 @@ pub use count::Vecs as CountVecs;
 pub use difficulty::Vecs as DifficultyVecs;
 pub use halving::Vecs as HalvingVecs;
 pub use interval::Vecs as IntervalVecs;
+pub use lookback::Vecs as LookbackVecs;
 pub use size::Vecs as SizeVecs;
 pub use time::Vecs as TimeVecs;
 pub use weight::Vecs as WeightVecs;
@@ -46,6 +48,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub(crate) db: Database,
 
     pub count: CountVecs<M>,
+    pub lookback: LookbackVecs<M>,
     pub interval: IntervalVecs<M>,
     #[traversable(flatten)]
     pub size: SizeVecs<M>,

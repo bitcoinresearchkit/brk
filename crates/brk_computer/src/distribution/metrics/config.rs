@@ -1,19 +1,17 @@
 use brk_cohort::Filter;
 use brk_error::Result;
-use brk_types::{
-    BasisPoints16, BasisPoints32, BasisPointsSigned32, Cents, Height, Version,
-};
+use brk_types::{BasisPoints16, BasisPoints32, BasisPointsSigned32, Cents, Height, Version};
 use schemars::JsonSchema;
 use vecdb::{BytesVec, BytesVecValue, Database, ImportableVec};
 
 use crate::{
     indexes,
     internal::{
-        CentsType, ComputedFromHeight, ComputedFromHeightCumulative,
-        ComputedFromHeightCumulativeSum, ComputedFromHeightRatio, FiatFromHeight,
-        FiatRollingDelta1m, FiatRollingDeltaExcept1m, NumericValue, PercentFromHeight,
-        PercentRollingWindows, Price, RollingDelta1m, RollingDeltaExcept1m, RollingWindow24h,
-        RollingWindows, RollingWindowsFrom1w, ValueFromHeight, ValueFromHeightCumulative,
+        AmountFromHeight, AmountFromHeightCumulative, CentsType, ComputedFromHeight,
+        ComputedFromHeightCumulative, ComputedFromHeightCumulativeSum, ComputedFromHeightRatio,
+        FiatFromHeight, FiatRollingDelta1m, FiatRollingDeltaExcept1m, NumericValue,
+        PercentFromHeight, PercentRollingWindows, Price, RollingDelta1m, RollingDeltaExcept1m,
+        RollingWindow24h, RollingWindows, RollingWindowsFrom1w,
     },
 };
 
@@ -37,8 +35,8 @@ macro_rules! impl_config_import {
 
 // Non-generic types
 impl_config_import!(
-    ValueFromHeight,
-    ValueFromHeightCumulative,
+    AmountFromHeight,
+    AmountFromHeightCumulative,
     ComputedFromHeightRatio,
     PercentFromHeight<BasisPoints16>,
     PercentFromHeight<BasisPoints32>,
@@ -83,7 +81,8 @@ impl<C: CentsType> ConfigImport for FiatFromHeight<C> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }
 }
-impl<S: NumericValue + JsonSchema, C: NumericValue + JsonSchema> ConfigImport for RollingDelta1m<S, C>
+impl<S: NumericValue + JsonSchema, C: NumericValue + JsonSchema> ConfigImport
+    for RollingDelta1m<S, C>
 {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
@@ -136,11 +135,7 @@ impl<'a> ImportConfig<'a> {
         }
     }
 
-    pub(crate) fn import<T: ConfigImport>(
-        &self,
-        suffix: &str,
-        offset: Version,
-    ) -> Result<T> {
+    pub(crate) fn import<T: ConfigImport>(&self, suffix: &str, offset: Version) -> Result<T> {
         T::config_import(self, suffix, offset)
     }
 }

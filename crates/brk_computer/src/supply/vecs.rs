@@ -4,7 +4,7 @@ use vecdb::{Database, Rw, StorageMode};
 
 use super::{burned, velocity};
 use crate::internal::{
-    FiatRollingDelta, LazyFiatFromHeight, LazyValueFromHeight, PercentFromHeight, RollingWindows,
+    FiatRollingDelta, LazyFiatFromHeight, LazyAmountFromHeight, PercentFromHeight, RollingWindows,
 };
 
 #[derive(Traversable)]
@@ -12,7 +12,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub(crate) db: Database,
 
-    pub circulating: LazyValueFromHeight,
+    pub circulating: LazyAmountFromHeight,
     pub burned: burned::Vecs<M>,
     pub inflation_rate: PercentFromHeight<BasisPointsSigned32, M>,
     pub velocity: velocity::Vecs<M>,

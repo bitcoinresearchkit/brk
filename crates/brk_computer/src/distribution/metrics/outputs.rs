@@ -67,7 +67,7 @@ impl OutputsMetrics {
     ) -> Result<()> {
         self.utxo_count_delta.compute(
             starting_indexes.height,
-            &blocks.count.height_1m_ago,
+            &blocks.lookback.height_1m_ago,
             &self.utxo_count.height,
             exit,
         )?;

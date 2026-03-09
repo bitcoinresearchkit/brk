@@ -18,7 +18,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.count
-            .compute(indexer, &blocks.count, starting_indexes, exit)?;
+            .compute(indexer, &blocks.lookback, starting_indexes, exit)?;
 
         self.value
             .compute(indexer, prices, starting_indexes, exit)?;

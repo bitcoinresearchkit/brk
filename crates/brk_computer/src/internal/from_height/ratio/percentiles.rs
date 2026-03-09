@@ -91,14 +91,14 @@ impl ComputedFromHeightRatioPercentiles {
     ) -> Result<()> {
         self.ratio_sma_1w.bps.height.compute_rolling_average(
             starting_indexes.height,
-            &blocks.count.height_1w_ago,
+            &blocks.lookback.height_1w_ago,
             ratio_source,
             exit,
         )?;
 
         self.ratio_sma_1m.bps.height.compute_rolling_average(
             starting_indexes.height,
-            &blocks.count.height_1m_ago,
+            &blocks.lookback.height_1m_ago,
             ratio_source,
             exit,
         )?;

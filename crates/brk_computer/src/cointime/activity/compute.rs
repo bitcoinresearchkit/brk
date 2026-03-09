@@ -13,7 +13,7 @@ impl Vecs {
         distribution: &distribution::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        let window_starts = blocks.count.window_starts();
+        let window_starts = blocks.lookback.window_starts();
 
         let all_metrics = &distribution.utxo_cohorts.all.metrics;
         let circulating_supply = &all_metrics.supply.total.sats.height;

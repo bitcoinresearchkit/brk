@@ -64,7 +64,7 @@ impl ActivityCore {
     ) -> Result<()> {
         self.sent_sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.count.height_24h_ago,
+            &blocks.lookback.height_24h_ago,
             &self.sent.height,
             exit,
         )?;

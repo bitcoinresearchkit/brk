@@ -6,7 +6,7 @@ use brk_types::{Cents, Dollars, Sats, Version};
 use crate::{
     distribution, indexes,
     internal::{
-        FiatRollingDelta, Identity, LazyFiatFromHeight, LazyValueFromHeight, PercentFromHeight,
+        FiatRollingDelta, Identity, LazyFiatFromHeight, LazyAmountFromHeight, PercentFromHeight,
         RollingWindows, SatsToBitcoin, finalize_db, open_db,
     },
 };
@@ -28,7 +28,7 @@ impl Vecs {
         let supply_metrics = &distribution.utxo_cohorts.all.metrics.supply;
 
         // Circulating supply - lazy refs to distribution
-        let circulating = LazyValueFromHeight::from_block_source::<
+        let circulating = LazyAmountFromHeight::from_block_source::<
             Identity<Sats>,
             SatsToBitcoin,
             Identity<Cents>,

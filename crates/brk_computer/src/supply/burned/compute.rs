@@ -10,12 +10,12 @@ impl Vecs {
         &mut self,
         scripts: &scripts::Vecs,
         mining: &mining::Vecs,
-        count_vecs: &blocks::CountVecs,
+        lookback: &blocks::LookbackVecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let window_starts = count_vecs.window_starts();
+        let window_starts = lookback.window_starts();
 
         // 1. Compute opreturn supply - copy per-block opreturn values from scripts
         self.opreturn.compute(

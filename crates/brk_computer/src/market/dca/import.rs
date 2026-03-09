@@ -5,7 +5,7 @@ use vecdb::{Database, ImportableVec};
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod, Vecs};
 use crate::{
     indexes,
-    internal::{PercentFromHeight, Price, ValueFromHeight},
+    internal::{AmountFromHeight, PercentFromHeight, Price},
 };
 
 impl Vecs {
@@ -15,7 +15,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let period_stack = ByDcaPeriod::try_new(|name, _days| {
-            ValueFromHeight::forced_import(db, &format!("dca_stack_{name}"), version, indexes)
+            AmountFromHeight::forced_import(db, &format!("dca_stack_{name}"), version, indexes)
         })?;
 
         let period_cost_basis = ByDcaPeriod::try_new(|name, _days| {
@@ -31,7 +31,7 @@ impl Vecs {
         })?;
 
         let period_lump_sum_stack = ByDcaPeriod::try_new(|name, _days| {
-            ValueFromHeight::forced_import(db, &format!("lump_sum_stack_{name}"), version, indexes)
+            AmountFromHeight::forced_import(db, &format!("lump_sum_stack_{name}"), version, indexes)
         })?;
 
         let period_lump_sum_return = ByDcaPeriod::try_new(|name, _days| {
@@ -44,7 +44,7 @@ impl Vecs {
         })?;
 
         let class_stack = ByDcaClass::try_new(|name, _year, _day1| {
-            ValueFromHeight::forced_import(db, &format!("dca_stack_{name}"), version, indexes)
+            AmountFromHeight::forced_import(db, &format!("dca_stack_{name}"), version, indexes)
         })?;
 
         let class_cost_basis = ByDcaClass::try_new(|name, _year, _day1| {

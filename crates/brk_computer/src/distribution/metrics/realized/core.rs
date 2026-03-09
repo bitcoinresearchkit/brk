@@ -155,27 +155,27 @@ impl RealizedCore {
 
         self.realized_cap_delta.compute(
             starting_indexes.height,
-            &blocks.count.height_1m_ago,
+            &blocks.lookback.height_1m_ago,
             &self.minimal.realized_cap_cents.height,
             exit,
         )?;
 
         self.net_realized_pnl_sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.count.height_24h_ago,
+            &blocks.lookback.height_24h_ago,
             &self.net_realized_pnl.height,
             exit,
         )?;
 
         self.value_created_sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.count.height_24h_ago,
+            &blocks.lookback.height_24h_ago,
             &self.value_created.height,
             exit,
         )?;
         self.value_destroyed_sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.count.height_24h_ago,
+            &blocks.lookback.height_24h_ago,
             &self.value_destroyed.height,
             exit,
         )?;

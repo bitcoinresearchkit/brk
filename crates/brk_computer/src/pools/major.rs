@@ -7,8 +7,8 @@ use vecdb::{BinaryTransform, Database, Exit, ReadableVec, Rw, StorageMode, Versi
 use crate::{
     blocks, indexes,
     internal::{
-        MaskSats, PercentRollingWindows, RatioU32Bp16, RollingWindows,
-        ValueFromHeightCumulativeSum,
+        AmountFromHeightCumulativeSum, MaskSats, PercentRollingWindows, RatioU32Bp16,
+        RollingWindows,
     },
     mining, prices,
 };
@@ -25,7 +25,7 @@ pub struct Vecs<M: StorageMode = Rw> {
 
     #[traversable(wrap = "blocks_mined", rename = "sum")]
     pub blocks_mined_sum: RollingWindows<StoredU32, M>,
-    pub rewards: ValueFromHeightCumulativeSum<M>,
+    pub rewards: AmountFromHeightCumulativeSum<M>,
     pub dominance_rolling: PercentRollingWindows<BasisPoints16, M>,
 }
 
@@ -44,7 +44,7 @@ impl Vecs {
             RollingWindows::forced_import(db, &suffix("blocks_mined"), version, indexes)?;
 
         let rewards =
-            ValueFromHeightCumulativeSum::forced_import(db, &suffix("rewards"), version, indexes)?;
+            AmountFromHeightCumulativeSum::forced_import(db, &suffix("rewards"), version, indexes)?;
 
         let dominance_rolling =
             PercentRollingWindows::forced_import(db, &suffix("dominance"), version, indexes)?;
@@ -70,7 +70,7 @@ impl Vecs {
         self.base
             .compute(starting_indexes, height_to_pool, blocks, exit)?;
 
-        let window_starts = blocks.count.window_starts();
+        let window_starts = blocks.lookback.window_starts();
 
         self.blocks_mined_sum.compute_rolling_sum(
             starting_indexes.height,
@@ -79,17 +79,12 @@ impl Vecs {
             exit,
         )?;
 
-        for (dom, (mined, total)) in self
-            .dominance_rolling
-            .as_mut_array()
-            .into_iter()
-            .zip(
-                self.blocks_mined_sum
-                    .as_array()
-                    .into_iter()
-                    .zip(blocks.count.block_count_sum.as_array()),
-            )
-        {
+        for (dom, (mined, total)) in self.dominance_rolling.as_mut_array().into_iter().zip(
+            self.blocks_mined_sum
+                .as_array()
+                .into_iter()
+                .zip(blocks.count.block_count.sum.as_array()),
+        ) {
             dom.compute_binary::<StoredU32, StoredU32, RatioU32Bp16>(
                 starting_indexes.height,
                 &mined.height,

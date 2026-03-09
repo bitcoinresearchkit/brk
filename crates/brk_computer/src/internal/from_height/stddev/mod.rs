@@ -65,7 +65,7 @@ impl ComputedFromHeightStdDev {
             return Ok(());
         }
 
-        let window_starts = blocks.count.start_vec(self.days);
+        let window_starts = blocks.lookback.start_vec(self.days);
 
         self.sma.height.compute_rolling_average(
             starting_indexes.height,

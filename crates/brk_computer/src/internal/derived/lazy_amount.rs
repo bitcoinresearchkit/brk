@@ -2,17 +2,17 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Sats, Version};
 use vecdb::UnaryTransform;
 
-use crate::internal::{LazyHeightDerived, ValueFromHeight};
+use crate::internal::{AmountFromHeight, LazyHeightDerived};
 
 #[derive(Clone, Traversable)]
-pub struct LazyValueHeightDerived {
+pub struct LazyAmountHeightDerived {
     pub sats: LazyHeightDerived<Sats, Sats>,
     pub btc: LazyHeightDerived<Bitcoin, Sats>,
     pub cents: LazyHeightDerived<Cents, Cents>,
     pub usd: LazyHeightDerived<Dollars, Dollars>,
 }
 
-impl LazyValueHeightDerived {
+impl LazyAmountHeightDerived {
     pub(crate) fn from_block_source<
         SatsTransform,
         BitcoinTransform,
@@ -20,7 +20,7 @@ impl LazyValueHeightDerived {
         DollarsTransform,
     >(
         name: &str,
-        source: &ValueFromHeight,
+        source: &AmountFromHeight,
         version: Version,
     ) -> Self
     where
@@ -30,13 +30,13 @@ impl LazyValueHeightDerived {
         DollarsTransform: UnaryTransform<Dollars, Dollars>,
     {
         let sats = LazyHeightDerived::from_derived_computed::<SatsTransform>(
-            name,
+            &format!("{name}_sats"),
             version,
             &source.sats.rest,
         );
 
         let btc = LazyHeightDerived::from_derived_computed::<BitcoinTransform>(
-            &format!("{name}_btc"),
+            name,
             version,
             &source.sats.rest,
         );

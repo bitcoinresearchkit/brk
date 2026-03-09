@@ -5,21 +5,21 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ByUnit, RollingFullByUnit, SatsToCents, WindowStarts},
+    internal::{AmountFromHeight, RollingFullAmountFromHeight, SatsToCents, WindowStarts},
     prices,
 };
 
 #[derive(Traversable)]
-pub struct ValueFromHeightFull<M: StorageMode = Rw> {
-    pub base: ByUnit<M>,
-    pub cumulative: ByUnit<M>,
+pub struct AmountFromHeightFull<M: StorageMode = Rw> {
+    pub base: AmountFromHeight<M>,
+    pub cumulative: AmountFromHeight<M>,
     #[traversable(flatten)]
-    pub rolling: RollingFullByUnit<M>,
+    pub rolling: RollingFullAmountFromHeight<M>,
 }
 
 const VERSION: Version = Version::TWO;
 
-impl ValueFromHeightFull {
+impl AmountFromHeightFull {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -29,9 +29,14 @@ impl ValueFromHeightFull {
         let v = version + VERSION;
 
         Ok(Self {
-            base: ByUnit::forced_import(db, name, v, indexes)?,
-            cumulative: ByUnit::forced_import(db, &format!("{name}_cumulative"), v, indexes)?,
-            rolling: RollingFullByUnit::forced_import(db, name, v, indexes)?,
+            base: AmountFromHeight::forced_import(db, name, v, indexes)?,
+            cumulative: AmountFromHeight::forced_import(
+                db,
+                &format!("{name}_cumulative"),
+                v,
+                indexes,
+            )?,
+            rolling: RollingFullAmountFromHeight::forced_import(db, name, v, indexes)?,
         })
     }
 

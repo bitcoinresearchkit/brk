@@ -22,7 +22,7 @@ impl Vecs {
         self.rewards.compute(
             indexer,
             indexes,
-            &blocks.count,
+            &blocks.lookback,
             &transactions.fees,
             prices,
             starting_indexes,
@@ -31,6 +31,7 @@ impl Vecs {
 
         self.hashrate.compute(
             &blocks.count,
+            &blocks.lookback,
             &blocks.difficulty,
             &self.rewards.coinbase.sum._24h.sats.height,
             &self.rewards.coinbase.sum._24h.usd.height,

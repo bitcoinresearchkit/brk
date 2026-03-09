@@ -5,20 +5,20 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ByUnit, RollingSumByUnit, SatsToCents, WindowStarts},
+    internal::{AmountFromHeight, RollingSumAmountFromHeight, SatsToCents, WindowStarts},
     prices,
 };
 
 #[derive(Traversable)]
-pub struct ValueFromHeightCumulativeSum<M: StorageMode = Rw> {
-    pub base: ByUnit<M>,
-    pub cumulative: ByUnit<M>,
-    pub sum: RollingSumByUnit<M>,
+pub struct AmountFromHeightCumulativeSum<M: StorageMode = Rw> {
+    pub base: AmountFromHeight<M>,
+    pub cumulative: AmountFromHeight<M>,
+    pub sum: RollingSumAmountFromHeight<M>,
 }
 
 const VERSION: Version = Version::TWO;
 
-impl ValueFromHeightCumulativeSum {
+impl AmountFromHeightCumulativeSum {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -28,9 +28,14 @@ impl ValueFromHeightCumulativeSum {
         let v = version + VERSION;
 
         Ok(Self {
-            base: ByUnit::forced_import(db, name, v, indexes)?,
-            cumulative: ByUnit::forced_import(db, &format!("{name}_cumulative"), v, indexes)?,
-            sum: RollingSumByUnit::forced_import(db, name, v, indexes)?,
+            base: AmountFromHeight::forced_import(db, name, v, indexes)?,
+            cumulative: AmountFromHeight::forced_import(
+                db,
+                &format!("{name}_cumulative"),
+                v,
+                indexes,
+            )?,
+            sum: RollingSumAmountFromHeight::forced_import(db, name, v, indexes)?,
         })
     }
 

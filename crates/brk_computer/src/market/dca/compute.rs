@@ -51,7 +51,7 @@ impl Vecs {
 
         // DCA by period - stack (rolling sum via _start vecs)
         for (stack, days) in self.period_stack.iter_mut_with_days() {
-            let window_starts = blocks.count.start_vec(days as usize);
+            let window_starts = blocks.lookback.start_vec(days as usize);
             stack.sats.height.compute_rolling_sum(
                 starting_indexes.height,
                 window_starts,

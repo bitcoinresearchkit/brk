@@ -16,7 +16,7 @@ impl Vecs {
         activity: &activity::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        let window_starts = blocks.count.window_starts();
+        let window_starts = blocks.lookback.window_starts();
 
         let all_metrics = &distribution.utxo_cohorts.all.metrics;
         let coinblocks_destroyed = &all_metrics.activity.coinblocks_destroyed;

@@ -5,15 +5,15 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::prices;
 
-use crate::internal::ValueFromHeight;
+use crate::internal::AmountFromHeight;
 
 use crate::distribution::{metrics::ImportConfig, state::UnrealizedState};
 
 /// Minimal unrealized metrics: supply in profit/loss only.
 #[derive(Traversable)]
 pub struct UnrealizedMinimal<M: StorageMode = Rw> {
-    pub supply_in_profit: ValueFromHeight<M>,
-    pub supply_in_loss: ValueFromHeight<M>,
+    pub supply_in_profit: AmountFromHeight<M>,
+    pub supply_in_loss: AmountFromHeight<M>,
 }
 
 impl UnrealizedMinimal {
@@ -46,10 +46,10 @@ impl UnrealizedMinimal {
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
-            &mut self.supply_in_profit.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_profit.base.cents.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_loss.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_loss.base.cents.height as &mut dyn AnyStoredVec,
+            &mut self.supply_in_profit.sats.height as &mut dyn AnyStoredVec,
+            &mut self.supply_in_profit.cents.height as &mut dyn AnyStoredVec,
+            &mut self.supply_in_loss.sats.height as &mut dyn AnyStoredVec,
+            &mut self.supply_in_loss.cents.height as &mut dyn AnyStoredVec,
         ]
     }
 
@@ -59,8 +59,8 @@ impl UnrealizedMinimal {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        sum_others!(self, starting_indexes, others, exit; supply_in_profit.base.sats.height);
-        sum_others!(self, starting_indexes, others, exit; supply_in_loss.base.sats.height);
+        sum_others!(self, starting_indexes, others, exit; supply_in_profit.sats.height);
+        sum_others!(self, starting_indexes, others, exit; supply_in_loss.sats.height);
         Ok(())
     }
 

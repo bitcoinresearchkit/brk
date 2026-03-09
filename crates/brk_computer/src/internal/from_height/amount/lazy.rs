@@ -1,25 +1,25 @@
-//! Lazy value wrapper for ValueFromHeight - all transforms are lazy.
+//! Lazy value wrapper for AmountFromHeight - all transforms are lazy.
 
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::UnaryTransform;
 
-use crate::internal::{LazyValue, LazyValueHeightDerived, ValueFromHeight};
+use crate::internal::{AmountFromHeight, LazyAmount, LazyAmountHeightDerived};
 
-/// Lazy value wrapper with height + all derived last transforms from ValueFromHeight.
+/// Lazy value wrapper with height + all derived last transforms from AmountFromHeight.
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct LazyValueFromHeight {
+pub struct LazyAmountFromHeight {
     #[traversable(flatten)]
-    pub height: LazyValue<Height>,
+    pub height: LazyAmount<Height>,
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub rest: Box<LazyValueHeightDerived>,
+    pub rest: Box<LazyAmountHeightDerived>,
 }
 
-impl LazyValueFromHeight {
+impl LazyAmountFromHeight {
     pub(crate) fn from_block_source<
         SatsTransform,
         BitcoinTransform,
@@ -27,7 +27,7 @@ impl LazyValueFromHeight {
         DollarsTransform,
     >(
         name: &str,
-        source: &ValueFromHeight,
+        source: &AmountFromHeight,
         version: Version,
     ) -> Self
     where
@@ -36,14 +36,14 @@ impl LazyValueFromHeight {
         CentsTransform: UnaryTransform<Cents, Cents>,
         DollarsTransform: UnaryTransform<Dollars, Dollars>,
     {
-        let height = LazyValue::from_block_source::<
+        let height = LazyAmount::from_block_source::<
             SatsTransform,
             BitcoinTransform,
             CentsTransform,
             DollarsTransform,
         >(name, source, version);
 
-        let rest = LazyValueHeightDerived::from_block_source::<
+        let rest = LazyAmountHeightDerived::from_block_source::<
             SatsTransform,
             BitcoinTransform,
             CentsTransform,

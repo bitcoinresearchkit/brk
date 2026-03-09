@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{Database, ImportableVec};
+use vecdb::Database;
 
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{BlockCountTarget, ComputedFromHeightCumulativeSum, ConstantVecs, RollingWindows},
+    internal::{BlockCountTarget, ComputedFromHeightCumulativeSum, ConstantVecs},
 };
 
 impl Vecs {
@@ -23,55 +23,6 @@ impl Vecs {
             block_count: ComputedFromHeightCumulativeSum::forced_import(
                 db,
                 "block_count",
-                version,
-                indexes,
-            )?,
-            height_1h_ago: ImportableVec::forced_import(db, "height_1h_ago", version)?,
-            height_24h_ago: ImportableVec::forced_import(db, "height_24h_ago", version)?,
-            height_3d_ago: ImportableVec::forced_import(db, "height_3d_ago", version)?,
-            height_1w_ago: ImportableVec::forced_import(db, "height_1w_ago", version)?,
-            height_8d_ago: ImportableVec::forced_import(db, "height_8d_ago", version)?,
-            height_9d_ago: ImportableVec::forced_import(db, "height_9d_ago", version)?,
-            height_12d_ago: ImportableVec::forced_import(db, "height_12d_ago", version)?,
-            height_13d_ago: ImportableVec::forced_import(db, "height_13d_ago", version)?,
-            height_2w_ago: ImportableVec::forced_import(db, "height_2w_ago", version)?,
-            height_21d_ago: ImportableVec::forced_import(db, "height_21d_ago", version)?,
-            height_26d_ago: ImportableVec::forced_import(db, "height_26d_ago", version)?,
-            height_1m_ago: ImportableVec::forced_import(db, "height_1m_ago", version)?,
-            height_34d_ago: ImportableVec::forced_import(db, "height_34d_ago", version)?,
-            height_55d_ago: ImportableVec::forced_import(db, "height_55d_ago", version)?,
-            height_2m_ago: ImportableVec::forced_import(db, "height_2m_ago", version)?,
-            height_9w_ago: ImportableVec::forced_import(db, "height_9w_ago", version)?,
-            height_12w_ago: ImportableVec::forced_import(db, "height_12w_ago", version)?,
-            height_89d_ago: ImportableVec::forced_import(db, "height_89d_ago", version)?,
-            height_3m_ago: ImportableVec::forced_import(db, "height_3m_ago", version)?,
-            height_14w_ago: ImportableVec::forced_import(db, "height_14w_ago", version)?,
-            height_111d_ago: ImportableVec::forced_import(db, "height_111d_ago", version)?,
-            height_144d_ago: ImportableVec::forced_import(db, "height_144d_ago", version)?,
-            height_6m_ago: ImportableVec::forced_import(db, "height_6m_ago", version)?,
-            height_26w_ago: ImportableVec::forced_import(db, "height_26w_ago", version)?,
-            height_200d_ago: ImportableVec::forced_import(db, "height_200d_ago", version)?,
-            height_9m_ago: ImportableVec::forced_import(db, "height_9m_ago", version)?,
-            height_350d_ago: ImportableVec::forced_import(db, "height_350d_ago", version)?,
-            height_12m_ago: ImportableVec::forced_import(db, "height_12m_ago", version)?,
-            height_1y_ago: ImportableVec::forced_import(db, "height_1y_ago", version)?,
-            height_14m_ago: ImportableVec::forced_import(db, "height_14m_ago", version)?,
-            height_2y_ago: ImportableVec::forced_import(db, "height_2y_ago", version)?,
-            height_26m_ago: ImportableVec::forced_import(db, "height_26m_ago", version)?,
-            height_3y_ago: ImportableVec::forced_import(db, "height_3y_ago", version)?,
-            height_200w_ago: ImportableVec::forced_import(db, "height_200w_ago", version)?,
-            height_4y_ago: ImportableVec::forced_import(db, "height_4y_ago", version)?,
-            height_5y_ago: ImportableVec::forced_import(db, "height_5y_ago", version)?,
-            height_6y_ago: ImportableVec::forced_import(db, "height_6y_ago", version)?,
-            height_8y_ago: ImportableVec::forced_import(db, "height_8y_ago", version)?,
-            height_9y_ago: ImportableVec::forced_import(db, "height_9y_ago", version)?,
-            height_10y_ago: ImportableVec::forced_import(db, "height_10y_ago", version)?,
-            height_12y_ago: ImportableVec::forced_import(db, "height_12y_ago", version)?,
-            height_14y_ago: ImportableVec::forced_import(db, "height_14y_ago", version)?,
-            height_26y_ago: ImportableVec::forced_import(db, "height_26y_ago", version)?,
-            block_count_sum: RollingWindows::forced_import(
-                db,
-                "block_count_sum",
                 version,
                 indexes,
             )?,

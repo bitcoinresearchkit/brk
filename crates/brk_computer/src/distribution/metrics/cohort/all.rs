@@ -35,7 +35,9 @@ pub struct AllCohortMetrics<M: StorageMode = Rw> {
     pub dormancy: ComputedFromHeight<StoredF32, M>,
     pub velocity: ComputedFromHeight<StoredF32, M>,
 
+    #[traversable(wrap = "supply", rename = "delta")]
     pub supply_delta_extended: RollingDeltaExcept1m<Sats, SatsSigned, M>,
+    #[traversable(wrap = "outputs", rename = "utxo_count_delta")]
     pub utxo_count_delta_extended: RollingDeltaExcept1m<StoredU64, StoredI64, M>,
 }
 
@@ -147,7 +149,7 @@ impl AllCohortMetrics {
             exit,
         )?;
 
-        let window_starts = blocks.count.window_starts();
+        let window_starts = blocks.lookback.window_starts();
         self.supply_delta_extended.compute(
             starting_indexes.height,
             &window_starts,

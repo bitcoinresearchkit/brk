@@ -5,19 +5,19 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ByUnit, SatsToCents},
+    internal::{AmountFromHeight, SatsToCents},
     prices,
 };
 
 #[derive(Traversable)]
-pub struct ValueFromHeightCumulative<M: StorageMode = Rw> {
-    pub base: ByUnit<M>,
-    pub cumulative: ByUnit<M>,
+pub struct AmountFromHeightCumulative<M: StorageMode = Rw> {
+    pub base: AmountFromHeight<M>,
+    pub cumulative: AmountFromHeight<M>,
 }
 
 const VERSION: Version = Version::ONE;
 
-impl ValueFromHeightCumulative {
+impl AmountFromHeightCumulative {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -27,8 +27,13 @@ impl ValueFromHeightCumulative {
         let v = version + VERSION;
 
         Ok(Self {
-            base: ByUnit::forced_import(db, name, v, indexes)?,
-            cumulative: ByUnit::forced_import(db, &format!("{name}_cumulative"), v, indexes)?,
+            base: AmountFromHeight::forced_import(db, name, v, indexes)?,
+            cumulative: AmountFromHeight::forced_import(
+                db,
+                &format!("{name}_cumulative"),
+                v,
+                indexes,
+            )?,
         })
     }
 

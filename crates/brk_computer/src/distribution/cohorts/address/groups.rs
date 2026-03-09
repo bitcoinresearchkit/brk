@@ -98,7 +98,7 @@ impl AddressCohorts {
         self.par_iter_mut().try_for_each(|v| {
             v.addr_count_delta.compute(
                 starting_indexes.height,
-                &blocks.count.height_1m_ago,
+                &blocks.lookback.height_1m_ago,
                 &v.addr_count.height,
                 exit,
             )

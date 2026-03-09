@@ -10,7 +10,8 @@ use crate::{
 };
 
 use super::{
-    CountVecs, DifficultyVecs, HalvingVecs, IntervalVecs, SizeVecs, TimeVecs, Vecs, WeightVecs,
+    CountVecs, DifficultyVecs, HalvingVecs, IntervalVecs, LookbackVecs, SizeVecs, TimeVecs, Vecs,
+    WeightVecs,
 };
 
 impl Vecs {
@@ -24,6 +25,7 @@ impl Vecs {
         let version = parent_version;
 
         let count = CountVecs::forced_import(&db, version, indexes)?;
+        let lookback = LookbackVecs::forced_import(&db, version)?;
         let interval = IntervalVecs::forced_import(&db, version, indexes)?;
         let size = SizeVecs::forced_import(&db, version, indexes)?;
         let weight = WeightVecs::forced_import(&db, version, indexes)?;
@@ -34,6 +36,7 @@ impl Vecs {
         let this = Self {
             db,
             count,
+            lookback,
             interval,
             size,
             weight,

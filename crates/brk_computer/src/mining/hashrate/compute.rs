@@ -9,9 +9,11 @@ use crate::{
 };
 
 impl Vecs {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
         count_vecs: &blocks::CountVecs,
+        lookback: &blocks::LookbackVecs,
         difficulty_vecs: &blocks::DifficultyVecs,
         coinbase_sats_24h_sum: &impl ReadableVec<Height, Sats>,
         coinbase_usd_24h_sum: &impl ReadableVec<Height, Dollars>,
@@ -20,7 +22,7 @@ impl Vecs {
     ) -> Result<()> {
         self.hash_rate.height.compute_transform2(
             starting_indexes.height,
-            &count_vecs.block_count_sum._24h.height,
+            &count_vecs.block_count.sum._24h.height,
             &difficulty_vecs.as_hash.height,
             |(i, block_count_sum, difficulty_as_hash, ..)| {
                 (
@@ -36,10 +38,10 @@ impl Vecs {
 
         let hash_rate = &self.hash_rate.height;
         for (sma, window) in [
-            (&mut self.hash_rate_sma_1w.height, &count_vecs.height_1w_ago),
-            (&mut self.hash_rate_sma_1m.height, &count_vecs.height_1m_ago),
-            (&mut self.hash_rate_sma_2m.height, &count_vecs.height_2m_ago),
-            (&mut self.hash_rate_sma_1y.height, &count_vecs.height_1y_ago),
+            (&mut self.hash_rate_sma_1w.height, &lookback.height_1w_ago),
+            (&mut self.hash_rate_sma_1m.height, &lookback.height_1m_ago),
+            (&mut self.hash_rate_sma_2m.height, &lookback.height_2m_ago),
+            (&mut self.hash_rate_sma_1y.height, &lookback.height_1y_ago),
         ] {
             sma.compute_rolling_average(starting_indexes.height, window, hash_rate, exit)?;
         }

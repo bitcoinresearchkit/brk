@@ -17,9 +17,9 @@ pub(super) fn compute(
     exit: &Exit,
 ) -> Result<()> {
     let close = &prices.price.usd.height;
-    let ws_fast = blocks.count.start_vec(fast_days);
-    let ws_slow = blocks.count.start_vec(slow_days);
-    let ws_signal = blocks.count.start_vec(signal_days);
+    let ws_fast = blocks.lookback.start_vec(fast_days);
+    let ws_slow = blocks.lookback.start_vec(slow_days);
+    let ws_signal = blocks.lookback.start_vec(signal_days);
 
     chain
         .ema_fast

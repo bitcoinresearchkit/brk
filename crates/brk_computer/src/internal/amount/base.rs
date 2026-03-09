@@ -1,4 +1,4 @@
-//! Value type with height-level data only (no period-derived views).
+//! Amount type with height-level data only (no period-derived views).
 //!
 //! Stores sats and cents per index, plus lazy btc and usd transforms.
 //! Use when period views are unnecessary (e.g., rolling windows provide windowed data).
@@ -16,26 +16,23 @@ use crate::{
     prices,
 };
 
-const VERSION: Version = Version::TWO; // Match ValueFromHeight versioning
+const VERSION: Version = Version::TWO; // Match AmountFromHeight versioning
 
 #[derive(Traversable)]
-pub struct Value<I: VecIndex, M: StorageMode = Rw> {
+pub struct Amount<I: VecIndex, M: StorageMode = Rw> {
     pub sats: M::Stored<EagerVec<PcoVec<I, Sats>>>,
     pub btc: LazyVecFrom1<I, Bitcoin, I, Sats>,
     pub cents: M::Stored<EagerVec<PcoVec<I, Cents>>>,
     pub usd: LazyVecFrom1<I, Dollars, I, Cents>,
 }
 
-impl Value<Height> {
+impl Amount<Height> {
     pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         let v = version + VERSION;
 
-        let sats: EagerVec<PcoVec<Height, Sats>> = EagerVec::forced_import(db, name, v)?;
-        let btc = LazyVecFrom1::transformed::<SatsToBitcoin>(
-            &format!("{name}_btc"),
-            v,
-            sats.read_only_boxed_clone(),
-        );
+        let sats: EagerVec<PcoVec<Height, Sats>> =
+            EagerVec::forced_import(db, &format!("{name}_sats"), v)?;
+        let btc = LazyVecFrom1::transformed::<SatsToBitcoin>(name, v, sats.read_only_boxed_clone());
         let cents: EagerVec<PcoVec<Height, Cents>> =
             EagerVec::forced_import(db, &format!("{name}_cents"), v)?;
         let usd = LazyVecFrom1::transformed::<CentsUnsignedToDollars>(

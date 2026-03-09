@@ -1,7 +1,7 @@
 //! Value type for Height + Rolling pattern.
 //!
 //! Combines Value (sats/btc/usd per height, no period views) with
-//! ValueFromHeightWindows (rolling sums across 4 windows).
+//! AmountFromHeightWindows (rolling sums across 4 windows).
 
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -11,21 +11,21 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{Value, ValueFromHeightWindows, WindowStarts},
+    internal::{Amount, AmountFromHeightWindows, WindowStarts},
     prices,
 };
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct ValueFromHeightRolling<M: StorageMode = Rw> {
+pub struct AmountFromHeightRolling<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub value: Value<Height, M>,
+    pub amount: Amount<Height, M>,
     #[traversable(flatten)]
-    pub rolling: ValueFromHeightWindows<M>,
+    pub rolling: AmountFromHeightWindows<M>,
 }
 
-impl ValueFromHeightRolling {
+impl AmountFromHeightRolling {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -33,8 +33,8 @@ impl ValueFromHeightRolling {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            value: Value::forced_import(db, name, version)?,
-            rolling: ValueFromHeightWindows::forced_import(db, name, version, indexes)?,
+            amount: Amount::forced_import(db, name, version)?,
+            rolling: AmountFromHeightWindows::forced_import(db, name, version, indexes)?,
         })
     }
 
@@ -47,13 +47,13 @@ impl ValueFromHeightRolling {
         exit: &Exit,
         compute_sats: impl FnOnce(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
     ) -> Result<()> {
-        compute_sats(&mut self.value.sats)?;
-        self.value.compute_cents(prices, max_from, exit)?;
+        compute_sats(&mut self.amount.sats)?;
+        self.amount.compute_cents(prices, max_from, exit)?;
         self.rolling.compute_rolling_sum(
             max_from,
             windows,
-            &self.value.sats,
-            &self.value.cents,
+            &self.amount.sats,
+            &self.amount.cents,
             exit,
         )?;
         Ok(())

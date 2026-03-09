@@ -22,11 +22,11 @@ impl Vecs {
     ) -> Result<()> {
         // Count computes first
         self.count
-            .compute(indexer, &blocks.count, starting_indexes, exit)?;
+            .compute(indexer, &blocks.lookback, starting_indexes, exit)?;
 
         // Versions depends on count
         self.versions
-            .compute(indexer, &blocks.count, starting_indexes, exit)?;
+            .compute(indexer, &blocks.lookback, starting_indexes, exit)?;
 
         // Size computes next (uses 6-block rolling window)
         self.size
