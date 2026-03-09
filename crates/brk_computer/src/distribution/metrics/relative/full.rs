@@ -1,13 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{
-    BasisPoints16, BasisPointsSigned32, Dollars, Height, Sats, StoredF32, Version,
-};
+use brk_types::{BasisPoints16, BasisPointsSigned32, Dollars, Height, Sats, StoredF32, Version};
 use vecdb::{Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{
-    Bps32ToFloat, LazyPerBlock, PercentPerBlock, RatioDollarsBp16, RatioDollarsBps32,
-    RatioSatsBp16,
+    Bps32ToFloat, LazyPerBlock, PercentPerBlock, RatioDollarsBp16, RatioDollarsBps32, RatioSatsBp16,
 };
 
 use crate::distribution::metrics::{ImportConfig, UnrealizedCore};
@@ -46,8 +43,7 @@ impl RelativeFull {
         Ok(Self {
             supply_in_profit_rel_to_own_supply: cfg
                 .import("supply_in_profit_rel_to_own_supply", v1)?,
-            supply_in_loss_rel_to_own_supply: cfg
-                .import("supply_in_loss_rel_to_own_supply", v1)?,
+            supply_in_loss_rel_to_own_supply: cfg.import("supply_in_loss_rel_to_own_supply", v1)?,
             unrealized_profit_rel_to_market_cap: cfg
                 .import("unrealized_profit_rel_to_market_cap", v2)?,
             unrealized_loss_rel_to_market_cap: cfg
@@ -83,21 +79,21 @@ impl RelativeFull {
         self.unrealized_profit_rel_to_market_cap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
-                &unrealized.unrealized_profit.usd.height,
+                &unrealized.profit.usd.height,
                 market_cap,
                 exit,
             )?;
         self.unrealized_loss_rel_to_market_cap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
-                &unrealized.unrealized_loss.usd.height,
+                &unrealized.loss.usd.height,
                 market_cap,
                 exit,
             )?;
         self.net_unrealized_pnl_rel_to_market_cap
             .compute_binary::<Dollars, Dollars, RatioDollarsBps32>(
                 max_from,
-                &unrealized.net_unrealized_pnl.usd.height,
+                &unrealized.net_pnl.usd.height,
                 market_cap,
                 exit,
             )?;

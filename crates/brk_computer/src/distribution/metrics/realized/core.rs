@@ -27,11 +27,11 @@ pub struct RealizedCore<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub minimal: RealizedMinimal<M>,
 
-    pub realized_cap_delta: FiatRollingDelta1m<Cents, CentsSigned, M>,
+    pub cap_delta: FiatRollingDelta1m<Cents, CentsSigned, M>,
 
-    pub neg_realized_loss: LazyPerBlock<Dollars, Cents>,
-    pub net_realized_pnl: ComputedPerBlock<CentsSigned, M>,
-    pub net_realized_pnl_sum: RollingWindow24h<CentsSigned, M>,
+    pub neg_loss: LazyPerBlock<Dollars, Cents>,
+    pub net_pnl: ComputedPerBlock<CentsSigned, M>,
+    pub net_pnl_sum: RollingWindow24h<CentsSigned, M>,
 
     pub value_created: ComputedPerBlock<Cents, M>,
     pub value_destroyed: ComputedPerBlock<Cents, M>,
@@ -50,7 +50,7 @@ impl RealizedCore {
         let neg_realized_loss = LazyPerBlock::from_height_source::<NegCentsUnsignedToDollars>(
             &cfg.name("neg_realized_loss"),
             cfg.version + Version::ONE,
-            minimal.realized_loss.height.read_only_boxed_clone(),
+            minimal.loss.height.read_only_boxed_clone(),
             cfg.indexes,
         );
 
@@ -65,10 +65,10 @@ impl RealizedCore {
 
         Ok(Self {
             minimal,
-            realized_cap_delta: cfg.import("realized_cap_delta", v1)?,
-            neg_realized_loss,
-            net_realized_pnl,
-            net_realized_pnl_sum,
+            cap_delta: cfg.import("realized_cap_delta", v1)?,
+            neg_loss: neg_realized_loss,
+            net_pnl: net_realized_pnl,
+            net_pnl_sum: net_realized_pnl_sum,
             value_created,
             value_destroyed,
             value_created_sum,
@@ -124,12 +124,13 @@ impl RealizedCore {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.minimal.compute_rest_part1(blocks, starting_indexes, exit)?;
+        self.minimal
+            .compute_rest_part1(blocks, starting_indexes, exit)?;
 
-        self.net_realized_pnl.height.compute_transform2(
+        self.net_pnl.height.compute_transform2(
             starting_indexes.height,
-            &self.minimal.realized_profit.height,
-            &self.minimal.realized_loss.height,
+            &self.minimal.profit.height,
+            &self.minimal.loss.height,
             |(i, profit, loss, ..)| {
                 (
                     i,
@@ -153,17 +154,17 @@ impl RealizedCore {
         self.minimal
             .compute_rest_part2(prices, starting_indexes, height_to_supply, exit)?;
 
-        self.realized_cap_delta.compute(
+        self.cap_delta.compute(
             starting_indexes.height,
             &blocks.lookback.height_1m_ago,
-            &self.minimal.realized_cap_cents.height,
+            &self.minimal.cap_cents.height,
             exit,
         )?;
 
-        self.net_realized_pnl_sum.compute_rolling_sum(
+        self.net_pnl_sum.compute_rolling_sum(
             starting_indexes.height,
             &blocks.lookback.height_24h_ago,
-            &self.net_realized_pnl.height,
+            &self.net_pnl.height,
             exit,
         )?;
 
@@ -180,12 +181,14 @@ impl RealizedCore {
             exit,
         )?;
 
-        self.sopr._24h.compute_binary::<Cents, Cents, RatioCents64>(
-            starting_indexes.height,
-            &self.value_created_sum._24h.height,
-            &self.value_destroyed_sum._24h.height,
-            exit,
-        )?;
+        self.sopr
+            ._24h
+            .compute_binary::<Cents, Cents, RatioCents64>(
+                starting_indexes.height,
+                &self.value_created_sum._24h.height,
+                &self.value_destroyed_sum._24h.height,
+                exit,
+            )?;
 
         Ok(())
     }

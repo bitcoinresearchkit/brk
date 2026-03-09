@@ -88,24 +88,30 @@ impl UnrealizedFull {
 
         self.gross_pnl.cents.height.compute_add(
             starting_indexes.height,
-            &self.inner.core.unrealized_profit.cents.height,
-            &self.inner.core.unrealized_loss.cents.height,
+            &self.inner.core.profit.cents.height,
+            &self.inner.core.loss.cents.height,
             exit,
         )?;
 
-        self.invested_capital_in_profit.cents.height.compute_transform(
-            starting_indexes.height,
-            &self.inner.invested_capital_in_profit_raw,
-            |(h, raw, ..)| (h, CentsSats::to_cents(raw)),
-            exit,
-        )?;
+        self.invested_capital_in_profit
+            .cents
+            .height
+            .compute_transform(
+                starting_indexes.height,
+                &self.inner.invested_capital_in_profit_raw,
+                |(h, raw, ..)| (h, CentsSats::to_cents(raw)),
+                exit,
+            )?;
 
-        self.invested_capital_in_loss.cents.height.compute_transform(
-            starting_indexes.height,
-            &self.inner.invested_capital_in_loss_raw,
-            |(h, raw, ..)| (h, CentsSats::to_cents(raw)),
-            exit,
-        )?;
+        self.invested_capital_in_loss
+            .cents
+            .height
+            .compute_transform(
+                starting_indexes.height,
+                &self.inner.invested_capital_in_loss_raw,
+                |(h, raw, ..)| (h, CentsSats::to_cents(raw)),
+                exit,
+            )?;
 
         self.compute_rest_extended(prices, starting_indexes, exit)?;
         Ok(())

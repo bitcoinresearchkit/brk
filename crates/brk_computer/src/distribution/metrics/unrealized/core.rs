@@ -9,9 +9,7 @@ use crate::{
         metrics::{ImportConfig, unrealized::UnrealizedMinimal},
         state::UnrealizedState,
     },
-    internal::{
-        CentsSubtractToCentsSigned, FiatPerBlock, LazyPerBlock, NegCentsUnsignedToDollars,
-    },
+    internal::{CentsSubtractToCentsSigned, FiatPerBlock, LazyPerBlock, NegCentsUnsignedToDollars},
     prices,
 };
 
@@ -24,12 +22,10 @@ pub struct UnrealizedCore<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub minimal: UnrealizedMinimal<M>,
 
-    pub unrealized_profit: FiatPerBlock<Cents, M>,
-    pub unrealized_loss: FiatPerBlock<Cents, M>,
-
-    pub neg_unrealized_loss: LazyPerBlock<Dollars, Cents>,
-
-    pub net_unrealized_pnl: FiatPerBlock<CentsSigned, M>,
+    pub profit: FiatPerBlock<Cents, M>,
+    pub loss: FiatPerBlock<Cents, M>,
+    pub neg_loss: LazyPerBlock<Dollars, Cents>,
+    pub net_pnl: FiatPerBlock<CentsSigned, M>,
 }
 
 impl UnrealizedCore {
@@ -52,18 +48,18 @@ impl UnrealizedCore {
 
         Ok(Self {
             minimal,
-            unrealized_profit,
-            unrealized_loss,
-            neg_unrealized_loss,
-            net_unrealized_pnl,
+            profit: unrealized_profit,
+            loss: unrealized_loss,
+            neg_loss: neg_unrealized_loss,
+            net_pnl: net_unrealized_pnl,
         })
     }
 
     pub(crate) fn min_stateful_height_len(&self) -> usize {
         self.minimal
             .min_stateful_height_len()
-            .min(self.unrealized_profit.cents.height.len())
-            .min(self.unrealized_loss.cents.height.len())
+            .min(self.profit.cents.height.len())
+            .min(self.loss.cents.height.len())
     }
 
     pub(crate) fn truncate_push(
@@ -72,11 +68,11 @@ impl UnrealizedCore {
         height_state: &UnrealizedState,
     ) -> Result<()> {
         self.minimal.truncate_push(height, height_state)?;
-        self.unrealized_profit
+        self.profit
             .cents
             .height
             .truncate_push(height, height_state.unrealized_profit)?;
-        self.unrealized_loss
+        self.loss
             .cents
             .height
             .truncate_push(height, height_state.unrealized_loss)?;
@@ -86,8 +82,8 @@ impl UnrealizedCore {
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.minimal.collect_vecs_mut();
-        vecs.push(&mut self.unrealized_profit.cents.height);
-        vecs.push(&mut self.unrealized_loss.cents.height);
+        vecs.push(&mut self.profit.cents.height);
+        vecs.push(&mut self.loss.cents.height);
         vecs
     }
 
@@ -101,8 +97,8 @@ impl UnrealizedCore {
         self.minimal
             .compute_from_sources(starting_indexes, &minimal_refs, exit)?;
 
-        sum_others!(self, starting_indexes, others, exit; unrealized_profit.cents.height);
-        sum_others!(self, starting_indexes, others, exit; unrealized_loss.cents.height);
+        sum_others!(self, starting_indexes, others, exit; profit.cents.height);
+        sum_others!(self, starting_indexes, others, exit; loss.cents.height);
 
         Ok(())
     }
@@ -117,13 +113,13 @@ impl UnrealizedCore {
         self.minimal
             .compute_rest(prices, starting_indexes.height, exit)?;
 
-        self.net_unrealized_pnl
+        self.net_pnl
             .cents
             .height
             .compute_binary::<Cents, Cents, CentsSubtractToCentsSigned>(
                 starting_indexes.height,
-                &self.unrealized_profit.cents.height,
-                &self.unrealized_loss.cents.height,
+                &self.profit.cents.height,
+                &self.loss.cents.height,
                 exit,
             )?;
 

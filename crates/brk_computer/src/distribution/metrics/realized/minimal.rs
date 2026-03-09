@@ -3,14 +3,16 @@ use brk_traversable::Traversable;
 use brk_types::{
     BasisPoints32, Bitcoin, Cents, Dollars, Height, Indexes, Sats, StoredF32, Version,
 };
-use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec};
+use vecdb::{
+    AnyStoredVec, AnyVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec,
+};
 
 use crate::{
     blocks,
     distribution::state::RealizedOps,
     internal::{
-        CentsUnsignedToDollars, ComputedPerBlock, ComputedPerBlockCumulative,
-        RatioPerBlock, Identity, LazyPerBlock, Price, RollingWindow24h,
+        CentsUnsignedToDollars, ComputedPerBlock, ComputedPerBlockCumulative, Identity,
+        LazyPerBlock, Price, RatioPerBlock, RollingWindow24h,
     },
     prices,
 };
@@ -19,16 +21,16 @@ use crate::distribution::metrics::ImportConfig;
 
 #[derive(Traversable)]
 pub struct RealizedMinimal<M: StorageMode = Rw> {
-    pub realized_cap_cents: ComputedPerBlock<Cents, M>,
-    pub realized_profit: ComputedPerBlockCumulative<Cents, M>,
-    pub realized_loss: ComputedPerBlockCumulative<Cents, M>,
-    pub realized_cap: LazyPerBlock<Dollars, Cents>,
-    pub realized_price: Price<ComputedPerBlock<Cents, M>>,
-    pub realized_price_ratio: RatioPerBlock<M>,
+    pub cap_cents: ComputedPerBlock<Cents, M>,
+    pub profit: ComputedPerBlockCumulative<Cents, M>,
+    pub loss: ComputedPerBlockCumulative<Cents, M>,
+    pub cap: LazyPerBlock<Dollars, Cents>,
+    pub price: Price<ComputedPerBlock<Cents, M>>,
+    pub price_ratio: RatioPerBlock<M>,
     pub mvrv: LazyPerBlock<StoredF32>,
 
-    pub realized_profit_sum: RollingWindow24h<Cents, M>,
-    pub realized_loss_sum: RollingWindow24h<Cents, M>,
+    pub profit_sum: RollingWindow24h<Cents, M>,
+    pub loss_sum: RollingWindow24h<Cents, M>,
 }
 
 impl RealizedMinimal {
@@ -46,8 +48,7 @@ impl RealizedMinimal {
         let realized_loss = cfg.import("realized_loss", Version::ZERO)?;
 
         let realized_price = cfg.import("realized_price", Version::ONE)?;
-        let realized_price_ratio: RatioPerBlock =
-            cfg.import("realized_price", Version::ONE)?;
+        let realized_price_ratio: RatioPerBlock = cfg.import("realized_price", Version::ONE)?;
         let mvrv = LazyPerBlock::from_lazy::<Identity<StoredF32>, BasisPoints32>(
             &cfg.name("mvrv"),
             cfg.version,
@@ -58,48 +59,38 @@ impl RealizedMinimal {
         let realized_loss_sum = cfg.import("realized_loss", Version::ONE)?;
 
         Ok(Self {
-            realized_cap_cents,
-            realized_profit,
-            realized_loss,
-            realized_cap,
-            realized_price,
-            realized_price_ratio,
+            cap_cents: realized_cap_cents,
+            profit: realized_profit,
+            loss: realized_loss,
+            cap: realized_cap,
+            price: realized_price,
+            price_ratio: realized_price_ratio,
             mvrv,
-            realized_profit_sum,
-            realized_loss_sum,
+            profit_sum: realized_profit_sum,
+            loss_sum: realized_loss_sum,
         })
     }
 
     pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.realized_cap_cents
+        self.cap_cents
             .height
             .len()
-            .min(self.realized_profit.height.len())
-            .min(self.realized_loss.height.len())
+            .min(self.profit.height.len())
+            .min(self.loss.height.len())
     }
 
-    pub(crate) fn truncate_push(
-        &mut self,
-        height: Height,
-        state: &impl RealizedOps,
-    ) -> Result<()> {
-        self.realized_cap_cents
-            .height
-            .truncate_push(height, state.cap())?;
-        self.realized_profit
-            .height
-            .truncate_push(height, state.profit())?;
-        self.realized_loss
-            .height
-            .truncate_push(height, state.loss())?;
+    pub(crate) fn truncate_push(&mut self, height: Height, state: &impl RealizedOps) -> Result<()> {
+        self.cap_cents.height.truncate_push(height, state.cap())?;
+        self.profit.height.truncate_push(height, state.profit())?;
+        self.loss.height.truncate_push(height, state.loss())?;
         Ok(())
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
-            &mut self.realized_cap_cents.height as &mut dyn AnyStoredVec,
-            &mut self.realized_profit.height,
-            &mut self.realized_loss.height,
+            &mut self.cap_cents.height as &mut dyn AnyStoredVec,
+            &mut self.profit.height,
+            &mut self.loss.height,
         ]
     }
 
@@ -109,9 +100,9 @@ impl RealizedMinimal {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        sum_others!(self, starting_indexes, others, exit; realized_cap_cents.height);
-        sum_others!(self, starting_indexes, others, exit; realized_profit.height);
-        sum_others!(self, starting_indexes, others, exit; realized_loss.height);
+        sum_others!(self, starting_indexes, others, exit; cap_cents.height);
+        sum_others!(self, starting_indexes, others, exit; profit.height);
+        sum_others!(self, starting_indexes, others, exit; loss.height);
         Ok(())
     }
 
@@ -121,20 +112,18 @@ impl RealizedMinimal {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.realized_profit
-            .compute_rest(starting_indexes.height, exit)?;
-        self.realized_loss
-            .compute_rest(starting_indexes.height, exit)?;
-        self.realized_profit_sum.compute_rolling_sum(
+        self.profit.compute_rest(starting_indexes.height, exit)?;
+        self.loss.compute_rest(starting_indexes.height, exit)?;
+        self.profit_sum.compute_rolling_sum(
             starting_indexes.height,
             &blocks.lookback.height_24h_ago,
-            &self.realized_profit.height,
+            &self.profit.height,
             exit,
         )?;
-        self.realized_loss_sum.compute_rolling_sum(
+        self.loss_sum.compute_rolling_sum(
             starting_indexes.height,
             &blocks.lookback.height_24h_ago,
-            &self.realized_loss.height,
+            &self.loss.height,
             exit,
         )?;
         Ok(())
@@ -147,9 +136,9 @@ impl RealizedMinimal {
         height_to_supply: &impl ReadableVec<Height, Bitcoin>,
         exit: &Exit,
     ) -> Result<()> {
-        self.realized_price.cents.height.compute_transform2(
+        self.price.cents.height.compute_transform2(
             starting_indexes.height,
-            &self.realized_cap_cents.height,
+            &self.cap_cents.height,
             height_to_supply,
             |(i, cap_cents, supply, ..)| {
                 let cap = cap_cents.as_u128();
@@ -163,10 +152,10 @@ impl RealizedMinimal {
             exit,
         )?;
 
-        self.realized_price_ratio.compute_ratio(
+        self.price_ratio.compute_ratio(
             starting_indexes,
             &prices.price.cents.height,
-            &self.realized_price.cents.height,
+            &self.price.cents.height,
             exit,
         )?;
 

@@ -61,10 +61,10 @@ impl Vecs {
 
         // 24h, 1w, 1y from extended; 1m from core delta
         let rcr_rates = [
-            &all_realized.realized_cap_delta_extended.rate_24h.bps.height,
-            &all_realized.realized_cap_delta_extended.rate_1w.bps.height,
-            &all_realized.realized_cap_delta.rate_1m.bps.height,
-            &all_realized.realized_cap_delta_extended.rate_1y.bps.height,
+            &all_realized.cap_delta_extended.rate_24h.bps.height,
+            &all_realized.cap_delta_extended.rate_1w.bps.height,
+            &all_realized.cap_delta.rate_1m.bps.height,
+            &all_realized.cap_delta_extended.rate_1y.bps.height,
         ];
 
         for i in 0..4 {

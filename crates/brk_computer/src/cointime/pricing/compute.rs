@@ -21,7 +21,7 @@ impl Vecs {
     ) -> Result<()> {
         let all_metrics = &distribution.utxo_cohorts.all.metrics;
         let circulating_supply = &all_metrics.supply.total.btc.height;
-        let realized_price = &all_metrics.realized.realized_price.cents.height;
+        let realized_price = &all_metrics.realized.price.cents.height;
 
         self.vaulted_price.cents.height.compute_transform2(
             starting_indexes.height,

@@ -39,21 +39,21 @@ impl RelativeExtendedOwnPnl {
         self.unrealized_profit_rel_to_own_gross_pnl
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
-                &unrealized.unrealized_profit.usd.height,
+                &unrealized.profit.usd.height,
                 gross_pnl_usd,
                 exit,
             )?;
         self.unrealized_loss_rel_to_own_gross_pnl
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
-                &unrealized.unrealized_loss.usd.height,
+                &unrealized.loss.usd.height,
                 gross_pnl_usd,
                 exit,
             )?;
         self.net_unrealized_pnl_rel_to_own_gross_pnl
             .compute_binary::<Dollars, Dollars, RatioDollarsBps32>(
                 max_from,
-                &unrealized.net_unrealized_pnl.usd.height,
+                &unrealized.net_pnl.usd.height,
                 gross_pnl_usd,
                 exit,
             )?;
