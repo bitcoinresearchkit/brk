@@ -2,10 +2,7 @@ use brk_traversable::Traversable;
 use brk_types::{Dollars, Version};
 use vecdb::ReadableCloneableVec;
 
-use super::{ComputedFromHeight, LazyFromHeight};
-use crate::internal::{Identity, NumericValue};
-
-use super::fiat::CentsType;
+use crate::internal::{CentsType, ComputedFromHeight, Identity, LazyFromHeight, NumericValue};
 
 /// Lazy fiat: both cents and usd are lazy views of a stored source.
 /// Zero extra stored vecs.

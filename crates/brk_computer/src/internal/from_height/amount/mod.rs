@@ -2,9 +2,11 @@ mod cumulative;
 mod cumulative_sum;
 mod full;
 mod lazy;
+mod lazy_derived;
 mod rolling;
 mod rolling_full;
 mod rolling_sum;
+mod windows;
 
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -27,6 +29,8 @@ pub use lazy::*;
 pub use rolling::*;
 pub use rolling_full::*;
 pub use rolling_sum::*;
+pub use lazy_derived::*;
+pub use windows::*;
 
 #[derive(Traversable)]
 pub struct AmountFromHeight<M: StorageMode = Rw> {

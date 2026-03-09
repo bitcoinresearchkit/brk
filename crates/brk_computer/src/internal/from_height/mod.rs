@@ -1,25 +1,21 @@
-mod base;
 mod amount;
 mod computed;
-mod constant;
 mod fiat;
 mod lazy;
-mod lazy_fiat;
 mod percent;
 mod percentiles;
 mod price;
 mod ratio;
+mod rolling;
 mod stddev;
 
-pub use base::*;
 pub use amount::*;
 pub use computed::*;
-pub use constant::*;
 pub use fiat::*;
 pub use lazy::*;
-pub use lazy_fiat::*;
 pub use percent::*;
 pub use percentiles::*;
 pub use price::*;
 pub use ratio::*;
+pub use rolling::*;
 pub use stddev::*;

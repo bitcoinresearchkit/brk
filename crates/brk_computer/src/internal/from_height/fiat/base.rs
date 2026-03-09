@@ -4,10 +4,12 @@ use brk_types::{Cents, CentsSigned, Dollars, Version};
 use schemars::JsonSchema;
 use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode, UnaryTransform};
 
-use super::{ComputedFromHeight, LazyFromHeight};
 use crate::{
     indexes,
-    internal::{CentsSignedToDollars, CentsUnsignedToDollars, NumericValue},
+    internal::{
+        CentsSignedToDollars, CentsUnsignedToDollars, ComputedFromHeight, LazyFromHeight,
+        NumericValue,
+    },
 };
 
 /// Trait that associates a cents type with its transform to Dollars.
