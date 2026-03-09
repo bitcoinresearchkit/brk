@@ -24,7 +24,7 @@ use crate::{
         state::UTXOCohortState,
     },
     indexes,
-    internal::AmountFromHeight,
+    internal::AmountPerBlock,
     prices,
 };
 
@@ -49,7 +49,7 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     #[traversable(rename = "type")]
     pub type_: BySpendableType<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
     pub profitability: ProfitabilityMetrics<M>,
-    pub matured: ByAgeRange<AmountFromHeight<M>>,
+    pub matured: ByAgeRange<AmountPerBlock<M>>,
     #[traversable(skip)]
     pub(super) fenwick: CostBasisFenwick,
     /// Cached partition_point positions for tick_tock boundary searches.
@@ -230,8 +230,8 @@ impl UTXOCohorts<Rw> {
 
         let matured = ByAgeRange::try_new(&|_f: Filter,
                                             name: &'static str|
-         -> Result<AmountFromHeight> {
-            AmountFromHeight::forced_import(db, &format!("utxo_{name}_matured"), v, indexes)
+         -> Result<AmountPerBlock> {
+            AmountPerBlock::forced_import(db, &format!("utxo_{name}_matured"), v, indexes)
         })?;
 
         Ok(Self {

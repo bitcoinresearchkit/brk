@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeight, PercentFromHeight},
+    internal::{ComputedPerBlock, PercentPerBlock},
 };
 
 impl Vecs {
@@ -18,98 +18,98 @@ impl Vecs {
         let v5 = Version::new(5);
 
         Ok(Self {
-            hash_rate: ComputedFromHeight::forced_import(db, "hash_rate", version + v5, indexes)?,
-            hash_rate_sma_1w: ComputedFromHeight::forced_import(
+            hash_rate: ComputedPerBlock::forced_import(db, "hash_rate", version + v5, indexes)?,
+            hash_rate_sma_1w: ComputedPerBlock::forced_import(
                 db,
                 "hash_rate_sma_1w",
                 version,
                 indexes,
             )?,
-            hash_rate_sma_1m: ComputedFromHeight::forced_import(
+            hash_rate_sma_1m: ComputedPerBlock::forced_import(
                 db,
                 "hash_rate_sma_1m",
                 version,
                 indexes,
             )?,
-            hash_rate_sma_2m: ComputedFromHeight::forced_import(
+            hash_rate_sma_2m: ComputedPerBlock::forced_import(
                 db,
                 "hash_rate_sma_2m",
                 version,
                 indexes,
             )?,
-            hash_rate_sma_1y: ComputedFromHeight::forced_import(
+            hash_rate_sma_1y: ComputedPerBlock::forced_import(
                 db,
                 "hash_rate_sma_1y",
                 version,
                 indexes,
             )?,
-            hash_rate_ath: ComputedFromHeight::forced_import(
+            hash_rate_ath: ComputedPerBlock::forced_import(
                 db,
                 "hash_rate_ath",
                 version,
                 indexes,
             )?,
-            hash_rate_drawdown: PercentFromHeight::forced_import(
+            hash_rate_drawdown: PercentPerBlock::forced_import(
                 db,
                 "hash_rate_drawdown",
                 version,
                 indexes,
             )?,
-            hash_price_ths: ComputedFromHeight::forced_import(
+            hash_price_ths: ComputedPerBlock::forced_import(
                 db,
                 "hash_price_ths",
                 version + v4,
                 indexes,
             )?,
-            hash_price_ths_min: ComputedFromHeight::forced_import(
+            hash_price_ths_min: ComputedPerBlock::forced_import(
                 db,
                 "hash_price_ths_min",
                 version + v4,
                 indexes,
             )?,
-            hash_price_phs: ComputedFromHeight::forced_import(
+            hash_price_phs: ComputedPerBlock::forced_import(
                 db,
                 "hash_price_phs",
                 version + v4,
                 indexes,
             )?,
-            hash_price_phs_min: ComputedFromHeight::forced_import(
+            hash_price_phs_min: ComputedPerBlock::forced_import(
                 db,
                 "hash_price_phs_min",
                 version + v4,
                 indexes,
             )?,
-            hash_price_rebound: PercentFromHeight::forced_import(
+            hash_price_rebound: PercentPerBlock::forced_import(
                 db,
                 "hash_price_rebound",
                 version + v4,
                 indexes,
             )?,
-            hash_value_ths: ComputedFromHeight::forced_import(
+            hash_value_ths: ComputedPerBlock::forced_import(
                 db,
                 "hash_value_ths",
                 version + v4,
                 indexes,
             )?,
-            hash_value_ths_min: ComputedFromHeight::forced_import(
+            hash_value_ths_min: ComputedPerBlock::forced_import(
                 db,
                 "hash_value_ths_min",
                 version + v4,
                 indexes,
             )?,
-            hash_value_phs: ComputedFromHeight::forced_import(
+            hash_value_phs: ComputedPerBlock::forced_import(
                 db,
                 "hash_value_phs",
                 version + v4,
                 indexes,
             )?,
-            hash_value_phs_min: ComputedFromHeight::forced_import(
+            hash_value_phs_min: ComputedPerBlock::forced_import(
                 db,
                 "hash_value_phs_min",
                 version + v4,
                 indexes,
             )?,
-            hash_value_rebound: PercentFromHeight::forced_import(
+            hash_value_rebound: PercentPerBlock::forced_import(
                 db,
                 "hash_value_rebound",
                 version + v4,

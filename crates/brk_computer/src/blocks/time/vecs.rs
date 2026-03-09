@@ -7,7 +7,7 @@ use brk_types::{
 use derive_more::{Deref, DerefMut};
 use vecdb::{EagerVec, Exit, LazyVecFrom1, PcoVec, ReadableVec, Rw, StorageMode};
 
-use crate::{indexes, internal::PerPeriod};
+use crate::{indexes, internal::PerResolution};
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub date: LazyVecFrom1<Height, Date, Height, Timestamp>,
@@ -19,13 +19,13 @@ pub struct Vecs<M: StorageMode = Rw> {
 ///
 /// Time-based periods (minute10–year10) are lazy: `idx.to_timestamp()` is a pure
 /// function of the index, so no storage or decompression is needed.
-/// Epoch-based periods (halvingepoch, difficultyepoch) are eager: their timestamps
+/// Epoch-based periods (halving, difficulty) are eager: their timestamps
 /// come from block data via `compute_indirect_sequential`.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct TimestampIndexes<M: StorageMode = Rw>(
     #[allow(clippy::type_complexity)]
-    pub  PerPeriod<
+    pub  PerResolution<
         LazyVecFrom1<Minute10, Timestamp, Minute10, Height>,
         LazyVecFrom1<Minute30, Timestamp, Minute30, Height>,
         LazyVecFrom1<Hour1, Timestamp, Hour1, Height>,
@@ -55,23 +55,23 @@ impl TimestampIndexes {
         exit: &Exit,
     ) -> Result<()> {
         let prev_height = starting_indexes.height.decremented().unwrap_or_default();
-        self.halvingepoch.compute_indirect_sequential(
+        self.halving.compute_indirect_sequential(
             indexes
                 .height
-                .halvingepoch
+                .halving
                 .collect_one(prev_height)
                 .unwrap_or_default(),
-            &indexes.halvingepoch.first_height,
+            &indexes.halving.first_height,
             &indexer.vecs.blocks.timestamp,
             exit,
         )?;
-        self.difficultyepoch.compute_indirect_sequential(
+        self.difficulty.compute_indirect_sequential(
             indexes
                 .height
-                .difficultyepoch
+                .difficulty
                 .collect_one(prev_height)
                 .unwrap_or_default(),
-            &indexes.difficultyepoch.first_height,
+            &indexes.difficulty.first_height,
             &indexer.vecs.blocks.timestamp,
             exit,
         )?;

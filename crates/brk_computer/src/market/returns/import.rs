@@ -6,7 +6,7 @@ use super::super::lookback::ByLookbackPeriod;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightStdDev, PercentFromHeight},
+    internal::{StdDevPerBlock, PercentPerBlock},
     market::dca::ByDcaCagr,
 };
 
@@ -19,15 +19,15 @@ impl Vecs {
         let v1 = Version::ONE;
 
         let price_return = ByLookbackPeriod::try_new(|name, _days| {
-            PercentFromHeight::forced_import(db, &format!("price_return_{name}"), version, indexes)
+            PercentPerBlock::forced_import(db, &format!("price_return_{name}"), version, indexes)
         })?;
 
         // CAGR (computed, 2y+ only)
         let price_cagr = ByDcaCagr::try_new(|name, _days| {
-            PercentFromHeight::forced_import(db, &format!("price_cagr_{name}"), version, indexes)
+            PercentPerBlock::forced_import(db, &format!("price_cagr_{name}"), version, indexes)
         })?;
 
-        let price_return_24h_sd_1w = ComputedFromHeightStdDev::forced_import(
+        let price_return_24h_sd_1w = StdDevPerBlock::forced_import(
             db,
             "price_return_24h",
             "1w",
@@ -35,7 +35,7 @@ impl Vecs {
             version + v1,
             indexes,
         )?;
-        let price_return_24h_sd_1m = ComputedFromHeightStdDev::forced_import(
+        let price_return_24h_sd_1m = StdDevPerBlock::forced_import(
             db,
             "price_return_24h",
             "1m",
@@ -43,7 +43,7 @@ impl Vecs {
             version + v1,
             indexes,
         )?;
-        let price_return_24h_sd_1y = ComputedFromHeightStdDev::forced_import(
+        let price_return_24h_sd_1y = StdDevPerBlock::forced_import(
             db,
             "price_return_24h",
             "1y",

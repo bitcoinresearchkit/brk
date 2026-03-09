@@ -14,14 +14,14 @@ use vecdb::{
 
 use crate::{
     indexes,
-    internal::{ComputedVecValue, NumericValue, PerPeriod},
+    internal::{ComputedVecValue, NumericValue, PerResolution},
 };
 
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct EagerIndexes<T, M: StorageMode = Rw>(
     #[allow(clippy::type_complexity)]
-    pub  PerPeriod<
+    pub  PerResolution<
         <M as StorageMode>::Stored<EagerVec<PcoVec<Minute10, T>>>,
         <M as StorageMode>::Stored<EagerVec<PcoVec<Minute30, T>>>,
         <M as StorageMode>::Stored<EagerVec<PcoVec<Hour1, T>>>,
@@ -53,7 +53,7 @@ where
             };
         }
 
-        Ok(Self(PerPeriod {
+        Ok(Self(PerResolution {
             minute10: per_period!(),
             minute30: per_period!(),
             hour1: per_period!(),
@@ -67,8 +67,8 @@ where
             month6: per_period!(),
             year1: per_period!(),
             year10: per_period!(),
-            halvingepoch: per_period!(),
-            difficultyepoch: per_period!(),
+            halving: per_period!(),
+            difficulty: per_period!(),
         }))
     }
 
@@ -109,8 +109,8 @@ where
         period!(month6);
         period!(year1);
         period!(year10);
-        period!(halvingepoch);
-        period!(difficultyepoch);
+        period!(halving);
+        period!(difficulty);
 
         Ok(())
     }
@@ -156,8 +156,8 @@ where
         period!(month6);
         period!(year1);
         period!(year10);
-        period!(halvingepoch);
-        period!(difficultyepoch);
+        period!(halving);
+        period!(difficulty);
 
         Ok(())
     }
@@ -203,8 +203,8 @@ where
         period!(month6);
         period!(year1);
         period!(year10);
-        period!(halvingepoch);
-        period!(difficultyepoch);
+        period!(halving);
+        period!(difficulty);
 
         Ok(())
     }

@@ -7,7 +7,7 @@ use vecdb::{
 
 use crate::{
     blocks, indexes,
-    internal::{ComputedFromHeightCumulative, PercentFromHeight, RatioU32Bp16},
+    internal::{ComputedPerBlockCumulative, PercentPerBlock, RatioU32Bp16},
 };
 
 #[derive(Traversable)]
@@ -15,8 +15,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     slug: PoolSlug,
 
-    pub blocks_mined: ComputedFromHeightCumulative<StoredU32, M>,
-    pub dominance: PercentFromHeight<BasisPoints16, M>,
+    pub blocks_mined: ComputedPerBlockCumulative<StoredU32, M>,
+    pub dominance: PercentPerBlock<BasisPoints16, M>,
 }
 
 impl Vecs {
@@ -28,7 +28,7 @@ impl Vecs {
     ) -> Result<Self> {
         let suffix = |s: &str| format!("{}_{s}", slug);
 
-        let blocks_mined = ComputedFromHeightCumulative::forced_import(
+        let blocks_mined = ComputedPerBlockCumulative::forced_import(
             db,
             &suffix("blocks_mined"),
             version,
@@ -36,7 +36,7 @@ impl Vecs {
         )?;
 
         let dominance =
-            PercentFromHeight::forced_import(db, &suffix("dominance"), version, indexes)?;
+            PercentPerBlock::forced_import(db, &suffix("dominance"), version, indexes)?;
 
         Ok(Self {
             slug,

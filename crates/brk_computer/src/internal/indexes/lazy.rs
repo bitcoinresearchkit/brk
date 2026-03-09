@@ -7,13 +7,13 @@ use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{LazyVecFrom1, ReadableCloneableVec, UnaryTransform};
 
-use crate::internal::{ComputedVecValue, EagerIndexes, PerPeriod};
+use crate::internal::{ComputedVecValue, EagerIndexes, PerResolution};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct LazyEagerIndexes<T, S>(
     #[allow(clippy::type_complexity)]
-    pub  PerPeriod<
+    pub  PerResolution<
         LazyVecFrom1<Minute10, T, Minute10, S>,
         LazyVecFrom1<Minute30, T, Minute30, S>,
         LazyVecFrom1<Hour1, T, Hour1, S>,
@@ -55,7 +55,7 @@ where
             };
         }
 
-        Self(PerPeriod {
+        Self(PerResolution {
             minute10: period!(minute10),
             minute30: period!(minute30),
             hour1: period!(hour1),
@@ -69,8 +69,8 @@ where
             month6: period!(month6),
             year1: period!(year1),
             year10: period!(year10),
-            halvingepoch: period!(halvingepoch),
-            difficultyepoch: period!(difficultyepoch),
+            halving: period!(halving),
+            difficulty: period!(difficulty),
         })
     }
 }

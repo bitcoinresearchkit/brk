@@ -3,7 +3,7 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::ComputedFromHeight};
+use crate::{indexes, internal::ComputedPerBlock};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -12,8 +12,8 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            btc: ComputedFromHeight::forced_import(db, "velocity_btc", version, indexes)?,
-            usd: ComputedFromHeight::forced_import(db, "velocity_usd", version, indexes)?,
+            btc: ComputedPerBlock::forced_import(db, "velocity_btc", version, indexes)?,
+            usd: ComputedPerBlock::forced_import(db, "velocity_usd", version, indexes)?,
         })
     }
 }

@@ -10,7 +10,7 @@ use crate::{
     blocks,
     distribution::state::RealizedOps,
     internal::{
-        ComputedFromHeight, FiatRollingDelta1m, LazyFromHeight, NegCentsUnsignedToDollars,
+        ComputedPerBlock, FiatRollingDelta1m, LazyPerBlock, NegCentsUnsignedToDollars,
         RatioCents64, RollingWindow24h,
     },
     prices,
@@ -29,12 +29,12 @@ pub struct RealizedCore<M: StorageMode = Rw> {
 
     pub realized_cap_delta: FiatRollingDelta1m<Cents, CentsSigned, M>,
 
-    pub neg_realized_loss: LazyFromHeight<Dollars, Cents>,
-    pub net_realized_pnl: ComputedFromHeight<CentsSigned, M>,
+    pub neg_realized_loss: LazyPerBlock<Dollars, Cents>,
+    pub net_realized_pnl: ComputedPerBlock<CentsSigned, M>,
     pub net_realized_pnl_sum: RollingWindow24h<CentsSigned, M>,
 
-    pub value_created: ComputedFromHeight<Cents, M>,
-    pub value_destroyed: ComputedFromHeight<Cents, M>,
+    pub value_created: ComputedPerBlock<Cents, M>,
+    pub value_destroyed: ComputedPerBlock<Cents, M>,
     pub value_created_sum: RollingWindow24h<Cents, M>,
     pub value_destroyed_sum: RollingWindow24h<Cents, M>,
     pub sopr: RollingWindow24h<StoredF64, M>,
@@ -47,7 +47,7 @@ impl RealizedCore {
 
         let minimal = RealizedMinimal::forced_import(cfg)?;
 
-        let neg_realized_loss = LazyFromHeight::from_height_source::<NegCentsUnsignedToDollars>(
+        let neg_realized_loss = LazyPerBlock::from_height_source::<NegCentsUnsignedToDollars>(
             &cfg.name("neg_realized_loss"),
             cfg.version + Version::ONE,
             minimal.realized_loss.height.read_only_boxed_clone(),

@@ -3,7 +3,7 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::ComputedFromHeight};
+use crate::{indexes, internal::ComputedPerBlock};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -14,14 +14,14 @@ impl Vecs {
         let v2 = Version::TWO;
 
         Ok(Self {
-            epoch: ComputedFromHeight::forced_import(db, "halving_epoch", version, indexes)?,
-            blocks_before_next_halving: ComputedFromHeight::forced_import(
+            epoch: ComputedPerBlock::forced_import(db, "halving_epoch", version, indexes)?,
+            blocks_before_next_halving: ComputedPerBlock::forced_import(
                 db,
                 "blocks_before_next_halving",
                 version + v2,
                 indexes,
             )?,
-            days_before_next_halving: ComputedFromHeight::forced_import(
+            days_before_next_halving: ComputedPerBlock::forced_import(
                 db,
                 "days_before_next_halving",
                 version + v2,

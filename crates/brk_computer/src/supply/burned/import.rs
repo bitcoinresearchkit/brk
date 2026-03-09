@@ -3,7 +3,7 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::AmountFromHeightCumulativeSum};
+use crate::{indexes, internal::AmountPerBlockCumulativeSum};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -12,13 +12,13 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            opreturn: AmountFromHeightCumulativeSum::forced_import(
+            opreturn: AmountPerBlockCumulativeSum::forced_import(
                 db,
                 "opreturn_supply",
                 version,
                 indexes,
             )?,
-            unspendable: AmountFromHeightCumulativeSum::forced_import(
+            unspendable: AmountPerBlockCumulativeSum::forced_import(
                 db,
                 "unspendable_supply",
                 version,

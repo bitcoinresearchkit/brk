@@ -11,8 +11,8 @@ use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        CentsUnsignedToDollars, CentsUnsignedToSats, ComputedFromHeight, ComputedHeightDerived,
-        EagerIndexes, LazyEagerIndexes, LazyFromHeight, OhlcCentsToDollars, OhlcCentsToSats,
+        CentsUnsignedToDollars, CentsUnsignedToSats, ComputedPerBlock, Resolutions,
+        EagerIndexes, LazyEagerIndexes, LazyPerBlock, OhlcCentsToDollars, OhlcCentsToSats,
         finalize_db, open_db,
     },
 };
@@ -51,13 +51,13 @@ impl Vecs {
     ) -> brk_error::Result<Self> {
         let version = version + Version::new(11);
 
-        let price_cents = ComputedFromHeight::forced_import(db, "price_cents", version, indexes)?;
+        let price_cents = ComputedPerBlock::forced_import(db, "price_cents", version, indexes)?;
 
         let open_cents = EagerIndexes::forced_import(db, "price_open_cents", version)?;
         let high_cents = EagerIndexes::forced_import(db, "price_high_cents", version)?;
         let low_cents = EagerIndexes::forced_import(db, "price_low_cents", version)?;
 
-        let close_cents = ComputedHeightDerived::forced_import(
+        let close_cents = Resolutions::forced_import(
             "price_close_cents",
             price_cents.height.read_only_boxed_clone(),
             version,
@@ -66,7 +66,7 @@ impl Vecs {
 
         let ohlc_cents = OhlcVecs::forced_import(db, "price_ohlc_cents", version)?;
 
-        let price_usd = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
+        let price_usd = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
             "price",
             version,
             price_cents.height.read_only_boxed_clone(),
@@ -89,7 +89,7 @@ impl Vecs {
             &low_cents,
         );
 
-        let close_usd = ComputedHeightDerived::forced_import(
+        let close_usd = Resolutions::forced_import(
             "price_close",
             price_usd.height.read_only_boxed_clone(),
             version,
@@ -102,7 +102,7 @@ impl Vecs {
             &ohlc_cents,
         );
 
-        let price_sats = LazyFromHeight::from_computed::<CentsUnsignedToSats>(
+        let price_sats = LazyPerBlock::from_computed::<CentsUnsignedToSats>(
             "price_sats",
             version,
             price_cents.height.read_only_boxed_clone(),
@@ -126,7 +126,7 @@ impl Vecs {
             &high_cents,
         );
 
-        let close_sats = ComputedHeightDerived::forced_import(
+        let close_sats = Resolutions::forced_import(
             "price_close_sats",
             price_sats.height.read_only_boxed_clone(),
             version,

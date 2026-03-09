@@ -3,7 +3,7 @@ use brk_types::{BasisPointsSigned32, Cents, Height, Sats};
 use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod};
-use crate::internal::{AmountFromHeight, ComputedFromHeight, PercentFromHeight, Price};
+use crate::internal::{AmountPerBlock, ComputedPerBlock, PercentPerBlock, Price};
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     /// Per-height DCA sats contribution: sats_from_dca(close) on day boundaries, 0 otherwise.
@@ -11,17 +11,17 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub dca_sats_per_day: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
 
     // DCA by period
-    pub period_stack: ByDcaPeriod<AmountFromHeight<M>>,
-    pub period_cost_basis: ByDcaPeriod<Price<ComputedFromHeight<Cents, M>>>,
-    pub period_return: ByDcaPeriod<PercentFromHeight<BasisPointsSigned32, M>>,
-    pub period_cagr: ByDcaCagr<PercentFromHeight<BasisPointsSigned32, M>>,
+    pub period_stack: ByDcaPeriod<AmountPerBlock<M>>,
+    pub period_cost_basis: ByDcaPeriod<Price<ComputedPerBlock<Cents, M>>>,
+    pub period_return: ByDcaPeriod<PercentPerBlock<BasisPointsSigned32, M>>,
+    pub period_cagr: ByDcaCagr<PercentPerBlock<BasisPointsSigned32, M>>,
 
     // Lump sum by period (for comparison with DCA)
-    pub period_lump_sum_stack: ByDcaPeriod<AmountFromHeight<M>>,
-    pub period_lump_sum_return: ByDcaPeriod<PercentFromHeight<BasisPointsSigned32, M>>,
+    pub period_lump_sum_stack: ByDcaPeriod<AmountPerBlock<M>>,
+    pub period_lump_sum_return: ByDcaPeriod<PercentPerBlock<BasisPointsSigned32, M>>,
 
     // DCA by year class
-    pub class_stack: ByDcaClass<AmountFromHeight<M>>,
-    pub class_cost_basis: ByDcaClass<Price<ComputedFromHeight<Cents, M>>>,
-    pub class_return: ByDcaClass<PercentFromHeight<BasisPointsSigned32, M>>,
+    pub class_stack: ByDcaClass<AmountPerBlock<M>>,
+    pub class_cost_basis: ByDcaClass<Price<ComputedPerBlock<Cents, M>>>,
+    pub class_return: ByDcaClass<PercentPerBlock<BasisPointsSigned32, M>>,
 }

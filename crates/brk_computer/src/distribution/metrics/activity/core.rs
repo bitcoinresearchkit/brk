@@ -3,13 +3,13 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Indexes, Sats, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
-use crate::internal::{ComputedFromHeight, RollingWindow24h};
+use crate::internal::{ComputedPerBlock, RollingWindow24h};
 
 use crate::{blocks, distribution::metrics::ImportConfig};
 
 #[derive(Traversable)]
 pub struct ActivityCore<M: StorageMode = Rw> {
-    pub sent: ComputedFromHeight<Sats, M>,
+    pub sent: ComputedPerBlock<Sats, M>,
     pub sent_sum: RollingWindow24h<Sats, M>,
 }
 

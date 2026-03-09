@@ -37,7 +37,7 @@ impl Vecs {
         // Compute epoch by height
         self.epoch.height.compute_transform(
             starting_indexes.height,
-            &indexes.height.difficultyepoch,
+            &indexes.height.difficulty,
             |(h, epoch, ..)| (h, epoch),
             exit,
         )?;

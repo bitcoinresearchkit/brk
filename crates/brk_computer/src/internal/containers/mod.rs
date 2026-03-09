@@ -1,7 +1,7 @@
 mod distribution_stats;
-mod per_period;
+mod per_resolution;
 mod windows;
 
 pub use distribution_stats::*;
-pub use per_period::*;
+pub use per_resolution::*;
 pub use windows::*;

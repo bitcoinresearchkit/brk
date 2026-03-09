@@ -5,15 +5,15 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     blocks,
-    internal::{ComputedFromHeight, RatioCents64, RollingWindows},
+    internal::{ComputedPerBlock, RatioCents64, RollingWindows},
 };
 
 use crate::distribution::metrics::ImportConfig;
 
 #[derive(Traversable)]
 pub struct RealizedAdjusted<M: StorageMode = Rw> {
-    pub value_created: ComputedFromHeight<Cents, M>,
-    pub value_destroyed: ComputedFromHeight<Cents, M>,
+    pub value_created: ComputedPerBlock<Cents, M>,
+    pub value_destroyed: ComputedPerBlock<Cents, M>,
     pub value_created_sum: RollingWindows<Cents, M>,
     pub value_destroyed_sum: RollingWindows<Cents, M>,
     pub sopr: RollingWindows<StoredF64, M>,

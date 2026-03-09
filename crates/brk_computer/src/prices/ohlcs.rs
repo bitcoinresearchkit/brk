@@ -15,14 +15,14 @@ use vecdb::{
 
 use crate::{
     indexes,
-    internal::{ComputedHeightDerived, EagerIndexes, PerPeriod},
+    internal::{Resolutions, EagerIndexes, PerResolution},
 };
 
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(merge)]
 pub struct OhlcVecs<T, M: StorageMode = Rw>(
     #[allow(clippy::type_complexity)]
-    pub  PerPeriod<
+    pub  PerResolution<
         <M as StorageMode>::Stored<EagerVec<BytesVec<Minute10, T>>>,
         <M as StorageMode>::Stored<EagerVec<BytesVec<Minute30, T>>>,
         <M as StorageMode>::Stored<EagerVec<BytesVec<Hour1, T>>>,
@@ -58,7 +58,7 @@ where
             };
         }
 
-        Ok(Self(PerPeriod {
+        Ok(Self(PerResolution {
             minute10: per_period!(),
             minute30: per_period!(),
             hour1: per_period!(),
@@ -72,8 +72,8 @@ where
             month6: per_period!(),
             year1: per_period!(),
             year10: per_period!(),
-            halvingepoch: per_period!(),
-            difficultyepoch: per_period!(),
+            halving: per_period!(),
+            difficulty: per_period!(),
         }))
     }
 }
@@ -87,7 +87,7 @@ impl OhlcVecs<OHLCCents> {
         open: &EagerIndexes<Cents>,
         high: &EagerIndexes<Cents>,
         low: &EagerIndexes<Cents>,
-        close: &ComputedHeightDerived<Cents>,
+        close: &Resolutions<Cents>,
         exit: &Exit,
     ) -> Result<()> {
         let prev_height = starting_indexes.height.decremented().unwrap_or_default();
@@ -168,8 +168,8 @@ impl OhlcVecs<OHLCCents> {
         period!(month6);
         period!(year1);
         period!(year10);
-        epoch!(halvingepoch);
-        epoch!(difficultyepoch);
+        epoch!(halving);
+        epoch!(difficulty);
 
         Ok(())
     }
@@ -179,7 +179,7 @@ impl OhlcVecs<OHLCCents> {
 #[traversable(merge)]
 pub struct LazyOhlcVecs<T, S>(
     #[allow(clippy::type_complexity)]
-    pub  PerPeriod<
+    pub  PerResolution<
         LazyVecFrom1<Minute10, T, Minute10, S>,
         LazyVecFrom1<Minute30, T, Minute30, S>,
         LazyVecFrom1<Hour1, T, Hour1, S>,
@@ -221,7 +221,7 @@ where
             };
         }
 
-        Self(PerPeriod {
+        Self(PerResolution {
             minute10: period!(minute10),
             minute30: period!(minute30),
             hour1: period!(hour1),
@@ -235,8 +235,8 @@ where
             month6: period!(month6),
             year1: period!(year1),
             year10: period!(year10),
-            halvingepoch: period!(halvingepoch),
-            difficultyepoch: period!(difficultyepoch),
+            halving: period!(halving),
+            difficulty: period!(difficulty),
         })
     }
 }

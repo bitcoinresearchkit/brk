@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::{MacdChain, RsiChain, Vecs};
 use crate::{
     indexes,
-    internal::{ComputedFromHeight, ComputedFromHeightRatio, PercentFromHeight, Windows},
+    internal::{ComputedPerBlock, RatioPerBlock, PercentPerBlock, Windows},
 };
 
 const VERSION: Version = Version::ONE;
@@ -19,7 +19,7 @@ impl RsiChain {
     ) -> Result<Self> {
         macro_rules! import {
             ($name:expr) => {
-                ComputedFromHeight::forced_import(
+                ComputedPerBlock::forced_import(
                     db,
                     &format!("rsi_{}_{}", $name, tf),
                     version,
@@ -30,7 +30,7 @@ impl RsiChain {
 
         macro_rules! percent_import {
             ($name:expr) => {
-                PercentFromHeight::forced_import(
+                PercentPerBlock::forced_import(
                     db,
                     &format!("rsi_{}_{}", $name, tf),
                     version,
@@ -42,7 +42,7 @@ impl RsiChain {
         let average_gain = import!("average_gain");
         let average_loss = import!("average_loss");
 
-        let rsi = PercentFromHeight::forced_import(db, &format!("rsi_{tf}"), version, indexes)?;
+        let rsi = PercentPerBlock::forced_import(db, &format!("rsi_{tf}"), version, indexes)?;
 
         Ok(Self {
             gains: import!("gains"),
@@ -67,11 +67,11 @@ impl MacdChain {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let line =
-            ComputedFromHeight::forced_import(db, &format!("macd_line_{tf}"), version, indexes)?;
+            ComputedPerBlock::forced_import(db, &format!("macd_line_{tf}"), version, indexes)?;
         let signal =
-            ComputedFromHeight::forced_import(db, &format!("macd_signal_{tf}"), version, indexes)?;
+            ComputedPerBlock::forced_import(db, &format!("macd_signal_{tf}"), version, indexes)?;
 
-        let histogram = ComputedFromHeight::forced_import(
+        let histogram = ComputedPerBlock::forced_import(
             db,
             &format!("macd_histogram_{tf}"),
             version,
@@ -79,13 +79,13 @@ impl MacdChain {
         )?;
 
         Ok(Self {
-            ema_fast: ComputedFromHeight::forced_import(
+            ema_fast: ComputedPerBlock::forced_import(
                 db,
                 &format!("macd_ema_fast_{tf}"),
                 version,
                 indexes,
             )?,
-            ema_slow: ComputedFromHeight::forced_import(
+            ema_slow: ComputedPerBlock::forced_import(
                 db,
                 &format!("macd_ema_slow_{tf}"),
                 version,
@@ -106,19 +106,19 @@ impl Vecs {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let nvt = ComputedFromHeightRatio::forced_import_raw(db, "nvt", v, indexes)?;
+        let nvt = RatioPerBlock::forced_import_raw(db, "nvt", v, indexes)?;
 
         let rsi = Windows::try_from_fn(|tf| RsiChain::forced_import(db, tf, v, indexes))?;
         let macd = Windows::try_from_fn(|tf| MacdChain::forced_import(db, tf, v, indexes))?;
 
-        let stoch_k = PercentFromHeight::forced_import(db, "stoch_k", v, indexes)?;
-        let stoch_d = PercentFromHeight::forced_import(db, "stoch_d", v, indexes)?;
-        let gini = PercentFromHeight::forced_import(db, "gini", v, indexes)?;
+        let stoch_k = PercentPerBlock::forced_import(db, "stoch_k", v, indexes)?;
+        let stoch_d = PercentPerBlock::forced_import(db, "stoch_d", v, indexes)?;
+        let gini = PercentPerBlock::forced_import(db, "gini", v, indexes)?;
 
-        let pi_cycle = ComputedFromHeightRatio::forced_import_raw(db, "pi_cycle", v, indexes)?;
+        let pi_cycle = RatioPerBlock::forced_import_raw(db, "pi_cycle", v, indexes)?;
 
         Ok(Self {
-            puell_multiple: ComputedFromHeightRatio::forced_import_raw(
+            puell_multiple: RatioPerBlock::forced_import_raw(
                 db,
                 "puell_multiple",
                 v,

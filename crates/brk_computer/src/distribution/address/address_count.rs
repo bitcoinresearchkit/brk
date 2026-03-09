@@ -9,11 +9,11 @@ use vecdb::{
     WritableVec,
 };
 
-use crate::{indexes, internal::ComputedFromHeight};
+use crate::{indexes, internal::ComputedPerBlock};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct AddrCountVecs<M: StorageMode = Rw>(
-    #[traversable(flatten)] pub ComputedFromHeight<StoredU64, M>,
+    #[traversable(flatten)] pub ComputedPerBlock<StoredU64, M>,
 );
 
 impl AddrCountVecs {
@@ -23,7 +23,7 @@ impl AddrCountVecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        Ok(Self(ComputedFromHeight::forced_import(
+        Ok(Self(ComputedPerBlock::forced_import(
             db, name, version, indexes,
         )?))
     }

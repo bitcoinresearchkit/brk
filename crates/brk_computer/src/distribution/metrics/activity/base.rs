@@ -4,7 +4,7 @@ use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
-use crate::internal::ComputedFromHeight;
+use crate::internal::ComputedPerBlock;
 
 use crate::{blocks, distribution::metrics::ImportConfig};
 
@@ -17,8 +17,8 @@ pub struct ActivityBase<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub core: ActivityCore<M>,
 
-    pub coinblocks_destroyed: ComputedFromHeight<StoredF64, M>,
-    pub coindays_destroyed: ComputedFromHeight<StoredF64, M>,
+    pub coinblocks_destroyed: ComputedPerBlock<StoredF64, M>,
+    pub coindays_destroyed: ComputedPerBlock<StoredF64, M>,
 }
 
 impl ActivityBase {

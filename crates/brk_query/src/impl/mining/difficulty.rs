@@ -23,7 +23,7 @@ impl Query {
         let current_epoch = computer
             .indexes
             .height
-            .difficultyepoch
+            .difficulty
             .collect_one(current_height)
             .unwrap();
         let current_epoch_usize: usize = current_epoch.into();
@@ -31,7 +31,7 @@ impl Query {
         // Get epoch start height
         let epoch_start_height = computer
             .indexes
-            .difficultyepoch
+            .difficulty
             .first_height
             .collect_one(current_epoch)
             .unwrap();
@@ -43,12 +43,12 @@ impl Query {
         let remaining_blocks = next_retarget_height - current_height_u32;
         let progress_percent = (blocks_into_epoch as f64 / BLOCKS_PER_EPOCH as f64) * 100.0;
 
-        // Get timestamps using difficultyepoch_to_timestamp for epoch start
+        // Get timestamps using difficulty_to_timestamp for epoch start
         let epoch_start_timestamp = computer
             .blocks
             .time
             .timestamp
-            .difficultyepoch
+            .difficulty
             .collect_one(current_epoch)
             .unwrap();
         let current_timestamp = indexer
@@ -90,7 +90,7 @@ impl Query {
             let prev_epoch = DifficultyEpoch::from(current_epoch_usize - 1);
             let prev_epoch_start = computer
                 .indexes
-                .difficultyepoch
+                .difficulty
                 .first_height
                 .collect_one(prev_epoch)
                 .unwrap();

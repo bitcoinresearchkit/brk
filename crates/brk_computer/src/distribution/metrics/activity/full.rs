@@ -4,7 +4,7 @@ use brk_types::{Indexes, Sats, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Exit, Rw, StorageMode};
 
-use crate::internal::{ComputedFromHeight, RollingWindows, RollingWindowsFrom1w};
+use crate::internal::{ComputedPerBlock, RollingWindows, RollingWindowsFrom1w};
 
 use crate::{blocks, distribution::metrics::ImportConfig};
 
@@ -17,8 +17,8 @@ pub struct ActivityFull<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub inner: ActivityBase<M>,
 
-    pub coinblocks_destroyed_cumulative: ComputedFromHeight<StoredF64, M>,
-    pub coindays_destroyed_cumulative: ComputedFromHeight<StoredF64, M>,
+    pub coinblocks_destroyed_cumulative: ComputedPerBlock<StoredF64, M>,
+    pub coindays_destroyed_cumulative: ComputedPerBlock<StoredF64, M>,
     pub coindays_destroyed_sum: RollingWindows<StoredF64, M>,
 
     #[traversable(rename = "sent_sum")]

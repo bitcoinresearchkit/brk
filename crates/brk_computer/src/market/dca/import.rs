@@ -5,7 +5,7 @@ use vecdb::{Database, ImportableVec};
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod, Vecs};
 use crate::{
     indexes,
-    internal::{AmountFromHeight, PercentFromHeight, Price},
+    internal::{AmountPerBlock, PercentPerBlock, Price},
 };
 
 impl Vecs {
@@ -15,7 +15,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let period_stack = ByDcaPeriod::try_new(|name, _days| {
-            AmountFromHeight::forced_import(db, &format!("dca_stack_{name}"), version, indexes)
+            AmountPerBlock::forced_import(db, &format!("dca_stack_{name}"), version, indexes)
         })?;
 
         let period_cost_basis = ByDcaPeriod::try_new(|name, _days| {
@@ -23,19 +23,19 @@ impl Vecs {
         })?;
 
         let period_return = ByDcaPeriod::try_new(|name, _days| {
-            PercentFromHeight::forced_import(db, &format!("dca_return_{name}"), version, indexes)
+            PercentPerBlock::forced_import(db, &format!("dca_return_{name}"), version, indexes)
         })?;
 
         let period_cagr = ByDcaCagr::try_new(|name, _days| {
-            PercentFromHeight::forced_import(db, &format!("dca_cagr_{name}"), version, indexes)
+            PercentPerBlock::forced_import(db, &format!("dca_cagr_{name}"), version, indexes)
         })?;
 
         let period_lump_sum_stack = ByDcaPeriod::try_new(|name, _days| {
-            AmountFromHeight::forced_import(db, &format!("lump_sum_stack_{name}"), version, indexes)
+            AmountPerBlock::forced_import(db, &format!("lump_sum_stack_{name}"), version, indexes)
         })?;
 
         let period_lump_sum_return = ByDcaPeriod::try_new(|name, _days| {
-            PercentFromHeight::forced_import(
+            PercentPerBlock::forced_import(
                 db,
                 &format!("lump_sum_return_{name}"),
                 version,
@@ -44,7 +44,7 @@ impl Vecs {
         })?;
 
         let class_stack = ByDcaClass::try_new(|name, _year, _day1| {
-            AmountFromHeight::forced_import(db, &format!("dca_stack_{name}"), version, indexes)
+            AmountPerBlock::forced_import(db, &format!("dca_stack_{name}"), version, indexes)
         })?;
 
         let class_cost_basis = ByDcaClass::try_new(|name, _year, _day1| {
@@ -52,7 +52,7 @@ impl Vecs {
         })?;
 
         let class_return = ByDcaClass::try_new(|name, _year, _day1| {
-            PercentFromHeight::forced_import(db, &format!("dca_return_{name}"), version, indexes)
+            PercentPerBlock::forced_import(db, &format!("dca_return_{name}"), version, indexes)
         })?;
 
         Ok(Self {

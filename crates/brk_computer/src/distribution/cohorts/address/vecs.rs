@@ -11,7 +11,7 @@ use crate::{
     blocks,
     distribution::state::{AddressCohortState, MinimalRealizedState},
     indexes,
-    internal::{ComputedFromHeight, RollingDelta1m},
+    internal::{ComputedPerBlock, RollingDelta1m},
     prices,
 };
 
@@ -28,7 +28,7 @@ pub struct AddressCohortVecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub metrics: MinimalCohortMetrics<M>,
 
-    pub addr_count: ComputedFromHeight<StoredU64, M>,
+    pub addr_count: ComputedPerBlock<StoredU64, M>,
     pub addr_count_delta: RollingDelta1m<StoredU64, StoredI64, M>,
 }
 
@@ -58,7 +58,7 @@ impl AddressCohortVecs {
 
             metrics: MinimalCohortMetrics::forced_import(&cfg)?,
 
-            addr_count: ComputedFromHeight::forced_import(
+            addr_count: ComputedPerBlock::forced_import(
                 db,
                 &cfg.name("addr_count"),
                 version,

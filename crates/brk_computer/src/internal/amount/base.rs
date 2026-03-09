@@ -16,7 +16,7 @@ use crate::{
     prices,
 };
 
-const VERSION: Version = Version::TWO; // Match AmountFromHeight versioning
+const VERSION: Version = Version::TWO; // Match AmountPerBlock versioning
 
 #[derive(Traversable)]
 pub struct Amount<I: VecIndex, M: StorageMode = Rw> {

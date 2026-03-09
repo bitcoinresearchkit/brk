@@ -3,7 +3,7 @@ use brk_traversable::Traversable;
 use brk_types::{Cents, Height, Version};
 use vecdb::{AnyStoredVec, AnyVec, Rw, StorageMode, WritableVec};
 
-use crate::internal::{ComputedFromHeight, PercentilesVecs, Price, PERCENTILES_LEN};
+use crate::internal::{ComputedPerBlock, PercentilesVecs, Price, PERCENTILES_LEN};
 
 use super::ImportConfig;
 
@@ -11,8 +11,8 @@ use super::ImportConfig;
 /// Used by all/sth/lth cohorts only.
 #[derive(Traversable)]
 pub struct CostBasis<M: StorageMode = Rw> {
-    pub min: Price<ComputedFromHeight<Cents, M>>,
-    pub max: Price<ComputedFromHeight<Cents, M>>,
+    pub min: Price<ComputedPerBlock<Cents, M>>,
+    pub max: Price<ComputedPerBlock<Cents, M>>,
     pub percentiles: PercentilesVecs<M>,
     pub invested_capital: PercentilesVecs<M>,
 }

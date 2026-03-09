@@ -5,15 +5,15 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::prices;
 
-use crate::internal::AmountFromHeight;
+use crate::internal::AmountPerBlock;
 
 use crate::distribution::{metrics::ImportConfig, state::UnrealizedState};
 
 /// Minimal unrealized metrics: supply in profit/loss only.
 #[derive(Traversable)]
 pub struct UnrealizedMinimal<M: StorageMode = Rw> {
-    pub supply_in_profit: AmountFromHeight<M>,
-    pub supply_in_loss: AmountFromHeight<M>,
+    pub supply_in_profit: AmountPerBlock<M>,
+    pub supply_in_loss: AmountPerBlock<M>,
 }
 
 impl UnrealizedMinimal {

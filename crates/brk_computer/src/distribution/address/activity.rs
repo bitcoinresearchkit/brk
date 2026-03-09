@@ -19,7 +19,7 @@ use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
     indexes,
-    internal::{ComputedFromHeightRollingAverage, WindowStarts},
+    internal::{ComputedPerBlockRollingAverage, WindowStarts},
 };
 
 /// Per-block activity counts - reset each block.
@@ -65,10 +65,10 @@ impl AddressTypeToActivityCounts {
 /// Activity count vectors for a single category (e.g., one address type or "all").
 #[derive(Traversable)]
 pub struct ActivityCountVecs<M: StorageMode = Rw> {
-    pub reactivated: ComputedFromHeightRollingAverage<StoredU32, M>,
-    pub sending: ComputedFromHeightRollingAverage<StoredU32, M>,
-    pub receiving: ComputedFromHeightRollingAverage<StoredU32, M>,
-    pub both: ComputedFromHeightRollingAverage<StoredU32, M>,
+    pub reactivated: ComputedPerBlockRollingAverage<StoredU32, M>,
+    pub sending: ComputedPerBlockRollingAverage<StoredU32, M>,
+    pub receiving: ComputedPerBlockRollingAverage<StoredU32, M>,
+    pub both: ComputedPerBlockRollingAverage<StoredU32, M>,
 }
 
 impl ActivityCountVecs {
@@ -79,25 +79,25 @@ impl ActivityCountVecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            reactivated: ComputedFromHeightRollingAverage::forced_import(
+            reactivated: ComputedPerBlockRollingAverage::forced_import(
                 db,
                 &format!("{name}_reactivated"),
                 version,
                 indexes,
             )?,
-            sending: ComputedFromHeightRollingAverage::forced_import(
+            sending: ComputedPerBlockRollingAverage::forced_import(
                 db,
                 &format!("{name}_sending"),
                 version,
                 indexes,
             )?,
-            receiving: ComputedFromHeightRollingAverage::forced_import(
+            receiving: ComputedPerBlockRollingAverage::forced_import(
                 db,
                 &format!("{name}_receiving"),
                 version,
                 indexes,
             )?,
-            both: ComputedFromHeightRollingAverage::forced_import(
+            both: ComputedPerBlockRollingAverage::forced_import(
                 db,
                 &format!("{name}_both"),
                 version,

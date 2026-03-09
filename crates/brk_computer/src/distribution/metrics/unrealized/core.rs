@@ -10,7 +10,7 @@ use crate::{
         state::UnrealizedState,
     },
     internal::{
-        CentsSubtractToCentsSigned, FiatFromHeight, LazyFromHeight, NegCentsUnsignedToDollars,
+        CentsSubtractToCentsSigned, FiatPerBlock, LazyPerBlock, NegCentsUnsignedToDollars,
     },
     prices,
 };
@@ -24,12 +24,12 @@ pub struct UnrealizedCore<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub minimal: UnrealizedMinimal<M>,
 
-    pub unrealized_profit: FiatFromHeight<Cents, M>,
-    pub unrealized_loss: FiatFromHeight<Cents, M>,
+    pub unrealized_profit: FiatPerBlock<Cents, M>,
+    pub unrealized_loss: FiatPerBlock<Cents, M>,
 
-    pub neg_unrealized_loss: LazyFromHeight<Dollars, Cents>,
+    pub neg_unrealized_loss: LazyPerBlock<Dollars, Cents>,
 
-    pub net_unrealized_pnl: FiatFromHeight<CentsSigned, M>,
+    pub net_unrealized_pnl: FiatPerBlock<CentsSigned, M>,
 }
 
 impl UnrealizedCore {
@@ -39,9 +39,9 @@ impl UnrealizedCore {
         let minimal = UnrealizedMinimal::forced_import(cfg)?;
 
         let unrealized_profit = cfg.import("unrealized_profit", v0)?;
-        let unrealized_loss: FiatFromHeight<Cents> = cfg.import("unrealized_loss", v0)?;
+        let unrealized_loss: FiatPerBlock<Cents> = cfg.import("unrealized_loss", v0)?;
 
-        let neg_unrealized_loss = LazyFromHeight::from_computed::<NegCentsUnsignedToDollars>(
+        let neg_unrealized_loss = LazyPerBlock::from_computed::<NegCentsUnsignedToDollars>(
             &cfg.name("neg_unrealized_loss"),
             cfg.version,
             unrealized_loss.cents.height.read_only_boxed_clone(),

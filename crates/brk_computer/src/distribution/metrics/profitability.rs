@@ -4,13 +4,13 @@ use brk_traversable::Traversable;
 use brk_types::{Dollars, Height, Sats, Version};
 use vecdb::{AnyStoredVec, AnyVec, Database, Rw, StorageMode, WritableVec};
 
-use crate::{indexes, internal::ComputedFromHeight};
+use crate::{indexes, internal::ComputedPerBlock};
 
 /// Supply + realized cap for a single profitability bucket.
 #[derive(Traversable)]
 pub struct ProfitabilityBucket<M: StorageMode = Rw> {
-    pub supply: ComputedFromHeight<Sats, M>,
-    pub realized_cap: ComputedFromHeight<Dollars, M>,
+    pub supply: ComputedPerBlock<Sats, M>,
+    pub realized_cap: ComputedPerBlock<Dollars, M>,
 }
 
 impl<M: StorageMode> ProfitabilityBucket<M> {
@@ -27,13 +27,13 @@ impl ProfitabilityBucket {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            supply: ComputedFromHeight::forced_import(
+            supply: ComputedPerBlock::forced_import(
                 db,
                 &format!("{name}_supply"),
                 version,
                 indexes,
             )?,
-            realized_cap: ComputedFromHeight::forced_import(
+            realized_cap: ComputedPerBlock::forced_import(
                 db,
                 &format!("{name}_realized_cap"),
                 version,

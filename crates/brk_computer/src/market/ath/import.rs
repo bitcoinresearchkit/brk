@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeight, DaysToYears, LazyHeightDerived, PercentFromHeight, Price},
+    internal::{ComputedPerBlock, DaysToYears, DerivedResolutions, PercentPerBlock, Price},
 };
 
 const VERSION: Version = Version::ONE;
@@ -21,24 +21,24 @@ impl Vecs {
         let price_ath = Price::forced_import(db, "price_ath", v, indexes)?;
 
         let max_days_between_price_ath =
-            ComputedFromHeight::forced_import(db, "max_days_between_price_ath", v, indexes)?;
+            ComputedPerBlock::forced_import(db, "max_days_between_price_ath", v, indexes)?;
 
-        let max_years_between_price_ath = LazyHeightDerived::from_computed::<DaysToYears>(
+        let max_years_between_price_ath = DerivedResolutions::from_computed::<DaysToYears>(
             "max_years_between_price_ath",
             v,
             &max_days_between_price_ath,
         );
 
         let days_since_price_ath =
-            ComputedFromHeight::forced_import(db, "days_since_price_ath", v, indexes)?;
+            ComputedPerBlock::forced_import(db, "days_since_price_ath", v, indexes)?;
 
-        let years_since_price_ath = LazyHeightDerived::from_computed::<DaysToYears>(
+        let years_since_price_ath = DerivedResolutions::from_computed::<DaysToYears>(
             "years_since_price_ath",
             v,
             &days_since_price_ath,
         );
 
-        let price_drawdown = PercentFromHeight::forced_import(db, "price_drawdown", v, indexes)?;
+        let price_drawdown = PercentPerBlock::forced_import(db, "price_drawdown", v, indexes)?;
 
         Ok(Self {
             price_ath,

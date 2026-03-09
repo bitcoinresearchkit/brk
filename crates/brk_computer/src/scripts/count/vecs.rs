@@ -2,22 +2,22 @@ use brk_traversable::Traversable;
 use brk_types::StoredU64;
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::ComputedFromHeightCumulativeSum;
+use crate::internal::ComputedPerBlockCumulativeSum;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub p2a: ComputedFromHeightCumulativeSum<StoredU64, M>,
-    pub p2ms: ComputedFromHeightCumulativeSum<StoredU64, M>,
-    pub p2pk33: ComputedFromHeightCumulativeSum<StoredU64, M>,
-    pub p2pk65: ComputedFromHeightCumulativeSum<StoredU64, M>,
-    pub p2pkh: ComputedFromHeightCumulativeSum<StoredU64, M>,
-    pub p2sh: ComputedFromHeightCumulativeSum<StoredU64, M>,
-    pub p2tr: ComputedFromHeightCumulativeSum<StoredU64, M>,
-    pub p2wpkh: ComputedFromHeightCumulativeSum<StoredU64, M>,
-    pub p2wsh: ComputedFromHeightCumulativeSum<StoredU64, M>,
-    pub opreturn: ComputedFromHeightCumulativeSum<StoredU64, M>,
-    pub emptyoutput: ComputedFromHeightCumulativeSum<StoredU64, M>,
-    pub unknownoutput: ComputedFromHeightCumulativeSum<StoredU64, M>,
+    pub p2a: ComputedPerBlockCumulativeSum<StoredU64, M>,
+    pub p2ms: ComputedPerBlockCumulativeSum<StoredU64, M>,
+    pub p2pk33: ComputedPerBlockCumulativeSum<StoredU64, M>,
+    pub p2pk65: ComputedPerBlockCumulativeSum<StoredU64, M>,
+    pub p2pkh: ComputedPerBlockCumulativeSum<StoredU64, M>,
+    pub p2sh: ComputedPerBlockCumulativeSum<StoredU64, M>,
+    pub p2tr: ComputedPerBlockCumulativeSum<StoredU64, M>,
+    pub p2wpkh: ComputedPerBlockCumulativeSum<StoredU64, M>,
+    pub p2wsh: ComputedPerBlockCumulativeSum<StoredU64, M>,
+    pub opreturn: ComputedPerBlockCumulativeSum<StoredU64, M>,
+    pub emptyoutput: ComputedPerBlockCumulativeSum<StoredU64, M>,
+    pub unknownoutput: ComputedPerBlockCumulativeSum<StoredU64, M>,
 
-    pub segwit: ComputedFromHeightCumulativeSum<StoredU64, M>,
+    pub segwit: ComputedPerBlockCumulativeSum<StoredU64, M>,
 }

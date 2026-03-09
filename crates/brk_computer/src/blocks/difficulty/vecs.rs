@@ -2,13 +2,13 @@ use brk_traversable::Traversable;
 use brk_types::{BasisPointsSigned32, DifficultyEpoch, StoredF32, StoredF64, StoredU32};
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedFromHeight, ComputedHeightDerived, PercentFromHeight};
+use crate::internal::{ComputedPerBlock, Resolutions, PercentPerBlock};
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub raw: ComputedHeightDerived<StoredF64>,
-    pub as_hash: ComputedFromHeight<StoredF64, M>,
-    pub adjustment: PercentFromHeight<BasisPointsSigned32, M>,
-    pub epoch: ComputedFromHeight<DifficultyEpoch, M>,
-    pub blocks_before_next_adjustment: ComputedFromHeight<StoredU32, M>,
-    pub days_before_next_adjustment: ComputedFromHeight<StoredF32, M>,
+    pub raw: Resolutions<StoredF64>,
+    pub as_hash: ComputedPerBlock<StoredF64, M>,
+    pub adjustment: PercentPerBlock<BasisPointsSigned32, M>,
+    pub epoch: ComputedPerBlock<DifficultyEpoch, M>,
+    pub blocks_before_next_adjustment: ComputedPerBlock<StoredU32, M>,
+    pub days_before_next_adjustment: ComputedPerBlock<StoredF32, M>,
 }

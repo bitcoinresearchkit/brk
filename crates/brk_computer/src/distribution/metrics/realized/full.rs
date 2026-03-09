@@ -14,10 +14,10 @@ use crate::{
     blocks,
     distribution::state::RealizedState,
     internal::{
-        CentsUnsignedToDollars, ComputedFromHeight, ComputedFromHeightCumulative,
-        ComputedFromHeightRatio, ComputedFromHeightRatioPercentiles,
-        ComputedFromHeightRatioStdDevBands, FiatFromHeight, FiatRollingDelta1m,
-        FiatRollingDeltaExcept1m, LazyFromHeight, PercentFromHeight, PercentRollingWindows, Price,
+        CentsUnsignedToDollars, ComputedPerBlock, ComputedPerBlockCumulative,
+        RatioPerBlock, RatioPerBlockPercentiles,
+        RatioPerBlockStdDevBands, FiatPerBlock, FiatRollingDelta1m,
+        FiatRollingDeltaExcept1m, LazyPerBlock, PercentPerBlock, PercentRollingWindows, Price,
         RatioCents64, RatioCentsBp32, RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32,
         RatioDollarsBp32, RollingWindows, RollingWindowsFrom1w,
     },
@@ -35,55 +35,55 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub base: RealizedBase<M>,
 
-    pub gross_pnl: FiatFromHeight<Cents, M>,
+    pub gross_pnl: FiatPerBlock<Cents, M>,
 
-    pub realized_profit_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
-    pub realized_loss_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
-    pub net_realized_pnl_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned32, M>,
+    pub realized_profit_rel_to_realized_cap: PercentPerBlock<BasisPoints32, M>,
+    pub realized_loss_rel_to_realized_cap: PercentPerBlock<BasisPoints32, M>,
+    pub net_realized_pnl_rel_to_realized_cap: PercentPerBlock<BasisPointsSigned32, M>,
 
-    pub profit_value_created: ComputedFromHeight<Cents, M>,
-    pub profit_value_destroyed: ComputedFromHeight<Cents, M>,
-    pub loss_value_created: ComputedFromHeight<Cents, M>,
-    pub loss_value_destroyed: ComputedFromHeight<Cents, M>,
+    pub profit_value_created: ComputedPerBlock<Cents, M>,
+    pub profit_value_destroyed: ComputedPerBlock<Cents, M>,
+    pub loss_value_created: ComputedPerBlock<Cents, M>,
+    pub loss_value_destroyed: ComputedPerBlock<Cents, M>,
 
     pub profit_value_created_sum: RollingWindows<Cents, M>,
     pub profit_value_destroyed_sum: RollingWindows<Cents, M>,
     pub loss_value_created_sum: RollingWindows<Cents, M>,
     pub loss_value_destroyed_sum: RollingWindows<Cents, M>,
 
-    pub capitulation_flow: LazyFromHeight<Dollars, Cents>,
-    pub profit_flow: LazyFromHeight<Dollars, Cents>,
+    pub capitulation_flow: LazyPerBlock<Dollars, Cents>,
+    pub profit_flow: LazyPerBlock<Dollars, Cents>,
 
     pub gross_pnl_sum: RollingWindows<Cents, M>,
 
-    pub net_realized_pnl_cumulative: ComputedFromHeight<CentsSigned, M>,
+    pub net_realized_pnl_cumulative: ComputedPerBlock<CentsSigned, M>,
     #[traversable(rename = "net_realized_pnl_sum")]
     pub net_realized_pnl_sum_extended: RollingWindowsFrom1w<CentsSigned, M>,
 
     pub net_pnl_delta: FiatRollingDelta1m<CentsSigned, CentsSigned, M>,
     #[traversable(rename = "net_pnl_delta")]
     pub net_pnl_delta_extended: FiatRollingDeltaExcept1m<CentsSigned, CentsSigned, M>,
-    pub net_pnl_change_1m_rel_to_realized_cap: PercentFromHeight<BasisPointsSigned32, M>,
-    pub net_pnl_change_1m_rel_to_market_cap: PercentFromHeight<BasisPointsSigned32, M>,
+    pub net_pnl_change_1m_rel_to_realized_cap: PercentPerBlock<BasisPointsSigned32, M>,
+    pub net_pnl_change_1m_rel_to_market_cap: PercentPerBlock<BasisPointsSigned32, M>,
 
     #[traversable(rename = "realized_cap_delta")]
     pub realized_cap_delta_extended: FiatRollingDeltaExcept1m<Cents, CentsSigned, M>,
 
-    pub investor_price: Price<ComputedFromHeight<Cents, M>>,
-    pub investor_price_ratio: ComputedFromHeightRatio<M>,
+    pub investor_price: Price<ComputedPerBlock<Cents, M>>,
+    pub investor_price_ratio: RatioPerBlock<M>,
 
-    pub lower_price_band: Price<ComputedFromHeight<Cents, M>>,
-    pub upper_price_band: Price<ComputedFromHeight<Cents, M>>,
+    pub lower_price_band: Price<ComputedPerBlock<Cents, M>>,
+    pub upper_price_band: Price<ComputedPerBlock<Cents, M>>,
 
     pub cap_raw: M::Stored<BytesVec<Height, CentsSats>>,
     pub investor_cap_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
 
     pub sell_side_risk_ratio: PercentRollingWindows<BasisPoints32, M>,
 
-    pub peak_regret: ComputedFromHeightCumulative<Cents, M>,
-    pub peak_regret_rel_to_realized_cap: PercentFromHeight<BasisPoints32, M>,
+    pub peak_regret: ComputedPerBlockCumulative<Cents, M>,
+    pub peak_regret_rel_to_realized_cap: PercentPerBlock<BasisPoints32, M>,
 
-    pub realized_cap_rel_to_own_market_cap: PercentFromHeight<BasisPoints32, M>,
+    pub realized_cap_rel_to_own_market_cap: PercentPerBlock<BasisPoints32, M>,
 
     #[traversable(rename = "realized_profit_sum")]
     pub realized_profit_sum_extended: RollingWindowsFrom1w<Cents, M>,
@@ -103,9 +103,9 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     #[traversable(rename = "sent_in_loss_sum")]
     pub sent_in_loss_sum_extended: RollingWindowsFrom1w<Sats, M>,
 
-    pub realized_price_ratio_percentiles: ComputedFromHeightRatioPercentiles<M>,
-    pub realized_price_ratio_std_dev: ComputedFromHeightRatioStdDevBands<M>,
-    pub investor_price_ratio_percentiles: ComputedFromHeightRatioPercentiles<M>,
+    pub realized_price_ratio_percentiles: RatioPerBlockPercentiles<M>,
+    pub realized_price_ratio_std_dev: RatioPerBlockStdDevBands<M>,
+    pub investor_price_ratio_percentiles: RatioPerBlockPercentiles<M>,
 }
 
 impl RealizedFull {
@@ -118,10 +118,10 @@ impl RealizedFull {
         let gross_pnl = cfg.import("realized_gross_pnl", v0)?;
 
         let profit_value_created = cfg.import("profit_value_created", v0)?;
-        let profit_value_destroyed: ComputedFromHeight<Cents> =
+        let profit_value_destroyed: ComputedPerBlock<Cents> =
             cfg.import("profit_value_destroyed", v0)?;
         let loss_value_created = cfg.import("loss_value_created", v0)?;
-        let loss_value_destroyed: ComputedFromHeight<Cents> =
+        let loss_value_destroyed: ComputedPerBlock<Cents> =
             cfg.import("loss_value_destroyed", v0)?;
 
         let profit_value_created_sum = cfg.import("profit_value_created", v1)?;
@@ -129,13 +129,13 @@ impl RealizedFull {
         let loss_value_created_sum = cfg.import("loss_value_created", v1)?;
         let loss_value_destroyed_sum = cfg.import("loss_value_destroyed", v1)?;
 
-        let capitulation_flow = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
+        let capitulation_flow = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
             &cfg.name("capitulation_flow"),
             cfg.version,
             loss_value_destroyed.height.read_only_boxed_clone(),
             &loss_value_destroyed,
         );
-        let profit_flow = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
+        let profit_flow = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
             &cfg.name("profit_flow"),
             cfg.version,
             profit_value_destroyed.height.read_only_boxed_clone(),
@@ -221,19 +221,19 @@ impl RealizedFull {
             sopr_extended,
             sent_in_profit_sum_extended: cfg.import("sent_in_profit", v1)?,
             sent_in_loss_sum_extended: cfg.import("sent_in_loss", v1)?,
-            realized_price_ratio_percentiles: ComputedFromHeightRatioPercentiles::forced_import(
+            realized_price_ratio_percentiles: RatioPerBlockPercentiles::forced_import(
                 cfg.db,
                 &realized_price_name,
                 realized_price_version,
                 cfg.indexes,
             )?,
-            realized_price_ratio_std_dev: ComputedFromHeightRatioStdDevBands::forced_import(
+            realized_price_ratio_std_dev: RatioPerBlockStdDevBands::forced_import(
                 cfg.db,
                 &realized_price_name,
                 realized_price_version,
                 cfg.indexes,
             )?,
-            investor_price_ratio_percentiles: ComputedFromHeightRatioPercentiles::forced_import(
+            investor_price_ratio_percentiles: RatioPerBlockPercentiles::forced_import(
                 cfg.db,
                 &investor_price_name,
                 investor_price_version,

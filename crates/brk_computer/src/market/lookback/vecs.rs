@@ -3,9 +3,9 @@ use brk_types::Cents;
 use vecdb::{Rw, StorageMode};
 
 use super::ByLookbackPeriod;
-use crate::internal::{ComputedFromHeight, Price};
+use crate::internal::{ComputedPerBlock, Price};
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub price_lookback: ByLookbackPeriod<Price<ComputedFromHeight<Cents, M>>>,
+    pub price_lookback: ByLookbackPeriod<Price<ComputedPerBlock<Cents, M>>>,
 }

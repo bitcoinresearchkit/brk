@@ -7,7 +7,7 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 use crate::{
     blocks,
     distribution::state::RealizedOps,
-    internal::{ComputedFromHeight, RollingWindow24h},
+    internal::{ComputedPerBlock, RollingWindow24h},
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -21,8 +21,8 @@ pub struct RealizedBase<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub core: RealizedCore<M>,
 
-    pub sent_in_profit: ComputedFromHeight<Sats, M>,
-    pub sent_in_loss: ComputedFromHeight<Sats, M>,
+    pub sent_in_profit: ComputedPerBlock<Sats, M>,
+    pub sent_in_loss: ComputedPerBlock<Sats, M>,
 
     pub sent_in_profit_sum: RollingWindow24h<Sats, M>,
     pub sent_in_loss_sum: RollingWindow24h<Sats, M>,

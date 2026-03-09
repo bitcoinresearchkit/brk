@@ -6,7 +6,7 @@ use brk_types::{Cents, Dollars, Sats, Version};
 use crate::{
     distribution, indexes,
     internal::{
-        FiatRollingDelta, Identity, LazyFiatFromHeight, LazyAmountFromHeight, PercentFromHeight,
+        FiatRollingDelta, Identity, LazyFiatPerBlock, LazyAmountPerBlock, PercentPerBlock,
         RollingWindows, SatsToBitcoin, finalize_db, open_db,
     },
 };
@@ -28,7 +28,7 @@ impl Vecs {
         let supply_metrics = &distribution.utxo_cohorts.all.metrics.supply;
 
         // Circulating supply - lazy refs to distribution
-        let circulating = LazyAmountFromHeight::from_block_source::<
+        let circulating = LazyAmountPerBlock::from_block_source::<
             Identity<Sats>,
             SatsToBitcoin,
             Identity<Cents>,
@@ -40,14 +40,14 @@ impl Vecs {
 
         // Inflation rate
         let inflation_rate =
-            PercentFromHeight::forced_import(&db, "inflation_rate", version, indexes)?;
+            PercentPerBlock::forced_import(&db, "inflation_rate", version, indexes)?;
 
         // Velocity
         let velocity = super::velocity::Vecs::forced_import(&db, version, indexes)?;
 
         // Market cap - lazy fiat (cents + usd) from distribution supply
         let market_cap =
-            LazyFiatFromHeight::from_computed("market_cap", version, &supply_metrics.total.cents);
+            LazyFiatPerBlock::from_computed("market_cap", version, &supply_metrics.total.cents);
 
         // Market cap delta (change + rate across 4 windows)
         let market_cap_delta = FiatRollingDelta::forced_import(

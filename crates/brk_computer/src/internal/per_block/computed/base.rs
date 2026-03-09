@@ -1,0 +1,71 @@
+use brk_error::Result;
+
+use brk_traversable::Traversable;
+use brk_types::{Height, Version};
+use derive_more::{Deref, DerefMut};
+use schemars::JsonSchema;
+use vecdb::{
+    BinaryTransform, Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableCloneableVec,
+    ReadableVec, Rw, StorageMode, VecValue,
+};
+
+use crate::indexes;
+
+use crate::internal::{Resolutions, ComputedVecValue, NumericValue};
+
+#[derive(Deref, DerefMut, Traversable)]
+#[traversable(merge)]
+pub struct ComputedPerBlock<T, M: StorageMode = Rw>
+where
+    T: ComputedVecValue + PartialOrd + JsonSchema,
+{
+    pub height: M::Stored<EagerVec<PcoVec<Height, T>>>,
+    #[deref]
+    #[deref_mut]
+    #[traversable(flatten)]
+    pub resolutions: Box<Resolutions<T>>,
+}
+
+impl<T> ComputedPerBlock<T>
+where
+    T: NumericValue + JsonSchema,
+{
+    pub(crate) fn forced_import(
+        db: &Database,
+        name: &str,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
+        let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, version)?;
+
+        let resolutions = Resolutions::forced_import(
+            name,
+            height.read_only_boxed_clone(),
+            version,
+            indexes,
+        );
+
+        Ok(Self {
+            height,
+            resolutions: Box::new(resolutions),
+        })
+    }
+
+    /// Eagerly compute this vec as a binary transform of two sources.
+    pub(crate) fn compute_binary<S1T, S2T, F>(
+        &mut self,
+        max_from: Height,
+        source1: &impl ReadableVec<Height, S1T>,
+        source2: &impl ReadableVec<Height, S2T>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        S1T: VecValue,
+        S2T: VecValue,
+        F: BinaryTransform<S1T, S2T, T>,
+    {
+        self.height
+            .compute_binary::<S1T, S2T, F>(max_from, source1, source2, exit)?;
+        Ok(())
+    }
+}

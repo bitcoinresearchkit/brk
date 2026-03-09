@@ -6,8 +6,8 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        AmountFromHeightCumulative, AmountFromHeightCumulativeSum, AmountFromHeightFull,
-        FiatFromHeight, PercentFromHeight, PercentRollingWindows,
+        AmountPerBlockCumulative, AmountPerBlockCumulativeSum, AmountPerBlockFull,
+        FiatPerBlock, PercentPerBlock, PercentRollingWindows,
     },
 };
 
@@ -18,25 +18,25 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            coinbase: AmountFromHeightCumulativeSum::forced_import(
+            coinbase: AmountPerBlockCumulativeSum::forced_import(
                 db, "coinbase", version, indexes,
             )?,
-            subsidy: AmountFromHeightCumulative::forced_import(db, "subsidy", version, indexes)?,
-            fees: AmountFromHeightFull::forced_import(db, "fees", version, indexes)?,
-            unclaimed_rewards: AmountFromHeightCumulativeSum::forced_import(
+            subsidy: AmountPerBlockCumulative::forced_import(db, "subsidy", version, indexes)?,
+            fees: AmountPerBlockFull::forced_import(db, "fees", version, indexes)?,
+            unclaimed_rewards: AmountPerBlockCumulativeSum::forced_import(
                 db,
                 "unclaimed_rewards",
                 version,
                 indexes,
             )?,
-            fee_dominance: PercentFromHeight::forced_import(db, "fee_dominance", version, indexes)?,
+            fee_dominance: PercentPerBlock::forced_import(db, "fee_dominance", version, indexes)?,
             fee_dominance_rolling: PercentRollingWindows::forced_import(
                 db,
                 "fee_dominance",
                 version,
                 indexes,
             )?,
-            subsidy_dominance: PercentFromHeight::forced_import(
+            subsidy_dominance: PercentPerBlock::forced_import(
                 db,
                 "subsidy_dominance",
                 version,
@@ -48,7 +48,7 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            subsidy_sma_1y: FiatFromHeight::forced_import(db, "subsidy_sma_1y", version, indexes)?,
+            subsidy_sma_1y: FiatPerBlock::forced_import(db, "subsidy_sma_1y", version, indexes)?,
         })
     }
 }

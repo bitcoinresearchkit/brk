@@ -45,7 +45,7 @@ impl TimestampIndexes {
             };
         }
 
-        Ok(Self(crate::internal::PerPeriod {
+        Ok(Self(crate::internal::PerResolution {
             minute10: period!(minute10),
             minute30: period!(minute30),
             hour1: period!(hour1),
@@ -59,8 +59,8 @@ impl TimestampIndexes {
             month6: period!(month6),
             year1: period!(year1),
             year10: period!(year10),
-            halvingepoch: epoch!(halvingepoch),
-            difficultyepoch: epoch!(difficultyepoch),
+            halving: epoch!(halving),
+            difficulty: epoch!(difficulty),
         }))
     }
 }

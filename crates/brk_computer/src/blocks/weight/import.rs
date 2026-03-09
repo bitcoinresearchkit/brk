@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedHeightDerivedFull, PercentFromHeightRollingAverage},
+    internal::{ResolutionsFull, PercentPerBlockRollingAverage},
 };
 
 impl Vecs {
@@ -15,9 +15,9 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let weight =
-            ComputedHeightDerivedFull::forced_import(db, "block_weight", version, indexes)?;
+            ResolutionsFull::forced_import(db, "block_weight", version, indexes)?;
 
-        let fullness = PercentFromHeightRollingAverage::forced_import(
+        let fullness = PercentPerBlockRollingAverage::forced_import(
             db,
             "block_fullness",
             version,

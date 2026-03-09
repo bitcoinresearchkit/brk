@@ -7,10 +7,10 @@ use vecdb::{BytesVec, BytesVecValue, Database, ImportableVec};
 use crate::{
     indexes,
     internal::{
-        AmountFromHeight, AmountFromHeightCumulative, CentsType, ComputedFromHeight,
-        ComputedFromHeightCumulative, ComputedFromHeightCumulativeSum, ComputedFromHeightRatio,
-        FiatFromHeight, FiatRollingDelta1m, FiatRollingDeltaExcept1m, NumericValue,
-        PercentFromHeight, PercentRollingWindows, Price, RollingDelta1m, RollingDeltaExcept1m,
+        AmountPerBlock, AmountPerBlockCumulative, CentsType, ComputedPerBlock,
+        ComputedPerBlockCumulative, ComputedPerBlockCumulativeSum, RatioPerBlock,
+        FiatPerBlock, FiatRollingDelta1m, FiatRollingDeltaExcept1m, NumericValue,
+        PercentPerBlock, PercentRollingWindows, Price, RollingDelta1m, RollingDeltaExcept1m,
         RollingWindow24h, RollingWindows, RollingWindowsFrom1w,
     },
 };
@@ -35,28 +35,28 @@ macro_rules! impl_config_import {
 
 // Non-generic types
 impl_config_import!(
-    AmountFromHeight,
-    AmountFromHeightCumulative,
-    ComputedFromHeightRatio,
-    PercentFromHeight<BasisPoints16>,
-    PercentFromHeight<BasisPoints32>,
-    PercentFromHeight<BasisPointsSigned32>,
+    AmountPerBlock,
+    AmountPerBlockCumulative,
+    RatioPerBlock,
+    PercentPerBlock<BasisPoints16>,
+    PercentPerBlock<BasisPoints32>,
+    PercentPerBlock<BasisPointsSigned32>,
     PercentRollingWindows<BasisPoints32>,
-    Price<ComputedFromHeight<Cents>>,
+    Price<ComputedPerBlock<Cents>>,
 );
 
 // Generic types (macro_rules can't parse generic bounds, so written out)
-impl<T: NumericValue + JsonSchema> ConfigImport for ComputedFromHeight<T> {
+impl<T: NumericValue + JsonSchema> ConfigImport for ComputedPerBlock<T> {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }
 }
-impl<T: NumericValue + JsonSchema> ConfigImport for ComputedFromHeightCumulative<T> {
+impl<T: NumericValue + JsonSchema> ConfigImport for ComputedPerBlockCumulative<T> {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }
 }
-impl<T: NumericValue + JsonSchema> ConfigImport for ComputedFromHeightCumulativeSum<T> {
+impl<T: NumericValue + JsonSchema> ConfigImport for ComputedPerBlockCumulativeSum<T> {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }
@@ -76,7 +76,7 @@ impl<T: NumericValue + JsonSchema> ConfigImport for RollingWindowsFrom1w<T> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }
 }
-impl<C: CentsType> ConfigImport for FiatFromHeight<C> {
+impl<C: CentsType> ConfigImport for FiatPerBlock<C> {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }

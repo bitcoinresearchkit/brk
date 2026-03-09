@@ -5,7 +5,7 @@ use vecdb::{Database, Exit, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{PercentFromHeight, RatioU64Bp16},
+    internal::{PercentPerBlock, RatioU64Bp16},
     outputs,
 };
 
@@ -13,8 +13,8 @@ use super::count::Vecs as CountVecs;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub taproot: PercentFromHeight<BasisPoints16, M>,
-    pub segwit: PercentFromHeight<BasisPoints16, M>,
+    pub taproot: PercentPerBlock<BasisPoints16, M>,
+    pub segwit: PercentPerBlock<BasisPoints16, M>,
 }
 
 impl Vecs {
@@ -24,8 +24,8 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            taproot: PercentFromHeight::forced_import(db, "taproot_adoption", version, indexes)?,
-            segwit: PercentFromHeight::forced_import(db, "segwit_adoption", version, indexes)?,
+            taproot: PercentPerBlock::forced_import(db, "taproot_adoption", version, indexes)?,
+            segwit: PercentPerBlock::forced_import(db, "segwit_adoption", version, indexes)?,
         })
     }
 

@@ -3,16 +3,16 @@ use brk_traversable::Traversable;
 use brk_types::{BasisPoints16, Height, Sats, Version};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::internal::{PercentFromHeight, RatioSatsBp16};
+use crate::internal::{PercentPerBlock, RatioSatsBp16};
 
 use crate::distribution::metrics::ImportConfig;
 
 /// Relative-to-all metrics (not present for the "all" cohort itself).
 #[derive(Traversable)]
 pub struct RelativeToAll<M: StorageMode = Rw> {
-    pub supply_rel_to_circulating_supply: PercentFromHeight<BasisPoints16, M>,
-    pub supply_in_profit_rel_to_circulating_supply: PercentFromHeight<BasisPoints16, M>,
-    pub supply_in_loss_rel_to_circulating_supply: PercentFromHeight<BasisPoints16, M>,
+    pub supply_rel_to_circulating_supply: PercentPerBlock<BasisPoints16, M>,
+    pub supply_in_profit_rel_to_circulating_supply: PercentPerBlock<BasisPoints16, M>,
+    pub supply_in_loss_rel_to_circulating_supply: PercentPerBlock<BasisPoints16, M>,
 }
 
 impl RelativeToAll {

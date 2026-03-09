@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeight, PercentFromHeight},
+    internal::{ComputedPerBlock, PercentPerBlock},
 };
 
 impl Vecs {
@@ -15,19 +15,19 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            cointime_adj_inflation_rate: PercentFromHeight::forced_import(
+            cointime_adj_inflation_rate: PercentPerBlock::forced_import(
                 db,
                 "cointime_adj_inflation_rate",
                 version,
                 indexes,
             )?,
-            cointime_adj_tx_velocity_btc: ComputedFromHeight::forced_import(
+            cointime_adj_tx_velocity_btc: ComputedPerBlock::forced_import(
                 db,
                 "cointime_adj_tx_velocity_btc",
                 version,
                 indexes,
             )?,
-            cointime_adj_tx_velocity_usd: ComputedFromHeight::forced_import(
+            cointime_adj_tx_velocity_usd: ComputedPerBlock::forced_import(
                 db,
                 "cointime_adj_tx_velocity_usd",
                 version,

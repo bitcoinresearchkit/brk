@@ -3,16 +3,16 @@ use brk_traversable::Traversable;
 use brk_types::{BasisPoints16, BasisPoints32, BasisPointsSigned32, Dollars, Height, Version};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::internal::{PercentFromHeight, RatioDollarsBp16, RatioDollarsBp32, RatioDollarsBps32};
+use crate::internal::{PercentPerBlock, RatioDollarsBp16, RatioDollarsBp32, RatioDollarsBps32};
 
 use crate::distribution::metrics::{ImportConfig, UnrealizedCore};
 
 /// Extended relative metrics for own market cap (extended && rel_to_all).
 #[derive(Traversable)]
 pub struct RelativeExtendedOwnMarketCap<M: StorageMode = Rw> {
-    pub unrealized_profit_rel_to_own_market_cap: PercentFromHeight<BasisPoints16, M>,
-    pub unrealized_loss_rel_to_own_market_cap: PercentFromHeight<BasisPoints32, M>,
-    pub net_unrealized_pnl_rel_to_own_market_cap: PercentFromHeight<BasisPointsSigned32, M>,
+    pub unrealized_profit_rel_to_own_market_cap: PercentPerBlock<BasisPoints16, M>,
+    pub unrealized_loss_rel_to_own_market_cap: PercentPerBlock<BasisPoints32, M>,
+    pub net_unrealized_pnl_rel_to_own_market_cap: PercentPerBlock<BasisPointsSigned32, M>,
 }
 
 impl RelativeExtendedOwnMarketCap {

@@ -11,19 +11,19 @@ pub fn iter_difficulty_epochs(
     let start_epoch = computer
         .indexes
         .height
-        .difficultyepoch
+        .difficulty
         .collect_one(Height::from(start_height))
         .unwrap_or_default();
     let end_epoch = computer
         .indexes
         .height
-        .difficultyepoch
+        .difficulty
         .collect_one(Height::from(end_height))
         .unwrap_or_default();
 
-    let epoch_to_height = &computer.indexes.difficultyepoch.first_height;
-    let epoch_to_timestamp = &computer.blocks.time.timestamp.difficultyepoch;
-    let epoch_to_difficulty = &computer.blocks.difficulty.raw.difficultyepoch;
+    let epoch_to_height = &computer.indexes.difficulty.first_height;
+    let epoch_to_timestamp = &computer.blocks.time.timestamp.difficulty;
+    let epoch_to_difficulty = &computer.blocks.difficulty.raw.difficulty;
 
     let mut results = Vec::with_capacity(end_epoch.to_usize() - start_epoch.to_usize() + 1);
     let mut prev_difficulty: Option<f64> = None;

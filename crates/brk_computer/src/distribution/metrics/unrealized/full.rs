@@ -5,7 +5,7 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::distribution::state::UnrealizedState;
-use crate::internal::{CentsSubtractToCentsSigned, FiatFromHeight};
+use crate::internal::{CentsSubtractToCentsSigned, FiatPerBlock};
 use crate::{distribution::metrics::ImportConfig, prices};
 
 use super::UnrealizedBase;
@@ -17,13 +17,13 @@ pub struct UnrealizedFull<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub inner: UnrealizedBase<M>,
 
-    pub gross_pnl: FiatFromHeight<Cents, M>,
-    pub invested_capital_in_profit: FiatFromHeight<Cents, M>,
-    pub invested_capital_in_loss: FiatFromHeight<Cents, M>,
+    pub gross_pnl: FiatPerBlock<Cents, M>,
+    pub invested_capital_in_profit: FiatPerBlock<Cents, M>,
+    pub invested_capital_in_loss: FiatPerBlock<Cents, M>,
 
-    pub pain_index: FiatFromHeight<Cents, M>,
-    pub greed_index: FiatFromHeight<Cents, M>,
-    pub net_sentiment: FiatFromHeight<CentsSigned, M>,
+    pub pain_index: FiatPerBlock<Cents, M>,
+    pub greed_index: FiatPerBlock<Cents, M>,
+    pub net_sentiment: FiatPerBlock<CentsSigned, M>,
 }
 
 impl UnrealizedFull {

@@ -2,7 +2,7 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
 use vecdb::{LazyVecFrom1, ReadableCloneableVec, UnaryTransform, VecIndex};
 
-use crate::internal::AmountFromHeight;
+use crate::internal::AmountPerBlock;
 
 /// Fully lazy value type at height level.
 ///
@@ -23,7 +23,7 @@ impl LazyAmount<Height> {
         DollarsTransform,
     >(
         name: &str,
-        source: &AmountFromHeight,
+        source: &AmountPerBlock,
         version: Version,
     ) -> Self
     where

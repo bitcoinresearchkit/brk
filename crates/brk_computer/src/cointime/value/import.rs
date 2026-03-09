@@ -3,7 +3,7 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::ComputedFromHeightCumulativeSum};
+use crate::{indexes, internal::ComputedPerBlockCumulativeSum};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -12,25 +12,25 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            cointime_value_destroyed: ComputedFromHeightCumulativeSum::forced_import(
+            cointime_value_destroyed: ComputedPerBlockCumulativeSum::forced_import(
                 db,
                 "cointime_value_destroyed",
                 version,
                 indexes,
             )?,
-            cointime_value_created: ComputedFromHeightCumulativeSum::forced_import(
+            cointime_value_created: ComputedPerBlockCumulativeSum::forced_import(
                 db,
                 "cointime_value_created",
                 version,
                 indexes,
             )?,
-            cointime_value_stored: ComputedFromHeightCumulativeSum::forced_import(
+            cointime_value_stored: ComputedPerBlockCumulativeSum::forced_import(
                 db,
                 "cointime_value_stored",
                 version,
                 indexes,
             )?,
-            vocdd: ComputedFromHeightCumulativeSum::forced_import(
+            vocdd: ComputedPerBlockCumulativeSum::forced_import(
                 db,
                 "vocdd",
                 version + Version::ONE,

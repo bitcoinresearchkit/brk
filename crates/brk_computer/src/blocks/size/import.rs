@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeightFull, ComputedHeightDerivedFull},
+    internal::{ComputedPerBlockFull, ResolutionsFull},
 };
 
 impl Vecs {
@@ -15,8 +15,8 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            vbytes: ComputedFromHeightFull::forced_import(db, "block_vbytes", version, indexes)?,
-            size: ComputedHeightDerivedFull::forced_import(db, "block_size", version, indexes)?,
+            vbytes: ComputedPerBlockFull::forced_import(db, "block_vbytes", version, indexes)?,
+            size: ResolutionsFull::forced_import(db, "block_size", version, indexes)?,
         })
     }
 }

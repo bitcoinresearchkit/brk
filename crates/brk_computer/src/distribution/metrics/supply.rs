@@ -6,8 +6,8 @@ use crate::{blocks, prices};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::internal::{
-    AmountFromHeight, HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin,
-    LazyAmountFromHeight, RollingDelta1m,
+    AmountPerBlock, HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin,
+    LazyAmountPerBlock, RollingDelta1m,
 };
 
 use super::ImportConfig;
@@ -15,8 +15,8 @@ use super::ImportConfig;
 /// Supply metrics for a cohort.
 #[derive(Traversable)]
 pub struct SupplyMetrics<M: StorageMode = Rw> {
-    pub total: AmountFromHeight<M>,
-    pub halved: LazyAmountFromHeight,
+    pub total: AmountPerBlock<M>,
+    pub halved: LazyAmountPerBlock,
     pub delta: RollingDelta1m<Sats, SatsSigned, M>,
 }
 
@@ -25,7 +25,7 @@ impl SupplyMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let supply = cfg.import("supply", Version::ZERO)?;
 
-        let supply_halved = LazyAmountFromHeight::from_block_source::<
+        let supply_halved = LazyAmountPerBlock::from_block_source::<
             HalveSats,
             HalveSatsToBitcoin,
             HalveCents,

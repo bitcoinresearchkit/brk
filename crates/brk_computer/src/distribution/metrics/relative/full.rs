@@ -6,7 +6,7 @@ use brk_types::{
 use vecdb::{Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{
-    Bps32ToFloat, LazyFromHeight, PercentFromHeight, RatioDollarsBp16, RatioDollarsBps32,
+    Bps32ToFloat, LazyPerBlock, PercentPerBlock, RatioDollarsBp16, RatioDollarsBps32,
     RatioSatsBp16,
 };
 
@@ -15,13 +15,13 @@ use crate::distribution::metrics::{ImportConfig, UnrealizedCore};
 /// Full relative metrics (sth/lth/all tier).
 #[derive(Traversable)]
 pub struct RelativeFull<M: StorageMode = Rw> {
-    pub supply_in_profit_rel_to_own_supply: PercentFromHeight<BasisPoints16, M>,
-    pub supply_in_loss_rel_to_own_supply: PercentFromHeight<BasisPoints16, M>,
+    pub supply_in_profit_rel_to_own_supply: PercentPerBlock<BasisPoints16, M>,
+    pub supply_in_loss_rel_to_own_supply: PercentPerBlock<BasisPoints16, M>,
 
-    pub unrealized_profit_rel_to_market_cap: PercentFromHeight<BasisPoints16, M>,
-    pub unrealized_loss_rel_to_market_cap: PercentFromHeight<BasisPoints16, M>,
-    pub net_unrealized_pnl_rel_to_market_cap: PercentFromHeight<BasisPointsSigned32, M>,
-    pub nupl: LazyFromHeight<StoredF32, BasisPointsSigned32>,
+    pub unrealized_profit_rel_to_market_cap: PercentPerBlock<BasisPoints16, M>,
+    pub unrealized_loss_rel_to_market_cap: PercentPerBlock<BasisPoints16, M>,
+    pub net_unrealized_pnl_rel_to_market_cap: PercentPerBlock<BasisPointsSigned32, M>,
+    pub nupl: LazyPerBlock<StoredF32, BasisPointsSigned32>,
 }
 
 impl RelativeFull {
@@ -30,10 +30,10 @@ impl RelativeFull {
         let v2 = Version::new(2);
         let v3 = Version::new(3);
 
-        let net_unrealized_pnl_rel_to_market_cap: PercentFromHeight<BasisPointsSigned32> =
+        let net_unrealized_pnl_rel_to_market_cap: PercentPerBlock<BasisPointsSigned32> =
             cfg.import("net_unrealized_pnl_rel_to_market_cap", v3)?;
 
-        let nupl = LazyFromHeight::from_computed::<Bps32ToFloat>(
+        let nupl = LazyPerBlock::from_computed::<Bps32ToFloat>(
             &cfg.name("nupl"),
             cfg.version + v3,
             net_unrealized_pnl_rel_to_market_cap

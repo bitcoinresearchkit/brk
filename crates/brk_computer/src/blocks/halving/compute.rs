@@ -15,7 +15,7 @@ impl Vecs {
     ) -> Result<()> {
         self.epoch.height.compute_transform(
             starting_indexes.height,
-            &indexes.height.halvingepoch,
+            &indexes.height.halving,
             |(h, epoch, ..)| (h, epoch),
             exit,
         )?;

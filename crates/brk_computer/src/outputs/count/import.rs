@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedFromHeight, ComputedFromHeightAggregated},
+    internal::{ComputedPerBlock, ComputedPerBlockAggregated},
 };
 
 impl Vecs {
@@ -15,13 +15,13 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            total_count: ComputedFromHeightAggregated::forced_import(
+            total_count: ComputedPerBlockAggregated::forced_import(
                 db,
                 "output_count",
                 version,
                 indexes,
             )?,
-            utxo_count: ComputedFromHeight::forced_import(
+            utxo_count: ComputedPerBlock::forced_import(
                 db,
                 "exact_utxo_count",
                 version,

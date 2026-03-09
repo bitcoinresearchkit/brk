@@ -1,8 +1,8 @@
 mod address;
 mod day1;
 mod day3;
-mod difficultyepoch;
-mod halvingepoch;
+mod difficulty;
+mod halving;
 mod height;
 mod hour1;
 mod hour12;
@@ -38,8 +38,8 @@ use crate::{
 pub use address::Vecs as AddressVecs;
 pub use day1::Vecs as Day1Vecs;
 pub use day3::Vecs as Day3Vecs;
-pub use difficultyepoch::Vecs as DifficultyEpochVecs;
-pub use halvingepoch::Vecs as HalvingEpochVecs;
+pub use difficulty::Vecs as DifficultyVecs;
+pub use halving::Vecs as HalvingVecs;
 pub use height::Vecs as HeightVecs;
 pub use hour1::Vecs as Hour1Vecs;
 pub use hour4::Vecs as Hour4Vecs;
@@ -63,8 +63,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     db: Database,
     pub address: AddressVecs,
     pub height: HeightVecs<M>,
-    pub difficultyepoch: DifficultyEpochVecs<M>,
-    pub halvingepoch: HalvingEpochVecs<M>,
+    pub difficulty: DifficultyVecs<M>,
+    pub halving: HalvingVecs<M>,
     pub minute10: Minute10Vecs<M>,
     pub minute30: Minute30Vecs<M>,
     pub hour1: Hour1Vecs<M>,
@@ -96,8 +96,8 @@ impl Vecs {
         let this = Self {
             address: AddressVecs::forced_import(version, indexer),
             height: HeightVecs::forced_import(&db, version)?,
-            difficultyepoch: DifficultyEpochVecs::forced_import(&db, version)?,
-            halvingepoch: HalvingEpochVecs::forced_import(&db, version)?,
+            difficulty: DifficultyVecs::forced_import(&db, version)?,
+            halving: HalvingVecs::forced_import(&db, version)?,
             minute10: Minute10Vecs::forced_import(&db, version)?,
             minute30: Minute30Vecs::forced_import(&db, version)?,
             hour1: Hour1Vecs::forced_import(&db, version)?,
@@ -316,55 +316,55 @@ impl Vecs {
         prev_height: Height,
         exit: &Exit,
     ) -> Result<()> {
-        let starting_difficultyepoch = self
+        let starting_difficulty = self
             .height
-            .difficultyepoch
+            .difficulty
             .collect_one(prev_height)
             .unwrap_or_default();
 
-        self.height.difficultyepoch.compute_from_index(
+        self.height.difficulty.compute_from_index(
             starting_indexes.height,
             &indexer.vecs.blocks.weight,
             exit,
         )?;
-        self.difficultyepoch.first_height.compute_first_per_index(
+        self.difficulty.first_height.compute_first_per_index(
             starting_indexes.height,
-            &self.height.difficultyepoch,
+            &self.height.difficulty,
             exit,
         )?;
-        self.difficultyepoch.identity.compute_from_index(
-            starting_difficultyepoch,
-            &self.difficultyepoch.first_height,
+        self.difficulty.identity.compute_from_index(
+            starting_difficulty,
+            &self.difficulty.first_height,
             exit,
         )?;
-        self.difficultyepoch
+        self.difficulty
             .height_count
             .compute_count_from_indexes(
-                starting_difficultyepoch,
-                &self.difficultyepoch.first_height,
+                starting_difficulty,
+                &self.difficulty.first_height,
                 &blocks_time.date,
                 exit,
             )?;
 
-        let starting_halvingepoch = self
+        let starting_halving = self
             .height
-            .halvingepoch
+            .halving
             .collect_one(prev_height)
             .unwrap_or_default();
 
-        self.height.halvingepoch.compute_from_index(
+        self.height.halving.compute_from_index(
             starting_indexes.height,
             &indexer.vecs.blocks.weight,
             exit,
         )?;
-        self.halvingepoch.first_height.compute_first_per_index(
+        self.halving.first_height.compute_first_per_index(
             starting_indexes.height,
-            &self.height.halvingepoch,
+            &self.height.halving,
             exit,
         )?;
-        self.halvingepoch.identity.compute_from_index(
-            starting_halvingepoch,
-            &self.halvingepoch.first_height,
+        self.halving.identity.compute_from_index(
+            starting_halving,
+            &self.halving.first_height,
             exit,
         )?;
 

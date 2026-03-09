@@ -9,8 +9,8 @@ use crate::{
     blocks,
     distribution::state::RealizedOps,
     internal::{
-        CentsUnsignedToDollars, ComputedFromHeight, ComputedFromHeightCumulative,
-        ComputedFromHeightRatio, Identity, LazyFromHeight, Price, RollingWindow24h,
+        CentsUnsignedToDollars, ComputedPerBlock, ComputedPerBlockCumulative,
+        RatioPerBlock, Identity, LazyPerBlock, Price, RollingWindow24h,
     },
     prices,
 };
@@ -19,13 +19,13 @@ use crate::distribution::metrics::ImportConfig;
 
 #[derive(Traversable)]
 pub struct RealizedMinimal<M: StorageMode = Rw> {
-    pub realized_cap_cents: ComputedFromHeight<Cents, M>,
-    pub realized_profit: ComputedFromHeightCumulative<Cents, M>,
-    pub realized_loss: ComputedFromHeightCumulative<Cents, M>,
-    pub realized_cap: LazyFromHeight<Dollars, Cents>,
-    pub realized_price: Price<ComputedFromHeight<Cents, M>>,
-    pub realized_price_ratio: ComputedFromHeightRatio<M>,
-    pub mvrv: LazyFromHeight<StoredF32>,
+    pub realized_cap_cents: ComputedPerBlock<Cents, M>,
+    pub realized_profit: ComputedPerBlockCumulative<Cents, M>,
+    pub realized_loss: ComputedPerBlockCumulative<Cents, M>,
+    pub realized_cap: LazyPerBlock<Dollars, Cents>,
+    pub realized_price: Price<ComputedPerBlock<Cents, M>>,
+    pub realized_price_ratio: RatioPerBlock<M>,
+    pub mvrv: LazyPerBlock<StoredF32>,
 
     pub realized_profit_sum: RollingWindow24h<Cents, M>,
     pub realized_loss_sum: RollingWindow24h<Cents, M>,
@@ -33,9 +33,9 @@ pub struct RealizedMinimal<M: StorageMode = Rw> {
 
 impl RealizedMinimal {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let realized_cap_cents: ComputedFromHeight<Cents> =
+        let realized_cap_cents: ComputedPerBlock<Cents> =
             cfg.import("realized_cap_cents", Version::ZERO)?;
-        let realized_cap = LazyFromHeight::from_computed::<CentsUnsignedToDollars>(
+        let realized_cap = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
             &cfg.name("realized_cap"),
             cfg.version,
             realized_cap_cents.height.read_only_boxed_clone(),
@@ -46,9 +46,9 @@ impl RealizedMinimal {
         let realized_loss = cfg.import("realized_loss", Version::ZERO)?;
 
         let realized_price = cfg.import("realized_price", Version::ONE)?;
-        let realized_price_ratio: ComputedFromHeightRatio =
+        let realized_price_ratio: RatioPerBlock =
             cfg.import("realized_price", Version::ONE)?;
-        let mvrv = LazyFromHeight::from_lazy::<Identity<StoredF32>, BasisPoints32>(
+        let mvrv = LazyPerBlock::from_lazy::<Identity<StoredF32>, BasisPoints32>(
             &cfg.name("mvrv"),
             cfg.version,
             &realized_price_ratio.ratio,

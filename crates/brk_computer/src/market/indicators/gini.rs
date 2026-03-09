@@ -2,10 +2,10 @@ use brk_error::Result;
 use brk_types::{BasisPoints16, Indexes, Sats, StoredU64, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
-use crate::{distribution, internal::PercentFromHeight};
+use crate::{distribution, internal::PercentPerBlock};
 
 pub(super) fn compute(
-    gini: &mut PercentFromHeight<BasisPoints16>,
+    gini: &mut PercentPerBlock<BasisPoints16>,
     distribution: &distribution::Vecs,
     starting_indexes: &Indexes,
     exit: &Exit,

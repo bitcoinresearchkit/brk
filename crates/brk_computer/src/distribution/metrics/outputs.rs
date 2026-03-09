@@ -3,14 +3,14 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Indexes, StoredI64, StoredU64, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
-use crate::{blocks, internal::{ComputedFromHeight, RollingDelta1m}};
+use crate::{blocks, internal::{ComputedPerBlock, RollingDelta1m}};
 
 use super::ImportConfig;
 
 /// Output metrics for a cohort.
 #[derive(Traversable)]
 pub struct OutputsMetrics<M: StorageMode = Rw> {
-    pub utxo_count: ComputedFromHeight<StoredU64, M>,
+    pub utxo_count: ComputedPerBlock<StoredU64, M>,
     pub utxo_count_delta: RollingDelta1m<StoredU64, StoredI64, M>,
 }
 

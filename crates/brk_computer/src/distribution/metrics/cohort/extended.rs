@@ -9,7 +9,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, prices};
 
-use crate::internal::{ComputedFromHeight, RollingDeltaExcept1m};
+use crate::internal::{ComputedPerBlock, RollingDeltaExcept1m};
 
 use crate::distribution::metrics::{
     ActivityFull, CohortMetricsBase, CostBasis, ImportConfig, OutputsMetrics,
@@ -29,8 +29,8 @@ pub struct ExtendedCohortMetrics<M: StorageMode = Rw> {
     pub cost_basis: Box<CostBasis<M>>,
     pub unrealized: Box<UnrealizedFull<M>>,
     pub relative: Box<RelativeWithExtended<M>>,
-    pub dormancy: ComputedFromHeight<StoredF32, M>,
-    pub velocity: ComputedFromHeight<StoredF32, M>,
+    pub dormancy: ComputedPerBlock<StoredF32, M>,
+    pub velocity: ComputedPerBlock<StoredF32, M>,
 
     #[traversable(wrap = "supply", rename = "delta")]
     pub supply_delta_extended: RollingDeltaExcept1m<Sats, SatsSigned, M>,

@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{BlockCountTarget, ComputedFromHeightCumulativeSum, ConstantVecs},
+    internal::{BlockCountTarget, ComputedPerBlockCumulativeSum, ConstantVecs},
 };
 
 impl Vecs {
@@ -20,7 +20,7 @@ impl Vecs {
                 version,
                 indexes,
             ),
-            block_count: ComputedFromHeightCumulativeSum::forced_import(
+            block_count: ComputedPerBlockCumulativeSum::forced_import(
                 db,
                 "block_count",
                 version,
