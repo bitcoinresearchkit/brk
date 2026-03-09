@@ -12,8 +12,12 @@ Command-line interface for running a Bitcoin Research Kit instance.
 - Linux or macOS
 - Bitcoin Core with `server=1` in `bitcoin.conf`
 - Access to `blk*.dat` files
-- [~400 GB disk space](https://bitview.space/api/server/disk)
+- [~400 GB disk space](https://bitview.space/api/server/disk) (see [Disk usage](#disk-usage))
 - [12+ GB RAM](https://github.com/bitcoinresearchkit/benches#benchmarks)
+
+## Disk usage
+
+BRK uses [sparse files](https://en.wikipedia.org/wiki/Sparse_file). Tools like `ls -l` or Finder report the logical file size (>1 TB), not actual disk usage (~350 GB). Use `du -sh` to see real usage.
 
 ## Install
 

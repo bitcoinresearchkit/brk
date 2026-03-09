@@ -61,6 +61,8 @@ docker compose -f docker/docker-compose.yml build
 
 ## Data Storage
 
+BRK uses [sparse files](https://en.wikipedia.org/wiki/Sparse_file). Volume inspection and `docker system df` may report the logical file size (>1 TB) instead of actual disk usage (~350 GB). Use `du -sh` on the volume mount point to see real usage.
+
 ### Named Volume (Default)
 Uses a Docker-managed volume called `brk-data`.
 

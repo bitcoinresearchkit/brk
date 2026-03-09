@@ -14,8 +14,10 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub fees: AmountPerBlockFull<M>,
     pub unclaimed_rewards: AmountPerBlockCumulativeSum<M>,
     pub fee_dominance: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(rename = "fee_dominance")]
     pub fee_dominance_rolling: PercentRollingWindows<BasisPoints16, M>,
     pub subsidy_dominance: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(rename = "subsidy_dominance")]
     pub subsidy_dominance_rolling: PercentRollingWindows<BasisPoints16, M>,
     pub subsidy_sma_1y: FiatPerBlock<Cents, M>,
 }

@@ -14,30 +14,27 @@ impl Vecs {
         activity: &activity::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        self.cointime_adj_inflation_rate
-            .bps
-            .height
-            .compute_transform2(
-                starting_indexes.height,
-                &activity.liveliness.height,
-                &supply.inflation_rate.bps.height,
-                |(h, liveliness, inflation, ..)| {
-                    (
-                        h,
-                        BasisPointsSigned32::from(f64::from(liveliness) * f64::from(inflation)),
-                    )
-                },
-                exit,
-            )?;
+        self.adj_inflation_rate.bps.height.compute_transform2(
+            starting_indexes.height,
+            &activity.liveliness.height,
+            &supply.inflation_rate.bps.height,
+            |(h, liveliness, inflation, ..)| {
+                (
+                    h,
+                    BasisPointsSigned32::from(f64::from(liveliness) * f64::from(inflation)),
+                )
+            },
+            exit,
+        )?;
 
-        self.cointime_adj_tx_velocity_btc.height.compute_multiply(
+        self.adj_tx_velocity_btc.height.compute_multiply(
             starting_indexes.height,
             &activity.activity_to_vaultedness_ratio.height,
             &supply.velocity.btc.height,
             exit,
         )?;
 
-        self.cointime_adj_tx_velocity_usd.height.compute_multiply(
+        self.adj_tx_velocity_usd.height.compute_multiply(
             starting_indexes.height,
             &activity.activity_to_vaultedness_ratio.height,
             &supply.velocity.usd.height,

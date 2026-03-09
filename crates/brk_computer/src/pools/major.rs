@@ -16,7 +16,6 @@ use crate::{
 use super::minor;
 
 #[derive(Deref, DerefMut, Traversable)]
-#[traversable(merge)]
 pub struct Vecs<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
@@ -26,6 +25,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(wrap = "blocks_mined", rename = "sum")]
     pub blocks_mined_sum: RollingWindows<StoredU32, M>,
     pub rewards: AmountPerBlockCumulativeSum<M>,
+    #[traversable(rename = "dominance")]
     pub dominance_rolling: PercentRollingWindows<BasisPoints16, M>,
 }
 

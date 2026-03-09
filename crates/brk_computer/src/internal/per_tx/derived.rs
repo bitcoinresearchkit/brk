@@ -22,7 +22,6 @@ pub struct BlockRollingDistribution<T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
-    #[traversable(rename = "6b")]
     pub _6b: Distribution<Height, T, M>,
 }
 

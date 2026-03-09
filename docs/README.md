@@ -53,6 +53,8 @@ cargo install --locked brk_cli && brk
 
 Run your own website and API. All you need is Bitcoin Core.
 
+> **Note:** BRK uses [sparse files](https://en.wikipedia.org/wiki/Sparse_file). Tools like `ls -l` or Finder report the logical file size (>1 TB), not actual disk usage (~350 GB). Use `du -sh` to see real usage.
+
 [Guide](https://github.com/bitcoinresearchkit/brk/blob/main/crates/brk_cli/README.md) · [Professional hosting](./PROFESSIONAL_HOSTING.md)
 
 ### Library

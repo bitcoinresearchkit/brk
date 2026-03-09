@@ -80,7 +80,7 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     pub sell_side_risk_ratio: PercentRollingWindows<BasisPoints32, M>,
 
     pub peak_regret: ComputedPerBlockCumulative<Cents, M>,
-    pub peak_regret_rel_to_realized_cap: PercentPerBlock<BasisPoints32, M>,
+    pub peak_regret_rel_to_rcap: PercentPerBlock<BasisPoints32, M>,
 
     pub cap_rel_to_own_mcap: PercentPerBlock<BasisPoints32, M>,
 
@@ -207,7 +207,7 @@ impl RealizedFull {
             investor_cap_raw,
             sell_side_risk_ratio,
             peak_regret,
-            peak_regret_rel_to_realized_cap,
+            peak_regret_rel_to_rcap: peak_regret_rel_to_realized_cap,
             cap_rel_to_own_mcap: cfg.import("realized_cap_rel_to_own_market_cap", v1)?,
             profit_sum_extended: cfg.import("realized_profit", v1)?,
             loss_sum_extended: cfg.import("realized_loss", v1)?,
@@ -535,7 +535,7 @@ impl RealizedFull {
         )?;
 
         // Peak regret
-        self.peak_regret_rel_to_realized_cap
+        self.peak_regret_rel_to_rcap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
                 &self.peak_regret.height,

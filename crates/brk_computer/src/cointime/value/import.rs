@@ -12,19 +12,19 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            cointime_value_destroyed: ComputedPerBlockCumulativeSum::forced_import(
+            value_destroyed: ComputedPerBlockCumulativeSum::forced_import(
                 db,
                 "cointime_value_destroyed",
                 version,
                 indexes,
             )?,
-            cointime_value_created: ComputedPerBlockCumulativeSum::forced_import(
+            value_created: ComputedPerBlockCumulativeSum::forced_import(
                 db,
                 "cointime_value_created",
                 version,
                 indexes,
             )?,
-            cointime_value_stored: ComputedPerBlockCumulativeSum::forced_import(
+            value_stored: ComputedPerBlockCumulativeSum::forced_import(
                 db,
                 "cointime_value_stored",
                 version,

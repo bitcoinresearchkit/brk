@@ -2,13 +2,9 @@ use brk_traversable::Traversable;
 
 #[derive(Clone, Traversable)]
 pub struct Windows<A> {
-    #[traversable(rename = "24h")]
     pub _24h: A,
-    #[traversable(rename = "1w")]
     pub _1w: A,
-    #[traversable(rename = "1m")]
     pub _1m: A,
-    #[traversable(rename = "1y")]
     pub _1y: A,
 }
 

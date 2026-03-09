@@ -67,7 +67,6 @@ pub struct RollingWindow24h<T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
-    #[traversable(rename = "24h")]
     pub _24h: ComputedPerBlock<T, M>,
 }
 
@@ -114,11 +113,8 @@ pub struct RollingWindowsFrom1w<T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
-    #[traversable(rename = "1w")]
     pub _1w: ComputedPerBlock<T, M>,
-    #[traversable(rename = "1m")]
     pub _1m: ComputedPerBlock<T, M>,
-    #[traversable(rename = "1y")]
     pub _1y: ComputedPerBlock<T, M>,
 }
 
