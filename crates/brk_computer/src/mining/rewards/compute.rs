@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{BasisPoints16, CheckedSub, HalvingEpoch, Indexes, Sats};
+use brk_types::{BasisPoints16, CheckedSub, Halving, Indexes, Sats};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
@@ -102,7 +102,7 @@ impl Vecs {
                     starting_indexes.height,
                     &self.subsidy.base.sats.height,
                     |(height, subsidy, ..)| {
-                        let halving = HalvingEpoch::from(height);
+                        let halving = Halving::from(height);
                         let expected = Sats::FIFTY_BTC / 2_usize.pow(halving.to_usize() as u32);
                         (height, expected.checked_sub(subsidy).unwrap())
                     },

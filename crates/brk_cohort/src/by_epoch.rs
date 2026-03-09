@@ -1,17 +1,17 @@
 use brk_traversable::Traversable;
-use brk_types::{HalvingEpoch, Height};
+use brk_types::{Halving, Height};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::Serialize;
 
 use super::{CohortName, Filter};
 
 /// Epoch values
-pub const EPOCH_VALUES: ByEpoch<HalvingEpoch> = ByEpoch {
-    _0: HalvingEpoch::new(0),
-    _1: HalvingEpoch::new(1),
-    _2: HalvingEpoch::new(2),
-    _3: HalvingEpoch::new(3),
-    _4: HalvingEpoch::new(4),
+pub const EPOCH_VALUES: ByEpoch<Halving> = ByEpoch {
+    _0: Halving::new(0),
+    _1: Halving::new(1),
+    _2: Halving::new(2),
+    _3: Halving::new(3),
+    _4: Halving::new(4),
 };
 
 /// Epoch filters
@@ -108,16 +108,16 @@ impl<T> ByEpoch<T> {
     }
 
     pub fn mut_vec_from_height(&mut self, height: Height) -> &mut T {
-        let epoch = HalvingEpoch::from(height);
-        if epoch == HalvingEpoch::new(0) {
+        let epoch = Halving::from(height);
+        if epoch == Halving::new(0) {
             &mut self._0
-        } else if epoch == HalvingEpoch::new(1) {
+        } else if epoch == Halving::new(1) {
             &mut self._1
-        } else if epoch == HalvingEpoch::new(2) {
+        } else if epoch == Halving::new(2) {
             &mut self._2
-        } else if epoch == HalvingEpoch::new(3) {
+        } else if epoch == Halving::new(3) {
             &mut self._3
-        } else if epoch == HalvingEpoch::new(4) {
+        } else if epoch == Halving::new(4) {
             &mut self._4
         } else {
             todo!("")

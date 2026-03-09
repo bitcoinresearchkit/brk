@@ -312,7 +312,7 @@
  * @property {number} difficulty - Difficulty value.
  * @property {Height} height - Block height of the adjustment.
  */
-/** @typedef {number} DifficultyEpoch */
+/** @typedef {number} Epoch */
 /**
  * Disk usage of the indexed data
  *
@@ -361,7 +361,7 @@
  * @property {CentsSquaredSats} investorCapRaw - The investor capitalization: Σ(price² × sats)
  */
 /** @typedef {TypeIndex} FundedAddressIndex */
-/** @typedef {number} HalvingEpoch */
+/** @typedef {number} Halving */
 /**
  * A single hashrate data point.
  *
@@ -3718,7 +3718,7 @@ function create_24hPattern(client, acc) {
  * @property {MetricPattern1<StoredF64>} raw
  * @property {MetricPattern1<StoredF64>} asHash
  * @property {BpsPercentRatioPattern} adjustment
- * @property {MetricPattern1<DifficultyEpoch>} epoch
+ * @property {MetricPattern1<Epoch>} epoch
  * @property {MetricPattern1<StoredU32>} blocksBeforeNextAdjustment
  * @property {MetricPattern1<StoredF32>} daysBeforeNextAdjustment
  */
@@ -3797,7 +3797,7 @@ function create_24hPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Blocks_Halving
- * @property {MetricPattern1<HalvingEpoch>} epoch
+ * @property {MetricPattern1<Halving>} epoch
  * @property {MetricPattern1<StoredU32>} blocksBeforeNextHalving
  * @property {MetricPattern1<StoredF32>} daysBeforeNextHalving
  */
@@ -4238,8 +4238,8 @@ function create_24hPattern(client, acc) {
  * @property {MetricPattern18<Hour12>} hour12
  * @property {MetricPattern18<Day1>} day1
  * @property {MetricPattern18<Day3>} day3
- * @property {MetricPattern18<DifficultyEpoch>} difficultyepoch
- * @property {MetricPattern18<HalvingEpoch>} halvingepoch
+ * @property {MetricPattern18<Epoch>} difficultyepoch
+ * @property {MetricPattern18<Halving>} halvingepoch
  * @property {MetricPattern18<Week1>} week1
  * @property {MetricPattern18<Month1>} month1
  * @property {MetricPattern18<Month3>} month3
@@ -4251,14 +4251,14 @@ function create_24hPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Difficultyepoch
- * @property {MetricPattern17<DifficultyEpoch>} identity
+ * @property {MetricPattern17<Epoch>} identity
  * @property {MetricPattern17<Height>} firstHeight
  * @property {MetricPattern17<StoredU64>} heightCount
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Halvingepoch
- * @property {MetricPattern16<HalvingEpoch>} identity
+ * @property {MetricPattern16<Halving>} identity
  * @property {MetricPattern16<Height>} firstHeight
  */
 

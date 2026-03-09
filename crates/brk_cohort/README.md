@@ -24,7 +24,7 @@ pub enum Filter {
     Term(Term),           // STH/LTH
     Time(TimeFilter),     // Age-based
     Amount(AmountFilter), // Value-based
-    Epoch(HalvingEpoch),  // Halving epoch
+    Epoch(Halving),  // Halving epoch
     Year(Year),           // Calendar year
     Type(OutputType),     // P2PKH, P2TR, etc.
 }
@@ -48,5 +48,5 @@ ctx.full_name(&filter, "min_age_150d");  // "utxos_min_age_150d"
 ## Built On
 
 - `brk_error` for error handling
-- `brk_types` for `Sats`, `HalvingEpoch`, `OutputType`
+- `brk_types` for `Sats`, `Halving`, `OutputType`
 - `brk_traversable` for data structure traversal

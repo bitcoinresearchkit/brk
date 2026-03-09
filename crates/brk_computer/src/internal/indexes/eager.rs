@@ -2,7 +2,7 @@ use brk_error::Result;
 
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Indexes, Minute10,
+    Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Indexes, Minute10,
     Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
@@ -35,8 +35,8 @@ pub struct EagerIndexes<T, M: StorageMode = Rw>(
         <M as StorageMode>::Stored<EagerVec<PcoVec<Month6, T>>>,
         <M as StorageMode>::Stored<EagerVec<PcoVec<Year1, T>>>,
         <M as StorageMode>::Stored<EagerVec<PcoVec<Year10, T>>>,
-        <M as StorageMode>::Stored<EagerVec<PcoVec<HalvingEpoch, T>>>,
-        <M as StorageMode>::Stored<EagerVec<PcoVec<DifficultyEpoch, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Halving, T>>>,
+        <M as StorageMode>::Stored<EagerVec<PcoVec<Epoch, T>>>,
     >,
 )
 where
@@ -68,7 +68,7 @@ where
             year1: per_period!(),
             year10: per_period!(),
             halving: per_period!(),
-            difficulty: per_period!(),
+            epoch: per_period!(),
         }))
     }
 
@@ -110,7 +110,7 @@ where
         period!(year1);
         period!(year10);
         period!(halving);
-        period!(difficulty);
+        period!(epoch);
 
         Ok(())
     }
@@ -157,7 +157,7 @@ where
         period!(year1);
         period!(year10);
         period!(halving);
-        period!(difficulty);
+        period!(epoch);
 
         Ok(())
     }
@@ -204,7 +204,7 @@ where
         period!(year1);
         period!(year10);
         period!(halving);
-        period!(difficulty);
+        period!(epoch);
 
         Ok(())
     }

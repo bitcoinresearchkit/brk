@@ -1,6 +1,6 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Minute10, Minute30,
+    Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30,
     Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
@@ -34,8 +34,8 @@ pub struct DerivedResolutions<T, S1T = T>(
         LazyTransformLast<Month6, Option<T>, Option<S1T>>,
         LazyTransformLast<Year1, Option<T>, Option<S1T>>,
         LazyTransformLast<Year10, Option<T>, Option<S1T>>,
-        LazyTransformLast<HalvingEpoch, T, S1T>,
-        LazyTransformLast<DifficultyEpoch, T, S1T>,
+        LazyTransformLast<Halving, T, S1T>,
+        LazyTransformLast<Epoch, T, S1T>,
     >,
 )
 where
@@ -110,7 +110,7 @@ where
             year1: period!(year1),
             year10: period!(year10),
             halving: epoch!(halving),
-            difficulty: epoch!(difficulty),
+            epoch: epoch!(epoch),
         })
     }
 
@@ -154,7 +154,7 @@ where
             year1: period!(year1),
             year10: period!(year10),
             halving: epoch!(halving),
-            difficulty: epoch!(difficulty),
+            epoch: epoch!(epoch),
         })
     }
 }

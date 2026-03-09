@@ -1,6 +1,6 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, FromCoarserIndex, HalvingEpoch, Height, Hour1, Hour4, Hour12,
+    Day1, Day3, Epoch, FromCoarserIndex, Halving, Height, Hour1, Hour4, Hour12,
     Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
@@ -32,8 +32,8 @@ pub struct Resolutions<T>(
         LazyAggVec<Month6, Option<T>, Height, Height, T>,
         LazyAggVec<Year1, Option<T>, Height, Height, T>,
         LazyAggVec<Year10, Option<T>, Height, Height, T>,
-        LazyAggVec<HalvingEpoch, T, Height, HalvingEpoch>,
-        LazyAggVec<DifficultyEpoch, T, Height, DifficultyEpoch>,
+        LazyAggVec<Halving, T, Height, Halving>,
+        LazyAggVec<Epoch, T, Height, Epoch>,
     >,
 )
 where
@@ -128,7 +128,7 @@ where
             year1: period!(year1),
             year10: period!(year10),
             halving: epoch!(halving),
-            difficulty: epoch!(difficulty),
+            epoch: epoch!(epoch),
         })
     }
 }

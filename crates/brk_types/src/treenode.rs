@@ -466,7 +466,7 @@ mod tests {
         // - height_cumulative (renamed to "cumulative") → direct leaf at Height
         // - day1 → branch with sum/cumulative at Day1
         // - week1 (flattened from dates) → branch with sum/cumulative at Week1
-        // - difficultyepoch → branch with sum/cumulative at DifficultyEpoch
+        // - difficultyepoch → branch with sum/cumulative at Epoch
         let tree = branch(vec![
             ("cumulative", leaf("metric_cumulative", Index::Height)),
             (
@@ -486,10 +486,10 @@ mod tests {
             (
                 "difficultyepoch",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::DifficultyEpoch)),
+                    ("sum", leaf("metric_sum", Index::Epoch)),
                     (
                         "cumulative",
-                        leaf("metric_cumulative", Index::DifficultyEpoch),
+                        leaf("metric_cumulative", Index::Epoch),
                     ),
                 ]),
             ),
@@ -501,19 +501,19 @@ mod tests {
             TreeNode::Branch(map) => {
                 assert_eq!(map.len(), 2);
 
-                // sum: Day1, Week1, DifficultyEpoch (NOT Height)
+                // sum: Day1, Week1, Epoch (NOT Height)
                 let sum_indexes = get_leaf_indexes(map.get("sum").unwrap()).unwrap();
                 assert!(!sum_indexes.contains(&Index::Height));
                 assert!(sum_indexes.contains(&Index::Day1));
                 assert!(sum_indexes.contains(&Index::Week1));
-                assert!(sum_indexes.contains(&Index::DifficultyEpoch));
+                assert!(sum_indexes.contains(&Index::Epoch));
 
-                // cumulative: Height, Day1, Week1, DifficultyEpoch
+                // cumulative: Height, Day1, Week1, Epoch
                 let cumulative_indexes = get_leaf_indexes(map.get("cumulative").unwrap()).unwrap();
                 assert!(cumulative_indexes.contains(&Index::Height));
                 assert!(cumulative_indexes.contains(&Index::Day1));
                 assert!(cumulative_indexes.contains(&Index::Week1));
-                assert!(cumulative_indexes.contains(&Index::DifficultyEpoch));
+                assert!(cumulative_indexes.contains(&Index::Epoch));
             }
             _ => panic!("Expected branch"),
         }

@@ -25,30 +25,30 @@ pub const BLOCKS_PER_DIFF_EPOCHS: u32 = 2016;
     Pco,
     JsonSchema,
 )]
-pub struct DifficultyEpoch(u16);
+pub struct Epoch(u16);
 
-impl From<u16> for DifficultyEpoch {
+impl From<u16> for Epoch {
     #[inline]
     fn from(value: u16) -> Self {
         Self(value)
     }
 }
 
-impl From<usize> for DifficultyEpoch {
+impl From<usize> for Epoch {
     #[inline]
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
-impl From<DifficultyEpoch> for usize {
+impl From<Epoch> for usize {
     #[inline]
-    fn from(value: DifficultyEpoch) -> Self {
+    fn from(value: Epoch) -> Self {
         value.0 as usize
     }
 }
 
-impl Add for DifficultyEpoch {
+impl Add for Epoch {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -56,13 +56,13 @@ impl Add for DifficultyEpoch {
     }
 }
 
-impl AddAssign for DifficultyEpoch {
+impl AddAssign for Epoch {
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs
     }
 }
 
-impl Add<usize> for DifficultyEpoch {
+impl Add<usize> for Epoch {
     type Output = Self;
 
     fn add(self, rhs: usize) -> Self::Output {
@@ -70,37 +70,37 @@ impl Add<usize> for DifficultyEpoch {
     }
 }
 
-impl Div<usize> for DifficultyEpoch {
+impl Div<usize> for Epoch {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
         Self::from(self.0 as usize / rhs)
     }
 }
 
-impl From<Height> for DifficultyEpoch {
+impl From<Height> for Epoch {
     #[inline]
     fn from(value: Height) -> Self {
         Self((u32::from(value) / BLOCKS_PER_DIFF_EPOCHS) as u16)
     }
 }
 
-impl CheckedSub for DifficultyEpoch {
+impl CheckedSub for Epoch {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
 
-impl PrintableIndex for DifficultyEpoch {
+impl PrintableIndex for Epoch {
     fn to_string() -> &'static str {
         "difficultyepoch"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["difficulty", "difficultyepoch", "diff"]
+        &["epoch", "difficulty", "difficultyepoch", "diff"]
     }
 }
 
-impl std::fmt::Display for DifficultyEpoch {
+impl std::fmt::Display for Epoch {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
@@ -108,7 +108,7 @@ impl std::fmt::Display for DifficultyEpoch {
     }
 }
 
-impl Formattable for DifficultyEpoch {
+impl Formattable for Epoch {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
         let mut b = itoa::Buffer::new();
@@ -116,7 +116,7 @@ impl Formattable for DifficultyEpoch {
     }
 }
 
-impl From<f64> for DifficultyEpoch {
+impl From<f64> for Epoch {
     #[inline]
     fn from(value: f64) -> Self {
         let value = value.max(0.0);
@@ -124,9 +124,9 @@ impl From<f64> for DifficultyEpoch {
     }
 }
 
-impl From<DifficultyEpoch> for f64 {
+impl From<Epoch> for f64 {
     #[inline]
-    fn from(value: DifficultyEpoch) -> Self {
+    fn from(value: Epoch) -> Self {
         value.0 as f64
     }
 }

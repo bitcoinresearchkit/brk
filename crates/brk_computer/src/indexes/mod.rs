@@ -1,7 +1,7 @@
 mod address;
 mod day1;
 mod day3;
-mod difficulty;
+mod epoch;
 mod halving;
 mod height;
 mod hour1;
@@ -38,7 +38,7 @@ use crate::{
 pub use address::Vecs as AddressVecs;
 pub use day1::Vecs as Day1Vecs;
 pub use day3::Vecs as Day3Vecs;
-pub use difficulty::Vecs as DifficultyVecs;
+pub use epoch::Vecs as EpochVecs;
 pub use halving::Vecs as HalvingVecs;
 pub use height::Vecs as HeightVecs;
 pub use hour1::Vecs as Hour1Vecs;
@@ -63,7 +63,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     db: Database,
     pub address: AddressVecs,
     pub height: HeightVecs<M>,
-    pub difficulty: DifficultyVecs<M>,
+    pub epoch: EpochVecs<M>,
     pub halving: HalvingVecs<M>,
     pub minute10: Minute10Vecs<M>,
     pub minute30: Minute30Vecs<M>,
@@ -96,7 +96,7 @@ impl Vecs {
         let this = Self {
             address: AddressVecs::forced_import(version, indexer),
             height: HeightVecs::forced_import(&db, version)?,
-            difficulty: DifficultyVecs::forced_import(&db, version)?,
+            epoch: EpochVecs::forced_import(&db, version)?,
             halving: HalvingVecs::forced_import(&db, version)?,
             minute10: Minute10Vecs::forced_import(&db, version)?,
             minute30: Minute30Vecs::forced_import(&db, version)?,
@@ -318,30 +318,30 @@ impl Vecs {
     ) -> Result<()> {
         let starting_difficulty = self
             .height
-            .difficulty
+            .epoch
             .collect_one(prev_height)
             .unwrap_or_default();
 
-        self.height.difficulty.compute_from_index(
+        self.height.epoch.compute_from_index(
             starting_indexes.height,
             &indexer.vecs.blocks.weight,
             exit,
         )?;
-        self.difficulty.first_height.compute_first_per_index(
+        self.epoch.first_height.compute_first_per_index(
             starting_indexes.height,
-            &self.height.difficulty,
+            &self.height.epoch,
             exit,
         )?;
-        self.difficulty.identity.compute_from_index(
+        self.epoch.identity.compute_from_index(
             starting_difficulty,
-            &self.difficulty.first_height,
+            &self.epoch.first_height,
             exit,
         )?;
-        self.difficulty
+        self.epoch
             .height_count
             .compute_count_from_indexes(
                 starting_difficulty,
-                &self.difficulty.first_height,
+                &self.epoch.first_height,
                 &blocks_time.date,
                 exit,
             )?;

@@ -1,6 +1,6 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Minute10, Minute30,
+    Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30,
     Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use schemars::JsonSchema;
@@ -29,8 +29,8 @@ where
     pub month6: LazyVecFrom1<Month6, T, Month6, Month6>,
     pub year1: LazyVecFrom1<Year1, T, Year1, Year1>,
     pub year10: LazyVecFrom1<Year10, T, Year10, Year10>,
-    pub halving: LazyVecFrom1<HalvingEpoch, T, HalvingEpoch, HalvingEpoch>,
-    pub difficulty: LazyVecFrom1<DifficultyEpoch, T, DifficultyEpoch, DifficultyEpoch>,
+    pub halving: LazyVecFrom1<Halving, T, Halving, Halving>,
+    pub epoch: LazyVecFrom1<Epoch, T, Epoch, Epoch>,
 }
 
 impl<T: VecValue + Formattable + Serialize + JsonSchema> ConstantVecs<T> {
@@ -50,8 +50,8 @@ impl<T: VecValue + Formattable + Serialize + JsonSchema> ConstantVecs<T> {
             + UnaryTransform<Month6, T>
             + UnaryTransform<Year1, T>
             + UnaryTransform<Year10, T>
-            + UnaryTransform<HalvingEpoch, T>
-            + UnaryTransform<DifficultyEpoch, T>,
+            + UnaryTransform<Halving, T>
+            + UnaryTransform<Epoch, T>,
     {
         macro_rules! period {
             ($idx:ident) => {
@@ -79,7 +79,7 @@ impl<T: VecValue + Formattable + Serialize + JsonSchema> ConstantVecs<T> {
             year1: period!(year1),
             year10: period!(year10),
             halving: period!(halving),
-            difficulty: period!(difficulty),
+            epoch: period!(epoch),
         }
     }
 }

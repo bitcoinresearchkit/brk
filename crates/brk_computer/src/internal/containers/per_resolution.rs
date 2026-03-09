@@ -17,5 +17,5 @@ pub struct PerResolution<M10, M30, H1, H4, H12, D1, D3, W1, Mo1, Mo3, Mo6, Y1, Y
     pub year1: Y1,
     pub year10: Y10,
     pub halving: HE,
-    pub difficulty: DE,
+    pub epoch: DE,
 }

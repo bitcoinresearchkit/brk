@@ -1,5 +1,5 @@
 use brk_computer::Computer;
-use brk_types::{DifficultyAdjustmentEntry, DifficultyEpoch, Height};
+use brk_types::{DifficultyAdjustmentEntry, Epoch, Height};
 use vecdb::{ReadableVec, Ro, VecIndex};
 
 /// Iterate over difficulty epochs within a height range.
@@ -11,25 +11,25 @@ pub fn iter_difficulty_epochs(
     let start_epoch = computer
         .indexes
         .height
-        .difficulty
+        .epoch
         .collect_one(Height::from(start_height))
         .unwrap_or_default();
     let end_epoch = computer
         .indexes
         .height
-        .difficulty
+        .epoch
         .collect_one(Height::from(end_height))
         .unwrap_or_default();
 
-    let epoch_to_height = &computer.indexes.difficulty.first_height;
-    let epoch_to_timestamp = &computer.blocks.time.timestamp.difficulty;
-    let epoch_to_difficulty = &computer.blocks.difficulty.raw.difficulty;
+    let epoch_to_height = &computer.indexes.epoch.first_height;
+    let epoch_to_timestamp = &computer.blocks.time.timestamp.epoch;
+    let epoch_to_difficulty = &computer.blocks.difficulty.raw.epoch;
 
     let mut results = Vec::with_capacity(end_epoch.to_usize() - start_epoch.to_usize() + 1);
     let mut prev_difficulty: Option<f64> = None;
 
     for epoch_usize in start_epoch.to_usize()..=end_epoch.to_usize() {
-        let epoch = DifficultyEpoch::from(epoch_usize);
+        let epoch = Epoch::from(epoch_usize);
         let epoch_height = epoch_to_height.collect_one(epoch).unwrap_or_default();
 
         // Skip epochs before our start height but track difficulty

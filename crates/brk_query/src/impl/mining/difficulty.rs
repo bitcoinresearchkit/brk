@@ -1,7 +1,7 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use brk_error::Result;
-use brk_types::{DifficultyAdjustment, DifficultyEpoch, Height};
+use brk_types::{DifficultyAdjustment, Epoch, Height};
 use vecdb::ReadableVec;
 
 use crate::Query;
@@ -23,7 +23,7 @@ impl Query {
         let current_epoch = computer
             .indexes
             .height
-            .difficulty
+            .epoch
             .collect_one(current_height)
             .unwrap();
         let current_epoch_usize: usize = current_epoch.into();
@@ -31,7 +31,7 @@ impl Query {
         // Get epoch start height
         let epoch_start_height = computer
             .indexes
-            .difficulty
+            .epoch
             .first_height
             .collect_one(current_epoch)
             .unwrap();
@@ -48,7 +48,7 @@ impl Query {
             .blocks
             .time
             .timestamp
-            .difficulty
+            .epoch
             .collect_one(current_epoch)
             .unwrap();
         let current_timestamp = indexer
@@ -87,10 +87,10 @@ impl Query {
 
         // Calculate previous retarget using stored difficulty values
         let previous_retarget = if current_epoch_usize > 0 {
-            let prev_epoch = DifficultyEpoch::from(current_epoch_usize - 1);
+            let prev_epoch = Epoch::from(current_epoch_usize - 1);
             let prev_epoch_start = computer
                 .indexes
-                .difficulty
+                .epoch
                 .first_height
                 .collect_one(prev_epoch)
                 .unwrap();

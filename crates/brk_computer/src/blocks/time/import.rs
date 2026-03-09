@@ -60,7 +60,7 @@ impl TimestampIndexes {
             year1: period!(year1),
             year10: period!(year10),
             halving: epoch!(halving),
-            difficulty: epoch!(difficulty),
+            epoch: epoch!(difficulty),
         }))
     }
 }

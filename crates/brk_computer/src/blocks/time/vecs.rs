@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    Date, Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Indexes,
+    Date, Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Indexes,
     Minute10, Minute30, Month1, Month3, Month6, Timestamp, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
@@ -39,8 +39,8 @@ pub struct TimestampIndexes<M: StorageMode = Rw>(
         LazyVecFrom1<Month6, Timestamp, Month6, Height>,
         LazyVecFrom1<Year1, Timestamp, Year1, Height>,
         LazyVecFrom1<Year10, Timestamp, Year10, Height>,
-        M::Stored<EagerVec<PcoVec<HalvingEpoch, Timestamp>>>,
-        M::Stored<EagerVec<PcoVec<DifficultyEpoch, Timestamp>>>,
+        M::Stored<EagerVec<PcoVec<Halving, Timestamp>>>,
+        M::Stored<EagerVec<PcoVec<Epoch, Timestamp>>>,
     >,
 );
 
@@ -65,13 +65,13 @@ impl TimestampIndexes {
             &indexer.vecs.blocks.timestamp,
             exit,
         )?;
-        self.difficulty.compute_indirect_sequential(
+        self.epoch.compute_indirect_sequential(
             indexes
                 .height
-                .difficulty
+                .epoch
                 .collect_one(prev_height)
                 .unwrap_or_default(),
-            &indexes.difficulty.first_height,
+            &indexes.epoch.first_height,
             &indexer.vecs.blocks.timestamp,
             exit,
         )?;

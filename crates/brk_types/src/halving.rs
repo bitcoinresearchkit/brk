@@ -25,36 +25,36 @@ pub const BLOCKS_PER_HALVING: u32 = 210_000;
     Pco,
     JsonSchema,
 )]
-pub struct HalvingEpoch(u8);
+pub struct Halving(u8);
 
-impl HalvingEpoch {
+impl Halving {
     pub const fn new(value: u8) -> Self {
         Self(value)
     }
 }
 
-impl From<u8> for HalvingEpoch {
+impl From<u8> for Halving {
     #[inline]
     fn from(value: u8) -> Self {
         Self(value)
     }
 }
 
-impl From<usize> for HalvingEpoch {
+impl From<usize> for Halving {
     #[inline]
     fn from(value: usize) -> Self {
         Self(value as u8)
     }
 }
 
-impl From<HalvingEpoch> for usize {
+impl From<Halving> for usize {
     #[inline]
-    fn from(value: HalvingEpoch) -> Self {
+    fn from(value: Halving) -> Self {
         value.0 as usize
     }
 }
 
-impl Add for HalvingEpoch {
+impl Add for Halving {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -62,13 +62,13 @@ impl Add for HalvingEpoch {
     }
 }
 
-impl AddAssign for HalvingEpoch {
+impl AddAssign for Halving {
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs
     }
 }
 
-impl Add<usize> for HalvingEpoch {
+impl Add<usize> for Halving {
     type Output = Self;
 
     fn add(self, rhs: usize) -> Self::Output {
@@ -76,27 +76,27 @@ impl Add<usize> for HalvingEpoch {
     }
 }
 
-impl From<Height> for HalvingEpoch {
+impl From<Height> for Halving {
     #[inline]
     fn from(value: Height) -> Self {
         Self((u32::from(value) / BLOCKS_PER_HALVING) as u8)
     }
 }
 
-impl CheckedSub for HalvingEpoch {
+impl CheckedSub for Halving {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
 
-impl Div<usize> for HalvingEpoch {
+impl Div<usize> for Halving {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
         Self::from(self.0 as usize / rhs)
     }
 }
 
-impl PrintableIndex for HalvingEpoch {
+impl PrintableIndex for Halving {
     fn to_string() -> &'static str {
         "halvingepoch"
     }
@@ -106,7 +106,7 @@ impl PrintableIndex for HalvingEpoch {
     }
 }
 
-impl std::fmt::Display for HalvingEpoch {
+impl std::fmt::Display for Halving {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
@@ -114,7 +114,7 @@ impl std::fmt::Display for HalvingEpoch {
     }
 }
 
-impl Formattable for HalvingEpoch {
+impl Formattable for Halving {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
         let mut b = itoa::Buffer::new();
@@ -122,7 +122,7 @@ impl Formattable for HalvingEpoch {
     }
 }
 
-impl From<f64> for HalvingEpoch {
+impl From<f64> for Halving {
     #[inline]
     fn from(value: f64) -> Self {
         let value = value.max(0.0);
@@ -130,9 +130,9 @@ impl From<f64> for HalvingEpoch {
     }
 }
 
-impl From<HalvingEpoch> for f64 {
+impl From<Halving> for f64 {
     #[inline]
-    fn from(value: HalvingEpoch) -> Self {
+    fn from(value: Halving) -> Self {
         value.0 as f64
     }
 }

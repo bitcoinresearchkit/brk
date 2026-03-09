@@ -1,5 +1,5 @@
 use brk_types::{
-    Close, Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, High, Hour1, Hour4, Hour12, Low,
+    Close, Day1, Day3, Epoch, Halving, Height, High, Hour1, Hour4, Hour12, Low,
     Minute10, Minute30, Month1, Month3, Month6, OHLCCents, OHLCDollars, OHLCSats, Open, StoredU64,
     Week1, Year1, Year10,
 };
@@ -114,16 +114,16 @@ impl UnaryTransform<Year10, StoredU64> for BlockCountTarget {
     }
 }
 
-impl UnaryTransform<HalvingEpoch, StoredU64> for BlockCountTarget {
+impl UnaryTransform<Halving, StoredU64> for BlockCountTarget {
     #[inline(always)]
-    fn apply(_: HalvingEpoch) -> StoredU64 {
+    fn apply(_: Halving) -> StoredU64 {
         StoredU64::from(TARGET_BLOCKS_PER_HALVING)
     }
 }
 
-impl UnaryTransform<DifficultyEpoch, StoredU64> for BlockCountTarget {
+impl UnaryTransform<Epoch, StoredU64> for BlockCountTarget {
     #[inline(always)]
-    fn apply(_: DifficultyEpoch) -> StoredU64 {
+    fn apply(_: Epoch) -> StoredU64 {
         StoredU64::from(2016u64)
     }
 }

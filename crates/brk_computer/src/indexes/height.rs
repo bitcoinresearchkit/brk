@@ -1,6 +1,6 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Height, Hour1, Hour4, Hour12, Minute10, Minute30,
+    Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30,
     Month1, Month3, Month6, StoredU64, Version, Week1, Year1, Year10,
 };
 use vecdb::{Database, EagerVec, ImportableVec, PcoVec, Rw, StorageMode};
@@ -17,8 +17,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub hour12: M::Stored<EagerVec<PcoVec<Height, Hour12>>>,
     pub day1: M::Stored<EagerVec<PcoVec<Height, Day1>>>,
     pub day3: M::Stored<EagerVec<PcoVec<Height, Day3>>>,
-    pub difficulty: M::Stored<EagerVec<PcoVec<Height, DifficultyEpoch>>>,
-    pub halving: M::Stored<EagerVec<PcoVec<Height, HalvingEpoch>>>,
+    pub epoch: M::Stored<EagerVec<PcoVec<Height, Epoch>>>,
+    pub halving: M::Stored<EagerVec<PcoVec<Height, Halving>>>,
     pub week1: M::Stored<EagerVec<PcoVec<Height, Week1>>>,
     pub month1: M::Stored<EagerVec<PcoVec<Height, Month1>>>,
     pub month3: M::Stored<EagerVec<PcoVec<Height, Month3>>>,
@@ -39,7 +39,7 @@ impl Vecs {
             hour12: EagerVec::forced_import(db, "hour12", version)?,
             day1: EagerVec::forced_import(db, "day1", version)?,
             day3: EagerVec::forced_import(db, "day3", version)?,
-            difficulty: EagerVec::forced_import(db, "difficulty", version)?,
+            epoch: EagerVec::forced_import(db, "difficulty", version)?,
             halving: EagerVec::forced_import(db, "halving", version)?,
             week1: EagerVec::forced_import(db, "week1", version)?,
             month1: EagerVec::forced_import(db, "month1", version)?,

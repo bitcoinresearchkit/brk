@@ -8,8 +8,8 @@ use vecdb::PrintableIndex;
 use crate::PairOutputIndex;
 
 use super::{
-    Date, Day1, Day3, DifficultyEpoch, EmptyAddressIndex, EmptyOutputIndex, FundedAddressIndex,
-    HalvingEpoch, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3, Month6,
+    Date, Day1, Day3, Epoch, EmptyAddressIndex, EmptyOutputIndex, FundedAddressIndex,
+    Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3, Month6,
     OpReturnIndex, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex,
     P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex,
     Timestamp, TxInIndex, TxIndex, TxOutIndex, UnknownOutputIndex, Week1, Year1, Year10,
@@ -36,8 +36,8 @@ pub enum Index {
     Month6,
     Year1,
     Year10,
-    HalvingEpoch,
-    DifficultyEpoch,
+    Halving,
+    Epoch,
     Height,
     TxIndex,
     TxInIndex,
@@ -75,8 +75,8 @@ impl Index {
             Self::Month6,
             Self::Year1,
             Self::Year10,
-            Self::HalvingEpoch,
-            Self::DifficultyEpoch,
+            Self::Halving,
+            Self::Epoch,
             Self::Height,
             Self::TxIndex,
             Self::TxInIndex,
@@ -114,8 +114,8 @@ impl Index {
             Self::Month6 => Month6::to_possible_strings(),
             Self::Year1 => Year1::to_possible_strings(),
             Self::Year10 => Year10::to_possible_strings(),
-            Self::HalvingEpoch => HalvingEpoch::to_possible_strings(),
-            Self::DifficultyEpoch => DifficultyEpoch::to_possible_strings(),
+            Self::Halving => Halving::to_possible_strings(),
+            Self::Epoch => Epoch::to_possible_strings(),
             Self::Height => Height::to_possible_strings(),
             Self::TxIndex => TxIndex::to_possible_strings(),
             Self::TxInIndex => TxInIndex::to_possible_strings(),
@@ -160,8 +160,8 @@ impl Index {
             Self::Month6 => <Month6 as PrintableIndex>::to_string(),
             Self::Year1 => <Year1 as PrintableIndex>::to_string(),
             Self::Year10 => <Year10 as PrintableIndex>::to_string(),
-            Self::HalvingEpoch => <HalvingEpoch as PrintableIndex>::to_string(),
-            Self::DifficultyEpoch => <DifficultyEpoch as PrintableIndex>::to_string(),
+            Self::Halving => <Halving as PrintableIndex>::to_string(),
+            Self::Epoch => <Epoch as PrintableIndex>::to_string(),
             Self::Height => <Height as PrintableIndex>::to_string(),
             Self::TxIndex => <TxIndex as PrintableIndex>::to_string(),
             Self::TxInIndex => <TxInIndex as PrintableIndex>::to_string(),
@@ -188,7 +188,7 @@ impl Index {
     /// Used for rate limiting to account for expensive lazy computations.
     pub const fn cost_multiplier(&self) -> usize {
         match self {
-            Self::DifficultyEpoch => 60,
+            Self::Epoch => 60,
             _ => 1,
         }
     }

@@ -1,4 +1,4 @@
-use brk_types::{HalvingEpoch, OutputType, Sats, Year};
+use brk_types::{Halving, OutputType, Sats, Year};
 
 use super::{AmountFilter, CohortContext, Term, TimeFilter};
 
@@ -8,7 +8,7 @@ pub enum Filter {
     Term(Term),
     Time(TimeFilter),
     Amount(AmountFilter),
-    Epoch(HalvingEpoch),
+    Epoch(Halving),
     Class(Year),
     Type(OutputType),
 }

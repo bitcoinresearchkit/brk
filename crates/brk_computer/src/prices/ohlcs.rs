@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    Cents, Close, Day1, Day3, DifficultyEpoch, HalvingEpoch, High, Hour1, Hour4, Hour12, Indexes,
+    Cents, Close, Day1, Day3, Epoch, Halving, High, Hour1, Hour4, Hour12, Indexes,
     Low, Minute10, Minute30, Month1, Month3, Month6, OHLCCents, Open, Version, Week1, Year1,
     Year10,
 };
@@ -36,8 +36,8 @@ pub struct OhlcVecs<T, M: StorageMode = Rw>(
         <M as StorageMode>::Stored<EagerVec<BytesVec<Month6, T>>>,
         <M as StorageMode>::Stored<EagerVec<BytesVec<Year1, T>>>,
         <M as StorageMode>::Stored<EagerVec<BytesVec<Year10, T>>>,
-        <M as StorageMode>::Stored<EagerVec<BytesVec<HalvingEpoch, T>>>,
-        <M as StorageMode>::Stored<EagerVec<BytesVec<DifficultyEpoch, T>>>,
+        <M as StorageMode>::Stored<EagerVec<BytesVec<Halving, T>>>,
+        <M as StorageMode>::Stored<EagerVec<BytesVec<Epoch, T>>>,
     >,
 )
 where
@@ -73,7 +73,7 @@ where
             year1: per_period!(),
             year10: per_period!(),
             halving: per_period!(),
-            difficulty: per_period!(),
+            epoch: per_period!(),
         }))
     }
 }
@@ -169,7 +169,7 @@ impl OhlcVecs<OHLCCents> {
         period!(year1);
         period!(year10);
         epoch!(halving);
-        epoch!(difficulty);
+        epoch!(epoch);
 
         Ok(())
     }
@@ -193,8 +193,8 @@ pub struct LazyOhlcVecs<T, S>(
         LazyVecFrom1<Month6, T, Month6, S>,
         LazyVecFrom1<Year1, T, Year1, S>,
         LazyVecFrom1<Year10, T, Year10, S>,
-        LazyVecFrom1<HalvingEpoch, T, HalvingEpoch, S>,
-        LazyVecFrom1<DifficultyEpoch, T, DifficultyEpoch, S>,
+        LazyVecFrom1<Halving, T, Halving, S>,
+        LazyVecFrom1<Epoch, T, Epoch, S>,
     >,
 )
 where
@@ -236,7 +236,7 @@ where
             year1: period!(year1),
             year10: period!(year10),
             halving: period!(halving),
-            difficulty: period!(difficulty),
+            epoch: period!(epoch),
         })
     }
 }

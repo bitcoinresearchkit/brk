@@ -11,7 +11,7 @@ Work with Bitcoin primitives (heights, satoshis, addresses, transactions) throug
 - **Bitcoin primitives**: `Height`, `Sats`, `Txid`, `BlockHash`, `Outpoint` with full arithmetic and conversion support
 - **Address types**: All output types (P2PK33, P2PK65, P2PKH, P2MS, P2SH, P2WPKH, P2WSH, P2TR, P2A, OP_RETURN) with address index variants
 - **Time indexes**: `DateIndex`, `WeekIndex`, `MonthIndex`, `QuarterIndex`, `SemesterIndex`, `YearIndex`, `DecadeIndex` with cross-index conversion
-- **Protocol types**: `DifficultyEpoch`, `HalvingEpoch`, `TxVersion`, `RawLocktime`
+- **Protocol types**: `Epoch`, `Halving`, `TxVersion`, `RawLocktime`
 - **Financial types**: `Dollars`, `Cents`, `OHLC` (Open/High/Low/Close)
 - **Serialization**: Serde + JSON Schema generation via schemars
 - **Compression**: PCO (Pco) derive for columnar compression in vecdb

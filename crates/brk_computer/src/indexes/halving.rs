@@ -1,13 +1,13 @@
 use brk_traversable::Traversable;
-use brk_types::{HalvingEpoch, Height, Version};
+use brk_types::{Halving, Height, Version};
 use vecdb::{Database, EagerVec, ImportableVec, PcoVec, Rw, StorageMode};
 
 use brk_error::Result;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub identity: M::Stored<EagerVec<PcoVec<HalvingEpoch, HalvingEpoch>>>,
-    pub first_height: M::Stored<EagerVec<PcoVec<HalvingEpoch, Height>>>,
+    pub identity: M::Stored<EagerVec<PcoVec<Halving, Halving>>>,
+    pub first_height: M::Stored<EagerVec<PcoVec<Halving, Height>>>,
 }
 
 impl Vecs {

@@ -88,7 +88,7 @@ Limit = int
 Date = int
 Day1 = int
 Day3 = int
-DifficultyEpoch = int
+Epoch = int
 # US Dollar amount as floating point
 Dollars = float
 EmptyAddressIndex = TypeIndex
@@ -96,7 +96,7 @@ EmptyOutputIndex = TypeIndex
 # Fee rate in sats/vB
 FeeRate = float
 FundedAddressIndex = TypeIndex
-HalvingEpoch = int
+Halving = int
 # Hex-encoded string
 Hex = str
 # Highest price value for a time period
@@ -3011,7 +3011,7 @@ class MetricsTree_Blocks_Difficulty:
         self.raw: MetricPattern1[StoredF64] = MetricPattern1(client, 'difficulty')
         self.as_hash: MetricPattern1[StoredF64] = MetricPattern1(client, 'difficulty_as_hash')
         self.adjustment: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'difficulty_adjustment')
-        self.epoch: MetricPattern1[DifficultyEpoch] = MetricPattern1(client, 'difficulty_epoch')
+        self.epoch: MetricPattern1[Epoch] = MetricPattern1(client, 'difficulty_epoch')
         self.blocks_before_next_adjustment: MetricPattern1[StoredU32] = MetricPattern1(client, 'blocks_before_next_difficulty_adjustment')
         self.days_before_next_adjustment: MetricPattern1[StoredF32] = MetricPattern1(client, 'days_before_next_difficulty_adjustment')
 
@@ -3094,7 +3094,7 @@ class MetricsTree_Blocks_Halving:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.epoch: MetricPattern1[HalvingEpoch] = MetricPattern1(client, 'halving_epoch')
+        self.epoch: MetricPattern1[Halving] = MetricPattern1(client, 'halving_epoch')
         self.blocks_before_next_halving: MetricPattern1[StoredU32] = MetricPattern1(client, 'blocks_before_next_halving')
         self.days_before_next_halving: MetricPattern1[StoredF32] = MetricPattern1(client, 'days_before_next_halving')
 
@@ -3573,8 +3573,8 @@ class MetricsTree_Indexes_Height:
         self.hour12: MetricPattern18[Hour12] = MetricPattern18(client, 'hour12')
         self.day1: MetricPattern18[Day1] = MetricPattern18(client, 'day1')
         self.day3: MetricPattern18[Day3] = MetricPattern18(client, 'day3')
-        self.difficultyepoch: MetricPattern18[DifficultyEpoch] = MetricPattern18(client, 'difficultyepoch')
-        self.halvingepoch: MetricPattern18[HalvingEpoch] = MetricPattern18(client, 'halvingepoch')
+        self.difficultyepoch: MetricPattern18[Epoch] = MetricPattern18(client, 'difficultyepoch')
+        self.halvingepoch: MetricPattern18[Halving] = MetricPattern18(client, 'halvingepoch')
         self.week1: MetricPattern18[Week1] = MetricPattern18(client, 'week1')
         self.month1: MetricPattern18[Month1] = MetricPattern18(client, 'month1')
         self.month3: MetricPattern18[Month3] = MetricPattern18(client, 'month3')
@@ -3587,7 +3587,7 @@ class MetricsTree_Indexes_Difficultyepoch:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern17[DifficultyEpoch] = MetricPattern17(client, 'difficultyepoch')
+        self.identity: MetricPattern17[Epoch] = MetricPattern17(client, 'difficultyepoch')
         self.first_height: MetricPattern17[Height] = MetricPattern17(client, 'first_height')
         self.height_count: MetricPattern17[StoredU64] = MetricPattern17(client, 'height_count')
 
@@ -3595,7 +3595,7 @@ class MetricsTree_Indexes_Halvingepoch:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern16[HalvingEpoch] = MetricPattern16(client, 'halvingepoch')
+        self.identity: MetricPattern16[Halving] = MetricPattern16(client, 'halvingepoch')
         self.first_height: MetricPattern16[Height] = MetricPattern16(client, 'first_height')
 
 class MetricsTree_Indexes_Minute10:

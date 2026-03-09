@@ -1,6 +1,6 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, DifficultyEpoch, HalvingEpoch, Hour1, Hour4, Hour12, Minute10, Minute30, Month1,
+    Day1, Day3, Epoch, Halving, Hour1, Hour4, Hour12, Minute10, Minute30, Month1,
     Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
@@ -27,8 +27,8 @@ pub struct LazyEagerIndexes<T, S>(
         LazyVecFrom1<Month6, T, Month6, S>,
         LazyVecFrom1<Year1, T, Year1, S>,
         LazyVecFrom1<Year10, T, Year10, S>,
-        LazyVecFrom1<HalvingEpoch, T, HalvingEpoch, S>,
-        LazyVecFrom1<DifficultyEpoch, T, DifficultyEpoch, S>,
+        LazyVecFrom1<Halving, T, Halving, S>,
+        LazyVecFrom1<Epoch, T, Epoch, S>,
     >,
 )
 where
@@ -70,7 +70,7 @@ where
             year1: period!(year1),
             year10: period!(year10),
             halving: period!(halving),
-            difficulty: period!(difficulty),
+            epoch: period!(epoch),
         })
     }
 }

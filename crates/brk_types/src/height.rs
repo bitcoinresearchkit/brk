@@ -12,7 +12,7 @@ use vecdb::{Bytes, CheckedSub, Formattable, Pco, PrintableIndex, Stamp};
 
 use crate::{BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING, FromCoarserIndex};
 
-use super::{DifficultyEpoch, HalvingEpoch, StoredU64};
+use super::{Epoch, Halving, StoredU64};
 
 /// Block height
 #[derive(
@@ -292,22 +292,22 @@ impl Formattable for Height {
     }
 }
 
-impl FromCoarserIndex<DifficultyEpoch> for Height {
-    fn min_from(coarser: DifficultyEpoch) -> usize {
+impl FromCoarserIndex<Epoch> for Height {
+    fn min_from(coarser: Epoch) -> usize {
         usize::from(coarser) * BLOCKS_PER_DIFF_EPOCHS as usize
     }
 
-    fn max_from_(coarser: DifficultyEpoch) -> usize {
+    fn max_from_(coarser: Epoch) -> usize {
         (usize::from(coarser) + 1) * BLOCKS_PER_DIFF_EPOCHS as usize - 1
     }
 }
 
-impl FromCoarserIndex<HalvingEpoch> for Height {
-    fn min_from(coarser: HalvingEpoch) -> usize {
+impl FromCoarserIndex<Halving> for Height {
+    fn min_from(coarser: Halving) -> usize {
         usize::from(coarser) * BLOCKS_PER_HALVING as usize
     }
 
-    fn max_from_(coarser: HalvingEpoch) -> usize {
+    fn max_from_(coarser: Halving) -> usize {
         (usize::from(coarser) + 1) * BLOCKS_PER_HALVING as usize - 1
     }
 }

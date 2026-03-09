@@ -370,8 +370,8 @@ impl<T: DeserializeOwned, D: DeserializeOwned> RangeBuilder<T, D> {
 
 
 // Static index arrays
-const _I1: &[Index] = &[Index::Minute10, Index::Minute30, Index::Hour1, Index::Hour4, Index::Hour12, Index::Day1, Index::Day3, Index::Week1, Index::Month1, Index::Month3, Index::Month6, Index::Year1, Index::Year10, Index::HalvingEpoch, Index::DifficultyEpoch, Index::Height];
-const _I2: &[Index] = &[Index::Minute10, Index::Minute30, Index::Hour1, Index::Hour4, Index::Hour12, Index::Day1, Index::Day3, Index::Week1, Index::Month1, Index::Month3, Index::Month6, Index::Year1, Index::Year10, Index::HalvingEpoch, Index::DifficultyEpoch];
+const _I1: &[Index] = &[Index::Minute10, Index::Minute30, Index::Hour1, Index::Hour4, Index::Hour12, Index::Day1, Index::Day3, Index::Week1, Index::Month1, Index::Month3, Index::Month6, Index::Year1, Index::Year10, Index::Halving, Index::Epoch, Index::Height];
+const _I2: &[Index] = &[Index::Minute10, Index::Minute30, Index::Hour1, Index::Hour4, Index::Hour12, Index::Day1, Index::Day3, Index::Week1, Index::Month1, Index::Month3, Index::Month6, Index::Year1, Index::Year10, Index::Halving, Index::Epoch];
 const _I3: &[Index] = &[Index::Minute10];
 const _I4: &[Index] = &[Index::Minute30];
 const _I5: &[Index] = &[Index::Hour1];
@@ -385,8 +385,8 @@ const _I12: &[Index] = &[Index::Month3];
 const _I13: &[Index] = &[Index::Month6];
 const _I14: &[Index] = &[Index::Year1];
 const _I15: &[Index] = &[Index::Year10];
-const _I16: &[Index] = &[Index::HalvingEpoch];
-const _I17: &[Index] = &[Index::DifficultyEpoch];
+const _I16: &[Index] = &[Index::Halving];
+const _I17: &[Index] = &[Index::Epoch];
 const _I18: &[Index] = &[Index::Height];
 const _I19: &[Index] = &[Index::TxIndex];
 const _I20: &[Index] = &[Index::TxInIndex];
@@ -433,8 +433,8 @@ impl<T: DeserializeOwned> MetricPattern1By<T> {
     pub fn month6(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month6) }
     pub fn year1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year1) }
     pub fn year10(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year10) }
-    pub fn halvingepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::HalvingEpoch) }
-    pub fn difficultyepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DifficultyEpoch) }
+    pub fn halvingepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Halving) }
+    pub fn difficultyepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Epoch) }
     pub fn height(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Height) }
 }
 
@@ -462,8 +462,8 @@ impl<T: DeserializeOwned> MetricPattern2By<T> {
     pub fn month6(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month6) }
     pub fn year1(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year1) }
     pub fn year10(&self) -> DateMetricEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year10) }
-    pub fn halvingepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::HalvingEpoch) }
-    pub fn difficultyepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DifficultyEpoch) }
+    pub fn halvingepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Halving) }
+    pub fn difficultyepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Epoch) }
 }
 
 pub struct MetricPattern2<T> { name: Arc<str>, pub by: MetricPattern2By<T> }
@@ -659,7 +659,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern15<T> { fn get(&self
 
 pub struct MetricPattern16By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern16By<T> {
-    pub fn halvingepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::HalvingEpoch) }
+    pub fn halvingepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Halving) }
 }
 
 pub struct MetricPattern16<T> { name: Arc<str>, pub by: MetricPattern16By<T> }
@@ -673,7 +673,7 @@ impl<T: DeserializeOwned> MetricPattern<T> for MetricPattern16<T> { fn get(&self
 
 pub struct MetricPattern17By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> MetricPattern17By<T> {
-    pub fn difficultyepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::DifficultyEpoch) }
+    pub fn difficultyepoch(&self) -> MetricEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Epoch) }
 }
 
 pub struct MetricPattern17<T> { name: Arc<str>, pub by: MetricPattern17By<T> }
@@ -2894,7 +2894,7 @@ pub struct MetricsTree_Blocks_Difficulty {
     pub raw: MetricPattern1<StoredF64>,
     pub as_hash: MetricPattern1<StoredF64>,
     pub adjustment: BpsPercentRatioPattern,
-    pub epoch: MetricPattern1<DifficultyEpoch>,
+    pub epoch: MetricPattern1<Epoch>,
     pub blocks_before_next_adjustment: MetricPattern1<StoredU32>,
     pub days_before_next_adjustment: MetricPattern1<StoredF32>,
 }
@@ -3067,7 +3067,7 @@ impl MetricsTree_Blocks_Count {
 
 /// Metrics tree node.
 pub struct MetricsTree_Blocks_Halving {
-    pub epoch: MetricPattern1<HalvingEpoch>,
+    pub epoch: MetricPattern1<Halving>,
     pub blocks_before_next_halving: MetricPattern1<StoredU32>,
     pub days_before_next_halving: MetricPattern1<StoredF32>,
 }
@@ -4082,8 +4082,8 @@ pub struct MetricsTree_Indexes_Height {
     pub hour12: MetricPattern18<Hour12>,
     pub day1: MetricPattern18<Day1>,
     pub day3: MetricPattern18<Day3>,
-    pub difficultyepoch: MetricPattern18<DifficultyEpoch>,
-    pub halvingepoch: MetricPattern18<HalvingEpoch>,
+    pub difficultyepoch: MetricPattern18<Epoch>,
+    pub halvingepoch: MetricPattern18<Halving>,
     pub week1: MetricPattern18<Week1>,
     pub month1: MetricPattern18<Month1>,
     pub month3: MetricPattern18<Month3>,
@@ -4119,7 +4119,7 @@ impl MetricsTree_Indexes_Height {
 
 /// Metrics tree node.
 pub struct MetricsTree_Indexes_Difficultyepoch {
-    pub identity: MetricPattern17<DifficultyEpoch>,
+    pub identity: MetricPattern17<Epoch>,
     pub first_height: MetricPattern17<Height>,
     pub height_count: MetricPattern17<StoredU64>,
 }
@@ -4136,7 +4136,7 @@ impl MetricsTree_Indexes_Difficultyepoch {
 
 /// Metrics tree node.
 pub struct MetricsTree_Indexes_Halvingepoch {
-    pub identity: MetricPattern16<HalvingEpoch>,
+    pub identity: MetricPattern16<Halving>,
     pub first_height: MetricPattern16<Height>,
 }
 
