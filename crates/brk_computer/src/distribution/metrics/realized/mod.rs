@@ -7,7 +7,7 @@ mod minimal;
 pub use adjusted::RealizedAdjusted;
 pub use base::RealizedBase;
 pub use self::core::RealizedCore;
-pub use full::RealizedFull;
+pub use full::{RealizedFull, RealizedFullAccum};
 pub use minimal::RealizedMinimal;
 
 use brk_error::Result;

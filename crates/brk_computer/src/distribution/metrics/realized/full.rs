@@ -298,6 +298,47 @@ impl RealizedFull {
         Ok(())
     }
 
+    pub(crate) fn push_from_accum(
+        &mut self,
+        accum: &RealizedFullAccum,
+        height: Height,
+    ) -> Result<()> {
+        self.profit_value_created
+            .height
+            .truncate_push(height, accum.profit_value_created)?;
+        self.profit_value_destroyed
+            .height
+            .truncate_push(height, accum.profit_value_destroyed)?;
+        self.loss_value_created
+            .height
+            .truncate_push(height, accum.loss_value_created)?;
+        self.loss_value_destroyed
+            .height
+            .truncate_push(height, accum.loss_value_destroyed)?;
+        self.cap_raw.truncate_push(height, accum.cap_raw)?;
+        self.investor_cap_raw
+            .truncate_push(height, accum.investor_cap_raw)?;
+
+        let investor_price = {
+            let cap = accum.cap_raw.as_u128();
+            if cap == 0 {
+                Cents::ZERO
+            } else {
+                Cents::new((accum.investor_cap_raw / cap) as u64)
+            }
+        };
+        self.investor_price
+            .cents
+            .height
+            .truncate_push(height, investor_price)?;
+
+        self.peak_regret
+            .height
+            .truncate_push(height, accum.peak_regret)?;
+
+        Ok(())
+    }
+
     pub(crate) fn compute_rest_part1(
         &mut self,
         blocks: &blocks::Vecs,
@@ -624,5 +665,28 @@ impl RealizedFull {
         )?;
 
         Ok(())
+    }
+}
+
+#[derive(Default)]
+pub struct RealizedFullAccum {
+    pub(crate) profit_value_created: Cents,
+    pub(crate) profit_value_destroyed: Cents,
+    pub(crate) loss_value_created: Cents,
+    pub(crate) loss_value_destroyed: Cents,
+    pub(crate) cap_raw: CentsSats,
+    pub(crate) investor_cap_raw: CentsSquaredSats,
+    pub(crate) peak_regret: Cents,
+}
+
+impl RealizedFullAccum {
+    pub(crate) fn add(&mut self, state: &RealizedState) {
+        self.profit_value_created += state.profit_value_created();
+        self.profit_value_destroyed += state.profit_value_destroyed();
+        self.loss_value_created += state.loss_value_created();
+        self.loss_value_destroyed += state.loss_value_destroyed();
+        self.cap_raw += state.cap_raw();
+        self.investor_cap_raw += state.investor_cap_raw();
+        self.peak_regret += state.peak_regret();
     }
 }

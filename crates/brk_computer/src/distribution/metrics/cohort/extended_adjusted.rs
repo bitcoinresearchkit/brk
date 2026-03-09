@@ -22,7 +22,6 @@ pub struct ExtendedAdjustedCohortMetrics<M: StorageMode = Rw> {
     #[deref_mut]
     #[traversable(flatten)]
     pub inner: ExtendedCohortMetrics<M>,
-    #[traversable(flatten)]
     pub adjusted: Box<RealizedAdjusted<M>>,
 }
 

@@ -157,10 +157,6 @@ impl<M: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<M> {
     ) -> Result<()> {
         self.metrics
             .compute_rest_part1(blocks, prices, starting_indexes, exit)?;
-        if self.state.is_some() {
-            self.metrics
-                .compute_net_sentiment_height(starting_indexes, exit)?;
-        }
         Ok(())
     }
 

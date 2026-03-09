@@ -506,6 +506,7 @@ fn push_cohort_states(
     height_price: Cents,
     is_day_boundary: bool,
 ) -> Result<()> {
+    // Phase 1: push + unrealized (no reset yet — states still needed for aggregation)
     let (r1, r2) = rayon::join(
         || {
             utxo_cohorts
@@ -517,7 +518,6 @@ fn push_cohort_states(
                         height_price,
                         is_day_boundary,
                     )?;
-                    v.reset_single_iteration_values();
                     Ok(())
                 })
         },
@@ -531,12 +531,23 @@ fn push_cohort_states(
                         height_price,
                         is_day_boundary,
                     )?;
-                    v.reset_single_iteration_values();
                     Ok(())
                 })
         },
     );
     r1?;
     r2?;
+
+    // Phase 2: aggregate age_range realized states → push to overlapping cohorts' RealizedFull
+    utxo_cohorts.push_overlapping_realized_full(height)?;
+
+    // Phase 3: reset per-block values
+    utxo_cohorts
+        .iter_separate_mut()
+        .for_each(|v| v.reset_single_iteration_values());
+    address_cohorts
+        .iter_separate_mut()
+        .for_each(|v| v.reset_single_iteration_values());
+
     Ok(())
 }

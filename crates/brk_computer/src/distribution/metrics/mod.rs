@@ -52,7 +52,8 @@ pub use cost_basis::CostBasis;
 pub use profitability::ProfitabilityMetrics;
 pub use outputs::OutputsMetrics;
 pub use realized::{
-    RealizedAdjusted, RealizedBase, RealizedCore, RealizedFull, RealizedLike, RealizedMinimal,
+    RealizedAdjusted, RealizedBase, RealizedCore, RealizedFull, RealizedFullAccum, RealizedLike,
+    RealizedMinimal,
 };
 pub use relative::{
     RelativeForAll, RelativeToAll, RelativeWithExtended,
@@ -189,16 +190,9 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
         self.unrealized_mut()
             .compute_rest(prices, starting_indexes, exit)?;
 
-        Ok(())
-    }
-
-    fn compute_net_sentiment_height(
-        &mut self,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
         self.unrealized_mut()
             .compute_net_sentiment_height(starting_indexes, exit)?;
+
         Ok(())
     }
 

@@ -17,7 +17,7 @@ use crate::{
         metrics::{
             AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase, CoreCohortMetrics,
             ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig,
-            MinimalCohortMetrics, ProfitabilityMetrics, SupplyMetrics,
+            MinimalCohortMetrics, ProfitabilityMetrics, RealizedFullAccum, SupplyMetrics,
         },
         state::UTXOCohortState,
     },
@@ -44,6 +44,7 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     pub ge_amount: ByGreatEqualAmount<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
     pub amount_range: ByAmountRange<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
     pub lt_amount: ByLowerThanAmount<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
+    #[traversable(rename = "type")]
     pub type_: BySpendableType<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
     pub profitability: ProfitabilityMetrics<M>,
     pub matured: ByAgeRange<ValueFromHeight<M>>,
@@ -707,7 +708,7 @@ impl UTXOCohorts<Rw> {
             .try_for_each(|v| v.write_state(height, cleanup))
     }
 
-    /// Get minimum height from all separate cohorts' + profitability height-indexed vectors.
+    /// Get minimum height from all separate cohorts' + profitability + overlapping realized height-indexed vectors.
     pub(crate) fn min_separate_stateful_height_len(&self) -> Height {
         self.iter_separate()
             .map(|v| Height::from(v.min_stateful_height_len()))
@@ -715,6 +716,9 @@ impl UTXOCohorts<Rw> {
             .min()
             .unwrap_or_default()
             .min(Height::from(self.profitability.min_stateful_height_len()))
+            .min(Height::from(self.all.metrics.realized.min_stateful_height_len()))
+            .min(Height::from(self.sth.metrics.realized.min_stateful_height_len()))
+            .min(Height::from(self.lth.metrics.realized.min_stateful_height_len()))
     }
 
     /// Import state for all separate cohorts at or before given height.
@@ -759,6 +763,38 @@ impl UTXOCohorts<Rw> {
         for v in self.lt_amount.iter_mut() {
             v.metrics.validate_computed_versions(base_version)?;
         }
+        Ok(())
+    }
+
+    /// Aggregate RealizedFull fields from age_range states and push to all/sth/lth.
+    /// Called during the block loop after separate cohorts' truncate_push but before reset.
+    pub(crate) fn push_overlapping_realized_full(&mut self, height: Height) -> Result<()> {
+        let Self {
+            all, sth, lth, age_range, ..
+        } = self;
+
+        let sth_filter = &sth.metrics.filter;
+
+        let mut all_acc = RealizedFullAccum::default();
+        let mut sth_acc = RealizedFullAccum::default();
+        let mut lth_acc = RealizedFullAccum::default();
+
+        for ar in age_range.iter() {
+            if let Some(state) = ar.state.as_ref() {
+                let r = &state.realized;
+                all_acc.add(r);
+                if sth_filter.includes(&ar.metrics.filter) {
+                    sth_acc.add(r);
+                } else {
+                    lth_acc.add(r);
+                }
+            }
+        }
+
+        all.metrics.realized.push_from_accum(&all_acc, height)?;
+        sth.metrics.realized.push_from_accum(&sth_acc, height)?;
+        lth.metrics.realized.push_from_accum(&lth_acc, height)?;
+
         Ok(())
     }
 }
