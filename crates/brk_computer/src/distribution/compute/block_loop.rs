@@ -66,8 +66,8 @@ pub(crate) fn process_blocks(
     let height_to_first_txindex = &indexer.vecs.transactions.first_txindex;
     let height_to_first_txoutindex = &indexer.vecs.outputs.first_txoutindex;
     let height_to_first_txinindex = &indexer.vecs.inputs.first_txinindex;
-    let height_to_tx_count = &transactions.count.tx_count.raw.height;
-    let height_to_output_count = &outputs.count.total_count.full.sum;
+    let height_to_tx_count = &transactions.count.total.raw.height;
+    let height_to_output_count = &outputs.count.total.full.sum;
     let height_to_input_count = &inputs.count.full.sum;
     let txindex_to_output_count = &indexes.txindex.output_count;
     let txindex_to_input_count = &indexes.txindex.input_count;
@@ -186,9 +186,9 @@ pub(crate) fn process_blocks(
     debug!("recovering addr_counts from height {}", starting_height);
     let (mut addr_counts, mut empty_addr_counts) = if starting_height > Height::ZERO {
         let addr_counts =
-            AddressTypeToAddressCount::from((&vecs.addr_count.by_addresstype, starting_height));
+            AddressTypeToAddressCount::from((&vecs.addresses.funded.by_addresstype, starting_height));
         let empty_addr_counts = AddressTypeToAddressCount::from((
-            &vecs.empty_addr_count.by_addresstype,
+            &vecs.addresses.empty.by_addresstype,
             starting_height,
         ));
         (addr_counts, empty_addr_counts)
@@ -436,14 +436,14 @@ pub(crate) fn process_blocks(
         vecs.utxo_cohorts.update_fenwick_from_pending();
 
         // Push to height-indexed vectors
-        vecs.addr_count
+        vecs.addresses.funded
             .truncate_push_height(height, addr_counts.sum(), &addr_counts)?;
-        vecs.empty_addr_count.truncate_push_height(
+        vecs.addresses.empty.truncate_push_height(
             height,
             empty_addr_counts.sum(),
             &empty_addr_counts,
         )?;
-        vecs.address_activity
+        vecs.addresses.activity
             .truncate_push_height(height, &activity_counts)?;
 
         let is_last_of_day = is_last_of_day[offset];

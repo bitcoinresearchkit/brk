@@ -36,6 +36,21 @@ use super::{
 };
 
 const VERSION: Version = Version::new(22);
+
+#[derive(Traversable)]
+pub struct AddressMetricsVecs<M: StorageMode = Rw> {
+    pub funded: AddrCountsVecs<M>,
+    pub empty: AddrCountsVecs<M>,
+    pub activity: AddressActivityVecs<M>,
+    pub total: TotalAddrCountVecs<M>,
+    pub new: NewAddrCountVecs<M>,
+    pub delta: DeltaVecs<M>,
+    pub funded_index:
+        LazyVecFrom1<FundedAddressIndex, FundedAddressIndex, FundedAddressIndex, FundedAddressData>,
+    pub empty_index:
+        LazyVecFrom1<EmptyAddressIndex, EmptyAddressIndex, EmptyAddressIndex, EmptyAddressData>,
+}
+
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
@@ -48,24 +63,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub addresses_data: AddressesDataVecs<M>,
     pub utxo_cohorts: UTXOCohorts<M>,
     pub address_cohorts: AddressCohorts<M>,
-
     pub coinblocks_destroyed: ComputedPerBlockCumulative<StoredF64, M>,
-
-    pub addr_count: AddrCountsVecs<M>,
-    pub empty_addr_count: AddrCountsVecs<M>,
-    pub address_activity: AddressActivityVecs<M>,
-
-    /// Total addresses ever seen (addr_count + empty_addr_count) - stored, global + per-type
-    pub total_addr_count: TotalAddrCountVecs<M>,
-    /// New addresses per block (delta of total) - stored height + cumulative + rolling, global + per-type
-    pub new_addr_count: NewAddrCountVecs<M>,
-    /// Windowed change + growth rate for addr_count, global + per-type
-    pub delta: DeltaVecs<M>,
-
-    pub funded_address_index:
-        LazyVecFrom1<FundedAddressIndex, FundedAddressIndex, FundedAddressIndex, FundedAddressData>,
-    pub empty_address_index:
-        LazyVecFrom1<EmptyAddressIndex, EmptyAddressIndex, EmptyAddressIndex, EmptyAddressData>,
+    pub addresses: AddressMetricsVecs<M>,
 
     /// In-memory block state for UTXO processing. Persisted via supply_state.
     /// Kept across compute() calls to avoid O(n) rebuild on resume.
@@ -151,12 +150,16 @@ impl Vecs {
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
 
-            addr_count,
-            empty_addr_count,
-            address_activity,
-            total_addr_count,
-            new_addr_count,
-            delta,
+            addresses: AddressMetricsVecs {
+                funded: addr_count,
+                empty: empty_addr_count,
+                activity: address_activity,
+                total: total_addr_count,
+                new: new_addr_count,
+                delta,
+                funded_index: funded_address_index,
+                empty_index: empty_address_index,
+            },
 
             utxo_cohorts,
             address_cohorts,
@@ -173,9 +176,6 @@ impl Vecs {
                 funded: fundedaddressindex_to_fundedaddressdata,
                 empty: emptyaddressindex_to_emptyaddressdata,
             },
-            funded_address_index,
-            empty_address_index,
-
             chain_state: Vec::new(),
             txindex_to_height: RangeMap::default(),
 
@@ -292,9 +292,9 @@ impl Vecs {
         // Recover or reuse chain_state
         let starting_height = if recovered_height.is_zero() {
             self.supply_state.reset()?;
-            self.addr_count.reset_height()?;
-            self.empty_addr_count.reset_height()?;
-            self.address_activity.reset_height()?;
+            self.addresses.funded.reset_height()?;
+            self.addresses.empty.reset_height()?;
+            self.addresses.activity.reset_height()?;
             reset_state(
                 &mut self.any_address_indexes,
                 &mut self.addresses_data,
@@ -414,32 +414,33 @@ impl Vecs {
         )?;
 
         // 6b. Compute address count sum (by addresstype → all)
-        self.addr_count.compute_rest(starting_indexes, exit)?;
-        self.empty_addr_count.compute_rest(starting_indexes, exit)?;
+        self.addresses.funded.compute_rest(starting_indexes, exit)?;
+        self.addresses.empty.compute_rest(starting_indexes, exit)?;
 
         // 6c. Compute total_addr_count = addr_count + empty_addr_count
-        self.total_addr_count.compute(
+        self.addresses.total.compute(
             starting_indexes.height,
-            &self.addr_count,
-            &self.empty_addr_count,
+            &self.addresses.funded,
+            &self.addresses.empty,
             exit,
         )?;
 
         let window_starts = blocks.lookback.window_starts();
 
-        self.address_activity
+        self.addresses
+            .activity
             .compute_rest(starting_indexes.height, &window_starts, exit)?;
-        self.new_addr_count.compute(
+        self.addresses.new.compute(
             starting_indexes.height,
             &window_starts,
-            &self.total_addr_count,
+            &self.addresses.total,
             exit,
         )?;
 
-        self.delta.compute(
+        self.addresses.delta.compute(
             starting_indexes.height,
             &window_starts,
-            &self.addr_count,
+            &self.addresses.funded,
             exit,
         )?;
 
@@ -474,48 +475,16 @@ impl Vecs {
         Ok(())
     }
 
-    /// Get minimum length across all height-indexed stateful vectors.
     fn min_stateful_len(&self) -> Height {
-        debug!("supply_state.len={}", self.supply_state.len());
-        debug!(
-            "utxo_cohorts.min={}",
-            self.utxo_cohorts.min_stateful_len()
-        );
-        debug!(
-            "address_cohorts.min={}",
-            self.address_cohorts.min_stateful_len()
-        );
-        debug!(
-            "address_indexes.min={}",
-            self.any_address_indexes.min_stamped_height()
-        );
-        debug!(
-            "addresses_data.min={}",
-            self.addresses_data.min_stamped_height()
-        );
-        debug!("addr_count.min={}", self.addr_count.min_stateful_len());
-        debug!(
-            "empty_addr_count.min={}",
-            self.empty_addr_count.min_stateful_len()
-        );
-        debug!(
-            "address_activity.min={}",
-            self.address_activity.min_stateful_len()
-        );
-        debug!(
-            "coinblocks_destroyed.raw.height.len={}",
-            self.coinblocks_destroyed.raw.height.len()
-        );
-
         self.utxo_cohorts
             .min_stateful_len()
             .min(self.address_cohorts.min_stateful_len())
             .min(Height::from(self.supply_state.len()))
-            .min(self.any_address_indexes.min_stamped_height())
-            .min(self.addresses_data.min_stamped_height())
-            .min(Height::from(self.addr_count.min_stateful_len()))
-            .min(Height::from(self.empty_addr_count.min_stateful_len()))
-            .min(Height::from(self.address_activity.min_stateful_len()))
+            .min(self.any_address_indexes.min_stamped_len())
+            .min(self.addresses_data.min_stamped_len())
+            .min(Height::from(self.addresses.funded.min_stateful_len()))
+            .min(Height::from(self.addresses.empty.min_stateful_len()))
+            .min(Height::from(self.addresses.activity.min_stateful_len()))
             .min(Height::from(self.coinblocks_destroyed.raw.height.len()))
     }
 }

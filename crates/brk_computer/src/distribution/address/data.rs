@@ -15,7 +15,7 @@ pub struct AddressesDataVecs<M: StorageMode = Rw> {
 
 impl AddressesDataVecs {
     /// Get minimum stamped height across funded and empty data.
-    pub(crate) fn min_stamped_height(&self) -> Height {
+    pub(crate) fn min_stamped_len(&self) -> Height {
         Height::from(self.funded.stamp())
             .incremented()
             .min(Height::from(self.empty.stamp()).incremented())

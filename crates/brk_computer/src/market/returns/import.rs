@@ -55,9 +55,9 @@ impl Vecs {
         };
 
         Ok(Self {
-            price_return,
-            price_cagr,
-            price_return_24h_sd,
+            periods: price_return,
+            cagr: price_cagr,
+            sd_24h: price_return_24h_sd,
         })
     }
 }

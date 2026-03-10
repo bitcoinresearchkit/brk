@@ -1,7 +1,7 @@
 pub mod activity;
 pub mod adjusted;
 pub mod cap;
-pub mod pricing;
+pub mod prices;
 pub mod reserve_risk;
 pub mod supply;
 pub mod value;
@@ -15,7 +15,7 @@ use vecdb::{Database, Rw, StorageMode};
 pub use activity::Vecs as ActivityVecs;
 pub use adjusted::Vecs as AdjustedVecs;
 pub use cap::Vecs as CapVecs;
-pub use pricing::Vecs as PricingVecs;
+pub use prices::Vecs as PricesVecs;
 pub use reserve_risk::Vecs as ReserveRiskVecs;
 pub use supply::Vecs as SupplyVecs;
 pub use value::Vecs as ValueVecs;
@@ -31,7 +31,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub supply: SupplyVecs<M>,
     pub value: ValueVecs<M>,
     pub cap: CapVecs<M>,
-    pub pricing: PricingVecs<M>,
+    pub prices: PricesVecs<M>,
     pub adjusted: AdjustedVecs<M>,
     pub reserve_risk: ReserveRiskVecs<M>,
 }

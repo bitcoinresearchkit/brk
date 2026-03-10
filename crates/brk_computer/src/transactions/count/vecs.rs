@@ -6,6 +6,6 @@ use crate::internal::ComputedPerBlockFull;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub tx_count: ComputedPerBlockFull<StoredU64, M>,
+    pub total: ComputedPerBlockFull<StoredU64, M>,
     pub is_coinbase: LazyVecFrom2<TxIndex, StoredBool, TxIndex, Height, Height, TxIndex>,
 }

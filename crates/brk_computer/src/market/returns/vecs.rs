@@ -16,7 +16,7 @@ pub struct PriceReturn24hSdVecs<M: StorageMode = Rw> {
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub price_return: ByLookbackPeriod<PercentPerBlock<BasisPointsSigned32, M>>,
-    pub price_cagr: ByDcaCagr<PercentPerBlock<BasisPointsSigned32, M>>,
-    pub price_return_24h_sd: PriceReturn24hSdVecs<M>,
+    pub periods: ByLookbackPeriod<PercentPerBlock<BasisPointsSigned32, M>>,
+    pub cagr: ByDcaCagr<PercentPerBlock<BasisPointsSigned32, M>>,
+    pub sd_24h: PriceReturn24hSdVecs<M>,
 }

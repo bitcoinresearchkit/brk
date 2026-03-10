@@ -23,14 +23,14 @@ impl Vecs {
             .sats
             .height;
 
-        self.vaulted_supply.sats.height.compute_multiply(
+        self.vaulted.sats.height.compute_multiply(
             starting_indexes.height,
             circulating_supply,
             &activity.vaultedness.height,
             exit,
         )?;
 
-        self.active_supply.sats.height.compute_multiply(
+        self.active.sats.height.compute_multiply(
             starting_indexes.height,
             circulating_supply,
             &activity.liveliness.height,

@@ -17,13 +17,13 @@ pub struct BlocksVecs<M: StorageMode = Rw> {
     #[traversable(wrap = "time")]
     pub timestamp: M::Stored<PcoVec<Height, Timestamp>>,
     #[traversable(wrap = "size")]
-    pub total_size: M::Stored<PcoVec<Height, StoredU64>>,
+    pub total: M::Stored<PcoVec<Height, StoredU64>>,
     pub weight: M::Stored<PcoVec<Height, Weight>>,
 }
 
 impl BlocksVecs {
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
-        let (blockhash, difficulty, timestamp, total_size, weight) = parallel_import! {
+        let (blockhash, difficulty, timestamp, total, weight) = parallel_import! {
             blockhash = BytesVec::forced_import(db, "blockhash", version),
             difficulty = PcoVec::forced_import(db, "difficulty", version),
             timestamp = PcoVec::forced_import(db, "timestamp", version),
@@ -34,7 +34,7 @@ impl BlocksVecs {
             blockhash,
             difficulty,
             timestamp,
-            total_size,
+            total,
             weight,
         })
     }
@@ -46,7 +46,7 @@ impl BlocksVecs {
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.timestamp
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.total_size
+        self.total
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.weight.truncate_if_needed_with_stamp(height, stamp)?;
         Ok(())
@@ -57,7 +57,7 @@ impl BlocksVecs {
             &mut self.blockhash as &mut dyn AnyStoredVec,
             &mut self.difficulty,
             &mut self.timestamp,
-            &mut self.total_size,
+            &mut self.total,
             &mut self.weight,
         ]
         .into_par_iter()

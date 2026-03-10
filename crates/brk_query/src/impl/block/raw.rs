@@ -21,7 +21,7 @@ impl Query {
         }
 
         let position = computer.positions.block.collect_one(height).unwrap();
-        let size = indexer.vecs.blocks.total_size.collect_one(height).unwrap();
+        let size = indexer.vecs.blocks.total.collect_one(height).unwrap();
 
         reader.read_raw_bytes(position, *size as usize)
     }

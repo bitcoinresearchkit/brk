@@ -15,7 +15,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            total_count: ComputedPerBlockAggregated::forced_import(
+            total: ComputedPerBlockAggregated::forced_import(
                 db,
                 "output_count",
                 version,

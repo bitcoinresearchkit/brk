@@ -22,11 +22,16 @@ pub struct HashPriceValueVecs<M: StorageMode = Rw> {
 }
 
 #[derive(Traversable)]
+pub struct RateVecs<M: StorageMode = Rw> {
+    pub raw: ComputedPerBlock<StoredF64, M>,
+    pub sma: HashRateSmaVecs<M>,
+    pub ath: ComputedPerBlock<StoredF64, M>,
+    pub drawdown: PercentPerBlock<BasisPointsSigned16, M>,
+}
+
+#[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub hash_rate: ComputedPerBlock<StoredF64, M>,
-    pub hash_rate_sma: HashRateSmaVecs<M>,
-    pub hash_rate_ath: ComputedPerBlock<StoredF64, M>,
-    pub hash_rate_drawdown: PercentPerBlock<BasisPointsSigned16, M>,
-    pub hash_price: HashPriceValueVecs<M>,
-    pub hash_value: HashPriceValueVecs<M>,
+    pub rate: RateVecs<M>,
+    pub price: HashPriceValueVecs<M>,
+    pub value: HashPriceValueVecs<M>,
 }

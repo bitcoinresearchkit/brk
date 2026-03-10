@@ -9,7 +9,7 @@ use crate::{
 };
 
 use super::{
-    ActivityVecs, AdjustedVecs, CapVecs, DB_NAME, PricingVecs, ReserveRiskVecs, SupplyVecs,
+    ActivityVecs, AdjustedVecs, CapVecs, DB_NAME, PricesVecs, ReserveRiskVecs, SupplyVecs,
     ValueVecs, Vecs,
 };
 
@@ -26,7 +26,7 @@ impl Vecs {
         let supply = SupplyVecs::forced_import(&db, v1, indexes)?;
         let value = ValueVecs::forced_import(&db, v1, indexes)?;
         let cap = CapVecs::forced_import(&db, v1, indexes)?;
-        let pricing = PricingVecs::forced_import(&db, version, indexes)?;
+        let prices = PricesVecs::forced_import(&db, version, indexes)?;
         let adjusted = AdjustedVecs::forced_import(&db, version, indexes)?;
         let reserve_risk = ReserveRiskVecs::forced_import(&db, v1, indexes)?;
 
@@ -36,7 +36,7 @@ impl Vecs {
             supply,
             value,
             cap,
-            pricing,
+            prices,
             adjusted,
             reserve_risk,
         };

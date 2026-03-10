@@ -21,28 +21,28 @@ impl Vecs {
         let realized_cap_cents = &all_metrics.realized.cap.cents.height;
         let circulating_supply = &all_metrics.supply.total.btc.height;
 
-        self.thermo_cap.cents.height.compute_transform(
+        self.thermo.cents.height.compute_transform(
             starting_indexes.height,
             &mining.rewards.subsidy.cumulative.cents.height,
             |(i, v, ..)| (i, v),
             exit,
         )?;
 
-        self.investor_cap.cents.height.compute_subtract(
+        self.investor.cents.height.compute_subtract(
             starting_indexes.height,
             realized_cap_cents,
-            &self.thermo_cap.cents.height,
+            &self.thermo.cents.height,
             exit,
         )?;
 
-        self.vaulted_cap.cents.height.compute_multiply(
+        self.vaulted.cents.height.compute_multiply(
             starting_indexes.height,
             realized_cap_cents,
             &activity.vaultedness.height,
             exit,
         )?;
 
-        self.active_cap.cents.height.compute_multiply(
+        self.active.cents.height.compute_multiply(
             starting_indexes.height,
             realized_cap_cents,
             &activity.liveliness.height,
@@ -50,9 +50,9 @@ impl Vecs {
         )?;
 
         // cointime_cap = (cointime_value_destroyed_cumulative * circulating_supply) / coinblocks_stored_cumulative
-        self.cointime_cap.cents.height.compute_transform3(
+        self.cointime.cents.height.compute_transform3(
             starting_indexes.height,
-            &value.value_destroyed.cumulative.height,
+            &value.destroyed.cumulative.height,
             circulating_supply,
             &activity.coinblocks_stored.cumulative.height,
             |(i, destroyed, supply, stored, ..)| {
@@ -67,8 +67,8 @@ impl Vecs {
         // AVIV = active_cap / investor_cap
         self.aviv.compute_ratio(
             starting_indexes,
-            &self.active_cap.cents.height,
-            &self.investor_cap.cents.height,
+            &self.active.cents.height,
+            &self.investor.cents.height,
             exit,
         )?;
 

@@ -30,7 +30,7 @@ impl Query {
         let current_hashrate = *computer
             .mining
             .hashrate
-            .hash_rate
+            .rate.raw
             .day1
             .collect_one_flat(current_day1)
             .unwrap_or_default() as u128;
@@ -55,7 +55,7 @@ impl Query {
         let total_days = end_day1.to_usize().saturating_sub(start_day1.to_usize()) + 1;
         let step = (total_days / 200).max(1); // Max ~200 data points
 
-        let hashrate_vec = &computer.mining.hashrate.hash_rate.day1;
+        let hashrate_vec = &computer.mining.hashrate.rate.raw.day1;
         let timestamp_vec = &computer.blocks.time.timestamp.day1;
 
         let mut hashrates = Vec::with_capacity(total_days / step + 1);

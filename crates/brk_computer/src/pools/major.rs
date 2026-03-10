@@ -83,7 +83,7 @@ impl Vecs {
             self.blocks_mined_sum
                 .as_array()
                 .into_iter()
-                .zip(blocks.count.block_count.sum.as_array()),
+                .zip(blocks.count.total.sum.as_array()),
         ) {
             dom.compute_binary::<StoredU32, StoredU32, RatioU32Bp16>(
                 starting_indexes.height,

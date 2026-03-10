@@ -23,7 +23,7 @@ impl Vecs {
         let coindays_destroyed = &all_metrics.activity.coindays_destroyed;
         let circulating_supply = &all_metrics.supply.total.btc.height;
 
-        self.value_destroyed
+        self.destroyed
             .compute(starting_indexes.height, &window_starts, exit, |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
@@ -34,7 +34,7 @@ impl Vecs {
                 Ok(())
             })?;
 
-        self.value_created
+        self.created
             .compute(starting_indexes.height, &window_starts, exit, |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
@@ -45,7 +45,7 @@ impl Vecs {
                 Ok(())
             })?;
 
-        self.value_stored
+        self.stored
             .compute(starting_indexes.height, &window_starts, exit, |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,

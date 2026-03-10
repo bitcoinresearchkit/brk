@@ -20,5 +20,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(wrap = "market_cap", rename = "delta")]
     pub market_cap_delta: FiatRollingDelta<Cents, CentsSigned, M>,
     pub market_minus_realized_cap_growth_rate: RollingWindows<BasisPointsSigned32, M>,
-    pub hodled_or_lost_coins: LazyAmountPerBlock,
+    pub hodled_or_lost: LazyAmountPerBlock,
 }

@@ -16,7 +16,7 @@ macro_rules! impl_import_state {
                     state.supply.utxo_count = *self
                         .metrics
                         .outputs
-                        .utxo_count
+                        .unspent_count
                         .height
                         .collect_one(prev_height)
                         .unwrap();
@@ -140,7 +140,7 @@ impl<M: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<M> {
                 state.supply.utxo_count = *self
                     .metrics
                     .outputs()
-                    .utxo_count
+                    .unspent_count
                     .height
                     .collect_one(prev_height)
                     .unwrap();

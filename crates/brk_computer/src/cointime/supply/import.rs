@@ -12,13 +12,13 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            vaulted_supply: AmountPerBlock::forced_import(
+            vaulted: AmountPerBlock::forced_import(
                 db,
                 "vaulted_supply",
                 version,
                 indexes,
             )?,
-            active_supply: AmountPerBlock::forced_import(db, "active_supply", version, indexes)?,
+            active: AmountPerBlock::forced_import(db, "active_supply", version, indexes)?,
         })
     }
 }

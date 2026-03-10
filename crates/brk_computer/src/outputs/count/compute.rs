@@ -19,7 +19,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let window_starts = blocks.lookback.window_starts();
-        self.total_count
+        self.total
             .compute(starting_indexes.height, &window_starts, exit, |full| {
                 full.compute_with_skip(
                     starting_indexes.height,
@@ -33,7 +33,7 @@ impl Vecs {
 
         self.utxo_count.height.compute_transform3(
             starting_indexes.height,
-            &self.total_count.full.cumulative,
+            &self.total.full.cumulative,
             &inputs_count.full.cumulative,
             &scripts_count.opreturn.cumulative.height,
             |(h, output_count, input_count, opreturn_count, ..)| {

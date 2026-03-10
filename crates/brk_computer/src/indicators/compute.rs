@@ -124,7 +124,7 @@ impl Vecs {
             )?;
 
         // Supply-Adjusted Dormancy = dormancy / circulating_supply_btc
-        self.dormancy_supply_adjusted
+        self.dormancy.supply_adjusted
             .height
             .compute_transform2(
                 starting_indexes.height,
@@ -161,7 +161,7 @@ impl Vecs {
         )?;
 
         // Dormancy Flow: supply_btc / dormancy
-        self.dormancy_flow.height.compute_transform2(
+        self.dormancy.flow.height.compute_transform2(
             starting_indexes.height,
             supply_total_sats,
             &all_activity.dormancy.height,

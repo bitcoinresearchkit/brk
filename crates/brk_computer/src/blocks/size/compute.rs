@@ -31,7 +31,7 @@ impl Vecs {
         self.size.compute(
             starting_indexes.height,
             &window_starts,
-            &indexer.vecs.blocks.total_size,
+            &indexer.vecs.blocks.total,
             exit,
         )?;
 

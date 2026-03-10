@@ -37,8 +37,8 @@ pub struct AllCohortMetrics<M: StorageMode = Rw> {
 
     #[traversable(wrap = "supply", rename = "delta")]
     pub supply_delta_extended: RollingDeltaExcept1m<Sats, SatsSigned, M>,
-    #[traversable(wrap = "outputs/utxo_count", rename = "delta")]
-    pub utxo_count_delta_extended: RollingDeltaExcept1m<StoredU64, StoredI64, M>,
+    #[traversable(wrap = "outputs/unspent_count", rename = "delta")]
+    pub unspent_count_delta_extended: RollingDeltaExcept1m<StoredU64, StoredI64, M>,
 }
 
 impl CohortMetricsBase for AllCohortMetrics {
@@ -103,7 +103,7 @@ impl AllCohortMetrics {
             asopr: Box::new(asopr),
             relative: Box::new(relative),
             supply_delta_extended: cfg.import("supply_delta", Version::ONE)?,
-            utxo_count_delta_extended: cfg.import("utxo_count_delta", Version::ONE)?,
+            unspent_count_delta_extended: cfg.import("utxo_count_delta", Version::ONE)?,
         })
     }
 
@@ -152,10 +152,10 @@ impl AllCohortMetrics {
             &self.supply.total.sats.height,
             exit,
         )?;
-        self.utxo_count_delta_extended.compute(
+        self.unspent_count_delta_extended.compute(
             starting_indexes.height,
             &window_starts,
-            &self.outputs.utxo_count.height,
+            &self.outputs.unspent_count.height,
             exit,
         )?;
 

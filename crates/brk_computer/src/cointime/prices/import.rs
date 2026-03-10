@@ -21,14 +21,14 @@ impl Vecs {
         }
 
         Ok(Self {
-            vaulted_price: import!("vaulted_price"),
-            active_price: import!("active_price"),
+            vaulted: import!("vaulted_price"),
+            active: import!("active_price"),
             true_market_mean: import!("true_market_mean"),
-            cointime_price: import!("cointime_price"),
-            transfer_price: import!("transfer_price"),
-            balanced_price: import!("balanced_price"),
-            terminal_price: import!("terminal_price"),
-            delta_price: import!("delta_price"),
+            cointime: import!("cointime_price"),
+            transfer: import!("transfer_price"),
+            balanced: import!("balanced_price"),
+            terminal: import!("terminal_price"),
+            delta: import!("delta_price"),
             cumulative_market_cap: ComputedPerBlock::forced_import(
                 db,
                 "cumulative_market_cap",

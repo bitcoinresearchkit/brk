@@ -52,10 +52,10 @@ impl Vecs {
 
         // RSI per timeframe
         let return_sources = [
-            &returns.price_return._24h.ratio.height,
-            &returns.price_return._1w.ratio.height,
-            &returns.price_return._1m.ratio.height,
-            &returns.price_return._1y.ratio.height,
+            &returns.periods._24h.ratio.height,
+            &returns.periods._1w.ratio.height,
+            &returns.periods._1m.ratio.height,
+            &returns.periods._1y.ratio.height,
         ];
         for ((rsi_chain, ret), &m) in self
             .rsi

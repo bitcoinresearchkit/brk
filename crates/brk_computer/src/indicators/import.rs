@@ -30,10 +30,11 @@ impl Vecs {
             ComputedPerBlock::forced_import(&db, "coindays_destroyed_supply_adjusted", v, indexes)?;
         let coinyears_destroyed_supply_adjusted =
             ComputedPerBlock::forced_import(&db, "coinyears_destroyed_supply_adjusted", v, indexes)?;
-        let dormancy_supply_adjusted =
-            ComputedPerBlock::forced_import(&db, "dormancy_supply_adjusted", v, indexes)?;
+        let dormancy = super::vecs::DormancyVecs {
+            supply_adjusted: ComputedPerBlock::forced_import(&db, "dormancy_supply_adjusted", v, indexes)?,
+            flow: ComputedPerBlock::forced_import(&db, "dormancy_flow", v, indexes)?,
+        };
         let stock_to_flow = ComputedPerBlock::forced_import(&db, "stock_to_flow", v, indexes)?;
-        let dormancy_flow = ComputedPerBlock::forced_import(&db, "dormancy_flow", v, indexes)?;
         let seller_exhaustion_constant =
             ComputedPerBlock::forced_import(&db, "seller_exhaustion_constant", v, indexes)?;
 
@@ -46,9 +47,8 @@ impl Vecs {
             thermocap_multiple,
             coindays_destroyed_supply_adjusted,
             coinyears_destroyed_supply_adjusted,
-            dormancy_supply_adjusted,
+            dormancy,
             stock_to_flow,
-            dormancy_flow,
             seller_exhaustion_constant,
         };
         finalize_db(&this.db, &this)?;

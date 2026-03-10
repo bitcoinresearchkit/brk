@@ -18,18 +18,18 @@ pub struct OutputsFull<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub base: OutputsBase<M>,
 
-    #[traversable(wrap = "utxo_count", rename = "delta")]
-    pub utxo_count_delta: RollingDelta1m<StoredU64, StoredI64, M>,
+    #[traversable(wrap = "unspent_count", rename = "delta")]
+    pub unspent_count_delta: RollingDelta1m<StoredU64, StoredI64, M>,
 }
 
 impl OutputsFull {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let base = OutputsBase::forced_import(cfg)?;
-        let utxo_count_delta = cfg.import("utxo_count_delta", Version::ONE)?;
+        let unspent_count_delta = cfg.import("utxo_count_delta", Version::ONE)?;
 
         Ok(Self {
             base,
-            utxo_count_delta,
+            unspent_count_delta,
         })
     }
 
@@ -53,10 +53,10 @@ impl OutputsFull {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.utxo_count_delta.compute(
+        self.unspent_count_delta.compute(
             starting_indexes.height,
             &blocks.lookback._1m,
-            &self.base.utxo_count.height,
+            &self.base.unspent_count.height,
             exit,
         )?;
 

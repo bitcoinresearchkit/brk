@@ -29,7 +29,7 @@ pub struct Vecs<M: StorageMode = Rw> {
 
     pub split: SplitByUnit<M>,
     pub ohlc: OhlcByUnit<M>,
-    pub price: PriceByUnit<M>,
+    pub spot: PriceByUnit<M>,
 }
 
 impl Vecs {
@@ -169,7 +169,7 @@ impl Vecs {
             sats: ohlc_sats,
         };
 
-        let price = PriceByUnit {
+        let spot = PriceByUnit {
             cents: price_cents,
             usd: price_usd,
             sats: price_sats,
@@ -179,7 +179,7 @@ impl Vecs {
             db: db.clone(),
             split,
             ohlc,
-            price,
+            spot,
         })
     }
 

@@ -21,19 +21,19 @@ impl Vecs {
         self.compute_prices(indexer, starting_indexes, exit)?;
         self.split.open.cents.compute_first(
             starting_indexes,
-            &self.price.cents.height,
+            &self.spot.cents.height,
             indexes,
             exit,
         )?;
         self.split.high.cents.compute_max(
             starting_indexes,
-            &self.price.cents.height,
+            &self.spot.cents.height,
             indexes,
             exit,
         )?;
         self.split.low.cents.compute_min(
             starting_indexes,
-            &self.price.cents.height,
+            &self.spot.cents.height,
             indexes,
             exit,
         )?;
@@ -60,7 +60,7 @@ impl Vecs {
     ) -> Result<()> {
         let source_version =
             indexer.vecs.outputs.value.version() + indexer.vecs.outputs.outputtype.version();
-        self.price
+        self.spot
             .cents
             .height
             .validate_computed_version_or_reset(source_version)?;
@@ -78,28 +78,28 @@ impl Vecs {
             .height
             .len()
             .min(starting_indexes.height.to_usize());
-        self.price.cents.height.truncate_if_needed_at(truncate_to)?;
+        self.spot.cents.height.truncate_if_needed_at(truncate_to)?;
 
-        if self.price.cents.height.len() < START_HEIGHT {
+        if self.spot.cents.height.len() < START_HEIGHT {
             for line in brk_oracle::PRICES
                 .lines()
-                .skip(self.price.cents.height.len())
+                .skip(self.spot.cents.height.len())
             {
-                if self.price.cents.height.len() >= START_HEIGHT {
+                if self.spot.cents.height.len() >= START_HEIGHT {
                     break;
                 }
                 let dollars: f64 = line.parse().unwrap_or(0.0);
                 let cents = (dollars * 100.0).round() as u64;
-                self.price.cents.height.push(Cents::new(cents));
+                self.spot.cents.height.push(Cents::new(cents));
             }
         }
 
-        if self.price.cents.height.len() >= total_heights {
+        if self.spot.cents.height.len() >= total_heights {
             return Ok(());
         }
 
         let config = Config::default();
-        let committed = self.price.cents.height.len();
+        let committed = self.spot.cents.height.len();
         let prev_cents = self
             .price
             .cents
@@ -121,7 +121,7 @@ impl Vecs {
         let ref_bins = Self::feed_blocks(&mut oracle, indexer, committed..total_heights);
 
         for (i, ref_bin) in ref_bins.into_iter().enumerate() {
-            self.price
+            self.spot
                 .cents
                 .height
                 .push(Cents::new(bin_to_cents(ref_bin)));
@@ -134,12 +134,12 @@ impl Vecs {
 
         {
             let _lock = exit.lock();
-            self.price.cents.height.write()?;
+            self.spot.cents.height.write()?;
         }
 
         info!(
             "Oracle prices complete: {} committed",
-            self.price.cents.height.len()
+            self.spot.cents.height.len()
         );
 
         Ok(())
@@ -237,7 +237,7 @@ impl<M: StorageMode> Vecs<M> {
             .price
             .cents
             .height
-            .collect_one_at(self.price.cents.height.len() - 1)
+            .collect_one_at(self.spot.cents.height.len() - 1)
             .unwrap();
         let seed_bin = cents_to_bin(last_cents.inner() as f64);
         let window_size = config.window_size;

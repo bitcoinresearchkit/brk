@@ -6,6 +6,6 @@ use crate::internal::{ComputedPerBlockCumulativeSum, ConstantVecs};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub block_count_target: ConstantVecs<StoredU64>,
-    pub block_count: ComputedPerBlockCumulativeSum<StoredU32, M>,
+    pub target: ConstantVecs<StoredU64>,
+    pub total: ComputedPerBlockCumulativeSum<StoredU32, M>,
 }

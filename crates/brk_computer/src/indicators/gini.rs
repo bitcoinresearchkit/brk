@@ -18,7 +18,7 @@ pub(super) fn compute(
         .collect();
     let count_vecs: Vec<&_> = amount_range
         .iter()
-        .map(|c| &c.metrics.outputs.utxo_count.height)
+        .map(|c| &c.metrics.outputs.unspent_count.height)
         .collect();
 
     if supply_vecs.is_empty() || supply_vecs.len() != count_vecs.len() {

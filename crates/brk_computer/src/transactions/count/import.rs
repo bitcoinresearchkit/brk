@@ -26,7 +26,7 @@ impl Vecs {
         );
 
         Ok(Self {
-            tx_count: ComputedPerBlockFull::forced_import(db, "tx_count", version, indexes)?,
+            total: ComputedPerBlockFull::forced_import(db, "tx_count", version, indexes)?,
             is_coinbase: txindex_to_is_coinbase,
         })
     }

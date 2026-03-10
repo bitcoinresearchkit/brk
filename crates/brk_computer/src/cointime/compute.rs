@@ -63,7 +63,7 @@ impl Vecs {
         // Phase 4: pricing and reserve_risk are independent
         let (r3, r4) = rayon::join(
             || {
-                self.pricing.compute(
+                self.prices.compute(
                     starting_indexes,
                     prices,
                     distribution,

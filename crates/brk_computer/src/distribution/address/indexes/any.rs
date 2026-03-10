@@ -39,7 +39,7 @@ macro_rules! define_any_address_indexes_vecs {
             }
 
             /// Get minimum stamped height across all address types.
-            pub(crate) fn min_stamped_height(&self) -> Height {
+            pub(crate) fn min_stamped_len(&self) -> Height {
                 [$(Height::from(self.$field.stamp()).incremented()),*]
                     .into_iter()
                     .min()

@@ -76,7 +76,7 @@ impl Vecs {
             .compute_binary::<StoredU32, StoredU32, RatioU32Bp16>(
                 starting_indexes.height,
                 &self.blocks_mined.cumulative.height,
-                &blocks.count.block_count.cumulative.height,
+                &blocks.count.total.cumulative.height,
                 exit,
             )?;
 

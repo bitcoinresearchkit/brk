@@ -16,24 +16,24 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         // Block count raw + cumulative
-        self.block_count.raw.height.compute_range(
+        self.total.raw.height.compute_range(
             starting_indexes.height,
             &indexer.vecs.blocks.weight,
             |h| (h, StoredU32::from(1_u32)),
             exit,
         )?;
-        self.block_count.cumulative.height.compute_cumulative(
+        self.total.cumulative.height.compute_cumulative(
             starting_indexes.height,
-            &self.block_count.raw.height,
+            &self.total.raw.height,
             exit,
         )?;
 
         // Rolling window block counts
         let ws = lookback.window_starts();
-        self.block_count.sum.compute_rolling_sum(
+        self.total.sum.compute_rolling_sum(
             starting_indexes.height,
             &ws,
-            &self.block_count.raw.height,
+            &self.total.raw.height,
             exit,
         )?;
 

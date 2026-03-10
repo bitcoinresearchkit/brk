@@ -23,7 +23,7 @@ impl Query {
         let blockhash = indexer.vecs.blocks.blockhash.read_once(height)?;
         let difficulty = indexer.vecs.blocks.difficulty.collect_one(height).unwrap();
         let timestamp = indexer.vecs.blocks.timestamp.collect_one(height).unwrap();
-        let size = indexer.vecs.blocks.total_size.collect_one(height).unwrap();
+        let size = indexer.vecs.blocks.total.collect_one(height).unwrap();
         let weight = indexer.vecs.blocks.weight.collect_one(height).unwrap();
         let tx_count = self.tx_count_at_height(height, max_height)?;
 
@@ -61,7 +61,7 @@ impl Query {
 
         let difficulties = indexer.vecs.blocks.difficulty.collect_range_at(begin, end);
         let timestamps = indexer.vecs.blocks.timestamp.collect_range_at(begin, end);
-        let sizes = indexer.vecs.blocks.total_size.collect_range_at(begin, end);
+        let sizes = indexer.vecs.blocks.total.collect_range_at(begin, end);
         let weights = indexer.vecs.blocks.weight.collect_range_at(begin, end);
 
         // Batch-read first_txindex for tx_count computation (need one extra for next boundary)

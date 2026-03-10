@@ -16,7 +16,7 @@ impl Vecs {
     ) -> Result<()> {
         // Compute price returns at height level
         for ((returns, _), (lookback_price, _)) in self
-            .price_return
+            .periods
             .iter_mut_with_days()
             .zip(lookback.price_lookback.iter_with_days())
         {
@@ -29,8 +29,8 @@ impl Vecs {
         }
 
         // CAGR computed from returns at height level (2y+ periods only)
-        let price_return_dca = self.price_return.as_dca_period();
-        for (cagr, returns, days) in self.price_cagr.zip_mut_with_period(&price_return_dca) {
+        let price_return_dca = self.periods.as_dca_period();
+        for (cagr, returns, days) in self.cagr.zip_mut_with_period(&price_return_dca) {
             let years = days as f64 / 365.0;
             cagr.bps.height.compute_transform(
                 starting_indexes.height,
@@ -44,12 +44,12 @@ impl Vecs {
             )?;
         }
 
-        let _24h_price_return_ratio = &self.price_return._24h.ratio.height;
+        let _24h_price_return_ratio = &self.periods._24h.ratio.height;
 
         for sd in [
-            &mut self.price_return_24h_sd._1w,
-            &mut self.price_return_24h_sd._1m,
-            &mut self.price_return_24h_sd._1y,
+            &mut self.sd_24h._1w,
+            &mut self.sd_24h._1m,
+            &mut self.sd_24h._1y,
         ] {
             sd.compute_all(blocks, starting_indexes, exit, _24h_price_return_ratio)?;
         }

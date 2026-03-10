@@ -29,7 +29,7 @@ impl Vecs {
             )?,
             liveliness: ComputedPerBlock::forced_import(db, "liveliness", version, indexes)?,
             vaultedness: ComputedPerBlock::forced_import(db, "vaultedness", version, indexes)?,
-            activity_to_vaultedness_ratio: ComputedPerBlock::forced_import(
+            ratio: ComputedPerBlock::forced_import(
                 db,
                 "activity_to_vaultedness_ratio",
                 version,

@@ -15,7 +15,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let window_starts = lookback.window_starts();
-        self.tx_count
+        self.total
             .compute(starting_indexes.height, &window_starts, exit, |height| {
                 Ok(height.compute_count_from_indexes(
                     starting_indexes.height,

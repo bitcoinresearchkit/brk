@@ -15,12 +15,12 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            block_count_target: ConstantVecs::new::<BlockCountTarget>(
+            target: ConstantVecs::new::<BlockCountTarget>(
                 "block_count_target",
                 version,
                 indexes,
             ),
-            block_count: ComputedPerBlockCumulativeSum::forced_import(
+            total: ComputedPerBlockCumulativeSum::forced_import(
                 db,
                 "block_count",
                 version,

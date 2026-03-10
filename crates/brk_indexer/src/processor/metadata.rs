@@ -62,7 +62,7 @@ impl BlockProcessor<'_> {
         }
         self.vecs
             .blocks
-            .total_size
+            .total
             .checked_push(self.height, total_size.into())?;
         self.vecs
             .blocks

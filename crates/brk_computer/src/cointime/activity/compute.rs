@@ -54,7 +54,7 @@ impl Vecs {
             exit,
         )?;
 
-        self.activity_to_vaultedness_ratio.height.compute_divide(
+        self.ratio.height.compute_divide(
             starting_indexes.height,
             &self.liveliness.height,
             &self.vaultedness.height,

@@ -61,9 +61,9 @@ impl Vecs {
             indexes,
         )?;
 
-        let hodled_or_lost_coins = LazyAmountPerBlock::identity(
+        let hodled_or_lost = LazyAmountPerBlock::identity(
             "hodled_or_lost_coins",
-            &cointime.supply.vaulted_supply,
+            &cointime.supply.vaulted,
             version,
         );
 
@@ -76,7 +76,7 @@ impl Vecs {
             market_cap,
             market_cap_delta,
             market_minus_realized_cap_growth_rate,
-            hodled_or_lost_coins,
+            hodled_or_lost,
         };
         finalize_db(&this.db, &this)?;
         Ok(this)

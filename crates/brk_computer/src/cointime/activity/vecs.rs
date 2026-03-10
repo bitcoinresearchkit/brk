@@ -10,5 +10,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub coinblocks_stored: ComputedPerBlockCumulativeSum<StoredF64, M>,
     pub liveliness: ComputedPerBlock<StoredF64, M>,
     pub vaultedness: ComputedPerBlock<StoredF64, M>,
-    pub activity_to_vaultedness_ratio: ComputedPerBlock<StoredF64, M>,
+    pub ratio: ComputedPerBlock<StoredF64, M>,
 }

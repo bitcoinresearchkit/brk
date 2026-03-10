@@ -132,7 +132,7 @@ impl DynCohortVecs for AddressCohortVecs {
                 state.inner.supply.utxo_count = *self
                     .metrics
                     .outputs
-                    .utxo_count
+                    .unspent_count
                     .height
                     .collect_one(prev_height)
                     .unwrap();

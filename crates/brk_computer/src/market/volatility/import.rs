@@ -14,36 +14,36 @@ impl Vecs {
             "price_volatility_1w",
             version + v2,
             returns
-                .price_return_24h_sd
+                .sd_24h
                 ._1w
                 .sd
                 .height
                 .read_only_boxed_clone(),
-            &returns.price_return_24h_sd._1w.sd,
+            &returns.sd_24h._1w.sd,
         );
 
         let _1m = LazyPerBlock::from_computed::<TimesSqrt<Days30>>(
             "price_volatility_1m",
             version + v2,
             returns
-                .price_return_24h_sd
+                .sd_24h
                 ._1m
                 .sd
                 .height
                 .read_only_boxed_clone(),
-            &returns.price_return_24h_sd._1m.sd,
+            &returns.sd_24h._1m.sd,
         );
 
         let _1y = LazyPerBlock::from_computed::<TimesSqrt<Days365>>(
             "price_volatility_1y",
             version + v2,
             returns
-                .price_return_24h_sd
+                .sd_24h
                 ._1y
                 .sd
                 .height
                 .read_only_boxed_clone(),
-            &returns.price_return_24h_sd._1y.sd,
+            &returns.sd_24h._1y.sd,
         );
 
         Ok(Self { _1w, _1m, _1y })

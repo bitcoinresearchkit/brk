@@ -6,8 +6,8 @@ use crate::internal::ComputedPerBlockCumulativeSum;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub value_destroyed: ComputedPerBlockCumulativeSum<StoredF64, M>,
-    pub value_created: ComputedPerBlockCumulativeSum<StoredF64, M>,
-    pub value_stored: ComputedPerBlockCumulativeSum<StoredF64, M>,
+    pub destroyed: ComputedPerBlockCumulativeSum<StoredF64, M>,
+    pub created: ComputedPerBlockCumulativeSum<StoredF64, M>,
+    pub stored: ComputedPerBlockCumulativeSum<StoredF64, M>,
     pub vocdd: ComputedPerBlockCumulativeSum<StoredF64, M>,
 }
