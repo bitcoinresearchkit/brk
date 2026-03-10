@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF32, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
+use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{ComputedPerBlock, RollingWindowsFrom1w};
 
@@ -10,20 +10,12 @@ use crate::{blocks, distribution::{metrics::ImportConfig, state::{CohortState, R
 
 use super::ActivityCore;
 
-#[derive(Traversable)]
-pub struct ActivityCoinblocks<M: StorageMode = Rw> {
-    pub raw: ComputedPerBlock<StoredF64, M>,
-    pub cumulative: ComputedPerBlock<StoredF64, M>,
-}
-
 #[derive(Deref, DerefMut, Traversable)]
 pub struct ActivityFull<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
     pub inner: ActivityCore<M>,
-
-    pub coinblocks_destroyed: ActivityCoinblocks<M>,
 
     #[traversable(wrap = "coindays_destroyed", rename = "cumulative")]
     pub coindays_destroyed_cumulative: ComputedPerBlock<StoredF64, M>,
@@ -42,10 +34,6 @@ impl ActivityFull {
         let v1 = Version::ONE;
         Ok(Self {
             inner: ActivityCore::forced_import(cfg)?,
-            coinblocks_destroyed: ActivityCoinblocks {
-                raw: cfg.import("coinblocks_destroyed", v1)?,
-                cumulative: cfg.import("coinblocks_destroyed_cumulative", v1)?,
-            },
             coindays_destroyed_cumulative: cfg.import("coindays_destroyed_cumulative", v1)?,
             coindays_destroyed_sum: cfg.import("coindays_destroyed", v1)?,
             sent_sum_extended: cfg.import("sent", v1)?,
@@ -55,9 +43,7 @@ impl ActivityFull {
     }
 
     pub(crate) fn full_min_len(&self) -> usize {
-        self.inner
-            .min_len()
-            .min(self.coinblocks_destroyed.raw.height.len())
+        self.inner.min_len()
     }
 
     pub(crate) fn full_truncate_push(
@@ -65,17 +51,11 @@ impl ActivityFull {
         height: Height,
         state: &CohortState<impl RealizedOps>,
     ) -> Result<()> {
-        self.inner.truncate_push(height, state)?;
-        self.coinblocks_destroyed.raw.height.truncate_push(
-            height,
-            StoredF64::from(Bitcoin::from(state.satblocks_destroyed)),
-        )?;
-        Ok(())
+        self.inner.truncate_push(height, state)
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.inner.collect_vecs_mut();
-        vecs.push(&mut self.coinblocks_destroyed.raw.height as &mut dyn AnyStoredVec);
         vecs.push(&mut self.dormancy.height);
         vecs.push(&mut self.velocity.height);
         vecs
@@ -99,15 +79,6 @@ impl ActivityFull {
     ) -> Result<()> {
         self.inner
             .compute_rest_part1(blocks, starting_indexes, exit)?;
-
-        self.coinblocks_destroyed
-            .cumulative
-            .height
-            .compute_cumulative(
-                starting_indexes.height,
-                &self.coinblocks_destroyed.raw.height,
-                exit,
-            )?;
 
         self.coindays_destroyed_cumulative
             .height

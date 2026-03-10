@@ -14,6 +14,7 @@ mod blocks;
 mod cointime;
 mod constants;
 mod distribution;
+mod indicators;
 pub mod indexes;
 mod inputs;
 mod internal;
@@ -37,6 +38,7 @@ pub struct Computer<M: StorageMode = Rw> {
     pub cointime: Box<cointime::Vecs<M>>,
     pub constants: Box<constants::Vecs>,
     pub indexes: Box<indexes::Vecs<M>>,
+    pub indicators: Box<indicators::Vecs<M>>,
     pub market: Box<market::Vecs<M>>,
     pub pools: Box<pools::Vecs<M>>,
     pub prices: Box<prices::Vecs<M>>,
@@ -174,28 +176,38 @@ impl Computer {
                 })
             })?;
 
-        // Market and distribution are independent; import in parallel.
+        // Market, indicators, and distribution are independent; import in parallel.
         // Supply depends on distribution so it runs after.
-        let (distribution, market) = timed("Imported distribution/market", || {
-            thread::scope(|s| -> Result<_> {
-                let market_handle = big_thread().spawn_scoped(s, || -> Result<_> {
-                    Ok(Box::new(market::Vecs::forced_import(
+        let (distribution, market, indicators) =
+            timed("Imported distribution/market/indicators", || {
+                thread::scope(|s| -> Result<_> {
+                    let market_handle = big_thread().spawn_scoped(s, || -> Result<_> {
+                        Ok(Box::new(market::Vecs::forced_import(
+                            &computed_path,
+                            VERSION,
+                            &indexes,
+                        )?))
+                    })?;
+
+                    let indicators_handle = big_thread().spawn_scoped(s, || -> Result<_> {
+                        Ok(Box::new(indicators::Vecs::forced_import(
+                            &computed_path,
+                            VERSION,
+                            &indexes,
+                        )?))
+                    })?;
+
+                    let distribution = Box::new(distribution::Vecs::forced_import(
                         &computed_path,
                         VERSION,
                         &indexes,
-                    )?))
-                })?;
+                    )?);
 
-                let distribution = Box::new(distribution::Vecs::forced_import(
-                    &computed_path,
-                    VERSION,
-                    &indexes,
-                )?);
-
-                let market = market_handle.join().unwrap()?;
-                Ok((distribution, market))
-            })
-        })?;
+                    let market = market_handle.join().unwrap()?;
+                    let indicators = indicators_handle.join().unwrap()?;
+                    Ok((distribution, market, indicators))
+                })
+            })?;
 
         let supply = timed("Imported supply", || -> Result<_> {
             Ok(Box::new(supply::Vecs::forced_import(
@@ -214,6 +226,7 @@ impl Computer {
             transactions,
             scripts,
             constants,
+            indicators,
             market,
             distribution,
             supply,
@@ -240,6 +253,7 @@ impl Computer {
             scripts::DB_NAME,
             positions::DB_NAME,
             cointime::DB_NAME,
+            indicators::DB_NAME,
             indexes::DB_NAME,
             market::DB_NAME,
             pools::DB_NAME,
@@ -408,6 +422,15 @@ impl Computer {
                         &self.indexes,
                         &self.prices,
                         &self.blocks,
+                        &starting_indexes,
+                        exit,
+                    )
+                })
+            });
+
+            let indicators = scope.spawn(|| {
+                timed("Computed indicators", || {
+                    self.indicators.compute(
                         &self.mining,
                         &self.distribution,
                         &self.transactions,
@@ -431,6 +454,7 @@ impl Computer {
             })?;
 
             market.join().unwrap()?;
+            indicators.join().unwrap()?;
             Ok(())
         })?;
 
@@ -473,6 +497,7 @@ impl Computer<Ro> {
             positions,
             cointime,
             constants,
+            indicators,
             indexes,
             market,
             pools,

@@ -47,8 +47,7 @@ pub(crate) fn process_sent(
     for (receive_height, by_type) in sent_data.into_iter() {
         let prev_price = height_to_price[receive_height.to_usize()];
         let prev_timestamp = height_to_timestamp[receive_height.to_usize()];
-        let blocks_old = current_height.to_usize() - receive_height.to_usize();
-        let age = Age::new(current_timestamp, prev_timestamp, blocks_old);
+        let age = Age::new(current_timestamp, prev_timestamp);
 
         // Compute peak price during holding period for peak regret
         // This is the max HIGH price between receive and send heights

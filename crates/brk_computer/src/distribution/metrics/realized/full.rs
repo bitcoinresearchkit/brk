@@ -289,7 +289,7 @@ impl RealizedFull {
             .min(self.investor.price.cents.height.len())
             .min(self.cap_raw.len())
             .min(self.investor.cap_raw.len())
-            .min(self.peak_regret.value.height.len())
+            .min(self.peak_regret.value.raw.height.len())
     }
 
     pub(crate) fn truncate_push(
@@ -326,6 +326,7 @@ impl RealizedFull {
             .truncate_push(height, state.realized.investor_cap_raw())?;
         self.peak_regret
             .value
+            .raw
             .height
             .truncate_push(height, state.realized.peak_regret())?;
 
@@ -341,7 +342,7 @@ impl RealizedFull {
         vecs.push(&mut self.investor.price.cents.height);
         vecs.push(&mut self.cap_raw as &mut dyn AnyStoredVec);
         vecs.push(&mut self.investor.cap_raw as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.peak_regret.value.height);
+        vecs.push(&mut self.peak_regret.value.raw.height);
         vecs
     }
 
@@ -400,6 +401,7 @@ impl RealizedFull {
 
         self.peak_regret
             .value
+            .raw
             .height
             .truncate_push(height, accum.peak_regret)?;
 
@@ -609,7 +611,7 @@ impl RealizedFull {
             .rel_to_rcap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
-                &self.peak_regret.value.height,
+                &self.peak_regret.value.raw.height,
                 &self.core.minimal.cap.cents.height,
                 exit,
             )?;

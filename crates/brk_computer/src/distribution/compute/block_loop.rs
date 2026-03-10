@@ -2,12 +2,12 @@ use brk_cohort::ByAddressType;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{
-    Cents, Date, Height, ONE_DAY_IN_SEC, OutputType, Sats, Timestamp, TxIndex, TypeIndex,
+    Cents, Date, Height, ONE_DAY_IN_SEC, OutputType, Sats, StoredF64, Timestamp, TxIndex, TypeIndex,
 };
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use tracing::{debug, info};
-use vecdb::{AnyVec, Exit, ReadableVec, VecIndex};
+use vecdb::{AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
 use crate::{
     distribution::{
@@ -66,7 +66,7 @@ pub(crate) fn process_blocks(
     let height_to_first_txindex = &indexer.vecs.transactions.first_txindex;
     let height_to_first_txoutindex = &indexer.vecs.outputs.first_txoutindex;
     let height_to_first_txinindex = &indexer.vecs.inputs.first_txinindex;
-    let height_to_tx_count = &transactions.count.tx_count.height;
+    let height_to_tx_count = &transactions.count.tx_count.raw.height;
     let height_to_output_count = &outputs.count.total_count.full.sum;
     let height_to_input_count = &inputs.count.full.sum;
     let txindex_to_output_count = &indexes.txindex.output_count;
@@ -352,6 +352,23 @@ pub(crate) fn process_blocks(
             price: block_price,
             timestamp,
         });
+
+        // Compute total coinblocks destroyed (once globally, before send() consumes height_to_sent)
+        {
+            let h = height.to_usize();
+            let total_satblocks: u128 = height_to_sent
+                .iter()
+                .filter(|(rh, _)| rh.to_usize() < h)
+                .map(|(rh, sent)| {
+                    let blocks_old = h - rh.to_usize();
+                    blocks_old as u128 * u64::from(sent.spendable_supply.value) as u128
+                })
+                .sum();
+            vecs.coinblocks_destroyed.raw.height.truncate_push(
+                height,
+                StoredF64::from(total_satblocks as f64 / Sats::ONE_BTC_U128 as f64),
+            )?;
+        }
 
         // Record maturation (sats crossing age boundaries)
         vecs.utxo_cohorts.push_maturation(height, &matured)?;

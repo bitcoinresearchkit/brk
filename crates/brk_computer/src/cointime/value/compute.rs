@@ -19,7 +19,7 @@ impl Vecs {
         let window_starts = blocks.lookback.window_starts();
 
         let all_metrics = &distribution.utxo_cohorts.all.metrics;
-        let coinblocks_destroyed = &all_metrics.activity.coinblocks_destroyed;
+        let coinblocks_destroyed = &distribution.coinblocks_destroyed;
         let coindays_destroyed = &all_metrics.activity.coindays_destroyed;
         let circulating_supply = &all_metrics.supply.total.btc.height;
 
@@ -39,7 +39,7 @@ impl Vecs {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &prices.price.usd.height,
-                    &activity.coinblocks_created.height,
+                    &activity.coinblocks_created.raw.height,
                     exit,
                 )?;
                 Ok(())
@@ -50,7 +50,7 @@ impl Vecs {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &prices.price.usd.height,
-                    &activity.coinblocks_stored.height,
+                    &activity.coinblocks_stored.raw.height,
                     exit,
                 )?;
                 Ok(())

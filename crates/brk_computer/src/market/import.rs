@@ -9,7 +9,7 @@ use crate::{
 };
 
 use super::{
-    AthVecs, DcaVecs, IndicatorsVecs, LookbackVecs, MovingAverageVecs, RangeVecs, ReturnsVecs,
+    AthVecs, DcaVecs, TechnicalVecs, LookbackVecs, MovingAverageVecs, RangeVecs, ReturnsVecs,
     Vecs, VolatilityVecs,
 };
 
@@ -29,7 +29,7 @@ impl Vecs {
         let range = RangeVecs::forced_import(&db, version, indexes)?;
         let moving_average = MovingAverageVecs::forced_import(&db, version, indexes)?;
         let dca = DcaVecs::forced_import(&db, version, indexes)?;
-        let indicators = IndicatorsVecs::forced_import(&db, version, indexes)?;
+        let technical = TechnicalVecs::forced_import(&db, version, indexes)?;
 
         let this = Self {
             db,
@@ -40,7 +40,7 @@ impl Vecs {
             range,
             moving_average,
             dca,
-            indicators,
+            technical,
         };
         finalize_db(&this.db, &this)?;
         Ok(this)

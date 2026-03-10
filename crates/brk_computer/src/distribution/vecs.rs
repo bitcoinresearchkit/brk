@@ -5,7 +5,7 @@ use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
     Cents, EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex, Height,
-    Indexes, SupplyState, Timestamp, TxIndex, Version,
+    Indexes, StoredF64, SupplyState, Timestamp, TxIndex, Version,
 };
 use tracing::{debug, info};
 use vecdb::{
@@ -23,7 +23,7 @@ use crate::{
         state::BlockState,
     },
     indexes, inputs,
-    internal::{finalize_db, open_db},
+    internal::{finalize_db, open_db, ComputedPerBlockCumulative},
     outputs, prices, transactions,
 };
 
@@ -48,6 +48,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub addresses_data: AddressesDataVecs<M>,
     pub utxo_cohorts: UTXOCohorts<M>,
     pub address_cohorts: AddressCohorts<M>,
+
+    pub coinblocks_destroyed: ComputedPerBlockCumulative<StoredF64, M>,
 
     pub addr_count: AddrCountsVecs<M>,
     pub empty_addr_count: AddrCountsVecs<M>,
@@ -158,6 +160,13 @@ impl Vecs {
 
             utxo_cohorts,
             address_cohorts,
+
+            coinblocks_destroyed: ComputedPerBlockCumulative::forced_import(
+                &db,
+                "coinblocks_destroyed",
+                version + Version::TWO,
+                indexes,
+            )?,
 
             any_address_indexes: AnyAddressIndexesVecs::forced_import(&db, version)?,
             addresses_data: AddressesDataVecs {
@@ -390,6 +399,10 @@ impl Vecs {
             exit,
         )?;
 
+        // 5b. Compute coinblocks_destroyed cumulative from raw
+        self.coinblocks_destroyed
+            .compute_rest(starting_indexes.height, exit)?;
+
         // 6. Compute rest part1 (day1 mappings)
         aggregates::compute_rest_part1(
             &mut self.utxo_cohorts,
@@ -474,5 +487,6 @@ impl Vecs {
             .min(Height::from(self.addr_count.min_stateful_height()))
             .min(Height::from(self.empty_addr_count.min_stateful_height()))
             .min(Height::from(self.address_activity.min_stateful_height()))
+            .min(Height::from(self.coinblocks_destroyed.raw.height.len()))
     }
 }

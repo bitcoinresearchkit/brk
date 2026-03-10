@@ -79,9 +79,13 @@ pub(crate) fn write(
         .chain(vecs.addr_count.par_iter_height_mut())
         .chain(vecs.empty_addr_count.par_iter_height_mut())
         .chain(vecs.address_activity.par_iter_height_mut())
-        .chain(rayon::iter::once(
-            &mut vecs.supply_state as &mut dyn AnyStoredVec,
-        ))
+        .chain(
+            [
+                &mut vecs.supply_state as &mut dyn AnyStoredVec,
+                &mut vecs.coinblocks_destroyed.raw.height,
+            ]
+            .into_par_iter(),
+        )
         .chain(vecs.utxo_cohorts.par_iter_vecs_mut())
         .chain(vecs.address_cohorts.par_iter_vecs_mut())
         .try_for_each(|v| v.any_stamped_write_maybe_with_changes(stamp, with_changes))?;

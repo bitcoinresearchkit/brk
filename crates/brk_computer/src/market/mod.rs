@@ -2,7 +2,7 @@ pub mod ath;
 mod compute;
 pub mod dca;
 mod import;
-pub mod indicators;
+pub mod technical;
 pub mod lookback;
 pub mod moving_average;
 pub mod range;
@@ -14,7 +14,7 @@ use vecdb::{Database, Rw, StorageMode};
 
 pub use ath::Vecs as AthVecs;
 pub use dca::Vecs as DcaVecs;
-pub use indicators::Vecs as IndicatorsVecs;
+pub use technical::Vecs as TechnicalVecs;
 pub use lookback::Vecs as LookbackVecs;
 pub use moving_average::Vecs as MovingAverageVecs;
 pub use range::Vecs as RangeVecs;
@@ -33,5 +33,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub range: RangeVecs<M>,
     pub moving_average: MovingAverageVecs<M>,
     pub dca: DcaVecs<M>,
-    pub indicators: IndicatorsVecs<M>,
+    pub technical: TechnicalVecs<M>,
 }

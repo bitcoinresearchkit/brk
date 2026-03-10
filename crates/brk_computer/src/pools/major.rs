@@ -75,7 +75,7 @@ impl Vecs {
         self.blocks_mined_sum.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.base.blocks_mined.height,
+            &self.base.blocks_mined.raw.height,
             exit,
         )?;
 
@@ -101,7 +101,7 @@ impl Vecs {
             |vec| {
                 Ok(vec.compute_transform2(
                     starting_indexes.height,
-                    &self.base.blocks_mined.height,
+                    &self.base.blocks_mined.raw.height,
                     &mining.rewards.coinbase.base.sats.height,
                     |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
                     exit,

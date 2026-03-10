@@ -4,9 +4,9 @@ use vecdb::Exit;
 
 use super::{
     super::{moving_average, range, returns},
-    Vecs, gini, macd, rsi,
+    Vecs, macd, rsi,
 };
-use crate::{blocks, distribution, internal::RatioDollarsBp32, mining, prices, transactions};
+use crate::{blocks, internal::RatioDollarsBp32, prices};
 
 const TF_MULTIPLIERS: [usize; 4] = [1, 7, 30, 365];
 
@@ -14,27 +14,15 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
-        rewards: &mining::RewardsVecs,
         returns: &returns::Vecs,
         range: &range::Vecs,
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
-        distribution: &distribution::Vecs,
-        transactions: &transactions::Vecs,
         moving_average: &moving_average::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.puell_multiple
-            .bps
-            .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
-                starting_indexes.height,
-                &rewards.subsidy.base.usd.height,
-                &rewards.subsidy_sma_1y.usd.height,
-                exit,
-            )?;
-
-        // Stochastic Oscillator: K = (close - low_2w) / (high_2w - low_2w), stored as ratio (0–1)
+        // Stochastic Oscillator: K = (close - low_2w) / (high_2w - low_2w), stored as ratio (0-1)
         {
             let price = &prices.price.usd.height;
             self.stoch_k.bps.height.compute_transform3(
@@ -100,53 +88,6 @@ impl Vecs {
                 exit,
             )?;
         }
-
-        // Gini (per height)
-        gini::compute(&mut self.gini, distribution, starting_indexes, exit)?;
-
-        // RHODL Ratio: 1d-1w realized cap / 1y-2y realized cap
-        self.rhodl_ratio
-            .bps
-            .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
-                starting_indexes.height,
-                &distribution
-                    .utxo_cohorts
-                    .age_range
-                    ._1d_to_1w
-                    .metrics
-                    .realized
-                    .cap
-                    .usd
-                    .height,
-                &distribution
-                    .utxo_cohorts
-                    .age_range
-                    ._1y_to_2y
-                    .metrics
-                    .realized
-                    .cap
-                    .usd
-                    .height,
-                exit,
-            )?;
-
-        // NVT: market_cap / tx_volume_24h
-        let market_cap = &distribution
-            .utxo_cohorts
-            .all
-            .metrics
-            .supply
-            .total
-            .usd
-            .height;
-        self.nvt
-            .bps
-            .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
-                starting_indexes.height,
-                market_cap,
-                &transactions.volume.sent_sum.rolling._24h.usd.height,
-                exit,
-            )?;
 
         // Pi Cycle: sma_111d / sma_350d_x2
         self.pi_cycle

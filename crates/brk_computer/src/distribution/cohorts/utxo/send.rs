@@ -43,8 +43,7 @@ impl UTXOCohorts<Rw> {
 
             let block_state = &chain_state[receive_height.to_usize()];
             let prev_price = block_state.price;
-            let blocks_old = chain_len - 1 - receive_height.to_usize();
-            let age = Age::new(last_timestamp, block_state.timestamp, blocks_old);
+            let age = Age::new(last_timestamp, block_state.timestamp);
 
             // Compute peak price during holding period for peak regret
             // This is the max price between receive and send heights

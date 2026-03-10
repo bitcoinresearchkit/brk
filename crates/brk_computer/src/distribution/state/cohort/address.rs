@@ -28,7 +28,6 @@ impl<R: RealizedOps> AddressCohortState<R> {
         self.addr_count = 0;
         self.inner.supply = SupplyState::default();
         self.inner.sent = Sats::ZERO;
-        self.inner.satblocks_destroyed = Sats::ZERO;
         self.inner.satdays_destroyed = Sats::ZERO;
         self.inner.realized = R::default();
     }

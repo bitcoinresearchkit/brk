@@ -2,20 +2,16 @@ use brk_error::Result;
 use brk_types::Indexes;
 use vecdb::Exit;
 
-use crate::{blocks, distribution, indexes, mining, prices, transactions};
+use crate::{blocks, indexes, prices};
 
 use super::Vecs;
 
 impl Vecs {
-    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
         indexes: &indexes::Vecs,
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
-        mining: &mining::Vecs,
-        distribution: &distribution::Vecs,
-        transactions: &transactions::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -63,14 +59,11 @@ impl Vecs {
         r4?;
 
         // Phase 3: Depends on returns, range, moving_average
-        self.indicators.compute(
-            &mining.rewards,
+        self.technical.compute(
             &self.returns,
             &self.range,
             prices,
             blocks,
-            distribution,
-            transactions,
             &self.moving_average,
             starting_indexes,
             exit,

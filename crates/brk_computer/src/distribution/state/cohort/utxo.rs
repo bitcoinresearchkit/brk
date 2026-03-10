@@ -23,7 +23,6 @@ impl<R: RealizedOps> UTXOCohortState<R> {
     pub(crate) fn reset(&mut self) {
         self.0.supply = SupplyState::default();
         self.0.sent = Sats::ZERO;
-        self.0.satblocks_destroyed = Sats::ZERO;
         self.0.satdays_destroyed = Sats::ZERO;
         self.0.realized = R::default();
     }

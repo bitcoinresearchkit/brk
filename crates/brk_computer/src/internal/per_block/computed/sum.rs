@@ -1,4 +1,4 @@
-//! ComputedPerBlockSum - stored height + RollingWindows (sum only).
+//! ComputedPerBlockSum - raw ComputedPerBlock + RollingWindows (sum only).
 //!
 //! Like ComputedPerBlockCumulativeSum but without the cumulative vec.
 
@@ -8,11 +8,11 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode};
+use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{NumericValue, RollingWindows, WindowStarts},
+    internal::{ComputedPerBlock, NumericValue, RollingWindows, WindowStarts},
 };
 
 #[derive(Traversable)]
@@ -20,7 +20,7 @@ pub struct ComputedPerBlockSum<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
-    pub height: M::Stored<EagerVec<PcoVec<Height, T>>>,
+    pub raw: ComputedPerBlock<T, M>,
     pub sum: RollingWindows<T, M>,
 }
 
@@ -34,26 +34,26 @@ where
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, version)?;
+        let raw = ComputedPerBlock::forced_import(db, name, version, indexes)?;
         let sum = RollingWindows::forced_import(db, &format!("{name}_sum"), version, indexes)?;
 
-        Ok(Self { height, sum })
+        Ok(Self { raw, sum })
     }
 
-    /// Compute height data via closure, then rolling sum.
+    /// Compute raw data via closure, then rolling sum.
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
         windows: &WindowStarts<'_>,
         exit: &Exit,
-        compute_height: impl FnOnce(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
+        compute_raw: impl FnOnce(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
     ) -> Result<()>
     where
         T: Default + SubAssign,
     {
-        compute_height(&mut self.height)?;
+        compute_raw(&mut self.raw.height)?;
         self.sum
-            .compute_rolling_sum(max_from, windows, &self.height, exit)?;
+            .compute_rolling_sum(max_from, windows, &self.raw.height, exit)?;
         Ok(())
     }
 }

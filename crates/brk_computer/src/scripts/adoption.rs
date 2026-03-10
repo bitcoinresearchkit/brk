@@ -38,14 +38,14 @@ impl Vecs {
     ) -> Result<()> {
         self.taproot.compute_binary::<_, _, RatioU64Bp16>(
             starting_indexes.height,
-            &count.p2tr.height,
+            &count.p2tr.raw.height,
             &outputs_count.total_count.full.sum,
             exit,
         )?;
 
         self.segwit.compute_binary::<_, _, RatioU64Bp16>(
             starting_indexes.height,
-            &count.segwit.height,
+            &count.segwit.raw.height,
             &outputs_count.total_count.full.sum,
             exit,
         )?;

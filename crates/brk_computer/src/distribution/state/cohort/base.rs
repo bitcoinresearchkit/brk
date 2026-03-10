@@ -53,7 +53,6 @@ pub struct CohortState<R: RealizedOps> {
     pub supply: SupplyState,
     pub realized: R,
     pub sent: Sats,
-    pub satblocks_destroyed: Sats,
     pub satdays_destroyed: Sats,
     cost_basis_data: CostBasisData,
 }
@@ -64,7 +63,6 @@ impl<R: RealizedOps> CohortState<R> {
             supply: SupplyState::default(),
             realized: R::default(),
             sent: Sats::ZERO,
-            satblocks_destroyed: Sats::ZERO,
             satdays_destroyed: Sats::ZERO,
             cost_basis_data: CostBasisData::create(path, name),
         }
@@ -104,7 +102,6 @@ impl<R: RealizedOps> CohortState<R> {
     pub(crate) fn reset_single_iteration_values(&mut self) {
         self.sent = Sats::ZERO;
         self.satdays_destroyed = Sats::ZERO;
-        self.satblocks_destroyed = Sats::ZERO;
         self.realized.reset_single_iteration_values();
     }
 
@@ -202,7 +199,6 @@ impl<R: RealizedOps> CohortState<R> {
     ) {
         self.supply -= supply;
         self.sent += pre.sats;
-        self.satblocks_destroyed += pre.age.satblocks_destroyed(pre.sats);
         self.satdays_destroyed += pre.age.satdays_destroyed(pre.sats);
 
         self.realized
@@ -246,7 +242,6 @@ impl<R: RealizedOps> CohortState<R> {
 
         if supply.value > Sats::ZERO {
             self.sent += supply.value;
-            self.satblocks_destroyed += age.satblocks_destroyed(supply.value);
             self.satdays_destroyed += age.satdays_destroyed(supply.value);
 
             let sats = supply.value;

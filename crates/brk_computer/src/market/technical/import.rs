@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::{MacdChain, RsiChain, Vecs};
 use crate::{
     indexes,
-    internal::{ComputedPerBlock, RatioPerBlock, PercentPerBlock, Windows},
+    internal::{ComputedPerBlock, PercentPerBlock, RatioPerBlock, Windows},
 };
 
 const VERSION: Version = Version::new(2);
@@ -106,34 +106,20 @@ impl Vecs {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let nvt = RatioPerBlock::forced_import_raw(db, "nvt", v, indexes)?;
-
         let rsi = Windows::try_from_fn(|tf| RsiChain::forced_import(db, tf, v, indexes))?;
         let macd = Windows::try_from_fn(|tf| MacdChain::forced_import(db, tf, v, indexes))?;
 
         let stoch_k = PercentPerBlock::forced_import(db, "stoch_k", v, indexes)?;
         let stoch_d = PercentPerBlock::forced_import(db, "stoch_d", v, indexes)?;
-        let gini = PercentPerBlock::forced_import(db, "gini", v, indexes)?;
 
         let pi_cycle = RatioPerBlock::forced_import_raw(db, "pi_cycle", v, indexes)?;
 
-        let rhodl_ratio = RatioPerBlock::forced_import_raw(db, "rhodl_ratio", v, indexes)?;
-
         Ok(Self {
-            puell_multiple: RatioPerBlock::forced_import_raw(
-                db,
-                "puell_multiple",
-                v,
-                indexes,
-            )?,
-            nvt,
             rsi,
             stoch_k,
             stoch_d,
             pi_cycle,
             macd,
-            gini,
-            rhodl_ratio,
         })
     }
 }

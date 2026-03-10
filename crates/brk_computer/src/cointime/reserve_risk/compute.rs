@@ -17,7 +17,7 @@ impl Vecs {
         self.vocdd_median_1y.compute_rolling_median_from_starts(
             starting_indexes.height,
             &blocks.lookback.height_1y_ago,
-            &value.vocdd.height,
+            &value.vocdd.raw.height,
             exit,
         )?;
 

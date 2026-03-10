@@ -71,7 +71,7 @@ impl Vecs {
             .height
             .compute_binary::<_, Timestamp, PerSec>(
                 starting_indexes.height,
-                &count_vecs.tx_count.height,
+                &count_vecs.tx_count.raw.height,
                 &blocks.interval.height,
                 exit,
             )?;

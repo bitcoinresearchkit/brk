@@ -15,8 +15,8 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        // Block count height + cumulative
-        self.block_count.height.compute_range(
+        // Block count raw + cumulative
+        self.block_count.raw.height.compute_range(
             starting_indexes.height,
             &indexer.vecs.blocks.weight,
             |h| (h, StoredU32::from(1_u32)),
@@ -24,7 +24,7 @@ impl Vecs {
         )?;
         self.block_count.cumulative.height.compute_cumulative(
             starting_indexes.height,
-            &self.block_count.height,
+            &self.block_count.raw.height,
             exit,
         )?;
 
@@ -33,7 +33,7 @@ impl Vecs {
         self.block_count.sum.compute_rolling_sum(
             starting_indexes.height,
             &ws,
-            &self.block_count.height,
+            &self.block_count.raw.height,
             exit,
         )?;
 
