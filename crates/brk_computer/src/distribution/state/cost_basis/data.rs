@@ -263,8 +263,8 @@ impl CostBasisOps for CostBasisRaw {
 /// Composes `CostBasisRaw` for scalar tracking, adds map, pending, and cache.
 ///
 /// Generic over the accumulator `S`:
-/// - `CachedStateRaw`: tracks all fields including invested capital + investor cap (128 bytes)
-/// - `CachedStateCore`: tracks only supply + unrealized profit/loss (64 bytes, 1 cache line)
+/// - `WithCapital`: tracks all fields including invested capital + investor cap (128 bytes)
+/// - `WithoutCapital`: tracks only supply + unrealized profit/loss (64 bytes, 1 cache line)
 #[derive(Clone, Debug)]
 pub struct CostBasisData<S: Accumulate> {
     raw: CostBasisRaw,

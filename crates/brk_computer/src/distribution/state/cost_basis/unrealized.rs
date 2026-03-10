@@ -40,10 +40,10 @@ impl UnrealizedState {
 /// Core cache state: supply + unrealized profit/loss only (64 bytes, 1 cache line).
 #[derive(Debug, Default, Clone)]
 pub struct WithoutCapital {
-    supply_in_profit: Sats,
-    supply_in_loss: Sats,
-    unrealized_profit: u128,
-    unrealized_loss: u128,
+    pub(crate) supply_in_profit: Sats,
+    pub(crate) supply_in_loss: Sats,
+    pub(crate) unrealized_profit: u128,
+    pub(crate) unrealized_loss: u128,
 }
 
 /// Full cache state: core + invested capital + investor cap (128 bytes, 2 cache lines).
@@ -56,21 +56,6 @@ pub struct WithCapital {
     investor_cap_in_loss: u128,
 }
 
-impl WithCapital {
-    fn to_output(&self) -> UnrealizedState {
-        let base = self.core.to_output();
-        UnrealizedState {
-            invested_capital_in_profit: div_btc(self.invested_capital_in_profit),
-            invested_capital_in_loss: div_btc(self.invested_capital_in_loss),
-            investor_cap_in_profit_raw: self.investor_cap_in_profit,
-            investor_cap_in_loss_raw: self.investor_cap_in_loss,
-            invested_capital_in_profit_raw: self.invested_capital_in_profit,
-            invested_capital_in_loss_raw: self.invested_capital_in_loss,
-            ..base
-        }
-    }
-}
-
 #[inline(always)]
 fn div_btc(raw: u128) -> Cents {
     if raw == 0 {
@@ -80,7 +65,25 @@ fn div_btc(raw: u128) -> Cents {
     }
 }
 
-impl WithoutCapital {
+/// Trait for accumulating profit/loss across BTreeMap entries.
+/// `WithoutCapital` skips capital tracking; `WithCapital` tracks all fields.
+pub trait Accumulate: Default + Clone + Send + Sync + 'static {
+    fn to_output(&self) -> UnrealizedState;
+    fn core(&self) -> &WithoutCapital;
+    fn core_mut(&mut self) -> &mut WithoutCapital;
+
+    fn supply_in_profit(&self) -> Sats { self.core().supply_in_profit }
+    fn supply_in_loss(&self) -> Sats { self.core().supply_in_loss }
+    fn unrealized_profit(&mut self) -> &mut u128 { &mut self.core_mut().unrealized_profit }
+    fn unrealized_loss(&mut self) -> &mut u128 { &mut self.core_mut().unrealized_loss }
+
+    fn accumulate_profit(&mut self, price_u128: u128, sats: Sats);
+    fn accumulate_loss(&mut self, price_u128: u128, sats: Sats);
+    fn deaccumulate_profit(&mut self, price_u128: u128, sats: Sats);
+    fn deaccumulate_loss(&mut self, price_u128: u128, sats: Sats);
+}
+
+impl Accumulate for WithoutCapital {
     fn to_output(&self) -> UnrealizedState {
         UnrealizedState {
             supply_in_profit: self.supply_in_profit,
@@ -90,79 +93,69 @@ impl WithoutCapital {
             ..UnrealizedState::ZERO
         }
     }
-}
 
-/// Trait for accumulating profit/loss across BTreeMap entries.
-/// `WithoutCapital` skips capital tracking; `WithCapital` tracks all fields.
-pub trait Accumulate: Default + Clone + Send + Sync + 'static {
-    fn to_output(&self) -> UnrealizedState;
-
-    fn supply_in_profit(&self) -> &Sats;
-    fn supply_in_loss(&self) -> &Sats;
-    fn unrealized_profit(&mut self) -> &mut u128;
-    fn unrealized_loss(&mut self) -> &mut u128;
-
-    fn accumulate_profit(&mut self, price_u128: u128, invested_capital: u128, sats: Sats);
-    fn accumulate_loss(&mut self, price_u128: u128, invested_capital: u128, sats: Sats);
-    fn deaccumulate_profit(&mut self, price_u128: u128, invested_capital: u128, sats: Sats);
-    fn deaccumulate_loss(&mut self, price_u128: u128, invested_capital: u128, sats: Sats);
-}
-
-impl Accumulate for WithoutCapital {
-    fn to_output(&self) -> UnrealizedState { self.to_output() }
-
-    fn supply_in_profit(&self) -> &Sats { &self.supply_in_profit }
-    fn supply_in_loss(&self) -> &Sats { &self.supply_in_loss }
-    fn unrealized_profit(&mut self) -> &mut u128 { &mut self.unrealized_profit }
-    fn unrealized_loss(&mut self) -> &mut u128 { &mut self.unrealized_loss }
+    fn core(&self) -> &WithoutCapital { self }
+    fn core_mut(&mut self) -> &mut WithoutCapital { self }
 
     #[inline(always)]
-    fn accumulate_profit(&mut self, _price_u128: u128, _invested_capital: u128, sats: Sats) {
+    fn accumulate_profit(&mut self, _price_u128: u128, sats: Sats) {
         self.supply_in_profit += sats;
     }
     #[inline(always)]
-    fn accumulate_loss(&mut self, _price_u128: u128, _invested_capital: u128, sats: Sats) {
+    fn accumulate_loss(&mut self, _price_u128: u128, sats: Sats) {
         self.supply_in_loss += sats;
     }
     #[inline(always)]
-    fn deaccumulate_profit(&mut self, _price_u128: u128, _invested_capital: u128, sats: Sats) {
+    fn deaccumulate_profit(&mut self, _price_u128: u128, sats: Sats) {
         self.supply_in_profit -= sats;
     }
     #[inline(always)]
-    fn deaccumulate_loss(&mut self, _price_u128: u128, _invested_capital: u128, sats: Sats) {
+    fn deaccumulate_loss(&mut self, _price_u128: u128, sats: Sats) {
         self.supply_in_loss -= sats;
     }
 }
 
 impl Accumulate for WithCapital {
-    fn to_output(&self) -> UnrealizedState { self.to_output() }
+    fn to_output(&self) -> UnrealizedState {
+        UnrealizedState {
+            invested_capital_in_profit: div_btc(self.invested_capital_in_profit),
+            invested_capital_in_loss: div_btc(self.invested_capital_in_loss),
+            investor_cap_in_profit_raw: self.investor_cap_in_profit,
+            investor_cap_in_loss_raw: self.investor_cap_in_loss,
+            invested_capital_in_profit_raw: self.invested_capital_in_profit,
+            invested_capital_in_loss_raw: self.invested_capital_in_loss,
+            ..Accumulate::to_output(&self.core)
+        }
+    }
 
-    fn supply_in_profit(&self) -> &Sats { &self.core.supply_in_profit }
-    fn supply_in_loss(&self) -> &Sats { &self.core.supply_in_loss }
-    fn unrealized_profit(&mut self) -> &mut u128 { &mut self.core.unrealized_profit }
-    fn unrealized_loss(&mut self) -> &mut u128 { &mut self.core.unrealized_loss }
+    fn core(&self) -> &WithoutCapital { &self.core }
+    fn core_mut(&mut self) -> &mut WithoutCapital { &mut self.core }
 
     #[inline(always)]
-    fn accumulate_profit(&mut self, price_u128: u128, invested_capital: u128, sats: Sats) {
+    fn accumulate_profit(&mut self, price_u128: u128, sats: Sats) {
         self.core.supply_in_profit += sats;
+        let invested_capital = price_u128 * sats.as_u128();
         self.invested_capital_in_profit += invested_capital;
         self.investor_cap_in_profit += price_u128 * invested_capital;
     }
     #[inline(always)]
-    fn accumulate_loss(&mut self, price_u128: u128, invested_capital: u128, sats: Sats) {
+    fn accumulate_loss(&mut self, price_u128: u128, sats: Sats) {
         self.core.supply_in_loss += sats;
+        let invested_capital = price_u128 * sats.as_u128();
         self.invested_capital_in_loss += invested_capital;
         self.investor_cap_in_loss += price_u128 * invested_capital;
     }
     #[inline(always)]
-    fn deaccumulate_profit(&mut self, price_u128: u128, invested_capital: u128, sats: Sats) {
+    fn deaccumulate_profit(&mut self, price_u128: u128, sats: Sats) {
         self.core.supply_in_profit -= sats;
+        let invested_capital = price_u128 * sats.as_u128();
         self.invested_capital_in_profit -= invested_capital;
         self.investor_cap_in_profit -= price_u128 * invested_capital;
     }
     #[inline(always)]
-    fn deaccumulate_loss(&mut self, price_u128: u128, invested_capital: u128, sats: Sats) {
+    fn deaccumulate_loss(&mut self, price_u128: u128, sats: Sats) {
         self.core.supply_in_loss -= sats;
+        let invested_capital = price_u128 * sats.as_u128();
         self.invested_capital_in_loss -= invested_capital;
         self.investor_cap_in_loss -= price_u128 * invested_capital;
     }
@@ -199,9 +192,7 @@ impl<S: Accumulate> CachedUnrealizedState<S> {
         if let Some(ref output) = self.cached_output {
             return output.clone();
         }
-        let output = self.state.to_output();
-        self.cached_output = Some(output.clone());
-        output
+        self.cached_output.insert(self.state.to_output()).clone()
     }
 
     pub(crate) fn on_receive(&mut self, price: Cents, sats: Sats) {
@@ -209,16 +200,15 @@ impl<S: Accumulate> CachedUnrealizedState<S> {
         let price: CentsCompact = price.into();
         let sats_u128 = sats.as_u128();
         let price_u128 = price.as_u128();
-        let invested_capital = price_u128 * sats_u128;
 
         if price <= self.at_price {
-            self.state.accumulate_profit(price_u128, invested_capital, sats);
+            self.state.accumulate_profit(price_u128, sats);
             if price < self.at_price {
                 let diff = (self.at_price - price).as_u128();
                 *self.state.unrealized_profit() += diff * sats_u128;
             }
         } else {
-            self.state.accumulate_loss(price_u128, invested_capital, sats);
+            self.state.accumulate_loss(price_u128, sats);
             let diff = (price - self.at_price).as_u128();
             *self.state.unrealized_loss() += diff * sats_u128;
         }
@@ -229,16 +219,15 @@ impl<S: Accumulate> CachedUnrealizedState<S> {
         let price: CentsCompact = price.into();
         let sats_u128 = sats.as_u128();
         let price_u128 = price.as_u128();
-        let invested_capital = price_u128 * sats_u128;
 
         if price <= self.at_price {
-            self.state.deaccumulate_profit(price_u128, invested_capital, sats);
+            self.state.deaccumulate_profit(price_u128, sats);
             if price < self.at_price {
                 let diff = (self.at_price - price).as_u128();
                 *self.state.unrealized_profit() -= diff * sats_u128;
             }
         } else {
-            self.state.deaccumulate_loss(price_u128, invested_capital, sats);
+            self.state.deaccumulate_loss(price_u128, sats);
             let diff = (price - self.at_price).as_u128();
             *self.state.unrealized_loss() -= diff * sats_u128;
         }
@@ -256,10 +245,9 @@ impl<S: Accumulate> CachedUnrealizedState<S> {
             {
                 let sats_u128 = sats.as_u128();
                 let price_u128 = price.as_u128();
-                let invested_capital = price_u128 * sats_u128;
 
-                self.state.deaccumulate_loss(price_u128, invested_capital, sats);
-                self.state.accumulate_profit(price_u128, invested_capital, sats);
+                self.state.deaccumulate_loss(price_u128, sats);
+                self.state.accumulate_profit(price_u128, sats);
 
                 let original_loss = (price - old_price).as_u128();
                 *self.state.unrealized_loss() -= original_loss * sats_u128;
@@ -282,10 +270,9 @@ impl<S: Accumulate> CachedUnrealizedState<S> {
             {
                 let sats_u128 = sats.as_u128();
                 let price_u128 = price.as_u128();
-                let invested_capital = price_u128 * sats_u128;
 
-                self.state.deaccumulate_profit(price_u128, invested_capital, sats);
-                self.state.accumulate_loss(price_u128, invested_capital, sats);
+                self.state.deaccumulate_profit(price_u128, sats);
+                self.state.accumulate_loss(price_u128, sats);
 
                 if price < old_price {
                     let original_profit = (old_price - price).as_u128();
@@ -310,16 +297,15 @@ impl<S: Accumulate> CachedUnrealizedState<S> {
         for (&price, &sats) in map.iter() {
             let sats_u128 = sats.as_u128();
             let price_u128 = price.as_u128();
-            let invested_capital = price_u128 * sats_u128;
 
             if price <= current_price {
-                state.accumulate_profit(price_u128, invested_capital, sats);
+                state.accumulate_profit(price_u128, sats);
                 if price < current_price {
                     let diff = (current_price - price).as_u128();
                     *state.unrealized_profit() += diff * sats_u128;
                 }
             } else {
-                state.accumulate_loss(price_u128, invested_capital, sats);
+                state.accumulate_loss(price_u128, sats);
                 let diff = (price - current_price).as_u128();
                 *state.unrealized_loss() += diff * sats_u128;
             }
@@ -328,4 +314,3 @@ impl<S: Accumulate> CachedUnrealizedState<S> {
         state
     }
 }
-
