@@ -3,7 +3,7 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Indexes, StoredU64, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
-use crate::{distribution::state::{CohortState, RealizedOps}, internal::ComputedPerBlock};
+use crate::{distribution::state::{CohortState, CostBasisOps, RealizedOps}, internal::ComputedPerBlock};
 
 use crate::distribution::metrics::ImportConfig;
 
@@ -24,7 +24,7 @@ impl OutputsBase {
         self.utxo_count.height.len()
     }
 
-    pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState<impl RealizedOps>) -> Result<()> {
+    pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState<impl RealizedOps, impl CostBasisOps>) -> Result<()> {
         self.utxo_count
             .height
             .truncate_push(height, StoredU64::from(state.supply.utxo_count))?;

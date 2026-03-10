@@ -12,7 +12,7 @@ use vecdb::{
 
 use crate::{
     blocks,
-    distribution::state::{CohortState, RealizedState},
+    distribution::state::{CohortState, CostBasisData, RealizedState},
     internal::{
         CentsUnsignedToDollars, ComputedPerBlock, ComputedPerBlockCumulative, FiatPerBlock,
         FiatRollingDelta1m, FiatRollingDeltaExcept1m, LazyPerBlock, PercentPerBlock,
@@ -295,7 +295,7 @@ impl RealizedFull {
     pub(crate) fn truncate_push(
         &mut self,
         height: Height,
-        state: &CohortState<RealizedState>,
+        state: &CohortState<RealizedState, CostBasisData>,
     ) -> Result<()> {
         self.core.truncate_push(height, state)?;
         self.profit

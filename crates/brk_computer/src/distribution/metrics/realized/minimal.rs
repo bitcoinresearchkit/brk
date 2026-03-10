@@ -10,7 +10,7 @@ use vecdb::{
 
 use crate::{
     blocks,
-    distribution::state::{CohortState, RealizedOps},
+    distribution::state::{CohortState, CostBasisOps, RealizedOps},
     internal::{
         ComputedPerBlock, FiatPerBlock, FiatPerBlockWithSum24h, Identity, LazyPerBlock,
         PerBlockWithSum24h, Price, RatioPerBlock,
@@ -83,7 +83,7 @@ impl RealizedMinimal {
             .min(self.sopr.value_destroyed.raw.height.len())
     }
 
-    pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState<impl RealizedOps>) -> Result<()> {
+    pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState<impl RealizedOps, impl CostBasisOps>) -> Result<()> {
         self.cap.cents.height.truncate_push(height, state.realized.cap())?;
         self.profit.raw.cents.height.truncate_push(height, state.realized.profit())?;
         self.loss.raw.cents.height.truncate_push(height, state.realized.loss())?;

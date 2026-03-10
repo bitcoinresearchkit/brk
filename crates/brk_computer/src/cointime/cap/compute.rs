@@ -64,6 +64,14 @@ impl Vecs {
             exit,
         )?;
 
+        // AVIV = active_cap / investor_cap
+        self.aviv.compute_ratio(
+            starting_indexes,
+            &self.active_cap.cents.height,
+            &self.investor_cap.cents.height,
+            exit,
+        )?;
+
         Ok(())
     }
 }

@@ -2,11 +2,11 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF32, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
-use crate::internal::{ComputedPerBlock, RollingWindowsFrom1w};
+use crate::internal::{ComputedPerBlock, Identity, LazyPerBlock, RollingWindowsFrom1w};
 
-use crate::{blocks, distribution::{metrics::ImportConfig, state::{CohortState, RealizedOps}}};
+use crate::{blocks, distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}}};
 
 use super::ActivityCore;
 
@@ -25,20 +25,37 @@ pub struct ActivityFull<M: StorageMode = Rw> {
     #[traversable(wrap = "sent", rename = "sum")]
     pub sent_sum_extended: RollingWindowsFrom1w<Sats, M>,
 
+    pub coinyears_destroyed: LazyPerBlock<StoredF64, StoredF64>,
+
     pub dormancy: ComputedPerBlock<StoredF32, M>,
     pub velocity: ComputedPerBlock<StoredF32, M>,
+    pub coindays_destroyed_supply_adjusted: ComputedPerBlock<StoredF32, M>,
+    pub coinyears_destroyed_supply_adjusted: ComputedPerBlock<StoredF32, M>,
 }
 
 impl ActivityFull {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v1 = Version::ONE;
+        let coindays_destroyed_sum: RollingWindowsFrom1w<StoredF64> =
+            cfg.import("coindays_destroyed", v1)?;
+
+        let coinyears_destroyed = LazyPerBlock::from_computed::<Identity<StoredF64>>(
+            &cfg.name("coinyears_destroyed"),
+            v1,
+            coindays_destroyed_sum._1y.height.read_only_boxed_clone(),
+            &coindays_destroyed_sum._1y,
+        );
+
         Ok(Self {
             inner: ActivityCore::forced_import(cfg)?,
             coindays_destroyed_cumulative: cfg.import("coindays_destroyed_cumulative", v1)?,
-            coindays_destroyed_sum: cfg.import("coindays_destroyed", v1)?,
+            coindays_destroyed_sum,
             sent_sum_extended: cfg.import("sent", v1)?,
+            coinyears_destroyed,
             dormancy: cfg.import("dormancy", v1)?,
             velocity: cfg.import("velocity", v1)?,
+            coindays_destroyed_supply_adjusted: cfg.import("coindays_destroyed_supply_adjusted", v1)?,
+            coinyears_destroyed_supply_adjusted: cfg.import("coinyears_destroyed_supply_adjusted", v1)?,
         })
     }
 
@@ -49,7 +66,7 @@ impl ActivityFull {
     pub(crate) fn full_truncate_push(
         &mut self,
         height: Height,
-        state: &CohortState<impl RealizedOps>,
+        state: &CohortState<impl RealizedOps, impl CostBasisOps>,
     ) -> Result<()> {
         self.inner.truncate_push(height, state)
     }
@@ -58,6 +75,8 @@ impl ActivityFull {
         let mut vecs = self.inner.collect_vecs_mut();
         vecs.push(&mut self.dormancy.height);
         vecs.push(&mut self.velocity.height);
+        vecs.push(&mut self.coindays_destroyed_supply_adjusted.height);
+        vecs.push(&mut self.coinyears_destroyed_supply_adjusted.height);
         vecs
     }
 
@@ -137,6 +156,38 @@ impl ActivityFull {
                     (i, StoredF32::from(0.0f32))
                 } else {
                     (i, StoredF32::from((sent_sats.as_u128() as f64 / supply) as f32))
+                }
+            },
+            exit,
+        )?;
+
+        // Supply-Adjusted CDD = sum_24h(CDD) / circulating_supply
+        self.coindays_destroyed_supply_adjusted.height.compute_transform2(
+            starting_indexes.height,
+            &self.inner.coindays_destroyed.sum._24h.height,
+            supply_total_sats,
+            |(i, cdd_24h, supply_sats, ..)| {
+                let supply = f64::from(Bitcoin::from(supply_sats));
+                if supply == 0.0 {
+                    (i, StoredF32::from(0.0f32))
+                } else {
+                    (i, StoredF32::from((f64::from(cdd_24h) / supply) as f32))
+                }
+            },
+            exit,
+        )?;
+
+        // Supply-Adjusted CYD = CYD / circulating_supply (CYD = 1y rolling sum of CDD)
+        self.coinyears_destroyed_supply_adjusted.height.compute_transform2(
+            starting_indexes.height,
+            &self.coinyears_destroyed.height,
+            supply_total_sats,
+            |(i, cdd_1y, supply_sats, ..)| {
+                let supply = f64::from(Bitcoin::from(supply_sats));
+                if supply == 0.0 {
+                    (i, StoredF32::from(0.0f32))
+                } else {
+                    (i, StoredF32::from((f64::from(cdd_1y) / supply) as f32))
                 }
             },
             exit,

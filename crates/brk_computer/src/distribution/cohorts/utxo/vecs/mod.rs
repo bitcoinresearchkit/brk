@@ -64,14 +64,14 @@ pub struct UTXOCohortVecs<M: CohortMetricsState> {
     state_starting_height: Option<Height>,
 
     #[traversable(skip)]
-    pub state: Option<Box<UTXOCohortState<M::Realized>>>,
+    pub state: Option<Box<UTXOCohortState<M::Realized, M::CostBasis>>>,
 
     #[traversable(flatten)]
     pub metrics: M,
 }
 
 impl<M: CohortMetricsState> UTXOCohortVecs<M> {
-    pub(crate) fn new(state: Option<Box<UTXOCohortState<M::Realized>>>, metrics: M) -> Self {
+    pub(crate) fn new(state: Option<Box<UTXOCohortState<M::Realized, M::CostBasis>>>, metrics: M) -> Self {
         Self {
             state_starting_height: None,
             state,

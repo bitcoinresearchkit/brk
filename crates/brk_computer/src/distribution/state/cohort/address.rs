@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_types::{Age, Cents, FundedAddressData, Sats, SupplyState};
 use vecdb::unlikely;
 
-use super::super::cost_basis::RealizedOps;
+use super::super::cost_basis::{CostBasisRaw, RealizedOps};
 use super::base::CohortState;
 
 /// Significant digits for address cost basis prices (after rounding to dollars).
@@ -12,7 +12,7 @@ const COST_BASIS_PRICE_DIGITS: i32 = 4;
 
 pub struct AddressCohortState<R: RealizedOps> {
     pub addr_count: u64,
-    pub inner: CohortState<R>,
+    pub inner: CohortState<R, CostBasisRaw>,
 }
 
 impl<R: RealizedOps> AddressCohortState<R> {

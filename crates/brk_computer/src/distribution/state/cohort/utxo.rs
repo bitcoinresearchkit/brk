@@ -4,13 +4,13 @@ use brk_error::Result;
 use brk_types::{Sats, SupplyState};
 use derive_more::{Deref, DerefMut};
 
-use super::super::cost_basis::RealizedOps;
+use super::super::cost_basis::{CostBasisOps, RealizedOps};
 use super::base::CohortState;
 
 #[derive(Deref, DerefMut)]
-pub struct UTXOCohortState<R: RealizedOps>(pub(crate) CohortState<R>);
+pub struct UTXOCohortState<R: RealizedOps, C: CostBasisOps>(pub(crate) CohortState<R, C>);
 
-impl<R: RealizedOps> UTXOCohortState<R> {
+impl<R: RealizedOps, C: CostBasisOps> UTXOCohortState<R, C> {
     pub(crate) fn new(path: &Path, name: &str) -> Self {
         Self(CohortState::new(path, name))
     }

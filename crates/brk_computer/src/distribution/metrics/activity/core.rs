@@ -5,7 +5,7 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
     blocks,
-    distribution::{metrics::ImportConfig, state::{CohortState, RealizedOps}},
+    distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}},
     internal::PerBlockWithSum24h,
 };
 
@@ -35,7 +35,7 @@ impl ActivityCore {
     pub(crate) fn truncate_push(
         &mut self,
         height: Height,
-        state: &CohortState<impl RealizedOps>,
+        state: &CohortState<impl RealizedOps, impl CostBasisOps>,
     ) -> Result<()> {
         self.sent.raw.height.truncate_push(height, state.sent)?;
         self.coindays_destroyed.raw.height.truncate_push(

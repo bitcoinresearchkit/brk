@@ -1,9 +1,9 @@
-use std::{collections::BTreeMap, path::Path};
+use std::path::Path;
 
 use brk_error::Result;
 use brk_types::{Age, Cents, CentsCompact, CentsSats, CentsSquaredSats, CostBasisSnapshot, Height, Sats, SupplyState};
 
-use super::super::cost_basis::{CostBasisData, PendingDelta, RealizedOps, UnrealizedState};
+use super::super::cost_basis::{CostBasisData, CostBasisOps, PendingDelta, RealizedOps, UnrealizedState};
 
 pub struct SendPrecomputed {
     pub sats: Sats,
@@ -49,54 +49,50 @@ impl SendPrecomputed {
     }
 }
 
-pub struct CohortState<R: RealizedOps> {
+pub struct CohortState<R: RealizedOps, C: CostBasisOps> {
     pub supply: SupplyState,
     pub realized: R,
     pub sent: Sats,
     pub satdays_destroyed: Sats,
-    cost_basis_data: CostBasisData,
+    cost_basis: C,
 }
 
-impl<R: RealizedOps> CohortState<R> {
+impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
     pub(crate) fn new(path: &Path, name: &str) -> Self {
         Self {
             supply: SupplyState::default(),
             realized: R::default(),
             sent: Sats::ZERO,
             satdays_destroyed: Sats::ZERO,
-            cost_basis_data: CostBasisData::create(path, name),
+            cost_basis: C::create(path, name),
         }
     }
 
     /// Enable price rounding for cost basis data.
     pub(crate) fn with_price_rounding(mut self, digits: i32) -> Self {
-        self.cost_basis_data = self.cost_basis_data.with_price_rounding(digits);
+        self.cost_basis = self.cost_basis.with_price_rounding(digits);
         self
     }
 
     pub(crate) fn import_at_or_before(&mut self, height: Height) -> Result<Height> {
-        self.cost_basis_data.import_at_or_before(height)
+        self.cost_basis.import_at_or_before(height)
     }
 
-    /// Restore realized cap from cost_basis_data after import.
+    /// Restore realized cap from cost_basis after import.
     pub(crate) fn restore_realized_cap(&mut self) {
-        self.realized.set_cap_raw(self.cost_basis_data.cap_raw());
+        self.realized.set_cap_raw(self.cost_basis.cap_raw());
         self.realized
-            .set_investor_cap_raw(self.cost_basis_data.investor_cap_raw());
+            .set_investor_cap_raw(self.cost_basis.investor_cap_raw());
     }
 
     pub(crate) fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
-        self.cost_basis_data.clean()?;
-        self.cost_basis_data.init();
+        self.cost_basis.clean()?;
+        self.cost_basis.init();
         Ok(())
     }
 
-    pub(crate) fn for_each_cost_basis_pending(&self, f: impl FnMut(&CentsCompact, &PendingDelta)) {
-        self.cost_basis_data.for_each_pending(f);
-    }
-
     pub(crate) fn apply_pending(&mut self) {
-        self.cost_basis_data.apply_pending();
+        self.cost_basis.apply_pending();
     }
 
     pub(crate) fn reset_single_iteration_values(&mut self) {
@@ -113,7 +109,7 @@ impl<R: RealizedOps> CohortState<R> {
         if s.supply_state.value > Sats::ZERO {
             self.realized
                 .increment_snapshot(s.price_sats, s.investor_cap);
-            self.cost_basis_data.increment(
+            self.cost_basis.increment(
                 s.realized_price,
                 s.supply_state.value,
                 s.price_sats,
@@ -128,7 +124,7 @@ impl<R: RealizedOps> CohortState<R> {
         if s.supply_state.value > Sats::ZERO {
             self.realized
                 .decrement_snapshot(s.price_sats, s.investor_cap);
-            self.cost_basis_data.decrement(
+            self.cost_basis.decrement(
                 s.realized_price,
                 s.supply_state.value,
                 s.price_sats,
@@ -153,7 +149,7 @@ impl<R: RealizedOps> CohortState<R> {
         if supply.value > Sats::ZERO {
             self.realized.receive(snapshot.realized_price, supply.value);
 
-            self.cost_basis_data.increment(
+            self.cost_basis.increment(
                 snapshot.realized_price,
                 supply.value,
                 snapshot.price_sats,
@@ -175,7 +171,7 @@ impl<R: RealizedOps> CohortState<R> {
             self.realized.receive(price, supply.value);
 
             if current.supply_state.value.is_not_zero() {
-                self.cost_basis_data.increment(
+                self.cost_basis.increment(
                     current.realized_price,
                     current.supply_state.value,
                     current.price_sats,
@@ -184,7 +180,7 @@ impl<R: RealizedOps> CohortState<R> {
             }
 
             if prev.supply_state.value.is_not_zero() {
-                self.cost_basis_data.decrement(
+                self.cost_basis.decrement(
                     prev.realized_price,
                     prev.supply_state.value,
                     prev.price_sats,
@@ -208,7 +204,7 @@ impl<R: RealizedOps> CohortState<R> {
         self.realized
             .send(pre.sats, pre.current_ps, pre.prev_ps, pre.ath_ps, pre.prev_investor_cap);
 
-        self.cost_basis_data
+        self.cost_basis
             .decrement(pre.prev_price, pre.sats, pre.prev_ps, pre.prev_investor_cap);
     }
 
@@ -262,7 +258,7 @@ impl<R: RealizedOps> CohortState<R> {
                 .send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
 
             if current.supply_state.value.is_not_zero() {
-                self.cost_basis_data.increment(
+                self.cost_basis.increment(
                     current.realized_price,
                     current.supply_state.value,
                     current.price_sats,
@@ -271,7 +267,7 @@ impl<R: RealizedOps> CohortState<R> {
             }
 
             if prev.supply_state.value.is_not_zero() {
-                self.cost_basis_data.decrement(
+                self.cost_basis.decrement(
                     prev.realized_price,
                     prev.supply_state.value,
                     prev.price_sats,
@@ -281,15 +277,22 @@ impl<R: RealizedOps> CohortState<R> {
         }
     }
 
-    pub(crate) fn compute_unrealized_state(&mut self, height_price: Cents) -> UnrealizedState {
-        self.cost_basis_data.compute_unrealized_state(height_price)
-    }
-
     pub(crate) fn write(&mut self, height: Height, cleanup: bool) -> Result<()> {
-        self.cost_basis_data.write(height, cleanup)
+        self.cost_basis.write(height, cleanup)
+    }
+}
+
+/// Methods only available with full CostBasisData (map + unrealized).
+impl<R: RealizedOps> CohortState<R, CostBasisData> {
+    pub(crate) fn compute_unrealized_state(&mut self, height_price: Cents) -> UnrealizedState {
+        self.cost_basis.compute_unrealized_state(height_price)
     }
 
-    pub(crate) fn cost_basis_map(&self) -> &BTreeMap<CentsCompact, Sats> {
-        self.cost_basis_data.map()
+    pub(crate) fn for_each_cost_basis_pending(&self, f: impl FnMut(&CentsCompact, &PendingDelta)) {
+        self.cost_basis.for_each_pending(f);
+    }
+
+    pub(crate) fn cost_basis_map(&self) -> &std::collections::BTreeMap<CentsCompact, Sats> {
+        self.cost_basis.map()
     }
 }

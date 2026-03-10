@@ -3,7 +3,7 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Indexes, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
-use crate::{distribution::state::{CohortState, RealizedOps}, prices};
+use crate::{distribution::state::{CohortState, CostBasisOps, RealizedOps}, prices};
 
 use crate::internal::{
     AmountPerBlock, HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin,
@@ -40,7 +40,7 @@ impl SupplyBase {
         self.total.sats.height.len()
     }
 
-    pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState<impl RealizedOps>) -> Result<()> {
+    pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState<impl RealizedOps, impl CostBasisOps>) -> Result<()> {
         self.total.sats.height.truncate_push(height, state.supply.value)?;
         Ok(())
     }
