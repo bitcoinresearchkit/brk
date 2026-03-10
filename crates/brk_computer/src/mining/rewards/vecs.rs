@@ -1,10 +1,10 @@
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Cents};
+use brk_types::{BasisPoints16, BasisPoints32, Cents};
 use vecdb::{Rw, StorageMode};
 
 use crate::internal::{
     AmountPerBlockCumulative, AmountPerBlockCumulativeSum, AmountPerBlockFull,
-    FiatPerBlock, PercentPerBlock, PercentRollingWindows,
+    FiatPerBlock, PercentPerBlock, PercentRollingWindows, RatioRollingWindows,
 };
 
 #[derive(Traversable)]
@@ -20,4 +20,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(rename = "subsidy_dominance")]
     pub subsidy_dominance_rolling: PercentRollingWindows<BasisPoints16, M>,
     pub subsidy_sma_1y: FiatPerBlock<Cents, M>,
+    pub fee_ratio_multiple: RatioRollingWindows<BasisPoints32, M>,
 }

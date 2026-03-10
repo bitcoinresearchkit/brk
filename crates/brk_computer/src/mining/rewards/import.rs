@@ -7,7 +7,7 @@ use crate::{
     indexes,
     internal::{
         AmountPerBlockCumulative, AmountPerBlockCumulativeSum, AmountPerBlockFull,
-        FiatPerBlock, PercentPerBlock, PercentRollingWindows,
+        FiatPerBlock, PercentPerBlock, PercentRollingWindows, RatioRollingWindows,
     },
 };
 
@@ -49,6 +49,12 @@ impl Vecs {
                 indexes,
             )?,
             subsidy_sma_1y: FiatPerBlock::forced_import(db, "subsidy_sma_1y", version, indexes)?,
+            fee_ratio_multiple: RatioRollingWindows::forced_import(
+                db,
+                "fee_ratio_multiple",
+                version,
+                indexes,
+            )?,
         })
     }
 }

@@ -14,7 +14,7 @@ impl Query {
 
         let coinbase_vec = &computer.mining.rewards.coinbase.base.sats.height;
         let fee_vec = &computer.mining.rewards.fees.base.sats.height;
-        let tx_count_vec = &computer.transactions.count.tx_count.height;
+        let tx_count_vec = &computer.transactions.count.tx_count.raw.height;
 
         let start = start_block.to_usize();
         let end = end_block.to_usize() + 1;

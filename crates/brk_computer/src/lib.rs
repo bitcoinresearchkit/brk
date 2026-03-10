@@ -215,6 +215,7 @@ impl Computer {
                 VERSION,
                 &indexes,
                 &distribution,
+                &cointime,
             )?))
         })?;
 

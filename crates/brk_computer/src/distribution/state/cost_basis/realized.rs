@@ -4,6 +4,7 @@ use brk_types::{Cents, CentsSats, CentsSquaredSats, Sats};
 
 /// Trait for realized state operations, implemented by Minimal, Core, and Full variants.
 pub trait RealizedOps: Default + Clone + Send + Sync + 'static {
+    const TRACK_ACTIVITY: bool = false;
     fn cap(&self) -> Cents;
     fn profit(&self) -> Cents;
     fn loss(&self) -> Cents;
@@ -159,6 +160,8 @@ pub struct CoreRealizedState {
 }
 
 impl RealizedOps for CoreRealizedState {
+    const TRACK_ACTIVITY: bool = true;
+
     #[inline]
     fn cap(&self) -> Cents {
         self.minimal.cap()
@@ -273,6 +276,8 @@ pub struct RealizedState {
 }
 
 impl RealizedOps for RealizedState {
+    const TRACK_ACTIVITY: bool = true;
+
     #[inline]
     fn cap(&self) -> Cents {
         self.core.cap()

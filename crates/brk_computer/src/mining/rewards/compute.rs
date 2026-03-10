@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{BasisPoints16, CheckedSub, Halving, Indexes, Sats};
+use brk_types::{BasisPoints16, CheckedSub, Dollars, Halving, Indexes, Sats};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{blocks, indexes, internal::RatioSatsBp16, prices, transactions};
+use crate::{blocks, indexes, internal::{RatioDollarsBp32, RatioSatsBp16}, prices, transactions};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -122,20 +122,13 @@ impl Vecs {
             )?;
 
         // Rolling fee dominance = sum(fees) / sum(coinbase)
-        for ((fee_dom, fees_w), coinbase_w) in self
-            .fee_dominance_rolling
-            .as_mut_array()
-            .into_iter()
-            .zip(self.fees.rolling.as_array())
-            .zip(self.coinbase.sum.as_array())
-        {
-            fee_dom.compute_binary::<Sats, Sats, RatioSatsBp16>(
+        self.fee_dominance_rolling
+            .compute_binary::<Sats, Sats, RatioSatsBp16, _, _>(
                 starting_indexes.height,
-                &fees_w.sum.sats.height,
-                &coinbase_w.sats.height,
+                self.fees.rolling.as_array().map(|w| &w.sum.sats.height),
+                self.coinbase.sum.as_array().map(|w| &w.sats.height),
                 exit,
             )?;
-        }
 
         // All-time cumulative subsidy dominance
         self.subsidy_dominance
@@ -167,6 +160,15 @@ impl Vecs {
             &self.subsidy.base.cents.height,
             exit,
         )?;
+
+        // Fee Ratio Multiple: sum(coinbase) / sum(fees) per rolling window
+        self.fee_ratio_multiple
+            .compute_binary::<Dollars, Dollars, RatioDollarsBp32, _, _>(
+                starting_indexes.height,
+                self.coinbase.sum.as_array().map(|w| &w.usd.height),
+                self.fees.rolling.as_array().map(|w| &w.sum.usd.height),
+                exit,
+            )?;
 
         Ok(())
     }

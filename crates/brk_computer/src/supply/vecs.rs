@@ -19,4 +19,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub market_cap: LazyFiatPerBlock<Cents>,
     pub market_cap_delta: FiatRollingDelta<Cents, CentsSigned, M>,
     pub market_minus_realized_cap_growth_rate: RollingWindows<BasisPointsSigned32, M>,
+    pub hodled_or_lost_coins: LazyAmountPerBlock,
 }

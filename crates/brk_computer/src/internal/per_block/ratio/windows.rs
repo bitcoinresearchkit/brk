@@ -6,18 +6,18 @@ use vecdb::{BinaryTransform, Database, Exit, ReadableVec, Rw, StorageMode, VecVa
 
 use crate::{
     indexes,
-    internal::{BpsType, PercentPerBlock, Windows},
+    internal::{BpsType, RatioPerBlock, Windows},
 };
 
 /// 4 rolling window vecs (24h, 1w, 1m, 1y), each storing basis points
-/// with lazy ratio and percent float views.
+/// with a lazy ratio float view.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct PercentRollingWindows<B: BpsType, M: StorageMode = Rw>(
-    pub Windows<PercentPerBlock<B, M>>,
+pub struct RatioRollingWindows<B: BpsType, M: StorageMode = Rw>(
+    pub Windows<RatioPerBlock<B, M>>,
 );
 
-impl<B: BpsType> PercentRollingWindows<B> {
+impl<B: BpsType> RatioRollingWindows<B> {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -25,7 +25,7 @@ impl<B: BpsType> PercentRollingWindows<B> {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self(Windows::try_from_fn(|suffix| {
-            PercentPerBlock::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
+            RatioPerBlock::forced_import_raw(db, &format!("{name}_{suffix}"), version, indexes)
         })?))
     }
 
@@ -50,7 +50,7 @@ impl<B: BpsType> PercentRollingWindows<B> {
             .zip(sources1)
             .zip(sources2)
         {
-            target.compute_binary::<S1T, S2T, F>(max_from, s1, s2, exit)?;
+            target.bps.compute_binary::<S1T, S2T, F>(max_from, s1, s2, exit)?;
         }
         Ok(())
     }

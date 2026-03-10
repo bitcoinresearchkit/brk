@@ -1,13 +1,13 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_types::{Cents, Dollars, Sats, Version};
+use brk_types::Version;
 
 use crate::{
-    distribution, indexes,
+    cointime, distribution, indexes,
     internal::{
-        FiatRollingDelta, Identity, LazyFiatPerBlock, LazyAmountPerBlock, PercentPerBlock,
-        RollingWindows, SatsToBitcoin, finalize_db, open_db,
+        FiatRollingDelta, LazyFiatPerBlock, LazyAmountPerBlock, PercentPerBlock,
+        RollingWindows, finalize_db, open_db,
     },
 };
 
@@ -21,6 +21,7 @@ impl Vecs {
         parent_version: Version,
         indexes: &indexes::Vecs,
         distribution: &distribution::Vecs,
+        cointime: &cointime::Vecs,
     ) -> Result<Self> {
         let db = open_db(parent, super::DB_NAME, 10_000_000)?;
 
@@ -28,12 +29,8 @@ impl Vecs {
         let supply_metrics = &distribution.utxo_cohorts.all.metrics.supply;
 
         // Circulating supply - lazy refs to distribution
-        let circulating = LazyAmountPerBlock::from_block_source::<
-            Identity<Sats>,
-            SatsToBitcoin,
-            Identity<Cents>,
-            Identity<Dollars>,
-        >("circulating_supply", &supply_metrics.total, version);
+        let circulating =
+            LazyAmountPerBlock::identity("circulating_supply", &supply_metrics.total, version);
 
         // Burned/unspendable supply - computed from scripts
         let burned = super::burned::Vecs::forced_import(&db, version, indexes)?;
@@ -64,6 +61,12 @@ impl Vecs {
             indexes,
         )?;
 
+        let hodled_or_lost_coins = LazyAmountPerBlock::identity(
+            "hodled_or_lost_coins",
+            &cointime.supply.vaulted_supply,
+            version,
+        );
+
         let this = Self {
             db,
             circulating,
@@ -73,6 +76,7 @@ impl Vecs {
             market_cap,
             market_cap_delta,
             market_minus_realized_cap_growth_rate,
+            hodled_or_lost_coins,
         };
         finalize_db(&this.db, &this)?;
         Ok(this)
