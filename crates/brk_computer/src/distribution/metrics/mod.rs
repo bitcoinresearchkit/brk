@@ -58,7 +58,7 @@ pub use realized::{
 pub use relative::{
     RelativeForAll, RelativeToAll, RelativeWithExtended,
 };
-pub use supply::{SupplyBase, SupplyFull};
+pub use supply::{SupplyBase, SupplyCore, SupplyFull};
 pub use unrealized::{UnrealizedBase, UnrealizedBasic, UnrealizedCore, UnrealizedFull, UnrealizedLike};
 
 use brk_cohort::Filter;
@@ -148,6 +148,8 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState, CostBa
         let unrealized_state = state.compute_unrealized_state(height_price);
         self.unrealized_mut()
             .truncate_push(height, &unrealized_state)?;
+        self.supply_mut()
+            .truncate_push_profitability(height, &unrealized_state)?;
         Ok(())
     }
 

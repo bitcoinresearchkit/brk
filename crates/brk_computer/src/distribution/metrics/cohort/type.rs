@@ -7,17 +7,17 @@ use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
 use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
-    ImportConfig, OutputsBase, RealizedMinimal, SupplyBase, UnrealizedBasic,
+    ImportConfig, OutputsBase, RealizedMinimal, SupplyCore, UnrealizedBasic,
 };
 
-/// TypeCohortMetrics: supply(base), outputs(base), realized(minimal), unrealized(basic).
+/// TypeCohortMetrics: supply(core), outputs(base), realized(minimal), unrealized(basic).
 ///
 /// Used for type_ cohorts (p2pkh, p2sh, etc.).
 #[derive(Traversable)]
 pub struct TypeCohortMetrics<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub filter: Filter,
-    pub supply: Box<SupplyBase<M>>,
+    pub supply: Box<SupplyCore<M>>,
     pub outputs: Box<OutputsBase<M>>,
     pub realized: Box<RealizedMinimal<M>>,
     pub unrealized: Box<UnrealizedBasic<M>>,
@@ -27,7 +27,7 @@ impl TypeCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
             filter: cfg.filter.clone(),
-            supply: Box::new(SupplyBase::forced_import(cfg)?),
+            supply: Box::new(SupplyCore::forced_import(cfg)?),
             outputs: Box::new(OutputsBase::forced_import(cfg)?),
             realized: Box::new(RealizedMinimal::forced_import(cfg)?),
             unrealized: Box::new(UnrealizedBasic::forced_import(cfg)?),
@@ -62,7 +62,7 @@ impl TypeCohortMetrics {
         self.realized
             .compute_rest_part1(blocks, starting_indexes, exit)?;
         self.unrealized
-            .compute_rest(blocks, prices, starting_indexes.height, exit)?;
+            .compute_rest(blocks, starting_indexes.height, exit)?;
         Ok(())
     }
 

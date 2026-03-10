@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Sats};
+use brk_types::{Dollars, Height};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::distribution::metrics::{ImportConfig, UnrealizedFull};
+use crate::distribution::metrics::{ImportConfig, SupplyCore, UnrealizedFull};
 
 use super::{RelativeFull, RelativeExtendedOwnPnl};
 
@@ -30,15 +30,15 @@ impl RelativeForAll {
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
+        supply: &SupplyCore,
         unrealized: &UnrealizedFull,
-        supply_total_sats: &impl ReadableVec<Height, Sats>,
         market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
         self.base.compute(
             max_from,
-            &unrealized.inner.core,
-            supply_total_sats,
+            supply,
+            &unrealized.inner.core.basic,
             market_cap,
             exit,
         )?;

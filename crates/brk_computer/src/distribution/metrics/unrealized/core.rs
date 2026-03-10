@@ -11,7 +11,6 @@ use crate::{
         state::UnrealizedState,
     },
     internal::{CentsSubtractToCentsSigned, FiatPerBlock, LazyPerBlock, NegCentsUnsignedToDollars},
-    prices,
 };
 
 use brk_types::Dollars;
@@ -83,12 +82,11 @@ impl UnrealizedCore {
     pub(crate) fn compute_rest(
         &mut self,
         blocks: &blocks::Vecs,
-        prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.basic
-            .compute_rest(blocks, prices, starting_indexes.height, exit)?;
+            .compute_rest(blocks, starting_indexes.height, exit)?;
 
         self.net_pnl
             .cents

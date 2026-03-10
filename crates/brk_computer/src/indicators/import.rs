@@ -6,7 +6,7 @@ use brk_types::Version;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{finalize_db, open_db, PercentPerBlock, RatioPerBlock},
+    internal::{finalize_db, open_db, ComputedPerBlock, PercentPerBlock, RatioPerBlock},
 };
 
 const VERSION: Version = Version::new(1);
@@ -24,6 +24,14 @@ impl Vecs {
         let nvt = RatioPerBlock::forced_import_raw(&db, "nvt", v, indexes)?;
         let gini = PercentPerBlock::forced_import(&db, "gini", v, indexes)?;
         let rhodl_ratio = RatioPerBlock::forced_import_raw(&db, "rhodl_ratio", v, indexes)?;
+        let thermocap_multiple =
+            RatioPerBlock::forced_import_raw(&db, "thermocap_multiple", v, indexes)?;
+        let coindays_destroyed_supply_adjusted =
+            ComputedPerBlock::forced_import(&db, "coindays_destroyed_supply_adjusted", v, indexes)?;
+        let coinyears_destroyed_supply_adjusted =
+            ComputedPerBlock::forced_import(&db, "coinyears_destroyed_supply_adjusted", v, indexes)?;
+        let dormancy_supply_adjusted =
+            ComputedPerBlock::forced_import(&db, "dormancy_supply_adjusted", v, indexes)?;
 
         let this = Self {
             db,
@@ -31,6 +39,10 @@ impl Vecs {
             nvt,
             gini,
             rhodl_ratio,
+            thermocap_multiple,
+            coindays_destroyed_supply_adjusted,
+            coinyears_destroyed_supply_adjusted,
+            dormancy_supply_adjusted,
         };
         finalize_db(&this.db, &this)?;
         Ok(this)

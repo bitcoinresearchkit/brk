@@ -29,8 +29,6 @@ pub struct ActivityFull<M: StorageMode = Rw> {
 
     pub dormancy: ComputedPerBlock<StoredF32, M>,
     pub velocity: ComputedPerBlock<StoredF32, M>,
-    pub coindays_destroyed_supply_adjusted: ComputedPerBlock<StoredF32, M>,
-    pub coinyears_destroyed_supply_adjusted: ComputedPerBlock<StoredF32, M>,
 }
 
 impl ActivityFull {
@@ -54,8 +52,6 @@ impl ActivityFull {
             coinyears_destroyed,
             dormancy: cfg.import("dormancy", v1)?,
             velocity: cfg.import("velocity", v1)?,
-            coindays_destroyed_supply_adjusted: cfg.import("coindays_destroyed_supply_adjusted", v1)?,
-            coinyears_destroyed_supply_adjusted: cfg.import("coinyears_destroyed_supply_adjusted", v1)?,
         })
     }
 
@@ -75,8 +71,6 @@ impl ActivityFull {
         let mut vecs = self.inner.collect_vecs_mut();
         vecs.push(&mut self.dormancy.height);
         vecs.push(&mut self.velocity.height);
-        vecs.push(&mut self.coindays_destroyed_supply_adjusted.height);
-        vecs.push(&mut self.coinyears_destroyed_supply_adjusted.height);
         vecs
     }
 
@@ -156,38 +150,6 @@ impl ActivityFull {
                     (i, StoredF32::from(0.0f32))
                 } else {
                     (i, StoredF32::from((sent_sats.as_u128() as f64 / supply) as f32))
-                }
-            },
-            exit,
-        )?;
-
-        // Supply-Adjusted CDD = sum_24h(CDD) / circulating_supply
-        self.coindays_destroyed_supply_adjusted.height.compute_transform2(
-            starting_indexes.height,
-            &self.inner.coindays_destroyed.sum._24h.height,
-            supply_total_sats,
-            |(i, cdd_24h, supply_sats, ..)| {
-                let supply = f64::from(Bitcoin::from(supply_sats));
-                if supply == 0.0 {
-                    (i, StoredF32::from(0.0f32))
-                } else {
-                    (i, StoredF32::from((f64::from(cdd_24h) / supply) as f32))
-                }
-            },
-            exit,
-        )?;
-
-        // Supply-Adjusted CYD = CYD / circulating_supply (CYD = 1y rolling sum of CDD)
-        self.coinyears_destroyed_supply_adjusted.height.compute_transform2(
-            starting_indexes.height,
-            &self.coinyears_destroyed.height,
-            supply_total_sats,
-            |(i, cdd_1y, supply_sats, ..)| {
-                let supply = f64::from(Bitcoin::from(supply_sats));
-                if supply == 0.0 {
-                    (i, StoredF32::from(0.0f32))
-                } else {
-                    (i, StoredF32::from((f64::from(cdd_1y) / supply) as f32))
                 }
             },
             exit,

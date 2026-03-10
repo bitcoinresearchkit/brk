@@ -118,7 +118,7 @@ impl CoreCohortMetrics {
         self.realized
             .compute_rest_part1(blocks, starting_indexes, exit)?;
 
-        self.unrealized.compute_rest(blocks, prices, starting_indexes, exit)?;
+        self.unrealized.compute_rest(blocks, starting_indexes, exit)?;
 
         Ok(())
     }
@@ -141,9 +141,7 @@ impl CoreCohortMetrics {
 
         self.relative.compute(
             starting_indexes.height,
-            &self.unrealized.supply_in_profit.sats.height,
-            &self.unrealized.supply_in_loss.sats.height,
-            &self.supply.total.sats.height,
+            &self.supply.core,
             all_supply_sats,
             exit,
         )?;

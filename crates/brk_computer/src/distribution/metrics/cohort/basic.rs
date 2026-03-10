@@ -81,9 +81,7 @@ impl BasicCohortMetrics {
 
         self.relative.compute(
             starting_indexes.height,
-            &self.unrealized.supply_in_profit.sats.height,
-            &self.unrealized.supply_in_loss.sats.height,
-            &self.supply.total.sats.height,
+            &self.supply.core,
             all_supply_sats,
             exit,
         )?;

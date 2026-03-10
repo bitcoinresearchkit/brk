@@ -4,7 +4,7 @@ use brk_types::{Dollars, Height, Sats};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::distribution::metrics::{ImportConfig, UnrealizedFull};
+use crate::distribution::metrics::{ImportConfig, SupplyCore, UnrealizedFull};
 
 use super::{RelativeFull, RelativeExtendedOwnMarketCap, RelativeExtendedOwnPnl, RelativeToAll};
 
@@ -38,8 +38,8 @@ impl RelativeWithExtended {
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
+        supply: &SupplyCore,
         unrealized: &UnrealizedFull,
-        supply_total_sats: &impl ReadableVec<Height, Sats>,
         market_cap: &impl ReadableVec<Height, Dollars>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         own_market_cap: &impl ReadableVec<Height, Dollars>,
@@ -47,16 +47,14 @@ impl RelativeWithExtended {
     ) -> Result<()> {
         self.base.compute(
             max_from,
-            &unrealized.inner.core,
-            supply_total_sats,
+            supply,
+            &unrealized.inner.core.basic,
             market_cap,
             exit,
         )?;
         self.rel_to_all.compute(
             max_from,
-            &unrealized.supply_in_profit.sats.height,
-            &unrealized.supply_in_loss.sats.height,
-            supply_total_sats,
+            supply,
             all_supply_sats,
             exit,
         )?;

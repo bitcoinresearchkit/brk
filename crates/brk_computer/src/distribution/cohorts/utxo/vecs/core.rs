@@ -55,6 +55,9 @@ impl DynCohortVecs for UTXOCohortVecs<CoreCohortMetrics> {
             self.metrics
                 .unrealized
                 .truncate_push(height, &unrealized_state)?;
+            self.metrics
+                .supply
+                .truncate_push_profitability(height, &unrealized_state)?;
         }
         Ok(())
     }
