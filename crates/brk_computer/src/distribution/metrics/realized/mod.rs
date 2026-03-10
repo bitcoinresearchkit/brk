@@ -12,7 +12,7 @@ use brk_error::Result;
 use brk_types::{Height, Indexes};
 use vecdb::Exit;
 
-use crate::{blocks, distribution::state::{CohortState, CostBasisData, RealizedState}};
+use crate::{blocks, distribution::state::{WithCapital, CohortState, CostBasisData, RealizedState}};
 
 /// Polymorphic dispatch for realized metric types.
 ///
@@ -23,7 +23,7 @@ pub trait RealizedLike: Send + Sync {
     fn as_core(&self) -> &RealizedCore;
     fn as_core_mut(&mut self) -> &mut RealizedCore;
     fn min_stateful_height_len(&self) -> usize;
-    fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData>) -> Result<()>;
+    fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData<WithCapital>>) -> Result<()>;
     fn compute_rest_part1(&mut self, blocks: &blocks::Vecs, starting_indexes: &Indexes, exit: &Exit) -> Result<()>;
     fn compute_from_stateful(
         &mut self,
@@ -37,7 +37,7 @@ impl RealizedLike for RealizedCore {
     fn as_core(&self) -> &RealizedCore { self }
     fn as_core_mut(&mut self) -> &mut RealizedCore { self }
     fn min_stateful_height_len(&self) -> usize { self.min_stateful_height_len() }
-    fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData>) -> Result<()> {
+    fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData<WithCapital>>) -> Result<()> {
         self.truncate_push(height, state)
     }
     fn compute_rest_part1(&mut self, blocks: &blocks::Vecs, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
@@ -52,7 +52,7 @@ impl RealizedLike for RealizedFull {
     fn as_core(&self) -> &RealizedCore { &self.core }
     fn as_core_mut(&mut self) -> &mut RealizedCore { &mut self.core }
     fn min_stateful_height_len(&self) -> usize { self.min_stateful_height_len() }
-    fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData>) -> Result<()> {
+    fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData<WithCapital>>) -> Result<()> {
         self.truncate_push(height, state)
     }
     fn compute_rest_part1(&mut self, blocks: &blocks::Vecs, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {

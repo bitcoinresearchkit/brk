@@ -4277,6 +4277,15 @@ pub struct MetricsTree_Cointime_Pricing {
     pub true_market_mean_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern,
     pub cointime_price: CentsSatsUsdPattern,
     pub cointime_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern,
+    pub transfer_price: CentsSatsUsdPattern,
+    pub transfer_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern,
+    pub balanced_price: CentsSatsUsdPattern,
+    pub balanced_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern,
+    pub terminal_price: CentsSatsUsdPattern,
+    pub terminal_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern,
+    pub delta_price: CentsSatsUsdPattern,
+    pub delta_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern,
+    pub cumulative_market_cap: MetricPattern1<Dollars>,
 }
 
 impl MetricsTree_Cointime_Pricing {
@@ -4290,6 +4299,15 @@ impl MetricsTree_Cointime_Pricing {
             true_market_mean_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern::new(client.clone(), "true_market_mean_ratio".to_string()),
             cointime_price: CentsSatsUsdPattern::new(client.clone(), "cointime_price".to_string()),
             cointime_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern::new(client.clone(), "cointime_price_ratio".to_string()),
+            transfer_price: CentsSatsUsdPattern::new(client.clone(), "transfer_price".to_string()),
+            transfer_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern::new(client.clone(), "transfer_price_ratio".to_string()),
+            balanced_price: CentsSatsUsdPattern::new(client.clone(), "balanced_price".to_string()),
+            balanced_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern::new(client.clone(), "balanced_price_ratio".to_string()),
+            terminal_price: CentsSatsUsdPattern::new(client.clone(), "terminal_price".to_string()),
+            terminal_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern::new(client.clone(), "terminal_price_ratio".to_string()),
+            delta_price: CentsSatsUsdPattern::new(client.clone(), "delta_price".to_string()),
+            delta_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern::new(client.clone(), "delta_price_ratio".to_string()),
+            cumulative_market_cap: MetricPattern1::new(client.clone(), "cumulative_market_cap".to_string()),
         }
     }
 }

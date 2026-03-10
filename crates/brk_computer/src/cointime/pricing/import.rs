@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{RatioPerBlockExtended, Price},
+    internal::{ComputedPerBlock, RatioPerBlockExtended, Price},
 };
 
 impl Vecs {
@@ -34,6 +34,25 @@ impl Vecs {
         let cointime_price_ratio =
             RatioPerBlockExtended::forced_import(db, "cointime_price", version, indexes)?;
 
+        let transfer_price = Price::forced_import(db, "transfer_price", version, indexes)?;
+        let transfer_price_ratio =
+            RatioPerBlockExtended::forced_import(db, "transfer_price", version, indexes)?;
+
+        let balanced_price = Price::forced_import(db, "balanced_price", version, indexes)?;
+        let balanced_price_ratio =
+            RatioPerBlockExtended::forced_import(db, "balanced_price", version, indexes)?;
+
+        let terminal_price = Price::forced_import(db, "terminal_price", version, indexes)?;
+        let terminal_price_ratio =
+            RatioPerBlockExtended::forced_import(db, "terminal_price", version, indexes)?;
+
+        let delta_price = Price::forced_import(db, "delta_price", version, indexes)?;
+        let delta_price_ratio =
+            RatioPerBlockExtended::forced_import(db, "delta_price", version, indexes)?;
+
+        let cumulative_market_cap =
+            ComputedPerBlock::forced_import(db, "cumulative_market_cap", version, indexes)?;
+
         Ok(Self {
             vaulted_price,
             vaulted_price_ratio,
@@ -43,6 +62,15 @@ impl Vecs {
             true_market_mean_ratio,
             cointime_price,
             cointime_price_ratio,
+            transfer_price,
+            transfer_price_ratio,
+            balanced_price,
+            balanced_price_ratio,
+            terminal_price,
+            terminal_price_ratio,
+            delta_price,
+            delta_price_ratio,
+            cumulative_market_cap,
         })
     }
 }

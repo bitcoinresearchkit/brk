@@ -11,7 +11,7 @@ use brk_types::{
 use rustc_hash::FxHashMap;
 use vecdb::{Bytes, unlikely};
 
-use super::{CachedUnrealizedState, UnrealizedState};
+use super::{Accumulate, CachedUnrealizedState, UnrealizedState};
 
 /// Type alias for the price-to-sats map used in cost basis data.
 pub(super) type CostBasisMap = BTreeMap<CentsCompact, Sats>;
@@ -261,19 +261,21 @@ impl CostBasisOps for CostBasisRaw {
 
 /// Full cost basis tracking: BTreeMap distribution + raw scalars.
 /// Composes `CostBasisRaw` for scalar tracking, adds map, pending, and cache.
-/// Used by cohorts that need unrealized computation or Fenwick tree.
+///
+/// Generic over the accumulator `S`:
+/// - `CachedStateRaw`: tracks all fields including invested capital + investor cap (128 bytes)
+/// - `CachedStateCore`: tracks only supply + unrealized profit/loss (64 bytes, 1 cache line)
 #[derive(Clone, Debug)]
-pub struct CostBasisData {
+pub struct CostBasisData<S: Accumulate> {
     raw: CostBasisRaw,
     map: Option<CostBasisDistribution>,
     pending: FxHashMap<CentsCompact, PendingDelta>,
-    cache: Option<CachedUnrealizedState>,
+    cache: Option<CachedUnrealizedState<S>>,
     rounding_digits: Option<i32>,
-    /// Monotonically increasing counter, bumped on each apply_pending with actual changes.
     generation: u64,
 }
 
-impl CostBasisData {
+impl<S: Accumulate> CostBasisData<S> {
     #[inline]
     fn round_price(&self, price: Cents) -> Cents {
         match self.rounding_digits {
@@ -364,7 +366,7 @@ impl CostBasisData {
     }
 }
 
-impl CostBasisOps for CostBasisData {
+impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
     fn create(path: &Path, name: &str) -> Self {
         Self {
             raw: CostBasisRaw::create(path, name),

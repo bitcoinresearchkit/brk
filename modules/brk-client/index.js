@@ -4769,6 +4769,15 @@ function createRawPattern(client, acc) {
  * @property {BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern} trueMarketMeanRatio
  * @property {CentsSatsUsdPattern} cointimePrice
  * @property {BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern} cointimePriceRatio
+ * @property {CentsSatsUsdPattern} transferPrice
+ * @property {BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern} transferPriceRatio
+ * @property {CentsSatsUsdPattern} balancedPrice
+ * @property {BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern} balancedPriceRatio
+ * @property {CentsSatsUsdPattern} terminalPrice
+ * @property {BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern} terminalPriceRatio
+ * @property {CentsSatsUsdPattern} deltaPrice
+ * @property {BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern} deltaPriceRatio
+ * @property {MetricPattern1<Dollars>} cumulativeMarketCap
  */
 
 /**
@@ -7598,6 +7607,15 @@ class BrkClient extends BrkClientBase {
           trueMarketMeanRatio: createBpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern(this, 'true_market_mean_ratio'),
           cointimePrice: createCentsSatsUsdPattern(this, 'cointime_price'),
           cointimePriceRatio: createBpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern(this, 'cointime_price_ratio'),
+          transferPrice: createCentsSatsUsdPattern(this, 'transfer_price'),
+          transferPriceRatio: createBpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern(this, 'transfer_price_ratio'),
+          balancedPrice: createCentsSatsUsdPattern(this, 'balanced_price'),
+          balancedPriceRatio: createBpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern(this, 'balanced_price_ratio'),
+          terminalPrice: createCentsSatsUsdPattern(this, 'terminal_price'),
+          terminalPriceRatio: createBpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern(this, 'terminal_price_ratio'),
+          deltaPrice: createCentsSatsUsdPattern(this, 'delta_price'),
+          deltaPriceRatio: createBpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern(this, 'delta_price_ratio'),
+          cumulativeMarketCap: createMetricPattern1(this, 'cumulative_market_cap'),
         },
         adjusted: {
           inflationRate: createBpsPercentRatioPattern(this, 'cointime_adj_inflation_rate'),

@@ -66,7 +66,7 @@ use brk_error::Result;
 use brk_types::{Cents, Height, Indexes, Version};
 use vecdb::{AnyStoredVec, Exit, StorageMode};
 
-use crate::{blocks, distribution::state::{CohortState, CostBasisData, CostBasisOps, CostBasisRaw, CoreRealizedState, MinimalRealizedState, RealizedOps, RealizedState}, prices};
+use crate::{blocks, distribution::state::{WithoutCapital, WithCapital, CohortState, CostBasisData, CostBasisOps, CostBasisRaw, CoreRealizedState, MinimalRealizedState, RealizedOps, RealizedState}, prices};
 
 pub trait CohortMetricsState {
     type Realized: RealizedOps;
@@ -75,7 +75,7 @@ pub trait CohortMetricsState {
 
 impl<M: StorageMode> CohortMetricsState for TypeCohortMetrics<M> {
     type Realized = MinimalRealizedState;
-    type CostBasis = CostBasisData;
+    type CostBasis = CostBasisData<WithoutCapital>;
 }
 impl<M: StorageMode> CohortMetricsState for MinimalCohortMetrics<M> {
     type Realized = MinimalRealizedState;
@@ -83,26 +83,26 @@ impl<M: StorageMode> CohortMetricsState for MinimalCohortMetrics<M> {
 }
 impl<M: StorageMode> CohortMetricsState for CoreCohortMetrics<M> {
     type Realized = CoreRealizedState;
-    type CostBasis = CostBasisData;
+    type CostBasis = CostBasisData<WithoutCapital>;
 }
 impl<M: StorageMode> CohortMetricsState for BasicCohortMetrics<M> {
     type Realized = RealizedState;
-    type CostBasis = CostBasisData;
+    type CostBasis = CostBasisData<WithCapital>;
 }
 impl<M: StorageMode> CohortMetricsState for ExtendedCohortMetrics<M> {
     type Realized = RealizedState;
-    type CostBasis = CostBasisData;
+    type CostBasis = CostBasisData<WithCapital>;
 }
 impl<M: StorageMode> CohortMetricsState for ExtendedAdjustedCohortMetrics<M> {
     type Realized = RealizedState;
-    type CostBasis = CostBasisData;
+    type CostBasis = CostBasisData<WithCapital>;
 }
 impl<M: StorageMode> CohortMetricsState for AllCohortMetrics<M> {
     type Realized = RealizedState;
-    type CostBasis = CostBasisData;
+    type CostBasis = CostBasisData<WithCapital>;
 }
 
-pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState, CostBasis = CostBasisData> + Send + Sync {
+pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState, CostBasis = CostBasisData<WithCapital>> + Send + Sync {
     type ActivityVecs: ActivityLike;
     type RealizedVecs: RealizedLike;
     type UnrealizedVecs: UnrealizedLike;
@@ -142,7 +142,7 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState, CostBa
         &mut self,
         height: Height,
         height_price: Cents,
-        state: &mut CohortState<RealizedState, CostBasisData>,
+        state: &mut CohortState<RealizedState, CostBasisData<WithCapital>>,
     ) -> Result<()> {
         state.apply_pending();
         let unrealized_state = state.compute_unrealized_state(height_price);
@@ -162,7 +162,7 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState, CostBa
             .min(self.unrealized().min_stateful_height_len())
     }
 
-    fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData>) -> Result<()> {
+    fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData<WithCapital>>) -> Result<()> {
         self.supply_mut().truncate_push(height, state)?;
         self.outputs_mut().truncate_push(height, state)?;
         self.activity_mut().truncate_push(height, state)?;

@@ -3721,6 +3721,15 @@ class MetricsTree_Cointime_Pricing:
         self.true_market_mean_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern = BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern(client, 'true_market_mean_ratio')
         self.cointime_price: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'cointime_price')
         self.cointime_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern = BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern(client, 'cointime_price_ratio')
+        self.transfer_price: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'transfer_price')
+        self.transfer_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern = BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern(client, 'transfer_price_ratio')
+        self.balanced_price: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'balanced_price')
+        self.balanced_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern = BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern(client, 'balanced_price_ratio')
+        self.terminal_price: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'terminal_price')
+        self.terminal_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern = BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern(client, 'terminal_price_ratio')
+        self.delta_price: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'delta_price')
+        self.delta_price_ratio: BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern = BpsPct1Pct2Pct5Pct95Pct98Pct99RatioSmaPattern(client, 'delta_price_ratio')
+        self.cumulative_market_cap: MetricPattern1[Dollars] = MetricPattern1(client, 'cumulative_market_cap')
 
 class MetricsTree_Cointime_Adjusted:
     """Metrics tree node."""

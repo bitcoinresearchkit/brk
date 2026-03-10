@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_types::{Age, Cents, CentsCompact, CentsSats, CentsSquaredSats, CostBasisSnapshot, Height, Sats, SupplyState};
 
-use super::super::cost_basis::{CostBasisData, CostBasisOps, PendingDelta, RealizedOps, UnrealizedState};
+use super::super::cost_basis::{Accumulate, CostBasisData, CostBasisOps, PendingDelta, RealizedOps, UnrealizedState};
 
 pub struct SendPrecomputed {
     pub sats: Sats,
@@ -282,8 +282,8 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
     }
 }
 
-/// Methods only available with full CostBasisData (map + unrealized).
-impl<R: RealizedOps> CohortState<R, CostBasisData> {
+/// Methods only available with CostBasisData (map + unrealized).
+impl<R: RealizedOps, S: Accumulate> CohortState<R, CostBasisData<S>> {
     pub(crate) fn compute_unrealized_state(&mut self, height_price: Cents) -> UnrealizedState {
         self.cost_basis.compute_unrealized_state(height_price)
     }
