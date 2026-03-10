@@ -44,7 +44,7 @@ impl Vecs {
 
             self.stoch_d.bps.height.compute_rolling_average(
                 starting_indexes.height,
-                &blocks.lookback.height_3d_ago,
+                &blocks.lookback._3d,
                 &self.stoch_k.bps.height,
                 exit,
             )?;

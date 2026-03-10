@@ -125,7 +125,7 @@ impl AddressTypeToAddrCountVecs {
         )?))
     }
 
-    pub(crate) fn min_stateful_height(&self) -> usize {
+    pub(crate) fn min_stateful_len(&self) -> usize {
         self.0.values().map(|v| v.height.len()).min().unwrap()
     }
 
@@ -181,8 +181,8 @@ impl AddrCountsVecs {
         })
     }
 
-    pub(crate) fn min_stateful_height(&self) -> usize {
-        self.all.height.len().min(self.by_addresstype.min_stateful_height())
+    pub(crate) fn min_stateful_len(&self) -> usize {
+        self.all.height.len().min(self.by_addresstype.min_stateful_len())
     }
 
     pub(crate) fn par_iter_height_mut(

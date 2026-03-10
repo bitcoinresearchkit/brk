@@ -23,7 +23,7 @@ use crate::{
         state::BlockState,
     },
     indexes, inputs,
-    internal::{finalize_db, open_db, ComputedPerBlockCumulative},
+    internal::{ComputedPerBlockCumulative, finalize_db, open_db},
     outputs, prices, transactions,
 };
 
@@ -240,16 +240,7 @@ impl Vecs {
 
         // 1. Find minimum height we have data for across stateful vecs
         let current_height = Height::from(self.supply_state.len());
-        debug!("supply_state.len={}", self.supply_state.len());
-        debug!("utxo_cohorts.min={}", self.utxo_cohorts.min_separate_stateful_height_len());
-        debug!("address_cohorts.min={}", self.address_cohorts.min_separate_stateful_height_len());
-        debug!("address_indexes.min={}", self.any_address_indexes.min_stamped_height());
-        debug!("addresses_data.min={}", self.addresses_data.min_stamped_height());
-        debug!("addr_count.min={}", self.addr_count.min_stateful_height());
-        debug!("empty_addr_count.min={}", self.empty_addr_count.min_stateful_height());
-        debug!("address_activity.min={}", self.address_activity.min_stateful_height());
-        debug!("coinblocks_destroyed.raw.height.len={}", self.coinblocks_destroyed.raw.height.len());
-        let min_stateful = self.min_stateful_height_len();
+        let min_stateful = self.min_stateful_len();
 
         // 2. Determine start mode and recover/reset state
         // Clamp to starting_indexes.height to handle reorg (indexer may require earlier start)
@@ -423,10 +414,8 @@ impl Vecs {
         )?;
 
         // 6b. Compute address count sum (by addresstype → all)
-        self.addr_count
-            .compute_rest(starting_indexes, exit)?;
-        self.empty_addr_count
-            .compute_rest(starting_indexes, exit)?;
+        self.addr_count.compute_rest(starting_indexes, exit)?;
+        self.empty_addr_count.compute_rest(starting_indexes, exit)?;
 
         // 6c. Compute total_addr_count = addr_count + empty_addr_count
         self.total_addr_count.compute(
@@ -486,16 +475,47 @@ impl Vecs {
     }
 
     /// Get minimum length across all height-indexed stateful vectors.
-    fn min_stateful_height_len(&self) -> Height {
+    fn min_stateful_len(&self) -> Height {
+        debug!("supply_state.len={}", self.supply_state.len());
+        debug!(
+            "utxo_cohorts.min={}",
+            self.utxo_cohorts.min_stateful_len()
+        );
+        debug!(
+            "address_cohorts.min={}",
+            self.address_cohorts.min_stateful_len()
+        );
+        debug!(
+            "address_indexes.min={}",
+            self.any_address_indexes.min_stamped_height()
+        );
+        debug!(
+            "addresses_data.min={}",
+            self.addresses_data.min_stamped_height()
+        );
+        debug!("addr_count.min={}", self.addr_count.min_stateful_len());
+        debug!(
+            "empty_addr_count.min={}",
+            self.empty_addr_count.min_stateful_len()
+        );
+        debug!(
+            "address_activity.min={}",
+            self.address_activity.min_stateful_len()
+        );
+        debug!(
+            "coinblocks_destroyed.raw.height.len={}",
+            self.coinblocks_destroyed.raw.height.len()
+        );
+
         self.utxo_cohorts
-            .min_separate_stateful_height_len()
-            .min(self.address_cohorts.min_separate_stateful_height_len())
+            .min_stateful_len()
+            .min(self.address_cohorts.min_stateful_len())
             .min(Height::from(self.supply_state.len()))
             .min(self.any_address_indexes.min_stamped_height())
             .min(self.addresses_data.min_stamped_height())
-            .min(Height::from(self.addr_count.min_stateful_height()))
-            .min(Height::from(self.empty_addr_count.min_stateful_height()))
-            .min(Height::from(self.address_activity.min_stateful_height()))
+            .min(Height::from(self.addr_count.min_stateful_len()))
+            .min(Height::from(self.empty_addr_count.min_stateful_len()))
+            .min(Height::from(self.address_activity.min_stateful_len()))
             .min(Height::from(self.coinblocks_destroyed.raw.height.len()))
     }
 }

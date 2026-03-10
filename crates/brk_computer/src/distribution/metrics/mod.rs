@@ -155,13 +155,13 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState, CostBa
 
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec>;
 
-    fn min_stateful_height_len(&self) -> usize {
+    fn min_stateful_len(&self) -> usize {
         self.supply()
             .min_len()
             .min(self.outputs().min_len())
             .min(self.activity().min_len())
-            .min(self.realized().min_stateful_height_len())
-            .min(self.unrealized().min_stateful_height_len())
+            .min(self.realized().min_stateful_len())
+            .min(self.unrealized().min_stateful_len())
     }
 
     fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData<WithCapital>>) -> Result<()> {

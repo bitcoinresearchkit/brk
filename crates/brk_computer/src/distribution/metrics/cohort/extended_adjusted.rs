@@ -37,8 +37,8 @@ impl CohortMetricsBase for ExtendedAdjustedCohortMetrics {
         self.inner.validate_computed_versions(base_version)
     }
 
-    fn min_stateful_height_len(&self) -> usize {
-        self.inner.min_stateful_height_len()
+    fn min_stateful_len(&self) -> usize {
+        self.inner.min_stateful_len()
     }
 
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

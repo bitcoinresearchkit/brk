@@ -38,10 +38,10 @@ impl Vecs {
 
         let hash_rate = &self.hash_rate.height;
         for (sma, window) in [
-            (&mut self.hash_rate_sma._1w.height, &lookback.height_1w_ago),
-            (&mut self.hash_rate_sma._1m.height, &lookback.height_1m_ago),
-            (&mut self.hash_rate_sma._2m.height, &lookback.height_2m_ago),
-            (&mut self.hash_rate_sma._1y.height, &lookback.height_1y_ago),
+            (&mut self.hash_rate_sma._1w.height, &lookback._1w),
+            (&mut self.hash_rate_sma._1m.height, &lookback._1m),
+            (&mut self.hash_rate_sma._2m.height, &lookback._2m),
+            (&mut self.hash_rate_sma._1y.height, &lookback._1y),
         ] {
             sma.compute_rolling_average(starting_indexes.height, window, hash_rate, exit)?;
         }

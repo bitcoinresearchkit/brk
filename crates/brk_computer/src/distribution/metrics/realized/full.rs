@@ -263,10 +263,11 @@ impl RealizedFull {
         })
     }
 
-    pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.core
-            .min_stateful_height_len()
-            .min(self.profit.value_created.height.len())
+    pub(crate) fn min_stateful_len(&self) -> usize {
+        self.profit
+            .value_created
+            .height
+            .len()
             .min(self.profit.value_destroyed.height.len())
             .min(self.loss.value_created.height.len())
             .min(self.loss.value_destroyed.height.len())
@@ -541,7 +542,7 @@ impl RealizedFull {
         // Net PnL delta (1m base + 24h/1w/1y extended)
         self.net_pnl.delta.compute(
             starting_indexes.height,
-            &blocks.lookback.height_1m_ago,
+            &blocks.lookback._1m,
             &self.net_pnl.cumulative.height,
             exit,
         )?;

@@ -60,7 +60,7 @@ impl Vecs {
         // Annualized volume: rolling 1y sum of per-block sent volume
         self.annualized_volume.sats.height.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.lookback.height_1y_ago,
+            &blocks.lookback._1y,
             &self.sent_sum.sats,
             exit,
         )?;

@@ -56,7 +56,7 @@ impl SupplyFull {
     ) -> Result<()> {
         self.delta.compute(
             starting_indexes.height,
-            &blocks.lookback.height_1m_ago,
+            &blocks.lookback._1m,
             &self.core.total.sats.height,
             exit,
         )

@@ -26,7 +26,7 @@ impl UnrealizedBasic {
         })
     }
 
-    pub(crate) fn min_stateful_height_len(&self) -> usize {
+    pub(crate) fn min_stateful_len(&self) -> usize {
         self.profit
             .raw
             .cents
@@ -75,13 +75,13 @@ impl UnrealizedBasic {
     ) -> Result<()> {
         self.profit.sum.compute_rolling_sum(
             max_from,
-            &blocks.lookback.height_24h_ago,
+            &blocks.lookback._24h,
             &self.profit.raw.cents.height,
             exit,
         )?;
         self.loss.sum.compute_rolling_sum(
             max_from,
-            &blocks.lookback.height_24h_ago,
+            &blocks.lookback._24h,
             &self.loss.raw.cents.height,
             exit,
         )?;

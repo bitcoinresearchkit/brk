@@ -106,7 +106,7 @@ impl ActivityCountVecs {
         })
     }
 
-    pub(crate) fn min_stateful_height(&self) -> usize {
+    pub(crate) fn min_stateful_len(&self) -> usize {
         self.reactivated
             .height
             .len()
@@ -197,10 +197,10 @@ impl AddressTypeToActivityCountVecs {
         ))
     }
 
-    pub(crate) fn min_stateful_height(&self) -> usize {
+    pub(crate) fn min_stateful_len(&self) -> usize {
         self.0
             .values()
-            .map(|v| v.min_stateful_height())
+            .map(|v| v.min_stateful_len())
             .min()
             .unwrap_or(0)
     }
@@ -272,10 +272,10 @@ impl AddressActivityVecs {
         })
     }
 
-    pub(crate) fn min_stateful_height(&self) -> usize {
+    pub(crate) fn min_stateful_len(&self) -> usize {
         self.all
-            .min_stateful_height()
-            .min(self.by_addresstype.min_stateful_height())
+            .min_stateful_len()
+            .min(self.by_addresstype.min_stateful_len())
     }
 
     pub(crate) fn par_iter_height_mut(

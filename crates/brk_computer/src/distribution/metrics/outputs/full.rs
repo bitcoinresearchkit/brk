@@ -55,7 +55,7 @@ impl OutputsFull {
     ) -> Result<()> {
         self.utxo_count_delta.compute(
             starting_indexes.height,
-            &blocks.lookback.height_1m_ago,
+            &blocks.lookback._1m,
             &self.base.utxo_count.height,
             exit,
         )?;

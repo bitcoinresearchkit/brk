@@ -116,8 +116,8 @@ impl<M: CohortMetricsBase + Traversable> Filtered for UTXOCohortVecs<M> {
 }
 
 impl<M: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<M> {
-    fn min_stateful_height_len(&self) -> usize {
-        self.metrics.min_stateful_height_len()
+    fn min_stateful_len(&self) -> usize {
+        self.metrics.min_stateful_len()
     }
 
     fn reset_state_starting_height(&mut self) {

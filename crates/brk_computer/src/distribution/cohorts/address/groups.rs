@@ -98,7 +98,7 @@ impl AddressCohorts {
         self.par_iter_mut().try_for_each(|v| {
             v.addr_count_delta.compute(
                 starting_indexes.height,
-                &blocks.lookback.height_1m_ago,
+                &blocks.lookback._1m,
                 &v.addr_count.height,
                 exit,
             )
@@ -141,9 +141,9 @@ impl AddressCohorts {
     }
 
     /// Get minimum height from all separate cohorts' height-indexed vectors.
-    pub(crate) fn min_separate_stateful_height_len(&self) -> Height {
+    pub(crate) fn min_stateful_len(&self) -> Height {
         self.iter_separate()
-            .map(|v| Height::from(v.min_stateful_height_len()))
+            .map(|v| Height::from(v.min_stateful_len()))
             .min()
             .unwrap_or_default()
     }

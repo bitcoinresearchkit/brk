@@ -14,8 +14,8 @@ impl Filtered for UTXOCohortVecs<CoreCohortMetrics> {
 }
 
 impl DynCohortVecs for UTXOCohortVecs<CoreCohortMetrics> {
-    fn min_stateful_height_len(&self) -> usize {
-        self.metrics.min_stateful_height_len()
+    fn min_stateful_len(&self) -> usize {
+        self.metrics.min_stateful_len()
     }
 
     fn reset_state_starting_height(&mut self) {

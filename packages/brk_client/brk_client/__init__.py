@@ -3377,49 +3377,49 @@ class MetricsTree_Blocks_Lookback:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.height_1h_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_1h_ago')
-        self.height_24h_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_24h_ago')
-        self.height_3d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_3d_ago')
-        self.height_1w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_1w_ago')
-        self.height_8d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_8d_ago')
-        self.height_9d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_9d_ago')
-        self.height_12d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_12d_ago')
-        self.height_13d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_13d_ago')
-        self.height_2w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_2w_ago')
-        self.height_21d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_21d_ago')
-        self.height_26d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_26d_ago')
-        self.height_1m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_1m_ago')
-        self.height_34d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_34d_ago')
-        self.height_55d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_55d_ago')
-        self.height_2m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_2m_ago')
-        self.height_9w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_9w_ago')
-        self.height_12w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_12w_ago')
-        self.height_89d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_89d_ago')
-        self.height_3m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_3m_ago')
-        self.height_14w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_14w_ago')
-        self.height_111d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_111d_ago')
-        self.height_144d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_144d_ago')
-        self.height_6m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_6m_ago')
-        self.height_26w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_26w_ago')
-        self.height_200d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_200d_ago')
-        self.height_9m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_9m_ago')
-        self.height_350d_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_350d_ago')
-        self.height_12m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_12m_ago')
-        self.height_1y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_1y_ago')
-        self.height_14m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_14m_ago')
-        self.height_2y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_2y_ago')
-        self.height_26m_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_26m_ago')
-        self.height_3y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_3y_ago')
-        self.height_200w_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_200w_ago')
-        self.height_4y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_4y_ago')
-        self.height_5y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_5y_ago')
-        self.height_6y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_6y_ago')
-        self.height_8y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_8y_ago')
-        self.height_9y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_9y_ago')
-        self.height_10y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_10y_ago')
-        self.height_12y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_12y_ago')
-        self.height_14y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_14y_ago')
-        self.height_26y_ago: MetricPattern18[Height] = MetricPattern18(client, 'height_26y_ago')
+        self._1h: MetricPattern18[Height] = MetricPattern18(client, 'height_1h_ago')
+        self._24h: MetricPattern18[Height] = MetricPattern18(client, 'height_24h_ago')
+        self._3d: MetricPattern18[Height] = MetricPattern18(client, 'height_3d_ago')
+        self._1w: MetricPattern18[Height] = MetricPattern18(client, 'height_1w_ago')
+        self._8d: MetricPattern18[Height] = MetricPattern18(client, 'height_8d_ago')
+        self._9d: MetricPattern18[Height] = MetricPattern18(client, 'height_9d_ago')
+        self._12d: MetricPattern18[Height] = MetricPattern18(client, 'height_12d_ago')
+        self._13d: MetricPattern18[Height] = MetricPattern18(client, 'height_13d_ago')
+        self._2w: MetricPattern18[Height] = MetricPattern18(client, 'height_2w_ago')
+        self._21d: MetricPattern18[Height] = MetricPattern18(client, 'height_21d_ago')
+        self._26d: MetricPattern18[Height] = MetricPattern18(client, 'height_26d_ago')
+        self._1m: MetricPattern18[Height] = MetricPattern18(client, 'height_1m_ago')
+        self._34d: MetricPattern18[Height] = MetricPattern18(client, 'height_34d_ago')
+        self._55d: MetricPattern18[Height] = MetricPattern18(client, 'height_55d_ago')
+        self._2m: MetricPattern18[Height] = MetricPattern18(client, 'height_2m_ago')
+        self._9w: MetricPattern18[Height] = MetricPattern18(client, 'height_9w_ago')
+        self._12w: MetricPattern18[Height] = MetricPattern18(client, 'height_12w_ago')
+        self._89d: MetricPattern18[Height] = MetricPattern18(client, 'height_89d_ago')
+        self._3m: MetricPattern18[Height] = MetricPattern18(client, 'height_3m_ago')
+        self._14w: MetricPattern18[Height] = MetricPattern18(client, 'height_14w_ago')
+        self._111d: MetricPattern18[Height] = MetricPattern18(client, 'height_111d_ago')
+        self._144d: MetricPattern18[Height] = MetricPattern18(client, 'height_144d_ago')
+        self._6m: MetricPattern18[Height] = MetricPattern18(client, 'height_6m_ago')
+        self._26w: MetricPattern18[Height] = MetricPattern18(client, 'height_26w_ago')
+        self._200d: MetricPattern18[Height] = MetricPattern18(client, 'height_200d_ago')
+        self._9m: MetricPattern18[Height] = MetricPattern18(client, 'height_9m_ago')
+        self._350d: MetricPattern18[Height] = MetricPattern18(client, 'height_350d_ago')
+        self._12m: MetricPattern18[Height] = MetricPattern18(client, 'height_12m_ago')
+        self._1y: MetricPattern18[Height] = MetricPattern18(client, 'height_1y_ago')
+        self._14m: MetricPattern18[Height] = MetricPattern18(client, 'height_14m_ago')
+        self._2y: MetricPattern18[Height] = MetricPattern18(client, 'height_2y_ago')
+        self._26m: MetricPattern18[Height] = MetricPattern18(client, 'height_26m_ago')
+        self._3y: MetricPattern18[Height] = MetricPattern18(client, 'height_3y_ago')
+        self._200w: MetricPattern18[Height] = MetricPattern18(client, 'height_200w_ago')
+        self._4y: MetricPattern18[Height] = MetricPattern18(client, 'height_4y_ago')
+        self._5y: MetricPattern18[Height] = MetricPattern18(client, 'height_5y_ago')
+        self._6y: MetricPattern18[Height] = MetricPattern18(client, 'height_6y_ago')
+        self._8y: MetricPattern18[Height] = MetricPattern18(client, 'height_8y_ago')
+        self._9y: MetricPattern18[Height] = MetricPattern18(client, 'height_9y_ago')
+        self._10y: MetricPattern18[Height] = MetricPattern18(client, 'height_10y_ago')
+        self._12y: MetricPattern18[Height] = MetricPattern18(client, 'height_12y_ago')
+        self._14y: MetricPattern18[Height] = MetricPattern18(client, 'height_14y_ago')
+        self._26y: MetricPattern18[Height] = MetricPattern18(client, 'height_26y_ago')
 
 class MetricsTree_Blocks_Halving:
     """Metrics tree node."""
@@ -4177,6 +4177,29 @@ class MetricsTree_Market_Range:
         self.true_range_sum_2w: MetricPattern1[StoredF32] = MetricPattern1(client, 'price_true_range_sum_2w')
         self.choppiness_index_2w: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'price_choppiness_index_2w')
 
+class MetricsTree_Market_MovingAverage_Sma_200d:
+    """Metrics tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cents: MetricPattern1[Cents] = MetricPattern1(client, 'price_sma_200d_cents')
+        self.usd: MetricPattern1[Dollars] = MetricPattern1(client, 'price_sma_200d_usd')
+        self.sats: MetricPattern1[SatsFract] = MetricPattern1(client, 'price_sma_200d_sats')
+        self.bps: MetricPattern1[BasisPoints32] = MetricPattern1(client, 'price_sma_200d_ratio_bps')
+        self.ratio: MetricPattern1[StoredF32] = MetricPattern1(client, 'price_sma_200d_ratio')
+        self.x2_4: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_sma_200d_x2_4')
+        self.x0_8: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_sma_200d_x0_8')
+
+class MetricsTree_Market_MovingAverage_Sma_350d:
+    """Metrics tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cents: MetricPattern1[Cents] = MetricPattern1(client, 'price_sma_350d_cents')
+        self.usd: MetricPattern1[Dollars] = MetricPattern1(client, 'price_sma_350d_usd')
+        self.sats: MetricPattern1[SatsFract] = MetricPattern1(client, 'price_sma_350d_sats')
+        self.bps: MetricPattern1[BasisPoints32] = MetricPattern1(client, 'price_sma_350d_ratio_bps')
+        self.ratio: MetricPattern1[StoredF32] = MetricPattern1(client, 'price_sma_350d_ratio')
+        self.x2: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_sma_350d_x2')
+
 class MetricsTree_Market_MovingAverage_Sma:
     """Metrics tree node."""
     
@@ -4191,15 +4214,12 @@ class MetricsTree_Market_MovingAverage_Sma:
         self._89d: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_sma_89d')
         self._111d: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_sma_111d')
         self._144d: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_sma_144d')
-        self._200d: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_sma_200d')
-        self._350d: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_sma_350d')
+        self._200d: MetricsTree_Market_MovingAverage_Sma_200d = MetricsTree_Market_MovingAverage_Sma_200d(client)
+        self._350d: MetricsTree_Market_MovingAverage_Sma_350d = MetricsTree_Market_MovingAverage_Sma_350d(client)
         self._1y: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_sma_1y')
         self._2y: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_sma_2y')
         self._200w: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_sma_200w')
         self._4y: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_sma_4y')
-        self._200d_x2_4: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_sma_200d_x2_4')
-        self._200d_x0_8: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_sma_200d_x0_8')
-        self._350d_x2: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_sma_350d_x2')
 
 class MetricsTree_Market_MovingAverage_Ema:
     """Metrics tree node."""
@@ -4229,7 +4249,7 @@ class MetricsTree_Market_MovingAverage:
         self.sma: MetricsTree_Market_MovingAverage_Sma = MetricsTree_Market_MovingAverage_Sma(client)
         self.ema: MetricsTree_Market_MovingAverage_Ema = MetricsTree_Market_MovingAverage_Ema(client)
 
-class MetricsTree_Market_Dca_PeriodCostBasis:
+class MetricsTree_Market_Dca_Period_CostBasis:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -4246,7 +4266,18 @@ class MetricsTree_Market_Dca_PeriodCostBasis:
         self._8y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_8y')
         self._10y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_10y')
 
-class MetricsTree_Market_Dca_ClassStack:
+class MetricsTree_Market_Dca_Period:
+    """Metrics tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'dca_stack')
+        self.cost_basis: MetricsTree_Market_Dca_Period_CostBasis = MetricsTree_Market_Dca_Period_CostBasis(client)
+        self.r#return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_return')
+        self.cagr: _10y2y3y4y5y6y8yPattern = _10y2y3y4y5y6y8yPattern(client, 'dca_cagr')
+        self.lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'lump_sum_stack')
+        self.lump_sum_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_return')
+
+class MetricsTree_Market_Dca_Class_Stack:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -4263,7 +4294,7 @@ class MetricsTree_Market_Dca_ClassStack:
         self.from_2025: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'dca_stack_from_2025')
         self.from_2026: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'dca_stack_from_2026')
 
-class MetricsTree_Market_Dca_ClassCostBasis:
+class MetricsTree_Market_Dca_Class_CostBasis:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -4280,7 +4311,7 @@ class MetricsTree_Market_Dca_ClassCostBasis:
         self.from_2025: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2025')
         self.from_2026: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2026')
 
-class MetricsTree_Market_Dca_ClassReturn:
+class MetricsTree_Market_Dca_Class_R#return:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -4297,20 +4328,21 @@ class MetricsTree_Market_Dca_ClassReturn:
         self.from_2025: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2025')
         self.from_2026: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2026')
 
+class MetricsTree_Market_Dca_Class:
+    """Metrics tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.stack: MetricsTree_Market_Dca_Class_Stack = MetricsTree_Market_Dca_Class_Stack(client)
+        self.cost_basis: MetricsTree_Market_Dca_Class_CostBasis = MetricsTree_Market_Dca_Class_CostBasis(client)
+        self.r#return: MetricsTree_Market_Dca_Class_R#return = MetricsTree_Market_Dca_Class_R#return(client)
+
 class MetricsTree_Market_Dca:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.dca_sats_per_day: MetricPattern18[Sats] = MetricPattern18(client, 'dca_sats_per_day')
-        self.period_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'dca_stack')
-        self.period_cost_basis: MetricsTree_Market_Dca_PeriodCostBasis = MetricsTree_Market_Dca_PeriodCostBasis(client)
-        self.period_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_return')
-        self.period_cagr: _10y2y3y4y5y6y8yPattern = _10y2y3y4y5y6y8yPattern(client, 'dca_cagr')
-        self.period_lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'lump_sum_stack')
-        self.period_lump_sum_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_return')
-        self.class_stack: MetricsTree_Market_Dca_ClassStack = MetricsTree_Market_Dca_ClassStack(client)
-        self.class_cost_basis: MetricsTree_Market_Dca_ClassCostBasis = MetricsTree_Market_Dca_ClassCostBasis(client)
-        self.class_return: MetricsTree_Market_Dca_ClassReturn = MetricsTree_Market_Dca_ClassReturn(client)
+        self.sats_per_day: MetricPattern18[Sats] = MetricPattern18(client, 'dca_sats_per_day')
+        self.period: MetricsTree_Market_Dca_Period = MetricsTree_Market_Dca_Period(client)
+        self.class: MetricsTree_Market_Dca_Class = MetricsTree_Market_Dca_Class(client)
 
 class MetricsTree_Market_Technical_Rsi_1w:
     """Metrics tree node."""

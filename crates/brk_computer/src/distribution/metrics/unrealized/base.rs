@@ -46,9 +46,9 @@ impl UnrealizedBase {
         })
     }
 
-    pub(crate) fn min_stateful_height_len(&self) -> usize {
+    pub(crate) fn min_stateful_len(&self) -> usize {
         self.core
-            .min_stateful_height_len()
+            .min_stateful_len()
             .min(self.invested_capital_in_profit_raw.len())
             .min(self.invested_capital_in_loss_raw.len())
             .min(self.investor_cap_in_profit_raw.len())

@@ -44,7 +44,7 @@ impl CostBasis {
         })
     }
 
-    pub(crate) fn min_stateful_height_len(&self) -> usize {
+    pub(crate) fn min_stateful_len(&self) -> usize {
         self.min
             .cents
             .height

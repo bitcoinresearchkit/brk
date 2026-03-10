@@ -22,7 +22,7 @@ use crate::{blocks, distribution::state::{WithCapital, CohortState, CostBasisDat
 pub trait RealizedLike: Send + Sync {
     fn as_core(&self) -> &RealizedCore;
     fn as_core_mut(&mut self) -> &mut RealizedCore;
-    fn min_stateful_height_len(&self) -> usize;
+    fn min_stateful_len(&self) -> usize;
     fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData<WithCapital>>) -> Result<()>;
     fn compute_rest_part1(&mut self, blocks: &blocks::Vecs, starting_indexes: &Indexes, exit: &Exit) -> Result<()>;
     fn compute_from_stateful(
@@ -36,7 +36,7 @@ pub trait RealizedLike: Send + Sync {
 impl RealizedLike for RealizedCore {
     fn as_core(&self) -> &RealizedCore { self }
     fn as_core_mut(&mut self) -> &mut RealizedCore { self }
-    fn min_stateful_height_len(&self) -> usize { self.min_stateful_height_len() }
+    fn min_stateful_len(&self) -> usize { self.min_stateful_len() }
     fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData<WithCapital>>) -> Result<()> {
         self.truncate_push(height, state)
     }
@@ -51,7 +51,7 @@ impl RealizedLike for RealizedCore {
 impl RealizedLike for RealizedFull {
     fn as_core(&self) -> &RealizedCore { &self.core }
     fn as_core_mut(&mut self) -> &mut RealizedCore { &mut self.core }
-    fn min_stateful_height_len(&self) -> usize { self.min_stateful_height_len() }
+    fn min_stateful_len(&self) -> usize { self.min_stateful_len() }
     fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData<WithCapital>>) -> Result<()> {
         self.truncate_push(height, state)
     }

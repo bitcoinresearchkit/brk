@@ -72,7 +72,7 @@ pub struct ProfitabilityMetrics<M: StorageMode = Rw> {
 }
 
 impl<M: StorageMode> ProfitabilityMetrics<M> {
-    pub(crate) fn min_stateful_height_len(&self) -> usize {
+    pub(crate) fn min_stateful_len(&self) -> usize {
         self.range.iter()
             .chain(self.profit.iter())
             .chain(self.loss.iter())

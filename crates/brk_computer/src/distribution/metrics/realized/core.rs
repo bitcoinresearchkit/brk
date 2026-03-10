@@ -74,8 +74,8 @@ impl RealizedCore {
         })
     }
 
-    pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.minimal.min_stateful_height_len()
+    pub(crate) fn min_stateful_len(&self) -> usize {
+        self.minimal.min_stateful_len()
     }
 
     pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState<impl RealizedOps, impl CostBasisOps>) -> Result<()> {
@@ -149,14 +149,14 @@ impl RealizedCore {
 
         self.cap_delta.compute(
             starting_indexes.height,
-            &blocks.lookback.height_1m_ago,
+            &blocks.lookback._1m,
             &self.minimal.cap.cents.height,
             exit,
         )?;
 
         self.net_pnl.sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.lookback.height_24h_ago,
+            &blocks.lookback._24h,
             &self.net_pnl.raw.height,
             exit,
         )?;

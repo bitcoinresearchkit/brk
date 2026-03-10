@@ -33,11 +33,11 @@ impl MinimalCohortMetrics {
         })
     }
 
-    pub(crate) fn min_stateful_height_len(&self) -> usize {
+    pub(crate) fn min_stateful_len(&self) -> usize {
         self.supply
             .min_len()
             .min(self.outputs.min_len())
-            .min(self.realized.min_stateful_height_len())
+            .min(self.realized.min_stateful_len())
     }
 
     pub(crate) fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

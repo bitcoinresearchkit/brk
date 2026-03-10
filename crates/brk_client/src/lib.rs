@@ -3574,97 +3574,97 @@ impl MetricsTree_Blocks_Count {
 
 /// Metrics tree node.
 pub struct MetricsTree_Blocks_Lookback {
-    pub height_1h_ago: MetricPattern18<Height>,
-    pub height_24h_ago: MetricPattern18<Height>,
-    pub height_3d_ago: MetricPattern18<Height>,
-    pub height_1w_ago: MetricPattern18<Height>,
-    pub height_8d_ago: MetricPattern18<Height>,
-    pub height_9d_ago: MetricPattern18<Height>,
-    pub height_12d_ago: MetricPattern18<Height>,
-    pub height_13d_ago: MetricPattern18<Height>,
-    pub height_2w_ago: MetricPattern18<Height>,
-    pub height_21d_ago: MetricPattern18<Height>,
-    pub height_26d_ago: MetricPattern18<Height>,
-    pub height_1m_ago: MetricPattern18<Height>,
-    pub height_34d_ago: MetricPattern18<Height>,
-    pub height_55d_ago: MetricPattern18<Height>,
-    pub height_2m_ago: MetricPattern18<Height>,
-    pub height_9w_ago: MetricPattern18<Height>,
-    pub height_12w_ago: MetricPattern18<Height>,
-    pub height_89d_ago: MetricPattern18<Height>,
-    pub height_3m_ago: MetricPattern18<Height>,
-    pub height_14w_ago: MetricPattern18<Height>,
-    pub height_111d_ago: MetricPattern18<Height>,
-    pub height_144d_ago: MetricPattern18<Height>,
-    pub height_6m_ago: MetricPattern18<Height>,
-    pub height_26w_ago: MetricPattern18<Height>,
-    pub height_200d_ago: MetricPattern18<Height>,
-    pub height_9m_ago: MetricPattern18<Height>,
-    pub height_350d_ago: MetricPattern18<Height>,
-    pub height_12m_ago: MetricPattern18<Height>,
-    pub height_1y_ago: MetricPattern18<Height>,
-    pub height_14m_ago: MetricPattern18<Height>,
-    pub height_2y_ago: MetricPattern18<Height>,
-    pub height_26m_ago: MetricPattern18<Height>,
-    pub height_3y_ago: MetricPattern18<Height>,
-    pub height_200w_ago: MetricPattern18<Height>,
-    pub height_4y_ago: MetricPattern18<Height>,
-    pub height_5y_ago: MetricPattern18<Height>,
-    pub height_6y_ago: MetricPattern18<Height>,
-    pub height_8y_ago: MetricPattern18<Height>,
-    pub height_9y_ago: MetricPattern18<Height>,
-    pub height_10y_ago: MetricPattern18<Height>,
-    pub height_12y_ago: MetricPattern18<Height>,
-    pub height_14y_ago: MetricPattern18<Height>,
-    pub height_26y_ago: MetricPattern18<Height>,
+    pub _1h: MetricPattern18<Height>,
+    pub _24h: MetricPattern18<Height>,
+    pub _3d: MetricPattern18<Height>,
+    pub _1w: MetricPattern18<Height>,
+    pub _8d: MetricPattern18<Height>,
+    pub _9d: MetricPattern18<Height>,
+    pub _12d: MetricPattern18<Height>,
+    pub _13d: MetricPattern18<Height>,
+    pub _2w: MetricPattern18<Height>,
+    pub _21d: MetricPattern18<Height>,
+    pub _26d: MetricPattern18<Height>,
+    pub _1m: MetricPattern18<Height>,
+    pub _34d: MetricPattern18<Height>,
+    pub _55d: MetricPattern18<Height>,
+    pub _2m: MetricPattern18<Height>,
+    pub _9w: MetricPattern18<Height>,
+    pub _12w: MetricPattern18<Height>,
+    pub _89d: MetricPattern18<Height>,
+    pub _3m: MetricPattern18<Height>,
+    pub _14w: MetricPattern18<Height>,
+    pub _111d: MetricPattern18<Height>,
+    pub _144d: MetricPattern18<Height>,
+    pub _6m: MetricPattern18<Height>,
+    pub _26w: MetricPattern18<Height>,
+    pub _200d: MetricPattern18<Height>,
+    pub _9m: MetricPattern18<Height>,
+    pub _350d: MetricPattern18<Height>,
+    pub _12m: MetricPattern18<Height>,
+    pub _1y: MetricPattern18<Height>,
+    pub _14m: MetricPattern18<Height>,
+    pub _2y: MetricPattern18<Height>,
+    pub _26m: MetricPattern18<Height>,
+    pub _3y: MetricPattern18<Height>,
+    pub _200w: MetricPattern18<Height>,
+    pub _4y: MetricPattern18<Height>,
+    pub _5y: MetricPattern18<Height>,
+    pub _6y: MetricPattern18<Height>,
+    pub _8y: MetricPattern18<Height>,
+    pub _9y: MetricPattern18<Height>,
+    pub _10y: MetricPattern18<Height>,
+    pub _12y: MetricPattern18<Height>,
+    pub _14y: MetricPattern18<Height>,
+    pub _26y: MetricPattern18<Height>,
 }
 
 impl MetricsTree_Blocks_Lookback {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            height_1h_ago: MetricPattern18::new(client.clone(), "height_1h_ago".to_string()),
-            height_24h_ago: MetricPattern18::new(client.clone(), "height_24h_ago".to_string()),
-            height_3d_ago: MetricPattern18::new(client.clone(), "height_3d_ago".to_string()),
-            height_1w_ago: MetricPattern18::new(client.clone(), "height_1w_ago".to_string()),
-            height_8d_ago: MetricPattern18::new(client.clone(), "height_8d_ago".to_string()),
-            height_9d_ago: MetricPattern18::new(client.clone(), "height_9d_ago".to_string()),
-            height_12d_ago: MetricPattern18::new(client.clone(), "height_12d_ago".to_string()),
-            height_13d_ago: MetricPattern18::new(client.clone(), "height_13d_ago".to_string()),
-            height_2w_ago: MetricPattern18::new(client.clone(), "height_2w_ago".to_string()),
-            height_21d_ago: MetricPattern18::new(client.clone(), "height_21d_ago".to_string()),
-            height_26d_ago: MetricPattern18::new(client.clone(), "height_26d_ago".to_string()),
-            height_1m_ago: MetricPattern18::new(client.clone(), "height_1m_ago".to_string()),
-            height_34d_ago: MetricPattern18::new(client.clone(), "height_34d_ago".to_string()),
-            height_55d_ago: MetricPattern18::new(client.clone(), "height_55d_ago".to_string()),
-            height_2m_ago: MetricPattern18::new(client.clone(), "height_2m_ago".to_string()),
-            height_9w_ago: MetricPattern18::new(client.clone(), "height_9w_ago".to_string()),
-            height_12w_ago: MetricPattern18::new(client.clone(), "height_12w_ago".to_string()),
-            height_89d_ago: MetricPattern18::new(client.clone(), "height_89d_ago".to_string()),
-            height_3m_ago: MetricPattern18::new(client.clone(), "height_3m_ago".to_string()),
-            height_14w_ago: MetricPattern18::new(client.clone(), "height_14w_ago".to_string()),
-            height_111d_ago: MetricPattern18::new(client.clone(), "height_111d_ago".to_string()),
-            height_144d_ago: MetricPattern18::new(client.clone(), "height_144d_ago".to_string()),
-            height_6m_ago: MetricPattern18::new(client.clone(), "height_6m_ago".to_string()),
-            height_26w_ago: MetricPattern18::new(client.clone(), "height_26w_ago".to_string()),
-            height_200d_ago: MetricPattern18::new(client.clone(), "height_200d_ago".to_string()),
-            height_9m_ago: MetricPattern18::new(client.clone(), "height_9m_ago".to_string()),
-            height_350d_ago: MetricPattern18::new(client.clone(), "height_350d_ago".to_string()),
-            height_12m_ago: MetricPattern18::new(client.clone(), "height_12m_ago".to_string()),
-            height_1y_ago: MetricPattern18::new(client.clone(), "height_1y_ago".to_string()),
-            height_14m_ago: MetricPattern18::new(client.clone(), "height_14m_ago".to_string()),
-            height_2y_ago: MetricPattern18::new(client.clone(), "height_2y_ago".to_string()),
-            height_26m_ago: MetricPattern18::new(client.clone(), "height_26m_ago".to_string()),
-            height_3y_ago: MetricPattern18::new(client.clone(), "height_3y_ago".to_string()),
-            height_200w_ago: MetricPattern18::new(client.clone(), "height_200w_ago".to_string()),
-            height_4y_ago: MetricPattern18::new(client.clone(), "height_4y_ago".to_string()),
-            height_5y_ago: MetricPattern18::new(client.clone(), "height_5y_ago".to_string()),
-            height_6y_ago: MetricPattern18::new(client.clone(), "height_6y_ago".to_string()),
-            height_8y_ago: MetricPattern18::new(client.clone(), "height_8y_ago".to_string()),
-            height_9y_ago: MetricPattern18::new(client.clone(), "height_9y_ago".to_string()),
-            height_10y_ago: MetricPattern18::new(client.clone(), "height_10y_ago".to_string()),
-            height_12y_ago: MetricPattern18::new(client.clone(), "height_12y_ago".to_string()),
-            height_14y_ago: MetricPattern18::new(client.clone(), "height_14y_ago".to_string()),
-            height_26y_ago: MetricPattern18::new(client.clone(), "height_26y_ago".to_string()),
+            _1h: MetricPattern18::new(client.clone(), "height_1h_ago".to_string()),
+            _24h: MetricPattern18::new(client.clone(), "height_24h_ago".to_string()),
+            _3d: MetricPattern18::new(client.clone(), "height_3d_ago".to_string()),
+            _1w: MetricPattern18::new(client.clone(), "height_1w_ago".to_string()),
+            _8d: MetricPattern18::new(client.clone(), "height_8d_ago".to_string()),
+            _9d: MetricPattern18::new(client.clone(), "height_9d_ago".to_string()),
+            _12d: MetricPattern18::new(client.clone(), "height_12d_ago".to_string()),
+            _13d: MetricPattern18::new(client.clone(), "height_13d_ago".to_string()),
+            _2w: MetricPattern18::new(client.clone(), "height_2w_ago".to_string()),
+            _21d: MetricPattern18::new(client.clone(), "height_21d_ago".to_string()),
+            _26d: MetricPattern18::new(client.clone(), "height_26d_ago".to_string()),
+            _1m: MetricPattern18::new(client.clone(), "height_1m_ago".to_string()),
+            _34d: MetricPattern18::new(client.clone(), "height_34d_ago".to_string()),
+            _55d: MetricPattern18::new(client.clone(), "height_55d_ago".to_string()),
+            _2m: MetricPattern18::new(client.clone(), "height_2m_ago".to_string()),
+            _9w: MetricPattern18::new(client.clone(), "height_9w_ago".to_string()),
+            _12w: MetricPattern18::new(client.clone(), "height_12w_ago".to_string()),
+            _89d: MetricPattern18::new(client.clone(), "height_89d_ago".to_string()),
+            _3m: MetricPattern18::new(client.clone(), "height_3m_ago".to_string()),
+            _14w: MetricPattern18::new(client.clone(), "height_14w_ago".to_string()),
+            _111d: MetricPattern18::new(client.clone(), "height_111d_ago".to_string()),
+            _144d: MetricPattern18::new(client.clone(), "height_144d_ago".to_string()),
+            _6m: MetricPattern18::new(client.clone(), "height_6m_ago".to_string()),
+            _26w: MetricPattern18::new(client.clone(), "height_26w_ago".to_string()),
+            _200d: MetricPattern18::new(client.clone(), "height_200d_ago".to_string()),
+            _9m: MetricPattern18::new(client.clone(), "height_9m_ago".to_string()),
+            _350d: MetricPattern18::new(client.clone(), "height_350d_ago".to_string()),
+            _12m: MetricPattern18::new(client.clone(), "height_12m_ago".to_string()),
+            _1y: MetricPattern18::new(client.clone(), "height_1y_ago".to_string()),
+            _14m: MetricPattern18::new(client.clone(), "height_14m_ago".to_string()),
+            _2y: MetricPattern18::new(client.clone(), "height_2y_ago".to_string()),
+            _26m: MetricPattern18::new(client.clone(), "height_26m_ago".to_string()),
+            _3y: MetricPattern18::new(client.clone(), "height_3y_ago".to_string()),
+            _200w: MetricPattern18::new(client.clone(), "height_200w_ago".to_string()),
+            _4y: MetricPattern18::new(client.clone(), "height_4y_ago".to_string()),
+            _5y: MetricPattern18::new(client.clone(), "height_5y_ago".to_string()),
+            _6y: MetricPattern18::new(client.clone(), "height_6y_ago".to_string()),
+            _8y: MetricPattern18::new(client.clone(), "height_8y_ago".to_string()),
+            _9y: MetricPattern18::new(client.clone(), "height_9y_ago".to_string()),
+            _10y: MetricPattern18::new(client.clone(), "height_10y_ago".to_string()),
+            _12y: MetricPattern18::new(client.clone(), "height_12y_ago".to_string()),
+            _14y: MetricPattern18::new(client.clone(), "height_14y_ago".to_string()),
+            _26y: MetricPattern18::new(client.clone(), "height_26y_ago".to_string()),
         }
     }
 }
@@ -5280,15 +5280,12 @@ pub struct MetricsTree_Market_MovingAverage_Sma {
     pub _89d: BpsCentsRatioSatsUsdPattern,
     pub _111d: BpsCentsRatioSatsUsdPattern,
     pub _144d: BpsCentsRatioSatsUsdPattern,
-    pub _200d: BpsCentsRatioSatsUsdPattern,
-    pub _350d: BpsCentsRatioSatsUsdPattern,
+    pub _200d: MetricsTree_Market_MovingAverage_Sma_200d,
+    pub _350d: MetricsTree_Market_MovingAverage_Sma_350d,
     pub _1y: BpsCentsRatioSatsUsdPattern,
     pub _2y: BpsCentsRatioSatsUsdPattern,
     pub _200w: BpsCentsRatioSatsUsdPattern,
     pub _4y: BpsCentsRatioSatsUsdPattern,
-    pub _200d_x2_4: CentsSatsUsdPattern,
-    pub _200d_x0_8: CentsSatsUsdPattern,
-    pub _350d_x2: CentsSatsUsdPattern,
 }
 
 impl MetricsTree_Market_MovingAverage_Sma {
@@ -5304,15 +5301,60 @@ impl MetricsTree_Market_MovingAverage_Sma {
             _89d: BpsCentsRatioSatsUsdPattern::new(client.clone(), "price_sma_89d".to_string()),
             _111d: BpsCentsRatioSatsUsdPattern::new(client.clone(), "price_sma_111d".to_string()),
             _144d: BpsCentsRatioSatsUsdPattern::new(client.clone(), "price_sma_144d".to_string()),
-            _200d: BpsCentsRatioSatsUsdPattern::new(client.clone(), "price_sma_200d".to_string()),
-            _350d: BpsCentsRatioSatsUsdPattern::new(client.clone(), "price_sma_350d".to_string()),
+            _200d: MetricsTree_Market_MovingAverage_Sma_200d::new(client.clone(), format!("{base_path}_200d")),
+            _350d: MetricsTree_Market_MovingAverage_Sma_350d::new(client.clone(), format!("{base_path}_350d")),
             _1y: BpsCentsRatioSatsUsdPattern::new(client.clone(), "price_sma_1y".to_string()),
             _2y: BpsCentsRatioSatsUsdPattern::new(client.clone(), "price_sma_2y".to_string()),
             _200w: BpsCentsRatioSatsUsdPattern::new(client.clone(), "price_sma_200w".to_string()),
             _4y: BpsCentsRatioSatsUsdPattern::new(client.clone(), "price_sma_4y".to_string()),
-            _200d_x2_4: CentsSatsUsdPattern::new(client.clone(), "price_sma_200d_x2_4".to_string()),
-            _200d_x0_8: CentsSatsUsdPattern::new(client.clone(), "price_sma_200d_x0_8".to_string()),
-            _350d_x2: CentsSatsUsdPattern::new(client.clone(), "price_sma_350d_x2".to_string()),
+        }
+    }
+}
+
+/// Metrics tree node.
+pub struct MetricsTree_Market_MovingAverage_Sma_200d {
+    pub cents: MetricPattern1<Cents>,
+    pub usd: MetricPattern1<Dollars>,
+    pub sats: MetricPattern1<SatsFract>,
+    pub bps: MetricPattern1<BasisPoints32>,
+    pub ratio: MetricPattern1<StoredF32>,
+    pub x2_4: CentsSatsUsdPattern,
+    pub x0_8: CentsSatsUsdPattern,
+}
+
+impl MetricsTree_Market_MovingAverage_Sma_200d {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            cents: MetricPattern1::new(client.clone(), "price_sma_200d_cents".to_string()),
+            usd: MetricPattern1::new(client.clone(), "price_sma_200d_usd".to_string()),
+            sats: MetricPattern1::new(client.clone(), "price_sma_200d_sats".to_string()),
+            bps: MetricPattern1::new(client.clone(), "price_sma_200d_ratio_bps".to_string()),
+            ratio: MetricPattern1::new(client.clone(), "price_sma_200d_ratio".to_string()),
+            x2_4: CentsSatsUsdPattern::new(client.clone(), "price_sma_200d_x2_4".to_string()),
+            x0_8: CentsSatsUsdPattern::new(client.clone(), "price_sma_200d_x0_8".to_string()),
+        }
+    }
+}
+
+/// Metrics tree node.
+pub struct MetricsTree_Market_MovingAverage_Sma_350d {
+    pub cents: MetricPattern1<Cents>,
+    pub usd: MetricPattern1<Dollars>,
+    pub sats: MetricPattern1<SatsFract>,
+    pub bps: MetricPattern1<BasisPoints32>,
+    pub ratio: MetricPattern1<StoredF32>,
+    pub x2: CentsSatsUsdPattern,
+}
+
+impl MetricsTree_Market_MovingAverage_Sma_350d {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            cents: MetricPattern1::new(client.clone(), "price_sma_350d_cents".to_string()),
+            usd: MetricPattern1::new(client.clone(), "price_sma_350d_usd".to_string()),
+            sats: MetricPattern1::new(client.clone(), "price_sma_350d_sats".to_string()),
+            bps: MetricPattern1::new(client.clone(), "price_sma_350d_ratio_bps".to_string()),
+            ratio: MetricPattern1::new(client.clone(), "price_sma_350d_ratio".to_string()),
+            x2: CentsSatsUsdPattern::new(client.clone(), "price_sma_350d_x2".to_string()),
         }
     }
 }
@@ -5362,37 +5404,46 @@ impl MetricsTree_Market_MovingAverage_Ema {
 
 /// Metrics tree node.
 pub struct MetricsTree_Market_Dca {
-    pub dca_sats_per_day: MetricPattern18<Sats>,
-    pub period_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3,
-    pub period_cost_basis: MetricsTree_Market_Dca_PeriodCostBasis,
-    pub period_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2,
-    pub period_cagr: _10y2y3y4y5y6y8yPattern,
-    pub period_lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3,
-    pub period_lump_sum_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2,
-    pub class_stack: MetricsTree_Market_Dca_ClassStack,
-    pub class_cost_basis: MetricsTree_Market_Dca_ClassCostBasis,
-    pub class_return: MetricsTree_Market_Dca_ClassReturn,
+    pub sats_per_day: MetricPattern18<Sats>,
+    pub period: MetricsTree_Market_Dca_Period,
+    pub class: MetricsTree_Market_Dca_Class,
 }
 
 impl MetricsTree_Market_Dca {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            dca_sats_per_day: MetricPattern18::new(client.clone(), "dca_sats_per_day".to_string()),
-            period_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3::new(client.clone(), "dca_stack".to_string()),
-            period_cost_basis: MetricsTree_Market_Dca_PeriodCostBasis::new(client.clone(), format!("{base_path}_period_cost_basis")),
-            period_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "dca_return".to_string()),
-            period_cagr: _10y2y3y4y5y6y8yPattern::new(client.clone(), "dca_cagr".to_string()),
-            period_lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3::new(client.clone(), "lump_sum_stack".to_string()),
-            period_lump_sum_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "lump_sum_return".to_string()),
-            class_stack: MetricsTree_Market_Dca_ClassStack::new(client.clone(), format!("{base_path}_class_stack")),
-            class_cost_basis: MetricsTree_Market_Dca_ClassCostBasis::new(client.clone(), format!("{base_path}_class_cost_basis")),
-            class_return: MetricsTree_Market_Dca_ClassReturn::new(client.clone(), format!("{base_path}_class_return")),
+            sats_per_day: MetricPattern18::new(client.clone(), "dca_sats_per_day".to_string()),
+            period: MetricsTree_Market_Dca_Period::new(client.clone(), format!("{base_path}_period")),
+            class: MetricsTree_Market_Dca_Class::new(client.clone(), format!("{base_path}_class")),
         }
     }
 }
 
 /// Metrics tree node.
-pub struct MetricsTree_Market_Dca_PeriodCostBasis {
+pub struct MetricsTree_Market_Dca_Period {
+    pub stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3,
+    pub cost_basis: MetricsTree_Market_Dca_Period_CostBasis,
+    pub r#return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2,
+    pub cagr: _10y2y3y4y5y6y8yPattern,
+    pub lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3,
+    pub lump_sum_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2,
+}
+
+impl MetricsTree_Market_Dca_Period {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3::new(client.clone(), "dca_stack".to_string()),
+            cost_basis: MetricsTree_Market_Dca_Period_CostBasis::new(client.clone(), format!("{base_path}_cost_basis")),
+            r#return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "dca_return".to_string()),
+            cagr: _10y2y3y4y5y6y8yPattern::new(client.clone(), "dca_cagr".to_string()),
+            lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3::new(client.clone(), "lump_sum_stack".to_string()),
+            lump_sum_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "lump_sum_return".to_string()),
+        }
+    }
+}
+
+/// Metrics tree node.
+pub struct MetricsTree_Market_Dca_Period_CostBasis {
     pub _1w: CentsSatsUsdPattern,
     pub _1m: CentsSatsUsdPattern,
     pub _3m: CentsSatsUsdPattern,
@@ -5407,7 +5458,7 @@ pub struct MetricsTree_Market_Dca_PeriodCostBasis {
     pub _10y: CentsSatsUsdPattern,
 }
 
-impl MetricsTree_Market_Dca_PeriodCostBasis {
+impl MetricsTree_Market_Dca_Period_CostBasis {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             _1w: CentsSatsUsdPattern::new(client.clone(), "dca_cost_basis_1w".to_string()),
@@ -5427,7 +5478,24 @@ impl MetricsTree_Market_Dca_PeriodCostBasis {
 }
 
 /// Metrics tree node.
-pub struct MetricsTree_Market_Dca_ClassStack {
+pub struct MetricsTree_Market_Dca_Class {
+    pub stack: MetricsTree_Market_Dca_Class_Stack,
+    pub cost_basis: MetricsTree_Market_Dca_Class_CostBasis,
+    pub r#return: MetricsTree_Market_Dca_Class_R#return,
+}
+
+impl MetricsTree_Market_Dca_Class {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            stack: MetricsTree_Market_Dca_Class_Stack::new(client.clone(), format!("{base_path}_stack")),
+            cost_basis: MetricsTree_Market_Dca_Class_CostBasis::new(client.clone(), format!("{base_path}_cost_basis")),
+            r#return: MetricsTree_Market_Dca_Class_R#return::new(client.clone(), format!("{base_path}_r#return")),
+        }
+    }
+}
+
+/// Metrics tree node.
+pub struct MetricsTree_Market_Dca_Class_Stack {
     pub from_2015: BtcCentsSatsUsdPattern,
     pub from_2016: BtcCentsSatsUsdPattern,
     pub from_2017: BtcCentsSatsUsdPattern,
@@ -5442,7 +5510,7 @@ pub struct MetricsTree_Market_Dca_ClassStack {
     pub from_2026: BtcCentsSatsUsdPattern,
 }
 
-impl MetricsTree_Market_Dca_ClassStack {
+impl MetricsTree_Market_Dca_Class_Stack {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             from_2015: BtcCentsSatsUsdPattern::new(client.clone(), "dca_stack_from_2015".to_string()),
@@ -5462,7 +5530,7 @@ impl MetricsTree_Market_Dca_ClassStack {
 }
 
 /// Metrics tree node.
-pub struct MetricsTree_Market_Dca_ClassCostBasis {
+pub struct MetricsTree_Market_Dca_Class_CostBasis {
     pub from_2015: CentsSatsUsdPattern,
     pub from_2016: CentsSatsUsdPattern,
     pub from_2017: CentsSatsUsdPattern,
@@ -5477,7 +5545,7 @@ pub struct MetricsTree_Market_Dca_ClassCostBasis {
     pub from_2026: CentsSatsUsdPattern,
 }
 
-impl MetricsTree_Market_Dca_ClassCostBasis {
+impl MetricsTree_Market_Dca_Class_CostBasis {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             from_2015: CentsSatsUsdPattern::new(client.clone(), "dca_cost_basis_from_2015".to_string()),
@@ -5497,7 +5565,7 @@ impl MetricsTree_Market_Dca_ClassCostBasis {
 }
 
 /// Metrics tree node.
-pub struct MetricsTree_Market_Dca_ClassReturn {
+pub struct MetricsTree_Market_Dca_Class_R#return {
     pub from_2015: BpsPercentRatioPattern,
     pub from_2016: BpsPercentRatioPattern,
     pub from_2017: BpsPercentRatioPattern,
@@ -5512,7 +5580,7 @@ pub struct MetricsTree_Market_Dca_ClassReturn {
     pub from_2026: BpsPercentRatioPattern,
 }
 
-impl MetricsTree_Market_Dca_ClassReturn {
+impl MetricsTree_Market_Dca_Class_R#return {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             from_2015: BpsPercentRatioPattern::new(client.clone(), "dca_return_from_2015".to_string()),

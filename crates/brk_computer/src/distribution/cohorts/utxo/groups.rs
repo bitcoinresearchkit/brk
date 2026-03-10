@@ -712,10 +712,9 @@ impl UTXOCohorts<Rw> {
             .try_for_each(|v| v.write_state(height, cleanup))
     }
 
-    /// Get minimum height from all separate cohorts' + profitability + overlapping realized height-indexed vectors.
-    pub(crate) fn min_separate_stateful_height_len(&self) -> Height {
+    pub(crate) fn min_stateful_len(&self) -> Height {
         self.iter_separate()
-            .map(|v| Height::from(v.min_stateful_height_len()))
+            .map(|v| Height::from(v.min_stateful_len()))
             .chain(
                 self.matured
                     .iter()
@@ -723,15 +722,15 @@ impl UTXOCohorts<Rw> {
             )
             .min()
             .unwrap_or_default()
-            .min(Height::from(self.profitability.min_stateful_height_len()))
+            .min(Height::from(self.profitability.min_stateful_len()))
             .min(Height::from(
-                self.all.metrics.realized.min_stateful_height_len(),
+                self.all.metrics.realized.min_stateful_len(),
             ))
             .min(Height::from(
-                self.sth.metrics.realized.min_stateful_height_len(),
+                self.sth.metrics.realized.min_stateful_len(),
             ))
             .min(Height::from(
-                self.lth.metrics.realized.min_stateful_height_len(),
+                self.lth.metrics.realized.min_stateful_len(),
             ))
     }
 

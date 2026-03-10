@@ -4491,49 +4491,49 @@ function createRawPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Blocks_Lookback
- * @property {MetricPattern18<Height>} height1hAgo
- * @property {MetricPattern18<Height>} height24hAgo
- * @property {MetricPattern18<Height>} height3dAgo
- * @property {MetricPattern18<Height>} height1wAgo
- * @property {MetricPattern18<Height>} height8dAgo
- * @property {MetricPattern18<Height>} height9dAgo
- * @property {MetricPattern18<Height>} height12dAgo
- * @property {MetricPattern18<Height>} height13dAgo
- * @property {MetricPattern18<Height>} height2wAgo
- * @property {MetricPattern18<Height>} height21dAgo
- * @property {MetricPattern18<Height>} height26dAgo
- * @property {MetricPattern18<Height>} height1mAgo
- * @property {MetricPattern18<Height>} height34dAgo
- * @property {MetricPattern18<Height>} height55dAgo
- * @property {MetricPattern18<Height>} height2mAgo
- * @property {MetricPattern18<Height>} height9wAgo
- * @property {MetricPattern18<Height>} height12wAgo
- * @property {MetricPattern18<Height>} height89dAgo
- * @property {MetricPattern18<Height>} height3mAgo
- * @property {MetricPattern18<Height>} height14wAgo
- * @property {MetricPattern18<Height>} height111dAgo
- * @property {MetricPattern18<Height>} height144dAgo
- * @property {MetricPattern18<Height>} height6mAgo
- * @property {MetricPattern18<Height>} height26wAgo
- * @property {MetricPattern18<Height>} height200dAgo
- * @property {MetricPattern18<Height>} height9mAgo
- * @property {MetricPattern18<Height>} height350dAgo
- * @property {MetricPattern18<Height>} height12mAgo
- * @property {MetricPattern18<Height>} height1yAgo
- * @property {MetricPattern18<Height>} height14mAgo
- * @property {MetricPattern18<Height>} height2yAgo
- * @property {MetricPattern18<Height>} height26mAgo
- * @property {MetricPattern18<Height>} height3yAgo
- * @property {MetricPattern18<Height>} height200wAgo
- * @property {MetricPattern18<Height>} height4yAgo
- * @property {MetricPattern18<Height>} height5yAgo
- * @property {MetricPattern18<Height>} height6yAgo
- * @property {MetricPattern18<Height>} height8yAgo
- * @property {MetricPattern18<Height>} height9yAgo
- * @property {MetricPattern18<Height>} height10yAgo
- * @property {MetricPattern18<Height>} height12yAgo
- * @property {MetricPattern18<Height>} height14yAgo
- * @property {MetricPattern18<Height>} height26yAgo
+ * @property {MetricPattern18<Height>} _1h
+ * @property {MetricPattern18<Height>} _24h
+ * @property {MetricPattern18<Height>} _3d
+ * @property {MetricPattern18<Height>} _1w
+ * @property {MetricPattern18<Height>} _8d
+ * @property {MetricPattern18<Height>} _9d
+ * @property {MetricPattern18<Height>} _12d
+ * @property {MetricPattern18<Height>} _13d
+ * @property {MetricPattern18<Height>} _2w
+ * @property {MetricPattern18<Height>} _21d
+ * @property {MetricPattern18<Height>} _26d
+ * @property {MetricPattern18<Height>} _1m
+ * @property {MetricPattern18<Height>} _34d
+ * @property {MetricPattern18<Height>} _55d
+ * @property {MetricPattern18<Height>} _2m
+ * @property {MetricPattern18<Height>} _9w
+ * @property {MetricPattern18<Height>} _12w
+ * @property {MetricPattern18<Height>} _89d
+ * @property {MetricPattern18<Height>} _3m
+ * @property {MetricPattern18<Height>} _14w
+ * @property {MetricPattern18<Height>} _111d
+ * @property {MetricPattern18<Height>} _144d
+ * @property {MetricPattern18<Height>} _6m
+ * @property {MetricPattern18<Height>} _26w
+ * @property {MetricPattern18<Height>} _200d
+ * @property {MetricPattern18<Height>} _9m
+ * @property {MetricPattern18<Height>} _350d
+ * @property {MetricPattern18<Height>} _12m
+ * @property {MetricPattern18<Height>} _1y
+ * @property {MetricPattern18<Height>} _14m
+ * @property {MetricPattern18<Height>} _2y
+ * @property {MetricPattern18<Height>} _26m
+ * @property {MetricPattern18<Height>} _3y
+ * @property {MetricPattern18<Height>} _200w
+ * @property {MetricPattern18<Height>} _4y
+ * @property {MetricPattern18<Height>} _5y
+ * @property {MetricPattern18<Height>} _6y
+ * @property {MetricPattern18<Height>} _8y
+ * @property {MetricPattern18<Height>} _9y
+ * @property {MetricPattern18<Height>} _10y
+ * @property {MetricPattern18<Height>} _12y
+ * @property {MetricPattern18<Height>} _14y
+ * @property {MetricPattern18<Height>} _26y
  */
 
 /**
@@ -5229,15 +5229,33 @@ function createRawPattern(client, acc) {
  * @property {BpsCentsRatioSatsUsdPattern} _89d
  * @property {BpsCentsRatioSatsUsdPattern} _111d
  * @property {BpsCentsRatioSatsUsdPattern} _144d
- * @property {BpsCentsRatioSatsUsdPattern} _200d
- * @property {BpsCentsRatioSatsUsdPattern} _350d
+ * @property {MetricsTree_Market_MovingAverage_Sma_200d} _200d
+ * @property {MetricsTree_Market_MovingAverage_Sma_350d} _350d
  * @property {BpsCentsRatioSatsUsdPattern} _1y
  * @property {BpsCentsRatioSatsUsdPattern} _2y
  * @property {BpsCentsRatioSatsUsdPattern} _200w
  * @property {BpsCentsRatioSatsUsdPattern} _4y
- * @property {CentsSatsUsdPattern} _200dX24
- * @property {CentsSatsUsdPattern} _200dX08
- * @property {CentsSatsUsdPattern} _350dX2
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Sma_200d
+ * @property {MetricPattern1<Cents>} cents
+ * @property {MetricPattern1<Dollars>} usd
+ * @property {MetricPattern1<SatsFract>} sats
+ * @property {MetricPattern1<BasisPoints32>} bps
+ * @property {MetricPattern1<StoredF32>} ratio
+ * @property {CentsSatsUsdPattern} x24
+ * @property {CentsSatsUsdPattern} x08
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_MovingAverage_Sma_350d
+ * @property {MetricPattern1<Cents>} cents
+ * @property {MetricPattern1<Dollars>} usd
+ * @property {MetricPattern1<SatsFract>} sats
+ * @property {MetricPattern1<BasisPoints32>} bps
+ * @property {MetricPattern1<StoredF32>} ratio
+ * @property {CentsSatsUsdPattern} x2
  */
 
 /**
@@ -5262,20 +5280,23 @@ function createRawPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Market_Dca
- * @property {MetricPattern18<Sats>} dcaSatsPerDay
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} periodStack
- * @property {MetricsTree_Market_Dca_PeriodCostBasis} periodCostBasis
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} periodReturn
- * @property {_10y2y3y4y5y6y8yPattern} periodCagr
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} periodLumpSumStack
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} periodLumpSumReturn
- * @property {MetricsTree_Market_Dca_ClassStack} classStack
- * @property {MetricsTree_Market_Dca_ClassCostBasis} classCostBasis
- * @property {MetricsTree_Market_Dca_ClassReturn} classReturn
+ * @property {MetricPattern18<Sats>} satsPerDay
+ * @property {MetricsTree_Market_Dca_Period} period
+ * @property {MetricsTree_Market_Dca_Class} class
  */
 
 /**
- * @typedef {Object} MetricsTree_Market_Dca_PeriodCostBasis
+ * @typedef {Object} MetricsTree_Market_Dca_Period
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} stack
+ * @property {MetricsTree_Market_Dca_Period_CostBasis} costBasis
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} r#return
+ * @property {_10y2y3y4y5y6y8yPattern} cagr
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} lumpSumStack
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} lumpSumReturn
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_Dca_Period_CostBasis
  * @property {CentsSatsUsdPattern} _1w
  * @property {CentsSatsUsdPattern} _1m
  * @property {CentsSatsUsdPattern} _3m
@@ -5291,7 +5312,14 @@ function createRawPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Market_Dca_ClassStack
+ * @typedef {Object} MetricsTree_Market_Dca_Class
+ * @property {MetricsTree_Market_Dca_Class_Stack} stack
+ * @property {MetricsTree_Market_Dca_Class_CostBasis} costBasis
+ * @property {MetricsTree_Market_Dca_Class_R#return} r#return
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_Dca_Class_Stack
  * @property {BtcCentsSatsUsdPattern} from2015
  * @property {BtcCentsSatsUsdPattern} from2016
  * @property {BtcCentsSatsUsdPattern} from2017
@@ -5307,7 +5335,7 @@ function createRawPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Market_Dca_ClassCostBasis
+ * @typedef {Object} MetricsTree_Market_Dca_Class_CostBasis
  * @property {CentsSatsUsdPattern} from2015
  * @property {CentsSatsUsdPattern} from2016
  * @property {CentsSatsUsdPattern} from2017
@@ -5323,7 +5351,7 @@ function createRawPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Market_Dca_ClassReturn
+ * @typedef {Object} MetricsTree_Market_Dca_Class_R#return
  * @property {BpsPercentRatioPattern} from2015
  * @property {BpsPercentRatioPattern} from2016
  * @property {BpsPercentRatioPattern} from2017
@@ -7191,49 +7219,49 @@ class BrkClient extends BrkClientBase {
           blockCount: createCumulativeRawSumPattern(this, 'block_count'),
         },
         lookback: {
-          height1hAgo: createMetricPattern18(this, 'height_1h_ago'),
-          height24hAgo: createMetricPattern18(this, 'height_24h_ago'),
-          height3dAgo: createMetricPattern18(this, 'height_3d_ago'),
-          height1wAgo: createMetricPattern18(this, 'height_1w_ago'),
-          height8dAgo: createMetricPattern18(this, 'height_8d_ago'),
-          height9dAgo: createMetricPattern18(this, 'height_9d_ago'),
-          height12dAgo: createMetricPattern18(this, 'height_12d_ago'),
-          height13dAgo: createMetricPattern18(this, 'height_13d_ago'),
-          height2wAgo: createMetricPattern18(this, 'height_2w_ago'),
-          height21dAgo: createMetricPattern18(this, 'height_21d_ago'),
-          height26dAgo: createMetricPattern18(this, 'height_26d_ago'),
-          height1mAgo: createMetricPattern18(this, 'height_1m_ago'),
-          height34dAgo: createMetricPattern18(this, 'height_34d_ago'),
-          height55dAgo: createMetricPattern18(this, 'height_55d_ago'),
-          height2mAgo: createMetricPattern18(this, 'height_2m_ago'),
-          height9wAgo: createMetricPattern18(this, 'height_9w_ago'),
-          height12wAgo: createMetricPattern18(this, 'height_12w_ago'),
-          height89dAgo: createMetricPattern18(this, 'height_89d_ago'),
-          height3mAgo: createMetricPattern18(this, 'height_3m_ago'),
-          height14wAgo: createMetricPattern18(this, 'height_14w_ago'),
-          height111dAgo: createMetricPattern18(this, 'height_111d_ago'),
-          height144dAgo: createMetricPattern18(this, 'height_144d_ago'),
-          height6mAgo: createMetricPattern18(this, 'height_6m_ago'),
-          height26wAgo: createMetricPattern18(this, 'height_26w_ago'),
-          height200dAgo: createMetricPattern18(this, 'height_200d_ago'),
-          height9mAgo: createMetricPattern18(this, 'height_9m_ago'),
-          height350dAgo: createMetricPattern18(this, 'height_350d_ago'),
-          height12mAgo: createMetricPattern18(this, 'height_12m_ago'),
-          height1yAgo: createMetricPattern18(this, 'height_1y_ago'),
-          height14mAgo: createMetricPattern18(this, 'height_14m_ago'),
-          height2yAgo: createMetricPattern18(this, 'height_2y_ago'),
-          height26mAgo: createMetricPattern18(this, 'height_26m_ago'),
-          height3yAgo: createMetricPattern18(this, 'height_3y_ago'),
-          height200wAgo: createMetricPattern18(this, 'height_200w_ago'),
-          height4yAgo: createMetricPattern18(this, 'height_4y_ago'),
-          height5yAgo: createMetricPattern18(this, 'height_5y_ago'),
-          height6yAgo: createMetricPattern18(this, 'height_6y_ago'),
-          height8yAgo: createMetricPattern18(this, 'height_8y_ago'),
-          height9yAgo: createMetricPattern18(this, 'height_9y_ago'),
-          height10yAgo: createMetricPattern18(this, 'height_10y_ago'),
-          height12yAgo: createMetricPattern18(this, 'height_12y_ago'),
-          height14yAgo: createMetricPattern18(this, 'height_14y_ago'),
-          height26yAgo: createMetricPattern18(this, 'height_26y_ago'),
+          _1h: createMetricPattern18(this, 'height_1h_ago'),
+          _24h: createMetricPattern18(this, 'height_24h_ago'),
+          _3d: createMetricPattern18(this, 'height_3d_ago'),
+          _1w: createMetricPattern18(this, 'height_1w_ago'),
+          _8d: createMetricPattern18(this, 'height_8d_ago'),
+          _9d: createMetricPattern18(this, 'height_9d_ago'),
+          _12d: createMetricPattern18(this, 'height_12d_ago'),
+          _13d: createMetricPattern18(this, 'height_13d_ago'),
+          _2w: createMetricPattern18(this, 'height_2w_ago'),
+          _21d: createMetricPattern18(this, 'height_21d_ago'),
+          _26d: createMetricPattern18(this, 'height_26d_ago'),
+          _1m: createMetricPattern18(this, 'height_1m_ago'),
+          _34d: createMetricPattern18(this, 'height_34d_ago'),
+          _55d: createMetricPattern18(this, 'height_55d_ago'),
+          _2m: createMetricPattern18(this, 'height_2m_ago'),
+          _9w: createMetricPattern18(this, 'height_9w_ago'),
+          _12w: createMetricPattern18(this, 'height_12w_ago'),
+          _89d: createMetricPattern18(this, 'height_89d_ago'),
+          _3m: createMetricPattern18(this, 'height_3m_ago'),
+          _14w: createMetricPattern18(this, 'height_14w_ago'),
+          _111d: createMetricPattern18(this, 'height_111d_ago'),
+          _144d: createMetricPattern18(this, 'height_144d_ago'),
+          _6m: createMetricPattern18(this, 'height_6m_ago'),
+          _26w: createMetricPattern18(this, 'height_26w_ago'),
+          _200d: createMetricPattern18(this, 'height_200d_ago'),
+          _9m: createMetricPattern18(this, 'height_9m_ago'),
+          _350d: createMetricPattern18(this, 'height_350d_ago'),
+          _12m: createMetricPattern18(this, 'height_12m_ago'),
+          _1y: createMetricPattern18(this, 'height_1y_ago'),
+          _14m: createMetricPattern18(this, 'height_14m_ago'),
+          _2y: createMetricPattern18(this, 'height_2y_ago'),
+          _26m: createMetricPattern18(this, 'height_26m_ago'),
+          _3y: createMetricPattern18(this, 'height_3y_ago'),
+          _200w: createMetricPattern18(this, 'height_200w_ago'),
+          _4y: createMetricPattern18(this, 'height_4y_ago'),
+          _5y: createMetricPattern18(this, 'height_5y_ago'),
+          _6y: createMetricPattern18(this, 'height_6y_ago'),
+          _8y: createMetricPattern18(this, 'height_8y_ago'),
+          _9y: createMetricPattern18(this, 'height_9y_ago'),
+          _10y: createMetricPattern18(this, 'height_10y_ago'),
+          _12y: createMetricPattern18(this, 'height_12y_ago'),
+          _14y: createMetricPattern18(this, 'height_14y_ago'),
+          _26y: createMetricPattern18(this, 'height_26y_ago'),
         },
         interval: create_1m1w1y24hHeightPattern(this, 'block_interval'),
         halving: {
@@ -7701,15 +7729,27 @@ class BrkClient extends BrkClientBase {
             _89d: createBpsCentsRatioSatsUsdPattern(this, 'price_sma_89d'),
             _111d: createBpsCentsRatioSatsUsdPattern(this, 'price_sma_111d'),
             _144d: createBpsCentsRatioSatsUsdPattern(this, 'price_sma_144d'),
-            _200d: createBpsCentsRatioSatsUsdPattern(this, 'price_sma_200d'),
-            _350d: createBpsCentsRatioSatsUsdPattern(this, 'price_sma_350d'),
+            _200d: {
+              cents: createMetricPattern1(this, 'price_sma_200d_cents'),
+              usd: createMetricPattern1(this, 'price_sma_200d_usd'),
+              sats: createMetricPattern1(this, 'price_sma_200d_sats'),
+              bps: createMetricPattern1(this, 'price_sma_200d_ratio_bps'),
+              ratio: createMetricPattern1(this, 'price_sma_200d_ratio'),
+              x24: createCentsSatsUsdPattern(this, 'price_sma_200d_x2_4'),
+              x08: createCentsSatsUsdPattern(this, 'price_sma_200d_x0_8'),
+            },
+            _350d: {
+              cents: createMetricPattern1(this, 'price_sma_350d_cents'),
+              usd: createMetricPattern1(this, 'price_sma_350d_usd'),
+              sats: createMetricPattern1(this, 'price_sma_350d_sats'),
+              bps: createMetricPattern1(this, 'price_sma_350d_ratio_bps'),
+              ratio: createMetricPattern1(this, 'price_sma_350d_ratio'),
+              x2: createCentsSatsUsdPattern(this, 'price_sma_350d_x2'),
+            },
             _1y: createBpsCentsRatioSatsUsdPattern(this, 'price_sma_1y'),
             _2y: createBpsCentsRatioSatsUsdPattern(this, 'price_sma_2y'),
             _200w: createBpsCentsRatioSatsUsdPattern(this, 'price_sma_200w'),
             _4y: createBpsCentsRatioSatsUsdPattern(this, 'price_sma_4y'),
-            _200dX24: createCentsSatsUsdPattern(this, 'price_sma_200d_x2_4'),
-            _200dX08: createCentsSatsUsdPattern(this, 'price_sma_200d_x0_8'),
-            _350dX2: createCentsSatsUsdPattern(this, 'price_sma_350d_x2'),
           },
           ema: {
             _1w: createBpsCentsRatioSatsUsdPattern(this, 'price_ema_1w'),
@@ -7731,67 +7771,71 @@ class BrkClient extends BrkClientBase {
           },
         },
         dca: {
-          dcaSatsPerDay: createMetricPattern18(this, 'dca_sats_per_day'),
-          periodStack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'dca_stack'),
-          periodCostBasis: {
-            _1w: createCentsSatsUsdPattern(this, 'dca_cost_basis_1w'),
-            _1m: createCentsSatsUsdPattern(this, 'dca_cost_basis_1m'),
-            _3m: createCentsSatsUsdPattern(this, 'dca_cost_basis_3m'),
-            _6m: createCentsSatsUsdPattern(this, 'dca_cost_basis_6m'),
-            _1y: createCentsSatsUsdPattern(this, 'dca_cost_basis_1y'),
-            _2y: createCentsSatsUsdPattern(this, 'dca_cost_basis_2y'),
-            _3y: createCentsSatsUsdPattern(this, 'dca_cost_basis_3y'),
-            _4y: createCentsSatsUsdPattern(this, 'dca_cost_basis_4y'),
-            _5y: createCentsSatsUsdPattern(this, 'dca_cost_basis_5y'),
-            _6y: createCentsSatsUsdPattern(this, 'dca_cost_basis_6y'),
-            _8y: createCentsSatsUsdPattern(this, 'dca_cost_basis_8y'),
-            _10y: createCentsSatsUsdPattern(this, 'dca_cost_basis_10y'),
+          satsPerDay: createMetricPattern18(this, 'dca_sats_per_day'),
+          period: {
+            stack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'dca_stack'),
+            costBasis: {
+              _1w: createCentsSatsUsdPattern(this, 'dca_cost_basis_1w'),
+              _1m: createCentsSatsUsdPattern(this, 'dca_cost_basis_1m'),
+              _3m: createCentsSatsUsdPattern(this, 'dca_cost_basis_3m'),
+              _6m: createCentsSatsUsdPattern(this, 'dca_cost_basis_6m'),
+              _1y: createCentsSatsUsdPattern(this, 'dca_cost_basis_1y'),
+              _2y: createCentsSatsUsdPattern(this, 'dca_cost_basis_2y'),
+              _3y: createCentsSatsUsdPattern(this, 'dca_cost_basis_3y'),
+              _4y: createCentsSatsUsdPattern(this, 'dca_cost_basis_4y'),
+              _5y: createCentsSatsUsdPattern(this, 'dca_cost_basis_5y'),
+              _6y: createCentsSatsUsdPattern(this, 'dca_cost_basis_6y'),
+              _8y: createCentsSatsUsdPattern(this, 'dca_cost_basis_8y'),
+              _10y: createCentsSatsUsdPattern(this, 'dca_cost_basis_10y'),
+            },
+            r#return: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_return'),
+            cagr: create_10y2y3y4y5y6y8yPattern(this, 'dca_cagr'),
+            lumpSumStack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'lump_sum_stack'),
+            lumpSumReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_return'),
           },
-          periodReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_return'),
-          periodCagr: create_10y2y3y4y5y6y8yPattern(this, 'dca_cagr'),
-          periodLumpSumStack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'lump_sum_stack'),
-          periodLumpSumReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_return'),
-          classStack: {
-            from2015: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2015'),
-            from2016: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2016'),
-            from2017: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2017'),
-            from2018: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2018'),
-            from2019: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2019'),
-            from2020: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2020'),
-            from2021: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2021'),
-            from2022: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2022'),
-            from2023: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2023'),
-            from2024: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2024'),
-            from2025: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2025'),
-            from2026: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2026'),
-          },
-          classCostBasis: {
-            from2015: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2015'),
-            from2016: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2016'),
-            from2017: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2017'),
-            from2018: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2018'),
-            from2019: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2019'),
-            from2020: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2020'),
-            from2021: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2021'),
-            from2022: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2022'),
-            from2023: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2023'),
-            from2024: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2024'),
-            from2025: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2025'),
-            from2026: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2026'),
-          },
-          classReturn: {
-            from2015: createBpsPercentRatioPattern(this, 'dca_return_from_2015'),
-            from2016: createBpsPercentRatioPattern(this, 'dca_return_from_2016'),
-            from2017: createBpsPercentRatioPattern(this, 'dca_return_from_2017'),
-            from2018: createBpsPercentRatioPattern(this, 'dca_return_from_2018'),
-            from2019: createBpsPercentRatioPattern(this, 'dca_return_from_2019'),
-            from2020: createBpsPercentRatioPattern(this, 'dca_return_from_2020'),
-            from2021: createBpsPercentRatioPattern(this, 'dca_return_from_2021'),
-            from2022: createBpsPercentRatioPattern(this, 'dca_return_from_2022'),
-            from2023: createBpsPercentRatioPattern(this, 'dca_return_from_2023'),
-            from2024: createBpsPercentRatioPattern(this, 'dca_return_from_2024'),
-            from2025: createBpsPercentRatioPattern(this, 'dca_return_from_2025'),
-            from2026: createBpsPercentRatioPattern(this, 'dca_return_from_2026'),
+          class: {
+            stack: {
+              from2015: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2015'),
+              from2016: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2016'),
+              from2017: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2017'),
+              from2018: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2018'),
+              from2019: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2019'),
+              from2020: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2020'),
+              from2021: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2021'),
+              from2022: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2022'),
+              from2023: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2023'),
+              from2024: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2024'),
+              from2025: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2025'),
+              from2026: createBtcCentsSatsUsdPattern(this, 'dca_stack_from_2026'),
+            },
+            costBasis: {
+              from2015: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2015'),
+              from2016: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2016'),
+              from2017: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2017'),
+              from2018: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2018'),
+              from2019: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2019'),
+              from2020: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2020'),
+              from2021: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2021'),
+              from2022: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2022'),
+              from2023: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2023'),
+              from2024: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2024'),
+              from2025: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2025'),
+              from2026: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2026'),
+            },
+            r#return: {
+              from2015: createBpsPercentRatioPattern(this, 'dca_return_from_2015'),
+              from2016: createBpsPercentRatioPattern(this, 'dca_return_from_2016'),
+              from2017: createBpsPercentRatioPattern(this, 'dca_return_from_2017'),
+              from2018: createBpsPercentRatioPattern(this, 'dca_return_from_2018'),
+              from2019: createBpsPercentRatioPattern(this, 'dca_return_from_2019'),
+              from2020: createBpsPercentRatioPattern(this, 'dca_return_from_2020'),
+              from2021: createBpsPercentRatioPattern(this, 'dca_return_from_2021'),
+              from2022: createBpsPercentRatioPattern(this, 'dca_return_from_2022'),
+              from2023: createBpsPercentRatioPattern(this, 'dca_return_from_2023'),
+              from2024: createBpsPercentRatioPattern(this, 'dca_return_from_2024'),
+              from2025: createBpsPercentRatioPattern(this, 'dca_return_from_2025'),
+              from2026: createBpsPercentRatioPattern(this, 'dca_return_from_2026'),
+            },
           },
         },
         technical: {

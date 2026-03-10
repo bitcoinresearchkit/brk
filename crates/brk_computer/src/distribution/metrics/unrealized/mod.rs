@@ -17,7 +17,7 @@ use crate::{blocks, distribution::state::UnrealizedState, prices};
 pub trait UnrealizedLike: Send + Sync {
     fn as_base(&self) -> &UnrealizedBase;
     fn as_base_mut(&mut self) -> &mut UnrealizedBase;
-    fn min_stateful_height_len(&self) -> usize;
+    fn min_stateful_len(&self) -> usize;
     fn truncate_push(&mut self, height: Height, state: &UnrealizedState) -> Result<()>;
     fn compute_rest(
         &mut self,
@@ -40,8 +40,8 @@ impl UnrealizedLike for UnrealizedBase {
     fn as_base_mut(&mut self) -> &mut UnrealizedBase {
         self
     }
-    fn min_stateful_height_len(&self) -> usize {
-        self.min_stateful_height_len()
+    fn min_stateful_len(&self) -> usize {
+        self.min_stateful_len()
     }
     fn truncate_push(&mut self, height: Height, state: &UnrealizedState) -> Result<()> {
         self.truncate_push(height, state)
@@ -71,8 +71,8 @@ impl UnrealizedLike for UnrealizedFull {
     fn as_base_mut(&mut self) -> &mut UnrealizedBase {
         &mut self.inner
     }
-    fn min_stateful_height_len(&self) -> usize {
-        self.inner.min_stateful_height_len()
+    fn min_stateful_len(&self) -> usize {
+        self.inner.min_stateful_len()
     }
     fn truncate_push(&mut self, height: Height, state: &UnrealizedState) -> Result<()> {
         self.truncate_push_all(height, state)

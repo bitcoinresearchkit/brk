@@ -111,13 +111,13 @@ impl ActivityCore {
     ) -> Result<()> {
         self.sent.sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.lookback.height_24h_ago,
+            &blocks.lookback._24h,
             &self.sent.raw.height,
             exit,
         )?;
         self.coindays_destroyed.sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.lookback.height_24h_ago,
+            &blocks.lookback._24h,
             &self.coindays_destroyed.raw.height,
             exit,
         )?;
@@ -140,14 +140,14 @@ impl ActivityCore {
 
         self.sent_in_profit.sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.lookback.height_24h_ago,
+            &blocks.lookback._24h,
             &self.sent_in_profit.raw.sats.height,
             &self.sent_in_profit.raw.cents.height,
             exit,
         )?;
         self.sent_in_loss.sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.lookback.height_24h_ago,
+            &blocks.lookback._24h,
             &self.sent_in_loss.raw.sats.height,
             &self.sent_in_loss.raw.cents.height,
             exit,

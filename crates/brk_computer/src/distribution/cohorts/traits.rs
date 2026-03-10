@@ -9,7 +9,7 @@ use crate::{blocks, prices};
 /// This trait enables heterogeneous cohort processing via trait objects.
 pub trait DynCohortVecs: Send + Sync {
     /// Get minimum length across height-indexed vectors written in block loop.
-    fn min_stateful_height_len(&self) -> usize;
+    fn min_stateful_len(&self) -> usize;
 
     /// Reset the starting height for state tracking.
     fn reset_state_starting_height(&mut self);

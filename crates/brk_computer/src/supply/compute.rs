@@ -35,7 +35,7 @@ impl Vecs {
             .height
             .compute_rolling_ratio_change(
                 starting_indexes.height,
-                &blocks.lookback.height_1y_ago,
+                &blocks.lookback._1y,
                 &circulating_supply.height,
                 exit,
             )?;

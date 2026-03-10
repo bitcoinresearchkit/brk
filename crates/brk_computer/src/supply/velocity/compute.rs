@@ -20,7 +20,7 @@ impl Vecs {
         // BTC velocity at height level
         self.btc.height.compute_rolling_ratio(
             starting_indexes.height,
-            &blocks.lookback.height_1y_ago,
+            &blocks.lookback._1y,
             &transactions.volume.sent_sum.sats,
             &circulating_supply.sats.height,
             exit,
@@ -29,7 +29,7 @@ impl Vecs {
         // USD velocity at height level
         self.usd.height.compute_rolling_ratio(
             starting_indexes.height,
-            &blocks.lookback.height_1y_ago,
+            &blocks.lookback._1y,
             &transactions.volume.sent_sum.usd,
             &circulating_supply.usd.height,
             exit,

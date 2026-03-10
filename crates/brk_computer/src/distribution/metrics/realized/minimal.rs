@@ -69,7 +69,7 @@ impl RealizedMinimal {
         })
     }
 
-    pub(crate) fn min_stateful_height_len(&self) -> usize {
+    pub(crate) fn min_stateful_len(&self) -> usize {
         self.cap
             .cents
             .height
@@ -129,25 +129,25 @@ impl RealizedMinimal {
     ) -> Result<()> {
         self.profit.sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.lookback.height_24h_ago,
+            &blocks.lookback._24h,
             &self.profit.raw.cents.height,
             exit,
         )?;
         self.loss.sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.lookback.height_24h_ago,
+            &blocks.lookback._24h,
             &self.loss.raw.cents.height,
             exit,
         )?;
         self.sopr.value_created.sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.lookback.height_24h_ago,
+            &blocks.lookback._24h,
             &self.sopr.value_created.raw.height,
             exit,
         )?;
         self.sopr.value_destroyed.sum.compute_rolling_sum(
             starting_indexes.height,
-            &blocks.lookback.height_24h_ago,
+            &blocks.lookback._24h,
             &self.sopr.value_destroyed.raw.height,
             exit,
         )?;

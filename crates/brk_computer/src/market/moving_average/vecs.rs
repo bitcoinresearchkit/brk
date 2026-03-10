@@ -22,8 +22,11 @@ pub struct SmaVecs<M: StorageMode = Rw> {
     pub _2y: PriceWithRatioPerBlock<M>,
     pub _200w: PriceWithRatioPerBlock<M>,
     pub _4y: PriceWithRatioPerBlock<M>,
+    #[traversable(wrap = "200d", rename = "x2_4")]
     pub _200d_x2_4: Price<LazyPerBlock<Cents, Cents>>,
+    #[traversable(wrap = "200d", rename = "x0_8")]
     pub _200d_x0_8: Price<LazyPerBlock<Cents, Cents>>,
+    #[traversable(wrap = "350d", rename = "x2")]
     pub _350d_x2: Price<LazyPerBlock<Cents, Cents>>,
 }
 

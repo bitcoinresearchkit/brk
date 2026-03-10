@@ -26,7 +26,7 @@ impl Vecs {
         // Value = sats_from_dca(close_price) on day-boundary blocks, Sats::ZERO otherwise.
         {
             let mut last_di: Option<Day1> = None;
-            self.dca_sats_per_day.compute_transform(
+            self.sats_per_day.compute_transform(
                 starting_indexes.height,
                 h2d,
                 |(h, di, _)| {
@@ -50,12 +50,12 @@ impl Vecs {
         }
 
         // DCA by period - stack (rolling sum via _start vecs)
-        for (stack, days) in self.period_stack.iter_mut_with_days() {
+        for (stack, days) in self.period.stack.iter_mut_with_days() {
             let window_starts = blocks.lookback.start_vec(days as usize);
             stack.sats.height.compute_rolling_sum(
                 starting_indexes.height,
                 window_starts,
-                &self.dca_sats_per_day,
+                &self.sats_per_day,
                 exit,
             )?;
         }
@@ -63,7 +63,7 @@ impl Vecs {
         // DCA by period - average price (derived from stack)
         let starting_height = starting_indexes.height.to_usize();
         for (average_price, stack, days) in
-            self.period_cost_basis.zip_mut_with_days(&self.period_stack)
+            self.period.cost_basis.zip_mut_with_days(&self.period.stack)
         {
             let days = days as usize;
             let start = average_price.cents.height.len().min(starting_height);
@@ -91,9 +91,10 @@ impl Vecs {
 
         // DCA by period - returns (compute from average price)
         for (returns, (average_price, _)) in self
-            .period_return
+            .period
+            .r#return
             .iter_mut()
-            .zip(self.period_cost_basis.iter_with_days())
+            .zip(self.period.cost_basis.iter_with_days())
         {
             returns.compute_binary::<Cents, Cents, RatioDiffCentsBps32>(
                 starting_indexes.height,
@@ -104,7 +105,7 @@ impl Vecs {
         }
 
         // DCA by period - CAGR (computed from returns at height level)
-        for (cagr, returns, days) in self.period_cagr.zip_mut_with_period(&self.period_return) {
+        for (cagr, returns, days) in self.period.cagr.zip_mut_with_period(&self.period.r#return) {
             let years = days as f64 / 365.0;
             cagr.bps.height.compute_transform(
                 starting_indexes.height,
@@ -121,7 +122,7 @@ impl Vecs {
         // Lump sum by period - stack
         let lookback_dca = lookback.price_lookback.as_dca_period();
         for (stack, lookback_price, days) in
-            self.period_lump_sum_stack.zip_mut_with_days(&lookback_dca)
+            self.period.lump_sum_stack.zip_mut_with_days(&lookback_dca)
         {
             let total_invested = DCA_AMOUNT * days as usize;
             let ls_start = stack.sats.height.len().min(starting_height);
@@ -147,7 +148,8 @@ impl Vecs {
 
         // Lump sum by period - returns (compute from lookback price)
         for (returns, (lookback_price, _)) in self
-            .period_lump_sum_return
+            .period
+            .lump_sum_return
             .iter_mut()
             .zip(lookback_dca.iter_with_days())
         {
@@ -161,7 +163,7 @@ impl Vecs {
 
         // DCA by year class - stack (cumulative sum from class start date)
         let start_days = super::ByDcaClass::<()>::start_days();
-        for (stack, day1) in self.class_stack.iter_mut().zip(start_days) {
+        for (stack, day1) in self.class.stack.iter_mut().zip(start_days) {
             let mut last_di: Option<Day1> = None;
             let mut prev_value = if starting_height > 0 {
                 stack.sats.height.collect_one_at(starting_height - 1).unwrap_or_default()
@@ -213,9 +215,10 @@ impl Vecs {
         // DCA by year class - average price (derived from stack)
         let start_days = super::ByDcaClass::<()>::start_days();
         for ((average_price, stack), from) in self
-            .class_cost_basis
+            .class
+            .cost_basis
             .iter_mut()
-            .zip(self.class_stack.iter())
+            .zip(self.class.stack.iter())
             .zip(start_days)
         {
             let from_usize = from.to_usize();
@@ -243,9 +246,10 @@ impl Vecs {
 
         // DCA by year class - returns (compute from average price)
         for (returns, average_price) in self
-            .class_return
+            .class
+            .r#return
             .iter_mut()
-            .zip(self.class_cost_basis.iter())
+            .zip(self.class.cost_basis.iter())
         {
             returns.compute_binary::<Cents, Cents, RatioDiffCentsBps32>(
                 starting_indexes.height,

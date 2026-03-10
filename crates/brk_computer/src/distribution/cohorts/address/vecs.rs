@@ -102,11 +102,11 @@ impl Filtered for AddressCohortVecs {
 }
 
 impl DynCohortVecs for AddressCohortVecs {
-    fn min_stateful_height_len(&self) -> usize {
+    fn min_stateful_len(&self) -> usize {
         self.addr_count
             .height
             .len()
-            .min(self.metrics.min_stateful_height_len())
+            .min(self.metrics.min_stateful_len())
     }
 
     fn reset_state_starting_height(&mut self) {

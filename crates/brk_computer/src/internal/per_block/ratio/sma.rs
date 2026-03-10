@@ -67,11 +67,11 @@ impl RatioSma {
 
         // Rolling SMAs
         for (sma, lookback) in [
-            (&mut self._1w, &blocks.lookback.height_1w_ago),
-            (&mut self._1m, &blocks.lookback.height_1m_ago),
-            (&mut self._1y, &blocks.lookback.height_1y_ago),
-            (&mut self._2y, &blocks.lookback.height_2y_ago),
-            (&mut self._4y, &blocks.lookback.height_4y_ago),
+            (&mut self._1w, &blocks.lookback._1w),
+            (&mut self._1m, &blocks.lookback._1m),
+            (&mut self._1y, &blocks.lookback._1y),
+            (&mut self._2y, &blocks.lookback._2y),
+            (&mut self._4y, &blocks.lookback._4y),
         ] {
             sma.bps.height.compute_rolling_average(
                 starting_indexes.height,

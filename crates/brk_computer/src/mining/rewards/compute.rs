@@ -156,7 +156,7 @@ impl Vecs {
 
         self.subsidy_sma_1y.cents.height.compute_rolling_average(
             starting_indexes.height,
-            &lookback.height_1y_ago,
+            &lookback._1y,
             &self.subsidy.base.cents.height,
             exit,
         )?;

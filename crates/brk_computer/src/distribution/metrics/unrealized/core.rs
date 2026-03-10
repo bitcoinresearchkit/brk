@@ -49,8 +49,8 @@ impl UnrealizedCore {
         })
     }
 
-    pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.basic.min_stateful_height_len()
+    pub(crate) fn min_stateful_len(&self) -> usize {
+        self.basic.min_stateful_len()
     }
 
     pub(crate) fn truncate_push(
