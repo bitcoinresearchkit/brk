@@ -28,7 +28,7 @@ pub fn main() -> Result<()> {
     println!("Time for BytesVec write_json: {:?}", start.elapsed());
 
     // Test emptyaddressindex (LazyVecFrom1 wrapper) - computed access
-    let empty_index = &computer.distribution.emptyaddressindex;
+    let empty_index = &computer.distribution.empty_address_index;
     println!(
         "\nemptyaddressindex (LazyVecFrom1) len: {}",
         empty_index.len()
