@@ -2,16 +2,14 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, Height, Indexes, StoredF32, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, Ident, PcoVec, ReadableCloneableVec,
-    ReadableVec, Rw, StorageMode, VecIndex, WritableVec,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, VecIndex,
+    WritableVec,
 };
 
 use crate::{
     blocks, indexes,
-    internal::{ComputedPerBlock, LazyPerBlock, Price, PriceTimesRatioCents},
+    internal::{ComputedPerBlock, Price, PriceTimesRatioCents},
 };
-
-use super::StdDevPerBlock;
 
 #[derive(Traversable)]
 pub struct StdDevBand<M: StorageMode = Rw> {
@@ -21,20 +19,12 @@ pub struct StdDevBand<M: StorageMode = Rw> {
 }
 
 #[derive(Traversable)]
-pub struct LazyStdDevBand<M: StorageMode = Rw> {
-    #[traversable(flatten)]
-    pub value: LazyPerBlock<StoredF32>,
-    pub price: Price<ComputedPerBlock<Cents, M>>,
-}
-
-#[derive(Traversable)]
 pub struct StdDevPerBlockExtended<M: StorageMode = Rw> {
-    #[traversable(flatten)]
-    pub base: StdDevPerBlock<M>,
-
+    days: usize,
+    pub sd: ComputedPerBlock<StoredF32, M>,
     pub zscore: ComputedPerBlock<StoredF32, M>,
 
-    pub _0sd: LazyStdDevBand<M>,
+    pub _0sd: Price<ComputedPerBlock<Cents, M>>,
     pub p0_5sd: StdDevBand<M>,
     pub p1sd: StdDevBand<M>,
     pub p1_5sd: StdDevBand<M>,
@@ -87,29 +77,11 @@ impl StdDevPerBlockExtended {
             };
         }
 
-        let base = StdDevPerBlock::forced_import(
-            db,
-            name,
-            period,
-            days,
-            parent_version,
-            indexes,
-        )?;
-
-        let _0sd = LazyStdDevBand {
-            value: LazyPerBlock::from_computed::<Ident>(
-                &format!("{name}_0sd{p}"),
-                version,
-                base.sma.height.read_only_boxed_clone(),
-                &base.sma,
-            ),
-            price: import_price!("0sd"),
-        };
-
         Ok(Self {
-            base,
+            days,
+            sd: import!("sd"),
             zscore: import!("zscore"),
-            _0sd,
+            _0sd: import_price!("0sd"),
             p0_5sd: import_band!("p0_5sd"),
             p1sd: import_band!("p1sd"),
             p1_5sd: import_band!("p1_5sd"),
@@ -131,19 +103,34 @@ impl StdDevPerBlockExtended {
         starting_indexes: &Indexes,
         exit: &Exit,
         source: &impl ReadableVec<Height, StoredF32>,
+        sma: &impl ReadableVec<Height, StoredF32>,
     ) -> Result<()> {
-        self.base
-            .compute_all(blocks, starting_indexes, exit, source)?;
+        if self.days == usize::MAX {
+            self.sd.height.compute_expanding_sd(
+                starting_indexes.height,
+                source,
+                sma,
+                exit,
+            )?;
+        } else {
+            let window_starts = blocks.lookback.start_vec(self.days);
+            self.sd.height.compute_rolling_sd(
+                starting_indexes.height,
+                window_starts,
+                source,
+                sma,
+                exit,
+            )?;
+        }
 
-        let sma_opt: Option<&EagerVec<PcoVec<Height, StoredF32>>> = None;
-        self.compute_bands(starting_indexes, exit, sma_opt, source)
+        self.compute_bands(starting_indexes, exit, sma, source)
     }
 
-    pub(crate) fn compute_bands(
+    fn compute_bands(
         &mut self,
         starting_indexes: &Indexes,
         exit: &Exit,
-        sma_opt: Option<&impl ReadableVec<Height, StoredF32>>,
+        sma: &impl ReadableVec<Height, StoredF32>,
         source: &impl ReadableVec<Height, StoredF32>,
     ) -> Result<()> {
         let source_version = source.version();
@@ -166,19 +153,11 @@ impl StdDevPerBlockExtended {
         let source_len = source.len();
         let source_data = source.collect_range_at(start, source_len);
 
-        let sma_len = sma_opt
-            .map(|s| s.len())
-            .unwrap_or(self.base.sma.height.len());
-        let sma_data: Vec<StoredF32> = if let Some(sma) = sma_opt {
-            sma.collect_range_at(start, sma_len)
-        } else {
-            self.base.sma.height.collect_range_at(start, sma_len)
-        };
+        let sma_data = sma.collect_range_at(start, sma.len());
         let sd_data = self
-            .base
             .sd
             .height
-            .collect_range_at(start, self.base.sd.height.len());
+            .collect_range_at(start, self.sd.height.len());
 
         const MULTIPLIERS: [f32; 12] = [
             0.5, 1.0, 1.5, 2.0, 2.5, 3.0, -0.5, -1.0, -1.5, -2.0, -2.5, -3.0,
@@ -197,23 +176,13 @@ impl StdDevPerBlockExtended {
             self.mut_band_height_vecs().try_for_each(|v| v.flush())?;
         }
 
-        if let Some(sma) = sma_opt {
-            self.zscore.height.compute_zscore(
-                starting_indexes.height,
-                source,
-                sma,
-                &self.base.sd.height,
-                exit,
-            )?;
-        } else {
-            self.zscore.height.compute_zscore(
-                starting_indexes.height,
-                source,
-                &self.base.sma.height,
-                &self.base.sd.height,
-                exit,
-            )?;
-        }
+        self.zscore.height.compute_zscore(
+            starting_indexes.height,
+            source,
+            sma,
+            &self.sd.height,
+            exit,
+        )?;
 
         Ok(())
     }
@@ -222,6 +191,7 @@ impl StdDevPerBlockExtended {
         &mut self,
         starting_indexes: &Indexes,
         metric_price: &impl ReadableVec<Height, Cents>,
+        sma: &impl ReadableVec<Height, StoredF32>,
         exit: &Exit,
     ) -> Result<()> {
         macro_rules! compute_band_price {
@@ -237,7 +207,7 @@ impl StdDevPerBlockExtended {
             };
         }
 
-        compute_band_price!(&mut self._0sd.price, &self.base.sma.height);
+        compute_band_price!(&mut self._0sd, sma);
         compute_band_price!(&mut self.p0_5sd.price, &self.p0_5sd.value.height);
         compute_band_price!(&mut self.p1sd.price, &self.p1sd.value.height);
         compute_band_price!(&mut self.p1_5sd.price, &self.p1_5sd.value.height);

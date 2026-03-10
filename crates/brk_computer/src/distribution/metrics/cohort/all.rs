@@ -37,7 +37,7 @@ pub struct AllCohortMetrics<M: StorageMode = Rw> {
 
     #[traversable(wrap = "supply", rename = "delta")]
     pub supply_delta_extended: RollingDeltaExcept1m<Sats, SatsSigned, M>,
-    #[traversable(wrap = "outputs", rename = "utxo_count_delta")]
+    #[traversable(wrap = "outputs/utxo_count", rename = "delta")]
     pub utxo_count_delta_extended: RollingDeltaExcept1m<StoredU64, StoredI64, M>,
 }
 

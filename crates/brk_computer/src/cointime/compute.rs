@@ -66,7 +66,6 @@ impl Vecs {
                 self.pricing.compute(
                     starting_indexes,
                     prices,
-                    blocks,
                     distribution,
                     &self.activity,
                     &self.supply,

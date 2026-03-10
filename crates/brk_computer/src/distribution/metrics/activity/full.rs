@@ -24,6 +24,10 @@ pub struct ActivityFull<M: StorageMode = Rw> {
 
     #[traversable(wrap = "sent", rename = "sum")]
     pub sent_sum_extended: RollingWindowsFrom1w<Sats, M>,
+    #[traversable(wrap = "sent/in_profit", rename = "sum")]
+    pub sent_in_profit_sum_extended: RollingWindowsFrom1w<Sats, M>,
+    #[traversable(wrap = "sent/in_loss", rename = "sum")]
+    pub sent_in_loss_sum_extended: RollingWindowsFrom1w<Sats, M>,
 
     pub coinyears_destroyed: LazyPerBlock<StoredF64, StoredF64>,
 
@@ -49,6 +53,8 @@ impl ActivityFull {
             coindays_destroyed_cumulative: cfg.import("coindays_destroyed_cumulative", v1)?,
             coindays_destroyed_sum,
             sent_sum_extended: cfg.import("sent", v1)?,
+            sent_in_profit_sum_extended: cfg.import("sent_in_profit", v1)?,
+            sent_in_loss_sum_extended: cfg.import("sent_in_loss", v1)?,
             coinyears_destroyed,
             dormancy: cfg.import("dormancy", v1)?,
             velocity: cfg.import("velocity", v1)?,
@@ -113,6 +119,19 @@ impl ActivityFull {
             starting_indexes.height,
             &window_starts,
             &self.inner.sent.raw.height,
+            exit,
+        )?;
+
+        self.sent_in_profit_sum_extended.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.inner.sent_in_profit.raw.sats.height,
+            exit,
+        )?;
+        self.sent_in_loss_sum_extended.compute_rolling_sum(
+            starting_indexes.height,
+            &window_starts,
+            &self.inner.sent_in_loss.raw.sats.height,
             exit,
         )?;
 

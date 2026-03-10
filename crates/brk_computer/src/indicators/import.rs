@@ -32,6 +32,10 @@ impl Vecs {
             ComputedPerBlock::forced_import(&db, "coinyears_destroyed_supply_adjusted", v, indexes)?;
         let dormancy_supply_adjusted =
             ComputedPerBlock::forced_import(&db, "dormancy_supply_adjusted", v, indexes)?;
+        let stock_to_flow = ComputedPerBlock::forced_import(&db, "stock_to_flow", v, indexes)?;
+        let dormancy_flow = ComputedPerBlock::forced_import(&db, "dormancy_flow", v, indexes)?;
+        let seller_exhaustion_constant =
+            ComputedPerBlock::forced_import(&db, "seller_exhaustion_constant", v, indexes)?;
 
         let this = Self {
             db,
@@ -43,6 +47,9 @@ impl Vecs {
             coindays_destroyed_supply_adjusted,
             coinyears_destroyed_supply_adjusted,
             dormancy_supply_adjusted,
+            stock_to_flow,
+            dormancy_flow,
+            seller_exhaustion_constant,
         };
         finalize_db(&this.db, &this)?;
         Ok(this)

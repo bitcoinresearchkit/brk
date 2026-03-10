@@ -6,13 +6,18 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 use crate::{
     blocks,
     distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}},
-    internal::PerBlockWithSum24h,
+    internal::{AmountPerBlockWithSum24h, PerBlockWithSum24h},
+    prices,
 };
 
 #[derive(Traversable)]
 pub struct ActivityCore<M: StorageMode = Rw> {
     pub sent: PerBlockWithSum24h<Sats, M>,
     pub coindays_destroyed: PerBlockWithSum24h<StoredF64, M>,
+    #[traversable(wrap = "sent", rename = "in_profit")]
+    pub sent_in_profit: AmountPerBlockWithSum24h<M>,
+    #[traversable(wrap = "sent", rename = "in_loss")]
+    pub sent_in_loss: AmountPerBlockWithSum24h<M>,
 }
 
 impl ActivityCore {
@@ -21,6 +26,8 @@ impl ActivityCore {
         Ok(Self {
             sent: cfg.import("sent", v1)?,
             coindays_destroyed: cfg.import("coindays_destroyed", v1)?,
+            sent_in_profit: cfg.import("sent_in_profit", v1)?,
+            sent_in_loss: cfg.import("sent_in_loss", v1)?,
         })
     }
 
@@ -30,6 +37,8 @@ impl ActivityCore {
             .height
             .len()
             .min(self.coindays_destroyed.raw.height.len())
+            .min(self.sent_in_profit.raw.sats.height.len())
+            .min(self.sent_in_loss.raw.sats.height.len())
     }
 
     pub(crate) fn truncate_push(
@@ -42,6 +51,16 @@ impl ActivityCore {
             height,
             StoredF64::from(Bitcoin::from(state.satdays_destroyed)),
         )?;
+        self.sent_in_profit
+            .raw
+            .sats
+            .height
+            .truncate_push(height, state.realized.sent_in_profit())?;
+        self.sent_in_loss
+            .raw
+            .sats
+            .height
+            .truncate_push(height, state.realized.sent_in_loss())?;
         Ok(())
     }
 
@@ -49,6 +68,10 @@ impl ActivityCore {
         vec![
             &mut self.sent.raw.height as &mut dyn AnyStoredVec,
             &mut self.coindays_destroyed.raw.height,
+            &mut self.sent_in_profit.raw.sats.height,
+            &mut self.sent_in_profit.raw.cents.height,
+            &mut self.sent_in_loss.raw.sats.height,
+            &mut self.sent_in_loss.raw.cents.height,
         ]
     }
 
@@ -72,6 +95,10 @@ impl ActivityCore {
         )?;
 
         sum_others!(self, starting_indexes, others, exit; coindays_destroyed.raw.height);
+        sum_others!(self, starting_indexes, others, exit; sent_in_profit.raw.sats.height);
+        sum_others!(self, starting_indexes, others, exit; sent_in_profit.raw.cents.height);
+        sum_others!(self, starting_indexes, others, exit; sent_in_loss.raw.sats.height);
+        sum_others!(self, starting_indexes, others, exit; sent_in_loss.raw.cents.height);
 
         Ok(())
     }
@@ -94,6 +121,38 @@ impl ActivityCore {
             &self.coindays_destroyed.raw.height,
             exit,
         )?;
+        Ok(())
+    }
+
+    pub(crate) fn compute_sent_profitability(
+        &mut self,
+        blocks: &blocks::Vecs,
+        prices: &prices::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.sent_in_profit
+            .raw
+            .compute(prices, starting_indexes.height, exit)?;
+        self.sent_in_loss
+            .raw
+            .compute(prices, starting_indexes.height, exit)?;
+
+        self.sent_in_profit.sum.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.lookback.height_24h_ago,
+            &self.sent_in_profit.raw.sats.height,
+            &self.sent_in_profit.raw.cents.height,
+            exit,
+        )?;
+        self.sent_in_loss.sum.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.lookback.height_24h_ago,
+            &self.sent_in_loss.raw.sats.height,
+            &self.sent_in_loss.raw.cents.height,
+            exit,
+        )?;
+
         Ok(())
     }
 }

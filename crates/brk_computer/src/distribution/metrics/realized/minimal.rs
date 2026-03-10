@@ -12,8 +12,8 @@ use crate::{
     blocks,
     distribution::state::{CohortState, CostBasisOps, RealizedOps},
     internal::{
-        ComputedPerBlock, FiatPerBlock, FiatPerBlockWithSum24h, Identity, LazyPerBlock,
-        PerBlockWithSum24h, Price, RatioPerBlock,
+        FiatPerBlock, FiatPerBlockWithSum24h, Identity, LazyPerBlock,
+        PerBlockWithSum24h, PriceWithRatioPerBlock, RatioPerBlock,
     },
     prices,
 };
@@ -33,8 +33,7 @@ pub struct RealizedMinimal<M: StorageMode = Rw> {
     pub cap: FiatPerBlock<Cents, M>,
     pub profit: FiatPerBlockWithSum24h<Cents, M>,
     pub loss: FiatPerBlockWithSum24h<Cents, M>,
-    pub price: Price<ComputedPerBlock<Cents, M>>,
-    pub price_ratio: RatioPerBlock<BasisPoints32, M>,
+    pub price: PriceWithRatioPerBlock<M>,
     pub mvrv: LazyPerBlock<StoredF32>,
     pub nupl: RatioPerBlock<BasisPointsSigned32, M>,
 
@@ -47,12 +46,11 @@ impl RealizedMinimal {
 
         let cap: FiatPerBlock<Cents> = cfg.import("realized_cap", Version::ZERO)?;
 
-        let realized_price = cfg.import("realized_price", v1)?;
-        let realized_price_ratio: RatioPerBlock = cfg.import("realized_price", v1)?;
+        let price: PriceWithRatioPerBlock = cfg.import("realized_price", v1)?;
         let mvrv = LazyPerBlock::from_lazy::<Identity<StoredF32>, BasisPoints32>(
             &cfg.name("mvrv"),
             cfg.version,
-            &realized_price_ratio.ratio,
+            &price.ratio,
         );
 
         let nupl = cfg.import("nupl", v1)?;
@@ -61,8 +59,7 @@ impl RealizedMinimal {
             cap,
             profit: cfg.import("realized_profit", v1)?,
             loss: cfg.import("realized_loss", v1)?,
-            price: realized_price,
-            price_ratio: realized_price_ratio,
+            price,
             mvrv,
             nupl,
             sopr: RealizedSoprMinimal {
@@ -164,28 +161,24 @@ impl RealizedMinimal {
         height_to_supply: &impl ReadableVec<Height, Bitcoin>,
         exit: &Exit,
     ) -> Result<()> {
-        self.price.cents.height.compute_transform2(
-            starting_indexes.height,
-            &self.cap.cents.height,
-            height_to_supply,
-            |(i, cap_cents, supply, ..)| {
-                let cap = cap_cents.as_u128();
-                let supply_sats = Sats::from(supply).as_u128();
-                if supply_sats == 0 {
-                    (i, Cents::ZERO)
-                } else {
-                    (i, Cents::from(cap * Sats::ONE_BTC_U128 / supply_sats))
-                }
-            },
-            exit,
-        )?;
-
-        self.price_ratio.compute_ratio(
-            starting_indexes,
-            &prices.price.cents.height,
-            &self.price.cents.height,
-            exit,
-        )?;
+        let cap = &self.cap.cents.height;
+        self.price.compute_all(prices, starting_indexes, exit, |v| {
+            Ok(v.compute_transform2(
+                starting_indexes.height,
+                cap,
+                height_to_supply,
+                |(i, cap_cents, supply, ..)| {
+                    let cap = cap_cents.as_u128();
+                    let supply_sats = Sats::from(supply).as_u128();
+                    if supply_sats == 0 {
+                        (i, Cents::ZERO)
+                    } else {
+                        (i, Cents::from(cap * Sats::ONE_BTC_U128 / supply_sats))
+                    }
+                },
+                exit,
+            )?)
+        })?;
 
         self.nupl.bps.height.compute_transform2(
             starting_indexes.height,

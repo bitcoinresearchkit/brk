@@ -429,18 +429,6 @@ impl Computer {
                 })
             });
 
-            let indicators = scope.spawn(|| {
-                timed("Computed indicators", || {
-                    self.indicators.compute(
-                        &self.mining,
-                        &self.distribution,
-                        &self.transactions,
-                        &starting_indexes,
-                        exit,
-                    )
-                })
-            });
-
             timed("Computed supply", || {
                 self.supply.compute(
                     &self.scripts,
@@ -455,20 +443,37 @@ impl Computer {
             })?;
 
             market.join().unwrap()?;
-            indicators.join().unwrap()?;
             Ok(())
         })?;
 
-        timed("Computed cointime", || {
-            self.cointime.compute(
-                &starting_indexes,
-                &self.prices,
-                &self.blocks,
-                &self.mining,
-                &self.supply,
-                &self.distribution,
-                exit,
-            )
+        thread::scope(|scope| -> Result<()> {
+            let indicators = scope.spawn(|| {
+                timed("Computed indicators", || {
+                    self.indicators.compute(
+                        &self.mining,
+                        &self.distribution,
+                        &self.transactions,
+                        &self.market,
+                        &starting_indexes,
+                        exit,
+                    )
+                })
+            });
+
+            timed("Computed cointime", || {
+                self.cointime.compute(
+                    &starting_indexes,
+                    &self.prices,
+                    &self.blocks,
+                    &self.mining,
+                    &self.supply,
+                    &self.distribution,
+                    exit,
+                )
+            })?;
+
+            indicators.join().unwrap()?;
+            Ok(())
         })?;
 
         info!("Total compute time: {:?}", compute_start.elapsed());

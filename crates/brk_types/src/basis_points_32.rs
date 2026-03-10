@@ -90,6 +90,27 @@ impl From<BasisPoints32> for f64 {
     }
 }
 
+impl From<f32> for BasisPoints32 {
+    #[inline]
+    fn from(value: f32) -> Self {
+        Self::from(value as f64)
+    }
+}
+
+impl From<StoredF32> for BasisPoints32 {
+    #[inline]
+    fn from(value: StoredF32) -> Self {
+        Self::from(f64::from(*value))
+    }
+}
+
+impl From<BasisPoints32> for f32 {
+    #[inline]
+    fn from(value: BasisPoints32) -> Self {
+        value.0 as f32 / 10000.0
+    }
+}
+
 impl From<BasisPoints32> for StoredF32 {
     #[inline]
     fn from(value: BasisPoints32) -> Self {

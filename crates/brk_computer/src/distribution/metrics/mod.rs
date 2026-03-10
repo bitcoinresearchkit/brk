@@ -188,6 +188,8 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState, CostBa
             .compute_rest(blocks, starting_indexes, exit)?;
         self.activity_mut()
             .compute_rest_part1(blocks, starting_indexes, exit)?;
+        self.activity_core_mut()
+            .compute_sent_profitability(blocks, prices, starting_indexes, exit)?;
 
         self.realized_mut()
             .compute_rest_part1(blocks, starting_indexes, exit)?;

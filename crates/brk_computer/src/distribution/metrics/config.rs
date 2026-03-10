@@ -9,7 +9,7 @@ use crate::{
     internal::{
         AmountPerBlock, AmountPerBlockCumulative, AmountPerBlockWithSum24h, CentsType, ComputedPerBlock,
         ComputedPerBlockCumulative, ComputedPerBlockCumulativeSum, FiatPerBlockWithSum24h,
-        PerBlockWithSum24h, RatioPerBlock, RollingWindow24hAmountPerBlock,
+        PerBlockWithSum24h, PriceWithRatioExtendedPerBlock, PriceWithRatioPerBlock, RatioPerBlock, RollingWindow24hAmountPerBlock,
         RollingWindow24hFiatPerBlock, RollingWindow24hPerBlock,
         FiatPerBlock, FiatRollingDelta1m, FiatRollingDeltaExcept1m, NumericValue,
         PercentPerBlock, PercentRollingWindows, Price, RollingDelta1m, RollingDeltaExcept1m,
@@ -40,6 +40,8 @@ impl_config_import!(
     AmountPerBlock,
     AmountPerBlockCumulative,
     RollingWindow24hAmountPerBlock,
+    PriceWithRatioPerBlock,
+    PriceWithRatioExtendedPerBlock,
     RatioPerBlock<BasisPoints32>,
     RatioPerBlock<BasisPointsSigned32>,
     PercentPerBlock<BasisPoints16>,

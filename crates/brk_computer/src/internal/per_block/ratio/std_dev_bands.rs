@@ -5,6 +5,8 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, indexes, internal::StdDevPerBlockExtended};
 
+use super::RatioSma;
+
 #[derive(Traversable)]
 pub struct RatioPerBlockStdDevBands<M: StorageMode = Rw> {
     pub all: StdDevPerBlockExtended<M>,
@@ -52,15 +54,16 @@ impl RatioPerBlockStdDevBands {
         exit: &Exit,
         ratio_source: &impl ReadableVec<Height, StoredF32>,
         metric_price: &impl ReadableVec<Height, Cents>,
+        sma: &RatioSma,
     ) -> Result<()> {
-        for sd in [
-            &mut self.all,
-            &mut self._4y,
-            &mut self._2y,
-            &mut self._1y,
+        for (sd, sma_ratio) in [
+            (&mut self.all, &sma.all.ratio.height),
+            (&mut self._4y, &sma._4y.ratio.height),
+            (&mut self._2y, &sma._2y.ratio.height),
+            (&mut self._1y, &sma._1y.ratio.height),
         ] {
-            sd.compute_all(blocks, starting_indexes, exit, ratio_source)?;
-            sd.compute_cents_bands(starting_indexes, metric_price, exit)?;
+            sd.compute_all(blocks, starting_indexes, exit, ratio_source, sma_ratio)?;
+            sd.compute_cents_bands(starting_indexes, metric_price, sma_ratio, exit)?;
         }
 
         Ok(())

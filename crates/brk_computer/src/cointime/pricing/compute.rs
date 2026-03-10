@@ -4,7 +4,7 @@ use vecdb::{Exit, VecIndex};
 
 use super::super::{activity, cap, supply};
 use super::Vecs;
-use crate::{blocks, distribution, prices};
+use crate::{distribution, prices};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -12,7 +12,6 @@ impl Vecs {
         &mut self,
         starting_indexes: &Indexes,
         prices: &prices::Vecs,
-        blocks: &blocks::Vecs,
         distribution: &distribution::Vecs,
         activity: &activity::Vecs,
         supply: &supply::Vecs,
@@ -24,74 +23,70 @@ impl Vecs {
         let realized_price = &all_metrics.realized.price.cents.height;
         let realized_cap = &all_metrics.realized.cap.cents.height;
 
-        self.vaulted_price.cents.height.compute_transform2(
-            starting_indexes.height,
-            realized_price,
-            &activity.vaultedness.height,
-            |(i, price, vaultedness, ..)| {
-                (i, Cents::from(f64::from(price) / f64::from(vaultedness)))
+        self.vaulted_price.compute_all(
+            prices,
+            starting_indexes,
+            exit,
+            |v| {
+                Ok(v.compute_transform2(
+                    starting_indexes.height,
+                    realized_price,
+                    &activity.vaultedness.height,
+                    |(i, price, vaultedness, ..)| {
+                        (i, Cents::from(f64::from(price) / f64::from(vaultedness)))
+                    },
+                    exit,
+                )?)
             },
-            exit,
         )?;
 
-        self.vaulted_price_ratio.compute_rest(
-            blocks,
+        self.active_price.compute_all(
             prices,
             starting_indexes,
             exit,
-            &self.vaulted_price.cents.height,
-        )?;
-
-        self.active_price.cents.height.compute_multiply(
-            starting_indexes.height,
-            realized_price,
-            &activity.liveliness.height,
-            exit,
-        )?;
-
-        self.active_price_ratio.compute_rest(
-            blocks,
-            prices,
-            starting_indexes,
-            exit,
-            &self.active_price.cents.height,
-        )?;
-
-        self.true_market_mean.cents.height.compute_transform2(
-            starting_indexes.height,
-            &cap.investor_cap.cents.height,
-            &supply.active_supply.btc.height,
-            |(i, cap_cents, supply_btc, ..)| {
-                (i, Cents::from(f64::from(cap_cents) / f64::from(supply_btc)))
+            |v| {
+                Ok(v.compute_multiply(
+                    starting_indexes.height,
+                    realized_price,
+                    &activity.liveliness.height,
+                    exit,
+                )?)
             },
-            exit,
         )?;
 
-        self.true_market_mean_ratio.compute_rest(
-            blocks,
+        self.true_market_mean.compute_all(
             prices,
             starting_indexes,
             exit,
-            &self.true_market_mean.cents.height,
+            |v| {
+                Ok(v.compute_transform2(
+                    starting_indexes.height,
+                    &cap.investor_cap.cents.height,
+                    &supply.active_supply.btc.height,
+                    |(i, cap_cents, supply_btc, ..)| {
+                        (i, Cents::from(f64::from(cap_cents) / f64::from(supply_btc)))
+                    },
+                    exit,
+                )?)
+            },
         )?;
 
         // cointime_price = cointime_cap / circulating_supply
-        self.cointime_price.cents.height.compute_transform2(
-            starting_indexes.height,
-            &cap.cointime_cap.cents.height,
-            circulating_supply,
-            |(i, cap_cents, supply_btc, ..)| {
-                (i, Cents::from(f64::from(cap_cents) / f64::from(supply_btc)))
-            },
-            exit,
-        )?;
-
-        self.cointime_price_ratio.compute_rest(
-            blocks,
+        self.cointime_price.compute_all(
             prices,
             starting_indexes,
             exit,
-            &self.cointime_price.cents.height,
+            |v| {
+                Ok(v.compute_transform2(
+                    starting_indexes.height,
+                    &cap.cointime_cap.cents.height,
+                    circulating_supply,
+                    |(i, cap_cents, supply_btc, ..)| {
+                        (i, Cents::from(f64::from(cap_cents) / f64::from(supply_btc)))
+                    },
+                    exit,
+                )?)
+            },
         )?;
 
         // transfer_price = cointime_price - vaulted_price
@@ -99,38 +94,20 @@ impl Vecs {
             starting_indexes.height,
             &self.cointime_price.cents.height,
             &self.vaulted_price.cents.height,
-            |(i, cointime, vaulted, ..)| {
-                (i, cointime.saturating_sub(vaulted))
-            },
+            |(i, cointime, vaulted, ..)| (i, cointime.saturating_sub(vaulted)),
             exit,
         )?;
-
-        self.transfer_price_ratio.compute_rest(
-            blocks,
-            prices,
-            starting_indexes,
-            exit,
-            &self.transfer_price.cents.height,
-        )?;
+        self.transfer_price.compute_rest(prices, starting_indexes, exit)?;
 
         // balanced_price = (realized_price + transfer_price) / 2
         self.balanced_price.cents.height.compute_transform2(
             starting_indexes.height,
             realized_price,
             &self.transfer_price.cents.height,
-            |(i, realized, transfer, ..)| {
-                (i, (realized + transfer) / 2u64)
-            },
+            |(i, realized, transfer, ..)| (i, (realized + transfer) / 2u64),
             exit,
         )?;
-
-        self.balanced_price_ratio.compute_rest(
-            blocks,
-            prices,
-            starting_indexes,
-            exit,
-            &self.balanced_price.cents.height,
-        )?;
+        self.balanced_price.compute_rest(prices, starting_indexes, exit)?;
 
         // terminal_price = 21M × transfer_price / circulating_supply_btc
         self.terminal_price.cents.height.compute_transform2(
@@ -147,14 +124,7 @@ impl Vecs {
             },
             exit,
         )?;
-
-        self.terminal_price_ratio.compute_rest(
-            blocks,
-            prices,
-            starting_indexes,
-            exit,
-            &self.terminal_price.cents.height,
-        )?;
+        self.terminal_price.compute_rest(prices, starting_indexes, exit)?;
 
         // cumulative_market_cap = Σ(market_cap) in dollars
         self.cumulative_market_cap
@@ -183,14 +153,7 @@ impl Vecs {
             },
             exit,
         )?;
-
-        self.delta_price_ratio.compute_rest(
-            blocks,
-            prices,
-            starting_indexes,
-            exit,
-            &self.delta_price.cents.height,
-        )?;
+        self.delta_price.compute_rest(prices, starting_indexes, exit)?;
 
         Ok(())
     }

@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
     BasisPoints32, BasisPointsSigned32, Bitcoin, Cents, CentsSats, CentsSigned, CentsSquaredSats,
-    Dollars, Height, Indexes, Sats, StoredF64, Version,
+    Dollars, Height, Indexes, StoredF64, Version,
 };
 use derive_more::{Deref, DerefMut};
 use vecdb::{
@@ -16,9 +16,10 @@ use crate::{
     internal::{
         CentsUnsignedToDollars, ComputedPerBlock, ComputedPerBlockCumulative, FiatPerBlock,
         FiatRollingDelta1m, FiatRollingDeltaExcept1m, LazyPerBlock, PercentPerBlock,
-        PercentRollingWindows, Price, RatioCents64, RatioCentsBp32, RatioCentsSignedCentsBps32,
-        RatioCentsSignedDollarsBps32, RatioDollarsBp32, RatioPerBlock, RatioPerBlockPercentiles,
-        RatioPerBlockStdDevBands, RollingWindows, RollingWindowsFrom1w,
+        PercentRollingWindows, Price, PriceWithRatioExtendedPerBlock, RatioCents64, RatioCentsBp32,
+        RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32, RatioDollarsBp32,
+        RatioPerBlockPercentiles, RatioPerBlockStdDevBands, RatioSma, RollingWindows,
+        RollingWindowsFrom1w,
     },
     prices,
 };
@@ -88,14 +89,6 @@ pub struct RealizedSopr<M: StorageMode = Rw> {
 }
 
 #[derive(Traversable)]
-pub struct RealizedSentFull<M: StorageMode = Rw> {
-    #[traversable(wrap = "in_profit", rename = "sum")]
-    pub in_profit_sum_extended: RollingWindowsFrom1w<Sats, M>,
-    #[traversable(wrap = "in_loss", rename = "sum")]
-    pub in_loss_sum_extended: RollingWindowsFrom1w<Sats, M>,
-}
-
-#[derive(Traversable)]
 pub struct RealizedPeakRegret<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub value: ComputedPerBlockCumulative<Cents, M>,
@@ -104,13 +97,11 @@ pub struct RealizedPeakRegret<M: StorageMode = Rw> {
 
 #[derive(Traversable)]
 pub struct RealizedInvestor<M: StorageMode = Rw> {
-    pub price: Price<ComputedPerBlock<Cents, M>>,
-    pub price_ratio: RatioPerBlock<BasisPoints32, M>,
+    pub price: PriceWithRatioExtendedPerBlock<M>,
     pub lower_price_band: Price<ComputedPerBlock<Cents, M>>,
     pub upper_price_band: Price<ComputedPerBlock<Cents, M>>,
     #[traversable(wrap = "cap", rename = "raw")]
     pub cap_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
-    pub price_ratio_percentiles: RatioPerBlockPercentiles<M>,
 }
 
 #[derive(Deref, DerefMut, Traversable)]
@@ -125,7 +116,6 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     pub gross_pnl: RealizedGrossPnl<M>,
     pub net_pnl: RealizedNetPnl<M>,
     pub sopr: RealizedSopr<M>,
-    pub sent: RealizedSentFull<M>,
     pub peak_regret: RealizedPeakRegret<M>,
     pub investor: RealizedInvestor<M>,
 
@@ -139,9 +129,11 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     #[traversable(wrap = "cap", rename = "rel_to_own_mcap")]
     pub cap_rel_to_own_mcap: PercentPerBlock<BasisPoints32, M>,
 
-    #[traversable(wrap = "price_ratio", rename = "percentiles")]
+    #[traversable(wrap = "price", rename = "percentiles")]
     pub price_ratio_percentiles: RatioPerBlockPercentiles<M>,
-    #[traversable(wrap = "price_ratio", rename = "std_dev")]
+    #[traversable(wrap = "price", rename = "sma")]
+    pub price_ratio_sma: RatioSma<M>,
+    #[traversable(wrap = "price", rename = "std_dev")]
     pub price_ratio_std_dev: RatioPerBlockStdDevBands<M>,
 }
 
@@ -218,12 +210,6 @@ impl RealizedFull {
             ratio_extended: cfg.import("sopr", v1)?,
         };
 
-        // Sent
-        let sent = RealizedSentFull {
-            in_profit_sum_extended: cfg.import("sent_in_profit", v1)?,
-            in_loss_sum_extended: cfg.import("sent_in_loss", v1)?,
-        };
-
         // Peak regret
         let peak_regret = RealizedPeakRegret {
             value: cfg.import("realized_peak_regret", Version::new(2))?,
@@ -234,16 +220,9 @@ impl RealizedFull {
         // Investor
         let investor = RealizedInvestor {
             price: cfg.import("investor_price", v0)?,
-            price_ratio: cfg.import("investor_price", v0)?,
             lower_price_band: cfg.import("lower_price_band", v0)?,
             upper_price_band: cfg.import("upper_price_band", v0)?,
             cap_raw: cfg.import("investor_cap_raw", v0)?,
-            price_ratio_percentiles: RatioPerBlockPercentiles::forced_import(
-                cfg.db,
-                &cfg.name("investor_price"),
-                cfg.version,
-                cfg.indexes,
-            )?,
         };
 
         // Price ratio stats
@@ -257,7 +236,6 @@ impl RealizedFull {
             gross_pnl,
             net_pnl,
             sopr,
-            sent,
             peak_regret,
             investor,
             profit_to_loss_ratio: cfg.import("realized_profit_to_loss_ratio", v1)?,
@@ -265,6 +243,12 @@ impl RealizedFull {
             cap_raw: cfg.import("cap_raw", v0)?,
             cap_rel_to_own_mcap: cfg.import("realized_cap_rel_to_own_market_cap", v1)?,
             price_ratio_percentiles: RatioPerBlockPercentiles::forced_import(
+                cfg.db,
+                &realized_price_name,
+                realized_price_version,
+                cfg.indexes,
+            )?,
+            price_ratio_sma: RatioSma::forced_import(
                 cfg.db,
                 &realized_price_name,
                 realized_price_version,
@@ -513,20 +497,6 @@ impl RealizedFull {
                 exit,
             )?;
 
-        // Sent rolling sums (1w, 1m, 1y)
-        self.sent.in_profit_sum_extended.compute_rolling_sum(
-            starting_indexes.height,
-            &window_starts,
-            &self.core.sent.in_profit.raw.sats.height,
-            exit,
-        )?;
-        self.sent.in_loss_sum_extended.compute_rolling_sum(
-            starting_indexes.height,
-            &window_starts,
-            &self.core.sent.in_loss.raw.sats.height,
-            exit,
-        )?;
-
         // Profit/loss value created/destroyed rolling sums
         self.profit.value_created_sum.compute_rolling_sum(
             starting_indexes.height,
@@ -616,11 +586,10 @@ impl RealizedFull {
                 exit,
             )?;
 
-        // Investor price ratio and bands
-        self.investor.price_ratio.compute_ratio(
+        // Investor price ratio, percentiles and bands
+        self.investor.price.compute_rest(
+            prices,
             starting_indexes,
-            &prices.price.cents.height,
-            &self.investor.price.cents.height,
             exit,
         )?;
 
@@ -727,31 +696,28 @@ impl RealizedFull {
             )?;
         }
 
-        // Price ratio: percentiles and std dev bands
+        // Price ratio: percentiles, sma and std dev bands
         self.price_ratio_percentiles.compute(
+            starting_indexes,
+            exit,
+            &self.core.minimal.price.ratio.height,
+            &self.core.minimal.price.cents.height,
+        )?;
+
+        self.price_ratio_sma.compute(
             blocks,
             starting_indexes,
             exit,
-            &self.core.minimal.price_ratio.ratio.height,
-            &self.core.minimal.price.cents.height,
+            &self.core.minimal.price.ratio.height,
         )?;
 
         self.price_ratio_std_dev.compute(
             blocks,
             starting_indexes,
             exit,
-            &self.core.minimal.price_ratio.ratio.height,
+            &self.core.minimal.price.ratio.height,
             &self.core.minimal.price.cents.height,
-        )?;
-
-        // Investor price ratio: percentiles
-        let investor_price = &self.investor.price.cents.height;
-        self.investor.price_ratio_percentiles.compute(
-            blocks,
-            starting_indexes,
-            exit,
-            &self.investor.price_ratio.ratio.height,
-            investor_price,
+            &self.price_ratio_sma,
         )?;
 
         Ok(())

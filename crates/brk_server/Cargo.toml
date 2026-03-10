@@ -14,6 +14,8 @@ bindgen = ["dep:brk_bindgen"]
 [dependencies]
 aide = { workspace = true }
 axum = { workspace = true }
+brotli = "8"
+flate2 = "1"
 brk_bindgen = { workspace = true, optional = true }
 brk_computer = { workspace = true }
 brk_error = { workspace = true, features = ["jiff", "serde_json", "tokio", "vecdb"] }
@@ -27,6 +29,7 @@ brk_traversable = { workspace = true }
 brk_website = { workspace = true }
 derive_more = { workspace = true }
 vecdb = { workspace = true }
+zstd = "0.13"
 jiff = { workspace = true }
 quick_cache = "0.6.18"
 schemars = { workspace = true }

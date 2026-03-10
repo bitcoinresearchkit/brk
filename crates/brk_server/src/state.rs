@@ -9,7 +9,7 @@ use derive_more::Deref;
 
 use axum::{
     body::{Body, Bytes},
-    http::{HeaderMap, Response, Uri},
+    http::{HeaderMap, HeaderValue, Response, Uri, header},
 };
 use brk_query::AsyncQuery;
 use brk_rpc::Client;
@@ -18,8 +18,8 @@ use quick_cache::sync::{Cache, GuardResult};
 use serde::Serialize;
 
 use crate::{
-    CacheParams, CacheStrategy, Website,
-    extended::{HeaderMapExtended, ResponseExtended, ResultExtended},
+    CacheParams, CacheStrategy, Error, Website,
+    extended::{ContentEncoding, HeaderMapExtended, ResponseExtended},
 };
 
 #[derive(Clone, Deref)]
@@ -40,6 +40,47 @@ impl AppState {
         CacheStrategy::MempoolHash(hash)
     }
 
+    /// Cached + pre-compressed response. Compression runs on the blocking thread.
+    async fn cached<F>(
+        &self,
+        headers: &HeaderMap,
+        strategy: CacheStrategy,
+        uri: &Uri,
+        content_type: &'static str,
+        f: F,
+    ) -> Response<Body>
+    where
+        F: FnOnce(&brk_query::Query, ContentEncoding) -> brk_error::Result<Bytes> + Send + 'static,
+    {
+        let encoding = ContentEncoding::negotiate(headers);
+        let params = CacheParams::resolve(&strategy, || self.sync(|q| q.height().into()));
+        if params.matches_etag(headers) {
+            return ResponseExtended::new_not_modified();
+        }
+
+        let full_key = format!("{}-{}-{}", uri, params.etag_str(), encoding.as_str());
+        let result = self
+            .get_or_insert(&full_key, async move {
+                self.run(move |q| f(q, encoding)).await
+            })
+            .await;
+
+        match result {
+            Ok(bytes) => {
+                let mut response = Response::new(Body::from(bytes));
+                let h = response.headers_mut();
+                h.insert(header::CONTENT_TYPE, HeaderValue::from_static(content_type));
+                h.insert_cache_control(&params.cache_control);
+                h.insert_content_encoding(encoding);
+                if let Some(etag) = &params.etag {
+                    h.insert_etag(etag);
+                }
+                response
+            }
+            Err(e) => Error::from(e).into_response_with_etag(params.etag_str()),
+        }
+    }
+
     /// JSON response with HTTP + server-side caching
     pub async fn cached_json<T, F>(
         &self,
@@ -52,32 +93,11 @@ impl AppState {
         T: Serialize + Send + 'static,
         F: FnOnce(&brk_query::Query) -> brk_error::Result<T> + Send + 'static,
     {
-        let params = CacheParams::resolve(&strategy, || self.sync(|q| q.height().into()));
-        if params.matches_etag(headers) {
-            return ResponseExtended::new_not_modified();
-        }
-
-        let full_key = format!("{}-{}", uri, params.etag_str());
-        let result = self
-            .get_or_insert(&full_key, async move {
-                let value = self.run(f).await?;
-                Ok(serde_json::to_vec(&value).unwrap().into())
-            })
-            .await;
-
-        match result {
-            Ok(bytes) => {
-                let mut response = Response::new(Body::from(bytes));
-                let h = response.headers_mut();
-                h.insert_content_type_application_json();
-                h.insert_cache_control(&params.cache_control);
-                if let Some(etag) = &params.etag {
-                    h.insert_etag(etag);
-                }
-                response
-            }
-            Err(e) => ResultExtended::<T>::to_json_response(Err(e), params.etag_str()),
-        }
+        self.cached(headers, strategy, uri, "application/json", move |q, enc| {
+            let value = f(q)?;
+            Ok(enc.compress(Bytes::from(serde_json::to_vec(&value).unwrap())))
+        })
+        .await
     }
 
     /// Text response with HTTP + server-side caching
@@ -92,32 +112,11 @@ impl AppState {
         T: AsRef<str> + Send + 'static,
         F: FnOnce(&brk_query::Query) -> brk_error::Result<T> + Send + 'static,
     {
-        let params = CacheParams::resolve(&strategy, || self.sync(|q| q.height().into()));
-        if params.matches_etag(headers) {
-            return ResponseExtended::new_not_modified();
-        }
-
-        let full_key = format!("{}-{}", uri, params.etag_str());
-        let result = self
-            .get_or_insert(&full_key, async move {
-                let value = self.run(f).await?;
-                Ok(Bytes::from(value.as_ref().to_owned()))
-            })
-            .await;
-
-        match result {
-            Ok(bytes) => {
-                let mut response = Response::new(Body::from(bytes));
-                let h = response.headers_mut();
-                h.insert_content_type_text_plain();
-                h.insert_cache_control(&params.cache_control);
-                if let Some(etag) = &params.etag {
-                    h.insert_etag(etag);
-                }
-                response
-            }
-            Err(e) => ResultExtended::<T>::to_text_response(Err(e), params.etag_str()),
-        }
+        self.cached(headers, strategy, uri, "text/plain", move |q, enc| {
+            let value = f(q)?;
+            Ok(enc.compress(Bytes::from(value.as_ref().as_bytes().to_vec())))
+        })
+        .await
     }
 
     /// Binary response with HTTP + server-side caching
@@ -132,32 +131,17 @@ impl AppState {
         T: Into<Vec<u8>> + Send + 'static,
         F: FnOnce(&brk_query::Query) -> brk_error::Result<T> + Send + 'static,
     {
-        let params = CacheParams::resolve(&strategy, || self.sync(|q| q.height().into()));
-        if params.matches_etag(headers) {
-            return ResponseExtended::new_not_modified();
-        }
-
-        let full_key = format!("{}-{}", uri, params.etag_str());
-        let result = self
-            .get_or_insert(&full_key, async move {
-                let value = self.run(f).await?;
-                Ok(Bytes::from(value.into()))
-            })
-            .await;
-
-        match result {
-            Ok(bytes) => {
-                let mut response = Response::new(Body::from(bytes));
-                let h = response.headers_mut();
-                h.insert_content_type_octet_stream();
-                h.insert_cache_control(&params.cache_control);
-                if let Some(etag) = &params.etag {
-                    h.insert_etag(etag);
-                }
-                response
-            }
-            Err(e) => ResultExtended::<T>::to_bytes_response(Err(e), params.etag_str()),
-        }
+        self.cached(
+            headers,
+            strategy,
+            uri,
+            "application/octet-stream",
+            move |q, enc| {
+                let value = f(q)?;
+                Ok(enc.compress(Bytes::from(value.into())))
+            },
+        )
+        .await
     }
 
     /// Check server-side cache, compute on miss

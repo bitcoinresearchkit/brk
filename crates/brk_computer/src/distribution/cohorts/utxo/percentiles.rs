@@ -2,7 +2,7 @@ use std::{cmp::Reverse, collections::BinaryHeap, fs, path::Path};
 
 use brk_cohort::{Filtered, PROFITABILITY_RANGE_COUNT, PROFIT_COUNT, TERM_NAMES};
 use brk_error::Result;
-use brk_types::{Cents, CentsCompact, CostBasisDistribution, Date, Dollars, Height, Sats};
+use brk_types::{BasisPoints16, Cents, CentsCompact, CostBasisDistribution, Date, Dollars, Height, Sats};
 
 use crate::distribution::metrics::{CostBasis, ProfitabilityMetrics};
 
@@ -24,12 +24,7 @@ impl UTXOCohorts {
         states_path: &Path,
     ) -> Result<()> {
         if self.fenwick.is_initialized() {
-            // Per-block accurate percentiles from Fenwick tree
-            self.push_percentiles_from_fenwick(height)?;
-
-            // Per-block accurate profitability from Fenwick tree with current spot_price
-            let prof = self.fenwick.profitability(spot_price);
-            push_profitability(height, &prof, &mut self.profitability)?;
+            self.push_fenwick_results(height, spot_price)?;
         }
 
         // Disk distributions only at day boundaries
@@ -40,18 +35,21 @@ impl UTXOCohorts {
         Ok(())
     }
 
-    /// Push Fenwick-computed percentiles for all/sth/lth to vecs.
-    fn push_percentiles_from_fenwick(&mut self, height: Height) -> Result<()> {
+    /// Push all Fenwick-derived per-block results: percentiles, density, profitability.
+    fn push_fenwick_results(&mut self, height: Height, spot_price: Cents) -> Result<()> {
+        let (all_d, sth_d, lth_d) = self.fenwick.density(spot_price);
+
         let all = self.fenwick.percentiles_all();
-        push_percentile_result(height, &all, &mut self.all.metrics.cost_basis)?;
+        push_cost_basis(height, &all, all_d, &mut self.all.metrics.cost_basis)?;
 
         let sth = self.fenwick.percentiles_sth();
-        push_percentile_result(height, &sth, &mut self.sth.metrics.cost_basis)?;
+        push_cost_basis(height, &sth, sth_d, &mut self.sth.metrics.cost_basis)?;
 
         let lth = self.fenwick.percentiles_lth();
-        push_percentile_result(height, &lth, &mut self.lth.metrics.cost_basis)?;
+        push_cost_basis(height, &lth, lth_d, &mut self.lth.metrics.cost_basis)?;
 
-        Ok(())
+        let prof = self.fenwick.profitability(spot_price);
+        push_profitability(height, &prof, &mut self.profitability)
     }
 
     /// K-way merge only for writing daily cost basis distributions to disk.
@@ -93,14 +91,16 @@ impl UTXOCohorts {
     }
 }
 
-/// Push a PercentileResult to cost basis vecs.
-fn push_percentile_result(
+/// Push percentiles + density to cost basis vecs.
+fn push_cost_basis(
     height: Height,
-    result: &PercentileResult,
+    percentiles: &PercentileResult,
+    density_bps: u16,
     cost_basis: &mut CostBasis,
 ) -> Result<()> {
-    cost_basis.truncate_push_minmax(height, result.min_price, result.max_price)?;
-    cost_basis.truncate_push_percentiles(height, &result.sat_prices, &result.usd_prices)
+    cost_basis.truncate_push_minmax(height, percentiles.min_price, percentiles.max_price)?;
+    cost_basis.truncate_push_percentiles(height, &percentiles.sat_prices, &percentiles.usd_prices)?;
+    cost_basis.truncate_push_density(height, BasisPoints16::from(density_bps))
 }
 
 /// Convert raw (cents × sats) accumulator to Dollars (÷ 100 for cents→dollars, ÷ 1e8 for sats).

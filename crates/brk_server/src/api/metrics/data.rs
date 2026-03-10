@@ -12,7 +12,7 @@ use brk_types::{Format, MetricSelection, Output};
 use crate::{
     Result,
     api::metrics::{CACHE_CONTROL, max_weight},
-    extended::HeaderMapExtended,
+    extended::{ContentEncoding, HeaderMapExtended},
 };
 
 use super::AppState;
@@ -38,15 +38,27 @@ pub async fn handler(
     }
 
     // Phase 2: Format (expensive, server-side cached)
-    let cache_key = format!("single-{}{}{}", uri.path(), uri.query().unwrap_or(""), etag);
+    let encoding = ContentEncoding::negotiate(&headers);
+    let cache_key = format!(
+        "single-{}{}{}-{}",
+        uri.path(),
+        uri.query().unwrap_or(""),
+        etag,
+        encoding.as_str()
+    );
     let query = &state;
     let bytes = state
         .get_or_insert(&cache_key, async move {
-            let out = query.run(move |q| q.format(resolved)).await?;
-            Ok(match out.output {
-                Output::CSV(s) => Bytes::from(s),
-                Output::Json(v) => Bytes::from(v),
-            })
+            query
+                .run(move |q| {
+                    let out = q.format(resolved)?;
+                    let raw = match out.output {
+                        Output::CSV(s) => Bytes::from(s),
+                        Output::Json(v) => Bytes::from(v),
+                    };
+                    Ok(encoding.compress(raw))
+                })
+                .await
         })
         .await?;
 
@@ -54,6 +66,7 @@ pub async fn handler(
     let h = response.headers_mut();
     h.insert_etag(etag.as_str());
     h.insert_cache_control(CACHE_CONTROL);
+    h.insert_content_encoding(encoding);
     match format {
         Format::CSV => {
             h.insert_content_disposition_attachment(&csv_filename);

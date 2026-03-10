@@ -26,7 +26,7 @@ impl Vecs {
         let sma_200d = import!("price_sma_200d");
         let sma_350d = import!("price_sma_350d");
 
-        let price_sma_200d_source = &sma_200d.price.cents;
+        let price_sma_200d_source = &sma_200d.cents;
         let _200d_x2_4 = Price::from_cents_source::<CentsTimesTenths<24>>(
             "price_sma_200d_x2_4",
             version,
@@ -38,7 +38,7 @@ impl Vecs {
             price_sma_200d_source,
         );
 
-        let price_sma_350d_source = &sma_350d.price.cents;
+        let price_sma_350d_source = &sma_350d.cents;
         let _350d_x2 = Price::from_cents_source::<CentsTimesTenths<20>>(
             "price_sma_350d_x2",
             version,

@@ -114,6 +114,8 @@ impl CoreCohortMetrics {
 
         self.activity
             .compute_rest_part1(blocks, starting_indexes, exit)?;
+        self.activity
+            .compute_sent_profitability(blocks, prices, starting_indexes, exit)?;
 
         self.realized
             .compute_rest_part1(blocks, starting_indexes, exit)?;

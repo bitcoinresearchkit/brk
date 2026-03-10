@@ -184,14 +184,6 @@ impl Index {
         }
     }
 
-    /// Returns the query cost multiplier for this index type.
-    /// Used for rate limiting to account for expensive lazy computations.
-    pub const fn cost_multiplier(&self) -> usize {
-        match self {
-            Self::Epoch => 60,
-            _ => 1,
-        }
-    }
 
     /// Returns true if this index type is date-based.
     pub const fn is_date_based(&self) -> bool {

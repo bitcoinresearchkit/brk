@@ -3,14 +3,14 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, CentsSigned, Dollars, Height, Indexes, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, AnyVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec,
+    AnyStoredVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
 };
 
 use crate::{
     blocks,
     distribution::state::{CohortState, CostBasisOps, RealizedOps},
     internal::{
-        AmountPerBlockWithSum24h, ComputedPerBlock, FiatRollingDelta1m, LazyPerBlock,
+        ComputedPerBlock, FiatRollingDelta1m, LazyPerBlock,
         NegCentsUnsignedToDollars, PerBlockWithSum24h, RatioCents64,
         RollingWindow24hPerBlock,
     },
@@ -24,12 +24,6 @@ use super::RealizedMinimal;
 #[derive(Traversable)]
 pub struct RealizedSoprCore<M: StorageMode = Rw> {
     pub ratio: RollingWindow24hPerBlock<StoredF64, M>,
-}
-
-#[derive(Traversable)]
-pub struct RealizedSentCore<M: StorageMode = Rw> {
-    pub in_profit: AmountPerBlockWithSum24h<M>,
-    pub in_loss: AmountPerBlockWithSum24h<M>,
 }
 
 #[derive(Deref, DerefMut, Traversable)]
@@ -51,7 +45,6 @@ pub struct RealizedCore<M: StorageMode = Rw> {
     pub neg_loss: LazyPerBlock<Dollars, Cents>,
     pub net_pnl: PerBlockWithSum24h<CentsSigned, M>,
     pub sopr: RealizedSoprCore<M>,
-    pub sent: RealizedSentCore<M>,
 }
 
 impl RealizedCore {
@@ -78,44 +71,20 @@ impl RealizedCore {
             sopr: RealizedSoprCore {
                 ratio: cfg.import("sopr", v1)?,
             },
-            sent: RealizedSentCore {
-                in_profit: cfg.import("sent_in_profit", v1)?,
-                in_loss: cfg.import("sent_in_loss", v1)?,
-            },
         })
     }
 
     pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.minimal
-            .min_stateful_height_len()
-            .min(self.sent.in_profit.raw.sats.height.len())
-            .min(self.sent.in_loss.raw.sats.height.len())
+        self.minimal.min_stateful_height_len()
     }
 
     pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState<impl RealizedOps, impl CostBasisOps>) -> Result<()> {
         self.minimal.truncate_push(height, state)?;
-        self.sent
-            .in_profit
-            .raw
-            .sats
-            .height
-            .truncate_push(height, state.realized.sent_in_profit())?;
-        self.sent
-            .in_loss
-            .raw
-            .sats
-            .height
-            .truncate_push(height, state.realized.sent_in_loss())?;
         Ok(())
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        let mut vecs = self.minimal.collect_vecs_mut();
-        vecs.push(&mut self.sent.in_profit.raw.sats.height as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.sent.in_profit.raw.cents.height);
-        vecs.push(&mut self.sent.in_loss.raw.sats.height);
-        vecs.push(&mut self.sent.in_loss.raw.cents.height);
-        vecs
+        self.minimal.collect_vecs_mut()
     }
 
     pub(crate) fn compute_from_stateful(
@@ -127,11 +96,6 @@ impl RealizedCore {
         let minimal_refs: Vec<&RealizedMinimal> = others.iter().map(|o| &o.minimal).collect();
         self.minimal
             .compute_from_stateful(starting_indexes, &minimal_refs, exit)?;
-
-        sum_others!(self, starting_indexes, others, exit; sent.in_profit.raw.sats.height);
-        sum_others!(self, starting_indexes, others, exit; sent.in_profit.raw.cents.height);
-        sum_others!(self, starting_indexes, others, exit; sent.in_loss.raw.sats.height);
-        sum_others!(self, starting_indexes, others, exit; sent.in_loss.raw.cents.height);
 
         Ok(())
     }
@@ -206,30 +170,6 @@ impl RealizedCore {
                 &self.minimal.sopr.value_destroyed.sum._24h.height,
                 exit,
             )?;
-
-        self.sent
-            .in_profit
-            .raw
-            .compute(prices, starting_indexes.height, exit)?;
-        self.sent
-            .in_loss
-            .raw
-            .compute(prices, starting_indexes.height, exit)?;
-
-        self.sent.in_profit.sum.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.lookback.height_24h_ago,
-            &self.sent.in_profit.raw.sats.height,
-            &self.sent.in_profit.raw.cents.height,
-            exit,
-        )?;
-        self.sent.in_loss.sum.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.lookback.height_24h_ago,
-            &self.sent.in_loss.raw.sats.height,
-            &self.sent.in_loss.raw.cents.height,
-            exit,
-        )?;
 
         Ok(())
     }

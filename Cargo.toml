@@ -68,7 +68,7 @@ brk_website = { version = "0.1.9", path = "crates/brk_website" }
 byteview = "0.10.1"
 color-eyre = "0.6.5"
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
-fjall = "3.0.4"
+fjall = "3.1.0"
 indexmap = { version = "2.13.0", features = ["serde"] }
 jiff = { version = "0.2.23", features = ["perf-inline", "tz-system"], default-features = false }
 minreq = { version = "2.14.1", features = ["https", "json-using-serde"] }

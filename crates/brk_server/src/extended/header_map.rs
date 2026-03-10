@@ -3,6 +3,8 @@ use axum::http::{
     header::{self, IF_NONE_MATCH},
 };
 
+use super::ContentEncoding;
+
 pub trait HeaderMapExtended {
     fn has_etag(&self, etag: &str) -> bool;
     fn insert_etag(&mut self, etag: &str);
@@ -12,10 +14,10 @@ pub trait HeaderMapExtended {
 
     fn insert_content_disposition_attachment(&mut self, filename: &str);
 
+    fn insert_content_encoding(&mut self, encoding: ContentEncoding);
+
     fn insert_content_type_application_json(&mut self);
     fn insert_content_type_text_csv(&mut self);
-    fn insert_content_type_text_plain(&mut self);
-    fn insert_content_type_octet_stream(&mut self);
 
     fn insert_deprecation(&mut self, sunset: &'static str);
 }
@@ -45,23 +47,18 @@ impl HeaderMapExtended for HeaderMap {
         );
     }
 
+    fn insert_content_encoding(&mut self, encoding: ContentEncoding) {
+        if let Some(value) = encoding.header_value() {
+            self.insert(header::CONTENT_ENCODING, value);
+        }
+    }
+
     fn insert_content_type_application_json(&mut self) {
         self.insert(header::CONTENT_TYPE, "application/json".parse().unwrap());
     }
 
     fn insert_content_type_text_csv(&mut self) {
         self.insert(header::CONTENT_TYPE, "text/csv".parse().unwrap());
-    }
-
-    fn insert_content_type_text_plain(&mut self) {
-        self.insert(header::CONTENT_TYPE, "text/plain".parse().unwrap());
-    }
-
-    fn insert_content_type_octet_stream(&mut self) {
-        self.insert(
-            header::CONTENT_TYPE,
-            "application/octet-stream".parse().unwrap(),
-        );
     }
 
     fn insert_deprecation(&mut self, sunset: &'static str) {

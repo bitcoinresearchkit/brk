@@ -7,7 +7,7 @@ use vecdb::{
 };
 
 use crate::{
-    blocks, indexes,
+    indexes,
     internal::{ExpandingPercentiles, Price, PriceTimesRatioBp32Cents},
 };
 
@@ -22,8 +22,6 @@ pub struct RatioBand<M: StorageMode = Rw> {
 
 #[derive(Traversable)]
 pub struct RatioPerBlockPercentiles<M: StorageMode = Rw> {
-    pub sma_1w: RatioPerBlock<BasisPoints32, M>,
-    pub sma_1m: RatioPerBlock<BasisPoints32, M>,
     pub pct99: RatioBand<M>,
     pub pct98: RatioBand<M>,
     pub pct95: RatioBand<M>,
@@ -73,8 +71,6 @@ impl RatioPerBlockPercentiles {
         }
 
         Ok(Self {
-            sma_1w: import_ratio!("ratio_sma_1w"),
-            sma_1m: import_ratio!("ratio_sma_1m"),
             pct99: import_band!("ratio_pct99"),
             pct98: import_band!("ratio_pct98"),
             pct95: import_band!("ratio_pct95"),
@@ -87,26 +83,11 @@ impl RatioPerBlockPercentiles {
 
     pub(crate) fn compute(
         &mut self,
-        blocks: &blocks::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         ratio_source: &impl ReadableVec<Height, StoredF32>,
         metric_price: &impl ReadableVec<Height, Cents>,
     ) -> Result<()> {
-        self.sma_1w.bps.height.compute_rolling_average(
-            starting_indexes.height,
-            &blocks.lookback.height_1w_ago,
-            ratio_source,
-            exit,
-        )?;
-
-        self.sma_1m.bps.height.compute_rolling_average(
-            starting_indexes.height,
-            &blocks.lookback.height_1m_ago,
-            ratio_source,
-            exit,
-        )?;
-
         let ratio_version = ratio_source.version();
         self.mut_pct_vecs().try_for_each(|v| -> Result<()> {
             v.validate_computed_version_or_reset(ratio_version)?;

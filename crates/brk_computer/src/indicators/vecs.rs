@@ -16,4 +16,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub coindays_destroyed_supply_adjusted: ComputedPerBlock<StoredF32, M>,
     pub coinyears_destroyed_supply_adjusted: ComputedPerBlock<StoredF32, M>,
     pub dormancy_supply_adjusted: ComputedPerBlock<StoredF32, M>,
+    pub stock_to_flow: ComputedPerBlock<StoredF32, M>,
+    pub dormancy_flow: ComputedPerBlock<StoredF32, M>,
+    pub seller_exhaustion_constant: ComputedPerBlock<StoredF32, M>,
 }

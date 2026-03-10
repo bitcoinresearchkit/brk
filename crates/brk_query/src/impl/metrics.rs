@@ -118,17 +118,8 @@ impl Query {
     }
 
     /// Calculate total weight of the vecs for the given range.
-    /// Applies index-specific cost multipliers for rate limiting.
     pub fn weight(vecs: &[&dyn AnyExportableVec], from: Option<i64>, to: Option<i64>) -> usize {
-        vecs.iter()
-            .map(|v| {
-                let base = v.range_weight(from, to);
-                let multiplier = Index::try_from(v.index_type_to_string())
-                    .map(|i| i.cost_multiplier())
-                    .unwrap_or(1);
-                base * multiplier
-            })
-            .sum()
+        vecs.iter().map(|v| v.range_weight(from, to)).sum()
     }
 
     /// Resolve query metadata without formatting (cheap).

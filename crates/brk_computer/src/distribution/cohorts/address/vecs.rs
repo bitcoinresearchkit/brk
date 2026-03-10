@@ -29,6 +29,7 @@ pub struct AddressCohortVecs<M: StorageMode = Rw> {
     pub metrics: MinimalCohortMetrics<M>,
 
     pub addr_count: ComputedPerBlock<StoredU64, M>,
+    #[traversable(wrap = "addr_count", rename = "delta")]
     pub addr_count_delta: RollingDelta1m<StoredU64, StoredI64, M>,
 }
 

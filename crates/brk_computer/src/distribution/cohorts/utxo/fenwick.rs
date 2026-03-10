@@ -31,6 +31,18 @@ pub(super) struct CostBasisNode {
     sth_usd: i128,
 }
 
+impl CostBasisNode {
+    #[inline]
+    fn new(sats: i64, usd: i128, is_sth: bool) -> Self {
+        Self {
+            all_sats: sats,
+            sth_sats: if is_sth { sats } else { 0 },
+            all_usd: usd,
+            sth_usd: if is_sth { usd } else { 0 },
+        }
+    }
+}
+
 impl FenwickNode for CostBasisNode {
     #[inline(always)]
     fn add_assign(&mut self, other: &Self) {
@@ -87,15 +99,13 @@ fn bucket_to_cents(bucket: usize) -> Cents {
 /// Map a CentsCompact price to a bucket index.
 #[inline]
 fn price_to_bucket(price: CentsCompact) -> usize {
-    let rounded = Cents::from(price).round_to_dollar(COST_BASIS_PRICE_DIGITS);
-    dollars_to_bucket(u64::from(rounded) / 100)
+    cents_to_bucket(price.into())
 }
 
 /// Map a Cents price to a bucket index.
 #[inline]
 fn cents_to_bucket(price: Cents) -> usize {
-    let rounded = price.round_to_dollar(COST_BASIS_PRICE_DIGITS);
-    dollars_to_bucket(u64::from(rounded) / 100)
+    dollars_to_bucket(u64::from(price.round_to_dollar(COST_BASIS_PRICE_DIGITS)) / 100)
 }
 
 // ---------------------------------------------------------------------------
@@ -143,13 +153,7 @@ impl CostBasisFenwick {
             return;
         }
         let bucket = price_to_bucket(price);
-        let net_usd = price.as_u128() as i128 * net_sats as i128;
-        let delta = CostBasisNode {
-            all_sats: net_sats,
-            sth_sats: if is_sth { net_sats } else { 0 },
-            all_usd: net_usd,
-            sth_usd: if is_sth { net_usd } else { 0 },
-        };
+        let delta = CostBasisNode::new(net_sats, price.as_u128() as i128 * net_sats as i128, is_sth);
         self.tree.add(bucket, &delta);
         self.totals.add_assign(&delta);
     }
@@ -167,13 +171,7 @@ impl CostBasisFenwick {
             for (&price, &sats) in map.iter() {
                 let bucket = price_to_bucket(price);
                 let s = u64::from(sats) as i64;
-                let usd = price.as_u128() as i128 * s as i128;
-                let node = CostBasisNode {
-                    all_sats: s,
-                    sth_sats: if is_sth { s } else { 0 },
-                    all_usd: usd,
-                    sth_usd: if is_sth { usd } else { 0 },
-                };
+                let node = CostBasisNode::new(s, price.as_u128() as i128 * s as i128, is_sth);
                 self.tree.add_raw(bucket, &node);
                 self.totals.add_assign(&node);
             }
@@ -242,9 +240,9 @@ impl CostBasisFenwick {
             .batch_kth(&sat_targets, &sat_field, &mut sat_buckets);
 
         result.min_price = bucket_to_cents(sat_buckets[0]);
-        for i in 0..PERCENTILES_LEN {
+        (0..PERCENTILES_LEN).for_each(|i| {
             result.sat_prices[i] = bucket_to_cents(sat_buckets[i + 1]);
-        }
+        });
         result.max_price = bucket_to_cents(sat_buckets[PERCENTILES_LEN + 1]);
 
         // USD-weighted percentiles (batch)
@@ -264,6 +262,51 @@ impl CostBasisFenwick {
         }
 
         result
+    }
+
+    // -----------------------------------------------------------------------
+    // Supply density queries (±5% of spot price)
+    // -----------------------------------------------------------------------
+
+    /// Compute supply density: % of supply with cost basis within ±5% of spot.
+    /// Returns (all_bps, sth_bps, lth_bps) as basis points (0-10000).
+    pub(super) fn density(&self, spot_price: Cents) -> (u16, u16, u16) {
+        if self.totals.all_sats <= 0 {
+            return (0, 0, 0);
+        }
+
+        let spot_f64 = u64::from(spot_price) as f64;
+        let low = Cents::from((spot_f64 * 0.95) as u64);
+        let high = Cents::from((spot_f64 * 1.05) as u64);
+
+        let low_bucket = cents_to_bucket(low);
+        let high_bucket = cents_to_bucket(high);
+
+        let cum_high = self.tree.prefix_sum(high_bucket);
+        let cum_low = if low_bucket > 0 {
+            self.tree.prefix_sum(low_bucket - 1)
+        } else {
+            CostBasisNode::default()
+        };
+
+        let all_range = (cum_high.all_sats - cum_low.all_sats).max(0);
+        let sth_range = (cum_high.sth_sats - cum_low.sth_sats).max(0);
+        let lth_range = all_range - sth_range;
+
+        let to_bps = |range: i64, total: i64| -> u16 {
+            if total <= 0 {
+                0
+            } else {
+                (range as f64 / total as f64 * 10000.0) as u16
+            }
+        };
+
+        let lth_total = self.totals.all_sats - self.totals.sth_sats;
+        (
+            to_bps(all_range, self.totals.all_sats),
+            to_bps(sth_range, self.totals.sth_sats),
+            to_bps(lth_range, lth_total),
+        )
     }
 
     // -----------------------------------------------------------------------

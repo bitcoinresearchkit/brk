@@ -94,7 +94,7 @@ impl Vecs {
             .bps
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
                 starting_indexes.height,
-                &moving_average.sma._111d.price.usd.height,
+                &moving_average.sma._111d.usd.height,
                 &moving_average.sma._350d_x2.usd.height,
                 exit,
             )?;

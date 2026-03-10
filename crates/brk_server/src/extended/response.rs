@@ -13,77 +13,18 @@ where
     Self: Sized,
 {
     fn new_not_modified() -> Self;
-    fn new_json<T>(value: T, etag: &str) -> Self
-    where
-        T: Serialize;
-    fn new_json_with<T>(status: StatusCode, value: T, etag: &str) -> Self
-    where
-        T: Serialize;
     fn new_json_cached<T>(value: T, params: &CacheParams) -> Self
     where
         T: Serialize;
     fn static_json<T>(headers: &HeaderMap, value: T) -> Self
     where
         T: Serialize;
-    fn new_text(value: &str, etag: &str) -> Self;
-    fn new_text_with(status: StatusCode, value: &str, etag: &str) -> Self;
-    fn new_bytes(value: Vec<u8>, etag: &str) -> Self;
-    fn new_bytes_with(status: StatusCode, value: Vec<u8>, etag: &str) -> Self;
 }
 
 impl ResponseExtended for Response<Body> {
     fn new_not_modified() -> Response<Body> {
         let mut response = (StatusCode::NOT_MODIFIED, "").into_response();
         let _headers = response.headers_mut();
-        response
-    }
-
-    fn new_json<T>(value: T, etag: &str) -> Self
-    where
-        T: Serialize,
-    {
-        Self::new_json_with(StatusCode::default(), value, etag)
-    }
-
-    fn new_json_with<T>(status: StatusCode, value: T, etag: &str) -> Self
-    where
-        T: Serialize,
-    {
-        let bytes = serde_json::to_vec(&value).unwrap();
-        let mut response = Response::builder().body(bytes.into()).unwrap();
-        *response.status_mut() = status;
-        let headers = response.headers_mut();
-        headers.insert_content_type_application_json();
-        headers.insert_cache_control_must_revalidate();
-        headers.insert_etag(etag);
-        response
-    }
-
-    fn new_text(value: &str, etag: &str) -> Self {
-        Self::new_text_with(StatusCode::default(), value, etag)
-    }
-
-    fn new_text_with(status: StatusCode, value: &str, etag: &str) -> Self {
-        let mut response = Response::builder().body(value.to_string().into()).unwrap();
-        *response.status_mut() = status;
-        let headers = response.headers_mut();
-        headers.insert_content_type_text_plain();
-        headers.insert_cache_control_must_revalidate();
-        headers.insert_etag(etag);
-        response
-    }
-
-    fn new_bytes(value: Vec<u8>, etag: &str) -> Self {
-        Self::new_bytes_with(StatusCode::default(), value, etag)
-    }
-
-    fn new_bytes_with(status: StatusCode, value: Vec<u8>, etag: &str) -> Self {
-        let mut response = Response::builder().body(value.into()).unwrap();
-        *response.status_mut() = status;
-        let headers = response.headers_mut();
-        headers.insert_content_type_octet_stream();
-        headers.insert_cache_control_must_revalidate();
-        headers.insert_etag(etag);
         response
     }
 

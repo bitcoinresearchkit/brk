@@ -1,16 +1,18 @@
 use brk_error::Result;
-use brk_types::{Bitcoin, Dollars, Indexes, StoredF32};
-use vecdb::Exit;
+use brk_types::{Bitcoin, Dollars, Indexes, Sats, StoredF32};
+use vecdb::{Exit, ReadableVec};
 
 use super::{gini, Vecs};
-use crate::{distribution, internal::RatioDollarsBp32, mining, transactions};
+use crate::{distribution, internal::RatioDollarsBp32, market, mining, transactions};
 
 impl Vecs {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
         mining: &mining::Vecs,
         distribution: &distribution::Vecs,
         transactions: &transactions::Vecs,
+        market: &market::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -72,7 +74,6 @@ impl Vecs {
             )?;
 
         // Thermocap Multiple: market_cap / thermo_cap
-        // thermo_cap = cumulative subsidy in USD
         self.thermocap_multiple
             .bps
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
@@ -82,15 +83,9 @@ impl Vecs {
                 exit,
             )?;
 
-        let all_activity = &distribution.utxo_cohorts.all.metrics.activity;
-        let supply_total_sats = &distribution
-            .utxo_cohorts
-            .all
-            .metrics
-            .supply
-            .total
-            .sats
-            .height;
+        let all_metrics = &distribution.utxo_cohorts.all.metrics;
+        let all_activity = &all_metrics.activity;
+        let supply_total_sats = &all_metrics.supply.total.sats.height;
 
         // Supply-Adjusted CDD = sum_24h(CDD) / circulating_supply_btc
         self.coindays_destroyed_supply_adjusted
@@ -110,7 +105,7 @@ impl Vecs {
                 exit,
             )?;
 
-        // Supply-Adjusted CYD = CYD / circulating_supply_btc (CYD = 1y rolling sum of CDD)
+        // Supply-Adjusted CYD = CYD / circulating_supply_btc
         self.coinyears_destroyed_supply_adjusted
             .height
             .compute_transform2(
@@ -141,6 +136,66 @@ impl Vecs {
                         (i, StoredF32::from(0.0f32))
                     } else {
                         (i, StoredF32::from((f64::from(dormancy) / supply) as f32))
+                    }
+                },
+                exit,
+            )?;
+
+        // Stock-to-Flow: supply / annual_issuance
+        // annual_issuance ≈ subsidy_per_block × 52560 (blocks/year)
+        self.stock_to_flow.height.compute_transform2(
+            starting_indexes.height,
+            supply_total_sats,
+            &mining.rewards.subsidy.base.sats.height,
+            |(i, supply_sats, subsidy_sats, ..)| {
+                let annual_flow = subsidy_sats.as_u128() as f64 * 52560.0;
+                if annual_flow == 0.0 {
+                    (i, StoredF32::from(0.0f32))
+                } else {
+                    (i, StoredF32::from(
+                        (supply_sats.as_u128() as f64 / annual_flow) as f32,
+                    ))
+                }
+            },
+            exit,
+        )?;
+
+        // Dormancy Flow: supply_btc / dormancy
+        self.dormancy_flow.height.compute_transform2(
+            starting_indexes.height,
+            supply_total_sats,
+            &all_activity.dormancy.height,
+            |(i, supply_sats, dormancy, ..)| {
+                let d = f64::from(dormancy);
+                if d == 0.0 {
+                    (i, StoredF32::from(0.0f32))
+                } else {
+                    let supply = f64::from(Bitcoin::from(supply_sats));
+                    (i, StoredF32::from((supply / d) as f32))
+                }
+            },
+            exit,
+        )?;
+
+        // Seller Exhaustion Constant: % supply_in_profit × 30d_volatility
+        self.seller_exhaustion_constant
+            .height
+            .compute_transform2(
+                starting_indexes.height,
+                &all_metrics.supply.in_profit.sats.height,
+                &market.volatility._1m.height,
+                |(i, profit_sats, volatility, ..)| {
+                    let total_sats: Sats = supply_total_sats
+                        .collect_one(i)
+                        .unwrap_or_default();
+                    let total = total_sats.as_u128() as f64;
+                    if total == 0.0 {
+                        (i, StoredF32::from(0.0f32))
+                    } else {
+                        let pct_in_profit = profit_sats.as_u128() as f64 / total;
+                        (i, StoredF32::from(
+                            (pct_in_profit * f64::from(volatility)) as f32,
+                        ))
                     }
                 },
                 exit,

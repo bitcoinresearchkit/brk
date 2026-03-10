@@ -1,13 +1,13 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Version};
+use brk_types::{BasisPoints16, Cents, Height, Version};
 use vecdb::{AnyStoredVec, AnyVec, Rw, StorageMode, WritableVec};
 
-use crate::internal::{ComputedPerBlock, PercentilesVecs, Price, PERCENTILES_LEN};
+use crate::internal::{ComputedPerBlock, PercentPerBlock, PercentilesVecs, Price, PERCENTILES_LEN};
 
 use super::ImportConfig;
 
-/// Cost basis metrics: min/max + percentiles.
+/// Cost basis metrics: min/max + percentiles + supply density.
 /// Used by all/sth/lth cohorts only.
 #[derive(Traversable)]
 pub struct CostBasis<M: StorageMode = Rw> {
@@ -15,6 +15,7 @@ pub struct CostBasis<M: StorageMode = Rw> {
     pub max: Price<ComputedPerBlock<Cents, M>>,
     pub percentiles: PercentilesVecs<M>,
     pub invested_capital: PercentilesVecs<M>,
+    pub supply_density: PercentPerBlock<BasisPoints16, M>,
 }
 
 impl CostBasis {
@@ -34,11 +35,22 @@ impl CostBasis {
                 cfg.version,
                 cfg.indexes,
             )?,
+            supply_density: PercentPerBlock::forced_import(
+                cfg.db,
+                &cfg.name("supply_density"),
+                cfg.version,
+                cfg.indexes,
+            )?,
         })
     }
 
     pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.min.cents.height.len().min(self.max.cents.height.len())
+        self.min
+            .cents
+            .height
+            .len()
+            .min(self.max.cents.height.len())
+            .min(self.supply_density.bps.height.len())
     }
 
     pub(crate) fn truncate_push_minmax(
@@ -63,6 +75,14 @@ impl CostBasis {
         Ok(())
     }
 
+    pub(crate) fn truncate_push_density(
+        &mut self,
+        height: Height,
+        density_bps: BasisPoints16,
+    ) -> Result<()> {
+        Ok(self.supply_density.bps.height.truncate_push(height, density_bps)?)
+    }
+
     pub(crate) fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.percentiles
             .validate_computed_version_or_reset(base_version)?;
@@ -75,6 +95,7 @@ impl CostBasis {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = vec![
             &mut self.min.cents.height,
             &mut self.max.cents.height,
+            &mut self.supply_density.bps.height,
         ];
         vecs.extend(
             self.percentiles

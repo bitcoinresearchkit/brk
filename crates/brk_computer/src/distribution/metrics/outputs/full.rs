@@ -18,6 +18,7 @@ pub struct OutputsFull<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub base: OutputsBase<M>,
 
+    #[traversable(wrap = "utxo_count", rename = "delta")]
     pub utxo_count_delta: RollingDelta1m<StoredU64, StoredI64, M>,
 }
 
