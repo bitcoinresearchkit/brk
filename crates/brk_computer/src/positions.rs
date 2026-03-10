@@ -19,8 +19,8 @@ pub const DB_NAME: &str = "positions";
 pub struct Vecs<M: StorageMode = Rw> {
     db: Database,
 
-    pub block_position: M::Stored<PcoVec<Height, BlkPosition>>,
-    pub tx_position: M::Stored<PcoVec<TxIndex, BlkPosition>>,
+    pub block: M::Stored<PcoVec<Height, BlkPosition>>,
+    pub tx: M::Stored<PcoVec<TxIndex, BlkPosition>>,
 }
 
 impl Vecs {
@@ -29,8 +29,8 @@ impl Vecs {
         let version = parent_version;
 
         let this = Self {
-            block_position: PcoVec::forced_import(&db, "position", version + Version::TWO)?,
-            tx_position: PcoVec::forced_import(&db, "position", version + Version::TWO)?,
+            block: PcoVec::forced_import(&db, "position", version + Version::TWO)?,
+            tx: PcoVec::forced_import(&db, "position", version + Version::TWO)?,
             db,
         };
         finalize_db(&this.db, &this)?;
@@ -62,8 +62,8 @@ impl Vecs {
             Some(c) if c == current => return Ok(()),
             Some(_) => {
                 info!("XOR bytes changed, resetting positions...");
-                self.block_position.reset()?;
-                self.tx_position.reset()?;
+                self.block.reset()?;
+                self.tx.reset()?;
             }
             None => {}
         }
@@ -85,12 +85,12 @@ impl Vecs {
         // Validate computed versions against dependencies
         let dep_version = indexer.vecs.transactions.first_txindex.version()
             + indexer.vecs.transactions.height.version();
-        self.block_position
+        self.block
             .validate_computed_version_or_reset(dep_version)?;
-        self.tx_position
+        self.tx
             .validate_computed_version_or_reset(dep_version)?;
 
-        let min_txindex = TxIndex::from(self.tx_position.len()).min(starting_indexes.txindex);
+        let min_txindex = TxIndex::from(self.tx.len()).min(starting_indexes.txindex);
 
         let Some(min_height) = indexer
             .vecs
@@ -116,7 +116,7 @@ impl Vecs {
             .try_for_each(|block| -> Result<()> {
                 let height = block.height();
 
-                self.block_position
+                self.block
                     .truncate_push(height, block.metadata().position())?;
 
                 let txindex = first_txindex_cursor.next().unwrap();
@@ -124,7 +124,7 @@ impl Vecs {
                 block.tx_metadata().iter().enumerate().try_for_each(
                     |(index, metadata)| -> Result<()> {
                         let txindex = txindex + index;
-                        self.tx_position
+                        self.tx
                             .truncate_push(txindex, metadata.position())?;
                         Ok(())
                     },
@@ -132,16 +132,16 @@ impl Vecs {
 
                 if *height % 1_000 == 0 {
                     let _lock = exit.lock();
-                    self.block_position.flush()?;
-                    self.tx_position.flush()?;
+                    self.block.flush()?;
+                    self.tx.flush()?;
                 }
 
                 Ok(())
             })?;
 
         let _lock = exit.lock();
-        self.block_position.flush()?;
-        self.tx_position.flush()?;
+        self.block.flush()?;
+        self.tx.flush()?;
 
         Ok(())
     }

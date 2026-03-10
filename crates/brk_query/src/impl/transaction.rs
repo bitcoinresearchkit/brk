@@ -226,7 +226,7 @@ impl Query {
             .first_txinindex
             .collect_one(txindex)
             .unwrap();
-        let position = computer.positions.tx_position.collect_one(txindex).unwrap();
+        let position = computer.positions.tx.collect_one(txindex).unwrap();
 
         // Get block info for status
         let block_hash = indexer.vecs.blocks.blockhash.read_once(height)?;
@@ -344,7 +344,7 @@ impl Query {
             .total_size
             .collect_one(txindex)
             .unwrap();
-        let position = computer.positions.tx_position.collect_one(txindex).unwrap();
+        let position = computer.positions.tx.collect_one(txindex).unwrap();
 
         let buffer = reader.read_raw_bytes(position, *total_size as usize)?;
 

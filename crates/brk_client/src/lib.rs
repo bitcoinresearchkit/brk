@@ -4195,15 +4195,15 @@ impl MetricsTree_Mining_Hashrate_HashRateSma {
 
 /// Metrics tree node.
 pub struct MetricsTree_Positions {
-    pub block_position: MetricPattern18<BlkPosition>,
-    pub tx_position: MetricPattern19<BlkPosition>,
+    pub block: MetricPattern18<BlkPosition>,
+    pub tx: MetricPattern19<BlkPosition>,
 }
 
 impl MetricsTree_Positions {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            block_position: MetricPattern18::new(client.clone(), "position".to_string()),
-            tx_position: MetricPattern19::new(client.clone(), "position".to_string()),
+            block: MetricPattern18::new(client.clone(), "position".to_string()),
+            tx: MetricPattern19::new(client.clone(), "position".to_string()),
         }
     }
 }
@@ -4376,47 +4376,47 @@ impl MetricsTree_Cointime_ReserveRisk {
 
 /// Metrics tree node.
 pub struct MetricsTree_Constants {
-    pub constant_0: MetricPattern1<StoredU16>,
-    pub constant_1: MetricPattern1<StoredU16>,
-    pub constant_2: MetricPattern1<StoredU16>,
-    pub constant_3: MetricPattern1<StoredU16>,
-    pub constant_4: MetricPattern1<StoredU16>,
-    pub constant_20: MetricPattern1<StoredU16>,
-    pub constant_30: MetricPattern1<StoredU16>,
-    pub constant_38_2: MetricPattern1<StoredF32>,
-    pub constant_50: MetricPattern1<StoredU16>,
-    pub constant_61_8: MetricPattern1<StoredF32>,
-    pub constant_70: MetricPattern1<StoredU16>,
-    pub constant_80: MetricPattern1<StoredU16>,
-    pub constant_100: MetricPattern1<StoredU16>,
-    pub constant_600: MetricPattern1<StoredU16>,
-    pub constant_minus_1: MetricPattern1<StoredI8>,
-    pub constant_minus_2: MetricPattern1<StoredI8>,
-    pub constant_minus_3: MetricPattern1<StoredI8>,
-    pub constant_minus_4: MetricPattern1<StoredI8>,
+    pub _0: MetricPattern1<StoredU16>,
+    pub _1: MetricPattern1<StoredU16>,
+    pub _2: MetricPattern1<StoredU16>,
+    pub _3: MetricPattern1<StoredU16>,
+    pub _4: MetricPattern1<StoredU16>,
+    pub _20: MetricPattern1<StoredU16>,
+    pub _30: MetricPattern1<StoredU16>,
+    pub _38_2: MetricPattern1<StoredF32>,
+    pub _50: MetricPattern1<StoredU16>,
+    pub _61_8: MetricPattern1<StoredF32>,
+    pub _70: MetricPattern1<StoredU16>,
+    pub _80: MetricPattern1<StoredU16>,
+    pub _100: MetricPattern1<StoredU16>,
+    pub _600: MetricPattern1<StoredU16>,
+    pub minus_1: MetricPattern1<StoredI8>,
+    pub minus_2: MetricPattern1<StoredI8>,
+    pub minus_3: MetricPattern1<StoredI8>,
+    pub minus_4: MetricPattern1<StoredI8>,
 }
 
 impl MetricsTree_Constants {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            constant_0: MetricPattern1::new(client.clone(), "constant_0".to_string()),
-            constant_1: MetricPattern1::new(client.clone(), "constant_1".to_string()),
-            constant_2: MetricPattern1::new(client.clone(), "constant_2".to_string()),
-            constant_3: MetricPattern1::new(client.clone(), "constant_3".to_string()),
-            constant_4: MetricPattern1::new(client.clone(), "constant_4".to_string()),
-            constant_20: MetricPattern1::new(client.clone(), "constant_20".to_string()),
-            constant_30: MetricPattern1::new(client.clone(), "constant_30".to_string()),
-            constant_38_2: MetricPattern1::new(client.clone(), "constant_38_2".to_string()),
-            constant_50: MetricPattern1::new(client.clone(), "constant_50".to_string()),
-            constant_61_8: MetricPattern1::new(client.clone(), "constant_61_8".to_string()),
-            constant_70: MetricPattern1::new(client.clone(), "constant_70".to_string()),
-            constant_80: MetricPattern1::new(client.clone(), "constant_80".to_string()),
-            constant_100: MetricPattern1::new(client.clone(), "constant_100".to_string()),
-            constant_600: MetricPattern1::new(client.clone(), "constant_600".to_string()),
-            constant_minus_1: MetricPattern1::new(client.clone(), "constant_minus_1".to_string()),
-            constant_minus_2: MetricPattern1::new(client.clone(), "constant_minus_2".to_string()),
-            constant_minus_3: MetricPattern1::new(client.clone(), "constant_minus_3".to_string()),
-            constant_minus_4: MetricPattern1::new(client.clone(), "constant_minus_4".to_string()),
+            _0: MetricPattern1::new(client.clone(), "constant_0".to_string()),
+            _1: MetricPattern1::new(client.clone(), "constant_1".to_string()),
+            _2: MetricPattern1::new(client.clone(), "constant_2".to_string()),
+            _3: MetricPattern1::new(client.clone(), "constant_3".to_string()),
+            _4: MetricPattern1::new(client.clone(), "constant_4".to_string()),
+            _20: MetricPattern1::new(client.clone(), "constant_20".to_string()),
+            _30: MetricPattern1::new(client.clone(), "constant_30".to_string()),
+            _38_2: MetricPattern1::new(client.clone(), "constant_38_2".to_string()),
+            _50: MetricPattern1::new(client.clone(), "constant_50".to_string()),
+            _61_8: MetricPattern1::new(client.clone(), "constant_61_8".to_string()),
+            _70: MetricPattern1::new(client.clone(), "constant_70".to_string()),
+            _80: MetricPattern1::new(client.clone(), "constant_80".to_string()),
+            _100: MetricPattern1::new(client.clone(), "constant_100".to_string()),
+            _600: MetricPattern1::new(client.clone(), "constant_600".to_string()),
+            minus_1: MetricPattern1::new(client.clone(), "constant_minus_1".to_string()),
+            minus_2: MetricPattern1::new(client.clone(), "constant_minus_2".to_string()),
+            minus_3: MetricPattern1::new(client.clone(), "constant_minus_3".to_string()),
+            minus_4: MetricPattern1::new(client.clone(), "constant_minus_4".to_string()),
         }
     }
 }

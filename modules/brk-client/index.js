@@ -4764,8 +4764,8 @@ function createRawPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Positions
- * @property {MetricPattern18<BlkPosition>} blockPosition
- * @property {MetricPattern19<BlkPosition>} txPosition
+ * @property {MetricPattern18<BlkPosition>} block
+ * @property {MetricPattern19<BlkPosition>} tx
  */
 
 /**
@@ -4841,24 +4841,24 @@ function createRawPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Constants
- * @property {MetricPattern1<StoredU16>} constant0
- * @property {MetricPattern1<StoredU16>} constant1
- * @property {MetricPattern1<StoredU16>} constant2
- * @property {MetricPattern1<StoredU16>} constant3
- * @property {MetricPattern1<StoredU16>} constant4
- * @property {MetricPattern1<StoredU16>} constant20
- * @property {MetricPattern1<StoredU16>} constant30
- * @property {MetricPattern1<StoredF32>} constant382
- * @property {MetricPattern1<StoredU16>} constant50
- * @property {MetricPattern1<StoredF32>} constant618
- * @property {MetricPattern1<StoredU16>} constant70
- * @property {MetricPattern1<StoredU16>} constant80
- * @property {MetricPattern1<StoredU16>} constant100
- * @property {MetricPattern1<StoredU16>} constant600
- * @property {MetricPattern1<StoredI8>} constantMinus1
- * @property {MetricPattern1<StoredI8>} constantMinus2
- * @property {MetricPattern1<StoredI8>} constantMinus3
- * @property {MetricPattern1<StoredI8>} constantMinus4
+ * @property {MetricPattern1<StoredU16>} _0
+ * @property {MetricPattern1<StoredU16>} _1
+ * @property {MetricPattern1<StoredU16>} _2
+ * @property {MetricPattern1<StoredU16>} _3
+ * @property {MetricPattern1<StoredU16>} _4
+ * @property {MetricPattern1<StoredU16>} _20
+ * @property {MetricPattern1<StoredU16>} _30
+ * @property {MetricPattern1<StoredF32>} _382
+ * @property {MetricPattern1<StoredU16>} _50
+ * @property {MetricPattern1<StoredF32>} _618
+ * @property {MetricPattern1<StoredU16>} _70
+ * @property {MetricPattern1<StoredU16>} _80
+ * @property {MetricPattern1<StoredU16>} _100
+ * @property {MetricPattern1<StoredU16>} _600
+ * @property {MetricPattern1<StoredI8>} minus1
+ * @property {MetricPattern1<StoredI8>} minus2
+ * @property {MetricPattern1<StoredI8>} minus3
+ * @property {MetricPattern1<StoredI8>} minus4
  */
 
 /**
@@ -7401,8 +7401,8 @@ class BrkClient extends BrkClientBase {
         },
       },
       positions: {
-        blockPosition: createMetricPattern18(this, 'position'),
-        txPosition: createMetricPattern19(this, 'position'),
+        block: createMetricPattern18(this, 'position'),
+        tx: createMetricPattern19(this, 'position'),
       },
       cointime: {
         activity: {
@@ -7453,24 +7453,24 @@ class BrkClient extends BrkClientBase {
         },
       },
       constants: {
-        constant0: createMetricPattern1(this, 'constant_0'),
-        constant1: createMetricPattern1(this, 'constant_1'),
-        constant2: createMetricPattern1(this, 'constant_2'),
-        constant3: createMetricPattern1(this, 'constant_3'),
-        constant4: createMetricPattern1(this, 'constant_4'),
-        constant20: createMetricPattern1(this, 'constant_20'),
-        constant30: createMetricPattern1(this, 'constant_30'),
-        constant382: createMetricPattern1(this, 'constant_38_2'),
-        constant50: createMetricPattern1(this, 'constant_50'),
-        constant618: createMetricPattern1(this, 'constant_61_8'),
-        constant70: createMetricPattern1(this, 'constant_70'),
-        constant80: createMetricPattern1(this, 'constant_80'),
-        constant100: createMetricPattern1(this, 'constant_100'),
-        constant600: createMetricPattern1(this, 'constant_600'),
-        constantMinus1: createMetricPattern1(this, 'constant_minus_1'),
-        constantMinus2: createMetricPattern1(this, 'constant_minus_2'),
-        constantMinus3: createMetricPattern1(this, 'constant_minus_3'),
-        constantMinus4: createMetricPattern1(this, 'constant_minus_4'),
+        _0: createMetricPattern1(this, 'constant_0'),
+        _1: createMetricPattern1(this, 'constant_1'),
+        _2: createMetricPattern1(this, 'constant_2'),
+        _3: createMetricPattern1(this, 'constant_3'),
+        _4: createMetricPattern1(this, 'constant_4'),
+        _20: createMetricPattern1(this, 'constant_20'),
+        _30: createMetricPattern1(this, 'constant_30'),
+        _382: createMetricPattern1(this, 'constant_38_2'),
+        _50: createMetricPattern1(this, 'constant_50'),
+        _618: createMetricPattern1(this, 'constant_61_8'),
+        _70: createMetricPattern1(this, 'constant_70'),
+        _80: createMetricPattern1(this, 'constant_80'),
+        _100: createMetricPattern1(this, 'constant_100'),
+        _600: createMetricPattern1(this, 'constant_600'),
+        minus1: createMetricPattern1(this, 'constant_minus_1'),
+        minus2: createMetricPattern1(this, 'constant_minus_2'),
+        minus3: createMetricPattern1(this, 'constant_minus_3'),
+        minus4: createMetricPattern1(this, 'constant_minus_4'),
       },
       indexes: {
         address: {

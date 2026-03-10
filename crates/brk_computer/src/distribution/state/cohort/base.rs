@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_types::{Age, Cents, CentsCompact, CentsSats, CentsSquaredSats, CostBasisSnapshot, Height, Sats, SupplyState};
 
-use super::super::cost_basis::{Accumulate, CostBasisData, CostBasisOps, PendingDelta, RealizedOps, UnrealizedState};
+use super::super::{cost_basis::{Accumulate, CostBasisData, CostBasisOps, RealizedOps, UnrealizedState}, pending::PendingDelta};
 
 pub struct SendPrecomputed {
     pub sats: Sats,

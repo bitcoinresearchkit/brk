@@ -3691,8 +3691,8 @@ class MetricsTree_Positions:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.block_position: MetricPattern18[BlkPosition] = MetricPattern18(client, 'position')
-        self.tx_position: MetricPattern19[BlkPosition] = MetricPattern19(client, 'position')
+        self.block: MetricPattern18[BlkPosition] = MetricPattern18(client, 'position')
+        self.tx: MetricPattern19[BlkPosition] = MetricPattern19(client, 'position')
 
 class MetricsTree_Cointime_Activity:
     """Metrics tree node."""
@@ -3777,24 +3777,24 @@ class MetricsTree_Constants:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.constant_0: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_0')
-        self.constant_1: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_1')
-        self.constant_2: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_2')
-        self.constant_3: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_3')
-        self.constant_4: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_4')
-        self.constant_20: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_20')
-        self.constant_30: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_30')
-        self.constant_38_2: MetricPattern1[StoredF32] = MetricPattern1(client, 'constant_38_2')
-        self.constant_50: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_50')
-        self.constant_61_8: MetricPattern1[StoredF32] = MetricPattern1(client, 'constant_61_8')
-        self.constant_70: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_70')
-        self.constant_80: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_80')
-        self.constant_100: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_100')
-        self.constant_600: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_600')
-        self.constant_minus_1: MetricPattern1[StoredI8] = MetricPattern1(client, 'constant_minus_1')
-        self.constant_minus_2: MetricPattern1[StoredI8] = MetricPattern1(client, 'constant_minus_2')
-        self.constant_minus_3: MetricPattern1[StoredI8] = MetricPattern1(client, 'constant_minus_3')
-        self.constant_minus_4: MetricPattern1[StoredI8] = MetricPattern1(client, 'constant_minus_4')
+        self._0: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_0')
+        self._1: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_1')
+        self._2: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_2')
+        self._3: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_3')
+        self._4: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_4')
+        self._20: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_20')
+        self._30: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_30')
+        self._38_2: MetricPattern1[StoredF32] = MetricPattern1(client, 'constant_38_2')
+        self._50: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_50')
+        self._61_8: MetricPattern1[StoredF32] = MetricPattern1(client, 'constant_61_8')
+        self._70: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_70')
+        self._80: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_80')
+        self._100: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_100')
+        self._600: MetricPattern1[StoredU16] = MetricPattern1(client, 'constant_600')
+        self.minus_1: MetricPattern1[StoredI8] = MetricPattern1(client, 'constant_minus_1')
+        self.minus_2: MetricPattern1[StoredI8] = MetricPattern1(client, 'constant_minus_2')
+        self.minus_3: MetricPattern1[StoredI8] = MetricPattern1(client, 'constant_minus_3')
+        self.minus_4: MetricPattern1[StoredI8] = MetricPattern1(client, 'constant_minus_4')
 
 class MetricsTree_Indexes_Address_P2pk33:
     """Metrics tree node."""

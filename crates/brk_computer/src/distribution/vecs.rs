@@ -240,6 +240,15 @@ impl Vecs {
 
         // 1. Find minimum height we have data for across stateful vecs
         let current_height = Height::from(self.supply_state.len());
+        debug!("supply_state.len={}", self.supply_state.len());
+        debug!("utxo_cohorts.min={}", self.utxo_cohorts.min_separate_stateful_height_len());
+        debug!("address_cohorts.min={}", self.address_cohorts.min_separate_stateful_height_len());
+        debug!("address_indexes.min={}", self.any_address_indexes.min_stamped_height());
+        debug!("addresses_data.min={}", self.addresses_data.min_stamped_height());
+        debug!("addr_count.min={}", self.addr_count.min_stateful_height());
+        debug!("empty_addr_count.min={}", self.empty_addr_count.min_stateful_height());
+        debug!("address_activity.min={}", self.address_activity.min_stateful_height());
+        debug!("coinblocks_destroyed.raw.height.len={}", self.coinblocks_destroyed.raw.height.len());
         let min_stateful = self.min_stateful_height_len();
 
         // 2. Determine start mode and recover/reset state

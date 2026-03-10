@@ -5,8 +5,7 @@ use brk_indexer::Indexer;
 use brk_query::Vecs;
 use vecdb::ReadOnlyClone;
 
-pub fn main() -> color_eyre::Result<()> {
-    color_eyre::install()?;
+pub fn main() -> brk_error::Result<()> {
 
     let tmp = env::temp_dir().join("brk_search_gen");
     fs::create_dir_all(&tmp)?;
