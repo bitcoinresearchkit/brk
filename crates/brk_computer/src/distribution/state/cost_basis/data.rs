@@ -112,7 +112,7 @@ impl CostBasisRaw {
             .collect())
     }
 
-    fn apply_pending_raw(&mut self) {
+    fn apply_pending_cap(&mut self) {
         if self.pending_cap.is_zero() {
             return;
         }
@@ -209,7 +209,7 @@ impl CostBasisOps for CostBasisRaw {
     }
 
     fn apply_pending(&mut self) {
-        self.apply_pending_raw();
+        self.apply_pending_cap();
     }
 
     fn init(&mut self) {
@@ -224,7 +224,7 @@ impl CostBasisOps for CostBasisRaw {
     }
 
     fn write(&mut self, height: Height, cleanup: bool) -> Result<()> {
-        self.apply_pending_raw();
+        self.apply_pending_cap();
         self.write_and_cleanup(height, cleanup)?;
         fs::write(
             self.path_state(height),
@@ -429,7 +429,7 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
 
     fn apply_pending(&mut self) {
         self.apply_map_pending();
-        self.raw.apply_pending_raw();
+        self.raw.apply_pending_cap();
         self.investor_cap_raw += self.pending_investor_cap.inc;
         self.investor_cap_raw -= self.pending_investor_cap.dec;
         self.pending_investor_cap = PendingInvestorCapDelta::default();
