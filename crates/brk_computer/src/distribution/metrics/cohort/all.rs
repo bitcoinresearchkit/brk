@@ -32,6 +32,7 @@ pub struct AllCohortMetrics<M: StorageMode = Rw> {
     pub unrealized: Box<UnrealizedFull<M>>,
     #[traversable(wrap = "realized/sopr", rename = "adjusted")]
     pub asopr: Box<AdjustedSopr<M>>,
+    #[traversable(flatten)]
     pub relative: Box<RelativeForAll<M>>,
 
     #[traversable(wrap = "supply", rename = "delta")]

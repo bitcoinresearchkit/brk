@@ -53,7 +53,6 @@ impl<C: CentsType> RollingWindow24hFiatPerBlock<C> {
 /// Fiat per-block value (cents + usd) with 24h rolling sum (also fiat).
 #[derive(Traversable)]
 pub struct FiatPerBlockWithSum24h<C: CentsType, M: StorageMode = Rw> {
-    #[traversable(flatten)]
     pub raw: FiatPerBlock<C, M>,
     pub sum: RollingWindow24hFiatPerBlock<C, M>,
 }

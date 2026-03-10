@@ -29,7 +29,7 @@ impl Vecs {
             exit,
         )?;
 
-        self.reserve_risk.height.compute_divide(
+        self.value.height.compute_divide(
             starting_indexes.height,
             &prices.price.usd.height,
             &self.hodl_bank,

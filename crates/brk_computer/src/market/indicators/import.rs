@@ -8,7 +8,7 @@ use crate::{
     internal::{ComputedPerBlock, RatioPerBlock, PercentPerBlock, Windows},
 };
 
-const VERSION: Version = Version::ONE;
+const VERSION: Version = Version::new(2);
 
 impl RsiChain {
     fn forced_import(
@@ -117,6 +117,8 @@ impl Vecs {
 
         let pi_cycle = RatioPerBlock::forced_import_raw(db, "pi_cycle", v, indexes)?;
 
+        let rhodl_ratio = RatioPerBlock::forced_import_raw(db, "rhodl_ratio", v, indexes)?;
+
         Ok(Self {
             puell_multiple: RatioPerBlock::forced_import_raw(
                 db,
@@ -131,6 +133,7 @@ impl Vecs {
             pi_cycle,
             macd,
             gini,
+            rhodl_ratio,
         })
     }
 }

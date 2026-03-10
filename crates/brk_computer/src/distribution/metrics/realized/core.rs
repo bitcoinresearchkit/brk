@@ -47,7 +47,7 @@ pub struct RealizedCore<M: StorageMode = Rw> {
     #[traversable(wrap = "cap", rename = "delta")]
     pub cap_delta: FiatRollingDelta1m<Cents, CentsSigned, M>,
 
-    #[traversable(wrap = "loss", rename = "neg")]
+    #[traversable(wrap = "loss", rename = "negative")]
     pub neg_loss: LazyPerBlock<Dollars, Cents>,
     pub net_pnl: PerBlockWithSum24h<CentsSigned, M>,
     pub sopr: RealizedSoprCore<M>,

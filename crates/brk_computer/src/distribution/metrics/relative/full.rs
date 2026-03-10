@@ -11,9 +11,9 @@ use crate::{
 /// Full relative metrics (sth/lth/all tier).
 #[derive(Traversable)]
 pub struct RelativeFull<M: StorageMode = Rw> {
-    #[traversable(wrap = "supply/in_profit", rename = "rel_to_own_supply")]
+    #[traversable(wrap = "unrealized/profit/supply", rename = "rel_to_own_supply")]
     pub supply_in_profit_rel_to_own_supply: PercentPerBlock<BasisPoints16, M>,
-    #[traversable(wrap = "supply/in_loss", rename = "rel_to_own_supply")]
+    #[traversable(wrap = "unrealized/loss/supply", rename = "rel_to_own_supply")]
     pub supply_in_loss_rel_to_own_supply: PercentPerBlock<BasisPoints16, M>,
 
     #[traversable(wrap = "unrealized/profit", rename = "rel_to_market_cap")]

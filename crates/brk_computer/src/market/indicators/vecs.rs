@@ -42,4 +42,6 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub macd: Windows<MacdChain<M>>,
 
     pub gini: PercentPerBlock<BasisPoints16, M>,
+
+    pub rhodl_ratio: RatioPerBlock<BasisPoints32, M>,
 }

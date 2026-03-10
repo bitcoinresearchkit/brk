@@ -14,7 +14,9 @@ use crate::distribution::metrics::ImportConfig;
 pub struct AdjustedSopr<M: StorageMode = Rw> {
     pub value_created: ComputedPerBlock<Cents, M>,
     pub value_destroyed: ComputedPerBlock<Cents, M>,
+    #[traversable(wrap = "value_created", rename = "sum")]
     pub value_created_sum: RollingWindows<Cents, M>,
+    #[traversable(wrap = "value_destroyed", rename = "sum")]
     pub value_destroyed_sum: RollingWindows<Cents, M>,
     pub ratio: RollingWindows<StoredF64, M>,
 }

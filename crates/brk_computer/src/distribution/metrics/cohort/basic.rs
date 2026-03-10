@@ -22,6 +22,7 @@ pub struct BasicCohortMetrics<M: StorageMode = Rw> {
     pub activity: Box<ActivityCore<M>>,
     pub realized: Box<RealizedCore<M>>,
     pub unrealized: Box<UnrealizedBase<M>>,
+    #[traversable(flatten)]
     pub relative: Box<RelativeToAll<M>>,
 }
 

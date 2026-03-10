@@ -28,6 +28,7 @@ pub struct ExtendedCohortMetrics<M: StorageMode = Rw> {
     pub realized: Box<RealizedFull<M>>,
     pub cost_basis: Box<CostBasis<M>>,
     pub unrealized: Box<UnrealizedFull<M>>,
+    #[traversable(flatten)]
     pub relative: Box<RelativeWithExtended<M>>,
 
     #[traversable(wrap = "supply", rename = "delta")]

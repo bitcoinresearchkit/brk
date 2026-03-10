@@ -14,7 +14,7 @@ impl Vecs {
         activity: &activity::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        self.adj_inflation_rate.bps.height.compute_transform2(
+        self.inflation_rate.bps.height.compute_transform2(
             starting_indexes.height,
             &activity.liveliness.height,
             &supply.inflation_rate.bps.height,
@@ -27,14 +27,14 @@ impl Vecs {
             exit,
         )?;
 
-        self.adj_tx_velocity_btc.height.compute_multiply(
+        self.tx_velocity_btc.height.compute_multiply(
             starting_indexes.height,
             &activity.activity_to_vaultedness_ratio.height,
             &supply.velocity.btc.height,
             exit,
         )?;
 
-        self.adj_tx_velocity_usd.height.compute_multiply(
+        self.tx_velocity_usd.height.compute_multiply(
             starting_indexes.height,
             &activity.activity_to_vaultedness_ratio.height,
             &supply.velocity.usd.height,

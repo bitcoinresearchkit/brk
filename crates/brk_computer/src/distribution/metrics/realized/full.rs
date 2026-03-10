@@ -32,9 +32,11 @@ pub struct RealizedProfit<M: StorageMode = Rw> {
     pub rel_to_rcap: PercentPerBlock<BasisPoints32, M>,
     pub value_created: ComputedPerBlock<Cents, M>,
     pub value_destroyed: ComputedPerBlock<Cents, M>,
+    #[traversable(wrap = "value_created", rename = "sum")]
     pub value_created_sum: RollingWindows<Cents, M>,
+    #[traversable(wrap = "value_destroyed", rename = "sum")]
     pub value_destroyed_sum: RollingWindows<Cents, M>,
-    pub flow: LazyPerBlock<Dollars, Cents>,
+    pub distribution_flow: LazyPerBlock<Dollars, Cents>,
     #[traversable(rename = "sum")]
     pub sum_extended: RollingWindowsFrom1w<Cents, M>,
 }
@@ -44,7 +46,9 @@ pub struct RealizedLoss<M: StorageMode = Rw> {
     pub rel_to_rcap: PercentPerBlock<BasisPoints32, M>,
     pub value_created: ComputedPerBlock<Cents, M>,
     pub value_destroyed: ComputedPerBlock<Cents, M>,
+    #[traversable(wrap = "value_created", rename = "sum")]
     pub value_created_sum: RollingWindows<Cents, M>,
+    #[traversable(wrap = "value_destroyed", rename = "sum")]
     pub value_destroyed_sum: RollingWindows<Cents, M>,
     pub capitulation_flow: LazyPerBlock<Dollars, Cents>,
     #[traversable(rename = "sum")]
@@ -53,8 +57,7 @@ pub struct RealizedLoss<M: StorageMode = Rw> {
 
 #[derive(Traversable)]
 pub struct RealizedGrossPnl<M: StorageMode = Rw> {
-    #[traversable(flatten)]
-    pub value: FiatPerBlock<Cents, M>,
+    pub raw: FiatPerBlock<Cents, M>,
     pub sum: RollingWindows<Cents, M>,
     pub sell_side_risk_ratio: PercentRollingWindows<BasisPoints32, M>,
 }
@@ -68,15 +71,17 @@ pub struct RealizedNetPnl<M: StorageMode = Rw> {
     pub delta: FiatRollingDelta1m<CentsSigned, CentsSigned, M>,
     #[traversable(rename = "delta")]
     pub delta_extended: FiatRollingDeltaExcept1m<CentsSigned, CentsSigned, M>,
+    #[traversable(wrap = "change_1m", rename = "rel_to_rcap")]
     pub change_1m_rel_to_rcap: PercentPerBlock<BasisPointsSigned32, M>,
+    #[traversable(wrap = "change_1m", rename = "rel_to_mcap")]
     pub change_1m_rel_to_mcap: PercentPerBlock<BasisPointsSigned32, M>,
 }
 
 #[derive(Traversable)]
 pub struct RealizedSopr<M: StorageMode = Rw> {
-    #[traversable(rename = "value_created_sum")]
+    #[traversable(wrap = "value_created", rename = "sum")]
     pub value_created_sum_extended: RollingWindowsFrom1w<Cents, M>,
-    #[traversable(rename = "value_destroyed_sum")]
+    #[traversable(wrap = "value_destroyed", rename = "sum")]
     pub value_destroyed_sum_extended: RollingWindowsFrom1w<Cents, M>,
     #[traversable(rename = "ratio")]
     pub ratio_extended: RollingWindowsFrom1w<StoredF64, M>,
@@ -103,6 +108,7 @@ pub struct RealizedInvestor<M: StorageMode = Rw> {
     pub price_ratio: RatioPerBlock<BasisPoints32, M>,
     pub lower_price_band: Price<ComputedPerBlock<Cents, M>>,
     pub upper_price_band: Price<ComputedPerBlock<Cents, M>>,
+    #[traversable(wrap = "cap", rename = "raw")]
     pub cap_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
     pub price_ratio_percentiles: RatioPerBlockPercentiles<M>,
 }
@@ -161,7 +167,7 @@ impl RealizedFull {
             value_destroyed: profit_value_destroyed,
             value_created_sum: cfg.import("profit_value_created", v1)?,
             value_destroyed_sum: cfg.import("profit_value_destroyed", v1)?,
-            flow: profit_flow,
+            distribution_flow: profit_flow,
             sum_extended: cfg.import("realized_profit", v1)?,
         };
 
@@ -186,7 +192,7 @@ impl RealizedFull {
 
         // Gross PnL
         let gross_pnl = RealizedGrossPnl {
-            value: cfg.import("realized_gross_pnl", v0)?,
+            raw: cfg.import("realized_gross_pnl", v0)?,
             sum: cfg.import("gross_pnl_sum", v1)?,
             sell_side_risk_ratio: cfg.import("sell_side_risk_ratio", Version::new(2))?,
         };
@@ -546,7 +552,7 @@ impl RealizedFull {
         )?;
 
         // Gross PnL
-        self.gross_pnl.value.cents.height.compute_add(
+        self.gross_pnl.raw.cents.height.compute_add(
             starting_indexes.height,
             &self.core.minimal.profit.raw.cents.height,
             &self.core.minimal.loss.raw.cents.height,
@@ -556,7 +562,7 @@ impl RealizedFull {
         self.gross_pnl.sum.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.gross_pnl.value.cents.height,
+            &self.gross_pnl.raw.cents.height,
             exit,
         )?;
 

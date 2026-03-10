@@ -25,7 +25,7 @@ pub struct UnrealizedCore<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub basic: UnrealizedBasic<M>,
 
-    #[traversable(wrap = "loss", rename = "neg")]
+    #[traversable(wrap = "loss", rename = "negative")]
     pub neg_loss: LazyPerBlock<Dollars, Cents>,
     pub net_pnl: FiatPerBlock<CentsSigned, M>,
 }

@@ -16,6 +16,7 @@ pub struct RelativeExtendedOwnPnl<M: StorageMode = Rw> {
     pub unrealized_loss_rel_to_own_gross_pnl: PercentPerBlock<BasisPoints16, M>,
     #[traversable(wrap = "unrealized/net_pnl", rename = "rel_to_own_gross_pnl")]
     pub net_unrealized_pnl_rel_to_own_gross_pnl: PercentPerBlock<BasisPointsSigned32, M>,
+
 }
 
 impl RelativeExtendedOwnPnl {
