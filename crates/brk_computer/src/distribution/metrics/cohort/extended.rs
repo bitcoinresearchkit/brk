@@ -2,18 +2,18 @@ use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    Bitcoin, Dollars, Height, Indexes, Sats, SatsSigned, StoredF32, StoredI64, StoredU64, Version,
+    Dollars, Height, Indexes, Sats, SatsSigned, StoredI64, StoredU64, Version,
 };
 use vecdb::AnyStoredVec;
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, prices};
 
-use crate::internal::{ComputedPerBlock, RollingDeltaExcept1m};
+use crate::internal::RollingDeltaExcept1m;
 
 use crate::distribution::metrics::{
-    ActivityFull, CohortMetricsBase, CostBasis, ImportConfig, OutputsMetrics,
-    RealizedFull, RelativeWithExtended, SupplyMetrics, UnrealizedFull,
+    ActivityFull, CohortMetricsBase, CostBasis, ImportConfig, OutputsFull,
+    RealizedFull, RelativeWithExtended, SupplyFull, UnrealizedFull,
 };
 
 /// Cohort metrics with extended realized + extended cost basis (no adjusted).
@@ -22,15 +22,13 @@ use crate::distribution::metrics::{
 pub struct ExtendedCohortMetrics<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub filter: Filter,
-    pub supply: Box<SupplyMetrics<M>>,
-    pub outputs: Box<OutputsMetrics<M>>,
+    pub supply: Box<SupplyFull<M>>,
+    pub outputs: Box<OutputsFull<M>>,
     pub activity: Box<ActivityFull<M>>,
     pub realized: Box<RealizedFull<M>>,
     pub cost_basis: Box<CostBasis<M>>,
     pub unrealized: Box<UnrealizedFull<M>>,
     pub relative: Box<RelativeWithExtended<M>>,
-    pub dormancy: ComputedPerBlock<StoredF32, M>,
-    pub velocity: ComputedPerBlock<StoredF32, M>,
 
     #[traversable(wrap = "supply", rename = "delta")]
     pub supply_delta_extended: RollingDeltaExcept1m<Sats, SatsSigned, M>,
@@ -70,15 +68,13 @@ impl CohortMetricsBase for ExtendedCohortMetrics {
         vecs.extend(self.realized.collect_vecs_mut());
         vecs.extend(self.cost_basis.collect_vecs_mut());
         vecs.extend(self.unrealized.collect_vecs_mut());
-        vecs.push(&mut self.dormancy.height);
-        vecs.push(&mut self.velocity.height);
         vecs
     }
 }
 
 impl ExtendedCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let supply = SupplyMetrics::forced_import(cfg)?;
+        let supply = SupplyFull::forced_import(cfg)?;
         let unrealized = UnrealizedFull::forced_import(cfg)?;
         let realized = RealizedFull::forced_import(cfg)?;
 
@@ -87,14 +83,12 @@ impl ExtendedCohortMetrics {
         Ok(Self {
             filter: cfg.filter.clone(),
             supply: Box::new(supply),
-            outputs: Box::new(OutputsMetrics::forced_import(cfg)?),
+            outputs: Box::new(OutputsFull::forced_import(cfg)?),
             activity: Box::new(ActivityFull::forced_import(cfg)?),
             realized: Box::new(realized),
             cost_basis: Box::new(CostBasis::forced_import(cfg)?),
             unrealized: Box::new(unrealized),
             relative: Box::new(relative),
-            dormancy: cfg.import("dormancy", Version::ONE)?,
-            velocity: cfg.import("velocity", Version::ONE)?,
             supply_delta_extended: cfg.import("supply_delta", Version::ONE)?,
             utxo_count_delta_extended: cfg.import("utxo_count_delta", Version::ONE)?,
         })
@@ -142,33 +136,9 @@ impl ExtendedCohortMetrics {
             exit,
         )?;
 
-        self.dormancy.height.compute_transform2(
-            starting_indexes.height,
-            &self.activity.coindays_destroyed.height,
-            &self.activity.sent.height,
-            |(i, cdd, sent_sats, ..)| {
-                let sent_btc = f64::from(Bitcoin::from(sent_sats));
-                if sent_btc == 0.0 {
-                    (i, StoredF32::from(0.0f32))
-                } else {
-                    (i, StoredF32::from((f64::from(cdd) / sent_btc) as f32))
-                }
-            },
-            exit,
-        )?;
-
-        self.velocity.height.compute_transform2(
-            starting_indexes.height,
-            &self.activity.sent.height,
+        self.activity.compute_rest_part2(
+            starting_indexes,
             &self.supply.total.sats.height,
-            |(i, sent_sats, supply_sats, ..)| {
-                let supply = supply_sats.as_u128() as f64;
-                if supply == 0.0 {
-                    (i, StoredF32::from(0.0f32))
-                } else {
-                    (i, StoredF32::from((sent_sats.as_u128() as f64 / supply) as f32))
-                }
-            },
             exit,
         )?;
 

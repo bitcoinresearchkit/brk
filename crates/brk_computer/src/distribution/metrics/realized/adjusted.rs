@@ -11,22 +11,22 @@ use crate::{
 use crate::distribution::metrics::ImportConfig;
 
 #[derive(Traversable)]
-pub struct RealizedAdjusted<M: StorageMode = Rw> {
+pub struct AdjustedSopr<M: StorageMode = Rw> {
     pub value_created: ComputedPerBlock<Cents, M>,
     pub value_destroyed: ComputedPerBlock<Cents, M>,
     pub value_created_sum: RollingWindows<Cents, M>,
     pub value_destroyed_sum: RollingWindows<Cents, M>,
-    pub sopr: RollingWindows<StoredF64, M>,
+    pub ratio: RollingWindows<StoredF64, M>,
 }
 
-impl RealizedAdjusted {
+impl AdjustedSopr {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        Ok(RealizedAdjusted {
+        Ok(Self {
             value_created: cfg.import("adjusted_value_created", Version::ZERO)?,
             value_destroyed: cfg.import("adjusted_value_destroyed", Version::ZERO)?,
             value_created_sum: cfg.import("adjusted_value_created", Version::ONE)?,
             value_destroyed_sum: cfg.import("adjusted_value_destroyed", Version::ONE)?,
-            sopr: cfg.import("adjusted_sopr", Version::ONE)?,
+            ratio: cfg.import("adjusted_sopr", Version::ONE)?,
         })
     }
 
@@ -72,7 +72,7 @@ impl RealizedAdjusted {
 
         // SOPR ratios from rolling sums
         for ((sopr, vc), vd) in self
-            .sopr
+            .ratio
             .as_mut_array()
             .into_iter()
             .zip(self.value_created_sum.as_array())

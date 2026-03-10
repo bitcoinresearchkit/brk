@@ -26,7 +26,7 @@ impl Query {
     fn block_txids_by_height(&self, height: Height) -> Result<Vec<Txid>> {
         let indexer = self.indexer();
 
-        let max_height = self.height();
+        let max_height = self.indexed_height();
         if height > max_height {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
@@ -55,7 +55,7 @@ impl Query {
     fn block_txs_by_height(&self, height: Height, start_index: usize) -> Result<Vec<Transaction>> {
         let indexer = self.indexer();
 
-        let max_height = self.height();
+        let max_height = self.indexed_height();
         if height > max_height {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
@@ -97,7 +97,7 @@ impl Query {
     fn block_txid_at_index_by_height(&self, height: Height, index: usize) -> Result<Txid> {
         let indexer = self.indexer();
 
-        let max_height = self.height();
+        let max_height = self.indexed_height();
         if height > max_height {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }

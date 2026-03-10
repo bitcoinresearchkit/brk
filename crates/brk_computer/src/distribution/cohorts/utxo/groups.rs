@@ -17,9 +17,10 @@ use crate::{
     distribution::{
         DynCohortVecs,
         metrics::{
-            AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase, CoreCohortMetrics,
-            ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig,
-            MinimalCohortMetrics, ProfitabilityMetrics, RealizedFullAccum, SupplyMetrics,
+            AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase,
+            CoreCohortMetrics, ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig,
+            MinimalCohortMetrics, ProfitabilityMetrics, RealizedFullAccum, SupplyFull,
+            TypeCohortMetrics,
         },
         state::UTXOCohortState,
     },
@@ -47,7 +48,7 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     pub amount_range: ByAmountRange<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
     pub lt_amount: ByLowerThanAmount<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
     #[traversable(rename = "type")]
-    pub type_: BySpendableType<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
+    pub type_: BySpendableType<UTXOCohortVecs<TypeCohortMetrics<M>>>,
     pub profitability: ProfitabilityMetrics<M>,
     pub matured: ByAgeRange<AmountPerBlock<M>>,
     #[traversable(skip)]
@@ -81,7 +82,7 @@ impl UTXOCohorts<Rw> {
             version: v + Version::ONE,
             indexes,
         };
-        let all_supply = SupplyMetrics::forced_import(&all_cfg)?;
+        let all_supply = SupplyFull::forced_import(&all_cfg)?;
 
         // Phase 2: Import separate (stateful) cohorts.
 
@@ -144,7 +145,25 @@ impl UTXOCohorts<Rw> {
             };
 
         let amount_range = ByAmountRange::try_new(&minimal_separate)?;
-        let type_ = BySpendableType::try_new(&minimal_separate)?;
+
+        let type_separate =
+            |f: Filter, name: &'static str| -> Result<UTXOCohortVecs<TypeCohortMetrics>> {
+                let full_name = CohortContext::Utxo.full_name(&f, name);
+                let cfg = ImportConfig {
+                    db,
+                    filter: &f,
+                    full_name: &full_name,
+                    version: v,
+                    indexes,
+                };
+                let state = Some(Box::new(UTXOCohortState::new(states_path, &full_name)));
+                Ok(UTXOCohortVecs::new(
+                    state,
+                    TypeCohortMetrics::forced_import(&cfg)?,
+                ))
+            };
+
+        let type_ = BySpendableType::try_new(&type_separate)?;
 
         // Phase 3: Import "all" cohort with pre-imported supply.
         let all = UTXOCohortVecs::new(
@@ -208,7 +227,6 @@ impl UTXOCohorts<Rw> {
         // min_age: CoreCohortMetrics (no state, aggregates from age_range)
         let min_age = ByMinAge::try_new(&core_no_state)?;
 
-        // MinimalCohortMetrics without state (for aggregate amount cohorts)
         let minimal_no_state =
             |f: Filter, name: &'static str| -> Result<UTXOCohortVecs<MinimalCohortMetrics>> {
                 let full_name = CohortContext::Utxo.full_name(&f, name);
@@ -424,7 +442,8 @@ impl UTXOCohorts<Rw> {
                     .try_for_each(|vecs| {
                         let sources =
                             filter_minimal_sources_from(amr.iter(), Some(&vecs.metrics.filter));
-                        vecs.metrics.compute_from_sources(si, &sources, exit)
+                        vecs.metrics
+                            .compute_from_sources(si, &sources, exit)
                     })
             }),
         ];
@@ -507,7 +526,10 @@ impl UTXOCohorts<Rw> {
             .up_to_1h
             .metrics
             .realized
+            .minimal
+            .sopr
             .value_created
+            .raw
             .height
             .read_only_clone();
         let up_to_1h_value_destroyed = self
@@ -515,7 +537,10 @@ impl UTXOCohorts<Rw> {
             .up_to_1h
             .metrics
             .realized
+            .minimal
+            .sopr
             .value_destroyed
+            .raw
             .height
             .read_only_clone();
 
@@ -744,12 +769,6 @@ impl UTXOCohorts<Rw> {
             v.metrics.validate_computed_versions(base_version)?;
         }
         for v in self.max_age.iter_mut() {
-            v.metrics.validate_computed_versions(base_version)?;
-        }
-        for v in self.ge_amount.iter_mut() {
-            v.metrics.validate_computed_versions(base_version)?;
-        }
-        for v in self.lt_amount.iter_mut() {
             v.metrics.validate_computed_versions(base_version)?;
         }
         Ok(())

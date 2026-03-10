@@ -10,7 +10,7 @@ impl Query {
         let indexer = self.indexer();
         let computer = self.computer();
 
-        let max_height = self.height();
+        let max_height = self.indexed_height();
         let max_height_usize: usize = max_height.into();
 
         if max_height_usize == 0 {

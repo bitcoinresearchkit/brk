@@ -3,6 +3,8 @@ use aide::transform::{TransformOperation, TransformResponse};
 use axum::Json;
 use schemars::JsonSchema;
 
+use crate::error::ErrorBody;
+
 pub trait TransformResponseExtended<'t> {
     fn addresses_tag(self) -> Self;
     fn blocks_tag(self) -> Self;
@@ -99,13 +101,13 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
     }
 
     fn bad_request(self) -> Self {
-        self.response_with::<400, Json<String>, _>(|res| {
+        self.response_with::<400, Json<ErrorBody>, _>(|res| {
             res.description("Invalid request parameters")
         })
     }
 
     fn not_found(self) -> Self {
-        self.response_with::<404, Json<String>, _>(|res| res.description("Resource not found"))
+        self.response_with::<404, Json<ErrorBody>, _>(|res| res.description("Resource not found"))
     }
 
     fn not_modified(self) -> Self {
@@ -115,6 +117,8 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
     }
 
     fn server_error(self) -> Self {
-        self.response_with::<500, Json<String>, _>(|res| res.description("Internal server error"))
+        self.response_with::<500, Json<ErrorBody>, _>(|res| {
+            res.description("Internal server error")
+        })
     }
 }

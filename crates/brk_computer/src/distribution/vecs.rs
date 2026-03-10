@@ -60,9 +60,9 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// Windowed change + growth rate for addr_count, global + per-type
     pub delta: DeltaVecs<M>,
 
-    pub fundedaddressindex:
+    pub funded_address_index:
         LazyVecFrom1<FundedAddressIndex, FundedAddressIndex, FundedAddressIndex, FundedAddressData>,
-    pub emptyaddressindex:
+    pub empty_address_index:
         LazyVecFrom1<EmptyAddressIndex, EmptyAddressIndex, EmptyAddressIndex, EmptyAddressData>,
 
     /// In-memory block state for UTXO processing. Persisted via supply_state.
@@ -115,14 +115,14 @@ impl Vecs {
         )?;
 
         // Identity mappings for traversable
-        let fundedaddressindex = LazyVecFrom1::init(
-            "fundedaddressindex",
+        let funded_address_index = LazyVecFrom1::init(
+            "funded_address_index",
             version,
             fundedaddressindex_to_fundedaddressdata.read_only_boxed_clone(),
             |index, _| index,
         );
-        let emptyaddressindex = LazyVecFrom1::init(
-            "emptyaddressindex",
+        let empty_address_index = LazyVecFrom1::init(
+            "empty_address_index",
             version,
             emptyaddressindex_to_emptyaddressdata.read_only_boxed_clone(),
             |index, _| index,
@@ -164,8 +164,8 @@ impl Vecs {
                 funded: fundedaddressindex_to_fundedaddressdata,
                 empty: emptyaddressindex_to_emptyaddressdata,
             },
-            fundedaddressindex,
-            emptyaddressindex,
+            funded_address_index,
+            empty_address_index,
 
             chain_state: Vec::new(),
             txindex_to_height: RangeMap::default(),

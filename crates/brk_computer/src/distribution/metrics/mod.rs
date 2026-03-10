@@ -19,10 +19,10 @@ mod activity;
 macro_rules! impl_cohort_accessors {
     () => {
         fn filter(&self) -> &brk_cohort::Filter { &self.filter }
-        fn supply(&self) -> &$crate::distribution::metrics::SupplyMetrics { &self.supply }
-        fn supply_mut(&mut self) -> &mut $crate::distribution::metrics::SupplyMetrics { &mut self.supply }
-        fn outputs(&self) -> &$crate::distribution::metrics::OutputsMetrics { &self.outputs }
-        fn outputs_mut(&mut self) -> &mut $crate::distribution::metrics::OutputsMetrics { &mut self.outputs }
+        fn supply(&self) -> &$crate::distribution::metrics::SupplyFull { &self.supply }
+        fn supply_mut(&mut self) -> &mut $crate::distribution::metrics::SupplyFull { &mut self.supply }
+        fn outputs(&self) -> &$crate::distribution::metrics::OutputsFull { &self.outputs }
+        fn outputs_mut(&mut self) -> &mut $crate::distribution::metrics::OutputsFull { &mut self.outputs }
         fn activity(&self) -> &Self::ActivityVecs { &self.activity }
         fn activity_mut(&mut self) -> &mut Self::ActivityVecs { &mut self.activity }
         fn realized(&self) -> &Self::RealizedVecs { &self.realized }
@@ -42,24 +42,24 @@ mod relative;
 mod supply;
 mod unrealized;
 
-pub use activity::{ActivityBase, ActivityCore, ActivityFull, ActivityLike};
+pub use activity::{ActivityCore, ActivityFull, ActivityLike};
 pub use cohort::{
-    AllCohortMetrics, BasicCohortMetrics, CoreCohortMetrics, ExtendedAdjustedCohortMetrics,
-    ExtendedCohortMetrics, MinimalCohortMetrics,
+    AllCohortMetrics, BasicCohortMetrics, CoreCohortMetrics,
+    ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, MinimalCohortMetrics, TypeCohortMetrics,
 };
 pub use config::ImportConfig;
 pub use cost_basis::CostBasis;
 pub use profitability::ProfitabilityMetrics;
-pub use outputs::OutputsMetrics;
+pub use outputs::{OutputsBase, OutputsFull};
 pub use realized::{
-    RealizedAdjusted, RealizedBase, RealizedCore, RealizedFull, RealizedFullAccum, RealizedLike,
+    AdjustedSopr, RealizedCore, RealizedFull, RealizedFullAccum, RealizedLike,
     RealizedMinimal,
 };
 pub use relative::{
     RelativeForAll, RelativeToAll, RelativeWithExtended,
 };
-pub use supply::SupplyMetrics;
-pub use unrealized::{UnrealizedBase, UnrealizedCore, UnrealizedFull, UnrealizedLike};
+pub use supply::{SupplyBase, SupplyFull};
+pub use unrealized::{UnrealizedBase, UnrealizedBasic, UnrealizedCore, UnrealizedFull, UnrealizedLike};
 
 use brk_cohort::Filter;
 use brk_error::Result;
@@ -72,6 +72,9 @@ pub trait CohortMetricsState {
     type Realized: RealizedOps;
 }
 
+impl<M: StorageMode> CohortMetricsState for TypeCohortMetrics<M> {
+    type Realized = MinimalRealizedState;
+}
 impl<M: StorageMode> CohortMetricsState for MinimalCohortMetrics<M> {
     type Realized = MinimalRealizedState;
 }
@@ -97,10 +100,10 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
     type UnrealizedVecs: UnrealizedLike;
 
     fn filter(&self) -> &Filter;
-    fn supply(&self) -> &SupplyMetrics;
-    fn supply_mut(&mut self) -> &mut SupplyMetrics;
-    fn outputs(&self) -> &OutputsMetrics;
-    fn outputs_mut(&mut self) -> &mut OutputsMetrics;
+    fn supply(&self) -> &SupplyFull;
+    fn supply_mut(&mut self) -> &mut SupplyFull;
+    fn outputs(&self) -> &OutputsFull;
+    fn outputs_mut(&mut self) -> &mut OutputsFull;
     fn activity(&self) -> &Self::ActivityVecs;
     fn activity_mut(&mut self) -> &mut Self::ActivityVecs;
     fn realized(&self) -> &Self::RealizedVecs;
@@ -108,13 +111,13 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
     fn unrealized(&self) -> &Self::UnrealizedVecs;
     fn unrealized_mut(&mut self) -> &mut Self::UnrealizedVecs;
 
-    /// Convenience: access activity as `&ActivityBase` (via `ActivityLike::as_base`).
-    fn activity_base(&self) -> &ActivityBase { self.activity().as_base() }
-    fn activity_base_mut(&mut self) -> &mut ActivityBase { self.activity_mut().as_base_mut() }
+    /// Convenience: access activity as `&ActivityCore` (via `ActivityLike::as_core`).
+    fn activity_core(&self) -> &ActivityCore { self.activity().as_core() }
+    fn activity_core_mut(&mut self) -> &mut ActivityCore { self.activity_mut().as_core_mut() }
 
-    /// Convenience: access realized as `&RealizedBase` (via `RealizedLike::as_base`).
-    fn realized_base(&self) -> &RealizedBase { self.realized().as_base() }
-    fn realized_base_mut(&mut self) -> &mut RealizedBase { self.realized_mut().as_base_mut() }
+    /// Convenience: access realized as `&RealizedCore` (via `RealizedLike::as_core`).
+    fn realized_core(&self) -> &RealizedCore { self.realized().as_core() }
+    fn realized_core_mut(&mut self) -> &mut RealizedCore { self.realized_mut().as_core_mut() }
 
     /// Convenience: access unrealized as `&UnrealizedBase` (via `UnrealizedLike::as_base`).
     fn unrealized_base(&self) -> &UnrealizedBase { self.unrealized().as_base() }
@@ -152,18 +155,10 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
     }
 
     fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState>) -> Result<()> {
-        self.supply_mut()
-            .truncate_push(height, state.supply.value)?;
-        self.outputs_mut()
-            .truncate_push(height, state.supply.utxo_count)?;
-        self.activity_mut().truncate_push(
-            height,
-            state.sent,
-            state.satblocks_destroyed,
-            state.satdays_destroyed,
-        )?;
-        self.realized_mut()
-            .truncate_push(height, &state.realized)?;
+        self.supply_mut().truncate_push(height, state)?;
+        self.outputs_mut().truncate_push(height, state)?;
+        self.activity_mut().truncate_push(height, state)?;
+        self.realized_mut().truncate_push(height, state)?;
         Ok(())
     }
 
@@ -188,7 +183,7 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
             .compute_rest_part1(blocks, starting_indexes, exit)?;
 
         self.unrealized_mut()
-            .compute_rest(prices, starting_indexes, exit)?;
+            .compute_rest(blocks, prices, starting_indexes, exit)?;
 
         self.unrealized_mut()
             .compute_net_sentiment_height(starting_indexes, exit)?;
@@ -215,12 +210,12 @@ pub trait CohortMetricsBase: CohortMetricsState<Realized = RealizedState> + Send
         )?;
         self.activity_mut().compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| v.activity_base()).collect::<Vec<_>>(),
+            &others.iter().map(|v| v.activity_core()).collect::<Vec<_>>(),
             exit,
         )?;
         self.realized_mut().compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| v.realized_base()).collect::<Vec<_>>(),
+            &others.iter().map(|v| v.realized_core()).collect::<Vec<_>>(),
             exit,
         )?;
         self.unrealized_base_mut().compute_from_stateful(

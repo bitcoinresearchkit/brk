@@ -17,23 +17,23 @@ impl Vecs {
 
         for (min_vec, max_vec, starts) in [
             (
-                &mut self.price_min_1w.cents.height,
-                &mut self.price_max_1w.cents.height,
+                &mut self.min._1w.cents.height,
+                &mut self.max._1w.cents.height,
                 &blocks.lookback.height_1w_ago,
             ),
             (
-                &mut self.price_min_2w.cents.height,
-                &mut self.price_max_2w.cents.height,
+                &mut self.min._2w.cents.height,
+                &mut self.max._2w.cents.height,
                 &blocks.lookback.height_2w_ago,
             ),
             (
-                &mut self.price_min_1m.cents.height,
-                &mut self.price_max_1m.cents.height,
+                &mut self.min._1m.cents.height,
+                &mut self.max._1m.cents.height,
                 &blocks.lookback.height_1m_ago,
             ),
             (
-                &mut self.price_min_1y.cents.height,
-                &mut self.price_max_1y.cents.height,
+                &mut self.min._1y.cents.height,
+                &mut self.max._1y.cents.height,
                 &blocks.lookback.height_1y_ago,
             ),
         ] {
@@ -53,7 +53,7 @@ impl Vecs {
 
         // True range at block level: |price[h] - price[h-1]|
         let mut prev_price = None;
-        self.price_true_range.height.compute_transform(
+        self.true_range.height.compute_transform(
             starting_indexes.height,
             price,
             |(h, current, ..)| {
@@ -73,21 +73,21 @@ impl Vecs {
         )?;
 
         // 2w rolling sum of true range
-        self.price_true_range_sum_2w.height.compute_rolling_sum(
+        self.true_range_sum_2w.height.compute_rolling_sum(
             starting_indexes.height,
             &blocks.lookback.height_2w_ago,
-            &self.price_true_range.height,
+            &self.true_range.height,
             exit,
         )?;
 
-        self.price_choppiness_index_2w
+        self.choppiness_index_2w
             .bps
             .height
             .compute_transform4(
                 starting_indexes.height,
-                &self.price_true_range_sum_2w.height,
-                &self.price_max_2w.cents.height,
-                &self.price_min_2w.cents.height,
+                &self.true_range_sum_2w.height,
+                &self.max._2w.cents.height,
+                &self.min._2w.cents.height,
                 &blocks.lookback.height_2w_ago,
                 |(h, tr_sum, max, min, window_start, ..)| {
                     let range = f64::from(max) - f64::from(min);

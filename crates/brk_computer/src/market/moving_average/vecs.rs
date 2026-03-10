@@ -2,44 +2,53 @@ use brk_traversable::Traversable;
 use brk_types::Cents;
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{PriceWithRatioPerBlock, LazyPerBlock, Price};
+use crate::internal::{LazyPerBlock, Price, PriceWithRatioPerBlock};
+
+#[derive(Traversable)]
+pub struct SmaVecs<M: StorageMode = Rw> {
+    pub _1w: PriceWithRatioPerBlock<M>,
+    pub _8d: PriceWithRatioPerBlock<M>,
+    pub _13d: PriceWithRatioPerBlock<M>,
+    pub _21d: PriceWithRatioPerBlock<M>,
+    pub _1m: PriceWithRatioPerBlock<M>,
+    pub _34d: PriceWithRatioPerBlock<M>,
+    pub _55d: PriceWithRatioPerBlock<M>,
+    pub _89d: PriceWithRatioPerBlock<M>,
+    pub _111d: PriceWithRatioPerBlock<M>,
+    pub _144d: PriceWithRatioPerBlock<M>,
+    pub _200d: PriceWithRatioPerBlock<M>,
+    pub _350d: PriceWithRatioPerBlock<M>,
+    pub _1y: PriceWithRatioPerBlock<M>,
+    pub _2y: PriceWithRatioPerBlock<M>,
+    pub _200w: PriceWithRatioPerBlock<M>,
+    pub _4y: PriceWithRatioPerBlock<M>,
+    pub _200d_x2_4: Price<LazyPerBlock<Cents, Cents>>,
+    pub _200d_x0_8: Price<LazyPerBlock<Cents, Cents>>,
+    pub _350d_x2: Price<LazyPerBlock<Cents, Cents>>,
+}
+
+#[derive(Traversable)]
+pub struct EmaVecs<M: StorageMode = Rw> {
+    pub _1w: PriceWithRatioPerBlock<M>,
+    pub _8d: PriceWithRatioPerBlock<M>,
+    pub _12d: PriceWithRatioPerBlock<M>,
+    pub _13d: PriceWithRatioPerBlock<M>,
+    pub _21d: PriceWithRatioPerBlock<M>,
+    pub _26d: PriceWithRatioPerBlock<M>,
+    pub _1m: PriceWithRatioPerBlock<M>,
+    pub _34d: PriceWithRatioPerBlock<M>,
+    pub _55d: PriceWithRatioPerBlock<M>,
+    pub _89d: PriceWithRatioPerBlock<M>,
+    pub _144d: PriceWithRatioPerBlock<M>,
+    pub _200d: PriceWithRatioPerBlock<M>,
+    pub _1y: PriceWithRatioPerBlock<M>,
+    pub _2y: PriceWithRatioPerBlock<M>,
+    pub _200w: PriceWithRatioPerBlock<M>,
+    pub _4y: PriceWithRatioPerBlock<M>,
+}
+
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub price_sma_1w: PriceWithRatioPerBlock<M>,
-    pub price_sma_8d: PriceWithRatioPerBlock<M>,
-    pub price_sma_13d: PriceWithRatioPerBlock<M>,
-    pub price_sma_21d: PriceWithRatioPerBlock<M>,
-    pub price_sma_1m: PriceWithRatioPerBlock<M>,
-    pub price_sma_34d: PriceWithRatioPerBlock<M>,
-    pub price_sma_55d: PriceWithRatioPerBlock<M>,
-    pub price_sma_89d: PriceWithRatioPerBlock<M>,
-    pub price_sma_111d: PriceWithRatioPerBlock<M>,
-    pub price_sma_144d: PriceWithRatioPerBlock<M>,
-    pub price_sma_200d: PriceWithRatioPerBlock<M>,
-    pub price_sma_350d: PriceWithRatioPerBlock<M>,
-    pub price_sma_1y: PriceWithRatioPerBlock<M>,
-    pub price_sma_2y: PriceWithRatioPerBlock<M>,
-    pub price_sma_200w: PriceWithRatioPerBlock<M>,
-    pub price_sma_4y: PriceWithRatioPerBlock<M>,
-
-    pub price_ema_1w: PriceWithRatioPerBlock<M>,
-    pub price_ema_8d: PriceWithRatioPerBlock<M>,
-    pub price_ema_12d: PriceWithRatioPerBlock<M>,
-    pub price_ema_13d: PriceWithRatioPerBlock<M>,
-    pub price_ema_21d: PriceWithRatioPerBlock<M>,
-    pub price_ema_26d: PriceWithRatioPerBlock<M>,
-    pub price_ema_1m: PriceWithRatioPerBlock<M>,
-    pub price_ema_34d: PriceWithRatioPerBlock<M>,
-    pub price_ema_55d: PriceWithRatioPerBlock<M>,
-    pub price_ema_89d: PriceWithRatioPerBlock<M>,
-    pub price_ema_144d: PriceWithRatioPerBlock<M>,
-    pub price_ema_200d: PriceWithRatioPerBlock<M>,
-    pub price_ema_1y: PriceWithRatioPerBlock<M>,
-    pub price_ema_2y: PriceWithRatioPerBlock<M>,
-    pub price_ema_200w: PriceWithRatioPerBlock<M>,
-    pub price_ema_4y: PriceWithRatioPerBlock<M>,
-
-    pub price_sma_200d_x2_4: Price<LazyPerBlock<Cents, Cents>>,
-    pub price_sma_200d_x0_8: Price<LazyPerBlock<Cents, Cents>>,
-    pub price_sma_350d_x2: Price<LazyPerBlock<Cents, Cents>>,
+    pub sma: SmaVecs<M>,
+    pub ema: EmaVecs<M>,
 }

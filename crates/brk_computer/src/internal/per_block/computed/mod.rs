@@ -10,6 +10,7 @@ mod fiat_delta;
 mod full;
 mod rolling_average;
 mod sum;
+mod with_sum_24h;
 
 pub use aggregated::*;
 pub use base::*;
@@ -23,3 +24,4 @@ pub use fiat_delta::*;
 pub use full::*;
 pub use rolling_average::*;
 pub use sum::*;
+pub use with_sum_24h::*;

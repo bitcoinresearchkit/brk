@@ -12,7 +12,7 @@ use vecdb::{
 
 use crate::{
     blocks,
-    distribution::state::RealizedState,
+    distribution::state::{CohortState, RealizedState},
     internal::{
         CentsUnsignedToDollars, ComputedPerBlock, ComputedPerBlockCumulative, FiatPerBlock,
         FiatRollingDelta1m, FiatRollingDeltaExcept1m, LazyPerBlock, PercentPerBlock,
@@ -25,86 +25,118 @@ use crate::{
 
 use crate::distribution::metrics::ImportConfig;
 
-use super::RealizedBase;
+use super::RealizedCore;
+
+#[derive(Traversable)]
+pub struct RealizedProfit<M: StorageMode = Rw> {
+    pub rel_to_rcap: PercentPerBlock<BasisPoints32, M>,
+    pub value_created: ComputedPerBlock<Cents, M>,
+    pub value_destroyed: ComputedPerBlock<Cents, M>,
+    pub value_created_sum: RollingWindows<Cents, M>,
+    pub value_destroyed_sum: RollingWindows<Cents, M>,
+    pub flow: LazyPerBlock<Dollars, Cents>,
+    #[traversable(rename = "sum")]
+    pub sum_extended: RollingWindowsFrom1w<Cents, M>,
+}
+
+#[derive(Traversable)]
+pub struct RealizedLoss<M: StorageMode = Rw> {
+    pub rel_to_rcap: PercentPerBlock<BasisPoints32, M>,
+    pub value_created: ComputedPerBlock<Cents, M>,
+    pub value_destroyed: ComputedPerBlock<Cents, M>,
+    pub value_created_sum: RollingWindows<Cents, M>,
+    pub value_destroyed_sum: RollingWindows<Cents, M>,
+    pub capitulation_flow: LazyPerBlock<Dollars, Cents>,
+    #[traversable(rename = "sum")]
+    pub sum_extended: RollingWindowsFrom1w<Cents, M>,
+}
+
+#[derive(Traversable)]
+pub struct RealizedGrossPnl<M: StorageMode = Rw> {
+    #[traversable(flatten)]
+    pub value: FiatPerBlock<Cents, M>,
+    pub sum: RollingWindows<Cents, M>,
+    pub sell_side_risk_ratio: PercentRollingWindows<BasisPoints32, M>,
+}
+
+#[derive(Traversable)]
+pub struct RealizedNetPnl<M: StorageMode = Rw> {
+    pub rel_to_rcap: PercentPerBlock<BasisPointsSigned32, M>,
+    pub cumulative: ComputedPerBlock<CentsSigned, M>,
+    #[traversable(rename = "sum")]
+    pub sum_extended: RollingWindowsFrom1w<CentsSigned, M>,
+    pub delta: FiatRollingDelta1m<CentsSigned, CentsSigned, M>,
+    #[traversable(rename = "delta")]
+    pub delta_extended: FiatRollingDeltaExcept1m<CentsSigned, CentsSigned, M>,
+    pub change_1m_rel_to_rcap: PercentPerBlock<BasisPointsSigned32, M>,
+    pub change_1m_rel_to_mcap: PercentPerBlock<BasisPointsSigned32, M>,
+}
+
+#[derive(Traversable)]
+pub struct RealizedSopr<M: StorageMode = Rw> {
+    #[traversable(rename = "value_created_sum")]
+    pub value_created_sum_extended: RollingWindowsFrom1w<Cents, M>,
+    #[traversable(rename = "value_destroyed_sum")]
+    pub value_destroyed_sum_extended: RollingWindowsFrom1w<Cents, M>,
+    #[traversable(rename = "ratio")]
+    pub ratio_extended: RollingWindowsFrom1w<StoredF64, M>,
+}
+
+#[derive(Traversable)]
+pub struct RealizedSentFull<M: StorageMode = Rw> {
+    #[traversable(wrap = "in_profit", rename = "sum")]
+    pub in_profit_sum_extended: RollingWindowsFrom1w<Sats, M>,
+    #[traversable(wrap = "in_loss", rename = "sum")]
+    pub in_loss_sum_extended: RollingWindowsFrom1w<Sats, M>,
+}
+
+#[derive(Traversable)]
+pub struct RealizedPeakRegret<M: StorageMode = Rw> {
+    #[traversable(flatten)]
+    pub value: ComputedPerBlockCumulative<Cents, M>,
+    pub rel_to_rcap: PercentPerBlock<BasisPoints32, M>,
+}
+
+#[derive(Traversable)]
+pub struct RealizedInvestor<M: StorageMode = Rw> {
+    pub price: Price<ComputedPerBlock<Cents, M>>,
+    pub price_ratio: RatioPerBlock<BasisPoints32, M>,
+    pub lower_price_band: Price<ComputedPerBlock<Cents, M>>,
+    pub upper_price_band: Price<ComputedPerBlock<Cents, M>>,
+    pub cap_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
+    pub price_ratio_percentiles: RatioPerBlockPercentiles<M>,
+}
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct RealizedFull<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub base: RealizedBase<M>,
+    pub core: RealizedCore<M>,
 
-    pub gross_pnl: FiatPerBlock<Cents, M>,
+    pub profit: RealizedProfit<M>,
+    pub loss: RealizedLoss<M>,
+    pub gross_pnl: RealizedGrossPnl<M>,
+    pub net_pnl: RealizedNetPnl<M>,
+    pub sopr: RealizedSopr<M>,
+    pub sent: RealizedSentFull<M>,
+    pub peak_regret: RealizedPeakRegret<M>,
+    pub investor: RealizedInvestor<M>,
 
-    pub profit_rel_to_rcap: PercentPerBlock<BasisPoints32, M>,
-    pub loss_rel_to_rcap: PercentPerBlock<BasisPoints32, M>,
-    pub net_pnl_rel_to_rcap: PercentPerBlock<BasisPointsSigned32, M>,
-
-    pub profit_value_created: ComputedPerBlock<Cents, M>,
-    pub profit_value_destroyed: ComputedPerBlock<Cents, M>,
-    pub loss_value_created: ComputedPerBlock<Cents, M>,
-    pub loss_value_destroyed: ComputedPerBlock<Cents, M>,
-
-    pub profit_value_created_sum: RollingWindows<Cents, M>,
-    pub profit_value_destroyed_sum: RollingWindows<Cents, M>,
-    pub loss_value_created_sum: RollingWindows<Cents, M>,
-    pub loss_value_destroyed_sum: RollingWindows<Cents, M>,
-
-    pub capitulation_flow: LazyPerBlock<Dollars, Cents>,
-    pub profit_flow: LazyPerBlock<Dollars, Cents>,
-
-    pub gross_pnl_sum: RollingWindows<Cents, M>,
-
-    pub net_pnl_cumulative: ComputedPerBlock<CentsSigned, M>,
-    #[traversable(rename = "net_pnl_sum")]
-    pub net_pnl_sum_extended: RollingWindowsFrom1w<CentsSigned, M>,
-
-    pub net_pnl_delta: FiatRollingDelta1m<CentsSigned, CentsSigned, M>,
-    #[traversable(rename = "net_pnl_delta")]
-    pub net_pnl_delta_extended: FiatRollingDeltaExcept1m<CentsSigned, CentsSigned, M>,
-    pub net_pnl_change_1m_rel_to_rcap: PercentPerBlock<BasisPointsSigned32, M>,
-    pub net_pnl_change_1m_rel_to_mcap: PercentPerBlock<BasisPointsSigned32, M>,
-
-    #[traversable(rename = "cap_delta")]
-    pub cap_delta_extended: FiatRollingDeltaExcept1m<Cents, CentsSigned, M>,
-
-    pub investor_price: Price<ComputedPerBlock<Cents, M>>,
-    pub investor_price_ratio: RatioPerBlock<M>,
-
-    pub lower_price_band: Price<ComputedPerBlock<Cents, M>>,
-    pub upper_price_band: Price<ComputedPerBlock<Cents, M>>,
-
-    pub cap_raw: M::Stored<BytesVec<Height, CentsSats>>,
-    pub investor_cap_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
-
-    pub sell_side_risk_ratio: PercentRollingWindows<BasisPoints32, M>,
-
-    pub peak_regret: ComputedPerBlockCumulative<Cents, M>,
-    pub peak_regret_rel_to_rcap: PercentPerBlock<BasisPoints32, M>,
-
-    pub cap_rel_to_own_mcap: PercentPerBlock<BasisPoints32, M>,
-
-    #[traversable(rename = "profit_sum")]
-    pub profit_sum_extended: RollingWindowsFrom1w<Cents, M>,
-    #[traversable(rename = "loss_sum")]
-    pub loss_sum_extended: RollingWindowsFrom1w<Cents, M>,
     pub profit_to_loss_ratio: RollingWindows<StoredF64, M>,
 
-    #[traversable(rename = "value_created_sum")]
-    pub value_created_sum_extended: RollingWindowsFrom1w<Cents, M>,
-    #[traversable(rename = "value_destroyed_sum")]
-    pub value_destroyed_sum_extended: RollingWindowsFrom1w<Cents, M>,
-    #[traversable(rename = "sopr")]
-    pub sopr_extended: RollingWindowsFrom1w<StoredF64, M>,
+    #[traversable(wrap = "cap", rename = "delta")]
+    pub cap_delta_extended: FiatRollingDeltaExcept1m<Cents, CentsSigned, M>,
 
-    #[traversable(rename = "sent_in_profit_sum")]
-    pub sent_in_profit_sum_extended: RollingWindowsFrom1w<Sats, M>,
-    #[traversable(rename = "sent_in_loss_sum")]
-    pub sent_in_loss_sum_extended: RollingWindowsFrom1w<Sats, M>,
+    #[traversable(wrap = "cap", rename = "raw")]
+    pub cap_raw: M::Stored<BytesVec<Height, CentsSats>>,
+    #[traversable(wrap = "cap", rename = "rel_to_own_mcap")]
+    pub cap_rel_to_own_mcap: PercentPerBlock<BasisPoints32, M>,
 
+    #[traversable(wrap = "price_ratio", rename = "percentiles")]
     pub price_ratio_percentiles: RatioPerBlockPercentiles<M>,
+    #[traversable(wrap = "price_ratio", rename = "std_dev")]
     pub price_ratio_std_dev: RatioPerBlockStdDevBands<M>,
-    pub investor_price_ratio_percentiles: RatioPerBlockPercentiles<M>,
 }
 
 impl RealizedFull {
@@ -112,111 +144,120 @@ impl RealizedFull {
         let v0 = Version::ZERO;
         let v1 = Version::ONE;
 
-        let base = RealizedBase::forced_import(cfg)?;
+        let core = RealizedCore::forced_import(cfg)?;
 
-        let gross_pnl = cfg.import("realized_gross_pnl", v0)?;
-
-        let profit_value_created = cfg.import("profit_value_created", v0)?;
+        // Profit
         let profit_value_destroyed: ComputedPerBlock<Cents> =
             cfg.import("profit_value_destroyed", v0)?;
-        let loss_value_created = cfg.import("loss_value_created", v0)?;
-        let loss_value_destroyed: ComputedPerBlock<Cents> =
-            cfg.import("loss_value_destroyed", v0)?;
-
-        let profit_value_created_sum = cfg.import("profit_value_created", v1)?;
-        let profit_value_destroyed_sum = cfg.import("profit_value_destroyed", v1)?;
-        let loss_value_created_sum = cfg.import("loss_value_created", v1)?;
-        let loss_value_destroyed_sum = cfg.import("loss_value_destroyed", v1)?;
-
-        let capitulation_flow = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
-            &cfg.name("capitulation_flow"),
-            cfg.version,
-            loss_value_destroyed.height.read_only_boxed_clone(),
-            &loss_value_destroyed,
-        );
         let profit_flow = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
             &cfg.name("profit_flow"),
             cfg.version,
             profit_value_destroyed.height.read_only_boxed_clone(),
             &profit_value_destroyed,
         );
+        let profit = RealizedProfit {
+            rel_to_rcap: cfg.import("realized_profit_rel_to_realized_cap", Version::new(2))?,
+            value_created: cfg.import("profit_value_created", v0)?,
+            value_destroyed: profit_value_destroyed,
+            value_created_sum: cfg.import("profit_value_created", v1)?,
+            value_destroyed_sum: cfg.import("profit_value_destroyed", v1)?,
+            flow: profit_flow,
+            sum_extended: cfg.import("realized_profit", v1)?,
+        };
 
-        let gross_pnl_sum = cfg.import("gross_pnl_sum", Version::ONE)?;
+        // Loss
+        let loss_value_destroyed: ComputedPerBlock<Cents> =
+            cfg.import("loss_value_destroyed", v0)?;
+        let capitulation_flow = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
+            &cfg.name("capitulation_flow"),
+            cfg.version,
+            loss_value_destroyed.height.read_only_boxed_clone(),
+            &loss_value_destroyed,
+        );
+        let loss = RealizedLoss {
+            rel_to_rcap: cfg.import("realized_loss_rel_to_realized_cap", Version::new(2))?,
+            value_created: cfg.import("loss_value_created", v0)?,
+            value_destroyed: loss_value_destroyed,
+            value_created_sum: cfg.import("loss_value_created", v1)?,
+            value_destroyed_sum: cfg.import("loss_value_destroyed", v1)?,
+            capitulation_flow,
+            sum_extended: cfg.import("realized_loss", v1)?,
+        };
 
-        let investor_price = cfg.import("investor_price", v0)?;
-        let investor_price_ratio = cfg.import("investor_price", v0)?;
-        let lower_price_band = cfg.import("lower_price_band", v0)?;
-        let upper_price_band = cfg.import("upper_price_band", v0)?;
+        // Gross PnL
+        let gross_pnl = RealizedGrossPnl {
+            value: cfg.import("realized_gross_pnl", v0)?,
+            sum: cfg.import("gross_pnl_sum", v1)?,
+            sell_side_risk_ratio: cfg.import("sell_side_risk_ratio", Version::new(2))?,
+        };
 
-        let cap_raw = cfg.import("cap_raw", v0)?;
-        let investor_cap_raw = cfg.import("investor_cap_raw", v0)?;
+        // Net PnL
+        let net_pnl = RealizedNetPnl {
+            rel_to_rcap: cfg
+                .import("net_realized_pnl_rel_to_realized_cap", Version::new(2))?,
+            cumulative: cfg.import("net_realized_pnl_cumulative", v1)?,
+            sum_extended: cfg.import("net_realized_pnl", v1)?,
+            delta: cfg.import("net_pnl_delta", Version::new(5))?,
+            delta_extended: cfg.import("net_pnl_delta", Version::new(5))?,
+            change_1m_rel_to_rcap: cfg
+                .import("net_pnl_change_1m_rel_to_realized_cap", Version::new(4))?,
+            change_1m_rel_to_mcap: cfg
+                .import("net_pnl_change_1m_rel_to_market_cap", Version::new(4))?,
+        };
 
-        let sell_side_risk_ratio = cfg.import("sell_side_risk_ratio", Version::new(2))?;
+        // SOPR
+        let sopr = RealizedSopr {
+            value_created_sum_extended: cfg.import("value_created", v1)?,
+            value_destroyed_sum_extended: cfg.import("value_destroyed", v1)?,
+            ratio_extended: cfg.import("sopr", v1)?,
+        };
 
-        let peak_regret = cfg.import("realized_peak_regret", Version::new(2))?;
-        let peak_regret_rel_to_realized_cap =
-            cfg.import("realized_peak_regret_rel_to_realized_cap", Version::new(2))?;
+        // Sent
+        let sent = RealizedSentFull {
+            in_profit_sum_extended: cfg.import("sent_in_profit", v1)?,
+            in_loss_sum_extended: cfg.import("sent_in_loss", v1)?,
+        };
 
+        // Peak regret
+        let peak_regret = RealizedPeakRegret {
+            value: cfg.import("realized_peak_regret", Version::new(2))?,
+            rel_to_rcap: cfg
+                .import("realized_peak_regret_rel_to_realized_cap", Version::new(2))?,
+        };
+
+        // Investor
+        let investor = RealizedInvestor {
+            price: cfg.import("investor_price", v0)?,
+            price_ratio: cfg.import("investor_price", v0)?,
+            lower_price_band: cfg.import("lower_price_band", v0)?,
+            upper_price_band: cfg.import("upper_price_band", v0)?,
+            cap_raw: cfg.import("investor_cap_raw", v0)?,
+            price_ratio_percentiles: RatioPerBlockPercentiles::forced_import(
+                cfg.db,
+                &cfg.name("investor_price"),
+                cfg.version,
+                cfg.indexes,
+            )?,
+        };
+
+        // Price ratio stats
         let realized_price_name = cfg.name("realized_price");
         let realized_price_version = cfg.version + v1;
-        let investor_price_name = cfg.name("investor_price");
-        let investor_price_version = cfg.version;
-
-        let realized_profit_rel_to_realized_cap =
-            cfg.import("realized_profit_rel_to_realized_cap", Version::new(2))?;
-        let realized_loss_rel_to_realized_cap =
-            cfg.import("realized_loss_rel_to_realized_cap", Version::new(2))?;
-        let net_realized_pnl_rel_to_realized_cap =
-            cfg.import("net_realized_pnl_rel_to_realized_cap", Version::new(2))?;
-
-        let value_created_sum_extended = cfg.import("value_created", v1)?;
-        let value_destroyed_sum_extended = cfg.import("value_destroyed", v1)?;
-        let sopr_extended = cfg.import("sopr", v1)?;
 
         Ok(Self {
-            base,
+            core,
+            profit,
+            loss,
             gross_pnl,
-            profit_rel_to_rcap: realized_profit_rel_to_realized_cap,
-            loss_rel_to_rcap: realized_loss_rel_to_realized_cap,
-            net_pnl_rel_to_rcap: net_realized_pnl_rel_to_realized_cap,
-            profit_value_created,
-            profit_value_destroyed,
-            loss_value_created,
-            loss_value_destroyed,
-            profit_value_created_sum,
-            profit_value_destroyed_sum,
-            loss_value_created_sum,
-            loss_value_destroyed_sum,
-            capitulation_flow,
-            profit_flow,
-            gross_pnl_sum,
-            net_pnl_cumulative: cfg.import("net_realized_pnl_cumulative", Version::ONE)?,
-            net_pnl_sum_extended: cfg.import("net_realized_pnl", Version::ONE)?,
-            net_pnl_delta: cfg.import("net_pnl_delta", Version::new(5))?,
-            net_pnl_delta_extended: cfg.import("net_pnl_delta", Version::new(5))?,
-            net_pnl_change_1m_rel_to_rcap: cfg
-                .import("net_pnl_change_1m_rel_to_realized_cap", Version::new(4))?,
-            net_pnl_change_1m_rel_to_mcap: cfg
-                .import("net_pnl_change_1m_rel_to_market_cap", Version::new(4))?,
-            cap_delta_extended: cfg.import("realized_cap_delta", Version::new(5))?,
-            investor_price,
-            investor_price_ratio,
-            lower_price_band,
-            upper_price_band,
-            cap_raw,
-            investor_cap_raw,
-            sell_side_risk_ratio,
+            net_pnl,
+            sopr,
+            sent,
             peak_regret,
-            peak_regret_rel_to_rcap: peak_regret_rel_to_realized_cap,
-            cap_rel_to_own_mcap: cfg.import("realized_cap_rel_to_own_market_cap", v1)?,
-            profit_sum_extended: cfg.import("realized_profit", v1)?,
-            loss_sum_extended: cfg.import("realized_loss", v1)?,
+            investor,
             profit_to_loss_ratio: cfg.import("realized_profit_to_loss_ratio", v1)?,
-            value_created_sum_extended,
-            value_destroyed_sum_extended,
-            sopr_extended,
-            sent_in_profit_sum_extended: cfg.import("sent_in_profit", v1)?,
-            sent_in_loss_sum_extended: cfg.import("sent_in_loss", v1)?,
+            cap_delta_extended: cfg.import("realized_cap_delta", Version::new(5))?,
+            cap_raw: cfg.import("cap_raw", v0)?,
+            cap_rel_to_own_mcap: cfg.import("realized_cap_rel_to_own_market_cap", v1)?,
             price_ratio_percentiles: RatioPerBlockPercentiles::forced_import(
                 cfg.db,
                 &realized_price_name,
@@ -229,76 +270,82 @@ impl RealizedFull {
                 realized_price_version,
                 cfg.indexes,
             )?,
-            investor_price_ratio_percentiles: RatioPerBlockPercentiles::forced_import(
-                cfg.db,
-                &investor_price_name,
-                investor_price_version,
-                cfg.indexes,
-            )?,
         })
     }
 
     pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.base
+        self.core
             .min_stateful_height_len()
-            .min(self.profit_value_created.height.len())
-            .min(self.profit_value_destroyed.height.len())
-            .min(self.loss_value_created.height.len())
-            .min(self.loss_value_destroyed.height.len())
-            .min(self.investor_price.cents.height.len())
+            .min(self.profit.value_created.height.len())
+            .min(self.profit.value_destroyed.height.len())
+            .min(self.loss.value_created.height.len())
+            .min(self.loss.value_destroyed.height.len())
+            .min(self.investor.price.cents.height.len())
             .min(self.cap_raw.len())
-            .min(self.investor_cap_raw.len())
-            .min(self.peak_regret.height.len())
+            .min(self.investor.cap_raw.len())
+            .min(self.peak_regret.value.height.len())
     }
 
-    pub(crate) fn truncate_push(&mut self, height: Height, state: &RealizedState) -> Result<()> {
-        self.base.truncate_push(height, state)?;
-        self.profit_value_created
+    pub(crate) fn truncate_push(
+        &mut self,
+        height: Height,
+        state: &CohortState<RealizedState>,
+    ) -> Result<()> {
+        self.core.truncate_push(height, state)?;
+        self.profit
+            .value_created
             .height
-            .truncate_push(height, state.profit_value_created())?;
-        self.profit_value_destroyed
+            .truncate_push(height, state.realized.profit_value_created())?;
+        self.profit
+            .value_destroyed
             .height
-            .truncate_push(height, state.profit_value_destroyed())?;
-        self.loss_value_created
+            .truncate_push(height, state.realized.profit_value_destroyed())?;
+        self.loss
+            .value_created
             .height
-            .truncate_push(height, state.loss_value_created())?;
-        self.loss_value_destroyed
+            .truncate_push(height, state.realized.loss_value_created())?;
+        self.loss
+            .value_destroyed
             .height
-            .truncate_push(height, state.loss_value_destroyed())?;
-        self.investor_price
+            .truncate_push(height, state.realized.loss_value_destroyed())?;
+        self.investor
+            .price
             .cents
             .height
-            .truncate_push(height, state.investor_price())?;
-        self.cap_raw.truncate_push(height, state.cap_raw())?;
-        self.investor_cap_raw
-            .truncate_push(height, state.investor_cap_raw())?;
+            .truncate_push(height, state.realized.investor_price())?;
+        self.cap_raw
+            .truncate_push(height, state.realized.cap_raw())?;
+        self.investor
+            .cap_raw
+            .truncate_push(height, state.realized.investor_cap_raw())?;
         self.peak_regret
+            .value
             .height
-            .truncate_push(height, state.peak_regret())?;
+            .truncate_push(height, state.realized.peak_regret())?;
 
         Ok(())
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        let mut vecs = self.base.collect_vecs_mut();
-        vecs.push(&mut self.profit_value_created.height as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.profit_value_destroyed.height);
-        vecs.push(&mut self.loss_value_created.height);
-        vecs.push(&mut self.loss_value_destroyed.height);
-        vecs.push(&mut self.investor_price.cents.height);
+        let mut vecs = self.core.collect_vecs_mut();
+        vecs.push(&mut self.profit.value_created.height as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.profit.value_destroyed.height);
+        vecs.push(&mut self.loss.value_created.height);
+        vecs.push(&mut self.loss.value_destroyed.height);
+        vecs.push(&mut self.investor.price.cents.height);
         vecs.push(&mut self.cap_raw as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.investor_cap_raw as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.peak_regret.height);
+        vecs.push(&mut self.investor.cap_raw as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.peak_regret.value.height);
         vecs
     }
 
     pub(crate) fn compute_from_stateful(
         &mut self,
         starting_indexes: &Indexes,
-        others: &[&RealizedBase],
+        others: &[&RealizedCore],
         exit: &Exit,
     ) -> Result<()> {
-        self.base
+        self.core
             .compute_from_stateful(starting_indexes, others, exit)?;
 
         Ok(())
@@ -309,20 +356,26 @@ impl RealizedFull {
         accum: &RealizedFullAccum,
         height: Height,
     ) -> Result<()> {
-        self.profit_value_created
+        self.profit
+            .value_created
             .height
             .truncate_push(height, accum.profit_value_created)?;
-        self.profit_value_destroyed
+        self.profit
+            .value_destroyed
             .height
             .truncate_push(height, accum.profit_value_destroyed)?;
-        self.loss_value_created
+        self.loss
+            .value_created
             .height
             .truncate_push(height, accum.loss_value_created)?;
-        self.loss_value_destroyed
+        self.loss
+            .value_destroyed
             .height
             .truncate_push(height, accum.loss_value_destroyed)?;
-        self.cap_raw.truncate_push(height, accum.cap_raw)?;
-        self.investor_cap_raw
+        self.cap_raw
+            .truncate_push(height, accum.cap_raw)?;
+        self.investor
+            .cap_raw
             .truncate_push(height, accum.investor_cap_raw)?;
 
         let investor_price = {
@@ -333,12 +386,14 @@ impl RealizedFull {
                 Cents::new((accum.investor_cap_raw / cap) as u64)
             }
         };
-        self.investor_price
+        self.investor
+            .price
             .cents
             .height
             .truncate_push(height, investor_price)?;
 
         self.peak_regret
+            .value
             .height
             .truncate_push(height, accum.peak_regret)?;
 
@@ -351,16 +406,17 @@ impl RealizedFull {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.base
+        self.core
             .compute_rest_part1(blocks, starting_indexes, exit)?;
 
-        self.net_pnl_cumulative.height.compute_cumulative(
+        self.net_pnl.cumulative.height.compute_cumulative(
             starting_indexes.height,
-            &self.base.core.net_pnl.height,
+            &self.core.net_pnl.raw.height,
             exit,
         )?;
 
         self.peak_regret
+            .value
             .compute_rest(starting_indexes.height, exit)?;
         Ok(())
     }
@@ -374,7 +430,7 @@ impl RealizedFull {
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
-        self.base.core.compute_rest_part2(
+        self.core.compute_rest_part2(
             blocks,
             prices,
             starting_indexes,
@@ -384,33 +440,36 @@ impl RealizedFull {
 
         let window_starts = blocks.lookback.window_starts();
 
-        // Extended rolling sum (1w, 1m, 1y) for net_realized_pnl
-        self.net_pnl_sum_extended.compute_rolling_sum(
+        // Net PnL rolling sums (1w, 1m, 1y)
+        self.net_pnl.sum_extended.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.base.core.net_pnl.height,
+            &self.core.net_pnl.raw.height,
             exit,
         )?;
 
-        // Extended rolling windows (1w, 1m, 1y) for value_created/destroyed/sopr
-        self.value_created_sum_extended.compute_rolling_sum(
+        // SOPR: value created/destroyed rolling sums and ratios
+        self.sopr.value_created_sum_extended.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.base.core.value_created.height,
+            &self.core.minimal.sopr.value_created.raw.height,
             exit,
         )?;
-        self.value_destroyed_sum_extended.compute_rolling_sum(
-            starting_indexes.height,
-            &window_starts,
-            &self.base.core.value_destroyed.height,
-            exit,
-        )?;
+        self.sopr
+            .value_destroyed_sum_extended
+            .compute_rolling_sum(
+                starting_indexes.height,
+                &window_starts,
+                &self.core.minimal.sopr.value_destroyed.raw.height,
+                exit,
+            )?;
         for ((sopr, vc), vd) in self
-            .sopr_extended
+            .sopr
+            .ratio_extended
             .as_mut_array()
             .into_iter()
-            .zip(self.value_created_sum_extended.as_array())
-            .zip(self.value_destroyed_sum_extended.as_array())
+            .zip(self.sopr.value_created_sum_extended.as_array())
+            .zip(self.sopr.value_destroyed_sum_extended.as_array())
         {
             sopr.compute_binary::<Cents, Cents, RatioCents64>(
                 starting_indexes.height,
@@ -420,108 +479,113 @@ impl RealizedFull {
             )?;
         }
 
-        // Realized P/L rel to realized cap
-        self.profit_rel_to_rcap
+        // Profit/loss/net_pnl rel to realized cap
+        self.profit
+            .rel_to_rcap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
-                &self.base.core.minimal.profit.height,
-                &self.base.core.minimal.cap_cents.height,
+                &self.core.minimal.profit.raw.cents.height,
+                &self.core.minimal.cap.cents.height,
                 exit,
             )?;
-        self.loss_rel_to_rcap
+        self.loss
+            .rel_to_rcap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
-                &self.base.core.minimal.loss.height,
-                &self.base.core.minimal.cap_cents.height,
+                &self.core.minimal.loss.raw.cents.height,
+                &self.core.minimal.cap.cents.height,
                 exit,
             )?;
-        self.net_pnl_rel_to_rcap
+        self.net_pnl
+            .rel_to_rcap
             .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
                 starting_indexes.height,
-                &self.base.core.net_pnl.height,
-                &self.base.core.minimal.cap_cents.height,
+                &self.core.net_pnl.raw.height,
+                &self.core.minimal.cap.cents.height,
                 exit,
             )?;
 
-        // Sent in profit/loss extended rolling sums (1w, 1m, 1y)
-        self.sent_in_profit_sum_extended.compute_rolling_sum(
+        // Sent rolling sums (1w, 1m, 1y)
+        self.sent.in_profit_sum_extended.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.base.sent_in_profit.height,
+            &self.core.sent.in_profit.raw.sats.height,
             exit,
         )?;
-        self.sent_in_loss_sum_extended.compute_rolling_sum(
+        self.sent.in_loss_sum_extended.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.base.sent_in_loss.height,
+            &self.core.sent.in_loss.raw.sats.height,
             exit,
         )?;
 
         // Profit/loss value created/destroyed rolling sums
-        self.profit_value_created_sum.compute_rolling_sum(
+        self.profit.value_created_sum.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.profit_value_created.height,
+            &self.profit.value_created.height,
             exit,
         )?;
-        self.profit_value_destroyed_sum.compute_rolling_sum(
+        self.profit.value_destroyed_sum.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.profit_value_destroyed.height,
+            &self.profit.value_destroyed.height,
             exit,
         )?;
-        self.loss_value_created_sum.compute_rolling_sum(
+        self.loss.value_created_sum.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.loss_value_created.height,
+            &self.loss.value_created.height,
             exit,
         )?;
-        self.loss_value_destroyed_sum.compute_rolling_sum(
+        self.loss.value_destroyed_sum.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.loss_value_destroyed.height,
+            &self.loss.value_destroyed.height,
             exit,
         )?;
 
         // Gross PnL
-        self.gross_pnl.cents.height.compute_add(
+        self.gross_pnl.value.cents.height.compute_add(
             starting_indexes.height,
-            &self.base.core.minimal.profit.height,
-            &self.base.core.minimal.loss.height,
+            &self.core.minimal.profit.raw.cents.height,
+            &self.core.minimal.loss.raw.cents.height,
             exit,
         )?;
 
-        self.gross_pnl_sum.compute_rolling_sum(
+        self.gross_pnl.sum.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.gross_pnl.cents.height,
+            &self.gross_pnl.value.cents.height,
             exit,
         )?;
 
         // Net PnL delta (1m base + 24h/1w/1y extended)
-        self.net_pnl_delta.compute(
+        self.net_pnl.delta.compute(
             starting_indexes.height,
             &blocks.lookback.height_1m_ago,
-            &self.net_pnl_cumulative.height,
+            &self.net_pnl.cumulative.height,
             exit,
         )?;
-        self.net_pnl_delta_extended.compute(
+        self.net_pnl.delta_extended.compute(
             starting_indexes.height,
             &window_starts,
-            &self.net_pnl_cumulative.height,
+            &self.net_pnl.cumulative.height,
             exit,
         )?;
-        self.net_pnl_change_1m_rel_to_rcap
+        self.net_pnl
+            .change_1m_rel_to_rcap
             .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
                 starting_indexes.height,
-                &self.net_pnl_delta.change_1m.cents.height,
-                &self.base.core.minimal.cap_cents.height,
+                &self.net_pnl.delta.change_1m.cents.height,
+                &self.core.minimal.cap.cents.height,
                 exit,
             )?;
-        self.net_pnl_change_1m_rel_to_mcap
+        self.net_pnl
+            .change_1m_rel_to_mcap
             .compute_binary::<CentsSigned, Dollars, RatioCentsSignedDollarsBps32>(
                 starting_indexes.height,
-                &self.net_pnl_delta.change_1m.cents.height,
+                &self.net_pnl.delta.change_1m.cents.height,
                 height_to_market_cap,
                 exit,
             )?;
@@ -530,85 +594,95 @@ impl RealizedFull {
         self.cap_delta_extended.compute(
             starting_indexes.height,
             &window_starts,
-            &self.base.core.minimal.cap_cents.height,
+            &self.core.minimal.cap.cents.height,
             exit,
         )?;
 
-        // Peak regret
-        self.peak_regret_rel_to_rcap
+        // Peak regret rel to rcap
+        self.peak_regret
+            .rel_to_rcap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
-                &self.peak_regret.height,
-                &self.base.core.minimal.cap_cents.height,
+                &self.peak_regret.value.height,
+                &self.core.minimal.cap.cents.height,
                 exit,
             )?;
 
-        // Investor price ratio and price bands
-        self.investor_price_ratio.compute_ratio(
+        // Investor price ratio and bands
+        self.investor.price_ratio.compute_ratio(
             starting_indexes,
             &prices.price.cents.height,
-            &self.investor_price.cents.height,
+            &self.investor.price.cents.height,
             exit,
         )?;
 
-        self.lower_price_band.cents.height.compute_transform2(
-            starting_indexes.height,
-            &self.base.core.minimal.price.cents.height,
-            &self.investor_price.cents.height,
-            |(i, rp, ip, ..)| {
-                let rp = rp.as_u128();
-                let ip = ip.as_u128();
-                if ip == 0 {
-                    (i, Cents::ZERO)
-                } else {
-                    (i, Cents::from(rp * rp / ip))
-                }
-            },
-            exit,
-        )?;
+        self.investor
+            .lower_price_band
+            .cents
+            .height
+            .compute_transform2(
+                starting_indexes.height,
+                &self.core.minimal.price.cents.height,
+                &self.investor.price.cents.height,
+                |(i, rp, ip, ..)| {
+                    let rp = rp.as_u128();
+                    let ip = ip.as_u128();
+                    if ip == 0 {
+                        (i, Cents::ZERO)
+                    } else {
+                        (i, Cents::from(rp * rp / ip))
+                    }
+                },
+                exit,
+            )?;
 
-        self.upper_price_band.cents.height.compute_transform2(
-            starting_indexes.height,
-            &self.investor_price.cents.height,
-            &self.base.core.minimal.price.cents.height,
-            |(i, ip, rp, ..)| {
-                let ip = ip.as_u128();
-                let rp = rp.as_u128();
-                if rp == 0 {
-                    (i, Cents::ZERO)
-                } else {
-                    (i, Cents::from(ip * ip / rp))
-                }
-            },
-            exit,
-        )?;
+        self.investor
+            .upper_price_band
+            .cents
+            .height
+            .compute_transform2(
+                starting_indexes.height,
+                &self.investor.price.cents.height,
+                &self.core.minimal.price.cents.height,
+                |(i, ip, rp, ..)| {
+                    let ip = ip.as_u128();
+                    let rp = rp.as_u128();
+                    if rp == 0 {
+                        (i, Cents::ZERO)
+                    } else {
+                        (i, Cents::from(ip * ip / rp))
+                    }
+                },
+                exit,
+            )?;
 
         // Sell-side risk ratios
         for (ssrr, rv) in self
+            .gross_pnl
             .sell_side_risk_ratio
             .as_mut_array()
             .into_iter()
-            .zip(self.gross_pnl_sum.as_array())
+            .zip(self.gross_pnl.sum.as_array())
         {
             ssrr.compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
                 &rv.height,
-                &self.base.core.minimal.cap_cents.height,
+                &self.core.minimal.cap.cents.height,
                 exit,
             )?;
         }
 
-        // Extended: realized profit/loss rolling sums (1w, 1m, 1y)
-        self.profit_sum_extended.compute_rolling_sum(
+        // Profit/loss sum extended (1w, 1m, 1y)
+        self.profit.sum_extended.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.base.core.minimal.profit.height,
+            &self.core.minimal.profit.raw.cents.height,
             exit,
         )?;
-        self.loss_sum_extended.compute_rolling_sum(
+        self.loss.sum_extended.compute_rolling_sum(
             starting_indexes.height,
             &window_starts,
-            &self.base.core.minimal.loss.height,
+            &self.core.minimal.loss.raw.cents.height,
             exit,
         )?;
 
@@ -616,7 +690,7 @@ impl RealizedFull {
         self.cap_rel_to_own_mcap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
                 starting_indexes.height,
-                &self.base.core.minimal.cap.height,
+                &self.core.minimal.cap.usd.height,
                 height_to_market_cap,
                 exit,
             )?;
@@ -626,16 +700,16 @@ impl RealizedFull {
             ._24h
             .compute_binary::<Cents, Cents, RatioCents64>(
                 starting_indexes.height,
-                &self.base.core.minimal.profit_sum._24h.height,
-                &self.base.core.minimal.loss_sum._24h.height,
+                &self.core.minimal.profit.sum._24h.cents.height,
+                &self.core.minimal.loss.sum._24h.cents.height,
                 exit,
             )?;
         for ((ratio, profit), loss) in self
             .profit_to_loss_ratio
             .as_mut_array_from_1w()
             .into_iter()
-            .zip(self.profit_sum_extended.as_array())
-            .zip(self.loss_sum_extended.as_array())
+            .zip(self.profit.sum_extended.as_array())
+            .zip(self.loss.sum_extended.as_array())
         {
             ratio.compute_binary::<Cents, Cents, RatioCents64>(
                 starting_indexes.height,
@@ -645,29 +719,30 @@ impl RealizedFull {
             )?;
         }
 
+        // Price ratio: percentiles and std dev bands
         self.price_ratio_percentiles.compute(
             blocks,
             starting_indexes,
             exit,
-            &self.base.core.minimal.price_ratio.ratio.height,
-            &self.base.core.minimal.price.cents.height,
+            &self.core.minimal.price_ratio.ratio.height,
+            &self.core.minimal.price.cents.height,
         )?;
 
         self.price_ratio_std_dev.compute(
             blocks,
             starting_indexes,
             exit,
-            &self.base.core.minimal.price_ratio.ratio.height,
-            &self.base.core.minimal.price.cents.height,
+            &self.core.minimal.price_ratio.ratio.height,
+            &self.core.minimal.price.cents.height,
         )?;
 
-        // Investor price: percentiles
-        let investor_price = &self.investor_price.cents.height;
-        self.investor_price_ratio_percentiles.compute(
+        // Investor price ratio: percentiles
+        let investor_price = &self.investor.price.cents.height;
+        self.investor.price_ratio_percentiles.compute(
             blocks,
             starting_indexes,
             exit,
-            &self.investor_price_ratio.ratio.height,
+            &self.investor.price_ratio.ratio.height,
             investor_price,
         )?;
 

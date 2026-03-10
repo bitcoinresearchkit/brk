@@ -90,12 +90,7 @@ where
                     break;
                 }
                 let target = S1I::max_from(I::from(i), source_len);
-                if cursor.position() <= target {
-                    cursor.advance(target - cursor.position());
-                    if let Some(v) = cursor.next() {
-                        f(v);
-                    }
-                } else if let Some(v) = source.collect_one_at(target) {
+                if let Some(v) = cursor.get(target) {
                     f(v);
                 }
             }

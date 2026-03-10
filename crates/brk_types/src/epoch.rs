@@ -92,7 +92,7 @@ impl CheckedSub for Epoch {
 
 impl PrintableIndex for Epoch {
     fn to_string() -> &'static str {
-        "difficultyepoch"
+        "epoch"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {

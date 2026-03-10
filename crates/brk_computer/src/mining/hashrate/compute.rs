@@ -38,10 +38,10 @@ impl Vecs {
 
         let hash_rate = &self.hash_rate.height;
         for (sma, window) in [
-            (&mut self.hash_rate_sma_1w.height, &lookback.height_1w_ago),
-            (&mut self.hash_rate_sma_1m.height, &lookback.height_1m_ago),
-            (&mut self.hash_rate_sma_2m.height, &lookback.height_2m_ago),
-            (&mut self.hash_rate_sma_1y.height, &lookback.height_1y_ago),
+            (&mut self.hash_rate_sma._1w.height, &lookback.height_1w_ago),
+            (&mut self.hash_rate_sma._1m.height, &lookback.height_1m_ago),
+            (&mut self.hash_rate_sma._2m.height, &lookback.height_2m_ago),
+            (&mut self.hash_rate_sma._1y.height, &lookback.height_1y_ago),
         ] {
             sma.compute_rolling_average(starting_indexes.height, window, hash_rate, exit)?;
         }
@@ -59,7 +59,7 @@ impl Vecs {
             exit,
         )?;
 
-        self.hash_price_ths.height.compute_transform2(
+        self.hash_price.ths.height.compute_transform2(
             starting_indexes.height,
             coinbase_usd_24h_sum,
             &self.hash_rate.height,
@@ -75,14 +75,14 @@ impl Vecs {
             exit,
         )?;
 
-        self.hash_price_phs.height.compute_transform(
+        self.hash_price.phs.height.compute_transform(
             starting_indexes.height,
-            &self.hash_price_ths.height,
+            &self.hash_price.ths.height,
             |(i, price, ..)| (i, (*price * 1000.0).into()),
             exit,
         )?;
 
-        self.hash_value_ths.height.compute_transform2(
+        self.hash_value.ths.height.compute_transform2(
             starting_indexes.height,
             coinbase_sats_24h_sum,
             &self.hash_rate.height,
@@ -98,47 +98,49 @@ impl Vecs {
             exit,
         )?;
 
-        self.hash_value_phs.height.compute_transform(
+        self.hash_value.phs.height.compute_transform(
             starting_indexes.height,
-            &self.hash_value_ths.height,
+            &self.hash_value.ths.height,
             |(i, value, ..)| (i, (*value * 1000.0).into()),
             exit,
         )?;
 
         for (min_vec, src_vec) in [
             (
-                &mut self.hash_price_ths_min.height,
-                &self.hash_price_ths.height,
+                &mut self.hash_price.ths_min.height,
+                &self.hash_price.ths.height,
             ),
             (
-                &mut self.hash_price_phs_min.height,
-                &self.hash_price_phs.height,
+                &mut self.hash_price.phs_min.height,
+                &self.hash_price.phs.height,
             ),
             (
-                &mut self.hash_value_ths_min.height,
-                &self.hash_value_ths.height,
+                &mut self.hash_value.ths_min.height,
+                &self.hash_value.ths.height,
             ),
             (
-                &mut self.hash_value_phs_min.height,
-                &self.hash_value_phs.height,
+                &mut self.hash_value.phs_min.height,
+                &self.hash_value.phs.height,
             ),
         ] {
             min_vec.compute_all_time_low_(starting_indexes.height, src_vec, exit, true)?;
         }
 
-        self.hash_price_rebound
+        self.hash_price
+            .rebound
             .compute_binary::<StoredF32, StoredF32, RatioDiffF32Bps32>(
                 starting_indexes.height,
-                &self.hash_price_phs.height,
-                &self.hash_price_phs_min.height,
+                &self.hash_price.phs.height,
+                &self.hash_price.phs_min.height,
                 exit,
             )?;
 
-        self.hash_value_rebound
+        self.hash_value
+            .rebound
             .compute_binary::<StoredF32, StoredF32, RatioDiffF32Bps32>(
                 starting_indexes.height,
-                &self.hash_value_phs.height,
-                &self.hash_value_phs_min.height,
+                &self.hash_value.phs.height,
+                &self.hash_value.phs_min.height,
                 exit,
             )?;
 

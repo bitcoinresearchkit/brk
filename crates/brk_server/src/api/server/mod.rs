@@ -5,10 +5,9 @@ use axum::{
     extract::State,
     http::{HeaderMap, Uri},
 };
-use brk_types::{DiskUsage, Health, Height, SyncStatus};
-use vecdb::ReadableVec;
+use brk_types::{DiskUsage, Health, SyncStatus};
 
-use crate::{CacheStrategy, extended::TransformResponseExtended};
+use crate::{CacheStrategy, VERSION, extended::TransformResponseExtended};
 
 use super::AppState;
 
@@ -26,23 +25,7 @@ impl ServerRoutes for ApiRouter<AppState> {
 
                     state
                         .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
-                            let indexed_height = q.height();
-                            let tip_height = tip_height?;
-                            let blocks_behind = Height::from(tip_height.saturating_sub(*indexed_height));
-                            let last_indexed_at_unix = q
-                                .indexer()
-                                .vecs
-                                .blocks
-                                .timestamp
-                                .collect_one(indexed_height).unwrap();
-
-                            Ok(SyncStatus {
-                                indexed_height,
-                                tip_height,
-                                blocks_behind,
-                                last_indexed_at: last_indexed_at_unix.to_iso8601(),
-                                last_indexed_at_unix,
-                            })
+                            Ok(q.sync_status(tip_height?))
                         })
                         .await
                 },
@@ -89,12 +72,19 @@ impl ServerRoutes for ApiRouter<AppState> {
             get_with(
                 async |State(state): State<AppState>| -> axum::Json<Health> {
                     let uptime = state.started_instant.elapsed();
+                    let tip_height = state.client.get_last_height();
+                    let sync = state.sync(|q| {
+                        let tip_height = tip_height.unwrap_or(q.indexed_height());
+                        q.sync_status(tip_height)
+                    });
                     axum::Json(Health {
                         status: Cow::Borrowed("healthy"),
                         service: Cow::Borrowed("brk"),
+                        version: Cow::Borrowed(VERSION),
                         timestamp: jiff::Timestamp::now().to_string(),
                         started_at: state.started_at.to_string(),
                         uptime_seconds: uptime.as_secs(),
+                        sync,
                     })
                 },
                 |op| {

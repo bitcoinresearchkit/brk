@@ -1,27 +1,25 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, Sats, SatsSigned, Version};
-
-use crate::{blocks, prices};
+use brk_types::{Height, Indexes, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
+
+use crate::{distribution::state::{CohortState, RealizedOps}, prices};
 
 use crate::internal::{
     AmountPerBlock, HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin,
-    LazyAmountPerBlock, RollingDelta1m,
+    LazyAmountPerBlock,
 };
 
-use super::ImportConfig;
+use crate::distribution::metrics::ImportConfig;
 
-/// Supply metrics for a cohort.
+/// Base supply metrics: total supply only (2 stored vecs).
 #[derive(Traversable)]
-pub struct SupplyMetrics<M: StorageMode = Rw> {
+pub struct SupplyBase<M: StorageMode = Rw> {
     pub total: AmountPerBlock<M>,
     pub halved: LazyAmountPerBlock,
-    pub delta: RollingDelta1m<Sats, SatsSigned, M>,
 }
 
-impl SupplyMetrics {
-    /// Import supply metrics from database.
+impl SupplyBase {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let supply = cfg.import("supply", Version::ZERO)?;
 
@@ -32,23 +30,18 @@ impl SupplyMetrics {
             HalveDollars,
         >(&cfg.name("supply_halved"), &supply, cfg.version);
 
-        let delta = cfg.import("supply_delta", Version::ONE)?;
-
         Ok(Self {
             total: supply,
             halved: supply_halved,
-            delta,
         })
     }
 
-    /// Get minimum length across height-indexed vectors.
     pub(crate) fn min_len(&self) -> usize {
         self.total.sats.height.len()
     }
 
-    /// Push supply state values to height-indexed vectors.
-    pub(crate) fn truncate_push(&mut self, height: Height, supply: Sats) -> Result<()> {
-        self.total.sats.height.truncate_push(height, supply)?;
+    pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState<impl RealizedOps>) -> Result<()> {
+        self.total.sats.height.truncate_push(height, state.supply.value)?;
         Ok(())
     }
 
@@ -59,7 +52,6 @@ impl SupplyMetrics {
         ]
     }
 
-    /// Eagerly compute USD height values from sats × price.
     pub(crate) fn compute(
         &mut self,
         prices: &prices::Vecs,
@@ -69,13 +61,6 @@ impl SupplyMetrics {
         self.total.compute(prices, max_from, exit)
     }
 
-    /// Validate computed versions against base version.
-    pub(crate) fn validate_computed_versions(&mut self, _base_version: Version) -> Result<()> {
-        // Validation logic for computed vecs
-        Ok(())
-    }
-
-    /// Compute aggregate values from separate cohorts.
     pub(crate) fn compute_from_stateful(
         &mut self,
         starting_indexes: &Indexes,
@@ -91,20 +76,5 @@ impl SupplyMetrics {
             exit,
         )?;
         Ok(())
-    }
-
-    /// Compute derived vecs from existing height data.
-    pub(crate) fn compute_rest_part1(
-        &mut self,
-        blocks: &blocks::Vecs,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.delta.compute(
-            starting_indexes.height,
-            &blocks.lookback.height_1m_ago,
-            &self.total.sats.height,
-            exit,
-        )
     }
 }

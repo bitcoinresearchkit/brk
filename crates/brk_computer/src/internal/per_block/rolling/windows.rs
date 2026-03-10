@@ -15,7 +15,7 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ComputedPerBlock, ComputedVecValue, NumericValue, Windows},
+    internal::{ComputedPerBlock, ComputedVecValue, NumericValue, RollingWindow24h, Windows, WindowsFrom1w},
 };
 
 /// Rolling window start heights — the 4 height-ago vecs (24h, 1w, 1m, 1y).
@@ -61,16 +61,16 @@ where
     }
 }
 
-/// Single 24h rolling window (1 stored vec).
-#[derive(Traversable)]
-pub struct RollingWindow24h<T, M: StorageMode = Rw>
+/// Single 24h rolling window backed by ComputedPerBlock (1 stored vec).
+#[derive(Deref, DerefMut, Traversable)]
+#[traversable(transparent)]
+pub struct RollingWindow24hPerBlock<T, M: StorageMode = Rw>(
+    pub RollingWindow24h<ComputedPerBlock<T, M>>,
+)
 where
-    T: ComputedVecValue + PartialOrd + JsonSchema,
-{
-    pub _24h: ComputedPerBlock<T, M>,
-}
+    T: ComputedVecValue + PartialOrd + JsonSchema;
 
-impl<T> RollingWindow24h<T>
+impl<T> RollingWindow24hPerBlock<T>
 where
     T: NumericValue + JsonSchema,
 {
@@ -80,14 +80,14 @@ where
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        Ok(Self {
+        Ok(Self(RollingWindow24h {
             _24h: ComputedPerBlock::forced_import(
                 db,
                 &format!("{name}_24h"),
                 version,
                 indexes,
             )?,
-        })
+        }))
     }
 
     pub(crate) fn compute_rolling_sum(
@@ -108,15 +108,11 @@ where
 }
 
 /// Extended rolling windows: 1w + 1m + 1y (3 stored vecs).
-#[derive(Traversable)]
-pub struct RollingWindowsFrom1w<T, M: StorageMode = Rw>
+#[derive(Deref, DerefMut, Traversable)]
+#[traversable(transparent)]
+pub struct RollingWindowsFrom1w<T, M: StorageMode = Rw>(pub WindowsFrom1w<ComputedPerBlock<T, M>>)
 where
-    T: ComputedVecValue + PartialOrd + JsonSchema,
-{
-    pub _1w: ComputedPerBlock<T, M>,
-    pub _1m: ComputedPerBlock<T, M>,
-    pub _1y: ComputedPerBlock<T, M>,
-}
+    T: ComputedVecValue + PartialOrd + JsonSchema;
 
 impl<T> RollingWindowsFrom1w<T>
 where
@@ -128,34 +124,9 @@ where
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        Ok(Self {
-            _1w: ComputedPerBlock::forced_import(
-                db,
-                &format!("{name}_1w"),
-                version,
-                indexes,
-            )?,
-            _1m: ComputedPerBlock::forced_import(
-                db,
-                &format!("{name}_1m"),
-                version,
-                indexes,
-            )?,
-            _1y: ComputedPerBlock::forced_import(
-                db,
-                &format!("{name}_1y"),
-                version,
-                indexes,
-            )?,
-        })
-    }
-
-    pub fn as_array(&self) -> [&ComputedPerBlock<T>; 3] {
-        [&self._1w, &self._1m, &self._1y]
-    }
-
-    pub fn as_mut_array(&mut self) -> [&mut ComputedPerBlock<T>; 3] {
-        [&mut self._1w, &mut self._1m, &mut self._1y]
+        Ok(Self(WindowsFrom1w::try_from_fn(|suffix| {
+            ComputedPerBlock::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
+        })?))
     }
 
     pub(crate) fn compute_rolling_sum(
@@ -168,15 +139,11 @@ where
     where
         T: Default + SubAssign,
     {
-        self._1w
-            .height
-            .compute_rolling_sum(max_from, windows._1w, source, exit)?;
-        self._1m
-            .height
-            .compute_rolling_sum(max_from, windows._1m, source, exit)?;
-        self._1y
-            .height
-            .compute_rolling_sum(max_from, windows._1y, source, exit)?;
+        let starts = [windows._1w, windows._1m, windows._1y];
+        for (w, starts) in self.0.as_mut_array().into_iter().zip(starts) {
+            w.height
+                .compute_rolling_sum(max_from, starts, source, exit)?;
+        }
         Ok(())
     }
 }

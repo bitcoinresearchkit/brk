@@ -8,8 +8,8 @@ use brk_indexer::Indexer;
 use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_rpc::Client;
-use brk_types::Height;
-use vecdb::{ReadOnlyClone, Ro};
+use brk_types::{Height, SyncStatus};
+use vecdb::{AnyVec, ReadOnlyClone, ReadableVec, Ro};
 
 #[cfg(feature = "tokio")]
 mod r#async;
@@ -57,8 +57,41 @@ impl Query {
     }
 
     /// Current indexed height
-    pub fn height(&self) -> Height {
+    pub fn indexed_height(&self) -> Height {
         Height::from(self.indexer().vecs.blocks.blockhash.stamp())
+    }
+
+    /// Current computed height (metrics)
+    pub fn computed_height(&self) -> Height {
+        Height::from(self.computer().distribution.supply_state.len())
+    }
+
+    /// Minimum of indexed and computed heights
+    pub fn height(&self) -> Height {
+        self.indexed_height().min(self.computed_height())
+    }
+
+    /// Build sync status with the given tip height
+    pub fn sync_status(&self, tip_height: Height) -> SyncStatus {
+        let indexed_height = self.indexed_height();
+        let computed_height = self.computed_height();
+        let blocks_behind = Height::from(tip_height.saturating_sub(*indexed_height));
+        let last_indexed_at_unix = self
+            .indexer()
+            .vecs
+            .blocks
+            .timestamp
+            .collect_one(indexed_height)
+            .unwrap();
+
+        SyncStatus {
+            indexed_height,
+            computed_height,
+            tip_height,
+            blocks_behind,
+            last_indexed_at: last_indexed_at_unix.to_iso8601(),
+            last_indexed_at_unix,
+        }
     }
 
     #[inline]

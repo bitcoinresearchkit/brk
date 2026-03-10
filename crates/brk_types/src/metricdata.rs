@@ -1,4 +1,4 @@
-use std::{io::Write, ops::Deref};
+use std::ops::Deref;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, de::DeserializeOwned};
@@ -38,17 +38,26 @@ impl MetricData {
         end: usize,
         buf: &mut Vec<u8>,
     ) -> vecdb::Result<()> {
-        let version = u32::from(vec.version());
-        let index_str = index.name();
         let total = vec.len();
         let end = end.min(total);
         let start = start.min(end);
-        let stamp = Timestamp::now().to_iso8601();
 
-        write!(
-            buf,
-            r#"{{"version":{version},"index":"{index_str}","total":{total},"start":{start},"end":{end},"stamp":"{stamp}","data":"#,
-        )?;
+        let mut itoa_buf = itoa::Buffer::new();
+
+        buf.extend_from_slice(b"{\"version\":");
+        buf.extend_from_slice(itoa_buf.format(u32::from(vec.version())).as_bytes());
+        buf.extend_from_slice(b",\"index\":\"");
+        buf.extend_from_slice(index.name().as_bytes());
+        buf.extend_from_slice(b"\",\"total\":");
+        buf.extend_from_slice(itoa_buf.format(total).as_bytes());
+        buf.extend_from_slice(b",\"start\":");
+        buf.extend_from_slice(itoa_buf.format(start).as_bytes());
+        buf.extend_from_slice(b",\"end\":");
+        buf.extend_from_slice(itoa_buf.format(end).as_bytes());
+        buf.extend_from_slice(b",\"stamp\":\"");
+        buf.extend_from_slice(Timestamp::now().to_iso8601().as_bytes());
+        buf.extend_from_slice(b"\",\"data\":");
+
         vec.write_json(Some(start), Some(end), buf)?;
         buf.push(b'}');
         Ok(())

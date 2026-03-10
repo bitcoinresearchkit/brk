@@ -37,7 +37,10 @@ impl Query {
             .join(format!("utxo_{cohort}_cost_basis/by_date"));
 
         if !dir.exists() {
-            return Err(Error::NotFound(format!("Unknown cohort '{cohort}'")));
+            let valid = self.cost_basis_cohorts().unwrap_or_default().join(", ");
+            return Err(Error::NotFound(format!(
+                "Unknown cohort '{cohort}'. Available: {valid}"
+            )));
         }
 
         Ok(dir)

@@ -2,10 +2,13 @@ use brk_error::Result;
 use brk_types::Version;
 use vecdb::Database;
 
-use super::Vecs;
+use super::{
+    vecs::{EmaVecs, SmaVecs},
+    Vecs,
+};
 use crate::{
     indexes,
-    internal::{CentsTimesTenths, PriceWithRatioPerBlock, Price},
+    internal::{CentsTimesTenths, Price, PriceWithRatioPerBlock},
 };
 
 impl Vecs {
@@ -16,72 +19,73 @@ impl Vecs {
     ) -> Result<Self> {
         macro_rules! import {
             ($name:expr) => {
-                PriceWithRatioPerBlock::forced_import(
-                    db, $name, version, indexes,
-                )?
+                PriceWithRatioPerBlock::forced_import(db, $name, version, indexes)?
             };
         }
 
-        let price_sma_200d = import!("price_sma_200d");
-        let price_sma_350d = import!("price_sma_350d");
+        let sma_200d = import!("price_sma_200d");
+        let sma_350d = import!("price_sma_350d");
 
-        let price_sma_200d_source = &price_sma_200d.price.cents;
-        let price_sma_200d_x2_4 = Price::from_cents_source::<CentsTimesTenths<24>>(
+        let price_sma_200d_source = &sma_200d.price.cents;
+        let _200d_x2_4 = Price::from_cents_source::<CentsTimesTenths<24>>(
             "price_sma_200d_x2_4",
             version,
             price_sma_200d_source,
         );
-        let price_sma_200d_x0_8 = Price::from_cents_source::<CentsTimesTenths<8>>(
+        let _200d_x0_8 = Price::from_cents_source::<CentsTimesTenths<8>>(
             "price_sma_200d_x0_8",
             version,
             price_sma_200d_source,
         );
 
-        let price_sma_350d_source = &price_sma_350d.price.cents;
-        let price_sma_350d_x2 = Price::from_cents_source::<CentsTimesTenths<20>>(
+        let price_sma_350d_source = &sma_350d.price.cents;
+        let _350d_x2 = Price::from_cents_source::<CentsTimesTenths<20>>(
             "price_sma_350d_x2",
             version,
             price_sma_350d_source,
         );
 
-        Ok(Self {
-            price_sma_1w: import!("price_sma_1w"),
-            price_sma_8d: import!("price_sma_8d"),
-            price_sma_13d: import!("price_sma_13d"),
-            price_sma_21d: import!("price_sma_21d"),
-            price_sma_1m: import!("price_sma_1m"),
-            price_sma_34d: import!("price_sma_34d"),
-            price_sma_55d: import!("price_sma_55d"),
-            price_sma_89d: import!("price_sma_89d"),
-            price_sma_111d: import!("price_sma_111d"),
-            price_sma_144d: import!("price_sma_144d"),
-            price_sma_200d,
-            price_sma_350d,
-            price_sma_1y: import!("price_sma_1y"),
-            price_sma_2y: import!("price_sma_2y"),
-            price_sma_200w: import!("price_sma_200w"),
-            price_sma_4y: import!("price_sma_4y"),
+        let sma = SmaVecs {
+            _1w: import!("price_sma_1w"),
+            _8d: import!("price_sma_8d"),
+            _13d: import!("price_sma_13d"),
+            _21d: import!("price_sma_21d"),
+            _1m: import!("price_sma_1m"),
+            _34d: import!("price_sma_34d"),
+            _55d: import!("price_sma_55d"),
+            _89d: import!("price_sma_89d"),
+            _111d: import!("price_sma_111d"),
+            _144d: import!("price_sma_144d"),
+            _200d: sma_200d,
+            _350d: sma_350d,
+            _1y: import!("price_sma_1y"),
+            _2y: import!("price_sma_2y"),
+            _200w: import!("price_sma_200w"),
+            _4y: import!("price_sma_4y"),
+            _200d_x2_4,
+            _200d_x0_8,
+            _350d_x2,
+        };
 
-            price_ema_1w: import!("price_ema_1w"),
-            price_ema_8d: import!("price_ema_8d"),
-            price_ema_12d: import!("price_ema_12d"),
-            price_ema_13d: import!("price_ema_13d"),
-            price_ema_21d: import!("price_ema_21d"),
-            price_ema_26d: import!("price_ema_26d"),
-            price_ema_1m: import!("price_ema_1m"),
-            price_ema_34d: import!("price_ema_34d"),
-            price_ema_55d: import!("price_ema_55d"),
-            price_ema_89d: import!("price_ema_89d"),
-            price_ema_144d: import!("price_ema_144d"),
-            price_ema_200d: import!("price_ema_200d"),
-            price_ema_1y: import!("price_ema_1y"),
-            price_ema_2y: import!("price_ema_2y"),
-            price_ema_200w: import!("price_ema_200w"),
-            price_ema_4y: import!("price_ema_4y"),
+        let ema = EmaVecs {
+            _1w: import!("price_ema_1w"),
+            _8d: import!("price_ema_8d"),
+            _12d: import!("price_ema_12d"),
+            _13d: import!("price_ema_13d"),
+            _21d: import!("price_ema_21d"),
+            _26d: import!("price_ema_26d"),
+            _1m: import!("price_ema_1m"),
+            _34d: import!("price_ema_34d"),
+            _55d: import!("price_ema_55d"),
+            _89d: import!("price_ema_89d"),
+            _144d: import!("price_ema_144d"),
+            _200d: import!("price_ema_200d"),
+            _1y: import!("price_ema_1y"),
+            _2y: import!("price_ema_2y"),
+            _200w: import!("price_ema_200w"),
+            _4y: import!("price_ema_4y"),
+        };
 
-            price_sma_200d_x2_4,
-            price_sma_200d_x0_8,
-            price_sma_350d_x2,
-        })
+        Ok(Self { sma, ema })
     }
 }

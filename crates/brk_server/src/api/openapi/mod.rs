@@ -14,7 +14,7 @@ mod compact;
 
 pub use compact::ApiJson;
 
-use aide::openapi::{Contact, Info, License, OpenApi, Tag};
+use aide::openapi::{Contact, Info, License, OpenApi, Server, ServerVariable, Tag};
 
 use crate::VERSION;
 
@@ -30,6 +30,34 @@ pub fn create_openapi() -> OpenApi {
 - **[Mempool.space](https://mempool.space/docs/api/rest) compatible** (WIP): Most non-metrics endpoints follow the mempool.space API format
 - **Multiple formats**: JSON and CSV output
 - **LLM-optimized**: [`/llms.txt`](/llms.txt) for discovery, [`/api.json`](/api.json) compact OpenAPI spec for tool use (full spec at [`/openapi.json`](/openapi.json))
+
+### Quick start
+
+```bash
+curl -s https://bitview.space/api/block-height/0
+curl -s https://bitview.space/api/metrics/search/price
+curl -s https://bitview.space/api/metric/price/day1
+```
+
+### Errors
+
+All errors return structured JSON with a consistent format:
+
+```json
+{
+  "error": {
+    "type": "not_found",
+    "code": "metric_not_found",
+    "message": "'foo' not found, did you mean 'bar'?",
+    "doc_url": "https://bitcoinresearchkit.org/api"
+  }
+}
+```
+
+- **`type`**: Error category — `invalid_request` (400), `forbidden` (403), `not_found` (404), `unavailable` (503), or `internal` (500)
+- **`code`**: Machine-readable error code (e.g. `invalid_address`, `metric_not_found`, `weight_exceeded`)
+- **`message`**: Human-readable description
+- **`doc_url`**: Link to API documentation
 
 ### Client Libraries
 
@@ -130,9 +158,38 @@ pub fn create_openapi() -> OpenApi {
         },
     ];
 
+    let servers = vec![Server {
+        url: "{scheme}://{host}".into(),
+        description: Some("BRK server".into()),
+        variables: [
+            (
+                "scheme".into(),
+                ServerVariable {
+                    enumeration: vec!["https".into(), "http".into()],
+                    default: "https".into(),
+                    description: Some("Protocol".into()),
+                    ..Default::default()
+                },
+            ),
+            (
+                "host".into(),
+                ServerVariable {
+                    default: "bitview.space".into(),
+                    description: Some(
+                        "Server address (e.g. bitview.space or localhost:3110)".into(),
+                    ),
+                    ..Default::default()
+                },
+            ),
+        ]
+        .into(),
+        ..Default::default()
+    }];
+
     OpenApi {
         info,
         tags,
+        servers,
         ..OpenApi::default()
     }
 }

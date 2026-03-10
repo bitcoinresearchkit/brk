@@ -18,35 +18,35 @@ impl Vecs {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let price_ath = Price::forced_import(db, "price_ath", v, indexes)?;
+        let price = Price::forced_import(db, "price_ath", v, indexes)?;
 
-        let max_days_between_price_ath =
+        let max_days_between =
             ComputedPerBlock::forced_import(db, "max_days_between_price_ath", v, indexes)?;
 
-        let max_years_between_price_ath = DerivedResolutions::from_computed::<DaysToYears>(
+        let max_years_between = DerivedResolutions::from_computed::<DaysToYears>(
             "max_years_between_price_ath",
             v,
-            &max_days_between_price_ath,
+            &max_days_between,
         );
 
-        let days_since_price_ath =
+        let days_since =
             ComputedPerBlock::forced_import(db, "days_since_price_ath", v, indexes)?;
 
-        let years_since_price_ath = DerivedResolutions::from_computed::<DaysToYears>(
+        let years_since = DerivedResolutions::from_computed::<DaysToYears>(
             "years_since_price_ath",
             v,
-            &days_since_price_ath,
+            &days_since,
         );
 
-        let price_drawdown = PercentPerBlock::forced_import(db, "price_drawdown", v, indexes)?;
+        let drawdown = PercentPerBlock::forced_import(db, "price_drawdown", v, indexes)?;
 
         Ok(Self {
-            price_ath,
-            price_drawdown,
-            days_since_price_ath,
-            years_since_price_ath,
-            max_days_between_price_ath,
-            max_years_between_price_ath,
+            price,
+            drawdown,
+            days_since,
+            years_since,
+            max_days_between,
+            max_years_between,
         })
     }
 }

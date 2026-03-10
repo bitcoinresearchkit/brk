@@ -7,8 +7,8 @@ use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
-    ActivityBase, CohortMetricsBase, ImportConfig, OutputsMetrics, RealizedBase,
-    RelativeToAll, SupplyMetrics, UnrealizedBase,
+    ActivityCore, CohortMetricsBase, ImportConfig, OutputsFull, RealizedCore,
+    RelativeToAll, SupplyFull, UnrealizedBase,
 };
 
 /// Basic cohort metrics: no extensions, with relative (rel_to_all).
@@ -17,17 +17,17 @@ use crate::distribution::metrics::{
 pub struct BasicCohortMetrics<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub filter: Filter,
-    pub supply: Box<SupplyMetrics<M>>,
-    pub outputs: Box<OutputsMetrics<M>>,
-    pub activity: Box<ActivityBase<M>>,
-    pub realized: Box<RealizedBase<M>>,
+    pub supply: Box<SupplyFull<M>>,
+    pub outputs: Box<OutputsFull<M>>,
+    pub activity: Box<ActivityCore<M>>,
+    pub realized: Box<RealizedCore<M>>,
     pub unrealized: Box<UnrealizedBase<M>>,
     pub relative: Box<RelativeToAll<M>>,
 }
 
 impl CohortMetricsBase for BasicCohortMetrics {
-    type ActivityVecs = ActivityBase;
-    type RealizedVecs = RealizedBase;
+    type ActivityVecs = ActivityCore;
+    type RealizedVecs = RealizedCore;
     type UnrealizedVecs = UnrealizedBase;
 
     impl_cohort_accessors!();
@@ -45,17 +45,17 @@ impl CohortMetricsBase for BasicCohortMetrics {
 
 impl BasicCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let supply = SupplyMetrics::forced_import(cfg)?;
+        let supply = SupplyFull::forced_import(cfg)?;
         let unrealized = UnrealizedBase::forced_import(cfg)?;
-        let realized = RealizedBase::forced_import(cfg)?;
+        let realized = RealizedCore::forced_import(cfg)?;
 
         let relative = RelativeToAll::forced_import(cfg)?;
 
         Ok(Self {
             filter: cfg.filter.clone(),
             supply: Box::new(supply),
-            outputs: Box::new(OutputsMetrics::forced_import(cfg)?),
-            activity: Box::new(ActivityBase::forced_import(cfg)?),
+            outputs: Box::new(OutputsFull::forced_import(cfg)?),
+            activity: Box::new(ActivityCore::forced_import(cfg)?),
             realized: Box::new(realized),
             unrealized: Box::new(unrealized),
             relative: Box::new(relative),

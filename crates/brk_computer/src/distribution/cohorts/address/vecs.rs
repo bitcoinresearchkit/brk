@@ -157,7 +157,6 @@ impl DynCohortVecs for AddressCohortVecs {
         self.addr_count
             .height
             .validate_computed_version_or_reset(base_version)?;
-        self.metrics.validate_computed_versions(base_version)?;
         Ok(())
     }
 
@@ -170,18 +169,9 @@ impl DynCohortVecs for AddressCohortVecs {
             self.addr_count
                 .height
                 .truncate_push(height, state.addr_count.into())?;
-            self.metrics
-                .supply
-                .truncate_push(height, state.inner.supply.value)?;
-            self.metrics
-                .outputs
-                .truncate_push(height, state.inner.supply.utxo_count)?;
-            self.metrics
-                .activity
-                .truncate_push(height, state.inner.sent)?;
-            self.metrics
-                .realized
-                .truncate_push(height, &state.inner.realized)?;
+            self.metrics.supply.truncate_push(height, &state.inner)?;
+            self.metrics.outputs.truncate_push(height, &state.inner)?;
+            self.metrics.realized.truncate_push(height, &state.inner)?;
         }
 
         Ok(())
@@ -189,17 +179,10 @@ impl DynCohortVecs for AddressCohortVecs {
 
     fn compute_then_truncate_push_unrealized_states(
         &mut self,
-        height: Height,
-        height_price: Cents,
+        _height: Height,
+        _height_price: Cents,
         _is_day_boundary: bool,
     ) -> Result<()> {
-        if let Some(state) = self.state.as_mut() {
-            state.inner.apply_pending();
-            let unrealized_state = state.inner.compute_unrealized_state(height_price);
-            self.metrics
-                .unrealized
-                .truncate_push(height, &unrealized_state)?;
-        }
         Ok(())
     }
 

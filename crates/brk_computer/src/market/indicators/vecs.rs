@@ -1,5 +1,5 @@
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, StoredF32};
+use brk_types::{BasisPoints16, BasisPoints32, StoredF32};
 use vecdb::{Rw, StorageMode};
 
 use crate::internal::{ComputedPerBlock, RatioPerBlock, PercentPerBlock, Windows};
@@ -29,15 +29,15 @@ pub struct MacdChain<M: StorageMode = Rw> {
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub puell_multiple: RatioPerBlock<M>,
-    pub nvt: RatioPerBlock<M>,
+    pub puell_multiple: RatioPerBlock<BasisPoints32, M>,
+    pub nvt: RatioPerBlock<BasisPoints32, M>,
 
     pub rsi: Windows<RsiChain<M>>,
 
     pub stoch_k: PercentPerBlock<BasisPoints16, M>,
     pub stoch_d: PercentPerBlock<BasisPoints16, M>,
 
-    pub pi_cycle: RatioPerBlock<M>,
+    pub pi_cycle: RatioPerBlock<BasisPoints32, M>,
 
     pub macd: Windows<MacdChain<M>>,
 

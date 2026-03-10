@@ -85,11 +85,50 @@ impl Server {
             },
         );
 
-        let response_uri_layer = axum::middleware::from_fn(
+        let response_time_layer = axum::middleware::from_fn(
             async |request: Request<Body>, next: Next| -> Response<Body> {
                 let uri = request.uri().clone();
+                let start = Instant::now();
                 let mut response = next.run(request).await;
                 response.extensions_mut().insert(uri);
+                response.headers_mut().insert(
+                    "X-Response-Time",
+                    format!("{}us", start.elapsed().as_micros())
+                        .parse()
+                        .unwrap(),
+                );
+                response
+            },
+        );
+
+        // Wrap non-JSON client errors (e.g. axum extraction rejections) in structured JSON
+        let json_error_layer = axum::middleware::from_fn(
+            async |request: Request<Body>, next: Next| -> Response<Body> {
+                use axum::http::header::CONTENT_TYPE;
+                use axum::response::IntoResponse;
+
+                let response = next.run(request).await;
+                if !response.status().is_client_error()
+                    || response
+                        .headers()
+                        .get(CONTENT_TYPE)
+                        .is_some_and(|v| v.as_bytes().starts_with(b"application/json"))
+                {
+                    return response;
+                }
+
+                let (parts, body) = response.into_parts();
+                let bytes = axum::body::to_bytes(body, 4096)
+                    .await
+                    .unwrap_or_default();
+                let msg = String::from_utf8_lossy(&bytes).to_string();
+                let code = if parts.status == StatusCode::NOT_FOUND {
+                    "not_found"
+                } else {
+                    "bad_request"
+                };
+                let mut response = Error::new(parts.status, code, msg).into_response();
+                response.extensions_mut().extend(parts.extensions);
                 response
             },
         );
@@ -99,7 +138,8 @@ impl Server {
             .on_response(
                 |response: &Response<Body>, latency: Duration, _: &tracing::Span| {
                     let status = response.status().as_u16();
-                    let uri = response.extensions().get::<Uri>().unwrap();
+                    let unknown = Uri::from_static("/unknown");
+                    let uri = response.extensions().get::<Uri>().unwrap_or(&unknown);
                     match response.status() {
                         StatusCode::OK => info!(status, %uri, ?latency),
                         StatusCode::NOT_MODIFIED
@@ -125,10 +165,11 @@ impl Server {
         let router = router
             .with_state(state)
             .merge(website_router)
-            .layer(CatchPanicLayer::new())
+            .layer(json_error_layer)
             .layer(compression_layer)
-            .layer(response_uri_layer)
+            .layer(response_time_layer)
             .layer(trace_layer)
+            .layer(CatchPanicLayer::new())
             .layer(TimeoutLayer::with_status_code(
                 StatusCode::GATEWAY_TIMEOUT,
                 Duration::from_secs(5),

@@ -18,7 +18,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let all_metrics = &distribution.utxo_cohorts.all.metrics;
-        let realized_cap_cents = &all_metrics.realized.cap_cents.height;
+        let realized_cap_cents = &all_metrics.realized.cap.cents.height;
         let circulating_supply = &all_metrics.supply.total.btc.height;
 
         self.thermo_cap.cents.height.compute_transform(

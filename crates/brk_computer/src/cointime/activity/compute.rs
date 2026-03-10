@@ -34,7 +34,7 @@ impl Vecs {
                 vec.compute_subtract(
                     starting_indexes.height,
                     &self.coinblocks_created.height,
-                    &all_metrics.activity.coinblocks_destroyed.height,
+                    &all_metrics.activity.coinblocks_destroyed.raw.height,
                     exit,
                 )?;
                 Ok(())
@@ -42,7 +42,7 @@ impl Vecs {
 
         self.liveliness.height.compute_divide(
             starting_indexes.height,
-            &all_metrics.activity.coinblocks_destroyed_cumulative.height,
+            &all_metrics.activity.coinblocks_destroyed.cumulative.height,
             &self.coinblocks_created.cumulative.height,
             exit,
         )?;

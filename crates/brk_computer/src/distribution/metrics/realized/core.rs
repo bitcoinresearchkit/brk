@@ -8,10 +8,11 @@ use vecdb::{
 
 use crate::{
     blocks,
-    distribution::state::RealizedOps,
+    distribution::state::{CohortState, RealizedOps},
     internal::{
-        ComputedPerBlock, FiatRollingDelta1m, LazyPerBlock, NegCentsUnsignedToDollars,
-        RatioCents64, RollingWindow24h,
+        AmountPerBlockWithSum24h, ComputedPerBlock, FiatRollingDelta1m, LazyPerBlock,
+        NegCentsUnsignedToDollars, PerBlockWithSum24h, RatioCents64,
+        RollingWindow24hPerBlock,
     },
     prices,
 };
@@ -20,6 +21,17 @@ use crate::distribution::metrics::ImportConfig;
 
 use super::RealizedMinimal;
 
+#[derive(Traversable)]
+pub struct RealizedSoprCore<M: StorageMode = Rw> {
+    pub ratio: RollingWindow24hPerBlock<StoredF64, M>,
+}
+
+#[derive(Traversable)]
+pub struct RealizedSentCore<M: StorageMode = Rw> {
+    pub in_profit: AmountPerBlockWithSum24h<M>,
+    pub in_loss: AmountPerBlockWithSum24h<M>,
+}
+
 #[derive(Deref, DerefMut, Traversable)]
 pub struct RealizedCore<M: StorageMode = Rw> {
     #[deref]
@@ -27,17 +39,19 @@ pub struct RealizedCore<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub minimal: RealizedMinimal<M>,
 
+    #[traversable(wrap = "profit", rename = "cumulative")]
+    pub profit_cumulative: ComputedPerBlock<Cents, M>,
+    #[traversable(wrap = "loss", rename = "cumulative")]
+    pub loss_cumulative: ComputedPerBlock<Cents, M>,
+
+    #[traversable(wrap = "cap", rename = "delta")]
     pub cap_delta: FiatRollingDelta1m<Cents, CentsSigned, M>,
 
+    #[traversable(wrap = "loss", rename = "neg")]
     pub neg_loss: LazyPerBlock<Dollars, Cents>,
-    pub net_pnl: ComputedPerBlock<CentsSigned, M>,
-    pub net_pnl_sum: RollingWindow24h<CentsSigned, M>,
-
-    pub value_created: ComputedPerBlock<Cents, M>,
-    pub value_destroyed: ComputedPerBlock<Cents, M>,
-    pub value_created_sum: RollingWindow24h<Cents, M>,
-    pub value_destroyed_sum: RollingWindow24h<Cents, M>,
-    pub sopr: RollingWindow24h<StoredF64, M>,
+    pub net_pnl: PerBlockWithSum24h<CentsSigned, M>,
+    pub sopr: RealizedSoprCore<M>,
+    pub sent: RealizedSentCore<M>,
 }
 
 impl RealizedCore {
@@ -50,55 +64,57 @@ impl RealizedCore {
         let neg_realized_loss = LazyPerBlock::from_height_source::<NegCentsUnsignedToDollars>(
             &cfg.name("neg_realized_loss"),
             cfg.version + Version::ONE,
-            minimal.loss.height.read_only_boxed_clone(),
+            minimal.loss.raw.cents.height.read_only_boxed_clone(),
             cfg.indexes,
         );
 
-        let net_realized_pnl = cfg.import("net_realized_pnl", v1)?;
-        let net_realized_pnl_sum = cfg.import("net_realized_pnl", v1)?;
-
-        let value_created = cfg.import("value_created", v0)?;
-        let value_destroyed = cfg.import("value_destroyed", v0)?;
-        let value_created_sum = cfg.import("value_created", v1)?;
-        let value_destroyed_sum = cfg.import("value_destroyed", v1)?;
-        let sopr = cfg.import("sopr", v1)?;
-
         Ok(Self {
             minimal,
+            profit_cumulative: cfg.import("realized_profit_cumulative", v0)?,
+            loss_cumulative: cfg.import("realized_loss_cumulative", v0)?,
             cap_delta: cfg.import("realized_cap_delta", v1)?,
             neg_loss: neg_realized_loss,
-            net_pnl: net_realized_pnl,
-            net_pnl_sum: net_realized_pnl_sum,
-            value_created,
-            value_destroyed,
-            value_created_sum,
-            value_destroyed_sum,
-            sopr,
+            net_pnl: cfg.import("net_realized_pnl", v1)?,
+            sopr: RealizedSoprCore {
+                ratio: cfg.import("sopr", v1)?,
+            },
+            sent: RealizedSentCore {
+                in_profit: cfg.import("sent_in_profit", v1)?,
+                in_loss: cfg.import("sent_in_loss", v1)?,
+            },
         })
     }
 
     pub(crate) fn min_stateful_height_len(&self) -> usize {
         self.minimal
             .min_stateful_height_len()
-            .min(self.value_created.height.len())
-            .min(self.value_destroyed.height.len())
+            .min(self.sent.in_profit.raw.sats.height.len())
+            .min(self.sent.in_loss.raw.sats.height.len())
     }
 
-    pub(crate) fn truncate_push(&mut self, height: Height, state: &impl RealizedOps) -> Result<()> {
+    pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState<impl RealizedOps>) -> Result<()> {
         self.minimal.truncate_push(height, state)?;
-        self.value_created
+        self.sent
+            .in_profit
+            .raw
+            .sats
             .height
-            .truncate_push(height, state.value_created())?;
-        self.value_destroyed
+            .truncate_push(height, state.realized.sent_in_profit())?;
+        self.sent
+            .in_loss
+            .raw
+            .sats
             .height
-            .truncate_push(height, state.value_destroyed())?;
+            .truncate_push(height, state.realized.sent_in_loss())?;
         Ok(())
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.minimal.collect_vecs_mut();
-        vecs.push(&mut self.value_created.height as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.value_destroyed.height);
+        vecs.push(&mut self.sent.in_profit.raw.sats.height as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.sent.in_profit.raw.cents.height);
+        vecs.push(&mut self.sent.in_loss.raw.sats.height);
+        vecs.push(&mut self.sent.in_loss.raw.cents.height);
         vecs
     }
 
@@ -112,8 +128,10 @@ impl RealizedCore {
         self.minimal
             .compute_from_stateful(starting_indexes, &minimal_refs, exit)?;
 
-        sum_others!(self, starting_indexes, others, exit; value_created.height);
-        sum_others!(self, starting_indexes, others, exit; value_destroyed.height);
+        sum_others!(self, starting_indexes, others, exit; sent.in_profit.raw.sats.height);
+        sum_others!(self, starting_indexes, others, exit; sent.in_profit.raw.cents.height);
+        sum_others!(self, starting_indexes, others, exit; sent.in_loss.raw.sats.height);
+        sum_others!(self, starting_indexes, others, exit; sent.in_loss.raw.cents.height);
 
         Ok(())
     }
@@ -127,10 +145,21 @@ impl RealizedCore {
         self.minimal
             .compute_rest_part1(blocks, starting_indexes, exit)?;
 
-        self.net_pnl.height.compute_transform2(
+        self.profit_cumulative.height.compute_cumulative(
             starting_indexes.height,
-            &self.minimal.profit.height,
-            &self.minimal.loss.height,
+            &self.minimal.profit.raw.cents.height,
+            exit,
+        )?;
+        self.loss_cumulative.height.compute_cumulative(
+            starting_indexes.height,
+            &self.minimal.loss.raw.cents.height,
+            exit,
+        )?;
+
+        self.net_pnl.raw.height.compute_transform2(
+            starting_indexes.height,
+            &self.minimal.profit.raw.cents.height,
+            &self.minimal.loss.raw.cents.height,
             |(i, profit, loss, ..)| {
                 (
                     i,
@@ -157,38 +186,50 @@ impl RealizedCore {
         self.cap_delta.compute(
             starting_indexes.height,
             &blocks.lookback.height_1m_ago,
-            &self.minimal.cap_cents.height,
+            &self.minimal.cap.cents.height,
             exit,
         )?;
 
-        self.net_pnl_sum.compute_rolling_sum(
+        self.net_pnl.sum.compute_rolling_sum(
             starting_indexes.height,
             &blocks.lookback.height_24h_ago,
-            &self.net_pnl.height,
-            exit,
-        )?;
-
-        self.value_created_sum.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.lookback.height_24h_ago,
-            &self.value_created.height,
-            exit,
-        )?;
-        self.value_destroyed_sum.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.lookback.height_24h_ago,
-            &self.value_destroyed.height,
+            &self.net_pnl.raw.height,
             exit,
         )?;
 
         self.sopr
+            .ratio
             ._24h
             .compute_binary::<Cents, Cents, RatioCents64>(
                 starting_indexes.height,
-                &self.value_created_sum._24h.height,
-                &self.value_destroyed_sum._24h.height,
+                &self.minimal.sopr.value_created.sum._24h.height,
+                &self.minimal.sopr.value_destroyed.sum._24h.height,
                 exit,
             )?;
+
+        self.sent
+            .in_profit
+            .raw
+            .compute(prices, starting_indexes.height, exit)?;
+        self.sent
+            .in_loss
+            .raw
+            .compute(prices, starting_indexes.height, exit)?;
+
+        self.sent.in_profit.sum.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.lookback.height_24h_ago,
+            &self.sent.in_profit.raw.sats.height,
+            &self.sent.in_profit.raw.cents.height,
+            exit,
+        )?;
+        self.sent.in_loss.sum.compute_rolling_sum(
+            starting_indexes.height,
+            &blocks.lookback.height_24h_ago,
+            &self.sent.in_loss.raw.sats.height,
+            &self.sent.in_loss.raw.cents.height,
+            exit,
+        )?;
 
         Ok(())
     }

@@ -19,7 +19,7 @@ use crate::{
     indexes,
     internal::{
         ComputedPerBlock, NumericValue, PercentPerBlock, PercentRollingWindows,
-        RollingWindows, WindowStarts,
+        RollingWindows, WindowStarts, WindowsExcept1m,
     },
 };
 
@@ -168,7 +168,9 @@ where
     S: NumericValue + JsonSchema,
     C: NumericValue + JsonSchema,
 {
+    #[traversable(wrap = "change", rename = "1m")]
     pub change_1m: ComputedPerBlock<C, M>,
+    #[traversable(wrap = "rate", rename = "1m")]
     pub rate_1m: PercentPerBlock<BasisPointsSigned32, M>,
     _phantom: std::marker::PhantomData<S>,
 }
@@ -227,14 +229,8 @@ where
     S: NumericValue + JsonSchema,
     C: NumericValue + JsonSchema,
 {
-    #[traversable(rename = "24h")]
-    pub change_24h: ComputedPerBlock<C, M>,
-    pub change_1w: ComputedPerBlock<C, M>,
-    pub change_1y: ComputedPerBlock<C, M>,
-    #[traversable(rename = "24h")]
-    pub rate_24h: PercentPerBlock<BasisPointsSigned32, M>,
-    pub rate_1w: PercentPerBlock<BasisPointsSigned32, M>,
-    pub rate_1y: PercentPerBlock<BasisPointsSigned32, M>,
+    pub change: WindowsExcept1m<ComputedPerBlock<C, M>>,
+    pub rate: WindowsExcept1m<PercentPerBlock<BasisPointsSigned32, M>>,
     _phantom: std::marker::PhantomData<S>,
 }
 
@@ -250,42 +246,22 @@ where
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            change_24h: ComputedPerBlock::forced_import(
-                db,
-                &format!("{name}_change_24h"),
-                version,
-                indexes,
-            )?,
-            change_1w: ComputedPerBlock::forced_import(
-                db,
-                &format!("{name}_change_1w"),
-                version,
-                indexes,
-            )?,
-            change_1y: ComputedPerBlock::forced_import(
-                db,
-                &format!("{name}_change_1y"),
-                version,
-                indexes,
-            )?,
-            rate_24h: PercentPerBlock::forced_import(
-                db,
-                &format!("{name}_rate_24h"),
-                version,
-                indexes,
-            )?,
-            rate_1w: PercentPerBlock::forced_import(
-                db,
-                &format!("{name}_rate_1w"),
-                version,
-                indexes,
-            )?,
-            rate_1y: PercentPerBlock::forced_import(
-                db,
-                &format!("{name}_rate_1y"),
-                version,
-                indexes,
-            )?,
+            change: WindowsExcept1m::try_from_fn(|suffix| {
+                ComputedPerBlock::forced_import(
+                    db,
+                    &format!("{name}_change_{suffix}"),
+                    version,
+                    indexes,
+                )
+            })?,
+            rate: WindowsExcept1m::try_from_fn(|suffix| {
+                PercentPerBlock::forced_import(
+                    db,
+                    &format!("{name}_rate_{suffix}"),
+                    version,
+                    indexes,
+                )
+            })?,
             _phantom: std::marker::PhantomData,
         })
     }
@@ -297,8 +273,8 @@ where
         source: &impl ReadableVec<Height, S>,
         exit: &Exit,
     ) -> Result<()> {
-        let changes = [&mut self.change_24h, &mut self.change_1w, &mut self.change_1y];
-        let rates = [&mut self.rate_24h, &mut self.rate_1w, &mut self.rate_1y];
+        let changes = self.change.as_mut_array();
+        let rates = self.rate.as_mut_array();
         let starts = [windows._24h, windows._1w, windows._1y];
 
         for ((change_w, rate_w), starts) in changes.into_iter().zip(rates).zip(starts) {

@@ -39,7 +39,7 @@ impl Query {
     }
 
     pub fn blocks(&self, start_height: Option<Height>) -> Result<Vec<BlockInfo>> {
-        let max_height = self.height();
+        let max_height = self.indexed_height();
 
         let start = start_height.unwrap_or(max_height);
         let start = start.min(max_height);

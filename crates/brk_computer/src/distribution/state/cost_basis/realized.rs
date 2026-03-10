@@ -38,13 +38,15 @@ pub trait RealizedOps: Default + Clone + Send + Sync + 'static {
     );
 }
 
-/// Minimal realized state: only cap, profit, loss.
+/// Minimal realized state: cap, profit, loss, value_created/destroyed.
 /// Used by MinimalCohortMetrics cohorts (amount_range, type_, address — ~135 separate cohorts).
 #[derive(Debug, Default, Clone)]
 pub struct MinimalRealizedState {
     cap_raw: u128,
     profit_raw: u128,
     loss_raw: u128,
+    value_created_raw: u128,
+    value_destroyed_raw: u128,
 }
 
 impl RealizedOps for MinimalRealizedState {
@@ -73,6 +75,22 @@ impl RealizedOps for MinimalRealizedState {
     }
 
     #[inline]
+    fn value_created(&self) -> Cents {
+        if self.value_created_raw == 0 {
+            return Cents::ZERO;
+        }
+        Cents::new((self.value_created_raw / Sats::ONE_BTC_U128) as u64)
+    }
+
+    #[inline]
+    fn value_destroyed(&self) -> Cents {
+        if self.value_destroyed_raw == 0 {
+            return Cents::ZERO;
+        }
+        Cents::new((self.value_destroyed_raw / Sats::ONE_BTC_U128) as u64)
+    }
+
+    #[inline]
     fn set_cap_raw(&mut self, cap_raw: CentsSats) {
         self.cap_raw = cap_raw.inner();
     }
@@ -84,6 +102,8 @@ impl RealizedOps for MinimalRealizedState {
     fn reset_single_iteration_values(&mut self) {
         self.profit_raw = 0;
         self.loss_raw = 0;
+        self.value_created_raw = 0;
+        self.value_destroyed_raw = 0;
     }
 
     #[inline]
@@ -124,16 +144,16 @@ impl RealizedOps for MinimalRealizedState {
             Ordering::Equal => {}
         }
         self.cap_raw -= prev_ps.as_u128();
+        self.value_created_raw += current_ps.as_u128();
+        self.value_destroyed_raw += prev_ps.as_u128();
     }
 }
 
-/// Core realized state: cap, profit, loss + value_created/destroyed for SOPR + sent tracking.
+/// Core realized state: extends Minimal with sent_in_profit/loss tracking.
 /// Used by CoreCohortMetrics cohorts (epoch, class, max_age, min_age — ~59 separate cohorts).
 #[derive(Debug, Default, Clone)]
 pub struct CoreRealizedState {
     minimal: MinimalRealizedState,
-    value_created_raw: u128,
-    value_destroyed_raw: u128,
     sent_in_profit: Sats,
     sent_in_loss: Sats,
 }
@@ -156,18 +176,12 @@ impl RealizedOps for CoreRealizedState {
 
     #[inline]
     fn value_created(&self) -> Cents {
-        if self.value_created_raw == 0 {
-            return Cents::ZERO;
-        }
-        Cents::new((self.value_created_raw / Sats::ONE_BTC_U128) as u64)
+        self.minimal.value_created()
     }
 
     #[inline]
     fn value_destroyed(&self) -> Cents {
-        if self.value_destroyed_raw == 0 {
-            return Cents::ZERO;
-        }
-        Cents::new((self.value_destroyed_raw / Sats::ONE_BTC_U128) as u64)
+        self.minimal.value_destroyed()
     }
 
     #[inline]
@@ -191,8 +205,6 @@ impl RealizedOps for CoreRealizedState {
     #[inline]
     fn reset_single_iteration_values(&mut self) {
         self.minimal.reset_single_iteration_values();
-        self.value_created_raw = 0;
-        self.value_destroyed_raw = 0;
         self.sent_in_profit = Sats::ZERO;
         self.sent_in_loss = Sats::ZERO;
     }
@@ -223,8 +235,6 @@ impl RealizedOps for CoreRealizedState {
     ) {
         self.minimal
             .send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
-        self.value_created_raw += current_ps.as_u128();
-        self.value_destroyed_raw += prev_ps.as_u128();
         match current_ps.cmp(&prev_ps) {
             Ordering::Greater | Ordering::Equal => {
                 self.sent_in_profit += sats;

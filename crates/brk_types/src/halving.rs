@@ -98,7 +98,7 @@ impl Div<usize> for Halving {
 
 impl PrintableIndex for Halving {
     fn to_string() -> &'static str {
-        "halvingepoch"
+        "halving"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {

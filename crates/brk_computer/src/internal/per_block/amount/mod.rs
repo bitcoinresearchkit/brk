@@ -8,6 +8,7 @@ mod rolling;
 mod rolling_full;
 mod rolling_sum;
 mod windows;
+mod with_sum_24h;
 
 pub use base::*;
 pub use cumulative::*;
@@ -19,3 +20,4 @@ pub use rolling::*;
 pub use rolling_full::*;
 pub use rolling_sum::*;
 pub use windows::*;
+pub use with_sum_24h::*;

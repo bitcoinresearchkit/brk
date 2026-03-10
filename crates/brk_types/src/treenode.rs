@@ -466,7 +466,7 @@ mod tests {
         // - height_cumulative (renamed to "cumulative") → direct leaf at Height
         // - day1 → branch with sum/cumulative at Day1
         // - week1 (flattened from dates) → branch with sum/cumulative at Week1
-        // - difficultyepoch → branch with sum/cumulative at Epoch
+        // - epoch → branch with sum/cumulative at Epoch
         let tree = branch(vec![
             ("cumulative", leaf("metric_cumulative", Index::Height)),
             (
@@ -484,7 +484,7 @@ mod tests {
                 ]),
             ),
             (
-                "difficultyepoch",
+                "epoch",
                 branch(vec![
                     ("sum", leaf("metric_sum", Index::Epoch)),
                     (

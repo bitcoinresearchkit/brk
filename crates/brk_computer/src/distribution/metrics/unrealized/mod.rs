@@ -1,10 +1,12 @@
 mod base;
+mod basic;
 mod core;
 mod full;
 mod minimal;
 
 pub use self::core::UnrealizedCore;
 pub use base::UnrealizedBase;
+pub use basic::UnrealizedBasic;
 pub use full::UnrealizedFull;
 pub use minimal::UnrealizedMinimal;
 
@@ -12,7 +14,7 @@ use brk_error::Result;
 use brk_types::{Height, Indexes};
 use vecdb::Exit;
 
-use crate::{distribution::state::UnrealizedState, prices};
+use crate::{blocks, distribution::state::UnrealizedState, prices};
 
 pub trait UnrealizedLike: Send + Sync {
     fn as_base(&self) -> &UnrealizedBase;
@@ -21,6 +23,7 @@ pub trait UnrealizedLike: Send + Sync {
     fn truncate_push(&mut self, height: Height, state: &UnrealizedState) -> Result<()>;
     fn compute_rest(
         &mut self,
+        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
@@ -47,11 +50,12 @@ impl UnrealizedLike for UnrealizedBase {
     }
     fn compute_rest(
         &mut self,
+        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_rest(prices, starting_indexes, exit)
+        self.compute_rest(blocks, prices, starting_indexes, exit)
     }
     fn compute_net_sentiment_height(
         &mut self,
@@ -77,11 +81,12 @@ impl UnrealizedLike for UnrealizedFull {
     }
     fn compute_rest(
         &mut self,
+        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_rest_all(prices, starting_indexes, exit)
+        self.compute_rest_all(blocks, prices, starting_indexes, exit)
     }
     fn compute_net_sentiment_height(
         &mut self,

@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Indexes, Version};
+use brk_types::{BasisPoints32, Cents, Height, Indexes, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
@@ -14,7 +14,7 @@ pub struct PriceWithRatioPerBlock<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub inner: RatioPerBlock<M>,
+    pub inner: RatioPerBlock<BasisPoints32, M>,
     pub price: Price<ComputedPerBlock<Cents, M>>,
 }
 

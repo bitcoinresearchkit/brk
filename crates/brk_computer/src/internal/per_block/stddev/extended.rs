@@ -2,16 +2,30 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, Height, Indexes, StoredF32, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, VecIndex,
-    WritableVec,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, Ident, PcoVec, ReadableCloneableVec,
+    ReadableVec, Rw, StorageMode, VecIndex, WritableVec,
 };
 
 use crate::{
     blocks, indexes,
-    internal::{ComputedPerBlock, Price, PriceTimesRatioCents},
+    internal::{ComputedPerBlock, LazyPerBlock, Price, PriceTimesRatioCents},
 };
 
 use super::StdDevPerBlock;
+
+#[derive(Traversable)]
+pub struct StdDevBand<M: StorageMode = Rw> {
+    #[traversable(flatten)]
+    pub value: ComputedPerBlock<StoredF32, M>,
+    pub price: Price<ComputedPerBlock<Cents, M>>,
+}
+
+#[derive(Traversable)]
+pub struct LazyStdDevBand<M: StorageMode = Rw> {
+    #[traversable(flatten)]
+    pub value: LazyPerBlock<StoredF32>,
+    pub price: Price<ComputedPerBlock<Cents, M>>,
+}
 
 #[derive(Traversable)]
 pub struct StdDevPerBlockExtended<M: StorageMode = Rw> {
@@ -20,32 +34,19 @@ pub struct StdDevPerBlockExtended<M: StorageMode = Rw> {
 
     pub zscore: ComputedPerBlock<StoredF32, M>,
 
-    pub p0_5sd: ComputedPerBlock<StoredF32, M>,
-    pub p1sd: ComputedPerBlock<StoredF32, M>,
-    pub p1_5sd: ComputedPerBlock<StoredF32, M>,
-    pub p2sd: ComputedPerBlock<StoredF32, M>,
-    pub p2_5sd: ComputedPerBlock<StoredF32, M>,
-    pub p3sd: ComputedPerBlock<StoredF32, M>,
-    pub m0_5sd: ComputedPerBlock<StoredF32, M>,
-    pub m1sd: ComputedPerBlock<StoredF32, M>,
-    pub m1_5sd: ComputedPerBlock<StoredF32, M>,
-    pub m2sd: ComputedPerBlock<StoredF32, M>,
-    pub m2_5sd: ComputedPerBlock<StoredF32, M>,
-    pub m3sd: ComputedPerBlock<StoredF32, M>,
-
-    pub _0sd_price: Price<ComputedPerBlock<Cents, M>>,
-    pub p0_5sd_price: Price<ComputedPerBlock<Cents, M>>,
-    pub p1sd_price: Price<ComputedPerBlock<Cents, M>>,
-    pub p1_5sd_price: Price<ComputedPerBlock<Cents, M>>,
-    pub p2sd_price: Price<ComputedPerBlock<Cents, M>>,
-    pub p2_5sd_price: Price<ComputedPerBlock<Cents, M>>,
-    pub p3sd_price: Price<ComputedPerBlock<Cents, M>>,
-    pub m0_5sd_price: Price<ComputedPerBlock<Cents, M>>,
-    pub m1sd_price: Price<ComputedPerBlock<Cents, M>>,
-    pub m1_5sd_price: Price<ComputedPerBlock<Cents, M>>,
-    pub m2sd_price: Price<ComputedPerBlock<Cents, M>>,
-    pub m2_5sd_price: Price<ComputedPerBlock<Cents, M>>,
-    pub m3sd_price: Price<ComputedPerBlock<Cents, M>>,
+    pub _0sd: LazyStdDevBand<M>,
+    pub p0_5sd: StdDevBand<M>,
+    pub p1sd: StdDevBand<M>,
+    pub p1_5sd: StdDevBand<M>,
+    pub p2sd: StdDevBand<M>,
+    pub p2_5sd: StdDevBand<M>,
+    pub p3sd: StdDevBand<M>,
+    pub m0_5sd: StdDevBand<M>,
+    pub m1sd: StdDevBand<M>,
+    pub m1_5sd: StdDevBand<M>,
+    pub m2sd: StdDevBand<M>,
+    pub m2_5sd: StdDevBand<M>,
+    pub m3sd: StdDevBand<M>,
 }
 
 impl StdDevPerBlockExtended {
@@ -77,41 +78,50 @@ impl StdDevPerBlockExtended {
             };
         }
 
+        macro_rules! import_band {
+            ($suffix:expr) => {
+                StdDevBand {
+                    value: import!($suffix),
+                    price: import_price!($suffix),
+                }
+            };
+        }
+
+        let base = StdDevPerBlock::forced_import(
+            db,
+            name,
+            period,
+            days,
+            parent_version,
+            indexes,
+        )?;
+
+        let _0sd = LazyStdDevBand {
+            value: LazyPerBlock::from_computed::<Ident>(
+                &format!("{name}_0sd{p}"),
+                version,
+                base.sma.height.read_only_boxed_clone(),
+                &base.sma,
+            ),
+            price: import_price!("0sd"),
+        };
+
         Ok(Self {
-            base: StdDevPerBlock::forced_import(
-                db,
-                name,
-                period,
-                days,
-                parent_version,
-                indexes,
-            )?,
+            base,
             zscore: import!("zscore"),
-            p0_5sd: import!("p0_5sd"),
-            p1sd: import!("p1sd"),
-            p1_5sd: import!("p1_5sd"),
-            p2sd: import!("p2sd"),
-            p2_5sd: import!("p2_5sd"),
-            p3sd: import!("p3sd"),
-            m0_5sd: import!("m0_5sd"),
-            m1sd: import!("m1sd"),
-            m1_5sd: import!("m1_5sd"),
-            m2sd: import!("m2sd"),
-            m2_5sd: import!("m2_5sd"),
-            m3sd: import!("m3sd"),
-            _0sd_price: import_price!("0sd"),
-            p0_5sd_price: import_price!("p0_5sd"),
-            p1sd_price: import_price!("p1sd"),
-            p1_5sd_price: import_price!("p1_5sd"),
-            p2sd_price: import_price!("p2sd"),
-            p2_5sd_price: import_price!("p2_5sd"),
-            p3sd_price: import_price!("p3sd"),
-            m0_5sd_price: import_price!("m0_5sd"),
-            m1sd_price: import_price!("m1sd"),
-            m1_5sd_price: import_price!("m1_5sd"),
-            m2sd_price: import_price!("m2sd"),
-            m2_5sd_price: import_price!("m2_5sd"),
-            m3sd_price: import_price!("m3sd"),
+            _0sd,
+            p0_5sd: import_band!("p0_5sd"),
+            p1sd: import_band!("p1sd"),
+            p1_5sd: import_band!("p1_5sd"),
+            p2sd: import_band!("p2sd"),
+            p2_5sd: import_band!("p2_5sd"),
+            p3sd: import_band!("p3sd"),
+            m0_5sd: import_band!("m0_5sd"),
+            m1sd: import_band!("m1sd"),
+            m1_5sd: import_band!("m1_5sd"),
+            m2sd: import_band!("m2sd"),
+            m2_5sd: import_band!("m2_5sd"),
+            m3sd: import_band!("m3sd"),
         })
     }
 
@@ -214,9 +224,9 @@ impl StdDevPerBlockExtended {
         metric_price: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
-        macro_rules! compute_band {
-            ($usd_field:ident, $band_source:expr) => {
-                self.$usd_field
+        macro_rules! compute_band_price {
+            ($price:expr, $band_source:expr) => {
+                $price
                     .cents
                     .compute_binary::<Cents, StoredF32, PriceTimesRatioCents>(
                         starting_indexes.height,
@@ -227,19 +237,19 @@ impl StdDevPerBlockExtended {
             };
         }
 
-        compute_band!(_0sd_price, &self.base.sma.height);
-        compute_band!(p0_5sd_price, &self.p0_5sd.height);
-        compute_band!(p1sd_price, &self.p1sd.height);
-        compute_band!(p1_5sd_price, &self.p1_5sd.height);
-        compute_band!(p2sd_price, &self.p2sd.height);
-        compute_band!(p2_5sd_price, &self.p2_5sd.height);
-        compute_band!(p3sd_price, &self.p3sd.height);
-        compute_band!(m0_5sd_price, &self.m0_5sd.height);
-        compute_band!(m1sd_price, &self.m1sd.height);
-        compute_band!(m1_5sd_price, &self.m1_5sd.height);
-        compute_band!(m2sd_price, &self.m2sd.height);
-        compute_band!(m2_5sd_price, &self.m2_5sd.height);
-        compute_band!(m3sd_price, &self.m3sd.height);
+        compute_band_price!(&mut self._0sd.price, &self.base.sma.height);
+        compute_band_price!(&mut self.p0_5sd.price, &self.p0_5sd.value.height);
+        compute_band_price!(&mut self.p1sd.price, &self.p1sd.value.height);
+        compute_band_price!(&mut self.p1_5sd.price, &self.p1_5sd.value.height);
+        compute_band_price!(&mut self.p2sd.price, &self.p2sd.value.height);
+        compute_band_price!(&mut self.p2_5sd.price, &self.p2_5sd.value.height);
+        compute_band_price!(&mut self.p3sd.price, &self.p3sd.value.height);
+        compute_band_price!(&mut self.m0_5sd.price, &self.m0_5sd.value.height);
+        compute_band_price!(&mut self.m1sd.price, &self.m1sd.value.height);
+        compute_band_price!(&mut self.m1_5sd.price, &self.m1_5sd.value.height);
+        compute_band_price!(&mut self.m2sd.price, &self.m2sd.value.height);
+        compute_band_price!(&mut self.m2_5sd.price, &self.m2_5sd.value.height);
+        compute_band_price!(&mut self.m3sd.price, &self.m3sd.value.height);
 
         Ok(())
     }
@@ -248,18 +258,18 @@ impl StdDevPerBlockExtended {
         &mut self,
     ) -> impl Iterator<Item = &mut EagerVec<PcoVec<Height, StoredF32>>> {
         [
-            &mut self.p0_5sd.height,
-            &mut self.p1sd.height,
-            &mut self.p1_5sd.height,
-            &mut self.p2sd.height,
-            &mut self.p2_5sd.height,
-            &mut self.p3sd.height,
-            &mut self.m0_5sd.height,
-            &mut self.m1sd.height,
-            &mut self.m1_5sd.height,
-            &mut self.m2sd.height,
-            &mut self.m2_5sd.height,
-            &mut self.m3sd.height,
+            &mut self.p0_5sd.value.height,
+            &mut self.p1sd.value.height,
+            &mut self.p1_5sd.value.height,
+            &mut self.p2sd.value.height,
+            &mut self.p2_5sd.value.height,
+            &mut self.p3sd.value.height,
+            &mut self.m0_5sd.value.height,
+            &mut self.m1sd.value.height,
+            &mut self.m1_5sd.value.height,
+            &mut self.m2sd.value.height,
+            &mut self.m2_5sd.value.height,
+            &mut self.m3sd.value.height,
         ]
         .into_iter()
     }

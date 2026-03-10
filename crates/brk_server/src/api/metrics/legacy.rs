@@ -15,6 +15,8 @@ use crate::{
     extended::HeaderMapExtended,
 };
 
+const SUNSET: &str = "2027-01-01T00:00:00Z";
+
 use super::AppState;
 
 pub async fn handler(
@@ -31,6 +33,7 @@ pub async fn handler(
 
     let format = resolved.format();
     let etag = resolved.etag();
+    let csv_filename = resolved.csv_filename();
 
     if headers.has_etag(etag.as_str()) {
         return Ok((StatusCode::NOT_MODIFIED, "").into_response());
@@ -55,11 +58,12 @@ pub async fn handler(
     h.insert_cache_control(CACHE_CONTROL);
     match format {
         Format::CSV => {
-            h.insert_content_disposition_attachment();
-            h.insert_content_type_text_csv()
+            h.insert_content_disposition_attachment(&csv_filename);
+            h.insert_content_type_text_csv();
         }
         Format::JSON => h.insert_content_type_application_json(),
     }
+    h.insert_deprecation(SUNSET);
 
     Ok(response)
 }

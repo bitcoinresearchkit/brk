@@ -14,7 +14,7 @@ use brk_types::{
     MetricSelection, MetricSelectionLegacy, MetricWithIndex, Metrics, PaginatedMetrics, Pagination,
 };
 
-use crate::{CacheStrategy, extended::TransformResponseExtended};
+use crate::{CacheStrategy, Error, extended::TransformResponseExtended};
 
 use super::AppState;
 
@@ -244,7 +244,9 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
 
                     let ser_index = split.next().unwrap();
                     let Ok(index) = Index::try_from(ser_index) else {
-                        return format!("Index {ser_index} doesn't exist").into_response();
+                        return Error::not_found(
+                            format!("Index '{ser_index}' doesn't exist")
+                        ).into_response();
                     };
 
                     let params = MetricSelection::from((

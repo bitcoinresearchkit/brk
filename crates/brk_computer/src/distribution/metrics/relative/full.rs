@@ -1,44 +1,31 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, BasisPointsSigned32, Dollars, Height, Sats, StoredF32, Version};
-use vecdb::{Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
+use brk_types::{BasisPoints16, Dollars, Height, Sats, Version};
+use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::internal::{
-    Bps32ToFloat, LazyPerBlock, PercentPerBlock, RatioDollarsBp16, RatioDollarsBps32, RatioSatsBp16,
+use crate::{
+    distribution::metrics::{ImportConfig, UnrealizedCore},
+    internal::{PercentPerBlock, RatioDollarsBp16, RatioSatsBp16},
 };
-
-use crate::distribution::metrics::{ImportConfig, UnrealizedCore};
 
 /// Full relative metrics (sth/lth/all tier).
 #[derive(Traversable)]
 pub struct RelativeFull<M: StorageMode = Rw> {
+    #[traversable(wrap = "supply/in_profit", rename = "rel_to_own_supply")]
     pub supply_in_profit_rel_to_own_supply: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "supply/in_loss", rename = "rel_to_own_supply")]
     pub supply_in_loss_rel_to_own_supply: PercentPerBlock<BasisPoints16, M>,
 
+    #[traversable(wrap = "unrealized/profit", rename = "rel_to_market_cap")]
     pub unrealized_profit_rel_to_market_cap: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "unrealized/loss", rename = "rel_to_market_cap")]
     pub unrealized_loss_rel_to_market_cap: PercentPerBlock<BasisPoints16, M>,
-    pub net_unrealized_pnl_rel_to_market_cap: PercentPerBlock<BasisPointsSigned32, M>,
-    pub nupl: LazyPerBlock<StoredF32, BasisPointsSigned32>,
 }
 
 impl RelativeFull {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v1 = Version::ONE;
         let v2 = Version::new(2);
-        let v3 = Version::new(3);
-
-        let net_unrealized_pnl_rel_to_market_cap: PercentPerBlock<BasisPointsSigned32> =
-            cfg.import("net_unrealized_pnl_rel_to_market_cap", v3)?;
-
-        let nupl = LazyPerBlock::from_computed::<Bps32ToFloat>(
-            &cfg.name("nupl"),
-            cfg.version + v3,
-            net_unrealized_pnl_rel_to_market_cap
-                .bps
-                .height
-                .read_only_boxed_clone(),
-            &net_unrealized_pnl_rel_to_market_cap.bps,
-        );
 
         Ok(Self {
             supply_in_profit_rel_to_own_supply: cfg
@@ -48,8 +35,6 @@ impl RelativeFull {
                 .import("unrealized_profit_rel_to_market_cap", v2)?,
             unrealized_loss_rel_to_market_cap: cfg
                 .import("unrealized_loss_rel_to_market_cap", v2)?,
-            net_unrealized_pnl_rel_to_market_cap,
-            nupl,
         })
     }
 
@@ -79,21 +64,14 @@ impl RelativeFull {
         self.unrealized_profit_rel_to_market_cap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
-                &unrealized.profit.usd.height,
+                &unrealized.profit.raw.usd.height,
                 market_cap,
                 exit,
             )?;
         self.unrealized_loss_rel_to_market_cap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
-                &unrealized.loss.usd.height,
-                market_cap,
-                exit,
-            )?;
-        self.net_unrealized_pnl_rel_to_market_cap
-            .compute_binary::<Dollars, Dollars, RatioDollarsBps32>(
-                max_from,
-                &unrealized.net_pnl.usd.height,
+                &unrealized.loss.raw.usd.height,
                 market_cap,
                 exit,
             )?;

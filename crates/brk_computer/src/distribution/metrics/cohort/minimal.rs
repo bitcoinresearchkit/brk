@@ -1,41 +1,35 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Indexes, Version};
+use brk_types::Indexes;
 use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
 
-use crate::distribution::metrics::unrealized::UnrealizedMinimal;
 use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
-    ActivityCore, ImportConfig, OutputsMetrics, RealizedMinimal, SupplyMetrics,
+    ImportConfig, OutputsBase, RealizedMinimal, SupplyBase,
 };
 
-/// MinimalCohortMetrics: supply, outputs, sent+ema, realized cap/price/mvrv/profit/loss,
-/// supply in profit/loss.
+/// MinimalCohortMetrics: supply, outputs, realized cap/price/mvrv/profit/loss + value_created/destroyed.
 ///
-/// Used for type_, amount, and address cohorts.
+/// Used for amount_range cohorts.
 /// Does NOT implement CohortMetricsBase — standalone, not aggregatable via trait.
 #[derive(Traversable)]
 pub struct MinimalCohortMetrics<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub filter: Filter,
-    pub supply: Box<SupplyMetrics<M>>,
-    pub outputs: Box<OutputsMetrics<M>>,
-    pub activity: Box<ActivityCore<M>>,
+    pub supply: Box<SupplyBase<M>>,
+    pub outputs: Box<OutputsBase<M>>,
     pub realized: Box<RealizedMinimal<M>>,
-    pub unrealized: Box<UnrealizedMinimal<M>>,
 }
 
 impl MinimalCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
             filter: cfg.filter.clone(),
-            supply: Box::new(SupplyMetrics::forced_import(cfg)?),
-            outputs: Box::new(OutputsMetrics::forced_import(cfg)?),
-            activity: Box::new(ActivityCore::forced_import(cfg)?),
+            supply: Box::new(SupplyBase::forced_import(cfg)?),
+            outputs: Box::new(OutputsBase::forced_import(cfg)?),
             realized: Box::new(RealizedMinimal::forced_import(cfg)?),
-            unrealized: Box::new(UnrealizedMinimal::forced_import(cfg)?),
         })
     }
 
@@ -43,23 +37,14 @@ impl MinimalCohortMetrics {
         self.supply
             .min_len()
             .min(self.outputs.min_len())
-            .min(self.activity.min_len())
             .min(self.realized.min_stateful_height_len())
-            .min(self.unrealized.min_stateful_height_len())
-    }
-
-    pub(crate) fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
-        self.supply.validate_computed_versions(base_version)?;
-        Ok(())
     }
 
     pub(crate) fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
         vecs.extend(self.supply.collect_vecs_mut());
         vecs.extend(self.outputs.collect_vecs_mut());
-        vecs.extend(self.activity.collect_vecs_mut());
         vecs.extend(self.realized.collect_vecs_mut());
-        vecs.extend(self.unrealized.collect_vecs_mut());
         vecs
     }
 
@@ -83,27 +68,11 @@ impl MinimalCohortMetrics {
                 .collect::<Vec<_>>(),
             exit,
         )?;
-        self.activity.compute_from_stateful(
-            starting_indexes,
-            &others
-                .iter()
-                .map(|v| v.activity.as_ref())
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
         self.realized.compute_from_stateful(
             starting_indexes,
             &others
                 .iter()
                 .map(|v| v.realized.as_ref())
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
-        self.unrealized.compute_from_sources(
-            starting_indexes,
-            &others
-                .iter()
-                .map(|v| v.unrealized.as_ref())
                 .collect::<Vec<_>>(),
             exit,
         )?;
@@ -118,15 +87,8 @@ impl MinimalCohortMetrics {
         exit: &Exit,
     ) -> Result<()> {
         self.supply.compute(prices, starting_indexes.height, exit)?;
-        self.supply
-            .compute_rest_part1(blocks, starting_indexes, exit)?;
-        self.outputs.compute_rest(blocks, starting_indexes, exit)?;
-        self.activity
-            .compute_rest_part1(blocks, starting_indexes, exit)?;
         self.realized
             .compute_rest_part1(blocks, starting_indexes, exit)?;
-        self.unrealized
-            .compute_rest(prices, starting_indexes.height, exit)?;
         Ok(())
     }
 

@@ -40,8 +40,8 @@ impl Vecs {
             self.stoch_k.bps.height.compute_transform3(
                 starting_indexes.height,
                 price,
-                &range.price_min_2w.usd.height,
-                &range.price_max_2w.usd.height,
+                &range.min._2w.usd.height,
+                &range.max._2w.usd.height,
                 |(h, close, low, high, ..)| {
                     let range = *high - *low;
                     let stoch = if range == 0.0 {
@@ -127,8 +127,8 @@ impl Vecs {
             .bps
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
                 starting_indexes.height,
-                &moving_average.price_sma_111d.price.usd.height,
-                &moving_average.price_sma_350d_x2.usd.height,
+                &moving_average.sma._111d.price.usd.height,
+                &moving_average.sma._350d_x2.usd.height,
                 exit,
             )?;
 

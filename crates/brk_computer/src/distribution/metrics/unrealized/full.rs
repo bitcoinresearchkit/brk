@@ -6,9 +6,16 @@ use vecdb::{AnyStoredVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::distribution::state::UnrealizedState;
 use crate::internal::{CentsSubtractToCentsSigned, FiatPerBlock};
-use crate::{distribution::metrics::ImportConfig, prices};
+use crate::{blocks, distribution::metrics::ImportConfig, prices};
 
 use super::UnrealizedBase;
+
+#[derive(Traversable)]
+pub struct UnrealizedSentiment<M: StorageMode = Rw> {
+    pub pain_index: FiatPerBlock<Cents, M>,
+    pub greed_index: FiatPerBlock<Cents, M>,
+    pub net: FiatPerBlock<CentsSigned, M>,
+}
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct UnrealizedFull<M: StorageMode = Rw> {
@@ -18,12 +25,13 @@ pub struct UnrealizedFull<M: StorageMode = Rw> {
     pub inner: UnrealizedBase<M>,
 
     pub gross_pnl: FiatPerBlock<Cents, M>,
+
+    #[traversable(wrap = "invested_capital", rename = "in_profit")]
     pub invested_capital_in_profit: FiatPerBlock<Cents, M>,
+    #[traversable(wrap = "invested_capital", rename = "in_loss")]
     pub invested_capital_in_loss: FiatPerBlock<Cents, M>,
 
-    pub pain_index: FiatPerBlock<Cents, M>,
-    pub greed_index: FiatPerBlock<Cents, M>,
-    pub net_sentiment: FiatPerBlock<CentsSigned, M>,
+    pub sentiment: UnrealizedSentiment<M>,
 }
 
 impl UnrealizedFull {
@@ -35,18 +43,18 @@ impl UnrealizedFull {
         let invested_capital_in_profit = cfg.import("invested_capital_in_profit", v0)?;
         let invested_capital_in_loss = cfg.import("invested_capital_in_loss", v0)?;
 
-        let pain_index = cfg.import("pain_index", v0)?;
-        let greed_index = cfg.import("greed_index", v0)?;
-        let net_sentiment = cfg.import("net_sentiment", Version::ONE)?;
+        let sentiment = UnrealizedSentiment {
+            pain_index: cfg.import("pain_index", v0)?,
+            greed_index: cfg.import("greed_index", v0)?,
+            net: cfg.import("net_sentiment", Version::ONE)?,
+        };
 
         Ok(Self {
             inner,
             gross_pnl,
             invested_capital_in_profit,
             invested_capital_in_loss,
-            pain_index,
-            greed_index,
-            net_sentiment,
+            sentiment,
         })
     }
 
@@ -72,24 +80,25 @@ impl UnrealizedFull {
         vecs.push(&mut self.gross_pnl.cents.height as &mut dyn AnyStoredVec);
         vecs.push(&mut self.invested_capital_in_profit.cents.height as &mut dyn AnyStoredVec);
         vecs.push(&mut self.invested_capital_in_loss.cents.height as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.pain_index.cents.height as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.greed_index.cents.height as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.net_sentiment.cents.height as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.sentiment.pain_index.cents.height as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.sentiment.greed_index.cents.height as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.sentiment.net.cents.height as &mut dyn AnyStoredVec);
         vecs
     }
 
     pub(crate) fn compute_rest_all(
         &mut self,
+        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.inner.compute_rest(prices, starting_indexes, exit)?;
+        self.inner.compute_rest(blocks, prices, starting_indexes, exit)?;
 
         self.gross_pnl.cents.height.compute_add(
             starting_indexes.height,
-            &self.inner.core.profit.cents.height,
-            &self.inner.core.loss.cents.height,
+            &self.inner.core.basic.profit.raw.cents.height,
+            &self.inner.core.basic.loss.raw.cents.height,
             exit,
         )?;
 
@@ -123,7 +132,7 @@ impl UnrealizedFull {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.pain_index.cents.height.compute_transform3(
+        self.sentiment.pain_index.cents.height.compute_transform3(
             starting_indexes.height,
             &self.inner.investor_cap_in_loss_raw,
             &self.inner.invested_capital_in_loss_raw,
@@ -139,7 +148,7 @@ impl UnrealizedFull {
             exit,
         )?;
 
-        self.greed_index.cents.height.compute_transform3(
+        self.sentiment.greed_index.cents.height.compute_transform3(
             starting_indexes.height,
             &self.inner.investor_cap_in_profit_raw,
             &self.inner.invested_capital_in_profit_raw,
@@ -163,13 +172,14 @@ impl UnrealizedFull {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.net_sentiment
+        self.sentiment
+            .net
             .cents
             .height
             .compute_binary::<Cents, Cents, CentsSubtractToCentsSigned>(
                 starting_indexes.height,
-                &self.greed_index.cents.height,
-                &self.pain_index.cents.height,
+                &self.sentiment.greed_index.cents.height,
+                &self.sentiment.pain_index.cents.height,
                 exit,
             )?;
         Ok(())

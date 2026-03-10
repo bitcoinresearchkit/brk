@@ -3,19 +3,20 @@ use brk_types::BasisPointsSigned32;
 use vecdb::{Rw, StorageMode};
 
 use crate::{
-    internal::{StdDevPerBlock, PercentPerBlock},
+    internal::{PercentPerBlock, StdDevPerBlock},
     market::{dca::ByDcaCagr, lookback::ByLookbackPeriod},
 };
+
+#[derive(Traversable)]
+pub struct PriceReturn24hSdVecs<M: StorageMode = Rw> {
+    pub _1w: StdDevPerBlock<M>,
+    pub _1m: StdDevPerBlock<M>,
+    pub _1y: StdDevPerBlock<M>,
+}
+
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub price_return: ByLookbackPeriod<PercentPerBlock<BasisPointsSigned32, M>>,
-
-    // CAGR (computed from returns, 2y+ only)
     pub price_cagr: ByDcaCagr<PercentPerBlock<BasisPointsSigned32, M>>,
-
-    // Returns standard deviation (computed from 24h returns)
-    pub price_return_24h_sd_1w: StdDevPerBlock<M>,
-    pub price_return_24h_sd_1m: StdDevPerBlock<M>,
-    pub price_return_24h_sd_1y: StdDevPerBlock<M>,
-
+    pub price_return_24h_sd: PriceReturn24hSdVecs<M>,
 }

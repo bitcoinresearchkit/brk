@@ -7,7 +7,7 @@ use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
-    ActivityFull, CohortMetricsBase, ImportConfig, RealizedAdjusted,
+    ActivityFull, CohortMetricsBase, ImportConfig, AdjustedSopr,
     RealizedFull, UnrealizedFull,
 };
 
@@ -22,7 +22,8 @@ pub struct ExtendedAdjustedCohortMetrics<M: StorageMode = Rw> {
     #[deref_mut]
     #[traversable(flatten)]
     pub inner: ExtendedCohortMetrics<M>,
-    pub adjusted: Box<RealizedAdjusted<M>>,
+    #[traversable(wrap = "realized/sopr", rename = "adjusted")]
+    pub asopr: Box<AdjustedSopr<M>>,
 }
 
 impl CohortMetricsBase for ExtendedAdjustedCohortMetrics {
@@ -48,10 +49,10 @@ impl CohortMetricsBase for ExtendedAdjustedCohortMetrics {
 impl ExtendedAdjustedCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let inner = ExtendedCohortMetrics::forced_import(cfg)?;
-        let adjusted = RealizedAdjusted::forced_import(cfg)?;
+        let asopr = AdjustedSopr::forced_import(cfg)?;
         Ok(Self {
             inner,
-            adjusted: Box::new(adjusted),
+            asopr: Box::new(asopr),
         })
     }
 
@@ -76,11 +77,11 @@ impl ExtendedAdjustedCohortMetrics {
             exit,
         )?;
 
-        self.adjusted.compute_rest_part2(
+        self.asopr.compute_rest_part2(
             blocks,
             starting_indexes,
-            &self.inner.realized.value_created.height,
-            &self.inner.realized.value_destroyed.height,
+            &self.inner.realized.minimal.sopr.value_created.raw.height,
+            &self.inner.realized.minimal.sopr.value_destroyed.raw.height,
             up_to_1h_value_created,
             up_to_1h_value_destroyed,
             exit,

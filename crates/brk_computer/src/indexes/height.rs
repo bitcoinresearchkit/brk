@@ -39,7 +39,7 @@ impl Vecs {
             hour12: EagerVec::forced_import(db, "hour12", version)?,
             day1: EagerVec::forced_import(db, "day1", version)?,
             day3: EagerVec::forced_import(db, "day3", version)?,
-            epoch: EagerVec::forced_import(db, "difficulty", version)?,
+            epoch: EagerVec::forced_import(db, "epoch", version)?,
             halving: EagerVec::forced_import(db, "halving", version)?,
             week1: EagerVec::forced_import(db, "week1", version)?,
             month1: EagerVec::forced_import(db, "month1", version)?,

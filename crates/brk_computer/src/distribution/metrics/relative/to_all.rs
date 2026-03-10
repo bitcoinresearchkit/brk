@@ -10,8 +10,11 @@ use crate::distribution::metrics::ImportConfig;
 /// Relative-to-all metrics (not present for the "all" cohort itself).
 #[derive(Traversable)]
 pub struct RelativeToAll<M: StorageMode = Rw> {
+    #[traversable(wrap = "supply", rename = "rel_to_circulating_supply")]
     pub supply_rel_to_circulating_supply: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "supply/in_profit", rename = "rel_to_circulating_supply")]
     pub supply_in_profit_rel_to_circulating_supply: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "supply/in_loss", rename = "rel_to_circulating_supply")]
     pub supply_in_loss_rel_to_circulating_supply: PercentPerBlock<BasisPoints16, M>,
 }
 

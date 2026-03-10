@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Indexes, Version};
+use brk_types::{BasisPoints32, Cents, Height, Indexes, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
@@ -13,7 +13,7 @@ pub struct RatioPerBlockExtended<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub base: RatioPerBlock<M>,
+    pub base: RatioPerBlock<BasisPoints32, M>,
     #[traversable(flatten)]
     pub percentiles: RatioPerBlockPercentiles<M>,
 }

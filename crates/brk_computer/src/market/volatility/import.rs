@@ -10,43 +10,42 @@ impl Vecs {
     pub(crate) fn forced_import(version: Version, returns: &returns::Vecs) -> Result<Self> {
         let v2 = Version::TWO;
 
-        let price_volatility_1w = LazyPerBlock::from_computed::<TimesSqrt<Days7>>(
+        let _1w = LazyPerBlock::from_computed::<TimesSqrt<Days7>>(
             "price_volatility_1w",
             version + v2,
             returns
-                .price_return_24h_sd_1w
+                .price_return_24h_sd
+                ._1w
                 .sd
                 .height
                 .read_only_boxed_clone(),
-            &returns.price_return_24h_sd_1w.sd,
+            &returns.price_return_24h_sd._1w.sd,
         );
 
-        let price_volatility_1m = LazyPerBlock::from_computed::<TimesSqrt<Days30>>(
+        let _1m = LazyPerBlock::from_computed::<TimesSqrt<Days30>>(
             "price_volatility_1m",
             version + v2,
             returns
-                .price_return_24h_sd_1m
+                .price_return_24h_sd
+                ._1m
                 .sd
                 .height
                 .read_only_boxed_clone(),
-            &returns.price_return_24h_sd_1m.sd,
+            &returns.price_return_24h_sd._1m.sd,
         );
 
-        let price_volatility_1y = LazyPerBlock::from_computed::<TimesSqrt<Days365>>(
+        let _1y = LazyPerBlock::from_computed::<TimesSqrt<Days365>>(
             "price_volatility_1y",
             version + v2,
             returns
-                .price_return_24h_sd_1y
+                .price_return_24h_sd
+                ._1y
                 .sd
                 .height
                 .read_only_boxed_clone(),
-            &returns.price_return_24h_sd_1y.sd,
+            &returns.price_return_24h_sd._1y.sd,
         );
 
-        Ok(Self {
-            price_volatility_1w,
-            price_volatility_1m,
-            price_volatility_1y,
-        })
+        Ok(Self { _1w, _1m, _1y })
     }
 }

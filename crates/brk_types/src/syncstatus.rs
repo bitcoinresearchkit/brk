@@ -8,6 +8,8 @@ use crate::{Height, Timestamp};
 pub struct SyncStatus {
     /// Height of the last indexed block
     pub indexed_height: Height,
+    /// Height of the last computed block (metrics)
+    pub computed_height: Height,
     /// Height of the chain tip (from Bitcoin node)
     pub tip_height: Height,
     /// Number of blocks behind the tip

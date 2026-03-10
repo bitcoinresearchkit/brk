@@ -12,15 +12,18 @@ use crate::distribution::{metrics::ImportConfig, state::UnrealizedState};
 /// Minimal unrealized metrics: supply in profit/loss only.
 #[derive(Traversable)]
 pub struct UnrealizedMinimal<M: StorageMode = Rw> {
+    #[traversable(wrap = "profit", rename = "supply")]
     pub supply_in_profit: AmountPerBlock<M>,
+    #[traversable(wrap = "loss", rename = "supply")]
     pub supply_in_loss: AmountPerBlock<M>,
 }
 
 impl UnrealizedMinimal {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
+        let v0 = Version::ZERO;
         Ok(Self {
-            supply_in_profit: cfg.import("supply_in_profit", Version::ZERO)?,
-            supply_in_loss: cfg.import("supply_in_loss", Version::ZERO)?,
+            supply_in_profit: cfg.import("supply_in_profit", v0)?,
+            supply_in_loss: cfg.import("supply_in_loss", v0)?,
         })
     }
 
@@ -47,9 +50,9 @@ impl UnrealizedMinimal {
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
             &mut self.supply_in_profit.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_profit.cents.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_loss.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply_in_loss.cents.height as &mut dyn AnyStoredVec,
+            &mut self.supply_in_profit.cents.height,
+            &mut self.supply_in_loss.sats.height,
+            &mut self.supply_in_loss.cents.height,
         ]
     }
 

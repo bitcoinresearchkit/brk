@@ -2,11 +2,12 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, CentsSigned, Height, Indexes, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableCloneableVec, Rw, StorageMode, WritableVec};
+use vecdb::{AnyStoredVec, Exit, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::{
+    blocks,
     distribution::{
-        metrics::{ImportConfig, unrealized::UnrealizedMinimal},
+        metrics::ImportConfig,
         state::UnrealizedState,
     },
     internal::{CentsSubtractToCentsSigned, FiatPerBlock, LazyPerBlock, NegCentsUnsignedToDollars},
@@ -15,51 +16,42 @@ use crate::{
 
 use brk_types::Dollars;
 
+use super::UnrealizedBasic;
+
 #[derive(Deref, DerefMut, Traversable)]
 pub struct UnrealizedCore<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub minimal: UnrealizedMinimal<M>,
+    pub basic: UnrealizedBasic<M>,
 
-    pub profit: FiatPerBlock<Cents, M>,
-    pub loss: FiatPerBlock<Cents, M>,
+    #[traversable(wrap = "loss", rename = "neg")]
     pub neg_loss: LazyPerBlock<Dollars, Cents>,
     pub net_pnl: FiatPerBlock<CentsSigned, M>,
 }
 
 impl UnrealizedCore {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let v0 = Version::ZERO;
-
-        let minimal = UnrealizedMinimal::forced_import(cfg)?;
-
-        let unrealized_profit = cfg.import("unrealized_profit", v0)?;
-        let unrealized_loss: FiatPerBlock<Cents> = cfg.import("unrealized_loss", v0)?;
+        let basic = UnrealizedBasic::forced_import(cfg)?;
 
         let neg_unrealized_loss = LazyPerBlock::from_computed::<NegCentsUnsignedToDollars>(
             &cfg.name("neg_unrealized_loss"),
             cfg.version,
-            unrealized_loss.cents.height.read_only_boxed_clone(),
-            &unrealized_loss.cents,
+            basic.loss.raw.cents.height.read_only_boxed_clone(),
+            &basic.loss.raw.cents,
         );
 
-        let net_unrealized_pnl = cfg.import("net_unrealized_pnl", v0)?;
+        let net_unrealized_pnl = cfg.import("net_unrealized_pnl", Version::ZERO)?;
 
         Ok(Self {
-            minimal,
-            profit: unrealized_profit,
-            loss: unrealized_loss,
+            basic,
             neg_loss: neg_unrealized_loss,
             net_pnl: net_unrealized_pnl,
         })
     }
 
     pub(crate) fn min_stateful_height_len(&self) -> usize {
-        self.minimal
-            .min_stateful_height_len()
-            .min(self.profit.cents.height.len())
-            .min(self.loss.cents.height.len())
+        self.basic.min_stateful_height_len()
     }
 
     pub(crate) fn truncate_push(
@@ -67,24 +59,12 @@ impl UnrealizedCore {
         height: Height,
         height_state: &UnrealizedState,
     ) -> Result<()> {
-        self.minimal.truncate_push(height, height_state)?;
-        self.profit
-            .cents
-            .height
-            .truncate_push(height, height_state.unrealized_profit)?;
-        self.loss
-            .cents
-            .height
-            .truncate_push(height, height_state.unrealized_loss)?;
-
+        self.basic.truncate_push(height, height_state)?;
         Ok(())
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        let mut vecs = self.minimal.collect_vecs_mut();
-        vecs.push(&mut self.profit.cents.height);
-        vecs.push(&mut self.loss.cents.height);
-        vecs
+        self.basic.collect_vecs_mut()
     }
 
     pub(crate) fn compute_from_stateful(
@@ -93,33 +73,30 @@ impl UnrealizedCore {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        let minimal_refs: Vec<&UnrealizedMinimal> = others.iter().map(|o| &o.minimal).collect();
-        self.minimal
-            .compute_from_sources(starting_indexes, &minimal_refs, exit)?;
-
-        sum_others!(self, starting_indexes, others, exit; profit.cents.height);
-        sum_others!(self, starting_indexes, others, exit; loss.cents.height);
-
+        let basic_refs: Vec<&UnrealizedBasic> = others.iter().map(|o| &o.basic).collect();
+        self.basic
+            .compute_from_sources(starting_indexes, &basic_refs, exit)?;
         Ok(())
     }
 
     /// Compute derived metrics from stored values.
     pub(crate) fn compute_rest(
         &mut self,
+        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.minimal
-            .compute_rest(prices, starting_indexes.height, exit)?;
+        self.basic
+            .compute_rest(blocks, prices, starting_indexes.height, exit)?;
 
         self.net_pnl
             .cents
             .height
             .compute_binary::<Cents, Cents, CentsSubtractToCentsSigned>(
                 starting_indexes.height,
-                &self.profit.cents.height,
-                &self.loss.cents.height,
+                &self.basic.profit.raw.cents.height,
+                &self.basic.loss.raw.cents.height,
                 exit,
             )?;
 

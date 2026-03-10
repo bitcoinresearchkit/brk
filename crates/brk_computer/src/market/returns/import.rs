@@ -3,7 +3,7 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::super::lookback::ByLookbackPeriod;
-use super::Vecs;
+use super::{vecs::PriceReturn24hSdVecs, Vecs};
 use crate::{
     indexes,
     internal::{StdDevPerBlock, PercentPerBlock},
@@ -27,37 +27,37 @@ impl Vecs {
             PercentPerBlock::forced_import(db, &format!("price_cagr_{name}"), version, indexes)
         })?;
 
-        let price_return_24h_sd_1w = StdDevPerBlock::forced_import(
-            db,
-            "price_return_24h",
-            "1w",
-            7,
-            version + v1,
-            indexes,
-        )?;
-        let price_return_24h_sd_1m = StdDevPerBlock::forced_import(
-            db,
-            "price_return_24h",
-            "1m",
-            30,
-            version + v1,
-            indexes,
-        )?;
-        let price_return_24h_sd_1y = StdDevPerBlock::forced_import(
-            db,
-            "price_return_24h",
-            "1y",
-            365,
-            version + v1,
-            indexes,
-        )?;
+        let price_return_24h_sd = PriceReturn24hSdVecs {
+            _1w: StdDevPerBlock::forced_import(
+                db,
+                "price_return_24h",
+                "1w",
+                7,
+                version + v1,
+                indexes,
+            )?,
+            _1m: StdDevPerBlock::forced_import(
+                db,
+                "price_return_24h",
+                "1m",
+                30,
+                version + v1,
+                indexes,
+            )?,
+            _1y: StdDevPerBlock::forced_import(
+                db,
+                "price_return_24h",
+                "1y",
+                365,
+                version + v1,
+                indexes,
+            )?,
+        };
 
         Ok(Self {
             price_return,
             price_cagr,
-            price_return_24h_sd_1w,
-            price_return_24h_sd_1m,
-            price_return_24h_sd_1y,
+            price_return_24h_sd,
         })
     }
 }

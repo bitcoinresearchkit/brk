@@ -398,30 +398,44 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
                 s.strip_prefix('_').map(String::from).unwrap_or(s)
             };
 
-            let (outer_key, inner_wrap): (&str, Option<&str>) =
+            // Determine the tree key and optional wrapping path.
+            // wrap = "a/b" means: outer_key = "a", wrap the node under "b" then under the rename/field name.
+            // wrap = "a" means: outer_key = "a", wrap under rename or field name.
+            // No wrap: outer_key = rename or field name, no wrapping.
+            let (outer_key, wrap_path): (String, Vec<&str>) =
                 match (info.wrap.as_deref(), info.rename.as_deref()) {
-                    (Some(wrap), Some(rename)) => (wrap, Some(rename)),
-                    (Some(wrap), None) => (wrap, Some(&field_name_str)),
-                    (None, Some(rename)) => (rename, None),
-                    (None, None) => (&field_name_str, None),
+                    (Some(wrap), Some(rename)) => {
+                        let parts: Vec<&str> = wrap.split('/').collect();
+                        let outer = parts[0].to_string();
+                        let mut path: Vec<&str> = parts[1..].to_vec();
+                        path.push(rename);
+                        (outer, path)
+                    }
+                    (Some(wrap), None) => {
+                        let parts: Vec<&str> = wrap.split('/').collect();
+                        let outer = parts[0].to_string();
+                        let mut path: Vec<&str> = parts[1..].to_vec();
+                        path.push(&field_name_str);
+                        (outer, path)
+                    }
+                    (None, Some(rename)) => (rename.to_string(), vec![]),
+                    (None, None) => (field_name_str.clone(), vec![]),
                 };
 
-            let node_expr = if let Some(inner_key) = inner_wrap {
-                quote! { brk_traversable::TreeNode::wrap(#inner_key, nested.to_tree_node()) }
-            } else {
-                quote! { nested.to_tree_node() }
+            // Build nested wrapping: wrap(path[last], wrap(path[last-1], ... node))
+            let build_wrapped = |base: proc_macro2::TokenStream| -> proc_macro2::TokenStream {
+                wrap_path.iter().rev().fold(base, |inner, key| {
+                    quote! { brk_traversable::TreeNode::wrap(#key, #inner) }
+                })
             };
 
             if info.is_option {
+                let node_expr = build_wrapped(quote! { nested.to_tree_node() });
                 quote! {
                     self.#field_name.as_ref().map(|nested| (String::from(#outer_key), #node_expr))
                 }
             } else {
-                let node_expr_self = if let Some(inner_key) = inner_wrap {
-                    quote! { brk_traversable::TreeNode::wrap(#inner_key, self.#field_name.to_tree_node()) }
-                } else {
-                    quote! { self.#field_name.to_tree_node() }
-                };
+                let node_expr_self = build_wrapped(quote! { self.#field_name.to_tree_node() });
                 quote! {
                     Some((String::from(#outer_key), #node_expr_self))
                 }

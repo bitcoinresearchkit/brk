@@ -14,21 +14,22 @@ use crate::{
 use super::{super::ComputedPerBlock, RatioPerBlock};
 
 #[derive(Traversable)]
+pub struct RatioBand<M: StorageMode = Rw> {
+    #[traversable(flatten)]
+    pub ratio: RatioPerBlock<BasisPoints32, M>,
+    pub price: Price<ComputedPerBlock<Cents, M>>,
+}
+
+#[derive(Traversable)]
 pub struct RatioPerBlockPercentiles<M: StorageMode = Rw> {
-    pub ratio_sma_1w: RatioPerBlock<M>,
-    pub ratio_sma_1m: RatioPerBlock<M>,
-    pub ratio_pct99: RatioPerBlock<M>,
-    pub ratio_pct98: RatioPerBlock<M>,
-    pub ratio_pct95: RatioPerBlock<M>,
-    pub ratio_pct5: RatioPerBlock<M>,
-    pub ratio_pct2: RatioPerBlock<M>,
-    pub ratio_pct1: RatioPerBlock<M>,
-    pub ratio_pct99_price: Price<ComputedPerBlock<Cents, M>>,
-    pub ratio_pct98_price: Price<ComputedPerBlock<Cents, M>>,
-    pub ratio_pct95_price: Price<ComputedPerBlock<Cents, M>>,
-    pub ratio_pct5_price: Price<ComputedPerBlock<Cents, M>>,
-    pub ratio_pct2_price: Price<ComputedPerBlock<Cents, M>>,
-    pub ratio_pct1_price: Price<ComputedPerBlock<Cents, M>>,
+    pub sma_1w: RatioPerBlock<BasisPoints32, M>,
+    pub sma_1m: RatioPerBlock<BasisPoints32, M>,
+    pub pct99: RatioBand<M>,
+    pub pct98: RatioBand<M>,
+    pub pct95: RatioBand<M>,
+    pub pct5: RatioBand<M>,
+    pub pct2: RatioBand<M>,
+    pub pct1: RatioBand<M>,
 
     #[traversable(skip)]
     expanding_pct: ExpandingPercentiles,
@@ -62,21 +63,24 @@ impl RatioPerBlockPercentiles {
             };
         }
 
+        macro_rules! import_band {
+            ($suffix:expr) => {
+                RatioBand {
+                    ratio: import_ratio!($suffix),
+                    price: import_price!($suffix),
+                }
+            };
+        }
+
         Ok(Self {
-            ratio_sma_1w: import_ratio!("ratio_sma_1w"),
-            ratio_sma_1m: import_ratio!("ratio_sma_1m"),
-            ratio_pct99: import_ratio!("ratio_pct99"),
-            ratio_pct98: import_ratio!("ratio_pct98"),
-            ratio_pct95: import_ratio!("ratio_pct95"),
-            ratio_pct5: import_ratio!("ratio_pct5"),
-            ratio_pct2: import_ratio!("ratio_pct2"),
-            ratio_pct1: import_ratio!("ratio_pct1"),
-            ratio_pct99_price: import_price!("ratio_pct99"),
-            ratio_pct98_price: import_price!("ratio_pct98"),
-            ratio_pct95_price: import_price!("ratio_pct95"),
-            ratio_pct5_price: import_price!("ratio_pct5"),
-            ratio_pct2_price: import_price!("ratio_pct2"),
-            ratio_pct1_price: import_price!("ratio_pct1"),
+            sma_1w: import_ratio!("ratio_sma_1w"),
+            sma_1m: import_ratio!("ratio_sma_1m"),
+            pct99: import_band!("ratio_pct99"),
+            pct98: import_band!("ratio_pct98"),
+            pct95: import_band!("ratio_pct95"),
+            pct5: import_band!("ratio_pct5"),
+            pct2: import_band!("ratio_pct2"),
+            pct1: import_band!("ratio_pct1"),
             expanding_pct: ExpandingPercentiles::default(),
         })
     }
@@ -89,14 +93,14 @@ impl RatioPerBlockPercentiles {
         ratio_source: &impl ReadableVec<Height, StoredF32>,
         metric_price: &impl ReadableVec<Height, Cents>,
     ) -> Result<()> {
-        self.ratio_sma_1w.bps.height.compute_rolling_average(
+        self.sma_1w.bps.height.compute_rolling_average(
             starting_indexes.height,
             &blocks.lookback.height_1w_ago,
             ratio_source,
             exit,
         )?;
 
-        self.ratio_sma_1m.bps.height.compute_rolling_average(
+        self.sma_1m.bps.height.compute_rolling_average(
             starting_indexes.height,
             &blocks.lookback.height_1m_ago,
             ratio_source,
@@ -131,12 +135,12 @@ impl RatioPerBlockPercentiles {
 
             let new_ratios = ratio_source.collect_range_at(start, ratio_len);
             let mut pct_vecs: [&mut EagerVec<PcoVec<Height, BasisPoints32>>; 6] = [
-                &mut self.ratio_pct1.bps.height,
-                &mut self.ratio_pct2.bps.height,
-                &mut self.ratio_pct5.bps.height,
-                &mut self.ratio_pct95.bps.height,
-                &mut self.ratio_pct98.bps.height,
-                &mut self.ratio_pct99.bps.height,
+                &mut self.pct1.ratio.bps.height,
+                &mut self.pct2.ratio.bps.height,
+                &mut self.pct5.ratio.bps.height,
+                &mut self.pct95.ratio.bps.height,
+                &mut self.pct98.ratio.bps.height,
+                &mut self.pct99.ratio.bps.height,
             ];
             const PCTS: [f64; 6] = [0.01, 0.02, 0.05, 0.95, 0.98, 0.99];
             let mut out = [0u32; 6];
@@ -158,24 +162,25 @@ impl RatioPerBlockPercentiles {
 
         // Cents bands
         macro_rules! compute_band {
-            ($usd_field:ident, $band_source:expr) => {
-                self.$usd_field
+            ($band:ident) => {
+                self.$band
+                    .price
                     .cents
                     .compute_binary::<Cents, BasisPoints32, PriceTimesRatioBp32Cents>(
                         starting_indexes.height,
                         metric_price,
-                        $band_source,
+                        &self.$band.ratio.bps.height,
                         exit,
                     )?;
             };
         }
 
-        compute_band!(ratio_pct99_price, &self.ratio_pct99.bps.height);
-        compute_band!(ratio_pct98_price, &self.ratio_pct98.bps.height);
-        compute_band!(ratio_pct95_price, &self.ratio_pct95.bps.height);
-        compute_band!(ratio_pct5_price, &self.ratio_pct5.bps.height);
-        compute_band!(ratio_pct2_price, &self.ratio_pct2.bps.height);
-        compute_band!(ratio_pct1_price, &self.ratio_pct1.bps.height);
+        compute_band!(pct99);
+        compute_band!(pct98);
+        compute_band!(pct95);
+        compute_band!(pct5);
+        compute_band!(pct2);
+        compute_band!(pct1);
 
         Ok(())
     }
@@ -184,12 +189,12 @@ impl RatioPerBlockPercentiles {
         &mut self,
     ) -> impl Iterator<Item = &mut EagerVec<PcoVec<Height, BasisPoints32>>> {
         [
-            &mut self.ratio_pct1.bps.height,
-            &mut self.ratio_pct2.bps.height,
-            &mut self.ratio_pct5.bps.height,
-            &mut self.ratio_pct95.bps.height,
-            &mut self.ratio_pct98.bps.height,
-            &mut self.ratio_pct99.bps.height,
+            &mut self.pct1.ratio.bps.height,
+            &mut self.pct2.ratio.bps.height,
+            &mut self.pct5.ratio.bps.height,
+            &mut self.pct95.ratio.bps.height,
+            &mut self.pct98.ratio.bps.height,
+            &mut self.pct99.ratio.bps.height,
         ]
         .into_iter()
     }

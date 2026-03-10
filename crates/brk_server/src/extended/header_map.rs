@@ -10,12 +10,14 @@ pub trait HeaderMapExtended {
     fn insert_cache_control(&mut self, value: &str);
     fn insert_cache_control_must_revalidate(&mut self);
 
-    fn insert_content_disposition_attachment(&mut self);
+    fn insert_content_disposition_attachment(&mut self, filename: &str);
 
     fn insert_content_type_application_json(&mut self);
     fn insert_content_type_text_csv(&mut self);
     fn insert_content_type_text_plain(&mut self);
     fn insert_content_type_octet_stream(&mut self);
+
+    fn insert_deprecation(&mut self, sunset: &'static str);
 }
 
 impl HeaderMapExtended for HeaderMap {
@@ -36,8 +38,11 @@ impl HeaderMapExtended for HeaderMap {
         self.insert_cache_control("public, max-age=1, must-revalidate");
     }
 
-    fn insert_content_disposition_attachment(&mut self) {
-        self.insert(header::CONTENT_DISPOSITION, "attachment".parse().unwrap());
+    fn insert_content_disposition_attachment(&mut self, filename: &str) {
+        self.insert(
+            header::CONTENT_DISPOSITION,
+            format!("attachment; filename=\"{filename}\"").parse().unwrap(),
+        );
     }
 
     fn insert_content_type_application_json(&mut self) {
@@ -57,5 +62,10 @@ impl HeaderMapExtended for HeaderMap {
             header::CONTENT_TYPE,
             "application/octet-stream".parse().unwrap(),
         );
+    }
+
+    fn insert_deprecation(&mut self, sunset: &'static str) {
+        self.insert("Deprecation", "true".parse().unwrap());
+        self.insert("Sunset", sunset.parse().unwrap());
     }
 }

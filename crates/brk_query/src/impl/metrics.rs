@@ -27,21 +27,24 @@ impl Query {
     pub fn metric_not_found_error(&self, metric: &Metric) -> Error {
         // Check if metric exists but with different indexes
         if let Some(indexes) = self.vecs().metric_to_indexes(metric.clone()) {
-            let index_list: Vec<_> = indexes.iter().map(|i| i.to_string()).collect();
+            let supported = indexes
+                .iter()
+                .map(|i| format!("/api/metric/{metric}/{i}"))
+                .collect::<Vec<_>>()
+                .join(", ");
             return Error::MetricUnsupportedIndex {
                 metric: metric.to_string(),
-                supported: index_list.join(", "),
+                supported,
             };
         }
 
         // Metric doesn't exist, suggest alternatives
-        Error::MetricNotFound {
-            metric: metric.to_string(),
-            suggestion: self
-                .match_metric(metric, Limit::MIN)
-                .first()
-                .map(|s| s.to_string()),
-        }
+        let matches = self
+            .match_metric(metric, Limit::DEFAULT)
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect();
+        Error::MetricNotFound(brk_error::MetricNotFound::new(metric.to_string(), matches))
     }
 
     pub(crate) fn columns_to_csv(
@@ -333,5 +336,10 @@ impl ResolvedQuery {
 
     pub fn format(&self) -> Format {
         self.format
+    }
+
+    pub fn csv_filename(&self) -> String {
+        let names: Vec<_> = self.vecs.iter().map(|v| v.name()).collect();
+        format!("{}-{}.csv", names.join("_"), self.index)
     }
 }

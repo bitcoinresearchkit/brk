@@ -4,7 +4,7 @@ use brk_types::{CentsSats, CentsSquaredSats, Height, Indexes, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, BytesVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
-use crate::{distribution::{metrics::ImportConfig, state::UnrealizedState}, prices};
+use crate::{blocks, distribution::{metrics::ImportConfig, state::UnrealizedState}, prices};
 
 use super::UnrealizedCore;
 
@@ -15,9 +15,13 @@ pub struct UnrealizedBase<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub core: UnrealizedCore<M>,
 
+    #[traversable(wrap = "invested_capital/in_profit", rename = "raw")]
     pub invested_capital_in_profit_raw: M::Stored<BytesVec<Height, CentsSats>>,
+    #[traversable(wrap = "invested_capital/in_loss", rename = "raw")]
     pub invested_capital_in_loss_raw: M::Stored<BytesVec<Height, CentsSats>>,
+    #[traversable(wrap = "investor_cap/in_profit", rename = "raw")]
     pub investor_cap_in_profit_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
+    #[traversable(wrap = "investor_cap/in_loss", rename = "raw")]
     pub investor_cap_in_loss_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
 }
 
@@ -161,11 +165,12 @@ impl UnrealizedBase {
 
     pub(crate) fn compute_rest(
         &mut self,
+        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.core.compute_rest(prices, starting_indexes, exit)?;
+        self.core.compute_rest(blocks, prices, starting_indexes, exit)?;
         Ok(())
     }
 }

@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::{io, path::PathBuf, result, time};
+use std::{fmt, io, path::PathBuf, result, time};
 
 use thiserror::Error;
 
@@ -127,13 +127,10 @@ pub enum Error {
     AuthFailed,
 
     // Metric-specific errors
-    #[error("'{metric}' not found{}", suggestion.as_ref().map(|s| format!(", did you mean '{s}'?")).unwrap_or_default())]
-    MetricNotFound {
-        metric: String,
-        suggestion: Option<String>,
-    },
+    #[error("{0}")]
+    MetricNotFound(MetricNotFound),
 
-    #[error("'{metric}' doesn't support the requested index. Supported indexes: {supported}")]
+    #[error("'{metric}' doesn't support the requested index. Try: {supported}")]
     MetricUnsupportedIndex { metric: String, supported: String },
 
     #[error("No metrics specified")]
@@ -224,5 +221,48 @@ fn is_io_error_permanent(e: &std::io::Error) -> bool {
                 || msg.contains("Name or service not known")
                 || msg.contains("No such host")
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct MetricNotFound {
+    pub metric: String,
+    pub suggestions: Vec<String>,
+    pub total_matches: usize,
+}
+
+impl MetricNotFound {
+    pub fn new(metric: String, all_matches: Vec<String>) -> Self {
+        let total_matches = all_matches.len();
+        let suggestions = all_matches.into_iter().take(3).collect();
+        Self {
+            metric,
+            suggestions,
+            total_matches,
+        }
+    }
+}
+
+impl fmt::Display for MetricNotFound {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "'{}' not found", self.metric)?;
+
+        if self.suggestions.is_empty() {
+            return Ok(());
+        }
+
+        let quoted: Vec<_> = self.suggestions.iter().map(|s| format!("'{s}'")).collect();
+        write!(f, ", did you mean {}?", quoted.join(", "))?;
+
+        let remaining = self.total_matches.saturating_sub(self.suggestions.len());
+        if remaining > 0 {
+            write!(
+                f,
+                " ({remaining} more — /api/metrics/search/{} for all)",
+                self.metric
+            )?;
+        }
+
+        Ok(())
     }
 }
