@@ -3,13 +3,13 @@ use rayon::prelude::*;
 
 use crate::Filter;
 
-use super::{ByAmountRange, ByGreatEqualAmount, ByLowerThanAmount};
+use super::{AmountRange, OverAmount, UnderAmount};
 
 #[derive(Default, Clone, Traversable)]
 pub struct AddressGroups<T> {
-    pub ge_amount: ByGreatEqualAmount<T>,
-    pub amount_range: ByAmountRange<T>,
-    pub lt_amount: ByLowerThanAmount<T>,
+    pub over_amount: OverAmount<T>,
+    pub amount_range: AmountRange<T>,
+    pub under_amount: UnderAmount<T>,
 }
 
 impl<T> AddressGroups<T> {
@@ -18,9 +18,9 @@ impl<T> AddressGroups<T> {
         F: FnMut(Filter, &'static str) -> T,
     {
         Self {
-            ge_amount: ByGreatEqualAmount::new(&mut create),
-            amount_range: ByAmountRange::new(&mut create),
-            lt_amount: ByLowerThanAmount::new(&mut create),
+            over_amount: OverAmount::new(&mut create),
+            amount_range: AmountRange::new(&mut create),
+            under_amount: UnderAmount::new(&mut create),
         }
     }
 
@@ -29,34 +29,34 @@ impl<T> AddressGroups<T> {
         F: Fn(Filter, &'static str) -> Result<T, E>,
     {
         Ok(Self {
-            ge_amount: ByGreatEqualAmount::try_new(create)?,
-            amount_range: ByAmountRange::try_new(create)?,
-            lt_amount: ByLowerThanAmount::try_new(create)?,
+            over_amount: OverAmount::try_new(create)?,
+            amount_range: AmountRange::try_new(create)?,
+            under_amount: UnderAmount::try_new(create)?,
         })
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {
-        self.ge_amount
+        self.over_amount
             .iter()
             .chain(self.amount_range.iter())
-            .chain(self.lt_amount.iter())
+            .chain(self.under_amount.iter())
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        self.ge_amount
+        self.over_amount
             .iter_mut()
             .chain(self.amount_range.iter_mut())
-            .chain(self.lt_amount.iter_mut())
+            .chain(self.under_amount.iter_mut())
     }
 
     pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
     where
         T: Send + Sync,
     {
-        self.ge_amount
+        self.over_amount
             .par_iter_mut()
             .chain(self.amount_range.par_iter_mut())
-            .chain(self.lt_amount.par_iter_mut())
+            .chain(self.under_amount.par_iter_mut())
     }
 
     pub fn iter_separate(&self) -> impl Iterator<Item = &T> {
@@ -75,7 +75,7 @@ impl<T> AddressGroups<T> {
     }
 
     pub fn iter_overlapping_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        self.lt_amount.iter_mut().chain(self.ge_amount.iter_mut())
+        self.under_amount.iter_mut().chain(self.over_amount.iter_mut())
     }
 }
 

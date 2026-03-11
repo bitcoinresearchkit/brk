@@ -196,6 +196,50 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
+            "/api/metric/{metric}/{index}/len",
+            get_with(
+                async |uri: Uri,
+                       headers: HeaderMap,
+                       State(state): State<AppState>,
+                       Path(path): Path<MetricWithIndex>| {
+                    state
+                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                            q.len(&path.metric, path.index)
+                        })
+                        .await
+                },
+                |op| op
+                    .id("get_metric_len")
+                    .metrics_tag()
+                    .summary("Get metric data length")
+                    .description("Returns the total number of data points for a metric at the given index.")
+                    .ok_response::<usize>()
+                    .not_found(),
+            ),
+        )
+        .api_route(
+            "/api/metric/{metric}/{index}/version",
+            get_with(
+                async |uri: Uri,
+                       headers: HeaderMap,
+                       State(state): State<AppState>,
+                       Path(path): Path<MetricWithIndex>| {
+                    state
+                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                            q.version(&path.metric, path.index)
+                        })
+                        .await
+                },
+                |op| op
+                    .id("get_metric_version")
+                    .metrics_tag()
+                    .summary("Get metric version")
+                    .description("Returns the current version of a metric. Changes when the metric data is updated.")
+                    .ok_response::<brk_types::Version>()
+                    .not_found(),
+            ),
+        )
+        .api_route(
             "/api/metric/{metric}/{index}/data",
             get_with(
                 async |uri: Uri,

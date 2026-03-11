@@ -2,15 +2,15 @@ use std::ops::{Add, AddAssign};
 
 use brk_types::OutputType;
 
-use super::{BySpendableType, ByUnspendableType};
+use super::{SpendableType, UnspendableType};
 
 #[derive(Default, Clone, Debug)]
-pub struct GroupedByType<T> {
-    pub spendable: BySpendableType<T>,
-    pub unspendable: ByUnspendableType<T>,
+pub struct ByType<T> {
+    pub spendable: SpendableType<T>,
+    pub unspendable: UnspendableType<T>,
 }
 
-impl<T> GroupedByType<T> {
+impl<T> ByType<T> {
     pub fn get(&self, output_type: OutputType) -> &T {
         match output_type {
             OutputType::P2PK65 => &self.spendable.p2pk65,
@@ -46,7 +46,7 @@ impl<T> GroupedByType<T> {
     }
 }
 
-impl<T> Add for GroupedByType<T>
+impl<T> Add for ByType<T>
 where
     T: Add<Output = T>,
 {
@@ -59,7 +59,7 @@ where
     }
 }
 
-impl<T> AddAssign for GroupedByType<T>
+impl<T> AddAssign for ByType<T>
 where
     T: AddAssign,
 {

@@ -40,7 +40,7 @@ fn main() -> brk_client::Result<()> {
         .metrics()
         .blocks
         .count
-        .block_count
+        .total
         .sum
         ._24h
         .by

@@ -1,4 +1,4 @@
-use brk_cohort::{AGE_BOUNDARIES, ByAgeRange};
+use brk_cohort::{AGE_BOUNDARIES, AgeRange};
 use brk_types::{CostBasisSnapshot, ONE_HOUR_IN_SEC, Sats, Timestamp};
 use vecdb::{Rw, unlikely};
 
@@ -22,9 +22,9 @@ impl UTXOCohorts<Rw> {
         &mut self,
         chain_state: &[BlockState],
         timestamp: Timestamp,
-    ) -> ByAgeRange<Sats> {
+    ) -> AgeRange<Sats> {
         if chain_state.is_empty() {
-            return ByAgeRange::default();
+            return AgeRange::default();
         }
 
         let prev_timestamp = chain_state.last().unwrap().timestamp;
@@ -32,7 +32,7 @@ impl UTXOCohorts<Rw> {
 
         // Skip if no time has passed
         if elapsed == 0 {
-            return ByAgeRange::default();
+            return AgeRange::default();
         }
 
         let mut matured = [Sats::ZERO; 21];
@@ -96,6 +96,6 @@ impl UTXOCohorts<Rw> {
             }
         }
 
-        ByAgeRange::from_array(matured)
+        AgeRange::from_array(matured)
     }
 }

@@ -82,7 +82,7 @@ pub fn compute_profitability_boundaries(spot: Cents) -> [Cents; PROFITABILITY_BO
 }
 
 /// Profitability range names (25 ranges, from most profitable to most in loss)
-pub const PROFITABILITY_RANGE_NAMES: ByProfitabilityRange<CohortName> = ByProfitabilityRange {
+pub const PROFITABILITY_RANGE_NAMES: ProfitabilityRange<CohortName> = ProfitabilityRange {
     over_1000pct_in_profit: CohortName::new("utxos_over_1000pct_in_profit", ">1000%", "Over 1000% Profit"),
     _500pct_to_1000pct_in_profit: CohortName::new("utxos_500pct_to_1000pct_in_profit", "500-1000%", "500-1000% Profit"),
     _300pct_to_500pct_in_profit: CohortName::new("utxos_300pct_to_500pct_in_profit", "300-500%", "300-500% Profit"),
@@ -110,7 +110,7 @@ pub const PROFITABILITY_RANGE_NAMES: ByProfitabilityRange<CohortName> = ByProfit
     _90pct_to_100pct_in_loss: CohortName::new("utxos_90pct_to_100pct_in_loss", "90-100%L", "90-100% Loss"),
 };
 
-impl ByProfitabilityRange<CohortName> {
+impl ProfitabilityRange<CohortName> {
     pub const fn names() -> &'static Self {
         &PROFITABILITY_RANGE_NAMES
     }
@@ -121,7 +121,7 @@ impl ByProfitabilityRange<CohortName> {
 /// During the k-way merge (ascending price order), the cursor starts at bucket 0
 /// (over_1000pct_in_profit, lowest cost basis) and advances as price crosses each boundary.
 #[derive(Default, Clone, Traversable, Serialize)]
-pub struct ByProfitabilityRange<T> {
+pub struct ProfitabilityRange<T> {
     pub over_1000pct_in_profit: T,
     pub _500pct_to_1000pct_in_profit: T,
     pub _300pct_to_500pct_in_profit: T,
@@ -152,7 +152,7 @@ pub struct ByProfitabilityRange<T> {
 /// Number of profitability range buckets.
 pub const PROFITABILITY_RANGE_COUNT: usize = 25;
 
-impl<T> ByProfitabilityRange<T> {
+impl<T> ProfitabilityRange<T> {
     pub fn new<F>(mut create: F) -> Self
     where
         F: FnMut(&'static str) -> T,

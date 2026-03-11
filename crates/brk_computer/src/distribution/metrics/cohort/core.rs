@@ -62,7 +62,7 @@ impl CoreCohortMetrics {
         vecs
     }
 
-    /// Aggregate Core-tier fields from CohortMetricsBase sources (e.g. age_range → max_age/min_age).
+    /// Aggregate Core-tier fields from CohortMetricsBase sources (e.g. age_range → under_age/over_age).
     pub(crate) fn compute_from_base_sources<T: CohortMetricsBase>(
         &mut self,
         starting_indexes: &Indexes,

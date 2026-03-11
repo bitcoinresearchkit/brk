@@ -1,14 +1,14 @@
 use std::ops::{Add, AddAssign};
 
-use brk_cohort::{ByAmountRange, GroupedByType};
+use brk_cohort::{AmountRange, ByType};
 use brk_types::{OutputType, Sats, SupplyState};
 use vecdb::unlikely;
 
 #[derive(Default, Debug)]
 pub struct Transacted {
     pub spendable_supply: SupplyState,
-    pub by_type: GroupedByType<SupplyState>,
-    pub by_size_group: ByAmountRange<SupplyState>,
+    pub by_type: ByType<SupplyState>,
+    pub by_size_group: AmountRange<SupplyState>,
 }
 
 impl Transacted {

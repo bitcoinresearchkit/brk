@@ -50,6 +50,11 @@ Get the latest value:
 
     GET /api/metric/{metric}/{index}/latest
 
+Get the data length or version:
+
+    GET /api/metric/{metric}/{index}/len
+    GET /api/metric/{metric}/{index}/version
+
 Example — last 30 days of Bitcoin closing price:
 
     GET /api/metric/price/day?start=-30

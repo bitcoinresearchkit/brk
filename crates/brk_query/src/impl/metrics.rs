@@ -116,6 +116,24 @@ impl Query {
         vec.last_json_value().ok_or(Error::NoData)
     }
 
+    /// Returns the length (total data points) for a single metric.
+    pub fn len(&self, metric: &Metric, index: Index) -> Result<usize> {
+        let vec = self
+            .vecs()
+            .get(metric, index)
+            .ok_or_else(|| self.metric_not_found_error(metric))?;
+        Ok(vec.len())
+    }
+
+    /// Returns the version for a single metric.
+    pub fn version(&self, metric: &Metric, index: Index) -> Result<Version> {
+        let vec = self
+            .vecs()
+            .get(metric, index)
+            .ok_or_else(|| self.metric_not_found_error(metric))?;
+        Ok(vec.version())
+    }
+
     /// Search for vecs matching the given metrics and index.
     /// Returns error if no metrics requested or any requested metric is not found.
     pub fn search(&self, params: &MetricSelection) -> Result<Vec<&'static dyn AnyExportableVec>> {
@@ -290,7 +308,7 @@ impl Query {
         let indexes = index_to_vec.keys().copied().collect();
         Some(MetricInfo {
             indexes,
-            value_type,
+            value_type: value_type.into(),
         })
     }
 

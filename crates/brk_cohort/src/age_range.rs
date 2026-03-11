@@ -38,7 +38,7 @@ pub const AGE_BOUNDARIES: [usize; 20] = [
 ];
 
 /// Age range bounds (end = usize::MAX means unbounded)
-pub const AGE_RANGE_BOUNDS: ByAgeRange<Range<usize>> = ByAgeRange {
+pub const AGE_RANGE_BOUNDS: AgeRange<Range<usize>> = AgeRange {
     up_to_1h: 0..HOURS_1H,
     _1h_to_1d: HOURS_1H..HOURS_1D,
     _1d_to_1w: HOURS_1D..HOURS_1W,
@@ -63,7 +63,7 @@ pub const AGE_RANGE_BOUNDS: ByAgeRange<Range<usize>> = ByAgeRange {
 };
 
 /// Age range filters
-pub const AGE_RANGE_FILTERS: ByAgeRange<Filter> = ByAgeRange {
+pub const AGE_RANGE_FILTERS: AgeRange<Filter> = AgeRange {
     up_to_1h: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS.up_to_1h)),
     _1h_to_1d: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._1h_to_1d)),
     _1d_to_1w: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._1d_to_1w)),
@@ -88,7 +88,7 @@ pub const AGE_RANGE_FILTERS: ByAgeRange<Filter> = ByAgeRange {
 };
 
 /// Age range names
-pub const AGE_RANGE_NAMES: ByAgeRange<CohortName> = ByAgeRange {
+pub const AGE_RANGE_NAMES: AgeRange<CohortName> = AgeRange {
     up_to_1h: CohortName::new("under_1h_old", "<1h", "Under 1 Hour Old"),
     _1h_to_1d: CohortName::new("1h_to_1d_old", "1h-1d", "1 Hour to 1 Day Old"),
     _1d_to_1w: CohortName::new("1d_to_1w_old", "1d-1w", "1 Day to 1 Week Old"),
@@ -112,14 +112,14 @@ pub const AGE_RANGE_NAMES: ByAgeRange<CohortName> = ByAgeRange {
     from_15y: CohortName::new("over_15y_old", "15y+", "15+ Years Old"),
 };
 
-impl ByAgeRange<CohortName> {
+impl AgeRange<CohortName> {
     pub const fn names() -> &'static Self {
         &AGE_RANGE_NAMES
     }
 }
 
 #[derive(Default, Clone, Traversable, Serialize)]
-pub struct ByAgeRange<T> {
+pub struct AgeRange<T> {
     pub up_to_1h: T,
     pub _1h_to_1d: T,
     pub _1d_to_1w: T,
@@ -143,7 +143,7 @@ pub struct ByAgeRange<T> {
     pub from_15y: T,
 }
 
-impl<T> ByAgeRange<T> {
+impl<T> AgeRange<T> {
     /// Get mutable reference by Age. O(1).
     #[inline]
     pub fn get_mut(&mut self, age: Age) -> &mut T {

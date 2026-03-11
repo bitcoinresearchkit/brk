@@ -5,8 +5,8 @@ use serde::Serialize;
 
 use super::{AmountFilter, CohortName, Filter};
 
-/// Greater-or-equal amount thresholds
-pub const GE_AMOUNT_THRESHOLDS: ByGreatEqualAmount<Sats> = ByGreatEqualAmount {
+/// Over-amount thresholds
+pub const OVER_AMOUNT_THRESHOLDS: OverAmount<Sats> = OverAmount {
     _1sat: Sats::_1,
     _10sats: Sats::_10,
     _100sats: Sats::_100,
@@ -22,8 +22,8 @@ pub const GE_AMOUNT_THRESHOLDS: ByGreatEqualAmount<Sats> = ByGreatEqualAmount {
     _10k_btc: Sats::_10K_BTC,
 };
 
-/// Greater-or-equal amount names
-pub const GE_AMOUNT_NAMES: ByGreatEqualAmount<CohortName> = ByGreatEqualAmount {
+/// Over-amount names
+pub const OVER_AMOUNT_NAMES: OverAmount<CohortName> = OverAmount {
     _1sat: CohortName::new("over_1sat", "1+ sats", "Over 1 Sat"),
     _10sats: CohortName::new("over_10sats", "10+ sats", "Over 10 Sats"),
     _100sats: CohortName::new("over_100sats", "100+ sats", "Over 100 Sats"),
@@ -39,27 +39,27 @@ pub const GE_AMOUNT_NAMES: ByGreatEqualAmount<CohortName> = ByGreatEqualAmount {
     _10k_btc: CohortName::new("over_10k_btc", "10k+ BTC", "Over 10K BTC"),
 };
 
-/// Greater-or-equal amount filters
-pub const GE_AMOUNT_FILTERS: ByGreatEqualAmount<Filter> = ByGreatEqualAmount {
-    _1sat: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._1sat)),
-    _10sats: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._10sats)),
-    _100sats: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._100sats)),
-    _1k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._1k_sats)),
-    _10k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._10k_sats)),
+/// Over-amount filters
+pub const OVER_AMOUNT_FILTERS: OverAmount<Filter> = OverAmount {
+    _1sat: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._1sat)),
+    _10sats: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._10sats)),
+    _100sats: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._100sats)),
+    _1k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._1k_sats)),
+    _10k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._10k_sats)),
     _100k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(
-        GE_AMOUNT_THRESHOLDS._100k_sats,
+        OVER_AMOUNT_THRESHOLDS._100k_sats,
     )),
-    _1m_sats: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._1m_sats)),
-    _10m_sats: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._10m_sats)),
-    _1btc: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._1btc)),
-    _10btc: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._10btc)),
-    _100btc: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._100btc)),
-    _1k_btc: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._1k_btc)),
-    _10k_btc: Filter::Amount(AmountFilter::GreaterOrEqual(GE_AMOUNT_THRESHOLDS._10k_btc)),
+    _1m_sats: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._1m_sats)),
+    _10m_sats: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._10m_sats)),
+    _1btc: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._1btc)),
+    _10btc: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._10btc)),
+    _100btc: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._100btc)),
+    _1k_btc: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._1k_btc)),
+    _10k_btc: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._10k_btc)),
 };
 
 #[derive(Default, Clone, Traversable, Serialize)]
-pub struct ByGreatEqualAmount<T> {
+pub struct OverAmount<T> {
     pub _1sat: T,
     pub _10sats: T,
     pub _100sats: T,
@@ -75,19 +75,19 @@ pub struct ByGreatEqualAmount<T> {
     pub _10k_btc: T,
 }
 
-impl ByGreatEqualAmount<CohortName> {
+impl OverAmount<CohortName> {
     pub const fn names() -> &'static Self {
-        &GE_AMOUNT_NAMES
+        &OVER_AMOUNT_NAMES
     }
 }
 
-impl<T> ByGreatEqualAmount<T> {
+impl<T> OverAmount<T> {
     pub fn new<F>(mut create: F) -> Self
     where
         F: FnMut(Filter, &'static str) -> T,
     {
-        let f = GE_AMOUNT_FILTERS;
-        let n = GE_AMOUNT_NAMES;
+        let f = OVER_AMOUNT_FILTERS;
+        let n = OVER_AMOUNT_NAMES;
         Self {
             _1sat: create(f._1sat.clone(), n._1sat.id),
             _10sats: create(f._10sats.clone(), n._10sats.id),
@@ -109,8 +109,8 @@ impl<T> ByGreatEqualAmount<T> {
     where
         F: FnMut(Filter, &'static str) -> Result<T, E>,
     {
-        let f = GE_AMOUNT_FILTERS;
-        let n = GE_AMOUNT_NAMES;
+        let f = OVER_AMOUNT_FILTERS;
+        let n = OVER_AMOUNT_NAMES;
         Ok(Self {
             _1sat: create(f._1sat.clone(), n._1sat.id)?,
             _10sats: create(f._10sats.clone(), n._10sats.id)?,

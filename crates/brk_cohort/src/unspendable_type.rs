@@ -3,17 +3,17 @@ use std::ops::{Add, AddAssign};
 use brk_traversable::Traversable;
 
 #[derive(Default, Clone, Debug, Traversable)]
-pub struct ByUnspendableType<T> {
+pub struct UnspendableType<T> {
     pub opreturn: T,
 }
 
-impl<T> ByUnspendableType<T> {
+impl<T> UnspendableType<T> {
     pub fn as_vec(&self) -> [&T; 1] {
         [&self.opreturn]
     }
 }
 
-impl<T> Add for ByUnspendableType<T>
+impl<T> Add for UnspendableType<T>
 where
     T: Add<Output = T>,
 {
@@ -25,7 +25,7 @@ where
     }
 }
 
-impl<T> AddAssign for ByUnspendableType<T>
+impl<T> AddAssign for UnspendableType<T>
 where
     T: AddAssign,
 {

@@ -6,8 +6,8 @@
 use std::collections::BTreeMap;
 
 use brk_cohort::{
-    AGE_RANGE_NAMES, AMOUNT_RANGE_NAMES, EPOCH_NAMES, GE_AMOUNT_NAMES, LT_AMOUNT_NAMES,
-    MAX_AGE_NAMES, MIN_AGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES, CLASS_NAMES,
+    AGE_RANGE_NAMES, AMOUNT_RANGE_NAMES, EPOCH_NAMES, OVER_AMOUNT_NAMES, UNDER_AMOUNT_NAMES,
+    UNDER_AGE_NAMES, OVER_AGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES, CLASS_NAMES,
 };
 use brk_types::{Index, PoolSlug, pools};
 use serde::Serialize;
@@ -58,11 +58,11 @@ impl CohortConstants {
             ("CLASS_NAMES", to_value(&CLASS_NAMES)),
             ("SPENDABLE_TYPE_NAMES", to_value(&SPENDABLE_TYPE_NAMES)),
             ("AGE_RANGE_NAMES", to_value(&AGE_RANGE_NAMES)),
-            ("MAX_AGE_NAMES", to_value(&MAX_AGE_NAMES)),
-            ("MIN_AGE_NAMES", to_value(&MIN_AGE_NAMES)),
+            ("UNDER_AGE_NAMES", to_value(&UNDER_AGE_NAMES)),
+            ("OVER_AGE_NAMES", to_value(&OVER_AGE_NAMES)),
             ("AMOUNT_RANGE_NAMES", to_value(&AMOUNT_RANGE_NAMES)),
-            ("GE_AMOUNT_NAMES", to_value(&GE_AMOUNT_NAMES)),
-            ("LT_AMOUNT_NAMES", to_value(&LT_AMOUNT_NAMES)),
+            ("OVER_AMOUNT_NAMES", to_value(&OVER_AMOUNT_NAMES)),
+            ("UNDER_AMOUNT_NAMES", to_value(&UNDER_AMOUNT_NAMES)),
         ]
     }
 }

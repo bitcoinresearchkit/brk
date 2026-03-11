@@ -395,6 +395,7 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
             let field_name = info.name;
             let field_name_str = {
                 let s = field_name.to_string();
+                let s = s.strip_prefix("r#").unwrap_or(&s).to_string();
                 s.strip_prefix('_').map(String::from).unwrap_or(s)
             };
 

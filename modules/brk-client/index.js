@@ -3270,7 +3270,7 @@ function createInRawSumPattern2(client, acc) {
  * @property {UnspentPattern} outputs
  * @property {CapLossMvrvNuplPriceProfitSoprPattern} realized
  * @property {HalvedInTotalPattern} supply
- * @property {LossProfitPattern2} unrealized
+ * @property {LossProfitPattern} unrealized
  */
 
 /**
@@ -3284,7 +3284,7 @@ function createOutputsRealizedSupplyUnrealizedPattern(client, acc) {
     outputs: createUnspentPattern(client, _m(acc, 'utxo_count')),
     realized: createCapLossMvrvNuplPriceProfitSoprPattern(client, acc),
     supply: createHalvedInTotalPattern(client, _m(acc, 'supply')),
-    unrealized: createLossProfitPattern2(client, _m(acc, 'unrealized')),
+    unrealized: createLossProfitPattern(client, _m(acc, 'unrealized')),
   };
 }
 
@@ -3983,18 +3983,18 @@ function createInPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} LossProfitPattern2
+ * @typedef {Object} LossProfitPattern
  * @property {RawSumPattern2} loss
  * @property {RawSumPattern2} profit
  */
 
 /**
- * Create a LossProfitPattern2 pattern node
+ * Create a LossProfitPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {LossProfitPattern2}
+ * @returns {LossProfitPattern}
  */
-function createLossProfitPattern2(client, acc) {
+function createLossProfitPattern(client, acc) {
   return {
     loss: createRawSumPattern2(client, _m(acc, 'loss')),
     profit: createRawSumPattern2(client, _m(acc, 'profit')),
@@ -5390,7 +5390,7 @@ function createRawPattern2(client, acc) {
  * @typedef {Object} MetricsTree_Market_Dca_Period
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} stack
  * @property {MetricsTree_Market_Dca_Period_CostBasis} costBasis
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} r#return
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} return
  * @property {_10y2y3y4y5y6y8yPattern} cagr
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} lumpSumStack
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} lumpSumReturn
@@ -5416,7 +5416,7 @@ function createRawPattern2(client, acc) {
  * @typedef {Object} MetricsTree_Market_Dca_Class
  * @property {MetricsTree_Market_Dca_Class_Stack} stack
  * @property {MetricsTree_Market_Dca_Class_CostBasis} costBasis
- * @property {MetricsTree_Market_Dca_Class_R#return} r#return
+ * @property {MetricsTree_Market_Dca_Class_Return} return
  */
 
 /**
@@ -5452,7 +5452,7 @@ function createRawPattern2(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Market_Dca_Class_R#return
+ * @typedef {Object} MetricsTree_Market_Dca_Class_Return
  * @property {BpsPercentRatioPattern} from2015
  * @property {BpsPercentRatioPattern} from2016
  * @property {BpsPercentRatioPattern} from2017
@@ -5865,13 +5865,13 @@ function createRawPattern2(client, acc) {
  * @property {MetricsTree_Distribution_Cohorts_Utxo_Sth} sth
  * @property {MetricsTree_Distribution_Cohorts_Utxo_Lth} lth
  * @property {MetricsTree_Distribution_Cohorts_Utxo_AgeRange} ageRange
- * @property {MetricsTree_Distribution_Cohorts_Utxo_MaxAge} maxAge
- * @property {MetricsTree_Distribution_Cohorts_Utxo_MinAge} minAge
+ * @property {MetricsTree_Distribution_Cohorts_Utxo_UnderAge} underAge
+ * @property {MetricsTree_Distribution_Cohorts_Utxo_OverAge} overAge
  * @property {MetricsTree_Distribution_Cohorts_Utxo_Epoch} epoch
  * @property {MetricsTree_Distribution_Cohorts_Utxo_Class} class
- * @property {MetricsTree_Distribution_Cohorts_Utxo_GeAmount} geAmount
+ * @property {MetricsTree_Distribution_Cohorts_Utxo_OverAmount} overAmount
  * @property {MetricsTree_Distribution_Cohorts_Utxo_AmountRange} amountRange
- * @property {MetricsTree_Distribution_Cohorts_Utxo_LtAmount} ltAmount
+ * @property {MetricsTree_Distribution_Cohorts_Utxo_UnderAmount} underAmount
  * @property {MetricsTree_Distribution_Cohorts_Utxo_Type} type
  * @property {MetricsTree_Distribution_Cohorts_Utxo_Profitability} profitability
  * @property {MetricsTree_Distribution_Cohorts_Utxo_Matured} matured
@@ -6012,7 +6012,7 @@ function createRawPattern2(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Distribution_Cohorts_Utxo_MaxAge
+ * @typedef {Object} MetricsTree_Distribution_Cohorts_Utxo_UnderAge
  * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1w
  * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1m
  * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _2m
@@ -6034,7 +6034,7 @@ function createRawPattern2(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Distribution_Cohorts_Utxo_MinAge
+ * @typedef {Object} MetricsTree_Distribution_Cohorts_Utxo_OverAge
  * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1d
  * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1w
  * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1m
@@ -6087,7 +6087,7 @@ function createRawPattern2(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Distribution_Cohorts_Utxo_GeAmount
+ * @typedef {Object} MetricsTree_Distribution_Cohorts_Utxo_OverAmount
  * @property {OutputsRealizedSupplyPattern} _1sat
  * @property {OutputsRealizedSupplyPattern} _10sats
  * @property {OutputsRealizedSupplyPattern} _100sats
@@ -6123,7 +6123,7 @@ function createRawPattern2(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Distribution_Cohorts_Utxo_LtAmount
+ * @typedef {Object} MetricsTree_Distribution_Cohorts_Utxo_UnderAmount
  * @property {OutputsRealizedSupplyPattern} _10sats
  * @property {OutputsRealizedSupplyPattern} _100sats
  * @property {OutputsRealizedSupplyPattern} _1kSats
@@ -6163,31 +6163,31 @@ function createRawPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution_Cohorts_Utxo_Profitability_Range
- * @property {RealizedSupplyPattern} profitOver1000
- * @property {RealizedSupplyPattern} profit500To1000
- * @property {RealizedSupplyPattern} profit300To500
- * @property {RealizedSupplyPattern} profit200To300
- * @property {RealizedSupplyPattern} profit100To200
- * @property {RealizedSupplyPattern} profit90To100
- * @property {RealizedSupplyPattern} profit80To90
- * @property {RealizedSupplyPattern} profit70To80
- * @property {RealizedSupplyPattern} profit60To70
- * @property {RealizedSupplyPattern} profit50To60
- * @property {RealizedSupplyPattern} profit40To50
- * @property {RealizedSupplyPattern} profit30To40
- * @property {RealizedSupplyPattern} profit20To30
- * @property {RealizedSupplyPattern} profit10To20
- * @property {RealizedSupplyPattern} profit0To10
- * @property {RealizedSupplyPattern} loss0To10
- * @property {RealizedSupplyPattern} loss10To20
- * @property {RealizedSupplyPattern} loss20To30
- * @property {RealizedSupplyPattern} loss30To40
- * @property {RealizedSupplyPattern} loss40To50
- * @property {RealizedSupplyPattern} loss50To60
- * @property {RealizedSupplyPattern} loss60To70
- * @property {RealizedSupplyPattern} loss70To80
- * @property {RealizedSupplyPattern} loss80To90
- * @property {RealizedSupplyPattern} loss90To100
+ * @property {RealizedSupplyPattern} over1000pctInProfit
+ * @property {RealizedSupplyPattern} _500pctTo1000pctInProfit
+ * @property {RealizedSupplyPattern} _300pctTo500pctInProfit
+ * @property {RealizedSupplyPattern} _200pctTo300pctInProfit
+ * @property {RealizedSupplyPattern} _100pctTo200pctInProfit
+ * @property {RealizedSupplyPattern} _90pctTo100pctInProfit
+ * @property {RealizedSupplyPattern} _80pctTo90pctInProfit
+ * @property {RealizedSupplyPattern} _70pctTo80pctInProfit
+ * @property {RealizedSupplyPattern} _60pctTo70pctInProfit
+ * @property {RealizedSupplyPattern} _50pctTo60pctInProfit
+ * @property {RealizedSupplyPattern} _40pctTo50pctInProfit
+ * @property {RealizedSupplyPattern} _30pctTo40pctInProfit
+ * @property {RealizedSupplyPattern} _20pctTo30pctInProfit
+ * @property {RealizedSupplyPattern} _10pctTo20pctInProfit
+ * @property {RealizedSupplyPattern} _0pctTo10pctInProfit
+ * @property {RealizedSupplyPattern} _0pctTo10pctInLoss
+ * @property {RealizedSupplyPattern} _10pctTo20pctInLoss
+ * @property {RealizedSupplyPattern} _20pctTo30pctInLoss
+ * @property {RealizedSupplyPattern} _30pctTo40pctInLoss
+ * @property {RealizedSupplyPattern} _40pctTo50pctInLoss
+ * @property {RealizedSupplyPattern} _50pctTo60pctInLoss
+ * @property {RealizedSupplyPattern} _60pctTo70pctInLoss
+ * @property {RealizedSupplyPattern} _70pctTo80pctInLoss
+ * @property {RealizedSupplyPattern} _80pctTo90pctInLoss
+ * @property {RealizedSupplyPattern} _90pctTo100pctInLoss
  */
 
 /**
@@ -6206,7 +6206,6 @@ function createRawPattern2(client, acc) {
  * @property {RealizedSupplyPattern} _200pct
  * @property {RealizedSupplyPattern} _300pct
  * @property {RealizedSupplyPattern} _500pct
- * @property {RealizedSupplyPattern} _1000pct
  */
 
 /**
@@ -6220,7 +6219,6 @@ function createRawPattern2(client, acc) {
  * @property {RealizedSupplyPattern} _60pct
  * @property {RealizedSupplyPattern} _70pct
  * @property {RealizedSupplyPattern} _80pct
- * @property {RealizedSupplyPattern} _90pct
  */
 
 /**
@@ -6250,13 +6248,13 @@ function createRawPattern2(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Distribution_Cohorts_Address
- * @property {MetricsTree_Distribution_Cohorts_Address_GeAmount} geAmount
+ * @property {MetricsTree_Distribution_Cohorts_Address_OverAmount} overAmount
  * @property {MetricsTree_Distribution_Cohorts_Address_AmountRange} amountRange
- * @property {MetricsTree_Distribution_Cohorts_Address_LtAmount} ltAmount
+ * @property {MetricsTree_Distribution_Cohorts_Address_UnderAmount} underAmount
  */
 
 /**
- * @typedef {Object} MetricsTree_Distribution_Cohorts_Address_GeAmount
+ * @typedef {Object} MetricsTree_Distribution_Cohorts_Address_OverAmount
  * @property {AddrOutputsRealizedSupplyPattern} _1sat
  * @property {AddrOutputsRealizedSupplyPattern} _10sats
  * @property {AddrOutputsRealizedSupplyPattern} _100sats
@@ -6292,7 +6290,7 @@ function createRawPattern2(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Distribution_Cohorts_Address_LtAmount
+ * @typedef {Object} MetricsTree_Distribution_Cohorts_Address_UnderAmount
  * @property {AddrOutputsRealizedSupplyPattern} _10sats
  * @property {AddrOutputsRealizedSupplyPattern} _100sats
  * @property {AddrOutputsRealizedSupplyPattern} _1kSats
@@ -6847,7 +6845,7 @@ class BrkClient extends BrkClientBase {
     }
   });
 
-  MAX_AGE_NAMES = /** @type {const} */ ({
+  UNDER_AGE_NAMES = /** @type {const} */ ({
     "_1w": {
       "id": "under_1w_old",
       "short": "<1w",
@@ -6940,7 +6938,7 @@ class BrkClient extends BrkClientBase {
     }
   });
 
-  MIN_AGE_NAMES = /** @type {const} */ ({
+  OVER_AGE_NAMES = /** @type {const} */ ({
     "_1d": {
       "id": "over_1d_old",
       "short": "1d+",
@@ -7111,7 +7109,7 @@ class BrkClient extends BrkClientBase {
     }
   });
 
-  GE_AMOUNT_NAMES = /** @type {const} */ ({
+  OVER_AMOUNT_NAMES = /** @type {const} */ ({
     "_1sat": {
       "id": "over_1sat",
       "short": "1+ sats",
@@ -7179,7 +7177,7 @@ class BrkClient extends BrkClientBase {
     }
   });
 
-  LT_AMOUNT_NAMES = /** @type {const} */ ({
+  UNDER_AMOUNT_NAMES = /** @type {const} */ ({
     "_10sats": {
       "id": "under_10sats",
       "short": "<10 sats",
@@ -7943,7 +7941,7 @@ class BrkClient extends BrkClientBase {
               _8y: createCentsSatsUsdPattern(this, 'dca_cost_basis_8y'),
               _10y: createCentsSatsUsdPattern(this, 'dca_cost_basis_10y'),
             },
-            r#return: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_return'),
+            return: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_return'),
             cagr: create_10y2y3y4y5y6y8yPattern(this, 'dca_cagr'),
             lumpSumStack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'lump_sum_stack'),
             lumpSumReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_return'),
@@ -7977,7 +7975,7 @@ class BrkClient extends BrkClientBase {
               from2025: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2025'),
               from2026: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2026'),
             },
-            r#return: {
+            return: {
               from2015: createBpsPercentRatioPattern(this, 'dca_return_from_2015'),
               from2016: createBpsPercentRatioPattern(this, 'dca_return_from_2016'),
               from2017: createBpsPercentRatioPattern(this, 'dca_return_from_2017'),
@@ -8410,7 +8408,7 @@ class BrkClient extends BrkClientBase {
               _12yTo15y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_12y_to_15y_old'),
               from15y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_15y_old'),
             },
-            maxAge: {
+            underAge: {
               _1w: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_1w_old'),
               _1m: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_1m_old'),
               _2m: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_2m_old'),
@@ -8430,7 +8428,7 @@ class BrkClient extends BrkClientBase {
               _12y: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_12y_old'),
               _15y: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_15y_old'),
             },
-            minAge: {
+            overAge: {
               _1d: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_1d_old'),
               _1w: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_1w_old'),
               _1m: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_1m_old'),
@@ -8477,7 +8475,7 @@ class BrkClient extends BrkClientBase {
               _2025: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'class_2025'),
               _2026: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'class_2026'),
             },
-            geAmount: {
+            overAmount: {
               _1sat: createOutputsRealizedSupplyPattern(this, 'utxos_over_1sat'),
               _10sats: createOutputsRealizedSupplyPattern(this, 'utxos_over_10sats'),
               _100sats: createOutputsRealizedSupplyPattern(this, 'utxos_over_100sats'),
@@ -8509,7 +8507,7 @@ class BrkClient extends BrkClientBase {
               _10kBtcTo100kBtc: createOutputsRealizedSupplyPattern(this, 'utxos_above_10k_btc_under_100k_btc'),
               _100kBtcOrMore: createOutputsRealizedSupplyPattern(this, 'utxos_above_100k_btc'),
             },
-            ltAmount: {
+            underAmount: {
               _10sats: createOutputsRealizedSupplyPattern(this, 'utxos_under_10sats'),
               _100sats: createOutputsRealizedSupplyPattern(this, 'utxos_under_100sats'),
               _1kSats: createOutputsRealizedSupplyPattern(this, 'utxos_under_1k_sats'),
@@ -8539,60 +8537,58 @@ class BrkClient extends BrkClientBase {
             },
             profitability: {
               range: {
-                profitOver1000: createRealizedSupplyPattern(this, 'utxos_over_1000pct_up'),
-                profit500To1000: createRealizedSupplyPattern(this, 'utxos_500pct_to_1000pct_up'),
-                profit300To500: createRealizedSupplyPattern(this, 'utxos_300pct_to_500pct_up'),
-                profit200To300: createRealizedSupplyPattern(this, 'utxos_200pct_to_300pct_up'),
-                profit100To200: createRealizedSupplyPattern(this, 'utxos_100pct_to_200pct_up'),
-                profit90To100: createRealizedSupplyPattern(this, 'utxos_90pct_to_100pct_up'),
-                profit80To90: createRealizedSupplyPattern(this, 'utxos_80pct_to_90pct_up'),
-                profit70To80: createRealizedSupplyPattern(this, 'utxos_70pct_to_80pct_up'),
-                profit60To70: createRealizedSupplyPattern(this, 'utxos_60pct_to_70pct_up'),
-                profit50To60: createRealizedSupplyPattern(this, 'utxos_50pct_to_60pct_up'),
-                profit40To50: createRealizedSupplyPattern(this, 'utxos_40pct_to_50pct_up'),
-                profit30To40: createRealizedSupplyPattern(this, 'utxos_30pct_to_40pct_up'),
-                profit20To30: createRealizedSupplyPattern(this, 'utxos_20pct_to_30pct_up'),
-                profit10To20: createRealizedSupplyPattern(this, 'utxos_10pct_to_20pct_up'),
-                profit0To10: createRealizedSupplyPattern(this, 'utxos_0pct_to_10pct_up'),
-                loss0To10: createRealizedSupplyPattern(this, 'utxos_0pct_to_10pct_down'),
-                loss10To20: createRealizedSupplyPattern(this, 'utxos_10pct_to_20pct_down'),
-                loss20To30: createRealizedSupplyPattern(this, 'utxos_20pct_to_30pct_down'),
-                loss30To40: createRealizedSupplyPattern(this, 'utxos_30pct_to_40pct_down'),
-                loss40To50: createRealizedSupplyPattern(this, 'utxos_40pct_to_50pct_down'),
-                loss50To60: createRealizedSupplyPattern(this, 'utxos_50pct_to_60pct_down'),
-                loss60To70: createRealizedSupplyPattern(this, 'utxos_60pct_to_70pct_down'),
-                loss70To80: createRealizedSupplyPattern(this, 'utxos_70pct_to_80pct_down'),
-                loss80To90: createRealizedSupplyPattern(this, 'utxos_80pct_to_90pct_down'),
-                loss90To100: createRealizedSupplyPattern(this, 'utxos_90pct_to_100pct_down'),
+                over1000pctInProfit: createRealizedSupplyPattern(this, 'utxos_over_1000pct_in_profit'),
+                _500pctTo1000pctInProfit: createRealizedSupplyPattern(this, 'utxos_500pct_to_1000pct_in_profit'),
+                _300pctTo500pctInProfit: createRealizedSupplyPattern(this, 'utxos_300pct_to_500pct_in_profit'),
+                _200pctTo300pctInProfit: createRealizedSupplyPattern(this, 'utxos_200pct_to_300pct_in_profit'),
+                _100pctTo200pctInProfit: createRealizedSupplyPattern(this, 'utxos_100pct_to_200pct_in_profit'),
+                _90pctTo100pctInProfit: createRealizedSupplyPattern(this, 'utxos_90pct_to_100pct_in_profit'),
+                _80pctTo90pctInProfit: createRealizedSupplyPattern(this, 'utxos_80pct_to_90pct_in_profit'),
+                _70pctTo80pctInProfit: createRealizedSupplyPattern(this, 'utxos_70pct_to_80pct_in_profit'),
+                _60pctTo70pctInProfit: createRealizedSupplyPattern(this, 'utxos_60pct_to_70pct_in_profit'),
+                _50pctTo60pctInProfit: createRealizedSupplyPattern(this, 'utxos_50pct_to_60pct_in_profit'),
+                _40pctTo50pctInProfit: createRealizedSupplyPattern(this, 'utxos_40pct_to_50pct_in_profit'),
+                _30pctTo40pctInProfit: createRealizedSupplyPattern(this, 'utxos_30pct_to_40pct_in_profit'),
+                _20pctTo30pctInProfit: createRealizedSupplyPattern(this, 'utxos_20pct_to_30pct_in_profit'),
+                _10pctTo20pctInProfit: createRealizedSupplyPattern(this, 'utxos_10pct_to_20pct_in_profit'),
+                _0pctTo10pctInProfit: createRealizedSupplyPattern(this, 'utxos_0pct_to_10pct_in_profit'),
+                _0pctTo10pctInLoss: createRealizedSupplyPattern(this, 'utxos_0pct_to_10pct_in_loss'),
+                _10pctTo20pctInLoss: createRealizedSupplyPattern(this, 'utxos_10pct_to_20pct_in_loss'),
+                _20pctTo30pctInLoss: createRealizedSupplyPattern(this, 'utxos_20pct_to_30pct_in_loss'),
+                _30pctTo40pctInLoss: createRealizedSupplyPattern(this, 'utxos_30pct_to_40pct_in_loss'),
+                _40pctTo50pctInLoss: createRealizedSupplyPattern(this, 'utxos_40pct_to_50pct_in_loss'),
+                _50pctTo60pctInLoss: createRealizedSupplyPattern(this, 'utxos_50pct_to_60pct_in_loss'),
+                _60pctTo70pctInLoss: createRealizedSupplyPattern(this, 'utxos_60pct_to_70pct_in_loss'),
+                _70pctTo80pctInLoss: createRealizedSupplyPattern(this, 'utxos_70pct_to_80pct_in_loss'),
+                _80pctTo90pctInLoss: createRealizedSupplyPattern(this, 'utxos_80pct_to_90pct_in_loss'),
+                _90pctTo100pctInLoss: createRealizedSupplyPattern(this, 'utxos_90pct_to_100pct_in_loss'),
               },
               profit: {
-                breakeven: createRealizedSupplyPattern(this, 'profit_ge_breakeven'),
-                _10pct: createRealizedSupplyPattern(this, 'profit_ge_10pct'),
-                _20pct: createRealizedSupplyPattern(this, 'profit_ge_20pct'),
-                _30pct: createRealizedSupplyPattern(this, 'profit_ge_30pct'),
-                _40pct: createRealizedSupplyPattern(this, 'profit_ge_40pct'),
-                _50pct: createRealizedSupplyPattern(this, 'profit_ge_50pct'),
-                _60pct: createRealizedSupplyPattern(this, 'profit_ge_60pct'),
-                _70pct: createRealizedSupplyPattern(this, 'profit_ge_70pct'),
-                _80pct: createRealizedSupplyPattern(this, 'profit_ge_80pct'),
-                _90pct: createRealizedSupplyPattern(this, 'profit_ge_90pct'),
-                _100pct: createRealizedSupplyPattern(this, 'profit_ge_100pct'),
-                _200pct: createRealizedSupplyPattern(this, 'profit_ge_200pct'),
-                _300pct: createRealizedSupplyPattern(this, 'profit_ge_300pct'),
-                _500pct: createRealizedSupplyPattern(this, 'profit_ge_500pct'),
-                _1000pct: createRealizedSupplyPattern(this, 'profit_ge_1000pct'),
+                breakeven: createRealizedSupplyPattern(this, 'utxos_in_profit'),
+                _10pct: createRealizedSupplyPattern(this, 'utxos_over_10pct_in_profit'),
+                _20pct: createRealizedSupplyPattern(this, 'utxos_over_20pct_in_profit'),
+                _30pct: createRealizedSupplyPattern(this, 'utxos_over_30pct_in_profit'),
+                _40pct: createRealizedSupplyPattern(this, 'utxos_over_40pct_in_profit'),
+                _50pct: createRealizedSupplyPattern(this, 'utxos_over_50pct_in_profit'),
+                _60pct: createRealizedSupplyPattern(this, 'utxos_over_60pct_in_profit'),
+                _70pct: createRealizedSupplyPattern(this, 'utxos_over_70pct_in_profit'),
+                _80pct: createRealizedSupplyPattern(this, 'utxos_over_80pct_in_profit'),
+                _90pct: createRealizedSupplyPattern(this, 'utxos_over_90pct_in_profit'),
+                _100pct: createRealizedSupplyPattern(this, 'utxos_over_100pct_in_profit'),
+                _200pct: createRealizedSupplyPattern(this, 'utxos_over_200pct_in_profit'),
+                _300pct: createRealizedSupplyPattern(this, 'utxos_over_300pct_in_profit'),
+                _500pct: createRealizedSupplyPattern(this, 'utxos_over_500pct_in_profit'),
               },
               loss: {
-                breakeven: createRealizedSupplyPattern(this, 'loss_ge_breakeven'),
-                _10pct: createRealizedSupplyPattern(this, 'loss_ge_10pct'),
-                _20pct: createRealizedSupplyPattern(this, 'loss_ge_20pct'),
-                _30pct: createRealizedSupplyPattern(this, 'loss_ge_30pct'),
-                _40pct: createRealizedSupplyPattern(this, 'loss_ge_40pct'),
-                _50pct: createRealizedSupplyPattern(this, 'loss_ge_50pct'),
-                _60pct: createRealizedSupplyPattern(this, 'loss_ge_60pct'),
-                _70pct: createRealizedSupplyPattern(this, 'loss_ge_70pct'),
-                _80pct: createRealizedSupplyPattern(this, 'loss_ge_80pct'),
-                _90pct: createRealizedSupplyPattern(this, 'loss_ge_90pct'),
+                breakeven: createRealizedSupplyPattern(this, 'utxos_in_loss'),
+                _10pct: createRealizedSupplyPattern(this, 'utxos_over_10pct_in_loss'),
+                _20pct: createRealizedSupplyPattern(this, 'utxos_over_20pct_in_loss'),
+                _30pct: createRealizedSupplyPattern(this, 'utxos_over_30pct_in_loss'),
+                _40pct: createRealizedSupplyPattern(this, 'utxos_over_40pct_in_loss'),
+                _50pct: createRealizedSupplyPattern(this, 'utxos_over_50pct_in_loss'),
+                _60pct: createRealizedSupplyPattern(this, 'utxos_over_60pct_in_loss'),
+                _70pct: createRealizedSupplyPattern(this, 'utxos_over_70pct_in_loss'),
+                _80pct: createRealizedSupplyPattern(this, 'utxos_over_80pct_in_loss'),
               },
             },
             matured: {
@@ -8620,7 +8616,7 @@ class BrkClient extends BrkClientBase {
             },
           },
           address: {
-            geAmount: {
+            overAmount: {
               _1sat: createAddrOutputsRealizedSupplyPattern(this, 'addrs_over_1sat'),
               _10sats: createAddrOutputsRealizedSupplyPattern(this, 'addrs_over_10sats'),
               _100sats: createAddrOutputsRealizedSupplyPattern(this, 'addrs_over_100sats'),
@@ -8652,7 +8648,7 @@ class BrkClient extends BrkClientBase {
               _10kBtcTo100kBtc: createAddrOutputsRealizedSupplyPattern(this, 'addrs_above_10k_btc_under_100k_btc'),
               _100kBtcOrMore: createAddrOutputsRealizedSupplyPattern(this, 'addrs_above_100k_btc'),
             },
-            ltAmount: {
+            underAmount: {
               _10sats: createAddrOutputsRealizedSupplyPattern(this, 'addrs_under_10sats'),
               _100sats: createAddrOutputsRealizedSupplyPattern(this, 'addrs_under_100sats'),
               _1kSats: createAddrOutputsRealizedSupplyPattern(this, 'addrs_under_1k_sats'),
@@ -9082,6 +9078,36 @@ class BrkClient extends BrkClientBase {
    */
   async getMetricLatest(metric, index) {
     return this.getJson(`/api/metric/${metric}/${index}/latest`);
+  }
+
+  /**
+   * Get metric data length
+   *
+   * Returns the total number of data points for a metric at the given index.
+   *
+   * Endpoint: `GET /api/metric/{metric}/{index}/len`
+   *
+   * @param {Metric} metric - Metric name
+   * @param {Index} index - Aggregation index
+   * @returns {Promise<number>}
+   */
+  async getMetricLen(metric, index) {
+    return this.getJson(`/api/metric/${metric}/${index}/len`);
+  }
+
+  /**
+   * Get metric version
+   *
+   * Returns the current version of a metric. Changes when the metric data is updated.
+   *
+   * Endpoint: `GET /api/metric/{metric}/{index}/version`
+   *
+   * @param {Metric} metric - Metric name
+   * @param {Index} index - Aggregation index
+   * @returns {Promise<Version>}
+   */
+  async getMetricVersion(metric, index) {
+    return this.getJson(`/api/metric/${metric}/${index}/version`);
   }
 
   /**

@@ -8,8 +8,8 @@ use super::{
     HOURS_10Y, HOURS_12Y, TimeFilter,
 };
 
-/// Min age thresholds in hours
-pub const MIN_AGE_HOURS: ByMinAge<usize> = ByMinAge {
+/// Over-age thresholds in hours
+pub const OVER_AGE_HOURS: OverAge<usize> = OverAge {
     _1d: HOURS_1D,
     _1w: HOURS_1W,
     _1m: HOURS_1M,
@@ -30,30 +30,30 @@ pub const MIN_AGE_HOURS: ByMinAge<usize> = ByMinAge {
     _12y: HOURS_12Y,
 };
 
-/// Min age filters (GreaterOrEqual threshold in hours)
-pub const MIN_AGE_FILTERS: ByMinAge<Filter> = ByMinAge {
-    _1d: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._1d)),
-    _1w: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._1w)),
-    _1m: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._1m)),
-    _2m: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._2m)),
-    _3m: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._3m)),
-    _4m: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._4m)),
-    _5m: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._5m)),
-    _6m: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._6m)),
-    _1y: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._1y)),
-    _2y: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._2y)),
-    _3y: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._3y)),
-    _4y: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._4y)),
-    _5y: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._5y)),
-    _6y: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._6y)),
-    _7y: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._7y)),
-    _8y: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._8y)),
-    _10y: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._10y)),
-    _12y: Filter::Time(TimeFilter::GreaterOrEqual(MIN_AGE_HOURS._12y)),
+/// Over-age filters (GreaterOrEqual threshold in hours)
+pub const OVER_AGE_FILTERS: OverAge<Filter> = OverAge {
+    _1d: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._1d)),
+    _1w: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._1w)),
+    _1m: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._1m)),
+    _2m: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._2m)),
+    _3m: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._3m)),
+    _4m: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._4m)),
+    _5m: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._5m)),
+    _6m: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._6m)),
+    _1y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._1y)),
+    _2y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._2y)),
+    _3y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._3y)),
+    _4y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._4y)),
+    _5y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._5y)),
+    _6y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._6y)),
+    _7y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._7y)),
+    _8y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._8y)),
+    _10y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._10y)),
+    _12y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._12y)),
 };
 
-/// Min age names
-pub const MIN_AGE_NAMES: ByMinAge<CohortName> = ByMinAge {
+/// Over-age names
+pub const OVER_AGE_NAMES: OverAge<CohortName> = OverAge {
     _1d: CohortName::new("over_1d_old", "1d+", "Over 1 Day Old"),
     _1w: CohortName::new("over_1w_old", "1w+", "Over 1 Week Old"),
     _1m: CohortName::new("over_1m_old", "1m+", "Over 1 Month Old"),
@@ -75,7 +75,7 @@ pub const MIN_AGE_NAMES: ByMinAge<CohortName> = ByMinAge {
 };
 
 #[derive(Default, Clone, Traversable, Serialize)]
-pub struct ByMinAge<T> {
+pub struct OverAge<T> {
     pub _1d: T,
     pub _1w: T,
     pub _1m: T,
@@ -96,19 +96,19 @@ pub struct ByMinAge<T> {
     pub _12y: T,
 }
 
-impl ByMinAge<CohortName> {
+impl OverAge<CohortName> {
     pub const fn names() -> &'static Self {
-        &MIN_AGE_NAMES
+        &OVER_AGE_NAMES
     }
 }
 
-impl<T> ByMinAge<T> {
+impl<T> OverAge<T> {
     pub fn new<F>(mut create: F) -> Self
     where
         F: FnMut(Filter, &'static str) -> T,
     {
-        let f = MIN_AGE_FILTERS;
-        let n = MIN_AGE_NAMES;
+        let f = OVER_AGE_FILTERS;
+        let n = OVER_AGE_NAMES;
         Self {
             _1d: create(f._1d.clone(), n._1d.id),
             _1w: create(f._1w.clone(), n._1w.id),
@@ -135,8 +135,8 @@ impl<T> ByMinAge<T> {
     where
         F: FnMut(Filter, &'static str) -> Result<T, E>,
     {
-        let f = MIN_AGE_FILTERS;
-        let n = MIN_AGE_NAMES;
+        let f = OVER_AGE_FILTERS;
+        let n = OVER_AGE_NAMES;
         Ok(Self {
             _1d: create(f._1d.clone(), n._1d.id)?,
             _1w: create(f._1w.clone(), n._1w.id)?,

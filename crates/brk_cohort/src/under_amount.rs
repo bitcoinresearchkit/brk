@@ -5,8 +5,8 @@ use serde::Serialize;
 
 use super::{AmountFilter, CohortName, Filter};
 
-/// Lower-than amount thresholds
-pub const LT_AMOUNT_THRESHOLDS: ByLowerThanAmount<Sats> = ByLowerThanAmount {
+/// Under-amount thresholds
+pub const UNDER_AMOUNT_THRESHOLDS: UnderAmount<Sats> = UnderAmount {
     _10sats: Sats::_10,
     _100sats: Sats::_100,
     _1k_sats: Sats::_1K,
@@ -22,8 +22,8 @@ pub const LT_AMOUNT_THRESHOLDS: ByLowerThanAmount<Sats> = ByLowerThanAmount {
     _100k_btc: Sats::_100K_BTC,
 };
 
-/// Lower-than amount names
-pub const LT_AMOUNT_NAMES: ByLowerThanAmount<CohortName> = ByLowerThanAmount {
+/// Under-amount names
+pub const UNDER_AMOUNT_NAMES: UnderAmount<CohortName> = UnderAmount {
     _10sats: CohortName::new("under_10sats", "<10 sats", "Under 10 Sats"),
     _100sats: CohortName::new("under_100sats", "<100 sats", "Under 100 Sats"),
     _1k_sats: CohortName::new("under_1k_sats", "<1k sats", "Under 1K Sats"),
@@ -39,25 +39,25 @@ pub const LT_AMOUNT_NAMES: ByLowerThanAmount<CohortName> = ByLowerThanAmount {
     _100k_btc: CohortName::new("under_100k_btc", "<100k BTC", "Under 100K BTC"),
 };
 
-/// Lower-than amount filters
-pub const LT_AMOUNT_FILTERS: ByLowerThanAmount<Filter> = ByLowerThanAmount {
-    _10sats: Filter::Amount(AmountFilter::LowerThan(LT_AMOUNT_THRESHOLDS._10sats)),
-    _100sats: Filter::Amount(AmountFilter::LowerThan(LT_AMOUNT_THRESHOLDS._100sats)),
-    _1k_sats: Filter::Amount(AmountFilter::LowerThan(LT_AMOUNT_THRESHOLDS._1k_sats)),
-    _10k_sats: Filter::Amount(AmountFilter::LowerThan(LT_AMOUNT_THRESHOLDS._10k_sats)),
-    _100k_sats: Filter::Amount(AmountFilter::LowerThan(LT_AMOUNT_THRESHOLDS._100k_sats)),
-    _1m_sats: Filter::Amount(AmountFilter::LowerThan(LT_AMOUNT_THRESHOLDS._1m_sats)),
-    _10m_sats: Filter::Amount(AmountFilter::LowerThan(LT_AMOUNT_THRESHOLDS._10m_sats)),
-    _1btc: Filter::Amount(AmountFilter::LowerThan(LT_AMOUNT_THRESHOLDS._1btc)),
-    _10btc: Filter::Amount(AmountFilter::LowerThan(LT_AMOUNT_THRESHOLDS._10btc)),
-    _100btc: Filter::Amount(AmountFilter::LowerThan(LT_AMOUNT_THRESHOLDS._100btc)),
-    _1k_btc: Filter::Amount(AmountFilter::LowerThan(LT_AMOUNT_THRESHOLDS._1k_btc)),
-    _10k_btc: Filter::Amount(AmountFilter::LowerThan(LT_AMOUNT_THRESHOLDS._10k_btc)),
-    _100k_btc: Filter::Amount(AmountFilter::LowerThan(LT_AMOUNT_THRESHOLDS._100k_btc)),
+/// Under-amount filters
+pub const UNDER_AMOUNT_FILTERS: UnderAmount<Filter> = UnderAmount {
+    _10sats: Filter::Amount(AmountFilter::LowerThan(UNDER_AMOUNT_THRESHOLDS._10sats)),
+    _100sats: Filter::Amount(AmountFilter::LowerThan(UNDER_AMOUNT_THRESHOLDS._100sats)),
+    _1k_sats: Filter::Amount(AmountFilter::LowerThan(UNDER_AMOUNT_THRESHOLDS._1k_sats)),
+    _10k_sats: Filter::Amount(AmountFilter::LowerThan(UNDER_AMOUNT_THRESHOLDS._10k_sats)),
+    _100k_sats: Filter::Amount(AmountFilter::LowerThan(UNDER_AMOUNT_THRESHOLDS._100k_sats)),
+    _1m_sats: Filter::Amount(AmountFilter::LowerThan(UNDER_AMOUNT_THRESHOLDS._1m_sats)),
+    _10m_sats: Filter::Amount(AmountFilter::LowerThan(UNDER_AMOUNT_THRESHOLDS._10m_sats)),
+    _1btc: Filter::Amount(AmountFilter::LowerThan(UNDER_AMOUNT_THRESHOLDS._1btc)),
+    _10btc: Filter::Amount(AmountFilter::LowerThan(UNDER_AMOUNT_THRESHOLDS._10btc)),
+    _100btc: Filter::Amount(AmountFilter::LowerThan(UNDER_AMOUNT_THRESHOLDS._100btc)),
+    _1k_btc: Filter::Amount(AmountFilter::LowerThan(UNDER_AMOUNT_THRESHOLDS._1k_btc)),
+    _10k_btc: Filter::Amount(AmountFilter::LowerThan(UNDER_AMOUNT_THRESHOLDS._10k_btc)),
+    _100k_btc: Filter::Amount(AmountFilter::LowerThan(UNDER_AMOUNT_THRESHOLDS._100k_btc)),
 };
 
 #[derive(Default, Clone, Traversable, Serialize)]
-pub struct ByLowerThanAmount<T> {
+pub struct UnderAmount<T> {
     pub _10sats: T,
     pub _100sats: T,
     pub _1k_sats: T,
@@ -73,19 +73,19 @@ pub struct ByLowerThanAmount<T> {
     pub _100k_btc: T,
 }
 
-impl ByLowerThanAmount<CohortName> {
+impl UnderAmount<CohortName> {
     pub const fn names() -> &'static Self {
-        &LT_AMOUNT_NAMES
+        &UNDER_AMOUNT_NAMES
     }
 }
 
-impl<T> ByLowerThanAmount<T> {
+impl<T> UnderAmount<T> {
     pub fn new<F>(mut create: F) -> Self
     where
         F: FnMut(Filter, &'static str) -> T,
     {
-        let f = LT_AMOUNT_FILTERS;
-        let n = LT_AMOUNT_NAMES;
+        let f = UNDER_AMOUNT_FILTERS;
+        let n = UNDER_AMOUNT_NAMES;
         Self {
             _10sats: create(f._10sats.clone(), n._10sats.id),
             _100sats: create(f._100sats.clone(), n._100sats.id),
@@ -107,8 +107,8 @@ impl<T> ByLowerThanAmount<T> {
     where
         F: FnMut(Filter, &'static str) -> Result<T, E>,
     {
-        let f = LT_AMOUNT_FILTERS;
-        let n = LT_AMOUNT_NAMES;
+        let f = UNDER_AMOUNT_FILTERS;
+        let n = UNDER_AMOUNT_NAMES;
         Ok(Self {
             _10sats: create(f._10sats.clone(), n._10sats.id)?,
             _100sats: create(f._100sats.clone(), n._100sats.id)?,

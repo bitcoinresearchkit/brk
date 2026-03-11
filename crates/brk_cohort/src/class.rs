@@ -6,7 +6,7 @@ use serde::Serialize;
 use super::{CohortName, Filter};
 
 /// Class values
-pub const CLASS_VALUES: ByClass<Year> = ByClass {
+pub const CLASS_VALUES: Class<Year> = Class {
     _2009: Year::new(2009),
     _2010: Year::new(2010),
     _2011: Year::new(2011),
@@ -28,7 +28,7 @@ pub const CLASS_VALUES: ByClass<Year> = ByClass {
 };
 
 /// Class filters
-pub const CLASS_FILTERS: ByClass<Filter> = ByClass {
+pub const CLASS_FILTERS: Class<Filter> = Class {
     _2009: Filter::Class(CLASS_VALUES._2009),
     _2010: Filter::Class(CLASS_VALUES._2010),
     _2011: Filter::Class(CLASS_VALUES._2011),
@@ -50,7 +50,7 @@ pub const CLASS_FILTERS: ByClass<Filter> = ByClass {
 };
 
 /// Class names
-pub const CLASS_NAMES: ByClass<CohortName> = ByClass {
+pub const CLASS_NAMES: Class<CohortName> = Class {
     _2009: CohortName::new("class_2009", "2009", "Class 2009"),
     _2010: CohortName::new("class_2010", "2010", "Class 2010"),
     _2011: CohortName::new("class_2011", "2011", "Class 2011"),
@@ -72,7 +72,7 @@ pub const CLASS_NAMES: ByClass<CohortName> = ByClass {
 };
 
 #[derive(Default, Clone, Traversable, Serialize)]
-pub struct ByClass<T> {
+pub struct Class<T> {
     pub _2009: T,
     pub _2010: T,
     pub _2011: T,
@@ -93,13 +93,13 @@ pub struct ByClass<T> {
     pub _2026: T,
 }
 
-impl ByClass<CohortName> {
+impl Class<CohortName> {
     pub const fn names() -> &'static Self {
         &CLASS_NAMES
     }
 }
 
-impl<T> ByClass<T> {
+impl<T> Class<T> {
     pub fn new<F>(mut create: F) -> Self
     where
         F: FnMut(Filter, &'static str) -> T,

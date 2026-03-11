@@ -2863,7 +2863,7 @@ class OutputsRealizedSupplyUnrealizedPattern:
         self.outputs: UnspentPattern = UnspentPattern(client, _m(acc, 'utxo_count'))
         self.realized: CapLossMvrvNuplPriceProfitSoprPattern = CapLossMvrvNuplPriceProfitSoprPattern(client, acc)
         self.supply: HalvedInTotalPattern = HalvedInTotalPattern(client, _m(acc, 'supply'))
-        self.unrealized: LossProfitPattern2 = LossProfitPattern2(client, _m(acc, 'unrealized'))
+        self.unrealized: LossProfitPattern = LossProfitPattern(client, _m(acc, 'unrealized'))
 
 class _1m1w1y24hPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
@@ -3158,7 +3158,7 @@ class InPattern:
         self.in_loss: RawPattern2[CentsSats] = RawPattern2(client, _m(acc, 'loss_raw'))
         self.in_profit: RawPattern2[CentsSats] = RawPattern2(client, _m(acc, 'profit_raw'))
 
-class LossProfitPattern2:
+class LossProfitPattern:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
@@ -4450,7 +4450,7 @@ class MetricsTree_Market_Dca_Class_CostBasis:
         self.from_2025: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2025')
         self.from_2026: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2026')
 
-class MetricsTree_Market_Dca_Class_R#return:
+class MetricsTree_Market_Dca_Class_Return:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -4473,7 +4473,7 @@ class MetricsTree_Market_Dca_Class:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.stack: MetricsTree_Market_Dca_Class_Stack = MetricsTree_Market_Dca_Class_Stack(client)
         self.cost_basis: MetricsTree_Market_Dca_Class_CostBasis = MetricsTree_Market_Dca_Class_CostBasis(client)
-        self.r#return: MetricsTree_Market_Dca_Class_R#return = MetricsTree_Market_Dca_Class_R#return(client)
+        self.r#return: MetricsTree_Market_Dca_Class_Return = MetricsTree_Market_Dca_Class_Return(client)
 
 class MetricsTree_Market_Dca:
     """Metrics tree node."""
@@ -5044,7 +5044,7 @@ class MetricsTree_Distribution_Cohorts_Utxo_AgeRange:
         self._12y_to_15y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_12y_to_15y_old')
         self.from_15y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_15y_old')
 
-class MetricsTree_Distribution_Cohorts_Utxo_MaxAge:
+class MetricsTree_Distribution_Cohorts_Utxo_UnderAge:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -5067,7 +5067,7 @@ class MetricsTree_Distribution_Cohorts_Utxo_MaxAge:
         self._12y: ActivityOutputsRealizedSupplyUnrealizedPattern2 = ActivityOutputsRealizedSupplyUnrealizedPattern2(client, 'utxos_under_12y_old')
         self._15y: ActivityOutputsRealizedSupplyUnrealizedPattern2 = ActivityOutputsRealizedSupplyUnrealizedPattern2(client, 'utxos_under_15y_old')
 
-class MetricsTree_Distribution_Cohorts_Utxo_MinAge:
+class MetricsTree_Distribution_Cohorts_Utxo_OverAge:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -5123,7 +5123,7 @@ class MetricsTree_Distribution_Cohorts_Utxo_Class:
         self._2025: ActivityOutputsRealizedSupplyUnrealizedPattern2 = ActivityOutputsRealizedSupplyUnrealizedPattern2(client, 'class_2025')
         self._2026: ActivityOutputsRealizedSupplyUnrealizedPattern2 = ActivityOutputsRealizedSupplyUnrealizedPattern2(client, 'class_2026')
 
-class MetricsTree_Distribution_Cohorts_Utxo_GeAmount:
+class MetricsTree_Distribution_Cohorts_Utxo_OverAmount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -5161,7 +5161,7 @@ class MetricsTree_Distribution_Cohorts_Utxo_AmountRange:
         self._10k_btc_to_100k_btc: OutputsRealizedSupplyPattern = OutputsRealizedSupplyPattern(client, 'utxos_above_10k_btc_under_100k_btc')
         self._100k_btc_or_more: OutputsRealizedSupplyPattern = OutputsRealizedSupplyPattern(client, 'utxos_above_100k_btc')
 
-class MetricsTree_Distribution_Cohorts_Utxo_LtAmount:
+class MetricsTree_Distribution_Cohorts_Utxo_UnderAmount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -5199,66 +5199,64 @@ class MetricsTree_Distribution_Cohorts_Utxo_Profitability_Range:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.profit_over_1000: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_1000pct_up')
-        self.profit_500_to_1000: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_500pct_to_1000pct_up')
-        self.profit_300_to_500: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_300pct_to_500pct_up')
-        self.profit_200_to_300: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_200pct_to_300pct_up')
-        self.profit_100_to_200: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_100pct_to_200pct_up')
-        self.profit_90_to_100: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_90pct_to_100pct_up')
-        self.profit_80_to_90: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_80pct_to_90pct_up')
-        self.profit_70_to_80: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_70pct_to_80pct_up')
-        self.profit_60_to_70: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_60pct_to_70pct_up')
-        self.profit_50_to_60: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_50pct_to_60pct_up')
-        self.profit_40_to_50: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_40pct_to_50pct_up')
-        self.profit_30_to_40: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_30pct_to_40pct_up')
-        self.profit_20_to_30: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_20pct_to_30pct_up')
-        self.profit_10_to_20: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_10pct_to_20pct_up')
-        self.profit_0_to_10: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_0pct_to_10pct_up')
-        self.loss_0_to_10: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_0pct_to_10pct_down')
-        self.loss_10_to_20: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_10pct_to_20pct_down')
-        self.loss_20_to_30: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_20pct_to_30pct_down')
-        self.loss_30_to_40: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_30pct_to_40pct_down')
-        self.loss_40_to_50: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_40pct_to_50pct_down')
-        self.loss_50_to_60: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_50pct_to_60pct_down')
-        self.loss_60_to_70: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_60pct_to_70pct_down')
-        self.loss_70_to_80: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_70pct_to_80pct_down')
-        self.loss_80_to_90: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_80pct_to_90pct_down')
-        self.loss_90_to_100: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_90pct_to_100pct_down')
+        self.over_1000pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_1000pct_in_profit')
+        self._500pct_to_1000pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_500pct_to_1000pct_in_profit')
+        self._300pct_to_500pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_300pct_to_500pct_in_profit')
+        self._200pct_to_300pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_200pct_to_300pct_in_profit')
+        self._100pct_to_200pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_100pct_to_200pct_in_profit')
+        self._90pct_to_100pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_90pct_to_100pct_in_profit')
+        self._80pct_to_90pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_80pct_to_90pct_in_profit')
+        self._70pct_to_80pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_70pct_to_80pct_in_profit')
+        self._60pct_to_70pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_60pct_to_70pct_in_profit')
+        self._50pct_to_60pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_50pct_to_60pct_in_profit')
+        self._40pct_to_50pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_40pct_to_50pct_in_profit')
+        self._30pct_to_40pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_30pct_to_40pct_in_profit')
+        self._20pct_to_30pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_20pct_to_30pct_in_profit')
+        self._10pct_to_20pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_10pct_to_20pct_in_profit')
+        self._0pct_to_10pct_in_profit: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_0pct_to_10pct_in_profit')
+        self._0pct_to_10pct_in_loss: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_0pct_to_10pct_in_loss')
+        self._10pct_to_20pct_in_loss: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_10pct_to_20pct_in_loss')
+        self._20pct_to_30pct_in_loss: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_20pct_to_30pct_in_loss')
+        self._30pct_to_40pct_in_loss: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_30pct_to_40pct_in_loss')
+        self._40pct_to_50pct_in_loss: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_40pct_to_50pct_in_loss')
+        self._50pct_to_60pct_in_loss: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_50pct_to_60pct_in_loss')
+        self._60pct_to_70pct_in_loss: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_60pct_to_70pct_in_loss')
+        self._70pct_to_80pct_in_loss: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_70pct_to_80pct_in_loss')
+        self._80pct_to_90pct_in_loss: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_80pct_to_90pct_in_loss')
+        self._90pct_to_100pct_in_loss: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_90pct_to_100pct_in_loss')
 
 class MetricsTree_Distribution_Cohorts_Utxo_Profitability_Profit:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.breakeven: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_breakeven')
-        self._10pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_10pct')
-        self._20pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_20pct')
-        self._30pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_30pct')
-        self._40pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_40pct')
-        self._50pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_50pct')
-        self._60pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_60pct')
-        self._70pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_70pct')
-        self._80pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_80pct')
-        self._90pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_90pct')
-        self._100pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_100pct')
-        self._200pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_200pct')
-        self._300pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_300pct')
-        self._500pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_500pct')
-        self._1000pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'profit_ge_1000pct')
+        self.breakeven: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_in_profit')
+        self._10pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_10pct_in_profit')
+        self._20pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_20pct_in_profit')
+        self._30pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_30pct_in_profit')
+        self._40pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_40pct_in_profit')
+        self._50pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_50pct_in_profit')
+        self._60pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_60pct_in_profit')
+        self._70pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_70pct_in_profit')
+        self._80pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_80pct_in_profit')
+        self._90pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_90pct_in_profit')
+        self._100pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_100pct_in_profit')
+        self._200pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_200pct_in_profit')
+        self._300pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_300pct_in_profit')
+        self._500pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_500pct_in_profit')
 
 class MetricsTree_Distribution_Cohorts_Utxo_Profitability_Loss:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.breakeven: RealizedSupplyPattern = RealizedSupplyPattern(client, 'loss_ge_breakeven')
-        self._10pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'loss_ge_10pct')
-        self._20pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'loss_ge_20pct')
-        self._30pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'loss_ge_30pct')
-        self._40pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'loss_ge_40pct')
-        self._50pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'loss_ge_50pct')
-        self._60pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'loss_ge_60pct')
-        self._70pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'loss_ge_70pct')
-        self._80pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'loss_ge_80pct')
-        self._90pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'loss_ge_90pct')
+        self.breakeven: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_in_loss')
+        self._10pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_10pct_in_loss')
+        self._20pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_20pct_in_loss')
+        self._30pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_30pct_in_loss')
+        self._40pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_40pct_in_loss')
+        self._50pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_50pct_in_loss')
+        self._60pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_60pct_in_loss')
+        self._70pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_70pct_in_loss')
+        self._80pct: RealizedSupplyPattern = RealizedSupplyPattern(client, 'utxos_over_80pct_in_loss')
 
 class MetricsTree_Distribution_Cohorts_Utxo_Profitability:
     """Metrics tree node."""
@@ -5302,18 +5300,18 @@ class MetricsTree_Distribution_Cohorts_Utxo:
         self.sth: MetricsTree_Distribution_Cohorts_Utxo_Sth = MetricsTree_Distribution_Cohorts_Utxo_Sth(client)
         self.lth: MetricsTree_Distribution_Cohorts_Utxo_Lth = MetricsTree_Distribution_Cohorts_Utxo_Lth(client)
         self.age_range: MetricsTree_Distribution_Cohorts_Utxo_AgeRange = MetricsTree_Distribution_Cohorts_Utxo_AgeRange(client)
-        self.max_age: MetricsTree_Distribution_Cohorts_Utxo_MaxAge = MetricsTree_Distribution_Cohorts_Utxo_MaxAge(client)
-        self.min_age: MetricsTree_Distribution_Cohorts_Utxo_MinAge = MetricsTree_Distribution_Cohorts_Utxo_MinAge(client)
+        self.under_age: MetricsTree_Distribution_Cohorts_Utxo_UnderAge = MetricsTree_Distribution_Cohorts_Utxo_UnderAge(client)
+        self.over_age: MetricsTree_Distribution_Cohorts_Utxo_OverAge = MetricsTree_Distribution_Cohorts_Utxo_OverAge(client)
         self.epoch: MetricsTree_Distribution_Cohorts_Utxo_Epoch = MetricsTree_Distribution_Cohorts_Utxo_Epoch(client)
         self.class: MetricsTree_Distribution_Cohorts_Utxo_Class = MetricsTree_Distribution_Cohorts_Utxo_Class(client)
-        self.ge_amount: MetricsTree_Distribution_Cohorts_Utxo_GeAmount = MetricsTree_Distribution_Cohorts_Utxo_GeAmount(client)
+        self.over_amount: MetricsTree_Distribution_Cohorts_Utxo_OverAmount = MetricsTree_Distribution_Cohorts_Utxo_OverAmount(client)
         self.amount_range: MetricsTree_Distribution_Cohorts_Utxo_AmountRange = MetricsTree_Distribution_Cohorts_Utxo_AmountRange(client)
-        self.lt_amount: MetricsTree_Distribution_Cohorts_Utxo_LtAmount = MetricsTree_Distribution_Cohorts_Utxo_LtAmount(client)
+        self.under_amount: MetricsTree_Distribution_Cohorts_Utxo_UnderAmount = MetricsTree_Distribution_Cohorts_Utxo_UnderAmount(client)
         self.r#type: MetricsTree_Distribution_Cohorts_Utxo_Type = MetricsTree_Distribution_Cohorts_Utxo_Type(client)
         self.profitability: MetricsTree_Distribution_Cohorts_Utxo_Profitability = MetricsTree_Distribution_Cohorts_Utxo_Profitability(client)
         self.matured: MetricsTree_Distribution_Cohorts_Utxo_Matured = MetricsTree_Distribution_Cohorts_Utxo_Matured(client)
 
-class MetricsTree_Distribution_Cohorts_Address_GeAmount:
+class MetricsTree_Distribution_Cohorts_Address_OverAmount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -5351,7 +5349,7 @@ class MetricsTree_Distribution_Cohorts_Address_AmountRange:
         self._10k_btc_to_100k_btc: AddrOutputsRealizedSupplyPattern = AddrOutputsRealizedSupplyPattern(client, 'addrs_above_10k_btc_under_100k_btc')
         self._100k_btc_or_more: AddrOutputsRealizedSupplyPattern = AddrOutputsRealizedSupplyPattern(client, 'addrs_above_100k_btc')
 
-class MetricsTree_Distribution_Cohorts_Address_LtAmount:
+class MetricsTree_Distribution_Cohorts_Address_UnderAmount:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -5373,9 +5371,9 @@ class MetricsTree_Distribution_Cohorts_Address:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.ge_amount: MetricsTree_Distribution_Cohorts_Address_GeAmount = MetricsTree_Distribution_Cohorts_Address_GeAmount(client)
+        self.over_amount: MetricsTree_Distribution_Cohorts_Address_OverAmount = MetricsTree_Distribution_Cohorts_Address_OverAmount(client)
         self.amount_range: MetricsTree_Distribution_Cohorts_Address_AmountRange = MetricsTree_Distribution_Cohorts_Address_AmountRange(client)
-        self.lt_amount: MetricsTree_Distribution_Cohorts_Address_LtAmount = MetricsTree_Distribution_Cohorts_Address_LtAmount(client)
+        self.under_amount: MetricsTree_Distribution_Cohorts_Address_UnderAmount = MetricsTree_Distribution_Cohorts_Address_UnderAmount(client)
 
 class MetricsTree_Distribution_Cohorts:
     """Metrics tree node."""
@@ -5956,7 +5954,7 @@ class BrkClient(BrkClientBase):
       }
     }
 
-    MAX_AGE_NAMES = {
+    UNDER_AGE_NAMES = {
       "_1w": {
         "id": "under_1w_old",
         "short": "<1w",
@@ -6049,7 +6047,7 @@ class BrkClient(BrkClientBase):
       }
     }
 
-    MIN_AGE_NAMES = {
+    OVER_AGE_NAMES = {
       "_1d": {
         "id": "over_1d_old",
         "short": "1d+",
@@ -6220,7 +6218,7 @@ class BrkClient(BrkClientBase):
       }
     }
 
-    GE_AMOUNT_NAMES = {
+    OVER_AMOUNT_NAMES = {
       "_1sat": {
         "id": "over_1sat",
         "short": "1+ sats",
@@ -6288,7 +6286,7 @@ class BrkClient(BrkClientBase):
       }
     }
 
-    LT_AMOUNT_NAMES = {
+    UNDER_AMOUNT_NAMES = {
       "_10sats": {
         "id": "under_10sats",
         "short": "<10 sats",
@@ -6611,6 +6609,22 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/metric/{metric}/{index}/latest`"""
         return self.get_json(f'/api/metric/{metric}/{index}/latest')
+
+    def get_metric_len(self, metric: Metric, index: Index) -> float:
+        """Get metric data length.
+
+        Returns the total number of data points for a metric at the given index.
+
+        Endpoint: `GET /api/metric/{metric}/{index}/len`"""
+        return self.get_json(f'/api/metric/{metric}/{index}/len')
+
+    def get_metric_version(self, metric: Metric, index: Index) -> Version:
+        """Get metric version.
+
+        Returns the current version of a metric. Changes when the metric data is updated.
+
+        Endpoint: `GET /api/metric/{metric}/{index}/version`"""
+        return self.get_json(f'/api/metric/{metric}/{index}/version')
 
     def get_metrics_tree(self) -> TreeNode:
         """Metrics catalog.

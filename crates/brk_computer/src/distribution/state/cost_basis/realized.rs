@@ -151,7 +151,7 @@ impl RealizedOps for MinimalRealizedState {
 }
 
 /// Core realized state: extends Minimal with sent_in_profit/loss tracking.
-/// Used by CoreCohortMetrics cohorts (epoch, class, max_age, min_age — ~59 separate cohorts).
+/// Used by CoreCohortMetrics cohorts (epoch, class, under_age, over_age — ~59 separate cohorts).
 #[derive(Debug, Default, Clone)]
 pub struct CoreRealizedState {
     minimal: MinimalRealizedState,

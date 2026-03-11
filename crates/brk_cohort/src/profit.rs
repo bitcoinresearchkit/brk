@@ -4,34 +4,38 @@ use serde::Serialize;
 
 use super::CohortName;
 
-/// "At least X% loss" threshold names (10 thresholds).
-pub const LOSS_NAMES: ByLoss<CohortName> = ByLoss {
-    breakeven: CohortName::new("utxos_in_loss", "<0%", "In Loss (Below Breakeven)"),
-    _10pct: CohortName::new("utxos_over_10pct_in_loss", "≥10%L", "10%+ Loss"),
-    _20pct: CohortName::new("utxos_over_20pct_in_loss", "≥20%L", "20%+ Loss"),
-    _30pct: CohortName::new("utxos_over_30pct_in_loss", "≥30%L", "30%+ Loss"),
-    _40pct: CohortName::new("utxos_over_40pct_in_loss", "≥40%L", "40%+ Loss"),
-    _50pct: CohortName::new("utxos_over_50pct_in_loss", "≥50%L", "50%+ Loss"),
-    _60pct: CohortName::new("utxos_over_60pct_in_loss", "≥60%L", "60%+ Loss"),
-    _70pct: CohortName::new("utxos_over_70pct_in_loss", "≥70%L", "70%+ Loss"),
-    _80pct: CohortName::new("utxos_over_80pct_in_loss", "≥80%L", "80%+ Loss"),
-    _90pct: CohortName::new("utxos_over_90pct_in_loss", "≥90%L", "90%+ Loss"),
+/// "At least X% profit" threshold names (15 thresholds).
+pub const PROFIT_NAMES: Profit<CohortName> = Profit {
+    breakeven: CohortName::new("utxos_in_profit", "≥0%", "In Profit (Breakeven+)"),
+    _10pct: CohortName::new("utxos_over_10pct_in_profit", "≥10%", "10%+ Profit"),
+    _20pct: CohortName::new("utxos_over_20pct_in_profit", "≥20%", "20%+ Profit"),
+    _30pct: CohortName::new("utxos_over_30pct_in_profit", "≥30%", "30%+ Profit"),
+    _40pct: CohortName::new("utxos_over_40pct_in_profit", "≥40%", "40%+ Profit"),
+    _50pct: CohortName::new("utxos_over_50pct_in_profit", "≥50%", "50%+ Profit"),
+    _60pct: CohortName::new("utxos_over_60pct_in_profit", "≥60%", "60%+ Profit"),
+    _70pct: CohortName::new("utxos_over_70pct_in_profit", "≥70%", "70%+ Profit"),
+    _80pct: CohortName::new("utxos_over_80pct_in_profit", "≥80%", "80%+ Profit"),
+    _90pct: CohortName::new("utxos_over_90pct_in_profit", "≥90%", "90%+ Profit"),
+    _100pct: CohortName::new("utxos_over_100pct_in_profit", "≥100%", "100%+ Profit"),
+    _200pct: CohortName::new("utxos_over_200pct_in_profit", "≥200%", "200%+ Profit"),
+    _300pct: CohortName::new("utxos_over_300pct_in_profit", "≥300%", "300%+ Profit"),
+    _500pct: CohortName::new("utxos_over_500pct_in_profit", "≥500%", "500%+ Profit"),
 };
 
-/// Number of loss thresholds.
-pub const LOSS_COUNT: usize = 10;
+/// Number of profit thresholds.
+pub const PROFIT_COUNT: usize = 14;
 
-impl ByLoss<CohortName> {
+impl Profit<CohortName> {
     pub const fn names() -> &'static Self {
-        &LOSS_NAMES
+        &PROFIT_NAMES
     }
 }
 
-/// 10 "at least X% loss" aggregate thresholds.
+/// 15 "at least X% profit" aggregate thresholds.
 ///
-/// Each is a suffix sum over the profitability ranges, from most loss-making up.
+/// Each is a prefix sum over the profitability ranges, from most profitable down.
 #[derive(Default, Clone, Traversable, Serialize)]
-pub struct ByLoss<T> {
+pub struct Profit<T> {
     pub breakeven: T,
     pub _10pct: T,
     pub _20pct: T,
@@ -42,14 +46,18 @@ pub struct ByLoss<T> {
     pub _70pct: T,
     pub _80pct: T,
     pub _90pct: T,
+    pub _100pct: T,
+    pub _200pct: T,
+    pub _300pct: T,
+    pub _500pct: T,
 }
 
-impl<T> ByLoss<T> {
+impl<T> Profit<T> {
     pub fn new<F>(mut create: F) -> Self
     where
         F: FnMut(&'static str) -> T,
     {
-        let n = &LOSS_NAMES;
+        let n = &PROFIT_NAMES;
         Self {
             breakeven: create(n.breakeven.id),
             _10pct: create(n._10pct.id),
@@ -61,6 +69,10 @@ impl<T> ByLoss<T> {
             _70pct: create(n._70pct.id),
             _80pct: create(n._80pct.id),
             _90pct: create(n._90pct.id),
+            _100pct: create(n._100pct.id),
+            _200pct: create(n._200pct.id),
+            _300pct: create(n._300pct.id),
+            _500pct: create(n._500pct.id),
         }
     }
 
@@ -68,7 +80,7 @@ impl<T> ByLoss<T> {
     where
         F: FnMut(&'static str) -> Result<T, E>,
     {
-        let n = &LOSS_NAMES;
+        let n = &PROFIT_NAMES;
         Ok(Self {
             breakeven: create(n.breakeven.id)?,
             _10pct: create(n._10pct.id)?,
@@ -80,6 +92,10 @@ impl<T> ByLoss<T> {
             _70pct: create(n._70pct.id)?,
             _80pct: create(n._80pct.id)?,
             _90pct: create(n._90pct.id)?,
+            _100pct: create(n._100pct.id)?,
+            _200pct: create(n._200pct.id)?,
+            _300pct: create(n._300pct.id)?,
+            _500pct: create(n._500pct.id)?,
         })
     }
 
@@ -95,6 +111,10 @@ impl<T> ByLoss<T> {
             &self._70pct,
             &self._80pct,
             &self._90pct,
+            &self._100pct,
+            &self._200pct,
+            &self._300pct,
+            &self._500pct,
         ]
         .into_iter()
     }
@@ -111,6 +131,10 @@ impl<T> ByLoss<T> {
             &mut self._70pct,
             &mut self._80pct,
             &mut self._90pct,
+            &mut self._100pct,
+            &mut self._200pct,
+            &mut self._300pct,
+            &mut self._500pct,
         ]
         .into_iter()
     }
@@ -130,12 +154,16 @@ impl<T> ByLoss<T> {
             &mut self._70pct,
             &mut self._80pct,
             &mut self._90pct,
+            &mut self._100pct,
+            &mut self._200pct,
+            &mut self._300pct,
+            &mut self._500pct,
         ]
         .into_par_iter()
     }
 
     /// Access as array for indexed accumulation.
-    pub fn as_array_mut(&mut self) -> [&mut T; LOSS_COUNT] {
+    pub fn as_array_mut(&mut self) -> [&mut T; PROFIT_COUNT] {
         [
             &mut self.breakeven,
             &mut self._10pct,
@@ -147,6 +175,10 @@ impl<T> ByLoss<T> {
             &mut self._70pct,
             &mut self._80pct,
             &mut self._90pct,
+            &mut self._100pct,
+            &mut self._200pct,
+            &mut self._300pct,
+            &mut self._500pct,
         ]
     }
 }

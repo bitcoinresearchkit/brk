@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use brk_cohort::{
-    AddressGroups, ByAmountRange, ByGreatEqualAmount, ByLowerThanAmount, Filter, Filtered,
+    AddressGroups, AmountRange, OverAmount, UnderAmount, Filter, Filtered,
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -41,9 +41,9 @@ impl AddressCohorts {
         let none = |f: Filter, name: &'static str| create(f, name, false);
 
         Ok(Self(AddressGroups {
-            amount_range: ByAmountRange::try_new(&full)?,
-            lt_amount: ByLowerThanAmount::try_new(&none)?,
-            ge_amount: ByGreatEqualAmount::try_new(&none)?,
+            amount_range: AmountRange::try_new(&full)?,
+            under_amount: UnderAmount::try_new(&none)?,
+            over_amount: OverAmount::try_new(&none)?,
         }))
     }
 
@@ -56,9 +56,9 @@ impl AddressCohorts {
 
         let pairs: Vec<_> = self
             .0
-            .ge_amount
+            .over_amount
             .iter_mut()
-            .chain(self.0.lt_amount.iter_mut())
+            .chain(self.0.under_amount.iter_mut())
             .map(|vecs| {
                 let filter = vecs.filter().clone();
                 (

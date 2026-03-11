@@ -1,4 +1,4 @@
-use brk_cohort::{ByLoss, ByProfit, ByProfitabilityRange};
+use brk_cohort::{Loss, Profit, ProfitabilityRange};
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Dollars, Height, Sats, Version};
@@ -66,9 +66,9 @@ impl ProfitabilityBucket {
 /// All profitability metrics: 25 ranges + 15 profit thresholds + 10 loss thresholds.
 #[derive(Traversable)]
 pub struct ProfitabilityMetrics<M: StorageMode = Rw> {
-    pub range: ByProfitabilityRange<ProfitabilityBucket<M>>,
-    pub profit: ByProfit<ProfitabilityBucket<M>>,
-    pub loss: ByLoss<ProfitabilityBucket<M>>,
+    pub range: ProfitabilityRange<ProfitabilityBucket<M>>,
+    pub profit: Profit<ProfitabilityBucket<M>>,
+    pub loss: Loss<ProfitabilityBucket<M>>,
 }
 
 impl<M: StorageMode> ProfitabilityMetrics<M> {
@@ -88,15 +88,15 @@ impl ProfitabilityMetrics {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let range = ByProfitabilityRange::try_new(|name| {
+        let range = ProfitabilityRange::try_new(|name| {
             ProfitabilityBucket::forced_import(db, name, version, indexes)
         })?;
 
-        let profit = ByProfit::try_new(|name| {
+        let profit = Profit::try_new(|name| {
             ProfitabilityBucket::forced_import(db, name, version, indexes)
         })?;
 
-        let loss = ByLoss::try_new(|name| {
+        let loss = Loss::try_new(|name| {
             ProfitabilityBucket::forced_import(db, name, version, indexes)
         })?;
 

@@ -8,8 +8,8 @@ use super::{
     HOURS_12Y, HOURS_15Y, TimeFilter,
 };
 
-/// Max age thresholds in hours
-pub const MAX_AGE_HOURS: ByMaxAge<usize> = ByMaxAge {
+/// Under-age thresholds in hours
+pub const UNDER_AGE_HOURS: UnderAge<usize> = UnderAge {
     _1w: HOURS_1W,
     _1m: HOURS_1M,
     _2m: HOURS_2M,
@@ -30,30 +30,30 @@ pub const MAX_AGE_HOURS: ByMaxAge<usize> = ByMaxAge {
     _15y: HOURS_15Y,
 };
 
-/// Max age filters (LowerThan threshold in hours)
-pub const MAX_AGE_FILTERS: ByMaxAge<Filter> = ByMaxAge {
-    _1w: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._1w)),
-    _1m: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._1m)),
-    _2m: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._2m)),
-    _3m: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._3m)),
-    _4m: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._4m)),
-    _5m: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._5m)),
-    _6m: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._6m)),
-    _1y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._1y)),
-    _2y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._2y)),
-    _3y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._3y)),
-    _4y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._4y)),
-    _5y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._5y)),
-    _6y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._6y)),
-    _7y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._7y)),
-    _8y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._8y)),
-    _10y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._10y)),
-    _12y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._12y)),
-    _15y: Filter::Time(TimeFilter::LowerThan(MAX_AGE_HOURS._15y)),
+/// Under-age filters (LowerThan threshold in hours)
+pub const UNDER_AGE_FILTERS: UnderAge<Filter> = UnderAge {
+    _1w: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._1w)),
+    _1m: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._1m)),
+    _2m: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._2m)),
+    _3m: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._3m)),
+    _4m: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._4m)),
+    _5m: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._5m)),
+    _6m: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._6m)),
+    _1y: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._1y)),
+    _2y: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._2y)),
+    _3y: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._3y)),
+    _4y: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._4y)),
+    _5y: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._5y)),
+    _6y: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._6y)),
+    _7y: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._7y)),
+    _8y: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._8y)),
+    _10y: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._10y)),
+    _12y: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._12y)),
+    _15y: Filter::Time(TimeFilter::LowerThan(UNDER_AGE_HOURS._15y)),
 };
 
-/// Max age names
-pub const MAX_AGE_NAMES: ByMaxAge<CohortName> = ByMaxAge {
+/// Under-age names
+pub const UNDER_AGE_NAMES: UnderAge<CohortName> = UnderAge {
     _1w: CohortName::new("under_1w_old", "<1w", "Under 1 Week Old"),
     _1m: CohortName::new("under_1m_old", "<1m", "Under 1 Month Old"),
     _2m: CohortName::new("under_2m_old", "<2m", "Under 2 Months Old"),
@@ -75,7 +75,7 @@ pub const MAX_AGE_NAMES: ByMaxAge<CohortName> = ByMaxAge {
 };
 
 #[derive(Default, Clone, Traversable, Serialize)]
-pub struct ByMaxAge<T> {
+pub struct UnderAge<T> {
     pub _1w: T,
     pub _1m: T,
     pub _2m: T,
@@ -96,19 +96,19 @@ pub struct ByMaxAge<T> {
     pub _15y: T,
 }
 
-impl ByMaxAge<CohortName> {
+impl UnderAge<CohortName> {
     pub const fn names() -> &'static Self {
-        &MAX_AGE_NAMES
+        &UNDER_AGE_NAMES
     }
 }
 
-impl<T> ByMaxAge<T> {
+impl<T> UnderAge<T> {
     pub fn new<F>(mut create: F) -> Self
     where
         F: FnMut(Filter, &'static str) -> T,
     {
-        let f = MAX_AGE_FILTERS;
-        let n = MAX_AGE_NAMES;
+        let f = UNDER_AGE_FILTERS;
+        let n = UNDER_AGE_NAMES;
         Self {
             _1w: create(f._1w.clone(), n._1w.id),
             _1m: create(f._1m.clone(), n._1m.id),
@@ -135,8 +135,8 @@ impl<T> ByMaxAge<T> {
     where
         F: FnMut(Filter, &'static str) -> Result<T, E>,
     {
-        let f = MAX_AGE_FILTERS;
-        let n = MAX_AGE_NAMES;
+        let f = UNDER_AGE_FILTERS;
+        let n = UNDER_AGE_NAMES;
         Ok(Self {
             _1w: create(f._1w.clone(), n._1w.id)?,
             _1m: create(f._1m.clone(), n._1m.id)?,

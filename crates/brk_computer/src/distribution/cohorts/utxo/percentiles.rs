@@ -121,8 +121,8 @@ fn push_profitability(
         bucket.truncate_push(height, Sats::from(sats), raw_usd_to_dollars(usd_raw))?;
     }
 
-    // ByProfit: forward cumulative sum over ranges[0..15], pushed in reverse.
-    // profit[0] (breakeven) = sum(0..=14), ..., profit[14] (_1000pct) = ranges[0]
+    // Profit: forward cumulative sum over ranges[0..15], pushed in reverse.
+    // profit[0] (breakeven) = sum(0..=13), ..., profit[13] (_500pct) = ranges[0]
     let profit_arr = metrics.profit.as_array_mut();
     let mut cum_sats = 0u64;
     let mut cum_usd = 0u128;
@@ -133,8 +133,8 @@ fn push_profitability(
             .truncate_push(height, Sats::from(cum_sats), raw_usd_to_dollars(cum_usd))?;
     }
 
-    // ByLoss: backward cumulative sum over ranges[15..25], pushed in reverse.
-    // loss[0] (breakeven) = sum(15..=24), ..., loss[9] (_90pct) = ranges[24]
+    // Loss: backward cumulative sum over ranges[15..25], pushed in reverse.
+    // loss[0] (breakeven) = sum(15..=24), ..., loss[8] (_80pct) = ranges[24]
     let loss_arr = metrics.loss.as_array_mut();
     let loss_count = loss_arr.len();
     cum_sats = 0;

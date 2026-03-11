@@ -89,7 +89,7 @@ impl Filter {
     }
 
     /// Whether to compute adjusted metrics (adjusted SOPR, adjusted value created/destroyed)
-    /// For UTXO context: true for All, STH, and max_age (LowerThan)
+    /// For UTXO context: true for All, STH, and under_age (LowerThan)
     /// For Address context: always false
     /// Note: LTH doesn't need adjusted (everything >= 5 months is already > 1 hour)
     /// Note: age ranges don't need adjusted (0-1h data lives in its own cohort)

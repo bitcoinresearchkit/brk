@@ -8,7 +8,7 @@ use serde::Serialize;
 use super::{CohortName, Filter};
 
 /// Spendable type values
-pub const SPENDABLE_TYPE_VALUES: BySpendableType<OutputType> = BySpendableType {
+pub const SPENDABLE_TYPE_VALUES: SpendableType<OutputType> = SpendableType {
     p2pk65: OutputType::P2PK65,
     p2pk33: OutputType::P2PK33,
     p2pkh: OutputType::P2PKH,
@@ -23,7 +23,7 @@ pub const SPENDABLE_TYPE_VALUES: BySpendableType<OutputType> = BySpendableType {
 };
 
 /// Spendable type filters
-pub const SPENDABLE_TYPE_FILTERS: BySpendableType<Filter> = BySpendableType {
+pub const SPENDABLE_TYPE_FILTERS: SpendableType<Filter> = SpendableType {
     p2pk65: Filter::Type(SPENDABLE_TYPE_VALUES.p2pk65),
     p2pk33: Filter::Type(SPENDABLE_TYPE_VALUES.p2pk33),
     p2pkh: Filter::Type(SPENDABLE_TYPE_VALUES.p2pkh),
@@ -38,7 +38,7 @@ pub const SPENDABLE_TYPE_FILTERS: BySpendableType<Filter> = BySpendableType {
 };
 
 /// Spendable type names
-pub const SPENDABLE_TYPE_NAMES: BySpendableType<CohortName> = BySpendableType {
+pub const SPENDABLE_TYPE_NAMES: SpendableType<CohortName> = SpendableType {
     p2pk65: CohortName::new("p2pk65", "P2PK65", "Pay to Public Key (65 bytes)"),
     p2pk33: CohortName::new("p2pk33", "P2PK33", "Pay to Public Key (33 bytes)"),
     p2pkh: CohortName::new("p2pkh", "P2PKH", "Pay to Public Key Hash"),
@@ -53,7 +53,7 @@ pub const SPENDABLE_TYPE_NAMES: BySpendableType<CohortName> = BySpendableType {
 };
 
 #[derive(Default, Clone, Debug, Traversable, Serialize)]
-pub struct BySpendableType<T> {
+pub struct SpendableType<T> {
     pub p2pk65: T,
     pub p2pk33: T,
     pub p2pkh: T,
@@ -67,13 +67,13 @@ pub struct BySpendableType<T> {
     pub empty: T,
 }
 
-impl BySpendableType<CohortName> {
+impl SpendableType<CohortName> {
     pub const fn names() -> &'static Self {
         &SPENDABLE_TYPE_NAMES
     }
 }
 
-impl<T> BySpendableType<T> {
+impl<T> SpendableType<T> {
     pub fn new<F>(mut create: F) -> Self
     where
         F: FnMut(Filter, &'static str) -> T,
@@ -222,7 +222,7 @@ impl<T> BySpendableType<T> {
     }
 }
 
-impl<T> Add for BySpendableType<T>
+impl<T> Add for SpendableType<T>
 where
     T: Add<Output = T>,
 {
@@ -244,7 +244,7 @@ where
     }
 }
 
-impl<T> AddAssign for BySpendableType<T>
+impl<T> AddAssign for SpendableType<T>
 where
     T: AddAssign,
 {

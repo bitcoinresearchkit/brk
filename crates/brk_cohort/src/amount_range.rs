@@ -13,7 +13,7 @@ pub struct AmountBucket(u8);
 
 impl AmountBucket {
     /// Returns (self, other) if buckets differ, None if same.
-    /// Use with `ByAmountRange::get_mut_by_bucket` to avoid recomputing.
+    /// Use with `AmountRange::get_mut_by_bucket` to avoid recomputing.
     #[inline(always)]
     pub fn transition_to(self, other: Self) -> Option<(Self, Self)> {
         if self != other {
@@ -59,7 +59,7 @@ pub fn amounts_in_different_buckets(a: Sats, b: Sats) -> bool {
 }
 
 /// Amount range bounds
-pub const AMOUNT_RANGE_BOUNDS: ByAmountRange<Range<Sats>> = ByAmountRange {
+pub const AMOUNT_RANGE_BOUNDS: AmountRange<Range<Sats>> = AmountRange {
     _0sats: Sats::ZERO..Sats::_1,
     _1sat_to_10sats: Sats::_1..Sats::_10,
     _10sats_to_100sats: Sats::_10..Sats::_100,
@@ -78,7 +78,7 @@ pub const AMOUNT_RANGE_BOUNDS: ByAmountRange<Range<Sats>> = ByAmountRange {
 };
 
 /// Amount range names
-pub const AMOUNT_RANGE_NAMES: ByAmountRange<CohortName> = ByAmountRange {
+pub const AMOUNT_RANGE_NAMES: AmountRange<CohortName> = AmountRange {
     _0sats: CohortName::new("with_0sats", "0 sats", "0 Sats"),
     _1sat_to_10sats: CohortName::new("above_1sat_under_10sats", "1-10 sats", "1-10 Sats"),
     _10sats_to_100sats: CohortName::new("above_10sats_under_100sats", "10-100 sats", "10-100 Sats"),
@@ -121,7 +121,7 @@ pub const AMOUNT_RANGE_NAMES: ByAmountRange<CohortName> = ByAmountRange {
 };
 
 /// Amount range filters
-pub const AMOUNT_RANGE_FILTERS: ByAmountRange<Filter> = ByAmountRange {
+pub const AMOUNT_RANGE_FILTERS: AmountRange<Filter> = AmountRange {
     _0sats: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._0sats)),
     _1sat_to_10sats: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._1sat_to_10sats)),
     _10sats_to_100sats: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._10sats_to_100sats)),
@@ -152,7 +152,7 @@ pub const AMOUNT_RANGE_FILTERS: ByAmountRange<Filter> = ByAmountRange {
 };
 
 #[derive(Debug, Default, Clone, Traversable, Serialize)]
-pub struct ByAmountRange<T> {
+pub struct AmountRange<T> {
     pub _0sats: T,
     pub _1sat_to_10sats: T,
     pub _10sats_to_100sats: T,
@@ -170,13 +170,13 @@ pub struct ByAmountRange<T> {
     pub _100k_btc_or_more: T,
 }
 
-impl ByAmountRange<CohortName> {
+impl AmountRange<CohortName> {
     pub const fn names() -> &'static Self {
         &AMOUNT_RANGE_NAMES
     }
 }
 
-impl<T> ByAmountRange<T> {
+impl<T> AmountRange<T> {
     pub fn new<F>(mut create: F) -> Self
     where
         F: FnMut(Filter, &'static str) -> T,
@@ -385,7 +385,7 @@ impl<T> ByAmountRange<T> {
     }
 }
 
-impl<T> Add for ByAmountRange<T>
+impl<T> Add for AmountRange<T>
 where
     T: Add<Output = T>,
 {
@@ -411,7 +411,7 @@ where
     }
 }
 
-impl<T> AddAssign for ByAmountRange<T>
+impl<T> AddAssign for AmountRange<T>
 where
     T: AddAssign,
 {
