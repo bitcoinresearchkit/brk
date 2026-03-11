@@ -92,7 +92,7 @@ impl Vecs {
         )?;
         self.subsidy.compute(prices, starting_indexes.height, exit)?;
 
-        self.unclaimed_rewards.compute(
+        self.unclaimed.compute(
             starting_indexes.height,
             &window_starts,
             prices,

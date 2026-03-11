@@ -10,8 +10,9 @@ use axum::{
 use brk_traversable::TreeNode;
 use brk_types::{
     CostBasisCohortParam, CostBasisFormatted, CostBasisParams, CostBasisQuery, DataRangeFormat,
-    Date, Index, IndexInfo, LimitParam, Metric, MetricCount, MetricData, MetricParam,
+    Date, Index, IndexInfo, Metric, MetricCount, MetricData, MetricInfo, MetricParam,
     MetricSelection, MetricSelectionLegacy, MetricWithIndex, Metrics, PaginatedMetrics, Pagination,
+    SearchQuery,
 };
 
 use crate::{CacheStrategy, Error, extended::TransformResponseExtended};
@@ -124,16 +125,15 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/metrics/search/{metric}",
+            "/api/metrics/search",
             get_with(
                 async |
                     uri: Uri,
                     headers: HeaderMap,
                     State(state): State<AppState>,
-                    Path(path): Path<MetricParam>,
-                    Query(query): Query<LimitParam>
+                    Query(query): Query<SearchQuery>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| Ok(q.match_metric(&path.metric, query.limit))).await
+                    state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| Ok(q.search_metrics(&query))).await
                 },
                 |op| op
                     .id("search_metrics")
@@ -155,24 +155,78 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     Path(path): Path<MetricParam>
                 | {
                     state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| {
-                        if let Some(indexes) = q.metric_to_indexes(path.metric.clone()) {
-                            return Ok(indexes.clone())
-                        }
-                        Err(q.metric_not_found_error(&path.metric))
+                        q.metric_info(&path.metric).ok_or_else(|| q.metric_not_found_error(&path.metric))
                     }).await
                 },
                 |op| op
                     .id("get_metric_info")
                     .metrics_tag()
-                    .summary("Get supported indexes for a metric")
+                    .summary("Get metric info")
                     .description(
-                        "Returns the list of indexes supported by the specified metric. \
-                        For example, `realized_price` might be available on day1, week1, and month1."
+                        "Returns the supported indexes and value type for the specified metric."
                     )
-                    .ok_response::<Vec<Index>>()
+                    .ok_response::<MetricInfo>()
                     .not_modified()
                     .not_found()
                     .server_error(),
+            ),
+        )
+        .api_route(
+            "/api/metric/{metric}/{index}/latest",
+            get_with(
+                async |uri: Uri,
+                       headers: HeaderMap,
+                       State(state): State<AppState>,
+                       Path(path): Path<MetricWithIndex>| {
+                    state
+                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                            q.latest(&path.metric, path.index)
+                        })
+                        .await
+                },
+                |op| op
+                    .id("get_metric_latest")
+                    .metrics_tag()
+                    .summary("Get latest metric value")
+                    .description(
+                        "Returns the single most recent value for a metric, unwrapped (not inside a MetricData object)."
+                    )
+                    .ok_response::<serde_json::Value>()
+                    .not_found(),
+            ),
+        )
+        .api_route(
+            "/api/metric/{metric}/{index}/data",
+            get_with(
+                async |uri: Uri,
+                       headers: HeaderMap,
+                       addr: Extension<SocketAddr>,
+                       state: State<AppState>,
+                       Path(path): Path<MetricWithIndex>,
+                       Query(range): Query<DataRangeFormat>|
+                       -> Response {
+                    data::raw_handler(
+                        uri,
+                        headers,
+                        addr,
+                        Query(MetricSelection::from((path.index, path.metric, range))),
+                        state,
+                    )
+                    .await
+                    .into_response()
+                },
+                |op| op
+                    .id("get_metric_data")
+                    .metrics_tag()
+                    .summary("Get raw metric data")
+                    .description(
+                        "Returns just the data array without the MetricData wrapper. \
+                        Supports the same range and format parameters as the standard endpoint."
+                    )
+                    .ok_response::<Vec<serde_json::Value>>()
+                    .csv_response()
+                    .not_modified()
+                    .not_found(),
             ),
         )
         .api_route(

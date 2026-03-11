@@ -10,11 +10,11 @@ use crate::distribution::metrics::{ImportConfig, UnrealizedCore};
 /// Extended relative metrics for own total unrealized PnL (extended only).
 #[derive(Traversable)]
 pub struct RelativeExtendedOwnPnl<M: StorageMode = Rw> {
-    #[traversable(wrap = "unrealized/profit", rename = "rel_to_own_gross_pnl")]
+    #[traversable(wrap = "unrealized/profit", rename = "rel_to_own_gross")]
     pub unrealized_profit_rel_to_own_gross_pnl: PercentPerBlock<BasisPoints16, M>,
-    #[traversable(wrap = "unrealized/loss", rename = "rel_to_own_gross_pnl")]
+    #[traversable(wrap = "unrealized/loss", rename = "rel_to_own_gross")]
     pub unrealized_loss_rel_to_own_gross_pnl: PercentPerBlock<BasisPoints16, M>,
-    #[traversable(wrap = "unrealized/net_pnl", rename = "rel_to_own_gross_pnl")]
+    #[traversable(wrap = "unrealized/net_pnl", rename = "rel_to_own_gross")]
     pub net_unrealized_pnl_rel_to_own_gross_pnl: PercentPerBlock<BasisPointsSigned32, M>,
 
 }

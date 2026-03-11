@@ -253,7 +253,7 @@ impl Index {
             Self::Day3 => return Some(usize::from(Day3::from_timestamp(ts))),
             _ => return self.date_to_index(Date::from(ts)),
         };
-        Some(((*ts - INDEX_EPOCH) / interval) as usize)
+        Some((*ts).saturating_sub(INDEX_EPOCH) as usize / interval as usize)
     }
 
     /// Convert an index value to a date for day-precision or coarser indexes.
@@ -299,12 +299,7 @@ impl<'de> Deserialize<'de> for Index {
         D: serde::Deserializer<'de>,
     {
         let str = String::deserialize(deserializer)?;
-        if let Ok(index) = Index::try_from(str.as_str()) {
-            // dbg!(index);
-            Ok(index)
-        } else {
-            Err(serde::de::Error::custom("Bad index"))
-        }
+        Index::try_from(str.as_str()).map_err(|e| serde::de::Error::custom(e))
     }
 }
 

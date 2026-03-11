@@ -13,17 +13,17 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.price.cents.height.compute_all_time_high(
+        self.high.cents.height.compute_all_time_high(
             starting_indexes.height,
-            &prices.price.cents.height,
+            &prices.spot.cents.height,
             exit,
         )?;
 
         let mut ath_ts: Option<Timestamp> = None;
         self.days_since.height.compute_transform3(
             starting_indexes.height,
-            &self.price.cents.height,
-            &prices.price.cents.height,
+            &self.high.cents.height,
+            &prices.spot.cents.height,
             &blocks.time.timestamp_monotonic,
             |(i, ath, price, ts, slf)| {
                 if ath_ts.is_none() {
@@ -68,8 +68,8 @@ impl Vecs {
 
         self.drawdown.compute_drawdown(
             starting_indexes.height,
-            &prices.price.cents.height,
-            &self.price.cents.height,
+            &prices.spot.cents.height,
+            &self.high.cents.height,
             exit,
         )?;
 

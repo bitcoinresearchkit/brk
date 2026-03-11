@@ -19,7 +19,7 @@ mod r#impl;
 
 #[cfg(feature = "tokio")]
 pub use r#async::*;
-pub use r#impl::BLOCK_TXS_PAGE_SIZE;
+pub use r#impl::{BLOCK_TXS_PAGE_SIZE, ResolvedQuery};
 pub use vecs::Vecs;
 
 #[derive(Clone)]

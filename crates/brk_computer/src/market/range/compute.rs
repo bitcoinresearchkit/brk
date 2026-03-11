@@ -13,7 +13,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let price = &prices.price.cents.height;
+        let price = &prices.spot.cents.height;
 
         for (min_vec, max_vec, starts) in [
             (

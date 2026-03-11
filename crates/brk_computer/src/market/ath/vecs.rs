@@ -6,7 +6,7 @@ use crate::internal::{ComputedPerBlock, DerivedResolutions, PercentPerBlock, Pri
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub price: Price<ComputedPerBlock<Cents, M>>,
+    pub high: Price<ComputedPerBlock<Cents, M>>,
     pub drawdown: PercentPerBlock<BasisPointsSigned16, M>,
     pub days_since: ComputedPerBlock<StoredF32, M>,
     pub years_since: DerivedResolutions<StoredF32, StoredF32>,

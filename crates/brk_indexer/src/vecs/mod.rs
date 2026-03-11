@@ -32,10 +32,15 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     db: Database,
     pub blocks: BlocksVecs<M>,
+    #[traversable(wrap = "transactions", rename = "raw")]
     pub transactions: TransactionsVecs<M>,
+    #[traversable(wrap = "inputs", rename = "raw")]
     pub inputs: InputsVecs<M>,
+    #[traversable(wrap = "outputs", rename = "raw")]
     pub outputs: OutputsVecs<M>,
+    #[traversable(wrap = "addresses", rename = "raw")]
     pub addresses: AddressesVecs<M>,
+    #[traversable(wrap = "scripts", rename = "raw")]
     pub scripts: ScriptsVecs<M>,
 }
 

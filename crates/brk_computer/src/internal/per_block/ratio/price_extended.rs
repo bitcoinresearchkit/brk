@@ -71,7 +71,7 @@ impl PriceWithRatioPerBlock {
         F: FnMut(&mut EagerVec<PcoVec<Height, Cents>>) -> Result<()>,
     {
         compute_price(&mut self.cents.height)?;
-        self.compute_ratio(starting_indexes, &prices.price.cents.height, exit)
+        self.compute_ratio(starting_indexes, &prices.spot.cents.height, exit)
     }
 }
 
@@ -104,7 +104,7 @@ impl PriceWithRatioExtendedPerBlock {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let close_price = &prices.price.cents.height;
+        let close_price = &prices.spot.cents.height;
         self.base.compute_ratio(starting_indexes, close_price, exit)?;
         self.percentiles.compute(
             starting_indexes,

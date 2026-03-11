@@ -7,5 +7,5 @@ use crate::internal::{ComputedPerBlock, ComputedPerBlockAggregated};
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub total: ComputedPerBlockAggregated<StoredU64, M>,
-    pub utxo_count: ComputedPerBlock<StoredU64, M>,
+    pub unspent: ComputedPerBlock<StoredU64, M>,
 }

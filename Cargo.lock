@@ -529,6 +529,8 @@ dependencies = [
  "rayon",
  "rlimit",
  "rustc-hash",
+ "schemars",
+ "serde",
  "tracing",
  "vecdb",
 ]
@@ -594,7 +596,9 @@ dependencies = [
  "brk_types",
  "derive_more",
  "jiff",
+ "parking_lot",
  "quickmatch",
+ "serde_json",
  "tokio",
  "vecdb",
 ]

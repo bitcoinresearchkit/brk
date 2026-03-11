@@ -142,7 +142,7 @@ impl<'a> Vecs<'a> {
         self.counts_by_db
             .entry(db.to_string())
             .or_default()
-            .add_endpoint(is_lazy);
+            .add_endpoint(name, is_lazy);
     }
 
     pub fn metrics(&'static self, pagination: Pagination) -> PaginatedMetrics {

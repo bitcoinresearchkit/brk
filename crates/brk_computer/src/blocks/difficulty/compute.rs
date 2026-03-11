@@ -43,7 +43,7 @@ impl Vecs {
         )?;
 
         // Compute blocks before next adjustment
-        self.blocks_before_next_adjustment
+        self.blocks_before_next
             .height
             .compute_transform(
                 starting_indexes.height,
@@ -53,9 +53,9 @@ impl Vecs {
             )?;
 
         // Compute days before next adjustment
-        self.days_before_next_adjustment.height.compute_transform(
+        self.days_before_next.height.compute_transform(
             starting_indexes.height,
-            &self.blocks_before_next_adjustment.height,
+            &self.blocks_before_next.height,
             |(h, blocks, ..)| (h, (*blocks as f32 / TARGET_BLOCKS_PER_DAY_F32).into()),
             exit,
         )?;

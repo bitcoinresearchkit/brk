@@ -7,7 +7,9 @@ use axum::{
     http::{HeaderMap, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
-use brk_types::{Format, MetricSelection, Output};
+use brk_error::Result as BrkResult;
+use brk_query::{Query as BrkQuery, ResolvedQuery};
+use brk_types::{Format, MetricOutput, MetricSelection, Output};
 
 use crate::{
     Result,
@@ -20,9 +22,30 @@ use super::AppState;
 pub async fn handler(
     uri: Uri,
     headers: HeaderMap,
-    Extension(addr): Extension<SocketAddr>,
+    addr: Extension<SocketAddr>,
     Query(params): Query<MetricSelection>,
-    State(state): State<AppState>,
+    state: State<AppState>,
+) -> Result<Response> {
+    format_and_respond(uri, headers, addr, params, state, |q, r| q.format(r)).await
+}
+
+pub async fn raw_handler(
+    uri: Uri,
+    headers: HeaderMap,
+    addr: Extension<SocketAddr>,
+    Query(params): Query<MetricSelection>,
+    state: State<AppState>,
+) -> Result<Response> {
+    format_and_respond(uri, headers, addr, params, state, |q, r| q.format_raw(r)).await
+}
+
+async fn format_and_respond(
+    uri: Uri,
+    headers: HeaderMap,
+    Extension(addr): Extension<SocketAddr>,
+    params: MetricSelection,
+    state: State<AppState>,
+    formatter: fn(&BrkQuery, ResolvedQuery) -> BrkResult<MetricOutput>,
 ) -> Result<Response> {
     // Phase 1: Search and resolve metadata (cheap)
     let resolved = state
@@ -51,7 +74,7 @@ pub async fn handler(
         .get_or_insert(&cache_key, async move {
             query
                 .run(move |q| {
-                    let out = q.format(resolved)?;
+                    let out = formatter(q, resolved)?;
                     let raw = match out.output {
                         Output::CSV(s) => Bytes::from(s),
                         Output::Json(v) => Bytes::from(v),

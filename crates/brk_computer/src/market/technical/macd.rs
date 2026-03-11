@@ -16,7 +16,7 @@ pub(super) fn compute(
     starting_indexes: &Indexes,
     exit: &Exit,
 ) -> Result<()> {
-    let close = &prices.price.usd.height;
+    let close = &prices.spot.usd.height;
     let ws_fast = blocks.lookback.start_vec(fast_days);
     let ws_slow = blocks.lookback.start_vec(slow_days);
     let ws_signal = blocks.lookback.start_vec(signal_days);

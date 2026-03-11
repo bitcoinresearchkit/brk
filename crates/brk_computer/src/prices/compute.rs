@@ -73,7 +73,7 @@ impl Vecs {
 
         // Reorg: truncate to starting_indexes
         let truncate_to = self
-            .price
+            .spot
             .cents
             .height
             .len()
@@ -101,7 +101,7 @@ impl Vecs {
         let config = Config::default();
         let committed = self.spot.cents.height.len();
         let prev_cents = self
-            .price
+            .spot
             .cents
             .height
             .collect_one_at(committed - 1)
@@ -234,7 +234,7 @@ impl<M: StorageMode> Vecs<M> {
         let config = Config::default();
         let height = indexer.vecs.blocks.timestamp.len();
         let last_cents = self
-            .price
+            .spot
             .cents
             .height
             .collect_one_at(self.spot.cents.height.len() - 1)

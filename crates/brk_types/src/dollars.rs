@@ -120,14 +120,14 @@ impl From<usize> for Dollars {
 impl Add for Dollars {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
-        Self::from(CentsSigned::from(self) + CentsSigned::from(rhs))
+        Self(self.0 + rhs.0)
     }
 }
 
 impl Sub for Dollars {
     type Output = Self;
     fn sub(self, rhs: Self) -> Self::Output {
-        Self::from(CentsSigned::from(self) - CentsSigned::from(rhs))
+        Self(self.0 - rhs.0)
     }
 }
 
@@ -346,13 +346,13 @@ impl From<Dollars> for u128 {
 
 impl AddAssign for Dollars {
     fn add_assign(&mut self, rhs: Self) {
-        *self = Dollars::from(CentsSigned::from(*self) + CentsSigned::from(rhs));
+        self.0 += rhs.0;
     }
 }
 
 impl SubAssign for Dollars {
     fn sub_assign(&mut self, rhs: Self) {
-        *self = Dollars::from(CentsSigned::from(*self) - CentsSigned::from(rhs));
+        self.0 -= rhs.0;
     }
 }
 

@@ -1,18 +1,24 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, sync::LazyLock};
 
 use brk_error::{Error, Result};
 use brk_traversable::TreeNode;
 use brk_types::{
-    DetailedMetricCount, Etag, Format, Index, IndexInfo, LegacyValue, Limit, Metric, MetricData,
-    MetricOutput, MetricOutputLegacy, MetricSelection, Output, OutputLegacy, PaginatedMetrics,
-    Pagination, PaginationIndex, Version,
+    Date, DetailedMetricCount, Epoch, Etag, Format, Halving, Height, Index, IndexInfo, LegacyValue,
+    Limit, Metric, MetricData, MetricInfo, MetricOutput, MetricOutputLegacy, MetricSelection,
+    Output, OutputLegacy, PaginatedMetrics, Pagination, PaginationIndex, RangeIndex, RangeMap,
+    SearchQuery, Timestamp, Version,
 };
-use vecdb::AnyExportableVec;
+use parking_lot::RwLock;
+use vecdb::{AnyExportableVec, ReadableVec};
 
 use crate::{
     Query,
     vecs::{IndexToVec, MetricToVec},
 };
+
+/// Monotonic block timestamps → height. Lazily extended as new blocks are indexed.
+static HEIGHT_BY_MONOTONIC_TIMESTAMP: LazyLock<RwLock<RangeMap<Timestamp, Height>>> =
+    LazyLock::new(|| RwLock::new(RangeMap::default()));
 
 /// Estimated bytes per column header
 const CSV_HEADER_BYTES_PER_COL: usize = 10;
@@ -20,8 +26,8 @@ const CSV_HEADER_BYTES_PER_COL: usize = 10;
 const CSV_CELL_BYTES: usize = 15;
 
 impl Query {
-    pub fn match_metric(&self, metric: &Metric, limit: Limit) -> Vec<&'static str> {
-        self.vecs().matches(metric, limit)
+    pub fn search_metrics(&self, query: &SearchQuery) -> Vec<&'static str> {
+        self.vecs().matches(&query.q, query.limit)
     }
 
     pub fn metric_not_found_error(&self, metric: &Metric) -> Error {
@@ -40,7 +46,7 @@ impl Query {
 
         // Metric doesn't exist, suggest alternatives
         let matches = self
-            .match_metric(metric, Limit::DEFAULT)
+            .vecs().matches(metric, Limit::DEFAULT)
             .into_iter()
             .map(|s| s.to_string())
             .collect();
@@ -101,6 +107,15 @@ impl Query {
         Ok(csv)
     }
 
+    /// Returns the latest value for a single metric as a JSON value.
+    pub fn latest(&self, metric: &Metric, index: Index) -> Result<serde_json::Value> {
+        let vec = self
+            .vecs()
+            .get(metric, index)
+            .ok_or_else(|| self.metric_not_found_error(metric))?;
+        vec.last_json_value().ok_or(Error::NoData)
+    }
+
     /// Search for vecs matching the given metrics and index.
     /// Returns error if no metrics requested or any requested metric is not found.
     pub fn search(&self, params: &MetricSelection) -> Result<Vec<&'static dyn AnyExportableVec>> {
@@ -129,21 +144,29 @@ impl Query {
 
         let total = vecs.iter().map(|v| v.len()).min().unwrap_or(0);
         let version: Version = vecs.iter().map(|v| v.version()).sum();
+        let index = params.index;
 
-        let start = params
-            .start()
-            .map(|s| vecs.iter().map(|v| v.i64_to_usize(s)).min().unwrap_or(0))
-            .unwrap_or(0);
+        let start = match params.start() {
+            Some(ri) => {
+                let i = self.range_index_to_i64(ri, index)?;
+                vecs.iter().map(|v| v.i64_to_usize(i)).min().unwrap_or(0)
+            }
+            None => 0,
+        };
 
-        let end = params
-            .end_for_len(total)
-            .map(|e| {
+        let end = match params.end() {
+            Some(ri) => {
+                let i = self.range_index_to_i64(ri, index)?;
                 vecs.iter()
-                    .map(|v| v.i64_to_usize(e))
+                    .map(|v| v.i64_to_usize(i))
                     .min()
                     .unwrap_or(total)
-            })
-            .unwrap_or(total);
+            }
+            None => params
+                .limit()
+                .map(|l| (start + *l).min(total))
+                .unwrap_or(total),
+        };
 
         let weight = Self::weight(&vecs, Some(start as i64), Some(end as i64));
         if weight > max_weight {
@@ -211,6 +234,25 @@ impl Query {
         })
     }
 
+    /// Format a resolved query as raw data (just the JSON array, no MetricData wrapper).
+    pub fn format_raw(&self, resolved: ResolvedQuery) -> Result<MetricOutput> {
+        let ResolvedQuery {
+            vecs, version, total, start, end, ..
+        } = resolved;
+
+        let count = end.saturating_sub(start);
+        let mut buf = Vec::with_capacity(count * 12 + 2);
+        vecs[0].write_json(Some(start), Some(end), &mut buf)?;
+
+        Ok(MetricOutput {
+            output: Output::Json(buf),
+            version,
+            total,
+            start,
+            end,
+        })
+    }
+
     pub fn metric_to_index_to_vec(&self) -> &BTreeMap<&str, IndexToVec<'_>> {
         &self.vecs().metric_to_index_to_vec
     }
@@ -242,8 +284,74 @@ impl Query {
         self.vecs().index_to_ids(paginated_index)
     }
 
+    pub fn metric_info(&self, metric: &Metric) -> Option<MetricInfo> {
+        let index_to_vec = self.vecs().metric_to_index_to_vec.get(metric.replace("-", "_").as_str())?;
+        let value_type = index_to_vec.values().next()?.value_type_to_string();
+        let indexes = index_to_vec.keys().copied().collect();
+        Some(MetricInfo {
+            indexes,
+            value_type,
+        })
+    }
+
     pub fn metric_to_indexes(&self, metric: Metric) -> Option<&Vec<Index>> {
         self.vecs().metric_to_indexes(metric)
+    }
+
+    /// Resolve a RangeIndex to an i64 offset for the given index type.
+    fn range_index_to_i64(&self, ri: RangeIndex, index: Index) -> Result<i64> {
+        match ri {
+            RangeIndex::Int(i) => Ok(i),
+            RangeIndex::Date(date) => self.date_to_i64(date, index),
+            RangeIndex::Timestamp(ts) => self.timestamp_to_i64(ts, index),
+        }
+    }
+
+    fn date_to_i64(&self, date: Date, index: Index) -> Result<i64> {
+        // Direct date-based index conversion (day1, week1, month1, etc.)
+        if let Some(idx) = index.date_to_index(date) {
+            return Ok(idx as i64);
+        }
+        // Fall through to timestamp-based resolution (height, epoch, halving)
+        self.timestamp_to_i64(Timestamp::from(date), index)
+    }
+
+    fn timestamp_to_i64(&self, ts: Timestamp, index: Index) -> Result<i64> {
+        // Direct timestamp-based index conversion (minute10, hour1, etc.)
+        if let Some(idx) = index.timestamp_to_index(ts) {
+            return Ok(idx as i64);
+        }
+        // Height-based indexes: find block height, then convert
+        let height = Height::from(self.height_for_timestamp(ts));
+        match index {
+            Index::Height => Ok(usize::from(height) as i64),
+            Index::Epoch => Ok(usize::from(Epoch::from(height)) as i64),
+            Index::Halving => Ok(usize::from(Halving::from(height)) as i64),
+            _ => Err(Error::Parse(format!(
+                "date/timestamp ranges not supported for index '{index}'"
+            ))),
+        }
+    }
+
+    /// Find the first block height at or after a given timestamp.
+    /// O(log n) binary search. Lazily rebuilt as new blocks arrive.
+    fn height_for_timestamp(&self, ts: Timestamp) -> usize {
+        let current_height: usize = self.height().into();
+
+        // Fast path: read lock, ceil is &self
+        {
+            let map = HEIGHT_BY_MONOTONIC_TIMESTAMP.read();
+            if map.len() > current_height {
+                return map.ceil(ts).map(usize::from).unwrap_or(current_height);
+            }
+        }
+
+        // Slow path: rebuild from computer's precomputed monotonic timestamps
+        let mut map = HEIGHT_BY_MONOTONIC_TIMESTAMP.write();
+        if map.len() <= current_height {
+            *map = RangeMap::from(self.computer().blocks.time.timestamp_monotonic.collect());
+        }
+        map.ceil(ts).map(usize::from).unwrap_or(current_height)
     }
 
     /// Deprecated - format a resolved query as legacy output (expensive).

@@ -4,22 +4,27 @@ use brk_types::{
     EmptyOutputIndex, Height, OpReturnIndex, P2MSOutputIndex, TxIndex, UnknownOutputIndex, Version,
 };
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, ImportableVec, PcoVec, Rw, Stamp, StorageMode, WritableVec};
+use schemars::JsonSchema;
+use serde::Serialize;
+use vecdb::{
+    AnyStoredVec, Database, Formattable, ImportableVec, PcoVec, PcoVecValue, Rw, Stamp,
+    StorageMode, VecIndex, WritableVec,
+};
 
 use crate::parallel_import;
 
 #[derive(Traversable)]
+pub struct ScriptTypeVecs<I: VecIndex + PcoVecValue + Formattable + Serialize + JsonSchema, M: StorageMode = Rw> {
+    pub first_index: M::Stored<PcoVec<Height, I>>,
+    pub to_txindex: M::Stored<PcoVec<I, TxIndex>>,
+}
+
+#[derive(Traversable)]
 pub struct ScriptsVecs<M: StorageMode = Rw> {
-    // Height to first output index (per output type)
-    pub first_emptyoutputindex: M::Stored<PcoVec<Height, EmptyOutputIndex>>,
-    pub first_opreturnindex: M::Stored<PcoVec<Height, OpReturnIndex>>,
-    pub first_p2msoutputindex: M::Stored<PcoVec<Height, P2MSOutputIndex>>,
-    pub first_unknownoutputindex: M::Stored<PcoVec<Height, UnknownOutputIndex>>,
-    // Output index to txindex (per output type)
-    pub empty_to_txindex: M::Stored<PcoVec<EmptyOutputIndex, TxIndex>>,
-    pub opreturn_to_txindex: M::Stored<PcoVec<OpReturnIndex, TxIndex>>,
-    pub p2ms_to_txindex: M::Stored<PcoVec<P2MSOutputIndex, TxIndex>>,
-    pub unknown_to_txindex: M::Stored<PcoVec<UnknownOutputIndex, TxIndex>>,
+    pub empty: ScriptTypeVecs<EmptyOutputIndex, M>,
+    pub opreturn: ScriptTypeVecs<OpReturnIndex, M>,
+    pub p2ms: ScriptTypeVecs<P2MSOutputIndex, M>,
+    pub unknown: ScriptTypeVecs<UnknownOutputIndex, M>,
 }
 
 impl ScriptsVecs {
@@ -44,14 +49,10 @@ impl ScriptsVecs {
             unknownoutputindex_to_txindex = PcoVec::forced_import(db, "txindex", version),
         };
         Ok(Self {
-            first_emptyoutputindex,
-            first_opreturnindex,
-            first_p2msoutputindex,
-            first_unknownoutputindex,
-            empty_to_txindex: emptyoutputindex_to_txindex,
-            opreturn_to_txindex: opreturnindex_to_txindex,
-            p2ms_to_txindex: p2msoutputindex_to_txindex,
-            unknown_to_txindex: unknownoutputindex_to_txindex,
+            empty: ScriptTypeVecs { first_index: first_emptyoutputindex, to_txindex: emptyoutputindex_to_txindex },
+            opreturn: ScriptTypeVecs { first_index: first_opreturnindex, to_txindex: opreturnindex_to_txindex },
+            p2ms: ScriptTypeVecs { first_index: first_p2msoutputindex, to_txindex: p2msoutputindex_to_txindex },
+            unknown: ScriptTypeVecs { first_index: first_unknownoutputindex, to_txindex: unknownoutputindex_to_txindex },
         })
     }
 
@@ -64,35 +65,35 @@ impl ScriptsVecs {
         unknownoutputindex: UnknownOutputIndex,
         stamp: Stamp,
     ) -> Result<()> {
-        self.first_emptyoutputindex
+        self.empty.first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.first_opreturnindex
+        self.opreturn.first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.first_p2msoutputindex
+        self.p2ms.first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.first_unknownoutputindex
+        self.unknown.first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.empty_to_txindex
+        self.empty.to_txindex
             .truncate_if_needed_with_stamp(emptyoutputindex, stamp)?;
-        self.opreturn_to_txindex
+        self.opreturn.to_txindex
             .truncate_if_needed_with_stamp(opreturnindex, stamp)?;
-        self.p2ms_to_txindex
+        self.p2ms.to_txindex
             .truncate_if_needed_with_stamp(p2msoutputindex, stamp)?;
-        self.unknown_to_txindex
+        self.unknown.to_txindex
             .truncate_if_needed_with_stamp(unknownoutputindex, stamp)?;
         Ok(())
     }
 
     pub fn par_iter_mut_any(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
-            &mut self.first_emptyoutputindex as &mut dyn AnyStoredVec,
-            &mut self.first_opreturnindex,
-            &mut self.first_p2msoutputindex,
-            &mut self.first_unknownoutputindex,
-            &mut self.empty_to_txindex,
-            &mut self.opreturn_to_txindex,
-            &mut self.p2ms_to_txindex,
-            &mut self.unknown_to_txindex,
+            &mut self.empty.first_index as &mut dyn AnyStoredVec,
+            &mut self.opreturn.first_index,
+            &mut self.p2ms.first_index,
+            &mut self.unknown.first_index,
+            &mut self.empty.to_txindex,
+            &mut self.opreturn.to_txindex,
+            &mut self.p2ms.to_txindex,
+            &mut self.unknown.to_txindex,
         ]
         .into_par_iter()
     }

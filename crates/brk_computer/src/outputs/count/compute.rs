@@ -31,7 +31,7 @@ impl Vecs {
                 )
             })?;
 
-        self.utxo_count.height.compute_transform3(
+        self.unspent.height.compute_transform3(
             starting_indexes.height,
             &self.total.full.cumulative,
             &inputs_count.full.cumulative,

@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -18,15 +19,20 @@ pub struct MetricCount {
     /// Number of eager (stored on disk) metric-index combinations
     #[schemars(example = 16000)]
     pub stored_endpoints: usize,
+    #[serde(skip)]
+    seen: FxHashSet<String>,
 }
 
 impl MetricCount {
-    pub fn add_endpoint(&mut self, is_lazy: bool) {
+    pub fn add_endpoint(&mut self, name: &str, is_lazy: bool) {
         self.total_endpoints += 1;
         if is_lazy {
             self.lazy_endpoints += 1;
         } else {
             self.stored_endpoints += 1;
+        }
+        if self.seen.insert(name.to_string()) {
+            self.distinct_metrics += 1;
         }
     }
 }

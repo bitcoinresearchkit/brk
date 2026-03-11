@@ -21,7 +21,7 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            utxo_count: ComputedPerBlock::forced_import(
+            unspent: ComputedPerBlock::forced_import(
                 db,
                 "exact_utxo_count",
                 version,

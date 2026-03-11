@@ -58,13 +58,13 @@ impl Vecs {
         )?;
 
         // Annualized volume: rolling 1y sum of per-block sent volume
-        self.annualized_volume.sats.height.compute_rolling_sum(
+        self.annualized.sats.height.compute_rolling_sum(
             starting_indexes.height,
             &blocks.lookback._1y,
             &self.sent_sum.sats,
             exit,
         )?;
-        self.annualized_volume
+        self.annualized
             .compute(prices, starting_indexes.height, exit)?;
 
         self.tx_per_sec

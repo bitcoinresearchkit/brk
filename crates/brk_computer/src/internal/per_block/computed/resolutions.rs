@@ -1,7 +1,7 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, Epoch, FromCoarserIndex, Halving, Height, Hour1, Hour4, Hour12,
-    Minute10, Minute30, Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Day1, Day3, Epoch, FromCoarserIndex, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30,
+    Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
@@ -70,7 +70,7 @@ where
             };
         }
 
-        fn for_each_range_from_coarser<
+        fn for_each_range<
             I: VecIndex,
             O: VecValue,
             S1I: VecIndex + FromCoarserIndex<I>,
@@ -103,7 +103,7 @@ where
                     version,
                     height_source.clone(),
                     indexes.$idx.identity.read_only_boxed_clone(),
-                    for_each_range_from_coarser,
+                    for_each_range,
                 )
             };
         }

@@ -20,8 +20,8 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.first_p2aaddressindex,
-                    &indexer.vecs.addresses.p2abytes,
+                    &indexer.vecs.addresses.p2a.first_index,
+                    &indexer.vecs.addresses.p2a.bytes,
                     exit,
                 )?)
             })?;
@@ -30,8 +30,8 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.scripts.first_p2msoutputindex,
-                    &indexer.vecs.scripts.p2ms_to_txindex,
+                    &indexer.vecs.scripts.p2ms.first_index,
+                    &indexer.vecs.scripts.p2ms.to_txindex,
                     exit,
                 )?)
             })?;
@@ -40,8 +40,8 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.first_p2pk33addressindex,
-                    &indexer.vecs.addresses.p2pk33bytes,
+                    &indexer.vecs.addresses.p2pk33.first_index,
+                    &indexer.vecs.addresses.p2pk33.bytes,
                     exit,
                 )?)
             })?;
@@ -50,8 +50,8 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.first_p2pk65addressindex,
-                    &indexer.vecs.addresses.p2pk65bytes,
+                    &indexer.vecs.addresses.p2pk65.first_index,
+                    &indexer.vecs.addresses.p2pk65.bytes,
                     exit,
                 )?)
             })?;
@@ -60,8 +60,8 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.first_p2pkhaddressindex,
-                    &indexer.vecs.addresses.p2pkhbytes,
+                    &indexer.vecs.addresses.p2pkh.first_index,
+                    &indexer.vecs.addresses.p2pkh.bytes,
                     exit,
                 )?)
             })?;
@@ -70,8 +70,8 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.first_p2shaddressindex,
-                    &indexer.vecs.addresses.p2shbytes,
+                    &indexer.vecs.addresses.p2sh.first_index,
+                    &indexer.vecs.addresses.p2sh.bytes,
                     exit,
                 )?)
             })?;
@@ -80,8 +80,8 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.first_p2traddressindex,
-                    &indexer.vecs.addresses.p2trbytes,
+                    &indexer.vecs.addresses.p2tr.first_index,
+                    &indexer.vecs.addresses.p2tr.bytes,
                     exit,
                 )?)
             })?;
@@ -90,8 +90,8 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.first_p2wpkhaddressindex,
-                    &indexer.vecs.addresses.p2wpkhbytes,
+                    &indexer.vecs.addresses.p2wpkh.first_index,
+                    &indexer.vecs.addresses.p2wpkh.bytes,
                     exit,
                 )?)
             })?;
@@ -100,8 +100,8 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.first_p2wshaddressindex,
-                    &indexer.vecs.addresses.p2wshbytes,
+                    &indexer.vecs.addresses.p2wsh.first_index,
+                    &indexer.vecs.addresses.p2wsh.bytes,
                     exit,
                 )?)
             })?;
@@ -110,8 +110,8 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.scripts.first_opreturnindex,
-                    &indexer.vecs.scripts.opreturn_to_txindex,
+                    &indexer.vecs.scripts.opreturn.first_index,
+                    &indexer.vecs.scripts.opreturn.to_txindex,
                     exit,
                 )?)
             })?;
@@ -120,8 +120,8 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.scripts.first_unknownoutputindex,
-                    &indexer.vecs.scripts.unknown_to_txindex,
+                    &indexer.vecs.scripts.unknown.first_index,
+                    &indexer.vecs.scripts.unknown.to_txindex,
                     exit,
                 )?)
             })?;
@@ -130,8 +130,8 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.scripts.first_emptyoutputindex,
-                    &indexer.vecs.scripts.empty_to_txindex,
+                    &indexer.vecs.scripts.empty.first_index,
+                    &indexer.vecs.scripts.empty.to_txindex,
                     exit,
                 )?)
             })?;

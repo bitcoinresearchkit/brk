@@ -18,7 +18,7 @@ impl Vecs {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let price = Price::forced_import(db, "price_ath", v, indexes)?;
+        let high = Price::forced_import(db, "price_ath", v, indexes)?;
 
         let max_days_between =
             ComputedPerBlock::forced_import(db, "max_days_between_price_ath", v, indexes)?;
@@ -41,7 +41,7 @@ impl Vecs {
         let drawdown = PercentPerBlock::forced_import(db, "price_drawdown", v, indexes)?;
 
         Ok(Self {
-            price,
+            high,
             drawdown,
             days_since,
             years_since,

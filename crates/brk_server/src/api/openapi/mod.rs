@@ -35,8 +35,9 @@ pub fn create_openapi() -> OpenApi {
 
 ```bash
 curl -s https://bitview.space/api/block-height/0
-curl -s https://bitview.space/api/metrics/search/price
-curl -s https://bitview.space/api/metric/price/day1
+curl -s https://bitview.space/api/metrics/search?q=price
+curl -s https://bitview.space/api/metric/price/day
+curl -s https://bitview.space/api/metric/price/day/latest
 ```
 
 ### Errors

@@ -57,6 +57,7 @@ fn error_status(e: &BrkError) -> StatusCode {
         BrkError::UnknownAddress
         | BrkError::UnknownTxid
         | BrkError::NotFound(_)
+        | BrkError::NoData
         | BrkError::MetricNotFound(_) => StatusCode::NOT_FOUND,
 
         BrkError::AuthFailed => StatusCode::FORBIDDEN,
@@ -79,6 +80,7 @@ fn error_code(e: &BrkError) -> &'static str {
         BrkError::UnknownAddress => "unknown_address",
         BrkError::UnknownTxid => "unknown_txid",
         BrkError::NotFound(_) => "not_found",
+        BrkError::NoData => "no_data",
         BrkError::MetricNotFound(_) => "metric_not_found",
         BrkError::MempoolNotAvailable => "mempool_not_available",
         BrkError::AuthFailed => "auth_failed",

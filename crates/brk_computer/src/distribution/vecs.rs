@@ -45,8 +45,10 @@ pub struct AddressMetricsVecs<M: StorageMode = Rw> {
     pub total: TotalAddrCountVecs<M>,
     pub new: NewAddrCountVecs<M>,
     pub delta: DeltaVecs<M>,
+    #[traversable(wrap = "indexes", rename = "funded")]
     pub funded_index:
         LazyVecFrom1<FundedAddressIndex, FundedAddressIndex, FundedAddressIndex, FundedAddressData>,
+    #[traversable(wrap = "indexes", rename = "empty")]
     pub empty_index:
         LazyVecFrom1<EmptyAddressIndex, EmptyAddressIndex, EmptyAddressIndex, EmptyAddressData>,
 }
@@ -59,9 +61,13 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub states_path: PathBuf,
 
     pub supply_state: M::Stored<BytesVec<Height, SupplyState>>,
+    #[traversable(wrap = "addresses", rename = "indexes")]
     pub any_address_indexes: AnyAddressIndexesVecs<M>,
+    #[traversable(wrap = "addresses", rename = "data")]
     pub addresses_data: AddressesDataVecs<M>,
+    #[traversable(wrap = "cohorts", rename = "utxo")]
     pub utxo_cohorts: UTXOCohorts<M>,
+    #[traversable(wrap = "cohorts", rename = "address")]
     pub address_cohorts: AddressCohorts<M>,
     pub coinblocks_destroyed: ComputedPerBlockCumulative<StoredF64, M>,
     pub addresses: AddressMetricsVecs<M>,
@@ -213,7 +219,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let cache_target_len = prices
-            .price
+            .spot
             .cents
             .height
             .len()
@@ -225,7 +231,7 @@ impl Vecs {
             self.cached_price_range_max.truncate(cache_target_len);
         } else if cache_target_len > cache_current_len {
             let new_prices = prices
-                .price
+                .spot
                 .cents
                 .height
                 .collect_range_at(cache_current_len, cache_target_len);

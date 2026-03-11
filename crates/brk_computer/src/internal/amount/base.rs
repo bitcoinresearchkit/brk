@@ -59,7 +59,7 @@ impl Amount<Height> {
         self.cents.compute_binary::<Sats, Cents, SatsToCents>(
             max_from,
             &self.sats,
-            &prices.price.cents.height,
+            &prices.spot.cents.height,
             exit,
         )?;
         Ok(())

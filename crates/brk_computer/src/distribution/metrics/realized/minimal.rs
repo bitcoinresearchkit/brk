@@ -182,7 +182,7 @@ impl RealizedMinimal {
 
         self.nupl.bps.height.compute_transform2(
             starting_indexes.height,
-            &prices.price.cents.height,
+            &prices.spot.cents.height,
             &self.price.cents.height,
             |(i, price, realized_price, ..)| {
                 let p = price.as_u128();

@@ -6,21 +6,21 @@ use super::CohortName;
 
 /// "At least X% profit" threshold names (15 thresholds).
 pub const PROFIT_NAMES: ByProfit<CohortName> = ByProfit {
-    breakeven: CohortName::new("profit_ge_breakeven", "≥0%", "In Profit (Breakeven+)"),
-    _10pct: CohortName::new("profit_ge_10pct", "≥10%", "10%+ Profit"),
-    _20pct: CohortName::new("profit_ge_20pct", "≥20%", "20%+ Profit"),
-    _30pct: CohortName::new("profit_ge_30pct", "≥30%", "30%+ Profit"),
-    _40pct: CohortName::new("profit_ge_40pct", "≥40%", "40%+ Profit"),
-    _50pct: CohortName::new("profit_ge_50pct", "≥50%", "50%+ Profit"),
-    _60pct: CohortName::new("profit_ge_60pct", "≥60%", "60%+ Profit"),
-    _70pct: CohortName::new("profit_ge_70pct", "≥70%", "70%+ Profit"),
-    _80pct: CohortName::new("profit_ge_80pct", "≥80%", "80%+ Profit"),
-    _90pct: CohortName::new("profit_ge_90pct", "≥90%", "90%+ Profit"),
-    _100pct: CohortName::new("profit_ge_100pct", "≥100%", "100%+ Profit"),
-    _200pct: CohortName::new("profit_ge_200pct", "≥200%", "200%+ Profit"),
-    _300pct: CohortName::new("profit_ge_300pct", "≥300%", "300%+ Profit"),
-    _500pct: CohortName::new("profit_ge_500pct", "≥500%", "500%+ Profit"),
-    _1000pct: CohortName::new("profit_ge_1000pct", "≥1000%", "1000%+ Profit"),
+    breakeven: CohortName::new("utxos_in_profit", "≥0%", "In Profit (Breakeven+)"),
+    _10pct: CohortName::new("utxos_over_10pct_in_profit", "≥10%", "10%+ Profit"),
+    _20pct: CohortName::new("utxos_over_20pct_in_profit", "≥20%", "20%+ Profit"),
+    _30pct: CohortName::new("utxos_over_30pct_in_profit", "≥30%", "30%+ Profit"),
+    _40pct: CohortName::new("utxos_over_40pct_in_profit", "≥40%", "40%+ Profit"),
+    _50pct: CohortName::new("utxos_over_50pct_in_profit", "≥50%", "50%+ Profit"),
+    _60pct: CohortName::new("utxos_over_60pct_in_profit", "≥60%", "60%+ Profit"),
+    _70pct: CohortName::new("utxos_over_70pct_in_profit", "≥70%", "70%+ Profit"),
+    _80pct: CohortName::new("utxos_over_80pct_in_profit", "≥80%", "80%+ Profit"),
+    _90pct: CohortName::new("utxos_over_90pct_in_profit", "≥90%", "90%+ Profit"),
+    _100pct: CohortName::new("utxos_over_100pct_in_profit", "≥100%", "100%+ Profit"),
+    _200pct: CohortName::new("utxos_over_200pct_in_profit", "≥200%", "200%+ Profit"),
+    _300pct: CohortName::new("utxos_over_300pct_in_profit", "≥300%", "300%+ Profit"),
+    _500pct: CohortName::new("utxos_over_500pct_in_profit", "≥500%", "500%+ Profit"),
+    _1000pct: CohortName::new("utxos_over_1000pct_in_profit", "≥1000%", "1000%+ Profit"),
 };
 
 /// Number of profit thresholds.

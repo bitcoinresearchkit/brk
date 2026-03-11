@@ -16,7 +16,11 @@ Free, no auth required. JSON and CSV output. Mempool.space compatible for block/
 
 Search for metrics by keyword:
 
-    GET /api/metrics/search/{query}
+    GET /api/metrics/search?q={query}
+
+Get metric info (available indexes, value type):
+
+    GET /api/metric/{metric}
 
 Browse all available metrics:
 
@@ -35,17 +39,26 @@ Browse the full metric catalog as a tree:
 Get a metric by name and index:
 
     GET /api/metric/{metric}/{index}
+    GET /api/metric/{metric}/{index}?start=2025-01-01&end=2025-06-01
     GET /api/metric/{metric}/{index}?start=-30
+
+Get just the data array (no wrapper):
+
+    GET /api/metric/{metric}/{index}/data
+
+Get the latest value:
+
+    GET /api/metric/{metric}/{index}/latest
 
 Example — last 30 days of Bitcoin closing price:
 
-    GET /api/metric/close/1d?start=-30
+    GET /api/metric/price/day?start=-30
 
 Fetch multiple metrics at once:
 
     GET /api/metrics/bulk?index={index}&metrics={metric1},{metric2}
 
-See the `MetricData` schema and query parameters (`start`, `end`, `limit`) in the [OpenAPI spec](https://bitview.space/api.json).
+Range parameters `start` and `end` accept integers, dates (YYYY-MM-DD), or ISO 8601 timestamps. See the [OpenAPI spec](https://bitview.space/api.json) for full details.
 
 ## Block Explorer
 

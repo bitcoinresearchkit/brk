@@ -94,7 +94,7 @@ impl Vecs {
                 identity: LazyVecFrom1::init(
                     "p2pk33addressindex",
                     version,
-                    indexer.vecs.addresses.p2pk33bytes.read_only_boxed_clone(),
+                    indexer.vecs.addresses.p2pk33.bytes.read_only_boxed_clone(),
                     |index, _| index,
                 ),
             },
@@ -102,7 +102,7 @@ impl Vecs {
                 identity: LazyVecFrom1::init(
                     "p2pk65addressindex",
                     version,
-                    indexer.vecs.addresses.p2pk65bytes.read_only_boxed_clone(),
+                    indexer.vecs.addresses.p2pk65.bytes.read_only_boxed_clone(),
                     |index, _| index,
                 ),
             },
@@ -110,7 +110,7 @@ impl Vecs {
                 identity: LazyVecFrom1::init(
                     "p2pkhaddressindex",
                     version,
-                    indexer.vecs.addresses.p2pkhbytes.read_only_boxed_clone(),
+                    indexer.vecs.addresses.p2pkh.bytes.read_only_boxed_clone(),
                     |index, _| index,
                 ),
             },
@@ -118,7 +118,7 @@ impl Vecs {
                 identity: LazyVecFrom1::init(
                     "p2shaddressindex",
                     version,
-                    indexer.vecs.addresses.p2shbytes.read_only_boxed_clone(),
+                    indexer.vecs.addresses.p2sh.bytes.read_only_boxed_clone(),
                     |index, _| index,
                 ),
             },
@@ -126,7 +126,7 @@ impl Vecs {
                 identity: LazyVecFrom1::init(
                     "p2traddressindex",
                     version,
-                    indexer.vecs.addresses.p2trbytes.read_only_boxed_clone(),
+                    indexer.vecs.addresses.p2tr.bytes.read_only_boxed_clone(),
                     |index, _| index,
                 ),
             },
@@ -134,7 +134,7 @@ impl Vecs {
                 identity: LazyVecFrom1::init(
                     "p2wpkhaddressindex",
                     version,
-                    indexer.vecs.addresses.p2wpkhbytes.read_only_boxed_clone(),
+                    indexer.vecs.addresses.p2wpkh.bytes.read_only_boxed_clone(),
                     |index, _| index,
                 ),
             },
@@ -142,7 +142,7 @@ impl Vecs {
                 identity: LazyVecFrom1::init(
                     "p2wshaddressindex",
                     version,
-                    indexer.vecs.addresses.p2wshbytes.read_only_boxed_clone(),
+                    indexer.vecs.addresses.p2wsh.bytes.read_only_boxed_clone(),
                     |index, _| index,
                 ),
             },
@@ -150,7 +150,7 @@ impl Vecs {
                 identity: LazyVecFrom1::init(
                     "p2aaddressindex",
                     version,
-                    indexer.vecs.addresses.p2abytes.read_only_boxed_clone(),
+                    indexer.vecs.addresses.p2a.bytes.read_only_boxed_clone(),
                     |index, _| index,
                 ),
             },
@@ -158,7 +158,7 @@ impl Vecs {
                 identity: LazyVecFrom1::init(
                     "p2msoutputindex",
                     version,
-                    indexer.vecs.scripts.p2ms_to_txindex.read_only_boxed_clone(),
+                    indexer.vecs.scripts.p2ms.to_txindex.read_only_boxed_clone(),
                     |index, _| index,
                 ),
             },
@@ -169,7 +169,7 @@ impl Vecs {
                     indexer
                         .vecs
                         .scripts
-                        .empty_to_txindex
+                        .empty.to_txindex
                         .read_only_boxed_clone(),
                     |index, _| index,
                 ),
@@ -181,7 +181,7 @@ impl Vecs {
                     indexer
                         .vecs
                         .scripts
-                        .unknown_to_txindex
+                        .unknown.to_txindex
                         .read_only_boxed_clone(),
                     |index, _| index,
                 ),
@@ -193,7 +193,7 @@ impl Vecs {
                     indexer
                         .vecs
                         .scripts
-                        .opreturn_to_txindex
+                        .opreturn.to_txindex
                         .read_only_boxed_clone(),
                     |index, _| index,
                 ),

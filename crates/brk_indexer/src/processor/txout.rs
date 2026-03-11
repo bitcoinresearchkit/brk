@@ -168,25 +168,25 @@ pub(super) fn finalize_outputs(
             match outputtype {
                 OutputType::P2MS => {
                     scripts
-                        .p2ms_to_txindex
+                        .p2ms.to_txindex
                         .checked_push(indexes.p2msoutputindex, txindex)?;
                     indexes.p2msoutputindex.copy_then_increment()
                 }
                 OutputType::OpReturn => {
                     scripts
-                        .opreturn_to_txindex
+                        .opreturn.to_txindex
                         .checked_push(indexes.opreturnindex, txindex)?;
                     indexes.opreturnindex.copy_then_increment()
                 }
                 OutputType::Empty => {
                     scripts
-                        .empty_to_txindex
+                        .empty.to_txindex
                         .checked_push(indexes.emptyoutputindex, txindex)?;
                     indexes.emptyoutputindex.copy_then_increment()
                 }
                 OutputType::Unknown => {
                     scripts
-                        .unknown_to_txindex
+                        .unknown.to_txindex
                         .checked_push(indexes.unknownoutputindex, txindex)?;
                     indexes.unknownoutputindex.copy_then_increment()
                 }

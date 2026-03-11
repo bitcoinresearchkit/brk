@@ -67,7 +67,7 @@ impl PrintableIndex for Hour1 {
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["1h", "hour1"]
+        &["1h", "h", "hour", "hourly", "hour1"]
     }
 }
 

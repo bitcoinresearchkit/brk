@@ -117,7 +117,7 @@ pub enum Error {
     #[error("{0}")]
     OutOfRange(String),
 
-    #[error("Parse error: {0}")]
+    #[error("{0}")]
     Parse(String),
 
     #[error("Internal error: {0}")]
@@ -135,6 +135,9 @@ pub enum Error {
 
     #[error("No metrics specified")]
     NoMetrics,
+
+    #[error("No data available")]
+    NoData,
 
     #[error("Request weight {requested} exceeds maximum {max}")]
     WeightExceeded { requested: usize, max: usize },

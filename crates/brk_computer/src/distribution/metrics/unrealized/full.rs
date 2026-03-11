@@ -136,7 +136,7 @@ impl UnrealizedFull {
             starting_indexes.height,
             &self.inner.investor_cap_in_loss_raw,
             &self.inner.invested_capital_in_loss_raw,
-            &prices.price.cents.height,
+            &prices.spot.cents.height,
             |(h, investor_cap, invested_cap, spot, ..)| {
                 if invested_cap.inner() == 0 {
                     return (h, Cents::ZERO);
@@ -152,7 +152,7 @@ impl UnrealizedFull {
             starting_indexes.height,
             &self.inner.investor_cap_in_profit_raw,
             &self.inner.invested_capital_in_profit_raw,
-            &prices.price.cents.height,
+            &prices.spot.cents.height,
             |(h, investor_cap, invested_cap, spot, ..)| {
                 if invested_cap.inner() == 0 {
                     return (h, Cents::ZERO);

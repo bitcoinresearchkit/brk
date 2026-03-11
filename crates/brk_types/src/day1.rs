@@ -202,7 +202,7 @@ impl PrintableIndex for Day1 {
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["1d", "d", "date", "daily", "day1", "dateindex"]
+        &["1d", "d", "day", "date", "daily", "day1", "dateindex"]
     }
 }
 

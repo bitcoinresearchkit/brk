@@ -144,42 +144,42 @@ pub(crate) fn process_blocks(
     let first_p2a_vec = indexer
         .vecs
         .addresses
-        .first_p2aaddressindex
+        .p2a.first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2pk33_vec = indexer
         .vecs
         .addresses
-        .first_p2pk33addressindex
+        .p2pk33.first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2pk65_vec = indexer
         .vecs
         .addresses
-        .first_p2pk65addressindex
+        .p2pk65.first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2pkh_vec = indexer
         .vecs
         .addresses
-        .first_p2pkhaddressindex
+        .p2pkh.first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2sh_vec = indexer
         .vecs
         .addresses
-        .first_p2shaddressindex
+        .p2sh.first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2tr_vec = indexer
         .vecs
         .addresses
-        .first_p2traddressindex
+        .p2tr.first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2wpkh_vec = indexer
         .vecs
         .addresses
-        .first_p2wpkhaddressindex
+        .p2wpkh.first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2wsh_vec = indexer
         .vecs
         .addresses
-        .first_p2wshaddressindex
+        .p2wsh.first_index
         .collect_range_at(start_usize, end_usize);
 
     // Track running totals - recover from previous height if resuming

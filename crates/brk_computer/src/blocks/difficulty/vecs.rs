@@ -9,6 +9,6 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub as_hash: ComputedPerBlock<StoredF64, M>,
     pub adjustment: PercentPerBlock<BasisPointsSigned32, M>,
     pub epoch: ComputedPerBlock<Epoch, M>,
-    pub blocks_before_next_adjustment: ComputedPerBlock<StoredU32, M>,
-    pub days_before_next_adjustment: ComputedPerBlock<StoredF32, M>,
+    pub blocks_before_next: ComputedPerBlock<StoredU32, M>,
+    pub days_before_next: ComputedPerBlock<StoredF32, M>,
 }

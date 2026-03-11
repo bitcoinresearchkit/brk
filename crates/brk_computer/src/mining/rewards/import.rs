@@ -23,7 +23,7 @@ impl Vecs {
             )?,
             subsidy: AmountPerBlockCumulative::forced_import(db, "subsidy", version, indexes)?,
             fees: AmountPerBlockFull::forced_import(db, "fees", version, indexes)?,
-            unclaimed_rewards: AmountPerBlockCumulativeSum::forced_import(
+            unclaimed: AmountPerBlockCumulativeSum::forced_import(
                 db,
                 "unclaimed_rewards",
                 version,

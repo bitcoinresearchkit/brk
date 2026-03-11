@@ -8,3 +8,4 @@ mod price;
 mod transaction;
 
 pub use block::BLOCK_TXS_PAGE_SIZE;
+pub use metrics::ResolvedQuery;

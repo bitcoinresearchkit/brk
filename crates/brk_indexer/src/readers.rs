@@ -39,14 +39,14 @@ impl Readers {
             txoutindex_to_outputtype: vecs.outputs.outputtype.reader(),
             txoutindex_to_typeindex: vecs.outputs.typeindex.reader(),
             addressbytes: AddressReaders {
-                p2pk65: vecs.addresses.p2pk65bytes.reader(),
-                p2pk33: vecs.addresses.p2pk33bytes.reader(),
-                p2pkh: vecs.addresses.p2pkhbytes.reader(),
-                p2sh: vecs.addresses.p2shbytes.reader(),
-                p2wpkh: vecs.addresses.p2wpkhbytes.reader(),
-                p2wsh: vecs.addresses.p2wshbytes.reader(),
-                p2tr: vecs.addresses.p2trbytes.reader(),
-                p2a: vecs.addresses.p2abytes.reader(),
+                p2pk65: vecs.addresses.p2pk65.bytes.reader(),
+                p2pk33: vecs.addresses.p2pk33.bytes.reader(),
+                p2pkh: vecs.addresses.p2pkh.bytes.reader(),
+                p2sh: vecs.addresses.p2sh.bytes.reader(),
+                p2wpkh: vecs.addresses.p2wpkh.bytes.reader(),
+                p2wsh: vecs.addresses.p2wsh.bytes.reader(),
+                p2tr: vecs.addresses.p2tr.bytes.reader(),
+                p2a: vecs.addresses.p2a.bytes.reader(),
             },
         }
     }

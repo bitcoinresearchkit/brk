@@ -23,7 +23,7 @@ impl Vecs {
 
         self.hodl_bank.compute_cumulative_transformed_binary(
             starting_indexes.height,
-            &prices.price.usd.height,
+            &prices.spot.usd.height,
             &self.vocdd_median_1y,
             |price, median| StoredF64::from(f64::from(price) - f64::from(median)),
             exit,
@@ -31,7 +31,7 @@ impl Vecs {
 
         self.value.height.compute_divide(
             starting_indexes.height,
-            &prices.price.usd.height,
+            &prices.spot.usd.height,
             &self.hodl_bank,
             exit,
         )?;

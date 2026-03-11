@@ -15,13 +15,13 @@ impl Vecs {
 
         Ok(Self {
             epoch: ComputedPerBlock::forced_import(db, "halving_epoch", version, indexes)?,
-            blocks_before_next_halving: ComputedPerBlock::forced_import(
+            blocks_before_next: ComputedPerBlock::forced_import(
                 db,
                 "blocks_before_next_halving",
                 version + v2,
                 indexes,
             )?,
-            days_before_next_halving: ComputedPerBlock::forced_import(
+            days_before_next: ComputedPerBlock::forced_import(
                 db,
                 "days_before_next_halving",
                 version + v2,

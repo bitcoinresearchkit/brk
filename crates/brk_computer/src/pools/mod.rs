@@ -120,14 +120,14 @@ impl Vecs {
         let first_txoutindex = indexer.vecs.transactions.first_txoutindex.reader();
         let outputtype = indexer.vecs.outputs.outputtype.reader();
         let typeindex = indexer.vecs.outputs.typeindex.reader();
-        let p2pk65 = indexer.vecs.addresses.p2pk65bytes.reader();
-        let p2pk33 = indexer.vecs.addresses.p2pk33bytes.reader();
-        let p2pkh = indexer.vecs.addresses.p2pkhbytes.reader();
-        let p2sh = indexer.vecs.addresses.p2shbytes.reader();
-        let p2wpkh = indexer.vecs.addresses.p2wpkhbytes.reader();
-        let p2wsh = indexer.vecs.addresses.p2wshbytes.reader();
-        let p2tr = indexer.vecs.addresses.p2trbytes.reader();
-        let p2a = indexer.vecs.addresses.p2abytes.reader();
+        let p2pk65 = indexer.vecs.addresses.p2pk65.bytes.reader();
+        let p2pk33 = indexer.vecs.addresses.p2pk33.bytes.reader();
+        let p2pkh = indexer.vecs.addresses.p2pkh.bytes.reader();
+        let p2sh = indexer.vecs.addresses.p2sh.bytes.reader();
+        let p2wpkh = indexer.vecs.addresses.p2wpkh.bytes.reader();
+        let p2wsh = indexer.vecs.addresses.p2wsh.bytes.reader();
+        let p2tr = indexer.vecs.addresses.p2tr.bytes.reader();
+        let p2a = indexer.vecs.addresses.p2a.bytes.reader();
 
         let unknown = self.pools.get_unknown();
 

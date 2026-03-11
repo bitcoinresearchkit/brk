@@ -60,7 +60,7 @@ impl AmountPerBlockCumulativeSum {
             .compute_binary::<Sats, Cents, SatsToCents>(
                 max_from,
                 &self.base.sats.height,
-                &prices.price.cents.height,
+                &prices.spot.cents.height,
                 exit,
             )?;
 

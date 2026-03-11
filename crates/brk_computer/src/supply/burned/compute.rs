@@ -60,7 +60,7 @@ impl Vecs {
         // 2. Compute unspendable supply = opreturn + unclaimed_rewards + genesis (at height 0)
         // Get reference to opreturn height vec for computing unspendable
         let opreturn_height = &self.opreturn.base.sats.height;
-        let unclaimed_height = &mining.rewards.unclaimed_rewards.base.sats.height;
+        let unclaimed_height = &mining.rewards.unclaimed.base.sats.height;
 
         self.unspendable.compute(
             starting_indexes.height,

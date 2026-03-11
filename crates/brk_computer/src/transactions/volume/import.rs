@@ -23,7 +23,7 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            annualized_volume: AmountPerBlock::forced_import(
+            annualized: AmountPerBlock::forced_import(
                 db,
                 "annualized_volume",
                 version,

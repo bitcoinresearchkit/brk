@@ -124,6 +124,13 @@ impl From<usize> for Timestamp {
     }
 }
 
+impl From<Timestamp> for usize {
+    #[inline]
+    fn from(value: Timestamp) -> Self {
+        value.0 as usize
+    }
+}
+
 impl From<Date> for Timestamp {
     #[inline]
     fn from(value: Date) -> Self {

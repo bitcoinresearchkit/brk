@@ -8,7 +8,7 @@ use crate::internal::{AmountPerBlock, AmountPerBlockRolling, ComputedPerBlock};
 pub struct Vecs<M: StorageMode = Rw> {
     pub sent_sum: AmountPerBlockRolling<M>,
     pub received_sum: AmountPerBlockRolling<M>,
-    pub annualized_volume: AmountPerBlock<M>,
+    pub annualized: AmountPerBlock<M>,
     pub tx_per_sec: ComputedPerBlock<StoredF32, M>,
     pub outputs_per_sec: ComputedPerBlock<StoredF32, M>,
     pub inputs_per_sec: ComputedPerBlock<StoredF32, M>,

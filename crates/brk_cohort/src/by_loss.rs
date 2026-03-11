@@ -6,16 +6,16 @@ use super::CohortName;
 
 /// "At least X% loss" threshold names (10 thresholds).
 pub const LOSS_NAMES: ByLoss<CohortName> = ByLoss {
-    breakeven: CohortName::new("loss_ge_breakeven", "<0%", "In Loss (Below Breakeven)"),
-    _10pct: CohortName::new("loss_ge_10pct", "≥10%L", "10%+ Loss"),
-    _20pct: CohortName::new("loss_ge_20pct", "≥20%L", "20%+ Loss"),
-    _30pct: CohortName::new("loss_ge_30pct", "≥30%L", "30%+ Loss"),
-    _40pct: CohortName::new("loss_ge_40pct", "≥40%L", "40%+ Loss"),
-    _50pct: CohortName::new("loss_ge_50pct", "≥50%L", "50%+ Loss"),
-    _60pct: CohortName::new("loss_ge_60pct", "≥60%L", "60%+ Loss"),
-    _70pct: CohortName::new("loss_ge_70pct", "≥70%L", "70%+ Loss"),
-    _80pct: CohortName::new("loss_ge_80pct", "≥80%L", "80%+ Loss"),
-    _90pct: CohortName::new("loss_ge_90pct", "≥90%L", "90%+ Loss"),
+    breakeven: CohortName::new("utxos_in_loss", "<0%", "In Loss (Below Breakeven)"),
+    _10pct: CohortName::new("utxos_over_10pct_in_loss", "≥10%L", "10%+ Loss"),
+    _20pct: CohortName::new("utxos_over_20pct_in_loss", "≥20%L", "20%+ Loss"),
+    _30pct: CohortName::new("utxos_over_30pct_in_loss", "≥30%L", "30%+ Loss"),
+    _40pct: CohortName::new("utxos_over_40pct_in_loss", "≥40%L", "40%+ Loss"),
+    _50pct: CohortName::new("utxos_over_50pct_in_loss", "≥50%L", "50%+ Loss"),
+    _60pct: CohortName::new("utxos_over_60pct_in_loss", "≥60%L", "60%+ Loss"),
+    _70pct: CohortName::new("utxos_over_70pct_in_loss", "≥70%L", "70%+ Loss"),
+    _80pct: CohortName::new("utxos_over_80pct_in_loss", "≥80%L", "80%+ Loss"),
+    _90pct: CohortName::new("utxos_over_90pct_in_loss", "≥90%L", "90%+ Loss"),
 };
 
 /// Number of loss thresholds.
