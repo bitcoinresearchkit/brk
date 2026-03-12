@@ -48,7 +48,6 @@
 /**
  * @typedef {Object} AddressTxidsParam
  * @property {(Txid|null)=} afterTxid - Txid to paginate from (return transactions before this one)
- * @property {number=} limit - Maximum number of results to return. Defaults to 25 if not specified.
  */
 /**
  * Address validation result
@@ -603,13 +602,17 @@
  * @typedef {Object} PaginatedMetrics
  * @property {number} currentPage - Current page number (0-indexed)
  * @property {number} maxPage - Maximum valid page index (0-indexed)
- * @property {string[]} metrics - List of metric names (max 1000 per page)
+ * @property {number} totalCount - Total number of metrics
+ * @property {number} perPage - Results per page
+ * @property {boolean} hasMore - Whether more pages are available after the current one
+ * @property {string[]} metrics - List of metric names
  */
 /**
  * Pagination parameters for paginated API endpoints
  *
  * @typedef {Object} Pagination
  * @property {?number=} page - Pagination index
+ * @property {?number=} perPage - Results per page (default: 1000, max: 1000)
  */
 /**
  * Block counts for different time periods
@@ -8732,23 +8735,21 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
-   * Address transaction IDs
+   * Address transactions
    *
-   * Get transaction IDs for an address, newest first. Use after_txid for pagination.
+   * Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. Use ?after_txid=<txid> for pagination.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
    *
    * Endpoint: `GET /api/address/{address}/txs`
    *
    * @param {Address} address
-   * @param {string=} [after_txid] - Txid to paginate from (return transactions before this one)
-   * @param {number=} [limit] - Maximum number of results to return. Defaults to 25 if not specified.
-   * @returns {Promise<Txid[]>}
+   * @param {Txid=} [after_txid] - Txid to paginate from (return transactions before this one)
+   * @returns {Promise<Transaction[]>}
    */
-  async getAddressTxs(address, after_txid, limit) {
+  async getAddressTxs(address, after_txid) {
     const params = new URLSearchParams();
     if (after_txid !== undefined) params.set('after_txid', String(after_txid));
-    if (limit !== undefined) params.set('limit', String(limit));
     const query = params.toString();
     const path = `/api/address/${address}/txs${query ? '?' + query : ''}`;
     return this.getJson(path);
@@ -8757,21 +8758,19 @@ class BrkClient extends BrkClientBase {
   /**
    * Address confirmed transactions
    *
-   * Get confirmed transaction IDs for an address, 25 per page. Use ?after_txid=<txid> for pagination.
+   * Get confirmed transactions for an address, 25 per page. Use ?after_txid=<txid> for pagination.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
    *
    * Endpoint: `GET /api/address/{address}/txs/chain`
    *
    * @param {Address} address
-   * @param {string=} [after_txid] - Txid to paginate from (return transactions before this one)
-   * @param {number=} [limit] - Maximum number of results to return. Defaults to 25 if not specified.
-   * @returns {Promise<Txid[]>}
+   * @param {Txid=} [after_txid] - Txid to paginate from (return transactions before this one)
+   * @returns {Promise<Transaction[]>}
    */
-  async getAddressConfirmedTxs(address, after_txid, limit) {
+  async getAddressConfirmedTxs(address, after_txid) {
     const params = new URLSearchParams();
     if (after_txid !== undefined) params.set('after_txid', String(after_txid));
-    if (limit !== undefined) params.set('limit', String(limit));
     const query = params.toString();
     const path = `/api/address/${address}/txs/chain${query ? '?' + query : ''}`;
     return this.getJson(path);
@@ -9016,9 +9015,9 @@ class BrkClient extends BrkClientBase {
    *
    * @param {Metric} metric - Metric name
    * @param {Index} index - Aggregation index
-   * @param {string=} [start] - Inclusive start: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `from`, `f`, `s`
-   * @param {string=} [end] - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
-   * @param {string=} [limit] - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
+   * @param {RangeIndex=} [start] - Inclusive start: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `from`, `f`, `s`
+   * @param {RangeIndex=} [end] - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
+   * @param {Limit=} [limit] - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
    * @param {Format=} [format] - Format of the output
    * @returns {Promise<AnyMetricData | string>}
    */
@@ -9045,9 +9044,9 @@ class BrkClient extends BrkClientBase {
    *
    * @param {Metric} metric - Metric name
    * @param {Index} index - Aggregation index
-   * @param {string=} [start] - Inclusive start: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `from`, `f`, `s`
-   * @param {string=} [end] - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
-   * @param {string=} [limit] - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
+   * @param {RangeIndex=} [start] - Inclusive start: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `from`, `f`, `s`
+   * @param {RangeIndex=} [end] - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
+   * @param {Limit=} [limit] - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
    * @param {Format=} [format] - Format of the output
    * @returns {Promise<boolean[] | string>}
    */
@@ -9131,9 +9130,9 @@ class BrkClient extends BrkClientBase {
    *
    * @param {Metrics} [metrics] - Requested metrics
    * @param {Index} [index] - Index to query
-   * @param {string=} [start] - Inclusive start: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `from`, `f`, `s`
-   * @param {string=} [end] - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
-   * @param {string=} [limit] - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
+   * @param {RangeIndex=} [start] - Inclusive start: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `from`, `f`, `s`
+   * @param {RangeIndex=} [end] - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
+   * @param {Limit=} [limit] - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
    * @param {Format=} [format] - Format of the output
    * @returns {Promise<AnyMetricData[] | string>}
    */
@@ -9237,11 +9236,13 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/metrics/list`
    *
    * @param {number=} [page] - Pagination index
+   * @param {number=} [per_page] - Results per page (default: 1000, max: 1000)
    * @returns {Promise<PaginatedMetrics>}
    */
-  async listMetrics(page) {
+  async listMetrics(page, per_page) {
     const params = new URLSearchParams();
     if (page !== undefined) params.set('page', String(page));
+    if (per_page !== undefined) params.set('per_page', String(per_page));
     const query = params.toString();
     const path = `/api/metrics/list${query ? '?' + query : ''}`;
     return this.getJson(path);

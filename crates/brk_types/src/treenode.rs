@@ -487,10 +487,7 @@ mod tests {
                 "epoch",
                 branch(vec![
                     ("sum", leaf("metric_sum", Index::Epoch)),
-                    (
-                        "cumulative",
-                        leaf("metric_cumulative", Index::Epoch),
-                    ),
+                    ("cumulative", leaf("metric_cumulative", Index::Epoch)),
                 ]),
             ),
         ]);

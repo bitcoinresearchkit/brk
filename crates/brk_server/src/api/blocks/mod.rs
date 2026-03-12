@@ -39,6 +39,53 @@ impl BlockRoutes for ApiRouter<AppState> {
                 ),
             )
             .api_route(
+                "/api/blocks/{height}",
+                get_with(
+                    async |uri: Uri,
+                           headers: HeaderMap,
+                           Path(path): Path<HeightParam>,
+                           State(state): State<AppState>| {
+                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.blocks(Some(path.height))).await
+                    },
+                    |op| {
+                        op.id("get_blocks_from_height")
+                            .blocks_tag()
+                            .summary("Blocks from height")
+                            .description(
+                                "Retrieve up to 10 blocks going backwards from the given height. For example, height=100 returns blocks 100, 99, 98, ..., 91. Height=0 returns only block 0.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*",
+                            )
+                            .ok_response::<Vec<BlockInfo>>()
+                            .not_modified()
+                            .bad_request()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/block-height/{height}",
+                get_with(
+                    async |uri: Uri,
+                           headers: HeaderMap,
+                           Path(path): Path<HeightParam>,
+                           State(state): State<AppState>| {
+                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.block_by_height(path.height)).await
+                    },
+                    |op| {
+                        op.id("get_block_by_height")
+                            .blocks_tag()
+                            .summary("Block by height")
+                            .description(
+                                "Retrieve block information by block height. Returns block metadata including hash, timestamp, difficulty, size, weight, and transaction count.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*",
+                            )
+                            .ok_response::<BlockInfo>()
+                            .not_modified()
+                            .bad_request()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
                 "/api/block/{hash}",
                 get_with(
                     async |uri: Uri,
@@ -82,53 +129,6 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .not_modified()
                             .bad_request()
                             .not_found()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
-                "/api/block-height/{height}",
-                get_with(
-                    async |uri: Uri,
-                           headers: HeaderMap,
-                           Path(path): Path<HeightParam>,
-                           State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.block_by_height(path.height)).await
-                    },
-                    |op| {
-                        op.id("get_block_by_height")
-                            .blocks_tag()
-                            .summary("Block by height")
-                            .description(
-                                "Retrieve block information by block height. Returns block metadata including hash, timestamp, difficulty, size, weight, and transaction count.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*",
-                            )
-                            .ok_response::<BlockInfo>()
-                            .not_modified()
-                            .bad_request()
-                            .not_found()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
-                "/api/blocks/{height}",
-                get_with(
-                    async |uri: Uri,
-                           headers: HeaderMap,
-                           Path(path): Path<HeightParam>,
-                           State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.blocks(Some(path.height))).await
-                    },
-                    |op| {
-                        op.id("get_blocks_from_height")
-                            .blocks_tag()
-                            .summary("Blocks from height")
-                            .description(
-                                "Retrieve up to 10 blocks going backwards from the given height. For example, height=100 returns blocks 100, 99, 98, ..., 91. Height=0 returns only block 0.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*",
-                            )
-                            .ok_response::<Vec<BlockInfo>>()
-                            .not_modified()
-                            .bad_request()
                             .server_error()
                     },
                 ),
@@ -207,28 +207,6 @@ impl BlockRoutes for ApiRouter<AppState> {
                 ),
             )
             .api_route(
-                "/api/v1/mining/blocks/timestamp/{timestamp}",
-                get_with(
-                    async |uri: Uri,
-                           headers: HeaderMap,
-                           Path(path): Path<TimestampParam>,
-                           State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.block_by_timestamp(path.timestamp)).await
-                    },
-                    |op| {
-                        op.id("get_block_by_timestamp")
-                            .blocks_tag()
-                            .summary("Block by timestamp")
-                            .description("Find the block closest to a given UNIX timestamp.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*")
-                            .ok_response::<BlockTimestamp>()
-                            .not_modified()
-                            .bad_request()
-                            .not_found()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
                 "/api/block/{hash}/raw",
                 get_with(
                     async |uri: Uri,
@@ -245,6 +223,28 @@ impl BlockRoutes for ApiRouter<AppState> {
                                 "Returns the raw block data in binary format.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*",
                             )
                             .ok_response::<Vec<u8>>()
+                            .not_modified()
+                            .bad_request()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/v1/mining/blocks/timestamp/{timestamp}",
+                get_with(
+                    async |uri: Uri,
+                           headers: HeaderMap,
+                           Path(path): Path<TimestampParam>,
+                           State(state): State<AppState>| {
+                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.block_by_timestamp(path.timestamp)).await
+                    },
+                    |op| {
+                        op.id("get_block_by_timestamp")
+                            .blocks_tag()
+                            .summary("Block by timestamp")
+                            .description("Find the block closest to a given UNIX timestamp.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*")
+                            .ok_response::<BlockTimestamp>()
                             .not_modified()
                             .bad_request()
                             .not_found()

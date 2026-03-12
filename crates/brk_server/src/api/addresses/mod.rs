@@ -6,7 +6,7 @@ use axum::{
     routing::get,
 };
 use brk_types::{
-    AddressParam, AddressStats, AddressTxidsParam, AddressValidation, Txid, Utxo,
+    AddressParam, AddressStats, AddressTxidsParam, AddressValidation, Transaction, Txid, Utxo,
     ValidateAddressParam,
 };
 
@@ -53,13 +53,13 @@ impl AddressRoutes for ApiRouter<AppState> {
                 Query(params): Query<AddressTxidsParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.address_txids(path.address, params.after_txid, params.limit)).await
+                state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.address_txs(path.address, params.after_txid, 25)).await
             }, |op| op
                 .id("get_address_txs")
                 .addresses_tag()
-                .summary("Address transaction IDs")
-                .description("Get transaction IDs for an address, newest first. Use after_txid for pagination.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*")
-                .ok_response::<Vec<Txid>>()
+                .summary("Address transactions")
+                .description("Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. Use ?after_txid=<txid> for pagination.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*")
+                .ok_response::<Vec<Transaction>>()
                 .not_modified()
                 .bad_request()
                 .not_found()
@@ -67,20 +67,21 @@ impl AddressRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/address/{address}/utxo",
+            "/api/address/{address}/txs/chain",
             get_with(async |
                 uri: Uri,
                 headers: HeaderMap,
                 Path(path): Path<AddressParam>,
+                Query(params): Query<AddressTxidsParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.address_utxos(path.address)).await
+                state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.address_txs(path.address, params.after_txid, 25)).await
             }, |op| op
-                .id("get_address_utxos")
+                .id("get_address_confirmed_txs")
                 .addresses_tag()
-                .summary("Address UTXOs")
-                .description("Get unspent transaction outputs (UTXOs) for an address. Returns txid, vout, value, and confirmation status for each UTXO.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-utxo)*")
-                .ok_response::<Vec<Utxo>>()
+                .summary("Address confirmed transactions")
+                .description("Get confirmed transactions for an address, 25 per page. Use ?after_txid=<txid> for pagination.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*")
+                .ok_response::<Vec<Transaction>>()
                 .not_modified()
                 .bad_request()
                 .not_found()
@@ -109,21 +110,20 @@ impl AddressRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/address/{address}/txs/chain",
+            "/api/address/{address}/utxo",
             get_with(async |
                 uri: Uri,
                 headers: HeaderMap,
                 Path(path): Path<AddressParam>,
-                Query(params): Query<AddressTxidsParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.address_txids(path.address, params.after_txid, 25)).await
+                state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.address_utxos(path.address)).await
             }, |op| op
-                .id("get_address_confirmed_txs")
+                .id("get_address_utxos")
                 .addresses_tag()
-                .summary("Address confirmed transactions")
-                .description("Get confirmed transaction IDs for an address, 25 per page. Use ?after_txid=<txid> for pagination.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*")
-                .ok_response::<Vec<Txid>>()
+                .summary("Address UTXOs")
+                .description("Get unspent transaction outputs (UTXOs) for an address. Returns txid, vout, value, and confirmation status for each UTXO.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-utxo)*")
+                .ok_response::<Vec<Utxo>>()
                 .not_modified()
                 .bad_request()
                 .not_found()

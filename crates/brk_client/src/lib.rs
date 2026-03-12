@@ -7860,17 +7860,16 @@ impl BrkClient {
         self.base.get_json(&format!("/api/address/{address}"))
     }
 
-    /// Address transaction IDs
+    /// Address transactions
     ///
-    /// Get transaction IDs for an address, newest first. Use after_txid for pagination.
+    /// Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. Use ?after_txid=<txid> for pagination.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
     ///
     /// Endpoint: `GET /api/address/{address}/txs`
-    pub fn get_address_txs(&self, address: Address, after_txid: Option<&str>, limit: Option<i64>) -> Result<Vec<Txid>> {
+    pub fn get_address_txs(&self, address: Address, after_txid: Option<Txid>) -> Result<Vec<Transaction>> {
         let mut query = Vec::new();
         if let Some(v) = after_txid { query.push(format!("after_txid={}", v)); }
-        if let Some(v) = limit { query.push(format!("limit={}", v)); }
         let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
         let path = format!("/api/address/{address}/txs{}", query_str);
         self.base.get_json(&path)
@@ -7878,15 +7877,14 @@ impl BrkClient {
 
     /// Address confirmed transactions
     ///
-    /// Get confirmed transaction IDs for an address, 25 per page. Use ?after_txid=<txid> for pagination.
+    /// Get confirmed transactions for an address, 25 per page. Use ?after_txid=<txid> for pagination.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
     ///
     /// Endpoint: `GET /api/address/{address}/txs/chain`
-    pub fn get_address_confirmed_txs(&self, address: Address, after_txid: Option<&str>, limit: Option<i64>) -> Result<Vec<Txid>> {
+    pub fn get_address_confirmed_txs(&self, address: Address, after_txid: Option<Txid>) -> Result<Vec<Transaction>> {
         let mut query = Vec::new();
         if let Some(v) = after_txid { query.push(format!("after_txid={}", v)); }
-        if let Some(v) = limit { query.push(format!("limit={}", v)); }
         let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
         let path = format!("/api/address/{address}/txs/chain{}", query_str);
         self.base.get_json(&path)
@@ -8058,7 +8056,7 @@ impl BrkClient {
     /// Fetch data for a specific metric at the given index. Use query parameters to filter by date range and format (json/csv).
     ///
     /// Endpoint: `GET /api/metric/{metric}/{index}`
-    pub fn get_metric(&self, metric: Metric, index: Index, start: Option<&str>, end: Option<&str>, limit: Option<&str>, format: Option<Format>) -> Result<FormatResponse<MetricData>> {
+    pub fn get_metric(&self, metric: Metric, index: Index, start: Option<RangeIndex>, end: Option<RangeIndex>, limit: Option<Limit>, format: Option<Format>) -> Result<FormatResponse<MetricData>> {
         let mut query = Vec::new();
         if let Some(v) = start { query.push(format!("start={}", v)); }
         if let Some(v) = end { query.push(format!("end={}", v)); }
@@ -8078,7 +8076,7 @@ impl BrkClient {
     /// Returns just the data array without the MetricData wrapper. Supports the same range and format parameters as the standard endpoint.
     ///
     /// Endpoint: `GET /api/metric/{metric}/{index}/data`
-    pub fn get_metric_data(&self, metric: Metric, index: Index, start: Option<&str>, end: Option<&str>, limit: Option<&str>, format: Option<Format>) -> Result<FormatResponse<Vec<bool>>> {
+    pub fn get_metric_data(&self, metric: Metric, index: Index, start: Option<RangeIndex>, end: Option<RangeIndex>, limit: Option<Limit>, format: Option<Format>) -> Result<FormatResponse<Vec<bool>>> {
         let mut query = Vec::new();
         if let Some(v) = start { query.push(format!("start={}", v)); }
         if let Some(v) = end { query.push(format!("end={}", v)); }
@@ -8134,7 +8132,7 @@ impl BrkClient {
     /// Fetch multiple metrics in a single request. Supports filtering by index and date range. Returns an array of MetricData objects. For a single metric, use `get_metric` instead.
     ///
     /// Endpoint: `GET /api/metrics/bulk`
-    pub fn get_metrics(&self, metrics: Metrics, index: Index, start: Option<&str>, end: Option<&str>, limit: Option<&str>, format: Option<Format>) -> Result<FormatResponse<Vec<MetricData>>> {
+    pub fn get_metrics(&self, metrics: Metrics, index: Index, start: Option<RangeIndex>, end: Option<RangeIndex>, limit: Option<Limit>, format: Option<Format>) -> Result<FormatResponse<Vec<MetricData>>> {
         let mut query = Vec::new();
         query.push(format!("metrics={}", metrics));
         query.push(format!("index={}", index));
@@ -8210,9 +8208,10 @@ impl BrkClient {
     /// Paginated flat list of all available metric names. Use `page` query param for pagination.
     ///
     /// Endpoint: `GET /api/metrics/list`
-    pub fn list_metrics(&self, page: Option<i64>) -> Result<PaginatedMetrics> {
+    pub fn list_metrics(&self, page: Option<i64>, per_page: Option<i64>) -> Result<PaginatedMetrics> {
         let mut query = Vec::new();
         if let Some(v) = page { query.push(format!("page={}", v)); }
+        if let Some(v) = per_page { query.push(format!("per_page={}", v)); }
         let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
         let path = format!("/api/metrics/list{}", query_str);
         self.base.get_json(&path)

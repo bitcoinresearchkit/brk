@@ -51,6 +51,7 @@ impl<I: Default + Copy, V: Default + Copy> Default for RangeMap<I, V> {
 
 impl<I: Ord + Copy + Default + Into<usize>, V: From<usize> + Copy + Default> RangeMap<I, V> {
     /// Number of ranges stored.
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.first_indexes.len()
     }
@@ -102,7 +103,12 @@ impl<I: Ord + Copy + Default + Into<usize>, V: From<usize> + Copy + Default> Ran
         if pos > 0 {
             let value = V::from(pos - 1);
             if pos < self.first_indexes.len() {
-                self.cache[slot] = (self.first_indexes[pos - 1], self.first_indexes[pos], value, true);
+                self.cache[slot] = (
+                    self.first_indexes[pos - 1],
+                    self.first_indexes[pos],
+                    value,
+                    true,
+                );
             }
             Some(value)
         } else {

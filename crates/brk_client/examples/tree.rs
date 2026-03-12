@@ -4,7 +4,7 @@
 //! and fetch data from each endpoint. Run with: cargo run --example tree
 
 use brk_client::BrkClient;
-use brk_types::{Index, TreeNode};
+use brk_types::{Index, RangeIndex, TreeNode};
 use std::collections::BTreeSet;
 
 /// A collected metric with its path and available indexes.
@@ -62,7 +62,7 @@ fn main() -> brk_client::Result<()> {
                 metric.name.as_str().into(),
                 *index,
                 None,
-                Some(0),
+                Some(RangeIndex::Int(0)),
                 None,
                 None,
             ) {

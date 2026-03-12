@@ -8,11 +8,11 @@ use vecdb::PrintableIndex;
 use crate::PairOutputIndex;
 
 use super::{
-    Date, Day1, Day3, Epoch, EmptyAddressIndex, EmptyOutputIndex, FundedAddressIndex,
-    Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3, Month6,
-    OpReturnIndex, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex,
-    P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex,
-    Timestamp, TxInIndex, TxIndex, TxOutIndex, UnknownOutputIndex, Week1, Year1, Year10,
+    Date, Day1, Day3, EmptyAddressIndex, EmptyOutputIndex, Epoch, FundedAddressIndex, Halving,
+    Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3, Month6, OpReturnIndex,
+    P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex,
+    P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, Timestamp,
+    TxInIndex, TxIndex, TxOutIndex, UnknownOutputIndex, Week1, Year1, Year10,
     hour1::HOUR1_INTERVAL, hour4::HOUR4_INTERVAL, hour12::HOUR12_INTERVAL,
     minute10::MINUTE10_INTERVAL, minute30::MINUTE30_INTERVAL, timestamp::INDEX_EPOCH,
 };
@@ -183,7 +183,6 @@ impl Index {
             Self::PairOutputIndex => <PairOutputIndex as PrintableIndex>::to_string(),
         }
     }
-
 
     /// Returns true if this index type is date-based.
     pub const fn is_date_based(&self) -> bool {

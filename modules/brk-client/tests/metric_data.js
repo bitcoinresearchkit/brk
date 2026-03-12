@@ -68,7 +68,9 @@ console.log("\n7. dateEntries():");
 const dateEntries = price.dateEntries();
 if (!(dateEntries[0][0] instanceof Date))
   throw new Error("Expected Date entry key");
-console.log(`   First: [${dateEntries[0][0].toISOString()}, ${dateEntries[0][1]}]`);
+console.log(
+  `   First: [${dateEntries[0][0].toISOString()}, ${dateEntries[0][1]}]`,
+);
 
 // Test toMap() - returns Map<number, value>
 console.log("\n8. toMap():");
@@ -95,7 +97,7 @@ if (count !== 5) throw new Error("Expected 5 iterations");
 
 // Test with non-date-based index (height)
 console.log("\n11. Testing height-based metric:");
-const heightMetric = await client.metrics.prices.price.usd.by.height.last(3);
+const heightMetric = await client.metrics.prices.spot.usd.by.height.last(3);
 console.log(
   `   Total: ${heightMetric.total}, Start: ${heightMetric.start}, End: ${heightMetric.end}`,
 );

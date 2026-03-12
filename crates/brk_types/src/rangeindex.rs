@@ -1,3 +1,5 @@
+use std::fmt;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer};
 
@@ -10,6 +12,34 @@ pub enum RangeIndex {
     Int(i64),
     Date(Date),
     Timestamp(Timestamp),
+}
+
+impl From<i64> for RangeIndex {
+    fn from(i: i64) -> Self {
+        Self::Int(i)
+    }
+}
+
+impl From<Date> for RangeIndex {
+    fn from(d: Date) -> Self {
+        Self::Date(d)
+    }
+}
+
+impl From<Timestamp> for RangeIndex {
+    fn from(t: Timestamp) -> Self {
+        Self::Timestamp(t)
+    }
+}
+
+impl fmt::Display for RangeIndex {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Int(i) => write!(f, "{i}"),
+            Self::Date(d) => write!(f, "{d}"),
+            Self::Timestamp(t) => write!(f, "{t}"),
+        }
+    }
 }
 
 impl<'de> Deserialize<'de> for RangeIndex {

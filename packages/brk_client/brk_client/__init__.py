@@ -264,10 +264,8 @@ class AddressTxidsParam(TypedDict):
     """
     Attributes:
         after_txid: Txid to paginate from (return transactions before this one)
-        limit: Maximum number of results to return. Defaults to 25 if not specified.
     """
     after_txid: Union[Txid, None]
-    limit: int
 
 class AddressValidation(TypedDict):
     """
@@ -767,10 +765,16 @@ class PaginatedMetrics(TypedDict):
     Attributes:
         current_page: Current page number (0-indexed)
         max_page: Maximum valid page index (0-indexed)
-        metrics: List of metric names (max 1000 per page)
+        total_count: Total number of metrics
+        per_page: Results per page
+        has_more: Whether more pages are available after the current one
+        metrics: List of metric names
     """
     current_page: int
     max_page: int
+    total_count: int
+    per_page: int
+    has_more: bool
     metrics: List[str]
 
 class Pagination(TypedDict):
@@ -779,8 +783,10 @@ class Pagination(TypedDict):
 
     Attributes:
         page: Pagination index
+        per_page: Results per page (default: 1000, max: 1000)
     """
     page: Optional[int]
+    per_page: Optional[int]
 
 class PoolBlockCounts(TypedDict):
     """
@@ -4481,7 +4487,7 @@ class MetricsTree_Market_Dca:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.sats_per_day: MetricPattern18[Sats] = MetricPattern18(client, 'dca_sats_per_day')
         self.period: MetricsTree_Market_Dca_Period = MetricsTree_Market_Dca_Period(client)
-        self.class: MetricsTree_Market_Dca_Class = MetricsTree_Market_Dca_Class(client)
+        self.class_: MetricsTree_Market_Dca_Class = MetricsTree_Market_Dca_Class(client)
 
 class MetricsTree_Market_Technical_Rsi_1w:
     """Metrics tree node."""
@@ -5303,7 +5309,7 @@ class MetricsTree_Distribution_Cohorts_Utxo:
         self.under_age: MetricsTree_Distribution_Cohorts_Utxo_UnderAge = MetricsTree_Distribution_Cohorts_Utxo_UnderAge(client)
         self.over_age: MetricsTree_Distribution_Cohorts_Utxo_OverAge = MetricsTree_Distribution_Cohorts_Utxo_OverAge(client)
         self.epoch: MetricsTree_Distribution_Cohorts_Utxo_Epoch = MetricsTree_Distribution_Cohorts_Utxo_Epoch(client)
-        self.class: MetricsTree_Distribution_Cohorts_Utxo_Class = MetricsTree_Distribution_Cohorts_Utxo_Class(client)
+        self.class_: MetricsTree_Distribution_Cohorts_Utxo_Class = MetricsTree_Distribution_Cohorts_Utxo_Class(client)
         self.over_amount: MetricsTree_Distribution_Cohorts_Utxo_OverAmount = MetricsTree_Distribution_Cohorts_Utxo_OverAmount(client)
         self.amount_range: MetricsTree_Distribution_Cohorts_Utxo_AmountRange = MetricsTree_Distribution_Cohorts_Utxo_AmountRange(client)
         self.under_amount: MetricsTree_Distribution_Cohorts_Utxo_UnderAmount = MetricsTree_Distribution_Cohorts_Utxo_UnderAmount(client)
@@ -6392,32 +6398,30 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/address/{address}`"""
         return self.get_json(f'/api/address/{address}')
 
-    def get_address_txs(self, address: Address, after_txid: Optional[str] = None, limit: Optional[float] = None) -> List[Txid]:
-        """Address transaction IDs.
+    def get_address_txs(self, address: Address, after_txid: Optional[Txid] = None) -> List[Transaction]:
+        """Address transactions.
 
-        Get transaction IDs for an address, newest first. Use after_txid for pagination.
+        Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. Use ?after_txid=<txid> for pagination.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
 
         Endpoint: `GET /api/address/{address}/txs`"""
         params = []
         if after_txid is not None: params.append(f'after_txid={after_txid}')
-        if limit is not None: params.append(f'limit={limit}')
         query = '&'.join(params)
         path = f'/api/address/{address}/txs{"?" + query if query else ""}'
         return self.get_json(path)
 
-    def get_address_confirmed_txs(self, address: Address, after_txid: Optional[str] = None, limit: Optional[float] = None) -> List[Txid]:
+    def get_address_confirmed_txs(self, address: Address, after_txid: Optional[Txid] = None) -> List[Transaction]:
         """Address confirmed transactions.
 
-        Get confirmed transaction IDs for an address, 25 per page. Use ?after_txid=<txid> for pagination.
+        Get confirmed transactions for an address, 25 per page. Use ?after_txid=<txid> for pagination.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
 
         Endpoint: `GET /api/address/{address}/txs/chain`"""
         params = []
         if after_txid is not None: params.append(f'after_txid={after_txid}')
-        if limit is not None: params.append(f'limit={limit}')
         query = '&'.join(params)
         path = f'/api/address/{address}/txs/chain{"?" + query if query else ""}'
         return self.get_json(path)
@@ -6568,7 +6572,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/metric/{metric}`"""
         return self.get_json(f'/api/metric/{metric}')
 
-    def get_metric(self, metric: Metric, index: Index, start: Optional[str] = None, end: Optional[str] = None, limit: Optional[str] = None, format: Optional[Format] = None) -> Union[AnyMetricData, str]:
+    def get_metric(self, metric: Metric, index: Index, start: Optional[RangeIndex] = None, end: Optional[RangeIndex] = None, limit: Optional[Limit] = None, format: Optional[Format] = None) -> Union[AnyMetricData, str]:
         """Get metric data.
 
         Fetch data for a specific metric at the given index. Use query parameters to filter by date range and format (json/csv).
@@ -6585,7 +6589,7 @@ class BrkClient(BrkClientBase):
             return self.get_text(path)
         return self.get_json(path)
 
-    def get_metric_data(self, metric: Metric, index: Index, start: Optional[str] = None, end: Optional[str] = None, limit: Optional[str] = None, format: Optional[Format] = None) -> Union[List[bool], str]:
+    def get_metric_data(self, metric: Metric, index: Index, start: Optional[RangeIndex] = None, end: Optional[RangeIndex] = None, limit: Optional[Limit] = None, format: Optional[Format] = None) -> Union[List[bool], str]:
         """Get raw metric data.
 
         Returns just the data array without the MetricData wrapper. Supports the same range and format parameters as the standard endpoint.
@@ -6634,7 +6638,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/metrics`"""
         return self.get_json('/api/metrics')
 
-    def get_metrics(self, metrics: Metrics, index: Index, start: Optional[str] = None, end: Optional[str] = None, limit: Optional[str] = None, format: Optional[Format] = None) -> Union[List[AnyMetricData], str]:
+    def get_metrics(self, metrics: Metrics, index: Index, start: Optional[RangeIndex] = None, end: Optional[RangeIndex] = None, limit: Optional[Limit] = None, format: Optional[Format] = None) -> Union[List[AnyMetricData], str]:
         """Bulk metric data.
 
         Fetch multiple metrics in a single request. Supports filtering by index and date range. Returns an array of MetricData objects. For a single metric, use `get_metric` instead.
@@ -6702,7 +6706,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/metrics/indexes`"""
         return self.get_json('/api/metrics/indexes')
 
-    def list_metrics(self, page: Optional[float] = None) -> PaginatedMetrics:
+    def list_metrics(self, page: Optional[float] = None, per_page: Optional[float] = None) -> PaginatedMetrics:
         """Metrics list.
 
         Paginated flat list of all available metric names. Use `page` query param for pagination.
@@ -6710,6 +6714,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/metrics/list`"""
         params = []
         if page is not None: params.append(f'page={page}')
+        if per_page is not None: params.append(f'per_page={per_page}')
         query = '&'.join(params)
         path = f'/api/metrics/list{"?" + query if query else ""}'
         return self.get_json(path)

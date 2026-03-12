@@ -7,7 +7,7 @@ use brk_types::TreeNode;
 
 use crate::{
     ClientMetadata, GenericSyntax, PatternField, PythonSyntax, build_child_path,
-    generate_leaf_field, prepare_tree_node, to_snake_case,
+    escape_python_keyword, generate_leaf_field, prepare_tree_node, to_snake_case,
 };
 
 /// Generate tree classes
@@ -70,7 +70,7 @@ fn generate_tree_class(
 
     let syntax = PythonSyntax;
     for child in &ctx.children {
-        let field_name_py = to_snake_case(child.name);
+        let field_name_py = escape_python_keyword(&to_snake_case(child.name));
 
         if child.is_leaf {
             if let TreeNode::Leaf(leaf) = child.node {

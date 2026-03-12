@@ -147,12 +147,17 @@ impl<'a> Vecs<'a> {
 
     pub fn metrics(&'static self, pagination: Pagination) -> PaginatedMetrics {
         let len = self.metrics.len();
+        let per_page = pagination.per_page();
         let start = pagination.start(len);
         let end = pagination.end(len);
+        let max_page = len.div_ceil(per_page).saturating_sub(1);
 
         PaginatedMetrics {
             current_page: pagination.page(),
-            max_page: len.div_ceil(Pagination::PER_PAGE).saturating_sub(1),
+            max_page,
+            total_count: len,
+            per_page,
+            has_more: pagination.page() < max_page,
             metrics: self.metrics[start..end]
                 .iter()
                 .map(|&s| Cow::Borrowed(s))
@@ -183,6 +188,9 @@ impl<'a> Vecs<'a> {
     }
 
     pub fn matches(&self, metric: &Metric, limit: Limit) -> Vec<&'_ str> {
+        if limit.is_zero() {
+            return Vec::new();
+        }
         self.matcher
             .as_ref()
             .expect("matcher not initialized")

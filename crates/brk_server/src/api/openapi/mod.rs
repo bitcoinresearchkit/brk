@@ -14,7 +14,7 @@ mod compact;
 
 pub use compact::ApiJson;
 
-use aide::openapi::{Contact, Info, License, OpenApi, Server, ServerVariable, Tag};
+use aide::openapi::{Contact, Info, License, OpenApi, Tag};
 
 use crate::VERSION;
 
@@ -159,38 +159,9 @@ All errors return structured JSON with a consistent format:
         },
     ];
 
-    let servers = vec![Server {
-        url: "{scheme}://{host}".into(),
-        description: Some("BRK server".into()),
-        variables: [
-            (
-                "scheme".into(),
-                ServerVariable {
-                    enumeration: vec!["https".into(), "http".into()],
-                    default: "https".into(),
-                    description: Some("Protocol".into()),
-                    ..Default::default()
-                },
-            ),
-            (
-                "host".into(),
-                ServerVariable {
-                    default: "bitview.space".into(),
-                    description: Some(
-                        "Server address (e.g. bitview.space or localhost:3110)".into(),
-                    ),
-                    ..Default::default()
-                },
-            ),
-        ]
-        .into(),
-        ..Default::default()
-    }];
-
     OpenApi {
         info,
         tags,
-        servers,
         ..OpenApi::default()
     }
 }

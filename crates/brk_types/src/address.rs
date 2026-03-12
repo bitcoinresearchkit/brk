@@ -43,10 +43,18 @@ impl TryFrom<&ScriptBuf> for Address {
 impl TryFrom<(&ScriptBuf, OutputType)> for Address {
     type Error = Error;
     fn try_from((script, outputtype): (&ScriptBuf, OutputType)) -> Result<Self, Self::Error> {
-        if outputtype.is_address() {
-            Ok(Self(script.to_hex_string()))
-        } else {
-            Err(Error::InvalidAddress)
+        match outputtype {
+            OutputType::P2PK65 | OutputType::P2PK33 => {
+                // P2PK has no standard address encoding, use raw pubkey hex
+                let bytes = AddressBytes::try_from((script, outputtype))?;
+                Ok(Self(bytes_to_hex(bytes.as_slice())))
+            }
+            _ if outputtype.is_address() => {
+                let addr = bitcoin::Address::from_script(script, bitcoin::Network::Bitcoin)
+                    .map_err(|_| Error::InvalidAddress)?;
+                Ok(Self(addr.to_string()))
+            }
+            _ => Err(Error::InvalidAddress),
         }
     }
 }
@@ -54,14 +62,7 @@ impl TryFrom<(&ScriptBuf, OutputType)> for Address {
 impl TryFrom<&AddressBytes> for Address {
     type Error = Error;
     fn try_from(bytes: &AddressBytes) -> Result<Self, Self::Error> {
-        // P2PK addresses are represented as raw pubkey hex, not as a script
-        let address = match bytes {
-            AddressBytes::P2PK65(_) | AddressBytes::P2PK33(_) => {
-                Self::from(bytes_to_hex(bytes.as_slice()))
-            }
-            _ => Self::try_from(&bytes.to_script_pubkey())?,
-        };
-        Ok(address)
+        Self::try_from(&bytes.to_script_pubkey())
     }
 }
 

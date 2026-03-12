@@ -3,8 +3,8 @@ use std::io::Cursor;
 use bitcoin::{consensus::Decodable, hex::DisplayHex};
 use brk_error::{Error, Result};
 use brk_types::{
-    Sats, Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxOutspend, TxStatus, Txid, TxidParam,
-    TxidPrefix, Vin, Vout, Weight,
+    OutputType, Sats, Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxOutspend, TxStatus, Txid,
+    TxidParam, TxidPrefix, Vin, Vout, Weight,
 };
 use vecdb::{ReadableVec, VecIndex};
 
@@ -242,6 +242,8 @@ impl Query {
         let txid_reader = indexer.vecs.transactions.txid.reader();
         let first_txoutindex_reader = indexer.vecs.transactions.first_txoutindex.reader();
         let value_reader = indexer.vecs.outputs.value.reader();
+        let outputtype_reader = indexer.vecs.outputs.outputtype.reader();
+        let typeindex_reader = indexer.vecs.outputs.typeindex.reader();
 
         // Batch-read outpoints for all inputs (avoids per-input PcoVec page decompression)
         let outpoints: Vec<_> = indexer.vecs.inputs.outpoint.collect_range_at(
@@ -272,13 +274,16 @@ impl Query {
                         first_txoutindex_reader.get(prev_txindex.to_usize());
                     let prev_txoutindex = prev_first_txoutindex + prev_vout;
 
-                    // Get the value of the prevout
                     let prev_value = value_reader.get(usize::from(prev_txoutindex));
+                    let prev_outputtype: OutputType =
+                        outputtype_reader.get(usize::from(prev_txoutindex));
+                    let prev_typeindex = typeindex_reader.get(usize::from(prev_txoutindex));
+                    let script_pubkey = indexer
+                        .vecs
+                        .addresses
+                        .script_pubkey(prev_outputtype, prev_typeindex);
 
-                    let prevout = Some(TxOut::from((
-                        bitcoin::ScriptBuf::new(), // Placeholder - would need to reconstruct
-                        prev_value,
-                    )));
+                    let prevout = Some(TxOut::from((script_pubkey, prev_value)));
 
                     (prev_txid, prev_vout, prevout)
                 };

@@ -40,6 +40,13 @@ impl Vout {
     }
 }
 
+impl From<u16> for Vout {
+    #[inline]
+    fn from(value: u16) -> Self {
+        Self(value)
+    }
+}
+
 const U16_MAX_AS_U32: u32 = u16::MAX as u32;
 impl From<u32> for Vout {
     #[inline]

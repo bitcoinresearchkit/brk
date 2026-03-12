@@ -1,6 +1,7 @@
 const DEFAULT_SEPARATORS = "_- ,:";
 const DEFAULT_TRIGRAM_BUDGET = 6;
 const DEFAULT_LIMIT = 100;
+const DEFAULT_MIN_SCORE = 2;
 
 /**
  * Configuration for QuickMatch.
@@ -14,6 +15,9 @@ export class QuickMatchConfig {
 
   /** @type {number} Number of trigram lookups for fuzzy matching (0-20) */
   trigramBudget = DEFAULT_TRIGRAM_BUDGET;
+
+  /** @type {number} Minimum trigram score required for fuzzy matches */
+  minScore = DEFAULT_MIN_SCORE;
 
   /**
    * Set maximum number of results.
@@ -40,6 +44,16 @@ export class QuickMatchConfig {
    */
   withSeparators(s) {
     this.separators = s;
+    return this;
+  }
+
+  /**
+   * Set minimum trigram score for fuzzy matches.
+   * Higher values require more trigram overlap, reducing noise.
+   * @param {number} n - Minimum score (default: 2, min: 1)
+   */
+  withMinScore(n) {
+    this.minScore = Math.max(1, n);
     return this;
   }
 }
@@ -179,7 +193,7 @@ export class QuickMatch {
       minItemLength,
     });
 
-    const minScoreToInclude = Math.max(1, Math.ceil(hitCount / 2));
+    const minScoreToInclude = Math.max(config.minScore, Math.ceil(hitCount / 2));
 
     return this.rankedResults(scores, minScoreToInclude, limit);
   }

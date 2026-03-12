@@ -4,8 +4,8 @@ use bitcoin::{Network, PublicKey, ScriptBuf};
 use brk_error::{Error, Result};
 use brk_types::{
     Address, AddressBytes, AddressChainStats, AddressHash, AddressIndexOutPoint,
-    AddressIndexTxIndex, AddressStats, AnyAddressDataIndexEnum, OutputType, Sats, TxIndex,
-    TxStatus, Txid, TypeIndex, Unit, Utxo, Vout,
+    AddressIndexTxIndex, AddressStats, AnyAddressDataIndexEnum, OutputType, Sats, Transaction,
+    TxIndex, TxStatus, Txid, TypeIndex, Unit, Utxo, Vout,
 };
 use vecdb::{ReadableVec, VecIndex};
 
@@ -32,16 +32,12 @@ impl Query {
             return Err(Error::InvalidAddress);
         };
 
-        dbg!(&script);
-
         let outputtype = OutputType::from(&script);
-        dbg!(outputtype);
         let Ok(bytes) = AddressBytes::try_from((&script, outputtype)) else {
             return Err(Error::InvalidAddress);
         };
         let addresstype = outputtype;
         let hash = AddressHash::from(&bytes);
-        dbg!(hash);
 
         let Ok(Some(type_index)) = stores
             .addresstype_to_addresshash_to_addressindex
@@ -94,16 +90,44 @@ impl Query {
         })
     }
 
+    pub fn address_txs(
+        &self,
+        address: Address,
+        after_txid: Option<Txid>,
+        limit: usize,
+    ) -> Result<Vec<Transaction>> {
+        let txindices = self.address_txindices(&address, after_txid, limit)?;
+        txindices
+            .into_iter()
+            .map(|txindex| self.transaction_by_index(txindex))
+            .collect()
+    }
+
     pub fn address_txids(
         &self,
         address: Address,
         after_txid: Option<Txid>,
         limit: usize,
     ) -> Result<Vec<Txid>> {
+        let txindices = self.address_txindices(&address, after_txid, limit)?;
+        let txid_reader = self.indexer().vecs.transactions.txid.reader();
+        let txids = txindices
+            .into_iter()
+            .map(|txindex| txid_reader.get(txindex.to_usize()))
+            .collect();
+        Ok(txids)
+    }
+
+    fn address_txindices(
+        &self,
+        address: &Address,
+        after_txid: Option<Txid>,
+        limit: usize,
+    ) -> Result<Vec<TxIndex>> {
         let indexer = self.indexer();
         let stores = &indexer.stores;
 
-        let (outputtype, type_index) = self.resolve_address(&address)?;
+        let (outputtype, type_index) = self.resolve_address(address)?;
 
         let store = stores
             .addresstype_to_addressindex_and_txindex
@@ -124,7 +148,7 @@ impl Query {
             None
         };
 
-        let txindices: Vec<TxIndex> = store
+        Ok(store
             .prefix(prefix)
             .rev()
             .filter(|(key, _): &(AddressIndexTxIndex, Unit)| {
@@ -136,15 +160,7 @@ impl Query {
             })
             .take(limit)
             .map(|(key, _)| key.txindex())
-            .collect();
-
-        let txid_reader = indexer.vecs.transactions.txid.reader();
-        let txids: Vec<Txid> = txindices
-            .into_iter()
-            .map(|txindex| txid_reader.get(txindex.to_usize()))
-            .collect();
-
-        Ok(txids)
+            .collect())
     }
 
     pub fn address_utxos(&self, address: Address) -> Result<Vec<Utxo>> {

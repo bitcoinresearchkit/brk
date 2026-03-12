@@ -1,5 +1,5 @@
 use crate::{TxOut, Txid, Vout};
-use bitcoin::{Script, ScriptBuf};
+use bitcoin::ScriptBuf;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeStruct};
 
@@ -60,8 +60,11 @@ impl TxIn {
         self.script_sig.to_asm_string()
     }
 
-    pub fn redeem_script(&self) -> Option<&Script> {
-        self.script_sig.redeem_script()
+    pub fn inner_redeemscript_asm(&self) -> String {
+        self.script_sig
+            .redeem_script()
+            .map(|s| s.to_asm_string())
+            .unwrap_or_default()
     }
 }
 
@@ -79,7 +82,7 @@ impl Serialize for TxIn {
         state.serialize_field("scriptsig_asm", &self.script_sig_asm())?;
         state.serialize_field("is_coinbase", &self.is_coinbase)?;
         state.serialize_field("sequence", &self.sequence)?;
-        state.serialize_field("inner_redeemscript_asm", &self.redeem_script())?;
+        state.serialize_field("inner_redeemscript_asm", &self.inner_redeemscript_asm())?;
 
         state.end()
     }

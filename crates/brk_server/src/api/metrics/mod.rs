@@ -172,6 +172,74 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
+            "/api/metric/{metric}/{index}",
+            get_with(
+                async |uri: Uri,
+                       headers: HeaderMap,
+                       addr: Extension<SocketAddr>,
+                       state: State<AppState>,
+                       Path(path): Path<MetricWithIndex>,
+                       Query(range): Query<DataRangeFormat>|
+                       -> Response {
+                    data::handler(
+                        uri,
+                        headers,
+                        addr,
+                        Query(MetricSelection::from((path.index, path.metric, range))),
+                        state,
+                    )
+                    .await
+                    .into_response()
+                },
+                |op| op
+                    .id("get_metric")
+                    .metrics_tag()
+                    .summary("Get metric data")
+                    .description(
+                        "Fetch data for a specific metric at the given index. \
+                        Use query parameters to filter by date range and format (json/csv)."
+                    )
+                    .ok_response::<MetricData>()
+                    .csv_response()
+                    .not_modified()
+                    .not_found(),
+            ),
+        )
+        .api_route(
+            "/api/metric/{metric}/{index}/data",
+            get_with(
+                async |uri: Uri,
+                       headers: HeaderMap,
+                       addr: Extension<SocketAddr>,
+                       state: State<AppState>,
+                       Path(path): Path<MetricWithIndex>,
+                       Query(range): Query<DataRangeFormat>|
+                       -> Response {
+                    data::raw_handler(
+                        uri,
+                        headers,
+                        addr,
+                        Query(MetricSelection::from((path.index, path.metric, range))),
+                        state,
+                    )
+                    .await
+                    .into_response()
+                },
+                |op| op
+                    .id("get_metric_data")
+                    .metrics_tag()
+                    .summary("Get raw metric data")
+                    .description(
+                        "Returns just the data array without the MetricData wrapper. \
+                        Supports the same range and format parameters as the standard endpoint."
+                    )
+                    .ok_response::<Vec<serde_json::Value>>()
+                    .csv_response()
+                    .not_modified()
+                    .not_found(),
+            ),
+        )
+        .api_route(
             "/api/metric/{metric}/{index}/latest",
             get_with(
                 async |uri: Uri,
@@ -240,74 +308,6 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/metric/{metric}/{index}/data",
-            get_with(
-                async |uri: Uri,
-                       headers: HeaderMap,
-                       addr: Extension<SocketAddr>,
-                       state: State<AppState>,
-                       Path(path): Path<MetricWithIndex>,
-                       Query(range): Query<DataRangeFormat>|
-                       -> Response {
-                    data::raw_handler(
-                        uri,
-                        headers,
-                        addr,
-                        Query(MetricSelection::from((path.index, path.metric, range))),
-                        state,
-                    )
-                    .await
-                    .into_response()
-                },
-                |op| op
-                    .id("get_metric_data")
-                    .metrics_tag()
-                    .summary("Get raw metric data")
-                    .description(
-                        "Returns just the data array without the MetricData wrapper. \
-                        Supports the same range and format parameters as the standard endpoint."
-                    )
-                    .ok_response::<Vec<serde_json::Value>>()
-                    .csv_response()
-                    .not_modified()
-                    .not_found(),
-            ),
-        )
-        .api_route(
-            "/api/metric/{metric}/{index}",
-            get_with(
-                async |uri: Uri,
-                       headers: HeaderMap,
-                       addr: Extension<SocketAddr>,
-                       state: State<AppState>,
-                       Path(path): Path<MetricWithIndex>,
-                       Query(range): Query<DataRangeFormat>|
-                       -> Response {
-                    data::handler(
-                        uri,
-                        headers,
-                        addr,
-                        Query(MetricSelection::from((path.index, path.metric, range))),
-                        state,
-                    )
-                    .await
-                    .into_response()
-                },
-                |op| op
-                    .id("get_metric")
-                    .metrics_tag()
-                    .summary("Get metric data")
-                    .description(
-                        "Fetch data for a specific metric at the given index. \
-                        Use query parameters to filter by date range and format (json/csv)."
-                    )
-                    .ok_response::<MetricData>()
-                    .csv_response()
-                    .not_modified()
-                    .not_found(),
-            ),
-        )
-        .api_route(
             "/api/metrics/bulk",
             get_with(
                 |uri, headers, addr, query, state| async move {
@@ -323,77 +323,6 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     )
                     .ok_response::<Vec<MetricData>>()
                     .csv_response()
-                    .not_modified(),
-            ),
-        )
-        .api_route(
-            "/api/vecs/{variant}",
-            get_with(
-                async |uri: Uri,
-                       headers: HeaderMap,
-                       addr: Extension<SocketAddr>,
-                       Path(variant): Path<String>,
-                       Query(range): Query<DataRangeFormat>,
-                       state: State<AppState>|
-                       -> Response {
-                    let separator = "_to_";
-                    let variant = variant.replace("-", "_");
-                    let mut split = variant.split(separator);
-
-                    let ser_index = split.next().unwrap();
-                    let Ok(index) = Index::try_from(ser_index) else {
-                        return Error::not_found(
-                            format!("Index '{ser_index}' doesn't exist")
-                        ).into_response();
-                    };
-
-                    let params = MetricSelection::from((
-                        index,
-                        Metrics::from(split.collect::<Vec<_>>().join(separator)),
-                        range,
-                    ));
-                    legacy::handler(uri, headers, addr, Query(params), state)
-                        .await
-                        .into_response()
-                },
-                |op| op
-                    .metrics_tag()
-                    .summary("Legacy variant endpoint")
-                    .description(
-                        "**DEPRECATED** - Use `/api/metric/{metric}/{index}` instead.\n\n\
-                        Sunset date: 2027-01-01. May be removed earlier in case of abuse.\n\n\
-                        Legacy endpoint for querying metrics by variant path (e.g., `day1_to_price`). \
-                        Returns raw data without the MetricData wrapper."
-                    )
-                    .deprecated()
-                    .ok_response::<serde_json::Value>()
-                    .not_modified(),
-            ),
-        )
-        .api_route(
-            "/api/vecs/query",
-            get_with(
-                async |uri: Uri,
-                       headers: HeaderMap,
-                       addr: Extension<SocketAddr>,
-                       Query(params): Query<MetricSelectionLegacy>,
-                       state: State<AppState>|
-                       -> Response {
-                    let params: MetricSelection = params.into();
-                    legacy::handler(uri, headers, addr, Query(params), state)
-                        .await
-                        .into_response()
-                },
-                |op| op
-                    .metrics_tag()
-                    .summary("Legacy query endpoint")
-                    .description(
-                        "**DEPRECATED** - Use `/api/metric/{metric}/{index}` or `/api/metrics/bulk` instead.\n\n\
-                        Sunset date: 2027-01-01. May be removed earlier in case of abuse.\n\n\
-                        Legacy endpoint for querying metrics. Returns raw data without the MetricData wrapper."
-                    )
-                    .deprecated()
-                    .ok_response::<serde_json::Value>()
                     .not_modified(),
             ),
         )
@@ -473,6 +402,78 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                         .not_found()
                         .server_error()
                 },
+            ),
+        )
+        // Deprecated endpoints
+        .api_route(
+            "/api/vecs/{variant}",
+            get_with(
+                async |uri: Uri,
+                       headers: HeaderMap,
+                       addr: Extension<SocketAddr>,
+                       Path(variant): Path<String>,
+                       Query(range): Query<DataRangeFormat>,
+                       state: State<AppState>|
+                       -> Response {
+                    let separator = "_to_";
+                    let variant = variant.replace("-", "_");
+                    let mut split = variant.split(separator);
+
+                    let ser_index = split.next().unwrap();
+                    let Ok(index) = Index::try_from(ser_index) else {
+                        return Error::not_found(
+                            format!("Index '{ser_index}' doesn't exist")
+                        ).into_response();
+                    };
+
+                    let params = MetricSelection::from((
+                        index,
+                        Metrics::from(split.collect::<Vec<_>>().join(separator)),
+                        range,
+                    ));
+                    legacy::handler(uri, headers, addr, Query(params), state)
+                        .await
+                        .into_response()
+                },
+                |op| op
+                    .metrics_tag()
+                    .summary("Legacy variant endpoint")
+                    .description(
+                        "**DEPRECATED** - Use `/api/metric/{metric}/{index}` instead.\n\n\
+                        Sunset date: 2027-01-01. May be removed earlier in case of abuse.\n\n\
+                        Legacy endpoint for querying metrics by variant path (e.g., `day1_to_price`). \
+                        Returns raw data without the MetricData wrapper."
+                    )
+                    .deprecated()
+                    .ok_response::<serde_json::Value>()
+                    .not_modified(),
+            ),
+        )
+        .api_route(
+            "/api/vecs/query",
+            get_with(
+                async |uri: Uri,
+                       headers: HeaderMap,
+                       addr: Extension<SocketAddr>,
+                       Query(params): Query<MetricSelectionLegacy>,
+                       state: State<AppState>|
+                       -> Response {
+                    let params: MetricSelection = params.into();
+                    legacy::handler(uri, headers, addr, Query(params), state)
+                        .await
+                        .into_response()
+                },
+                |op| op
+                    .metrics_tag()
+                    .summary("Legacy query endpoint")
+                    .description(
+                        "**DEPRECATED** - Use `/api/metric/{metric}/{index}` or `/api/metrics/bulk` instead.\n\n\
+                        Sunset date: 2027-01-01. May be removed earlier in case of abuse.\n\n\
+                        Legacy endpoint for querying metrics. Returns raw data without the MetricData wrapper."
+                    )
+                    .deprecated()
+                    .ok_response::<serde_json::Value>()
+                    .not_modified(),
             ),
         )
     }

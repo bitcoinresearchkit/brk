@@ -12,6 +12,7 @@ use axum::{
 };
 
 use crate::{
+    Error,
     api::{
         addresses::AddressRoutes, blocks::BlockRoutes, mempool::MempoolRoutes,
         metrics::ApiMetricsRoutes, mining::MiningRoutes, server::ServerRoutes,
@@ -39,13 +40,13 @@ pub trait ApiRoutes {
 
 impl ApiRoutes for ApiRouter<AppState> {
     fn add_api_routes(self) -> Self {
-        self.add_addresses_routes()
+        self.add_server_routes()
+            .add_metrics_routes()
             .add_block_routes()
+            .add_tx_routes()
+            .add_addresses_routes()
             .add_mempool_routes()
             .add_mining_routes()
-            .add_tx_routes()
-            .add_metrics_routes()
-            .add_server_routes()
             .route("/api/server", get(Redirect::temporary("/api#tag/server")))
             .api_route(
                 "/openapi.json",
@@ -99,7 +100,9 @@ impl ApiRoutes for ApiRouter<AppState> {
             )
             .route(
                 "/api/{*path}",
-                get(|| async { Redirect::permanent("/api") }),
+                get(|| async {
+                    Error::not_found("Unknown API endpoint. See /api for documentation.")
+                }),
             )
     }
 }

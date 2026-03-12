@@ -1,7 +1,7 @@
 //! Basic example of using the BRK client.
 
 use brk_client::{BrkClient, BrkClientOptions};
-use brk_types::{FormatResponse, Index, Metric};
+use brk_types::{FormatResponse, Index, Metric, RangeIndex};
 
 fn main() -> brk_client::Result<()> {
     // Create client with default options
@@ -79,7 +79,7 @@ fn main() -> brk_client::Result<()> {
     let metricdata = client.get_metric(
         Metric::from("price_close"),
         Index::Day1,
-        Some(-3),
+        Some(RangeIndex::Int(-3)),
         None,
         None,
         None,

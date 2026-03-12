@@ -8,20 +8,31 @@ pub struct Pagination {
     #[serde(default, alias = "p")]
     #[schemars(example = 0, example = 1, example = 2)]
     pub page: Option<usize>,
+    /// Results per page (default: 1000, max: 1000)
+    #[serde(default)]
+    #[schemars(example = 100, example = 1000)]
+    pub per_page: Option<usize>,
 }
 
 impl Pagination {
-    pub const PER_PAGE: usize = 1_000;
+    pub const DEFAULT_PER_PAGE: usize = 1_000;
+    pub const MAX_PER_PAGE: usize = 1_000;
 
     pub fn page(&self) -> usize {
         self.page.unwrap_or_default()
     }
 
+    pub fn per_page(&self) -> usize {
+        self.per_page
+            .unwrap_or(Self::DEFAULT_PER_PAGE)
+            .min(Self::MAX_PER_PAGE)
+    }
+
     pub fn start(&self, len: usize) -> usize {
-        (self.page() * Self::PER_PAGE).clamp(0, len)
+        (self.page() * self.per_page()).clamp(0, len)
     }
 
     pub fn end(&self, len: usize) -> usize {
-        ((self.page() + 1) * Self::PER_PAGE).clamp(0, len)
+        ((self.page() + 1) * self.per_page()).clamp(0, len)
     }
 }

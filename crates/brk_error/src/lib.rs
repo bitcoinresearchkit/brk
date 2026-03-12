@@ -235,9 +235,13 @@ pub struct MetricNotFound {
 }
 
 impl MetricNotFound {
-    pub fn new(metric: String, all_matches: Vec<String>) -> Self {
+    pub fn new(mut metric: String, all_matches: Vec<String>) -> Self {
         let total_matches = all_matches.len();
         let suggestions = all_matches.into_iter().take(3).collect();
+        if metric.len() > 100 {
+            metric.truncate(100);
+            metric.push_str("...");
+        }
         Self {
             metric,
             suggestions,
@@ -261,7 +265,7 @@ impl fmt::Display for MetricNotFound {
         if remaining > 0 {
             write!(
                 f,
-                " ({remaining} more — /api/metrics/search/{} for all)",
+                " ({remaining} more — /api/metrics/search?q={} for all)",
                 self.metric
             )?;
         }

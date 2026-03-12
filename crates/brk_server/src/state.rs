@@ -60,9 +60,10 @@ impl AppState {
 
         let full_key = format!("{}-{}-{}", uri, params.etag_str(), encoding.as_str());
         let result = self
-            .get_or_insert(&full_key, async move {
-                self.run(move |q| f(q, encoding)).await
-            })
+            .get_or_insert(
+                &full_key,
+                async move { self.run(move |q| f(q, encoding)).await },
+            )
             .await;
 
         match result {

@@ -129,10 +129,15 @@ impl Display for OHLCCents {
 
 impl Formattable for OHLCCents {
     fn write_to(&self, buf: &mut Vec<u8>) {
-        use std::fmt::Write;
-        let mut s = String::new();
-        write!(s, "{}", self).unwrap();
-        buf.extend_from_slice(s.as_bytes());
+        buf.push(b'[');
+        self.open.write_to(buf);
+        buf.push(b',');
+        self.high.write_to(buf);
+        buf.push(b',');
+        self.low.write_to(buf);
+        buf.push(b',');
+        self.close.write_to(buf);
+        buf.push(b']');
     }
 
     fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
@@ -143,12 +148,6 @@ impl Formattable for OHLCCents {
             f.push('"');
         }
         Ok(())
-    }
-
-    fn fmt_json(&self, buf: &mut Vec<u8>) {
-        buf.push(b'"');
-        self.write_to(buf);
-        buf.push(b'"');
     }
 }
 
@@ -272,10 +271,15 @@ impl Display for OHLCDollars {
 
 impl Formattable for OHLCDollars {
     fn write_to(&self, buf: &mut Vec<u8>) {
-        use std::fmt::Write;
-        let mut s = String::new();
-        write!(s, "{}", self).unwrap();
-        buf.extend_from_slice(s.as_bytes());
+        buf.push(b'[');
+        self.open.write_to(buf);
+        buf.push(b',');
+        self.high.write_to(buf);
+        buf.push(b',');
+        self.low.write_to(buf);
+        buf.push(b',');
+        self.close.write_to(buf);
+        buf.push(b']');
     }
 
     fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
@@ -286,12 +290,6 @@ impl Formattable for OHLCDollars {
             f.push('"');
         }
         Ok(())
-    }
-
-    fn fmt_json(&self, buf: &mut Vec<u8>) {
-        buf.push(b'"');
-        self.write_to(buf);
-        buf.push(b'"');
     }
 }
 
@@ -384,10 +382,15 @@ impl Display for OHLCSats {
 
 impl Formattable for OHLCSats {
     fn write_to(&self, buf: &mut Vec<u8>) {
-        use std::fmt::Write;
-        let mut s = String::new();
-        write!(s, "{}", self).unwrap();
-        buf.extend_from_slice(s.as_bytes());
+        buf.push(b'[');
+        self.open.write_to(buf);
+        buf.push(b',');
+        self.high.write_to(buf);
+        buf.push(b',');
+        self.low.write_to(buf);
+        buf.push(b',');
+        self.close.write_to(buf);
+        buf.push(b']');
     }
 
     fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
@@ -398,12 +401,6 @@ impl Formattable for OHLCSats {
             f.push('"');
         }
         Ok(())
-    }
-
-    fn fmt_json(&self, buf: &mut Vec<u8>) {
-        buf.push(b'"');
-        self.write_to(buf);
-        buf.push(b'"');
     }
 }
 

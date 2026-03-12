@@ -1,6 +1,6 @@
 use axum::{
     body::Bytes,
-    http::{header, HeaderMap, HeaderValue},
+    http::{HeaderMap, HeaderValue, header},
 };
 
 /// HTTP content encoding for pre-compressed caching.
@@ -61,9 +61,9 @@ impl ContentEncoding {
                 encoder.write_all(&bytes).expect("gzip compression failed");
                 Bytes::from(encoder.finish().expect("gzip finish failed"))
             }
-            Self::Zstd => Bytes::from(
-                zstd::encode_all(bytes.as_ref(), 3).expect("zstd compression failed"),
-            ),
+            Self::Zstd => {
+                Bytes::from(zstd::encode_all(bytes.as_ref(), 3).expect("zstd compression failed"))
+            }
         }
     }
 

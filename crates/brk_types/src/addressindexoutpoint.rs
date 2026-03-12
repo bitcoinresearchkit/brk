@@ -50,8 +50,8 @@ impl From<ByteView> for AddressIndexOutPoint {
     #[inline]
     fn from(value: ByteView) -> Self {
         Self {
-            addressindextxindex: AddressIndexTxIndex::from_bytes(&value[0..8]).unwrap(),
-            vout: Vout::from_bytes(&value[8..]).unwrap(),
+            addressindextxindex: AddressIndexTxIndex::from(ByteView::new(&value[..8])),
+            vout: Vout::from(u16::from_be_bytes([value[8], value[9]])),
         }
     }
 }

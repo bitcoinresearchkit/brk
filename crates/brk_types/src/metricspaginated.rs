@@ -12,6 +12,12 @@ pub struct PaginatedMetrics {
     /// Maximum valid page index (0-indexed)
     #[schemars(example = 21)]
     pub max_page: usize,
-    /// List of metric names (max 1000 per page)
+    /// Total number of metrics
+    pub total_count: usize,
+    /// Results per page
+    pub per_page: usize,
+    /// Whether more pages are available after the current one
+    pub has_more: bool,
+    /// List of metric names
     pub metrics: Vec<Cow<'static, str>>,
 }

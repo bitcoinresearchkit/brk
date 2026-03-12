@@ -9,6 +9,7 @@ use brk_types::{
 use rayon::prelude::*;
 use schemars::JsonSchema;
 use serde::Serialize;
+use bitcoin::ScriptBuf;
 use vecdb::{
     AnyStoredVec, BytesVec, BytesVecValue, Database, Formattable, ImportableVec, PcoVec,
     PcoVecValue, ReadableVec, Rw, Stamp, StorageMode, VecIndex, WritableVec,
@@ -255,5 +256,22 @@ impl AddressesVecs {
             OutputType::P2A => make_iter!(self.p2a),
             _ => Ok(Box::new(std::iter::empty())),
         }
+    }
+}
+
+impl<M: StorageMode> AddressesVecs<M> {
+    pub fn script_pubkey(&self, outputtype: OutputType, typeindex: TypeIndex) -> ScriptBuf {
+        let bytes: Option<AddressBytes> = match outputtype {
+            OutputType::P2PK65 => self.p2pk65.bytes.collect_one(typeindex.into()).map(Into::into),
+            OutputType::P2PK33 => self.p2pk33.bytes.collect_one(typeindex.into()).map(Into::into),
+            OutputType::P2PKH => self.p2pkh.bytes.collect_one(typeindex.into()).map(Into::into),
+            OutputType::P2SH => self.p2sh.bytes.collect_one(typeindex.into()).map(Into::into),
+            OutputType::P2WPKH => self.p2wpkh.bytes.collect_one(typeindex.into()).map(Into::into),
+            OutputType::P2WSH => self.p2wsh.bytes.collect_one(typeindex.into()).map(Into::into),
+            OutputType::P2TR => self.p2tr.bytes.collect_one(typeindex.into()).map(Into::into),
+            OutputType::P2A => self.p2a.bytes.collect_one(typeindex.into()).map(Into::into),
+            _ => None,
+        };
+        bytes.map(|b| b.to_script_pubkey()).unwrap_or_default()
     }
 }

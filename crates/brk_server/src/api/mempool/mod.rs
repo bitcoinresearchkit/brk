@@ -52,22 +52,6 @@ impl MempoolRoutes for ApiRouter<AppState> {
                 ),
             )
             .api_route(
-                "/api/v1/fees/recommended",
-                get_with(
-                    async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
-                        state.cached_json(&headers, state.mempool_cache(), &uri, |q| q.recommended_fees()).await
-                    },
-                    |op| {
-                        op.id("get_recommended_fees")
-                            .mempool_tag()
-                            .summary("Recommended fees")
-                            .description("Get recommended fee rates for different confirmation targets based on current mempool state.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*")
-                            .ok_response::<RecommendedFees>()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
                 "/api/mempool/price",
                 get_with(
                     async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
@@ -83,6 +67,22 @@ impl MempoolRoutes for ApiRouter<AppState> {
                                 plus mempool.",
                             )
                             .ok_response::<Dollars>()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/v1/fees/recommended",
+                get_with(
+                    async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                        state.cached_json(&headers, state.mempool_cache(), &uri, |q| q.recommended_fees()).await
+                    },
+                    |op| {
+                        op.id("get_recommended_fees")
+                            .mempool_tag()
+                            .summary("Recommended fees")
+                            .description("Get recommended fee rates for different confirmation targets based on current mempool state.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*")
+                            .ok_response::<RecommendedFees>()
                             .server_error()
                     },
                 ),

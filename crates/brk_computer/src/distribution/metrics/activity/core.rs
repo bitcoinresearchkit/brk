@@ -96,9 +96,7 @@ impl ActivityCore {
 
         sum_others!(self, starting_indexes, others, exit; coindays_destroyed.raw.height);
         sum_others!(self, starting_indexes, others, exit; sent_in_profit.raw.sats.height);
-        sum_others!(self, starting_indexes, others, exit; sent_in_profit.raw.cents.height);
         sum_others!(self, starting_indexes, others, exit; sent_in_loss.raw.sats.height);
-        sum_others!(self, starting_indexes, others, exit; sent_in_loss.raw.cents.height);
 
         Ok(())
     }

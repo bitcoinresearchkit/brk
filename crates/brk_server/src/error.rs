@@ -58,6 +58,7 @@ fn error_status(e: &BrkError) -> StatusCode {
         | BrkError::UnknownTxid
         | BrkError::NotFound(_)
         | BrkError::NoData
+        | BrkError::OutOfRange(_)
         | BrkError::MetricNotFound(_) => StatusCode::NOT_FOUND,
 
         BrkError::AuthFailed => StatusCode::FORBIDDEN,
@@ -80,6 +81,7 @@ fn error_code(e: &BrkError) -> &'static str {
         BrkError::UnknownAddress => "unknown_address",
         BrkError::UnknownTxid => "unknown_txid",
         BrkError::NotFound(_) => "not_found",
+        BrkError::OutOfRange(_) => "out_of_range",
         BrkError::NoData => "no_data",
         BrkError::MetricNotFound(_) => "metric_not_found",
         BrkError::MempoolNotAvailable => "mempool_not_available",
@@ -128,6 +130,10 @@ impl Error {
         Self::new(StatusCode::NOT_FOUND, "not_found", msg)
     }
 
+    pub fn not_implemented(msg: impl Into<String>) -> Self {
+        Self::new(StatusCode::NOT_IMPLEMENTED, "not_implemented", msg)
+    }
+
     pub fn internal(msg: impl Into<String>) -> Self {
         Self::new(StatusCode::INTERNAL_SERVER_ERROR, "internal_error", msg)
     }
@@ -156,7 +162,7 @@ impl IntoResponse for Error {
         let body = build_error_body(self.status, self.code, self.message);
         (
             self.status,
-            [(header::CONTENT_TYPE, "application/json")],
+            [(header::CONTENT_TYPE, "application/problem+json")],
             body,
         )
             .into_response()

@@ -35,7 +35,7 @@ impl Query {
         if let Some(indexes) = self.vecs().metric_to_indexes(metric.clone()) {
             let supported = indexes
                 .iter()
-                .map(|i| format!("/api/metric/{metric}/{i}"))
+                .map(|i| format!("/api/metric/{metric}/{}", i.name()))
                 .collect::<Vec<_>>()
                 .join(", ");
             return Error::MetricUnsupportedIndex {
@@ -253,7 +253,12 @@ impl Query {
     }
 
     /// Format a resolved query as raw data (just the JSON array, no MetricData wrapper).
+    /// CSV output is identical to `format` (no wrapper distinction for CSV).
     pub fn format_raw(&self, resolved: ResolvedQuery) -> Result<MetricOutput> {
+        if resolved.format() == Format::CSV {
+            return self.format(resolved);
+        }
+
         let ResolvedQuery {
             vecs, version, total, start, end, ..
         } = resolved;

@@ -2,7 +2,7 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, State},
     http::{HeaderMap, Uri},
-    response::Redirect,
+    response::{IntoResponse, Redirect, Response},
     routing::get,
 };
 use brk_types::{
@@ -11,7 +11,7 @@ use brk_types::{
     RewardStats, TimePeriodParam,
 };
 
-use crate::{CacheStrategy, extended::TransformResponseExtended};
+use crate::{CacheStrategy, Error, extended::TransformResponseExtended};
 
 use super::AppState;
 
@@ -200,18 +200,15 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/blocks/fee-rates/{time_period}",
             get_with(
-                async |Path(_path): Path<TimePeriodParam>| {
-                    axum::Json(serde_json::json!({
-                        "status": "wip",
-                        "message": "This endpoint is work in progress. Percentile fields are not yet available."
-                    }))
+                async |Path(_path): Path<TimePeriodParam>| -> Response {
+                    Error::not_implemented("Fee rate percentiles are not yet available").into_response()
                 },
                 |op| {
                     op.id("get_block_fee_rates")
                         .mining_tag()
                         .summary("Block fee rates (WIP)")
                         .description("**Work in progress.** Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*")
-                        .ok_response::<serde_json::Value>()
+                        .server_error()
                 },
             ),
         )

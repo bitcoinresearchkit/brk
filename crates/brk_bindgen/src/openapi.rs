@@ -306,18 +306,52 @@ fn schema_type_from_schema(schema: &Schema) -> Option<String> {
 }
 
 fn schema_to_type_name(schema: &ObjectSchema) -> Option<String> {
-    let schema_type = schema.schema_type.as_ref()?;
+    if let Some(schema_type) = schema.schema_type.as_ref() {
+        return match schema_type {
+            SchemaTypeSet::Single(t) => single_type_to_name(t, schema),
+            SchemaTypeSet::Multiple(types) => {
+                // For nullable types like ["integer", "null"], return the non-null type
+                types
+                    .iter()
+                    .find(|t| !matches!(t, SchemaType::Null))
+                    .and_then(|t| single_type_to_name(t, schema))
+                    .or(Some("*".to_string()))
+            }
+        };
+    }
 
-    match schema_type {
-        SchemaTypeSet::Single(t) => single_type_to_name(t, schema),
-        SchemaTypeSet::Multiple(types) => {
-            // For nullable types like ["integer", "null"], return the non-null type
-            types
-                .iter()
-                .find(|t| !matches!(t, SchemaType::Null))
-                .and_then(|t| single_type_to_name(t, schema))
-                .or(Some("*".to_string()))
-        }
+    // Handle anyOf/oneOf unions (e.g., Option<RangeIndex> → anyOf: [$ref, null])
+    let variants = if !schema.any_of.is_empty() {
+        &schema.any_of
+    } else if !schema.one_of.is_empty() {
+        &schema.one_of
+    } else {
+        return None;
+    };
+
+    let types: Vec<String> = variants
+        .iter()
+        .filter_map(|v| match v {
+            ObjectOrReference::Ref { ref_path, .. } => {
+                ref_to_type_name(ref_path).map(|s| s.to_string())
+            }
+            ObjectOrReference::Object(obj) => {
+                // Skip null variants
+                if matches!(
+                    obj.schema_type.as_ref(),
+                    Some(SchemaTypeSet::Single(SchemaType::Null))
+                ) {
+                    return None;
+                }
+                schema_to_type_name(obj)
+            }
+        })
+        .collect();
+
+    match types.len() {
+        0 => None,
+        1 => Some(types.into_iter().next().unwrap()),
+        _ => Some(types.join(" | ")),
     }
 }
 

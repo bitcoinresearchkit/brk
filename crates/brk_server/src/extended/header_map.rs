@@ -24,12 +24,19 @@ pub trait HeaderMapExtended {
 
 impl HeaderMapExtended for HeaderMap {
     fn has_etag(&self, etag: &str) -> bool {
-        self.get(IF_NONE_MATCH)
-            .is_some_and(|prev_etag| etag == prev_etag)
+        self.get(IF_NONE_MATCH).is_some_and(|v| {
+            let s = v.as_bytes();
+            // Match both quoted and unquoted: "etag" or etag
+            s == etag.as_bytes()
+                || (s.len() == etag.len() + 2
+                    && s[0] == b'"'
+                    && s[s.len() - 1] == b'"'
+                    && &s[1..s.len() - 1] == etag.as_bytes())
+        })
     }
 
     fn insert_etag(&mut self, etag: &str) {
-        self.insert(header::ETAG, etag.parse().unwrap());
+        self.insert(header::ETAG, format!("\"{etag}\"").parse().unwrap());
     }
 
     fn insert_cache_control(&mut self, value: &str) {
@@ -43,7 +50,9 @@ impl HeaderMapExtended for HeaderMap {
     fn insert_content_disposition_attachment(&mut self, filename: &str) {
         self.insert(
             header::CONTENT_DISPOSITION,
-            format!("attachment; filename=\"{filename}\"").parse().unwrap(),
+            format!("attachment; filename=\"{filename}\"")
+                .parse()
+                .unwrap(),
         );
     }
 

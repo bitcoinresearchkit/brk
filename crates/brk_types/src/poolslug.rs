@@ -169,22 +169,22 @@ pub enum PoolSlug {
     Ocean,
     WhitePool,
     Wiz,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy145,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy146,
     Wk057,
     FutureBitApolloSolo,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy149,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy150,
     CarbonNegative,
     PortlandHodl,
     Phoenix,
     Neopool,
     MaxiPool,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy156,
     BitFuFuPool,
     GDPool,
@@ -192,187 +192,187 @@ pub enum PoolSlug {
     PublicPool,
     MiningSquared,
     InnopolisTech,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy163,
     BtcLab,
     Parasite,
     RedRockPool,
     Est3lar,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy168,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy169,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy170,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy171,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy172,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy173,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy174,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy175,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy176,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy177,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy178,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy179,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy180,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy181,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy182,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy183,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy184,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy185,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy186,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy187,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy188,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy189,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy190,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy191,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy192,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy193,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy194,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy195,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy196,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy197,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy198,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy199,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy200,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy201,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy202,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy203,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy204,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy205,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy206,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy207,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy208,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy209,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy210,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy211,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy212,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy213,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy214,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy215,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy216,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy217,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy218,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy219,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy220,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy221,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy222,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy223,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy224,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy225,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy226,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy227,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy228,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy229,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy230,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy231,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy232,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy233,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy234,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy235,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy236,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy237,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy238,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy239,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy240,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy241,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy242,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy243,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy244,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy245,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy246,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy247,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy248,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy249,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy250,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy251,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy252,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy253,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy254,
-    #[schemars(skip)]
+    #[serde(skip)]
     Dummy255,
 }
 
