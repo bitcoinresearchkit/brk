@@ -244,6 +244,7 @@ impl Query {
         let value_reader = indexer.vecs.outputs.value.reader();
         let outputtype_reader = indexer.vecs.outputs.outputtype.reader();
         let typeindex_reader = indexer.vecs.outputs.typeindex.reader();
+        let address_readers = indexer.vecs.addresses.address_readers();
 
         // Batch-read outpoints for all inputs (avoids per-input PcoVec page decompression)
         let outpoints: Vec<_> = indexer.vecs.inputs.outpoint.collect_range_at(
@@ -278,10 +279,8 @@ impl Query {
                     let prev_outputtype: OutputType =
                         outputtype_reader.get(usize::from(prev_txoutindex));
                     let prev_typeindex = typeindex_reader.get(usize::from(prev_txoutindex));
-                    let script_pubkey = indexer
-                        .vecs
-                        .addresses
-                        .script_pubkey(prev_outputtype, prev_typeindex);
+                    let script_pubkey =
+                        address_readers.script_pubkey(prev_outputtype, prev_typeindex);
 
                     let prevout = Some(TxOut::from((script_pubkey, prev_value)));
 

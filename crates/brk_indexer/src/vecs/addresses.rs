@@ -9,10 +9,9 @@ use brk_types::{
 use rayon::prelude::*;
 use schemars::JsonSchema;
 use serde::Serialize;
-use bitcoin::ScriptBuf;
 use vecdb::{
     AnyStoredVec, BytesVec, BytesVecValue, Database, Formattable, ImportableVec, PcoVec,
-    PcoVecValue, ReadableVec, Rw, Stamp, StorageMode, VecIndex, WritableVec,
+    PcoVecValue, ReadableVec, Ro, Rw, Stamp, StorageMode, VecIndex, WritableVec,
 };
 
 use crate::parallel_import;
@@ -259,19 +258,24 @@ impl AddressesVecs {
     }
 }
 
-impl<M: StorageMode> AddressesVecs<M> {
-    pub fn script_pubkey(&self, outputtype: OutputType, typeindex: TypeIndex) -> ScriptBuf {
-        let bytes: Option<AddressBytes> = match outputtype {
-            OutputType::P2PK65 => self.p2pk65.bytes.collect_one(typeindex.into()).map(Into::into),
-            OutputType::P2PK33 => self.p2pk33.bytes.collect_one(typeindex.into()).map(Into::into),
-            OutputType::P2PKH => self.p2pkh.bytes.collect_one(typeindex.into()).map(Into::into),
-            OutputType::P2SH => self.p2sh.bytes.collect_one(typeindex.into()).map(Into::into),
-            OutputType::P2WPKH => self.p2wpkh.bytes.collect_one(typeindex.into()).map(Into::into),
-            OutputType::P2WSH => self.p2wsh.bytes.collect_one(typeindex.into()).map(Into::into),
-            OutputType::P2TR => self.p2tr.bytes.collect_one(typeindex.into()).map(Into::into),
-            OutputType::P2A => self.p2a.bytes.collect_one(typeindex.into()).map(Into::into),
-            _ => None,
-        };
-        bytes.map(|b| b.to_script_pubkey()).unwrap_or_default()
-    }
+macro_rules! impl_address_readers {
+    ($mode:ty) => {
+        impl AddressesVecs<$mode> {
+            pub fn address_readers(&self) -> AddressReaders {
+                AddressReaders {
+                    p2pk65: self.p2pk65.bytes.reader(),
+                    p2pk33: self.p2pk33.bytes.reader(),
+                    p2pkh: self.p2pkh.bytes.reader(),
+                    p2sh: self.p2sh.bytes.reader(),
+                    p2wpkh: self.p2wpkh.bytes.reader(),
+                    p2wsh: self.p2wsh.bytes.reader(),
+                    p2tr: self.p2tr.bytes.reader(),
+                    p2a: self.p2a.bytes.reader(),
+                }
+            }
+        }
+    };
 }
+
+impl_address_readers!(Rw);
+impl_address_readers!(Ro);

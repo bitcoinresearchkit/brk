@@ -1,8 +1,9 @@
+use bitcoin::ScriptBuf;
 use brk_types::{
-    OutputType, P2AAddressIndex, P2ABytes, P2PK33AddressIndex, P2PK33Bytes, P2PK65AddressIndex,
-    P2PK65Bytes, P2PKHAddressIndex, P2PKHBytes, P2SHAddressIndex, P2SHBytes, P2TRAddressIndex,
-    P2TRBytes, P2WPKHAddressIndex, P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, TxIndex, TxOutIndex,
-    Txid, TypeIndex,
+    AddressBytes, OutputType, P2AAddressIndex, P2ABytes, P2PK33AddressIndex, P2PK33Bytes,
+    P2PK65AddressIndex, P2PK65Bytes, P2PKHAddressIndex, P2PKHBytes, P2SHAddressIndex, P2SHBytes,
+    P2TRAddressIndex, P2TRBytes, P2WPKHAddressIndex, P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes,
+    TxIndex, TxOutIndex, Txid, TypeIndex,
 };
 use vecdb::{BytesStrategy, VecReader};
 
@@ -17,6 +18,24 @@ pub struct AddressReaders {
     pub p2wsh: VecReader<P2WSHAddressIndex, P2WSHBytes, BytesStrategy<P2WSHBytes>>,
     pub p2tr: VecReader<P2TRAddressIndex, P2TRBytes, BytesStrategy<P2TRBytes>>,
     pub p2a: VecReader<P2AAddressIndex, P2ABytes, BytesStrategy<P2ABytes>>,
+}
+
+impl AddressReaders {
+    pub fn script_pubkey(&self, outputtype: OutputType, typeindex: TypeIndex) -> ScriptBuf {
+        let idx = usize::from(typeindex);
+        let bytes: Option<AddressBytes> = match outputtype {
+            OutputType::P2PK65 => self.p2pk65.try_get(idx).map(Into::into),
+            OutputType::P2PK33 => self.p2pk33.try_get(idx).map(Into::into),
+            OutputType::P2PKH => self.p2pkh.try_get(idx).map(Into::into),
+            OutputType::P2SH => self.p2sh.try_get(idx).map(Into::into),
+            OutputType::P2WPKH => self.p2wpkh.try_get(idx).map(Into::into),
+            OutputType::P2WSH => self.p2wsh.try_get(idx).map(Into::into),
+            OutputType::P2TR => self.p2tr.try_get(idx).map(Into::into),
+            OutputType::P2A => self.p2a.try_get(idx).map(Into::into),
+            _ => None,
+        };
+        bytes.map(|b| b.to_script_pubkey()).unwrap_or_default()
+    }
 }
 
 /// Readers for vectors that need to be accessed during block processing.
@@ -38,16 +57,7 @@ impl Readers {
             txindex_to_first_txoutindex: vecs.transactions.first_txoutindex.reader(),
             txoutindex_to_outputtype: vecs.outputs.outputtype.reader(),
             txoutindex_to_typeindex: vecs.outputs.typeindex.reader(),
-            addressbytes: AddressReaders {
-                p2pk65: vecs.addresses.p2pk65.bytes.reader(),
-                p2pk33: vecs.addresses.p2pk33.bytes.reader(),
-                p2pkh: vecs.addresses.p2pkh.bytes.reader(),
-                p2sh: vecs.addresses.p2sh.bytes.reader(),
-                p2wpkh: vecs.addresses.p2wpkh.bytes.reader(),
-                p2wsh: vecs.addresses.p2wsh.bytes.reader(),
-                p2tr: vecs.addresses.p2tr.bytes.reader(),
-                p2a: vecs.addresses.p2a.bytes.reader(),
-            },
+            addressbytes: vecs.addresses.address_readers(),
         }
     }
 }
