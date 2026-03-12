@@ -62,21 +62,21 @@ impl RatioPerBlockPercentiles {
         }
 
         macro_rules! import_band {
-            ($suffix:expr) => {
+            ($pct:expr) => {
                 RatioBand {
-                    ratio: import_ratio!($suffix),
-                    price: import_price!($suffix),
+                    ratio: import_ratio!(concat!("ratio_", $pct)),
+                    price: import_price!($pct),
                 }
             };
         }
 
         Ok(Self {
-            pct99: import_band!("ratio_pct99"),
-            pct98: import_band!("ratio_pct98"),
-            pct95: import_band!("ratio_pct95"),
-            pct5: import_band!("ratio_pct5"),
-            pct2: import_band!("ratio_pct2"),
-            pct1: import_band!("ratio_pct1"),
+            pct99: import_band!("pct99"),
+            pct98: import_band!("pct98"),
+            pct95: import_band!("pct95"),
+            pct5: import_band!("pct5"),
+            pct2: import_band!("pct2"),
+            pct1: import_band!("pct1"),
             expanding_pct: ExpandingPercentiles::default(),
         })
     }

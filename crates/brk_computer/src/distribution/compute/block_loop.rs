@@ -183,22 +183,22 @@ pub(crate) fn process_blocks(
         .collect_range_at(start_usize, end_usize);
 
     // Track running totals - recover from previous height if resuming
-    debug!("recovering addr_counts from height {}", starting_height);
-    let (mut addr_counts, mut empty_addr_counts) = if starting_height > Height::ZERO {
-        let addr_counts =
+    debug!("recovering address_counts from height {}", starting_height);
+    let (mut address_counts, mut empty_address_counts) = if starting_height > Height::ZERO {
+        let address_counts =
             AddressTypeToAddressCount::from((&vecs.addresses.funded.by_addresstype, starting_height));
-        let empty_addr_counts = AddressTypeToAddressCount::from((
+        let empty_address_counts = AddressTypeToAddressCount::from((
             &vecs.addresses.empty.by_addresstype,
             starting_height,
         ));
-        (addr_counts, empty_addr_counts)
+        (address_counts, empty_address_counts)
     } else {
         (
             AddressTypeToAddressCount::default(),
             AddressTypeToAddressCount::default(),
         )
     };
-    debug!("addr_counts recovered");
+    debug!("address_counts recovered");
 
     // Track activity counts - reset each block
     let mut activity_counts = AddressTypeToActivityCounts::default();
@@ -406,8 +406,8 @@ pub(crate) fn process_blocks(
                     &mut vecs.address_cohorts,
                     &mut lookup,
                     block_price,
-                    &mut addr_counts,
-                    &mut empty_addr_counts,
+                    &mut address_counts,
+                    &mut empty_address_counts,
                     &mut activity_counts,
                 );
 
@@ -418,8 +418,8 @@ pub(crate) fn process_blocks(
                     &mut lookup,
                     block_price,
                     ctx.price_range_max,
-                    &mut addr_counts,
-                    &mut empty_addr_counts,
+                    &mut address_counts,
+                    &mut empty_address_counts,
                     &mut activity_counts,
                     &received_addresses,
                     height_to_price_vec,
@@ -437,11 +437,11 @@ pub(crate) fn process_blocks(
 
         // Push to height-indexed vectors
         vecs.addresses.funded
-            .truncate_push_height(height, addr_counts.sum(), &addr_counts)?;
+            .truncate_push_height(height, address_counts.sum(), &address_counts)?;
         vecs.addresses.empty.truncate_push_height(
             height,
-            empty_addr_counts.sum(),
-            &empty_addr_counts,
+            empty_address_counts.sum(),
+            &empty_address_counts,
         )?;
         vecs.addresses.activity
             .truncate_push_height(height, &activity_counts)?;

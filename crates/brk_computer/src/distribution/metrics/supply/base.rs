@@ -16,23 +16,23 @@ use crate::distribution::metrics::ImportConfig;
 #[derive(Traversable)]
 pub struct SupplyBase<M: StorageMode = Rw> {
     pub total: AmountPerBlock<M>,
-    pub halved: LazyAmountPerBlock,
+    pub half: LazyAmountPerBlock,
 }
 
 impl SupplyBase {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let supply = cfg.import("supply", Version::ZERO)?;
 
-        let supply_halved = LazyAmountPerBlock::from_block_source::<
+        let supply_half = LazyAmountPerBlock::from_block_source::<
             HalveSats,
             HalveSatsToBitcoin,
             HalveCents,
             HalveDollars,
-        >(&cfg.name("supply_halved"), &supply, cfg.version);
+        >(&cfg.name("supply_half"), &supply, cfg.version);
 
         Ok(Self {
             total: supply,
-            halved: supply_halved,
+            half: supply_half,
         })
     }
 

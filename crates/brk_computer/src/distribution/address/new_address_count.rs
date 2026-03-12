@@ -9,29 +9,29 @@ use crate::{
     internal::{ComputedPerBlockSum, WindowStarts},
 };
 
-use super::TotalAddrCountVecs;
+use super::TotalAddressCountVecs;
 
 /// New address count per block (global + per-type)
 #[derive(Traversable)]
-pub struct NewAddrCountVecs<M: StorageMode = Rw> {
+pub struct NewAddressCountVecs<M: StorageMode = Rw> {
     pub all: ComputedPerBlockSum<StoredU64, M>,
     #[traversable(flatten)]
     pub by_addresstype: ByAddressType<ComputedPerBlockSum<StoredU64, M>>,
 }
 
-impl NewAddrCountVecs {
+impl NewAddressCountVecs {
     pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let all = ComputedPerBlockSum::forced_import(db, "new_addr_count", version, indexes)?;
+        let all = ComputedPerBlockSum::forced_import(db, "new_address_count", version, indexes)?;
 
         let by_addresstype: ByAddressType<ComputedPerBlockSum<StoredU64>> =
             ByAddressType::new_with_name(|name| {
                 ComputedPerBlockSum::forced_import(
                     db,
-                    &format!("{name}_new_addr_count"),
+                    &format!("{name}_new_address_count"),
                     version,
                     indexes,
                 )
@@ -47,17 +47,17 @@ impl NewAddrCountVecs {
         &mut self,
         max_from: Height,
         windows: &WindowStarts<'_>,
-        total_addr_count: &TotalAddrCountVecs,
+        total_address_count: &TotalAddressCountVecs,
         exit: &Exit,
     ) -> Result<()> {
         self.all.compute(max_from, windows, exit, |height_vec| {
-            Ok(height_vec.compute_change(max_from, &total_addr_count.all.height, 1, exit)?)
+            Ok(height_vec.compute_change(max_from, &total_address_count.all.height, 1, exit)?)
         })?;
 
         for ((_, new), (_, total)) in self
             .by_addresstype
             .iter_mut()
-            .zip(total_addr_count.by_addresstype.iter())
+            .zip(total_address_count.by_addresstype.iter())
         {
             new.compute(max_from, windows, exit, |height_vec| {
                 Ok(height_vec.compute_change(max_from, &total.height, 1, exit)?)

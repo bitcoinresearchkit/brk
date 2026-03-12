@@ -31,7 +31,7 @@ derive_more = { workspace = true }
 vecdb = { workspace = true }
 zstd = "0.13"
 jiff = { workspace = true }
-quick_cache = "0.6.18"
+quick_cache = "0.6.19"
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

@@ -74,50 +74,26 @@ pub const AMOUNT_RANGE_BOUNDS: AmountRange<Range<Sats>> = AmountRange {
     _100btc_to_1k_btc: Sats::_100BTC..Sats::_1K_BTC,
     _1k_btc_to_10k_btc: Sats::_1K_BTC..Sats::_10K_BTC,
     _10k_btc_to_100k_btc: Sats::_10K_BTC..Sats::_100K_BTC,
-    _100k_btc_or_more: Sats::_100K_BTC..Sats::MAX,
+    over_100k_btc: Sats::_100K_BTC..Sats::MAX,
 };
 
 /// Amount range names
 pub const AMOUNT_RANGE_NAMES: AmountRange<CohortName> = AmountRange {
-    _0sats: CohortName::new("with_0sats", "0 sats", "0 Sats"),
-    _1sat_to_10sats: CohortName::new("above_1sat_under_10sats", "1-10 sats", "1-10 Sats"),
-    _10sats_to_100sats: CohortName::new("above_10sats_under_100sats", "10-100 sats", "10-100 Sats"),
-    _100sats_to_1k_sats: CohortName::new(
-        "above_100sats_under_1k_sats",
-        "100-1k sats",
-        "100-1K Sats",
-    ),
-    _1k_sats_to_10k_sats: CohortName::new(
-        "above_1k_sats_under_10k_sats",
-        "1k-10k sats",
-        "1K-10K Sats",
-    ),
-    _10k_sats_to_100k_sats: CohortName::new(
-        "above_10k_sats_under_100k_sats",
-        "10k-100k sats",
-        "10K-100K Sats",
-    ),
-    _100k_sats_to_1m_sats: CohortName::new(
-        "above_100k_sats_under_1m_sats",
-        "100k-1M sats",
-        "100K-1M Sats",
-    ),
-    _1m_sats_to_10m_sats: CohortName::new(
-        "above_1m_sats_under_10m_sats",
-        "1M-10M sats",
-        "1M-10M Sats",
-    ),
-    _10m_sats_to_1btc: CohortName::new("above_10m_sats_under_1btc", "0.1-1 BTC", "0.1-1 BTC"),
-    _1btc_to_10btc: CohortName::new("above_1btc_under_10btc", "1-10 BTC", "1-10 BTC"),
-    _10btc_to_100btc: CohortName::new("above_10btc_under_100btc", "10-100 BTC", "10-100 BTC"),
-    _100btc_to_1k_btc: CohortName::new("above_100btc_under_1k_btc", "100-1k BTC", "100-1K BTC"),
-    _1k_btc_to_10k_btc: CohortName::new("above_1k_btc_under_10k_btc", "1k-10k BTC", "1K-10K BTC"),
-    _10k_btc_to_100k_btc: CohortName::new(
-        "above_10k_btc_under_100k_btc",
-        "10k-100k BTC",
-        "10K-100K BTC",
-    ),
-    _100k_btc_or_more: CohortName::new("above_100k_btc", "100k+ BTC", "100K+ BTC"),
+    _0sats: CohortName::new("0sats", "0 sats", "0 Sats"),
+    _1sat_to_10sats: CohortName::new("1sat_to_10sats", "1-10 sats", "1-10 Sats"),
+    _10sats_to_100sats: CohortName::new("10sats_to_100sats", "10-100 sats", "10-100 Sats"),
+    _100sats_to_1k_sats: CohortName::new("100sats_to_1k_sats", "100-1k sats", "100-1K Sats"),
+    _1k_sats_to_10k_sats: CohortName::new("1k_sats_to_10k_sats", "1k-10k sats", "1K-10K Sats"),
+    _10k_sats_to_100k_sats: CohortName::new("10k_sats_to_100k_sats", "10k-100k sats", "10K-100K Sats"),
+    _100k_sats_to_1m_sats: CohortName::new("100k_sats_to_1m_sats", "100k-1M sats", "100K-1M Sats"),
+    _1m_sats_to_10m_sats: CohortName::new("1m_sats_to_10m_sats", "1M-10M sats", "1M-10M Sats"),
+    _10m_sats_to_1btc: CohortName::new("10m_sats_to_1btc", "0.1-1 BTC", "0.1-1 BTC"),
+    _1btc_to_10btc: CohortName::new("1btc_to_10btc", "1-10 BTC", "1-10 BTC"),
+    _10btc_to_100btc: CohortName::new("10btc_to_100btc", "10-100 BTC", "10-100 BTC"),
+    _100btc_to_1k_btc: CohortName::new("100btc_to_1k_btc", "100-1k BTC", "100-1K BTC"),
+    _1k_btc_to_10k_btc: CohortName::new("1k_btc_to_10k_btc", "1k-10k BTC", "1K-10K BTC"),
+    _10k_btc_to_100k_btc: CohortName::new("10k_btc_to_100k_btc", "10k-100k BTC", "10K-100K BTC"),
+    over_100k_btc: CohortName::new("over_100k_btc", "100k+ BTC", "100K+ BTC"),
 };
 
 /// Amount range filters
@@ -148,7 +124,7 @@ pub const AMOUNT_RANGE_FILTERS: AmountRange<Filter> = AmountRange {
     _10k_btc_to_100k_btc: Filter::Amount(AmountFilter::Range(
         AMOUNT_RANGE_BOUNDS._10k_btc_to_100k_btc,
     )),
-    _100k_btc_or_more: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._100k_btc_or_more)),
+    over_100k_btc: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS.over_100k_btc)),
 };
 
 #[derive(Debug, Default, Clone, Traversable, Serialize)]
@@ -167,7 +143,7 @@ pub struct AmountRange<T> {
     pub _100btc_to_1k_btc: T,
     pub _1k_btc_to_10k_btc: T,
     pub _10k_btc_to_100k_btc: T,
-    pub _100k_btc_or_more: T,
+    pub over_100k_btc: T,
 }
 
 impl AmountRange<CohortName> {
@@ -204,7 +180,7 @@ impl<T> AmountRange<T> {
             _100btc_to_1k_btc: create(f._100btc_to_1k_btc.clone(), n._100btc_to_1k_btc.id),
             _1k_btc_to_10k_btc: create(f._1k_btc_to_10k_btc.clone(), n._1k_btc_to_10k_btc.id),
             _10k_btc_to_100k_btc: create(f._10k_btc_to_100k_btc.clone(), n._10k_btc_to_100k_btc.id),
-            _100k_btc_or_more: create(f._100k_btc_or_more.clone(), n._100k_btc_or_more.id),
+            over_100k_btc: create(f.over_100k_btc.clone(), n.over_100k_btc.id),
         }
     }
 
@@ -244,7 +220,7 @@ impl<T> AmountRange<T> {
                 f._10k_btc_to_100k_btc.clone(),
                 n._10k_btc_to_100k_btc.id,
             )?,
-            _100k_btc_or_more: create(f._100k_btc_or_more.clone(), n._100k_btc_or_more.id)?,
+            over_100k_btc: create(f.over_100k_btc.clone(), n.over_100k_btc.id)?,
         })
     }
 
@@ -265,7 +241,7 @@ impl<T> AmountRange<T> {
             11 => &self._100btc_to_1k_btc,
             12 => &self._1k_btc_to_10k_btc,
             13 => &self._10k_btc_to_100k_btc,
-            _ => &self._100k_btc_or_more,
+            _ => &self.over_100k_btc,
         }
     }
 
@@ -293,7 +269,7 @@ impl<T> AmountRange<T> {
             11 => &mut self._100btc_to_1k_btc,
             12 => &mut self._1k_btc_to_10k_btc,
             13 => &mut self._10k_btc_to_100k_btc,
-            _ => &mut self._100k_btc_or_more,
+            _ => &mut self.over_100k_btc,
         }
     }
 
@@ -313,7 +289,7 @@ impl<T> AmountRange<T> {
             &self._100btc_to_1k_btc,
             &self._1k_btc_to_10k_btc,
             &self._10k_btc_to_100k_btc,
-            &self._100k_btc_or_more,
+            &self.over_100k_btc,
         ]
         .into_iter()
     }
@@ -334,7 +310,7 @@ impl<T> AmountRange<T> {
             (Sats::_100BTC, &self._100btc_to_1k_btc),
             (Sats::_1K_BTC, &self._1k_btc_to_10k_btc),
             (Sats::_10K_BTC, &self._10k_btc_to_100k_btc),
-            (Sats::_100K_BTC, &self._100k_btc_or_more),
+            (Sats::_100K_BTC, &self.over_100k_btc),
         ]
         .into_iter()
     }
@@ -355,7 +331,7 @@ impl<T> AmountRange<T> {
             &mut self._100btc_to_1k_btc,
             &mut self._1k_btc_to_10k_btc,
             &mut self._10k_btc_to_100k_btc,
-            &mut self._100k_btc_or_more,
+            &mut self.over_100k_btc,
         ]
         .into_iter()
     }
@@ -379,7 +355,7 @@ impl<T> AmountRange<T> {
             &mut self._100btc_to_1k_btc,
             &mut self._1k_btc_to_10k_btc,
             &mut self._10k_btc_to_100k_btc,
-            &mut self._100k_btc_or_more,
+            &mut self.over_100k_btc,
         ]
         .into_par_iter()
     }
@@ -406,7 +382,7 @@ where
             _100btc_to_1k_btc: self._100btc_to_1k_btc + rhs._100btc_to_1k_btc,
             _1k_btc_to_10k_btc: self._1k_btc_to_10k_btc + rhs._1k_btc_to_10k_btc,
             _10k_btc_to_100k_btc: self._10k_btc_to_100k_btc + rhs._10k_btc_to_100k_btc,
-            _100k_btc_or_more: self._100k_btc_or_more + rhs._100k_btc_or_more,
+            over_100k_btc: self.over_100k_btc + rhs.over_100k_btc,
         }
     }
 }
@@ -430,6 +406,6 @@ where
         self._100btc_to_1k_btc += rhs._100btc_to_1k_btc;
         self._1k_btc_to_10k_btc += rhs._1k_btc_to_10k_btc;
         self._10k_btc_to_100k_btc += rhs._10k_btc_to_100k_btc;
-        self._100k_btc_or_more += rhs._100k_btc_or_more;
+        self.over_100k_btc += rhs.over_100k_btc;
     }
 }

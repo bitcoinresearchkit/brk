@@ -12,11 +12,11 @@ use vecdb::{
 use crate::{indexes, internal::ComputedPerBlock};
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct AddrCountVecs<M: StorageMode = Rw>(
+pub struct AddressCountVecs<M: StorageMode = Rw>(
     #[traversable(flatten)] pub ComputedPerBlock<StoredU64, M>,
 );
 
-impl AddrCountVecs {
+impl AddressCountVecs {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -40,9 +40,9 @@ impl AddressTypeToAddressCount {
     }
 }
 
-impl From<(&AddressTypeToAddrCountVecs, Height)> for AddressTypeToAddressCount {
+impl From<(&AddressTypeToAddressCountVecs, Height)> for AddressTypeToAddressCount {
     #[inline]
-    fn from((groups, starting_height): (&AddressTypeToAddrCountVecs, Height)) -> Self {
+    fn from((groups, starting_height): (&AddressTypeToAddressCountVecs, Height)) -> Self {
         if let Some(prev_height) = starting_height.decremented() {
             Self(ByAddressType {
                 p2pk65: groups
@@ -102,25 +102,25 @@ impl From<(&AddressTypeToAddrCountVecs, Height)> for AddressTypeToAddressCount {
 
 /// Address count per address type, with height + derived indexes.
 #[derive(Deref, DerefMut, Traversable)]
-pub struct AddressTypeToAddrCountVecs<M: StorageMode = Rw>(ByAddressType<AddrCountVecs<M>>);
+pub struct AddressTypeToAddressCountVecs<M: StorageMode = Rw>(ByAddressType<AddressCountVecs<M>>);
 
-impl From<ByAddressType<AddrCountVecs>> for AddressTypeToAddrCountVecs {
+impl From<ByAddressType<AddressCountVecs>> for AddressTypeToAddressCountVecs {
     #[inline]
-    fn from(value: ByAddressType<AddrCountVecs>) -> Self {
+    fn from(value: ByAddressType<AddressCountVecs>) -> Self {
         Self(value)
     }
 }
 
-impl AddressTypeToAddrCountVecs {
+impl AddressTypeToAddressCountVecs {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        Ok(Self::from(ByAddressType::<AddrCountVecs>::new_with_name(
+        Ok(Self::from(ByAddressType::<AddressCountVecs>::new_with_name(
             |type_name| {
-                AddrCountVecs::forced_import(db, &format!("{type_name}_{name}"), version, indexes)
+                AddressCountVecs::forced_import(db, &format!("{type_name}_{name}"), version, indexes)
             },
         )?))
     }
@@ -140,9 +140,9 @@ impl AddressTypeToAddrCountVecs {
     pub(crate) fn truncate_push_height(
         &mut self,
         height: Height,
-        addr_counts: &AddressTypeToAddressCount,
+        address_counts: &AddressTypeToAddressCount,
     ) -> Result<()> {
-        for (vecs, &count) in self.0.values_mut().zip(addr_counts.values()) {
+        for (vecs, &count) in self.0.values_mut().zip(address_counts.values()) {
             vecs.height.truncate_push(height, count.into())?;
         }
         Ok(())
@@ -162,13 +162,13 @@ impl AddressTypeToAddrCountVecs {
 }
 
 #[derive(Traversable)]
-pub struct AddrCountsVecs<M: StorageMode = Rw> {
-    pub all: AddrCountVecs<M>,
+pub struct AddressCountsVecs<M: StorageMode = Rw> {
+    pub all: AddressCountVecs<M>,
     #[traversable(flatten)]
-    pub by_addresstype: AddressTypeToAddrCountVecs<M>,
+    pub by_addresstype: AddressTypeToAddressCountVecs<M>,
 }
 
-impl AddrCountsVecs {
+impl AddressCountsVecs {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -176,8 +176,8 @@ impl AddrCountsVecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            all: AddrCountVecs::forced_import(db, name, version, indexes)?,
-            by_addresstype: AddressTypeToAddrCountVecs::forced_import(db, name, version, indexes)?,
+            all: AddressCountVecs::forced_import(db, name, version, indexes)?,
+            by_addresstype: AddressTypeToAddressCountVecs::forced_import(db, name, version, indexes)?,
         })
     }
 
@@ -202,11 +202,11 @@ impl AddrCountsVecs {
         &mut self,
         height: Height,
         total: u64,
-        addr_counts: &AddressTypeToAddressCount,
+        address_counts: &AddressTypeToAddressCount,
     ) -> Result<()> {
         self.all.height.truncate_push(height, total.into())?;
         self.by_addresstype
-            .truncate_push_height(height, addr_counts)?;
+            .truncate_push_height(height, address_counts)?;
         Ok(())
     }
 

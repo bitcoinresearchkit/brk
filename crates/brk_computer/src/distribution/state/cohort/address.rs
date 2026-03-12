@@ -11,21 +11,21 @@ use super::base::CohortState;
 const COST_BASIS_PRICE_DIGITS: i32 = 4;
 
 pub struct AddressCohortState<R: RealizedOps> {
-    pub addr_count: u64,
+    pub address_count: u64,
     pub inner: CohortState<R, CostBasisRaw>,
 }
 
 impl<R: RealizedOps> AddressCohortState<R> {
     pub(crate) fn new(path: &Path, name: &str) -> Self {
         Self {
-            addr_count: 0,
+            address_count: 0,
             inner: CohortState::new(path, name).with_price_rounding(COST_BASIS_PRICE_DIGITS),
         }
     }
 
     /// Reset state for fresh start.
     pub(crate) fn reset(&mut self) {
-        self.addr_count = 0;
+        self.address_count = 0;
         self.inner.supply = SupplyState::default();
         self.inner.sent = Sats::ZERO;
         self.inner.satdays_destroyed = Sats::ZERO;
@@ -84,7 +84,7 @@ impl<R: RealizedOps> AddressCohortState<R> {
     }
 
     pub(crate) fn add(&mut self, addressdata: &FundedAddressData) {
-        self.addr_count += 1;
+        self.address_count += 1;
         self.inner
             .increment_snapshot(&addressdata.cost_basis_snapshot());
     }
@@ -96,12 +96,12 @@ impl<R: RealizedOps> AddressCohortState<R> {
         if unlikely(self.inner.supply.utxo_count < snapshot.supply_state.utxo_count) {
             panic!(
                 "AddressCohortState::subtract underflow!\n\
-                Cohort state: addr_count={}, supply={}\n\
+                Cohort state: address_count={}, supply={}\n\
                 Address being subtracted: {}\n\
                 Address supply: {}\n\
                 Realized price: {}\n\
                 This means the address is not properly tracked in this cohort.",
-                self.addr_count,
+                self.address_count,
                 self.inner.supply,
                 addressdata,
                 snapshot.supply_state,
@@ -111,12 +111,12 @@ impl<R: RealizedOps> AddressCohortState<R> {
         if unlikely(self.inner.supply.value < snapshot.supply_state.value) {
             panic!(
                 "AddressCohortState::subtract value underflow!\n\
-                Cohort state: addr_count={}, supply={}\n\
+                Cohort state: address_count={}, supply={}\n\
                 Address being subtracted: {}\n\
                 Address supply: {}\n\
                 Realized price: {}\n\
                 This means the address is not properly tracked in this cohort.",
-                self.addr_count,
+                self.address_count,
                 self.inner.supply,
                 addressdata,
                 snapshot.supply_state,
@@ -124,9 +124,9 @@ impl<R: RealizedOps> AddressCohortState<R> {
             );
         }
 
-        self.addr_count = self.addr_count.checked_sub(1).unwrap_or_else(|| {
+        self.address_count = self.address_count.checked_sub(1).unwrap_or_else(|| {
             panic!(
-                "AddressCohortState::subtract addr_count underflow! addr_count=0\n\
+                "AddressCohortState::subtract address_count underflow! address_count=0\n\
                 Address being subtracted: {}\n\
                 Realized price: {}",
                 addressdata, snapshot.realized_price

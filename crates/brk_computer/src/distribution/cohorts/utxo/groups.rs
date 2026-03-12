@@ -520,10 +520,10 @@ impl UTXOCohorts<Rw> {
     where
         HM: ReadableVec<Height, Dollars> + Sync,
     {
-        // Get up_to_1h value sources for adjusted computation (cloned to avoid borrow conflicts).
-        let up_to_1h_value_created = self
+        // Get under_1h value sources for adjusted computation (cloned to avoid borrow conflicts).
+        let under_1h_value_created = self
             .age_range
-            .up_to_1h
+            .under_1h
             .metrics
             .realized
             .minimal
@@ -532,9 +532,9 @@ impl UTXOCohorts<Rw> {
             .raw
             .height
             .read_only_clone();
-        let up_to_1h_value_destroyed = self
+        let under_1h_value_destroyed = self
             .age_range
-            .up_to_1h
+            .under_1h
             .metrics
             .realized
             .minimal
@@ -550,8 +550,8 @@ impl UTXOCohorts<Rw> {
             prices,
             starting_indexes,
             height_to_market_cap,
-            &up_to_1h_value_created,
-            &up_to_1h_value_destroyed,
+            &under_1h_value_created,
+            &under_1h_value_destroyed,
             exit,
         )?;
 
@@ -576,8 +576,8 @@ impl UTXOCohorts<Rw> {
 
         // All remaining groups run in parallel. Each closure owns an exclusive &mut
         // to its field and shares read-only references to common data.
-        let vc = &up_to_1h_value_created;
-        let vd = &up_to_1h_value_destroyed;
+        let vc = &under_1h_value_created;
+        let vd = &under_1h_value_destroyed;
         let ss = &all_supply_sats;
 
         let tasks: Vec<Box<dyn FnOnce() -> Result<()> + Send + '_>> = vec![

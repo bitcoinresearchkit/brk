@@ -30,7 +30,7 @@ use crate::{
 use super::{
     AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, RangeMap, UTXOCohorts,
     address::{
-        AddrCountsVecs, AddressActivityVecs, DeltaVecs, NewAddrCountVecs, TotalAddrCountVecs,
+        AddressCountsVecs, AddressActivityVecs, DeltaVecs, NewAddressCountVecs, TotalAddressCountVecs,
     },
     compute::aggregates,
 };
@@ -39,11 +39,11 @@ const VERSION: Version = Version::new(22);
 
 #[derive(Traversable)]
 pub struct AddressMetricsVecs<M: StorageMode = Rw> {
-    pub funded: AddrCountsVecs<M>,
-    pub empty: AddrCountsVecs<M>,
+    pub funded: AddressCountsVecs<M>,
+    pub empty: AddressCountsVecs<M>,
     pub activity: AddressActivityVecs<M>,
-    pub total: TotalAddrCountVecs<M>,
-    pub new: NewAddrCountVecs<M>,
+    pub total: TotalAddressCountVecs<M>,
+    pub new: NewAddressCountVecs<M>,
     pub delta: DeltaVecs<M>,
     #[traversable(wrap = "indexes", rename = "funded")]
     pub funded_index:
@@ -135,19 +135,19 @@ impl Vecs {
             |index, _| index,
         );
 
-        let addr_count = AddrCountsVecs::forced_import(&db, "addr_count", version, indexes)?;
-        let empty_addr_count =
-            AddrCountsVecs::forced_import(&db, "empty_addr_count", version, indexes)?;
+        let address_count = AddressCountsVecs::forced_import(&db, "address_count", version, indexes)?;
+        let empty_address_count =
+            AddressCountsVecs::forced_import(&db, "empty_address_count", version, indexes)?;
         let address_activity =
             AddressActivityVecs::forced_import(&db, "address_activity", version, indexes)?;
 
-        // Stored total = addr_count + empty_addr_count (global + per-type, with all derived indexes)
-        let total_addr_count = TotalAddrCountVecs::forced_import(&db, version, indexes)?;
+        // Stored total = address_count + empty_address_count (global + per-type, with all derived indexes)
+        let total_address_count = TotalAddressCountVecs::forced_import(&db, version, indexes)?;
 
         // Per-block delta of total (global + per-type)
-        let new_addr_count = NewAddrCountVecs::forced_import(&db, version, indexes)?;
+        let new_address_count = NewAddressCountVecs::forced_import(&db, version, indexes)?;
 
-        // Growth rate: new / addr_count (global + per-type)
+        // Growth rate: new / address_count (global + per-type)
         let delta = DeltaVecs::forced_import(&db, version, indexes)?;
 
         let this = Self {
@@ -157,11 +157,11 @@ impl Vecs {
             )?,
 
             addresses: AddressMetricsVecs {
-                funded: addr_count,
-                empty: empty_addr_count,
+                funded: address_count,
+                empty: empty_address_count,
                 activity: address_activity,
-                total: total_addr_count,
-                new: new_addr_count,
+                total: total_address_count,
+                new: new_address_count,
                 delta,
                 funded_index: funded_address_index,
                 empty_index: empty_address_index,
@@ -423,7 +423,7 @@ impl Vecs {
         self.addresses.funded.compute_rest(starting_indexes, exit)?;
         self.addresses.empty.compute_rest(starting_indexes, exit)?;
 
-        // 6c. Compute total_addr_count = addr_count + empty_addr_count
+        // 6c. Compute total_address_count = address_count + empty_address_count
         self.addresses.total.compute(
             starting_indexes.height,
             &self.addresses.funded,

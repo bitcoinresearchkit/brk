@@ -46,32 +46,47 @@ pub struct MetricLeafWithSchema {
     pub schema: serde_json::Value,
 }
 
-/// Extract JSON type from a schema, following $ref if needed.
+/// Extract JSON type from a root schema, following $ref and composition keywords.
 pub fn extract_json_type(schema: &serde_json::Value) -> String {
+    extract_json_type_inner(schema, schema)
+}
+
+fn extract_json_type_inner(node: &serde_json::Value, root: &serde_json::Value) -> String {
     // Direct type field
-    if let Some(t) = schema.get("type").and_then(|v| v.as_str()) {
+    if let Some(t) = node.get("type").and_then(|v| v.as_str()) {
         return t.to_string();
     }
 
-    // Handle $ref - look up in definitions
-    if let Some(ref_path) = schema.get("$ref").and_then(|v| v.as_str())
+    // Handle $ref - resolve against root definitions
+    if let Some(ref_path) = node.get("$ref").and_then(|v| v.as_str())
         && let Some(def_name) = ref_path.rsplit('/').next()
     {
-        // Check both "$defs" (draft 2020-12) and "definitions" (older drafts)
         for defs_key in &["$defs", "definitions"] {
-            if let Some(defs) = schema.get(defs_key)
+            if let Some(defs) = root.get(defs_key)
                 && let Some(def) = defs.get(def_name)
             {
-                return extract_json_type(def);
+                return extract_json_type_inner(def, root);
             }
         }
     }
 
     // Handle allOf with single element
-    if let Some(all_of) = schema.get("allOf").and_then(|v| v.as_array())
+    if let Some(all_of) = node.get("allOf").and_then(|v| v.as_array())
         && all_of.len() == 1
     {
-        return extract_json_type(&all_of[0]);
+        return extract_json_type_inner(&all_of[0], root);
+    }
+
+    // Handle anyOf/oneOf (e.g. Option<T> generates {"anyOf": [{"type":"null"}, ...]})
+    for key in &["anyOf", "oneOf"] {
+        if let Some(variants) = node.get(key).and_then(|v| v.as_array()) {
+            for variant in variants {
+                let t = extract_json_type_inner(variant, root);
+                if t != "null" {
+                    return t;
+                }
+            }
+        }
     }
 
     "object".to_string()
@@ -136,7 +151,7 @@ pub enum TreeNode {
     Leaf(MetricLeafWithSchema),
 }
 
-const BASE: &str = "base";
+const BASE: &str = "raw";
 
 impl TreeNode {
     pub fn is_empty(&self) -> bool {
@@ -708,13 +723,13 @@ mod tests {
     #[test]
     fn case3_computed_block_sum() {
         // ComputedBlockSum:
-        // - height: wrap="base" → Branch { "base": Leaf(height) }
+        // - height: wrap="raw" → Branch { "raw": Leaf(height) }
         // - rest (flatten): DerivedComputedBlockSum → branches with "sum" children
         let tree = branch(vec![
-            // height wrapped as "base"
+            // height wrapped as "raw"
             (
                 "height",
-                branch(vec![("base", leaf("metric", Index::Height))]),
+                branch(vec![("raw", leaf("metric", Index::Height))]),
             ),
             // rest (flattened) produces branches
             (
@@ -729,7 +744,7 @@ mod tests {
 
         let merged = tree.merge_branches().unwrap();
 
-        // DESIRED: { "base": Leaf(height), "sum": Leaf(day1, week1) }
+        // DESIRED: { "raw": Leaf(height), "sum": Leaf(day1, week1) }
         match &merged {
             TreeNode::Branch(map) => {
                 assert_eq!(
@@ -740,7 +755,7 @@ mod tests {
                 );
 
                 // base should have Height only
-                let base_indexes = get_leaf_indexes(map.get("base").unwrap()).unwrap();
+                let base_indexes = get_leaf_indexes(map.get("raw").unwrap()).unwrap();
                 assert!(base_indexes.contains(&Index::Height));
                 assert_eq!(base_indexes.len(), 1);
 
@@ -759,13 +774,13 @@ mod tests {
     #[test]
     fn case4_computed_block_last() {
         // ComputedBlockLast:
-        // - height: wrap="base" → Branch { "base": Leaf(height) }
+        // - height: wrap="raw" → Branch { "raw": Leaf(height) }
         // - rest (flatten): DerivedComputedBlockLast → branches with "last" children
         let tree = branch(vec![
-            // height wrapped as "base"
+            // height wrapped as "raw"
             (
                 "height",
-                branch(vec![("base", leaf("metric", Index::Height))]),
+                branch(vec![("raw", leaf("metric", Index::Height))]),
             ),
             // rest (flattened) produces branches with "last" key
             (
@@ -780,7 +795,7 @@ mod tests {
 
         let merged = tree.merge_branches().unwrap();
 
-        // DESIRED: { "base": Leaf(height), "last": Leaf(day1, week1) }
+        // DESIRED: { "raw": Leaf(height), "last": Leaf(day1, week1) }
         match &merged {
             TreeNode::Branch(map) => {
                 assert_eq!(
@@ -791,7 +806,7 @@ mod tests {
                 );
 
                 // base should have Height only
-                let base_indexes = get_leaf_indexes(map.get("base").unwrap()).unwrap();
+                let base_indexes = get_leaf_indexes(map.get("raw").unwrap()).unwrap();
                 assert!(base_indexes.contains(&Index::Height));
                 assert_eq!(base_indexes.len(), 1);
 
@@ -810,17 +825,17 @@ mod tests {
     #[test]
     fn case5_computed_block_full() {
         // ComputedBlockFull has:
-        // - height: wrapped as "base" (raw values, not aggregated)
+        // - height: wrapped as "raw" (raw values, not aggregated)
         // - rest (flatten): DerivedComputedBlockFull {
         //     height_cumulative: CumulativeVec → Branch{"cumulative": Leaf}
         //     day1: Full → Branch{avg, min, max, sum, cumulative}
         //     dates (flatten): more aggregation branches
         //   }
         let tree = branch(vec![
-            // height wrapped as "base" (raw values at height granularity)
+            // height wrapped as "raw" (raw values at height granularity)
             (
                 "height",
-                branch(vec![("base", leaf("metric", Index::Height))]),
+                branch(vec![("raw", leaf("metric", Index::Height))]),
             ),
             // height_cumulative wrapped as cumulative
             (
@@ -867,7 +882,7 @@ mod tests {
                 );
 
                 // base should have Height only
-                let base_indexes = get_leaf_indexes(map.get("base").unwrap()).unwrap();
+                let base_indexes = get_leaf_indexes(map.get("raw").unwrap()).unwrap();
                 assert!(base_indexes.contains(&Index::Height));
                 assert_eq!(base_indexes.len(), 1);
 
@@ -991,7 +1006,7 @@ mod tests {
 
     // ========== Case 8: BinaryBlockSumCum ==========
     // After derive applies all inner merges and flatten, before parent merge:
-    // - height wrapped as "base" → { base: Leaf(Height) }
+    // - height wrapped as "raw" → { base: Leaf(Height) }
     // - height_cumulative wrapped as "cumulative" → { cumulative: Leaf(Height) }
     // - rest (flatten): children from already-merged inner struct inserted directly
     //
@@ -1002,10 +1017,10 @@ mod tests {
     fn case8_binary_block_sum_cum() {
         // Tree AFTER derive applies inner merges, flatten lifts rest's children:
         let tree = branch(vec![
-            // height with wrap="base"
+            // height with wrap="raw"
             (
                 "height",
-                branch(vec![("base", leaf("metric", Index::Height))]),
+                branch(vec![("raw", leaf("metric", Index::Height))]),
             ),
             // height_cumulative with wrap="cumulative"
             (
@@ -1040,7 +1055,7 @@ mod tests {
                 );
 
                 // base: only Height
-                let base_indexes = get_leaf_indexes(map.get("base").unwrap()).unwrap();
+                let base_indexes = get_leaf_indexes(map.get("raw").unwrap()).unwrap();
                 assert_eq!(base_indexes.len(), 1);
                 assert!(base_indexes.contains(&Index::Height));
 
@@ -1067,19 +1082,19 @@ mod tests {
         // Each denomination has already been merged internally
         // Simulating the output after inner merge
         let sats_merged = branch(vec![
-            ("base", leaf("metric", Index::Height)),
+            ("raw", leaf("metric", Index::Height)),
             ("sum", leaf("metric_sum", Index::Day1)),
             ("cumulative", leaf("metric_cumulative", Index::Height)),
         ]);
 
         let bitcoin_merged = branch(vec![
-            ("base", leaf("metric_btc", Index::Height)),
+            ("raw", leaf("metric_btc", Index::Height)),
             ("sum", leaf("metric_btc_sum", Index::Day1)),
             ("cumulative", leaf("metric_btc_cumulative", Index::Height)),
         ]);
 
         let dollars_merged = branch(vec![
-            ("base", leaf("metric_usd", Index::Height)),
+            ("raw", leaf("metric_usd", Index::Height)),
             ("sum", leaf("metric_usd_sum", Index::Day1)),
             ("cumulative", leaf("metric_usd_cumulative", Index::Height)),
         ]);
@@ -1099,7 +1114,7 @@ mod tests {
                     match map.get(denom) {
                         Some(TreeNode::Branch(inner)) => {
                             assert_eq!(inner.len(), 3);
-                            assert!(inner.contains_key("base"));
+                            assert!(inner.contains_key("raw"));
                             assert!(inner.contains_key("sum"));
                             assert!(inner.contains_key("cumulative"));
                         }
@@ -1156,14 +1171,14 @@ mod tests {
     #[test]
     fn case10_computed_date_last_collapses_to_leaf() {
         // ComputedDateLast<T> with merge:
-        //   - day1 with wrap="base" → { base: Leaf }
+        //   - day1 with wrap="raw" → { base: Leaf }
         //   - rest (flatten): DerivedDateLast already merged to Leaf
         //     → flatten inserts with field name "rest" as key
         //
         // Both have same metric name → collapses to single Leaf
         let tree = branch(vec![
-            // day1 with wrap="base"
-            ("day1", branch(vec![("base", leaf("metric", Index::Day1))])),
+            // day1 with wrap="raw"
+            ("day1", branch(vec![("raw", leaf("metric", Index::Day1))])),
             // rest (flatten): DerivedDateLast merged to Leaf
             // Same metric name as base
             ("rest", leaf("metric", Index::Week1)),

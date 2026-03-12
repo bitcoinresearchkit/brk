@@ -96,10 +96,10 @@ impl AddressCohorts {
         exit: &Exit,
     ) -> Result<()> {
         self.par_iter_mut().try_for_each(|v| {
-            v.addr_count_delta.compute(
+            v.address_count_delta.compute(
                 starting_indexes.height,
                 &blocks.lookback._1m,
-                &v.addr_count.height,
+                &v.address_count.height,
                 exit,
             )
         })?;

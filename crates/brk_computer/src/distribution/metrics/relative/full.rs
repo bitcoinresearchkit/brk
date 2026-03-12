@@ -11,15 +11,15 @@ use crate::{
 /// Full relative metrics (sth/lth/all tier).
 #[derive(Traversable)]
 pub struct RelativeFull<M: StorageMode = Rw> {
-    #[traversable(wrap = "supply/in_profit", rename = "rel_to_own_supply")]
-    pub supply_in_profit_rel_to_own_supply: PercentPerBlock<BasisPoints16, M>,
-    #[traversable(wrap = "supply/in_loss", rename = "rel_to_own_supply")]
-    pub supply_in_loss_rel_to_own_supply: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "supply/in_profit", rename = "rel_to_own")]
+    pub supply_in_profit_rel_to_own: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "supply/in_loss", rename = "rel_to_own")]
+    pub supply_in_loss_rel_to_own: PercentPerBlock<BasisPoints16, M>,
 
-    #[traversable(wrap = "unrealized/profit", rename = "rel_to_market_cap")]
-    pub unrealized_profit_rel_to_market_cap: PercentPerBlock<BasisPoints16, M>,
-    #[traversable(wrap = "unrealized/loss", rename = "rel_to_market_cap")]
-    pub unrealized_loss_rel_to_market_cap: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "unrealized/profit", rename = "rel_to_mcap")]
+    pub unrealized_profit_rel_to_mcap: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "unrealized/loss", rename = "rel_to_mcap")]
+    pub unrealized_loss_rel_to_mcap: PercentPerBlock<BasisPoints16, M>,
 }
 
 impl RelativeFull {
@@ -28,13 +28,13 @@ impl RelativeFull {
         let v2 = Version::new(2);
 
         Ok(Self {
-            supply_in_profit_rel_to_own_supply: cfg
-                .import("supply_in_profit_rel_to_own_supply", v1)?,
-            supply_in_loss_rel_to_own_supply: cfg.import("supply_in_loss_rel_to_own_supply", v1)?,
-            unrealized_profit_rel_to_market_cap: cfg
-                .import("unrealized_profit_rel_to_market_cap", v2)?,
-            unrealized_loss_rel_to_market_cap: cfg
-                .import("unrealized_loss_rel_to_market_cap", v2)?,
+            supply_in_profit_rel_to_own: cfg
+                .import("supply_in_profit_rel_to_own", v1)?,
+            supply_in_loss_rel_to_own: cfg.import("supply_in_loss_rel_to_own", v1)?,
+            unrealized_profit_rel_to_mcap: cfg
+                .import("unrealized_profit_rel_to_mcap", v2)?,
+            unrealized_loss_rel_to_mcap: cfg
+                .import("unrealized_loss_rel_to_mcap", v2)?,
         })
     }
 
@@ -46,14 +46,14 @@ impl RelativeFull {
         market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
-        self.supply_in_profit_rel_to_own_supply
+        self.supply_in_profit_rel_to_own
             .compute_binary::<Sats, Sats, RatioSatsBp16>(
                 max_from,
                 &supply.in_profit.sats.height,
                 &supply.total.sats.height,
                 exit,
             )?;
-        self.supply_in_loss_rel_to_own_supply
+        self.supply_in_loss_rel_to_own
             .compute_binary::<Sats, Sats, RatioSatsBp16>(
                 max_from,
                 &supply.in_loss.sats.height,
@@ -61,14 +61,14 @@ impl RelativeFull {
                 exit,
             )?;
 
-        self.unrealized_profit_rel_to_market_cap
+        self.unrealized_profit_rel_to_mcap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
                 &unrealized.profit.raw.usd.height,
                 market_cap,
                 exit,
             )?;
-        self.unrealized_loss_rel_to_market_cap
+        self.unrealized_loss_rel_to_mcap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
                 &unrealized.loss.raw.usd.height,

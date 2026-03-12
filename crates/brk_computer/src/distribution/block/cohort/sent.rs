@@ -32,8 +32,8 @@ pub(crate) fn process_sent(
     lookup: &mut AddressLookup<'_>,
     current_price: Cents,
     price_range_max: &PriceRangeMax,
-    addr_count: &mut ByAddressType<u64>,
-    empty_addr_count: &mut ByAddressType<u64>,
+    address_count: &mut ByAddressType<u64>,
+    empty_address_count: &mut ByAddressType<u64>,
     activity_counts: &mut AddressTypeToActivityCounts,
     received_addresses: &ByAddressType<FxHashSet<TypeIndex>>,
     height_to_price: &[Cents],
@@ -55,8 +55,8 @@ pub(crate) fn process_sent(
 
         for (output_type, vec) in by_type.unwrap().into_iter() {
             // Cache mutable refs for this address type
-            let type_addr_count = addr_count.get_mut(output_type).unwrap();
-            let type_empty_count = empty_addr_count.get_mut(output_type).unwrap();
+            let type_address_count = address_count.get_mut(output_type).unwrap();
+            let type_empty_count = empty_address_count.get_mut(output_type).unwrap();
             let type_activity = activity_counts.get_mut_unwrap(output_type);
             let type_received = received_addresses.get(output_type);
             let type_seen = seen_senders.get_mut_unwrap(output_type);
@@ -126,7 +126,7 @@ pub(crate) fn process_sent(
                             unreachable!()
                         }
 
-                        *type_addr_count -= 1;
+                        *type_address_count -= 1;
                         *type_empty_count += 1;
 
                         // Move from funded to empty

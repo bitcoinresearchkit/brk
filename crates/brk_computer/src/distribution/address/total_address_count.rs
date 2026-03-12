@@ -6,29 +6,29 @@ use vecdb::{Database, Exit, Rw, StorageMode};
 
 use crate::{indexes, internal::ComputedPerBlock};
 
-use super::AddrCountsVecs;
+use super::AddressCountsVecs;
 
 /// Total address count (global + per-type) with all derived indexes
 #[derive(Traversable)]
-pub struct TotalAddrCountVecs<M: StorageMode = Rw> {
+pub struct TotalAddressCountVecs<M: StorageMode = Rw> {
     pub all: ComputedPerBlock<StoredU64, M>,
     #[traversable(flatten)]
     pub by_addresstype: ByAddressType<ComputedPerBlock<StoredU64, M>>,
 }
 
-impl TotalAddrCountVecs {
+impl TotalAddressCountVecs {
     pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let all = ComputedPerBlock::forced_import(db, "total_addr_count", version, indexes)?;
+        let all = ComputedPerBlock::forced_import(db, "total_address_count", version, indexes)?;
 
         let by_addresstype: ByAddressType<ComputedPerBlock<StoredU64>> =
             ByAddressType::new_with_name(|name| {
                 ComputedPerBlock::forced_import(
                     db,
-                    &format!("{name}_total_addr_count"),
+                    &format!("{name}_total_address_count"),
                     version,
                     indexes,
                 )
@@ -40,26 +40,26 @@ impl TotalAddrCountVecs {
         })
     }
 
-    /// Eagerly compute total = addr_count + empty_addr_count.
+    /// Eagerly compute total = address_count + empty_address_count.
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        addr_count: &AddrCountsVecs,
-        empty_addr_count: &AddrCountsVecs,
+        address_count: &AddressCountsVecs,
+        empty_address_count: &AddressCountsVecs,
         exit: &Exit,
     ) -> Result<()> {
         self.all.height.compute_add(
             max_from,
-            &addr_count.all.height,
-            &empty_addr_count.all.height,
+            &address_count.all.height,
+            &empty_address_count.all.height,
             exit,
         )?;
 
         for ((_, total), ((_, addr), (_, empty))) in self.by_addresstype.iter_mut().zip(
-            addr_count
+            address_count
                 .by_addresstype
                 .iter()
-                .zip(empty_addr_count.by_addresstype.iter()),
+                .zip(empty_address_count.by_addresstype.iter()),
         ) {
             total
                 .height

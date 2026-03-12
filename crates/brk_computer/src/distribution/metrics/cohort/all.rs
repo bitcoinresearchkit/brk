@@ -114,8 +114,8 @@ impl AllCohortMetrics {
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
-        up_to_1h_value_created: &impl ReadableVec<Height, Cents>,
-        up_to_1h_value_destroyed: &impl ReadableVec<Height, Cents>,
+        under_1h_value_created: &impl ReadableVec<Height, Cents>,
+        under_1h_value_destroyed: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
         self.realized.compute_rest_part2(
@@ -132,8 +132,8 @@ impl AllCohortMetrics {
             starting_indexes,
             &self.realized.minimal.sopr.value_created.raw.height,
             &self.realized.minimal.sopr.value_destroyed.raw.height,
-            up_to_1h_value_created,
-            up_to_1h_value_destroyed,
+            under_1h_value_created,
+            under_1h_value_destroyed,
             exit,
         )?;
 

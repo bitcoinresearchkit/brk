@@ -28,9 +28,9 @@ pub struct AddressCohortVecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub metrics: MinimalCohortMetrics<M>,
 
-    pub addr_count: ComputedPerBlock<StoredU64, M>,
-    #[traversable(wrap = "addr_count", rename = "delta")]
-    pub addr_count_delta: RollingDelta1m<StoredU64, StoredI64, M>,
+    pub address_count: ComputedPerBlock<StoredU64, M>,
+    #[traversable(wrap = "address_count", rename = "delta")]
+    pub address_count_delta: RollingDelta1m<StoredU64, StoredI64, M>,
 }
 
 impl AddressCohortVecs {
@@ -59,15 +59,15 @@ impl AddressCohortVecs {
 
             metrics: MinimalCohortMetrics::forced_import(&cfg)?,
 
-            addr_count: ComputedPerBlock::forced_import(
+            address_count: ComputedPerBlock::forced_import(
                 db,
-                &cfg.name("addr_count"),
+                &cfg.name("address_count"),
                 version,
                 indexes,
             )?,
-            addr_count_delta: RollingDelta1m::forced_import(
+            address_count_delta: RollingDelta1m::forced_import(
                 db,
-                &cfg.name("addr_count_delta"),
+                &cfg.name("address_count_delta"),
                 version + Version::ONE,
                 indexes,
             )?,
@@ -82,7 +82,7 @@ impl AddressCohortVecs {
         &mut self,
     ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
-        vecs.push(&mut self.addr_count.height as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.address_count.height as &mut dyn AnyStoredVec);
         vecs.extend(self.metrics.collect_all_vecs_mut());
         vecs.into_par_iter()
     }
@@ -103,7 +103,7 @@ impl Filtered for AddressCohortVecs {
 
 impl DynCohortVecs for AddressCohortVecs {
     fn min_stateful_len(&self) -> usize {
-        self.addr_count
+        self.address_count
             .height
             .len()
             .min(self.metrics.min_stateful_len())
@@ -136,7 +136,7 @@ impl DynCohortVecs for AddressCohortVecs {
                     .height
                     .collect_one(prev_height)
                     .unwrap();
-                state.addr_count = *self.addr_count.height.collect_one(prev_height).unwrap();
+                state.address_count = *self.address_count.height.collect_one(prev_height).unwrap();
 
                 state.inner.restore_realized_cap();
 
@@ -155,7 +155,7 @@ impl DynCohortVecs for AddressCohortVecs {
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         use vecdb::WritableVec;
-        self.addr_count
+        self.address_count
             .height
             .validate_computed_version_or_reset(base_version)?;
         Ok(())
@@ -167,9 +167,9 @@ impl DynCohortVecs for AddressCohortVecs {
         }
 
         if let Some(state) = self.state.as_ref() {
-            self.addr_count
+            self.address_count
                 .height
-                .truncate_push(height, state.addr_count.into())?;
+                .truncate_push(height, state.address_count.into())?;
             self.metrics.supply.truncate_push(height, &state.inner)?;
             self.metrics.outputs.truncate_push(height, &state.inner)?;
             self.metrics.realized.truncate_push(height, &state.inner)?;
@@ -226,11 +226,11 @@ impl CohortVecs for AddressCohortVecs {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.addr_count.height.compute_sum_of_others(
+        self.address_count.height.compute_sum_of_others(
             starting_indexes.height,
             others
                 .iter()
-                .map(|v| &v.addr_count.height)
+                .map(|v| &v.address_count.height)
                 .collect::<Vec<_>>()
                 .as_slice(),
             exit,

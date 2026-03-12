@@ -39,7 +39,7 @@ pub const AGE_BOUNDARIES: [usize; 20] = [
 
 /// Age range bounds (end = usize::MAX means unbounded)
 pub const AGE_RANGE_BOUNDS: AgeRange<Range<usize>> = AgeRange {
-    up_to_1h: 0..HOURS_1H,
+    under_1h: 0..HOURS_1H,
     _1h_to_1d: HOURS_1H..HOURS_1D,
     _1d_to_1w: HOURS_1D..HOURS_1W,
     _1w_to_1m: HOURS_1W..HOURS_1M,
@@ -59,12 +59,12 @@ pub const AGE_RANGE_BOUNDS: AgeRange<Range<usize>> = AgeRange {
     _8y_to_10y: HOURS_8Y..HOURS_10Y,
     _10y_to_12y: HOURS_10Y..HOURS_12Y,
     _12y_to_15y: HOURS_12Y..HOURS_15Y,
-    from_15y: HOURS_15Y..usize::MAX,
+    over_15y: HOURS_15Y..usize::MAX,
 };
 
 /// Age range filters
 pub const AGE_RANGE_FILTERS: AgeRange<Filter> = AgeRange {
-    up_to_1h: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS.up_to_1h)),
+    under_1h: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS.under_1h)),
     _1h_to_1d: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._1h_to_1d)),
     _1d_to_1w: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._1d_to_1w)),
     _1w_to_1m: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._1w_to_1m)),
@@ -84,12 +84,12 @@ pub const AGE_RANGE_FILTERS: AgeRange<Filter> = AgeRange {
     _8y_to_10y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._8y_to_10y)),
     _10y_to_12y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._10y_to_12y)),
     _12y_to_15y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._12y_to_15y)),
-    from_15y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS.from_15y)),
+    over_15y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS.over_15y)),
 };
 
 /// Age range names
 pub const AGE_RANGE_NAMES: AgeRange<CohortName> = AgeRange {
-    up_to_1h: CohortName::new("under_1h_old", "<1h", "Under 1 Hour Old"),
+    under_1h: CohortName::new("under_1h_old", "<1h", "Under 1 Hour Old"),
     _1h_to_1d: CohortName::new("1h_to_1d_old", "1h-1d", "1 Hour to 1 Day Old"),
     _1d_to_1w: CohortName::new("1d_to_1w_old", "1d-1w", "1 Day to 1 Week Old"),
     _1w_to_1m: CohortName::new("1w_to_1m_old", "1w-1m", "1 Week to 1 Month Old"),
@@ -109,7 +109,7 @@ pub const AGE_RANGE_NAMES: AgeRange<CohortName> = AgeRange {
     _8y_to_10y: CohortName::new("8y_to_10y_old", "8y-10y", "8 to 10 Years Old"),
     _10y_to_12y: CohortName::new("10y_to_12y_old", "10y-12y", "10 to 12 Years Old"),
     _12y_to_15y: CohortName::new("12y_to_15y_old", "12y-15y", "12 to 15 Years Old"),
-    from_15y: CohortName::new("over_15y_old", "15y+", "15+ Years Old"),
+    over_15y: CohortName::new("over_15y_old", "15y+", "15+ Years Old"),
 };
 
 impl AgeRange<CohortName> {
@@ -120,7 +120,7 @@ impl AgeRange<CohortName> {
 
 #[derive(Default, Clone, Traversable, Serialize)]
 pub struct AgeRange<T> {
-    pub up_to_1h: T,
+    pub under_1h: T,
     pub _1h_to_1d: T,
     pub _1d_to_1w: T,
     pub _1w_to_1m: T,
@@ -140,7 +140,7 @@ pub struct AgeRange<T> {
     pub _8y_to_10y: T,
     pub _10y_to_12y: T,
     pub _12y_to_15y: T,
-    pub from_15y: T,
+    pub over_15y: T,
 }
 
 impl<T> AgeRange<T> {
@@ -148,7 +148,7 @@ impl<T> AgeRange<T> {
     #[inline]
     pub fn get_mut(&mut self, age: Age) -> &mut T {
         match age.hours() {
-            0..HOURS_1H => &mut self.up_to_1h,
+            0..HOURS_1H => &mut self.under_1h,
             HOURS_1H..HOURS_1D => &mut self._1h_to_1d,
             HOURS_1D..HOURS_1W => &mut self._1d_to_1w,
             HOURS_1W..HOURS_1M => &mut self._1w_to_1m,
@@ -168,7 +168,7 @@ impl<T> AgeRange<T> {
             HOURS_8Y..HOURS_10Y => &mut self._8y_to_10y,
             HOURS_10Y..HOURS_12Y => &mut self._10y_to_12y,
             HOURS_12Y..HOURS_15Y => &mut self._12y_to_15y,
-            _ => &mut self.from_15y,
+            _ => &mut self.over_15y,
         }
     }
 
@@ -176,7 +176,7 @@ impl<T> AgeRange<T> {
     #[inline]
     pub fn get(&self, age: Age) -> &T {
         match age.hours() {
-            0..HOURS_1H => &self.up_to_1h,
+            0..HOURS_1H => &self.under_1h,
             HOURS_1H..HOURS_1D => &self._1h_to_1d,
             HOURS_1D..HOURS_1W => &self._1d_to_1w,
             HOURS_1W..HOURS_1M => &self._1w_to_1m,
@@ -196,14 +196,14 @@ impl<T> AgeRange<T> {
             HOURS_8Y..HOURS_10Y => &self._8y_to_10y,
             HOURS_10Y..HOURS_12Y => &self._10y_to_12y,
             HOURS_12Y..HOURS_15Y => &self._12y_to_15y,
-            _ => &self.from_15y,
+            _ => &self.over_15y,
         }
     }
 
     pub fn from_array(arr: [T; 21]) -> Self {
         let [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20] = arr;
         Self {
-            up_to_1h: a0,
+            under_1h: a0,
             _1h_to_1d: a1,
             _1d_to_1w: a2,
             _1w_to_1m: a3,
@@ -223,7 +223,7 @@ impl<T> AgeRange<T> {
             _8y_to_10y: a17,
             _10y_to_12y: a18,
             _12y_to_15y: a19,
-            from_15y: a20,
+            over_15y: a20,
         }
     }
 
@@ -234,7 +234,7 @@ impl<T> AgeRange<T> {
         let f = AGE_RANGE_FILTERS;
         let n = AGE_RANGE_NAMES;
         Self {
-            up_to_1h: create(f.up_to_1h.clone(), n.up_to_1h.id),
+            under_1h: create(f.under_1h.clone(), n.under_1h.id),
             _1h_to_1d: create(f._1h_to_1d.clone(), n._1h_to_1d.id),
             _1d_to_1w: create(f._1d_to_1w.clone(), n._1d_to_1w.id),
             _1w_to_1m: create(f._1w_to_1m.clone(), n._1w_to_1m.id),
@@ -254,7 +254,7 @@ impl<T> AgeRange<T> {
             _8y_to_10y: create(f._8y_to_10y.clone(), n._8y_to_10y.id),
             _10y_to_12y: create(f._10y_to_12y.clone(), n._10y_to_12y.id),
             _12y_to_15y: create(f._12y_to_15y.clone(), n._12y_to_15y.id),
-            from_15y: create(f.from_15y.clone(), n.from_15y.id),
+            over_15y: create(f.over_15y.clone(), n.over_15y.id),
         }
     }
 
@@ -265,7 +265,7 @@ impl<T> AgeRange<T> {
         let f = AGE_RANGE_FILTERS;
         let n = AGE_RANGE_NAMES;
         Ok(Self {
-            up_to_1h: create(f.up_to_1h.clone(), n.up_to_1h.id)?,
+            under_1h: create(f.under_1h.clone(), n.under_1h.id)?,
             _1h_to_1d: create(f._1h_to_1d.clone(), n._1h_to_1d.id)?,
             _1d_to_1w: create(f._1d_to_1w.clone(), n._1d_to_1w.id)?,
             _1w_to_1m: create(f._1w_to_1m.clone(), n._1w_to_1m.id)?,
@@ -285,13 +285,13 @@ impl<T> AgeRange<T> {
             _8y_to_10y: create(f._8y_to_10y.clone(), n._8y_to_10y.id)?,
             _10y_to_12y: create(f._10y_to_12y.clone(), n._10y_to_12y.id)?,
             _12y_to_15y: create(f._12y_to_15y.clone(), n._12y_to_15y.id)?,
-            from_15y: create(f.from_15y.clone(), n.from_15y.id)?,
+            over_15y: create(f.over_15y.clone(), n.over_15y.id)?,
         })
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         [
-            &self.up_to_1h,
+            &self.under_1h,
             &self._1h_to_1d,
             &self._1d_to_1w,
             &self._1w_to_1m,
@@ -311,14 +311,14 @@ impl<T> AgeRange<T> {
             &self._8y_to_10y,
             &self._10y_to_12y,
             &self._12y_to_15y,
-            &self.from_15y,
+            &self.over_15y,
         ]
         .into_iter()
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
-            &mut self.up_to_1h,
+            &mut self.under_1h,
             &mut self._1h_to_1d,
             &mut self._1d_to_1w,
             &mut self._1w_to_1m,
@@ -338,7 +338,7 @@ impl<T> AgeRange<T> {
             &mut self._8y_to_10y,
             &mut self._10y_to_12y,
             &mut self._12y_to_15y,
-            &mut self.from_15y,
+            &mut self.over_15y,
         ]
         .into_iter()
     }
@@ -348,7 +348,7 @@ impl<T> AgeRange<T> {
         T: Send + Sync,
     {
         [
-            &mut self.up_to_1h,
+            &mut self.under_1h,
             &mut self._1h_to_1d,
             &mut self._1d_to_1w,
             &mut self._1w_to_1m,
@@ -368,7 +368,7 @@ impl<T> AgeRange<T> {
             &mut self._8y_to_10y,
             &mut self._10y_to_12y,
             &mut self._12y_to_15y,
-            &mut self.from_15y,
+            &mut self.over_15y,
         ]
         .into_par_iter()
     }

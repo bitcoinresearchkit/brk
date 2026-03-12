@@ -17,7 +17,7 @@ impl UTXOCohorts<Rw> {
     /// Complexity: O(k * c) where k = 20 boundaries, c = ~1 (forward scan steps).
     ///
     /// Returns how many sats matured INTO each cohort from the younger adjacent one.
-    /// `up_to_1h` is always zero since nothing ages into the youngest cohort.
+    /// `under_1h` is always zero since nothing ages into the youngest cohort.
     pub(crate) fn tick_tock_next_block(
         &mut self,
         chain_state: &[BlockState],

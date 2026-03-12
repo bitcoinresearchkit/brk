@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use brk_traversable::Traversable;
 use brk_types::{
     Day1, Day3, Epoch, FromCoarserIndex, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30,
@@ -6,13 +8,60 @@ use brk_types::{
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    Cursor, LazyAggVec, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, VecIndex, VecValue,
+    AggFold, Cursor, LazyAggVec, ReadOnlyClone, ReadableBoxedVec, ReadableVec, VecIndex, VecValue,
 };
 
 use crate::{
     indexes,
     internal::{ComputedVecValue, NumericValue, PerResolution},
 };
+
+/// Aggregation strategy for epoch-based indices (Halving, Epoch).
+///
+/// Uses `FromCoarserIndex::max_from` to compute the target height for each
+/// coarse index, rather than reading from the mapping. The mapping is only
+/// used for its length.
+pub struct CoarserIndex<I>(PhantomData<I>);
+
+impl<I, O, S1I, S2T> AggFold<O, S1I, S2T, O> for CoarserIndex<I>
+where
+    I: VecIndex,
+    O: VecValue,
+    S1I: VecIndex + FromCoarserIndex<I>,
+    S2T: VecValue,
+{
+    #[inline]
+    fn try_fold<S: ReadableVec<S1I, O> + ?Sized, B, E, F: FnMut(B, O) -> Result<B, E>>(
+        source: &S,
+        mapping: &[S2T],
+        from: usize,
+        to: usize,
+        init: B,
+        mut f: F,
+    ) -> Result<B, E> {
+        let mapping_len = mapping.len();
+        let source_len = source.len();
+        let mut cursor = Cursor::new(source);
+        let mut acc = init;
+        for i in from..to.min(mapping_len) {
+            let target = S1I::max_from(I::from(i), source_len);
+            if let Some(v) = cursor.get(target) {
+                acc = f(acc, v)?;
+            }
+        }
+        Ok(acc)
+    }
+
+    #[inline]
+    fn collect_one<S: ReadableVec<S1I, O> + ?Sized>(
+        source: &S,
+        _mapping: &[S2T],
+        index: usize,
+    ) -> Option<O> {
+        let target = S1I::max_from(I::from(index), source.len());
+        source.collect_one_at(target)
+    }
+}
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
@@ -32,8 +81,8 @@ pub struct Resolutions<T>(
         LazyAggVec<Month6, Option<T>, Height, Height, T>,
         LazyAggVec<Year1, Option<T>, Height, Height, T>,
         LazyAggVec<Year10, Option<T>, Height, Height, T>,
-        LazyAggVec<Halving, T, Height, Halving>,
-        LazyAggVec<Epoch, T, Height, Epoch>,
+        LazyAggVec<Halving, T, Height, Halving, T, CoarserIndex<Halving>>,
+        LazyAggVec<Epoch, T, Height, Epoch, T, CoarserIndex<Epoch>>,
     >,
 )
 where
@@ -59,71 +108,38 @@ where
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Self {
-        macro_rules! period {
-            ($idx:ident) => {
-                LazyAggVec::sparse_from_first_index(
-                    name,
-                    version,
-                    height_source.clone(),
-                    indexes.$idx.first_height.read_only_boxed_clone(),
-                )
-            };
-        }
+        let cm = &indexes.cached_mappings;
 
-        fn for_each_range<
-            I: VecIndex,
-            O: VecValue,
-            S1I: VecIndex + FromCoarserIndex<I>,
-            S2T: VecValue,
-        >(
-            from: usize,
-            to: usize,
-            source: &ReadableBoxedVec<S1I, O>,
-            mapping: &ReadableBoxedVec<I, S2T>,
-            f: &mut dyn FnMut(O),
-        ) {
-            let mapping_len = mapping.len();
-            let source_len = source.len();
-            let mut cursor = Cursor::new(&**source);
-            for i in from..to {
-                if i >= mapping_len {
-                    break;
-                }
-                let target = S1I::max_from(I::from(i), source_len);
-                if let Some(v) = cursor.get(target) {
-                    f(v);
-                }
-            }
-        }
-
-        macro_rules! epoch {
-            ($idx:ident) => {
+        macro_rules! res {
+            ($cached:expr) => {{
+                let cached = $cached.clone();
+                let mapping_version = cached.version();
                 LazyAggVec::new(
                     name,
                     version,
+                    mapping_version,
                     height_source.clone(),
-                    indexes.$idx.identity.read_only_boxed_clone(),
-                    for_each_range,
+                    move || cached.get(),
                 )
-            };
+            }};
         }
 
         Self(PerResolution {
-            minute10: period!(minute10),
-            minute30: period!(minute30),
-            hour1: period!(hour1),
-            hour4: period!(hour4),
-            hour12: period!(hour12),
-            day1: period!(day1),
-            day3: period!(day3),
-            week1: period!(week1),
-            month1: period!(month1),
-            month3: period!(month3),
-            month6: period!(month6),
-            year1: period!(year1),
-            year10: period!(year10),
-            halving: epoch!(halving),
-            epoch: epoch!(epoch),
+            minute10: res!(cm.minute10_first_height),
+            minute30: res!(cm.minute30_first_height),
+            hour1: res!(cm.hour1_first_height),
+            hour4: res!(cm.hour4_first_height),
+            hour12: res!(cm.hour12_first_height),
+            day1: res!(cm.day1_first_height),
+            day3: res!(cm.day3_first_height),
+            week1: res!(cm.week1_first_height),
+            month1: res!(cm.month1_first_height),
+            month3: res!(cm.month3_first_height),
+            month6: res!(cm.month6_first_height),
+            year1: res!(cm.year1_first_height),
+            year10: res!(cm.year10_first_height),
+            halving: res!(cm.halving_identity),
+            epoch: res!(cm.epoch_identity),
         })
     }
 }

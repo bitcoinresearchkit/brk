@@ -154,7 +154,7 @@ impl RealizedFull {
             &profit_value_destroyed,
         );
         let profit = RealizedProfit {
-            rel_to_rcap: cfg.import("realized_profit_rel_to_realized_cap", Version::new(2))?,
+            rel_to_rcap: cfg.import("realized_profit_rel_to_rcap", Version::new(2))?,
             value_created: cfg.import("profit_value_created", v0)?,
             value_destroyed: profit_value_destroyed,
             value_created_sum: cfg.import("profit_value_created", v1)?,
@@ -173,7 +173,7 @@ impl RealizedFull {
             &loss_value_destroyed,
         );
         let loss = RealizedLoss {
-            rel_to_rcap: cfg.import("realized_loss_rel_to_realized_cap", Version::new(2))?,
+            rel_to_rcap: cfg.import("realized_loss_rel_to_rcap", Version::new(2))?,
             value_created: cfg.import("loss_value_created", v0)?,
             value_destroyed: loss_value_destroyed,
             value_created_sum: cfg.import("loss_value_created", v1)?,
@@ -192,15 +192,15 @@ impl RealizedFull {
         // Net PnL
         let net_pnl = RealizedNetPnl {
             rel_to_rcap: cfg
-                .import("net_realized_pnl_rel_to_realized_cap", Version::new(2))?,
+                .import("net_realized_pnl_rel_to_rcap", Version::new(2))?,
             cumulative: cfg.import("net_realized_pnl_cumulative", v1)?,
             sum_extended: cfg.import("net_realized_pnl", v1)?,
             delta: cfg.import("net_pnl_delta", Version::new(5))?,
             delta_extended: cfg.import("net_pnl_delta", Version::new(5))?,
             change_1m_rel_to_rcap: cfg
-                .import("net_pnl_change_1m_rel_to_realized_cap", Version::new(4))?,
+                .import("net_pnl_change_1m_rel_to_rcap", Version::new(4))?,
             change_1m_rel_to_mcap: cfg
-                .import("net_pnl_change_1m_rel_to_market_cap", Version::new(4))?,
+                .import("net_pnl_change_1m_rel_to_mcap", Version::new(4))?,
         };
 
         // SOPR
@@ -214,7 +214,7 @@ impl RealizedFull {
         let peak_regret = RealizedPeakRegret {
             value: cfg.import("realized_peak_regret", Version::new(2))?,
             rel_to_rcap: cfg
-                .import("realized_peak_regret_rel_to_realized_cap", Version::new(2))?,
+                .import("realized_peak_regret_rel_to_rcap", Version::new(2))?,
         };
 
         // Investor
@@ -241,7 +241,7 @@ impl RealizedFull {
             profit_to_loss_ratio: cfg.import("realized_profit_to_loss_ratio", v1)?,
             cap_delta_extended: cfg.import("realized_cap_delta", Version::new(5))?,
             cap_raw: cfg.import("cap_raw", v0)?,
-            cap_rel_to_own_mcap: cfg.import("realized_cap_rel_to_own_market_cap", v1)?,
+            cap_rel_to_own_mcap: cfg.import("realized_cap_rel_to_own_mcap", v1)?,
             price_ratio_percentiles: RatioPerBlockPercentiles::forced_import(
                 cfg.db,
                 &realized_price_name,

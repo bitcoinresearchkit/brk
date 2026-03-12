@@ -9,7 +9,7 @@ use crate::{
     internal::{WindowStarts, RollingDelta},
 };
 
-use super::AddrCountsVecs;
+use super::AddressCountsVecs;
 
 #[derive(Traversable)]
 pub struct DeltaVecs<M: StorageMode = Rw> {
@@ -26,10 +26,10 @@ impl DeltaVecs {
     ) -> Result<Self> {
         let version = version + Version::TWO;
 
-        let all = RollingDelta::forced_import(db, "addr_count", version, indexes)?;
+        let all = RollingDelta::forced_import(db, "address_count", version, indexes)?;
 
         let by_addresstype = ByAddressType::new_with_name(|name| {
-            RollingDelta::forced_import(db, &format!("{name}_addr_count"), version, indexes)
+            RollingDelta::forced_import(db, &format!("{name}_address_count"), version, indexes)
         })?;
 
         Ok(Self {
@@ -42,16 +42,16 @@ impl DeltaVecs {
         &mut self,
         max_from: Height,
         windows: &WindowStarts<'_>,
-        addr_count: &AddrCountsVecs,
+        address_count: &AddressCountsVecs,
         exit: &Exit,
     ) -> Result<()> {
         self.all
-            .compute(max_from, windows, &addr_count.all.height, exit)?;
+            .compute(max_from, windows, &address_count.all.height, exit)?;
 
         for ((_, growth), (_, addr)) in self
             .by_addresstype
             .iter_mut()
-            .zip(addr_count.by_addresstype.iter())
+            .zip(address_count.by_addresstype.iter())
         {
             growth.compute(max_from, windows, &addr.height, exit)?;
         }

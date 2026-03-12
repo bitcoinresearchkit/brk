@@ -71,7 +71,7 @@ impl StdDevPerBlockExtended {
         macro_rules! import_band {
             ($suffix:expr) => {
                 StdDevBand {
-                    value: import!($suffix),
+                    value: import!(concat!("ratio_", $suffix)),
                     price: import_price!($suffix),
                 }
             };

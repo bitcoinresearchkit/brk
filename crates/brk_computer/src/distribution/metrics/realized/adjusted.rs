@@ -24,11 +24,11 @@ pub struct AdjustedSopr<M: StorageMode = Rw> {
 impl AdjustedSopr {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            value_created: cfg.import("adjusted_value_created", Version::ZERO)?,
-            value_destroyed: cfg.import("adjusted_value_destroyed", Version::ZERO)?,
-            value_created_sum: cfg.import("adjusted_value_created", Version::ONE)?,
-            value_destroyed_sum: cfg.import("adjusted_value_destroyed", Version::ONE)?,
-            ratio: cfg.import("adjusted_sopr", Version::ONE)?,
+            value_created: cfg.import("adj_value_created", Version::ZERO)?,
+            value_destroyed: cfg.import("adj_value_destroyed", Version::ZERO)?,
+            value_created_sum: cfg.import("adj_value_created", Version::ONE)?,
+            value_destroyed_sum: cfg.import("adj_value_destroyed", Version::ONE)?,
+            ratio: cfg.import("asopr", Version::ONE)?,
         })
     }
 
@@ -39,21 +39,21 @@ impl AdjustedSopr {
         starting_indexes: &Indexes,
         base_value_created: &impl ReadableVec<Height, Cents>,
         base_value_destroyed: &impl ReadableVec<Height, Cents>,
-        up_to_1h_value_created: &impl ReadableVec<Height, Cents>,
-        up_to_1h_value_destroyed: &impl ReadableVec<Height, Cents>,
+        under_1h_value_created: &impl ReadableVec<Height, Cents>,
+        under_1h_value_destroyed: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
-        // Compute value_created = base.value_created - up_to_1h.value_created
+        // Compute value_created = base.value_created - under_1h.value_created
         self.value_created.height.compute_subtract(
             starting_indexes.height,
             base_value_created,
-            up_to_1h_value_created,
+            under_1h_value_created,
             exit,
         )?;
         self.value_destroyed.height.compute_subtract(
             starting_indexes.height,
             base_value_destroyed,
-            up_to_1h_value_destroyed,
+            under_1h_value_destroyed,
             exit,
         )?;
 

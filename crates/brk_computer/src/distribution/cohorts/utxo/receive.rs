@@ -9,7 +9,7 @@ impl UTXOCohorts<Rw> {
     /// Process received outputs for this block.
     ///
     /// New UTXOs are added to:
-    /// - The "up_to_1h" age cohort (all new UTXOs start at 0 hours old)
+    /// - The "under_1h" age cohort (all new UTXOs start at 0 hours old)
     /// - The appropriate epoch cohort based on block height
     /// - The appropriate class cohort based on block timestamp
     /// - The appropriate output type cohort (P2PKH, P2SH, etc.)
@@ -26,9 +26,9 @@ impl UTXOCohorts<Rw> {
         // Pre-compute snapshot once for the 3 cohorts sharing the same supply_state
         let snapshot = CostBasisSnapshot::from_utxo(price, &supply_state);
 
-        // New UTXOs go into up_to_1h, current epoch, and current class
+        // New UTXOs go into under_1h, current epoch, and current class
         self.age_range
-            .up_to_1h
+            .under_1h
             .state
             .as_mut()
             .unwrap()

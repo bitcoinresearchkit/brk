@@ -63,8 +63,8 @@ impl ExtendedAdjustedCohortMetrics {
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
-        up_to_1h_value_created: &impl ReadableVec<Height, Cents>,
-        up_to_1h_value_destroyed: &impl ReadableVec<Height, Cents>,
+        under_1h_value_created: &impl ReadableVec<Height, Cents>,
+        under_1h_value_destroyed: &impl ReadableVec<Height, Cents>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {
@@ -82,8 +82,8 @@ impl ExtendedAdjustedCohortMetrics {
             starting_indexes,
             &self.inner.realized.minimal.sopr.value_created.raw.height,
             &self.inner.realized.minimal.sopr.value_destroyed.raw.height,
-            up_to_1h_value_created,
-            up_to_1h_value_destroyed,
+            under_1h_value_created,
+            under_1h_value_destroyed,
             exit,
         )?;
 

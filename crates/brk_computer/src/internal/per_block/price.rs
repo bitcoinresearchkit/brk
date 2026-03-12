@@ -35,7 +35,7 @@ impl Price<ComputedPerBlock<Cents>> {
         let cents =
             ComputedPerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
         let usd = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
-            &format!("{name}_usd"),
+            name,
             version,
             cents.height.read_only_boxed_clone(),
             &cents,

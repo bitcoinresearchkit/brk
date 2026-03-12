@@ -22,8 +22,8 @@ pub(crate) fn process_received(
     cohorts: &mut AddressCohorts,
     lookup: &mut AddressLookup<'_>,
     price: Cents,
-    addr_count: &mut ByAddressType<u64>,
-    empty_addr_count: &mut ByAddressType<u64>,
+    address_count: &mut ByAddressType<u64>,
+    empty_address_count: &mut ByAddressType<u64>,
     activity_counts: &mut AddressTypeToActivityCounts,
 ) {
     let max_type_len = received_data.iter().map(|(_, v)| v.len()).max().unwrap_or(0);
@@ -36,8 +36,8 @@ pub(crate) fn process_received(
         }
 
         // Cache mutable refs for this address type
-        let type_addr_count = addr_count.get_mut(output_type).unwrap();
-        let type_empty_count = empty_addr_count.get_mut(output_type).unwrap();
+        let type_address_count = address_count.get_mut(output_type).unwrap();
+        let type_empty_count = empty_address_count.get_mut(output_type).unwrap();
         let type_activity = activity_counts.get_mut_unwrap(output_type);
 
         // Aggregate receives by address - each address processed exactly once
@@ -55,10 +55,10 @@ pub(crate) fn process_received(
 
             match status {
                 TrackingStatus::New => {
-                    *type_addr_count += 1;
+                    *type_address_count += 1;
                 }
                 TrackingStatus::WasEmpty => {
-                    *type_addr_count += 1;
+                    *type_address_count += 1;
                     *type_empty_count -= 1;
                     // Reactivated - was empty, now has funds
                     type_activity.reactivated += 1;

@@ -298,7 +298,7 @@ impl<'de> Deserialize<'de> for Index {
         D: serde::Deserializer<'de>,
     {
         let str = String::deserialize(deserializer)?;
-        Index::try_from(str.as_str()).map_err(|e| serde::de::Error::custom(e))
+        Index::try_from(str.as_str()).map_err(serde::de::Error::custom)
     }
 }
 

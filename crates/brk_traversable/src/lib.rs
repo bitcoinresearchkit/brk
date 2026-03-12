@@ -8,9 +8,9 @@ pub use brk_traversable_derive::Traversable;
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AnyExportableVec, AnyVec, BytesVec, BytesVecValue, CompressionStrategy, EagerVec, Formattable,
-    LazyAggVec, LazyVecFrom1, LazyVecFrom2, LazyVecFrom3, RawStrategy, ReadOnlyCompressedVec,
-    ReadOnlyRawVec, StoredVec, VecIndex, VecValue,
+    AggFold, AnyExportableVec, AnyVec, BytesVec, BytesVecValue, CompressionStrategy, EagerVec,
+    Formattable, LazyAggVec, LazyVecFrom1, LazyVecFrom2, LazyVecFrom3, RawStrategy,
+    ReadOnlyCompressedVec, ReadOnlyRawVec, StoredVec, VecIndex, VecValue,
 };
 
 pub trait Traversable {
@@ -217,13 +217,14 @@ where
     }
 }
 
-impl<I, O, S1I, S2T, S1T> Traversable for LazyAggVec<I, O, S1I, S2T, S1T>
+impl<I, O, S1I, S2T, S1T, Strat> Traversable for LazyAggVec<I, O, S1I, S2T, S1T, Strat>
 where
     I: VecIndex,
     O: VecValue + Formattable + Serialize + JsonSchema,
     S1I: VecIndex,
     S2T: VecValue,
     S1T: VecValue,
+    Strat: AggFold<O, S1I, S2T, S1T>,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
         std::iter::once(self as &dyn AnyExportableVec)

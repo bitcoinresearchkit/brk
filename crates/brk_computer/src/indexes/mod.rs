@@ -1,4 +1,5 @@
 mod address;
+mod cached_mappings;
 mod day1;
 mod day3;
 mod epoch;
@@ -28,13 +29,14 @@ use brk_types::{
     Date, Day1, Day3, Height, Hour1, Hour4, Hour12, Indexes, Minute10, Minute30, Month1, Month3,
     Month6, Version, Week1, Year1, Year10,
 };
-use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
+use vecdb::{CachedVec, Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     blocks,
     internal::{finalize_db, open_db},
 };
 
+pub use cached_mappings::CachedMappings;
 pub use address::Vecs as AddressVecs;
 pub use day1::Vecs as Day1Vecs;
 pub use day3::Vecs as Day3Vecs;
@@ -61,6 +63,8 @@ pub const DB_NAME: &str = "indexes";
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     db: Database,
+    #[traversable(skip)]
+    pub cached_mappings: CachedMappings,
     pub address: AddressVecs,
     pub height: HeightVecs<M>,
     pub epoch: EpochVecs<M>,
@@ -93,27 +97,67 @@ impl Vecs {
 
         let version = parent_version;
 
+        let address = AddressVecs::forced_import(version, indexer);
+        let height = HeightVecs::forced_import(&db, version)?;
+        let epoch = EpochVecs::forced_import(&db, version)?;
+        let halving = HalvingVecs::forced_import(&db, version)?;
+        let minute10 = Minute10Vecs::forced_import(&db, version)?;
+        let minute30 = Minute30Vecs::forced_import(&db, version)?;
+        let hour1 = Hour1Vecs::forced_import(&db, version)?;
+        let hour4 = Hour4Vecs::forced_import(&db, version)?;
+        let hour12 = Hour12Vecs::forced_import(&db, version)?;
+        let day1 = Day1Vecs::forced_import(&db, version)?;
+        let day3 = Day3Vecs::forced_import(&db, version)?;
+        let week1 = Week1Vecs::forced_import(&db, version)?;
+        let month1 = Month1Vecs::forced_import(&db, version)?;
+        let month3 = Month3Vecs::forced_import(&db, version)?;
+        let month6 = Month6Vecs::forced_import(&db, version)?;
+        let year1 = Year1Vecs::forced_import(&db, version)?;
+        let year10 = Year10Vecs::forced_import(&db, version)?;
+        let txindex = TxIndexVecs::forced_import(&db, version, indexer)?;
+        let txinindex = TxInIndexVecs::forced_import(version, indexer);
+        let txoutindex = TxOutIndexVecs::forced_import(version, indexer);
+
+        let cached_mappings = CachedMappings {
+            minute10_first_height: CachedVec::new(&minute10.first_height),
+            minute30_first_height: CachedVec::new(&minute30.first_height),
+            hour1_first_height: CachedVec::new(&hour1.first_height),
+            hour4_first_height: CachedVec::new(&hour4.first_height),
+            hour12_first_height: CachedVec::new(&hour12.first_height),
+            day1_first_height: CachedVec::new(&day1.first_height),
+            day3_first_height: CachedVec::new(&day3.first_height),
+            week1_first_height: CachedVec::new(&week1.first_height),
+            month1_first_height: CachedVec::new(&month1.first_height),
+            month3_first_height: CachedVec::new(&month3.first_height),
+            month6_first_height: CachedVec::new(&month6.first_height),
+            year1_first_height: CachedVec::new(&year1.first_height),
+            year10_first_height: CachedVec::new(&year10.first_height),
+            halving_identity: CachedVec::new(&halving.identity),
+            epoch_identity: CachedVec::new(&epoch.identity),
+        };
+
         let this = Self {
-            address: AddressVecs::forced_import(version, indexer),
-            height: HeightVecs::forced_import(&db, version)?,
-            epoch: EpochVecs::forced_import(&db, version)?,
-            halving: HalvingVecs::forced_import(&db, version)?,
-            minute10: Minute10Vecs::forced_import(&db, version)?,
-            minute30: Minute30Vecs::forced_import(&db, version)?,
-            hour1: Hour1Vecs::forced_import(&db, version)?,
-            hour4: Hour4Vecs::forced_import(&db, version)?,
-            hour12: Hour12Vecs::forced_import(&db, version)?,
-            day1: Day1Vecs::forced_import(&db, version)?,
-            day3: Day3Vecs::forced_import(&db, version)?,
-            week1: Week1Vecs::forced_import(&db, version)?,
-            month1: Month1Vecs::forced_import(&db, version)?,
-            month3: Month3Vecs::forced_import(&db, version)?,
-            month6: Month6Vecs::forced_import(&db, version)?,
-            year1: Year1Vecs::forced_import(&db, version)?,
-            year10: Year10Vecs::forced_import(&db, version)?,
-            txindex: TxIndexVecs::forced_import(&db, version, indexer)?,
-            txinindex: TxInIndexVecs::forced_import(version, indexer),
-            txoutindex: TxOutIndexVecs::forced_import(version, indexer),
+            cached_mappings,
+            address,
+            height,
+            epoch,
+            halving,
+            minute10,
+            minute30,
+            hour1,
+            hour4,
+            hour12,
+            day1,
+            day3,
+            week1,
+            month1,
+            month3,
+            month6,
+            year1,
+            year10,
+            txindex,
+            txinindex,
+            txoutindex,
             db,
         };
 
