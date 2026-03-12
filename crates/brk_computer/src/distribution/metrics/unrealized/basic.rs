@@ -1,6 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, Height, Indexes, Version};
+use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
@@ -9,9 +10,15 @@ use crate::{
     internal::FiatPerBlockWithSum24h,
 };
 
-/// Basic unrealized metrics: unrealized profit/loss (fiat + 24h sums).
-#[derive(Traversable)]
+use super::UnrealizedMinimal;
+
+/// Basic unrealized metrics: nupl + unrealized profit/loss (fiat + 24h sums).
+#[derive(Deref, DerefMut, Traversable)]
 pub struct UnrealizedBasic<M: StorageMode = Rw> {
+    #[deref]
+    #[deref_mut]
+    #[traversable(flatten)]
+    pub minimal: UnrealizedMinimal<M>,
     pub profit: FiatPerBlockWithSum24h<Cents, M>,
     pub loss: FiatPerBlockWithSum24h<Cents, M>,
 }
@@ -21,6 +28,7 @@ impl UnrealizedBasic {
         let v1 = Version::ONE;
 
         Ok(Self {
+            minimal: UnrealizedMinimal::forced_import(cfg)?,
             profit: cfg.import("unrealized_profit", v1)?,
             loss: cfg.import("unrealized_loss", v1)?,
         })

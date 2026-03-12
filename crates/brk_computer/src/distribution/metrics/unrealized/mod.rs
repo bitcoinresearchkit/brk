@@ -2,11 +2,13 @@ mod base;
 mod basic;
 mod core;
 mod full;
+mod minimal;
 
 pub use self::core::UnrealizedCore;
 pub use base::UnrealizedBase;
 pub use basic::UnrealizedBasic;
 pub use full::UnrealizedFull;
+pub use minimal::UnrealizedMinimal;
 
 use brk_error::Result;
 use brk_types::{Height, Indexes};

@@ -78,6 +78,14 @@ impl TypeCohortMetrics {
             &self.supply.total.btc.height,
             exit,
         )?;
+
+        self.unrealized.compute(
+            starting_indexes.height,
+            &prices.spot.cents.height,
+            &self.realized.price.cents.height,
+            exit,
+        )?;
+
         Ok(())
     }
 }

@@ -141,6 +141,13 @@ impl CoreCohortMetrics {
             exit,
         )?;
 
+        self.unrealized.compute(
+            starting_indexes.height,
+            &prices.spot.cents.height,
+            &self.realized.price.cents.height,
+            exit,
+        )?;
+
         self.relative.compute(
             starting_indexes.height,
             &self.supply.core,

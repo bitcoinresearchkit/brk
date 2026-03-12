@@ -59,7 +59,7 @@ pub use relative::{
     RelativeForAll, RelativeToAll, RelativeWithExtended,
 };
 pub use supply::{SupplyBase, SupplyCore, SupplyFull};
-pub use unrealized::{UnrealizedBase, UnrealizedBasic, UnrealizedCore, UnrealizedFull, UnrealizedLike};
+pub use unrealized::{UnrealizedBase, UnrealizedBasic, UnrealizedCore, UnrealizedFull, UnrealizedLike, UnrealizedMinimal};
 
 use brk_cohort::Filter;
 use brk_error::Result;

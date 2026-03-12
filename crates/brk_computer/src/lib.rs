@@ -42,6 +42,7 @@ pub struct Computer<M: StorageMode = Rw> {
     pub market: Box<market::Vecs<M>>,
     pub pools: Box<pools::Vecs<M>>,
     pub prices: Box<prices::Vecs<M>>,
+    #[traversable(flatten)]
     pub distribution: Box<distribution::Vecs<M>>,
     pub supply: Box<supply::Vecs<M>>,
     pub inputs: Box<inputs::Vecs<M>>,

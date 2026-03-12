@@ -127,6 +127,13 @@ impl AllCohortMetrics {
             exit,
         )?;
 
+        self.unrealized.compute(
+            starting_indexes.height,
+            &prices.spot.cents.height,
+            &self.realized.price.cents.height,
+            exit,
+        )?;
+
         self.asopr.compute_rest_part2(
             blocks,
             starting_indexes,

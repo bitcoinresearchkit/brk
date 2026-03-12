@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    BasisPoints32, BasisPointsSigned32, Bitcoin, Cents, Height, Indexes, Sats, StoredF32,
+    BasisPoints32, Bitcoin, Cents, Height, Indexes, Sats, StoredF32,
     Version,
 };
 use vecdb::{
@@ -13,7 +13,7 @@ use crate::{
     distribution::state::{CohortState, CostBasisOps, RealizedOps},
     internal::{
         FiatPerBlock, FiatPerBlockWithSum24h, Identity, LazyPerBlock,
-        PerBlockWithSum24h, PriceWithRatioPerBlock, RatioPerBlock,
+        PerBlockWithSum24h, PriceWithRatioPerBlock,
     },
     prices,
 };
@@ -27,7 +27,7 @@ pub struct RealizedSoprMinimal<M: StorageMode = Rw> {
 }
 
 /// Minimal realized metrics: cap (fiat), profit/loss (fiat + 24h sum),
-/// price, mvrv, nupl, sopr (value_created/destroyed with 24h sums).
+/// price, mvrv, sopr (value_created/destroyed with 24h sums).
 #[derive(Traversable)]
 pub struct RealizedMinimal<M: StorageMode = Rw> {
     pub cap: FiatPerBlock<Cents, M>,
@@ -35,7 +35,6 @@ pub struct RealizedMinimal<M: StorageMode = Rw> {
     pub loss: FiatPerBlockWithSum24h<Cents, M>,
     pub price: PriceWithRatioPerBlock<M>,
     pub mvrv: LazyPerBlock<StoredF32>,
-    pub nupl: RatioPerBlock<BasisPointsSigned32, M>,
 
     pub sopr: RealizedSoprMinimal<M>,
 }
@@ -53,15 +52,12 @@ impl RealizedMinimal {
             &price.ratio,
         );
 
-        let nupl = cfg.import("nupl", v1)?;
-
         Ok(Self {
             cap,
             profit: cfg.import("realized_profit", v1)?,
             loss: cfg.import("realized_loss", v1)?,
             price,
             mvrv,
-            nupl,
             sopr: RealizedSoprMinimal {
                 value_created: cfg.import("value_created", v1)?,
                 value_destroyed: cfg.import("value_destroyed", v1)?,
@@ -179,23 +175,6 @@ impl RealizedMinimal {
                 exit,
             )?)
         })?;
-
-        self.nupl.bps.height.compute_transform2(
-            starting_indexes.height,
-            &prices.spot.cents.height,
-            &self.price.cents.height,
-            |(i, price, realized_price, ..)| {
-                let p = price.as_u128();
-                if p == 0 {
-                    (i, BasisPointsSigned32::ZERO)
-                } else {
-                    let rp = realized_price.as_u128();
-                    let nupl_bps = ((p as i128 - rp as i128) * 10000) / p as i128;
-                    (i, BasisPointsSigned32::from(nupl_bps as i32))
-                }
-            },
-            exit,
-        )?;
 
         Ok(())
     }

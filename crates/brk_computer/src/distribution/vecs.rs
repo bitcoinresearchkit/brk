@@ -60,6 +60,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub states_path: PathBuf,
 
+    #[traversable(wrap = "supply", rename = "state")]
     pub supply_state: M::Stored<BytesVec<Height, SupplyState>>,
     #[traversable(wrap = "addresses", rename = "indexes")]
     pub any_address_indexes: AnyAddressIndexesVecs<M>,
@@ -69,6 +70,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub utxo_cohorts: UTXOCohorts<M>,
     #[traversable(wrap = "cohorts", rename = "address")]
     pub address_cohorts: AddressCohorts<M>,
+    #[traversable(wrap = "cointime")]
     pub coinblocks_destroyed: ComputedPerBlockCumulative<StoredF64, M>,
     pub addresses: AddressMetricsVecs<M>,
 

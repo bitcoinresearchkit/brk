@@ -7,7 +7,7 @@ use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
 use crate::{blocks, prices};
 
 use crate::distribution::metrics::{
-    ImportConfig, OutputsBase, RealizedMinimal, SupplyBase,
+    ImportConfig, OutputsBase, RealizedMinimal, SupplyBase, UnrealizedMinimal,
 };
 
 /// MinimalCohortMetrics: supply, outputs, realized cap/price/mvrv/profit/loss + value_created/destroyed.
@@ -21,6 +21,7 @@ pub struct MinimalCohortMetrics<M: StorageMode = Rw> {
     pub supply: Box<SupplyBase<M>>,
     pub outputs: Box<OutputsBase<M>>,
     pub realized: Box<RealizedMinimal<M>>,
+    pub unrealized: Box<UnrealizedMinimal<M>>,
 }
 
 impl MinimalCohortMetrics {
@@ -30,6 +31,7 @@ impl MinimalCohortMetrics {
             supply: Box::new(SupplyBase::forced_import(cfg)?),
             outputs: Box::new(OutputsBase::forced_import(cfg)?),
             realized: Box::new(RealizedMinimal::forced_import(cfg)?),
+            unrealized: Box::new(UnrealizedMinimal::forced_import(cfg)?),
         })
     }
 
@@ -102,6 +104,13 @@ impl MinimalCohortMetrics {
             prices,
             starting_indexes,
             &self.supply.total.btc.height,
+            exit,
+        )?;
+
+        self.unrealized.compute(
+            starting_indexes.height,
+            &prices.spot.cents.height,
+            &self.realized.price.cents.height,
             exit,
         )?;
 
