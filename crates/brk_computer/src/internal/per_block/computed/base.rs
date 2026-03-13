@@ -15,7 +15,7 @@ use crate::internal::{Resolutions, ComputedVecValue, NumericValue};
 
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct ComputedPerBlock<T, M: StorageMode = Rw>
+pub struct PerBlock<T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
@@ -26,7 +26,7 @@ where
     pub resolutions: Box<Resolutions<T>>,
 }
 
-impl<T> ComputedPerBlock<T>
+impl<T> PerBlock<T>
 where
     T: NumericValue + JsonSchema,
 {

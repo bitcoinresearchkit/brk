@@ -1,4 +1,4 @@
-//! ComputedPerBlockCumulativeWithSums - raw ComputedPerBlock + cumulative ComputedPerBlock + lazy rolling sums.
+//! PerBlockCumulativeWithSums - base PerBlock + cumulative PerBlock + lazy rolling sums.
 //!
 //! Rolling sums are derived lazily from the cumulative vec via LazyDeltaVec.
 //! No rolling sum vecs are stored on disk.
@@ -17,21 +17,21 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, ComputedPerBlock, LazyRollingSumsFromHeight, NumericValue},
+    internal::{CachedWindowStarts, PerBlock, LazyRollingSumsFromHeight, NumericValue},
 };
 
 #[derive(Traversable)]
-pub struct ComputedPerBlockCumulativeWithSums<T, C, M: StorageMode = Rw>
+pub struct PerBlockCumulativeWithSums<T, C, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
     C: NumericValue + JsonSchema,
 {
-    pub raw: ComputedPerBlock<T, M>,
-    pub cumulative: ComputedPerBlock<C, M>,
+    pub base: PerBlock<T, M>,
+    pub cumulative: PerBlock<C, M>,
     pub sum: LazyRollingSumsFromHeight<C>,
 }
 
-impl<T, C> ComputedPerBlockCumulativeWithSums<T, C>
+impl<T, C> PerBlockCumulativeWithSums<T, C>
 where
     T: NumericValue + JsonSchema + Into<C>,
     C: NumericValue + JsonSchema,
@@ -43,9 +43,9 @@ where
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let raw = ComputedPerBlock::forced_import(db, name, version, indexes)?;
+        let base = PerBlock::forced_import(db, name, version, indexes)?;
         let cumulative =
-            ComputedPerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
+            PerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
         let sum = LazyRollingSumsFromHeight::new(
             &format!("{name}_sum"),
             version,
@@ -55,34 +55,34 @@ where
         );
 
         Ok(Self {
-            raw,
+            base,
             cumulative,
             sum,
         })
     }
 
-    /// Compute raw data via closure, then cumulative. Rolling sums are lazy.
+    /// Compute base data via closure, then cumulative. Rolling sums are lazy.
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
         exit: &Exit,
-        compute_raw: impl FnOnce(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
+        compute_base: impl FnOnce(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
     ) -> Result<()>
     where
         C: Default,
     {
-        compute_raw(&mut self.raw.height)?;
+        compute_base(&mut self.base.height)?;
         self.compute_rest(max_from, exit)
     }
 
-    /// Compute cumulative from already-populated raw data. Rolling sums are lazy.
+    /// Compute cumulative from already-populated base data. Rolling sums are lazy.
     pub(crate) fn compute_rest(&mut self, max_from: Height, exit: &Exit) -> Result<()>
     where
         C: Default,
     {
         self.cumulative
             .height
-            .compute_cumulative(max_from, &self.raw.height, exit)?;
+            .compute_cumulative(max_from, &self.base.height, exit)?;
         Ok(())
     }
 }

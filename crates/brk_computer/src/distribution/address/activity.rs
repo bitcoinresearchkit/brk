@@ -19,7 +19,7 @@ use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, ComputedPerBlockRollingAverage},
+    internal::{CachedWindowStarts, PerBlockRollingAverage},
 };
 
 /// Per-block activity counts - reset each block.
@@ -65,10 +65,10 @@ impl AddressTypeToActivityCounts {
 /// Activity count vectors for a single category (e.g., one address type or "all").
 #[derive(Traversable)]
 pub struct ActivityCountVecs<M: StorageMode = Rw> {
-    pub reactivated: ComputedPerBlockRollingAverage<StoredU32, M>,
-    pub sending: ComputedPerBlockRollingAverage<StoredU32, M>,
-    pub receiving: ComputedPerBlockRollingAverage<StoredU32, M>,
-    pub both: ComputedPerBlockRollingAverage<StoredU32, M>,
+    pub reactivated: PerBlockRollingAverage<StoredU32, M>,
+    pub sending: PerBlockRollingAverage<StoredU32, M>,
+    pub receiving: PerBlockRollingAverage<StoredU32, M>,
+    pub both: PerBlockRollingAverage<StoredU32, M>,
 }
 
 impl ActivityCountVecs {
@@ -80,28 +80,28 @@ impl ActivityCountVecs {
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         Ok(Self {
-            reactivated: ComputedPerBlockRollingAverage::forced_import(
+            reactivated: PerBlockRollingAverage::forced_import(
                 db,
                 &format!("{name}_reactivated"),
                 version,
                 indexes,
                 cached_starts,
             )?,
-            sending: ComputedPerBlockRollingAverage::forced_import(
+            sending: PerBlockRollingAverage::forced_import(
                 db,
                 &format!("{name}_sending"),
                 version,
                 indexes,
                 cached_starts,
             )?,
-            receiving: ComputedPerBlockRollingAverage::forced_import(
+            receiving: PerBlockRollingAverage::forced_import(
                 db,
                 &format!("{name}_receiving"),
                 version,
                 indexes,
                 cached_starts,
             )?,
-            both: ComputedPerBlockRollingAverage::forced_import(
+            both: PerBlockRollingAverage::forced_import(
                 db,
                 &format!("{name}_both"),
                 version,

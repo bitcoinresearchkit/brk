@@ -7,7 +7,7 @@ use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode, UnaryTransform};
 use crate::{
     indexes,
     internal::{
-        CentsSignedToDollars, CentsUnsignedToDollars, ComputedPerBlock, LazyPerBlock,
+        CentsSignedToDollars, CentsUnsignedToDollars, PerBlock, LazyPerBlock,
         NumericValue,
     },
 };
@@ -29,7 +29,7 @@ impl CentsType for CentsSigned {
 /// Generic over `C` to support both `Cents` (unsigned) and `CentsSigned` (signed).
 #[derive(Traversable)]
 pub struct FiatPerBlock<C: CentsType, M: StorageMode = Rw> {
-    pub cents: ComputedPerBlock<C, M>,
+    pub cents: PerBlock<C, M>,
     pub usd: LazyPerBlock<Dollars, C>,
 }
 
@@ -41,7 +41,7 @@ impl<C: CentsType> FiatPerBlock<C> {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let cents =
-            ComputedPerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
+            PerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
         let usd = LazyPerBlock::from_computed::<C::ToDollars>(
             name,
             version,

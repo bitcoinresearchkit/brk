@@ -3,7 +3,7 @@ use brk_types::{Cents, CentsCompact, Sats};
 
 use crate::{
     distribution::state::PendingDelta,
-    internal::{FenwickNode, FenwickTree, PERCENTILES, PERCENTILES_LEN},
+    internal::{PERCENTILES, PERCENTILES_LEN, algo::{FenwickNode, FenwickTree}},
 };
 
 use super::COST_BASIS_PRICE_DIGITS;

@@ -5,7 +5,7 @@ use brk_types::Version;
 
 use crate::{
     indexes,
-    internal::{finalize_db, open_db},
+    internal::db_utils::{finalize_db, open_db},
 };
 
 use super::{AdoptionVecs, CountVecs, ValueVecs, Vecs};

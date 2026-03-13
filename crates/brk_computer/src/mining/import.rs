@@ -5,7 +5,7 @@ use brk_types::Version;
 
 use crate::{
     indexes,
-    internal::{finalize_db, open_db, CachedWindowStarts},
+    internal::{CachedWindowStarts, db_utils::{finalize_db, open_db}},
 };
 
 use super::{HashrateVecs, RewardsVecs, Vecs};

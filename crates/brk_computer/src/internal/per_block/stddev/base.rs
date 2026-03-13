@@ -3,15 +3,15 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Indexes, StoredF32, Version};
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{blocks, indexes, internal::ComputedPerBlock};
+use crate::{blocks, indexes, internal::PerBlock};
 
 use super::period_suffix;
 
 #[derive(Traversable)]
 pub struct StdDevPerBlock<M: StorageMode = Rw> {
     days: usize,
-    pub sma: ComputedPerBlock<StoredF32, M>,
-    pub sd: ComputedPerBlock<StoredF32, M>,
+    pub sma: PerBlock<StoredF32, M>,
+    pub sd: PerBlock<StoredF32, M>,
 }
 
 impl StdDevPerBlock {
@@ -27,8 +27,8 @@ impl StdDevPerBlock {
         let p = period_suffix(period);
 
         let sma =
-            ComputedPerBlock::forced_import(db, &format!("{name}_sma{p}"), version, indexes)?;
-        let sd = ComputedPerBlock::forced_import(db, &format!("{name}_sd{p}"), version, indexes)?;
+            PerBlock::forced_import(db, &format!("{name}_sma{p}"), version, indexes)?;
+        let sd = PerBlock::forced_import(db, &format!("{name}_sd{p}"), version, indexes)?;
 
         Ok(Self { days, sma, sd })
     }

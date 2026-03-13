@@ -2,14 +2,14 @@ use brk_traversable::Traversable;
 use brk_types::{BasisPoints16, BasisPoints32, StoredF32};
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedPerBlock, PercentPerBlock, RatioPerBlock, Windows};
+use crate::internal::{PerBlock, PercentPerBlock, RatioPerBlock, Windows};
 
 #[derive(Traversable)]
 pub struct RsiChain<M: StorageMode = Rw> {
-    pub gains: ComputedPerBlock<StoredF32, M>,
-    pub losses: ComputedPerBlock<StoredF32, M>,
-    pub average_gain: ComputedPerBlock<StoredF32, M>,
-    pub average_loss: ComputedPerBlock<StoredF32, M>,
+    pub gains: PerBlock<StoredF32, M>,
+    pub losses: PerBlock<StoredF32, M>,
+    pub average_gain: PerBlock<StoredF32, M>,
+    pub average_loss: PerBlock<StoredF32, M>,
     pub rsi: PercentPerBlock<BasisPoints16, M>,
     pub rsi_min: PercentPerBlock<BasisPoints16, M>,
     pub rsi_max: PercentPerBlock<BasisPoints16, M>,
@@ -20,11 +20,11 @@ pub struct RsiChain<M: StorageMode = Rw> {
 
 #[derive(Traversable)]
 pub struct MacdChain<M: StorageMode = Rw> {
-    pub ema_fast: ComputedPerBlock<StoredF32, M>,
-    pub ema_slow: ComputedPerBlock<StoredF32, M>,
-    pub line: ComputedPerBlock<StoredF32, M>,
-    pub signal: ComputedPerBlock<StoredF32, M>,
-    pub histogram: ComputedPerBlock<StoredF32, M>,
+    pub ema_fast: PerBlock<StoredF32, M>,
+    pub ema_slow: PerBlock<StoredF32, M>,
+    pub line: PerBlock<StoredF32, M>,
+    pub signal: PerBlock<StoredF32, M>,
+    pub histogram: PerBlock<StoredF32, M>,
 }
 
 #[derive(Traversable)]

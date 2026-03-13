@@ -128,8 +128,8 @@ impl AllCohortMetrics {
 
         self.asopr.compute_rest_part2(
             starting_indexes,
-            &self.realized.minimal.sopr.value_created.raw.height,
-            &self.realized.minimal.sopr.value_destroyed.raw.height,
+            &self.realized.minimal.sopr.value_created.base.height,
+            &self.realized.minimal.sopr.value_destroyed.base.height,
             under_1h_value_created,
             under_1h_value_destroyed,
             exit,

@@ -10,7 +10,7 @@ use vecdb::{ReadableBoxedVec, ReadableCloneableVec, UnaryTransform, VecValue};
 use crate::{
     indexes,
     internal::{
-        ComputedPerBlock, Resolutions, ComputedVecValue, NumericValue, PerResolution,
+        PerBlock, Resolutions, ComputedVecValue, NumericValue, PerResolution,
     },
 };
 
@@ -50,7 +50,7 @@ where
     pub(crate) fn from_computed<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        source: &ComputedPerBlock<S1T>,
+        source: &PerBlock<S1T>,
     ) -> Self
     where
         S1T: NumericValue,

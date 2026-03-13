@@ -1,4 +1,4 @@
-//! RollingFull - Lazy rolling sums + stored rolling distribution per window.
+//! RollingComplete - Lazy rolling sums + stored rolling distribution per window.
 
 use brk_error::Result;
 
@@ -17,7 +17,7 @@ use crate::{
 
 /// Lazy rolling sums + stored rolling distribution (8 stats × 4 windows).
 #[derive(Traversable)]
-pub struct RollingFull<T, M: StorageMode = Rw>
+pub struct RollingComplete<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
@@ -26,7 +26,7 @@ where
     pub distribution: RollingDistribution<T, M>,
 }
 
-impl<T> RollingFull<T>
+impl<T> RollingComplete<T>
 where
     T: NumericValue + JsonSchema,
 {

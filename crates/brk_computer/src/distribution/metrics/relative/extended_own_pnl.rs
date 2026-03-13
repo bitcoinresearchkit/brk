@@ -43,14 +43,14 @@ impl RelativeExtendedOwnPnl {
         self.unrealized_profit_rel_to_own_gross_pnl
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
-                &unrealized.profit.raw.usd.height,
+                &unrealized.profit.base.usd.height,
                 gross_pnl_usd,
                 exit,
             )?;
         self.unrealized_loss_rel_to_own_gross_pnl
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
-                &unrealized.loss.raw.usd.height,
+                &unrealized.loss.base.usd.height,
                 gross_pnl_usd,
                 exit,
             )?;

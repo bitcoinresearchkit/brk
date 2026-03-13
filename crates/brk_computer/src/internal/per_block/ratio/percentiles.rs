@@ -8,16 +8,16 @@ use vecdb::{
 
 use crate::{
     indexes,
-    internal::{ExpandingPercentiles, Price, PriceTimesRatioBp32Cents},
+    internal::{Price, PriceTimesRatioBp32Cents, algo::ExpandingPercentiles},
 };
 
-use super::{super::ComputedPerBlock, RatioPerBlock};
+use super::{super::PerBlock, RatioPerBlock};
 
 #[derive(Traversable)]
 pub struct RatioBand<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub ratio: RatioPerBlock<BasisPoints32, M>,
-    pub price: Price<ComputedPerBlock<Cents, M>>,
+    pub price: Price<PerBlock<Cents, M>>,
 }
 
 #[derive(Traversable)]

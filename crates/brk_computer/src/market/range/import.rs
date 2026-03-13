@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::{vecs::PriceMinMaxVecs, Vecs};
 use crate::{
     indexes,
-    internal::{ComputedPerBlock, PercentPerBlock, Price},
+    internal::{PerBlock, PercentPerBlock, Price},
 };
 
 impl Vecs {
@@ -29,13 +29,13 @@ impl Vecs {
                 _1m: Price::forced_import(db, "price_max_1m", version + v1, indexes)?,
                 _1y: Price::forced_import(db, "price_max_1y", version + v1, indexes)?,
             },
-            true_range: ComputedPerBlock::forced_import(
+            true_range: PerBlock::forced_import(
                 db,
                 "price_true_range",
                 version + v1,
                 indexes,
             )?,
-            true_range_sum_2w: ComputedPerBlock::forced_import(
+            true_range_sum_2w: PerBlock::forced_import(
                 db,
                 "price_true_range_sum_2w",
                 version + v1,

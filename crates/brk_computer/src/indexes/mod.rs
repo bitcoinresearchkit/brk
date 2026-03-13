@@ -33,7 +33,7 @@ use vecdb::{CachedVec, Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     blocks,
-    internal::{finalize_db, open_db},
+    internal::db_utils::{finalize_db, open_db},
 };
 
 pub use cached_mappings::CachedMappings;

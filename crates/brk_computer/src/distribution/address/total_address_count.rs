@@ -4,16 +4,16 @@ use brk_traversable::Traversable;
 use brk_types::{Height, StoredU64, Version};
 use vecdb::{Database, Exit, Rw, StorageMode};
 
-use crate::{indexes, internal::ComputedPerBlock};
+use crate::{indexes, internal::PerBlock};
 
 use super::AddressCountsVecs;
 
 /// Total address count (global + per-type) with all derived indexes
 #[derive(Traversable)]
 pub struct TotalAddressCountVecs<M: StorageMode = Rw> {
-    pub all: ComputedPerBlock<StoredU64, M>,
+    pub all: PerBlock<StoredU64, M>,
     #[traversable(flatten)]
-    pub by_addresstype: ByAddressType<ComputedPerBlock<StoredU64, M>>,
+    pub by_addresstype: ByAddressType<PerBlock<StoredU64, M>>,
 }
 
 impl TotalAddressCountVecs {
@@ -22,11 +22,11 @@ impl TotalAddressCountVecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let all = ComputedPerBlock::forced_import(db, "total_address_count", version, indexes)?;
+        let all = PerBlock::forced_import(db, "total_address_count", version, indexes)?;
 
-        let by_addresstype: ByAddressType<ComputedPerBlock<StoredU64>> =
+        let by_addresstype: ByAddressType<PerBlock<StoredU64>> =
             ByAddressType::new_with_name(|name| {
-                ComputedPerBlock::forced_import(
+                PerBlock::forced_import(
                     db,
                     &format!("{name}_total_address_count"),
                     version,

@@ -10,7 +10,7 @@ use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, 
 use crate::{
     distribution::state::{AddressCohortState, MinimalRealizedState},
     indexes,
-    internal::{CachedWindowStarts, ComputedPerBlockWithDeltas},
+    internal::{CachedWindowStarts, PerBlockWithDeltas},
     prices,
 };
 
@@ -27,7 +27,7 @@ pub struct AddressCohortVecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub metrics: MinimalCohortMetrics<M>,
 
-    pub address_count: ComputedPerBlockWithDeltas<StoredU64, StoredI64, BasisPointsSigned32, M>,
+    pub address_count: PerBlockWithDeltas<StoredU64, StoredI64, BasisPointsSigned32, M>,
 }
 
 impl AddressCohortVecs {
@@ -51,7 +51,7 @@ impl AddressCohortVecs {
             cached_starts,
         };
 
-        let address_count = ComputedPerBlockWithDeltas::forced_import(
+        let address_count = PerBlockWithDeltas::forced_import(
             db,
             &cfg.name("address_count"),
             version,

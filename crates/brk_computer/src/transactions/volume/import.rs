@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{AmountPerBlockCumulativeWithSums, CachedWindowStarts, ComputedPerBlock},
+    internal::{AmountPerBlockCumulativeWithSums, CachedWindowStarts, PerBlock},
 };
 
 impl Vecs {
@@ -31,14 +31,14 @@ impl Vecs {
                 indexes,
                 cached_starts,
             )?,
-            tx_per_sec: ComputedPerBlock::forced_import(db, "tx_per_sec", version + v2, indexes)?,
-            outputs_per_sec: ComputedPerBlock::forced_import(
+            tx_per_sec: PerBlock::forced_import(db, "tx_per_sec", version + v2, indexes)?,
+            outputs_per_sec: PerBlock::forced_import(
                 db,
                 "outputs_per_sec",
                 version + v2,
                 indexes,
             )?,
-            inputs_per_sec: ComputedPerBlock::forced_import(
+            inputs_per_sec: PerBlock::forced_import(
                 db,
                 "inputs_per_sec",
                 version + v2,

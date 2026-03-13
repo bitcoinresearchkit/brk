@@ -7,10 +7,10 @@ use vecdb::{
 
 use crate::{
     indexes,
-    internal::{BpsType, ComputeDrawdown},
+    internal::{BpsType, algo::ComputeDrawdown},
 };
 
-use crate::internal::{ComputedPerBlock, LazyPerBlock};
+use crate::internal::{PerBlock, LazyPerBlock};
 
 /// Basis-point storage with both ratio and percentage float views.
 ///
@@ -20,7 +20,7 @@ use crate::internal::{ComputedPerBlock, LazyPerBlock};
 /// - `percent`: bps / 100 (e.g., 4523 bps -> 45.23%)
 #[derive(Traversable)]
 pub struct PercentPerBlock<B: BpsType, M: StorageMode = Rw> {
-    pub bps: ComputedPerBlock<B, M>,
+    pub bps: PerBlock<B, M>,
     pub ratio: LazyPerBlock<StoredF32, B>,
     pub percent: LazyPerBlock<StoredF32, B>,
 }
@@ -32,7 +32,7 @@ impl<B: BpsType> PercentPerBlock<B> {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let bps = ComputedPerBlock::forced_import(db, &format!("{name}_bps"), version, indexes)?;
+        let bps = PerBlock::forced_import(db, &format!("{name}_bps"), version, indexes)?;
         let bps_clone = bps.height.read_only_boxed_clone();
 
         let ratio = LazyPerBlock::from_computed::<B::ToRatio>(

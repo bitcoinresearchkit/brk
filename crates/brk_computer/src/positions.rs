@@ -11,7 +11,7 @@ use vecdb::{
     VecIndex, WritableVec,
 };
 
-use crate::internal::{finalize_db, open_db};
+use crate::internal::db_utils::{finalize_db, open_db};
 
 pub const DB_NAME: &str = "positions";
 

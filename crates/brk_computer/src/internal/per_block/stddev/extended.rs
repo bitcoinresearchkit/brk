@@ -8,23 +8,23 @@ use vecdb::{
 
 use crate::{
     blocks, indexes,
-    internal::{ComputedPerBlock, Price, PriceTimesRatioCents},
+    internal::{PerBlock, Price, PriceTimesRatioCents},
 };
 
 #[derive(Traversable)]
 pub struct StdDevBand<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub value: ComputedPerBlock<StoredF32, M>,
-    pub price: Price<ComputedPerBlock<Cents, M>>,
+    pub value: PerBlock<StoredF32, M>,
+    pub price: Price<PerBlock<Cents, M>>,
 }
 
 #[derive(Traversable)]
 pub struct StdDevPerBlockExtended<M: StorageMode = Rw> {
     days: usize,
-    pub sd: ComputedPerBlock<StoredF32, M>,
-    pub zscore: ComputedPerBlock<StoredF32, M>,
+    pub sd: PerBlock<StoredF32, M>,
+    pub zscore: PerBlock<StoredF32, M>,
 
-    pub _0sd: Price<ComputedPerBlock<Cents, M>>,
+    pub _0sd: Price<PerBlock<Cents, M>>,
     pub p0_5sd: StdDevBand<M>,
     pub p1sd: StdDevBand<M>,
     pub p1_5sd: StdDevBand<M>,
@@ -53,7 +53,7 @@ impl StdDevPerBlockExtended {
 
         macro_rules! import {
             ($suffix:expr) => {
-                ComputedPerBlock::forced_import(
+                PerBlock::forced_import(
                     db,
                     &format!("{name}_{}{p}", $suffix),
                     version,

@@ -1,11 +1,13 @@
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::Database;
+use vecdb::{Database, ReadableCloneableVec};
 
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, ComputedPerBlock, ComputedPerBlockCumulativeWithSums},
+    internal::{
+        CachedWindowStarts, LazyPerBlock, OneMinusF64, PerBlock, PerBlockCumulativeWithSums,
+    },
 };
 
 impl Vecs {
@@ -15,29 +17,25 @@ impl Vecs {
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
+        let liveliness = PerBlock::forced_import(db, "liveliness", version, indexes)?;
+
+        let vaultedness = LazyPerBlock::from_computed::<OneMinusF64>(
+            "vaultedness",
+            version,
+            liveliness.height.read_only_boxed_clone(),
+            &liveliness,
+        );
+
         Ok(Self {
-            coinblocks_created: ComputedPerBlockCumulativeWithSums::forced_import(
-                db,
-                "coinblocks_created",
-                version,
-                indexes,
-                cached_starts,
+            coinblocks_created: PerBlockCumulativeWithSums::forced_import(
+                db, "coinblocks_created", version, indexes, cached_starts,
             )?,
-            coinblocks_stored: ComputedPerBlockCumulativeWithSums::forced_import(
-                db,
-                "coinblocks_stored",
-                version,
-                indexes,
-                cached_starts,
+            coinblocks_stored: PerBlockCumulativeWithSums::forced_import(
+                db, "coinblocks_stored", version, indexes, cached_starts,
             )?,
-            liveliness: ComputedPerBlock::forced_import(db, "liveliness", version, indexes)?,
-            vaultedness: ComputedPerBlock::forced_import(db, "vaultedness", version, indexes)?,
-            ratio: ComputedPerBlock::forced_import(
-                db,
-                "activity_to_vaultedness_ratio",
-                version,
-                indexes,
-            )?,
+            liveliness,
+            vaultedness,
+            ratio: PerBlock::forced_import(db, "activity_to_vaultedness_ratio", version, indexes)?,
         })
     }
 }

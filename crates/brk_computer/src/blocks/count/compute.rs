@@ -13,7 +13,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         // Block count raw + cumulative
-        self.total.raw.height.compute_range(
+        self.total.base.height.compute_range(
             starting_indexes.height,
             &indexer.vecs.blocks.weight,
             |h| (h, StoredU32::from(1_u32)),

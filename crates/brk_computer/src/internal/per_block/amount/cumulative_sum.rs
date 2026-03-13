@@ -11,7 +11,7 @@ use crate::{
 
 #[derive(Traversable)]
 pub struct AmountPerBlockCumulativeWithSums<M: StorageMode = Rw> {
-    pub raw: AmountPerBlock<M>,
+    pub base: AmountPerBlock<M>,
     pub cumulative: AmountPerBlock<M>,
     pub sum: LazyRollingSumsAmountFromHeight,
 }
@@ -28,7 +28,7 @@ impl AmountPerBlockCumulativeWithSums {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let raw = AmountPerBlock::forced_import(db, name, v, indexes)?;
+        let base = AmountPerBlock::forced_import(db, name, v, indexes)?;
         let cumulative =
             AmountPerBlock::forced_import(db, &format!("{name}_cumulative"), v, indexes)?;
         let sum = LazyRollingSumsAmountFromHeight::new(
@@ -41,7 +41,7 @@ impl AmountPerBlockCumulativeWithSums {
         );
 
         Ok(Self {
-            raw,
+            base,
             cumulative,
             sum,
         })
@@ -54,7 +54,7 @@ impl AmountPerBlockCumulativeWithSums {
         exit: &Exit,
         compute_sats: impl FnOnce(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
     ) -> Result<()> {
-        compute_sats(&mut self.raw.sats.height)?;
+        compute_sats(&mut self.base.sats.height)?;
         self.compute_rest(max_from, prices, exit)
     }
 
@@ -67,14 +67,14 @@ impl AmountPerBlockCumulativeWithSums {
         self.cumulative
             .sats
             .height
-            .compute_cumulative(max_from, &self.raw.sats.height, exit)?;
+            .compute_cumulative(max_from, &self.base.sats.height, exit)?;
 
-        self.raw
+        self.base
             .cents
             .height
             .compute_binary::<Sats, Cents, SatsToCents>(
                 max_from,
-                &self.raw.sats.height,
+                &self.base.sats.height,
                 &prices.spot.cents.height,
                 exit,
             )?;
@@ -82,7 +82,7 @@ impl AmountPerBlockCumulativeWithSums {
         self.cumulative
             .cents
             .height
-            .compute_cumulative(max_from, &self.raw.cents.height, exit)?;
+            .compute_cumulative(max_from, &self.base.cents.height, exit)?;
 
         Ok(())
     }

@@ -7,7 +7,8 @@ use crate::{
     cointime, distribution, indexes,
     internal::{
         CachedWindowStarts, LazyAmountPerBlock, LazyFiatPerBlock,
-        LazyRollingDeltasFiatFromHeight, PercentPerBlock, RollingWindows, finalize_db, open_db,
+        LazyRollingDeltasFiatFromHeight, PercentPerBlock, RollingWindows,
+        db_utils::{finalize_db, open_db},
     },
     supply::burned,
 };

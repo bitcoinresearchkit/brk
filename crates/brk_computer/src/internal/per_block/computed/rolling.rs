@@ -1,7 +1,7 @@
-//! ResolutionsFull - LazyAggVec index views + cumulative (from height) + RollingFull.
+//! PerBlockRolling - LazyAggVec index views + cumulative (from height) + RollingComplete.
 //!
 //! For metrics derived from indexer sources (no stored height vec).
-//! Cumulative gets its own ComputedPerBlock so it has LazyAggVec index views too.
+//! Cumulative gets its own PerBlock so it has LazyAggVec index views too.
 
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -11,20 +11,20 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, ComputedPerBlock, NumericValue, RollingFull, WindowStarts},
+    internal::{CachedWindowStarts, PerBlock, NumericValue, RollingComplete, WindowStarts},
 };
 
 #[derive(Traversable)]
-pub struct ResolutionsFull<T, M: StorageMode = Rw>
+pub struct PerBlockRolling<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
-    pub cumulative: ComputedPerBlock<T, M>,
+    pub cumulative: PerBlock<T, M>,
     #[traversable(flatten)]
-    pub rolling: RollingFull<T, M>,
+    pub rolling: RollingComplete<T, M>,
 }
 
-impl<T> ResolutionsFull<T>
+impl<T> PerBlockRolling<T>
 where
     T: NumericValue + JsonSchema,
 {
@@ -36,8 +36,8 @@ where
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let cumulative =
-            ComputedPerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
-        let rolling = RollingFull::forced_import(
+            PerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
+        let rolling = RollingComplete::forced_import(
             db,
             name,
             version,

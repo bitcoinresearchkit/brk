@@ -3,7 +3,7 @@ use brk_types::Version;
 use vecdb::{Database, EagerVec, ImportableVec};
 
 use super::Vecs;
-use crate::{indexes, internal::ComputedPerBlock};
+use crate::{indexes, internal::PerBlock};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -15,7 +15,7 @@ impl Vecs {
         Ok(Self {
             vocdd_median_1y: EagerVec::forced_import(db, "vocdd_median_1y", v1)?,
             hodl_bank: EagerVec::forced_import(db, "hodl_bank", v1)?,
-            value: ComputedPerBlock::forced_import(db, "reserve_risk", v1, indexes)?,
+            value: PerBlock::forced_import(db, "reserve_risk", v1, indexes)?,
         })
     }
 }

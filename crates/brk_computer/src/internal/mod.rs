@@ -1,8 +1,8 @@
 mod aggregate;
-mod algo;
+pub(crate) mod algo;
 mod amount;
 mod containers;
-mod db_utils;
+pub(crate) mod db_utils;
 mod per_block;
 mod per_tx;
 mod indexes;
@@ -10,10 +10,8 @@ mod traits;
 mod transform;
 
 pub(crate) use aggregate::*;
-pub(crate) use algo::*;
 pub(crate) use amount::*;
 pub(crate) use containers::*;
-pub(crate) use db_utils::*;
 pub(crate) use per_block::*;
 pub(crate) use per_tx::*;
 pub(crate) use indexes::*;

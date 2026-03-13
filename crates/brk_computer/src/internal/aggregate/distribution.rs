@@ -7,7 +7,8 @@ use vecdb::{
 };
 
 use crate::internal::{
-    ComputedVecValue, DistributionStats, compute_aggregations, compute_aggregations_nblock_window,
+    ComputedVecValue, DistributionStats,
+    algo::{compute_aggregations, compute_aggregations_nblock_window},
 };
 
 #[derive(Traversable)]

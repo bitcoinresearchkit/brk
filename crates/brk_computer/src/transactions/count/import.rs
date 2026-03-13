@@ -4,7 +4,7 @@ use brk_types::{StoredBool, TxIndex, Version};
 use vecdb::{Database, LazyVecFrom2, ReadableCloneableVec};
 
 use super::Vecs;
-use crate::{indexes, internal::{CachedWindowStarts, ComputedPerBlockFull}};
+use crate::{indexes, internal::{CachedWindowStarts, PerBlockFull}};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -27,7 +27,7 @@ impl Vecs {
         );
 
         Ok(Self {
-            total: ComputedPerBlockFull::forced_import(
+            total: PerBlockFull::forced_import(
                 db,
                 "tx_count",
                 version,

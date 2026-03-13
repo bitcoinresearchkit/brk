@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use brk_types::{Bitcoin, Cents, Dollars, Sats, StoredF32, StoredI8, StoredU16, StoredU32, StoredU64, VSize, Weight};
+use brk_types::{BasisPoints16, Bitcoin, Cents, Dollars, Sats, StoredF32, StoredF64, StoredI8, StoredU16, StoredU32, StoredU64, VSize, Weight};
 use vecdb::{BinaryTransform, UnaryTransform, VecValue};
 
 pub struct Identity<T>(PhantomData<T>);
@@ -85,6 +85,52 @@ impl<S, const V: i8> UnaryTransform<S, StoredI8> for ReturnI8<V> {
     #[inline(always)]
     fn apply(_: S) -> StoredI8 {
         StoredI8::new(V)
+    }
+}
+
+pub struct ThsToPhsF32;
+
+impl UnaryTransform<StoredF32, StoredF32> for ThsToPhsF32 {
+    #[inline(always)]
+    fn apply(ths: StoredF32) -> StoredF32 {
+        (*ths * 1000.0).into()
+    }
+}
+
+pub struct BlocksToDaysF32;
+
+impl UnaryTransform<StoredU32, StoredF32> for BlocksToDaysF32 {
+    #[inline(always)]
+    fn apply(blocks: StoredU32) -> StoredF32 {
+        (*blocks as f32 / crate::blocks::TARGET_BLOCKS_PER_DAY_F32).into()
+    }
+}
+
+pub struct OneMinusF64;
+
+impl UnaryTransform<StoredF64, StoredF64> for OneMinusF64 {
+    #[inline(always)]
+    fn apply(v: StoredF64) -> StoredF64 {
+        StoredF64::from(1.0 - *v)
+    }
+}
+
+pub struct DifficultyToHashF64;
+
+impl UnaryTransform<StoredF64, StoredF64> for DifficultyToHashF64 {
+    #[inline(always)]
+    fn apply(difficulty: StoredF64) -> StoredF64 {
+        const MULTIPLIER: f64 = 4_294_967_296.0 / 600.0; // 2^32 / 600
+        StoredF64::from(*difficulty * MULTIPLIER)
+    }
+}
+
+pub struct OneMinusBp16;
+
+impl UnaryTransform<BasisPoints16, BasisPoints16> for OneMinusBp16 {
+    #[inline(always)]
+    fn apply(v: BasisPoints16) -> BasisPoints16 {
+        BasisPoints16::ONE - v
     }
 }
 

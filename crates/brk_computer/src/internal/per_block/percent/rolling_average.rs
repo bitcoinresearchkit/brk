@@ -8,12 +8,12 @@ use crate::{
     internal::{BpsType, CachedWindowStarts},
 };
 
-use crate::internal::{ComputedPerBlockRollingAverage, LazyPerBlock};
+use crate::internal::{PerBlockRollingAverage, LazyPerBlock};
 
 /// Like PercentPerBlock but with rolling average stats on the bps data.
 #[derive(Traversable)]
 pub struct PercentPerBlockRollingAverage<B: BpsType, M: StorageMode = Rw> {
-    pub bps: ComputedPerBlockRollingAverage<B, M>,
+    pub bps: PerBlockRollingAverage<B, M>,
     pub ratio: LazyPerBlock<StoredF32, B>,
     pub percent: LazyPerBlock<StoredF32, B>,
 }
@@ -26,7 +26,7 @@ impl<B: BpsType> PercentPerBlockRollingAverage<B> {
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let bps = ComputedPerBlockRollingAverage::forced_import(
+        let bps = PerBlockRollingAverage::forced_import(
             db,
             &format!("{name}_bps"),
             version,

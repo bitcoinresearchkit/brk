@@ -6,7 +6,7 @@ use vecdb::{LazyVecFrom1, ReadableBoxedVec, ReadableCloneableVec, UnaryTransform
 
 use crate::{
     indexes,
-    internal::{ComputedPerBlock, ComputedVecValue, DerivedResolutions, NumericValue},
+    internal::{PerBlock, ComputedVecValue, DerivedResolutions, NumericValue},
 };
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -31,7 +31,7 @@ where
         name: &str,
         version: Version,
         height_source: ReadableBoxedVec<Height, S1T>,
-        source: &ComputedPerBlock<S1T>,
+        source: &PerBlock<S1T>,
     ) -> Self
     where
         S1T: NumericValue,

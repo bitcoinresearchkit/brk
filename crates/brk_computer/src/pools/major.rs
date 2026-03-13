@@ -93,8 +93,8 @@ impl Vecs {
             |vec| {
                 Ok(vec.compute_transform2(
                     starting_indexes.height,
-                    &self.base.blocks_mined.raw.height,
-                    &mining.rewards.coinbase.raw.sats.height,
+                    &self.base.blocks_mined.base.height,
+                    &mining.rewards.coinbase.base.sats.height,
                     |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
                     exit,
                 )?)

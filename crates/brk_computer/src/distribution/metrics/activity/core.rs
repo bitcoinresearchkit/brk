@@ -5,14 +5,14 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
     distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}},
-    internal::{AmountPerBlockCumulativeWithSums, ComputedPerBlockCumulativeWithSums},
+    internal::{AmountPerBlockCumulativeWithSums, PerBlockCumulativeWithSums},
     prices,
 };
 
 #[derive(Traversable)]
 pub struct ActivityCore<M: StorageMode = Rw> {
-    pub sent: ComputedPerBlockCumulativeWithSums<Sats, Sats, M>,
-    pub coindays_destroyed: ComputedPerBlockCumulativeWithSums<StoredF64, StoredF64, M>,
+    pub sent: PerBlockCumulativeWithSums<Sats, Sats, M>,
+    pub coindays_destroyed: PerBlockCumulativeWithSums<StoredF64, StoredF64, M>,
     #[traversable(wrap = "sent", rename = "in_profit")]
     pub sent_in_profit: AmountPerBlockCumulativeWithSums<M>,
     #[traversable(wrap = "sent", rename = "in_loss")]
@@ -32,12 +32,12 @@ impl ActivityCore {
 
     pub(crate) fn min_len(&self) -> usize {
         self.sent
-            .raw
+            .base
             .height
             .len()
-            .min(self.coindays_destroyed.raw.height.len())
-            .min(self.sent_in_profit.raw.sats.height.len())
-            .min(self.sent_in_loss.raw.sats.height.len())
+            .min(self.coindays_destroyed.base.height.len())
+            .min(self.sent_in_profit.base.sats.height.len())
+            .min(self.sent_in_loss.base.sats.height.len())
     }
 
     pub(crate) fn truncate_push(
@@ -45,18 +45,18 @@ impl ActivityCore {
         height: Height,
         state: &CohortState<impl RealizedOps, impl CostBasisOps>,
     ) -> Result<()> {
-        self.sent.raw.height.truncate_push(height, state.sent)?;
-        self.coindays_destroyed.raw.height.truncate_push(
+        self.sent.base.height.truncate_push(height, state.sent)?;
+        self.coindays_destroyed.base.height.truncate_push(
             height,
             StoredF64::from(Bitcoin::from(state.satdays_destroyed)),
         )?;
         self.sent_in_profit
-            .raw
+            .base
             .sats
             .height
             .truncate_push(height, state.realized.sent_in_profit())?;
         self.sent_in_loss
-            .raw
+            .base
             .sats
             .height
             .truncate_push(height, state.realized.sent_in_loss())?;
@@ -65,12 +65,12 @@ impl ActivityCore {
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
-            &mut self.sent.raw.height as &mut dyn AnyStoredVec,
-            &mut self.coindays_destroyed.raw.height,
-            &mut self.sent_in_profit.raw.sats.height,
-            &mut self.sent_in_profit.raw.cents.height,
-            &mut self.sent_in_loss.raw.sats.height,
-            &mut self.sent_in_loss.raw.cents.height,
+            &mut self.sent.base.height as &mut dyn AnyStoredVec,
+            &mut self.coindays_destroyed.base.height,
+            &mut self.sent_in_profit.base.sats.height,
+            &mut self.sent_in_profit.base.cents.height,
+            &mut self.sent_in_loss.base.sats.height,
+            &mut self.sent_in_loss.base.cents.height,
         ]
     }
 
@@ -84,18 +84,18 @@ impl ActivityCore {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.sent.raw.height.compute_sum_of_others(
+        self.sent.base.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.sent.raw.height)
+                .map(|v| &v.sent.base.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
 
-        sum_others!(self, starting_indexes, others, exit; coindays_destroyed.raw.height);
-        sum_others!(self, starting_indexes, others, exit; sent_in_profit.raw.sats.height);
-        sum_others!(self, starting_indexes, others, exit; sent_in_loss.raw.sats.height);
+        sum_others!(self, starting_indexes, others, exit; coindays_destroyed.base.height);
+        sum_others!(self, starting_indexes, others, exit; sent_in_profit.base.sats.height);
+        sum_others!(self, starting_indexes, others, exit; sent_in_loss.base.sats.height);
 
         Ok(())
     }

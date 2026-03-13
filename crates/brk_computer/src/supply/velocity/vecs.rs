@@ -2,10 +2,10 @@ use brk_traversable::Traversable;
 use brk_types::StoredF64;
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::ComputedPerBlock;
+use crate::internal::PerBlock;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub btc: ComputedPerBlock<StoredF64, M>,
-    pub usd: ComputedPerBlock<StoredF64, M>,
+    pub btc: PerBlock<StoredF64, M>,
+    pub usd: PerBlock<StoredF64, M>,
 }

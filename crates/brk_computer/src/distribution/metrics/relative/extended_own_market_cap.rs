@@ -42,14 +42,14 @@ impl RelativeExtendedOwnMarketCap {
         self.unrealized_profit_rel_to_own_mcap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
-                &unrealized.profit.raw.usd.height,
+                &unrealized.profit.base.usd.height,
                 own_market_cap,
                 exit,
             )?;
         self.unrealized_loss_rel_to_own_mcap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
                 max_from,
-                &unrealized.loss.raw.usd.height,
+                &unrealized.loss.base.usd.height,
                 own_market_cap,
                 exit,
             )?;

@@ -1,4 +1,4 @@
-//! ComputedPerBlockFull - raw ComputedPerBlock + cumulative ComputedPerBlock + RollingFull.
+//! PerBlockFull - base PerBlock + cumulative PerBlock + RollingComplete.
 //!
 //! For metrics with stored per-block data, cumulative sums, and rolling windows.
 
@@ -10,21 +10,21 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, ComputedPerBlock, NumericValue, RollingFull, WindowStarts},
+    internal::{CachedWindowStarts, PerBlock, NumericValue, RollingComplete, WindowStarts},
 };
 
 #[derive(Traversable)]
-pub struct ComputedPerBlockFull<T, M: StorageMode = Rw>
+pub struct PerBlockFull<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
-    pub raw: ComputedPerBlock<T, M>,
-    pub cumulative: ComputedPerBlock<T, M>,
+    pub base: PerBlock<T, M>,
+    pub cumulative: PerBlock<T, M>,
     #[traversable(flatten)]
-    pub rolling: RollingFull<T, M>,
+    pub rolling: RollingComplete<T, M>,
 }
 
-impl<T> ComputedPerBlockFull<T>
+impl<T> PerBlockFull<T>
 where
     T: NumericValue + JsonSchema,
 {
@@ -35,10 +35,10 @@ where
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let raw = ComputedPerBlock::forced_import(db, name, version, indexes)?;
+        let base = PerBlock::forced_import(db, name, version, indexes)?;
         let cumulative =
-            ComputedPerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
-        let rolling = RollingFull::forced_import(
+            PerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
+        let rolling = RollingComplete::forced_import(
             db,
             name,
             version,
@@ -48,30 +48,30 @@ where
         )?;
 
         Ok(Self {
-            raw,
+            base,
             cumulative,
             rolling,
         })
     }
 
-    /// Compute raw data via closure, then cumulative + rolling distribution.
+    /// Compute base data via closure, then cumulative + rolling distribution.
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
         windows: &WindowStarts<'_>,
         exit: &Exit,
-        compute_raw: impl FnOnce(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
+        compute_base: impl FnOnce(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
     ) -> Result<()>
     where
         T: From<f64> + Default + Copy + Ord,
         f64: From<T>,
     {
-        compute_raw(&mut self.raw.height)?;
+        compute_base(&mut self.base.height)?;
         self.cumulative
             .height
-            .compute_cumulative(max_from, &self.raw.height, exit)?;
+            .compute_cumulative(max_from, &self.base.height, exit)?;
         self.rolling
-            .compute(max_from, windows, &self.raw.height, exit)?;
+            .compute(max_from, windows, &self.base.height, exit)?;
         Ok(())
     }
 }

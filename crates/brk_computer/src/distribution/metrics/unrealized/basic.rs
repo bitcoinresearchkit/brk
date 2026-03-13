@@ -34,21 +34,21 @@ impl UnrealizedBasic {
 
     pub(crate) fn min_stateful_len(&self) -> usize {
         self.profit
-            .raw
+            .base
             .cents
             .height
             .len()
-            .min(self.loss.raw.cents.height.len())
+            .min(self.loss.base.cents.height.len())
     }
 
     pub(crate) fn truncate_push(&mut self, height: Height, state: &UnrealizedState) -> Result<()> {
         self.profit
-            .raw
+            .base
             .cents
             .height
             .truncate_push(height, state.unrealized_profit)?;
         self.loss
-            .raw
+            .base
             .cents
             .height
             .truncate_push(height, state.unrealized_loss)?;
@@ -57,8 +57,8 @@ impl UnrealizedBasic {
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
-            &mut self.profit.raw.cents.height as &mut dyn AnyStoredVec,
-            &mut self.loss.raw.cents.height,
+            &mut self.profit.base.cents.height as &mut dyn AnyStoredVec,
+            &mut self.loss.base.cents.height,
         ]
     }
 
@@ -68,8 +68,8 @@ impl UnrealizedBasic {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        sum_others!(self, starting_indexes, others, exit; profit.raw.cents.height);
-        sum_others!(self, starting_indexes, others, exit; loss.raw.cents.height);
+        sum_others!(self, starting_indexes, others, exit; profit.base.cents.height);
+        sum_others!(self, starting_indexes, others, exit; loss.base.cents.height);
         Ok(())
     }
 

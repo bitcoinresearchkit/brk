@@ -11,9 +11,9 @@ use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        CentsUnsignedToDollars, CentsUnsignedToSats, ComputedPerBlock, Resolutions,
+        CentsUnsignedToDollars, CentsUnsignedToSats, PerBlock, Resolutions,
         EagerIndexes, LazyEagerIndexes, LazyPerBlock, OhlcCentsToDollars, OhlcCentsToSats,
-        finalize_db, open_db,
+        db_utils::{finalize_db, open_db},
     },
 };
 
@@ -51,7 +51,7 @@ impl Vecs {
     ) -> brk_error::Result<Self> {
         let version = version + Version::new(11);
 
-        let price_cents = ComputedPerBlock::forced_import(db, "price_cents", version, indexes)?;
+        let price_cents = PerBlock::forced_import(db, "price_cents", version, indexes)?;
 
         let open_cents = EagerIndexes::forced_import(db, "price_open_cents", version)?;
         let high_cents = EagerIndexes::forced_import(db, "price_high_cents", version)?;

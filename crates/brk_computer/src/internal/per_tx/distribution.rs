@@ -1,4 +1,4 @@
-//! ComputedPerTxDistribution - stored per-tx EagerVec + computed distribution.
+//! PerTxDistribution - stored per-tx EagerVec + computed distribution.
 //!
 //! Like LazyFromTxDistribution, but the per-tx source is eagerly computed
 //! and stored rather than lazily derived.
@@ -16,7 +16,7 @@ use crate::{
 };
 
 #[derive(Traversable)]
-pub struct ComputedPerTxDistribution<T, M: StorageMode = Rw>
+pub struct PerTxDistribution<T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
@@ -25,7 +25,7 @@ where
     pub distribution: TxDerivedDistribution<T, M>,
 }
 
-impl<T> ComputedPerTxDistribution<T>
+impl<T> PerTxDistribution<T>
 where
     T: NumericValue + JsonSchema,
 {

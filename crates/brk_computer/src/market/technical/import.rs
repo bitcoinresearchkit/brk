@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::{MacdChain, RsiChain, Vecs};
 use crate::{
     indexes,
-    internal::{ComputedPerBlock, PercentPerBlock, RatioPerBlock, Windows},
+    internal::{PerBlock, PercentPerBlock, RatioPerBlock, Windows},
 };
 
 const VERSION: Version = Version::new(2);
@@ -19,7 +19,7 @@ impl RsiChain {
     ) -> Result<Self> {
         macro_rules! import {
             ($name:expr) => {
-                ComputedPerBlock::forced_import(
+                PerBlock::forced_import(
                     db,
                     &format!("rsi_{}_{}", $name, tf),
                     version,
@@ -67,11 +67,11 @@ impl MacdChain {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let line =
-            ComputedPerBlock::forced_import(db, &format!("macd_line_{tf}"), version, indexes)?;
+            PerBlock::forced_import(db, &format!("macd_line_{tf}"), version, indexes)?;
         let signal =
-            ComputedPerBlock::forced_import(db, &format!("macd_signal_{tf}"), version, indexes)?;
+            PerBlock::forced_import(db, &format!("macd_signal_{tf}"), version, indexes)?;
 
-        let histogram = ComputedPerBlock::forced_import(
+        let histogram = PerBlock::forced_import(
             db,
             &format!("macd_histogram_{tf}"),
             version,
@@ -79,13 +79,13 @@ impl MacdChain {
         )?;
 
         Ok(Self {
-            ema_fast: ComputedPerBlock::forced_import(
+            ema_fast: PerBlock::forced_import(
                 db,
                 &format!("macd_ema_fast_{tf}"),
                 version,
                 indexes,
             )?,
-            ema_slow: ComputedPerBlock::forced_import(
+            ema_slow: PerBlock::forced_import(
                 db,
                 &format!("macd_ema_slow_{tf}"),
                 version,

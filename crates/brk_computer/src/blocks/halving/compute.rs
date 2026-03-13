@@ -2,7 +2,6 @@ use brk_error::Result;
 use brk_types::{Indexes, StoredU32};
 use vecdb::Exit;
 
-use super::super::TARGET_BLOCKS_PER_DAY_F32;
 use super::Vecs;
 use crate::indexes;
 
@@ -24,13 +23,6 @@ impl Vecs {
             starting_indexes.height,
             &indexes.height.identity,
             |(h, ..)| (h, StoredU32::from(h.left_before_next_halving())),
-            exit,
-        )?;
-
-        self.days_before_next.height.compute_transform(
-            starting_indexes.height,
-            &self.blocks_before_next.height,
-            |(h, blocks, ..)| (h, (*blocks as f32 / TARGET_BLOCKS_PER_DAY_F32).into()),
             exit,
         )?;
 

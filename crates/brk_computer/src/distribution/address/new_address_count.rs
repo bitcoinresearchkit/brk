@@ -6,7 +6,7 @@ use vecdb::{Database, Exit, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, ComputedPerBlockCumulativeWithSums},
+    internal::{CachedWindowStarts, PerBlockCumulativeWithSums},
 };
 
 use super::TotalAddressCountVecs;
@@ -14,9 +14,9 @@ use super::TotalAddressCountVecs;
 /// New address count per block (global + per-type)
 #[derive(Traversable)]
 pub struct NewAddressCountVecs<M: StorageMode = Rw> {
-    pub all: ComputedPerBlockCumulativeWithSums<StoredU64, StoredU64, M>,
+    pub all: PerBlockCumulativeWithSums<StoredU64, StoredU64, M>,
     #[traversable(flatten)]
-    pub by_addresstype: ByAddressType<ComputedPerBlockCumulativeWithSums<StoredU64, StoredU64, M>>,
+    pub by_addresstype: ByAddressType<PerBlockCumulativeWithSums<StoredU64, StoredU64, M>>,
 }
 
 impl NewAddressCountVecs {
@@ -26,7 +26,7 @@ impl NewAddressCountVecs {
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let all = ComputedPerBlockCumulativeWithSums::forced_import(
+        let all = PerBlockCumulativeWithSums::forced_import(
             db,
             "new_address_count",
             version,
@@ -35,7 +35,7 @@ impl NewAddressCountVecs {
         )?;
 
         let by_addresstype = ByAddressType::new_with_name(|name| {
-            ComputedPerBlockCumulativeWithSums::forced_import(
+            PerBlockCumulativeWithSums::forced_import(
                 db,
                 &format!("{name}_new_address_count"),
                 version,

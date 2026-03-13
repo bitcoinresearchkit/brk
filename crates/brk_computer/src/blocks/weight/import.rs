@@ -6,7 +6,7 @@ use super::Vecs;
 use crate::{
     blocks::SizeVecs,
     indexes,
-    internal::{CachedWindowStarts, LazyResolutionsFull, PercentPerBlockRollingAverage, VBytesToWeight},
+    internal::{CachedWindowStarts, LazyPerBlockRolling, PercentPerBlockRollingAverage, VBytesToWeight},
 };
 
 impl Vecs {
@@ -17,7 +17,7 @@ impl Vecs {
         cached_starts: &CachedWindowStarts,
         size: &SizeVecs,
     ) -> Result<Self> {
-        let weight = LazyResolutionsFull::from_computed_per_block_full::<VBytesToWeight>(
+        let weight = LazyPerBlockRolling::from_per_block_full::<VBytesToWeight>(
             "block_weight",
             version,
             &size.vbytes,

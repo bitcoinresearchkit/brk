@@ -4,7 +4,7 @@ use brk_types::{Cents, Height, Version};
 use vecdb::{AnyExportableVec, Database, ReadOnlyClone, Ro, Rw, StorageMode, WritableVec};
 
 use crate::indexes;
-use crate::internal::{ComputedPerBlock, Price};
+use crate::internal::{PerBlock, Price};
 
 pub const PERCENTILES: [u8; 19] = [
     5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95,
@@ -12,7 +12,7 @@ pub const PERCENTILES: [u8; 19] = [
 pub const PERCENTILES_LEN: usize = PERCENTILES.len();
 
 pub struct PercentilesVecs<M: StorageMode = Rw> {
-    pub vecs: [Price<ComputedPerBlock<Cents, M>>; PERCENTILES_LEN],
+    pub vecs: [Price<PerBlock<Cents, M>>; PERCENTILES_LEN],
 }
 
 const VERSION: Version = Version::ONE;
@@ -73,7 +73,7 @@ impl ReadOnlyClone for PercentilesVecs {
 
 impl<M: StorageMode> Traversable for PercentilesVecs<M>
 where
-    Price<ComputedPerBlock<Cents, M>>: Traversable,
+    Price<PerBlock<Cents, M>>: Traversable,
 {
     fn to_tree_node(&self) -> TreeNode {
         TreeNode::Branch(

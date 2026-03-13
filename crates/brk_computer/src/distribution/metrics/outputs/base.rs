@@ -8,19 +8,19 @@ use crate::{
         metrics::ImportConfig,
         state::{CohortState, CostBasisOps, RealizedOps},
     },
-    internal::ComputedPerBlockWithDeltas,
+    internal::PerBlockWithDeltas,
 };
 
 /// Base output metrics: utxo_count + delta.
 #[derive(Traversable)]
 pub struct OutputsBase<M: StorageMode = Rw> {
-    pub unspent_count: ComputedPerBlockWithDeltas<StoredU64, StoredI64, BasisPointsSigned32, M>,
+    pub unspent_count: PerBlockWithDeltas<StoredU64, StoredI64, BasisPointsSigned32, M>,
 }
 
 impl OutputsBase {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            unspent_count: ComputedPerBlockWithDeltas::forced_import(
+            unspent_count: PerBlockWithDeltas::forced_import(
                 cfg.db,
                 &cfg.name("utxo_count"),
                 cfg.version,

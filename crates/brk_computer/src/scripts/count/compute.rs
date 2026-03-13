@@ -137,9 +137,9 @@ impl Vecs {
             .compute(starting_indexes.height, exit, |v| {
                 Ok(v.compute_transform3(
                     starting_indexes.height,
-                    &self.p2wpkh.raw.height,
-                    &self.p2wsh.raw.height,
-                    &self.p2tr.raw.height,
+                    &self.p2wpkh.base.height,
+                    &self.p2wsh.base.height,
+                    &self.p2tr.base.height,
                     |(h, p2wpkh, p2wsh, p2tr, ..)| (h, StoredU64::from(*p2wpkh + *p2wsh + *p2tr)),
                     exit,
                 )?)

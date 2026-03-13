@@ -46,7 +46,7 @@ impl RealizedCore {
         let neg_realized_loss = LazyPerBlock::from_height_source::<NegCentsUnsignedToDollars>(
             &cfg.name("neg_realized_loss"),
             cfg.version + Version::ONE,
-            minimal.loss.raw.cents.height.read_only_boxed_clone(),
+            minimal.loss.base.cents.height.read_only_boxed_clone(),
             cfg.indexes,
         );
 
@@ -103,10 +103,10 @@ impl RealizedCore {
         self.minimal
             .compute_rest_part1(starting_indexes, exit)?;
 
-        self.net_pnl.raw.cents.height.compute_transform2(
+        self.net_pnl.base.cents.height.compute_transform2(
             starting_indexes.height,
-            &self.minimal.profit.raw.cents.height,
-            &self.minimal.loss.raw.cents.height,
+            &self.minimal.profit.base.cents.height,
+            &self.minimal.loss.base.cents.height,
             |(i, profit, loss, ..)| {
                 (
                     i,

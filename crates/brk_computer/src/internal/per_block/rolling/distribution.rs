@@ -10,7 +10,7 @@ use crate::{
     indexes,
     internal::{
         ComputedVecValue, DistributionStats, NumericValue, RollingWindows, WindowStarts,
-        compute_rolling_distribution_from_starts,
+        algo::compute_rolling_distribution_from_starts,
     },
 };
 

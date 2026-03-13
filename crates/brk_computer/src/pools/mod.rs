@@ -18,7 +18,7 @@ pub mod minor;
 
 use crate::{
     blocks, indexes,
-    internal::{finalize_db, open_db, CachedWindowStarts},
+    internal::{CachedWindowStarts, db_utils::{finalize_db, open_db}},
     mining, prices,
 };
 

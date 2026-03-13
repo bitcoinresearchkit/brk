@@ -1,4 +1,4 @@
-//! ComputedPerBlock with rolling average (no distribution stats).
+//! PerBlock with rolling average (no distribution stats).
 //!
 //! Stored height data + f64 cumulative + lazy 4-window rolling averages.
 //! Rolling averages are computed on-the-fly from the cumulative via DeltaAvg.
@@ -15,7 +15,7 @@ use crate::indexes;
 use crate::internal::{CachedWindowStarts, LazyRollingAvgsFromHeight, NumericValue};
 
 #[derive(Traversable)]
-pub struct ComputedPerBlockRollingAverage<T, M: StorageMode = Rw>
+pub struct PerBlockRollingAverage<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
@@ -26,7 +26,7 @@ where
     pub average: LazyRollingAvgsFromHeight<T>,
 }
 
-impl<T> ComputedPerBlockRollingAverage<T>
+impl<T> PerBlockRollingAverage<T>
 where
     T: NumericValue + JsonSchema,
 {

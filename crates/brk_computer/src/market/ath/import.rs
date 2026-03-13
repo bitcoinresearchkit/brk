@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedPerBlock, DaysToYears, DerivedResolutions, PercentPerBlock, Price},
+    internal::{PerBlock, DaysToYears, DerivedResolutions, PercentPerBlock, Price},
 };
 
 const VERSION: Version = Version::ONE;
@@ -21,7 +21,7 @@ impl Vecs {
         let high = Price::forced_import(db, "price_ath", v, indexes)?;
 
         let max_days_between =
-            ComputedPerBlock::forced_import(db, "max_days_between_price_ath", v, indexes)?;
+            PerBlock::forced_import(db, "max_days_between_price_ath", v, indexes)?;
 
         let max_years_between = DerivedResolutions::from_computed::<DaysToYears>(
             "max_years_between_price_ath",
@@ -30,7 +30,7 @@ impl Vecs {
         );
 
         let days_since =
-            ComputedPerBlock::forced_import(db, "days_since_price_ath", v, indexes)?;
+            PerBlock::forced_import(db, "days_since_price_ath", v, indexes)?;
 
         let years_since = DerivedResolutions::from_computed::<DaysToYears>(
             "years_since_price_ath",

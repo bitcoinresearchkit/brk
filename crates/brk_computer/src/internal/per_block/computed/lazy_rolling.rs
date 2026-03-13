@@ -6,33 +6,33 @@ use vecdb::{ReadableCloneableVec, UnaryTransform};
 use crate::{
     indexes,
     internal::{
-        CachedWindowStarts, ComputedPerBlockFull, ComputedVecValue, LazyPerBlock, LazyRollingFull,
+        CachedWindowStarts, PerBlockFull, ComputedVecValue, LazyPerBlock, LazyRollingComplete,
         NumericValue,
     },
 };
 
-/// Lazy analog of `ResolutionsFull<T>`: lazy cumulative + lazy rolling full.
-/// Derived by transforming a `ComputedPerBlockFull<S1T>`. Zero stored vecs.
+/// Lazy analog of `PerBlockRolling<T>`: lazy cumulative + lazy rolling complete.
+/// Derived by transforming a `PerBlockFull<S1T>`. Zero stored vecs.
 #[derive(Clone, Traversable)]
-pub struct LazyResolutionsFull<T, S1T>
+pub struct LazyPerBlockRolling<T, S1T>
 where
     T: NumericValue + JsonSchema,
     S1T: ComputedVecValue + JsonSchema,
 {
     pub cumulative: LazyPerBlock<T, S1T>,
     #[traversable(flatten)]
-    pub rolling: LazyRollingFull<T, S1T>,
+    pub rolling: LazyRollingComplete<T, S1T>,
 }
 
-impl<T, S1T> LazyResolutionsFull<T, S1T>
+impl<T, S1T> LazyPerBlockRolling<T, S1T>
 where
     T: NumericValue + JsonSchema + 'static,
     S1T: NumericValue + JsonSchema,
 {
-    pub(crate) fn from_computed_per_block_full<F: UnaryTransform<S1T, T>>(
+    pub(crate) fn from_per_block_full<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        source: &ComputedPerBlockFull<S1T>,
+        source: &PerBlockFull<S1T>,
         cached_starts: &CachedWindowStarts,
         indexes: &indexes::Vecs,
     ) -> Self {
@@ -43,7 +43,7 @@ where
             &source.cumulative,
         );
 
-        let rolling = LazyRollingFull::from_rolling_full::<F>(
+        let rolling = LazyRollingComplete::from_rolling_complete::<F>(
             name,
             version,
             &cumulative.height,

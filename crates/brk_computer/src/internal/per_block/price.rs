@@ -10,7 +10,7 @@ use brk_types::{Cents, Dollars, SatsFract, Version};
 use schemars::JsonSchema;
 use vecdb::{Database, ReadableCloneableVec, UnaryTransform};
 
-use super::{ComputedPerBlock, LazyPerBlock};
+use super::{PerBlock, LazyPerBlock};
 use crate::{
     indexes,
     internal::{CentsUnsignedToDollars, ComputedVecValue, DollarsToSatsFract, NumericValue},
@@ -24,7 +24,7 @@ pub struct Price<C> {
     pub sats: LazyPerBlock<SatsFract, Dollars>,
 }
 
-impl Price<ComputedPerBlock<Cents>> {
+impl Price<PerBlock<Cents>> {
     /// Import from database: stored cents, lazy USD + sats.
     pub(crate) fn forced_import(
         db: &Database,
@@ -33,7 +33,7 @@ impl Price<ComputedPerBlock<Cents>> {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let cents =
-            ComputedPerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
+            PerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
         let usd = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
             name,
             version,
@@ -57,7 +57,7 @@ where
     pub(crate) fn from_cents_source<F: UnaryTransform<ST, Cents>>(
         name: &str,
         version: Version,
-        source: &ComputedPerBlock<ST>,
+        source: &PerBlock<ST>,
     ) -> Self {
         let cents = LazyPerBlock::from_computed::<F>(
             &format!("{name}_cents"),

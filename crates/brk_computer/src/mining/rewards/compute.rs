@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{BasisPoints16, CheckedSub, Dollars, Halving, Indexes, Sats};
+use brk_types::{CheckedSub, Dollars, Halving, Indexes, Sats};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
@@ -77,7 +77,7 @@ impl Vecs {
 
         self.subsidy.base.sats.height.compute_transform2(
             starting_indexes.height,
-            &self.coinbase.raw.sats.height,
+            &self.coinbase.base.sats.height,
             &self.fees.base.sats.height,
             |(height, coinbase, fees, ..)| {
                 (
@@ -136,21 +136,6 @@ impl Vecs {
                 &self.coinbase.cumulative.sats.height,
                 exit,
             )?;
-
-        // Rolling subsidy dominance = 1 - fee_dominance
-        for (sub_dom, fee_dom) in self
-            .subsidy_dominance_rolling
-            .as_mut_array()
-            .into_iter()
-            .zip(self.fee_dominance_rolling.as_array())
-        {
-            sub_dom.bps.height.compute_transform(
-                starting_indexes.height,
-                &fee_dom.bps.height,
-                |(height, fee, _)| (height, BasisPoints16::ONE - fee),
-                exit,
-            )?;
-        }
 
         self.subsidy_sma_1y.cents.height.compute_rolling_average(
             starting_indexes.height,

@@ -20,7 +20,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.rate.raw.height.compute_transform2(
+        self.rate.base.height.compute_transform2(
             starting_indexes.height,
             &count_vecs.total.sum._24h.height,
             &difficulty_vecs.as_hash.height,
@@ -36,7 +36,7 @@ impl Vecs {
             exit,
         )?;
 
-        let hash_rate = &self.rate.raw.height;
+        let hash_rate = &self.rate.base.height;
         for (sma, window) in [
             (&mut self.rate.sma._1w.height, &lookback._1w),
             (&mut self.rate.sma._1m.height, &lookback._1m),
@@ -48,13 +48,13 @@ impl Vecs {
 
         self.rate.ath.height.compute_all_time_high(
             starting_indexes.height,
-            &self.rate.raw.height,
+            &self.rate.base.height,
             exit,
         )?;
 
         self.rate.drawdown.compute_drawdown(
             starting_indexes.height,
-            &self.rate.raw.height,
+            &self.rate.base.height,
             &self.rate.ath.height,
             exit,
         )?;
@@ -62,7 +62,7 @@ impl Vecs {
         self.price.ths.height.compute_transform2(
             starting_indexes.height,
             coinbase_usd_24h_sum,
-            &self.rate.raw.height,
+            &self.rate.base.height,
             |(i, coinbase_sum, hashrate, ..)| {
                 let hashrate_ths = *hashrate / ONE_TERA_HASH;
                 let price = if hashrate_ths == 0.0 {
@@ -75,17 +75,10 @@ impl Vecs {
             exit,
         )?;
 
-        self.price.phs.height.compute_transform(
-            starting_indexes.height,
-            &self.price.ths.height,
-            |(i, price, ..)| (i, (*price * 1000.0).into()),
-            exit,
-        )?;
-
         self.value.ths.height.compute_transform2(
             starting_indexes.height,
             coinbase_sats_24h_sum,
-            &self.rate.raw.height,
+            &self.rate.base.height,
             |(i, coinbase_sum, hashrate, ..)| {
                 let hashrate_ths = *hashrate / ONE_TERA_HASH;
                 let value = if hashrate_ths == 0.0 {
@@ -98,30 +91,9 @@ impl Vecs {
             exit,
         )?;
 
-        self.value.phs.height.compute_transform(
-            starting_indexes.height,
-            &self.value.ths.height,
-            |(i, value, ..)| (i, (*value * 1000.0).into()),
-            exit,
-        )?;
-
         for (min_vec, src_vec) in [
-            (
-                &mut self.price.ths_min.height,
-                &self.price.ths.height,
-            ),
-            (
-                &mut self.price.phs_min.height,
-                &self.price.phs.height,
-            ),
-            (
-                &mut self.value.ths_min.height,
-                &self.value.ths.height,
-            ),
-            (
-                &mut self.value.phs_min.height,
-                &self.value.phs.height,
-            ),
+            (&mut self.price.ths_min.height, &self.price.ths.height),
+            (&mut self.value.ths_min.height, &self.value.ths.height),
         ] {
             min_vec.compute_all_time_low_(starting_indexes.height, src_vec, exit, true)?;
         }

@@ -4,7 +4,7 @@ use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF32, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
-use crate::internal::{ComputedPerBlock, Identity, LazyPerBlock};
+use crate::internal::{PerBlock, Identity, LazyPerBlock};
 
 use crate::distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}};
 
@@ -19,8 +19,8 @@ pub struct ActivityFull<M: StorageMode = Rw> {
 
     pub coinyears_destroyed: LazyPerBlock<StoredF64, StoredF64>,
 
-    pub dormancy: ComputedPerBlock<StoredF32, M>,
-    pub velocity: ComputedPerBlock<StoredF32, M>,
+    pub dormancy: PerBlock<StoredF32, M>,
+    pub velocity: PerBlock<StoredF32, M>,
 }
 
 impl ActivityFull {
@@ -88,8 +88,8 @@ impl ActivityFull {
     ) -> Result<()> {
         self.dormancy.height.compute_transform2(
             starting_indexes.height,
-            &self.inner.coindays_destroyed.raw.height,
-            &self.inner.sent.raw.height,
+            &self.inner.coindays_destroyed.base.height,
+            &self.inner.sent.base.height,
             |(i, cdd, sent_sats, ..)| {
                 let sent_btc = f64::from(Bitcoin::from(sent_sats));
                 if sent_btc == 0.0 {
@@ -103,7 +103,7 @@ impl ActivityFull {
 
         self.velocity.height.compute_transform2(
             starting_indexes.height,
-            &self.inner.sent.raw.height,
+            &self.inner.sent.base.height,
             supply_total_sats,
             |(i, sent_sats, supply_sats, ..)| {
                 let supply = supply_sats.as_u128() as f64;

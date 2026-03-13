@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::{Bitcoin, CheckedSub, Indexes, StoredF64};
+use brk_types::{Bitcoin, Indexes, StoredF64};
 use vecdb::Exit;
 
 use super::Vecs;
@@ -30,8 +30,8 @@ impl Vecs {
             .compute(starting_indexes.height, exit, |vec| {
                 vec.compute_subtract(
                     starting_indexes.height,
-                    &self.coinblocks_created.raw.height,
-                    &distribution.coinblocks_destroyed.raw.height,
+                    &self.coinblocks_created.base.height,
+                    &distribution.coinblocks_destroyed.base.height,
                     exit,
                 )?;
                 Ok(())
@@ -41,13 +41,6 @@ impl Vecs {
             starting_indexes.height,
             &distribution.coinblocks_destroyed.cumulative.height,
             &self.coinblocks_created.cumulative.height,
-            exit,
-        )?;
-
-        self.vaultedness.height.compute_transform(
-            starting_indexes.height,
-            &self.liveliness.height,
-            |(i, v, ..)| (i, StoredF64::from(1.0).checked_sub(v).unwrap()),
             exit,
         )?;
 

@@ -25,7 +25,7 @@ impl Vecs {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &prices.spot.usd.height,
-                    &coinblocks_destroyed.raw.height,
+                    &coinblocks_destroyed.base.height,
                     exit,
                 )?;
                 Ok(())
@@ -36,7 +36,7 @@ impl Vecs {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &prices.spot.usd.height,
-                    &activity.coinblocks_created.raw.height,
+                    &activity.coinblocks_created.base.height,
                     exit,
                 )?;
                 Ok(())
@@ -47,7 +47,7 @@ impl Vecs {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &prices.spot.usd.height,
-                    &activity.coinblocks_stored.raw.height,
+                    &activity.coinblocks_stored.base.height,
                     exit,
                 )?;
                 Ok(())
@@ -61,7 +61,7 @@ impl Vecs {
                 vec.compute_transform3(
                     starting_indexes.height,
                     &prices.spot.usd.height,
-                    &coindays_destroyed.raw.height,
+                    &coindays_destroyed.base.height,
                     circulating_supply,
                     |(i, price, cdd, supply, _): (_, Dollars, StoredF64, Bitcoin, _)| {
                         let supply_f64 = f64::from(supply);

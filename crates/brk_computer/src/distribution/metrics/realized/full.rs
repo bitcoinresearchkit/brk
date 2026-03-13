@@ -14,8 +14,8 @@ use crate::{
     blocks,
     distribution::state::{WithCapital, CohortState, CostBasisData, RealizedState},
     internal::{
-        CentsUnsignedToDollars, ComputedPerBlock, ComputedPerBlockCumulative,
-        ComputedPerBlockCumulativeWithSums, FiatPerBlockCumulativeWithSums,
+        CentsUnsignedToDollars, PerBlock, PerBlockCumulative,
+        PerBlockCumulativeWithSums, FiatPerBlockCumulativeWithSums,
         LazyPerBlock, PercentPerBlock, PercentRollingWindows, Price,
         PriceWithRatioExtendedPerBlock, RatioCents64, RatioCentsBp32,
         RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32, RatioDollarsBp32,
@@ -32,16 +32,16 @@ use super::RealizedCore;
 #[derive(Traversable)]
 pub struct RealizedProfit<M: StorageMode = Rw> {
     pub rel_to_rcap: PercentPerBlock<BasisPoints32, M>,
-    pub value_created: ComputedPerBlockCumulativeWithSums<Cents, Cents, M>,
-    pub value_destroyed: ComputedPerBlockCumulativeWithSums<Cents, Cents, M>,
+    pub value_created: PerBlockCumulativeWithSums<Cents, Cents, M>,
+    pub value_destroyed: PerBlockCumulativeWithSums<Cents, Cents, M>,
     pub distribution_flow: LazyPerBlock<Dollars, Cents>,
 }
 
 #[derive(Traversable)]
 pub struct RealizedLoss<M: StorageMode = Rw> {
     pub rel_to_rcap: PercentPerBlock<BasisPoints32, M>,
-    pub value_created: ComputedPerBlockCumulativeWithSums<Cents, Cents, M>,
-    pub value_destroyed: ComputedPerBlockCumulativeWithSums<Cents, Cents, M>,
+    pub value_created: PerBlockCumulativeWithSums<Cents, Cents, M>,
+    pub value_destroyed: PerBlockCumulativeWithSums<Cents, Cents, M>,
     pub capitulation_flow: LazyPerBlock<Dollars, Cents>,
 }
 
@@ -63,15 +63,15 @@ pub struct RealizedSopr<M: StorageMode = Rw> {
 #[derive(Traversable)]
 pub struct RealizedPeakRegret<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub value: ComputedPerBlockCumulative<Cents, M>,
+    pub value: PerBlockCumulative<Cents, M>,
     pub rel_to_rcap: PercentPerBlock<BasisPoints32, M>,
 }
 
 #[derive(Traversable)]
 pub struct RealizedInvestor<M: StorageMode = Rw> {
     pub price: PriceWithRatioExtendedPerBlock<M>,
-    pub lower_price_band: Price<ComputedPerBlock<Cents, M>>,
-    pub upper_price_band: Price<ComputedPerBlock<Cents, M>>,
+    pub lower_price_band: Price<PerBlock<Cents, M>>,
+    pub upper_price_band: Price<PerBlock<Cents, M>>,
     #[traversable(hidden)]
     pub cap_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
 }
@@ -115,13 +115,13 @@ impl RealizedFull {
         let core = RealizedCore::forced_import(cfg)?;
 
         // Profit
-        let profit_value_destroyed: ComputedPerBlockCumulativeWithSums<Cents, Cents> =
+        let profit_value_destroyed: PerBlockCumulativeWithSums<Cents, Cents> =
             cfg.import("profit_value_destroyed", v1)?;
         let profit_flow = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
             &cfg.name("distribution_flow"),
             cfg.version,
-            profit_value_destroyed.raw.height.read_only_boxed_clone(),
-            &profit_value_destroyed.raw,
+            profit_value_destroyed.base.height.read_only_boxed_clone(),
+            &profit_value_destroyed.base,
         );
         let profit = RealizedProfit {
             rel_to_rcap: cfg.import("realized_profit_rel_to_rcap", Version::new(2))?,
@@ -131,13 +131,13 @@ impl RealizedFull {
         };
 
         // Loss
-        let loss_value_destroyed: ComputedPerBlockCumulativeWithSums<Cents, Cents> =
+        let loss_value_destroyed: PerBlockCumulativeWithSums<Cents, Cents> =
             cfg.import("loss_value_destroyed", v1)?;
         let capitulation_flow = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
             &cfg.name("capitulation_flow"),
             cfg.version,
-            loss_value_destroyed.raw.height.read_only_boxed_clone(),
-            &loss_value_destroyed.raw,
+            loss_value_destroyed.base.height.read_only_boxed_clone(),
+            &loss_value_destroyed.base,
         );
         let loss = RealizedLoss {
             rel_to_rcap: cfg.import("realized_loss_rel_to_rcap", Version::new(2))?,
@@ -222,16 +222,16 @@ impl RealizedFull {
     pub(crate) fn min_stateful_len(&self) -> usize {
         self.profit
             .value_created
-            .raw
+            .base
             .height
             .len()
-            .min(self.profit.value_destroyed.raw.height.len())
-            .min(self.loss.value_created.raw.height.len())
-            .min(self.loss.value_destroyed.raw.height.len())
+            .min(self.profit.value_destroyed.base.height.len())
+            .min(self.loss.value_created.base.height.len())
+            .min(self.loss.value_destroyed.base.height.len())
             .min(self.investor.price.cents.height.len())
             .min(self.cap_raw.len())
             .min(self.investor.cap_raw.len())
-            .min(self.peak_regret.value.raw.height.len())
+            .min(self.peak_regret.value.base.height.len())
     }
 
     pub(crate) fn truncate_push(
@@ -242,22 +242,22 @@ impl RealizedFull {
         self.core.truncate_push(height, state)?;
         self.profit
             .value_created
-            .raw
+            .base
             .height
             .truncate_push(height, state.realized.profit_value_created())?;
         self.profit
             .value_destroyed
-            .raw
+            .base
             .height
             .truncate_push(height, state.realized.profit_value_destroyed())?;
         self.loss
             .value_created
-            .raw
+            .base
             .height
             .truncate_push(height, state.realized.loss_value_created())?;
         self.loss
             .value_destroyed
-            .raw
+            .base
             .height
             .truncate_push(height, state.realized.loss_value_destroyed())?;
         self.investor
@@ -272,7 +272,7 @@ impl RealizedFull {
             .truncate_push(height, state.realized.investor_cap_raw())?;
         self.peak_regret
             .value
-            .raw
+            .base
             .height
             .truncate_push(height, state.realized.peak_regret())?;
 
@@ -281,14 +281,14 @@ impl RealizedFull {
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.core.collect_vecs_mut();
-        vecs.push(&mut self.profit.value_created.raw.height as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.profit.value_destroyed.raw.height);
-        vecs.push(&mut self.loss.value_created.raw.height);
-        vecs.push(&mut self.loss.value_destroyed.raw.height);
+        vecs.push(&mut self.profit.value_created.base.height as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.profit.value_destroyed.base.height);
+        vecs.push(&mut self.loss.value_created.base.height);
+        vecs.push(&mut self.loss.value_destroyed.base.height);
         vecs.push(&mut self.investor.price.cents.height);
         vecs.push(&mut self.cap_raw as &mut dyn AnyStoredVec);
         vecs.push(&mut self.investor.cap_raw as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.peak_regret.value.raw.height);
+        vecs.push(&mut self.peak_regret.value.base.height);
         vecs
     }
 
@@ -311,22 +311,22 @@ impl RealizedFull {
     ) -> Result<()> {
         self.profit
             .value_created
-            .raw
+            .base
             .height
             .truncate_push(height, accum.profit_value_created)?;
         self.profit
             .value_destroyed
-            .raw
+            .base
             .height
             .truncate_push(height, accum.profit_value_destroyed)?;
         self.loss
             .value_created
-            .raw
+            .base
             .height
             .truncate_push(height, accum.loss_value_created)?;
         self.loss
             .value_destroyed
-            .raw
+            .base
             .height
             .truncate_push(height, accum.loss_value_destroyed)?;
         self.cap_raw
@@ -351,7 +351,7 @@ impl RealizedFull {
 
         self.peak_regret
             .value
-            .raw
+            .base
             .height
             .truncate_push(height, accum.peak_regret)?;
 
@@ -410,7 +410,7 @@ impl RealizedFull {
             .rel_to_rcap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
-                &self.core.minimal.profit.raw.cents.height,
+                &self.core.minimal.profit.base.cents.height,
                 &self.core.minimal.cap.cents.height,
                 exit,
             )?;
@@ -418,7 +418,7 @@ impl RealizedFull {
             .rel_to_rcap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
-                &self.core.minimal.loss.raw.cents.height,
+                &self.core.minimal.loss.base.cents.height,
                 &self.core.minimal.cap.cents.height,
                 exit,
             )?;
@@ -426,7 +426,7 @@ impl RealizedFull {
             .rel_to_rcap
             .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
                 starting_indexes.height,
-                &self.core.net_pnl.raw.cents.height,
+                &self.core.net_pnl.base.cents.height,
                 &self.core.minimal.cap.cents.height,
                 exit,
             )?;
@@ -446,10 +446,10 @@ impl RealizedFull {
             .compute_rest(starting_indexes.height, exit)?;
 
         // Gross PnL
-        self.gross_pnl.raw.cents.height.compute_add(
+        self.gross_pnl.base.cents.height.compute_add(
             starting_indexes.height,
-            &self.core.minimal.profit.raw.cents.height,
-            &self.core.minimal.loss.raw.cents.height,
+            &self.core.minimal.profit.base.cents.height,
+            &self.core.minimal.loss.base.cents.height,
             exit,
         )?;
         self.gross_pnl
@@ -478,7 +478,7 @@ impl RealizedFull {
             .rel_to_rcap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
-                &self.peak_regret.value.raw.height,
+                &self.peak_regret.value.base.height,
                 &self.core.minimal.cap.cents.height,
                 exit,
             )?;

@@ -2,10 +2,10 @@ use brk_traversable::Traversable;
 use brk_types::StoredU64;
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedPerBlockFull, ResolutionsFull};
+use crate::internal::{PerBlockFull, PerBlockRolling};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub vbytes: ComputedPerBlockFull<StoredU64, M>,
-    pub size: ResolutionsFull<StoredU64, M>,
+    pub vbytes: PerBlockFull<StoredU64, M>,
+    pub size: PerBlockRolling<StoredU64, M>,
 }

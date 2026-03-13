@@ -8,7 +8,7 @@ use crate::{
     indexes,
     internal::{
         AmountPerBlock, DistributionStats, WindowStarts, Windows,
-        compute_rolling_distribution_from_starts,
+        algo::compute_rolling_distribution_from_starts,
     },
 };
 

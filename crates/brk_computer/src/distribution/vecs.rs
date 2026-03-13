@@ -23,7 +23,7 @@ use crate::{
         state::BlockState,
     },
     indexes, inputs,
-    internal::{CachedWindowStarts, ComputedPerBlockCumulative, finalize_db, open_db},
+    internal::{CachedWindowStarts, PerBlockCumulative, db_utils::{finalize_db, open_db}},
     outputs, prices, transactions,
 };
 
@@ -70,7 +70,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(wrap = "cohorts", rename = "address")]
     pub address_cohorts: AddressCohorts<M>,
     #[traversable(wrap = "cointime")]
-    pub coinblocks_destroyed: ComputedPerBlockCumulative<StoredF64, M>,
+    pub coinblocks_destroyed: PerBlockCumulative<StoredF64, M>,
     pub addresses: AddressMetricsVecs<M>,
 
     /// In-memory block state for UTXO processing. Persisted via supply_state.
@@ -173,7 +173,7 @@ impl Vecs {
             utxo_cohorts,
             address_cohorts,
 
-            coinblocks_destroyed: ComputedPerBlockCumulative::forced_import(
+            coinblocks_destroyed: PerBlockCumulative::forced_import(
                 &db,
                 "coinblocks_destroyed",
                 version + Version::TWO,
@@ -489,6 +489,6 @@ impl Vecs {
             .min(Height::from(self.addresses.funded.min_stateful_len()))
             .min(Height::from(self.addresses.empty.min_stateful_len()))
             .min(Height::from(self.addresses.activity.min_stateful_len()))
-            .min(Height::from(self.coinblocks_destroyed.raw.height.len()))
+            .min(Height::from(self.coinblocks_destroyed.base.height.len()))
     }
 }

@@ -1,4 +1,4 @@
-//! RollingWindows - newtype on Windows with ComputedPerBlock per window duration.
+//! RollingWindows - newtype on Windows with PerBlock per window duration.
 //!
 //! Each of the 4 windows (24h, 1w, 1m, 1y) contains a height-level stored vec
 //! plus all 17 LazyAggVec index views.
@@ -11,10 +11,17 @@ use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{Database, EagerVec, PcoVec, Rw, StorageMode};
 
+use vecdb::CachedVec;
+
 use crate::{
     indexes,
-    internal::{ComputedPerBlock, ComputedVecValue, NumericValue, RollingWindow24h, Windows, WindowsFrom1w},
+    internal::{PerBlock, ComputedVecValue, NumericValue, RollingWindow24h, Windows, WindowsFrom1w},
 };
+
+/// Cached window starts for lazy rolling computations.
+/// Clone-cheap (all fields are Arc-backed). Shared across all metrics.
+#[derive(Clone)]
+pub struct CachedWindowStarts(pub Windows<CachedVec<Height, Height>>);
 
 /// Rolling window start heights — the 4 height-ago vecs (24h, 1w, 1m, 1y).
 pub type WindowStarts<'a> = Windows<&'a EagerVec<PcoVec<Height, Height>>>;
@@ -22,7 +29,7 @@ pub type WindowStarts<'a> = Windows<&'a EagerVec<PcoVec<Height, Height>>>;
 /// 4 rolling window vecs (24h, 1w, 1m, 1y), each with height data + all 17 index views.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct RollingWindows<T, M: StorageMode = Rw>(pub Windows<ComputedPerBlock<T, M>>)
+pub struct RollingWindows<T, M: StorageMode = Rw>(pub Windows<PerBlock<T, M>>)
 where
     T: ComputedVecValue + PartialOrd + JsonSchema;
 
@@ -37,16 +44,16 @@ where
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self(Windows::try_from_fn(|suffix| {
-            ComputedPerBlock::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
+            PerBlock::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })?))
     }
 }
 
-/// Single 24h rolling window backed by ComputedPerBlock (1 stored vec).
+/// Single 24h rolling window backed by PerBlock (1 stored vec).
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct RollingWindow24hPerBlock<T, M: StorageMode = Rw>(
-    pub RollingWindow24h<ComputedPerBlock<T, M>>,
+    pub RollingWindow24h<PerBlock<T, M>>,
 )
 where
     T: ComputedVecValue + PartialOrd + JsonSchema;
@@ -62,7 +69,7 @@ where
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self(RollingWindow24h {
-            _24h: ComputedPerBlock::forced_import(
+            _24h: PerBlock::forced_import(
                 db,
                 &format!("{name}_24h"),
                 version,
@@ -75,7 +82,7 @@ where
 /// Extended rolling windows: 1w + 1m + 1y (3 stored vecs).
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct RollingWindowsFrom1w<T, M: StorageMode = Rw>(pub WindowsFrom1w<ComputedPerBlock<T, M>>)
+pub struct RollingWindowsFrom1w<T, M: StorageMode = Rw>(pub WindowsFrom1w<PerBlock<T, M>>)
 where
     T: ComputedVecValue + PartialOrd + JsonSchema;
 
@@ -90,7 +97,7 @@ where
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self(WindowsFrom1w::try_from_fn(|suffix| {
-            ComputedPerBlock::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
+            PerBlock::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })?))
     }
 }

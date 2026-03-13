@@ -4,17 +4,17 @@ use brk_types::{BasisPoints32, Cents, Dollars, Height, Indexes, SatsFract, Store
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode};
 
-use crate::internal::{ComputedPerBlock, LazyPerBlock, Price};
+use crate::internal::{PerBlock, LazyPerBlock, Price};
 use crate::{indexes, prices};
 
 use super::{RatioPerBlock, RatioPerBlockPercentiles};
 
 #[derive(Traversable)]
 pub struct PriceWithRatioPerBlock<M: StorageMode = Rw> {
-    pub cents: ComputedPerBlock<Cents, M>,
+    pub cents: PerBlock<Cents, M>,
     pub usd: LazyPerBlock<Dollars, Cents>,
     pub sats: LazyPerBlock<SatsFract, Dollars>,
-    pub bps: ComputedPerBlock<BasisPoints32, M>,
+    pub bps: PerBlock<BasisPoints32, M>,
     pub ratio: LazyPerBlock<StoredF32, BasisPoints32>,
 }
 

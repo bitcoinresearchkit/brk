@@ -2,7 +2,7 @@ use brk_traversable::Traversable;
 use brk_types::Dollars;
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ComputedPerBlock, PriceWithRatioExtendedPerBlock};
+use crate::internal::{PerBlock, PriceWithRatioExtendedPerBlock};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
@@ -15,5 +15,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub terminal: PriceWithRatioExtendedPerBlock<M>,
     pub delta: PriceWithRatioExtendedPerBlock<M>,
 
-    pub cumulative_market_cap: ComputedPerBlock<Dollars, M>,
+    pub cumulative_market_cap: PerBlock<Dollars, M>,
 }

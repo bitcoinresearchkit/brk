@@ -538,7 +538,7 @@ impl UTXOCohorts<Rw> {
             .minimal
             .sopr
             .value_created
-            .raw
+            .base
             .height
             .read_only_clone();
         let under_1h_value_destroyed = self
@@ -549,7 +549,7 @@ impl UTXOCohorts<Rw> {
             .minimal
             .sopr
             .value_destroyed
-            .raw
+            .base
             .height
             .read_only_clone();
 

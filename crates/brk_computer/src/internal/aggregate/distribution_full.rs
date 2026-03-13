@@ -6,20 +6,20 @@ use vecdb::{
     VecIndex, VecValue, Version,
 };
 
-use crate::internal::{ComputedVecValue, compute_aggregations};
+use crate::internal::{ComputedVecValue, algo::compute_aggregations};
 
 use super::Distribution;
 
 /// Full stats aggregate: distribution + sum + cumulative
 #[derive(Traversable)]
-pub struct Full<I: VecIndex, T: ComputedVecValue + JsonSchema, M: StorageMode = Rw> {
+pub struct DistributionFull<I: VecIndex, T: ComputedVecValue + JsonSchema, M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub distribution: Distribution<I, T, M>,
     pub sum: M::Stored<EagerVec<PcoVec<I, T>>>,
     pub cumulative: M::Stored<EagerVec<PcoVec<I, T>>>,
 }
 
-impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Full<I, T> {
+impl<I: VecIndex, T: ComputedVecValue + JsonSchema> DistributionFull<I, T> {
     pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         Ok(Self {
             distribution: Distribution::forced_import(db, name, version)?,
@@ -65,8 +65,8 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Full<I, T> {
         )
     }
 
-    pub fn read_only_clone(&self) -> Full<I, T, Ro> {
-        Full {
+    pub fn read_only_clone(&self) -> DistributionFull<I, T, Ro> {
+        DistributionFull {
             distribution: self.distribution.read_only_clone(),
             sum: StoredVec::read_only_clone(&self.sum),
             cumulative: StoredVec::read_only_clone(&self.cumulative),

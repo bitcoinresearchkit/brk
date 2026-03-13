@@ -9,11 +9,11 @@ use vecdb::{
     WritableVec,
 };
 
-use crate::{indexes, internal::ComputedPerBlock};
+use crate::{indexes, internal::PerBlock};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct AddressCountVecs<M: StorageMode = Rw>(
-    #[traversable(flatten)] pub ComputedPerBlock<StoredU64, M>,
+    #[traversable(flatten)] pub PerBlock<StoredU64, M>,
 );
 
 impl AddressCountVecs {
@@ -23,7 +23,7 @@ impl AddressCountVecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        Ok(Self(ComputedPerBlock::forced_import(
+        Ok(Self(PerBlock::forced_import(
             db, name, version, indexes,
         )?))
     }

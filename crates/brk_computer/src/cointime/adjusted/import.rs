@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedPerBlock, PercentPerBlock},
+    internal::{PerBlock, PercentPerBlock},
 };
 
 impl Vecs {
@@ -21,13 +21,13 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            tx_velocity_btc: ComputedPerBlock::forced_import(
+            tx_velocity_btc: PerBlock::forced_import(
                 db,
                 "cointime_adj_tx_velocity_btc",
                 version,
                 indexes,
             )?,
-            tx_velocity_usd: ComputedPerBlock::forced_import(
+            tx_velocity_usd: PerBlock::forced_import(
                 db,
                 "cointime_adj_tx_velocity_usd",
                 version,

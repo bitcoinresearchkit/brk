@@ -3,7 +3,7 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::{CachedWindowStarts, ComputedPerBlockAggregated}};
+use crate::{indexes, internal::{CachedWindowStarts, PerBlockAggregated}};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -12,7 +12,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        Ok(Self(ComputedPerBlockAggregated::forced_import(
+        Ok(Self(PerBlockAggregated::forced_import(
             db,
             "input_count",
             version,

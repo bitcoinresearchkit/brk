@@ -3,7 +3,7 @@ use brk_types::{Cents, Dollars, OHLCCents, OHLCDollars, OHLCSats, Sats};
 use vecdb::{Rw, StorageMode};
 
 use crate::internal::{
-    ComputedPerBlock, Resolutions, EagerIndexes, LazyEagerIndexes, LazyPerBlock,
+    PerBlock, Resolutions, EagerIndexes, LazyEagerIndexes, LazyPerBlock,
 };
 
 use super::ohlcs::{LazyOhlcVecs, OhlcVecs};
@@ -39,7 +39,7 @@ pub struct OhlcByUnit<M: StorageMode = Rw> {
 
 #[derive(Traversable)]
 pub struct PriceByUnit<M: StorageMode = Rw> {
-    pub cents: ComputedPerBlock<Cents, M>,
+    pub cents: PerBlock<Cents, M>,
     pub usd: LazyPerBlock<Dollars, Cents>,
     pub sats: LazyPerBlock<Sats, Cents>,
 }

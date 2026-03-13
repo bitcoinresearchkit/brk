@@ -1,22 +1,20 @@
 use brk_traversable::Traversable;
-use brk_types::Version;
+use brk_types::{Height, Version};
 use schemars::JsonSchema;
 use vecdb::{ReadableCloneableVec, UnaryTransform};
-
-use brk_types::Height;
 
 use crate::{
     indexes,
     internal::{
         CachedWindowStarts, ComputedVecValue, LazyRollingDistribution, LazyRollingSumsFromHeight,
-        NumericValue, RollingFull,
+        NumericValue, RollingComplete,
     },
 };
 
-/// Lazy analog of `RollingFull<T>`: lazy rolling sums + lazy rolling distribution.
+/// Lazy analog of `RollingComplete<T>`: lazy rolling sums + lazy rolling distribution.
 /// Zero stored vecs.
 #[derive(Clone, Traversable)]
-pub struct LazyRollingFull<T, S1T>
+pub struct LazyRollingComplete<T, S1T>
 where
     T: NumericValue + JsonSchema,
     S1T: ComputedVecValue + JsonSchema,
@@ -26,16 +24,16 @@ where
     pub distribution: LazyRollingDistribution<T, S1T>,
 }
 
-impl<T, S1T> LazyRollingFull<T, S1T>
+impl<T, S1T> LazyRollingComplete<T, S1T>
 where
     T: NumericValue + JsonSchema + 'static,
     S1T: NumericValue + JsonSchema,
 {
-    pub(crate) fn from_rolling_full<F: UnaryTransform<S1T, T>>(
+    pub(crate) fn from_rolling_complete<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
         cumulative: &(impl ReadableCloneableVec<Height, T> + 'static),
-        source: &RollingFull<S1T>,
+        source: &RollingComplete<S1T>,
         cached_starts: &CachedWindowStarts,
         indexes: &indexes::Vecs,
     ) -> Self {

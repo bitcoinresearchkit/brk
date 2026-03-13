@@ -8,8 +8,8 @@ use crate::{
     indexes,
     internal::{
         AmountPerBlock, AmountPerBlockCumulative, AmountPerBlockCumulativeWithSums,
-        CachedWindowStarts, CentsType, ComputedPerBlock,
-        ComputedPerBlockCumulative, ComputedPerBlockCumulativeWithSums,
+        CachedWindowStarts, CentsType, PerBlock,
+        PerBlockCumulative, PerBlockCumulativeWithSums,
         FiatPerBlock, FiatPerBlockCumulativeWithSums, NumericValue,
         PercentPerBlock, PercentRollingWindows, Price,
         PriceWithRatioExtendedPerBlock, PriceWithRatioPerBlock, RatioPerBlock,
@@ -47,21 +47,21 @@ impl_config_import!(
     PercentPerBlock<BasisPoints32>,
     PercentPerBlock<BasisPointsSigned32>,
     PercentRollingWindows<BasisPoints32>,
-    Price<ComputedPerBlock<Cents>>,
+    Price<PerBlock<Cents>>,
 );
 
 // Generic types (macro_rules can't parse generic bounds, so written out)
-impl<T: NumericValue + JsonSchema> ConfigImport for ComputedPerBlock<T> {
+impl<T: NumericValue + JsonSchema> ConfigImport for PerBlock<T> {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }
 }
-impl<T: NumericValue + JsonSchema> ConfigImport for ComputedPerBlockCumulative<T> {
+impl<T: NumericValue + JsonSchema> ConfigImport for PerBlockCumulative<T> {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }
 }
-impl<T, C> ConfigImport for ComputedPerBlockCumulativeWithSums<T, C>
+impl<T, C> ConfigImport for PerBlockCumulativeWithSums<T, C>
 where
     T: NumericValue + JsonSchema + Into<C>,
     C: NumericValue + JsonSchema,

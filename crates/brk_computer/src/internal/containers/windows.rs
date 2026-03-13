@@ -1,11 +1,4 @@
 use brk_traversable::Traversable;
-use brk_types::Height;
-use vecdb::CachedVec;
-
-/// Cached window starts for lazy rolling computations.
-/// Clone-cheap (all fields are Arc-backed). Shared across all metrics.
-#[derive(Clone)]
-pub struct CachedWindowStarts(pub Windows<CachedVec<Height, Height>>);
 
 #[derive(Clone, Traversable)]
 pub struct Windows<A> {

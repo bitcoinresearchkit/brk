@@ -1,23 +1,21 @@
 mod aggregated;
 mod base;
-mod constant;
 mod cumulative;
 mod cumulative_sum;
 mod resolutions;
-mod resolutions_full;
-mod lazy_resolutions_full;
+mod rolling;
+mod lazy_rolling;
 mod full;
 mod rolling_average;
 mod with_deltas;
 
 pub use aggregated::*;
 pub use base::*;
-pub use constant::*;
 pub use cumulative::*;
 pub use cumulative_sum::*;
 pub use resolutions::*;
-pub use resolutions_full::*;
-pub use lazy_resolutions_full::*;
+pub use rolling::*;
+pub use lazy_rolling::*;
 pub use full::*;
 pub use rolling_average::*;
 pub use with_deltas::*;

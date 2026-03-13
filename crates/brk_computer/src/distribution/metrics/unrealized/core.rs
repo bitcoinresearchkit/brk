@@ -35,8 +35,8 @@ impl UnrealizedCore {
         let neg_unrealized_loss = LazyPerBlock::from_computed::<NegCentsUnsignedToDollars>(
             &cfg.name("neg_unrealized_loss"),
             cfg.version,
-            basic.loss.raw.cents.height.read_only_boxed_clone(),
-            &basic.loss.raw.cents,
+            basic.loss.base.cents.height.read_only_boxed_clone(),
+            &basic.loss.base.cents,
         );
 
         let net_unrealized_pnl = cfg.import("net_unrealized_pnl", Version::ZERO)?;
@@ -90,8 +90,8 @@ impl UnrealizedCore {
             .height
             .compute_binary::<Cents, Cents, CentsSubtractToCentsSigned>(
                 starting_indexes.height,
-                &self.basic.profit.raw.cents.height,
-                &self.basic.loss.raw.cents.height,
+                &self.basic.profit.base.cents.height,
+                &self.basic.loss.base.cents.height,
                 exit,
             )?;
 

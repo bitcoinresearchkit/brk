@@ -11,7 +11,7 @@ use vecdb::{
 use crate::{
     distribution::state::{CohortState, CostBasisOps, RealizedOps},
     internal::{
-        ComputedPerBlockCumulativeWithSums, FiatPerBlockCumulativeWithSums,
+        PerBlockCumulativeWithSums, FiatPerBlockCumulativeWithSums,
         FiatPerBlockWithDeltas, Identity, LazyPerBlock, PriceWithRatioPerBlock,
     },
     prices,
@@ -21,8 +21,8 @@ use crate::distribution::metrics::ImportConfig;
 
 #[derive(Traversable)]
 pub struct RealizedSoprMinimal<M: StorageMode = Rw> {
-    pub value_created: ComputedPerBlockCumulativeWithSums<Cents, Cents, M>,
-    pub value_destroyed: ComputedPerBlockCumulativeWithSums<Cents, Cents, M>,
+    pub value_created: PerBlockCumulativeWithSums<Cents, Cents, M>,
+    pub value_destroyed: PerBlockCumulativeWithSums<Cents, Cents, M>,
 }
 
 #[derive(Traversable)]
@@ -74,24 +74,24 @@ impl RealizedMinimal {
             .cents
             .height
             .len()
-            .min(self.profit.raw.cents.height.len())
-            .min(self.loss.raw.cents.height.len())
-            .min(self.sopr.value_created.raw.height.len())
-            .min(self.sopr.value_destroyed.raw.height.len())
+            .min(self.profit.base.cents.height.len())
+            .min(self.loss.base.cents.height.len())
+            .min(self.sopr.value_created.base.height.len())
+            .min(self.sopr.value_destroyed.base.height.len())
     }
 
     pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState<impl RealizedOps, impl CostBasisOps>) -> Result<()> {
         self.cap.cents.height.truncate_push(height, state.realized.cap())?;
-        self.profit.raw.cents.height.truncate_push(height, state.realized.profit())?;
-        self.loss.raw.cents.height.truncate_push(height, state.realized.loss())?;
+        self.profit.base.cents.height.truncate_push(height, state.realized.profit())?;
+        self.loss.base.cents.height.truncate_push(height, state.realized.loss())?;
         self.sopr
             .value_created
-            .raw
+            .base
             .height
             .truncate_push(height, state.realized.value_created())?;
         self.sopr
             .value_destroyed
-            .raw
+            .base
             .height
             .truncate_push(height, state.realized.value_destroyed())?;
         Ok(())
@@ -100,10 +100,10 @@ impl RealizedMinimal {
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
             &mut self.cap.cents.height as &mut dyn AnyStoredVec,
-            &mut self.profit.raw.cents.height,
-            &mut self.loss.raw.cents.height,
-            &mut self.sopr.value_created.raw.height,
-            &mut self.sopr.value_destroyed.raw.height,
+            &mut self.profit.base.cents.height,
+            &mut self.loss.base.cents.height,
+            &mut self.sopr.value_created.base.height,
+            &mut self.sopr.value_destroyed.base.height,
         ]
     }
 
@@ -114,10 +114,10 @@ impl RealizedMinimal {
         exit: &Exit,
     ) -> Result<()> {
         sum_others!(self, starting_indexes, others, exit; cap.cents.height);
-        sum_others!(self, starting_indexes, others, exit; profit.raw.cents.height);
-        sum_others!(self, starting_indexes, others, exit; loss.raw.cents.height);
-        sum_others!(self, starting_indexes, others, exit; sopr.value_created.raw.height);
-        sum_others!(self, starting_indexes, others, exit; sopr.value_destroyed.raw.height);
+        sum_others!(self, starting_indexes, others, exit; profit.base.cents.height);
+        sum_others!(self, starting_indexes, others, exit; loss.base.cents.height);
+        sum_others!(self, starting_indexes, others, exit; sopr.value_created.base.height);
+        sum_others!(self, starting_indexes, others, exit; sopr.value_destroyed.base.height);
         Ok(())
     }
 

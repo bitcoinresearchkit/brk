@@ -5,12 +5,12 @@ use vecdb::{Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{BpsType, ComputedPerBlock, LazyPerBlock},
+    internal::{BpsType, PerBlock, LazyPerBlock},
 };
 
 #[derive(Traversable)]
 pub struct RatioPerBlock<B: BpsType = BasisPoints32, M: StorageMode = Rw> {
-    pub bps: ComputedPerBlock<B, M>,
+    pub bps: PerBlock<B, M>,
     pub ratio: LazyPerBlock<StoredF32, B>,
 }
 
@@ -34,7 +34,7 @@ impl<B: BpsType> RatioPerBlock<B> {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let bps = ComputedPerBlock::forced_import(db, &format!("{name}_bps"), v, indexes)?;
+        let bps = PerBlock::forced_import(db, &format!("{name}_bps"), v, indexes)?;
 
         let ratio = LazyPerBlock::from_computed::<B::ToRatio>(
             name,

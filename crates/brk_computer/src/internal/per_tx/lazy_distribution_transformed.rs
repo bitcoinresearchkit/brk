@@ -8,7 +8,7 @@ use crate::internal::{ComputedVecValue, LazyTxDerivedDistribution, TxDerivedDist
 /// Like `LazyPerTxDistribution` but with a lazy-derived distribution
 /// (transformed from another type's distribution rather than eagerly computed).
 #[derive(Clone, Traversable)]
-pub struct LazyPerTxDistributionDerived<T, S1, S2, DSource>
+pub struct LazyPerTxDistributionTransformed<T, S1, S2, DSource>
 where
     T: ComputedVecValue + JsonSchema,
     S1: ComputedVecValue,
@@ -20,7 +20,7 @@ where
     pub distribution: LazyTxDerivedDistribution<T, DSource>,
 }
 
-impl<T, S1, S2, DSource> LazyPerTxDistributionDerived<T, S1, S2, DSource>
+impl<T, S1, S2, DSource> LazyPerTxDistributionTransformed<T, S1, S2, DSource>
 where
     T: ComputedVecValue + JsonSchema + 'static,
     S1: ComputedVecValue + JsonSchema,

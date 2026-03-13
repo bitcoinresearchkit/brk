@@ -3,7 +3,7 @@ use brk_types::Version;
 use vecdb::{Database, EagerVec, ImportableVec};
 
 use super::Vecs;
-use crate::internal::ComputedPerTxDistribution;
+use crate::internal::PerTxDistribution;
 
 /// Bump this when fee/feerate aggregation logic changes (e.g., skip coinbase).
 const VERSION: Version = Version::new(2);
@@ -14,8 +14,8 @@ impl Vecs {
         Ok(Self {
             input_value: EagerVec::forced_import(db, "input_value", version)?,
             output_value: EagerVec::forced_import(db, "output_value", version)?,
-            fee: ComputedPerTxDistribution::forced_import(db, "fee", v)?,
-            fee_rate: ComputedPerTxDistribution::forced_import(db, "fee_rate", v)?,
+            fee: PerTxDistribution::forced_import(db, "fee", v)?,
+            fee_rate: PerTxDistribution::forced_import(db, "fee_rate", v)?,
         })
     }
 }

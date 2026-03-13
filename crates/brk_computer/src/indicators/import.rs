@@ -6,7 +6,7 @@ use brk_types::Version;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{finalize_db, open_db, ComputedPerBlock, PercentPerBlock, RatioPerBlock},
+    internal::{PerBlock, PercentPerBlock, RatioPerBlock, db_utils::{finalize_db, open_db}},
 };
 
 const VERSION: Version = Version::new(1);
@@ -27,16 +27,16 @@ impl Vecs {
         let thermocap_multiple =
             RatioPerBlock::forced_import_raw(&db, "thermocap_multiple", v, indexes)?;
         let coindays_destroyed_supply_adjusted =
-            ComputedPerBlock::forced_import(&db, "coindays_destroyed_supply_adjusted", v, indexes)?;
+            PerBlock::forced_import(&db, "coindays_destroyed_supply_adjusted", v, indexes)?;
         let coinyears_destroyed_supply_adjusted =
-            ComputedPerBlock::forced_import(&db, "coinyears_destroyed_supply_adjusted", v, indexes)?;
+            PerBlock::forced_import(&db, "coinyears_destroyed_supply_adjusted", v, indexes)?;
         let dormancy = super::vecs::DormancyVecs {
-            supply_adjusted: ComputedPerBlock::forced_import(&db, "dormancy_supply_adjusted", v, indexes)?,
-            flow: ComputedPerBlock::forced_import(&db, "dormancy_flow", v, indexes)?,
+            supply_adjusted: PerBlock::forced_import(&db, "dormancy_supply_adjusted", v, indexes)?,
+            flow: PerBlock::forced_import(&db, "dormancy_flow", v, indexes)?,
         };
-        let stock_to_flow = ComputedPerBlock::forced_import(&db, "stock_to_flow", v, indexes)?;
+        let stock_to_flow = PerBlock::forced_import(&db, "stock_to_flow", v, indexes)?;
         let seller_exhaustion_constant =
-            ComputedPerBlock::forced_import(&db, "seller_exhaustion_constant", v, indexes)?;
+            PerBlock::forced_import(&db, "seller_exhaustion_constant", v, indexes)?;
 
         let this = Self {
             db,

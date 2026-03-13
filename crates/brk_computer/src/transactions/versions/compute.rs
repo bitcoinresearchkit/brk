@@ -4,7 +4,7 @@ use brk_types::{Indexes, StoredU64, TxVersion};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::internal::ComputedPerBlockCumulativeWithSums;
+use crate::internal::PerBlockCumulativeWithSums;
 
 impl Vecs {
     pub(crate) fn compute(
@@ -13,7 +13,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let tx_vany = |tx_vany: &mut ComputedPerBlockCumulativeWithSums<StoredU64, StoredU64>,
+        let tx_vany = |tx_vany: &mut PerBlockCumulativeWithSums<StoredU64, StoredU64>,
                        txversion: TxVersion| {
             let txversion_vec = &indexer.vecs.transactions.txversion;
             // Cursor avoids per-transaction PcoVec page decompression.

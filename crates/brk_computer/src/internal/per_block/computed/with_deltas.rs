@@ -8,12 +8,12 @@ use vecdb::{Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        BpsType, CachedWindowStarts, ComputedPerBlock, LazyRollingDeltasFromHeight, NumericValue,
+        BpsType, CachedWindowStarts, PerBlock, LazyRollingDeltasFromHeight, NumericValue,
     },
 };
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct ComputedPerBlockWithDeltas<S, C, B, M: StorageMode = Rw>
+pub struct PerBlockWithDeltas<S, C, B, M: StorageMode = Rw>
 where
     S: NumericValue + JsonSchema + Into<f64>,
     C: NumericValue + JsonSchema + From<f64>,
@@ -22,11 +22,11 @@ where
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub inner: ComputedPerBlock<S, M>,
+    pub inner: PerBlock<S, M>,
     pub delta: LazyRollingDeltasFromHeight<S, C, B>,
 }
 
-impl<S, C, B> ComputedPerBlockWithDeltas<S, C, B>
+impl<S, C, B> PerBlockWithDeltas<S, C, B>
 where
     S: NumericValue + JsonSchema + Into<f64>,
     C: NumericValue + JsonSchema + From<f64>,
@@ -40,7 +40,7 @@ where
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let inner = ComputedPerBlock::forced_import(db, name, version, indexes)?;
+        let inner = PerBlock::forced_import(db, name, version, indexes)?;
 
         let delta = LazyRollingDeltasFromHeight::new(
             &format!("{name}_delta"),
