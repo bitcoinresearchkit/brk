@@ -3,15 +3,13 @@
 //! Each of the 4 windows (24h, 1w, 1m, 1y) contains a height-level stored vec
 //! plus all 17 LazyAggVec index views.
 
-use std::ops::SubAssign;
-
 use brk_error::Result;
 
 use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode};
+use vecdb::{Database, EagerVec, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
@@ -41,23 +39,6 @@ where
         Ok(Self(Windows::try_from_fn(|suffix| {
             ComputedPerBlock::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })?))
-    }
-
-    pub(crate) fn compute_rolling_sum(
-        &mut self,
-        max_from: Height,
-        windows: &WindowStarts<'_>,
-        source: &impl ReadableVec<Height, T>,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        T: Default + SubAssign,
-    {
-        for (w, starts) in self.0.as_mut_array().into_iter().zip(windows.as_array()) {
-            w.height
-                .compute_rolling_sum(max_from, *starts, source, exit)?;
-        }
-        Ok(())
     }
 }
 
@@ -89,22 +70,6 @@ where
             )?,
         }))
     }
-
-    pub(crate) fn compute_rolling_sum(
-        &mut self,
-        max_from: Height,
-        height_24h_ago: &impl ReadableVec<Height, Height>,
-        source: &impl ReadableVec<Height, T>,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        T: Default + SubAssign,
-    {
-        self._24h
-            .height
-            .compute_rolling_sum(max_from, height_24h_ago, source, exit)?;
-        Ok(())
-    }
 }
 
 /// Extended rolling windows: 1w + 1m + 1y (3 stored vecs).
@@ -127,23 +92,5 @@ where
         Ok(Self(WindowsFrom1w::try_from_fn(|suffix| {
             ComputedPerBlock::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
         })?))
-    }
-
-    pub(crate) fn compute_rolling_sum(
-        &mut self,
-        max_from: Height,
-        windows: &WindowStarts<'_>,
-        source: &impl ReadableVec<Height, T>,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        T: Default + SubAssign,
-    {
-        let starts = [windows._1w, windows._1m, windows._1y];
-        for (w, starts) in self.0.as_mut_array().into_iter().zip(starts) {
-            w.height
-                .compute_rolling_sum(max_from, starts, source, exit)?;
-        }
-        Ok(())
     }
 }

@@ -24,7 +24,7 @@ impl Vecs {
         )?;
 
         self.fullness
-            .compute(starting_indexes.height, &window_starts, exit, |vec| {
+            .compute(starting_indexes.height, exit, |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
                     &indexer.vecs.blocks.weight,

@@ -11,7 +11,7 @@ pub struct PoolsSummary {
 
     /// Total blocks in the time period
     #[serde(rename = "blockCount")]
-    pub block_count: u32,
+    pub block_count: u64,
 
     /// Estimated network hashrate (hashes per second)
     #[serde(rename = "lastEstimatedHashrate")]

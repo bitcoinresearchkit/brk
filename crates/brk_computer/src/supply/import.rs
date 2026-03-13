@@ -6,9 +6,10 @@ use brk_types::Version;
 use crate::{
     cointime, distribution, indexes,
     internal::{
-        FiatRollingDelta, LazyFiatPerBlock, LazyAmountPerBlock, PercentPerBlock,
-        RollingWindows, finalize_db, open_db,
+        CachedWindowStarts, LazyAmountPerBlock, LazyFiatPerBlock,
+        LazyRollingDeltasFiatFromHeight, PercentPerBlock, RollingWindows, finalize_db, open_db,
     },
+    supply::burned,
 };
 
 use super::Vecs;
@@ -22,18 +23,17 @@ impl Vecs {
         indexes: &indexes::Vecs,
         distribution: &distribution::Vecs,
         cointime: &cointime::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let db = open_db(parent, super::DB_NAME, 10_000_000)?;
 
         let version = parent_version + VERSION;
         let supply_metrics = &distribution.utxo_cohorts.all.metrics.supply;
 
-        // Circulating supply - lazy refs to distribution
         let circulating =
             LazyAmountPerBlock::identity("circulating_supply", &supply_metrics.total, version);
 
-        // Burned/unspendable supply - computed from scripts
-        let burned = super::burned::Vecs::forced_import(&db, version, indexes)?;
+        let burned = burned::Vecs::forced_import(&db, version, indexes, cached_starts)?;
 
         // Inflation rate
         let inflation_rate =
@@ -47,12 +47,13 @@ impl Vecs {
             LazyFiatPerBlock::from_computed("market_cap", version, &supply_metrics.total.cents);
 
         // Market cap delta (change + rate across 4 windows)
-        let market_cap_delta = FiatRollingDelta::forced_import(
-            &db,
+        let market_cap_delta = LazyRollingDeltasFiatFromHeight::new(
             "market_cap_delta",
             version + Version::new(3),
+            &market_cap.cents.height,
+            cached_starts,
             indexes,
-        )?;
+        );
 
         let market_minus_realized_cap_growth_rate = RollingWindows::forced_import(
             &db,
@@ -61,11 +62,8 @@ impl Vecs {
             indexes,
         )?;
 
-        let hodled_or_lost = LazyAmountPerBlock::identity(
-            "hodled_or_lost_coins",
-            &cointime.supply.vaulted,
-            version,
-        );
+        let hodled_or_lost =
+            LazyAmountPerBlock::identity("hodled_or_lost_coins", &cointime.supply.vaulted, version);
 
         let this = Self {
             db,

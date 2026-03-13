@@ -5,7 +5,7 @@ use brk_types::Version;
 
 use crate::{
     indexes,
-    internal::{finalize_db, open_db},
+    internal::{finalize_db, open_db, CachedWindowStarts},
 };
 
 use super::{HashrateVecs, RewardsVecs, Vecs};
@@ -15,11 +15,12 @@ impl Vecs {
         parent_path: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let db = open_db(parent_path, super::DB_NAME, 50_000_000)?;
         let version = parent_version;
 
-        let rewards = RewardsVecs::forced_import(&db, version, indexes)?;
+        let rewards = RewardsVecs::forced_import(&db, version, indexes, cached_starts)?;
         let hashrate = HashrateVecs::forced_import(&db, version, indexes)?;
 
         let this = Self {

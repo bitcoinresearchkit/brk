@@ -5,7 +5,10 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{AmountPerBlock, RollingFullAmountPerBlock, SatsToCents, WindowStarts},
+    internal::{
+        AmountPerBlock, CachedWindowStarts, LazyRollingSumsAmountFromHeight,
+        RollingDistributionAmountPerBlock, SatsToCents, WindowStarts,
+    },
     prices,
 };
 
@@ -13,8 +16,9 @@ use crate::{
 pub struct AmountPerBlockFull<M: StorageMode = Rw> {
     pub base: AmountPerBlock<M>,
     pub cumulative: AmountPerBlock<M>,
+    pub sum: LazyRollingSumsAmountFromHeight,
     #[traversable(flatten)]
-    pub rolling: RollingFullAmountPerBlock<M>,
+    pub rolling: RollingDistributionAmountPerBlock<M>,
 }
 
 const VERSION: Version = Version::TWO;
@@ -25,18 +29,33 @@ impl AmountPerBlockFull {
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let v = version + VERSION;
 
+        let base = AmountPerBlock::forced_import(db, name, v, indexes)?;
+        let cumulative = AmountPerBlock::forced_import(
+            db,
+            &format!("{name}_cumulative"),
+            v,
+            indexes,
+        )?;
+        let sum = LazyRollingSumsAmountFromHeight::new(
+            &format!("{name}_sum"),
+            v,
+            &cumulative.sats.height,
+            &cumulative.cents.height,
+            cached_starts,
+            indexes,
+        );
+        let rolling =
+            RollingDistributionAmountPerBlock::forced_import(db, name, v, indexes)?;
+
         Ok(Self {
-            base: AmountPerBlock::forced_import(db, name, v, indexes)?,
-            cumulative: AmountPerBlock::forced_import(
-                db,
-                &format!("{name}_cumulative"),
-                v,
-                indexes,
-            )?,
-            rolling: RollingFullAmountPerBlock::forced_import(db, name, v, indexes)?,
+            base,
+            cumulative,
+            sum,
+            rolling,
         })
     }
 

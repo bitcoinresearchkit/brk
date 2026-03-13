@@ -1,4 +1,11 @@
 use brk_traversable::Traversable;
+use brk_types::Height;
+use vecdb::CachedVec;
+
+/// Cached window starts for lazy rolling computations.
+/// Clone-cheap (all fields are Arc-backed). Shared across all metrics.
+#[derive(Clone)]
+pub struct CachedWindowStarts(pub Windows<CachedVec<Height, Height>>);
 
 #[derive(Clone, Traversable)]
 pub struct Windows<A> {
@@ -32,5 +39,33 @@ impl<A> Windows<A> {
 
     pub fn as_mut_array_from_1w(&mut self) -> [&mut A; 3] {
         [&mut self._1w, &mut self._1m, &mut self._1y]
+    }
+
+    pub fn map_with_suffix<B>(&self, mut f: impl FnMut(&str, &A) -> B) -> Windows<B> {
+        Windows {
+            _24h: f(Self::SUFFIXES[0], &self._24h),
+            _1w: f(Self::SUFFIXES[1], &self._1w),
+            _1m: f(Self::SUFFIXES[2], &self._1m),
+            _1y: f(Self::SUFFIXES[3], &self._1y),
+        }
+    }
+}
+
+impl<A, B> Windows<(A, B)> {
+    pub fn unzip(self) -> (Windows<A>, Windows<B>) {
+        (
+            Windows {
+                _24h: self._24h.0,
+                _1w: self._1w.0,
+                _1m: self._1m.0,
+                _1y: self._1y.0,
+            },
+            Windows {
+                _24h: self._24h.1,
+                _1w: self._1w.1,
+                _1m: self._1m.1,
+                _1y: self._1y.1,
+            },
+        )
     }
 }

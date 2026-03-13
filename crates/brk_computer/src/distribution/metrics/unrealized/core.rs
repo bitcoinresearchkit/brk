@@ -5,7 +5,6 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, Exit, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::{
-    blocks,
     distribution::{
         metrics::ImportConfig,
         state::UnrealizedState,
@@ -78,15 +77,13 @@ impl UnrealizedCore {
         Ok(())
     }
 
-    /// Compute derived metrics from stored values.
     pub(crate) fn compute_rest(
         &mut self,
-        blocks: &blocks::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.basic
-            .compute_rest(blocks, starting_indexes.height, exit)?;
+            .compute_rest(starting_indexes.height, exit)?;
 
         self.net_pnl
             .cents

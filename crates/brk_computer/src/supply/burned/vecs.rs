@@ -1,10 +1,10 @@
 use brk_traversable::Traversable;
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::AmountPerBlockCumulativeSum;
+use crate::internal::AmountPerBlockCumulativeWithSums;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub opreturn: AmountPerBlockCumulativeSum<M>,
-    pub unspendable: AmountPerBlockCumulativeSum<M>,
+    pub opreturn: AmountPerBlockCumulativeWithSums<M>,
+    pub unspendable: AmountPerBlockCumulativeWithSums<M>,
 }

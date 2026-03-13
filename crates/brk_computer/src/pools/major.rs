@@ -1,14 +1,14 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Height, Indexes, PoolSlug, StoredU32};
+use brk_types::{BasisPoints16, Height, Indexes, PoolSlug, StoredU64};
 use derive_more::{Deref, DerefMut};
 use vecdb::{BinaryTransform, Database, Exit, ReadableVec, Rw, StorageMode, Version};
 
 use crate::{
     blocks, indexes,
     internal::{
-        AmountPerBlockCumulativeSum, MaskSats, PercentRollingWindows, RatioU32Bp16,
-        RollingWindows,
+        AmountPerBlockCumulativeWithSums, CachedWindowStarts, MaskSats, PercentRollingWindows,
+        RatioU64Bp16,
     },
     mining, prices,
 };
@@ -22,9 +22,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub base: minor::Vecs<M>,
 
-    #[traversable(wrap = "blocks_mined", rename = "sum")]
-    pub blocks_mined_sum: RollingWindows<StoredU32, M>,
-    pub rewards: AmountPerBlockCumulativeSum<M>,
+    pub rewards: AmountPerBlockCumulativeWithSums<M>,
     #[traversable(rename = "dominance")]
     pub dominance_rolling: PercentRollingWindows<BasisPoints16, M>,
 }
@@ -35,23 +33,25 @@ impl Vecs {
         slug: PoolSlug,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let suffix = |s: &str| format!("{}_{s}", slug);
 
-        let base = minor::Vecs::forced_import(db, slug, version, indexes)?;
+        let base = minor::Vecs::forced_import(db, slug, version, indexes, cached_starts)?;
 
-        let blocks_mined_sum =
-            RollingWindows::forced_import(db, &suffix("blocks_mined"), version, indexes)?;
-
-        let rewards =
-            AmountPerBlockCumulativeSum::forced_import(db, &suffix("rewards"), version, indexes)?;
+        let rewards = AmountPerBlockCumulativeWithSums::forced_import(
+            db,
+            &suffix("rewards"),
+            version,
+            indexes,
+            cached_starts,
+        )?;
 
         let dominance_rolling =
             PercentRollingWindows::forced_import(db, &suffix("dominance"), version, indexes)?;
 
         Ok(Self {
             base,
-            blocks_mined_sum,
             rewards,
             dominance_rolling,
         })
@@ -70,22 +70,15 @@ impl Vecs {
         self.base
             .compute(starting_indexes, height_to_pool, blocks, exit)?;
 
-        let window_starts = blocks.lookback.window_starts();
-
-        self.blocks_mined_sum.compute_rolling_sum(
-            starting_indexes.height,
-            &window_starts,
-            &self.base.blocks_mined.raw.height,
-            exit,
-        )?;
-
         for (dom, (mined, total)) in self.dominance_rolling.as_mut_array().into_iter().zip(
-            self.blocks_mined_sum
+            self.base
+                .blocks_mined
+                .sum
                 .as_array()
                 .into_iter()
                 .zip(blocks.count.total.sum.as_array()),
         ) {
-            dom.compute_binary::<StoredU32, StoredU32, RatioU32Bp16>(
+            dom.compute_binary::<StoredU64, StoredU64, RatioU64Bp16>(
                 starting_indexes.height,
                 &mined.height,
                 &total.height,
@@ -95,14 +88,13 @@ impl Vecs {
 
         self.rewards.compute(
             starting_indexes.height,
-            &window_starts,
             prices,
             exit,
             |vec| {
                 Ok(vec.compute_transform2(
                     starting_indexes.height,
                     &self.base.blocks_mined.raw.height,
-                    &mining.rewards.coinbase.base.sats.height,
+                    &mining.rewards.coinbase.raw.sats.height,
                     |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
                     exit,
                 )?)

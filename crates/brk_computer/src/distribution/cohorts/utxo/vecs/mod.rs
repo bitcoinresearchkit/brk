@@ -49,7 +49,6 @@ use brk_types::{Cents, Height, Indexes, Version};
 use vecdb::{Exit, ReadableVec};
 
 use crate::{
-    blocks,
     distribution::{
         cohorts::traits::DynCohortVecs,
         metrics::{CohortMetricsBase, CohortMetricsState},
@@ -71,7 +70,10 @@ pub struct UTXOCohortVecs<M: CohortMetricsState> {
 }
 
 impl<M: CohortMetricsState> UTXOCohortVecs<M> {
-    pub(crate) fn new(state: Option<Box<UTXOCohortState<M::Realized, M::CostBasis>>>, metrics: M) -> Self {
+    pub(crate) fn new(
+        state: Option<Box<UTXOCohortState<M::Realized, M::CostBasis>>>,
+        metrics: M,
+    ) -> Self {
         Self {
             state_starting_height: None,
             state,
@@ -183,24 +185,20 @@ impl<M: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<M> {
         _is_day_boundary: bool,
     ) -> Result<()> {
         if let Some(state) = self.state.as_mut() {
-            self.metrics.compute_and_push_unrealized(
-                height,
-                height_price,
-                state,
-            )?;
+            self.metrics
+                .compute_and_push_unrealized(height, height_price, state)?;
         }
         Ok(())
     }
 
     fn compute_rest_part1(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics
-            .compute_rest_part1(blocks, prices, starting_indexes, exit)?;
+            .compute_rest_part1(prices, starting_indexes, exit)?;
         Ok(())
     }
 

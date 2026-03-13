@@ -80,6 +80,10 @@ impl SupplyCore {
         Ok(())
     }
 
+    pub(crate) fn validate_computed_versions(&mut self, _base_version: Version) -> Result<()> {
+        Ok(())
+    }
+
     pub(crate) fn compute_from_stateful(
         &mut self,
         starting_indexes: &Indexes,

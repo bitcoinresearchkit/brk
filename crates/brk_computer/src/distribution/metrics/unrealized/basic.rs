@@ -5,22 +5,20 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
-    blocks,
     distribution::{metrics::ImportConfig, state::UnrealizedState},
-    internal::FiatPerBlockWithSum24h,
+    internal::FiatPerBlockCumulativeWithSums,
 };
 
 use super::UnrealizedMinimal;
 
-/// Basic unrealized metrics: nupl + unrealized profit/loss (fiat + 24h sums).
 #[derive(Deref, DerefMut, Traversable)]
 pub struct UnrealizedBasic<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
     pub minimal: UnrealizedMinimal<M>,
-    pub profit: FiatPerBlockWithSum24h<Cents, M>,
-    pub loss: FiatPerBlockWithSum24h<Cents, M>,
+    pub profit: FiatPerBlockCumulativeWithSums<Cents, M>,
+    pub loss: FiatPerBlockCumulativeWithSums<Cents, M>,
 }
 
 impl UnrealizedBasic {
@@ -77,23 +75,11 @@ impl UnrealizedBasic {
 
     pub(crate) fn compute_rest(
         &mut self,
-        blocks: &blocks::Vecs,
         max_from: Height,
         exit: &Exit,
     ) -> Result<()> {
-        self.profit.sum.compute_rolling_sum(
-            max_from,
-            &blocks.lookback._24h,
-            &self.profit.raw.cents.height,
-            exit,
-        )?;
-        self.loss.sum.compute_rolling_sum(
-            max_from,
-            &blocks.lookback._24h,
-            &self.loss.raw.cents.height,
-            exit,
-        )?;
-
+        self.profit.compute_rest(max_from, exit)?;
+        self.loss.compute_rest(max_from, exit)?;
         Ok(())
     }
 }

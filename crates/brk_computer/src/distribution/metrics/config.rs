@@ -7,13 +7,13 @@ use vecdb::{BytesVec, BytesVecValue, Database, ImportableVec};
 use crate::{
     indexes,
     internal::{
-        AmountPerBlock, AmountPerBlockCumulative, AmountPerBlockWithSum24h, CentsType, ComputedPerBlock,
-        ComputedPerBlockCumulative, ComputedPerBlockCumulativeSum, FiatPerBlockWithSum24h,
-        PerBlockWithSum24h, PriceWithRatioExtendedPerBlock, PriceWithRatioPerBlock, RatioPerBlock, RollingWindow24hAmountPerBlock,
-        RollingWindow24hFiatPerBlock, RollingWindow24hPerBlock,
-        FiatPerBlock, FiatRollingDelta1m, FiatRollingDeltaExcept1m, NumericValue,
-        PercentPerBlock, PercentRollingWindows, Price, RollingDelta1m, RollingDeltaExcept1m,
-        RollingWindows, RollingWindowsFrom1w,
+        AmountPerBlock, AmountPerBlockCumulative, AmountPerBlockCumulativeWithSums,
+        CachedWindowStarts, CentsType, ComputedPerBlock,
+        ComputedPerBlockCumulative, ComputedPerBlockCumulativeWithSums,
+        FiatPerBlock, FiatPerBlockCumulativeWithSums, NumericValue,
+        PercentPerBlock, PercentRollingWindows, Price,
+        PriceWithRatioExtendedPerBlock, PriceWithRatioPerBlock, RatioPerBlock,
+        RollingWindow24hPerBlock, RollingWindows, RollingWindowsFrom1w,
     },
 };
 
@@ -39,7 +39,6 @@ macro_rules! impl_config_import {
 impl_config_import!(
     AmountPerBlock,
     AmountPerBlockCumulative,
-    RollingWindow24hAmountPerBlock,
     PriceWithRatioPerBlock,
     PriceWithRatioExtendedPerBlock,
     RatioPerBlock<BasisPoints32>,
@@ -62,9 +61,19 @@ impl<T: NumericValue + JsonSchema> ConfigImport for ComputedPerBlockCumulative<T
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }
 }
-impl<T: NumericValue + JsonSchema> ConfigImport for ComputedPerBlockCumulativeSum<T> {
+impl<T, C> ConfigImport for ComputedPerBlockCumulativeWithSums<T, C>
+where
+    T: NumericValue + JsonSchema + Into<C>,
+    C: NumericValue + JsonSchema,
+{
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
-        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
+        Self::forced_import(
+            cfg.db,
+            &cfg.name(suffix),
+            cfg.version + offset,
+            cfg.indexes,
+            cfg.cached_starts,
+        )
     }
 }
 impl<T: NumericValue + JsonSchema> ConfigImport for RollingWindows<T> {
@@ -77,33 +86,26 @@ impl<T: NumericValue + JsonSchema> ConfigImport for RollingWindow24hPerBlock<T> 
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }
 }
-impl<T: NumericValue + JsonSchema> ConfigImport for PerBlockWithSum24h<T> {
+impl ConfigImport for AmountPerBlockCumulativeWithSums {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
-        Ok(Self {
-            raw: ComputedPerBlock::config_import(cfg, suffix, offset)?,
-            sum: RollingWindow24hPerBlock::config_import(cfg, suffix, offset)?,
-        })
+        Self::forced_import(
+            cfg.db,
+            &cfg.name(suffix),
+            cfg.version + offset,
+            cfg.indexes,
+            cfg.cached_starts,
+        )
     }
 }
-impl ConfigImport for AmountPerBlockWithSum24h {
+impl<C: CentsType> ConfigImport for FiatPerBlockCumulativeWithSums<C> {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
-        Ok(Self {
-            raw: AmountPerBlock::config_import(cfg, suffix, offset)?,
-            sum: RollingWindow24hAmountPerBlock::config_import(cfg, suffix, offset)?,
-        })
-    }
-}
-impl<C: CentsType> ConfigImport for RollingWindow24hFiatPerBlock<C> {
-    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
-        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
-    }
-}
-impl<C: CentsType> ConfigImport for FiatPerBlockWithSum24h<C> {
-    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
-        Ok(Self {
-            raw: FiatPerBlock::config_import(cfg, suffix, offset)?,
-            sum: RollingWindow24hFiatPerBlock::config_import(cfg, suffix, offset)?,
-        })
+        Self::forced_import(
+            cfg.db,
+            &cfg.name(suffix),
+            cfg.version + offset,
+            cfg.indexes,
+            cfg.cached_starts,
+        )
     }
 }
 impl<T: NumericValue + JsonSchema> ConfigImport for RollingWindowsFrom1w<T> {
@@ -112,30 +114,6 @@ impl<T: NumericValue + JsonSchema> ConfigImport for RollingWindowsFrom1w<T> {
     }
 }
 impl<C: CentsType> ConfigImport for FiatPerBlock<C> {
-    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
-        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
-    }
-}
-impl<S: NumericValue + JsonSchema, C: NumericValue + JsonSchema> ConfigImport
-    for RollingDelta1m<S, C>
-{
-    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
-        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
-    }
-}
-impl<S: NumericValue + JsonSchema, C: NumericValue + JsonSchema> ConfigImport
-    for RollingDeltaExcept1m<S, C>
-{
-    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
-        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
-    }
-}
-impl<S: NumericValue + JsonSchema, C: CentsType> ConfigImport for FiatRollingDelta1m<S, C> {
-    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
-        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
-    }
-}
-impl<S: NumericValue + JsonSchema, C: CentsType> ConfigImport for FiatRollingDeltaExcept1m<S, C> {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }
@@ -157,6 +135,7 @@ pub struct ImportConfig<'a> {
     pub full_name: &'a str,
     pub version: Version,
     pub indexes: &'a indexes::Vecs,
+    pub cached_starts: &'a CachedWindowStarts,
 }
 
 impl<'a> ImportConfig<'a> {

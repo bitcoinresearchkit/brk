@@ -3,7 +3,7 @@ use std::ops::{Add, AddAssign, Div, Sub, SubAssign};
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{Formattable, Pco};
+use vecdb::{CheckedSub, Formattable, Pco};
 
 /// Transaction or block weight in weight units (WU)
 #[derive(
@@ -125,6 +125,13 @@ impl Div<Weight> for Weight {
     type Output = Self;
     fn div(self, rhs: Self) -> Self::Output {
         Self(self.0 / rhs.0)
+    }
+}
+
+impl CheckedSub for Weight {
+    #[inline]
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self)
     }
 }
 

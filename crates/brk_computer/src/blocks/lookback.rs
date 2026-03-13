@@ -1,14 +1,16 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, Indexes, Timestamp, Version};
-use vecdb::{AnyVec, Cursor, Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode, VecIndex};
+use vecdb::{AnyVec, CachedVec, Cursor, Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode, VecIndex};
 
-use crate::internal::WindowStarts;
+use crate::internal::{CachedWindowStarts, Windows, WindowStarts};
 
 use super::time;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
+    #[traversable(skip)]
+    pub cached_window_starts: CachedWindowStarts,
     pub _1h: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub _24h: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 1d
     pub _3d: M::Stored<EagerVec<PcoVec<Height, Height>>>,
@@ -56,50 +58,63 @@ pub struct Vecs<M: StorageMode = Rw> {
 
 impl Vecs {
     pub(crate) fn forced_import(db: &Database, version: Version) -> Result<Self> {
+        let _1h = ImportableVec::forced_import(db, "height_1h_ago", version)?;
+        let _24h = ImportableVec::forced_import(db, "height_24h_ago", version)?;
+        let _3d = ImportableVec::forced_import(db, "height_3d_ago", version)?;
+        let _1w = ImportableVec::forced_import(db, "height_1w_ago", version)?;
+        let _8d = ImportableVec::forced_import(db, "height_8d_ago", version)?;
+        let _9d = ImportableVec::forced_import(db, "height_9d_ago", version)?;
+        let _12d = ImportableVec::forced_import(db, "height_12d_ago", version)?;
+        let _13d = ImportableVec::forced_import(db, "height_13d_ago", version)?;
+        let _2w = ImportableVec::forced_import(db, "height_2w_ago", version)?;
+        let _21d = ImportableVec::forced_import(db, "height_21d_ago", version)?;
+        let _26d = ImportableVec::forced_import(db, "height_26d_ago", version)?;
+        let _1m = ImportableVec::forced_import(db, "height_1m_ago", version)?;
+        let _34d = ImportableVec::forced_import(db, "height_34d_ago", version)?;
+        let _55d = ImportableVec::forced_import(db, "height_55d_ago", version)?;
+        let _2m = ImportableVec::forced_import(db, "height_2m_ago", version)?;
+        let _9w = ImportableVec::forced_import(db, "height_9w_ago", version)?;
+        let _12w = ImportableVec::forced_import(db, "height_12w_ago", version)?;
+        let _89d = ImportableVec::forced_import(db, "height_89d_ago", version)?;
+        let _3m = ImportableVec::forced_import(db, "height_3m_ago", version)?;
+        let _14w = ImportableVec::forced_import(db, "height_14w_ago", version)?;
+        let _111d = ImportableVec::forced_import(db, "height_111d_ago", version)?;
+        let _144d = ImportableVec::forced_import(db, "height_144d_ago", version)?;
+        let _6m = ImportableVec::forced_import(db, "height_6m_ago", version)?;
+        let _26w = ImportableVec::forced_import(db, "height_26w_ago", version)?;
+        let _200d = ImportableVec::forced_import(db, "height_200d_ago", version)?;
+        let _9m = ImportableVec::forced_import(db, "height_9m_ago", version)?;
+        let _350d = ImportableVec::forced_import(db, "height_350d_ago", version)?;
+        let _12m = ImportableVec::forced_import(db, "height_12m_ago", version)?;
+        let _1y = ImportableVec::forced_import(db, "height_1y_ago", version)?;
+        let _14m = ImportableVec::forced_import(db, "height_14m_ago", version)?;
+        let _2y = ImportableVec::forced_import(db, "height_2y_ago", version)?;
+        let _26m = ImportableVec::forced_import(db, "height_26m_ago", version)?;
+        let _3y = ImportableVec::forced_import(db, "height_3y_ago", version)?;
+        let _200w = ImportableVec::forced_import(db, "height_200w_ago", version)?;
+        let _4y = ImportableVec::forced_import(db, "height_4y_ago", version)?;
+        let _5y = ImportableVec::forced_import(db, "height_5y_ago", version)?;
+        let _6y = ImportableVec::forced_import(db, "height_6y_ago", version)?;
+        let _8y = ImportableVec::forced_import(db, "height_8y_ago", version)?;
+        let _9y = ImportableVec::forced_import(db, "height_9y_ago", version)?;
+        let _10y = ImportableVec::forced_import(db, "height_10y_ago", version)?;
+        let _12y = ImportableVec::forced_import(db, "height_12y_ago", version)?;
+        let _14y = ImportableVec::forced_import(db, "height_14y_ago", version)?;
+        let _26y = ImportableVec::forced_import(db, "height_26y_ago", version)?;
+
+        let cached_window_starts = CachedWindowStarts(Windows {
+            _24h: CachedVec::new(&_24h),
+            _1w: CachedVec::new(&_1w),
+            _1m: CachedVec::new(&_1m),
+            _1y: CachedVec::new(&_1y),
+        });
+
         Ok(Self {
-            _1h: ImportableVec::forced_import(db, "height_1h_ago", version)?,
-            _24h: ImportableVec::forced_import(db, "height_24h_ago", version)?,
-            _3d: ImportableVec::forced_import(db, "height_3d_ago", version)?,
-            _1w: ImportableVec::forced_import(db, "height_1w_ago", version)?,
-            _8d: ImportableVec::forced_import(db, "height_8d_ago", version)?,
-            _9d: ImportableVec::forced_import(db, "height_9d_ago", version)?,
-            _12d: ImportableVec::forced_import(db, "height_12d_ago", version)?,
-            _13d: ImportableVec::forced_import(db, "height_13d_ago", version)?,
-            _2w: ImportableVec::forced_import(db, "height_2w_ago", version)?,
-            _21d: ImportableVec::forced_import(db, "height_21d_ago", version)?,
-            _26d: ImportableVec::forced_import(db, "height_26d_ago", version)?,
-            _1m: ImportableVec::forced_import(db, "height_1m_ago", version)?,
-            _34d: ImportableVec::forced_import(db, "height_34d_ago", version)?,
-            _55d: ImportableVec::forced_import(db, "height_55d_ago", version)?,
-            _2m: ImportableVec::forced_import(db, "height_2m_ago", version)?,
-            _9w: ImportableVec::forced_import(db, "height_9w_ago", version)?,
-            _12w: ImportableVec::forced_import(db, "height_12w_ago", version)?,
-            _89d: ImportableVec::forced_import(db, "height_89d_ago", version)?,
-            _3m: ImportableVec::forced_import(db, "height_3m_ago", version)?,
-            _14w: ImportableVec::forced_import(db, "height_14w_ago", version)?,
-            _111d: ImportableVec::forced_import(db, "height_111d_ago", version)?,
-            _144d: ImportableVec::forced_import(db, "height_144d_ago", version)?,
-            _6m: ImportableVec::forced_import(db, "height_6m_ago", version)?,
-            _26w: ImportableVec::forced_import(db, "height_26w_ago", version)?,
-            _200d: ImportableVec::forced_import(db, "height_200d_ago", version)?,
-            _9m: ImportableVec::forced_import(db, "height_9m_ago", version)?,
-            _350d: ImportableVec::forced_import(db, "height_350d_ago", version)?,
-            _12m: ImportableVec::forced_import(db, "height_12m_ago", version)?,
-            _1y: ImportableVec::forced_import(db, "height_1y_ago", version)?,
-            _14m: ImportableVec::forced_import(db, "height_14m_ago", version)?,
-            _2y: ImportableVec::forced_import(db, "height_2y_ago", version)?,
-            _26m: ImportableVec::forced_import(db, "height_26m_ago", version)?,
-            _3y: ImportableVec::forced_import(db, "height_3y_ago", version)?,
-            _200w: ImportableVec::forced_import(db, "height_200w_ago", version)?,
-            _4y: ImportableVec::forced_import(db, "height_4y_ago", version)?,
-            _5y: ImportableVec::forced_import(db, "height_5y_ago", version)?,
-            _6y: ImportableVec::forced_import(db, "height_6y_ago", version)?,
-            _8y: ImportableVec::forced_import(db, "height_8y_ago", version)?,
-            _9y: ImportableVec::forced_import(db, "height_9y_ago", version)?,
-            _10y: ImportableVec::forced_import(db, "height_10y_ago", version)?,
-            _12y: ImportableVec::forced_import(db, "height_12y_ago", version)?,
-            _14y: ImportableVec::forced_import(db, "height_14y_ago", version)?,
-            _26y: ImportableVec::forced_import(db, "height_26y_ago", version)?,
+            cached_window_starts,
+            _1h, _24h, _3d, _1w, _8d, _9d, _12d, _13d, _2w, _21d, _26d,
+            _1m, _34d, _55d, _2m, _9w, _12w, _89d, _3m, _14w, _111d, _144d,
+            _6m, _26w, _200d, _9m, _350d, _12m, _1y, _14m, _2y, _26m, _3y,
+            _200w, _4y, _5y, _6y, _8y, _9y, _10y, _12y, _14y, _26y,
         })
     }
 
@@ -111,6 +126,7 @@ impl Vecs {
             _1y: &self._1y,
         }
     }
+
 
     pub fn start_vec(&self, days: usize) -> &EagerVec<PcoVec<Height, Height>> {
         match days {

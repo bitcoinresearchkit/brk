@@ -1,4 +1,3 @@
-pub mod aggregates;
 mod block_loop;
 mod context;
 mod readers;

@@ -4,10 +4,11 @@ use brk_traversable::Traversable;
 use brk_types::Indexes;
 use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
 
-use crate::{blocks, prices};
-
-use crate::distribution::metrics::{
-    ImportConfig, OutputsBase, RealizedMinimal, SupplyCore, UnrealizedBasic,
+use crate::{
+    distribution::metrics::{
+        ImportConfig, OutputsBase, RealizedMinimal, SupplyCore, UnrealizedBasic,
+    },
+    prices,
 };
 
 /// TypeCohortMetrics: supply(core), outputs(base), realized(minimal), unrealized(basic).
@@ -53,16 +54,15 @@ impl TypeCohortMetrics {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.supply.compute(prices, starting_indexes.height, exit)?;
         self.realized
-            .compute_rest_part1(blocks, starting_indexes, exit)?;
+            .compute_rest_part1(starting_indexes, exit)?;
         self.unrealized
-            .compute_rest(blocks, starting_indexes.height, exit)?;
+            .compute_rest(starting_indexes.height, exit)?;
         Ok(())
     }
 

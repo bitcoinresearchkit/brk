@@ -3,15 +3,14 @@ use std::path::Path;
 use brk_cohort::{CohortContext, Filter, Filtered};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Indexes, StoredI64, StoredU64, Version};
+use brk_types::{BasisPointsSigned32, Cents, Height, Indexes, StoredI64, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
-    blocks,
     distribution::state::{AddressCohortState, MinimalRealizedState},
     indexes,
-    internal::{ComputedPerBlock, RollingDelta1m},
+    internal::{CachedWindowStarts, ComputedPerBlockWithDeltas},
     prices,
 };
 
@@ -28,9 +27,7 @@ pub struct AddressCohortVecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub metrics: MinimalCohortMetrics<M>,
 
-    pub address_count: ComputedPerBlock<StoredU64, M>,
-    #[traversable(wrap = "address_count", rename = "delta")]
-    pub address_count_delta: RollingDelta1m<StoredU64, StoredI64, M>,
+    pub address_count: ComputedPerBlockWithDeltas<StoredU64, StoredI64, BasisPointsSigned32, M>,
 }
 
 impl AddressCohortVecs {
@@ -41,6 +38,7 @@ impl AddressCohortVecs {
         version: Version,
         indexes: &indexes::Vecs,
         states_path: Option<&Path>,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let full_name = CohortContext::Address.full_name(&filter, name);
 
@@ -50,27 +48,23 @@ impl AddressCohortVecs {
             full_name: &full_name,
             version,
             indexes,
+            cached_starts,
         };
+
+        let address_count = ComputedPerBlockWithDeltas::forced_import(
+            db,
+            &cfg.name("address_count"),
+            version,
+            Version::ONE,
+            indexes,
+            cached_starts,
+        )?;
 
         Ok(Self {
             starting_height: None,
-
             state: states_path.map(|path| Box::new(AddressCohortState::new(path, &full_name))),
-
             metrics: MinimalCohortMetrics::forced_import(&cfg)?,
-
-            address_count: ComputedPerBlock::forced_import(
-                db,
-                &cfg.name("address_count"),
-                version,
-                indexes,
-            )?,
-            address_count_delta: RollingDelta1m::forced_import(
-                db,
-                &cfg.name("address_count_delta"),
-                version + Version::ONE,
-                indexes,
-            )?,
+            address_count,
         })
     }
 
@@ -189,13 +183,12 @@ impl DynCohortVecs for AddressCohortVecs {
 
     fn compute_rest_part1(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics
-            .compute_rest_part1(blocks, prices, starting_indexes, exit)
+            .compute_rest_part1(prices, starting_indexes, exit)
     }
 
     fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {

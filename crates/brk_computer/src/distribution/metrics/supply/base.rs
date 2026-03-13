@@ -1,13 +1,13 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, Version};
+use brk_types::{BasisPointsSigned32, Height, Indexes, Sats, SatsSigned, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{distribution::state::{CohortState, CostBasisOps, RealizedOps}, prices};
 
 use crate::internal::{
     AmountPerBlock, HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin,
-    LazyAmountPerBlock,
+    LazyAmountPerBlock, LazyRollingDeltasFromHeight,
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -17,6 +17,7 @@ use crate::distribution::metrics::ImportConfig;
 pub struct SupplyBase<M: StorageMode = Rw> {
     pub total: AmountPerBlock<M>,
     pub half: LazyAmountPerBlock,
+    pub delta: LazyRollingDeltasFromHeight<Sats, SatsSigned, BasisPointsSigned32>,
 }
 
 impl SupplyBase {
@@ -30,9 +31,18 @@ impl SupplyBase {
             HalveDollars,
         >(&cfg.name("supply_half"), &supply, cfg.version);
 
+        let delta = LazyRollingDeltasFromHeight::new(
+            &cfg.name("supply_delta"),
+            cfg.version + Version::ONE,
+            &supply.sats.height,
+            cfg.cached_starts,
+            cfg.indexes,
+        );
+
         Ok(Self {
             total: supply,
             half: supply_half,
+            delta,
         })
     }
 

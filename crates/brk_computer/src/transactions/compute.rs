@@ -26,7 +26,7 @@ impl Vecs {
 
         // Versions depends on count
         self.versions
-            .compute(indexer, &blocks.lookback, starting_indexes, exit)?;
+            .compute(indexer, starting_indexes, exit)?;
 
         // Size computes next (uses 6-block rolling window)
         self.size

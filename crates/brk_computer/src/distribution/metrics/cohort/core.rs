@@ -4,19 +4,20 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Indexes, Sats, Version};
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{blocks, prices};
-
-use crate::distribution::metrics::{
-    ActivityCore, CohortMetricsBase, RealizedCore, ImportConfig, OutputsFull,
-    RelativeToAll, SupplyFull, UnrealizedCore,
+use crate::{
+    distribution::metrics::{
+        ActivityCore, CohortMetricsBase, ImportConfig, OutputsBase, RealizedCore, RelativeToAll,
+        SupplyCore, UnrealizedCore,
+    },
+    prices,
 };
 
 #[derive(Traversable)]
 pub struct CoreCohortMetrics<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub filter: Filter,
-    pub supply: Box<SupplyFull<M>>,
-    pub outputs: Box<OutputsFull<M>>,
+    pub supply: Box<SupplyCore<M>>,
+    pub outputs: Box<OutputsBase<M>>,
     pub activity: Box<ActivityCore<M>>,
     pub realized: Box<RealizedCore<M>>,
     pub unrealized: Box<UnrealizedCore<M>>,
@@ -28,8 +29,8 @@ impl CoreCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
             filter: cfg.filter.clone(),
-            supply: Box::new(SupplyFull::forced_import(cfg)?),
-            outputs: Box::new(OutputsFull::forced_import(cfg)?),
+            supply: Box::new(SupplyCore::forced_import(cfg)?),
+            outputs: Box::new(OutputsBase::forced_import(cfg)?),
             activity: Box::new(ActivityCore::forced_import(cfg)?),
             realized: Box::new(RealizedCore::forced_import(cfg)?),
             unrealized: Box::new(UnrealizedCore::forced_import(cfg)?),
@@ -100,41 +101,34 @@ impl CoreCohortMetrics {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.supply
             .compute(prices, starting_indexes.height, exit)?;
-        self.supply
-            .compute_rest_part1(blocks, starting_indexes, exit)?;
-        self.outputs
-            .compute_rest(blocks, starting_indexes, exit)?;
 
         self.activity
-            .compute_rest_part1(blocks, starting_indexes, exit)?;
+            .compute_rest_part1(starting_indexes, exit)?;
         self.activity
-            .compute_sent_profitability(blocks, prices, starting_indexes, exit)?;
+            .compute_sent_profitability(prices, starting_indexes, exit)?;
 
         self.realized
-            .compute_rest_part1(blocks, starting_indexes, exit)?;
+            .compute_rest_part1(starting_indexes, exit)?;
 
-        self.unrealized.compute_rest(blocks, starting_indexes, exit)?;
+        self.unrealized.compute_rest(starting_indexes, exit)?;
 
         Ok(())
     }
 
     pub(crate) fn compute_rest_part2(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {
         self.realized.compute_rest_part2(
-            blocks,
             prices,
             starting_indexes,
             &self.supply.total.btc.height,
@@ -150,7 +144,7 @@ impl CoreCohortMetrics {
 
         self.relative.compute(
             starting_indexes.height,
-            &self.supply.core,
+            &self.supply,
             all_supply_sats,
             exit,
         )?;

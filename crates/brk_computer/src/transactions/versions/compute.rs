@@ -4,25 +4,22 @@ use brk_types::{Indexes, StoredU64, TxVersion};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{blocks, internal::ComputedPerBlockCumulativeSum};
+use crate::internal::ComputedPerBlockCumulativeWithSums;
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        lookback: &blocks::LookbackVecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let window_starts = lookback.window_starts();
-
-        let tx_vany = |tx_vany: &mut ComputedPerBlockCumulativeSum<StoredU64>,
+        let tx_vany = |tx_vany: &mut ComputedPerBlockCumulativeWithSums<StoredU64, StoredU64>,
                        txversion: TxVersion| {
             let txversion_vec = &indexer.vecs.transactions.txversion;
             // Cursor avoids per-transaction PcoVec page decompression.
             // Txindex values are sequential, so the cursor only advances forward.
             let mut cursor = txversion_vec.cursor();
-            tx_vany.compute(starting_indexes.height, &window_starts, exit, |vec| {
+            tx_vany.compute(starting_indexes.height, exit, |vec| {
                 vec.compute_filtered_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.transactions.first_txindex,

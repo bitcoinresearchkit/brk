@@ -19,13 +19,13 @@ use crate::{
         metrics::{
             AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase,
             CoreCohortMetrics, ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig,
-            MinimalCohortMetrics, ProfitabilityMetrics, RealizedFullAccum, SupplyFull,
+            MinimalCohortMetrics, ProfitabilityMetrics, RealizedFullAccum, SupplyCore,
             TypeCohortMetrics,
         },
         state::UTXOCohortState,
     },
     indexes,
-    internal::AmountPerBlock,
+    internal::{AmountPerBlock, CachedWindowStarts},
     prices,
 };
 
@@ -70,6 +70,7 @@ impl UTXOCohorts<Rw> {
         version: Version,
         indexes: &indexes::Vecs,
         states_path: &Path,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let v = version + VERSION;
 
@@ -81,8 +82,9 @@ impl UTXOCohorts<Rw> {
             full_name: &all_full_name,
             version: v + Version::ONE,
             indexes,
+            cached_starts,
         };
-        let all_supply = SupplyFull::forced_import(&all_cfg)?;
+        let all_supply = SupplyCore::forced_import(&all_cfg)?;
 
         // Phase 2: Import separate (stateful) cohorts.
 
@@ -96,6 +98,7 @@ impl UTXOCohorts<Rw> {
                     full_name: &full_name,
                     version: v,
                     indexes,
+                    cached_starts,
                 };
                 let state = Some(Box::new(UTXOCohortState::new(states_path, &full_name)));
                 Ok(UTXOCohortVecs::new(
@@ -115,6 +118,7 @@ impl UTXOCohorts<Rw> {
                     full_name: &full_name,
                     version: v,
                     indexes,
+                    cached_starts,
                 };
                 let state = Some(Box::new(UTXOCohortState::new(states_path, &full_name)));
                 Ok(UTXOCohortVecs::new(
@@ -136,6 +140,7 @@ impl UTXOCohorts<Rw> {
                     full_name: &full_name,
                     version: v,
                     indexes,
+                    cached_starts,
                 };
                 let state = Some(Box::new(UTXOCohortState::new(states_path, &full_name)));
                 Ok(UTXOCohortVecs::new(
@@ -155,6 +160,7 @@ impl UTXOCohorts<Rw> {
                     full_name: &full_name,
                     version: v,
                     indexes,
+                    cached_starts,
                 };
                 let state = Some(Box::new(UTXOCohortState::new(states_path, &full_name)));
                 Ok(UTXOCohortVecs::new(
@@ -186,6 +192,7 @@ impl UTXOCohorts<Rw> {
                 full_name: &full_name,
                 version: v,
                 indexes,
+                cached_starts,
             };
             UTXOCohortVecs::new(None, ExtendedAdjustedCohortMetrics::forced_import(&cfg)?)
         };
@@ -200,6 +207,7 @@ impl UTXOCohorts<Rw> {
                 full_name: &full_name,
                 version: v,
                 indexes,
+                cached_starts,
             };
             UTXOCohortVecs::new(None, ExtendedCohortMetrics::forced_import(&cfg)?)
         };
@@ -214,6 +222,7 @@ impl UTXOCohorts<Rw> {
                     full_name: &full_name,
                     version: v,
                     indexes,
+                    cached_starts,
                 };
                 Ok(UTXOCohortVecs::new(
                     None,
@@ -236,6 +245,7 @@ impl UTXOCohorts<Rw> {
                     full_name: &full_name,
                     version: v,
                     indexes,
+                    cached_starts,
                 };
                 Ok(UTXOCohortVecs::new(
                     None,
@@ -459,7 +469,6 @@ impl UTXOCohorts<Rw> {
     /// First phase of post-processing: compute index transforms.
     pub(crate) fn compute_rest_part1(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
@@ -497,7 +506,7 @@ impl UTXOCohorts<Rw> {
             );
             all.extend(self.type_.iter_mut().map(|x| x as &mut dyn DynCohortVecs));
             all.into_par_iter()
-                .try_for_each(|v| v.compute_rest_part1(blocks, prices, starting_indexes, exit))?;
+                .try_for_each(|v| v.compute_rest_part1(prices, starting_indexes, exit))?;
         }
 
         // Compute matured cents from sats × price
@@ -606,19 +615,19 @@ impl UTXOCohorts<Rw> {
             Box::new(|| {
                 age_range.par_iter_mut().try_for_each(|v| {
                     v.metrics
-                        .compute_rest_part2(blocks, prices, starting_indexes, ss, exit)
+                        .compute_rest_part2(prices, starting_indexes, ss, exit)
                 })
             }),
             Box::new(|| {
                 under_age.par_iter_mut().try_for_each(|v| {
                     v.metrics
-                        .compute_rest_part2(blocks, prices, starting_indexes, ss, exit)
+                        .compute_rest_part2(prices, starting_indexes, ss, exit)
                 })
             }),
             Box::new(|| {
                 over_age.par_iter_mut().try_for_each(|v| {
                     v.metrics
-                        .compute_rest_part2(blocks, prices, starting_indexes, ss, exit)
+                        .compute_rest_part2(prices, starting_indexes, ss, exit)
                 })
             }),
             Box::new(|| {
@@ -629,13 +638,13 @@ impl UTXOCohorts<Rw> {
             Box::new(|| {
                 epoch.par_iter_mut().try_for_each(|v| {
                     v.metrics
-                        .compute_rest_part2(blocks, prices, starting_indexes, ss, exit)
+                        .compute_rest_part2(prices, starting_indexes, ss, exit)
                 })
             }),
             Box::new(|| {
                 class.par_iter_mut().try_for_each(|v| {
                     v.metrics
-                        .compute_rest_part2(blocks, prices, starting_indexes, ss, exit)
+                        .compute_rest_part2(prices, starting_indexes, ss, exit)
                 })
             }),
             Box::new(|| {

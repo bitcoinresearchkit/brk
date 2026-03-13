@@ -4,20 +4,19 @@ use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF64, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
-    blocks,
     distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}},
-    internal::{AmountPerBlockWithSum24h, PerBlockWithSum24h},
+    internal::{AmountPerBlockCumulativeWithSums, ComputedPerBlockCumulativeWithSums},
     prices,
 };
 
 #[derive(Traversable)]
 pub struct ActivityCore<M: StorageMode = Rw> {
-    pub sent: PerBlockWithSum24h<Sats, M>,
-    pub coindays_destroyed: PerBlockWithSum24h<StoredF64, M>,
+    pub sent: ComputedPerBlockCumulativeWithSums<Sats, Sats, M>,
+    pub coindays_destroyed: ComputedPerBlockCumulativeWithSums<StoredF64, StoredF64, M>,
     #[traversable(wrap = "sent", rename = "in_profit")]
-    pub sent_in_profit: AmountPerBlockWithSum24h<M>,
+    pub sent_in_profit: AmountPerBlockCumulativeWithSums<M>,
     #[traversable(wrap = "sent", rename = "in_loss")]
-    pub sent_in_loss: AmountPerBlockWithSum24h<M>,
+    pub sent_in_loss: AmountPerBlockCumulativeWithSums<M>,
 }
 
 impl ActivityCore {
@@ -103,54 +102,26 @@ impl ActivityCore {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        blocks: &blocks::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.sent.sum.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.lookback._24h,
-            &self.sent.raw.height,
-            exit,
-        )?;
-        self.coindays_destroyed.sum.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.lookback._24h,
-            &self.coindays_destroyed.raw.height,
-            exit,
-        )?;
+        self.sent
+            .compute_rest(starting_indexes.height, exit)?;
+        self.coindays_destroyed
+            .compute_rest(starting_indexes.height, exit)?;
         Ok(())
     }
 
     pub(crate) fn compute_sent_profitability(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.sent_in_profit
-            .raw
-            .compute(prices, starting_indexes.height, exit)?;
+            .compute_rest(starting_indexes.height, prices, exit)?;
         self.sent_in_loss
-            .raw
-            .compute(prices, starting_indexes.height, exit)?;
-
-        self.sent_in_profit.sum.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.lookback._24h,
-            &self.sent_in_profit.raw.sats.height,
-            &self.sent_in_profit.raw.cents.height,
-            exit,
-        )?;
-        self.sent_in_loss.sum.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.lookback._24h,
-            &self.sent_in_loss.raw.sats.height,
-            &self.sent_in_loss.raw.cents.height,
-            exit,
-        )?;
-
+            .compute_rest(starting_indexes.height, prices, exit)?;
         Ok(())
     }
 }

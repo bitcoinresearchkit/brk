@@ -12,19 +12,14 @@ use brk_error::Result;
 use brk_types::{Height, Indexes};
 use vecdb::Exit;
 
-use crate::{blocks, distribution::state::{WithCapital, CohortState, CostBasisData, RealizedState}};
+use crate::distribution::state::{WithCapital, CohortState, CostBasisData, RealizedState};
 
-/// Polymorphic dispatch for realized metric types.
-///
-/// Both `RealizedCore` and `RealizedFull` have the same inherent methods
-/// but with different behavior (Full checks/pushes more fields).
-/// This trait enables `CohortMetricsBase` to dispatch correctly via associated type.
 pub trait RealizedLike: Send + Sync {
     fn as_core(&self) -> &RealizedCore;
     fn as_core_mut(&mut self) -> &mut RealizedCore;
     fn min_stateful_len(&self) -> usize;
     fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData<WithCapital>>) -> Result<()>;
-    fn compute_rest_part1(&mut self, blocks: &blocks::Vecs, starting_indexes: &Indexes, exit: &Exit) -> Result<()>;
+    fn compute_rest_part1(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()>;
     fn compute_from_stateful(
         &mut self,
         starting_indexes: &Indexes,
@@ -40,8 +35,8 @@ impl RealizedLike for RealizedCore {
     fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData<WithCapital>>) -> Result<()> {
         self.truncate_push(height, state)
     }
-    fn compute_rest_part1(&mut self, blocks: &blocks::Vecs, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
-        self.compute_rest_part1(blocks, starting_indexes, exit)
+    fn compute_rest_part1(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
+        self.compute_rest_part1(starting_indexes, exit)
     }
     fn compute_from_stateful(&mut self, starting_indexes: &Indexes, others: &[&RealizedCore], exit: &Exit) -> Result<()> {
         self.compute_from_stateful(starting_indexes, others, exit)
@@ -55,8 +50,8 @@ impl RealizedLike for RealizedFull {
     fn truncate_push(&mut self, height: Height, state: &CohortState<RealizedState, CostBasisData<WithCapital>>) -> Result<()> {
         self.truncate_push(height, state)
     }
-    fn compute_rest_part1(&mut self, blocks: &blocks::Vecs, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
-        self.compute_rest_part1(blocks, starting_indexes, exit)
+    fn compute_rest_part1(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
+        self.compute_rest_part1(starting_indexes, exit)
     }
     fn compute_from_stateful(&mut self, starting_indexes: &Indexes, others: &[&RealizedCore], exit: &Exit) -> Result<()> {
         self.compute_from_stateful(starting_indexes, others, exit)

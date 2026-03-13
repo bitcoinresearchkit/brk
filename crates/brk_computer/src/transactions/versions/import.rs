@@ -3,18 +3,22 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::ComputedPerBlockCumulativeSum};
+use crate::{
+    indexes,
+    internal::{CachedWindowStarts, ComputedPerBlockCumulativeWithSums},
+};
 
 impl Vecs {
     pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         Ok(Self {
-            v1: ComputedPerBlockCumulativeSum::forced_import(db, "tx_v1", version, indexes)?,
-            v2: ComputedPerBlockCumulativeSum::forced_import(db, "tx_v2", version, indexes)?,
-            v3: ComputedPerBlockCumulativeSum::forced_import(db, "tx_v3", version, indexes)?,
+            v1: ComputedPerBlockCumulativeWithSums::forced_import(db, "tx_v1", version, indexes, cached_starts)?,
+            v2: ComputedPerBlockCumulativeWithSums::forced_import(db, "tx_v2", version, indexes, cached_starts)?,
+            v3: ComputedPerBlockCumulativeWithSums::forced_import(db, "tx_v3", version, indexes, cached_starts)?,
         })
     }
 }

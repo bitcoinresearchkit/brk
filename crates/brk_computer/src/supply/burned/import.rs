@@ -3,26 +3,29 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::AmountPerBlockCumulativeSum};
+use crate::{indexes, internal::{AmountPerBlockCumulativeWithSums, CachedWindowStarts}};
 
 impl Vecs {
     pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         Ok(Self {
-            opreturn: AmountPerBlockCumulativeSum::forced_import(
+            opreturn: AmountPerBlockCumulativeWithSums::forced_import(
                 db,
                 "opreturn_supply",
                 version,
                 indexes,
+                cached_starts,
             )?,
-            unspendable: AmountPerBlockCumulativeSum::forced_import(
+            unspendable: AmountPerBlockCumulativeWithSums::forced_import(
                 db,
                 "unspendable_supply",
                 version,
                 indexes,
+                cached_starts,
             )?,
         })
     }

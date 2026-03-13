@@ -13,18 +13,21 @@ use super::{
     ValueVecs, Vecs,
 };
 
+use crate::internal::CachedWindowStarts;
+
 impl Vecs {
     pub(crate) fn forced_import(
         parent_path: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let db = open_db(parent_path, DB_NAME, 1_000_000)?;
         let version = parent_version;
         let v1 = version + Version::ONE;
-        let activity = ActivityVecs::forced_import(&db, version, indexes)?;
+        let activity = ActivityVecs::forced_import(&db, version, indexes, cached_starts)?;
         let supply = SupplyVecs::forced_import(&db, v1, indexes)?;
-        let value = ValueVecs::forced_import(&db, v1, indexes)?;
+        let value = ValueVecs::forced_import(&db, v1, indexes, cached_starts)?;
         let cap = CapVecs::forced_import(&db, v1, indexes)?;
         let prices = PricesVecs::forced_import(&db, version, indexes)?;
         let adjusted = AdjustedVecs::forced_import(&db, version, indexes)?;

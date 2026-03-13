@@ -34,6 +34,7 @@ pub struct Computer<M: StorageMode = Rw> {
     pub mining: Box<mining::Vecs<M>>,
     pub transactions: Box<transactions::Vecs<M>>,
     pub scripts: Box<scripts::Vecs<M>>,
+    #[traversable(hidden)]
     pub positions: Box<positions::Vecs<M>>,
     pub cointime: Box<cointime::Vecs<M>>,
     pub constants: Box<constants::Vecs>,
@@ -81,31 +82,6 @@ impl Computer {
             })
         })?;
 
-        let (inputs, outputs) = timed("Imported inputs/outputs", || {
-            thread::scope(|s| -> Result<_> {
-                let inputs_handle = big_thread().spawn_scoped(s, || -> Result<_> {
-                    Ok(Box::new(inputs::Vecs::forced_import(
-                        &computed_path,
-                        VERSION,
-                        &indexes,
-                    )?))
-                })?;
-
-                let outputs_handle = big_thread().spawn_scoped(s, || -> Result<_> {
-                    Ok(Box::new(outputs::Vecs::forced_import(
-                        &computed_path,
-                        VERSION,
-                        &indexes,
-                    )?))
-                })?;
-
-                let inputs = inputs_handle.join().unwrap()?;
-                let outputs = outputs_handle.join().unwrap()?;
-
-                Ok((inputs, outputs))
-            })
-        })?;
-
         let (constants, prices) = timed("Imported prices/constants", || -> Result<_> {
             let constants = Box::new(constants::Vecs::new(VERSION, &indexes));
             let prices = Box::new(prices::Vecs::forced_import(
@@ -116,15 +92,35 @@ impl Computer {
             Ok((constants, prices))
         })?;
 
-        let (blocks, mining, transactions, scripts, pools, cointime) =
-            timed("Imported blocks/mining/tx/scripts/pools/cointime", || {
+        let blocks = timed("Imported blocks", || -> Result<_> {
+            Ok(Box::new(blocks::Vecs::forced_import(
+                &computed_path,
+                VERSION,
+                indexer,
+                &indexes,
+            )?))
+        })?;
+
+        let cached_starts = &blocks.lookback.cached_window_starts;
+
+        let (inputs, outputs, mining, transactions, scripts, pools, cointime) =
+            timed("Imported inputs/outputs/mining/tx/scripts/pools/cointime", || {
                 thread::scope(|s| -> Result<_> {
-                    let blocks_handle = big_thread().spawn_scoped(s, || -> Result<_> {
-                        Ok(Box::new(blocks::Vecs::forced_import(
+                    let inputs_handle = big_thread().spawn_scoped(s, || -> Result<_> {
+                        Ok(Box::new(inputs::Vecs::forced_import(
                             &computed_path,
                             VERSION,
-                            indexer,
                             &indexes,
+                            cached_starts,
+                        )?))
+                    })?;
+
+                    let outputs_handle = big_thread().spawn_scoped(s, || -> Result<_> {
+                        Ok(Box::new(outputs::Vecs::forced_import(
+                            &computed_path,
+                            VERSION,
+                            &indexes,
+                            cached_starts,
                         )?))
                     })?;
 
@@ -133,6 +129,7 @@ impl Computer {
                             &computed_path,
                             VERSION,
                             &indexes,
+                            cached_starts,
                         )?))
                     })?;
 
@@ -142,6 +139,7 @@ impl Computer {
                             VERSION,
                             indexer,
                             &indexes,
+                            cached_starts,
                         )?))
                     })?;
 
@@ -150,6 +148,7 @@ impl Computer {
                             &computed_path,
                             VERSION,
                             &indexes,
+                            cached_starts,
                         )?))
                     })?;
 
@@ -158,6 +157,7 @@ impl Computer {
                             &computed_path,
                             VERSION,
                             &indexes,
+                            cached_starts,
                         )?))
                     })?;
 
@@ -165,15 +165,17 @@ impl Computer {
                         &computed_path,
                         VERSION,
                         &indexes,
+                        cached_starts,
                     )?);
 
-                    let blocks = blocks_handle.join().unwrap()?;
+                    let inputs = inputs_handle.join().unwrap()?;
+                    let outputs = outputs_handle.join().unwrap()?;
                     let mining = mining_handle.join().unwrap()?;
                     let transactions = transactions_handle.join().unwrap()?;
                     let scripts = scripts_handle.join().unwrap()?;
                     let pools = pools_handle.join().unwrap()?;
 
-                    Ok((blocks, mining, transactions, scripts, pools, cointime))
+                    Ok((inputs, outputs, mining, transactions, scripts, pools, cointime))
                 })
             })?;
 
@@ -202,6 +204,7 @@ impl Computer {
                         &computed_path,
                         VERSION,
                         &indexes,
+                        cached_starts,
                     )?);
 
                     let market = market_handle.join().unwrap()?;
@@ -217,6 +220,7 @@ impl Computer {
                 &indexes,
                 &distribution,
                 &cointime,
+                cached_starts,
             )?))
         })?;
 
@@ -334,7 +338,6 @@ impl Computer {
             timed("Computed scripts", || {
                 self.scripts.compute(
                     indexer,
-                    &self.blocks,
                     &self.outputs,
                     &self.prices,
                     &starting_indexes,

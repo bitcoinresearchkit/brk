@@ -2,18 +2,18 @@ use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    Dollars, Height, Indexes, Sats, SatsSigned, StoredI64, StoredU64, Version,
+    Dollars, Height, Indexes, Sats, Version,
 };
 use vecdb::AnyStoredVec;
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{blocks, prices};
-
-use crate::internal::RollingDeltaExcept1m;
-
-use crate::distribution::metrics::{
-    ActivityFull, CohortMetricsBase, CostBasis, ImportConfig, OutputsFull,
-    RealizedFull, RelativeWithExtended, SupplyFull, UnrealizedFull,
+use crate::{
+    blocks,
+    distribution::metrics::{
+        ActivityFull, CohortMetricsBase, CostBasis, ImportConfig, OutputsBase, RealizedFull,
+        RelativeWithExtended, SupplyCore, UnrealizedFull,
+    },
+    prices,
 };
 
 /// Cohort metrics with extended realized + extended cost basis (no adjusted).
@@ -22,19 +22,14 @@ use crate::distribution::metrics::{
 pub struct ExtendedCohortMetrics<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub filter: Filter,
-    pub supply: Box<SupplyFull<M>>,
-    pub outputs: Box<OutputsFull<M>>,
+    pub supply: Box<SupplyCore<M>>,
+    pub outputs: Box<OutputsBase<M>>,
     pub activity: Box<ActivityFull<M>>,
     pub realized: Box<RealizedFull<M>>,
     pub cost_basis: Box<CostBasis<M>>,
     pub unrealized: Box<UnrealizedFull<M>>,
     #[traversable(flatten)]
     pub relative: Box<RelativeWithExtended<M>>,
-
-    #[traversable(wrap = "supply", rename = "delta")]
-    pub supply_delta_extended: RollingDeltaExcept1m<Sats, SatsSigned, M>,
-    #[traversable(wrap = "outputs/unspent_count", rename = "delta")]
-    pub unspent_count_delta_extended: RollingDeltaExcept1m<StoredU64, StoredI64, M>,
 }
 
 impl CohortMetricsBase for ExtendedCohortMetrics {
@@ -75,7 +70,7 @@ impl CohortMetricsBase for ExtendedCohortMetrics {
 
 impl ExtendedCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let supply = SupplyFull::forced_import(cfg)?;
+        let supply = SupplyCore::forced_import(cfg)?;
         let unrealized = UnrealizedFull::forced_import(cfg)?;
         let realized = RealizedFull::forced_import(cfg)?;
 
@@ -84,14 +79,12 @@ impl ExtendedCohortMetrics {
         Ok(Self {
             filter: cfg.filter.clone(),
             supply: Box::new(supply),
-            outputs: Box::new(OutputsFull::forced_import(cfg)?),
+            outputs: Box::new(OutputsBase::forced_import(cfg)?),
             activity: Box::new(ActivityFull::forced_import(cfg)?),
             realized: Box::new(realized),
             cost_basis: Box::new(CostBasis::forced_import(cfg)?),
             unrealized: Box::new(unrealized),
             relative: Box::new(relative),
-            supply_delta_extended: cfg.import("supply_delta", Version::ONE)?,
-            unspent_count_delta_extended: cfg.import("utxo_count_delta", Version::ONE)?,
         })
     }
 
@@ -122,25 +115,11 @@ impl ExtendedCohortMetrics {
 
         self.relative.compute(
             starting_indexes.height,
-            &self.supply.core,
+            &self.supply,
             &self.unrealized,
             height_to_market_cap,
             all_supply_sats,
             &self.supply.total.usd.height,
-            exit,
-        )?;
-
-        let window_starts = blocks.lookback.window_starts();
-        self.supply_delta_extended.compute(
-            starting_indexes.height,
-            &window_starts,
-            &self.supply.total.sats.height,
-            exit,
-        )?;
-        self.unspent_count_delta_extended.compute(
-            starting_indexes.height,
-            &window_starts,
-            &self.outputs.unspent_count.height,
             exit,
         )?;
 

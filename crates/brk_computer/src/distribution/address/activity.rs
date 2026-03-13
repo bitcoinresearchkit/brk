@@ -19,7 +19,7 @@ use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
     indexes,
-    internal::{ComputedPerBlockRollingAverage, WindowStarts},
+    internal::{CachedWindowStarts, ComputedPerBlockRollingAverage},
 };
 
 /// Per-block activity counts - reset each block.
@@ -77,6 +77,7 @@ impl ActivityCountVecs {
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         Ok(Self {
             reactivated: ComputedPerBlockRollingAverage::forced_import(
@@ -84,24 +85,28 @@ impl ActivityCountVecs {
                 &format!("{name}_reactivated"),
                 version,
                 indexes,
+                cached_starts,
             )?,
             sending: ComputedPerBlockRollingAverage::forced_import(
                 db,
                 &format!("{name}_sending"),
                 version,
                 indexes,
+                cached_starts,
             )?,
             receiving: ComputedPerBlockRollingAverage::forced_import(
                 db,
                 &format!("{name}_receiving"),
                 version,
                 indexes,
+                cached_starts,
             )?,
             both: ComputedPerBlockRollingAverage::forced_import(
                 db,
                 &format!("{name}_both"),
                 version,
                 indexes,
+                cached_starts,
             )?,
         })
     }
@@ -156,13 +161,12 @@ impl ActivityCountVecs {
     pub(crate) fn compute_rest(
         &mut self,
         max_from: Height,
-        windows: &WindowStarts<'_>,
         exit: &Exit,
     ) -> Result<()> {
-        self.reactivated.compute_rest(max_from, windows, exit)?;
-        self.sending.compute_rest(max_from, windows, exit)?;
-        self.receiving.compute_rest(max_from, windows, exit)?;
-        self.both.compute_rest(max_from, windows, exit)?;
+        self.reactivated.compute_rest(max_from, exit)?;
+        self.sending.compute_rest(max_from, exit)?;
+        self.receiving.compute_rest(max_from, exit)?;
+        self.both.compute_rest(max_from, exit)?;
         Ok(())
     }
 }
@@ -184,6 +188,7 @@ impl AddressTypeToActivityCountVecs {
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         Ok(Self::from(
             ByAddressType::<ActivityCountVecs>::new_with_name(|type_name| {
@@ -192,6 +197,7 @@ impl AddressTypeToActivityCountVecs {
                     &format!("{type_name}_{name}"),
                     version,
                     indexes,
+                    cached_starts,
                 )
             })?,
         ))
@@ -228,11 +234,10 @@ impl AddressTypeToActivityCountVecs {
     pub(crate) fn compute_rest(
         &mut self,
         max_from: Height,
-        windows: &WindowStarts<'_>,
         exit: &Exit,
     ) -> Result<()> {
         for type_vecs in self.0.values_mut() {
-            type_vecs.compute_rest(max_from, windows, exit)?;
+            type_vecs.compute_rest(max_from, exit)?;
         }
         Ok(())
     }
@@ -263,11 +268,12 @@ impl AddressActivityVecs {
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         Ok(Self {
-            all: ActivityCountVecs::forced_import(db, name, version, indexes)?,
+            all: ActivityCountVecs::forced_import(db, name, version, indexes, cached_starts)?,
             by_addresstype: AddressTypeToActivityCountVecs::forced_import(
-                db, name, version, indexes,
+                db, name, version, indexes, cached_starts,
             )?,
         })
     }
@@ -295,11 +301,10 @@ impl AddressActivityVecs {
     pub(crate) fn compute_rest(
         &mut self,
         max_from: Height,
-        windows: &WindowStarts<'_>,
         exit: &Exit,
     ) -> Result<()> {
-        self.all.compute_rest(max_from, windows, exit)?;
-        self.by_addresstype.compute_rest(max_from, windows, exit)?;
+        self.all.compute_rest(max_from, exit)?;
+        self.by_addresstype.compute_rest(max_from, exit)?;
         Ok(())
     }
 

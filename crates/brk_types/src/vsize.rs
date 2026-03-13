@@ -3,7 +3,7 @@ use std::ops::{Add, AddAssign, Div, Sub, SubAssign};
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{Formattable, Pco};
+use vecdb::{CheckedSub, Formattable, Pco};
 
 use crate::Weight;
 
@@ -106,6 +106,13 @@ impl Div<usize> for VSize {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
         Self(self.0 / rhs as u64)
+    }
+}
+
+impl CheckedSub for VSize {
+    #[inline]
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self)
     }
 }
 

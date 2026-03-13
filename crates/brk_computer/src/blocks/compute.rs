@@ -21,9 +21,9 @@ impl Vecs {
         self.lookback
             .compute(&self.time, starting_indexes, exit)?;
         self.count
-            .compute(indexer, &self.lookback, starting_indexes, exit)?;
+            .compute(indexer, starting_indexes, exit)?;
         self.interval
-            .compute(indexer, &self.lookback, starting_indexes, exit)?;
+            .compute(indexer, starting_indexes, exit)?;
         self.size
             .compute(indexer, &self.lookback, starting_indexes, exit)?;
         self.weight

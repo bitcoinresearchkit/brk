@@ -2,8 +2,6 @@
 //!
 //! For metrics with stored per-block data, cumulative sums, and rolling windows.
 
-use std::ops::SubAssign;
-
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, Version};
@@ -12,7 +10,7 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ComputedPerBlock, NumericValue, RollingFull, WindowStarts},
+    internal::{CachedWindowStarts, ComputedPerBlock, NumericValue, RollingFull, WindowStarts},
 };
 
 #[derive(Traversable)]
@@ -35,11 +33,19 @@ where
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let raw = ComputedPerBlock::forced_import(db, name, version, indexes)?;
         let cumulative =
             ComputedPerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
-        let rolling = RollingFull::forced_import(db, name, version, indexes)?;
+        let rolling = RollingFull::forced_import(
+            db,
+            name,
+            version,
+            indexes,
+            &cumulative.height,
+            cached_starts,
+        )?;
 
         Ok(Self {
             raw,
@@ -48,7 +54,7 @@ where
         })
     }
 
-    /// Compute raw data via closure, then cumulative + rolling.
+    /// Compute raw data via closure, then cumulative + rolling distribution.
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
@@ -57,7 +63,7 @@ where
         compute_raw: impl FnOnce(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
     ) -> Result<()>
     where
-        T: From<f64> + Default + SubAssign + Copy + Ord,
+        T: From<f64> + Default + Copy + Ord,
         f64: From<T>,
     {
         compute_raw(&mut self.raw.height)?;

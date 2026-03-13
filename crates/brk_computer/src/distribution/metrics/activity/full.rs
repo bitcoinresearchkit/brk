@@ -4,9 +4,9 @@ use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF32, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
-use crate::internal::{ComputedPerBlock, Identity, LazyPerBlock, RollingWindowsFrom1w};
+use crate::internal::{ComputedPerBlock, Identity, LazyPerBlock};
 
-use crate::{blocks, distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}}};
+use crate::distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}};
 
 use super::ActivityCore;
 
@@ -17,18 +17,6 @@ pub struct ActivityFull<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub inner: ActivityCore<M>,
 
-    #[traversable(wrap = "coindays_destroyed", rename = "cumulative")]
-    pub coindays_destroyed_cumulative: ComputedPerBlock<StoredF64, M>,
-    #[traversable(wrap = "coindays_destroyed", rename = "sum")]
-    pub coindays_destroyed_sum: RollingWindowsFrom1w<StoredF64, M>,
-
-    #[traversable(wrap = "sent", rename = "sum")]
-    pub sent_sum_extended: RollingWindowsFrom1w<Sats, M>,
-    #[traversable(wrap = "sent/in_profit", rename = "sum")]
-    pub sent_in_profit_sum_extended: RollingWindowsFrom1w<Sats, M>,
-    #[traversable(wrap = "sent/in_loss", rename = "sum")]
-    pub sent_in_loss_sum_extended: RollingWindowsFrom1w<Sats, M>,
-
     pub coinyears_destroyed: LazyPerBlock<StoredF64, StoredF64>,
 
     pub dormancy: ComputedPerBlock<StoredF32, M>,
@@ -38,23 +26,17 @@ pub struct ActivityFull<M: StorageMode = Rw> {
 impl ActivityFull {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v1 = Version::ONE;
-        let coindays_destroyed_sum: RollingWindowsFrom1w<StoredF64> =
-            cfg.import("coindays_destroyed", v1)?;
+        let inner = ActivityCore::forced_import(cfg)?;
 
-        let coinyears_destroyed = LazyPerBlock::from_computed::<Identity<StoredF64>>(
+        let coinyears_destroyed = LazyPerBlock::from_height_source::<Identity<StoredF64>>(
             &cfg.name("coinyears_destroyed"),
-            v1,
-            coindays_destroyed_sum._1y.height.read_only_boxed_clone(),
-            &coindays_destroyed_sum._1y,
+            cfg.version + v1,
+            inner.coindays_destroyed.sum._1y.height.read_only_boxed_clone(),
+            cfg.indexes,
         );
 
         Ok(Self {
-            inner: ActivityCore::forced_import(cfg)?,
-            coindays_destroyed_cumulative: cfg.import("coindays_destroyed_cumulative", v1)?,
-            coindays_destroyed_sum,
-            sent_sum_extended: cfg.import("sent", v1)?,
-            sent_in_profit_sum_extended: cfg.import("sent_in_profit", v1)?,
-            sent_in_loss_sum_extended: cfg.import("sent_in_loss", v1)?,
+            inner,
             coinyears_destroyed,
             dormancy: cfg.import("dormancy", v1)?,
             velocity: cfg.import("velocity", v1)?,
@@ -92,50 +74,10 @@ impl ActivityFull {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        blocks: &blocks::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.inner
-            .compute_rest_part1(blocks, starting_indexes, exit)?;
-
-        self.coindays_destroyed_cumulative
-            .height
-            .compute_cumulative(
-                starting_indexes.height,
-                &self.inner.coindays_destroyed.raw.height,
-                exit,
-            )?;
-
-        let window_starts = blocks.lookback.window_starts();
-        self.coindays_destroyed_sum.compute_rolling_sum(
-            starting_indexes.height,
-            &window_starts,
-            &self.inner.coindays_destroyed.raw.height,
-            exit,
-        )?;
-
-        self.sent_sum_extended.compute_rolling_sum(
-            starting_indexes.height,
-            &window_starts,
-            &self.inner.sent.raw.height,
-            exit,
-        )?;
-
-        self.sent_in_profit_sum_extended.compute_rolling_sum(
-            starting_indexes.height,
-            &window_starts,
-            &self.inner.sent_in_profit.raw.sats.height,
-            exit,
-        )?;
-        self.sent_in_loss_sum_extended.compute_rolling_sum(
-            starting_indexes.height,
-            &window_starts,
-            &self.inner.sent_in_loss.raw.sats.height,
-            exit,
-        )?;
-
-        Ok(())
+        self.inner.compute_rest_part1(starting_indexes, exit)
     }
 
     pub(crate) fn compute_rest_part2(

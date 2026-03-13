@@ -3,7 +3,7 @@ use brk_error::Result;
 use brk_types::{Cents, Height, Indexes, Version};
 use vecdb::{Exit, ReadableVec};
 
-use crate::{blocks, distribution::cohorts::traits::DynCohortVecs, distribution::metrics::TypeCohortMetrics, prices};
+use crate::{distribution::cohorts::traits::DynCohortVecs, distribution::metrics::TypeCohortMetrics, prices};
 
 use super::UTXOCohortVecs;
 
@@ -63,13 +63,12 @@ impl DynCohortVecs for UTXOCohortVecs<TypeCohortMetrics> {
 
     fn compute_rest_part1(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics
-            .compute_rest_part1(blocks, prices, starting_indexes, exit)
+            .compute_rest_part1(prices, starting_indexes, exit)
     }
 
     fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {

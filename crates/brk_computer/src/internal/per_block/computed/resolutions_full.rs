@@ -3,8 +3,6 @@
 //! For metrics derived from indexer sources (no stored height vec).
 //! Cumulative gets its own ComputedPerBlock so it has LazyAggVec index views too.
 
-use std::ops::SubAssign;
-
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, Version};
@@ -13,7 +11,7 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ComputedPerBlock, NumericValue, RollingFull, WindowStarts},
+    internal::{CachedWindowStarts, ComputedPerBlock, NumericValue, RollingFull, WindowStarts},
 };
 
 #[derive(Traversable)]
@@ -35,10 +33,18 @@ where
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let cumulative =
             ComputedPerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
-        let rolling = RollingFull::forced_import(db, name, version, indexes)?;
+        let rolling = RollingFull::forced_import(
+            db,
+            name,
+            version,
+            indexes,
+            &cumulative.height,
+            cached_starts,
+        )?;
 
         Ok(Self {
             cumulative,
@@ -54,7 +60,7 @@ where
         exit: &Exit,
     ) -> Result<()>
     where
-        T: From<f64> + Default + SubAssign + Copy + Ord,
+        T: From<f64> + Default + Copy + Ord,
         f64: From<T>,
     {
         self.cumulative

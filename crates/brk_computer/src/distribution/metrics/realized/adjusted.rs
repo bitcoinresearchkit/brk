@@ -4,30 +4,22 @@ use brk_types::{Cents, Height, Indexes, StoredF64, Version};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
-    blocks,
-    internal::{ComputedPerBlock, RatioCents64, RollingWindows},
+    distribution::metrics::ImportConfig,
+    internal::{ComputedPerBlockCumulativeWithSums, RatioCents64, RollingWindows},
 };
-
-use crate::distribution::metrics::ImportConfig;
 
 #[derive(Traversable)]
 pub struct AdjustedSopr<M: StorageMode = Rw> {
-    pub value_created: ComputedPerBlock<Cents, M>,
-    pub value_destroyed: ComputedPerBlock<Cents, M>,
-    #[traversable(wrap = "value_created", rename = "sum")]
-    pub value_created_sum: RollingWindows<Cents, M>,
-    #[traversable(wrap = "value_destroyed", rename = "sum")]
-    pub value_destroyed_sum: RollingWindows<Cents, M>,
+    pub value_created: ComputedPerBlockCumulativeWithSums<Cents, Cents, M>,
+    pub value_destroyed: ComputedPerBlockCumulativeWithSums<Cents, Cents, M>,
     pub ratio: RollingWindows<StoredF64, M>,
 }
 
 impl AdjustedSopr {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            value_created: cfg.import("adj_value_created", Version::ZERO)?,
-            value_destroyed: cfg.import("adj_value_destroyed", Version::ZERO)?,
-            value_created_sum: cfg.import("adj_value_created", Version::ONE)?,
-            value_destroyed_sum: cfg.import("adj_value_destroyed", Version::ONE)?,
+            value_created: cfg.import("adj_value_created", Version::ONE)?,
+            value_destroyed: cfg.import("adj_value_destroyed", Version::ONE)?,
             ratio: cfg.import("asopr", Version::ONE)?,
         })
     }
@@ -35,7 +27,6 @@ impl AdjustedSopr {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_rest_part2(
         &mut self,
-        blocks: &blocks::Vecs,
         starting_indexes: &Indexes,
         base_value_created: &impl ReadableVec<Height, Cents>,
         base_value_destroyed: &impl ReadableVec<Height, Cents>,
@@ -44,41 +35,32 @@ impl AdjustedSopr {
         exit: &Exit,
     ) -> Result<()> {
         // Compute value_created = base.value_created - under_1h.value_created
-        self.value_created.height.compute_subtract(
+        self.value_created.raw.height.compute_subtract(
             starting_indexes.height,
             base_value_created,
             under_1h_value_created,
             exit,
         )?;
-        self.value_destroyed.height.compute_subtract(
+        self.value_destroyed.raw.height.compute_subtract(
             starting_indexes.height,
             base_value_destroyed,
             under_1h_value_destroyed,
             exit,
         )?;
 
-        // Adjusted value created/destroyed rolling sums
-        let window_starts = blocks.lookback.window_starts();
-        self.value_created_sum.compute_rolling_sum(
-            starting_indexes.height,
-            &window_starts,
-            &self.value_created.height,
-            exit,
-        )?;
-        self.value_destroyed_sum.compute_rolling_sum(
-            starting_indexes.height,
-            &window_starts,
-            &self.value_destroyed.height,
-            exit,
-        )?;
+        // Cumulatives (rolling sums are lazy)
+        self.value_created
+            .compute_rest(starting_indexes.height, exit)?;
+        self.value_destroyed
+            .compute_rest(starting_indexes.height, exit)?;
 
-        // SOPR ratios from rolling sums
+        // SOPR ratios from lazy rolling sums
         for ((sopr, vc), vd) in self
             .ratio
             .as_mut_array()
             .into_iter()
-            .zip(self.value_created_sum.as_array())
-            .zip(self.value_destroyed_sum.as_array())
+            .zip(self.value_created.sum.as_array())
+            .zip(self.value_destroyed.sum.as_array())
         {
             sopr.compute_binary::<Cents, Cents, RatioCents64>(
                 starting_indexes.height,

@@ -8,9 +8,9 @@ pub use brk_traversable_derive::Traversable;
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AggFold, AnyExportableVec, AnyVec, BytesVec, BytesVecValue, CompressionStrategy, EagerVec,
-    Formattable, LazyAggVec, LazyVecFrom1, LazyVecFrom2, LazyVecFrom3, RawStrategy,
-    ReadOnlyCompressedVec, ReadOnlyRawVec, StoredVec, VecIndex, VecValue,
+    AggFold, AnyExportableVec, AnyVec, BytesVec, BytesVecValue, CompressionStrategy, DeltaOp,
+    EagerVec, Formattable, LazyAggVec, LazyDeltaVec, LazyVecFrom1, LazyVecFrom2, LazyVecFrom3,
+    RawStrategy, ReadOnlyCompressedVec, ReadOnlyRawVec, StoredVec, VecIndex, VecValue,
 };
 
 pub trait Traversable {
@@ -232,6 +232,22 @@ where
 
     fn to_tree_node(&self) -> TreeNode {
         make_leaf::<I, O, _>(self)
+    }
+}
+
+impl<I, S, T, Op> Traversable for LazyDeltaVec<I, S, T, Op>
+where
+    I: VecIndex,
+    S: VecValue,
+    T: VecValue + Formattable + Serialize + JsonSchema,
+    Op: DeltaOp<S, T>,
+{
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::once(self as &dyn AnyExportableVec)
+    }
+
+    fn to_tree_node(&self) -> TreeNode {
+        make_leaf::<I, T, _>(self)
     }
 }
 

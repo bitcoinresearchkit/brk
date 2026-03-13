@@ -1,7 +1,12 @@
 mod base;
+mod cumulative_sum;
+mod cumulative_sum_with_deltas;
 mod lazy;
-mod with_sum_24h;
-
+mod lazy_rolling_sum;
+mod with_deltas;
 pub use base::*;
+pub use cumulative_sum::*;
+pub use cumulative_sum_with_deltas::*;
 pub use lazy::*;
-pub use with_sum_24h::*;
+pub use lazy_rolling_sum::*;
+pub use with_deltas::*;

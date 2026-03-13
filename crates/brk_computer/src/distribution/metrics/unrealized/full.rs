@@ -6,7 +6,7 @@ use vecdb::{AnyStoredVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::distribution::state::UnrealizedState;
 use crate::internal::{CentsSubtractToCentsSigned, FiatPerBlock};
-use crate::{blocks, distribution::metrics::ImportConfig, prices};
+use crate::{distribution::metrics::ImportConfig, prices};
 
 use super::UnrealizedBase;
 
@@ -88,12 +88,11 @@ impl UnrealizedFull {
 
     pub(crate) fn compute_rest_all(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.inner.compute_rest(blocks, starting_indexes, exit)?;
+        self.inner.compute_rest(starting_indexes, exit)?;
 
         self.gross_pnl.cents.height.compute_add(
             starting_indexes.height,

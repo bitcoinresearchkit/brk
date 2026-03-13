@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedPerBlock, ComputedPerBlockCumulativeSum},
+    internal::{CachedWindowStarts, ComputedPerBlock, ComputedPerBlockCumulativeWithSums},
 };
 
 impl Vecs {
@@ -13,19 +13,22 @@ impl Vecs {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         Ok(Self {
-            coinblocks_created: ComputedPerBlockCumulativeSum::forced_import(
+            coinblocks_created: ComputedPerBlockCumulativeWithSums::forced_import(
                 db,
                 "coinblocks_created",
                 version,
                 indexes,
+                cached_starts,
             )?,
-            coinblocks_stored: ComputedPerBlockCumulativeSum::forced_import(
+            coinblocks_stored: ComputedPerBlockCumulativeWithSums::forced_import(
                 db,
                 "coinblocks_stored",
                 version,
                 indexes,
+                cached_starts,
             )?,
             liveliness: ComputedPerBlock::forced_import(db, "liveliness", version, indexes)?,
             vaultedness: ComputedPerBlock::forced_import(db, "vaultedness", version, indexes)?,

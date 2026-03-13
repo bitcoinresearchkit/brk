@@ -18,11 +18,8 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let window_starts = lookback.window_starts();
-
         self.coinbase.compute(
             starting_indexes.height,
-            &window_starts,
             prices,
             exit,
             |vec| {
@@ -59,6 +56,8 @@ impl Vecs {
         )?;
 
         // Coinbase fee is 0, so including it in the sum doesn't affect the result
+        let window_starts = lookback.window_starts();
+
         self.fees.compute(
             starting_indexes.height,
             &window_starts,
@@ -78,7 +77,7 @@ impl Vecs {
 
         self.subsidy.base.sats.height.compute_transform2(
             starting_indexes.height,
-            &self.coinbase.base.sats.height,
+            &self.coinbase.raw.sats.height,
             &self.fees.base.sats.height,
             |(height, coinbase, fees, ..)| {
                 (
@@ -94,7 +93,6 @@ impl Vecs {
 
         self.unclaimed.compute(
             starting_indexes.height,
-            &window_starts,
             prices,
             exit,
             |vec| {
@@ -125,7 +123,7 @@ impl Vecs {
         self.fee_dominance_rolling
             .compute_binary::<Sats, Sats, RatioSatsBp16, _, _>(
                 starting_indexes.height,
-                self.fees.rolling.as_array().map(|w| &w.sum.sats.height),
+                self.fees.sum.as_array().map(|w| &w.sats.height),
                 self.coinbase.sum.as_array().map(|w| &w.sats.height),
                 exit,
             )?;
@@ -166,7 +164,7 @@ impl Vecs {
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32, _, _>(
                 starting_indexes.height,
                 self.coinbase.sum.as_array().map(|w| &w.usd.height),
-                self.fees.rolling.as_array().map(|w| &w.sum.usd.height),
+                self.fees.sum.as_array().map(|w| &w.usd.height),
                 exit,
             )?;
 

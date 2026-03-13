@@ -1,61 +1,53 @@
 use brk_cohort::ByAddressType;
-use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, StoredI64, StoredU64, Version};
-use vecdb::{Database, Exit, Rw, StorageMode};
+use brk_types::{BasisPoints32, StoredI64, StoredU64, Version};
 
 use crate::{
     indexes,
-    internal::{WindowStarts, RollingDelta},
+    internal::{CachedWindowStarts, LazyRollingDeltasFromHeight},
 };
 
 use super::AddressCountsVecs;
 
-#[derive(Traversable)]
-pub struct DeltaVecs<M: StorageMode = Rw> {
-    pub all: RollingDelta<StoredU64, StoredI64, M>,
+type AddrDelta = LazyRollingDeltasFromHeight<StoredU64, StoredI64, BasisPoints32>;
+
+#[derive(Clone, Traversable)]
+pub struct DeltaVecs {
+    pub all: AddrDelta,
     #[traversable(flatten)]
-    pub by_addresstype: ByAddressType<RollingDelta<StoredU64, StoredI64, M>>,
+    pub by_addresstype: ByAddressType<AddrDelta>,
 }
 
 impl DeltaVecs {
-    pub(crate) fn forced_import(
-        db: &Database,
+    pub(crate) fn new(
         version: Version,
+        address_count: &AddressCountsVecs,
+        cached_starts: &CachedWindowStarts,
         indexes: &indexes::Vecs,
-    ) -> Result<Self> {
+    ) -> Self {
         let version = version + Version::TWO;
 
-        let all = RollingDelta::forced_import(db, "address_count", version, indexes)?;
+        let all = LazyRollingDeltasFromHeight::new(
+            "address_count",
+            version,
+            &address_count.all.0.height,
+            cached_starts,
+            indexes,
+        );
 
-        let by_addresstype = ByAddressType::new_with_name(|name| {
-            RollingDelta::forced_import(db, &format!("{name}_address_count"), version, indexes)
-        })?;
+        let by_addresstype = address_count.by_addresstype.map_with_name(|name, addr| {
+            LazyRollingDeltasFromHeight::new(
+                &format!("{name}_address_count"),
+                version,
+                &addr.0.height,
+                cached_starts,
+                indexes,
+            )
+        });
 
-        Ok(Self {
+        Self {
             all,
             by_addresstype,
-        })
-    }
-
-    pub(crate) fn compute(
-        &mut self,
-        max_from: Height,
-        windows: &WindowStarts<'_>,
-        address_count: &AddressCountsVecs,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.all
-            .compute(max_from, windows, &address_count.all.height, exit)?;
-
-        for ((_, growth), (_, addr)) in self
-            .by_addresstype
-            .iter_mut()
-            .zip(address_count.by_addresstype.iter())
-        {
-            growth.compute(max_from, windows, &addr.height, exit)?;
         }
-
-        Ok(())
     }
 }

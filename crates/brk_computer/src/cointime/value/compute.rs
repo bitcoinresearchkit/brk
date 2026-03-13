@@ -4,27 +4,24 @@ use vecdb::Exit;
 
 use super::super::activity;
 use super::Vecs;
-use crate::{blocks, distribution, prices};
+use crate::{distribution, prices};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         starting_indexes: &Indexes,
         prices: &prices::Vecs,
-        blocks: &blocks::Vecs,
         distribution: &distribution::Vecs,
         activity: &activity::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        let window_starts = blocks.lookback.window_starts();
-
         let all_metrics = &distribution.utxo_cohorts.all.metrics;
         let coinblocks_destroyed = &distribution.coinblocks_destroyed;
         let coindays_destroyed = &all_metrics.activity.coindays_destroyed;
         let circulating_supply = &all_metrics.supply.total.btc.height;
 
         self.destroyed
-            .compute(starting_indexes.height, &window_starts, exit, |vec| {
+            .compute(starting_indexes.height, exit, |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &prices.spot.usd.height,
@@ -35,7 +32,7 @@ impl Vecs {
             })?;
 
         self.created
-            .compute(starting_indexes.height, &window_starts, exit, |vec| {
+            .compute(starting_indexes.height, exit, |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &prices.spot.usd.height,
@@ -46,7 +43,7 @@ impl Vecs {
             })?;
 
         self.stored
-            .compute(starting_indexes.height, &window_starts, exit, |vec| {
+            .compute(starting_indexes.height, exit, |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
                     &prices.spot.usd.height,
@@ -60,7 +57,7 @@ impl Vecs {
         // Supply-adjusted to account for growing supply over time
         // This is a key input for Reserve Risk / HODL Bank calculation
         self.vocdd
-            .compute(starting_indexes.height, &window_starts, exit, |vec| {
+            .compute(starting_indexes.height, exit, |vec| {
                 vec.compute_transform3(
                     starting_indexes.height,
                     &prices.spot.usd.height,

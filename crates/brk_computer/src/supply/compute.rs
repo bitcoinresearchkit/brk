@@ -22,7 +22,6 @@ impl Vecs {
         self.burned.compute(
             scripts,
             mining,
-            &blocks.lookback,
             prices,
             starting_indexes,
             exit,
@@ -44,27 +43,16 @@ impl Vecs {
         self.velocity
             .compute(blocks, transactions, distribution, starting_indexes, exit)?;
 
-        // 4. Compute market cap delta (change + rate across 4 windows)
-        let window_starts = blocks.lookback.window_starts();
-
-        self.market_cap_delta.compute(
-            starting_indexes.height,
-            &window_starts,
-            &self.market_cap.cents.height,
-            exit,
-        )?;
-
-        // 5. market_cap_rate - realized_cap_rate per window
+        // 4. market_cap_rate - realized_cap_rate per window
         let all_realized = &distribution.utxo_cohorts.all.metrics.realized;
-        let mcr_arr = self.market_cap_delta.rate.0.as_array();
+        let mcr_arr = self.market_cap_delta.rate.as_array();
         let diff_arr = self.market_minus_realized_cap_growth_rate.0.as_mut_array();
 
-        // 24h, 1w, 1y from extended; 1m from core delta
         let rcr_rates = [
-            &all_realized.cap_delta_extended.rate._24h.bps.height,
-            &all_realized.cap_delta_extended.rate._1w.bps.height,
-            &all_realized.cap_delta.rate_1m.bps.height,
-            &all_realized.cap_delta_extended.rate._1y.bps.height,
+            &all_realized.cap.delta.rate._24h.bps.height,
+            &all_realized.cap.delta.rate._1w.bps.height,
+            &all_realized.cap.delta.rate._1m.bps.height,
+            &all_realized.cap.delta.rate._1y.bps.height,
         ];
 
         for i in 0..4 {

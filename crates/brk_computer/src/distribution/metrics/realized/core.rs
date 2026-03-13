@@ -1,18 +1,16 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Cents, CentsSigned, Dollars, Height, Indexes, StoredF64, Version};
+use brk_types::{BasisPointsSigned32, Bitcoin, Cents, CentsSigned, Dollars, Height, Indexes, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
     AnyStoredVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
 };
 
 use crate::{
-    blocks,
     distribution::state::{CohortState, CostBasisOps, RealizedOps},
     internal::{
-        ComputedPerBlock, FiatRollingDelta1m, LazyPerBlock,
-        NegCentsUnsignedToDollars, PerBlockWithSum24h, RatioCents64,
-        RollingWindow24hPerBlock,
+        FiatPerBlockCumulativeWithSumsAndDeltas, LazyPerBlock, NegCentsUnsignedToDollars,
+        RatioCents64, RollingWindow24hPerBlock,
     },
     prices,
 };
@@ -33,23 +31,14 @@ pub struct RealizedCore<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub minimal: RealizedMinimal<M>,
 
-    #[traversable(wrap = "profit", rename = "cumulative")]
-    pub profit_cumulative: ComputedPerBlock<Cents, M>,
-    #[traversable(wrap = "loss", rename = "cumulative")]
-    pub loss_cumulative: ComputedPerBlock<Cents, M>,
-
-    #[traversable(wrap = "cap", rename = "delta")]
-    pub cap_delta: FiatRollingDelta1m<Cents, CentsSigned, M>,
-
     #[traversable(wrap = "loss", rename = "negative")]
     pub neg_loss: LazyPerBlock<Dollars, Cents>,
-    pub net_pnl: PerBlockWithSum24h<CentsSigned, M>,
+    pub net_pnl: FiatPerBlockCumulativeWithSumsAndDeltas<CentsSigned, CentsSigned, BasisPointsSigned32, M>,
     pub sopr: RealizedSoprCore<M>,
 }
 
 impl RealizedCore {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let v0 = Version::ZERO;
         let v1 = Version::ONE;
 
         let minimal = RealizedMinimal::forced_import(cfg)?;
@@ -61,13 +50,19 @@ impl RealizedCore {
             cfg.indexes,
         );
 
+        let net_pnl = FiatPerBlockCumulativeWithSumsAndDeltas::forced_import(
+            cfg.db,
+            &cfg.name("net_realized_pnl"),
+            cfg.version + v1,
+            Version::new(4),
+            cfg.indexes,
+            cfg.cached_starts,
+        )?;
+
         Ok(Self {
             minimal,
-            profit_cumulative: cfg.import("realized_profit_cumulative", v0)?,
-            loss_cumulative: cfg.import("realized_loss_cumulative", v0)?,
-            cap_delta: cfg.import("realized_cap_delta", v1)?,
             neg_loss: neg_realized_loss,
-            net_pnl: cfg.import("net_realized_pnl", v1)?,
+            net_pnl,
             sopr: RealizedSoprCore {
                 ratio: cfg.import("sopr", v1)?,
             },
@@ -102,25 +97,13 @@ impl RealizedCore {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        blocks: &blocks::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.minimal
-            .compute_rest_part1(blocks, starting_indexes, exit)?;
+            .compute_rest_part1(starting_indexes, exit)?;
 
-        self.profit_cumulative.height.compute_cumulative(
-            starting_indexes.height,
-            &self.minimal.profit.raw.cents.height,
-            exit,
-        )?;
-        self.loss_cumulative.height.compute_cumulative(
-            starting_indexes.height,
-            &self.minimal.loss.raw.cents.height,
-            exit,
-        )?;
-
-        self.net_pnl.raw.height.compute_transform2(
+        self.net_pnl.raw.cents.height.compute_transform2(
             starting_indexes.height,
             &self.minimal.profit.raw.cents.height,
             &self.minimal.loss.raw.cents.height,
@@ -138,7 +121,6 @@ impl RealizedCore {
 
     pub(crate) fn compute_rest_part2(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         height_to_supply: &impl ReadableVec<Height, Bitcoin>,
@@ -147,19 +129,8 @@ impl RealizedCore {
         self.minimal
             .compute_rest_part2(prices, starting_indexes, height_to_supply, exit)?;
 
-        self.cap_delta.compute(
-            starting_indexes.height,
-            &blocks.lookback._1m,
-            &self.minimal.cap.cents.height,
-            exit,
-        )?;
-
-        self.net_pnl.sum.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.lookback._24h,
-            &self.net_pnl.raw.height,
-            exit,
-        )?;
+        self.net_pnl
+            .compute_rest(starting_indexes.height, exit)?;
 
         self.sopr
             .ratio

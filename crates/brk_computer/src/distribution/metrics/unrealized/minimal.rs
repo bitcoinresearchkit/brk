@@ -15,7 +15,12 @@ pub struct UnrealizedMinimal<M: StorageMode = Rw> {
 impl UnrealizedMinimal {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            nupl: cfg.import("nupl", Version::ONE)?,
+            nupl: RatioPerBlock::forced_import_raw(
+                cfg.db,
+                &cfg.name("nupl"),
+                cfg.version + Version::ONE,
+                cfg.indexes,
+            )?,
         })
     }
 

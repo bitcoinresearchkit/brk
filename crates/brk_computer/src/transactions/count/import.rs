@@ -4,7 +4,7 @@ use brk_types::{StoredBool, TxIndex, Version};
 use vecdb::{Database, LazyVecFrom2, ReadableCloneableVec};
 
 use super::Vecs;
-use crate::{indexes, internal::ComputedPerBlockFull};
+use crate::{indexes, internal::{CachedWindowStarts, ComputedPerBlockFull}};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -12,6 +12,7 @@ impl Vecs {
         version: Version,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let txindex_to_is_coinbase = LazyVecFrom2::init(
             "is_coinbase",
@@ -26,7 +27,13 @@ impl Vecs {
         );
 
         Ok(Self {
-            total: ComputedPerBlockFull::forced_import(db, "tx_count", version, indexes)?,
+            total: ComputedPerBlockFull::forced_import(
+                db,
+                "tx_count",
+                version,
+                indexes,
+                cached_starts,
+            )?,
             is_coinbase: txindex_to_is_coinbase,
         })
     }

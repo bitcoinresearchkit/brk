@@ -26,7 +26,7 @@ impl Query {
         let start = end.saturating_sub(time_period.block_count());
 
         let pools = pools();
-        let mut pool_data: Vec<(&'static brk_types::Pool, u32)> = Vec::new();
+        let mut pool_data: Vec<(&'static brk_types::Pool, u64)> = Vec::new();
 
         // For each pool, get cumulative count at end and start, subtract to get range count
         for (pool_id, cumulative) in computer
@@ -42,9 +42,9 @@ impl Query {
                     .map(|(id, v)| (id, &v.blocks_mined.cumulative.height)),
             )
         {
-            let count_at_end: u32 = *cumulative.collect_one(current_height).unwrap_or_default();
+            let count_at_end: u64 = *cumulative.collect_one(current_height).unwrap_or_default();
 
-            let count_at_start: u32 = if start == 0 {
+            let count_at_start: u64 = if start == 0 {
                 0
             } else {
                 *cumulative
@@ -62,7 +62,7 @@ impl Query {
         // Sort by block count descending
         pool_data.sort_by(|a, b| b.1.cmp(&a.1));
 
-        let total_blocks: u32 = pool_data.iter().map(|(_, count)| count).sum();
+        let total_blocks: u64 = pool_data.iter().map(|(_, count)| count).sum();
 
         // Build stats with ranks
         let pool_stats: Vec<PoolStats> = pool_data
@@ -116,11 +116,11 @@ impl Query {
             .ok_or_else(|| Error::NotFound("Pool data not found".into()))?;
 
         // Get total blocks (all time)
-        let total_all: u32 = *cumulative.collect_one(current_height).unwrap_or_default();
+        let total_all: u64 = *cumulative.collect_one(current_height).unwrap_or_default();
 
         // Get blocks for 24h (144 blocks)
         let start_24h = end.saturating_sub(144);
-        let count_before_24h: u32 = if start_24h == 0 {
+        let count_before_24h: u64 = if start_24h == 0 {
             0
         } else {
             *cumulative
@@ -131,7 +131,7 @@ impl Query {
 
         // Get blocks for 1w (1008 blocks)
         let start_1w = end.saturating_sub(1008);
-        let count_before_1w: u32 = if start_1w == 0 {
+        let count_before_1w: u64 = if start_1w == 0 {
             0
         } else {
             *cumulative
@@ -141,9 +141,9 @@ impl Query {
         let total_1w = total_all.saturating_sub(count_before_1w);
 
         // Calculate total network blocks for share calculation
-        let network_blocks_all = (end + 1) as u32;
-        let network_blocks_24h = (end - start_24h + 1) as u32;
-        let network_blocks_1w = (end - start_1w + 1) as u32;
+        let network_blocks_all = (end + 1) as u64;
+        let network_blocks_24h = (end - start_24h + 1) as u64;
+        let network_blocks_1w = (end - start_1w + 1) as u64;
 
         let share_all = if network_blocks_all > 0 {
             total_all as f64 / network_blocks_all as f64

@@ -4,11 +4,12 @@ use brk_types::{Cents, Dollars, Height, Indexes, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{blocks, prices};
-
-use crate::distribution::metrics::{
-    ActivityFull, CohortMetricsBase, ImportConfig, AdjustedSopr,
-    RealizedFull, UnrealizedFull,
+use crate::{
+    blocks,
+    distribution::metrics::{
+        ActivityFull, AdjustedSopr, CohortMetricsBase, ImportConfig, RealizedFull, UnrealizedFull,
+    },
+    prices,
 };
 
 use super::ExtendedCohortMetrics;
@@ -78,7 +79,6 @@ impl ExtendedAdjustedCohortMetrics {
         )?;
 
         self.asopr.compute_rest_part2(
-            blocks,
             starting_indexes,
             &self.inner.realized.minimal.sopr.value_created.raw.height,
             &self.inner.realized.minimal.sopr.value_destroyed.raw.height,

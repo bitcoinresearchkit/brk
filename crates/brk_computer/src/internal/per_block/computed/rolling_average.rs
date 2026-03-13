@@ -1,8 +1,7 @@
 //! ComputedPerBlock with rolling average (no distribution stats).
 //!
-//! Stored height data + 4-window rolling averages (24h, 1w, 1m, 1y).
-//! Use instead of ComputedPerBlockDistribution when only the average
-//! is analytically useful (e.g., block interval, activity counts).
+//! Stored height data + f64 cumulative + lazy 4-window rolling averages.
+//! Rolling averages are computed on-the-fly from the cumulative via DeltaAvg.
 
 use brk_error::Result;
 
@@ -13,7 +12,7 @@ use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode};
 
 use crate::indexes;
 
-use crate::internal::{NumericValue, RollingWindows, WindowStarts};
+use crate::internal::{CachedWindowStarts, LazyRollingAvgsFromHeight, NumericValue};
 
 #[derive(Traversable)]
 pub struct ComputedPerBlockRollingAverage<T, M: StorageMode = Rw>
@@ -21,8 +20,10 @@ where
     T: NumericValue + JsonSchema,
 {
     pub height: M::Stored<EagerVec<PcoVec<Height, T>>>,
+    #[traversable(hidden)]
+    pub cumulative: M::Stored<EagerVec<PcoVec<Height, f64>>>,
     #[traversable(flatten)]
-    pub average: RollingWindows<T, M>,
+    pub average: LazyRollingAvgsFromHeight<T>,
 }
 
 impl<T> ComputedPerBlockRollingAverage<T>
@@ -34,45 +35,41 @@ where
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, version)?;
-        let average =
-            RollingWindows::forced_import(db, &format!("{name}_average"), version + Version::ONE, indexes)?;
+        let cumulative: EagerVec<PcoVec<Height, f64>> =
+            EagerVec::forced_import(db, &format!("{name}_cumulative"), version)?;
+        let average = LazyRollingAvgsFromHeight::new(
+            &format!("{name}_average"),
+            version + Version::ONE,
+            &cumulative,
+            cached_starts,
+            indexes,
+        );
 
-        Ok(Self { height, average })
+        Ok(Self {
+            height,
+            cumulative,
+            average,
+        })
     }
 
-    /// Compute height data via closure, then rolling averages.
+    /// Compute height data via closure, then cumulative. Rolling averages are lazy.
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        windows: &WindowStarts<'_>,
         exit: &Exit,
         compute_height: impl FnOnce(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
-    ) -> Result<()>
-    where
-        T: Default,
-        f64: From<T>,
-    {
+    ) -> Result<()> {
         compute_height(&mut self.height)?;
-        self.compute_rest(max_from, windows, exit)
+        self.compute_rest(max_from, exit)
     }
 
-    /// Compute rolling averages from already-populated height data.
-    pub(crate) fn compute_rest(
-        &mut self,
-        max_from: Height,
-        windows: &WindowStarts<'_>,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        T: Default,
-        f64: From<T>,
-    {
-        for (w, starts) in self.average.0.as_mut_array().into_iter().zip(windows.as_array()) {
-            w.height
-                .compute_rolling_average(max_from, *starts, &self.height, exit)?;
-        }
+    /// Compute cumulative from already-populated height data. Rolling averages are lazy.
+    pub(crate) fn compute_rest(&mut self, max_from: Height, exit: &Exit) -> Result<()> {
+        self.cumulative
+            .compute_cumulative(max_from, &self.height, exit)?;
         Ok(())
     }
 }

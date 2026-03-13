@@ -5,7 +5,7 @@ use brk_types::Version;
 
 use crate::{
     indexes,
-    internal::{finalize_db, open_db},
+    internal::{finalize_db, open_db, CachedWindowStarts},
 };
 
 use super::{CountVecs, SpentVecs, Vecs};
@@ -15,12 +15,13 @@ impl Vecs {
         parent_path: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let db = open_db(parent_path, super::DB_NAME, 10_000_000)?;
         let version = parent_version;
 
         let spent = SpentVecs::forced_import(&db, version)?;
-        let count = CountVecs::forced_import(&db, version, indexes)?;
+        let count = CountVecs::forced_import(&db, version, indexes, cached_starts)?;
 
         let this = Self { db, spent, count };
         finalize_db(&this.db, &this)?;

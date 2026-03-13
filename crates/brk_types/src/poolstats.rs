@@ -20,14 +20,14 @@ pub struct PoolStats {
 
     /// Number of blocks mined in the time period
     #[serde(rename = "blockCount")]
-    pub block_count: u32,
+    pub block_count: u64,
 
     /// Pool ranking by block count (1 = most blocks)
     pub rank: u32,
 
     /// Number of empty blocks mined
     #[serde(rename = "emptyBlocks")]
-    pub empty_blocks: u32,
+    pub empty_blocks: u64,
 
     /// URL-friendly pool identifier
     pub slug: PoolSlug,
@@ -38,7 +38,7 @@ pub struct PoolStats {
 
 impl PoolStats {
     /// Create a new PoolStats from a Pool reference
-    pub fn new(pool: &'static Pool, block_count: u32, rank: u32, share: f64) -> Self {
+    pub fn new(pool: &'static Pool, block_count: u64, rank: u32, share: f64) -> Self {
         Self {
             pool_id: pool.unique_id(),
             name: Cow::Borrowed(pool.name),

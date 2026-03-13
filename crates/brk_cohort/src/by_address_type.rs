@@ -61,6 +61,19 @@ impl<T> ByAddressType<T> {
         })
     }
 
+    pub fn map_with_name<U>(&self, f: impl Fn(&'static str, &T) -> U) -> ByAddressType<U> {
+        ByAddressType {
+            p2pk65: f(P2PK65, &self.p2pk65),
+            p2pk33: f(P2PK33, &self.p2pk33),
+            p2pkh: f(P2PKH, &self.p2pkh),
+            p2sh: f(P2SH, &self.p2sh),
+            p2wpkh: f(P2WPKH, &self.p2wpkh),
+            p2wsh: f(P2WSH, &self.p2wsh),
+            p2tr: f(P2TR, &self.p2tr),
+            p2a: f(P2A, &self.p2a),
+        }
+    }
+
     pub fn new_with_index<F>(f: F) -> Result<Self>
     where
         F: Fn(usize) -> Result<T>,

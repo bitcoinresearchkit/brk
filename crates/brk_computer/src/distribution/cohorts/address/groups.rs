@@ -10,7 +10,7 @@ use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, Rw, StorageMode};
 
-use crate::{blocks, distribution::DynCohortVecs, indexes, prices};
+use crate::{distribution::DynCohortVecs, indexes, internal::CachedWindowStarts, prices};
 
 use super::{super::traits::CohortVecs, vecs::AddressCohortVecs};
 
@@ -27,6 +27,7 @@ impl AddressCohorts {
         version: Version,
         indexes: &indexes::Vecs,
         states_path: &Path,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let v = version + VERSION;
 
@@ -34,7 +35,7 @@ impl AddressCohorts {
         let create =
             |filter: Filter, name: &'static str, has_state: bool| -> Result<AddressCohortVecs> {
                 let sp = if has_state { Some(states_path) } else { None };
-                AddressCohortVecs::forced_import(db, filter, name, v, indexes, sp)
+                AddressCohortVecs::forced_import(db, filter, name, v, indexes, sp, cached_starts)
             };
 
         let full = |f: Filter, name: &'static str| create(f, name, true);
@@ -90,22 +91,12 @@ impl AddressCohorts {
     /// First phase of post-processing: compute index transforms.
     pub(crate) fn compute_rest_part1(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.par_iter_mut().try_for_each(|v| {
-            v.address_count_delta.compute(
-                starting_indexes.height,
-                &blocks.lookback._1m,
-                &v.address_count.height,
-                exit,
-            )
-        })?;
-
         self.par_iter_mut()
-            .try_for_each(|v| v.compute_rest_part1(blocks, prices, starting_indexes, exit))?;
+            .try_for_each(|v| v.compute_rest_part1(prices, starting_indexes, exit))?;
 
         Ok(())
     }

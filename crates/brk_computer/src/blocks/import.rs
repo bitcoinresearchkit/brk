@@ -24,11 +24,12 @@ impl Vecs {
         let db = open_db(parent_path, super::DB_NAME, 50_000_000)?;
         let version = parent_version;
 
-        let count = CountVecs::forced_import(&db, version, indexes)?;
         let lookback = LookbackVecs::forced_import(&db, version)?;
-        let interval = IntervalVecs::forced_import(&db, version, indexes)?;
-        let size = SizeVecs::forced_import(&db, version, indexes)?;
-        let weight = WeightVecs::forced_import(&db, version, indexes)?;
+        let cached_starts = &lookback.cached_window_starts;
+        let count = CountVecs::forced_import(&db, version, indexes, cached_starts)?;
+        let interval = IntervalVecs::forced_import(&db, version, indexes, cached_starts)?;
+        let size = SizeVecs::forced_import(&db, version, indexes, cached_starts)?;
+        let weight = WeightVecs::forced_import(&db, version, indexes, cached_starts)?;
         let time = TimeVecs::forced_import(&db, version, indexes)?;
         let difficulty = DifficultyVecs::forced_import(&db, version, indexer, indexes)?;
         let halving = HalvingVecs::forced_import(&db, version, indexes)?;

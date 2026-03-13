@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ComputedPerBlockFull, ResolutionsFull},
+    internal::{CachedWindowStarts, ComputedPerBlockFull, ResolutionsFull},
 };
 
 impl Vecs {
@@ -13,10 +13,23 @@ impl Vecs {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         Ok(Self {
-            vbytes: ComputedPerBlockFull::forced_import(db, "block_vbytes", version, indexes)?,
-            size: ResolutionsFull::forced_import(db, "block_size", version, indexes)?,
+            vbytes: ComputedPerBlockFull::forced_import(
+                db,
+                "block_vbytes",
+                version,
+                indexes,
+                cached_starts,
+            )?,
+            size: ResolutionsFull::forced_import(
+                db,
+                "block_size",
+                version,
+                indexes,
+                cached_starts,
+            )?,
         })
     }
 }

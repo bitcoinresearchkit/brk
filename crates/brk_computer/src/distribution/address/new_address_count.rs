@@ -6,7 +6,7 @@ use vecdb::{Database, Exit, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{ComputedPerBlockSum, WindowStarts},
+    internal::{CachedWindowStarts, ComputedPerBlockCumulativeWithSums},
 };
 
 use super::TotalAddressCountVecs;
@@ -14,9 +14,9 @@ use super::TotalAddressCountVecs;
 /// New address count per block (global + per-type)
 #[derive(Traversable)]
 pub struct NewAddressCountVecs<M: StorageMode = Rw> {
-    pub all: ComputedPerBlockSum<StoredU64, M>,
+    pub all: ComputedPerBlockCumulativeWithSums<StoredU64, StoredU64, M>,
     #[traversable(flatten)]
-    pub by_addresstype: ByAddressType<ComputedPerBlockSum<StoredU64, M>>,
+    pub by_addresstype: ByAddressType<ComputedPerBlockCumulativeWithSums<StoredU64, StoredU64, M>>,
 }
 
 impl NewAddressCountVecs {
@@ -24,18 +24,25 @@ impl NewAddressCountVecs {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let all = ComputedPerBlockSum::forced_import(db, "new_address_count", version, indexes)?;
+        let all = ComputedPerBlockCumulativeWithSums::forced_import(
+            db,
+            "new_address_count",
+            version,
+            indexes,
+            cached_starts,
+        )?;
 
-        let by_addresstype: ByAddressType<ComputedPerBlockSum<StoredU64>> =
-            ByAddressType::new_with_name(|name| {
-                ComputedPerBlockSum::forced_import(
-                    db,
-                    &format!("{name}_new_address_count"),
-                    version,
-                    indexes,
-                )
-            })?;
+        let by_addresstype = ByAddressType::new_with_name(|name| {
+            ComputedPerBlockCumulativeWithSums::forced_import(
+                db,
+                &format!("{name}_new_address_count"),
+                version,
+                indexes,
+                cached_starts,
+            )
+        })?;
 
         Ok(Self {
             all,
@@ -46,11 +53,10 @@ impl NewAddressCountVecs {
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        windows: &WindowStarts<'_>,
         total_address_count: &TotalAddressCountVecs,
         exit: &Exit,
     ) -> Result<()> {
-        self.all.compute(max_from, windows, exit, |height_vec| {
+        self.all.compute(max_from, exit, |height_vec| {
             Ok(height_vec.compute_change(max_from, &total_address_count.all.height, 1, exit)?)
         })?;
 
@@ -59,7 +65,7 @@ impl NewAddressCountVecs {
             .iter_mut()
             .zip(total_address_count.by_addresstype.iter())
         {
-            new.compute(max_from, windows, exit, |height_vec| {
+            new.compute(max_from, exit, |height_vec| {
                 Ok(height_vec.compute_change(max_from, &total.height, 1, exit)?)
             })?;
         }

@@ -3,7 +3,7 @@ use std::ops::{Add, AddAssign, Div};
 use brk_types::{BasisPoints16, BasisPoints32, BasisPointsSigned16, BasisPointsSigned32, StoredF32};
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::{Formattable, PcoVecValue, UnaryTransform};
+use vecdb::{CheckedSub, Formattable, PcoVecValue, UnaryTransform};
 
 use crate::internal::{
     Bp16ToFloat, Bp16ToPercent, Bp32ToFloat, Bp32ToPercent, Bps16ToFloat, Bps16ToPercent,
@@ -34,9 +34,9 @@ impl<T> ComputedVecValue for T where
 {
 }
 
-pub trait NumericValue: ComputedVecValue + From<f64> + Into<f64> {}
+pub trait NumericValue: ComputedVecValue + CheckedSub + Default + From<f64> + Into<f64> {}
 
-impl<T> NumericValue for T where T: ComputedVecValue + From<f64> + Into<f64> {}
+impl<T> NumericValue for T where T: ComputedVecValue + CheckedSub + Default + From<f64> + Into<f64> {}
 
 /// Trait that associates a basis-point type with its transforms to ratio and percent.
 pub trait BpsType: NumericValue + JsonSchema {

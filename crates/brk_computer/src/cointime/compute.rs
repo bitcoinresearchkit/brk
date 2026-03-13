@@ -19,7 +19,7 @@ impl Vecs {
     ) -> Result<()> {
         // Activity computes first (liveliness, vaultedness, etc.)
         self.activity
-            .compute(starting_indexes, blocks, distribution, exit)?;
+            .compute(starting_indexes, distribution, exit)?;
 
         // Phase 2: supply, adjusted, value are independent (all depend only on activity)
         let (r1, r2) = rayon::join(
@@ -37,7 +37,6 @@ impl Vecs {
                         self.value.compute(
                             starting_indexes,
                             prices,
-                            blocks,
                             distribution,
                             &self.activity,
                             exit,

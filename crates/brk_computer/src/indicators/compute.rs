@@ -69,7 +69,7 @@ impl Vecs {
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
                 starting_indexes.height,
                 market_cap,
-                &transactions.volume.sent_sum.rolling._24h.usd.height,
+                &transactions.volume.sent_sum.sum._24h.usd.height,
                 exit,
             )?;
 

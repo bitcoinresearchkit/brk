@@ -5,7 +5,7 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, ReadableCloneableVec, Rw, StorageM
 
 use crate::{
     indexes,
-    internal::{BpsType, WindowStarts},
+    internal::{BpsType, CachedWindowStarts},
 };
 
 use crate::internal::{ComputedPerBlockRollingAverage, LazyPerBlock};
@@ -24,12 +24,14 @@ impl<B: BpsType> PercentPerBlockRollingAverage<B> {
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let bps = ComputedPerBlockRollingAverage::forced_import(
             db,
             &format!("{name}_bps"),
             version,
             indexes,
+            cached_starts,
         )?;
 
         let ratio = LazyPerBlock::from_height_source::<B::ToRatio>(
@@ -56,14 +58,9 @@ impl<B: BpsType> PercentPerBlockRollingAverage<B> {
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        windows: &WindowStarts<'_>,
         exit: &Exit,
         compute_height: impl FnOnce(&mut EagerVec<PcoVec<Height, B>>) -> Result<()>,
-    ) -> Result<()>
-    where
-        B: Default,
-        f64: From<B>,
-    {
-        self.bps.compute(max_from, windows, exit, compute_height)
+    ) -> Result<()> {
+        self.bps.compute(max_from, exit, compute_height)
     }
 }

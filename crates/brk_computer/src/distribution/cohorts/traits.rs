@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_types::{Cents, Height, Indexes, Version};
 use vecdb::Exit;
 
-use crate::{blocks, prices};
+use crate::prices;
 
 /// Dynamic dispatch trait for cohort vectors.
 ///
@@ -34,7 +34,6 @@ pub trait DynCohortVecs: Send + Sync {
     /// First phase of post-processing computations.
     fn compute_rest_part1(
         &mut self,
-        blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,

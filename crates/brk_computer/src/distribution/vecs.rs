@@ -23,7 +23,7 @@ use crate::{
         state::BlockState,
     },
     indexes, inputs,
-    internal::{ComputedPerBlockCumulative, finalize_db, open_db},
+    internal::{CachedWindowStarts, ComputedPerBlockCumulative, finalize_db, open_db},
     outputs, prices, transactions,
 };
 
@@ -32,7 +32,6 @@ use super::{
     address::{
         AddressCountsVecs, AddressActivityVecs, DeltaVecs, NewAddressCountVecs, TotalAddressCountVecs,
     },
-    compute::aggregates,
 };
 
 const VERSION: Version = Version::new(22);
@@ -44,7 +43,7 @@ pub struct AddressMetricsVecs<M: StorageMode = Rw> {
     pub activity: AddressActivityVecs<M>,
     pub total: TotalAddressCountVecs<M>,
     pub new: NewAddressCountVecs<M>,
-    pub delta: DeltaVecs<M>,
+    pub delta: DeltaVecs,
     #[traversable(wrap = "indexes", rename = "funded")]
     pub funded_index:
         LazyVecFrom1<FundedAddressIndex, FundedAddressIndex, FundedAddressIndex, FundedAddressData>,
@@ -100,6 +99,7 @@ impl Vecs {
         parent: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let db_path = parent.join(super::DB_NAME);
         let states_path = db_path.join("states");
@@ -109,9 +109,9 @@ impl Vecs {
 
         let version = parent_version + VERSION;
 
-        let utxo_cohorts = UTXOCohorts::forced_import(&db, version, indexes, &states_path)?;
+        let utxo_cohorts = UTXOCohorts::forced_import(&db, version, indexes, &states_path, cached_starts)?;
 
-        let address_cohorts = AddressCohorts::forced_import(&db, version, indexes, &states_path)?;
+        let address_cohorts = AddressCohorts::forced_import(&db, version, indexes, &states_path, cached_starts)?;
 
         // Create address data BytesVecs first so we can also use them for identity mappings
         let fundedaddressindex_to_fundedaddressdata = BytesVec::forced_import_with(
@@ -141,16 +141,17 @@ impl Vecs {
         let empty_address_count =
             AddressCountsVecs::forced_import(&db, "empty_address_count", version, indexes)?;
         let address_activity =
-            AddressActivityVecs::forced_import(&db, "address_activity", version, indexes)?;
+            AddressActivityVecs::forced_import(&db, "address_activity", version, indexes, cached_starts)?;
 
         // Stored total = address_count + empty_address_count (global + per-type, with all derived indexes)
         let total_address_count = TotalAddressCountVecs::forced_import(&db, version, indexes)?;
 
         // Per-block delta of total (global + per-type)
-        let new_address_count = NewAddressCountVecs::forced_import(&db, version, indexes)?;
+        let new_address_count =
+            NewAddressCountVecs::forced_import(&db, version, indexes, cached_starts)?;
 
-        // Growth rate: new / address_count (global + per-type)
-        let delta = DeltaVecs::forced_import(&db, version, indexes)?;
+        // Growth rate: delta change + rate (global + per-type)
+        let delta = DeltaVecs::new(version, &address_count, cached_starts, indexes);
 
         let this = Self {
             supply_state: BytesVec::forced_import_with(
@@ -400,26 +401,30 @@ impl Vecs {
         self.txindex_to_height = txindex_to_height;
 
         // 5. Compute aggregates (overlapping cohorts from separate cohorts)
-        aggregates::compute_overlapping(
-            &mut self.utxo_cohorts,
-            &mut self.address_cohorts,
-            starting_indexes,
-            exit,
-        )?;
+        info!("Computing overlapping cohorts...");
+        {
+            let (r1, r2) = rayon::join(
+                || self.utxo_cohorts.compute_overlapping_vecs(starting_indexes, exit),
+                || self.address_cohorts.compute_overlapping_vecs(starting_indexes, exit),
+            );
+            r1?;
+            r2?;
+        }
 
         // 5b. Compute coinblocks_destroyed cumulative from raw
         self.coinblocks_destroyed
             .compute_rest(starting_indexes.height, exit)?;
 
         // 6. Compute rest part1 (day1 mappings)
-        aggregates::compute_rest_part1(
-            &mut self.utxo_cohorts,
-            &mut self.address_cohorts,
-            blocks,
-            prices,
-            starting_indexes,
-            exit,
-        )?;
+        info!("Computing rest part 1...");
+        {
+            let (r1, r2) = rayon::join(
+                || self.utxo_cohorts.compute_rest_part1(prices, starting_indexes, exit),
+                || self.address_cohorts.compute_rest_part1(prices, starting_indexes, exit),
+            );
+            r1?;
+            r2?;
+        }
 
         // 6b. Compute address count sum (by addresstype → all)
         self.addresses.funded.compute_rest(starting_indexes, exit)?;
@@ -433,22 +438,12 @@ impl Vecs {
             exit,
         )?;
 
-        let window_starts = blocks.lookback.window_starts();
-
         self.addresses
             .activity
-            .compute_rest(starting_indexes.height, &window_starts, exit)?;
+            .compute_rest(starting_indexes.height, exit)?;
         self.addresses.new.compute(
             starting_indexes.height,
-            &window_starts,
             &self.addresses.total,
-            exit,
-        )?;
-
-        self.addresses.delta.compute(
-            starting_indexes.height,
-            &window_starts,
-            &self.addresses.funded,
             exit,
         )?;
 
@@ -463,15 +458,16 @@ impl Vecs {
             .height
             .read_only_clone();
 
-        aggregates::compute_rest_part2(
-            &mut self.utxo_cohorts,
-            &mut self.address_cohorts,
+        info!("Computing rest part 2...");
+        self.utxo_cohorts.compute_rest_part2(
             blocks,
             prices,
             starting_indexes,
             &height_to_market_cap,
             exit,
         )?;
+        self.address_cohorts
+            .compute_rest_part2(prices, starting_indexes, exit)?;
 
         let _lock = exit.lock();
         self.db.compact()?;

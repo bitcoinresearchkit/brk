@@ -11,7 +11,7 @@ impl Query {
         let current_height = self.height().to_usize();
         let start = current_height.saturating_sub(time_period.block_count());
 
-        let coinbase_vec = &computer.mining.rewards.coinbase.base.sats.height;
+        let coinbase_vec = &computer.mining.rewards.coinbase.raw.sats.height;
         let timestamp_vec = &indexer.vecs.blocks.timestamp;
 
         match time_period {

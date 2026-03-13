@@ -18,7 +18,7 @@ pub mod minor;
 
 use crate::{
     blocks, indexes,
-    internal::{finalize_db, open_db},
+    internal::{finalize_db, open_db, CachedWindowStarts},
     mining, prices,
 };
 
@@ -39,6 +39,7 @@ impl Vecs {
         parent_path: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let db = open_db(parent_path, DB_NAME, 1_000_000)?;
         let pools = pools();
@@ -52,12 +53,12 @@ impl Vecs {
             if pool.slug.is_major() {
                 major_map.insert(
                     pool.slug,
-                    major::Vecs::forced_import(&db, pool.slug, version, indexes)?,
+                    major::Vecs::forced_import(&db, pool.slug, version, indexes, cached_starts)?,
                 );
             } else {
                 minor_map.insert(
                     pool.slug,
-                    minor::Vecs::forced_import(&db, pool.slug, version, indexes)?,
+                    minor::Vecs::forced_import(&db, pool.slug, version, indexes, cached_starts)?,
                 );
             }
         }

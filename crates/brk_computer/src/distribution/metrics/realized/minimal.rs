@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    BasisPoints32, Bitcoin, Cents, Height, Indexes, Sats, StoredF32,
+    BasisPoints32, BasisPointsSigned32, Bitcoin, Cents, CentsSigned, Height, Indexes, Sats, StoredF32,
     Version,
 };
 use vecdb::{
@@ -9,11 +9,10 @@ use vecdb::{
 };
 
 use crate::{
-    blocks,
     distribution::state::{CohortState, CostBasisOps, RealizedOps},
     internal::{
-        FiatPerBlock, FiatPerBlockWithSum24h, Identity, LazyPerBlock,
-        PerBlockWithSum24h, PriceWithRatioPerBlock,
+        ComputedPerBlockCumulativeWithSums, FiatPerBlockCumulativeWithSums,
+        FiatPerBlockWithDeltas, Identity, LazyPerBlock, PriceWithRatioPerBlock,
     },
     prices,
 };
@@ -22,17 +21,15 @@ use crate::distribution::metrics::ImportConfig;
 
 #[derive(Traversable)]
 pub struct RealizedSoprMinimal<M: StorageMode = Rw> {
-    pub value_created: PerBlockWithSum24h<Cents, M>,
-    pub value_destroyed: PerBlockWithSum24h<Cents, M>,
+    pub value_created: ComputedPerBlockCumulativeWithSums<Cents, Cents, M>,
+    pub value_destroyed: ComputedPerBlockCumulativeWithSums<Cents, Cents, M>,
 }
 
-/// Minimal realized metrics: cap (fiat), profit/loss (fiat + 24h sum),
-/// price, mvrv, sopr (value_created/destroyed with 24h sums).
 #[derive(Traversable)]
 pub struct RealizedMinimal<M: StorageMode = Rw> {
-    pub cap: FiatPerBlock<Cents, M>,
-    pub profit: FiatPerBlockWithSum24h<Cents, M>,
-    pub loss: FiatPerBlockWithSum24h<Cents, M>,
+    pub cap: FiatPerBlockWithDeltas<Cents, CentsSigned, BasisPointsSigned32, M>,
+    pub profit: FiatPerBlockCumulativeWithSums<Cents, M>,
+    pub loss: FiatPerBlockCumulativeWithSums<Cents, M>,
     pub price: PriceWithRatioPerBlock<M>,
     pub mvrv: LazyPerBlock<StoredF32>,
 
@@ -43,7 +40,14 @@ impl RealizedMinimal {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v1 = Version::ONE;
 
-        let cap: FiatPerBlock<Cents> = cfg.import("realized_cap", Version::ZERO)?;
+        let cap = FiatPerBlockWithDeltas::forced_import(
+            cfg.db,
+            &cfg.name("realized_cap"),
+            cfg.version,
+            v1,
+            cfg.indexes,
+            cfg.cached_starts,
+        )?;
 
         let price: PriceWithRatioPerBlock = cfg.import("realized_price", v1)?;
         let mvrv = LazyPerBlock::from_lazy::<Identity<StoredF32>, BasisPoints32>(
@@ -119,34 +123,17 @@ impl RealizedMinimal {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        blocks: &blocks::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.profit.sum.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.lookback._24h,
-            &self.profit.raw.cents.height,
-            exit,
-        )?;
-        self.loss.sum.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.lookback._24h,
-            &self.loss.raw.cents.height,
-            exit,
-        )?;
-        self.sopr.value_created.sum.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.lookback._24h,
-            &self.sopr.value_created.raw.height,
-            exit,
-        )?;
-        self.sopr.value_destroyed.sum.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.lookback._24h,
-            &self.sopr.value_destroyed.raw.height,
-            exit,
-        )?;
+        self.profit.compute_rest(starting_indexes.height, exit)?;
+        self.loss.compute_rest(starting_indexes.height, exit)?;
+        self.sopr
+            .value_created
+            .compute_rest(starting_indexes.height, exit)?;
+        self.sopr
+            .value_destroyed
+            .compute_rest(starting_indexes.height, exit)?;
         Ok(())
     }
 

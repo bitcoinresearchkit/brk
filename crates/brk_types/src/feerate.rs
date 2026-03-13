@@ -5,7 +5,7 @@ use std::{
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{Formattable, Pco};
+use vecdb::{CheckedSub, Formattable, Pco};
 
 use super::{Sats, VSize};
 
@@ -108,6 +108,18 @@ impl Ord for FeeRate {
             (true, false) => Ordering::Less,
             (false, true) => Ordering::Greater,
             (false, false) => self.0.partial_cmp(&other.0).unwrap(),
+        }
+    }
+}
+
+impl CheckedSub for FeeRate {
+    #[inline]
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        let result = self.0 - rhs.0;
+        if result.is_nan() {
+            None
+        } else {
+            Some(Self(result))
         }
     }
 }

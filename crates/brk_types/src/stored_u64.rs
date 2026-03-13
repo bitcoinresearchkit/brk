@@ -8,8 +8,8 @@ use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 use super::{
     Day1, EmptyOutputIndex, Height, Month1, OpReturnIndex, P2AAddressIndex, P2MSOutputIndex,
     P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex,
-    P2WPKHAddressIndex, P2WSHAddressIndex, TxInIndex, TxIndex, TxOutIndex, UnknownOutputIndex,
-    Year1,
+    P2WPKHAddressIndex, P2WSHAddressIndex, StoredU32, TxInIndex, TxIndex, TxOutIndex,
+    UnknownOutputIndex, Year1,
 };
 
 /// Fixed-size 64-bit unsigned integer optimized for on-disk storage
@@ -35,6 +35,13 @@ impl StoredU64 {
 
     pub fn new(counter: u64) -> Self {
         Self(counter)
+    }
+}
+
+impl From<StoredU32> for StoredU64 {
+    #[inline]
+    fn from(value: StoredU32) -> Self {
+        Self(u32::from(value) as u64)
     }
 }
 

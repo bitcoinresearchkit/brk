@@ -53,13 +53,17 @@ struct FieldInfo<'a> {
     attr: FieldAttr,
     rename: Option<String>,
     wrap: Option<String>,
+    hidden: bool,
 }
 
-/// Returns None for skip, Some((attr, rename, wrap)) for normal/flatten.
-fn get_field_attr(field: &syn::Field) -> Option<(FieldAttr, Option<String>, Option<String>)> {
+/// Returns None for skip, Some((attr, rename, wrap, hidden)) for normal/flatten/hidden.
+fn get_field_attr(
+    field: &syn::Field,
+) -> Option<(FieldAttr, Option<String>, Option<String>, bool)> {
     let mut attr_type = FieldAttr::Normal;
     let mut rename = None;
     let mut wrap = None;
+    let mut hidden = false;
 
     for attr in &field.attrs {
         if !attr.path().is_ident("traversable") {
@@ -70,6 +74,7 @@ fn get_field_attr(field: &syn::Field) -> Option<(FieldAttr, Option<String>, Opti
             match ident.to_string().as_str() {
                 "skip" => return None,
                 "flatten" => attr_type = FieldAttr::Flatten,
+                "hidden" => hidden = true,
                 _ => {}
             }
             continue;
@@ -94,7 +99,7 @@ fn get_field_attr(field: &syn::Field) -> Option<(FieldAttr, Option<String>, Opti
         }
     }
 
-    Some((attr_type, rename, wrap))
+    Some((attr_type, rename, wrap, hidden))
 }
 
 fn is_field_skipped(field: &syn::Field) -> bool {
@@ -316,7 +321,7 @@ fn analyze_fields<'a>(
     let mut field_traversable_types = Vec::new();
 
     for field in &fields.named {
-        let Some((attr, rename, wrap)) = get_field_attr(field) else {
+        let Some((attr, rename, wrap, hidden)) = get_field_attr(field) else {
             continue;
         };
 
@@ -352,6 +357,7 @@ fn analyze_fields<'a>(
             attr,
             rename,
             wrap,
+            hidden,
         });
     }
 
@@ -390,7 +396,7 @@ fn build_where_clause(
 fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::TokenStream {
     let normal_entries: Vec<_> = infos
         .iter()
-        .filter(|i| matches!(i.attr, FieldAttr::Normal))
+        .filter(|i| matches!(i.attr, FieldAttr::Normal) && !i.hidden)
         .map(|info| {
             let field_name = info.name;
             let field_name_str = {
@@ -446,7 +452,7 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
 
     let flatten_entries: Vec<_> = infos
         .iter()
-        .filter(|i| matches!(i.attr, FieldAttr::Flatten))
+        .filter(|i| matches!(i.attr, FieldAttr::Flatten) && !i.hidden)
         .map(|info| {
             let field_name = info.name;
             let merge_branch = quote! {

@@ -67,15 +67,15 @@ impl From<&'static Pool> for PoolDetailInfo {
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PoolBlockCounts {
     /// Total blocks mined (all time)
-    pub all: u32,
+    pub all: u64,
 
     /// Blocks mined in last 24 hours
     #[serde(rename = "24h")]
-    pub day: u32,
+    pub day: u64,
 
     /// Blocks mined in last week
     #[serde(rename = "1w")]
-    pub week: u32,
+    pub week: u64,
 }
 
 /// Pool's share of total blocks for different time periods

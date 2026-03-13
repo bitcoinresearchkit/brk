@@ -3,24 +3,19 @@ use brk_types::{Height, Indexes, Sats};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
 use super::Vecs;
-use crate::{blocks, mining, prices, scripts};
+use crate::{mining, prices, scripts};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         scripts: &scripts::Vecs,
         mining: &mining::Vecs,
-        lookback: &blocks::LookbackVecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let window_starts = lookback.window_starts();
-
-        // 1. Compute opreturn supply - copy per-block opreturn values from scripts
         self.opreturn.compute(
             starting_indexes.height,
-            &window_starts,
             prices,
             exit,
             |height_vec| {
@@ -59,12 +54,11 @@ impl Vecs {
 
         // 2. Compute unspendable supply = opreturn + unclaimed_rewards + genesis (at height 0)
         // Get reference to opreturn height vec for computing unspendable
-        let opreturn_height = &self.opreturn.base.sats.height;
-        let unclaimed_height = &mining.rewards.unclaimed.base.sats.height;
+        let opreturn_height = &self.opreturn.raw.sats.height;
+        let unclaimed_height = &mining.rewards.unclaimed.raw.sats.height;
 
         self.unspendable.compute(
             starting_indexes.height,
-            &window_starts,
             prices,
             exit,
             |height_vec| {

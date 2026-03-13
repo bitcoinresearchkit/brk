@@ -1,22 +1,33 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, StoredU64, Version};
+use brk_types::{BasisPointsSigned32, Height, Indexes, StoredI64, StoredU64, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
-use crate::{distribution::state::{CohortState, CostBasisOps, RealizedOps}, internal::ComputedPerBlock};
+use crate::{
+    distribution::{
+        metrics::ImportConfig,
+        state::{CohortState, CostBasisOps, RealizedOps},
+    },
+    internal::ComputedPerBlockWithDeltas,
+};
 
-use crate::distribution::metrics::ImportConfig;
-
-/// Base output metrics: utxo_count only (1 stored vec).
+/// Base output metrics: utxo_count + delta.
 #[derive(Traversable)]
 pub struct OutputsBase<M: StorageMode = Rw> {
-    pub unspent_count: ComputedPerBlock<StoredU64, M>,
+    pub unspent_count: ComputedPerBlockWithDeltas<StoredU64, StoredI64, BasisPointsSigned32, M>,
 }
 
 impl OutputsBase {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            unspent_count: cfg.import("utxo_count", Version::ZERO)?,
+            unspent_count: ComputedPerBlockWithDeltas::forced_import(
+                cfg.db,
+                &cfg.name("utxo_count"),
+                cfg.version,
+                Version::ONE,
+                cfg.indexes,
+                cfg.cached_starts,
+            )?,
         })
     }
 

@@ -3,34 +3,38 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::ComputedPerBlockCumulativeSum};
+use crate::{
+    indexes,
+    internal::{CachedWindowStarts, ComputedPerBlockCumulativeWithSums},
+};
 
 impl Vecs {
     pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
+        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let p2a =
-            ComputedPerBlockCumulativeSum::forced_import(db, "p2a_count", version, indexes)?;
+            ComputedPerBlockCumulativeWithSums::forced_import(db, "p2a_count", version, indexes, cached_starts)?;
         let p2ms =
-            ComputedPerBlockCumulativeSum::forced_import(db, "p2ms_count", version, indexes)?;
+            ComputedPerBlockCumulativeWithSums::forced_import(db, "p2ms_count", version, indexes, cached_starts)?;
         let p2pk33 =
-            ComputedPerBlockCumulativeSum::forced_import(db, "p2pk33_count", version, indexes)?;
+            ComputedPerBlockCumulativeWithSums::forced_import(db, "p2pk33_count", version, indexes, cached_starts)?;
         let p2pk65 =
-            ComputedPerBlockCumulativeSum::forced_import(db, "p2pk65_count", version, indexes)?;
+            ComputedPerBlockCumulativeWithSums::forced_import(db, "p2pk65_count", version, indexes, cached_starts)?;
         let p2pkh =
-            ComputedPerBlockCumulativeSum::forced_import(db, "p2pkh_count", version, indexes)?;
+            ComputedPerBlockCumulativeWithSums::forced_import(db, "p2pkh_count", version, indexes, cached_starts)?;
         let p2sh =
-            ComputedPerBlockCumulativeSum::forced_import(db, "p2sh_count", version, indexes)?;
+            ComputedPerBlockCumulativeWithSums::forced_import(db, "p2sh_count", version, indexes, cached_starts)?;
         let p2tr =
-            ComputedPerBlockCumulativeSum::forced_import(db, "p2tr_count", version, indexes)?;
+            ComputedPerBlockCumulativeWithSums::forced_import(db, "p2tr_count", version, indexes, cached_starts)?;
         let p2wpkh =
-            ComputedPerBlockCumulativeSum::forced_import(db, "p2wpkh_count", version, indexes)?;
+            ComputedPerBlockCumulativeWithSums::forced_import(db, "p2wpkh_count", version, indexes, cached_starts)?;
         let p2wsh =
-            ComputedPerBlockCumulativeSum::forced_import(db, "p2wsh_count", version, indexes)?;
+            ComputedPerBlockCumulativeWithSums::forced_import(db, "p2wsh_count", version, indexes, cached_starts)?;
         let segwit =
-            ComputedPerBlockCumulativeSum::forced_import(db, "segwit_count", version, indexes)?;
+            ComputedPerBlockCumulativeWithSums::forced_import(db, "segwit_count", version, indexes, cached_starts)?;
 
         Ok(Self {
             p2a,
@@ -42,23 +46,26 @@ impl Vecs {
             p2tr,
             p2wpkh,
             p2wsh,
-            opreturn: ComputedPerBlockCumulativeSum::forced_import(
+            opreturn: ComputedPerBlockCumulativeWithSums::forced_import(
                 db,
                 "opreturn_count",
                 version,
                 indexes,
+                cached_starts,
             )?,
-            emptyoutput: ComputedPerBlockCumulativeSum::forced_import(
+            emptyoutput: ComputedPerBlockCumulativeWithSums::forced_import(
                 db,
                 "emptyoutput_count",
                 version,
                 indexes,
+                cached_starts,
             )?,
-            unknownoutput: ComputedPerBlockCumulativeSum::forced_import(
+            unknownoutput: ComputedPerBlockCumulativeWithSums::forced_import(
                 db,
                 "unknownoutput_count",
                 version,
                 indexes,
+                cached_starts,
             )?,
             segwit,
         })

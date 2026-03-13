@@ -22,11 +22,8 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let window_starts = blocks.lookback.window_starts();
-
         self.sent_sum.compute(
             starting_indexes.height,
-            &window_starts,
             prices,
             exit,
             |sats_vec| {
@@ -43,7 +40,6 @@ impl Vecs {
 
         self.received_sum.compute(
             starting_indexes.height,
-            &window_starts,
             prices,
             exit,
             |sats_vec| {
@@ -56,16 +52,6 @@ impl Vecs {
                 )?)
             },
         )?;
-
-        // Annualized volume: rolling 1y sum of per-block sent volume
-        self.annualized.sats.height.compute_rolling_sum(
-            starting_indexes.height,
-            &blocks.lookback._1y,
-            &self.sent_sum.sats,
-            exit,
-        )?;
-        self.annualized
-            .compute(prices, starting_indexes.height, exit)?;
 
         self.tx_per_sec
             .height
