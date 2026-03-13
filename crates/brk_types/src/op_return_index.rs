@@ -68,11 +68,11 @@ impl CheckedSub<OpReturnIndex> for OpReturnIndex {
 
 impl PrintableIndex for OpReturnIndex {
     fn to_string() -> &'static str {
-        "opreturnindex"
+        "op_return_index"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["op", "opreturn", "opreturnindex"]
+        &["op", "opreturn", "op_return_index"]
     }
 }
 

@@ -185,8 +185,8 @@ fn main() {
     let total_outputs = indexer.vecs.outputs.value.len();
 
     // Pre-collect height-indexed vecs (small). Transaction-indexed vecs are too large.
-    let first_txindex: Vec<TxIndex> = indexer.vecs.transactions.first_txindex.collect();
-    let out_first: Vec<TxOutIndex> = indexer.vecs.outputs.first_txoutindex.collect();
+    let first_tx_index: Vec<TxIndex> = indexer.vecs.transactions.first_tx_index.collect();
+    let out_first: Vec<TxOutIndex> = indexer.vecs.outputs.first_txout_index.collect();
 
     let ref_config = Config::default();
 
@@ -200,8 +200,8 @@ fn main() {
     let mut current_di: Option<usize> = None;
 
     for h in START_HEIGHT..total_heights {
-        let ft = first_txindex[h];
-        let next_ft = first_txindex
+        let ft = first_tx_index[h];
+        let next_ft = first_tx_index
             .get(h + 1)
             .copied()
             .unwrap_or(TxIndex::from(total_txs));
@@ -210,7 +210,7 @@ fn main() {
             indexer
                 .vecs
                 .transactions
-                .first_txoutindex
+                .first_txout_index
                 .collect_one(ft + 1)
                 .unwrap()
                 .to_usize()
@@ -235,7 +235,7 @@ fn main() {
         let output_types: Vec<OutputType> = indexer
             .vecs
             .outputs
-            .outputtype
+            .output_type
             .collect_range_at(out_start, out_end);
 
         let mut hist = [0u32; NUM_BINS];

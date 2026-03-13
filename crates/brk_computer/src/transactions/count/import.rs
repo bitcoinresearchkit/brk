@@ -14,16 +14,16 @@ impl Vecs {
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let txindex_to_is_coinbase = LazyVecFrom2::init(
+        let tx_index_to_is_coinbase = LazyVecFrom2::init(
             "is_coinbase",
             version,
             indexer.vecs.transactions.height.read_only_boxed_clone(),
             indexer
                 .vecs
                 .transactions
-                .first_txindex
+                .first_tx_index
                 .read_only_boxed_clone(),
-            |index: TxIndex, _height, first_txindex| StoredBool::from(index == first_txindex),
+            |index: TxIndex, _height, first_tx_index| StoredBool::from(index == first_tx_index),
         );
 
         Ok(Self {
@@ -34,7 +34,7 @@ impl Vecs {
                 indexes,
                 cached_starts,
             )?,
-            is_coinbase: txindex_to_is_coinbase,
+            is_coinbase: tx_index_to_is_coinbase,
         })
     }
 }

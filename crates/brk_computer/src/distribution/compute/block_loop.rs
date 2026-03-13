@@ -45,7 +45,7 @@ pub(crate) fn process_blocks(
     starting_height: Height,
     last_height: Height,
     chain_state: &mut Vec<BlockState>,
-    txindex_to_height: &mut RangeMap<TxIndex, Height>,
+    tx_index_to_height: &mut RangeMap<TxIndex, Height>,
     cached_prices: &[Cents],
     cached_timestamps: &[Timestamp],
     cached_price_range_max: &PriceRangeMax,
@@ -63,14 +63,14 @@ pub(crate) fn process_blocks(
         return Ok(());
     }
 
-    let height_to_first_txindex = &indexer.vecs.transactions.first_txindex;
-    let height_to_first_txoutindex = &indexer.vecs.outputs.first_txoutindex;
-    let height_to_first_txinindex = &indexer.vecs.inputs.first_txinindex;
+    let height_to_first_tx_index = &indexer.vecs.transactions.first_tx_index;
+    let height_to_first_txout_index = &indexer.vecs.outputs.first_txout_index;
+    let height_to_first_txin_index = &indexer.vecs.inputs.first_txin_index;
     let height_to_tx_count = &transactions.count.total.base.height;
     let height_to_output_count = &outputs.count.total.full.sum;
     let height_to_input_count = &inputs.count.full.sum;
-    let txindex_to_output_count = &indexes.txindex.output_count;
-    let txindex_to_input_count = &indexes.txindex.input_count;
+    let tx_index_to_output_count = &indexes.tx_index.output_count;
+    let tx_index_to_input_count = &indexes.tx_index.input_count;
 
     let height_to_price_vec = cached_prices;
     let height_to_timestamp_vec = cached_timestamps;
@@ -78,12 +78,12 @@ pub(crate) fn process_blocks(
     let start_usize = starting_height.to_usize();
     let end_usize = last_height.to_usize() + 1;
 
-    let height_to_first_txindex_vec: Vec<TxIndex> =
-        height_to_first_txindex.collect_range_at(start_usize, end_usize);
-    let height_to_first_txoutindex_vec: Vec<_> =
-        height_to_first_txoutindex.collect_range_at(start_usize, end_usize);
-    let height_to_first_txinindex_vec: Vec<_> =
-        height_to_first_txinindex.collect_range_at(start_usize, end_usize);
+    let height_to_first_tx_index_vec: Vec<TxIndex> =
+        height_to_first_tx_index.collect_range_at(start_usize, end_usize);
+    let height_to_first_txout_index_vec: Vec<_> =
+        height_to_first_txout_index.collect_range_at(start_usize, end_usize);
+    let height_to_first_txin_index_vec: Vec<_> =
+        height_to_first_txin_index.collect_range_at(start_usize, end_usize);
     let height_to_tx_count_vec: Vec<_> =
         height_to_tx_count.collect_range_at(start_usize, end_usize);
     let height_to_output_count_vec: Vec<_> =
@@ -106,39 +106,39 @@ pub(crate) fn process_blocks(
     let mut vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
     debug!("VecsReaders created");
 
-    // Extend txindex_to_height RangeMap with new entries (incremental, O(new_blocks))
-    let target_len = indexer.vecs.transactions.first_txindex.len();
-    let current_len = txindex_to_height.len();
+    // Extend tx_index_to_height RangeMap with new entries (incremental, O(new_blocks))
+    let target_len = indexer.vecs.transactions.first_tx_index.len();
+    let current_len = tx_index_to_height.len();
     if current_len < target_len {
         debug!(
-            "extending txindex_to_height RangeMap from {} to {}",
+            "extending tx_index_to_height RangeMap from {} to {}",
             current_len, target_len
         );
         let new_entries: Vec<TxIndex> = indexer
             .vecs
             .transactions
-            .first_txindex
+            .first_tx_index
             .collect_range_at(current_len, target_len);
-        for first_txindex in new_entries {
-            txindex_to_height.push(first_txindex);
+        for first_tx_index in new_entries {
+            tx_index_to_height.push(first_tx_index);
         }
     } else if current_len > target_len {
         debug!(
-            "truncating txindex_to_height RangeMap from {} to {}",
+            "truncating tx_index_to_height RangeMap from {} to {}",
             current_len, target_len
         );
-        txindex_to_height.truncate(target_len);
+        tx_index_to_height.truncate(target_len);
     }
     debug!(
-        "txindex_to_height RangeMap ready ({} entries)",
-        txindex_to_height.len()
+        "tx_index_to_height RangeMap ready ({} entries)",
+        tx_index_to_height.len()
     );
 
     // Create reusable iterators and buffers for per-block reads
     let mut txout_iters = TxOutReaders::new(indexer);
-    let mut txin_iters = TxInReaders::new(indexer, inputs, txindex_to_height);
-    let mut txout_to_txindex_buf = IndexToTxIndexBuf::new();
-    let mut txin_to_txindex_buf = IndexToTxIndexBuf::new();
+    let mut txin_iters = TxInReaders::new(indexer, inputs, tx_index_to_height);
+    let mut txout_to_tx_index_buf = IndexToTxIndexBuf::new();
+    let mut txin_to_tx_index_buf = IndexToTxIndexBuf::new();
 
     // Pre-collect first address indexes per type for the block range
     let first_p2a_vec = indexer
@@ -186,9 +186,9 @@ pub(crate) fn process_blocks(
     debug!("recovering address_counts from height {}", starting_height);
     let (mut address_counts, mut empty_address_counts) = if starting_height > Height::ZERO {
         let address_counts =
-            AddressTypeToAddressCount::from((&vecs.addresses.funded.by_addresstype, starting_height));
+            AddressTypeToAddressCount::from((&vecs.addresses.funded.by_address_type, starting_height));
         let empty_address_counts = AddressTypeToAddressCount::from((
-            &vecs.addresses.empty.by_addresstype,
+            &vecs.addresses.empty.by_address_type,
             starting_height,
         ));
         (address_counts, empty_address_counts)
@@ -225,11 +225,11 @@ pub(crate) fn process_blocks(
 
         // Get block metadata from pre-collected vecs
         let offset = height.to_usize() - start_usize;
-        let first_txindex = height_to_first_txindex_vec[offset];
+        let first_tx_index = height_to_first_tx_index_vec[offset];
         let tx_count = u64::from(height_to_tx_count_vec[offset]);
-        let first_txoutindex = height_to_first_txoutindex_vec[offset].to_usize();
+        let first_txout_index = height_to_first_txout_index_vec[offset].to_usize();
         let output_count = u64::from(height_to_output_count_vec[offset]) as usize;
-        let first_txinindex = height_to_first_txinindex_vec[offset].to_usize();
+        let first_txin_index = height_to_first_txin_index_vec[offset].to_usize();
         let input_count = u64::from(height_to_input_count_vec[offset]) as usize;
         let timestamp = height_to_timestamp_collected[offset];
         let block_price = height_to_price_collected[offset];
@@ -239,7 +239,7 @@ pub(crate) fn process_blocks(
         debug_assert_eq!(ctx.price_at(height), block_price);
 
         // Get first address indexes for this height from pre-collected vecs
-        let first_addressindexes = ByAddressType {
+        let first_address_indexes = ByAddressType {
             p2a: TypeIndex::from(first_p2a_vec[offset].to_usize()),
             p2pk33: TypeIndex::from(first_p2pk33_vec[offset].to_usize()),
             p2pk65: TypeIndex::from(first_p2pk65_vec[offset].to_usize()),
@@ -254,7 +254,7 @@ pub(crate) fn process_blocks(
         activity_counts.reset();
 
         // Process outputs, inputs, and tick-tock in parallel via rayon::join.
-        // Collection (build txindex mappings + bulk mmap reads) is merged into the
+        // Collection (build tx_index mappings + bulk mmap reads) is merged into the
         // processing closures so outputs and inputs collection overlap each other
         // and tick-tock, instead of running sequentially before the join.
         let (matured, oi_result) = rayon::join(
@@ -262,14 +262,14 @@ pub(crate) fn process_blocks(
             || -> Result<_> {
                 let (outputs_result, inputs_result) = rayon::join(
                     || {
-                        let txoutindex_to_txindex = txout_to_txindex_buf
-                            .build(first_txindex, tx_count, txindex_to_output_count);
-                        let txoutdata_vec =
-                            txout_iters.collect_block_outputs(first_txoutindex, output_count);
+                        let txout_index_to_tx_index = txout_to_tx_index_buf
+                            .build(first_tx_index, tx_count, tx_index_to_output_count);
+                        let txout_data_vec =
+                            txout_iters.collect_block_outputs(first_txout_index, output_count);
                         process_outputs(
-                            txoutindex_to_txindex,
-                            txoutdata_vec,
-                            &first_addressindexes,
+                            txout_index_to_tx_index,
+                            txout_data_vec,
+                            &first_address_indexes,
                             &cache,
                             &vr,
                             &vecs.any_address_indexes,
@@ -278,22 +278,22 @@ pub(crate) fn process_blocks(
                     },
                     || -> Result<_> {
                         if input_count > 1 {
-                            let txinindex_to_txindex = txin_to_txindex_buf
-                                .build(first_txindex, tx_count, txindex_to_input_count);
-                            let (input_values, input_prev_heights, input_outputtypes, input_typeindexes) =
+                            let txin_index_to_tx_index = txin_to_tx_index_buf
+                                .build(first_tx_index, tx_count, tx_index_to_input_count);
+                            let (input_values, input_prev_heights, input_output_types, input_type_indexes) =
                                 txin_iters.collect_block_inputs(
-                                    first_txinindex + 1,
+                                    first_txin_index + 1,
                                     input_count - 1,
                                     height,
                                 );
                             process_inputs(
                                 input_count - 1,
-                                &txinindex_to_txindex[1..],
+                                &txin_index_to_tx_index[1..],
                                 input_values,
-                                input_outputtypes,
-                                input_typeindexes,
+                                input_output_types,
+                                input_type_indexes,
                                 input_prev_heights,
-                                &first_addressindexes,
+                                &first_address_indexes,
                                 &cache,
                                 &vr,
                                 &vecs.any_address_indexes,
@@ -304,7 +304,7 @@ pub(crate) fn process_blocks(
                                 height_to_sent: Default::default(),
                                 sent_data: Default::default(),
                                 address_data: Default::default(),
-                                txindex_vecs: Default::default(),
+                                tx_index_vecs: Default::default(),
                             })
                         }
                     },
@@ -318,11 +318,11 @@ pub(crate) fn process_blocks(
         cache.merge_funded(outputs_result.address_data);
         cache.merge_funded(inputs_result.address_data);
 
-        // Combine txindex_vecs from outputs and inputs, then update tx_count
-        let combined_txindex_vecs = outputs_result
-            .txindex_vecs
-            .merge_vec(inputs_result.txindex_vecs);
-        cache.update_tx_counts(combined_txindex_vecs);
+        // Combine tx_index_vecs from outputs and inputs, then update tx_count
+        let combined_tx_index_vecs = outputs_result
+            .tx_index_vecs
+            .merge_vec(inputs_result.tx_index_vecs);
+        cache.update_tx_counts(combined_tx_index_vecs);
 
         let mut transacted = outputs_result.transacted;
         let mut height_to_sent = inputs_result.height_to_sent;

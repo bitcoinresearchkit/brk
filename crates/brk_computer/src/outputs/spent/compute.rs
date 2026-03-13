@@ -25,29 +25,29 @@ impl Vecs {
         let target_height = Height::from(target_height - 1);
 
         // Find min_height from current vec length
-        let current_txoutindex = self.txinindex.len();
-        let min_txoutindex = current_txoutindex.min(starting_indexes.txoutindex.to_usize());
+        let current_txout_index = self.txin_index.len();
+        let min_txout_index = current_txout_index.min(starting_indexes.txout_index.to_usize());
 
         let starting_stamp = Stamp::from(starting_indexes.height);
-        let _ = self.txinindex.rollback_before(starting_stamp);
+        let _ = self.txin_index.rollback_before(starting_stamp);
 
-        self.txinindex
-            .truncate_if_needed(TxOutIndex::from(min_txoutindex))?;
+        self.txin_index
+            .truncate_if_needed(TxOutIndex::from(min_txout_index))?;
 
-        let txinindex_to_txoutindex = &inputs.spent.txoutindex;
+        let txin_index_to_txout_index = &inputs.spent.txout_index;
 
-        // Find min_height via binary search (first_txoutindex is monotonically non-decreasing)
-        let first_txoutindex_vec = &indexer.vecs.outputs.first_txoutindex;
-        let min_height = if min_txoutindex == 0 {
+        // Find min_height via binary search (first_txout_index is monotonically non-decreasing)
+        let first_txout_index_vec = &indexer.vecs.outputs.first_txout_index;
+        let min_height = if min_txout_index == 0 {
             Height::ZERO
-        } else if min_txoutindex >= starting_indexes.txoutindex.to_usize() {
+        } else if min_txout_index >= starting_indexes.txout_index.to_usize() {
             starting_indexes.height
         } else {
             let mut lo = 0usize;
             let mut hi = starting_indexes.height.to_usize() + 1;
             while lo < hi {
                 let mid = lo + (hi - lo) / 2;
-                if first_txoutindex_vec.collect_one_at(mid).unwrap().to_usize() <= min_txoutindex {
+                if first_txout_index_vec.collect_one_at(mid).unwrap().to_usize() <= min_txout_index {
                     lo = mid + 1;
                 } else {
                     hi = mid;
@@ -58,12 +58,12 @@ impl Vecs {
 
         // Only collect from min_height onward (not from 0)
         let offset = min_height.to_usize();
-        let first_txoutindex_data =
-            first_txoutindex_vec.collect_range_at(offset, target_height.to_usize() + 1);
-        let first_txinindex_data = indexer
+        let first_txout_index_data =
+            first_txout_index_vec.collect_range_at(offset, target_height.to_usize() + 1);
+        let first_txin_index_data = indexer
             .vecs
             .inputs
-            .first_txinindex
+            .first_txin_index
             .collect_range_at(offset, target_height.to_usize() + 2);
 
         // Validate: computed height must not exceed starting height
@@ -80,47 +80,47 @@ impl Vecs {
         while batch_start_height <= target_height {
             let batch_end_height = (batch_start_height + HEIGHT_BATCH).min(target_height);
 
-            // Fill txoutindex up to batch_end_height + 1
-            let batch_txoutindex = if batch_end_height >= target_height {
+            // Fill txout_index up to batch_end_height + 1
+            let batch_txout_index = if batch_end_height >= target_height {
                 indexer.vecs.outputs.value.len()
             } else {
-                first_txoutindex_data[batch_end_height.to_usize() + 1 - offset].to_usize()
+                first_txout_index_data[batch_end_height.to_usize() + 1 - offset].to_usize()
             };
-            self.txinindex
-                .fill_to(batch_txoutindex, TxInIndex::UNSPENT)?;
+            self.txin_index
+                .fill_to(batch_txout_index, TxInIndex::UNSPENT)?;
 
             // Get txin range for this height batch
             let txin_start =
-                first_txinindex_data[batch_start_height.to_usize() - offset].to_usize();
+                first_txin_index_data[batch_start_height.to_usize() - offset].to_usize();
             let txin_end = if batch_end_height >= target_height {
-                inputs.spent.txoutindex.len()
+                inputs.spent.txout_index.len()
             } else {
-                first_txinindex_data[batch_end_height.to_usize() + 1 - offset].to_usize()
+                first_txin_index_data[batch_end_height.to_usize() + 1 - offset].to_usize()
             };
 
             // Stream txins directly into pairs — avoids intermediate Vec allocation
             pairs.clear();
             let mut j = txin_start;
-            txinindex_to_txoutindex.for_each_range_at(
+            txin_index_to_txout_index.for_each_range_at(
                 txin_start,
                 txin_end,
-                |txoutindex: TxOutIndex| {
-                    if !txoutindex.is_coinbase() {
-                        pairs.push((txoutindex, TxInIndex::from(j)));
+                |txout_index: TxOutIndex| {
+                    if !txout_index.is_coinbase() {
+                        pairs.push((txout_index, TxInIndex::from(j)));
                     }
                     j += 1;
                 },
             );
 
-            pairs.sort_unstable_by_key(|(txoutindex, _)| *txoutindex);
+            pairs.sort_unstable_by_key(|(txout_index, _)| *txout_index);
 
-            for &(txoutindex, txinindex) in &pairs {
-                self.txinindex.update(txoutindex, txinindex)?;
+            for &(txout_index, txin_index) in &pairs {
+                self.txin_index.update(txout_index, txin_index)?;
             }
 
             if batch_end_height < target_height {
                 let _lock = exit.lock();
-                self.txinindex.write()?;
+                self.txin_index.write()?;
                 info!(
                     "TxOuts: {:.2}%",
                     batch_end_height.to_usize() as f64 / target_height.to_usize() as f64 * 100.0
@@ -132,7 +132,7 @@ impl Vecs {
         }
 
         let _lock = exit.lock();
-        self.txinindex
+        self.txin_index
             .stamped_write_with_changes(Stamp::from(target_height))?;
         db.flush()?;
 

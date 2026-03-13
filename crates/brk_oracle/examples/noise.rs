@@ -94,9 +94,9 @@ fn main() {
     let total_txs = indexer.vecs.transactions.height.len();
     let total_outputs = indexer.vecs.outputs.value.len();
 
-    let first_txoutindex_reader = indexer.vecs.transactions.first_txoutindex.reader();
+    let first_txout_index_reader = indexer.vecs.transactions.first_txout_index.reader();
     let value_reader = indexer.vecs.outputs.value.reader();
-    let outputtype_reader = indexer.vecs.outputs.outputtype.reader();
+    let output_type_reader = indexer.vecs.outputs.output_type.reader();
 
     let config = Config::default();
     let total_blocks = total_heights - lowest;
@@ -110,28 +110,28 @@ fn main() {
     let mut blocks: Vec<BlockData> = Vec::with_capacity(total_blocks);
 
     for h in lowest..total_heights {
-        let first_txindex: TxIndex = indexer
+        let first_tx_index: TxIndex = indexer
             .vecs
             .transactions
-            .first_txindex
+            .first_tx_index
             .collect_one_at(h)
             .unwrap();
-        let next_first_txindex: TxIndex = indexer
+        let next_first_tx_index: TxIndex = indexer
             .vecs
             .transactions
-            .first_txindex
+            .first_tx_index
             .collect_one_at(h + 1)
             .unwrap_or(TxIndex::from(total_txs));
 
-        let out_start = if first_txindex.to_usize() + 1 < next_first_txindex.to_usize() {
-            first_txoutindex_reader
-                .get(first_txindex.to_usize() + 1)
+        let out_start = if first_tx_index.to_usize() + 1 < next_first_tx_index.to_usize() {
+            first_txout_index_reader
+                .get(first_tx_index.to_usize() + 1)
                 .to_usize()
         } else {
             indexer
                 .vecs
                 .outputs
-                .first_txoutindex
+                .first_txout_index
                 .collect_one_at(h + 1)
                 .unwrap_or(TxOutIndex::from(total_outputs))
                 .to_usize()
@@ -139,7 +139,7 @@ fn main() {
         let out_end: usize = indexer
             .vecs
             .outputs
-            .first_txoutindex
+            .first_txout_index
             .collect_one_at(h + 1)
             .unwrap_or(TxOutIndex::from(total_outputs))
             .to_usize();
@@ -147,7 +147,7 @@ fn main() {
         let mut hist = Box::new([0u32; NUM_BINS]);
         for i in out_start..out_end {
             let sats: Sats = value_reader.get(i);
-            let output_type = outputtype_reader.get(i);
+            let output_type = output_type_reader.get(i);
             if config.excluded_output_types.contains(&output_type) {
                 continue;
             }

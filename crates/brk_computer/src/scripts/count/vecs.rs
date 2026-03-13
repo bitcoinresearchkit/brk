@@ -16,8 +16,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub p2wpkh: PerBlockCumulativeWithSums<StoredU64, StoredU64, M>,
     pub p2wsh: PerBlockCumulativeWithSums<StoredU64, StoredU64, M>,
     pub opreturn: PerBlockCumulativeWithSums<StoredU64, StoredU64, M>,
-    pub emptyoutput: PerBlockCumulativeWithSums<StoredU64, StoredU64, M>,
-    pub unknownoutput: PerBlockCumulativeWithSums<StoredU64, StoredU64, M>,
+    pub empty_output: PerBlockCumulativeWithSums<StoredU64, StoredU64, M>,
+    pub unknown_output: PerBlockCumulativeWithSums<StoredU64, StoredU64, M>,
 
     pub segwit: PerBlockCumulativeWithSums<StoredU64, StoredU64, M>,
 }

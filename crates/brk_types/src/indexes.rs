@@ -9,55 +9,55 @@ use crate::{
 /// Used by brk_indexer during block processing.
 #[derive(Debug, Default, Clone)]
 pub struct Indexes {
-    pub emptyoutputindex: EmptyOutputIndex,
+    pub empty_output_index: EmptyOutputIndex,
     pub height: Height,
-    pub opreturnindex: OpReturnIndex,
-    pub p2msoutputindex: P2MSOutputIndex,
-    pub p2pk33addressindex: P2PK33AddressIndex,
-    pub p2pk65addressindex: P2PK65AddressIndex,
-    pub p2pkhaddressindex: P2PKHAddressIndex,
-    pub p2shaddressindex: P2SHAddressIndex,
-    pub p2traddressindex: P2TRAddressIndex,
-    pub p2wpkhaddressindex: P2WPKHAddressIndex,
-    pub p2wshaddressindex: P2WSHAddressIndex,
-    pub p2aaddressindex: P2AAddressIndex,
-    pub txindex: TxIndex,
-    pub txinindex: TxInIndex,
-    pub txoutindex: TxOutIndex,
-    pub unknownoutputindex: UnknownOutputIndex,
+    pub op_return_index: OpReturnIndex,
+    pub p2ms_output_index: P2MSOutputIndex,
+    pub p2pk33_address_index: P2PK33AddressIndex,
+    pub p2pk65_address_index: P2PK65AddressIndex,
+    pub p2pkh_address_index: P2PKHAddressIndex,
+    pub p2sh_address_index: P2SHAddressIndex,
+    pub p2tr_address_index: P2TRAddressIndex,
+    pub p2wpkh_address_index: P2WPKHAddressIndex,
+    pub p2wsh_address_index: P2WSHAddressIndex,
+    pub p2a_address_index: P2AAddressIndex,
+    pub tx_index: TxIndex,
+    pub txin_index: TxInIndex,
+    pub txout_index: TxOutIndex,
+    pub unknown_output_index: UnknownOutputIndex,
 }
 
 impl Indexes {
-    pub fn to_typeindex(&self, outputtype: OutputType) -> TypeIndex {
-        match outputtype {
-            OutputType::Empty => *self.emptyoutputindex,
-            OutputType::OpReturn => *self.opreturnindex,
-            OutputType::P2A => *self.p2aaddressindex,
-            OutputType::P2MS => *self.p2msoutputindex,
-            OutputType::P2PK33 => *self.p2pk33addressindex,
-            OutputType::P2PK65 => *self.p2pk65addressindex,
-            OutputType::P2PKH => *self.p2pkhaddressindex,
-            OutputType::P2SH => *self.p2shaddressindex,
-            OutputType::P2TR => *self.p2traddressindex,
-            OutputType::P2WPKH => *self.p2wpkhaddressindex,
-            OutputType::P2WSH => *self.p2wshaddressindex,
-            OutputType::Unknown => *self.unknownoutputindex,
+    pub fn to_type_index(&self, output_type: OutputType) -> TypeIndex {
+        match output_type {
+            OutputType::Empty => *self.empty_output_index,
+            OutputType::OpReturn => *self.op_return_index,
+            OutputType::P2A => *self.p2a_address_index,
+            OutputType::P2MS => *self.p2ms_output_index,
+            OutputType::P2PK33 => *self.p2pk33_address_index,
+            OutputType::P2PK65 => *self.p2pk65_address_index,
+            OutputType::P2PKH => *self.p2pkh_address_index,
+            OutputType::P2SH => *self.p2sh_address_index,
+            OutputType::P2TR => *self.p2tr_address_index,
+            OutputType::P2WPKH => *self.p2wpkh_address_index,
+            OutputType::P2WSH => *self.p2wsh_address_index,
+            OutputType::Unknown => *self.unknown_output_index,
         }
     }
 
     /// Increments the address index for the given address type and returns the previous value.
     /// Only call this for address types (P2PK65, P2PK33, P2PKH, P2SH, P2WPKH, P2WSH, P2TR, P2A).
     #[inline]
-    pub fn increment_address_index(&mut self, addresstype: OutputType) -> TypeIndex {
-        match addresstype {
-            OutputType::P2PK65 => self.p2pk65addressindex.copy_then_increment(),
-            OutputType::P2PK33 => self.p2pk33addressindex.copy_then_increment(),
-            OutputType::P2PKH => self.p2pkhaddressindex.copy_then_increment(),
-            OutputType::P2SH => self.p2shaddressindex.copy_then_increment(),
-            OutputType::P2WPKH => self.p2wpkhaddressindex.copy_then_increment(),
-            OutputType::P2WSH => self.p2wshaddressindex.copy_then_increment(),
-            OutputType::P2TR => self.p2traddressindex.copy_then_increment(),
-            OutputType::P2A => self.p2aaddressindex.copy_then_increment(),
+    pub fn increment_address_index(&mut self, address_type: OutputType) -> TypeIndex {
+        match address_type {
+            OutputType::P2PK65 => self.p2pk65_address_index.copy_then_increment(),
+            OutputType::P2PK33 => self.p2pk33_address_index.copy_then_increment(),
+            OutputType::P2PKH => self.p2pkh_address_index.copy_then_increment(),
+            OutputType::P2SH => self.p2sh_address_index.copy_then_increment(),
+            OutputType::P2WPKH => self.p2wpkh_address_index.copy_then_increment(),
+            OutputType::P2WSH => self.p2wsh_address_index.copy_then_increment(),
+            OutputType::P2TR => self.p2tr_address_index.copy_then_increment(),
+            OutputType::P2A => self.p2a_address_index.copy_then_increment(),
             _ => unreachable!(),
         }
     }

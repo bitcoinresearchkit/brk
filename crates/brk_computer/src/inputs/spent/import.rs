@@ -7,7 +7,7 @@ use super::Vecs;
 impl Vecs {
     pub(crate) fn forced_import(db: &Database, version: Version) -> Result<Self> {
         Ok(Self {
-            txoutindex: PcoVec::forced_import(db, "txoutindex", version)?,
+            txout_index: PcoVec::forced_import(db, "txout_index", version)?,
             value: PcoVec::forced_import(db, "value", version)?,
         })
     }

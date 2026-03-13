@@ -326,8 +326,8 @@ export function createChart({ parent, brk, fitContent }) {
       timeScale: {
         timeVisible:
           index === "height" ||
-          index === "difficultyepoch" ||
-          index === "halvingepoch" ||
+          index === "epoch" ||
+          index === "halving" ||
           index.startsWith("minute") ||
           index.startsWith("hour"),
         ...(!fitContent

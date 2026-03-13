@@ -66,11 +66,11 @@ impl CheckedSub<EmptyAddressIndex> for EmptyAddressIndex {
 
 impl PrintableIndex for EmptyAddressIndex {
     fn to_string() -> &'static str {
-        "emptyaddressindex"
+        "empty_address_index"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["emptyaddr", "emptyaddressindex"]
+        &["emptyaddr", "empty_address_index"]
     }
 }
 

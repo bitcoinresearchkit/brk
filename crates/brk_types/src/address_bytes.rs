@@ -79,9 +79,9 @@ impl TryFrom<&ScriptBuf> for AddressBytes {
 impl TryFrom<(&ScriptBuf, OutputType)> for AddressBytes {
     type Error = Error;
     fn try_from(tuple: (&ScriptBuf, OutputType)) -> Result<Self, Self::Error> {
-        let (script, outputtype) = tuple;
+        let (script, output_type) = tuple;
 
-        match outputtype {
+        match output_type {
             OutputType::P2PK65 => {
                 let bytes = script.as_bytes();
                 let bytes = match bytes.len() {
@@ -219,7 +219,7 @@ impl FromStr for AddressBytes {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let script = Self::address_to_script(s)?;
-        let outputtype = OutputType::from(&script);
-        Self::try_from((&script, outputtype))
+        let output_type = OutputType::from(&script);
+        Self::try_from((&script, output_type))
     }
 }

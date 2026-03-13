@@ -27,9 +27,9 @@ pub struct BlockProcessor<'a> {
 impl BlockProcessor<'_> {
     /// Update global indexes after processing a block.
     pub fn update_indexes(&mut self, tx_count: usize, input_count: usize, output_count: usize) {
-        self.indexes.txindex += TxIndex::from(tx_count);
-        self.indexes.txinindex += TxInIndex::from(input_count);
-        self.indexes.txoutindex += TxOutIndex::from(output_count);
+        self.indexes.tx_index += TxIndex::from(tx_count);
+        self.indexes.txin_index += TxInIndex::from(input_count);
+        self.indexes.txout_index += TxOutIndex::from(output_count);
     }
 
     /// Finalizes outputs/inputs in parallel with storing tx metadata.
@@ -46,8 +46,8 @@ impl BlockProcessor<'_> {
         let height = self.height;
         let indexes = &mut *self.indexes;
 
-        // Split transactions vecs: finalize needs first_txoutindex/first_txinindex, metadata needs the rest
-        let (first_txoutindex, first_txinindex, mut tx_metadata) =
+        // Split transactions vecs: finalize needs first_txout_index/first_txin_index, metadata needs the rest
+        let (first_txout_index, first_txin_index, mut tx_metadata) =
             self.vecs.transactions.split_for_finalize();
 
         let outputs = &mut self.vecs.outputs;
@@ -55,21 +55,21 @@ impl BlockProcessor<'_> {
         let addresses = &mut self.vecs.addresses;
         let scripts = &mut self.vecs.scripts;
 
-        let addr_hash_stores = &mut self.stores.addresstype_to_addresshash_to_addressindex;
-        let addr_txindex_stores = &mut self.stores.addresstype_to_addressindex_and_txindex;
-        let addr_outpoint_stores = &mut self.stores.addresstype_to_addressindex_and_unspentoutpoint;
-        let txidprefix_store = &mut self.stores.txidprefix_to_txindex;
+        let addr_hash_stores = &mut self.stores.address_type_to_address_hash_to_address_index;
+        let addr_tx_index_stores = &mut self.stores.address_type_to_address_index_and_tx_index;
+        let addr_outpoint_stores = &mut self.stores.address_type_to_address_index_and_unspent_outpoint;
+        let txid_prefix_store = &mut self.stores.txid_prefix_to_tx_index;
 
         let (finalize_result, metadata_result) = rayon::join(
             || -> Result<()> {
                 txout::finalize_outputs(
                     indexes,
-                    first_txoutindex,
+                    first_txout_index,
                     outputs,
                     addresses,
                     scripts,
                     addr_hash_stores,
-                    addr_txindex_stores,
+                    addr_tx_index_stores,
                     addr_outpoint_stores,
                     txouts,
                     same_block_spent_outpoints,
@@ -77,15 +77,15 @@ impl BlockProcessor<'_> {
                     same_block_info,
                 )?;
                 txin::finalize_inputs(
-                    first_txinindex,
+                    first_txin_index,
                     inputs,
-                    addr_txindex_stores,
+                    addr_tx_index_stores,
                     addr_outpoint_stores,
                     txins,
                     same_block_info,
                 )
             },
-            || tx::store_tx_metadata(height, txs, txidprefix_store, &mut tx_metadata),
+            || tx::store_tx_metadata(height, txs, txid_prefix_store, &mut tx_metadata),
         );
 
         finalize_result?;

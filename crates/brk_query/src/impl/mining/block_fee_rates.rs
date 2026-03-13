@@ -1,8 +1,8 @@
 // TODO: INCOMPLETE - indexes_to_fee_rate.day1 doesn't have percentile fields
-// because from_txindex.rs calls remove_percentiles() before creating day1.
+// because from_tx_index.rs calls remove_percentiles() before creating day1.
 // Need to either:
 // 1. Use .height instead and convert height to day1 for iteration
-// 2. Fix from_txindex.rs to preserve percentiles for day1
+// 2. Fix from_tx_index.rs to preserve percentiles for day1
 // 3. Create a separate day1 computation path with percentiles
 
 #![allow(dead_code)]

@@ -42,14 +42,14 @@ impl TryFrom<&ScriptBuf> for Address {
 
 impl TryFrom<(&ScriptBuf, OutputType)> for Address {
     type Error = Error;
-    fn try_from((script, outputtype): (&ScriptBuf, OutputType)) -> Result<Self, Self::Error> {
-        match outputtype {
+    fn try_from((script, output_type): (&ScriptBuf, OutputType)) -> Result<Self, Self::Error> {
+        match output_type {
             OutputType::P2PK65 | OutputType::P2PK33 => {
                 // P2PK has no standard address encoding, use raw pubkey hex
-                let bytes = AddressBytes::try_from((script, outputtype))?;
+                let bytes = AddressBytes::try_from((script, output_type))?;
                 Ok(Self(bytes_to_hex(bytes.as_slice())))
             }
-            _ if outputtype.is_address() => {
+            _ if output_type.is_address() => {
                 let addr = bitcoin::Address::from_script(script, bitcoin::Network::Bitcoin)
                     .map_err(|_| Error::InvalidAddress)?;
                 Ok(Self(addr.to_string()))

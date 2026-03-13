@@ -20,13 +20,13 @@ impl Vecs {
             exit,
             |height_vec| {
                 // Validate computed versions against dependencies
-                let dep_version = indexer.vecs.outputs.first_txoutindex.version()
-                    + indexer.vecs.outputs.outputtype.version()
+                let dep_version = indexer.vecs.outputs.first_txout_index.version()
+                    + indexer.vecs.outputs.output_type.version()
                     + indexer.vecs.outputs.value.version();
                 height_vec.validate_computed_version_or_reset(dep_version)?;
 
                 // Get target height
-                let target_len = indexer.vecs.outputs.first_txoutindex.len();
+                let target_len = indexer.vecs.outputs.first_txout_index.len();
                 if target_len == 0 {
                     return Ok(());
                 }
@@ -42,14 +42,14 @@ impl Vecs {
                 }
 
                 // Pre-collect height-indexed data
-                let first_txoutindexes: Vec<TxOutIndex> =
-                    indexer.vecs.outputs.first_txoutindex.collect_range_at(
+                let first_txout_indexes: Vec<TxOutIndex> =
+                    indexer.vecs.outputs.first_txout_index.collect_range_at(
                         starting_height.to_usize(),
                         target_height.to_usize()
-                            + 2.min(indexer.vecs.outputs.first_txoutindex.len()),
+                            + 2.min(indexer.vecs.outputs.first_txout_index.len()),
                     );
 
-                let mut outputtypes_buf: Vec<OutputType> = Vec::new();
+                let mut output_types_buf: Vec<OutputType> = Vec::new();
                 let mut values_buf: Vec<Sats> = Vec::new();
 
                 // Iterate blocks
@@ -58,23 +58,23 @@ impl Vecs {
                     let local_idx = h - starting_height.to_usize();
 
                     // Get output range for this block
-                    let first_txoutindex = first_txoutindexes[local_idx];
-                    let next_first_txoutindex =
-                        if let Some(&next) = first_txoutindexes.get(local_idx + 1) {
+                    let first_txout_index = first_txout_indexes[local_idx];
+                    let next_first_txout_index =
+                        if let Some(&next) = first_txout_indexes.get(local_idx + 1) {
                             next
                         } else {
                             TxOutIndex::from(indexer.vecs.outputs.value.len())
                         };
 
-                    let out_start = first_txoutindex.to_usize();
-                    let out_end = next_first_txoutindex.to_usize();
+                    let out_start = first_txout_index.to_usize();
+                    let out_end = next_first_txout_index.to_usize();
 
                     // Pre-collect both vecs into reusable buffers
                     indexer
                         .vecs
                         .outputs
-                        .outputtype
-                        .collect_range_into_at(out_start, out_end, &mut outputtypes_buf);
+                        .output_type
+                        .collect_range_into_at(out_start, out_end, &mut output_types_buf);
                     indexer
                         .vecs
                         .outputs
@@ -82,7 +82,7 @@ impl Vecs {
                         .collect_range_into_at(out_start, out_end, &mut values_buf);
 
                     let mut opreturn_value = Sats::ZERO;
-                    for (ot, val) in outputtypes_buf.iter().zip(values_buf.iter()) {
+                    for (ot, val) in output_types_buf.iter().zip(values_buf.iter()) {
                         if *ot == OutputType::OpReturn {
                             opreturn_value += *val;
                         }

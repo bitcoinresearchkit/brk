@@ -211,7 +211,7 @@ function singleAddressCountChart(cohort, title) {
     title: title("Address Count"),
     bottom: [
       line({
-        metric: cohort.addrCount.count,
+        metric: cohort.addressCount.inner,
         name: "Address Count",
         color: cohort.color,
         unit: Unit.count,
@@ -299,7 +299,7 @@ function createSingleUtxoCount30dChangeSeries(cohort) {
 function createSingleAddrCount30dChangeSeries(cohort) {
   return [
     baseline({
-      metric: cohort.addrCount._30dChange,
+      metric: cohort.addressCount.delta.change._1m,
       name: "30d Change",
       unit: Unit.count,
     }),
@@ -580,8 +580,8 @@ export function createGroupedHoldingsSectionAddress({ list, all, title }) {
       {
         name: "Address Count",
         title: title("Address Count"),
-        bottom: mapCohortsWithAll(list, all, ({ name, color, addrCount }) =>
-          line({ metric: addrCount.count, name, color, unit: Unit.count }),
+        bottom: mapCohortsWithAll(list, all, ({ name, color, addressCount }) =>
+          line({ metric: addressCount.inner, name, color, unit: Unit.count }),
         ),
       },
       {
@@ -592,9 +592,9 @@ export function createGroupedHoldingsSectionAddress({ list, all, title }) {
           {
             name: "Address Count",
             title: title("Address Count 30d Change"),
-            bottom: mapCohortsWithAll(list, all, ({ name, color, addrCount }) =>
+            bottom: mapCohortsWithAll(list, all, ({ name, color, addressCount }) =>
               baseline({
-                metric: addrCount._30dChange,
+                metric: addressCount.delta.change._1m,
                 name,
                 unit: Unit.count,
                 color,
@@ -706,8 +706,8 @@ export function createGroupedHoldingsSectionAddressAmount({
       {
         name: "Address Count",
         title: title("Address Count"),
-        bottom: mapCohortsWithAll(list, all, ({ name, color, addrCount }) =>
-          line({ metric: addrCount.count, name, color, unit: Unit.count }),
+        bottom: mapCohortsWithAll(list, all, ({ name, color, addressCount }) =>
+          line({ metric: addressCount.inner, name, color, unit: Unit.count }),
         ),
       },
       {
@@ -718,9 +718,9 @@ export function createGroupedHoldingsSectionAddressAmount({
           {
             name: "Address Count",
             title: title("Address Count 30d Change"),
-            bottom: mapCohortsWithAll(list, all, ({ name, color, addrCount }) =>
+            bottom: mapCohortsWithAll(list, all, ({ name, color, addressCount }) =>
               baseline({
-                metric: addrCount._30dChange,
+                metric: addressCount.delta.change._1m,
                 name,
                 unit: Unit.count,
                 color,

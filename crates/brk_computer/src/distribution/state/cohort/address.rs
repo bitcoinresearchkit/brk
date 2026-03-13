@@ -34,16 +34,16 @@ impl<R: RealizedOps> AddressCohortState<R> {
 
     pub(crate) fn send(
         &mut self,
-        addressdata: &mut FundedAddressData,
+        address_data: &mut FundedAddressData,
         value: Sats,
         current_price: Cents,
         prev_price: Cents,
         ath: Cents,
         age: Age,
     ) -> Result<()> {
-        let prev = addressdata.cost_basis_snapshot();
-        addressdata.send(value, prev_price)?;
-        let current = addressdata.cost_basis_snapshot();
+        let prev = address_data.cost_basis_snapshot();
+        address_data.send(value, prev_price)?;
+        let current = address_data.cost_basis_snapshot();
 
         self.inner.send_address(
             &SupplyState {
@@ -83,14 +83,14 @@ impl<R: RealizedOps> AddressCohortState<R> {
         );
     }
 
-    pub(crate) fn add(&mut self, addressdata: &FundedAddressData) {
+    pub(crate) fn add(&mut self, address_data: &FundedAddressData) {
         self.address_count += 1;
         self.inner
-            .increment_snapshot(&addressdata.cost_basis_snapshot());
+            .increment_snapshot(&address_data.cost_basis_snapshot());
     }
 
-    pub(crate) fn subtract(&mut self, addressdata: &FundedAddressData) {
-        let snapshot = addressdata.cost_basis_snapshot();
+    pub(crate) fn subtract(&mut self, address_data: &FundedAddressData) {
+        let snapshot = address_data.cost_basis_snapshot();
 
         // Check for potential underflow before it happens
         if unlikely(self.inner.supply.utxo_count < snapshot.supply_state.utxo_count) {
@@ -103,7 +103,7 @@ impl<R: RealizedOps> AddressCohortState<R> {
                 This means the address is not properly tracked in this cohort.",
                 self.address_count,
                 self.inner.supply,
-                addressdata,
+                address_data,
                 snapshot.supply_state,
                 snapshot.realized_price
             );
@@ -118,7 +118,7 @@ impl<R: RealizedOps> AddressCohortState<R> {
                 This means the address is not properly tracked in this cohort.",
                 self.address_count,
                 self.inner.supply,
-                addressdata,
+                address_data,
                 snapshot.supply_state,
                 snapshot.realized_price
             );
@@ -129,7 +129,7 @@ impl<R: RealizedOps> AddressCohortState<R> {
                 "AddressCohortState::subtract address_count underflow! address_count=0\n\
                 Address being subtracted: {}\n\
                 Realized price: {}",
-                addressdata, snapshot.realized_price
+                address_data, snapshot.realized_price
             )
         });
 

@@ -96,11 +96,11 @@ impl CheckedSub<P2SHAddressIndex> for P2SHAddressIndex {
 
 impl PrintableIndex for P2SHAddressIndex {
     fn to_string() -> &'static str {
-        "p2shaddressindex"
+        "p2sh_address_index"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["shaddr", "p2shaddr", "p2shaddressindex"]
+        &["shaddr", "p2shaddr", "p2sh_address_index"]
     }
 }
 

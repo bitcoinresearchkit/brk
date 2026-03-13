@@ -9,7 +9,7 @@ pub const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
 
 /// Known duplicate Bitcoin transactions (BIP30)
 /// https://github.com/bitcoin/bips/blob/master/bip-0030.mediawiki
-/// Each entry is (txid_str, txindex) - these are coinbase txs that were duplicated.
+/// Each entry is (txid_str, tx_index) - these are coinbase txs that were duplicated.
 pub const DUPLICATE_TXID_STRS: [(&str, u32); 2] = [
     (
         "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599",
@@ -34,10 +34,10 @@ pub static DUPLICATE_TXIDS: std::sync::LazyLock<[Txid; 2]> = std::sync::LazyLock
 
 pub static DUPLICATE_TXID_PREFIXES: std::sync::LazyLock<[(TxidPrefix, TxIndex); 2]> =
     std::sync::LazyLock::new(|| {
-        DUPLICATE_TXID_STRS.map(|(s, txindex)| {
+        DUPLICATE_TXID_STRS.map(|(s, tx_index)| {
             (
                 TxidPrefix::from(&Txid::from(bitcoin::Txid::from_str(s).unwrap())),
-                TxIndex::new(txindex),
+                TxIndex::new(tx_index),
             )
         })
     });

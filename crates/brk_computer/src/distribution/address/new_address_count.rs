@@ -16,7 +16,7 @@ use super::TotalAddressCountVecs;
 pub struct NewAddressCountVecs<M: StorageMode = Rw> {
     pub all: PerBlockCumulativeWithSums<StoredU64, StoredU64, M>,
     #[traversable(flatten)]
-    pub by_addresstype: ByAddressType<PerBlockCumulativeWithSums<StoredU64, StoredU64, M>>,
+    pub by_address_type: ByAddressType<PerBlockCumulativeWithSums<StoredU64, StoredU64, M>>,
 }
 
 impl NewAddressCountVecs {
@@ -34,7 +34,7 @@ impl NewAddressCountVecs {
             cached_starts,
         )?;
 
-        let by_addresstype = ByAddressType::new_with_name(|name| {
+        let by_address_type = ByAddressType::new_with_name(|name| {
             PerBlockCumulativeWithSums::forced_import(
                 db,
                 &format!("{name}_new_address_count"),
@@ -46,7 +46,7 @@ impl NewAddressCountVecs {
 
         Ok(Self {
             all,
-            by_addresstype,
+            by_address_type,
         })
     }
 
@@ -61,9 +61,9 @@ impl NewAddressCountVecs {
         })?;
 
         for ((_, new), (_, total)) in self
-            .by_addresstype
+            .by_address_type
             .iter_mut()
-            .zip(total_address_count.by_addresstype.iter())
+            .zip(total_address_count.by_address_type.iter())
         {
             new.compute(max_from, exit, |height_vec| {
                 Ok(height_vec.compute_change(max_from, &total.height, 1, exit)?)

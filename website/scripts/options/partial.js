@@ -39,16 +39,16 @@ export function createPartialOptions() {
     cohortAll,
     termShort,
     termLong,
-    upToDate,
-    fromDate,
-    dateRange,
+    underAge,
+    overAge,
+    ageRange,
     epoch,
-    utxosAboveAmount,
-    addressesAboveAmount,
+    utxosOverAmount,
+    addressesOverAmount,
     utxosUnderAmount,
     addressesUnderAmount,
-    utxosAmountRanges,
-    addressesAmountRanges,
+    utxosAmountRange,
+    addressesAmountRange,
     typeAddressable,
     typeOther,
     class: class_,
@@ -99,11 +99,11 @@ export function createPartialOptions() {
                   tree: [
                     createGroupedCohortFolderWithAdjusted({
                       name: "Compare",
-                      title: "Max Age",
-                      list: upToDate,
+                      title: "Under Age",
+                      list: underAge,
                       all: cohortAll,
                     }),
-                    ...upToDate.map(createCohortFolderWithAdjusted),
+                    ...underAge.map(createCohortFolderWithAdjusted),
                   ],
                 },
                 // Older Than (≥ X old)
@@ -112,11 +112,11 @@ export function createPartialOptions() {
                   tree: [
                     createGroupedCohortFolderBasicWithMarketCap({
                       name: "Compare",
-                      title: "Min Age",
-                      list: fromDate,
+                      title: "Over Age",
+                      list: overAge,
                       all: cohortAll,
                     }),
-                    ...fromDate.map(createCohortFolderBasicWithMarketCap),
+                    ...overAge.map(createCohortFolderBasicWithMarketCap),
                   ],
                 },
                 // Range
@@ -126,10 +126,10 @@ export function createPartialOptions() {
                     createGroupedCohortFolderAgeRange({
                       name: "Compare",
                       title: "Age Ranges",
-                      list: dateRange,
+                      list: ageRange,
                       all: cohortAll,
                     }),
-                    ...dateRange.map(createCohortFolderAgeRange),
+                    ...ageRange.map(createCohortFolderAgeRange),
                   ],
                 },
               ],
@@ -145,7 +145,7 @@ export function createPartialOptions() {
                   tree: [
                     createGroupedCohortFolderBasicWithMarketCap({
                       name: "Compare",
-                      title: "Max Size",
+                      title: "Over Amount",
                       list: utxosUnderAmount,
                       all: cohortAll,
                     }),
@@ -158,11 +158,11 @@ export function createPartialOptions() {
                   tree: [
                     createGroupedCohortFolderBasicWithMarketCap({
                       name: "Compare",
-                      title: "Min Size",
-                      list: utxosAboveAmount,
+                      title: "Under Amount",
+                      list: utxosOverAmount,
                       all: cohortAll,
                     }),
-                    ...utxosAboveAmount.map(createCohortFolderBasicWithMarketCap),
+                    ...utxosOverAmount.map(createCohortFolderBasicWithMarketCap),
                   ],
                 },
                 // Range
@@ -171,11 +171,11 @@ export function createPartialOptions() {
                   tree: [
                     createGroupedCohortFolderBasicWithoutMarketCap({
                       name: "Compare",
-                      title: "Size Ranges",
-                      list: utxosAmountRanges,
+                      title: "Amount Ranges",
+                      list: utxosAmountRange,
                       all: cohortAll,
                     }),
-                    ...utxosAmountRanges.map(createCohortFolderBasicWithoutMarketCap),
+                    ...utxosAmountRange.map(createCohortFolderBasicWithoutMarketCap),
                   ],
                 },
               ],
@@ -191,7 +191,7 @@ export function createPartialOptions() {
                   tree: [
                     createGroupedAddressCohortFolder({
                       name: "Compare",
-                      title: "Max Balance",
+                      title: "Over Balance",
                       list: addressesUnderAmount,
                       all: cohortAll,
                     }),
@@ -204,11 +204,11 @@ export function createPartialOptions() {
                   tree: [
                     createGroupedAddressCohortFolder({
                       name: "Compare",
-                      title: "Min Balance",
-                      list: addressesAboveAmount,
+                      title: "Under Balance",
+                      list: addressesOverAmount,
                       all: cohortAll,
                     }),
-                    ...addressesAboveAmount.map(createAddressCohortFolder),
+                    ...addressesOverAmount.map(createAddressCohortFolder),
                   ],
                 },
                 // Range
@@ -218,10 +218,10 @@ export function createPartialOptions() {
                     createGroupedAddressCohortFolder({
                       name: "Compare",
                       title: "Balance Ranges",
-                      list: addressesAmountRanges,
+                      list: addressesAmountRange,
                       all: cohortAll,
                     }),
-                    ...addressesAmountRanges.map(createAddressCohortFolder),
+                    ...addressesAmountRange.map(createAddressCohortFolder),
                   ],
                 },
               ],

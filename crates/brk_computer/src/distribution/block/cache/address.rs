@@ -37,14 +37,14 @@ impl AddressCache {
 
     /// Check if address is in cache (either funded or empty).
     #[inline]
-    pub(crate) fn contains(&self, address_type: OutputType, typeindex: TypeIndex) -> bool {
+    pub(crate) fn contains(&self, address_type: OutputType, type_index: TypeIndex) -> bool {
         self.funded
             .get(address_type)
-            .is_some_and(|m| m.contains_key(&typeindex))
+            .is_some_and(|m| m.contains_key(&type_index))
             || self
                 .empty
                 .get(address_type)
-                .is_some_and(|m| m.contains_key(&typeindex))
+                .is_some_and(|m| m.contains_key(&type_index))
     }
 
     /// Merge address data into funded cache.
@@ -68,9 +68,9 @@ impl AddressCache {
     /// Update transaction counts for addresses.
     pub(crate) fn update_tx_counts(
         &mut self,
-        txindex_vecs: AddressTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>,
+        tx_index_vecs: AddressTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>,
     ) {
-        update_tx_counts(&mut self.funded, &mut self.empty, txindex_vecs);
+        update_tx_counts(&mut self.funded, &mut self.empty, tx_index_vecs);
     }
 
     /// Take the cache contents for flushing, leaving empty caches.
@@ -93,33 +93,33 @@ impl AddressCache {
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn load_uncached_address_data(
     address_type: OutputType,
-    typeindex: TypeIndex,
-    first_addressindexes: &ByAddressType<TypeIndex>,
+    type_index: TypeIndex,
+    first_address_indexes: &ByAddressType<TypeIndex>,
     cache: &AddressCache,
     vr: &VecsReaders,
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
 ) -> Result<Option<WithAddressDataSource<FundedAddressData>>> {
-    // Check if this is a new address (typeindex >= first for this height)
-    let first = *first_addressindexes.get(address_type).unwrap();
-    if first <= typeindex {
+    // Check if this is a new address (type_index >= first for this height)
+    let first = *first_address_indexes.get(address_type).unwrap();
+    if first <= type_index {
         return Ok(Some(WithAddressDataSource::New(
             FundedAddressData::default(),
         )));
     }
 
     // Skip if already in cache
-    if cache.contains(address_type, typeindex) {
+    if cache.contains(address_type, type_index) {
         return Ok(None);
     }
 
     // Read from storage
     let reader = vr.address_reader(address_type);
-    let anyaddressindex = any_address_indexes.get(address_type, typeindex, reader)?;
+    let any_address_index = any_address_indexes.get(address_type, type_index, reader)?;
 
-    Ok(Some(match anyaddressindex.to_enum() {
+    Ok(Some(match any_address_index.to_enum() {
         AnyAddressDataIndexEnum::Funded(funded_index) => {
-            let reader = &vr.anyaddressindex_to_anyaddressdata.funded;
+            let reader = &vr.any_address_index_to_any_address_data.funded;
             let funded_data = addresses_data
                 .funded
                 .get_any_or_read_at(funded_index.into(), reader)?
@@ -127,7 +127,7 @@ pub(crate) fn load_uncached_address_data(
             WithAddressDataSource::FromFunded(funded_index, funded_data)
         }
         AnyAddressDataIndexEnum::Empty(empty_index) => {
-            let reader = &vr.anyaddressindex_to_anyaddressdata.empty;
+            let reader = &vr.any_address_index_to_any_address_data.empty;
             let empty_data = addresses_data
                 .empty
                 .get_any_or_read_at(empty_index.into(), reader)?

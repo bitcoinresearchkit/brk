@@ -32,16 +32,16 @@ impl Query {
             return Err(Error::InvalidAddress);
         };
 
-        let outputtype = OutputType::from(&script);
-        let Ok(bytes) = AddressBytes::try_from((&script, outputtype)) else {
+        let output_type = OutputType::from(&script);
+        let Ok(bytes) = AddressBytes::try_from((&script, output_type)) else {
             return Err(Error::InvalidAddress);
         };
-        let addresstype = outputtype;
+        let address_type = output_type;
         let hash = AddressHash::from(&bytes);
 
         let Ok(Some(type_index)) = stores
-            .addresstype_to_addresshash_to_addressindex
-            .get_unwrap(addresstype)
+            .address_type_to_address_hash_to_address_index
+            .get_unwrap(address_type)
             .get(&hash)
             .map(|opt| opt.map(|cow| cow.into_owned()))
         else {
@@ -51,7 +51,7 @@ impl Query {
         let any_address_index = computer
             .distribution
             .any_address_indexes
-            .get_once(outputtype, type_index)?;
+            .get_once(output_type, type_index)?;
 
         let address_data = match any_address_index.to_enum() {
             AnyAddressDataIndexEnum::Funded(index) => computer
@@ -99,7 +99,7 @@ impl Query {
         let txindices = self.address_txindices(&address, after_txid, limit)?;
         txindices
             .into_iter()
-            .map(|txindex| self.transaction_by_index(txindex))
+            .map(|tx_index| self.transaction_by_index(tx_index))
             .collect()
     }
 
@@ -113,7 +113,7 @@ impl Query {
         let txid_reader = self.indexer().vecs.transactions.txid.reader();
         let txids = txindices
             .into_iter()
-            .map(|txindex| txid_reader.get(txindex.to_usize()))
+            .map(|tx_index| txid_reader.get(tx_index.to_usize()))
             .collect();
         Ok(txids)
     }
@@ -127,23 +127,23 @@ impl Query {
         let indexer = self.indexer();
         let stores = &indexer.stores;
 
-        let (outputtype, type_index) = self.resolve_address(address)?;
+        let (output_type, type_index) = self.resolve_address(address)?;
 
         let store = stores
-            .addresstype_to_addressindex_and_txindex
-            .get(outputtype)
+            .address_type_to_address_index_and_tx_index
+            .get(output_type)
             .unwrap();
 
         let prefix = u32::from(type_index).to_be_bytes();
 
-        let after_txindex = if let Some(after_txid) = after_txid {
-            let txindex = stores
-                .txidprefix_to_txindex
+        let after_tx_index = if let Some(after_txid) = after_txid {
+            let tx_index = stores
+                .txid_prefix_to_tx_index
                 .get(&after_txid.into())
                 .map_err(|_| Error::UnknownTxid)?
                 .ok_or(Error::UnknownTxid)?
                 .into_owned();
-            Some(txindex)
+            Some(tx_index)
         } else {
             None
         };
@@ -152,14 +152,14 @@ impl Query {
             .prefix(prefix)
             .rev()
             .filter(|(key, _): &(AddressIndexTxIndex, Unit)| {
-                if let Some(after) = after_txindex {
-                    key.txindex() < after
+                if let Some(after) = after_tx_index {
+                    key.tx_index() < after
                 } else {
                     true
                 }
             })
             .take(limit)
-            .map(|(key, _)| key.txindex())
+            .map(|(key, _)| key.tx_index())
             .collect())
     }
 
@@ -168,37 +168,37 @@ impl Query {
         let stores = &indexer.stores;
         let vecs = &indexer.vecs;
 
-        let (outputtype, type_index) = self.resolve_address(&address)?;
+        let (output_type, type_index) = self.resolve_address(&address)?;
 
         let store = stores
-            .addresstype_to_addressindex_and_unspentoutpoint
-            .get(outputtype)
+            .address_type_to_address_index_and_unspent_outpoint
+            .get(output_type)
             .unwrap();
 
         let prefix = u32::from(type_index).to_be_bytes();
 
         let outpoints: Vec<(TxIndex, Vout)> = store
             .prefix(prefix)
-            .map(|(key, _): (AddressIndexOutPoint, Unit)| (key.txindex(), key.vout()))
+            .map(|(key, _): (AddressIndexOutPoint, Unit)| (key.tx_index(), key.vout()))
             .collect();
 
         let txid_reader = vecs.transactions.txid.reader();
-        let first_txoutindex_reader = vecs.transactions.first_txoutindex.reader();
+        let first_txout_index_reader = vecs.transactions.first_txout_index.reader();
         let value_reader = vecs.outputs.value.reader();
         let blockhash_reader = vecs.blocks.blockhash.reader();
 
         let utxos: Vec<Utxo> = outpoints
             .into_iter()
-            .map(|(txindex, vout)| {
-                let txid: Txid = txid_reader.get(txindex.to_usize());
+            .map(|(tx_index, vout)| {
+                let txid: Txid = txid_reader.get(tx_index.to_usize());
                 let height = vecs
                     .transactions
                     .height
-                    .collect_one_at(txindex.to_usize())
+                    .collect_one_at(tx_index.to_usize())
                     .unwrap();
-                let first_txoutindex = first_txoutindex_reader.get(txindex.to_usize());
-                let txoutindex = first_txoutindex + vout;
-                let value: Sats = value_reader.get(usize::from(txoutindex));
+                let first_txout_index = first_txout_index_reader.get(tx_index.to_usize());
+                let txout_index = first_txout_index + vout;
+                let value: Sats = value_reader.get(usize::from(txout_index));
                 let block_hash = blockhash_reader.get(usize::from(height));
                 let block_time = vecs
                     .blocks
@@ -252,12 +252,12 @@ impl Query {
         let stores = &self.indexer().stores;
 
         let bytes = AddressBytes::from_str(address)?;
-        let outputtype = OutputType::from(&bytes);
+        let output_type = OutputType::from(&bytes);
         let hash = AddressHash::from(&bytes);
 
         let Ok(Some(type_index)) = stores
-            .addresstype_to_addresshash_to_addressindex
-            .get(outputtype)
+            .address_type_to_address_hash_to_address_index
+            .get(output_type)
             .unwrap()
             .get(&hash)
             .map(|opt| opt.map(|cow| cow.into_owned()))
@@ -265,6 +265,6 @@ impl Query {
             return Err(Error::UnknownAddress);
         };
 
-        Ok((outputtype, type_index))
+        Ok((output_type, type_index))
     }
 }

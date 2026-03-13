@@ -83,20 +83,20 @@ impl Vecs {
         self.check_xor_bytes(parser)?;
 
         // Validate computed versions against dependencies
-        let dep_version = indexer.vecs.transactions.first_txindex.version()
+        let dep_version = indexer.vecs.transactions.first_tx_index.version()
             + indexer.vecs.transactions.height.version();
         self.block
             .validate_computed_version_or_reset(dep_version)?;
         self.tx
             .validate_computed_version_or_reset(dep_version)?;
 
-        let min_txindex = TxIndex::from(self.tx.len()).min(starting_indexes.txindex);
+        let min_tx_index = TxIndex::from(self.tx.len()).min(starting_indexes.tx_index);
 
         let Some(min_height) = indexer
             .vecs
             .transactions
             .height
-            .collect_one(min_txindex)
+            .collect_one(min_tx_index)
             .map(|h: Height| h.min(starting_indexes.height))
         else {
             return Ok(());
@@ -104,13 +104,13 @@ impl Vecs {
 
         // Cursor avoids per-height PcoVec page decompression.
         // Heights are sequential, so the cursor only advances forward.
-        let mut first_txindex_cursor = indexer.vecs.transactions.first_txindex.cursor();
-        first_txindex_cursor.advance(min_height.to_usize());
+        let mut first_tx_index_cursor = indexer.vecs.transactions.first_tx_index.cursor();
+        first_tx_index_cursor.advance(min_height.to_usize());
 
         parser
             .read(
                 Some(min_height),
-                Some((indexer.vecs.transactions.first_txindex.len() - 1).into()),
+                Some((indexer.vecs.transactions.first_tx_index.len() - 1).into()),
             )
             .iter()
             .try_for_each(|block| -> Result<()> {
@@ -119,13 +119,13 @@ impl Vecs {
                 self.block
                     .truncate_push(height, block.metadata().position())?;
 
-                let txindex = first_txindex_cursor.next().unwrap();
+                let tx_index = first_tx_index_cursor.next().unwrap();
 
                 block.tx_metadata().iter().enumerate().try_for_each(
                     |(index, metadata)| -> Result<()> {
-                        let txindex = txindex + index;
+                        let tx_index = tx_index + index;
                         self.tx
-                            .truncate_push(txindex, metadata.position())?;
+                            .truncate_push(tx_index, metadata.position())?;
                         Ok(())
                     },
                 )?;

@@ -64,28 +64,28 @@ impl Query {
         let sizes = indexer.vecs.blocks.total.collect_range_at(begin, end);
         let weights = indexer.vecs.blocks.weight.collect_range_at(begin, end);
 
-        // Batch-read first_txindex for tx_count computation (need one extra for next boundary)
-        let txindex_end = if end <= max_height.to_usize() {
+        // Batch-read first_tx_index for tx_count computation (need one extra for next boundary)
+        let tx_index_end = if end <= max_height.to_usize() {
             end + 1
         } else {
             end
         };
-        let first_txindexes: Vec<TxIndex> = indexer
+        let first_tx_indexes: Vec<TxIndex> = indexer
             .vecs
             .transactions
-            .first_txindex
-            .collect_range_at(begin, txindex_end);
-        let total_txs = computer.indexes.txindex.identity.len();
+            .first_tx_index
+            .collect_range_at(begin, tx_index_end);
+        let total_txs = computer.indexes.tx_index.identity.len();
 
         let mut blocks = Vec::with_capacity(count);
         for i in (0..count).rev() {
             let height = Height::from(begin + i);
             let blockhash = indexer.vecs.blocks.blockhash.read_once(height)?;
 
-            let tx_count = if i + 1 < first_txindexes.len() {
-                first_txindexes[i + 1].to_usize() - first_txindexes[i].to_usize()
+            let tx_count = if i + 1 < first_tx_indexes.len() {
+                first_tx_indexes[i + 1].to_usize() - first_tx_indexes[i].to_usize()
             } else {
-                total_txs - first_txindexes[i].to_usize()
+                total_txs - first_tx_indexes[i].to_usize()
             };
 
             blocks.push(BlockInfo {
@@ -111,7 +111,7 @@ impl Query {
 
         indexer
             .stores
-            .blockhashprefix_to_height
+            .blockhash_prefix_to_height
             .get(&prefix)?
             .map(|h| *h)
             .ok_or(Error::NotFound("Block not found".into()))
@@ -125,23 +125,23 @@ impl Query {
         let indexer = self.indexer();
         let computer = self.computer();
 
-        let first_txindex = indexer
+        let first_tx_index = indexer
             .vecs
             .transactions
-            .first_txindex
+            .first_tx_index
             .collect_one(height)
             .unwrap();
-        let next_first_txindex = if height < max_height {
+        let next_first_tx_index = if height < max_height {
             indexer
                 .vecs
                 .transactions
-                .first_txindex
+                .first_tx_index
                 .collect_one(height.incremented())
                 .unwrap()
         } else {
-            TxIndex::from(computer.indexes.txindex.identity.len())
+            TxIndex::from(computer.indexes.tx_index.identity.len())
         };
 
-        Ok((next_first_txindex.to_usize() - first_txindex.to_usize()) as u32)
+        Ok((next_first_tx_index.to_usize() - first_tx_index.to_usize()) as u32)
     }
 }

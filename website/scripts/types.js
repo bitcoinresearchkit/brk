@@ -39,8 +39,8 @@
  * @typedef {keyof Brk.BtcSatsUsdPattern} BtcSatsUsdKey
  * @typedef {Brk.BtcSatsUsdPattern} SupplyPattern
  * @typedef {Brk.AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} BlockSizePattern
- * @typedef {keyof Brk.MetricsTree_Distribution_UtxoCohorts_Type} SpendableType
- * @typedef {keyof Brk.MetricsTree_Distribution_AnyAddressIndexes} AddressableType
+ * @typedef {keyof Brk.MetricsTree_Cohorts_Utxo_Type} SpendableType
+ * @typedef {keyof Brk.MetricsTree_Addresses_Raw} AddressableType
  *
  * Brk pattern types (using new pattern names)
  * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4} MaxAgePattern
@@ -59,13 +59,13 @@
  * AnyRatioPattern: full ratio patterns (with or without price) - has ratio, percentiles, z-scores
  * @typedef {Brk.RatioPattern | Brk.PriceRatioPattern} AnyRatioPattern
  * ValuePattern: patterns with base + cumulative (no rolling)
- * @typedef {Brk.BaseCumulativeSumPattern | Brk.BaseCumulativePattern} ValuePattern
+ * @typedef {Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativePattern} ValuePattern
  * FullValuePattern: base + cumulative + rolling windows (flattened)
  * @typedef {Brk._1y24h30d7dBaseCumulativePattern} FullValuePattern
  * RollingWindowSlot: a single rolling window with stats (average, pct10, pct25, median, pct75, pct90, max, min, sum) per unit
  * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern2} RollingWindowSlot
  * AnyValuePatternType: union of all value pattern types
- * @typedef {Brk._1y24h30d7dBaseCumulativePattern | Brk.BaseCumulativeSumPattern | Brk.BaseCumulativePattern} AnyValuePatternType
+ * @typedef {Brk._1y24h30d7dBaseCumulativePattern | Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativePattern} AnyValuePatternType
  * @typedef {Brk.AnyMetricPattern} AnyMetricPattern
  * @typedef {Brk.SatsUsdPattern} ActivePricePattern
  * @typedef {Brk.AnyMetricEndpointBuilder} AnyMetricEndpoint
@@ -95,8 +95,7 @@
  */
 /**
  * Stats pattern: average, min, max, percentiles (height-only indexes, NO base)
- * @template T
- * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>} StatsPattern
+ * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern} StatsPattern
  */
 /**
  * Base stats pattern: height, average, min, max, percentiles (windowed, NO sum/cumulative)

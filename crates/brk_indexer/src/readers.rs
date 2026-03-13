@@ -21,9 +21,9 @@ pub struct AddressReaders {
 }
 
 impl AddressReaders {
-    pub fn script_pubkey(&self, outputtype: OutputType, typeindex: TypeIndex) -> ScriptBuf {
-        let idx = usize::from(typeindex);
-        let bytes: Option<AddressBytes> = match outputtype {
+    pub fn script_pubkey(&self, output_type: OutputType, type_index: TypeIndex) -> ScriptBuf {
+        let idx = usize::from(type_index);
+        let bytes: Option<AddressBytes> = match output_type {
             OutputType::P2PK65 => self.p2pk65.try_get(idx).map(Into::into),
             OutputType::P2PK33 => self.p2pk33.try_get(idx).map(Into::into),
             OutputType::P2PKH => self.p2pkh.try_get(idx).map(Into::into),
@@ -44,9 +44,9 @@ impl AddressReaders {
 /// random access without recomputing `region.start() + HEADER_OFFSET` per read.
 pub struct Readers {
     pub txid: VecReader<TxIndex, Txid, BytesStrategy<Txid>>,
-    pub txindex_to_first_txoutindex: VecReader<TxIndex, TxOutIndex, BytesStrategy<TxOutIndex>>,
-    pub txoutindex_to_outputtype: VecReader<TxOutIndex, OutputType, BytesStrategy<OutputType>>,
-    pub txoutindex_to_typeindex: VecReader<TxOutIndex, TypeIndex, BytesStrategy<TypeIndex>>,
+    pub tx_index_to_first_txout_index: VecReader<TxIndex, TxOutIndex, BytesStrategy<TxOutIndex>>,
+    pub txout_index_to_output_type: VecReader<TxOutIndex, OutputType, BytesStrategy<OutputType>>,
+    pub txout_index_to_type_index: VecReader<TxOutIndex, TypeIndex, BytesStrategy<TypeIndex>>,
     pub addressbytes: AddressReaders,
 }
 
@@ -54,9 +54,9 @@ impl Readers {
     pub fn new(vecs: &Vecs) -> Self {
         Self {
             txid: vecs.transactions.txid.reader(),
-            txindex_to_first_txoutindex: vecs.transactions.first_txoutindex.reader(),
-            txoutindex_to_outputtype: vecs.outputs.outputtype.reader(),
-            txoutindex_to_typeindex: vecs.outputs.typeindex.reader(),
+            tx_index_to_first_txout_index: vecs.transactions.first_txout_index.reader(),
+            txout_index_to_output_type: vecs.outputs.output_type.reader(),
+            txout_index_to_type_index: vecs.outputs.type_index.reader(),
             addressbytes: vecs.addresses.address_readers(),
         }
     }

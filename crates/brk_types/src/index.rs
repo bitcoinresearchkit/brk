@@ -18,7 +18,7 @@ use super::{
 };
 
 /// Aggregation dimension for querying metrics. Includes time-based (date, week, month, year),
-/// block-based (height, txindex), and address/output type indexes.
+/// block-based (height, tx_index), and address/output type indexes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 #[schemars(example = Index::Day1)]
@@ -347,7 +347,7 @@ mod tests {
     }
 
     #[test]
-    fn test_is_not_date_based_txindex() {
+    fn test_is_not_date_based_tx_index() {
         assert!(!Index::TxIndex.is_date_based());
     }
 
@@ -405,7 +405,7 @@ mod tests {
     }
 
     #[test]
-    fn test_index_to_date_txindex_returns_none() {
+    fn test_index_to_date_tx_index_returns_none() {
         assert!(Index::TxIndex.index_to_date(100).is_none());
     }
 

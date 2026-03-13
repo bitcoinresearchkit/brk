@@ -38,49 +38,49 @@ pub struct AddressesVecs<M: StorageMode = Rw> {
 impl AddressesVecs {
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
         let (
-            first_p2pk65addressindex,
-            first_p2pk33addressindex,
-            first_p2pkhaddressindex,
-            first_p2shaddressindex,
-            first_p2wpkhaddressindex,
-            first_p2wshaddressindex,
-            first_p2traddressindex,
-            first_p2aaddressindex,
-            p2pk65bytes,
-            p2pk33bytes,
-            p2pkhbytes,
-            p2shbytes,
-            p2wpkhbytes,
-            p2wshbytes,
-            p2trbytes,
-            p2abytes,
+            first_p2pk65_address_index,
+            first_p2pk33_address_index,
+            first_p2pkh_address_index,
+            first_p2sh_address_index,
+            first_p2wpkh_address_index,
+            first_p2wsh_address_index,
+            first_p2tr_address_index,
+            first_p2a_address_index,
+            p2pk65_bytes,
+            p2pk33_bytes,
+            p2pkh_bytes,
+            p2sh_bytes,
+            p2wpkh_bytes,
+            p2wsh_bytes,
+            p2tr_bytes,
+            p2a_bytes,
         ) = parallel_import! {
-            first_p2pk65addressindex = PcoVec::forced_import(db, "first_p2pk65addressindex", version),
-            first_p2pk33addressindex = PcoVec::forced_import(db, "first_p2pk33addressindex", version),
-            first_p2pkhaddressindex = PcoVec::forced_import(db, "first_p2pkhaddressindex", version),
-            first_p2shaddressindex = PcoVec::forced_import(db, "first_p2shaddressindex", version),
-            first_p2wpkhaddressindex = PcoVec::forced_import(db, "first_p2wpkhaddressindex", version),
-            first_p2wshaddressindex = PcoVec::forced_import(db, "first_p2wshaddressindex", version),
-            first_p2traddressindex = PcoVec::forced_import(db, "first_p2traddressindex", version),
-            first_p2aaddressindex = PcoVec::forced_import(db, "first_p2aaddressindex", version),
-            p2pk65bytes = BytesVec::forced_import(db, "p2pk65bytes", version),
-            p2pk33bytes = BytesVec::forced_import(db, "p2pk33bytes", version),
-            p2pkhbytes = BytesVec::forced_import(db, "p2pkhbytes", version),
-            p2shbytes = BytesVec::forced_import(db, "p2shbytes", version),
-            p2wpkhbytes = BytesVec::forced_import(db, "p2wpkhbytes", version),
-            p2wshbytes = BytesVec::forced_import(db, "p2wshbytes", version),
-            p2trbytes = BytesVec::forced_import(db, "p2trbytes", version),
-            p2abytes = BytesVec::forced_import(db, "p2abytes", version),
+            first_p2pk65_address_index = PcoVec::forced_import(db, "first_p2pk65_address_index", version),
+            first_p2pk33_address_index = PcoVec::forced_import(db, "first_p2pk33_address_index", version),
+            first_p2pkh_address_index = PcoVec::forced_import(db, "first_p2pkh_address_index", version),
+            first_p2sh_address_index = PcoVec::forced_import(db, "first_p2sh_address_index", version),
+            first_p2wpkh_address_index = PcoVec::forced_import(db, "first_p2wpkh_address_index", version),
+            first_p2wsh_address_index = PcoVec::forced_import(db, "first_p2wsh_address_index", version),
+            first_p2tr_address_index = PcoVec::forced_import(db, "first_p2tr_address_index", version),
+            first_p2a_address_index = PcoVec::forced_import(db, "first_p2a_address_index", version),
+            p2pk65_bytes = BytesVec::forced_import(db, "p2pk65_bytes", version),
+            p2pk33_bytes = BytesVec::forced_import(db, "p2pk33_bytes", version),
+            p2pkh_bytes = BytesVec::forced_import(db, "p2pkh_bytes", version),
+            p2sh_bytes = BytesVec::forced_import(db, "p2sh_bytes", version),
+            p2wpkh_bytes = BytesVec::forced_import(db, "p2wpkh_bytes", version),
+            p2wsh_bytes = BytesVec::forced_import(db, "p2wsh_bytes", version),
+            p2tr_bytes = BytesVec::forced_import(db, "p2tr_bytes", version),
+            p2a_bytes = BytesVec::forced_import(db, "p2a_bytes", version),
         };
         Ok(Self {
-            p2pk65: AddressTypeVecs { first_index: first_p2pk65addressindex, bytes: p2pk65bytes },
-            p2pk33: AddressTypeVecs { first_index: first_p2pk33addressindex, bytes: p2pk33bytes },
-            p2pkh: AddressTypeVecs { first_index: first_p2pkhaddressindex, bytes: p2pkhbytes },
-            p2sh: AddressTypeVecs { first_index: first_p2shaddressindex, bytes: p2shbytes },
-            p2wpkh: AddressTypeVecs { first_index: first_p2wpkhaddressindex, bytes: p2wpkhbytes },
-            p2wsh: AddressTypeVecs { first_index: first_p2wshaddressindex, bytes: p2wshbytes },
-            p2tr: AddressTypeVecs { first_index: first_p2traddressindex, bytes: p2trbytes },
-            p2a: AddressTypeVecs { first_index: first_p2aaddressindex, bytes: p2abytes },
+            p2pk65: AddressTypeVecs { first_index: first_p2pk65_address_index, bytes: p2pk65_bytes },
+            p2pk33: AddressTypeVecs { first_index: first_p2pk33_address_index, bytes: p2pk33_bytes },
+            p2pkh: AddressTypeVecs { first_index: first_p2pkh_address_index, bytes: p2pkh_bytes },
+            p2sh: AddressTypeVecs { first_index: first_p2sh_address_index, bytes: p2sh_bytes },
+            p2wpkh: AddressTypeVecs { first_index: first_p2wpkh_address_index, bytes: p2wpkh_bytes },
+            p2wsh: AddressTypeVecs { first_index: first_p2wsh_address_index, bytes: p2wsh_bytes },
+            p2tr: AddressTypeVecs { first_index: first_p2tr_address_index, bytes: p2tr_bytes },
+            p2a: AddressTypeVecs { first_index: first_p2a_address_index, bytes: p2a_bytes },
         })
     }
 
@@ -88,14 +88,14 @@ impl AddressesVecs {
     pub fn truncate(
         &mut self,
         height: Height,
-        p2pk65addressindex: P2PK65AddressIndex,
-        p2pk33addressindex: P2PK33AddressIndex,
-        p2pkhaddressindex: P2PKHAddressIndex,
-        p2shaddressindex: P2SHAddressIndex,
-        p2wpkhaddressindex: P2WPKHAddressIndex,
-        p2wshaddressindex: P2WSHAddressIndex,
-        p2traddressindex: P2TRAddressIndex,
-        p2aaddressindex: P2AAddressIndex,
+        p2pk65_address_index: P2PK65AddressIndex,
+        p2pk33_address_index: P2PK33AddressIndex,
+        p2pkh_address_index: P2PKHAddressIndex,
+        p2sh_address_index: P2SHAddressIndex,
+        p2wpkh_address_index: P2WPKHAddressIndex,
+        p2wsh_address_index: P2WSHAddressIndex,
+        p2tr_address_index: P2TRAddressIndex,
+        p2a_address_index: P2AAddressIndex,
         stamp: Stamp,
     ) -> Result<()> {
         self.p2pk65.first_index
@@ -115,21 +115,21 @@ impl AddressesVecs {
         self.p2a.first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.p2pk65.bytes
-            .truncate_if_needed_with_stamp(p2pk65addressindex, stamp)?;
+            .truncate_if_needed_with_stamp(p2pk65_address_index, stamp)?;
         self.p2pk33.bytes
-            .truncate_if_needed_with_stamp(p2pk33addressindex, stamp)?;
+            .truncate_if_needed_with_stamp(p2pk33_address_index, stamp)?;
         self.p2pkh.bytes
-            .truncate_if_needed_with_stamp(p2pkhaddressindex, stamp)?;
+            .truncate_if_needed_with_stamp(p2pkh_address_index, stamp)?;
         self.p2sh.bytes
-            .truncate_if_needed_with_stamp(p2shaddressindex, stamp)?;
+            .truncate_if_needed_with_stamp(p2sh_address_index, stamp)?;
         self.p2wpkh.bytes
-            .truncate_if_needed_with_stamp(p2wpkhaddressindex, stamp)?;
+            .truncate_if_needed_with_stamp(p2wpkh_address_index, stamp)?;
         self.p2wsh.bytes
-            .truncate_if_needed_with_stamp(p2wshaddressindex, stamp)?;
+            .truncate_if_needed_with_stamp(p2wsh_address_index, stamp)?;
         self.p2tr.bytes
-            .truncate_if_needed_with_stamp(p2traddressindex, stamp)?;
+            .truncate_if_needed_with_stamp(p2tr_address_index, stamp)?;
         self.p2a.bytes
-            .truncate_if_needed_with_stamp(p2aaddressindex, stamp)?;
+            .truncate_if_needed_with_stamp(p2a_address_index, stamp)?;
         Ok(())
     }
 
@@ -159,42 +159,42 @@ impl AddressesVecs {
     /// Returns None if the index doesn't exist yet.
     pub fn get_bytes_by_type(
         &self,
-        addresstype: OutputType,
-        typeindex: TypeIndex,
+        address_type: OutputType,
+        type_index: TypeIndex,
         readers: &AddressReaders,
     ) -> Option<AddressBytes> {
-        match addresstype {
+        match address_type {
             OutputType::P2PK65 => self
                 .p2pk65.bytes
-                .get_pushed_or_read(typeindex.into(), &readers.p2pk65)
+                .get_pushed_or_read(type_index.into(), &readers.p2pk65)
                 .map(AddressBytes::from),
             OutputType::P2PK33 => self
                 .p2pk33.bytes
-                .get_pushed_or_read(typeindex.into(), &readers.p2pk33)
+                .get_pushed_or_read(type_index.into(), &readers.p2pk33)
                 .map(AddressBytes::from),
             OutputType::P2PKH => self
                 .p2pkh.bytes
-                .get_pushed_or_read(typeindex.into(), &readers.p2pkh)
+                .get_pushed_or_read(type_index.into(), &readers.p2pkh)
                 .map(AddressBytes::from),
             OutputType::P2SH => self
                 .p2sh.bytes
-                .get_pushed_or_read(typeindex.into(), &readers.p2sh)
+                .get_pushed_or_read(type_index.into(), &readers.p2sh)
                 .map(AddressBytes::from),
             OutputType::P2WPKH => self
                 .p2wpkh.bytes
-                .get_pushed_or_read(typeindex.into(), &readers.p2wpkh)
+                .get_pushed_or_read(type_index.into(), &readers.p2wpkh)
                 .map(AddressBytes::from),
             OutputType::P2WSH => self
                 .p2wsh.bytes
-                .get_pushed_or_read(typeindex.into(), &readers.p2wsh)
+                .get_pushed_or_read(type_index.into(), &readers.p2wsh)
                 .map(AddressBytes::from),
             OutputType::P2TR => self
                 .p2tr.bytes
-                .get_pushed_or_read(typeindex.into(), &readers.p2tr)
+                .get_pushed_or_read(type_index.into(), &readers.p2tr)
                 .map(AddressBytes::from),
             OutputType::P2A => self
                 .p2a.bytes
-                .get_pushed_or_read(typeindex.into(), &readers.p2a)
+                .get_pushed_or_read(type_index.into(), &readers.p2a)
                 .map(AddressBytes::from),
             _ => unreachable!("get_bytes_by_type called with non-address type"),
         }

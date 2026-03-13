@@ -31,8 +31,8 @@ impl TxIndex {
     pub const ZERO: Self = Self(0);
     pub const COINBASE: Self = Self(u32::MAX);
 
-    pub fn new(txindex: u32) -> Self {
-        Self(txindex)
+    pub fn new(tx_index: u32) -> Self {
+        Self(tx_index)
     }
 
     pub fn incremented(self) -> Self {
@@ -152,11 +152,11 @@ impl From<TxIndex> for StoredU32 {
 
 impl PrintableIndex for TxIndex {
     fn to_string() -> &'static str {
-        "txindex"
+        "tx_index"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["tx", "txindex"]
+        &["tx", "tx_index"]
     }
 }
 

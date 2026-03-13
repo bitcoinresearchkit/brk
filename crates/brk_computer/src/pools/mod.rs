@@ -118,9 +118,9 @@ impl Vecs {
         self.height_to_pool
             .validate_computed_version_or_reset(indexer.stores.height_to_coinbase_tag.version())?;
 
-        let first_txoutindex = indexer.vecs.transactions.first_txoutindex.reader();
-        let outputtype = indexer.vecs.outputs.outputtype.reader();
-        let typeindex = indexer.vecs.outputs.typeindex.reader();
+        let first_txout_index = indexer.vecs.transactions.first_txout_index.reader();
+        let output_type = indexer.vecs.outputs.output_type.reader();
+        let type_index = indexer.vecs.outputs.type_index.reader();
         let p2pk65 = indexer.vecs.addresses.p2pk65.bytes.reader();
         let p2pk33 = indexer.vecs.addresses.p2pk33.bytes.reader();
         let p2pkh = indexer.vecs.addresses.p2pkh.bytes.reader();
@@ -138,11 +138,11 @@ impl Vecs {
             .min(self.height_to_pool.len());
 
         // Cursors avoid per-height PcoVec page decompression.
-        // Heights are sequential, txindex values derived from them are monotonically
+        // Heights are sequential, tx_index values derived from them are monotonically
         // increasing, so both cursors only advance forward.
-        let mut first_txindex_cursor = indexer.vecs.transactions.first_txindex.cursor();
-        first_txindex_cursor.advance(min);
-        let mut output_count_cursor = indexes.txindex.output_count.cursor();
+        let mut first_tx_index_cursor = indexer.vecs.transactions.first_tx_index.cursor();
+        first_tx_index_cursor.advance(min);
+        let mut output_count_cursor = indexes.tx_index.output_count.cursor();
 
         indexer
             .stores
@@ -150,18 +150,18 @@ impl Vecs {
             .iter()
             .skip(min)
             .try_for_each(|(height, coinbase_tag)| -> Result<()> {
-                let txindex = first_txindex_cursor.next().unwrap();
-                let out_start = first_txoutindex.get(txindex.to_usize());
+                let tx_index = first_tx_index_cursor.next().unwrap();
+                let out_start = first_txout_index.get(tx_index.to_usize());
 
-                let ti = txindex.to_usize();
+                let ti = tx_index.to_usize();
                 output_count_cursor.advance(ti - output_count_cursor.position());
-                let outputcount = output_count_cursor.next().unwrap();
+                let output_count_val = output_count_cursor.next().unwrap();
 
-                let pool = (*out_start..(*out_start + *outputcount))
+                let pool = (*out_start..(*out_start + *output_count_val))
                     .map(TxOutIndex::from)
-                    .find_map(|txoutindex| {
-                        let ot = outputtype.get(txoutindex.to_usize());
-                        let ti = usize::from(typeindex.get(txoutindex.to_usize()));
+                    .find_map(|txout_index| {
+                        let ot = output_type.get(txout_index.to_usize());
+                        let ti = usize::from(type_index.get(txout_index.to_usize()));
                         match ot {
                             OutputType::P2PK65 => Some(AddressBytes::from(p2pk65.get(ti))),
                             OutputType::P2PK33 => Some(AddressBytes::from(p2pk33.get(ti))),

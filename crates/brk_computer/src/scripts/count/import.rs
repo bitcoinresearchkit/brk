@@ -53,16 +53,16 @@ impl Vecs {
                 indexes,
                 cached_starts,
             )?,
-            emptyoutput: PerBlockCumulativeWithSums::forced_import(
+            empty_output: PerBlockCumulativeWithSums::forced_import(
                 db,
-                "emptyoutput_count",
+                "empty_output_count",
                 version,
                 indexes,
                 cached_starts,
             )?,
-            unknownoutput: PerBlockCumulativeWithSums::forced_import(
+            unknown_output: PerBlockCumulativeWithSums::forced_import(
                 db,
-                "unknownoutput_count",
+                "unknown_output_count",
                 version,
                 indexes,
                 cached_starts,

@@ -13,7 +13,7 @@ use super::AddressCountsVecs;
 pub struct TotalAddressCountVecs<M: StorageMode = Rw> {
     pub all: PerBlock<StoredU64, M>,
     #[traversable(flatten)]
-    pub by_addresstype: ByAddressType<PerBlock<StoredU64, M>>,
+    pub by_address_type: ByAddressType<PerBlock<StoredU64, M>>,
 }
 
 impl TotalAddressCountVecs {
@@ -24,7 +24,7 @@ impl TotalAddressCountVecs {
     ) -> Result<Self> {
         let all = PerBlock::forced_import(db, "total_address_count", version, indexes)?;
 
-        let by_addresstype: ByAddressType<PerBlock<StoredU64>> =
+        let by_address_type: ByAddressType<PerBlock<StoredU64>> =
             ByAddressType::new_with_name(|name| {
                 PerBlock::forced_import(
                     db,
@@ -36,7 +36,7 @@ impl TotalAddressCountVecs {
 
         Ok(Self {
             all,
-            by_addresstype,
+            by_address_type,
         })
     }
 
@@ -55,11 +55,11 @@ impl TotalAddressCountVecs {
             exit,
         )?;
 
-        for ((_, total), ((_, addr), (_, empty))) in self.by_addresstype.iter_mut().zip(
+        for ((_, total), ((_, addr), (_, empty))) in self.by_address_type.iter_mut().zip(
             address_count
-                .by_addresstype
+                .by_address_type
                 .iter()
-                .zip(empty_address_count.by_addresstype.iter()),
+                .zip(empty_address_count.by_address_type.iter()),
         ) {
             total
                 .height

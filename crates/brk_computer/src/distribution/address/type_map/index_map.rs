@@ -59,14 +59,14 @@ impl<T> AddressTypeToTypeIndexMap<T> {
         Self::merge_single(&mut self.p2wsh, &mut other.p2wsh);
     }
 
-    /// Insert a value for a specific address type and typeindex.
+    /// Insert a value for a specific address type and type_index.
     pub(crate) fn insert_for_type(
         &mut self,
         address_type: OutputType,
-        typeindex: TypeIndex,
+        type_index: TypeIndex,
         value: T,
     ) {
-        self.get_mut(address_type).unwrap().insert(typeindex, value);
+        self.get_mut(address_type).unwrap().insert(type_index, value);
     }
 
     /// Consume and iterate over entries by address type.
@@ -96,8 +96,8 @@ where
     pub(crate) fn merge_vec(mut self, other: Self) -> Self {
         for (address_type, other_map) in other.0.into_iter() {
             let self_map = self.0.get_mut_unwrap(address_type);
-            for (typeindex, mut other_vec) in other_map {
-                match self_map.entry(typeindex) {
+            for (type_index, mut other_vec) in other_map {
+                match self_map.entry(type_index) {
                     Entry::Occupied(mut entry) => {
                         let self_vec = entry.get_mut();
                         if other_vec.len() > self_vec.len() {

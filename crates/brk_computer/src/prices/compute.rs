@@ -59,7 +59,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let source_version =
-            indexer.vecs.outputs.value.version() + indexer.vecs.outputs.outputtype.version();
+            indexer.vecs.outputs.value.version() + indexer.vecs.outputs.output_type.version();
         self.spot
             .cents
             .height
@@ -156,34 +156,34 @@ impl Vecs {
         let total_outputs = indexer.vecs.outputs.value.len();
 
         // Pre-collect height-indexed data for the range (plus one extra for next-block lookups)
-        let collect_end = (range.end + 1).min(indexer.vecs.transactions.first_txindex.len());
-        let first_txindexes: Vec<TxIndex> = indexer
+        let collect_end = (range.end + 1).min(indexer.vecs.transactions.first_tx_index.len());
+        let first_tx_indexes: Vec<TxIndex> = indexer
             .vecs
             .transactions
-            .first_txindex
+            .first_tx_index
             .collect_range_at(range.start, collect_end);
 
         let out_firsts: Vec<TxOutIndex> = indexer
             .vecs
             .outputs
-            .first_txoutindex
+            .first_txout_index
             .collect_range_at(range.start, collect_end);
 
         let mut ref_bins = Vec::with_capacity(range.len());
 
         // Cursor avoids per-block PcoVec page decompression for
-        // the tx-indexed first_txoutindex lookup.  The accessed
-        // txindex values (first_txindex + 1) are strictly increasing
+        // the tx-indexed first_txout_index lookup.  The accessed
+        // tx_index values (first_tx_index + 1) are strictly increasing
         // across blocks, so the cursor only advances forward.
-        let mut txout_cursor = indexer.vecs.transactions.first_txoutindex.cursor();
+        let mut txout_cursor = indexer.vecs.transactions.first_txout_index.cursor();
 
         // Reusable buffers — avoid per-block allocation
         let mut values: Vec<Sats> = Vec::new();
         let mut output_types: Vec<OutputType> = Vec::new();
 
         for (idx, _h) in range.enumerate() {
-            let first_txindex = first_txindexes[idx];
-            let next_first_txindex = first_txindexes
+            let first_tx_index = first_tx_indexes[idx];
+            let next_first_tx_index = first_tx_indexes
                 .get(idx + 1)
                 .copied()
                 .unwrap_or(TxIndex::from(total_txs));
@@ -193,8 +193,8 @@ impl Vecs {
                 .copied()
                 .unwrap_or(TxOutIndex::from(total_outputs))
                 .to_usize();
-            let out_start = if first_txindex.to_usize() + 1 < next_first_txindex.to_usize() {
-                let target = first_txindex.to_usize() + 1;
+            let out_start = if first_tx_index.to_usize() + 1 < next_first_tx_index.to_usize() {
+                let target = first_tx_index.to_usize() + 1;
                 txout_cursor.advance(target - txout_cursor.position());
                 txout_cursor.next().unwrap().to_usize()
             } else {
@@ -207,7 +207,7 @@ impl Vecs {
                 .outputs
                 .value
                 .collect_range_into_at(out_start, out_end, &mut values);
-            indexer.vecs.outputs.outputtype.collect_range_into_at(
+            indexer.vecs.outputs.output_type.collect_range_into_at(
                 out_start,
                 out_end,
                 &mut output_types,

@@ -8,52 +8,52 @@ use crate::parallel_import;
 
 #[derive(Traversable)]
 pub struct InputsVecs<M: StorageMode = Rw> {
-    pub first_txinindex: M::Stored<PcoVec<Height, TxInIndex>>,
+    pub first_txin_index: M::Stored<PcoVec<Height, TxInIndex>>,
     pub outpoint: M::Stored<PcoVec<TxInIndex, OutPoint>>,
-    pub txindex: M::Stored<PcoVec<TxInIndex, TxIndex>>,
-    pub outputtype: M::Stored<PcoVec<TxInIndex, OutputType>>,
-    pub typeindex: M::Stored<PcoVec<TxInIndex, TypeIndex>>,
+    pub tx_index: M::Stored<PcoVec<TxInIndex, TxIndex>>,
+    pub output_type: M::Stored<PcoVec<TxInIndex, OutputType>>,
+    pub type_index: M::Stored<PcoVec<TxInIndex, TypeIndex>>,
 }
 
 impl InputsVecs {
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
-        let (first_txinindex, outpoint, txindex, outputtype, typeindex) = parallel_import! {
-            first_txinindex = PcoVec::forced_import(db, "first_txinindex", version),
+        let (first_txin_index, outpoint, tx_index, output_type, type_index) = parallel_import! {
+            first_txin_index = PcoVec::forced_import(db, "first_txin_index", version),
             outpoint = PcoVec::forced_import(db, "outpoint", version),
-            txindex = PcoVec::forced_import(db, "txindex", version),
-            outputtype = PcoVec::forced_import(db, "outputtype", version),
-            typeindex = PcoVec::forced_import(db, "typeindex", version),
+            tx_index = PcoVec::forced_import(db, "tx_index", version),
+            output_type = PcoVec::forced_import(db, "output_type", version),
+            type_index = PcoVec::forced_import(db, "type_index", version),
         };
         Ok(Self {
-            first_txinindex,
+            first_txin_index,
             outpoint,
-            txindex,
-            outputtype,
-            typeindex,
+            tx_index,
+            output_type,
+            type_index,
         })
     }
 
-    pub fn truncate(&mut self, height: Height, txinindex: TxInIndex, stamp: Stamp) -> Result<()> {
-        self.first_txinindex
+    pub fn truncate(&mut self, height: Height, txin_index: TxInIndex, stamp: Stamp) -> Result<()> {
+        self.first_txin_index
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.outpoint
-            .truncate_if_needed_with_stamp(txinindex, stamp)?;
-        self.txindex
-            .truncate_if_needed_with_stamp(txinindex, stamp)?;
-        self.outputtype
-            .truncate_if_needed_with_stamp(txinindex, stamp)?;
-        self.typeindex
-            .truncate_if_needed_with_stamp(txinindex, stamp)?;
+            .truncate_if_needed_with_stamp(txin_index, stamp)?;
+        self.tx_index
+            .truncate_if_needed_with_stamp(txin_index, stamp)?;
+        self.output_type
+            .truncate_if_needed_with_stamp(txin_index, stamp)?;
+        self.type_index
+            .truncate_if_needed_with_stamp(txin_index, stamp)?;
         Ok(())
     }
 
     pub fn par_iter_mut_any(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
-            &mut self.first_txinindex as &mut dyn AnyStoredVec,
+            &mut self.first_txin_index as &mut dyn AnyStoredVec,
             &mut self.outpoint,
-            &mut self.txindex,
-            &mut self.outputtype,
-            &mut self.typeindex,
+            &mut self.tx_index,
+            &mut self.output_type,
+            &mut self.type_index,
         ]
         .into_par_iter()
     }

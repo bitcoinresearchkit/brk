@@ -62,14 +62,14 @@ where
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
-        txindex_source: &impl ReadableVec<TxIndex, T>,
+        tx_index_source: &impl ReadableVec<TxIndex, T>,
         exit: &Exit,
     ) -> Result<()>
     where
         T: Copy + Ord + From<f64> + Default,
         f64: From<T>,
     {
-        self.derive_from_with_skip(indexer, indexes, starting_indexes, txindex_source, exit, 0)
+        self.derive_from_with_skip(indexer, indexes, starting_indexes, tx_index_source, exit, 0)
     }
 
     /// Derive from source, skipping first N transactions per block from per-block stats.
@@ -82,7 +82,7 @@ where
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
-        txindex_source: &impl ReadableVec<TxIndex, T>,
+        tx_index_source: &impl ReadableVec<TxIndex, T>,
         exit: &Exit,
         skip_count: usize,
     ) -> Result<()>
@@ -93,9 +93,9 @@ where
         // Per-block distribution (supports skip for coinbase exclusion)
         self.block.compute_with_skip(
             starting_indexes.height,
-            txindex_source,
-            &indexer.vecs.transactions.first_txindex,
-            &indexes.height.txindex_count,
+            tx_index_source,
+            &indexer.vecs.transactions.first_tx_index,
+            &indexes.height.tx_index_count,
             exit,
             skip_count,
         )?;
@@ -103,9 +103,9 @@ where
         // 6-block rolling: true distribution from all txs in last 6 blocks
         self.rolling._6b.compute_from_nblocks(
             starting_indexes.height,
-            txindex_source,
-            &indexer.vecs.transactions.first_txindex,
-            &indexes.height.txindex_count,
+            tx_index_source,
+            &indexer.vecs.transactions.first_tx_index,
+            &indexes.height.tx_index_count,
             6,
             exit,
         )?;

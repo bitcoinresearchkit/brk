@@ -14,20 +14,20 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let tx_vany = |tx_vany: &mut PerBlockCumulativeWithSums<StoredU64, StoredU64>,
-                       txversion: TxVersion| {
-            let txversion_vec = &indexer.vecs.transactions.txversion;
+                       tx_version: TxVersion| {
+            let tx_version_vec = &indexer.vecs.transactions.tx_version;
             // Cursor avoids per-transaction PcoVec page decompression.
             // Txindex values are sequential, so the cursor only advances forward.
-            let mut cursor = txversion_vec.cursor();
+            let mut cursor = tx_version_vec.cursor();
             tx_vany.compute(starting_indexes.height, exit, |vec| {
                 vec.compute_filtered_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.transactions.first_txindex,
+                    &indexer.vecs.transactions.first_tx_index,
                     &indexer.vecs.transactions.txid,
-                    |txindex| {
-                        let ti = txindex.to_usize();
+                    |tx_index| {
+                        let ti = tx_index.to_usize();
                         cursor.advance(ti - cursor.position());
-                        cursor.next().unwrap() == txversion
+                        cursor.next().unwrap() == tx_version
                     },
                     exit,
                 )?;

@@ -87,33 +87,33 @@ impl Vecs {
         self.blocks.truncate(starting_indexes.height, stamp)?;
 
         self.transactions
-            .truncate(starting_indexes.height, starting_indexes.txindex, stamp)?;
+            .truncate(starting_indexes.height, starting_indexes.tx_index, stamp)?;
 
         self.inputs
-            .truncate(starting_indexes.height, starting_indexes.txinindex, stamp)?;
+            .truncate(starting_indexes.height, starting_indexes.txin_index, stamp)?;
 
         self.outputs
-            .truncate(starting_indexes.height, starting_indexes.txoutindex, stamp)?;
+            .truncate(starting_indexes.height, starting_indexes.txout_index, stamp)?;
 
         self.addresses.truncate(
             starting_indexes.height,
-            starting_indexes.p2pk65addressindex,
-            starting_indexes.p2pk33addressindex,
-            starting_indexes.p2pkhaddressindex,
-            starting_indexes.p2shaddressindex,
-            starting_indexes.p2wpkhaddressindex,
-            starting_indexes.p2wshaddressindex,
-            starting_indexes.p2traddressindex,
-            starting_indexes.p2aaddressindex,
+            starting_indexes.p2pk65_address_index,
+            starting_indexes.p2pk33_address_index,
+            starting_indexes.p2pkh_address_index,
+            starting_indexes.p2sh_address_index,
+            starting_indexes.p2wpkh_address_index,
+            starting_indexes.p2wsh_address_index,
+            starting_indexes.p2tr_address_index,
+            starting_indexes.p2a_address_index,
             stamp,
         )?;
 
         self.scripts.truncate(
             starting_indexes.height,
-            starting_indexes.emptyoutputindex,
-            starting_indexes.opreturnindex,
-            starting_indexes.p2msoutputindex,
-            starting_indexes.unknownoutputindex,
+            starting_indexes.empty_output_index,
+            starting_indexes.op_return_index,
+            starting_indexes.p2ms_output_index,
+            starting_indexes.unknown_output_index,
             stamp,
         )?;
 

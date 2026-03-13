@@ -4,5 +4,5 @@ use vecdb::{BytesVec, Rw, StorageMode};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub txinindex: M::Stored<BytesVec<TxOutIndex, TxInIndex>>,
+    pub txin_index: M::Stored<BytesVec<TxOutIndex, TxInIndex>>,
 }

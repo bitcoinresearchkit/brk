@@ -24,26 +24,26 @@ impl Vecs {
             exit,
             |vec| {
                 // Cursors avoid per-height PcoVec page decompression for the
-                // tx-indexed lookups.  Coinbase txindex values are strictly
+                // tx-indexed lookups.  Coinbase tx_index values are strictly
                 // increasing, so the cursors only advance forward.
-                let mut txout_cursor = indexer.vecs.transactions.first_txoutindex.cursor();
-                let mut count_cursor = indexes.txindex.output_count.cursor();
+                let mut txout_cursor = indexer.vecs.transactions.first_txout_index.cursor();
+                let mut count_cursor = indexes.tx_index.output_count.cursor();
 
                 vec.compute_transform(
                     starting_indexes.height,
-                    &indexer.vecs.transactions.first_txindex,
-                    |(height, txindex, ..)| {
-                        let ti = txindex.to_usize();
+                    &indexer.vecs.transactions.first_tx_index,
+                    |(height, tx_index, ..)| {
+                        let ti = tx_index.to_usize();
 
                         txout_cursor.advance(ti - txout_cursor.position());
-                        let first_txoutindex = txout_cursor.next().unwrap().to_usize();
+                        let first_txout_index = txout_cursor.next().unwrap().to_usize();
 
                         count_cursor.advance(ti - count_cursor.position());
                         let output_count: usize = count_cursor.next().unwrap().into();
 
                         let sats = indexer.vecs.outputs.value.fold_range_at(
-                            first_txoutindex,
-                            first_txoutindex + output_count,
+                            first_txout_index,
+                            first_txout_index + output_count,
                             Sats::ZERO,
                             |acc, v| acc + v,
                         );
@@ -66,9 +66,9 @@ impl Vecs {
             |vec| {
                 vec.compute_sum_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.transactions.first_txindex,
-                    &indexes.height.txindex_count,
-                    &transactions_fees.fee.txindex,
+                    &indexer.vecs.transactions.first_tx_index,
+                    &indexes.height.tx_index_count,
+                    &transactions_fees.fee.tx_index,
                     exit,
                 )?;
                 Ok(())

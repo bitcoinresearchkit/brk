@@ -12,7 +12,7 @@ impl Vecs {
     pub(crate) fn forced_import(version: Version, indexer: &Indexer) -> Self {
         Self {
             identity: LazyVecFrom1::init(
-                "txinindex",
+                "txin_index",
                 version,
                 indexer.vecs.inputs.outpoint.read_only_boxed_clone(),
                 |index, _| index,

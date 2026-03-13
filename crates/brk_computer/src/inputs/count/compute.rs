@@ -20,9 +20,9 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, exit, |full| {
                 full.compute_with_skip(
                     starting_indexes.height,
-                    &indexes.txindex.input_count,
-                    &indexer.vecs.transactions.first_txindex,
-                    &indexes.height.txindex_count,
+                    &indexes.tx_index.input_count,
+                    &indexer.vecs.transactions.first_tx_index,
+                    &indexes.height.tx_index_count,
                     exit,
                     0,
                 )

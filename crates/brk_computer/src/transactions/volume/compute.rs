@@ -29,8 +29,8 @@ impl Vecs {
             |sats_vec| {
                 Ok(sats_vec.compute_filtered_sum_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.transactions.first_txindex,
-                    &indexes.height.txindex_count,
+                    &indexer.vecs.transactions.first_tx_index,
+                    &indexes.height.tx_index_count,
                     &fees_vecs.input_value,
                     |sats| !sats.is_max(),
                     exit,
@@ -45,8 +45,8 @@ impl Vecs {
             |sats_vec| {
                 Ok(sats_vec.compute_sum_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.transactions.first_txindex,
-                    &indexes.height.txindex_count,
+                    &indexer.vecs.transactions.first_tx_index,
+                    &indexes.height.tx_index_count,
                     &fees_vecs.output_value,
                     exit,
                 )?)

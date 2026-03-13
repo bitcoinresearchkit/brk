@@ -12,7 +12,7 @@ impl Vecs {
         version: Version,
         indexer: &Indexer,
     ) -> Result<Self> {
-        let txindex_to_vsize = LazyVecFrom2::init(
+        let tx_index_to_vsize = LazyVecFrom2::init(
             "tx_vsize",
             version,
             indexer.vecs.transactions.base_size.read_only_boxed_clone(),
@@ -23,9 +23,9 @@ impl Vecs {
         );
 
         let vsize =
-            LazyPerTxDistribution::forced_import(db, "tx_vsize", version, txindex_to_vsize)?;
+            LazyPerTxDistribution::forced_import(db, "tx_vsize", version, tx_index_to_vsize)?;
 
-        let txindex_to_weight = LazyVecFrom2::init(
+        let tx_index_to_weight = LazyVecFrom2::init(
             "tx_weight",
             version,
             indexer.vecs.transactions.base_size.read_only_boxed_clone(),
@@ -36,7 +36,7 @@ impl Vecs {
         let weight = LazyPerTxDistributionTransformed::new::<VSizeToWeight>(
             "tx_weight",
             version,
-            txindex_to_weight,
+            tx_index_to_weight,
             &vsize.distribution,
         );
 

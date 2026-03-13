@@ -63,11 +63,11 @@ impl CheckedSub<UnknownOutputIndex> for UnknownOutputIndex {
 
 impl PrintableIndex for UnknownOutputIndex {
     fn to_string() -> &'static str {
-        "unknownoutputindex"
+        "unknown_output_index"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["unknownout", "unknownoutputindex"]
+        &["unknownout", "unknown_output_index"]
     }
 }
 

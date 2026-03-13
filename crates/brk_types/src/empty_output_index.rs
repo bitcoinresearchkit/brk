@@ -63,11 +63,11 @@ impl CheckedSub<EmptyOutputIndex> for EmptyOutputIndex {
 
 impl PrintableIndex for EmptyOutputIndex {
     fn to_string() -> &'static str {
-        "emptyoutputindex"
+        "empty_output_index"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["emptyout", "emptyoutputindex"]
+        &["emptyout", "empty_output_index"]
     }
 }
 

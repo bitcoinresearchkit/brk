@@ -13,9 +13,9 @@ mod minute30;
 mod month1;
 mod month3;
 mod month6;
-mod txindex;
-mod txinindex;
-mod txoutindex;
+mod tx_index;
+mod txin_index;
+mod txout_index;
 mod week1;
 mod year1;
 mod year10;
@@ -51,9 +51,9 @@ pub use minute30::Vecs as Minute30Vecs;
 pub use month1::Vecs as Month1Vecs;
 pub use month3::Vecs as Month3Vecs;
 pub use month6::Vecs as Month6Vecs;
-pub use txindex::Vecs as TxIndexVecs;
-pub use txinindex::Vecs as TxInIndexVecs;
-pub use txoutindex::Vecs as TxOutIndexVecs;
+pub use tx_index::Vecs as TxIndexVecs;
+pub use txin_index::Vecs as TxInIndexVecs;
+pub use txout_index::Vecs as TxOutIndexVecs;
 pub use week1::Vecs as Week1Vecs;
 pub use year1::Vecs as Year1Vecs;
 pub use year10::Vecs as Year10Vecs;
@@ -82,9 +82,9 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub month6: Month6Vecs<M>,
     pub year1: Year1Vecs<M>,
     pub year10: Year10Vecs<M>,
-    pub txindex: TxIndexVecs<M>,
-    pub txinindex: TxInIndexVecs,
-    pub txoutindex: TxOutIndexVecs,
+    pub tx_index: TxIndexVecs<M>,
+    pub txin_index: TxInIndexVecs,
+    pub txout_index: TxOutIndexVecs,
 }
 
 impl Vecs {
@@ -114,9 +114,9 @@ impl Vecs {
         let month6 = Month6Vecs::forced_import(&db, version)?;
         let year1 = Year1Vecs::forced_import(&db, version)?;
         let year10 = Year10Vecs::forced_import(&db, version)?;
-        let txindex = TxIndexVecs::forced_import(&db, version, indexer)?;
-        let txinindex = TxInIndexVecs::forced_import(version, indexer);
-        let txoutindex = TxOutIndexVecs::forced_import(version, indexer);
+        let tx_index = TxIndexVecs::forced_import(&db, version, indexer)?;
+        let txin_index = TxInIndexVecs::forced_import(version, indexer);
+        let txout_index = TxOutIndexVecs::forced_import(version, indexer);
 
         let cached_mappings = CachedMappings {
             minute10_first_height: CachedVec::new(&minute10.first_height),
@@ -155,9 +155,9 @@ impl Vecs {
             month6,
             year1,
             year10,
-            txindex,
-            txinindex,
-            txoutindex,
+            tx_index,
+            txin_index,
+            txout_index,
             db,
         };
 
@@ -221,15 +221,15 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.txindex.input_count.compute_count_from_indexes(
-            starting_indexes.txindex,
-            &indexer.vecs.transactions.first_txinindex,
+        self.tx_index.input_count.compute_count_from_indexes(
+            starting_indexes.tx_index,
+            &indexer.vecs.transactions.first_txin_index,
             &indexer.vecs.inputs.outpoint,
             exit,
         )?;
-        self.txindex.output_count.compute_count_from_indexes(
-            starting_indexes.txindex,
-            &indexer.vecs.transactions.first_txoutindex,
+        self.tx_index.output_count.compute_count_from_indexes(
+            starting_indexes.tx_index,
+            &indexer.vecs.transactions.first_txout_index,
             &indexer.vecs.outputs.value,
             exit,
         )?;
@@ -242,9 +242,9 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.height.txindex_count.compute_count_from_indexes(
+        self.height.tx_index_count.compute_count_from_indexes(
             starting_indexes.height,
-            &indexer.vecs.transactions.first_txindex,
+            &indexer.vecs.transactions.first_tx_index,
             &indexer.vecs.transactions.txid,
             exit,
         )?;

@@ -20,7 +20,7 @@ pub struct PerTxDistribution<T, M: StorageMode = Rw>
 where
     T: ComputedVecValue + PartialOrd + JsonSchema,
 {
-    pub txindex: M::Stored<EagerVec<PcoVec<TxIndex, T>>>,
+    pub tx_index: M::Stored<EagerVec<PcoVec<TxIndex, T>>>,
     #[traversable(flatten)]
     pub distribution: TxDerivedDistribution<T, M>,
 }
@@ -30,10 +30,10 @@ where
     T: NumericValue + JsonSchema,
 {
     pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
-        let txindex = EagerVec::forced_import(db, name, version)?;
+        let tx_index = EagerVec::forced_import(db, name, version)?;
         let distribution = TxDerivedDistribution::forced_import(db, name, version)?;
         Ok(Self {
-            txindex,
+            tx_index,
             distribution,
         })
     }
@@ -55,7 +55,7 @@ where
             indexer,
             indexes,
             starting_indexes,
-            &self.txindex,
+            &self.tx_index,
             exit,
             skip_count,
         )

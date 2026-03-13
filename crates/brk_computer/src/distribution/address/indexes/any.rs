@@ -32,7 +32,7 @@ macro_rules! define_any_address_indexes_vecs {
             pub(crate) fn forced_import(db: &Database, version: Version) -> Result<Self> {
                 Ok(Self {
                     $($field: BytesVec::forced_import_with(
-                        ImportOptions::new(db, "anyaddressindex", version)
+                        ImportOptions::new(db, "any_address_index", version)
                             .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
                     )?,)*
                 })
@@ -57,11 +57,11 @@ macro_rules! define_any_address_indexes_vecs {
                 Ok(())
             }
 
-            /// Get address index for a given type and typeindex.
+            /// Get address index for a given type and type_index.
             /// Uses get_any_or_read_at to check updated layer (needed after rollback).
-            pub(crate) fn get(&self, address_type: OutputType, typeindex: TypeIndex, reader: &Reader) -> Result<AnyAddressIndex> {
+            pub(crate) fn get(&self, address_type: OutputType, type_index: TypeIndex, reader: &Reader) -> Result<AnyAddressIndex> {
                 match address_type {
-                    $(OutputType::$variant => Ok(self.$field.get_any_or_read_at(typeindex.into(), reader)?.unwrap()),)*
+                    $(OutputType::$variant => Ok(self.$field.get_any_or_read_at(type_index.into(), reader)?.unwrap()),)*
                     _ => unreachable!("Invalid address type: {:?}", address_type),
                 }
             }
@@ -74,10 +74,10 @@ macro_rules! define_any_address_indexes_vecs {
 
         impl<M: StorageMode> AnyAddressIndexesVecs<M> {
             /// Get address index with single read (no caching).
-            pub fn get_once(&self, address_type: OutputType, typeindex: TypeIndex) -> Result<AnyAddressIndex> {
+            pub fn get_once(&self, address_type: OutputType, type_index: TypeIndex) -> Result<AnyAddressIndex> {
                 match address_type {
                     $(OutputType::$variant => self.$field
-                        .collect_one(<$index>::from(usize::from(typeindex)))
+                        .collect_one(<$index>::from(usize::from(type_index)))
                         .ok_or_else(|| Error::UnsupportedType(address_type.to_string())),)*
                     _ => Err(Error::UnsupportedType(address_type.to_string())),
                 }
@@ -177,18 +177,18 @@ fn process_single_type_merged<I: vecdb::VecIndex>(
     let mut pushes = Vec::with_capacity(map1.len() + map2.len());
     let mut update_count = 0usize;
 
-    for (typeindex, any_index) in map1.into_iter().chain(map2) {
-        if usize::from(typeindex) < current_len {
-            vec.update(I::from(usize::from(typeindex)), any_index)?;
+    for (type_index, any_index) in map1.into_iter().chain(map2) {
+        if usize::from(type_index) < current_len {
+            vec.update(I::from(usize::from(type_index)), any_index)?;
             update_count += 1;
         } else {
-            pushes.push((typeindex, any_index));
+            pushes.push((type_index, any_index));
         }
     }
 
     let push_count = pushes.len();
     if !pushes.is_empty() {
-        pushes.sort_unstable_by_key(|(typeindex, _)| *typeindex);
+        pushes.sort_unstable_by_key(|(type_index, _)| *type_index);
         for (_, any_index) in pushes {
             vec.push(any_index);
         }

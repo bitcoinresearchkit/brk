@@ -259,7 +259,7 @@ impl AddressTypeToActivityCountVecs {
 pub struct AddressActivityVecs<M: StorageMode = Rw> {
     pub all: ActivityCountVecs<M>,
     #[traversable(flatten)]
-    pub by_addresstype: AddressTypeToActivityCountVecs<M>,
+    pub by_address_type: AddressTypeToActivityCountVecs<M>,
 }
 
 impl AddressActivityVecs {
@@ -272,7 +272,7 @@ impl AddressActivityVecs {
     ) -> Result<Self> {
         Ok(Self {
             all: ActivityCountVecs::forced_import(db, name, version, indexes, cached_starts)?,
-            by_addresstype: AddressTypeToActivityCountVecs::forced_import(
+            by_address_type: AddressTypeToActivityCountVecs::forced_import(
                 db, name, version, indexes, cached_starts,
             )?,
         })
@@ -281,7 +281,7 @@ impl AddressActivityVecs {
     pub(crate) fn min_stateful_len(&self) -> usize {
         self.all
             .min_stateful_len()
-            .min(self.by_addresstype.min_stateful_len())
+            .min(self.by_address_type.min_stateful_len())
     }
 
     pub(crate) fn par_iter_height_mut(
@@ -289,12 +289,12 @@ impl AddressActivityVecs {
     ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         self.all
             .par_iter_height_mut()
-            .chain(self.by_addresstype.par_iter_height_mut())
+            .chain(self.by_address_type.par_iter_height_mut())
     }
 
     pub(crate) fn reset_height(&mut self) -> Result<()> {
         self.all.reset_height()?;
-        self.by_addresstype.reset_height()?;
+        self.by_address_type.reset_height()?;
         Ok(())
     }
 
@@ -304,7 +304,7 @@ impl AddressActivityVecs {
         exit: &Exit,
     ) -> Result<()> {
         self.all.compute_rest(max_from, exit)?;
-        self.by_addresstype.compute_rest(max_from, exit)?;
+        self.by_address_type.compute_rest(max_from, exit)?;
         Ok(())
     }
 
@@ -315,7 +315,7 @@ impl AddressActivityVecs {
     ) -> Result<()> {
         let totals = counts.totals();
         self.all.truncate_push_height(height, &totals)?;
-        self.by_addresstype.truncate_push_height(height, counts)?;
+        self.by_address_type.truncate_push_height(height, counts)?;
         Ok(())
     }
 }

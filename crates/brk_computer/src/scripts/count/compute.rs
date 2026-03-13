@@ -27,7 +27,7 @@ impl Vecs {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.scripts.p2ms.first_index,
-                    &indexer.vecs.scripts.p2ms.to_txindex,
+                    &indexer.vecs.scripts.p2ms.to_tx_index,
                     exit,
                 )?)
             })?;
@@ -107,27 +107,27 @@ impl Vecs {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.scripts.opreturn.first_index,
-                    &indexer.vecs.scripts.opreturn.to_txindex,
+                    &indexer.vecs.scripts.opreturn.to_tx_index,
                     exit,
                 )?)
             })?;
 
-        self.unknownoutput
+        self.unknown_output
             .compute(starting_indexes.height, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.scripts.unknown.first_index,
-                    &indexer.vecs.scripts.unknown.to_txindex,
+                    &indexer.vecs.scripts.unknown.to_tx_index,
                     exit,
                 )?)
             })?;
 
-        self.emptyoutput
+        self.empty_output
             .compute(starting_indexes.height, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
                     &indexer.vecs.scripts.empty.first_index,
-                    &indexer.vecs.scripts.empty.to_txindex,
+                    &indexer.vecs.scripts.empty.to_tx_index,
                     exit,
                 )?)
             })?;

@@ -165,7 +165,7 @@ impl AddressTypeToAddressCountVecs {
 pub struct AddressCountsVecs<M: StorageMode = Rw> {
     pub all: AddressCountVecs<M>,
     #[traversable(flatten)]
-    pub by_addresstype: AddressTypeToAddressCountVecs<M>,
+    pub by_address_type: AddressTypeToAddressCountVecs<M>,
 }
 
 impl AddressCountsVecs {
@@ -177,24 +177,24 @@ impl AddressCountsVecs {
     ) -> Result<Self> {
         Ok(Self {
             all: AddressCountVecs::forced_import(db, name, version, indexes)?,
-            by_addresstype: AddressTypeToAddressCountVecs::forced_import(db, name, version, indexes)?,
+            by_address_type: AddressTypeToAddressCountVecs::forced_import(db, name, version, indexes)?,
         })
     }
 
     pub(crate) fn min_stateful_len(&self) -> usize {
-        self.all.height.len().min(self.by_addresstype.min_stateful_len())
+        self.all.height.len().min(self.by_address_type.min_stateful_len())
     }
 
     pub(crate) fn par_iter_height_mut(
         &mut self,
     ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         rayon::iter::once(&mut self.all.height as &mut dyn AnyStoredVec)
-            .chain(self.by_addresstype.par_iter_height_mut())
+            .chain(self.by_address_type.par_iter_height_mut())
     }
 
     pub(crate) fn reset_height(&mut self) -> Result<()> {
         self.all.height.reset()?;
-        self.by_addresstype.reset_height()?;
+        self.by_address_type.reset_height()?;
         Ok(())
     }
 
@@ -205,7 +205,7 @@ impl AddressCountsVecs {
         address_counts: &AddressTypeToAddressCount,
     ) -> Result<()> {
         self.all.height.truncate_push(height, total.into())?;
-        self.by_addresstype
+        self.by_address_type
             .truncate_push_height(height, address_counts)?;
         Ok(())
     }
@@ -215,7 +215,7 @@ impl AddressCountsVecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let sources = self.by_addresstype.by_height();
+        let sources = self.by_address_type.by_height();
         self.all
             .height
             .compute_sum_of_others(starting_indexes.height, &sources, exit)?;

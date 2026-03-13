@@ -26,17 +26,17 @@ pub(crate) fn process_funded_addresses(
     let mut pushes: Vec<(OutputType, TypeIndex, FundedAddressData)> = Vec::with_capacity(total);
 
     for (address_type, items) in funded_updates.into_iter() {
-        for (typeindex, source) in items {
+        for (type_index, source) in items {
             match source {
                 WithAddressDataSource::New(data) => {
-                    pushes.push((address_type, typeindex, data));
+                    pushes.push((address_type, type_index, data));
                 }
                 WithAddressDataSource::FromFunded(index, data) => {
                     updates.push((index, data));
                 }
                 WithAddressDataSource::FromEmpty(empty_index, data) => {
                     deletes.push(empty_index);
-                    pushes.push((address_type, typeindex, data));
+                    pushes.push((address_type, type_index, data));
                 }
             }
         }
@@ -57,21 +57,21 @@ pub(crate) fn process_funded_addresses(
     let holes_count = addresses_data.funded.holes().len();
     let mut pushes_iter = pushes.into_iter();
 
-    for (address_type, typeindex, data) in pushes_iter.by_ref().take(holes_count) {
+    for (address_type, type_index, data) in pushes_iter.by_ref().take(holes_count) {
         let index = addresses_data.funded.fill_first_hole_or_push(data)?;
         result
             .get_mut(address_type)
             .unwrap()
-            .insert(typeindex, AnyAddressIndex::from(index));
+            .insert(type_index, AnyAddressIndex::from(index));
     }
 
     // Pure pushes - no holes remain
     addresses_data.funded.reserve_pushed(pushes_iter.len());
     let mut next_index = addresses_data.funded.len();
-    for (address_type, typeindex, data) in pushes_iter {
+    for (address_type, type_index, data) in pushes_iter {
         addresses_data.funded.push(data);
         result.get_mut(address_type).unwrap().insert(
-            typeindex,
+            type_index,
             AnyAddressIndex::from(FundedAddressIndex::from(next_index)),
         );
         next_index += 1;
@@ -97,17 +97,17 @@ pub(crate) fn process_empty_addresses(
     let mut pushes: Vec<(OutputType, TypeIndex, EmptyAddressData)> = Vec::with_capacity(total);
 
     for (address_type, items) in empty_updates.into_iter() {
-        for (typeindex, source) in items {
+        for (type_index, source) in items {
             match source {
                 WithAddressDataSource::New(data) => {
-                    pushes.push((address_type, typeindex, data));
+                    pushes.push((address_type, type_index, data));
                 }
                 WithAddressDataSource::FromEmpty(index, data) => {
                     updates.push((index, data));
                 }
                 WithAddressDataSource::FromFunded(funded_index, data) => {
                     deletes.push(funded_index);
-                    pushes.push((address_type, typeindex, data));
+                    pushes.push((address_type, type_index, data));
                 }
             }
         }
@@ -128,21 +128,21 @@ pub(crate) fn process_empty_addresses(
     let holes_count = addresses_data.empty.holes().len();
     let mut pushes_iter = pushes.into_iter();
 
-    for (address_type, typeindex, data) in pushes_iter.by_ref().take(holes_count) {
+    for (address_type, type_index, data) in pushes_iter.by_ref().take(holes_count) {
         let index = addresses_data.empty.fill_first_hole_or_push(data)?;
         result
             .get_mut(address_type)
             .unwrap()
-            .insert(typeindex, AnyAddressIndex::from(index));
+            .insert(type_index, AnyAddressIndex::from(index));
     }
 
     // Pure pushes - no holes remain
     addresses_data.empty.reserve_pushed(pushes_iter.len());
     let mut next_index = addresses_data.empty.len();
-    for (address_type, typeindex, data) in pushes_iter {
+    for (address_type, type_index, data) in pushes_iter {
         addresses_data.empty.push(data);
         result.get_mut(address_type).unwrap().insert(
-            typeindex,
+            type_index,
             AnyAddressIndex::from(EmptyAddressIndex::from(next_index)),
         );
         next_index += 1;

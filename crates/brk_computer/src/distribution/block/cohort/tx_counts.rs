@@ -16,35 +16,35 @@ use super::with_source::WithAddressDataSource;
 pub(crate) fn update_tx_counts(
     funded_cache: &mut AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>,
     empty_cache: &mut AddressTypeToTypeIndexMap<WithAddressDataSource<EmptyAddressData>>,
-    mut txindex_vecs: AddressTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>,
+    mut tx_index_vecs: AddressTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>,
 ) {
-    // First, deduplicate txindex_vecs for addresses that appear multiple times in a block
-    for (_, map) in txindex_vecs.iter_mut() {
-        for (_, txindex_vec) in map.iter_mut() {
-            if txindex_vec.len() > 1 {
-                txindex_vec.sort_unstable();
-                txindex_vec.dedup();
+    // First, deduplicate tx_index_vecs for addresses that appear multiple times in a block
+    for (_, map) in tx_index_vecs.iter_mut() {
+        for (_, tx_index_vec) in map.iter_mut() {
+            if tx_index_vec.len() > 1 {
+                tx_index_vec.sort_unstable();
+                tx_index_vec.dedup();
             }
         }
     }
 
     // Update tx_count on address data
-    for (address_type, typeindex, txindex_vec) in txindex_vecs
+    for (address_type, type_index, tx_index_vec) in tx_index_vecs
         .into_iter()
         .flat_map(|(t, m)| m.into_iter().map(move |(i, v)| (t, i, v)))
     {
-        let tx_count = txindex_vec.len() as u32;
+        let tx_count = tx_index_vec.len() as u32;
 
         if let Some(addr_data) = funded_cache
             .get_mut(address_type)
             .unwrap()
-            .get_mut(&typeindex)
+            .get_mut(&type_index)
         {
             addr_data.tx_count += tx_count;
         } else if let Some(addr_data) = empty_cache
             .get_mut(address_type)
             .unwrap()
-            .get_mut(&typeindex)
+            .get_mut(&type_index)
         {
             addr_data.tx_count += tx_count;
         }

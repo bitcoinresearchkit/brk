@@ -68,11 +68,11 @@ impl CheckedSub<P2MSOutputIndex> for P2MSOutputIndex {
 
 impl PrintableIndex for P2MSOutputIndex {
     fn to_string() -> &'static str {
-        "p2msoutputindex"
+        "p2ms_output_index"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["msout", "p2msout", "p2msoutputindex"]
+        &["msout", "p2msout", "p2ms_output_index"]
     }
 }
 

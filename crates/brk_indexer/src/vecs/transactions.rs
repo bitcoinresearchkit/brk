@@ -13,23 +13,23 @@ use crate::parallel_import;
 
 #[derive(Traversable)]
 pub struct TransactionsVecs<M: StorageMode = Rw> {
-    pub first_txindex: M::Stored<PcoVec<Height, TxIndex>>,
+    pub first_tx_index: M::Stored<PcoVec<Height, TxIndex>>,
     pub height: M::Stored<PcoVec<TxIndex, Height>>,
     pub txid: M::Stored<BytesVec<TxIndex, Txid>>,
-    pub txversion: M::Stored<PcoVec<TxIndex, TxVersion>>,
-    pub rawlocktime: M::Stored<PcoVec<TxIndex, RawLockTime>>,
+    pub tx_version: M::Stored<PcoVec<TxIndex, TxVersion>>,
+    pub raw_locktime: M::Stored<PcoVec<TxIndex, RawLockTime>>,
     pub base_size: M::Stored<PcoVec<TxIndex, StoredU32>>,
     pub total_size: M::Stored<PcoVec<TxIndex, StoredU32>>,
     pub is_explicitly_rbf: M::Stored<PcoVec<TxIndex, StoredBool>>,
-    pub first_txinindex: M::Stored<PcoVec<TxIndex, TxInIndex>>,
-    pub first_txoutindex: M::Stored<BytesVec<TxIndex, TxOutIndex>>,
+    pub first_txin_index: M::Stored<PcoVec<TxIndex, TxInIndex>>,
+    pub first_txout_index: M::Stored<BytesVec<TxIndex, TxOutIndex>>,
 }
 
 pub struct TxMetadataVecs<'a> {
     pub height: &'a mut PcoVec<TxIndex, Height>,
-    pub txversion: &'a mut PcoVec<TxIndex, TxVersion>,
+    pub tx_version: &'a mut PcoVec<TxIndex, TxVersion>,
     pub txid: &'a mut BytesVec<TxIndex, Txid>,
-    pub rawlocktime: &'a mut PcoVec<TxIndex, RawLockTime>,
+    pub raw_locktime: &'a mut PcoVec<TxIndex, RawLockTime>,
     pub base_size: &'a mut PcoVec<TxIndex, StoredU32>,
     pub total_size: &'a mut PcoVec<TxIndex, StoredU32>,
     pub is_explicitly_rbf: &'a mut PcoVec<TxIndex, StoredBool>,
@@ -44,13 +44,13 @@ impl TransactionsVecs {
         TxMetadataVecs<'_>,
     ) {
         (
-            &mut self.first_txoutindex,
-            &mut self.first_txinindex,
+            &mut self.first_txout_index,
+            &mut self.first_txin_index,
             TxMetadataVecs {
                 height: &mut self.height,
-                txversion: &mut self.txversion,
+                tx_version: &mut self.tx_version,
                 txid: &mut self.txid,
-                rawlocktime: &mut self.rawlocktime,
+                raw_locktime: &mut self.raw_locktime,
                 base_size: &mut self.base_size,
                 total_size: &mut self.total_size,
                 is_explicitly_rbf: &mut self.is_explicitly_rbf,
@@ -60,76 +60,76 @@ impl TransactionsVecs {
 
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
         let (
-            first_txindex,
+            first_tx_index,
             height,
             txid,
-            txversion,
-            rawlocktime,
+            tx_version,
+            raw_locktime,
             base_size,
             total_size,
             is_explicitly_rbf,
-            first_txinindex,
-            first_txoutindex,
+            first_txin_index,
+            first_txout_index,
         ) = parallel_import! {
-            first_txindex = PcoVec::forced_import(db, "first_txindex", version),
+            first_tx_index = PcoVec::forced_import(db, "first_tx_index", version),
             height = PcoVec::forced_import(db, "height", version),
             txid = BytesVec::forced_import(db, "txid", version),
-            txversion = PcoVec::forced_import(db, "txversion", version),
-            rawlocktime = PcoVec::forced_import(db, "rawlocktime", version),
+            tx_version = PcoVec::forced_import(db, "tx_version", version),
+            raw_locktime = PcoVec::forced_import(db, "raw_locktime", version),
             base_size = PcoVec::forced_import(db, "base_size", version),
             total_size = PcoVec::forced_import(db, "total_size", version),
             is_explicitly_rbf = PcoVec::forced_import(db, "is_explicitly_rbf", version),
-            first_txinindex = PcoVec::forced_import(db, "first_txinindex", version),
-            first_txoutindex = BytesVec::forced_import(db, "first_txoutindex", version),
+            first_txin_index = PcoVec::forced_import(db, "first_txin_index", version),
+            first_txout_index = BytesVec::forced_import(db, "first_txout_index", version),
         };
         Ok(Self {
-            first_txindex,
+            first_tx_index,
             height,
             txid,
-            txversion,
-            rawlocktime,
+            tx_version,
+            raw_locktime,
             base_size,
             total_size,
             is_explicitly_rbf,
-            first_txinindex,
-            first_txoutindex,
+            first_txin_index,
+            first_txout_index,
         })
     }
 
-    pub fn truncate(&mut self, height: Height, txindex: TxIndex, stamp: Stamp) -> Result<()> {
-        self.first_txindex
+    pub fn truncate(&mut self, height: Height, tx_index: TxIndex, stamp: Stamp) -> Result<()> {
+        self.first_tx_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.height.truncate_if_needed_with_stamp(txindex, stamp)?;
-        self.txid.truncate_if_needed_with_stamp(txindex, stamp)?;
-        self.txversion
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
-        self.rawlocktime
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
+        self.height.truncate_if_needed_with_stamp(tx_index, stamp)?;
+        self.txid.truncate_if_needed_with_stamp(tx_index, stamp)?;
+        self.tx_version
+            .truncate_if_needed_with_stamp(tx_index, stamp)?;
+        self.raw_locktime
+            .truncate_if_needed_with_stamp(tx_index, stamp)?;
         self.base_size
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
+            .truncate_if_needed_with_stamp(tx_index, stamp)?;
         self.total_size
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
+            .truncate_if_needed_with_stamp(tx_index, stamp)?;
         self.is_explicitly_rbf
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
-        self.first_txinindex
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
-        self.first_txoutindex
-            .truncate_if_needed_with_stamp(txindex, stamp)?;
+            .truncate_if_needed_with_stamp(tx_index, stamp)?;
+        self.first_txin_index
+            .truncate_if_needed_with_stamp(tx_index, stamp)?;
+        self.first_txout_index
+            .truncate_if_needed_with_stamp(tx_index, stamp)?;
         Ok(())
     }
 
     pub fn par_iter_mut_any(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
-            &mut self.first_txindex as &mut dyn AnyStoredVec,
+            &mut self.first_tx_index as &mut dyn AnyStoredVec,
             &mut self.height,
             &mut self.txid,
-            &mut self.txversion,
-            &mut self.rawlocktime,
+            &mut self.tx_version,
+            &mut self.raw_locktime,
             &mut self.base_size,
             &mut self.total_size,
             &mut self.is_explicitly_rbf,
-            &mut self.first_txinindex,
-            &mut self.first_txoutindex,
+            &mut self.first_txin_index,
+            &mut self.first_txout_index,
         ]
         .into_par_iter()
     }

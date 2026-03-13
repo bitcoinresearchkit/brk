@@ -19,7 +19,7 @@ impl Vecs {
             .compute(starting_indexes.height, &window_starts, exit, |height| {
                 Ok(height.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.transactions.first_txindex,
+                    &indexer.vecs.transactions.first_tx_index,
                     &indexer.vecs.transactions.txid,
                     exit,
                 )?)

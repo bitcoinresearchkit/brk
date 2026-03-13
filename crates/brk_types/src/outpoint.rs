@@ -10,14 +10,14 @@ pub struct OutPoint(u64);
 impl OutPoint {
     pub const COINBASE: Self = Self(u64::MAX);
 
-    pub fn new(txindex: TxIndex, vout: Vout) -> Self {
-        let txindex_bits = u64::from(txindex) << 32;
+    pub fn new(tx_index: TxIndex, vout: Vout) -> Self {
+        let tx_index_bits = u64::from(tx_index) << 32;
         let vout_bits = u64::from(vout);
-        Self(txindex_bits | vout_bits)
+        Self(tx_index_bits | vout_bits)
     }
 
     #[inline(always)]
-    pub fn txindex(self) -> TxIndex {
+    pub fn tx_index(self) -> TxIndex {
         TxIndex::from((self.0 >> 32) as u32)
     }
 
@@ -42,7 +42,7 @@ impl OutPoint {
 
 impl std::fmt::Display for OutPoint {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "txindex: {}, vout: {}", self.txindex(), self.vout())
+        write!(f, "tx_index: {}, vout: {}", self.tx_index(), self.vout())
     }
 }
 
@@ -78,7 +78,7 @@ impl Serialize for OutPoint {
     {
         use serde::ser::SerializeStruct;
         let mut state = serializer.serialize_struct("OutPoint", 2)?;
-        state.serialize_field("txindex", &self.txindex())?;
+        state.serialize_field("tx_index", &self.tx_index())?;
         state.serialize_field("vout", &self.vout())?;
         state.end()
     }
@@ -91,10 +91,10 @@ impl<'de> Deserialize<'de> for OutPoint {
     {
         #[derive(Deserialize)]
         struct Helper {
-            txindex: TxIndex,
+            tx_index: TxIndex,
             vout: Vout,
         }
         let h = Helper::deserialize(deserializer)?;
-        Ok(Self::new(h.txindex, h.vout))
+        Ok(Self::new(h.tx_index, h.vout))
     }
 }

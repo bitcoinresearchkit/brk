@@ -23,7 +23,7 @@ use crate::{
         state::BlockState,
     },
     indexes, inputs,
-    internal::{CachedWindowStarts, PerBlockCumulative, db_utils::{finalize_db, open_db}},
+    internal::{CachedWindowStarts, PerBlockCumulativeWithSums, db_utils::{finalize_db, open_db}},
     outputs, prices, transactions,
 };
 
@@ -70,16 +70,16 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(wrap = "cohorts", rename = "address")]
     pub address_cohorts: AddressCohorts<M>,
     #[traversable(wrap = "cointime")]
-    pub coinblocks_destroyed: PerBlockCumulative<StoredF64, M>,
+    pub coinblocks_destroyed: PerBlockCumulativeWithSums<StoredF64, StoredF64, M>,
     pub addresses: AddressMetricsVecs<M>,
 
     /// In-memory block state for UTXO processing. Persisted via supply_state.
     /// Kept across compute() calls to avoid O(n) rebuild on resume.
     #[traversable(skip)]
     chain_state: Vec<BlockState>,
-    /// In-memory txindex→height reverse lookup. Kept across compute() calls.
+    /// In-memory tx_index→height reverse lookup. Kept across compute() calls.
     #[traversable(skip)]
-    txindex_to_height: RangeMap<TxIndex, Height>,
+    tx_index_to_height: RangeMap<TxIndex, Height>,
 
     /// Cached height→price mapping. Incrementally extended, O(new_blocks) on resume.
     #[traversable(skip)]
@@ -114,12 +114,12 @@ impl Vecs {
         let address_cohorts = AddressCohorts::forced_import(&db, version, indexes, &states_path, cached_starts)?;
 
         // Create address data BytesVecs first so we can also use them for identity mappings
-        let fundedaddressindex_to_fundedaddressdata = BytesVec::forced_import_with(
-            vecdb::ImportOptions::new(&db, "fundedaddressdata", version)
+        let funded_address_index_to_funded_address_data = BytesVec::forced_import_with(
+            vecdb::ImportOptions::new(&db, "funded_address_data", version)
                 .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
         )?;
-        let emptyaddressindex_to_emptyaddressdata = BytesVec::forced_import_with(
-            vecdb::ImportOptions::new(&db, "emptyaddressdata", version)
+        let empty_address_index_to_empty_address_data = BytesVec::forced_import_with(
+            vecdb::ImportOptions::new(&db, "empty_address_data", version)
                 .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
         )?;
 
@@ -127,13 +127,13 @@ impl Vecs {
         let funded_address_index = LazyVecFrom1::init(
             "funded_address_index",
             version,
-            fundedaddressindex_to_fundedaddressdata.read_only_boxed_clone(),
+            funded_address_index_to_funded_address_data.read_only_boxed_clone(),
             |index, _| index,
         );
         let empty_address_index = LazyVecFrom1::init(
             "empty_address_index",
             version,
-            emptyaddressindex_to_emptyaddressdata.read_only_boxed_clone(),
+            empty_address_index_to_empty_address_data.read_only_boxed_clone(),
             |index, _| index,
         );
 
@@ -173,20 +173,21 @@ impl Vecs {
             utxo_cohorts,
             address_cohorts,
 
-            coinblocks_destroyed: PerBlockCumulative::forced_import(
+            coinblocks_destroyed: PerBlockCumulativeWithSums::forced_import(
                 &db,
                 "coinblocks_destroyed",
                 version + Version::TWO,
                 indexes,
+                cached_starts,
             )?,
 
             any_address_indexes: AnyAddressIndexesVecs::forced_import(&db, version)?,
             addresses_data: AddressesDataVecs {
-                funded: fundedaddressindex_to_fundedaddressdata,
-                empty: emptyaddressindex_to_emptyaddressdata,
+                funded: funded_address_index_to_funded_address_data,
+                empty: empty_address_index_to_empty_address_data,
             },
             chain_state: Vec::new(),
-            txindex_to_height: RangeMap::default(),
+            tx_index_to_height: RangeMap::default(),
 
             cached_prices: Vec::new(),
             cached_timestamps: Vec::new(),
@@ -294,9 +295,9 @@ impl Vecs {
 
         debug!("recovered_height={}", recovered_height);
 
-        // Take chain_state and txindex_to_height out of self to avoid borrow conflicts
+        // Take chain_state and tx_index_to_height out of self to avoid borrow conflicts
         let mut chain_state = std::mem::take(&mut self.chain_state);
-        let mut txindex_to_height = std::mem::take(&mut self.txindex_to_height);
+        let mut tx_index_to_height = std::mem::take(&mut self.tx_index_to_height);
 
         // Recover or reuse chain_state
         let starting_height = if recovered_height.is_zero() {
@@ -312,7 +313,7 @@ impl Vecs {
             )?;
 
             chain_state.clear();
-            txindex_to_height.truncate(0);
+            tx_index_to_height.truncate(0);
 
             info!("State recovery: fresh start");
             Height::ZERO
@@ -341,7 +342,7 @@ impl Vecs {
             debug!("chain_state rebuilt");
 
             // Truncate RangeMap to match (entries are immutable, safe to keep)
-            txindex_to_height.truncate(end);
+            tx_index_to_height.truncate(end);
 
             recovered_height
         };
@@ -384,7 +385,7 @@ impl Vecs {
                 starting_height,
                 last_height,
                 &mut chain_state,
-                &mut txindex_to_height,
+                &mut tx_index_to_height,
                 &cached_prices,
                 &cached_timestamps,
                 &cached_price_range_max,
@@ -396,9 +397,9 @@ impl Vecs {
             self.cached_price_range_max = cached_price_range_max;
         }
 
-        // Put chain_state and txindex_to_height back
+        // Put chain_state and tx_index_to_height back
         self.chain_state = chain_state;
-        self.txindex_to_height = txindex_to_height;
+        self.tx_index_to_height = tx_index_to_height;
 
         // 5. Compute aggregates (overlapping cohorts from separate cohorts)
         info!("Computing overlapping cohorts...");
@@ -426,7 +427,7 @@ impl Vecs {
             r2?;
         }
 
-        // 6b. Compute address count sum (by addresstype → all)
+        // 6b. Compute address count sum (by address_type → all)
         self.addresses.funded.compute_rest(starting_indexes, exit)?;
         self.addresses.empty.compute_rest(starting_indexes, exit)?;
 

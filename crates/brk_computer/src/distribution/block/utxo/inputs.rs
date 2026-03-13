@@ -22,20 +22,20 @@ use super::super::{
 pub struct InputsResult {
     /// Map from UTXO creation height -> aggregated sent supply.
     pub height_to_sent: FxHashMap<Height, Transacted>,
-    /// Per-height, per-address-type sent data: (typeindex, value) for each address.
+    /// Per-height, per-address-type sent data: (type_index, value) for each address.
     pub sent_data: HeightToAddressTypeToVec<(TypeIndex, Sats)>,
-    /// Address data looked up during processing, keyed by (address_type, typeindex).
+    /// Address data looked up during processing, keyed by (address_type, type_index).
     pub address_data: AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>,
     /// Transaction indexes per address for tx_count tracking.
-    pub txindex_vecs: AddressTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>,
+    pub tx_index_vecs: AddressTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>,
 }
 
 /// Process inputs (spent UTXOs) for a block.
 ///
 /// For each input:
 /// 1. Use pre-collected outpoint (from reusable iterator, avoids PcoVec re-decompression)
-/// 2. Resolve outpoint to txoutindex
-/// 3. Get the creation height from txoutindex_to_height map
+/// 2. Resolve outpoint to txout_index
+/// 3. Get the creation height from txout_index_to_height map
 /// 4. Read value and type from the referenced output (random access via mmap)
 /// 5. Look up address data if input references an address type
 /// 6. Accumulate into height_to_sent map
@@ -46,35 +46,35 @@ pub struct InputsResult {
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn process_inputs(
     input_count: usize,
-    txinindex_to_txindex: &[TxIndex],
-    txinindex_to_value: &[Sats],
-    txinindex_to_outputtype: &[OutputType],
-    txinindex_to_typeindex: &[TypeIndex],
-    txinindex_to_prev_height: &[Height],
-    first_addressindexes: &ByAddressType<TypeIndex>,
+    txin_index_to_tx_index: &[TxIndex],
+    txin_index_to_value: &[Sats],
+    txin_index_to_output_type: &[OutputType],
+    txin_index_to_type_index: &[TypeIndex],
+    txin_index_to_prev_height: &[Height],
+    first_address_indexes: &ByAddressType<TypeIndex>,
     cache: &AddressCache,
     vr: &VecsReaders,
     any_address_indexes: &AnyAddressIndexesVecs,
     addresses_data: &AddressesDataVecs,
 ) -> Result<InputsResult> {
     let map_fn = |local_idx: usize| -> Result<_> {
-        let txindex = txinindex_to_txindex[local_idx];
+        let tx_index = txin_index_to_tx_index[local_idx];
 
-        let prev_height = txinindex_to_prev_height[local_idx];
-        let value = txinindex_to_value[local_idx];
-        let input_type = txinindex_to_outputtype[local_idx];
+        let prev_height = txin_index_to_prev_height[local_idx];
+        let value = txin_index_to_value[local_idx];
+        let input_type = txin_index_to_output_type[local_idx];
 
         if input_type.is_not_address() {
             return Ok((prev_height, value, input_type, None));
         }
 
-        let typeindex = txinindex_to_typeindex[local_idx];
+        let type_index = txin_index_to_type_index[local_idx];
 
         // Look up address data
         let addr_data_opt = load_uncached_address_data(
             input_type,
-            typeindex,
-            first_addressindexes,
+            type_index,
+            first_address_indexes,
             cache,
             vr,
             any_address_indexes,
@@ -85,7 +85,7 @@ pub(crate) fn process_inputs(
             prev_height,
             value,
             input_type,
-            Some((typeindex, txindex, value, addr_data_opt)),
+            Some((type_index, tx_index, value, addr_data_opt)),
         ))
     };
 
@@ -113,7 +113,7 @@ pub(crate) fn process_inputs(
         AddressTypeToTypeIndexMap::<WithAddressDataSource<FundedAddressData>>::with_capacity(
             estimated_per_type,
         );
-    let mut txindex_vecs =
+    let mut tx_index_vecs =
         AddressTypeToTypeIndexMap::<SmallVec<[TxIndex; 4]>>::with_capacity(estimated_per_type);
 
     for (prev_height, value, output_type, addr_info) in items {
@@ -122,24 +122,24 @@ pub(crate) fn process_inputs(
             .or_default()
             .iterate(value, output_type);
 
-        if let Some((typeindex, txindex, value, addr_data_opt)) = addr_info {
+        if let Some((type_index, tx_index, value, addr_data_opt)) = addr_info {
             sent_data
                 .entry(prev_height)
                 .or_default()
                 .get_mut(output_type)
                 .unwrap()
-                .push((typeindex, value));
+                .push((type_index, value));
 
             if let Some(addr_data) = addr_data_opt {
-                address_data.insert_for_type(output_type, typeindex, addr_data);
+                address_data.insert_for_type(output_type, type_index, addr_data);
             }
 
-            txindex_vecs
+            tx_index_vecs
                 .get_mut(output_type)
                 .unwrap()
-                .entry(typeindex)
+                .entry(type_index)
                 .or_default()
-                .push(txindex);
+                .push(tx_index);
         }
     }
 
@@ -147,6 +147,6 @@ pub(crate) fn process_inputs(
         height_to_sent,
         sent_data,
         address_data,
-        txindex_vecs,
+        tx_index_vecs,
     })
 }

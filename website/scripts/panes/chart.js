@@ -40,13 +40,13 @@ export function init() {
     /** @type {Map<Unit, AnyFetchedSeriesBlueprint[]>} */
     const result = new Map();
 
-    const { ohlc, price } = brk.metrics.prices;
+    const { ohlc, spot } = brk.metrics.prices;
 
     result.set(Unit.usd, [
       /** @type {AnyFetchedSeriesBlueprint} */ ({
         type: "Price",
         title: "Price",
-        metric: price.usd,
+        metric: spot.usd,
         ohlcMetric: ohlc.usd,
       }),
       ...(optionTop.get(Unit.usd) ?? []),
@@ -56,7 +56,7 @@ export function init() {
       /** @type {AnyFetchedSeriesBlueprint} */ ({
         type: "Price",
         title: "Price",
-        metric: price.sats,
+        metric: spot.sats,
         ohlcMetric: ohlc.sats,
         colors: /** @type {const} */ ([colors.bi.p1[1], colors.bi.p1[0]]),
       }),

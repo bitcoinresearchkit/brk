@@ -7,7 +7,7 @@ use super::Vecs;
 impl Vecs {
     pub(crate) fn forced_import(db: &Database, version: Version) -> Result<Self> {
         Ok(Self {
-            txinindex: BytesVec::forced_import(db, "txinindex", version)?,
+            txin_index: BytesVec::forced_import(db, "txin_index", version)?,
         })
     }
 }

@@ -434,9 +434,9 @@ export function statsAtWindow(pattern, window) {
 }
 
 /**
- * Create a Rolling folder tree from a _1y24h30d7dPattern (4 rolling windows)
+ * Create a Rolling folder tree from a _1m1w1y24hPattern (4 rolling windows)
  * @param {Object} args
- * @param {{ _24h: AnyMetricPattern, _7d: AnyMetricPattern, _30d: AnyMetricPattern, _1y: AnyMetricPattern }} args.windows
+ * @param {{ _24h: AnyMetricPattern, _1w: AnyMetricPattern, _1m: AnyMetricPattern, _1y: AnyMetricPattern }} args.windows
  * @param {string} args.title
  * @param {Unit} args.unit
  * @returns {PartialOptionsGroup}
@@ -450,8 +450,8 @@ export function rollingWindowsTree({ windows, title, unit }) {
         title: `${title} Rolling`,
         bottom: [
           line({ metric: windows._24h, name: "24h", color: colors.time._24h, unit }),
-          line({ metric: windows._7d, name: "7d", color: colors.time._1w, unit }),
-          line({ metric: windows._30d, name: "30d", color: colors.time._1m, unit }),
+          line({ metric: windows._1w, name: "7d", color: colors.time._1w, unit }),
+          line({ metric: windows._1m, name: "30d", color: colors.time._1m, unit }),
           line({ metric: windows._1y, name: "1y", color: colors.time._1y, unit }),
         ],
       },
@@ -463,12 +463,12 @@ export function rollingWindowsTree({ windows, title, unit }) {
       {
         name: "7d",
         title: `${title} 7d`,
-        bottom: [line({ metric: windows._7d, name: "7d", color: colors.time._1w, unit })],
+        bottom: [line({ metric: windows._1w, name: "7d", color: colors.time._1w, unit })],
       },
       {
         name: "30d",
         title: `${title} 30d`,
-        bottom: [line({ metric: windows._30d, name: "30d", color: colors.time._1m, unit })],
+        bottom: [line({ metric: windows._1m, name: "30d", color: colors.time._1m, unit })],
       },
       {
         name: "1y",

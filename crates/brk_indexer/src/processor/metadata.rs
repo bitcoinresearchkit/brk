@@ -14,7 +14,7 @@ impl BlockProcessor<'_> {
 
         if self
             .stores
-            .blockhashprefix_to_height
+            .blockhash_prefix_to_height
             .get(&blockhash_prefix)?
             .is_some_and(|prev_height| *prev_height != height)
         {
@@ -25,7 +25,7 @@ impl BlockProcessor<'_> {
         self.indexes.checked_push(self.vecs)?;
 
         self.stores
-            .blockhashprefix_to_height
+            .blockhash_prefix_to_height
             .insert(blockhash_prefix, height);
 
         self.stores

@@ -17,7 +17,7 @@ where
     S1: ComputedVecValue,
     S2: ComputedVecValue,
 {
-    pub txindex: LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>,
+    pub tx_index: LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>,
     #[traversable(flatten)]
     pub distribution: TxDerivedDistribution<T, M>,
 }
@@ -32,11 +32,11 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        txindex: LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>,
+        tx_index: LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>,
     ) -> Result<Self> {
         let distribution = TxDerivedDistribution::forced_import(db, name, version)?;
         Ok(Self {
-            txindex,
+            tx_index,
             distribution,
         })
     }
@@ -54,6 +54,6 @@ where
         LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>: ReadableVec<TxIndex, T>,
     {
         self.distribution
-            .derive_from(indexer, indexes, starting_indexes, &self.txindex, exit)
+            .derive_from(indexer, indexes, starting_indexes, &self.tx_index, exit)
     }
 }

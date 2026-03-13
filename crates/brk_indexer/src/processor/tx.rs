@@ -13,7 +13,7 @@ use super::{BlockProcessor, ComputedTx};
 impl<'a> BlockProcessor<'a> {
     pub fn compute_txids(&self) -> Result<Vec<ComputedTx<'a>>> {
         let will_check_collisions = self.check_collisions;
-        let base_txindex = self.indexes.txindex;
+        let base_tx_index = self.indexes.tx_index;
 
         self.block
             .txdata
@@ -24,9 +24,9 @@ impl<'a> BlockProcessor<'a> {
                 let txid = Txid::from(btc_txid);
                 let txid_prefix = TxidPrefix::from(&txid);
 
-                let prev_txindex_opt = if will_check_collisions {
+                let prev_tx_index_opt = if will_check_collisions {
                     self.stores
-                        .txidprefix_to_txindex
+                        .txid_prefix_to_tx_index
                         .get(&txid_prefix)?
                         .map(|v| *v)
                 } else {
@@ -34,11 +34,11 @@ impl<'a> BlockProcessor<'a> {
                 };
 
                 Ok(ComputedTx {
-                    txindex: base_txindex + TxIndex::from(index),
+                    tx_index: base_tx_index + TxIndex::from(index),
                     tx,
                     txid,
                     txid_prefix,
-                    prev_txindex_opt,
+                    prev_tx_index_opt,
                     base_size,
                     total_size,
                 })
@@ -53,11 +53,11 @@ impl<'a> BlockProcessor<'a> {
         }
 
         for ct in txs.iter() {
-            let Some(prev_txindex) = ct.prev_txindex_opt else {
+            let Some(prev_tx_index) = ct.prev_tx_index_opt else {
                 continue;
             };
 
-            if ct.txindex == prev_txindex {
+            if ct.tx_index == prev_tx_index {
                 continue;
             }
 
@@ -66,18 +66,18 @@ impl<'a> BlockProcessor<'a> {
                 .vecs
                 .transactions
                 .txid
-                .get_pushed_or_read(prev_txindex, &self.readers.txid)
-                .ok_or(Error::Internal("Missing txid for txindex"))
+                .get_pushed_or_read(prev_tx_index, &self.readers.txid)
+                .ok_or(Error::Internal("Missing txid for tx_index"))
                 .inspect_err(|_| {
-                    error!(txindex = ?ct.txindex, len, "Missing txid for txindex");
+                    error!(tx_index = ?ct.tx_index, len, "Missing txid for tx_index");
                 })?;
 
             let is_dup = DUPLICATE_TXIDS.contains(&prev_txid);
 
             if !is_dup {
                 error!(
-                    height = ?self.height, txindex = ?ct.txindex,
-                    ?prev_txid, ?prev_txindex,
+                    height = ?self.height, tx_index = ?ct.tx_index,
+                    ?prev_txid, ?prev_tx_index,
                     "Unexpected TXID collision"
                 );
                 return Err(Error::Internal("Unexpected TXID collision"));
@@ -95,20 +95,20 @@ pub(super) fn store_tx_metadata(
     md: &mut TxMetadataVecs<'_>,
 ) -> Result<()> {
     for ct in txs {
-        if ct.prev_txindex_opt.is_none() {
-            store.insert(ct.txid_prefix, ct.txindex);
+        if ct.prev_tx_index_opt.is_none() {
+            store.insert(ct.txid_prefix, ct.tx_index);
         }
-        md.height.checked_push(ct.txindex, height)?;
-        md.txversion
-            .checked_push(ct.txindex, ct.tx.version.into())?;
-        md.txid.checked_push(ct.txindex, ct.txid)?;
-        md.rawlocktime
-            .checked_push(ct.txindex, ct.tx.lock_time.into())?;
-        md.base_size.checked_push(ct.txindex, ct.base_size.into())?;
+        md.height.checked_push(ct.tx_index, height)?;
+        md.tx_version
+            .checked_push(ct.tx_index, ct.tx.version.into())?;
+        md.txid.checked_push(ct.tx_index, ct.txid)?;
+        md.raw_locktime
+            .checked_push(ct.tx_index, ct.tx.lock_time.into())?;
+        md.base_size.checked_push(ct.tx_index, ct.base_size.into())?;
         md.total_size
-            .checked_push(ct.txindex, ct.total_size.into())?;
+            .checked_push(ct.tx_index, ct.total_size.into())?;
         md.is_explicitly_rbf
-            .checked_push(ct.txindex, StoredBool::from(ct.tx.is_explicitly_rbf()))?;
+            .checked_push(ct.tx_index, StoredBool::from(ct.tx.is_explicitly_rbf()))?;
     }
     Ok(())
 }

@@ -11,14 +11,14 @@ use super::{OutPoint, TxIndex, TypeIndex};
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Serialize)]
 #[repr(C)]
 pub struct AddressIndexOutPoint {
-    addressindextxindex: AddressIndexTxIndex, // u64
+    address_index_tx_index: AddressIndexTxIndex, // u64
     vout: Vout,                               // u16
 }
 
 impl AddressIndexOutPoint {
     #[inline]
-    pub fn txindex(&self) -> TxIndex {
-        self.addressindextxindex.txindex()
+    pub fn tx_index(&self) -> TxIndex {
+        self.address_index_tx_index.tx_index()
     }
 
     #[inline]
@@ -30,7 +30,7 @@ impl AddressIndexOutPoint {
 impl Hash for AddressIndexOutPoint {
     fn hash<H: Hasher>(&self, state: &mut H) {
         let mut buf = [0u8; 10];
-        buf[0..8].copy_from_slice(&self.addressindextxindex.to_bytes());
+        buf[0..8].copy_from_slice(&self.address_index_tx_index.to_bytes());
         buf[8..].copy_from_slice(&self.vout.to_bytes());
         state.write(&buf);
     }
@@ -38,9 +38,9 @@ impl Hash for AddressIndexOutPoint {
 
 impl From<(TypeIndex, OutPoint)> for AddressIndexOutPoint {
     #[inline]
-    fn from((addressindex, outpoint): (TypeIndex, OutPoint)) -> Self {
+    fn from((address_index, outpoint): (TypeIndex, OutPoint)) -> Self {
         Self {
-            addressindextxindex: AddressIndexTxIndex::from((addressindex, outpoint.txindex())),
+            address_index_tx_index: AddressIndexTxIndex::from((address_index, outpoint.tx_index())),
             vout: outpoint.vout(),
         }
     }
@@ -50,7 +50,7 @@ impl From<ByteView> for AddressIndexOutPoint {
     #[inline]
     fn from(value: ByteView) -> Self {
         Self {
-            addressindextxindex: AddressIndexTxIndex::from(ByteView::new(&value[..8])),
+            address_index_tx_index: AddressIndexTxIndex::from(ByteView::new(&value[..8])),
             vout: Vout::from(u16::from_be_bytes([value[8], value[9]])),
         }
     }
@@ -67,7 +67,7 @@ impl From<&AddressIndexOutPoint> for ByteView {
     fn from(value: &AddressIndexOutPoint) -> Self {
         ByteView::from(
             [
-                &ByteView::from(value.addressindextxindex),
+                &ByteView::from(value.address_index_tx_index),
                 value.vout.to_be_bytes().as_slice(),
             ]
             .concat(),

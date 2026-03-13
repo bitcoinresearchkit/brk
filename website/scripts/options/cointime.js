@@ -9,23 +9,24 @@ import { satsBtcUsd, createPriceRatioCharts } from "./shared.js";
  * @returns {PartialOptionsGroup}
  */
 export function createCointimeSection() {
-  const { cointime, distribution, supply } = brk.metrics;
+  const { cointime, cohorts, supply } = brk.metrics;
   const {
-    pricing,
+    prices: cointimePrices,
     cap,
     activity,
     supply: cointimeSupply,
     adjusted,
     reserveRisk,
     value,
+    coinblocksDestroyed,
   } = cointime;
-  const { all } = distribution.utxoCohorts;
+  const { all } = cohorts.utxo;
 
   // Reference lines for cap comparisons
   const capReferenceLines = /** @type {const} */ ([
     { metric: supply.marketCap, name: "Market", color: colors.default },
     {
-      metric: all.realized.realizedCap,
+      metric: all.realized.cap.usd,
       name: "Realized",
       color: colors.realized,
     },
@@ -33,48 +34,44 @@ export function createCointimeSection() {
 
   const prices = /** @type {const} */ ([
     {
-      pricePattern: pricing.trueMarketMean,
-      ratio: pricing.trueMarketMeanRatio,
+      pattern: cointimePrices.trueMarketMean,
       name: "True Market Mean",
       color: colors.trueMarketMean,
     },
     {
-      pricePattern: pricing.vaultedPrice,
-      ratio: pricing.vaultedPriceRatio,
+      pattern: cointimePrices.vaulted,
       name: "Vaulted",
       color: colors.vaulted,
     },
     {
-      pricePattern: pricing.activePrice,
-      ratio: pricing.activePriceRatio,
+      pattern: cointimePrices.active,
       name: "Active",
       color: colors.active,
     },
     {
-      pricePattern: pricing.cointimePrice,
-      ratio: pricing.cointimePriceRatio,
+      pattern: cointimePrices.cointime,
       name: "Cointime",
       color: colors.cointime,
     },
   ]);
 
   const caps = /** @type {const} */ ([
-    { metric: cap.vaultedCap, name: "Vaulted", color: colors.vaulted },
-    { metric: cap.activeCap, name: "Active", color: colors.active },
-    { metric: cap.cointimeCap, name: "Cointime", color: colors.cointime },
-    { metric: cap.investorCap, name: "Investor", color: colors.investor },
-    { metric: cap.thermoCap, name: "Thermo", color: colors.thermo },
+    { metric: cap.vaulted.usd, name: "Vaulted", color: colors.vaulted },
+    { metric: cap.active.usd, name: "Active", color: colors.active },
+    { metric: cap.cointime.usd, name: "Cointime", color: colors.cointime },
+    { metric: cap.investor.usd, name: "Investor", color: colors.investor },
+    { metric: cap.thermo.usd, name: "Thermo", color: colors.thermo },
   ]);
 
   const supplyBreakdown = /** @type {const} */ ([
     { pattern: all.supply.total, name: "Total", color: colors.bitcoin },
     {
-      pattern: cointimeSupply.vaultedSupply,
+      pattern: cointimeSupply.vaulted,
       name: "Vaulted",
       color: colors.vaulted,
     },
     {
-      pattern: cointimeSupply.activeSupply,
+      pattern: cointimeSupply.active,
       name: "Active",
       color: colors.active,
     },
@@ -82,7 +79,7 @@ export function createCointimeSection() {
 
   const coinblocks = /** @type {const} */ ([
     {
-      pattern: all.activity.coinblocksDestroyed,
+      pattern: coinblocksDestroyed,
       name: "Destroyed",
       title: "Coinblocks Destroyed",
       color: colors.destroyed,
@@ -104,19 +101,19 @@ export function createCointimeSection() {
   // Colors aligned with coinblocks: Destroyed=red, Created=orange, Stored=green
   const cointimeValues = /** @type {const} */ ([
     {
-      pattern: value.cointimeValueCreated,
+      pattern: value.created,
       name: "Created",
       title: "Cointime Value Created",
       color: colors.created,
     },
     {
-      pattern: value.cointimeValueDestroyed,
+      pattern: value.destroyed,
       name: "Destroyed",
       title: "Cointime Value Destroyed",
       color: colors.destroyed,
     },
     {
-      pattern: value.cointimeValueStored,
+      pattern: value.stored,
       name: "Stored",
       title: "Cointime Value Stored",
       color: colors.stored,
@@ -142,31 +139,31 @@ export function createCointimeSection() {
             title: "Cointime Prices",
             top: [
               price({
-                metric: all.realized.realizedPrice,
+                metric: all.realized.price,
                 name: "Realized",
                 color: colors.realized,
               }),
               price({
-                metric: all.realized.investorPrice,
+                metric: all.realized.investor.price,
                 name: "Investor",
                 color: colors.investor,
               }),
-              ...prices.map(({ pricePattern, name, color }) =>
-                price({ metric: pricePattern, name, color }),
+              ...prices.map(({ pattern, name, color }) =>
+                price({ metric: pattern, name, color }),
               ),
             ],
           },
-          ...prices.map(({ pricePattern, ratio, name, color }) => ({
+          ...prices.map(({ pattern, name, color }) => ({
             name,
             tree: createPriceRatioCharts({
               context: `${name} Price`,
               legend: name,
-              pricePattern,
-              ratio,
+              pricePattern: pattern,
+              ratio: pattern,
               color,
               priceReferences: [
                 price({
-                  metric: all.realized.realizedPrice,
+                  metric: all.realized.price,
                   name: "Realized",
                   color: colors.realized,
                   defaultActive: false,
@@ -238,7 +235,7 @@ export function createCointimeSection() {
             unit: Unit.ratio,
           }),
           line({
-            metric: activity.activityToVaultednessRatio,
+            metric: activity.ratio,
             name: "L/V Ratio",
             color: colors.activity,
             unit: Unit.ratio,
@@ -259,7 +256,7 @@ export function createCointimeSection() {
                 title: "Coinblocks",
                 bottom: coinblocks.map(({ pattern, name, color }) =>
                   line({
-                    metric: pattern.height,
+                    metric: pattern.base,
                     name,
                     color,
                     unit: Unit.coinblocks,
@@ -288,7 +285,7 @@ export function createCointimeSection() {
                 title,
                 bottom: [
                   line({
-                    metric: pattern.height,
+                    metric: pattern.base,
                     name,
                     color,
                     unit: Unit.coinblocks,
@@ -325,10 +322,10 @@ export function createCointimeSection() {
                 title: "Cointime Value",
                 bottom: [
                   ...cointimeValues.map(({ pattern, name, color }) =>
-                    line({ metric: pattern.height, name, color, unit: Unit.usd }),
+                    line({ metric: pattern.base, name, color, unit: Unit.usd }),
                   ),
                   line({
-                    metric: vocdd.pattern.height,
+                    metric: vocdd.pattern.base,
                     name: vocdd.name,
                     color: vocdd.color,
                     unit: Unit.usd,
@@ -364,7 +361,7 @@ export function createCointimeSection() {
                 name: "Base",
                 title,
                 bottom: [
-                  line({ metric: pattern.height, name, color, unit: Unit.usd }),
+                  line({ metric: pattern.base, name, color, unit: Unit.usd }),
                 ],
               },
               rollingWindowsTree({ windows: pattern.sum, title, unit: Unit.usd }),
@@ -390,13 +387,13 @@ export function createCointimeSection() {
                 title: vocdd.title,
                 bottom: [
                   line({
-                    metric: vocdd.pattern.height,
+                    metric: vocdd.pattern.base,
                     name: vocdd.name,
                     color: vocdd.color,
                     unit: Unit.usd,
                   }),
                   line({
-                    metric: reserveRisk.vocdd365dMedian,
+                    metric: reserveRisk.vocddMedian1y,
                     name: "365d Median",
                     color: colors.time._1y,
                     unit: Unit.usd,
@@ -430,7 +427,7 @@ export function createCointimeSection() {
             title: "Reserve Risk",
             bottom: [
               line({
-                metric: reserveRisk.reserveRisk,
+                metric: reserveRisk.value,
                 name: "Ratio",
                 color: colors.reserveRisk,
                 unit: Unit.ratio,
@@ -461,13 +458,13 @@ export function createCointimeSection() {
             title: "Cointime-Adjusted Inflation",
             bottom: [
               dots({
-                metric: supply.inflation,
+                metric: supply.inflationRate.percent,
                 name: "Base",
                 color: colors.base,
                 unit: Unit.percentage,
               }),
               dots({
-                metric: adjusted.cointimeAdjInflationRate,
+                metric: adjusted.inflationRate.percent,
                 name: "Cointime-Adjusted",
                 color: colors.adjusted,
                 unit: Unit.percentage,
@@ -488,7 +485,7 @@ export function createCointimeSection() {
                     unit: Unit.ratio,
                   }),
                   line({
-                    metric: adjusted.cointimeAdjTxBtcVelocity,
+                    metric: adjusted.txVelocityBtc,
                     name: "Cointime-Adjusted",
                     color: colors.adjusted,
                     unit: Unit.ratio,
@@ -506,7 +503,7 @@ export function createCointimeSection() {
                     unit: Unit.ratio,
                   }),
                   line({
-                    metric: adjusted.cointimeAdjTxUsdVelocity,
+                    metric: adjusted.txVelocityUsd,
                     name: "Cointime-Adjusted",
                     color: colors.vaulted,
                     unit: Unit.ratio,

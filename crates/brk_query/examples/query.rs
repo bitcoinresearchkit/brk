@@ -48,7 +48,7 @@ pub fn main() -> Result<()> {
     dbg!(
         indexer
             .stores
-            .addresstype_to_addresshash_to_addressindex
+            .address_type_to_address_hash_to_address_index
             .get_unwrap(OutputType::P2WSH)
             .approximate_len()
     );

@@ -19,23 +19,23 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.input_value.compute_sum_from_indexes(
-            starting_indexes.txindex,
-            &indexer.vecs.transactions.first_txinindex,
-            &indexes.txindex.input_count,
+            starting_indexes.tx_index,
+            &indexer.vecs.transactions.first_txin_index,
+            &indexes.tx_index.input_count,
             &txins.spent.value,
             exit,
         )?;
 
         self.output_value.compute_sum_from_indexes(
-            starting_indexes.txindex,
-            &indexer.vecs.transactions.first_txoutindex,
-            &indexes.txindex.output_count,
+            starting_indexes.tx_index,
+            &indexer.vecs.transactions.first_txout_index,
+            &indexes.tx_index.output_count,
             &indexer.vecs.outputs.value,
             exit,
         )?;
 
-        self.fee.txindex.compute_transform2(
-            starting_indexes.txindex,
+        self.fee.tx_index.compute_transform2(
+            starting_indexes.tx_index,
             &self.input_value,
             &self.output_value,
             |(i, input, output, ..)| {
@@ -49,11 +49,11 @@ impl Vecs {
             exit,
         )?;
 
-        self.fee_rate.txindex.compute_transform2(
-            starting_indexes.txindex,
-            &self.fee.txindex,
-            &size_vecs.vsize.txindex,
-            |(txindex, fee, vsize, ..)| (txindex, FeeRate::from((fee, vsize))),
+        self.fee_rate.tx_index.compute_transform2(
+            starting_indexes.tx_index,
+            &self.fee.tx_index,
+            &size_vecs.vsize.tx_index,
+            |(tx_index, fee, vsize, ..)| (tx_index, FeeRate::from((fee, vsize))),
             exit,
         )?;
 

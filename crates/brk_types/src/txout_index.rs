@@ -114,11 +114,11 @@ impl From<TxOutIndex> for usize {
 
 impl PrintableIndex for TxOutIndex {
     fn to_string() -> &'static str {
-        "txoutindex"
+        "txout_index"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["txo", "txout", "txoutindex"]
+        &["txo", "txout", "txout_index"]
     }
 }
 

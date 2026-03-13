@@ -25,7 +25,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub month6: M::Stored<EagerVec<PcoVec<Height, Month6>>>,
     pub year1: M::Stored<EagerVec<PcoVec<Height, Year1>>>,
     pub year10: M::Stored<EagerVec<PcoVec<Height, Year10>>>,
-    pub txindex_count: M::Stored<EagerVec<PcoVec<Height, StoredU64>>>,
+    pub tx_index_count: M::Stored<EagerVec<PcoVec<Height, StoredU64>>>,
 }
 
 impl Vecs {
@@ -47,7 +47,7 @@ impl Vecs {
             month6: EagerVec::forced_import(db, "month6", version)?,
             year1: EagerVec::forced_import(db, "year1", version)?,
             year10: EagerVec::forced_import(db, "year10", version)?,
-            txindex_count: EagerVec::forced_import(db, "txindex_count", version)?,
+            tx_index_count: EagerVec::forced_import(db, "tx_index_count", version)?,
         })
     }
 }

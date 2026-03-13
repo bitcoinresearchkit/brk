@@ -10,13 +10,13 @@ use rustc_hash::{FxHashMap, FxHashSet};
 pub enum InputSource {
     PreviousBlock {
         vin: Vin,
-        txindex: TxIndex,
+        tx_index: TxIndex,
         outpoint: OutPoint,
-        outputtype: OutputType,
-        typeindex: TypeIndex,
+        output_type: OutputType,
+        type_index: TypeIndex,
     },
     SameBlock {
-        txindex: TxIndex,
+        tx_index: TxIndex,
         vin: Vin,
         outpoint: OutPoint,
     },
@@ -24,26 +24,26 @@ pub enum InputSource {
 
 #[derive(Debug, Clone, Copy)]
 pub struct SameBlockOutputInfo {
-    pub outputtype: OutputType,
-    pub typeindex: TypeIndex,
+    pub output_type: OutputType,
+    pub type_index: TypeIndex,
 }
 
 pub struct ProcessedOutput<'a> {
-    pub txoutindex: TxOutIndex,
+    pub txout_index: TxOutIndex,
     pub txout: &'a TxOut,
-    pub txindex: TxIndex,
+    pub tx_index: TxIndex,
     pub vout: Vout,
-    pub outputtype: OutputType,
+    pub output_type: OutputType,
     pub address_info: Option<(AddressBytes, AddressHash)>,
-    pub existing_typeindex: Option<TypeIndex>,
+    pub existing_type_index: Option<TypeIndex>,
 }
 
 pub struct ComputedTx<'a> {
-    pub txindex: TxIndex,
+    pub tx_index: TxIndex,
     pub tx: &'a Transaction,
     pub txid: Txid,
     pub txid_prefix: TxidPrefix,
-    pub prev_txindex_opt: Option<TxIndex>,
+    pub prev_tx_index_opt: Option<TxIndex>,
     pub base_size: u32,
     pub total_size: u32,
 }

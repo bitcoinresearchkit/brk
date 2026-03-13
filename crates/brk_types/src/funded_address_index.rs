@@ -62,11 +62,11 @@ impl CheckedSub<FundedAddressIndex> for FundedAddressIndex {
 }
 impl PrintableIndex for FundedAddressIndex {
     fn to_string() -> &'static str {
-        "fundedaddressindex"
+        "funded_address_index"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["fundedaddr", "fundedaddressindex"]
+        &["fundedaddr", "funded_address_index"]
     }
 }
 

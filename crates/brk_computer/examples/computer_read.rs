@@ -14,23 +14,23 @@ pub fn main() -> Result<()> {
 
     let computer = Computer::forced_import(&outputs_dir, &indexer)?;
 
-    // Test emptyaddressdata (underlying BytesVec) - direct access
+    // Test empty_address_data (underlying BytesVec) - direct access
     let empty_data = &computer.distribution.addresses_data.empty;
-    println!("emptyaddressdata (BytesVec) len: {}", empty_data.len());
+    println!("empty_address_data (BytesVec) len: {}", empty_data.len());
 
     let start = Instant::now();
     let mut buf = Vec::new();
     empty_data.write_json(Some(empty_data.len() - 1), Some(empty_data.len()), &mut buf)?;
     println!(
-        "emptyaddressdata last item JSON: {}",
+        "empty_address_data last item JSON: {}",
         String::from_utf8_lossy(&buf)
     );
     println!("Time for BytesVec write_json: {:?}", start.elapsed());
 
-    // Test emptyaddressindex (LazyVecFrom1 wrapper) - computed access
+    // Test empty_address_index (LazyVecFrom1 wrapper) - computed access
     let empty_index = &computer.distribution.addresses.empty_index;
     println!(
-        "\nemptyaddressindex (LazyVecFrom1) len: {}",
+        "\nempty_address_index (LazyVecFrom1) len: {}",
         empty_index.len()
     );
 
@@ -42,14 +42,14 @@ pub fn main() -> Result<()> {
         &mut buf,
     )?;
     println!(
-        "emptyaddressindex last item JSON: {}",
+        "empty_address_index last item JSON: {}",
         String::from_utf8_lossy(&buf)
     );
     println!("Time for LazyVecFrom1 write_json: {:?}", start.elapsed());
 
     // Compare with funded versions
     let funded_data = &computer.distribution.addresses_data.funded;
-    println!("\nfundedaddressdata (BytesVec) len: {}", funded_data.len());
+    println!("\nfunded_address_data (BytesVec) len: {}", funded_data.len());
 
     let start = Instant::now();
     let mut buf = Vec::new();
@@ -59,7 +59,7 @@ pub fn main() -> Result<()> {
         &mut buf,
     )?;
     println!(
-        "fundedaddressdata last item JSON: {}",
+        "funded_address_data last item JSON: {}",
         String::from_utf8_lossy(&buf)
     );
     println!("Time for BytesVec write_json: {:?}", start.elapsed());

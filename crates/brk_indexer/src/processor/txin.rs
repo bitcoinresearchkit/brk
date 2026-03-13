@@ -17,13 +17,13 @@ impl<'a> BlockProcessor<'a> {
     pub fn process_inputs(
         &self,
         txs: &[ComputedTx],
-        txid_prefix_to_txindex: &mut FxHashMap<TxidPrefix, TxIndex>,
+        txid_prefix_to_tx_index: &mut FxHashMap<TxidPrefix, TxIndex>,
     ) -> Result<Vec<(TxInIndex, InputSource)>> {
-        txid_prefix_to_txindex.clear();
-        txid_prefix_to_txindex.extend(txs.iter().map(|ct| (ct.txid_prefix, ct.txindex)));
+        txid_prefix_to_tx_index.clear();
+        txid_prefix_to_tx_index.extend(txs.iter().map(|ct| (ct.txid_prefix, ct.tx_index)));
 
-        let base_txindex = self.indexes.txindex;
-        let base_txinindex = self.indexes.txinindex;
+        let base_tx_index = self.indexes.tx_index;
+        let base_txin_index = self.indexes.txin_index;
 
         let total_inputs: usize = self.block.txdata.iter().map(|tx| tx.input.len()).sum();
         let mut items = Vec::with_capacity(total_inputs);
@@ -33,21 +33,21 @@ impl<'a> BlockProcessor<'a> {
             }
         }
 
-        let txid_prefix_to_txindex = &*txid_prefix_to_txindex;
+        let txid_prefix_to_tx_index = &*txid_prefix_to_tx_index;
 
         let txins = items
             .into_par_iter()
             .enumerate()
             .map(
-                |(block_txinindex, (block_txindex, vin, txin, tx))| -> Result<(TxInIndex, InputSource)> {
-                    let txindex = base_txindex + block_txindex;
-                    let txinindex = base_txinindex + TxInIndex::from(block_txinindex);
+                |(block_txin_index, (block_tx_index, vin, txin, tx))| -> Result<(TxInIndex, InputSource)> {
+                    let tx_index = base_tx_index + block_tx_index;
+                    let txin_index = base_txin_index + TxInIndex::from(block_txin_index);
 
                     if tx.is_coinbase() {
                         return Ok((
-                            txinindex,
+                            txin_index,
                             InputSource::SameBlock {
-                                txindex,
+                                tx_index,
                                 vin,
                                 outpoint: OutPoint::COINBASE,
                             },
@@ -59,13 +59,13 @@ impl<'a> BlockProcessor<'a> {
                     let txid_prefix = TxidPrefix::from(&txid);
                     let vout = Vout::from(outpoint.vout);
 
-                    if let Some(&same_block_txindex) = txid_prefix_to_txindex
+                    if let Some(&same_block_tx_index) = txid_prefix_to_tx_index
                         .get(&txid_prefix) {
-                        let outpoint = OutPoint::new(same_block_txindex, vout);
+                        let outpoint = OutPoint::new(same_block_tx_index, vout);
                         return Ok((
-                            txinindex,
+                            txin_index,
                             InputSource::SameBlock {
-                                txindex,
+                                tx_index,
                                 vin,
                                 outpoint,
                             },
@@ -74,53 +74,53 @@ impl<'a> BlockProcessor<'a> {
 
                     let store_result = self
                         .stores
-                        .txidprefix_to_txindex
+                        .txid_prefix_to_tx_index
                         .get(&txid_prefix)?
                         .map(|v| *v);
 
-                    let prev_txindex = match store_result {
-                        Some(txindex) if txindex < self.indexes.txindex => txindex,
+                    let prev_tx_index = match store_result {
+                        Some(tx_index) if tx_index < self.indexes.tx_index => tx_index,
                         _ => {
                             error!(
-                                "UnknownTxid: txid={}, prefix={:?}, store_result={:?}, current_txindex={:?}",
-                                txid, txid_prefix, store_result, self.indexes.txindex
+                                "UnknownTxid: txid={}, prefix={:?}, store_result={:?}, current_tx_index={:?}",
+                                txid, txid_prefix, store_result, self.indexes.tx_index
                             );
                             return Err(Error::UnknownTxid);
                         }
                     };
 
-                    let txoutindex = self
+                    let txout_index = self
                         .vecs
                         .transactions
-                        .first_txoutindex
-                        .get_pushed_or_read(prev_txindex, &self.readers.txindex_to_first_txoutindex)
-                        .ok_or(Error::Internal("Missing txoutindex"))?
+                        .first_txout_index
+                        .get_pushed_or_read(prev_tx_index, &self.readers.tx_index_to_first_txout_index)
+                        .ok_or(Error::Internal("Missing txout_index"))?
                         + vout;
 
-                    let outpoint = OutPoint::new(prev_txindex, vout);
+                    let outpoint = OutPoint::new(prev_tx_index, vout);
 
-                    let outputtype = self
+                    let output_type = self
                         .vecs
                         .outputs
-                        .outputtype
-                        .get_pushed_or_read(txoutindex, &self.readers.txoutindex_to_outputtype)
-                        .ok_or(Error::Internal("Missing outputtype"))?;
+                        .output_type
+                        .get_pushed_or_read(txout_index, &self.readers.txout_index_to_output_type)
+                        .ok_or(Error::Internal("Missing output_type"))?;
 
-                    let typeindex = self
+                    let type_index = self
                         .vecs
                         .outputs
-                        .typeindex
-                        .get_pushed_or_read(txoutindex, &self.readers.txoutindex_to_typeindex)
-                        .ok_or(Error::Internal("Missing typeindex"))?;
+                        .type_index
+                        .get_pushed_or_read(txout_index, &self.readers.txout_index_to_type_index)
+                        .ok_or(Error::Internal("Missing type_index"))?;
 
                     Ok((
-                        txinindex,
+                        txin_index,
                         InputSource::PreviousBlock {
                             vin,
-                            txindex,
+                            tx_index,
                             outpoint,
-                            outputtype,
-                            typeindex,
+                            output_type,
+                            type_index,
                         },
                     ))
                 },
@@ -149,31 +149,31 @@ impl<'a> BlockProcessor<'a> {
 }
 
 pub(super) fn finalize_inputs(
-    first_txinindex: &mut PcoVec<TxIndex, TxInIndex>,
+    first_txin_index: &mut PcoVec<TxIndex, TxInIndex>,
     inputs: &mut InputsVecs,
-    addr_txindex_stores: &mut ByAddressType<Store<AddressIndexTxIndex, Unit>>,
+    addr_tx_index_stores: &mut ByAddressType<Store<AddressIndexTxIndex, Unit>>,
     addr_outpoint_stores: &mut ByAddressType<Store<AddressIndexOutPoint, Unit>>,
     txins: Vec<(TxInIndex, InputSource)>,
     same_block_output_info: &mut FxHashMap<OutPoint, SameBlockOutputInfo>,
 ) -> Result<()> {
-    for (txinindex, input_source) in txins {
-        let (vin, txindex, outpoint, outputtype, typeindex) = match input_source {
+    for (txin_index, input_source) in txins {
+        let (vin, tx_index, outpoint, output_type, type_index) = match input_source {
             InputSource::PreviousBlock {
                 vin,
-                txindex,
+                tx_index,
                 outpoint,
-                outputtype,
-                typeindex,
-            } => (vin, txindex, outpoint, outputtype, typeindex),
+                output_type,
+                type_index,
+            } => (vin, tx_index, outpoint, output_type, type_index),
             InputSource::SameBlock {
-                txindex,
+                tx_index,
                 vin,
                 outpoint,
             } => {
                 if outpoint.is_coinbase() {
                     (
                         vin,
-                        txindex,
+                        tx_index,
                         outpoint,
                         OutputType::Unknown,
                         TypeIndex::COINBASE,
@@ -189,33 +189,33 @@ pub(super) fn finalize_inputs(
                                 "Same-block output not found"
                             );
                         })?;
-                    (vin, txindex, outpoint, info.outputtype, info.typeindex)
+                    (vin, tx_index, outpoint, info.output_type, info.type_index)
                 }
             }
         };
 
         if vin.is_zero() {
-            first_txinindex.checked_push(txindex, txinindex)?;
+            first_txin_index.checked_push(tx_index, txin_index)?;
         }
 
-        inputs.txindex.checked_push(txinindex, txindex)?;
-        inputs.outpoint.checked_push(txinindex, outpoint)?;
-        inputs.outputtype.checked_push(txinindex, outputtype)?;
-        inputs.typeindex.checked_push(txinindex, typeindex)?;
+        inputs.tx_index.checked_push(txin_index, tx_index)?;
+        inputs.outpoint.checked_push(txin_index, outpoint)?;
+        inputs.output_type.checked_push(txin_index, output_type)?;
+        inputs.type_index.checked_push(txin_index, type_index)?;
 
-        if !outputtype.is_address() {
+        if !output_type.is_address() {
             continue;
         }
-        let addresstype = outputtype;
-        let addressindex = typeindex;
+        let address_type = output_type;
+        let address_index = type_index;
 
-        addr_txindex_stores
-            .get_mut_unwrap(addresstype)
-            .insert(AddressIndexTxIndex::from((addressindex, txindex)), Unit);
+        addr_tx_index_stores
+            .get_mut_unwrap(address_type)
+            .insert(AddressIndexTxIndex::from((address_index, tx_index)), Unit);
 
         addr_outpoint_stores
-            .get_mut_unwrap(addresstype)
-            .remove(AddressIndexOutPoint::from((addressindex, outpoint)));
+            .get_mut_unwrap(address_type)
+            .remove(AddressIndexOutPoint::from((address_index, outpoint)));
     }
 
     Ok(())

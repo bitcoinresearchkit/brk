@@ -22,7 +22,7 @@ impl Vecs {
     ) -> Result<Self> {
         Ok(Self {
             identity: LazyVecFrom1::init(
-                "txindex",
+                "tx_index",
                 version,
                 indexer.vecs.transactions.txid.read_only_boxed_clone(),
                 |index, _| index,

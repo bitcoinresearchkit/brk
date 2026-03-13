@@ -1,6 +1,6 @@
 use brk_cohort::ByAddressType;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints32, StoredI64, StoredU64, Version};
+use brk_types::{BasisPointsSigned32, StoredI64, StoredU64, Version};
 
 use crate::{
     indexes,
@@ -9,13 +9,13 @@ use crate::{
 
 use super::AddressCountsVecs;
 
-type AddrDelta = LazyRollingDeltasFromHeight<StoredU64, StoredI64, BasisPoints32>;
+type AddrDelta = LazyRollingDeltasFromHeight<StoredU64, StoredI64, BasisPointsSigned32>;
 
 #[derive(Clone, Traversable)]
 pub struct DeltaVecs {
     pub all: AddrDelta,
     #[traversable(flatten)]
-    pub by_addresstype: ByAddressType<AddrDelta>,
+    pub by_address_type: ByAddressType<AddrDelta>,
 }
 
 impl DeltaVecs {
@@ -35,7 +35,7 @@ impl DeltaVecs {
             indexes,
         );
 
-        let by_addresstype = address_count.by_addresstype.map_with_name(|name, addr| {
+        let by_address_type = address_count.by_address_type.map_with_name(|name, addr| {
             LazyRollingDeltasFromHeight::new(
                 &format!("{name}_address_count"),
                 version,
@@ -47,7 +47,7 @@ impl DeltaVecs {
 
         Self {
             all,
-            by_addresstype,
+            by_address_type,
         }
     }
 }

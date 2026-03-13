@@ -194,7 +194,7 @@
  * @property {string} title
  * @property {Color} color
  * @property {PatternAll} tree
- * @property {Brk._30dCountPattern} addrCount
+ * @property {Brk.DeltaInnerPattern} addressCount
  *
  * Full cohort: adjustedSopr + percentiles + RelToMarketCap (term.short)
  * @typedef {Object} CohortFull
@@ -260,7 +260,7 @@
  * ============================================================================
  *
  * Addressable cohort with address count (for "type" cohorts - no RelToMarketCap)
- * @typedef {CohortBasicWithoutMarketCap & { addrCount: Brk._30dCountPattern }} CohortAddress
+ * @typedef {CohortBasicWithoutMarketCap & { addressCount: Brk.DeltaInnerPattern }} CohortAddress
  *
  * ============================================================================
  * Cohort Group Types (by capability)
@@ -328,7 +328,7 @@
  * @property {string} title
  * @property {Color} color
  * @property {AddressCohortPattern} tree
- * @property {Brk._30dCountPattern} addrCount
+ * @property {Brk.DeltaInnerPattern} addressCount
  *
  * @typedef {UtxoCohortObject | AddressCohortObject | CohortWithoutRelative} CohortObject
  *

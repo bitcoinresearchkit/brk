@@ -97,11 +97,11 @@ impl From<PairOutputIndex> for usize {
 
 impl PrintableIndex for PairOutputIndex {
     fn to_string() -> &'static str {
-        "pairoutputindex"
+        "pair_output_index"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["pairoutput", "pairoutputindex"]
+        &["pairoutput", "pair_output_index"]
     }
 }
 

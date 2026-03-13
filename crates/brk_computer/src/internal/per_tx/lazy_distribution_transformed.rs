@@ -15,7 +15,7 @@ where
     S2: ComputedVecValue,
     DSource: ComputedVecValue,
 {
-    pub txindex: LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>,
+    pub tx_index: LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>,
     #[traversable(flatten)]
     pub distribution: LazyTxDerivedDistribution<T, DSource>,
 }
@@ -30,13 +30,13 @@ where
     pub(crate) fn new<F: UnaryTransform<DSource, T>>(
         name: &str,
         version: Version,
-        txindex: LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>,
+        tx_index: LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>,
         source_distribution: &TxDerivedDistribution<DSource>,
     ) -> Self {
         let distribution =
             LazyTxDerivedDistribution::from_tx_derived::<F>(name, version, source_distribution);
         Self {
-            txindex,
+            tx_index,
             distribution,
         }
     }

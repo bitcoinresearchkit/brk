@@ -18,9 +18,9 @@ impl Vecs {
     ) -> Result<()> {
         // Validate computed versions against dependencies
         let dep_version = indexer.vecs.inputs.outpoint.version()
-            + indexer.vecs.transactions.first_txoutindex.version()
+            + indexer.vecs.transactions.first_txout_index.version()
             + indexer.vecs.outputs.value.version();
-        self.txoutindex
+        self.txout_index
             .validate_computed_version_or_reset(dep_version)?;
         self.value.validate_computed_version_or_reset(dep_version)?;
 
@@ -29,21 +29,21 @@ impl Vecs {
             return Ok(());
         }
 
-        let len1 = self.txoutindex.len();
+        let len1 = self.txout_index.len();
         let len2 = self.value.len();
-        let starting = starting_indexes.txinindex.to_usize();
+        let starting = starting_indexes.txin_index.to_usize();
         let min = len1.min(len2).min(starting);
 
         if min >= target {
             return Ok(());
         }
 
-        let first_txoutindex_reader = indexer.vecs.transactions.first_txoutindex.reader();
+        let first_txout_index_reader = indexer.vecs.transactions.first_txout_index.reader();
         let value_reader = indexer.vecs.outputs.value.reader();
         let actual_total = target - min;
         let mut entries: Vec<Entry> = Vec::with_capacity(actual_total.min(BATCH_SIZE));
         // Pre-allocate output buffers for scatter-write pattern
-        let mut out_txoutindex: Vec<TxOutIndex> = Vec::new();
+        let mut out_txout_index: Vec<TxOutIndex> = Vec::new();
         let mut out_value: Vec<Sats> = Vec::new();
 
         let mut batch_start = min;
@@ -60,49 +60,49 @@ impl Vecs {
                 .for_each_range_at(batch_start, batch_end, |outpoint| {
                     entries.push(Entry {
                         original_idx: j,
-                        txindex: outpoint.txindex(),
+                        tx_index: outpoint.tx_index(),
                         vout: outpoint.vout(),
-                        txoutindex: TxOutIndex::COINBASE,
+                        txout_index: TxOutIndex::COINBASE,
                         value: Sats::MAX,
                     });
                     j += 1;
                 });
 
-            // Sort 1: by txindex (group by transaction for sequential first_txoutindex reads)
-            entries.sort_unstable_by_key(|e| e.txindex);
+            // Sort 1: by tx_index (group by transaction for sequential first_txout_index reads)
+            entries.sort_unstable_by_key(|e| e.tx_index);
             for entry in &mut entries {
-                if entry.txindex.is_coinbase() {
+                if entry.tx_index.is_coinbase() {
                     break;
                 }
-                entry.txoutindex =
-                    first_txoutindex_reader.get(entry.txindex.to_usize()) + entry.vout;
+                entry.txout_index =
+                    first_txout_index_reader.get(entry.tx_index.to_usize()) + entry.vout;
             }
 
-            // Sort 2: by txoutindex (sequential value reads)
-            entries.sort_unstable_by_key(|e| e.txoutindex);
+            // Sort 2: by txout_index (sequential value reads)
+            entries.sort_unstable_by_key(|e| e.txout_index);
             for entry in &mut entries {
-                if entry.txoutindex.is_coinbase() {
+                if entry.txout_index.is_coinbase() {
                     break;
                 }
-                entry.value = value_reader.get(entry.txoutindex.to_usize());
+                entry.value = value_reader.get(entry.txout_index.to_usize());
             }
 
             // Scatter-write to output buffers using original_idx (avoids Sort 3)
-            out_txoutindex.clear();
-            out_txoutindex.resize(batch_len, TxOutIndex::COINBASE);
+            out_txout_index.clear();
+            out_txout_index.resize(batch_len, TxOutIndex::COINBASE);
             out_value.clear();
             out_value.resize(batch_len, Sats::MAX);
 
             for entry in &entries {
-                out_txoutindex[entry.original_idx] = entry.txoutindex;
+                out_txout_index[entry.original_idx] = entry.txout_index;
                 out_value[entry.original_idx] = entry.value;
             }
 
             for i in 0..batch_len {
-                let txinindex = TxInIndex::from(batch_start + i);
-                self.txoutindex
-                    .truncate_push(txinindex, out_txoutindex[i])?;
-                self.value.truncate_push(txinindex, out_value[i])?;
+                let txin_index = TxInIndex::from(batch_start + i);
+                self.txout_index
+                    .truncate_push(txin_index, out_txout_index[i])?;
+                self.value.truncate_push(txin_index, out_value[i])?;
             }
 
             if batch_end < target {
@@ -110,7 +110,7 @@ impl Vecs {
             }
 
             let _lock = exit.lock();
-            self.txoutindex.write()?;
+            self.txout_index.write()?;
             self.value.write()?;
             db.flush()?;
 
@@ -123,8 +123,8 @@ impl Vecs {
 
 struct Entry {
     original_idx: usize,
-    txindex: TxIndex,
+    tx_index: TxIndex,
     vout: Vout,
-    txoutindex: TxOutIndex,
+    txout_index: TxOutIndex,
     value: Sats,
 }
