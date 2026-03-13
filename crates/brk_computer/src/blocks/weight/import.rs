@@ -4,8 +4,9 @@ use vecdb::Database;
 
 use super::Vecs;
 use crate::{
+    blocks::SizeVecs,
     indexes,
-    internal::{CachedWindowStarts, ResolutionsFull, PercentPerBlockRollingAverage},
+    internal::{CachedWindowStarts, LazyResolutionsFull, PercentPerBlockRollingAverage, VBytesToWeight},
 };
 
 impl Vecs {
@@ -14,9 +15,15 @@ impl Vecs {
         version: Version,
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
+        size: &SizeVecs,
     ) -> Result<Self> {
-        let weight =
-            ResolutionsFull::forced_import(db, "block_weight", version, indexes, cached_starts)?;
+        let weight = LazyResolutionsFull::from_computed_per_block_full::<VBytesToWeight>(
+            "block_weight",
+            version,
+            &size.vbytes,
+            cached_starts,
+            indexes,
+        );
 
         let fullness = PercentPerBlockRollingAverage::forced_import(
             db,

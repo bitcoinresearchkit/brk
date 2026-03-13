@@ -34,7 +34,7 @@ impl Vecs {
         let blocks_mined = ComputedPerBlockCumulativeWithSums::forced_import(
             db,
             &suffix("blocks_mined"),
-            version,
+            version + Version::ONE,
             indexes,
             cached_starts,
         )?;

@@ -329,11 +329,21 @@ fn resolve_branch_patterns(
 }
 
 /// Normalize fields for naming (same structure = same name).
+/// Only erases leaf types when all leaves share the same type — this ensures
+/// mixed-type signatures (e.g., StoredU32 raw + StoredU64 cumulative) get a
+/// different name than same-type signatures that can be genericized.
 fn normalize_fields_for_naming(fields: &[PatternField]) -> Vec<PatternField> {
+    let leaf_types: Vec<&str> = fields
+        .iter()
+        .filter(|f| !f.is_branch())
+        .map(|f| f.rust_type.as_str())
+        .collect();
+    let all_same = !leaf_types.is_empty() && leaf_types.iter().all(|t| *t == leaf_types[0]);
+
     fields
         .iter()
         .map(|f| {
-            if f.is_branch() {
+            if f.is_branch() || !all_same {
                 f.clone()
             } else {
                 PatternField {

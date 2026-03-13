@@ -7,7 +7,7 @@ mod specialized;
 
 pub use arithmetic::{
     HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin, Identity, MaskSats, ReturnF32Tenths,
-    ReturnI8, ReturnU16,
+    ReturnI8, ReturnU16, VBytesToWeight, VSizeToWeight,
 };
 pub use bps::{
     Bp16ToFloat, Bp16ToPercent, Bp32ToFloat, Bp32ToPercent, Bps16ToFloat, Bps16ToPercent, Bps32ToFloat,

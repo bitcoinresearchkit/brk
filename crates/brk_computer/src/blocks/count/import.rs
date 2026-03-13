@@ -24,7 +24,7 @@ impl Vecs {
             total: ComputedPerBlockCumulativeWithSums::forced_import(
                 db,
                 "block_count",
-                version,
+                version + Version::ONE,
                 indexes,
                 cached_starts,
             )?,

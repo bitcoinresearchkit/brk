@@ -1033,36 +1033,36 @@ impl _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 {
-    pub _10y: BpsPercentRatioPattern,
-    pub _1m: BpsPercentRatioPattern,
-    pub _1w: BpsPercentRatioPattern,
-    pub _1y: BpsPercentRatioPattern,
-    pub _2y: BpsPercentRatioPattern,
-    pub _3m: BpsPercentRatioPattern,
-    pub _3y: BpsPercentRatioPattern,
-    pub _4y: BpsPercentRatioPattern,
-    pub _5y: BpsPercentRatioPattern,
-    pub _6m: BpsPercentRatioPattern,
-    pub _6y: BpsPercentRatioPattern,
-    pub _8y: BpsPercentRatioPattern,
+    pub _10y: BpsPercentRatioPattern2,
+    pub _1m: BpsPercentRatioPattern2,
+    pub _1w: BpsPercentRatioPattern2,
+    pub _1y: BpsPercentRatioPattern2,
+    pub _2y: BpsPercentRatioPattern2,
+    pub _3m: BpsPercentRatioPattern2,
+    pub _3y: BpsPercentRatioPattern2,
+    pub _4y: BpsPercentRatioPattern2,
+    pub _5y: BpsPercentRatioPattern2,
+    pub _6m: BpsPercentRatioPattern2,
+    pub _6y: BpsPercentRatioPattern2,
+    pub _8y: BpsPercentRatioPattern2,
 }
 
 impl _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            _10y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "10y")),
-            _1m: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "1m")),
-            _1w: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "1w")),
-            _1y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "1y")),
-            _2y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "2y")),
-            _3m: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "3m")),
-            _3y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "3y")),
-            _4y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "4y")),
-            _5y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "5y")),
-            _6m: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "6m")),
-            _6y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "6y")),
-            _8y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "8y")),
+            _10y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "10y")),
+            _1m: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "1m")),
+            _1w: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "1w")),
+            _1y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "1y")),
+            _2y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "2y")),
+            _3m: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "3m")),
+            _3y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "3y")),
+            _4y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "4y")),
+            _5y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "5y")),
+            _6m: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "6m")),
+            _6y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "6y")),
+            _8y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "8y")),
         }
     }
 }
@@ -1106,7 +1106,7 @@ impl _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 {
 /// Pattern struct for repeated tree structure.
 pub struct CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern {
     pub cap: CentsDeltaRelUsdPattern,
-    pub gross_pnl: CumulativeRawSumPattern2,
+    pub gross_pnl: CumulativeRawSumPattern3,
     pub investor: LowerPriceUpperPattern,
     pub loss: CapitulationCumulativeNegativeRawRelSumValuePattern,
     pub mvrv: MetricPattern1<StoredF32>,
@@ -1124,7 +1124,7 @@ impl CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern {
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             cap: CentsDeltaRelUsdPattern::new(client.clone(), _m(&acc, "realized_cap")),
-            gross_pnl: CumulativeRawSumPattern2::new(client.clone(), _m(&acc, "realized_gross_pnl")),
+            gross_pnl: CumulativeRawSumPattern3::new(client.clone(), _m(&acc, "realized_gross_pnl")),
             investor: LowerPriceUpperPattern::new(client.clone(), acc.clone()),
             loss: CapitulationCumulativeNegativeRawRelSumValuePattern::new(client.clone(), acc.clone()),
             mvrv: MetricPattern1::new(client.clone(), _m(&acc, "mvrv")),
@@ -1213,12 +1213,12 @@ pub struct AverageGainsLossesRsiStochPattern {
     pub average_loss: MetricPattern1<StoredF32>,
     pub gains: MetricPattern1<StoredF32>,
     pub losses: MetricPattern1<StoredF32>,
-    pub rsi: BpsPercentRatioPattern,
-    pub rsi_max: BpsPercentRatioPattern,
-    pub rsi_min: BpsPercentRatioPattern,
-    pub stoch_rsi: BpsPercentRatioPattern,
-    pub stoch_rsi_d: BpsPercentRatioPattern,
-    pub stoch_rsi_k: BpsPercentRatioPattern,
+    pub rsi: BpsPercentRatioPattern4,
+    pub rsi_max: BpsPercentRatioPattern4,
+    pub rsi_min: BpsPercentRatioPattern4,
+    pub stoch_rsi: BpsPercentRatioPattern4,
+    pub stoch_rsi_d: BpsPercentRatioPattern4,
+    pub stoch_rsi_k: BpsPercentRatioPattern4,
 }
 
 impl AverageGainsLossesRsiStochPattern {
@@ -1229,12 +1229,12 @@ impl AverageGainsLossesRsiStochPattern {
             average_loss: MetricPattern1::new(client.clone(), _m(&acc, "average_loss_24h")),
             gains: MetricPattern1::new(client.clone(), _m(&acc, "gains_24h")),
             losses: MetricPattern1::new(client.clone(), _m(&acc, "losses_24h")),
-            rsi: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "24h")),
-            rsi_max: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "max_24h")),
-            rsi_min: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "min_24h")),
-            stoch_rsi: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "stoch_24h")),
-            stoch_rsi_d: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "stoch_d_24h")),
-            stoch_rsi_k: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "stoch_k_24h")),
+            rsi: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "24h")),
+            rsi_max: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "max_24h")),
+            rsi_min: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "min_24h")),
+            stoch_rsi: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "stoch_24h")),
+            stoch_rsi_d: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "stoch_d_24h")),
+            stoch_rsi_k: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "stoch_k_24h")),
         }
     }
 }
@@ -1358,11 +1358,11 @@ impl BpsCentsPercentilesRatioSatsSmaStdUsdPattern {
 /// Pattern struct for repeated tree structure.
 pub struct CapitulationCumulativeNegativeRawRelSumValuePattern {
     pub capitulation_flow: MetricPattern1<Dollars>,
-    pub cumulative: MetricPattern1<Cents>,
+    pub cumulative: CentsUsdPattern2,
     pub negative: MetricPattern1<Dollars>,
-    pub raw: CentsUsdPattern,
+    pub raw: CentsUsdPattern2,
     pub rel_to_rcap: BpsPercentRatioPattern,
-    pub sum: _1m1w1y24hPattern3,
+    pub sum: _1m1w1y24hPattern5,
     pub value_created: CumulativeRawSumPattern<Cents>,
     pub value_destroyed: CumulativeRawSumPattern<Cents>,
 }
@@ -1372,11 +1372,11 @@ impl CapitulationCumulativeNegativeRawRelSumValuePattern {
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             capitulation_flow: MetricPattern1::new(client.clone(), _m(&acc, "capitulation_flow")),
-            cumulative: MetricPattern1::new(client.clone(), _m(&acc, "realized_loss_cumulative")),
+            cumulative: CentsUsdPattern2::new(client.clone(), _m(&acc, "realized_loss_cumulative")),
             negative: MetricPattern1::new(client.clone(), _m(&acc, "neg_realized_loss")),
-            raw: CentsUsdPattern::new(client.clone(), _m(&acc, "realized_loss")),
+            raw: CentsUsdPattern2::new(client.clone(), _m(&acc, "realized_loss")),
             rel_to_rcap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "realized_loss_rel_to_rcap")),
-            sum: _1m1w1y24hPattern3::new(client.clone(), _m(&acc, "realized_loss_sum")),
+            sum: _1m1w1y24hPattern5::new(client.clone(), _m(&acc, "realized_loss_sum")),
             value_created: CumulativeRawSumPattern::new(client.clone(), _m(&acc, "loss_value_created")),
             value_destroyed: CumulativeRawSumPattern::new(client.clone(), _m(&acc, "loss_value_destroyed")),
         }
@@ -1413,36 +1413,36 @@ impl<T: DeserializeOwned> AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern2<T> {
 
 /// Pattern struct for repeated tree structure.
 pub struct _10y2y3y4y5y6y8yPattern {
-    pub _10y: BpsPercentRatioPattern,
-    pub _2y: BpsPercentRatioPattern,
-    pub _3y: BpsPercentRatioPattern,
-    pub _4y: BpsPercentRatioPattern,
-    pub _5y: BpsPercentRatioPattern,
-    pub _6y: BpsPercentRatioPattern,
-    pub _8y: BpsPercentRatioPattern,
+    pub _10y: BpsPercentRatioPattern2,
+    pub _2y: BpsPercentRatioPattern2,
+    pub _3y: BpsPercentRatioPattern2,
+    pub _4y: BpsPercentRatioPattern2,
+    pub _5y: BpsPercentRatioPattern2,
+    pub _6y: BpsPercentRatioPattern2,
+    pub _8y: BpsPercentRatioPattern2,
 }
 
 impl _10y2y3y4y5y6y8yPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            _10y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "10y")),
-            _2y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "2y")),
-            _3y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "3y")),
-            _4y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "4y")),
-            _5y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "5y")),
-            _6y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "6y")),
-            _8y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "8y")),
+            _10y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "10y")),
+            _2y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "2y")),
+            _3y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "3y")),
+            _4y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "4y")),
+            _5y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "5y")),
+            _6y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "6y")),
+            _8y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "8y")),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
 pub struct _1m1w1y24hBpsPercentRatioPattern {
-    pub _1m: BpsPercentRatioPattern,
-    pub _1w: BpsPercentRatioPattern,
-    pub _1y: BpsPercentRatioPattern,
-    pub _24h: BpsPercentRatioPattern,
+    pub _1m: BpsPercentRatioPattern4,
+    pub _1w: BpsPercentRatioPattern4,
+    pub _1y: BpsPercentRatioPattern4,
+    pub _24h: BpsPercentRatioPattern4,
     pub bps: MetricPattern1<BasisPoints16>,
     pub percent: MetricPattern1<StoredF32>,
     pub ratio: MetricPattern1<StoredF32>,
@@ -1452,10 +1452,10 @@ impl _1m1w1y24hBpsPercentRatioPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            _1m: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "1m")),
-            _1w: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "1w")),
-            _1y: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "1y")),
-            _24h: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "24h")),
+            _1m: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "1m")),
+            _1w: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "1w")),
+            _1y: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "1y")),
+            _24h: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "24h")),
             bps: MetricPattern1::new(client.clone(), _m(&acc, "bps")),
             percent: MetricPattern1::new(client.clone(), acc.clone()),
             ratio: MetricPattern1::new(client.clone(), _m(&acc, "ratio")),
@@ -1468,9 +1468,9 @@ pub struct CapLossMvrvNetPriceProfitSoprPattern {
     pub cap: CentsDeltaUsdPattern,
     pub loss: CumulativeNegativeRawSumPattern,
     pub mvrv: MetricPattern1<StoredF32>,
-    pub net_pnl: CumulativeRawSumPattern<CentsSigned>,
+    pub net_pnl: CumulativeDeltaRawSumPattern,
     pub price: BpsCentsRatioSatsUsdPattern,
-    pub profit: CumulativeRawSumPattern2,
+    pub profit: CumulativeRawSumPattern3,
     pub sopr: RatioValuePattern,
 }
 
@@ -1481,9 +1481,9 @@ impl CapLossMvrvNetPriceProfitSoprPattern {
             cap: CentsDeltaUsdPattern::new(client.clone(), _m(&acc, "realized_cap")),
             loss: CumulativeNegativeRawSumPattern::new(client.clone(), acc.clone()),
             mvrv: MetricPattern1::new(client.clone(), _m(&acc, "mvrv")),
-            net_pnl: CumulativeRawSumPattern::new(client.clone(), _m(&acc, "net_realized_pnl")),
+            net_pnl: CumulativeDeltaRawSumPattern::new(client.clone(), _m(&acc, "net_realized_pnl")),
             price: BpsCentsRatioSatsUsdPattern::new(client.clone(), _m(&acc, "realized_price")),
-            profit: CumulativeRawSumPattern2::new(client.clone(), _m(&acc, "realized_profit")),
+            profit: CumulativeRawSumPattern3::new(client.clone(), _m(&acc, "realized_profit")),
             sopr: RatioValuePattern::new(client.clone(), acc.clone()),
         }
     }
@@ -1491,11 +1491,11 @@ impl CapLossMvrvNetPriceProfitSoprPattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct CumulativeDistributionRawRelSumValuePattern {
-    pub cumulative: MetricPattern1<Cents>,
+    pub cumulative: CentsUsdPattern2,
     pub distribution_flow: MetricPattern1<Dollars>,
-    pub raw: CentsUsdPattern,
+    pub raw: CentsUsdPattern2,
     pub rel_to_rcap: BpsPercentRatioPattern,
-    pub sum: _1m1w1y24hPattern3,
+    pub sum: _1m1w1y24hPattern5,
     pub value_created: CumulativeRawSumPattern<Cents>,
     pub value_destroyed: CumulativeRawSumPattern<Cents>,
 }
@@ -1504,11 +1504,11 @@ impl CumulativeDistributionRawRelSumValuePattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            cumulative: MetricPattern1::new(client.clone(), _m(&acc, "realized_profit_cumulative")),
+            cumulative: CentsUsdPattern2::new(client.clone(), _m(&acc, "realized_profit_cumulative")),
             distribution_flow: MetricPattern1::new(client.clone(), _m(&acc, "distribution_flow")),
-            raw: CentsUsdPattern::new(client.clone(), _m(&acc, "realized_profit")),
+            raw: CentsUsdPattern2::new(client.clone(), _m(&acc, "realized_profit")),
             rel_to_rcap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "realized_profit_rel_to_rcap")),
-            sum: _1m1w1y24hPattern3::new(client.clone(), _m(&acc, "realized_profit_sum")),
+            sum: _1m1w1y24hPattern5::new(client.clone(), _m(&acc, "realized_profit_sum")),
             value_created: CumulativeRawSumPattern::new(client.clone(), _m(&acc, "profit_value_created")),
             value_destroyed: CumulativeRawSumPattern::new(client.clone(), _m(&acc, "profit_value_destroyed")),
         }
@@ -1517,33 +1517,33 @@ impl CumulativeDistributionRawRelSumValuePattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct CumulativeNegativeRawRelSumPattern2 {
-    pub cumulative: MetricPattern1<Cents>,
+    pub cumulative: CentsUsdPattern2,
     pub negative: MetricPattern1<Dollars>,
-    pub raw: CentsUsdPattern,
-    pub rel_to_mcap: BpsPercentRatioPattern,
-    pub rel_to_own_gross: BpsPercentRatioPattern,
+    pub raw: CentsUsdPattern2,
+    pub rel_to_mcap: BpsPercentRatioPattern4,
+    pub rel_to_own_gross: BpsPercentRatioPattern4,
     pub rel_to_own_mcap: BpsPercentRatioPattern,
-    pub sum: _1m1w1y24hPattern3,
+    pub sum: _1m1w1y24hPattern5,
 }
 
 impl CumulativeNegativeRawRelSumPattern2 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            cumulative: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_loss_cumulative")),
+            cumulative: CentsUsdPattern2::new(client.clone(), _m(&acc, "unrealized_loss_cumulative")),
             negative: MetricPattern1::new(client.clone(), _m(&acc, "neg_unrealized_loss")),
-            raw: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_loss")),
-            rel_to_mcap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_mcap")),
-            rel_to_own_gross: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_own_gross_pnl")),
+            raw: CentsUsdPattern2::new(client.clone(), _m(&acc, "unrealized_loss")),
+            rel_to_mcap: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_mcap")),
+            rel_to_own_gross: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_own_gross_pnl")),
             rel_to_own_mcap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "unrealized_loss_rel_to_own_mcap")),
-            sum: _1m1w1y24hPattern3::new(client.clone(), _m(&acc, "unrealized_loss_sum")),
+            sum: _1m1w1y24hPattern5::new(client.clone(), _m(&acc, "unrealized_loss_sum")),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
 pub struct GrossInvestedLossNetNuplProfitSentimentPattern2 {
-    pub gross_pnl: CentsUsdPattern,
+    pub gross_pnl: CentsUsdPattern2,
     pub invested_capital: InPattern,
     pub loss: CumulativeNegativeRawRelSumPattern2,
     pub net_pnl: CentsRelUsdPattern2,
@@ -1556,7 +1556,7 @@ impl GrossInvestedLossNetNuplProfitSentimentPattern2 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            gross_pnl: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_gross_pnl")),
+            gross_pnl: CentsUsdPattern2::new(client.clone(), _m(&acc, "unrealized_gross_pnl")),
             invested_capital: InPattern::new(client.clone(), _m(&acc, "invested_capital_in")),
             loss: CumulativeNegativeRawRelSumPattern2::new(client.clone(), acc.clone()),
             net_pnl: CentsRelUsdPattern2::new(client.clone(), _m(&acc, "net_unrealized_pnl")),
@@ -1569,24 +1569,24 @@ impl GrossInvestedLossNetNuplProfitSentimentPattern2 {
 
 /// Pattern struct for repeated tree structure.
 pub struct _1m1w1y2y4yAllPattern {
-    pub _1m: BpsRatioPattern,
-    pub _1w: BpsRatioPattern,
-    pub _1y: BpsRatioPattern,
-    pub _2y: BpsRatioPattern,
-    pub _4y: BpsRatioPattern,
-    pub all: BpsRatioPattern,
+    pub _1m: BpsRatioPattern2,
+    pub _1w: BpsRatioPattern2,
+    pub _1y: BpsRatioPattern2,
+    pub _2y: BpsRatioPattern2,
+    pub _4y: BpsRatioPattern2,
+    pub all: BpsRatioPattern2,
 }
 
 impl _1m1w1y2y4yAllPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            _1m: BpsRatioPattern::new(client.clone(), _m(&acc, "1m")),
-            _1w: BpsRatioPattern::new(client.clone(), _m(&acc, "1w")),
-            _1y: BpsRatioPattern::new(client.clone(), _m(&acc, "1y")),
-            _2y: BpsRatioPattern::new(client.clone(), _m(&acc, "2y")),
-            _4y: BpsRatioPattern::new(client.clone(), _m(&acc, "4y")),
-            all: BpsRatioPattern::new(client.clone(), _m(&acc, "all")),
+            _1m: BpsRatioPattern2::new(client.clone(), _m(&acc, "1m")),
+            _1w: BpsRatioPattern2::new(client.clone(), _m(&acc, "1w")),
+            _1y: BpsRatioPattern2::new(client.clone(), _m(&acc, "1y")),
+            _2y: BpsRatioPattern2::new(client.clone(), _m(&acc, "2y")),
+            _4y: BpsRatioPattern2::new(client.clone(), _m(&acc, "4y")),
+            all: BpsRatioPattern2::new(client.clone(), _m(&acc, "all")),
         }
     }
 }
@@ -1619,8 +1619,8 @@ impl BpsCentsPercentilesRatioSatsUsdPattern {
 pub struct BtcCentsRelSatsUsdPattern3 {
     pub btc: MetricPattern1<Bitcoin>,
     pub cents: MetricPattern1<Cents>,
-    pub rel_to_circulating: BpsPercentRatioPattern,
-    pub rel_to_own: BpsPercentRatioPattern,
+    pub rel_to_circulating: BpsPercentRatioPattern4,
+    pub rel_to_own: BpsPercentRatioPattern4,
     pub sats: MetricPattern1<Sats>,
     pub usd: MetricPattern1<Dollars>,
 }
@@ -1631,8 +1631,8 @@ impl BtcCentsRelSatsUsdPattern3 {
         Self {
             btc: MetricPattern1::new(client.clone(), acc.clone()),
             cents: MetricPattern1::new(client.clone(), _m(&acc, "cents")),
-            rel_to_circulating: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rel_to_circulating")),
-            rel_to_own: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rel_to_own")),
+            rel_to_circulating: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "rel_to_circulating")),
+            rel_to_own: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "rel_to_own")),
             sats: MetricPattern1::new(client.clone(), _m(&acc, "sats")),
             usd: MetricPattern1::new(client.clone(), _m(&acc, "usd")),
         }
@@ -1641,11 +1641,11 @@ impl BtcCentsRelSatsUsdPattern3 {
 
 /// Pattern struct for repeated tree structure.
 pub struct CapLossMvrvPriceProfitSoprPattern {
-    pub cap: CentsUsdPattern,
-    pub loss: CumulativeRawSumPattern2,
+    pub cap: CentsDeltaUsdPattern,
+    pub loss: CumulativeRawSumPattern3,
     pub mvrv: MetricPattern1<StoredF32>,
     pub price: BpsCentsRatioSatsUsdPattern,
-    pub profit: CumulativeRawSumPattern2,
+    pub profit: CumulativeRawSumPattern3,
     pub sopr: ValuePattern,
 }
 
@@ -1653,11 +1653,11 @@ impl CapLossMvrvPriceProfitSoprPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            cap: CentsUsdPattern::new(client.clone(), _m(&acc, "realized_cap")),
-            loss: CumulativeRawSumPattern2::new(client.clone(), _m(&acc, "realized_loss")),
+            cap: CentsDeltaUsdPattern::new(client.clone(), _m(&acc, "realized_cap")),
+            loss: CumulativeRawSumPattern3::new(client.clone(), _m(&acc, "realized_loss")),
             mvrv: MetricPattern1::new(client.clone(), _m(&acc, "mvrv")),
             price: BpsCentsRatioSatsUsdPattern::new(client.clone(), _m(&acc, "realized_price")),
-            profit: CumulativeRawSumPattern2::new(client.clone(), _m(&acc, "realized_profit")),
+            profit: CumulativeRawSumPattern3::new(client.clone(), _m(&acc, "realized_profit")),
             sopr: ValuePattern::new(client.clone(), _m(&acc, "value")),
         }
     }
@@ -1666,11 +1666,11 @@ impl CapLossMvrvPriceProfitSoprPattern {
 /// Pattern struct for repeated tree structure.
 pub struct ChangeCumulativeDeltaRawRelSumPattern {
     pub change_1m: RelPattern,
-    pub cumulative: MetricPattern1<CentsSigned>,
-    pub delta: ChangeRatePattern2,
-    pub raw: MetricPattern1<CentsSigned>,
-    pub rel_to_rcap: BpsPercentRatioPattern,
-    pub sum: _1m1w1y24hPattern<CentsSigned>,
+    pub cumulative: CentsUsdPattern,
+    pub delta: ChangeRatePattern3,
+    pub raw: CentsUsdPattern,
+    pub rel_to_rcap: BpsPercentRatioPattern2,
+    pub sum: _1m1w1y24hPattern4,
 }
 
 impl ChangeCumulativeDeltaRawRelSumPattern {
@@ -1678,46 +1678,46 @@ impl ChangeCumulativeDeltaRawRelSumPattern {
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             change_1m: RelPattern::new(client.clone(), _m(&acc, "pnl_change_1m_rel_to")),
-            cumulative: MetricPattern1::new(client.clone(), _m(&acc, "realized_pnl_cumulative")),
-            delta: ChangeRatePattern2::new(client.clone(), _m(&acc, "pnl_delta")),
-            raw: MetricPattern1::new(client.clone(), _m(&acc, "realized_pnl")),
-            rel_to_rcap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "realized_pnl_rel_to_rcap")),
-            sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "realized_pnl_sum")),
+            cumulative: CentsUsdPattern::new(client.clone(), _m(&acc, "realized_pnl_cumulative")),
+            delta: ChangeRatePattern3::new(client.clone(), _m(&acc, "realized_pnl_delta")),
+            raw: CentsUsdPattern::new(client.clone(), _m(&acc, "realized_pnl")),
+            rel_to_rcap: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "realized_pnl_rel_to_rcap")),
+            sum: _1m1w1y24hPattern4::new(client.clone(), _m(&acc, "realized_pnl_sum")),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
 pub struct CumulativeRawRelSumPattern2 {
-    pub cumulative: MetricPattern1<Cents>,
-    pub raw: CentsUsdPattern,
-    pub rel_to_mcap: BpsPercentRatioPattern,
-    pub rel_to_own_gross: BpsPercentRatioPattern,
-    pub rel_to_own_mcap: BpsPercentRatioPattern,
-    pub sum: _1m1w1y24hPattern3,
+    pub cumulative: CentsUsdPattern2,
+    pub raw: CentsUsdPattern2,
+    pub rel_to_mcap: BpsPercentRatioPattern4,
+    pub rel_to_own_gross: BpsPercentRatioPattern4,
+    pub rel_to_own_mcap: BpsPercentRatioPattern4,
+    pub sum: _1m1w1y24hPattern5,
 }
 
 impl CumulativeRawRelSumPattern2 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            cumulative: MetricPattern1::new(client.clone(), _m(&acc, "cumulative")),
-            raw: CentsUsdPattern::new(client.clone(), acc.clone()),
-            rel_to_mcap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rel_to_mcap")),
-            rel_to_own_gross: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rel_to_own_gross_pnl")),
-            rel_to_own_mcap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rel_to_own_mcap")),
-            sum: _1m1w1y24hPattern3::new(client.clone(), _m(&acc, "sum")),
+            cumulative: CentsUsdPattern2::new(client.clone(), _m(&acc, "cumulative")),
+            raw: CentsUsdPattern2::new(client.clone(), acc.clone()),
+            rel_to_mcap: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "rel_to_mcap")),
+            rel_to_own_gross: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "rel_to_own_gross_pnl")),
+            rel_to_own_mcap: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "rel_to_own_mcap")),
+            sum: _1m1w1y24hPattern5::new(client.clone(), _m(&acc, "sum")),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
 pub struct DeltaHalfInRelTotalPattern {
-    pub delta: ChangeRatePattern,
+    pub delta: ChangeRatePattern2,
     pub half: BtcCentsSatsUsdPattern,
     pub in_loss: BtcCentsRelSatsUsdPattern,
     pub in_profit: BtcCentsRelSatsUsdPattern,
-    pub rel_to_circulating: BpsPercentRatioPattern,
+    pub rel_to_circulating: BpsPercentRatioPattern4,
     pub total: BtcCentsSatsUsdPattern,
 }
 
@@ -1725,11 +1725,11 @@ impl DeltaHalfInRelTotalPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            delta: ChangeRatePattern::new(client.clone(), _m(&acc, "delta")),
+            delta: ChangeRatePattern2::new(client.clone(), _m(&acc, "delta")),
             half: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "half")),
             in_loss: BtcCentsRelSatsUsdPattern::new(client.clone(), _m(&acc, "in_loss")),
             in_profit: BtcCentsRelSatsUsdPattern::new(client.clone(), _m(&acc, "in_profit")),
-            rel_to_circulating: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rel_to_circulating")),
+            rel_to_circulating: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "rel_to_circulating")),
             total: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
         }
     }
@@ -1737,11 +1737,11 @@ impl DeltaHalfInRelTotalPattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct DeltaHalfInRelTotalPattern2 {
-    pub delta: ChangeRatePattern,
+    pub delta: ChangeRatePattern2,
     pub half: BtcCentsSatsUsdPattern,
     pub in_loss: BtcCentsRelSatsUsdPattern3,
     pub in_profit: BtcCentsRelSatsUsdPattern3,
-    pub rel_to_circulating: BpsPercentRatioPattern,
+    pub rel_to_circulating: BpsPercentRatioPattern4,
     pub total: BtcCentsSatsUsdPattern,
 }
 
@@ -1749,11 +1749,11 @@ impl DeltaHalfInRelTotalPattern2 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            delta: ChangeRatePattern::new(client.clone(), _m(&acc, "delta")),
+            delta: ChangeRatePattern2::new(client.clone(), _m(&acc, "delta")),
             half: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "half")),
             in_loss: BtcCentsRelSatsUsdPattern3::new(client.clone(), _m(&acc, "in_loss")),
             in_profit: BtcCentsRelSatsUsdPattern3::new(client.clone(), _m(&acc, "in_profit")),
-            rel_to_circulating: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rel_to_circulating")),
+            rel_to_circulating: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "rel_to_circulating")),
             total: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
         }
     }
@@ -1786,7 +1786,7 @@ impl Pct1Pct2Pct5Pct95Pct98Pct99Pattern {
 /// Pattern struct for repeated tree structure.
 pub struct ActivityOutputsRealizedSupplyUnrealizedPattern {
     pub activity: CoindaysSentPattern,
-    pub outputs: UnspentPattern2,
+    pub outputs: UnspentPattern,
     pub realized: CapLossMvrvNetPriceProfitSoprPattern,
     pub supply: DeltaHalfInRelTotalPattern,
     pub unrealized: LossNetNuplProfitPattern,
@@ -1797,7 +1797,7 @@ impl ActivityOutputsRealizedSupplyUnrealizedPattern {
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             activity: CoindaysSentPattern::new(client.clone(), acc.clone()),
-            outputs: UnspentPattern2::new(client.clone(), _m(&acc, "utxo_count")),
+            outputs: UnspentPattern::new(client.clone(), _m(&acc, "utxo_count")),
             realized: CapLossMvrvNetPriceProfitSoprPattern::new(client.clone(), acc.clone()),
             supply: DeltaHalfInRelTotalPattern::new(client.clone(), _m(&acc, "supply")),
             unrealized: LossNetNuplProfitPattern::new(client.clone(), acc.clone()),
@@ -1810,7 +1810,7 @@ pub struct AddressOutputsRealizedSupplyUnrealizedPattern {
     pub address_count: DeltaInnerPattern,
     pub outputs: UnspentPattern,
     pub realized: CapLossMvrvPriceProfitSoprPattern,
-    pub supply: HalfTotalPattern,
+    pub supply: DeltaHalfTotalPattern,
     pub unrealized: NuplPattern,
 }
 
@@ -1821,7 +1821,7 @@ impl AddressOutputsRealizedSupplyUnrealizedPattern {
             address_count: DeltaInnerPattern::new(client.clone(), _m(&acc, "address_count")),
             outputs: UnspentPattern::new(client.clone(), _m(&acc, "utxo_count")),
             realized: CapLossMvrvPriceProfitSoprPattern::new(client.clone(), acc.clone()),
-            supply: HalfTotalPattern::new(client.clone(), _m(&acc, "supply")),
+            supply: DeltaHalfTotalPattern::new(client.clone(), _m(&acc, "supply")),
             unrealized: NuplPattern::new(client.clone(), _m(&acc, "nupl")),
         }
     }
@@ -1853,7 +1853,7 @@ impl BpsCentsRatioSatsUsdPattern {
 pub struct BtcCentsRelSatsUsdPattern {
     pub btc: MetricPattern1<Bitcoin>,
     pub cents: MetricPattern1<Cents>,
-    pub rel_to_circulating: BpsPercentRatioPattern,
+    pub rel_to_circulating: BpsPercentRatioPattern4,
     pub sats: MetricPattern1<Sats>,
     pub usd: MetricPattern1<Dollars>,
 }
@@ -1864,7 +1864,7 @@ impl BtcCentsRelSatsUsdPattern {
         Self {
             btc: MetricPattern1::new(client.clone(), acc.clone()),
             cents: MetricPattern1::new(client.clone(), _m(&acc, "cents")),
-            rel_to_circulating: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rel_to_circulating")),
+            rel_to_circulating: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "rel_to_circulating")),
             sats: MetricPattern1::new(client.clone(), _m(&acc, "sats")),
             usd: MetricPattern1::new(client.clone(), _m(&acc, "usd")),
         }
@@ -1875,7 +1875,7 @@ impl BtcCentsRelSatsUsdPattern {
 pub struct BtcCentsRelSatsUsdPattern2 {
     pub btc: MetricPattern1<Bitcoin>,
     pub cents: MetricPattern1<Cents>,
-    pub rel_to_own: BpsPercentRatioPattern,
+    pub rel_to_own: BpsPercentRatioPattern4,
     pub sats: MetricPattern1<Sats>,
     pub usd: MetricPattern1<Dollars>,
 }
@@ -1886,7 +1886,7 @@ impl BtcCentsRelSatsUsdPattern2 {
         Self {
             btc: MetricPattern1::new(client.clone(), acc.clone()),
             cents: MetricPattern1::new(client.clone(), _m(&acc, "cents")),
-            rel_to_own: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rel_to_own")),
+            rel_to_own: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "rel_to_own")),
             sats: MetricPattern1::new(client.clone(), _m(&acc, "sats")),
             usd: MetricPattern1::new(client.clone(), _m(&acc, "usd")),
         }
@@ -1918,8 +1918,8 @@ impl CoindaysCoinyearsDormancySentVelocityPattern {
 /// Pattern struct for repeated tree structure.
 pub struct CumulativeInRawSumPattern {
     pub cumulative: MetricPattern1<Sats>,
-    pub in_loss: CumulativeRawSumPattern3,
-    pub in_profit: CumulativeRawSumPattern3,
+    pub in_loss: CumulativeRawSumPattern4,
+    pub in_profit: CumulativeRawSumPattern4,
     pub raw: MetricPattern1<Sats>,
     pub sum: _1m1w1y24hPattern<Sats>,
 }
@@ -1929,10 +1929,32 @@ impl CumulativeInRawSumPattern {
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             cumulative: MetricPattern1::new(client.clone(), _m(&acc, "cumulative")),
-            in_loss: CumulativeRawSumPattern3::new(client.clone(), _m(&acc, "in_loss")),
-            in_profit: CumulativeRawSumPattern3::new(client.clone(), _m(&acc, "in_profit")),
+            in_loss: CumulativeRawSumPattern4::new(client.clone(), _m(&acc, "in_loss")),
+            in_profit: CumulativeRawSumPattern4::new(client.clone(), _m(&acc, "in_profit")),
             raw: MetricPattern1::new(client.clone(), acc.clone()),
             sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "sum")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct DeltaHalfInTotalPattern2 {
+    pub delta: ChangeRatePattern2,
+    pub half: BtcCentsSatsUsdPattern,
+    pub in_loss: BtcCentsSatsUsdPattern,
+    pub in_profit: BtcCentsSatsUsdPattern,
+    pub total: BtcCentsSatsUsdPattern,
+}
+
+impl DeltaHalfInTotalPattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            delta: ChangeRatePattern2::new(client.clone(), _m(&acc, "delta")),
+            half: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "half")),
+            in_loss: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "in_loss")),
+            in_profit: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "in_profit")),
+            total: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -1965,7 +1987,7 @@ pub struct InvestedMaxMinPercentilesSupplyPattern {
     pub max: CentsSatsUsdPattern,
     pub min: CentsSatsUsdPattern,
     pub percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
-    pub supply_density: BpsPercentRatioPattern,
+    pub supply_density: BpsPercentRatioPattern4,
 }
 
 impl InvestedMaxMinPercentilesSupplyPattern {
@@ -1976,7 +1998,7 @@ impl InvestedMaxMinPercentilesSupplyPattern {
             max: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "cost_basis_max")),
             min: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "cost_basis_min")),
             percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), _m(&acc, "cost_basis")),
-            supply_density: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "supply_density")),
+            supply_density: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "supply_density")),
         }
     }
 }
@@ -1985,7 +2007,7 @@ impl InvestedMaxMinPercentilesSupplyPattern {
 pub struct PhsReboundThsPattern {
     pub phs: MetricPattern1<StoredF32>,
     pub phs_min: MetricPattern1<StoredF32>,
-    pub rebound: BpsPercentRatioPattern,
+    pub rebound: BpsPercentRatioPattern2,
     pub ths: MetricPattern1<StoredF32>,
     pub ths_min: MetricPattern1<StoredF32>,
 }
@@ -1996,7 +2018,7 @@ impl PhsReboundThsPattern {
         Self {
             phs: MetricPattern1::new(client.clone(), _m(&acc, "phs")),
             phs_min: MetricPattern1::new(client.clone(), _m(&acc, "phs_min")),
-            rebound: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rebound")),
+            rebound: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "rebound")),
             ths: MetricPattern1::new(client.clone(), _m(&acc, "ths")),
             ths_min: MetricPattern1::new(client.clone(), _m(&acc, "ths_min")),
         }
@@ -2046,14 +2068,34 @@ impl _1m1w1y24hPattern2 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct _1m1w1y24hPattern4 {
+pub struct _1m1w1y24hPattern3 {
+    pub _1m: BpsPercentRatioPattern2,
+    pub _1w: BpsPercentRatioPattern2,
+    pub _1y: BpsPercentRatioPattern2,
+    pub _24h: BpsPercentRatioPattern2,
+}
+
+impl _1m1w1y24hPattern3 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            _1m: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "1m_rate")),
+            _1w: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "1w_rate")),
+            _1y: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "1y_rate")),
+            _24h: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "24h_rate")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct _1m1w1y24hPattern6 {
     pub _1m: BtcCentsSatsUsdPattern,
     pub _1w: BtcCentsSatsUsdPattern,
     pub _1y: BtcCentsSatsUsdPattern,
     pub _24h: BtcCentsSatsUsdPattern,
 }
 
-impl _1m1w1y24hPattern4 {
+impl _1m1w1y24hPattern6 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
@@ -2086,21 +2128,41 @@ impl _1m1w1y2wPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct _1m1w1y24hPattern3 {
+pub struct _1m1w1y24hPattern4 {
     pub _1m: CentsUsdPattern,
     pub _1w: CentsUsdPattern,
     pub _1y: CentsUsdPattern,
     pub _24h: CentsUsdPattern,
 }
 
-impl _1m1w1y24hPattern3 {
+impl _1m1w1y24hPattern4 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            _1m: CentsUsdPattern::new(client.clone(), _m(&acc, "1m")),
-            _1w: CentsUsdPattern::new(client.clone(), _m(&acc, "1w")),
-            _1y: CentsUsdPattern::new(client.clone(), _m(&acc, "1y")),
-            _24h: CentsUsdPattern::new(client.clone(), _m(&acc, "24h")),
+            _1m: CentsUsdPattern::new(client.clone(), _m(&acc, "1m_change")),
+            _1w: CentsUsdPattern::new(client.clone(), _m(&acc, "1w_change")),
+            _1y: CentsUsdPattern::new(client.clone(), _m(&acc, "1y_change")),
+            _24h: CentsUsdPattern::new(client.clone(), _m(&acc, "24h_change")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct _1m1w1y24hPattern5 {
+    pub _1m: CentsUsdPattern2,
+    pub _1w: CentsUsdPattern2,
+    pub _1y: CentsUsdPattern2,
+    pub _24h: CentsUsdPattern2,
+}
+
+impl _1m1w1y24hPattern5 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            _1m: CentsUsdPattern2::new(client.clone(), _m(&acc, "1m")),
+            _1w: CentsUsdPattern2::new(client.clone(), _m(&acc, "1w")),
+            _1y: CentsUsdPattern2::new(client.clone(), _m(&acc, "1y")),
+            _24h: CentsUsdPattern2::new(client.clone(), _m(&acc, "24h")),
         }
     }
 }
@@ -2188,7 +2250,7 @@ impl BtcCentsSatsUsdPattern {
 /// Pattern struct for repeated tree structure.
 pub struct CentsDeltaRelUsdPattern {
     pub cents: MetricPattern1<Cents>,
-    pub delta: ChangeRatePattern2,
+    pub delta: ChangeRatePattern3,
     pub rel_to_own_mcap: BpsPercentRatioPattern,
     pub usd: MetricPattern1<Dollars>,
 }
@@ -2198,7 +2260,7 @@ impl CentsDeltaRelUsdPattern {
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             cents: MetricPattern1::new(client.clone(), _m(&acc, "cents")),
-            delta: ChangeRatePattern2::new(client.clone(), _m(&acc, "delta")),
+            delta: ChangeRatePattern3::new(client.clone(), _m(&acc, "delta")),
             rel_to_own_mcap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rel_to_own_mcap")),
             usd: MetricPattern1::new(client.clone(), acc.clone()),
         }
@@ -2208,8 +2270,8 @@ impl CentsDeltaRelUsdPattern {
 /// Pattern struct for repeated tree structure.
 pub struct CentsRelUsdPattern2 {
     pub cents: MetricPattern1<CentsSigned>,
-    pub rel_to_own_gross: BpsPercentRatioPattern,
-    pub rel_to_own_mcap: BpsPercentRatioPattern,
+    pub rel_to_own_gross: BpsPercentRatioPattern2,
+    pub rel_to_own_mcap: BpsPercentRatioPattern2,
     pub usd: MetricPattern1<Dollars>,
 }
 
@@ -2218,49 +2280,49 @@ impl CentsRelUsdPattern2 {
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             cents: MetricPattern1::new(client.clone(), _m(&acc, "cents")),
-            rel_to_own_gross: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rel_to_own_gross_pnl")),
-            rel_to_own_mcap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rel_to_own_mcap")),
+            rel_to_own_gross: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "rel_to_own_gross_pnl")),
+            rel_to_own_mcap: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "rel_to_own_mcap")),
             usd: MetricPattern1::new(client.clone(), acc.clone()),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct CumulativeNegativeRawSumPattern {
-    pub cumulative: MetricPattern1<Cents>,
-    pub negative: MetricPattern1<Dollars>,
+pub struct CumulativeDeltaRawSumPattern {
+    pub cumulative: CentsUsdPattern,
+    pub delta: ChangeRatePattern3,
     pub raw: CentsUsdPattern,
-    pub sum: _1m1w1y24hPattern3,
+    pub sum: _1m1w1y24hPattern4,
+}
+
+impl CumulativeDeltaRawSumPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            cumulative: CentsUsdPattern::new(client.clone(), _m(&acc, "cumulative")),
+            delta: ChangeRatePattern3::new(client.clone(), _m(&acc, "delta")),
+            raw: CentsUsdPattern::new(client.clone(), acc.clone()),
+            sum: _1m1w1y24hPattern4::new(client.clone(), _m(&acc, "sum")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct CumulativeNegativeRawSumPattern {
+    pub cumulative: CentsUsdPattern2,
+    pub negative: MetricPattern1<Dollars>,
+    pub raw: CentsUsdPattern2,
+    pub sum: _1m1w1y24hPattern5,
 }
 
 impl CumulativeNegativeRawSumPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            cumulative: MetricPattern1::new(client.clone(), _m(&acc, "unrealized_loss_cumulative")),
+            cumulative: CentsUsdPattern2::new(client.clone(), _m(&acc, "unrealized_loss_cumulative")),
             negative: MetricPattern1::new(client.clone(), _m(&acc, "neg_unrealized_loss")),
-            raw: CentsUsdPattern::new(client.clone(), _m(&acc, "unrealized_loss")),
-            sum: _1m1w1y24hPattern3::new(client.clone(), _m(&acc, "unrealized_loss_sum")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct HalfInTotalPattern {
-    pub half: BtcCentsSatsUsdPattern,
-    pub in_loss: BtcCentsSatsUsdPattern,
-    pub in_profit: BtcCentsSatsUsdPattern,
-    pub total: BtcCentsSatsUsdPattern,
-}
-
-impl HalfInTotalPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            half: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "half")),
-            in_loss: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "in_loss")),
-            in_profit: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "in_profit")),
-            total: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
+            raw: CentsUsdPattern2::new(client.clone(), _m(&acc, "unrealized_loss")),
+            sum: _1m1w1y24hPattern5::new(client.clone(), _m(&acc, "unrealized_loss_sum")),
         }
     }
 }
@@ -2270,7 +2332,7 @@ pub struct LossNetNuplProfitPattern {
     pub loss: CumulativeNegativeRawSumPattern,
     pub net_pnl: CentsUsdPattern,
     pub nupl: BpsRatioPattern,
-    pub profit: CumulativeRawSumPattern2,
+    pub profit: CumulativeRawSumPattern3,
 }
 
 impl LossNetNuplProfitPattern {
@@ -2280,7 +2342,7 @@ impl LossNetNuplProfitPattern {
             loss: CumulativeNegativeRawSumPattern::new(client.clone(), acc.clone()),
             net_pnl: CentsUsdPattern::new(client.clone(), _m(&acc, "net_unrealized_pnl")),
             nupl: BpsRatioPattern::new(client.clone(), _m(&acc, "nupl")),
-            profit: CumulativeRawSumPattern2::new(client.clone(), _m(&acc, "unrealized_profit")),
+            profit: CumulativeRawSumPattern3::new(client.clone(), _m(&acc, "unrealized_profit")),
         }
     }
 }
@@ -2289,7 +2351,7 @@ impl LossNetNuplProfitPattern {
 pub struct OutputsRealizedSupplyUnrealizedPattern2 {
     pub outputs: UnspentPattern,
     pub realized: CapLossMvrvPriceProfitSoprPattern,
-    pub supply: HalfInTotalPattern,
+    pub supply: DeltaHalfInTotalPattern2,
     pub unrealized: LossNuplProfitPattern,
 }
 
@@ -2299,7 +2361,7 @@ impl OutputsRealizedSupplyUnrealizedPattern2 {
         Self {
             outputs: UnspentPattern::new(client.clone(), _m(&acc, "utxo_count")),
             realized: CapLossMvrvPriceProfitSoprPattern::new(client.clone(), acc.clone()),
-            supply: HalfInTotalPattern::new(client.clone(), _m(&acc, "supply")),
+            supply: DeltaHalfInTotalPattern2::new(client.clone(), _m(&acc, "supply")),
             unrealized: LossNuplProfitPattern::new(client.clone(), acc.clone()),
         }
     }
@@ -2309,7 +2371,7 @@ impl OutputsRealizedSupplyUnrealizedPattern2 {
 pub struct OutputsRealizedSupplyUnrealizedPattern {
     pub outputs: UnspentPattern,
     pub realized: CapLossMvrvPriceProfitSoprPattern,
-    pub supply: HalfTotalPattern,
+    pub supply: DeltaHalfTotalPattern,
     pub unrealized: NuplPattern,
 }
 
@@ -2319,7 +2381,7 @@ impl OutputsRealizedSupplyUnrealizedPattern {
         Self {
             outputs: UnspentPattern::new(client.clone(), _m(&acc, "utxo_count")),
             realized: CapLossMvrvPriceProfitSoprPattern::new(client.clone(), acc.clone()),
-            supply: HalfTotalPattern::new(client.clone(), _m(&acc, "supply")),
+            supply: DeltaHalfTotalPattern::new(client.clone(), _m(&acc, "supply")),
             unrealized: NuplPattern::new(client.clone(), _m(&acc, "nupl")),
         }
     }
@@ -2347,25 +2409,43 @@ impl<T: DeserializeOwned> _1m1w1y24hPattern<T> {
 
 /// Pattern struct for repeated tree structure.
 pub struct BlocksDominanceRewardsPattern {
-    pub blocks_mined: CumulativeRawSumPattern<StoredU32>,
+    pub blocks_mined: CumulativeRawSumPattern2,
     pub dominance: _1m1w1y24hBpsPercentRatioPattern,
-    pub rewards: CumulativeRawSumPattern3,
+    pub rewards: CumulativeRawSumPattern4,
 }
 
 impl BlocksDominanceRewardsPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            blocks_mined: CumulativeRawSumPattern::new(client.clone(), _m(&acc, "blocks_mined")),
+            blocks_mined: CumulativeRawSumPattern2::new(client.clone(), _m(&acc, "blocks_mined")),
             dominance: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "dominance")),
-            rewards: CumulativeRawSumPattern3::new(client.clone(), _m(&acc, "rewards")),
+            rewards: CumulativeRawSumPattern4::new(client.clone(), _m(&acc, "rewards")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct BpsPercentRatioPattern4 {
+    pub bps: MetricPattern1<BasisPoints16>,
+    pub percent: MetricPattern1<StoredF32>,
+    pub ratio: MetricPattern1<StoredF32>,
+}
+
+impl BpsPercentRatioPattern4 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            bps: MetricPattern1::new(client.clone(), _m(&acc, "bps")),
+            percent: MetricPattern1::new(client.clone(), acc.clone()),
+            ratio: MetricPattern1::new(client.clone(), _m(&acc, "ratio")),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
 pub struct BpsPercentRatioPattern {
-    pub bps: MetricPattern1<BasisPoints16>,
+    pub bps: MetricPattern1<BasisPoints32>,
     pub percent: MetricPattern1<StoredF32>,
     pub ratio: MetricPattern1<StoredF32>,
 }
@@ -2400,13 +2480,49 @@ impl BpsPriceRatioPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct CentsSatsUsdPattern2 {
+pub struct BpsPercentRatioPattern5 {
+    pub bps: MetricPattern1<BasisPointsSigned16>,
+    pub percent: MetricPattern1<StoredF32>,
+    pub ratio: MetricPattern1<StoredF32>,
+}
+
+impl BpsPercentRatioPattern5 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            bps: MetricPattern1::new(client.clone(), _m(&acc, "bps")),
+            percent: MetricPattern1::new(client.clone(), acc.clone()),
+            ratio: MetricPattern1::new(client.clone(), _m(&acc, "ratio")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct BpsPercentRatioPattern2 {
+    pub bps: MetricPattern1<BasisPointsSigned32>,
+    pub percent: MetricPattern1<StoredF32>,
+    pub ratio: MetricPattern1<StoredF32>,
+}
+
+impl BpsPercentRatioPattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            bps: MetricPattern1::new(client.clone(), _m(&acc, "bps")),
+            percent: MetricPattern1::new(client.clone(), acc.clone()),
+            ratio: MetricPattern1::new(client.clone(), _m(&acc, "ratio")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct CentsSatsUsdPattern3 {
     pub cents: MetricPattern2<Cents>,
     pub sats: MetricPattern2<Sats>,
     pub usd: MetricPattern2<Dollars>,
 }
 
-impl CentsSatsUsdPattern2 {
+impl CentsSatsUsdPattern3 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
@@ -2420,7 +2536,7 @@ impl CentsSatsUsdPattern2 {
 /// Pattern struct for repeated tree structure.
 pub struct CentsDeltaUsdPattern {
     pub cents: MetricPattern1<Cents>,
-    pub delta: ChangeRatePattern2,
+    pub delta: ChangeRatePattern3,
     pub usd: MetricPattern1<Dollars>,
 }
 
@@ -2429,7 +2545,7 @@ impl CentsDeltaUsdPattern {
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             cents: MetricPattern1::new(client.clone(), _m(&acc, "cents")),
-            delta: ChangeRatePattern2::new(client.clone(), _m(&acc, "delta")),
+            delta: ChangeRatePattern3::new(client.clone(), _m(&acc, "delta")),
             usd: MetricPattern1::new(client.clone(), acc.clone()),
         }
     }
@@ -2454,19 +2570,19 @@ impl CentsSatsUsdPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct CumulativeRawSumPattern3 {
+pub struct CumulativeRawSumPattern4 {
     pub cumulative: BtcCentsSatsUsdPattern,
     pub raw: BtcCentsSatsUsdPattern,
-    pub sum: _1m1w1y24hPattern4,
+    pub sum: _1m1w1y24hPattern6,
 }
 
-impl CumulativeRawSumPattern3 {
+impl CumulativeRawSumPattern4 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             cumulative: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "cumulative")),
             raw: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
-            sum: _1m1w1y24hPattern4::new(client.clone(), _m(&acc, "sum")),
+            sum: _1m1w1y24hPattern6::new(client.clone(), _m(&acc, "sum")),
         }
     }
 }
@@ -2490,10 +2606,28 @@ impl CumulativeRawRelPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct CumulativeRawSumPattern3 {
+    pub cumulative: CentsUsdPattern2,
+    pub raw: CentsUsdPattern2,
+    pub sum: _1m1w1y24hPattern5,
+}
+
+impl CumulativeRawSumPattern3 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            cumulative: CentsUsdPattern2::new(client.clone(), _m(&acc, "cumulative")),
+            raw: CentsUsdPattern2::new(client.clone(), acc.clone()),
+            sum: _1m1w1y24hPattern5::new(client.clone(), _m(&acc, "sum")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct CumulativeRawSumPattern2 {
-    pub cumulative: MetricPattern1<Cents>,
-    pub raw: CentsUsdPattern,
-    pub sum: _1m1w1y24hPattern3,
+    pub cumulative: MetricPattern1<StoredU64>,
+    pub raw: MetricPattern1<StoredU32>,
+    pub sum: _1m1w1y24hPattern<StoredU64>,
 }
 
 impl CumulativeRawSumPattern2 {
@@ -2501,44 +2635,62 @@ impl CumulativeRawSumPattern2 {
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             cumulative: MetricPattern1::new(client.clone(), _m(&acc, "cumulative")),
-            raw: CentsUsdPattern::new(client.clone(), acc.clone()),
-            sum: _1m1w1y24hPattern3::new(client.clone(), _m(&acc, "sum")),
+            raw: MetricPattern1::new(client.clone(), acc.clone()),
+            sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "sum")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct DeltaHalfTotalPattern {
+    pub delta: ChangeRatePattern2,
+    pub half: BtcCentsSatsUsdPattern,
+    pub total: BtcCentsSatsUsdPattern,
+}
+
+impl DeltaHalfTotalPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            delta: ChangeRatePattern2::new(client.clone(), _m(&acc, "delta")),
+            half: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "half")),
+            total: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
 pub struct GreedNetPainPattern {
-    pub greed_index: CentsUsdPattern,
+    pub greed_index: CentsUsdPattern2,
     pub net: CentsUsdPattern,
-    pub pain_index: CentsUsdPattern,
+    pub pain_index: CentsUsdPattern2,
 }
 
 impl GreedNetPainPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            greed_index: CentsUsdPattern::new(client.clone(), _m(&acc, "greed_index")),
+            greed_index: CentsUsdPattern2::new(client.clone(), _m(&acc, "greed_index")),
             net: CentsUsdPattern::new(client.clone(), _m(&acc, "net_sentiment")),
-            pain_index: CentsUsdPattern::new(client.clone(), _m(&acc, "pain_index")),
+            pain_index: CentsUsdPattern2::new(client.clone(), _m(&acc, "pain_index")),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
 pub struct LossNuplProfitPattern {
-    pub loss: CumulativeRawSumPattern2,
+    pub loss: CumulativeRawSumPattern3,
     pub nupl: BpsRatioPattern,
-    pub profit: CumulativeRawSumPattern2,
+    pub profit: CumulativeRawSumPattern3,
 }
 
 impl LossNuplProfitPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            loss: CumulativeRawSumPattern2::new(client.clone(), _m(&acc, "unrealized_loss")),
+            loss: CumulativeRawSumPattern3::new(client.clone(), _m(&acc, "unrealized_loss")),
             nupl: BpsRatioPattern::new(client.clone(), _m(&acc, "nupl")),
-            profit: CumulativeRawSumPattern2::new(client.clone(), _m(&acc, "unrealized_profit")),
+            profit: CumulativeRawSumPattern3::new(client.clone(), _m(&acc, "unrealized_profit")),
         }
     }
 }
@@ -2635,23 +2787,39 @@ impl<T: DeserializeOwned> CumulativeRawSumPattern<T> {
 
 /// Pattern struct for repeated tree structure.
 pub struct BlocksDominancePattern {
-    pub blocks_mined: CumulativeRawSumPattern<StoredU32>,
-    pub dominance: BpsPercentRatioPattern,
+    pub blocks_mined: CumulativeRawSumPattern2,
+    pub dominance: BpsPercentRatioPattern4,
 }
 
 impl BlocksDominancePattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            blocks_mined: CumulativeRawSumPattern::new(client.clone(), _m(&acc, "blocks_mined")),
-            dominance: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "dominance")),
+            blocks_mined: CumulativeRawSumPattern2::new(client.clone(), _m(&acc, "blocks_mined")),
+            dominance: BpsPercentRatioPattern4::new(client.clone(), _m(&acc, "dominance")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct BpsRatioPattern2 {
+    pub bps: MetricPattern1<BasisPoints32>,
+    pub ratio: MetricPattern1<StoredF32>,
+}
+
+impl BpsRatioPattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            bps: MetricPattern1::new(client.clone(), _m(&acc, "bps")),
+            ratio: MetricPattern1::new(client.clone(), acc.clone()),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
 pub struct BpsRatioPattern {
-    pub bps: MetricPattern1<BasisPoints32>,
+    pub bps: MetricPattern1<BasisPointsSigned32>,
     pub ratio: MetricPattern1<StoredF32>,
 }
 
@@ -2666,8 +2834,24 @@ impl BpsRatioPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct CentsUsdPattern {
+pub struct CentsUsdPattern2 {
     pub cents: MetricPattern1<Cents>,
+    pub usd: MetricPattern1<Dollars>,
+}
+
+impl CentsUsdPattern2 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            cents: MetricPattern1::new(client.clone(), _m(&acc, "cents")),
+            usd: MetricPattern1::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct CentsUsdPattern {
+    pub cents: MetricPattern1<CentsSigned>,
     pub usd: MetricPattern1<Dollars>,
 }
 
@@ -2675,8 +2859,8 @@ impl CentsUsdPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            cents: MetricPattern1::new(client.clone(), _m(&acc, "cents")),
-            usd: MetricPattern1::new(client.clone(), acc.clone()),
+            cents: MetricPattern1::new(client.clone(), acc.clone()),
+            usd: MetricPattern1::new(client.clone(), _m(&acc, "usd")),
         }
     }
 }
@@ -2699,16 +2883,32 @@ impl ChangeRatePattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct ChangeRatePattern2 {
-    pub change: _1m1w1y24hPattern3,
-    pub rate: _1m1w1y24hPattern2,
+    pub change: _1m1w1y24hPattern<StoredI64>,
+    pub rate: _1m1w1y24hPattern3,
 }
 
 impl ChangeRatePattern2 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            change: _1m1w1y24hPattern3::new(client.clone(), acc.clone()),
-            rate: _1m1w1y24hPattern2::new(client.clone(), acc.clone()),
+            change: _1m1w1y24hPattern::new(client.clone(), acc.clone()),
+            rate: _1m1w1y24hPattern3::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct ChangeRatePattern3 {
+    pub change: _1m1w1y24hPattern4,
+    pub rate: _1m1w1y24hPattern3,
+}
+
+impl ChangeRatePattern3 {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            change: _1m1w1y24hPattern4::new(client.clone(), acc.clone()),
+            rate: _1m1w1y24hPattern3::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -2731,7 +2931,7 @@ impl CoindaysSentPattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct DeltaInnerPattern {
-    pub delta: ChangeRatePattern,
+    pub delta: ChangeRatePattern2,
     pub inner: MetricPattern1<StoredU64>,
 }
 
@@ -2739,56 +2939,24 @@ impl DeltaInnerPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            delta: ChangeRatePattern::new(client.clone(), _m(&acc, "delta")),
+            delta: ChangeRatePattern2::new(client.clone(), _m(&acc, "delta")),
             inner: MetricPattern1::new(client.clone(), acc.clone()),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct DeltaRawPattern {
-    pub delta: ChangeRatePattern,
-    pub raw: MetricPattern1<StoredU64>,
-}
-
-impl DeltaRawPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            delta: ChangeRatePattern::new(client.clone(), _m(&acc, "delta")),
-            raw: MetricPattern1::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct HalfTotalPattern {
-    pub half: BtcCentsSatsUsdPattern,
-    pub total: BtcCentsSatsUsdPattern,
-}
-
-impl HalfTotalPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            half: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "half")),
-            total: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct InPattern {
-    pub in_loss: CentsUsdPattern,
-    pub in_profit: CentsUsdPattern,
+    pub in_loss: CentsUsdPattern2,
+    pub in_profit: CentsUsdPattern2,
 }
 
 impl InPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            in_loss: CentsUsdPattern::new(client.clone(), _m(&acc, "loss")),
-            in_profit: CentsUsdPattern::new(client.clone(), _m(&acc, "profit")),
+            in_loss: CentsUsdPattern2::new(client.clone(), _m(&acc, "loss")),
+            in_profit: CentsUsdPattern2::new(client.clone(), _m(&acc, "profit")),
         }
     }
 }
@@ -2827,16 +2995,16 @@ impl RealizedSupplyPattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct RelPattern {
-    pub rel_to_mcap: BpsPercentRatioPattern,
-    pub rel_to_rcap: BpsPercentRatioPattern,
+    pub rel_to_mcap: BpsPercentRatioPattern2,
+    pub rel_to_rcap: BpsPercentRatioPattern2,
 }
 
 impl RelPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            rel_to_mcap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "mcap")),
-            rel_to_rcap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rcap")),
+            rel_to_mcap: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "mcap")),
+            rel_to_rcap: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "rcap")),
         }
     }
 }
@@ -2902,29 +3070,15 @@ impl NuplPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct UnspentPattern2 {
-    pub unspent_count: DeltaRawPattern,
-}
-
-impl UnspentPattern2 {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            unspent_count: DeltaRawPattern::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct UnspentPattern {
-    pub unspent_count: MetricPattern1<StoredU64>,
+    pub unspent_count: DeltaInnerPattern,
 }
 
 impl UnspentPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            unspent_count: MetricPattern1::new(client.clone(), acc.clone()),
+            unspent_count: DeltaInnerPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -3011,7 +3165,7 @@ impl MetricsTree_Blocks {
 pub struct MetricsTree_Blocks_Difficulty {
     pub raw: MetricPattern1<StoredF64>,
     pub as_hash: MetricPattern1<StoredF64>,
-    pub adjustment: BpsPercentRatioPattern,
+    pub adjustment: BpsPercentRatioPattern2,
     pub epoch: MetricPattern1<Epoch>,
     pub blocks_before_next: MetricPattern1<StoredU32>,
     pub days_before_next: MetricPattern1<StoredF32>,
@@ -3022,7 +3176,7 @@ impl MetricsTree_Blocks_Difficulty {
         Self {
             raw: MetricPattern1::new(client.clone(), "difficulty".to_string()),
             as_hash: MetricPattern1::new(client.clone(), "difficulty_as_hash".to_string()),
-            adjustment: BpsPercentRatioPattern::new(client.clone(), "difficulty_adjustment".to_string()),
+            adjustment: BpsPercentRatioPattern2::new(client.clone(), "difficulty_adjustment".to_string()),
             epoch: MetricPattern1::new(client.clone(), "difficulty_epoch".to_string()),
             blocks_before_next: MetricPattern1::new(client.clone(), "blocks_before_next_difficulty_adjustment".to_string()),
             days_before_next: MetricPattern1::new(client.clone(), "days_before_next_difficulty_adjustment".to_string()),
@@ -3116,14 +3270,14 @@ impl MetricsTree_Blocks_Weight {
 /// Metrics tree node.
 pub struct MetricsTree_Blocks_Count {
     pub target: MetricPattern1<StoredU64>,
-    pub total: CumulativeRawSumPattern<StoredU32>,
+    pub total: CumulativeRawSumPattern2,
 }
 
 impl MetricsTree_Blocks_Count {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             target: MetricPattern1::new(client.clone(), "block_count_target".to_string()),
-            total: CumulativeRawSumPattern::new(client.clone(), "block_count".to_string()),
+            total: CumulativeRawSumPattern2::new(client.clone(), "block_count".to_string()),
         }
     }
 }
@@ -3381,8 +3535,8 @@ impl MetricsTree_Transactions_Versions {
 
 /// Metrics tree node.
 pub struct MetricsTree_Transactions_Volume {
-    pub sent_sum: CumulativeRawSumPattern3,
-    pub received_sum: CumulativeRawSumPattern3,
+    pub sent_sum: CumulativeRawSumPattern4,
+    pub received_sum: CumulativeRawSumPattern4,
     pub tx_per_sec: MetricPattern1<StoredF32>,
     pub outputs_per_sec: MetricPattern1<StoredF32>,
     pub inputs_per_sec: MetricPattern1<StoredF32>,
@@ -3391,8 +3545,8 @@ pub struct MetricsTree_Transactions_Volume {
 impl MetricsTree_Transactions_Volume {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            sent_sum: CumulativeRawSumPattern3::new(client.clone(), "sent_sum".to_string()),
-            received_sum: CumulativeRawSumPattern3::new(client.clone(), "received_sum".to_string()),
+            sent_sum: CumulativeRawSumPattern4::new(client.clone(), "sent_sum".to_string()),
+            received_sum: CumulativeRawSumPattern4::new(client.clone(), "received_sum".to_string()),
             tx_per_sec: MetricPattern1::new(client.clone(), "tx_per_sec".to_string()),
             outputs_per_sec: MetricPattern1::new(client.clone(), "outputs_per_sec".to_string()),
             inputs_per_sec: MetricPattern1::new(client.clone(), "inputs_per_sec".to_string()),
@@ -3993,15 +4147,15 @@ impl MetricsTree_Scripts_Value_Opreturn {
 
 /// Metrics tree node.
 pub struct MetricsTree_Scripts_Adoption {
-    pub taproot: BpsPercentRatioPattern,
-    pub segwit: BpsPercentRatioPattern,
+    pub taproot: BpsPercentRatioPattern4,
+    pub segwit: BpsPercentRatioPattern4,
 }
 
 impl MetricsTree_Scripts_Adoption {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            taproot: BpsPercentRatioPattern::new(client.clone(), "taproot_adoption".to_string()),
-            segwit: BpsPercentRatioPattern::new(client.clone(), "segwit_adoption".to_string()),
+            taproot: BpsPercentRatioPattern4::new(client.clone(), "taproot_adoption".to_string()),
+            segwit: BpsPercentRatioPattern4::new(client.clone(), "segwit_adoption".to_string()),
         }
     }
 }
@@ -4023,19 +4177,19 @@ impl MetricsTree_Mining {
 
 /// Metrics tree node.
 pub struct MetricsTree_Mining_Rewards {
-    pub coinbase: CumulativeRawSumPattern3,
+    pub coinbase: CumulativeRawSumPattern4,
     pub subsidy: MetricsTree_Mining_Rewards_Subsidy,
     pub fees: MetricsTree_Mining_Rewards_Fees,
-    pub unclaimed: CumulativeRawSumPattern3,
+    pub unclaimed: CumulativeRawSumPattern4,
 }
 
 impl MetricsTree_Mining_Rewards {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            coinbase: CumulativeRawSumPattern3::new(client.clone(), "coinbase".to_string()),
+            coinbase: CumulativeRawSumPattern4::new(client.clone(), "coinbase".to_string()),
             subsidy: MetricsTree_Mining_Rewards_Subsidy::new(client.clone(), format!("{base_path}_subsidy")),
             fees: MetricsTree_Mining_Rewards_Fees::new(client.clone(), format!("{base_path}_fees")),
-            unclaimed: CumulativeRawSumPattern3::new(client.clone(), "unclaimed_rewards".to_string()),
+            unclaimed: CumulativeRawSumPattern4::new(client.clone(), "unclaimed_rewards".to_string()),
         }
     }
 }
@@ -4045,7 +4199,7 @@ pub struct MetricsTree_Mining_Rewards_Subsidy {
     pub base: BtcCentsSatsUsdPattern,
     pub cumulative: BtcCentsSatsUsdPattern,
     pub dominance: _1m1w1y24hBpsPercentRatioPattern,
-    pub sma_1y: CentsUsdPattern,
+    pub sma_1y: CentsUsdPattern2,
 }
 
 impl MetricsTree_Mining_Rewards_Subsidy {
@@ -4054,7 +4208,7 @@ impl MetricsTree_Mining_Rewards_Subsidy {
             base: BtcCentsSatsUsdPattern::new(client.clone(), "subsidy".to_string()),
             cumulative: BtcCentsSatsUsdPattern::new(client.clone(), "subsidy_cumulative".to_string()),
             dominance: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "subsidy_dominance".to_string()),
-            sma_1y: CentsUsdPattern::new(client.clone(), "subsidy_sma_1y".to_string()),
+            sma_1y: CentsUsdPattern2::new(client.clone(), "subsidy_sma_1y".to_string()),
         }
     }
 }
@@ -4063,7 +4217,7 @@ impl MetricsTree_Mining_Rewards_Subsidy {
 pub struct MetricsTree_Mining_Rewards_Fees {
     pub base: BtcCentsSatsUsdPattern,
     pub cumulative: BtcCentsSatsUsdPattern,
-    pub sum: _1m1w1y24hPattern4,
+    pub sum: _1m1w1y24hPattern6,
     pub _24h: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern,
     pub _1w: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern,
     pub _1m: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern,
@@ -4077,7 +4231,7 @@ impl MetricsTree_Mining_Rewards_Fees {
         Self {
             base: BtcCentsSatsUsdPattern::new(client.clone(), "fees".to_string()),
             cumulative: BtcCentsSatsUsdPattern::new(client.clone(), "fees_cumulative".to_string()),
-            sum: _1m1w1y24hPattern4::new(client.clone(), "fees_sum".to_string()),
+            sum: _1m1w1y24hPattern6::new(client.clone(), "fees_sum".to_string()),
             _24h: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern::new(client.clone(), "fees_24h".to_string()),
             _1w: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern::new(client.clone(), "fees_1w".to_string()),
             _1m: AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern::new(client.clone(), "fees_1m".to_string()),
@@ -4090,19 +4244,19 @@ impl MetricsTree_Mining_Rewards_Fees {
 
 /// Metrics tree node.
 pub struct MetricsTree_Mining_Rewards_Fees_RatioMultiple {
-    pub _24h: BpsRatioPattern,
-    pub _1w: BpsRatioPattern,
-    pub _1m: BpsRatioPattern,
-    pub _1y: BpsRatioPattern,
+    pub _24h: BpsRatioPattern2,
+    pub _1w: BpsRatioPattern2,
+    pub _1m: BpsRatioPattern2,
+    pub _1y: BpsRatioPattern2,
 }
 
 impl MetricsTree_Mining_Rewards_Fees_RatioMultiple {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _24h: BpsRatioPattern::new(client.clone(), "fee_ratio_multiple_24h".to_string()),
-            _1w: BpsRatioPattern::new(client.clone(), "fee_ratio_multiple_1w".to_string()),
-            _1m: BpsRatioPattern::new(client.clone(), "fee_ratio_multiple_1m".to_string()),
-            _1y: BpsRatioPattern::new(client.clone(), "fee_ratio_multiple_1y".to_string()),
+            _24h: BpsRatioPattern2::new(client.clone(), "fee_ratio_multiple_24h".to_string()),
+            _1w: BpsRatioPattern2::new(client.clone(), "fee_ratio_multiple_1w".to_string()),
+            _1m: BpsRatioPattern2::new(client.clone(), "fee_ratio_multiple_1m".to_string()),
+            _1y: BpsRatioPattern2::new(client.clone(), "fee_ratio_multiple_1y".to_string()),
         }
     }
 }
@@ -4129,7 +4283,7 @@ pub struct MetricsTree_Mining_Hashrate_Rate {
     pub raw: MetricPattern1<StoredF64>,
     pub sma: MetricsTree_Mining_Hashrate_Rate_Sma,
     pub ath: MetricPattern1<StoredF64>,
-    pub drawdown: BpsPercentRatioPattern,
+    pub drawdown: BpsPercentRatioPattern5,
 }
 
 impl MetricsTree_Mining_Hashrate_Rate {
@@ -4138,7 +4292,7 @@ impl MetricsTree_Mining_Hashrate_Rate {
             raw: MetricPattern1::new(client.clone(), "hash_rate".to_string()),
             sma: MetricsTree_Mining_Hashrate_Rate_Sma::new(client.clone(), format!("{base_path}_sma")),
             ath: MetricPattern1::new(client.clone(), "hash_rate_ath".to_string()),
-            drawdown: BpsPercentRatioPattern::new(client.clone(), "hash_rate_drawdown".to_string()),
+            drawdown: BpsPercentRatioPattern5::new(client.clone(), "hash_rate_drawdown".to_string()),
         }
     }
 }
@@ -4246,23 +4400,23 @@ impl MetricsTree_Cointime_Value {
 
 /// Metrics tree node.
 pub struct MetricsTree_Cointime_Cap {
-    pub thermo: CentsUsdPattern,
-    pub investor: CentsUsdPattern,
-    pub vaulted: CentsUsdPattern,
-    pub active: CentsUsdPattern,
-    pub cointime: CentsUsdPattern,
-    pub aviv: BpsRatioPattern,
+    pub thermo: CentsUsdPattern2,
+    pub investor: CentsUsdPattern2,
+    pub vaulted: CentsUsdPattern2,
+    pub active: CentsUsdPattern2,
+    pub cointime: CentsUsdPattern2,
+    pub aviv: BpsRatioPattern2,
 }
 
 impl MetricsTree_Cointime_Cap {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            thermo: CentsUsdPattern::new(client.clone(), "thermo_cap".to_string()),
-            investor: CentsUsdPattern::new(client.clone(), "investor_cap".to_string()),
-            vaulted: CentsUsdPattern::new(client.clone(), "vaulted_cap".to_string()),
-            active: CentsUsdPattern::new(client.clone(), "active_cap".to_string()),
-            cointime: CentsUsdPattern::new(client.clone(), "cointime_cap".to_string()),
-            aviv: BpsRatioPattern::new(client.clone(), "aviv_ratio".to_string()),
+            thermo: CentsUsdPattern2::new(client.clone(), "thermo_cap".to_string()),
+            investor: CentsUsdPattern2::new(client.clone(), "investor_cap".to_string()),
+            vaulted: CentsUsdPattern2::new(client.clone(), "vaulted_cap".to_string()),
+            active: CentsUsdPattern2::new(client.clone(), "active_cap".to_string()),
+            cointime: CentsUsdPattern2::new(client.clone(), "cointime_cap".to_string()),
+            aviv: BpsRatioPattern2::new(client.clone(), "aviv_ratio".to_string()),
         }
     }
 }
@@ -4298,7 +4452,7 @@ impl MetricsTree_Cointime_Prices {
 
 /// Metrics tree node.
 pub struct MetricsTree_Cointime_Adjusted {
-    pub inflation_rate: BpsPercentRatioPattern,
+    pub inflation_rate: BpsPercentRatioPattern2,
     pub tx_velocity_btc: MetricPattern1<StoredF64>,
     pub tx_velocity_usd: MetricPattern1<StoredF64>,
 }
@@ -4306,7 +4460,7 @@ pub struct MetricsTree_Cointime_Adjusted {
 impl MetricsTree_Cointime_Adjusted {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            inflation_rate: BpsPercentRatioPattern::new(client.clone(), "cointime_adj_inflation_rate".to_string()),
+            inflation_rate: BpsPercentRatioPattern2::new(client.clone(), "cointime_adj_inflation_rate".to_string()),
             tx_velocity_btc: MetricPattern1::new(client.clone(), "cointime_adj_tx_velocity_btc".to_string()),
             tx_velocity_usd: MetricPattern1::new(client.clone(), "cointime_adj_tx_velocity_usd".to_string()),
         }
@@ -4967,11 +5121,11 @@ impl MetricsTree_Indexes_Txoutindex {
 
 /// Metrics tree node.
 pub struct MetricsTree_Indicators {
-    pub puell_multiple: BpsRatioPattern,
-    pub nvt: BpsRatioPattern,
-    pub gini: BpsPercentRatioPattern,
-    pub rhodl_ratio: BpsRatioPattern,
-    pub thermocap_multiple: BpsRatioPattern,
+    pub puell_multiple: BpsRatioPattern2,
+    pub nvt: BpsRatioPattern2,
+    pub gini: BpsPercentRatioPattern4,
+    pub rhodl_ratio: BpsRatioPattern2,
+    pub thermocap_multiple: BpsRatioPattern2,
     pub coindays_destroyed_supply_adjusted: MetricPattern1<StoredF32>,
     pub coinyears_destroyed_supply_adjusted: MetricPattern1<StoredF32>,
     pub dormancy: MetricsTree_Indicators_Dormancy,
@@ -4982,11 +5136,11 @@ pub struct MetricsTree_Indicators {
 impl MetricsTree_Indicators {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            puell_multiple: BpsRatioPattern::new(client.clone(), "puell_multiple".to_string()),
-            nvt: BpsRatioPattern::new(client.clone(), "nvt".to_string()),
-            gini: BpsPercentRatioPattern::new(client.clone(), "gini".to_string()),
-            rhodl_ratio: BpsRatioPattern::new(client.clone(), "rhodl_ratio".to_string()),
-            thermocap_multiple: BpsRatioPattern::new(client.clone(), "thermocap_multiple".to_string()),
+            puell_multiple: BpsRatioPattern2::new(client.clone(), "puell_multiple".to_string()),
+            nvt: BpsRatioPattern2::new(client.clone(), "nvt".to_string()),
+            gini: BpsPercentRatioPattern4::new(client.clone(), "gini".to_string()),
+            rhodl_ratio: BpsRatioPattern2::new(client.clone(), "rhodl_ratio".to_string()),
+            thermocap_multiple: BpsRatioPattern2::new(client.clone(), "thermocap_multiple".to_string()),
             coindays_destroyed_supply_adjusted: MetricPattern1::new(client.clone(), "coindays_destroyed_supply_adjusted".to_string()),
             coinyears_destroyed_supply_adjusted: MetricPattern1::new(client.clone(), "coinyears_destroyed_supply_adjusted".to_string()),
             dormancy: MetricsTree_Indicators_Dormancy::new(client.clone(), format!("{base_path}_dormancy")),
@@ -5041,7 +5195,7 @@ impl MetricsTree_Market {
 /// Metrics tree node.
 pub struct MetricsTree_Market_Ath {
     pub high: CentsSatsUsdPattern,
-    pub drawdown: BpsPercentRatioPattern,
+    pub drawdown: BpsPercentRatioPattern5,
     pub days_since: MetricPattern1<StoredF32>,
     pub years_since: MetricPattern2<StoredF32>,
     pub max_days_between: MetricPattern1<StoredF32>,
@@ -5052,7 +5206,7 @@ impl MetricsTree_Market_Ath {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             high: CentsSatsUsdPattern::new(client.clone(), "price_ath".to_string()),
-            drawdown: BpsPercentRatioPattern::new(client.clone(), "price_drawdown".to_string()),
+            drawdown: BpsPercentRatioPattern5::new(client.clone(), "price_drawdown".to_string()),
             days_since: MetricPattern1::new(client.clone(), "days_since_price_ath".to_string()),
             years_since: MetricPattern2::new(client.clone(), "years_since_price_ath".to_string()),
             max_days_between: MetricPattern1::new(client.clone(), "max_days_between_price_ath".to_string()),
@@ -5117,37 +5271,37 @@ impl MetricsTree_Market_Returns {
 
 /// Metrics tree node.
 pub struct MetricsTree_Market_Returns_Periods {
-    pub _24h: BpsPercentRatioPattern,
-    pub _1w: BpsPercentRatioPattern,
-    pub _1m: BpsPercentRatioPattern,
-    pub _3m: BpsPercentRatioPattern,
-    pub _6m: BpsPercentRatioPattern,
-    pub _1y: BpsPercentRatioPattern,
-    pub _2y: BpsPercentRatioPattern,
-    pub _3y: BpsPercentRatioPattern,
-    pub _4y: BpsPercentRatioPattern,
-    pub _5y: BpsPercentRatioPattern,
-    pub _6y: BpsPercentRatioPattern,
-    pub _8y: BpsPercentRatioPattern,
-    pub _10y: BpsPercentRatioPattern,
+    pub _24h: BpsPercentRatioPattern2,
+    pub _1w: BpsPercentRatioPattern2,
+    pub _1m: BpsPercentRatioPattern2,
+    pub _3m: BpsPercentRatioPattern2,
+    pub _6m: BpsPercentRatioPattern2,
+    pub _1y: BpsPercentRatioPattern2,
+    pub _2y: BpsPercentRatioPattern2,
+    pub _3y: BpsPercentRatioPattern2,
+    pub _4y: BpsPercentRatioPattern2,
+    pub _5y: BpsPercentRatioPattern2,
+    pub _6y: BpsPercentRatioPattern2,
+    pub _8y: BpsPercentRatioPattern2,
+    pub _10y: BpsPercentRatioPattern2,
 }
 
 impl MetricsTree_Market_Returns_Periods {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _24h: BpsPercentRatioPattern::new(client.clone(), "price_return_24h".to_string()),
-            _1w: BpsPercentRatioPattern::new(client.clone(), "price_return_1w".to_string()),
-            _1m: BpsPercentRatioPattern::new(client.clone(), "price_return_1m".to_string()),
-            _3m: BpsPercentRatioPattern::new(client.clone(), "price_return_3m".to_string()),
-            _6m: BpsPercentRatioPattern::new(client.clone(), "price_return_6m".to_string()),
-            _1y: BpsPercentRatioPattern::new(client.clone(), "price_return_1y".to_string()),
-            _2y: BpsPercentRatioPattern::new(client.clone(), "price_return_2y".to_string()),
-            _3y: BpsPercentRatioPattern::new(client.clone(), "price_return_3y".to_string()),
-            _4y: BpsPercentRatioPattern::new(client.clone(), "price_return_4y".to_string()),
-            _5y: BpsPercentRatioPattern::new(client.clone(), "price_return_5y".to_string()),
-            _6y: BpsPercentRatioPattern::new(client.clone(), "price_return_6y".to_string()),
-            _8y: BpsPercentRatioPattern::new(client.clone(), "price_return_8y".to_string()),
-            _10y: BpsPercentRatioPattern::new(client.clone(), "price_return_10y".to_string()),
+            _24h: BpsPercentRatioPattern2::new(client.clone(), "price_return_24h".to_string()),
+            _1w: BpsPercentRatioPattern2::new(client.clone(), "price_return_1w".to_string()),
+            _1m: BpsPercentRatioPattern2::new(client.clone(), "price_return_1m".to_string()),
+            _3m: BpsPercentRatioPattern2::new(client.clone(), "price_return_3m".to_string()),
+            _6m: BpsPercentRatioPattern2::new(client.clone(), "price_return_6m".to_string()),
+            _1y: BpsPercentRatioPattern2::new(client.clone(), "price_return_1y".to_string()),
+            _2y: BpsPercentRatioPattern2::new(client.clone(), "price_return_2y".to_string()),
+            _3y: BpsPercentRatioPattern2::new(client.clone(), "price_return_3y".to_string()),
+            _4y: BpsPercentRatioPattern2::new(client.clone(), "price_return_4y".to_string()),
+            _5y: BpsPercentRatioPattern2::new(client.clone(), "price_return_5y".to_string()),
+            _6y: BpsPercentRatioPattern2::new(client.clone(), "price_return_6y".to_string()),
+            _8y: BpsPercentRatioPattern2::new(client.clone(), "price_return_8y".to_string()),
+            _10y: BpsPercentRatioPattern2::new(client.clone(), "price_return_10y".to_string()),
         }
     }
 }
@@ -5222,7 +5376,7 @@ pub struct MetricsTree_Market_Range {
     pub max: _1m1w1y2wPattern,
     pub true_range: MetricPattern1<StoredF32>,
     pub true_range_sum_2w: MetricPattern1<StoredF32>,
-    pub choppiness_index_2w: BpsPercentRatioPattern,
+    pub choppiness_index_2w: BpsPercentRatioPattern4,
 }
 
 impl MetricsTree_Market_Range {
@@ -5232,7 +5386,7 @@ impl MetricsTree_Market_Range {
             max: _1m1w1y2wPattern::new(client.clone(), "price_max".to_string()),
             true_range: MetricPattern1::new(client.clone(), "price_true_range".to_string()),
             true_range_sum_2w: MetricPattern1::new(client.clone(), "price_true_range_sum_2w".to_string()),
-            choppiness_index_2w: BpsPercentRatioPattern::new(client.clone(), "price_choppiness_index_2w".to_string()),
+            choppiness_index_2w: BpsPercentRatioPattern4::new(client.clone(), "price_choppiness_index_2w".to_string()),
         }
     }
 }
@@ -5601,35 +5755,35 @@ impl MetricsTree_Market_Dca_Class_CostBasis {
 
 /// Metrics tree node.
 pub struct MetricsTree_Market_Dca_Class_Return {
-    pub from_2015: BpsPercentRatioPattern,
-    pub from_2016: BpsPercentRatioPattern,
-    pub from_2017: BpsPercentRatioPattern,
-    pub from_2018: BpsPercentRatioPattern,
-    pub from_2019: BpsPercentRatioPattern,
-    pub from_2020: BpsPercentRatioPattern,
-    pub from_2021: BpsPercentRatioPattern,
-    pub from_2022: BpsPercentRatioPattern,
-    pub from_2023: BpsPercentRatioPattern,
-    pub from_2024: BpsPercentRatioPattern,
-    pub from_2025: BpsPercentRatioPattern,
-    pub from_2026: BpsPercentRatioPattern,
+    pub from_2015: BpsPercentRatioPattern2,
+    pub from_2016: BpsPercentRatioPattern2,
+    pub from_2017: BpsPercentRatioPattern2,
+    pub from_2018: BpsPercentRatioPattern2,
+    pub from_2019: BpsPercentRatioPattern2,
+    pub from_2020: BpsPercentRatioPattern2,
+    pub from_2021: BpsPercentRatioPattern2,
+    pub from_2022: BpsPercentRatioPattern2,
+    pub from_2023: BpsPercentRatioPattern2,
+    pub from_2024: BpsPercentRatioPattern2,
+    pub from_2025: BpsPercentRatioPattern2,
+    pub from_2026: BpsPercentRatioPattern2,
 }
 
 impl MetricsTree_Market_Dca_Class_Return {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            from_2015: BpsPercentRatioPattern::new(client.clone(), "dca_return_from_2015".to_string()),
-            from_2016: BpsPercentRatioPattern::new(client.clone(), "dca_return_from_2016".to_string()),
-            from_2017: BpsPercentRatioPattern::new(client.clone(), "dca_return_from_2017".to_string()),
-            from_2018: BpsPercentRatioPattern::new(client.clone(), "dca_return_from_2018".to_string()),
-            from_2019: BpsPercentRatioPattern::new(client.clone(), "dca_return_from_2019".to_string()),
-            from_2020: BpsPercentRatioPattern::new(client.clone(), "dca_return_from_2020".to_string()),
-            from_2021: BpsPercentRatioPattern::new(client.clone(), "dca_return_from_2021".to_string()),
-            from_2022: BpsPercentRatioPattern::new(client.clone(), "dca_return_from_2022".to_string()),
-            from_2023: BpsPercentRatioPattern::new(client.clone(), "dca_return_from_2023".to_string()),
-            from_2024: BpsPercentRatioPattern::new(client.clone(), "dca_return_from_2024".to_string()),
-            from_2025: BpsPercentRatioPattern::new(client.clone(), "dca_return_from_2025".to_string()),
-            from_2026: BpsPercentRatioPattern::new(client.clone(), "dca_return_from_2026".to_string()),
+            from_2015: BpsPercentRatioPattern2::new(client.clone(), "dca_return_from_2015".to_string()),
+            from_2016: BpsPercentRatioPattern2::new(client.clone(), "dca_return_from_2016".to_string()),
+            from_2017: BpsPercentRatioPattern2::new(client.clone(), "dca_return_from_2017".to_string()),
+            from_2018: BpsPercentRatioPattern2::new(client.clone(), "dca_return_from_2018".to_string()),
+            from_2019: BpsPercentRatioPattern2::new(client.clone(), "dca_return_from_2019".to_string()),
+            from_2020: BpsPercentRatioPattern2::new(client.clone(), "dca_return_from_2020".to_string()),
+            from_2021: BpsPercentRatioPattern2::new(client.clone(), "dca_return_from_2021".to_string()),
+            from_2022: BpsPercentRatioPattern2::new(client.clone(), "dca_return_from_2022".to_string()),
+            from_2023: BpsPercentRatioPattern2::new(client.clone(), "dca_return_from_2023".to_string()),
+            from_2024: BpsPercentRatioPattern2::new(client.clone(), "dca_return_from_2024".to_string()),
+            from_2025: BpsPercentRatioPattern2::new(client.clone(), "dca_return_from_2025".to_string()),
+            from_2026: BpsPercentRatioPattern2::new(client.clone(), "dca_return_from_2026".to_string()),
         }
     }
 }
@@ -5637,9 +5791,9 @@ impl MetricsTree_Market_Dca_Class_Return {
 /// Metrics tree node.
 pub struct MetricsTree_Market_Technical {
     pub rsi: MetricsTree_Market_Technical_Rsi,
-    pub stoch_k: BpsPercentRatioPattern,
-    pub stoch_d: BpsPercentRatioPattern,
-    pub pi_cycle: BpsRatioPattern,
+    pub stoch_k: BpsPercentRatioPattern4,
+    pub stoch_d: BpsPercentRatioPattern4,
+    pub pi_cycle: BpsRatioPattern2,
     pub macd: MetricsTree_Market_Technical_Macd,
 }
 
@@ -5647,9 +5801,9 @@ impl MetricsTree_Market_Technical {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             rsi: MetricsTree_Market_Technical_Rsi::new(client.clone(), format!("{base_path}_rsi")),
-            stoch_k: BpsPercentRatioPattern::new(client.clone(), "stoch_k".to_string()),
-            stoch_d: BpsPercentRatioPattern::new(client.clone(), "stoch_d".to_string()),
-            pi_cycle: BpsRatioPattern::new(client.clone(), "pi_cycle".to_string()),
+            stoch_k: BpsPercentRatioPattern4::new(client.clone(), "stoch_k".to_string()),
+            stoch_d: BpsPercentRatioPattern4::new(client.clone(), "stoch_d".to_string()),
+            pi_cycle: BpsRatioPattern2::new(client.clone(), "pi_cycle".to_string()),
             macd: MetricsTree_Market_Technical_Macd::new(client.clone(), format!("{base_path}_macd")),
         }
     }
@@ -5680,12 +5834,12 @@ pub struct MetricsTree_Market_Technical_Rsi_1w {
     pub losses: MetricPattern1<StoredF32>,
     pub average_gain: MetricPattern1<StoredF32>,
     pub average_loss: MetricPattern1<StoredF32>,
-    pub rsi: BpsPercentRatioPattern,
-    pub rsi_min: BpsPercentRatioPattern,
-    pub rsi_max: BpsPercentRatioPattern,
-    pub stoch_rsi: BpsPercentRatioPattern,
-    pub stoch_rsi_k: BpsPercentRatioPattern,
-    pub stoch_rsi_d: BpsPercentRatioPattern,
+    pub rsi: BpsPercentRatioPattern4,
+    pub rsi_min: BpsPercentRatioPattern4,
+    pub rsi_max: BpsPercentRatioPattern4,
+    pub stoch_rsi: BpsPercentRatioPattern4,
+    pub stoch_rsi_k: BpsPercentRatioPattern4,
+    pub stoch_rsi_d: BpsPercentRatioPattern4,
 }
 
 impl MetricsTree_Market_Technical_Rsi_1w {
@@ -5695,12 +5849,12 @@ impl MetricsTree_Market_Technical_Rsi_1w {
             losses: MetricPattern1::new(client.clone(), "rsi_losses_1w".to_string()),
             average_gain: MetricPattern1::new(client.clone(), "rsi_average_gain_1w".to_string()),
             average_loss: MetricPattern1::new(client.clone(), "rsi_average_loss_1w".to_string()),
-            rsi: BpsPercentRatioPattern::new(client.clone(), "rsi_1w".to_string()),
-            rsi_min: BpsPercentRatioPattern::new(client.clone(), "rsi_min_1w".to_string()),
-            rsi_max: BpsPercentRatioPattern::new(client.clone(), "rsi_max_1w".to_string()),
-            stoch_rsi: BpsPercentRatioPattern::new(client.clone(), "rsi_stoch_1w".to_string()),
-            stoch_rsi_k: BpsPercentRatioPattern::new(client.clone(), "rsi_stoch_k_1w".to_string()),
-            stoch_rsi_d: BpsPercentRatioPattern::new(client.clone(), "rsi_stoch_d_1w".to_string()),
+            rsi: BpsPercentRatioPattern4::new(client.clone(), "rsi_1w".to_string()),
+            rsi_min: BpsPercentRatioPattern4::new(client.clone(), "rsi_min_1w".to_string()),
+            rsi_max: BpsPercentRatioPattern4::new(client.clone(), "rsi_max_1w".to_string()),
+            stoch_rsi: BpsPercentRatioPattern4::new(client.clone(), "rsi_stoch_1w".to_string()),
+            stoch_rsi_k: BpsPercentRatioPattern4::new(client.clone(), "rsi_stoch_k_1w".to_string()),
+            stoch_rsi_d: BpsPercentRatioPattern4::new(client.clone(), "rsi_stoch_d_1w".to_string()),
         }
     }
 }
@@ -5711,12 +5865,12 @@ pub struct MetricsTree_Market_Technical_Rsi_1m {
     pub losses: MetricPattern1<StoredF32>,
     pub average_gain: MetricPattern1<StoredF32>,
     pub average_loss: MetricPattern1<StoredF32>,
-    pub rsi: BpsPercentRatioPattern,
-    pub rsi_min: BpsPercentRatioPattern,
-    pub rsi_max: BpsPercentRatioPattern,
-    pub stoch_rsi: BpsPercentRatioPattern,
-    pub stoch_rsi_k: BpsPercentRatioPattern,
-    pub stoch_rsi_d: BpsPercentRatioPattern,
+    pub rsi: BpsPercentRatioPattern4,
+    pub rsi_min: BpsPercentRatioPattern4,
+    pub rsi_max: BpsPercentRatioPattern4,
+    pub stoch_rsi: BpsPercentRatioPattern4,
+    pub stoch_rsi_k: BpsPercentRatioPattern4,
+    pub stoch_rsi_d: BpsPercentRatioPattern4,
 }
 
 impl MetricsTree_Market_Technical_Rsi_1m {
@@ -5726,12 +5880,12 @@ impl MetricsTree_Market_Technical_Rsi_1m {
             losses: MetricPattern1::new(client.clone(), "rsi_losses_1m".to_string()),
             average_gain: MetricPattern1::new(client.clone(), "rsi_average_gain_1m".to_string()),
             average_loss: MetricPattern1::new(client.clone(), "rsi_average_loss_1m".to_string()),
-            rsi: BpsPercentRatioPattern::new(client.clone(), "rsi_1m".to_string()),
-            rsi_min: BpsPercentRatioPattern::new(client.clone(), "rsi_min_1m".to_string()),
-            rsi_max: BpsPercentRatioPattern::new(client.clone(), "rsi_max_1m".to_string()),
-            stoch_rsi: BpsPercentRatioPattern::new(client.clone(), "rsi_stoch_1m".to_string()),
-            stoch_rsi_k: BpsPercentRatioPattern::new(client.clone(), "rsi_stoch_k_1m".to_string()),
-            stoch_rsi_d: BpsPercentRatioPattern::new(client.clone(), "rsi_stoch_d_1m".to_string()),
+            rsi: BpsPercentRatioPattern4::new(client.clone(), "rsi_1m".to_string()),
+            rsi_min: BpsPercentRatioPattern4::new(client.clone(), "rsi_min_1m".to_string()),
+            rsi_max: BpsPercentRatioPattern4::new(client.clone(), "rsi_max_1m".to_string()),
+            stoch_rsi: BpsPercentRatioPattern4::new(client.clone(), "rsi_stoch_1m".to_string()),
+            stoch_rsi_k: BpsPercentRatioPattern4::new(client.clone(), "rsi_stoch_k_1m".to_string()),
+            stoch_rsi_d: BpsPercentRatioPattern4::new(client.clone(), "rsi_stoch_d_1m".to_string()),
         }
     }
 }
@@ -5742,12 +5896,12 @@ pub struct MetricsTree_Market_Technical_Rsi_1y {
     pub losses: MetricPattern1<StoredF32>,
     pub average_gain: MetricPattern1<StoredF32>,
     pub average_loss: MetricPattern1<StoredF32>,
-    pub rsi: BpsPercentRatioPattern,
-    pub rsi_min: BpsPercentRatioPattern,
-    pub rsi_max: BpsPercentRatioPattern,
-    pub stoch_rsi: BpsPercentRatioPattern,
-    pub stoch_rsi_k: BpsPercentRatioPattern,
-    pub stoch_rsi_d: BpsPercentRatioPattern,
+    pub rsi: BpsPercentRatioPattern4,
+    pub rsi_min: BpsPercentRatioPattern4,
+    pub rsi_max: BpsPercentRatioPattern4,
+    pub stoch_rsi: BpsPercentRatioPattern4,
+    pub stoch_rsi_k: BpsPercentRatioPattern4,
+    pub stoch_rsi_d: BpsPercentRatioPattern4,
 }
 
 impl MetricsTree_Market_Technical_Rsi_1y {
@@ -5757,12 +5911,12 @@ impl MetricsTree_Market_Technical_Rsi_1y {
             losses: MetricPattern1::new(client.clone(), "rsi_losses_1y".to_string()),
             average_gain: MetricPattern1::new(client.clone(), "rsi_average_gain_1y".to_string()),
             average_loss: MetricPattern1::new(client.clone(), "rsi_average_loss_1y".to_string()),
-            rsi: BpsPercentRatioPattern::new(client.clone(), "rsi_1y".to_string()),
-            rsi_min: BpsPercentRatioPattern::new(client.clone(), "rsi_min_1y".to_string()),
-            rsi_max: BpsPercentRatioPattern::new(client.clone(), "rsi_max_1y".to_string()),
-            stoch_rsi: BpsPercentRatioPattern::new(client.clone(), "rsi_stoch_1y".to_string()),
-            stoch_rsi_k: BpsPercentRatioPattern::new(client.clone(), "rsi_stoch_k_1y".to_string()),
-            stoch_rsi_d: BpsPercentRatioPattern::new(client.clone(), "rsi_stoch_d_1y".to_string()),
+            rsi: BpsPercentRatioPattern4::new(client.clone(), "rsi_1y".to_string()),
+            rsi_min: BpsPercentRatioPattern4::new(client.clone(), "rsi_min_1y".to_string()),
+            rsi_max: BpsPercentRatioPattern4::new(client.clone(), "rsi_max_1y".to_string()),
+            stoch_rsi: BpsPercentRatioPattern4::new(client.clone(), "rsi_stoch_1y".to_string()),
+            stoch_rsi_k: BpsPercentRatioPattern4::new(client.clone(), "rsi_stoch_k_1y".to_string()),
+            stoch_rsi_d: BpsPercentRatioPattern4::new(client.clone(), "rsi_stoch_d_1y".to_string()),
         }
     }
 }
@@ -6231,19 +6385,19 @@ impl MetricsTree_Prices {
 
 /// Metrics tree node.
 pub struct MetricsTree_Prices_Split {
-    pub open: CentsSatsUsdPattern2,
-    pub high: CentsSatsUsdPattern2,
-    pub low: CentsSatsUsdPattern2,
-    pub close: CentsSatsUsdPattern2,
+    pub open: CentsSatsUsdPattern3,
+    pub high: CentsSatsUsdPattern3,
+    pub low: CentsSatsUsdPattern3,
+    pub close: CentsSatsUsdPattern3,
 }
 
 impl MetricsTree_Prices_Split {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            open: CentsSatsUsdPattern2::new(client.clone(), "price_open".to_string()),
-            high: CentsSatsUsdPattern2::new(client.clone(), "price_high".to_string()),
-            low: CentsSatsUsdPattern2::new(client.clone(), "price_low".to_string()),
-            close: CentsSatsUsdPattern2::new(client.clone(), "price_close".to_string()),
+            open: CentsSatsUsdPattern3::new(client.clone(), "price_open".to_string()),
+            high: CentsSatsUsdPattern3::new(client.clone(), "price_high".to_string()),
+            low: CentsSatsUsdPattern3::new(client.clone(), "price_low".to_string()),
+            close: CentsSatsUsdPattern3::new(client.clone(), "price_close".to_string()),
         }
     }
 }
@@ -6286,7 +6440,7 @@ impl MetricsTree_Prices_Spot {
 pub struct MetricsTree_Supply {
     pub circulating: BtcCentsSatsUsdPattern,
     pub burned: MetricsTree_Supply_Burned,
-    pub inflation_rate: BpsPercentRatioPattern,
+    pub inflation_rate: BpsPercentRatioPattern2,
     pub velocity: MetricsTree_Supply_Velocity,
     pub market_cap: CentsDeltaUsdPattern,
     pub market_minus_realized_cap_growth_rate: _1m1w1y24hPattern<BasisPointsSigned32>,
@@ -6299,7 +6453,7 @@ impl MetricsTree_Supply {
         Self {
             circulating: BtcCentsSatsUsdPattern::new(client.clone(), "circulating_supply".to_string()),
             burned: MetricsTree_Supply_Burned::new(client.clone(), format!("{base_path}_burned")),
-            inflation_rate: BpsPercentRatioPattern::new(client.clone(), "inflation_rate".to_string()),
+            inflation_rate: BpsPercentRatioPattern2::new(client.clone(), "inflation_rate".to_string()),
             velocity: MetricsTree_Supply_Velocity::new(client.clone(), format!("{base_path}_velocity")),
             market_cap: CentsDeltaUsdPattern::new(client.clone(), "market_cap".to_string()),
             market_minus_realized_cap_growth_rate: _1m1w1y24hPattern::new(client.clone(), "market_minus_realized_cap_growth_rate".to_string()),
@@ -6311,15 +6465,15 @@ impl MetricsTree_Supply {
 
 /// Metrics tree node.
 pub struct MetricsTree_Supply_Burned {
-    pub opreturn: CumulativeRawSumPattern3,
-    pub unspendable: CumulativeRawSumPattern3,
+    pub opreturn: CumulativeRawSumPattern4,
+    pub unspendable: CumulativeRawSumPattern4,
 }
 
 impl MetricsTree_Supply_Burned {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            opreturn: CumulativeRawSumPattern3::new(client.clone(), "opreturn_supply".to_string()),
-            unspendable: CumulativeRawSumPattern3::new(client.clone(), "unspendable_supply".to_string()),
+            opreturn: CumulativeRawSumPattern4::new(client.clone(), "opreturn_supply".to_string()),
+            unspendable: CumulativeRawSumPattern4::new(client.clone(), "unspendable_supply".to_string()),
         }
     }
 }
@@ -6396,7 +6550,7 @@ impl MetricsTree_Cohorts_Utxo {
 /// Metrics tree node.
 pub struct MetricsTree_Cohorts_Utxo_All {
     pub supply: MetricsTree_Cohorts_Utxo_All_Supply,
-    pub outputs: UnspentPattern2,
+    pub outputs: UnspentPattern,
     pub activity: CoindaysCoinyearsDormancySentVelocityPattern,
     pub realized: CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern,
     pub cost_basis: InvestedMaxMinPercentilesSupplyPattern,
@@ -6407,7 +6561,7 @@ impl MetricsTree_Cohorts_Utxo_All {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             supply: MetricsTree_Cohorts_Utxo_All_Supply::new(client.clone(), format!("{base_path}_supply")),
-            outputs: UnspentPattern2::new(client.clone(), "utxo_count".to_string()),
+            outputs: UnspentPattern::new(client.clone(), "utxo_count".to_string()),
             activity: CoindaysCoinyearsDormancySentVelocityPattern::new(client.clone(), "".to_string()),
             realized: CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern::new(client.clone(), "".to_string()),
             cost_basis: InvestedMaxMinPercentilesSupplyPattern::new(client.clone(), "".to_string()),
@@ -6418,28 +6572,28 @@ impl MetricsTree_Cohorts_Utxo_All {
 
 /// Metrics tree node.
 pub struct MetricsTree_Cohorts_Utxo_All_Supply {
-    pub delta: ChangeRatePattern,
     pub in_profit: BtcCentsRelSatsUsdPattern2,
     pub in_loss: BtcCentsRelSatsUsdPattern2,
     pub total: BtcCentsSatsUsdPattern,
     pub half: BtcCentsSatsUsdPattern,
+    pub delta: ChangeRatePattern2,
 }
 
 impl MetricsTree_Cohorts_Utxo_All_Supply {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            delta: ChangeRatePattern::new(client.clone(), "supply_delta".to_string()),
             in_profit: BtcCentsRelSatsUsdPattern2::new(client.clone(), "supply_in_profit".to_string()),
             in_loss: BtcCentsRelSatsUsdPattern2::new(client.clone(), "supply_in_loss".to_string()),
             total: BtcCentsSatsUsdPattern::new(client.clone(), "supply".to_string()),
             half: BtcCentsSatsUsdPattern::new(client.clone(), "supply_half".to_string()),
+            delta: ChangeRatePattern2::new(client.clone(), "supply_delta".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Cohorts_Utxo_All_Unrealized {
-    pub gross_pnl: CentsUsdPattern,
+    pub gross_pnl: CentsUsdPattern2,
     pub invested_capital: InPattern,
     pub sentiment: GreedNetPainPattern,
     pub loss: MetricsTree_Cohorts_Utxo_All_Unrealized_Loss,
@@ -6451,7 +6605,7 @@ pub struct MetricsTree_Cohorts_Utxo_All_Unrealized {
 impl MetricsTree_Cohorts_Utxo_All_Unrealized {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            gross_pnl: CentsUsdPattern::new(client.clone(), "unrealized_gross_pnl".to_string()),
+            gross_pnl: CentsUsdPattern2::new(client.clone(), "unrealized_gross_pnl".to_string()),
             invested_capital: InPattern::new(client.clone(), "invested_capital_in".to_string()),
             sentiment: GreedNetPainPattern::new(client.clone(), "".to_string()),
             loss: MetricsTree_Cohorts_Utxo_All_Unrealized_Loss::new(client.clone(), format!("{base_path}_loss")),
@@ -6465,22 +6619,22 @@ impl MetricsTree_Cohorts_Utxo_All_Unrealized {
 /// Metrics tree node.
 pub struct MetricsTree_Cohorts_Utxo_All_Unrealized_Loss {
     pub negative: MetricPattern1<Dollars>,
-    pub raw: CentsUsdPattern,
-    pub cumulative: MetricPattern1<Cents>,
-    pub sum: _1m1w1y24hPattern3,
-    pub rel_to_mcap: BpsPercentRatioPattern,
-    pub rel_to_own_gross: BpsPercentRatioPattern,
+    pub raw: CentsUsdPattern2,
+    pub cumulative: CentsUsdPattern2,
+    pub sum: _1m1w1y24hPattern5,
+    pub rel_to_mcap: BpsPercentRatioPattern4,
+    pub rel_to_own_gross: BpsPercentRatioPattern4,
 }
 
 impl MetricsTree_Cohorts_Utxo_All_Unrealized_Loss {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             negative: MetricPattern1::new(client.clone(), "neg_unrealized_loss".to_string()),
-            raw: CentsUsdPattern::new(client.clone(), "unrealized_loss".to_string()),
-            cumulative: MetricPattern1::new(client.clone(), "unrealized_loss_cumulative".to_string()),
-            sum: _1m1w1y24hPattern3::new(client.clone(), "unrealized_loss_sum".to_string()),
-            rel_to_mcap: BpsPercentRatioPattern::new(client.clone(), "unrealized_loss_rel_to_mcap".to_string()),
-            rel_to_own_gross: BpsPercentRatioPattern::new(client.clone(), "unrealized_loss_rel_to_own_gross_pnl".to_string()),
+            raw: CentsUsdPattern2::new(client.clone(), "unrealized_loss".to_string()),
+            cumulative: CentsUsdPattern2::new(client.clone(), "unrealized_loss_cumulative".to_string()),
+            sum: _1m1w1y24hPattern5::new(client.clone(), "unrealized_loss_sum".to_string()),
+            rel_to_mcap: BpsPercentRatioPattern4::new(client.clone(), "unrealized_loss_rel_to_mcap".to_string()),
+            rel_to_own_gross: BpsPercentRatioPattern4::new(client.clone(), "unrealized_loss_rel_to_own_gross_pnl".to_string()),
         }
     }
 }
@@ -6489,7 +6643,7 @@ impl MetricsTree_Cohorts_Utxo_All_Unrealized_Loss {
 pub struct MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl {
     pub cents: MetricPattern1<CentsSigned>,
     pub usd: MetricPattern1<Dollars>,
-    pub rel_to_own_gross: BpsPercentRatioPattern,
+    pub rel_to_own_gross: BpsPercentRatioPattern2,
 }
 
 impl MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl {
@@ -6497,28 +6651,28 @@ impl MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl {
         Self {
             cents: MetricPattern1::new(client.clone(), "net_unrealized_pnl_cents".to_string()),
             usd: MetricPattern1::new(client.clone(), "net_unrealized_pnl".to_string()),
-            rel_to_own_gross: BpsPercentRatioPattern::new(client.clone(), "net_unrealized_pnl_rel_to_own_gross_pnl".to_string()),
+            rel_to_own_gross: BpsPercentRatioPattern2::new(client.clone(), "net_unrealized_pnl_rel_to_own_gross_pnl".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Cohorts_Utxo_All_Unrealized_Profit {
-    pub raw: CentsUsdPattern,
-    pub cumulative: MetricPattern1<Cents>,
-    pub sum: _1m1w1y24hPattern3,
-    pub rel_to_mcap: BpsPercentRatioPattern,
-    pub rel_to_own_gross: BpsPercentRatioPattern,
+    pub raw: CentsUsdPattern2,
+    pub cumulative: CentsUsdPattern2,
+    pub sum: _1m1w1y24hPattern5,
+    pub rel_to_mcap: BpsPercentRatioPattern4,
+    pub rel_to_own_gross: BpsPercentRatioPattern4,
 }
 
 impl MetricsTree_Cohorts_Utxo_All_Unrealized_Profit {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            raw: CentsUsdPattern::new(client.clone(), "unrealized_profit".to_string()),
-            cumulative: MetricPattern1::new(client.clone(), "unrealized_profit_cumulative".to_string()),
-            sum: _1m1w1y24hPattern3::new(client.clone(), "unrealized_profit_sum".to_string()),
-            rel_to_mcap: BpsPercentRatioPattern::new(client.clone(), "unrealized_profit_rel_to_mcap".to_string()),
-            rel_to_own_gross: BpsPercentRatioPattern::new(client.clone(), "unrealized_profit_rel_to_own_gross_pnl".to_string()),
+            raw: CentsUsdPattern2::new(client.clone(), "unrealized_profit".to_string()),
+            cumulative: CentsUsdPattern2::new(client.clone(), "unrealized_profit_cumulative".to_string()),
+            sum: _1m1w1y24hPattern5::new(client.clone(), "unrealized_profit_sum".to_string()),
+            rel_to_mcap: BpsPercentRatioPattern4::new(client.clone(), "unrealized_profit_rel_to_mcap".to_string()),
+            rel_to_own_gross: BpsPercentRatioPattern4::new(client.clone(), "unrealized_profit_rel_to_own_gross_pnl".to_string()),
         }
     }
 }
@@ -6527,7 +6681,7 @@ impl MetricsTree_Cohorts_Utxo_All_Unrealized_Profit {
 pub struct MetricsTree_Cohorts_Utxo_Sth {
     pub realized: CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern,
     pub supply: DeltaHalfInRelTotalPattern2,
-    pub outputs: UnspentPattern2,
+    pub outputs: UnspentPattern,
     pub activity: CoindaysCoinyearsDormancySentVelocityPattern,
     pub cost_basis: InvestedMaxMinPercentilesSupplyPattern,
     pub unrealized: GrossInvestedLossNetNuplProfitSentimentPattern2,
@@ -6538,7 +6692,7 @@ impl MetricsTree_Cohorts_Utxo_Sth {
         Self {
             realized: CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern::new(client.clone(), "sth".to_string()),
             supply: DeltaHalfInRelTotalPattern2::new(client.clone(), "sth_supply".to_string()),
-            outputs: UnspentPattern2::new(client.clone(), "sth_utxo_count".to_string()),
+            outputs: UnspentPattern::new(client.clone(), "sth_utxo_count".to_string()),
             activity: CoindaysCoinyearsDormancySentVelocityPattern::new(client.clone(), "sth".to_string()),
             cost_basis: InvestedMaxMinPercentilesSupplyPattern::new(client.clone(), "sth".to_string()),
             unrealized: GrossInvestedLossNetNuplProfitSentimentPattern2::new(client.clone(), "sth".to_string()),
@@ -6549,7 +6703,7 @@ impl MetricsTree_Cohorts_Utxo_Sth {
 /// Metrics tree node.
 pub struct MetricsTree_Cohorts_Utxo_Lth {
     pub supply: DeltaHalfInRelTotalPattern2,
-    pub outputs: UnspentPattern2,
+    pub outputs: UnspentPattern,
     pub activity: CoindaysCoinyearsDormancySentVelocityPattern,
     pub realized: MetricsTree_Cohorts_Utxo_Lth_Realized,
     pub cost_basis: InvestedMaxMinPercentilesSupplyPattern,
@@ -6560,7 +6714,7 @@ impl MetricsTree_Cohorts_Utxo_Lth {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             supply: DeltaHalfInRelTotalPattern2::new(client.clone(), "lth_supply".to_string()),
-            outputs: UnspentPattern2::new(client.clone(), "lth_utxo_count".to_string()),
+            outputs: UnspentPattern::new(client.clone(), "lth_utxo_count".to_string()),
             activity: CoindaysCoinyearsDormancySentVelocityPattern::new(client.clone(), "lth".to_string()),
             realized: MetricsTree_Cohorts_Utxo_Lth_Realized::new(client.clone(), format!("{base_path}_realized")),
             cost_basis: InvestedMaxMinPercentilesSupplyPattern::new(client.clone(), "lth".to_string()),
@@ -6573,7 +6727,7 @@ impl MetricsTree_Cohorts_Utxo_Lth {
 pub struct MetricsTree_Cohorts_Utxo_Lth_Realized {
     pub profit: CumulativeDistributionRawRelSumValuePattern,
     pub loss: CapitulationCumulativeNegativeRawRelSumValuePattern,
-    pub gross_pnl: CumulativeRawSumPattern2,
+    pub gross_pnl: CumulativeRawSumPattern3,
     pub sell_side_risk_ratio: MetricsTree_Cohorts_Utxo_Lth_Realized_SellSideRiskRatio,
     pub net_pnl: ChangeCumulativeDeltaRawRelSumPattern,
     pub sopr: MetricsTree_Cohorts_Utxo_Lth_Realized_Sopr,
@@ -6590,7 +6744,7 @@ impl MetricsTree_Cohorts_Utxo_Lth_Realized {
         Self {
             profit: CumulativeDistributionRawRelSumValuePattern::new(client.clone(), "lth".to_string()),
             loss: CapitulationCumulativeNegativeRawRelSumValuePattern::new(client.clone(), "lth".to_string()),
-            gross_pnl: CumulativeRawSumPattern2::new(client.clone(), "lth_realized_gross_pnl".to_string()),
+            gross_pnl: CumulativeRawSumPattern3::new(client.clone(), "lth_realized_gross_pnl".to_string()),
             sell_side_risk_ratio: MetricsTree_Cohorts_Utxo_Lth_Realized_SellSideRiskRatio::new(client.clone(), format!("{base_path}_sell_side_risk_ratio")),
             net_pnl: ChangeCumulativeDeltaRawRelSumPattern::new(client.clone(), "lth_net".to_string()),
             sopr: MetricsTree_Cohorts_Utxo_Lth_Realized_Sopr::new(client.clone(), format!("{base_path}_sopr")),

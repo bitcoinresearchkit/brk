@@ -5,6 +5,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco};
 
+use crate::VSize;
+
 /// Transaction or block weight in weight units (WU)
 #[derive(
     Debug,
@@ -63,6 +65,14 @@ impl From<Weight> for bitcoin::Weight {
     #[inline]
     fn from(value: Weight) -> Self {
         Self::from_wu(value.0)
+    }
+}
+
+impl From<VSize> for Weight {
+    /// Convert virtual bytes to weight units: `weight = vbytes * WITNESS_SCALE_FACTOR`.
+    #[inline]
+    fn from(vsize: VSize) -> Self {
+        Self(bitcoin::Weight::from_vb_unchecked(*vsize).to_wu())
     }
 }
 

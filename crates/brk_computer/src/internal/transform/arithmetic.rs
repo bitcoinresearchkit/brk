@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use brk_types::{Bitcoin, Cents, Dollars, Sats, StoredF32, StoredI8, StoredU16, StoredU32};
+use brk_types::{Bitcoin, Cents, Dollars, Sats, StoredF32, StoredI8, StoredU16, StoredU32, StoredU64, VSize, Weight};
 use vecdb::{BinaryTransform, UnaryTransform, VecValue};
 
 pub struct Identity<T>(PhantomData<T>);
@@ -85,5 +85,23 @@ impl<S, const V: i8> UnaryTransform<S, StoredI8> for ReturnI8<V> {
     #[inline(always)]
     fn apply(_: S) -> StoredI8 {
         StoredI8::new(V)
+    }
+}
+
+pub struct VBytesToWeight;
+
+impl UnaryTransform<StoredU64, Weight> for VBytesToWeight {
+    #[inline(always)]
+    fn apply(vbytes: StoredU64) -> Weight {
+        Weight::from(VSize::new(*vbytes))
+    }
+}
+
+pub struct VSizeToWeight;
+
+impl UnaryTransform<VSize, Weight> for VSizeToWeight {
+    #[inline(always)]
+    fn apply(vsize: VSize) -> Weight {
+        Weight::from(vsize)
     }
 }

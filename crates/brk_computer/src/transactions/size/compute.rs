@@ -14,9 +14,6 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.weight
-            .derive_from(indexer, indexes, starting_indexes, exit)?;
-
         self.vsize
             .derive_from(indexer, indexes, starting_indexes, exit)?;
 
