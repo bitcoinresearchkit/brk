@@ -19,8 +19,8 @@ use crate::{
 /// Generic price metric with cents, USD, and sats representations.
 #[derive(Clone, Traversable)]
 pub struct Price<C> {
-    pub cents: C,
     pub usd: LazyPerBlock<Dollars, Cents>,
+    pub cents: C,
     pub sats: LazyPerBlock<SatsFract, Dollars>,
 }
 
@@ -45,7 +45,7 @@ impl Price<PerBlock<Cents>> {
             version,
             &usd,
         );
-        Ok(Self { cents, usd, sats })
+        Ok(Self { usd, cents, sats })
     }
 }
 
@@ -75,6 +75,6 @@ where
             version,
             &usd,
         );
-        Self { cents, usd, sats }
+        Self { usd, cents, sats }
     }
 }

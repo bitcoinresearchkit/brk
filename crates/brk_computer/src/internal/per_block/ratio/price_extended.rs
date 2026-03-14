@@ -11,8 +11,8 @@ use super::{RatioPerBlock, RatioPerBlockPercentiles};
 
 #[derive(Traversable)]
 pub struct PriceWithRatioPerBlock<M: StorageMode = Rw> {
-    pub cents: PerBlock<Cents, M>,
     pub usd: LazyPerBlock<Dollars, Cents>,
+    pub cents: PerBlock<Cents, M>,
     pub sats: LazyPerBlock<SatsFract, Dollars>,
     pub bps: PerBlock<BasisPoints32, M>,
     pub ratio: LazyPerBlock<StoredF32, BasisPoints32>,
@@ -28,8 +28,8 @@ impl PriceWithRatioPerBlock {
         let price = Price::forced_import(db, name, version, indexes)?;
         let ratio = RatioPerBlock::forced_import(db, name, version, indexes)?;
         Ok(Self {
-            cents: price.cents,
             usd: price.usd,
+            cents: price.cents,
             sats: price.sats,
             bps: ratio.bps,
             ratio: ratio.ratio,

@@ -8,8 +8,8 @@ use crate::internal::{CentsType, PerBlock, Identity, LazyPerBlock, NumericValue}
 /// Zero extra stored vecs.
 #[derive(Clone, Traversable)]
 pub struct LazyFiatPerBlock<C: CentsType> {
-    pub cents: LazyPerBlock<C, C>,
     pub usd: LazyPerBlock<Dollars, C>,
+    pub cents: LazyPerBlock<C, C>,
 }
 
 impl<C: CentsType> LazyFiatPerBlock<C> {
@@ -33,6 +33,6 @@ impl<C: CentsType> LazyFiatPerBlock<C> {
             source.height.read_only_boxed_clone(),
             source,
         );
-        Self { cents, usd }
+        Self { usd, cents }
     }
 }

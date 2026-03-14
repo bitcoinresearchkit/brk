@@ -224,19 +224,26 @@ impl SlidingWindowSorted {
             let rank = p * last;
             let lo = rank.floor() as usize;
             let hi = rank.ceil() as usize;
-            let frac = rank - lo as f64;
-            lo_hi[i] = (lo, hi, frac);
+            lo_hi[i] = (lo, hi, rank - lo as f64);
 
-            // Insert unique ranks in sorted order (they're already ~sorted since ps is sorted)
-            if rank_count == 0 || rank_set[rank_count - 1] != lo {
-                rank_set[rank_count] = lo;
-                rank_count += 1;
-            }
-            if hi != lo && (rank_count == 0 || rank_set[rank_count - 1] != hi) {
+            rank_set[rank_count] = lo;
+            rank_count += 1;
+            if hi != lo {
                 rank_set[rank_count] = hi;
                 rank_count += 1;
             }
         }
+
+        // Sort and deduplicate (interleaved lo/hi values aren't necessarily sorted)
+        rank_set[..rank_count].sort_unstable();
+        let mut w = 1;
+        for r in 1..rank_count {
+            if rank_set[r] != rank_set[w - 1] {
+                rank_set[w] = rank_set[r];
+                w += 1;
+            }
+        }
+        rank_count = w;
 
         // Single pass through blocks to get all values
         let ranks = &rank_set[..rank_count];

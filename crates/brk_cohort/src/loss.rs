@@ -4,7 +4,7 @@ use serde::Serialize;
 
 use super::CohortName;
 
-/// "At least X% loss" threshold names (10 thresholds).
+/// "At least X% loss" threshold names (9 thresholds).
 pub const LOSS_NAMES: Loss<CohortName> = Loss {
     breakeven: CohortName::new("utxos_in_loss", "<0%", "In Loss (Below Breakeven)"),
     _10pct: CohortName::new("utxos_over_10pct_in_loss", "≥10%L", "10%+ Loss"),
@@ -26,7 +26,7 @@ impl Loss<CohortName> {
     }
 }
 
-/// 10 "at least X% loss" aggregate thresholds.
+/// 9 "at least X% loss" aggregate thresholds.
 ///
 /// Each is a suffix sum over the profitability ranges, from most loss-making up.
 #[derive(Default, Clone, Traversable, Serialize)]

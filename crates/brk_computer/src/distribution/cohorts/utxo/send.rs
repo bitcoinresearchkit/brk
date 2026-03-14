@@ -63,34 +63,22 @@ impl UTXOCohorts<Rw> {
                     .as_mut()
                     .unwrap()
                     .send_utxo_precomputed(&sent.spendable_supply, &pre);
-                self.epoch
-                    .mut_vec_from_height(receive_height)
-                    .state
-                    .as_mut()
-                    .unwrap()
-                    .send_utxo_precomputed(&sent.spendable_supply, &pre);
-                self.class
-                    .mut_vec_from_timestamp(block_state.timestamp)
-                    .state
-                    .as_mut()
-                    .unwrap()
-                    .send_utxo_precomputed(&sent.spendable_supply, &pre);
+                if let Some(v) = self.epoch.mut_vec_from_height(receive_height) {
+                    v.state.as_mut().unwrap().send_utxo_precomputed(&sent.spendable_supply, &pre);
+                }
+                if let Some(v) = self.class.mut_vec_from_timestamp(block_state.timestamp) {
+                    v.state.as_mut().unwrap().send_utxo_precomputed(&sent.spendable_supply, &pre);
+                }
             } else if sent.spendable_supply.utxo_count > 0 {
                 // Zero-value UTXOs: just subtract supply
                 self.age_range.get_mut(age).state.as_mut().unwrap().supply -=
                     &sent.spendable_supply;
-                self.epoch
-                    .mut_vec_from_height(receive_height)
-                    .state
-                    .as_mut()
-                    .unwrap()
-                    .supply -= &sent.spendable_supply;
-                self.class
-                    .mut_vec_from_timestamp(block_state.timestamp)
-                    .state
-                    .as_mut()
-                    .unwrap()
-                    .supply -= &sent.spendable_supply;
+                if let Some(v) = self.epoch.mut_vec_from_height(receive_height) {
+                    v.state.as_mut().unwrap().supply -= &sent.spendable_supply;
+                }
+                if let Some(v) = self.class.mut_vec_from_timestamp(block_state.timestamp) {
+                    v.state.as_mut().unwrap().supply -= &sent.spendable_supply;
+                }
             }
 
             // Update output type cohorts (skip zero-supply entries)

@@ -33,18 +33,12 @@ impl UTXOCohorts<Rw> {
             .as_mut()
             .unwrap()
             .receive_utxo_snapshot(&supply_state, &snapshot);
-        self.epoch
-            .mut_vec_from_height(height)
-            .state
-            .as_mut()
-            .unwrap()
-            .receive_utxo_snapshot(&supply_state, &snapshot);
-        self.class
-            .mut_vec_from_timestamp(timestamp)
-            .state
-            .as_mut()
-            .unwrap()
-            .receive_utxo_snapshot(&supply_state, &snapshot);
+        if let Some(v) = self.epoch.mut_vec_from_height(height) {
+            v.state.as_mut().unwrap().receive_utxo_snapshot(&supply_state, &snapshot);
+        }
+        if let Some(v) = self.class.mut_vec_from_timestamp(timestamp) {
+            v.state.as_mut().unwrap().receive_utxo_snapshot(&supply_state, &snapshot);
+        }
 
         // Update output type cohorts (skip types with no outputs this block)
         self.type_.iter_typed_mut().for_each(|(output_type, vecs)| {

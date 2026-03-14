@@ -213,6 +213,10 @@ impl<'de> Deserialize<'de> for Date {
                     .parse()
                     .map_err(|_| E::invalid_value(serde::de::Unexpected::Str(v), &self))?;
 
+                if !(1..=12).contains(&month) || !(1..=31).contains(&day) {
+                    return Err(E::invalid_value(serde::de::Unexpected::Str(v), &self));
+                }
+
                 Ok(Date::new(year, month, day))
             }
         }

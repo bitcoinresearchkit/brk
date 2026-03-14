@@ -4,7 +4,7 @@ use std::{path::Path, thread::sleep, time::Duration};
 
 use brk_error::{Error, Result};
 use brk_types::{Date, Height, OHLCCents, Timestamp};
-use tracing::info;
+use tracing::{info, warn};
 
 mod binance;
 mod brk;
@@ -70,14 +70,20 @@ impl Fetcher {
     where
         F: FnMut(&mut dyn PriceSource) -> Option<Result<OHLCCents>>,
     {
-        if let Some(Ok(ohlc)) = fetch(&mut self.binance) {
-            return Some(Ok(ohlc));
+        match fetch(&mut self.binance) {
+            Some(Ok(ohlc)) => return Some(Ok(ohlc)),
+            Some(Err(e)) => warn!("Binance fetch failed: {e}"),
+            None => {}
         }
-        if let Some(Ok(ohlc)) = fetch(&mut self.kraken) {
-            return Some(Ok(ohlc));
+        match fetch(&mut self.kraken) {
+            Some(Ok(ohlc)) => return Some(Ok(ohlc)),
+            Some(Err(e)) => warn!("Kraken fetch failed: {e}"),
+            None => {}
         }
-        if let Some(Ok(ohlc)) = fetch(&mut self.brk) {
-            return Some(Ok(ohlc));
+        match fetch(&mut self.brk) {
+            Some(Ok(ohlc)) => return Some(Ok(ohlc)),
+            Some(Err(e)) => warn!("Brk fetch failed: {e}"),
+            None => {}
         }
         None
     }

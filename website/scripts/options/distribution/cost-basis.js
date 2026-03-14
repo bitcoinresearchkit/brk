@@ -14,8 +14,8 @@ import { colors } from "../../utils/colors.js";
 import { entries } from "../../utils/array.js";
 import { Unit } from "../../utils/units.js";
 import { priceLines } from "../constants.js";
-import { line, price } from "../series.js";
-import { mapCohortsWithAll } from "../shared.js";
+import { price, percentRatio } from "../series.js";
+import { mapCohortsWithAll, flatMapCohortsWithAll } from "../shared.js";
 
 const ACTIVE_PCTS = new Set(["pct75", "pct50", "pct25"]);
 
@@ -129,11 +129,10 @@ function createSingleByCapitalSeries(cohort) {
 function createSingleSupplyDensitySeries(cohort) {
   const { tree } = cohort;
   return [
-    line({
-      metric: tree.costBasis.supplyDensity.percent,
+    ...percentRatio({
+      pattern: tree.costBasis.supplyDensity,
       name: "Supply Density",
       color: colors.bitcoin,
-      unit: Unit.percentage,
     }),
     ...priceLines({ numbers: [100, 50, 0], unit: Unit.percentage }),
   ];
@@ -269,12 +268,11 @@ export function createGroupedCostBasisSectionWithPercentiles({
       {
         name: "Supply Density",
         title: title("Cost Basis Supply Density"),
-        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-          line({
-            metric: tree.costBasis.supplyDensity.percent,
+        bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
+          percentRatio({
+            pattern: tree.costBasis.supplyDensity,
             name,
             color,
-            unit: Unit.percentage,
           }),
         ),
       },

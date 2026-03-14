@@ -9,10 +9,10 @@ use crate::internal::AmountPerBlock;
 /// All fields are lazy transforms from existing sources - no storage.
 #[derive(Clone, Traversable)]
 pub struct LazyAmount<I: VecIndex> {
-    pub sats: LazyVecFrom1<I, Sats, I, Sats>,
     pub btc: LazyVecFrom1<I, Bitcoin, I, Sats>,
-    pub cents: LazyVecFrom1<I, Cents, I, Cents>,
+    pub sats: LazyVecFrom1<I, Sats, I, Sats>,
     pub usd: LazyVecFrom1<I, Dollars, I, Dollars>,
+    pub cents: LazyVecFrom1<I, Cents, I, Cents>,
 }
 
 impl LazyAmount<Height> {
@@ -57,10 +57,10 @@ impl LazyAmount<Height> {
         );
 
         Self {
-            sats,
             btc,
-            cents,
+            sats,
             usd,
+            cents,
         }
     }
 }

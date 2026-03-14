@@ -267,7 +267,7 @@ impl std::fmt::Display for StoredF32 {
 impl Formattable for StoredF32 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        if !self.0.is_nan() {
+        if self.0.is_finite() {
             let mut b = ryu::Buffer::new();
             buf.extend_from_slice(b.format(self.0).as_bytes());
         }
@@ -275,10 +275,10 @@ impl Formattable for StoredF32 {
 
     #[inline(always)]
     fn fmt_json(&self, buf: &mut Vec<u8>) {
-        if self.0.is_nan() {
-            buf.extend_from_slice(b"null");
-        } else {
+        if self.0.is_finite() {
             self.write_to(buf);
+        } else {
+            buf.extend_from_slice(b"null");
         }
     }
 }

@@ -142,36 +142,36 @@ impl Vecs {
 
         let split = SplitByUnit {
             open: SplitIndexesByUnit {
-                cents: open_cents,
                 usd: open_usd,
+                cents: open_cents,
                 sats: open_sats,
             },
             high: SplitIndexesByUnit {
-                cents: high_cents,
                 usd: high_usd,
+                cents: high_cents,
                 sats: high_sats,
             },
             low: SplitIndexesByUnit {
-                cents: low_cents,
                 usd: low_usd,
+                cents: low_cents,
                 sats: low_sats,
             },
             close: SplitCloseByUnit {
-                cents: close_cents,
                 usd: close_usd,
+                cents: close_cents,
                 sats: close_sats,
             },
         };
 
         let ohlc = OhlcByUnit {
-            cents: ohlc_cents,
             usd: ohlc_usd,
+            cents: ohlc_cents,
             sats: ohlc_sats,
         };
 
         let spot = PriceByUnit {
-            cents: price_cents,
             usd: price_usd,
+            cents: price_cents,
             sats: price_sats,
         };
 

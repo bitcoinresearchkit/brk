@@ -8,11 +8,11 @@ pub enum TimeFilter {
 }
 
 impl TimeFilter {
-    pub fn contains(&self, days: usize) -> bool {
+    pub fn contains(&self, hours: usize) -> bool {
         match self {
-            TimeFilter::LowerThan(max) => days < *max,
-            TimeFilter::Range(r) => r.contains(&days),
-            TimeFilter::GreaterOrEqual(min) => days >= *min,
+            TimeFilter::LowerThan(max) => hours < *max,
+            TimeFilter::Range(r) => r.contains(&hours),
+            TimeFilter::GreaterOrEqual(min) => hours >= *min,
         }
     }
 

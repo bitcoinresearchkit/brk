@@ -14,10 +14,10 @@ use crate::{
 /// Single window slot: lazy rolling sum for Amount (sats + btc + cents + usd).
 #[derive(Clone, Traversable)]
 pub struct LazyRollingSumAmountFromHeight {
-    pub sats: LazyRollingSumFromHeight<Sats>,
     pub btc: LazyPerBlock<Bitcoin, Sats>,
-    pub cents: LazyRollingSumFromHeight<Cents>,
+    pub sats: LazyRollingSumFromHeight<Sats>,
     pub usd: LazyPerBlock<Dollars, Cents>,
+    pub cents: LazyRollingSumFromHeight<Cents>,
 }
 
 /// Lazy rolling sums for all 4 windows, for Amount (sats + btc + cents + usd).
@@ -112,10 +112,10 @@ impl LazyRollingSumsAmountFromHeight {
             };
 
             LazyRollingSumAmountFromHeight {
-                sats,
                 btc,
-                cents,
+                sats,
                 usd,
+                cents,
             }
         };
 

@@ -175,7 +175,7 @@ export function createNetworkSection() {
       name: "Trends",
       tree: [
         rollingWindowsTree({
-          windows: addresses.delta[key].change,
+          windows: addresses.delta[key].absolute,
           title: `${titlePrefix}Address Count Change`,
           unit: Unit.count,
           series: baseline,
@@ -487,7 +487,7 @@ export function createNetworkSection() {
               },
               rollingWindowsTree({
                 windows: mapWindows(
-                  supply.marketCap.delta.change,
+                  supply.marketCap.delta.absolute,
                   (c) => c.usd,
                 ),
                 title: "Market Cap Change",
@@ -1074,7 +1074,7 @@ export function createNetworkSection() {
             title: "UTXO Count 30d Change",
             bottom: [
               baseline({
-                metric: cohorts.utxo.all.outputs.unspentCount.delta.change._1m,
+                metric: cohorts.utxo.all.outputs.unspentCount.delta.absolute._1m,
                 name: "30d Change",
                 unit: Unit.count,
               }),

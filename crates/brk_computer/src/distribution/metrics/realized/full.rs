@@ -460,7 +460,7 @@ impl RealizedFull {
             .change_1m_rel_to_rcap
             .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
                 starting_indexes.height,
-                &self.core.net_pnl.delta.change._1m.cents.height,
+                &self.core.net_pnl.delta.absolute._1m.cents.height,
                 &self.core.minimal.cap.cents.height,
                 exit,
             )?;
@@ -468,7 +468,7 @@ impl RealizedFull {
             .change_1m_rel_to_mcap
             .compute_binary::<CentsSigned, Dollars, RatioCentsSignedDollarsBps32>(
                 starting_indexes.height,
-                &self.core.net_pnl.delta.change._1m.cents.height,
+                &self.core.net_pnl.delta.absolute._1m.cents.height,
                 height_to_market_cap,
                 exit,
             )?;

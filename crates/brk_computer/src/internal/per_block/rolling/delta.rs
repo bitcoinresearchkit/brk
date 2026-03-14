@@ -44,7 +44,7 @@ where
 
 /// Lazy rolling deltas for all 4 window durations (24h, 1w, 1m, 1y).
 ///
-/// Tree shape: `change._24h/...`, `rate._24h/...` — matches old `RollingDelta`.
+/// Tree shape: `absolute._24h/...`, `rate._24h/...` — matches old `RollingDelta`.
 ///
 /// Replaces `RollingDelta`, `RollingDelta1m`, and `RollingDeltaExcept1m` — since
 /// there is no storage cost, all 4 windows are always available.
@@ -55,7 +55,7 @@ where
     C: NumericValue + JsonSchema,
     B: BpsType,
 {
-    pub change: Windows<LazyDeltaFromHeight<S, C, DeltaChange>>,
+    pub absolute: Windows<LazyDeltaFromHeight<S, C, DeltaChange>>,
     pub rate: Windows<LazyDeltaPercentFromHeight<S, B>>,
 }
 
@@ -96,7 +96,7 @@ where
                 version,
                 indexes,
             );
-            let change = LazyDeltaFromHeight {
+            let absolute = LazyDeltaFromHeight {
                 height: change_vec,
                 resolutions: Box::new(change_resolutions),
             };
@@ -154,12 +154,12 @@ where
                 percent,
             };
 
-            (change, rate)
+            (absolute, rate)
         };
 
-        let (change, rate) = cached_starts.0.map_with_suffix(make_slot).unzip();
+        let (absolute, rate) = cached_starts.0.map_with_suffix(make_slot).unzip();
 
-        Self { change, rate }
+        Self { absolute, rate }
     }
 }
 
@@ -174,13 +174,13 @@ where
     S: VecValue,
     C: CentsType,
 {
-    pub cents: LazyDeltaFromHeight<S, C, DeltaChange>,
     pub usd: LazyPerBlock<Dollars, C>,
+    pub cents: LazyDeltaFromHeight<S, C, DeltaChange>,
 }
 
 /// Lazy fiat rolling deltas for all 4 windows.
 ///
-/// Tree shape: `change._24h.{cents,usd}/...`, `rate._24h/...` — matches old `FiatRollingDelta`.
+/// Tree shape: `absolute._24h.{cents,usd}/...`, `rate._24h/...` — matches old `FiatRollingDelta`.
 ///
 /// Replaces `FiatRollingDelta`, `FiatRollingDelta1m`, and `FiatRollingDeltaExcept1m`.
 #[derive(Clone, Traversable)]
@@ -190,7 +190,7 @@ where
     C: CentsType,
     B: BpsType,
 {
-    pub change: Windows<LazyDeltaFiatFromHeight<S, C>>,
+    pub absolute: Windows<LazyDeltaFiatFromHeight<S, C>>,
     pub rate: Windows<LazyDeltaPercentFromHeight<S, B>>,
 }
 
@@ -250,7 +250,7 @@ where
                 )),
             };
 
-            let change = LazyDeltaFiatFromHeight { cents, usd };
+            let absolute = LazyDeltaFiatFromHeight { usd, cents };
 
             // Rate BPS: (source[h] - source[ago]) / source[ago] as B (via f64)
             let rate_vec = LazyDeltaVec::<Height, S, B, DeltaRate>::new(
@@ -303,11 +303,11 @@ where
                 percent,
             };
 
-            (change, rate)
+            (absolute, rate)
         };
 
-        let (change, rate) = cached_starts.0.map_with_suffix(make_slot).unzip();
+        let (absolute, rate) = cached_starts.0.map_with_suffix(make_slot).unzip();
 
-        Self { change, rate }
+        Self { absolute, rate }
     }
 }

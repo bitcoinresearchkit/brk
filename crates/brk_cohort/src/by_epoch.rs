@@ -107,20 +107,20 @@ impl<T> ByEpoch<T> {
         .into_par_iter()
     }
 
-    pub fn mut_vec_from_height(&mut self, height: Height) -> &mut T {
+    pub fn mut_vec_from_height(&mut self, height: Height) -> Option<&mut T> {
         let epoch = Halving::from(height);
         if epoch == Halving::new(0) {
-            &mut self._0
+            Some(&mut self._0)
         } else if epoch == Halving::new(1) {
-            &mut self._1
+            Some(&mut self._1)
         } else if epoch == Halving::new(2) {
-            &mut self._2
+            Some(&mut self._2)
         } else if epoch == Halving::new(3) {
-            &mut self._3
+            Some(&mut self._3)
         } else if epoch == Halving::new(4) {
-            &mut self._4
+            Some(&mut self._4)
         } else {
-            todo!("")
+            None
         }
     }
 }

@@ -135,7 +135,18 @@ impl std::fmt::Display for FeeRate {
 impl Formattable for FeeRate {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = ryu::Buffer::new();
-        buf.extend_from_slice(b.format(self.0).as_bytes());
+        if self.0.is_finite() {
+            let mut b = ryu::Buffer::new();
+            buf.extend_from_slice(b.format(self.0).as_bytes());
+        }
+    }
+
+    #[inline(always)]
+    fn fmt_json(&self, buf: &mut Vec<u8>) {
+        if self.0.is_finite() {
+            self.write_to(buf);
+        } else {
+            buf.extend_from_slice(b"null");
+        }
     }
 }

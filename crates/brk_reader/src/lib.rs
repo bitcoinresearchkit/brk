@@ -20,7 +20,7 @@ use crossbeam::channel::bounded;
 use derive_more::Deref;
 use parking_lot::{RwLock, RwLockReadGuard};
 use rayon::prelude::*;
-use tracing::error;
+use tracing::{error, warn};
 
 mod blk_index_to_blk_path;
 mod decode;
@@ -169,6 +169,10 @@ impl ReaderInner {
                         };
                         i += offset;
 
+                        if i + 4 > blk_bytes.len() {
+                            warn!("Truncated blk file {blk_index}: not enough bytes for block length at offset {i}");
+                            break;
+                        }
                         let len = u32::from_le_bytes(
                             xor_i
                                 .bytes(&mut blk_bytes[i..(i + 4)], xor_bytes)
@@ -177,6 +181,10 @@ impl ReaderInner {
                         ) as usize;
                         i += 4;
 
+                        if i + len > blk_bytes.len() {
+                            warn!("Truncated blk file {blk_index}: block at offset {} claims {len} bytes but only {} remain", i - 4, blk_bytes.len() - i);
+                            break;
+                        }
                         let position = BlkPosition::new(blk_index, i as u32);
                         let metadata = BlkMetadata::new(position, len as u32);
 
@@ -208,12 +216,20 @@ impl ReaderInner {
                         .into_iter()
                         .par_bridge()
                         .try_for_each(|(metadata, bytes, xor_i)| {
-                            if let Ok(Some(block)) = decode_block(
+                            let position = metadata.position();
+                            match decode_block(
                                 bytes, metadata, &client, xor_i, xor_bytes, start, end, start_time,
                                 end_time,
-                            ) && send_block.send(block).is_err()
-                            {
-                                return ControlFlow::Break(());
+                            ) {
+                                Ok(Some(block)) => {
+                                    if send_block.send(block).is_err() {
+                                        return ControlFlow::Break(());
+                                    }
+                                }
+                                Ok(None) => {} // Block filtered out (outside range, unconfirmed)
+                                Err(e) => {
+                                    warn!("Failed to decode block at {position}: {e}");
+                                }
                             }
                             ControlFlow::Continue(())
                         });
@@ -247,7 +263,7 @@ impl ReaderInner {
                                 "Chain discontinuity detected at height {}: expected prev_hash {}, got {}. Stopping iteration.",
                                 *block.height(),
                                 expected_prev,
-                                block.hash()
+                                block.header.prev_blockhash
                             );
                             return ControlFlow::Break(());
                         }

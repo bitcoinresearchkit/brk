@@ -373,6 +373,7 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
         let (base, rest) = CostBasisDistribution::deserialize_with_rest(&data)?;
         self.map = Some(base);
         self.raw.state = Some(RawState::deserialize(rest)?);
+        debug_assert!(rest.len() >= 32, "CostBasisData state too short: {} bytes", rest.len());
         self.investor_cap_raw = CentsSquaredSats::from_bytes(&rest[16..32])?;
         self.pending.clear();
         self.raw.pending_cap = PendingCapDelta::default();
@@ -431,6 +432,14 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
         self.apply_map_pending();
         self.raw.apply_pending_cap();
         self.investor_cap_raw += self.pending_investor_cap.inc;
+        debug_assert!(
+            self.investor_cap_raw >= self.pending_investor_cap.dec,
+            "CostBasis investor_cap_raw underflow!\n\
+            Path: {:?}\n\
+            Current (after increments): {:?}\n\
+            Trying to decrement by: {:?}",
+            self.raw.pathbuf, self.investor_cap_raw, self.pending_investor_cap.dec
+        );
         self.investor_cap_raw -= self.pending_investor_cap.dec;
         self.pending_investor_cap = PendingInvestorCapDelta::default();
     }

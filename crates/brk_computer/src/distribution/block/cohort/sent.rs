@@ -2,7 +2,7 @@ use brk_cohort::{AmountBucket, ByAddressType};
 use brk_error::Result;
 use brk_types::{Age, Cents, CheckedSub, Height, Sats, Timestamp, TypeIndex};
 use rustc_hash::FxHashSet;
-use vecdb::{VecIndex, unlikely};
+use vecdb::VecIndex;
 
 use crate::distribution::{
     address::{AddressTypeToActivityCounts, HeightToAddressTypeToVec},
@@ -49,8 +49,7 @@ pub(crate) fn process_sent(
         let prev_timestamp = height_to_timestamp[receive_height.to_usize()];
         let age = Age::new(current_timestamp, prev_timestamp);
 
-        // Compute peak price during holding period for peak regret
-        // This is the max HIGH price between receive and send heights
+        // Compute peak spot price during holding period for peak regret
         let peak_price = price_range_max.max_between(receive_height, current_height);
 
         for (output_type, vec) in by_type.unwrap().into_iter() {
@@ -84,72 +83,33 @@ pub(crate) fn process_sent(
                 let new_bucket = AmountBucket::from(new_balance);
                 let crossing_boundary = prev_bucket != new_bucket;
 
+                let cohort_state = cohorts
+                    .amount_range
+                    .get_mut_by_bucket(prev_bucket)
+                    .state
+                    .as_mut()
+                    .unwrap();
+
+                cohort_state.send(addr_data, value, current_price, prev_price, peak_price, age)?;
+
+                // If crossing a bucket boundary, remove the (now-updated) address from old bucket
                 if will_be_empty || crossing_boundary {
-                    // Subtract from old cohort
-                    let cohort_state = cohorts
-                        .amount_range
-                        .get_mut_by_bucket(prev_bucket)
-                        .state
-                        .as_mut()
-                        .unwrap();
-
-                    // Debug info for tracking down underflow issues
-                    if unlikely(
-                        cohort_state.inner.supply.utxo_count < addr_data.utxo_count() as u64,
-                    ) {
-                        panic!(
-                            "process_sent: cohort underflow detected!\n\
-                            Block context: receive_height={:?}, output_type={:?}, type_index={:?}\n\
-                            prev_balance={}, new_balance={}, value={}\n\
-                            will_be_empty={}, crossing_boundary={}\n\
-                            Address: {:?}",
-                            receive_height,
-                            output_type,
-                            type_index,
-                            prev_balance,
-                            new_balance,
-                            value,
-                            will_be_empty,
-                            crossing_boundary,
-                            addr_data
-                        );
-                    }
-
                     cohort_state.subtract(addr_data);
+                }
 
-                    // Update address data
-                    addr_data.send(value, prev_price)?;
-
-                    if will_be_empty {
-                        // Address becoming empty - invariant check
-                        if new_balance.is_not_zero() {
-                            unreachable!()
-                        }
-
-                        *type_address_count -= 1;
-                        *type_empty_count += 1;
-
-                        // Move from funded to empty
-                        lookup.move_to_empty(output_type, type_index);
-                    } else {
-                        // Add to new cohort
-                        cohorts
-                            .amount_range
-                            .get_mut_by_bucket(new_bucket)
-                            .state
-                            .as_mut()
-                            .unwrap()
-                            .add(addr_data);
-                    }
-                } else {
-                    // Address staying in same cohort - update in place
+                // Migrate address to new bucket or mark as empty
+                if will_be_empty {
+                    *type_address_count -= 1;
+                    *type_empty_count += 1;
+                    lookup.move_to_empty(output_type, type_index);
+                } else if crossing_boundary {
                     cohorts
                         .amount_range
                         .get_mut_by_bucket(new_bucket)
                         .state
                         .as_mut()
                         .unwrap()
-                        .send(addr_data, value, current_price, prev_price, peak_price, age)?;
+                        .add(addr_data);
                 }
             }
         }

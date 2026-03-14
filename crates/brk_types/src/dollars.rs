@@ -196,10 +196,11 @@ impl Div<f64> for Dollars {
 impl Div<Bitcoin> for Dollars {
     type Output = Self;
     fn div(self, rhs: Bitcoin) -> Self::Output {
-        if self.is_nan() {
-            self
+        let rhs = f64::from(rhs);
+        if self.is_nan() || rhs == 0.0 {
+            Dollars::NAN
         } else {
-            Self(f64::from(self) / f64::from(rhs))
+            Self(f64::from(self) / rhs)
         }
     }
 }
@@ -435,7 +436,7 @@ impl std::fmt::Display for Dollars {
 impl Formattable for Dollars {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        if !self.0.is_nan() {
+        if self.0.is_finite() {
             let mut b = ryu::Buffer::new();
             buf.extend_from_slice(b.format(self.0).as_bytes());
         }
@@ -443,10 +444,10 @@ impl Formattable for Dollars {
 
     #[inline(always)]
     fn fmt_json(&self, buf: &mut Vec<u8>) {
-        if self.0.is_nan() {
-            buf.extend_from_slice(b"null");
-        } else {
+        if self.0.is_finite() {
             self.write_to(buf);
+        } else {
+            buf.extend_from_slice(b"null");
         }
     }
 }

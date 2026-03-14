@@ -56,7 +56,13 @@ impl<'de> Deserialize<'de> for RangeIndex {
             return Ok(Self::Date(date));
         }
         if let Ok(ts) = s.parse::<jiff::Timestamp>() {
-            return Ok(Self::Timestamp(Timestamp::new(ts.as_second() as u32)));
+            let secs = ts.as_second();
+            if secs < 0 || secs > u32::MAX as i64 {
+                return Err(serde::de::Error::custom(format!(
+                    "timestamp out of range: {s}"
+                )));
+            }
+            return Ok(Self::Timestamp(Timestamp::new(secs as u32)));
         }
         Err(serde::de::Error::custom(format!(
             "expected integer, YYYY-MM-DD, or ISO 8601 timestamp: {s}"

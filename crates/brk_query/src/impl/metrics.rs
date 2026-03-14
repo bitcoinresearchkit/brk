@@ -186,6 +186,7 @@ impl Query {
                 .unwrap_or(total),
         };
 
+        let end = end.max(start);
         let weight = Self::weight(&vecs, Some(start as i64), Some(end as i64));
         if weight > max_weight {
             return Err(Error::WeightExceeded {

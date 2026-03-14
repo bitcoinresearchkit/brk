@@ -13,8 +13,8 @@ use crate::{
 
 #[derive(Clone, Traversable)]
 pub struct LazyRollingSumFiatFromHeight<C: CentsType> {
-    pub cents: LazyRollingSumFromHeight<C>,
     pub usd: LazyPerBlock<Dollars, C>,
+    pub cents: LazyRollingSumFromHeight<C>,
 }
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
@@ -69,7 +69,7 @@ impl<C: CentsType> LazyRollingSumsFiatFromHeight<C> {
                 )),
             };
 
-            LazyRollingSumFiatFromHeight { cents, usd }
+            LazyRollingSumFiatFromHeight { usd, cents }
         };
 
         Self(cached_starts.0.map_with_suffix(make_slot))

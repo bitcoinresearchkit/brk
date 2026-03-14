@@ -11,8 +11,8 @@
  */
 
 import { Unit } from "../../utils/units.js";
-import { line, baseline } from "../series.js";
-import { createRatioChart, mapCohortsWithAll } from "../shared.js";
+import { ROLLING_WINDOWS, line, baseline, mapWindows, rollingWindowsTree, rollingPercentRatioTree, percentRatio, percentRatioBaseline } from "../series.js";
+import { createRatioChart, mapCohortsWithAll, flatMapCohortsWithAll } from "../shared.js";
 
 /**
  * @param {UtxoCohortObject | CohortWithoutRelative} cohort
@@ -31,20 +31,6 @@ function createSingleRealizedCapSeries(cohort) {
 }
 
 /**
- * @param {UtxoCohortObject | CohortWithoutRelative} cohort
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-function createSingle30dChangeSeries(cohort) {
-  return [
-    baseline({
-      metric: cohort.tree.realized.cap.delta.change._1m.usd,
-      name: "30d Change",
-      unit: Unit.usd,
-    }),
-  ];
-}
-
-/**
  * Create valuation section for cohorts with full ratio patterns
  * (CohortAll, CohortFull, CohortWithPercentiles)
  * @param {{ cohort: CohortAll | CohortFull | CohortLongTerm, title: (metric: string) => string }} args
@@ -57,21 +43,25 @@ export function createValuationSectionFull({ cohort, title }) {
     tree: [
       {
         name: "Realized Cap",
-        title: title("Realized Cap"),
-        bottom: [
-          ...createSingleRealizedCapSeries(cohort),
-          baseline({
-            metric: tree.realized.cap.relToOwnMcap.percent,
-            name: "Rel. to Own M.Cap",
-            color,
-            unit: Unit.pctOwnMcap,
-          }),
+        tree: [
+          {
+            name: "USD",
+            title: title("Realized Cap"),
+            bottom: createSingleRealizedCapSeries(cohort),
+          },
+          {
+            name: "% of Own Mcap",
+            title: title("Realized Cap (% of Own Mcap)"),
+            bottom: percentRatioBaseline({ pattern: tree.realized.cap.relToOwnMcap, name: "Rel. to Own M.Cap", color }),
+          },
         ],
       },
       {
-        name: "30d Change",
-        title: title("Realized Cap 30d Change"),
-        bottom: createSingle30dChangeSeries(cohort),
+        name: "Change",
+        tree: [
+          { ...rollingWindowsTree({ windows: mapWindows(tree.realized.cap.delta.absolute, (c) => c.usd), title: title("Realized Cap Change"), unit: Unit.usd, series: baseline }), name: "Absolute" },
+          { ...rollingPercentRatioTree({ windows: tree.realized.cap.delta.rate, title: title("Realized Cap Rate") }), name: "Rate" },
+        ],
       },
       createRatioChart({
         title,
@@ -101,9 +91,11 @@ export function createValuationSection({ cohort, title }) {
         bottom: createSingleRealizedCapSeries(cohort),
       },
       {
-        name: "30d Change",
-        title: title("Realized Cap 30d Change"),
-        bottom: createSingle30dChangeSeries(cohort),
+        name: "Change",
+        tree: [
+          { ...rollingWindowsTree({ windows: mapWindows(tree.realized.cap.delta.absolute, (c) => c.usd), title: title("Realized Cap Change"), unit: Unit.usd, series: baseline }), name: "Absolute" },
+          { ...rollingPercentRatioTree({ windows: tree.realized.cap.delta.rate, title: title("Realized Cap Rate") }), name: "Rate" },
+        ],
       },
       {
         name: "MVRV",
@@ -142,16 +134,29 @@ export function createGroupedValuationSection({ list, all, title }) {
         ),
       },
       {
-        name: "30d Change",
-        title: title("Realized Cap 30d Change"),
-        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-          baseline({
-            metric: tree.realized.cap.delta.change._1m.usd,
-            name,
-            color,
-            unit: Unit.usd,
-          }),
-        ),
+        name: "Change",
+        tree: [
+          {
+            name: "Absolute",
+            tree: ROLLING_WINDOWS.map((w) => ({
+              name: w.name,
+              title: title(`Realized Cap Change (${w.name})`),
+              bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+                baseline({ metric: tree.realized.cap.delta.absolute[w.key].usd, name, color, unit: Unit.usd }),
+              ),
+            })),
+          },
+          {
+            name: "Rate",
+            tree: ROLLING_WINDOWS.map((w) => ({
+              name: w.name,
+              title: title(`Realized Cap Rate (${w.name})`),
+              bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
+                percentRatio({ pattern: tree.realized.cap.delta.rate[w.key], name, color }),
+              ),
+            })),
+          },
+        ],
       },
       {
         name: "MVRV",
@@ -184,37 +189,47 @@ export function createGroupedValuationSectionWithOwnMarketCap({
     tree: [
       {
         name: "Realized Cap",
-        title: title("Realized Cap"),
-        bottom: [
-          ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({
-              metric: tree.realized.cap.usd,
-              name,
-              color,
-              unit: Unit.usd,
-            }),
-          ),
-          ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            baseline({
-              metric: tree.realized.cap.relToOwnMcap.percent,
-              name,
-              color,
-              unit: Unit.pctOwnMcap,
-            }),
-          ),
+        tree: [
+          {
+            name: "USD",
+            title: title("Realized Cap"),
+            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+              line({ metric: tree.realized.cap.usd, name, color, unit: Unit.usd }),
+            ),
+          },
+          {
+            name: "% of Own Mcap",
+            title: title("Realized Cap (% of Own Mcap)"),
+            bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
+              percentRatio({ pattern: tree.realized.cap.relToOwnMcap, name, color }),
+            ),
+          },
         ],
       },
       {
-        name: "30d Change",
-        title: title("Realized Cap 30d Change"),
-        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-          baseline({
-            metric: tree.realized.cap.delta.change._1m.usd,
-            name,
-            color,
-            unit: Unit.usd,
-          }),
-        ),
+        name: "Change",
+        tree: [
+          {
+            name: "Absolute",
+            tree: ROLLING_WINDOWS.map((w) => ({
+              name: w.name,
+              title: title(`Realized Cap Change (${w.name})`),
+              bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+                baseline({ metric: tree.realized.cap.delta.absolute[w.key].usd, name, color, unit: Unit.usd }),
+              ),
+            })),
+          },
+          {
+            name: "Rate",
+            tree: ROLLING_WINDOWS.map((w) => ({
+              name: w.name,
+              title: title(`Realized Cap Rate (${w.name})`),
+              bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
+                percentRatio({ pattern: tree.realized.cap.delta.rate[w.key], name, color }),
+              ),
+            })),
+          },
+        ],
       },
       {
         name: "MVRV",

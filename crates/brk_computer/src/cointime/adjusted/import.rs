@@ -21,15 +21,15 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            tx_velocity_btc: PerBlock::forced_import(
+            tx_velocity_native: PerBlock::forced_import(
                 db,
-                "cointime_adj_tx_velocity_btc",
+                "cointime_adj_tx_velocity",
                 version,
                 indexes,
             )?,
-            tx_velocity_usd: PerBlock::forced_import(
+            tx_velocity_fiat: PerBlock::forced_import(
                 db,
-                "cointime_adj_tx_velocity_usd",
+                "cointime_adj_tx_velocity_fiat",
                 version,
                 indexes,
             )?,

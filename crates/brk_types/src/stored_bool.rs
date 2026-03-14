@@ -1,5 +1,5 @@
 use derive_more::Deref;
-use schemars::JsonSchema;
+use schemars::{JsonSchema, SchemaGenerator};
 use serde::{Deserialize, Serialize};
 use vecdb::{Formattable, Pco, PrintableIndex};
 
@@ -17,9 +17,18 @@ use vecdb::{Formattable, Pco, PrintableIndex};
     Serialize,
     Deserialize,
     Pco,
-    JsonSchema,
 )]
 pub struct StoredBool(u8);
+
+impl JsonSchema for StoredBool {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "StoredBool".into()
+    }
+
+    fn json_schema(generator: &mut SchemaGenerator) -> schemars::Schema {
+        bool::json_schema(generator)
+    }
+}
 
 impl StoredBool {
     pub const FALSE: Self = Self(0);

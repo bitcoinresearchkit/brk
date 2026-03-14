@@ -27,6 +27,12 @@ pub type CostBasisFormatted = BTreeMap<Dollars, f64>;
 impl CostBasisDistribution {
     /// Deserialize from the pco-compressed format, returning remaining bytes.
     pub fn deserialize_with_rest(data: &[u8]) -> Result<(Self, &[u8])> {
+        if data.len() < 24 {
+            return Err(brk_error::Error::Deserialization(format!(
+                "CostBasisDistribution: data too short ({} bytes, need >= 24)",
+                data.len()
+            )));
+        }
         let entry_count = usize::from_bytes(&data[0..8])?;
         let keys_len = usize::from_bytes(&data[8..16])?;
         let values_len = usize::from_bytes(&data[16..24])?;
@@ -34,6 +40,13 @@ impl CostBasisDistribution {
         let keys_start = 24;
         let values_start = keys_start + keys_len;
         let rest_start = values_start + values_len;
+
+        if data.len() < rest_start {
+            return Err(brk_error::Error::Deserialization(format!(
+                "CostBasisDistribution: data too short ({} bytes, need >= {})",
+                data.len(), rest_start
+            )));
+        }
 
         let keys: Vec<u32> = simple_decompress(&data[keys_start..values_start])?;
         let values: Vec<u64> = simple_decompress(&data[values_start..rest_start])?;
@@ -44,7 +57,7 @@ impl CostBasisDistribution {
             .map(|(k, v)| (CentsCompact::new(k), Sats::from(v)))
             .collect();
 
-        assert_eq!(map.len(), entry_count);
+        debug_assert_eq!(map.len(), entry_count);
 
         Ok((Self { map }, &data[rest_start..]))
     }

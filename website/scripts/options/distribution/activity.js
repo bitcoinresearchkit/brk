@@ -9,7 +9,7 @@
  */
 
 import { Unit } from "../../utils/units.js";
-import { line, baseline, dotsBaseline, dots } from "../series.js";
+import { line, baseline, dotsBaseline, percentRatio, percentRatioDots } from "../series.js";
 import {
   mapCohortsWithAll,
   flatMapCohortsWithAll,
@@ -35,31 +35,18 @@ function volumeAndCoinsTree(activity, color, title) {
           name: "Sum",
           title: title("Sent Volume"),
           bottom: [
-            line({
-              metric: activity.sent.sum._24h,
-              name: "24h",
-              color: colors.indicator.main,
-              unit: Unit.sats,
-              defaultActive: false,
-            }),
-            line({
-              metric: activity.sent.base,
-              name: "Sum",
-              color,
-              unit: Unit.sats,
-            }),
+            line({ metric: activity.sent.base, name: "Sum", color, unit: Unit.sats }),
+            line({ metric: activity.sent.sum._24h, name: "24h", color: colors.time._24h, unit: Unit.sats, defaultActive: false }),
+            line({ metric: activity.sent.sum._1w, name: "1w", color: colors.time._1w, unit: Unit.sats, defaultActive: false }),
+            line({ metric: activity.sent.sum._1m, name: "1m", color: colors.time._1m, unit: Unit.sats, defaultActive: false }),
+            line({ metric: activity.sent.sum._1y, name: "1y", color: colors.time._1y, unit: Unit.sats, defaultActive: false }),
           ],
         },
         {
           name: "Cumulative",
           title: title("Sent Volume (Total)"),
           bottom: [
-            line({
-              metric: activity.sent.cumulative,
-              name: "All-time",
-              color,
-              unit: Unit.sats,
-            }),
+            line({ metric: activity.sent.cumulative, name: "All-time", color, unit: Unit.sats }),
           ],
         },
       ],
@@ -68,27 +55,21 @@ function volumeAndCoinsTree(activity, color, title) {
       name: "Coins Destroyed",
       tree: [
         {
-          name: "Sum",
+          name: "Base",
           title: title("Coindays Destroyed"),
           bottom: [
-            line({
-              metric: activity.coindaysDestroyed.sum._24h,
-              name: "24h",
-              color,
-              unit: Unit.coindays,
-            }),
+            line({ metric: activity.coindaysDestroyed.base, name: "Base", color, unit: Unit.coindays }),
+            line({ metric: activity.coindaysDestroyed.sum._24h, name: "24h", color: colors.time._24h, unit: Unit.coindays, defaultActive: false }),
+            line({ metric: activity.coindaysDestroyed.sum._1w, name: "1w", color: colors.time._1w, unit: Unit.coindays, defaultActive: false }),
+            line({ metric: activity.coindaysDestroyed.sum._1m, name: "1m", color: colors.time._1m, unit: Unit.coindays, defaultActive: false }),
+            line({ metric: activity.coindaysDestroyed.sum._1y, name: "1y", color: colors.time._1y, unit: Unit.coindays, defaultActive: false }),
           ],
         },
         {
           name: "Cumulative",
           title: title("Cumulative Coindays Destroyed"),
           bottom: [
-            line({
-              metric: activity.coindaysDestroyed.cumulative,
-              name: "All-time",
-              color,
-              unit: Unit.coindays,
-            }),
+            line({ metric: activity.coindaysDestroyed.cumulative, name: "All-time", color, unit: Unit.coindays }),
           ],
         },
       ],
@@ -156,31 +137,31 @@ function singleSellSideRiskTree(sellSideRisk, title) {
       name: "Compare",
       title: title("Rolling Sell Side Risk"),
       bottom: [
-        line({ metric: sellSideRisk._24h.ratio, name: "24h", color: colors.time._24h, unit: Unit.ratio }),
-        line({ metric: sellSideRisk._1w.ratio, name: "7d", color: colors.time._1w, unit: Unit.ratio }),
-        line({ metric: sellSideRisk._1m.ratio, name: "30d", color: colors.time._1m, unit: Unit.ratio }),
-        line({ metric: sellSideRisk._1y.ratio, name: "1y", color: colors.time._1y, unit: Unit.ratio }),
+        ...percentRatioDots({ pattern: sellSideRisk._24h, name: "24h", color: colors.time._24h }),
+        ...percentRatio({ pattern: sellSideRisk._1w, name: "7d", color: colors.time._1w }),
+        ...percentRatio({ pattern: sellSideRisk._1m, name: "30d", color: colors.time._1m }),
+        ...percentRatio({ pattern: sellSideRisk._1y, name: "1y", color: colors.time._1y }),
       ],
     },
     {
       name: "24h",
       title: title("Sell Side Risk (24h)"),
-      bottom: [dots({ metric: sellSideRisk._24h.ratio, name: "Raw", color: colors.bitcoin, unit: Unit.ratio })],
+      bottom: percentRatioDots({ pattern: sellSideRisk._24h, name: "Raw", color: colors.bitcoin }),
     },
     {
       name: "7d",
       title: title("Sell Side Risk (7d)"),
-      bottom: [line({ metric: sellSideRisk._1w.ratio, name: "Risk", unit: Unit.ratio })],
+      bottom: percentRatio({ pattern: sellSideRisk._1w, name: "Risk" }),
     },
     {
       name: "30d",
       title: title("Sell Side Risk (30d)"),
-      bottom: [line({ metric: sellSideRisk._1m.ratio, name: "Risk", unit: Unit.ratio })],
+      bottom: percentRatio({ pattern: sellSideRisk._1m, name: "Risk" }),
     },
     {
       name: "1y",
       title: title("Sell Side Risk (1y)"),
-      bottom: [line({ metric: sellSideRisk._1y.ratio, name: "Risk", unit: Unit.ratio })],
+      bottom: percentRatio({ pattern: sellSideRisk._1y, name: "Risk" }),
     },
   ];
 }
@@ -253,6 +234,14 @@ function singleRollingValueTree(valueCreated, valueDestroyed, title, prefix = ""
       bottom: [
         line({ metric: valueCreated.sum._1y, name: "Created", color: colors.usd, unit: Unit.usd }),
         line({ metric: valueDestroyed.sum._1y, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
+      ],
+    },
+    {
+      name: "Cumulative",
+      title: title(`${prefix}Value Created & Destroyed (Total)`),
+      bottom: [
+        line({ metric: valueCreated.cumulative, name: "Created", color: colors.usd, unit: Unit.usd }),
+        line({ metric: valueDestroyed.cumulative, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
       ],
     },
   ];

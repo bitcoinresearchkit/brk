@@ -29,8 +29,8 @@ impl CentsType for CentsSigned {
 /// Generic over `C` to support both `Cents` (unsigned) and `CentsSigned` (signed).
 #[derive(Traversable)]
 pub struct FiatPerBlock<C: CentsType, M: StorageMode = Rw> {
-    pub cents: PerBlock<C, M>,
     pub usd: LazyPerBlock<Dollars, C>,
+    pub cents: PerBlock<C, M>,
 }
 
 impl<C: CentsType> FiatPerBlock<C> {
@@ -48,6 +48,6 @@ impl<C: CentsType> FiatPerBlock<C> {
             cents.height.read_only_boxed_clone(),
             &cents,
         );
-        Ok(Self { cents, usd })
+        Ok(Self { usd, cents })
     }
 }

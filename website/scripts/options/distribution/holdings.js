@@ -10,7 +10,7 @@
  */
 
 import { Unit } from "../../utils/units.js";
-import { line, baseline } from "../series.js";
+import { ROLLING_WINDOWS, line, baseline, rollingWindowsTree, rollingPercentRatioTree, percentRatio } from "../series.js";
 import {
   satsBtcUsd,
   mapCohorts,
@@ -74,23 +74,15 @@ function fullSupplySeries(supply) {
 
 /**
  * % of Own Supply series (profit/loss relative to own supply)
- * @param {{ inProfit: { relToOwn: { percent: AnyMetricPattern } }, inLoss: { relToOwn: { percent: AnyMetricPattern } } }} supply
+ * @param {{ inProfit: { relToOwn: { percent: AnyMetricPattern, ratio: AnyMetricPattern } }, inLoss: { relToOwn: { percent: AnyMetricPattern, ratio: AnyMetricPattern } } }} supply
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function ownSupplyPctSeries(supply) {
   return [
-    line({
-      metric: supply.inProfit.relToOwn.percent,
-      name: "In Profit",
-      color: colors.profit,
-      unit: Unit.pctOwn,
-    }),
-    line({
-      metric: supply.inLoss.relToOwn.percent,
-      name: "In Loss",
-      color: colors.loss,
-      unit: Unit.pctOwn,
-    }),
+    line({ metric: supply.inProfit.relToOwn.percent, name: "In Profit", color: colors.profit, unit: Unit.pctOwn }),
+    line({ metric: supply.inLoss.relToOwn.percent, name: "In Loss", color: colors.loss, unit: Unit.pctOwn }),
+    line({ metric: supply.inProfit.relToOwn.ratio, name: "In Profit", color: colors.profit, unit: Unit.ratio }),
+    line({ metric: supply.inLoss.relToOwn.ratio, name: "In Loss", color: colors.loss, unit: Unit.ratio }),
     ...priceLines({ numbers: [100, 50, 0], unit: Unit.pctOwn }),
   ];
 }
@@ -144,42 +136,58 @@ function groupedUtxoCountChart(list, all, title) {
 }
 
 /**
- * @param {readonly (UtxoCohortObject | CohortWithoutRelative)[]} list
- * @param {CohortAll} all
+ * @param {{ absolute: { _24h: AnyMetricPattern, _1w: AnyMetricPattern, _1m: AnyMetricPattern, _1y: AnyMetricPattern }, rate: { _24h: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, _1w: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, _1m: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, _1y: { percent: AnyMetricPattern, ratio: AnyMetricPattern } } }} delta
+ * @param {Unit} unit
  * @param {(metric: string) => string} title
+ * @param {string} name
+ * @returns {PartialOptionsGroup}
  */
-function grouped30dSupplyChangeChart(list, all, title) {
+function singleDeltaTree(delta, unit, title, name) {
   return {
-    name: "Supply",
-    title: title("Supply 30d Change"),
-    bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-      baseline({
-        metric: tree.supply.delta.change._1m,
-        name,
-        color,
-        unit: Unit.sats,
-      }),
-    ),
+    name,
+    tree: [
+      { ...rollingWindowsTree({ windows: delta.absolute, title: title(`${name} Change`), unit, series: baseline }), name: "Absolute" },
+      { ...rollingPercentRatioTree({ windows: delta.rate, title: title(`${name} Rate`) }), name: "Rate" },
+    ],
   };
 }
 
 /**
- * @param {readonly (UtxoCohortObject | CohortWithoutRelative)[]} list
- * @param {CohortAll} all
+ * @template {{ name: string, color: Color }} T
+ * @template {{ name: string, color: Color }} A
+ * @param {readonly T[]} list
+ * @param {A} all
+ * @param {(c: T | A) => ChangeRatePattern | ChangeRatePattern2} getDelta
+ * @param {Unit} unit
  * @param {(metric: string) => string} title
+ * @param {string} name
+ * @returns {PartialOptionsGroup}
  */
-function grouped30dUtxoCountChangeChart(list, all, title) {
+function groupedDeltaTree(list, all, getDelta, unit, title, name) {
   return {
-    name: "UTXO Count",
-    title: title("UTXO Count 30d Change"),
-    bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-      baseline({
-        metric: tree.outputs.unspentCount.delta.change._1m,
-        name,
-        unit: Unit.count,
-        color,
-      }),
-    ),
+    name,
+    tree: [
+      {
+        name: "Absolute",
+        tree: ROLLING_WINDOWS.map((w) => ({
+          name: w.name,
+          title: title(`${name} Change (${w.name})`),
+          bottom: mapCohortsWithAll(list, all, (c) =>
+            baseline({ metric: getDelta(c).absolute[w.key], name: c.name, color: c.color, unit }),
+          ),
+        })),
+      },
+      {
+        name: "Rate",
+        tree: ROLLING_WINDOWS.map((w) => ({
+          name: w.name,
+          title: title(`${name} Rate (${w.name})`),
+          bottom: flatMapCohortsWithAll(list, all, (c) =>
+            percentRatio({ pattern: getDelta(c).rate[w.key], name: c.name, color: c.color }),
+          ),
+        })),
+      },
+    ],
   };
 }
 
@@ -203,43 +211,6 @@ function singleUtxoCountChart(cohort, title) {
   };
 }
 
-/**
- * @param {UtxoCohortObject | CohortWithoutRelative} cohort
- * @param {(metric: string) => string} title
- * @returns {PartialChartOption}
- */
-function single30dSupplyChangeChart(cohort, title) {
-  return {
-    name: "Supply",
-    title: title("Supply 30d Change"),
-    bottom: [
-      baseline({
-        metric: cohort.tree.supply.delta.change._1m,
-        name: "30d Change",
-        unit: Unit.sats,
-      }),
-    ],
-  };
-}
-
-/**
- * @param {UtxoCohortObject | CohortWithoutRelative} cohort
- * @param {(metric: string) => string} title
- * @returns {PartialChartOption}
- */
-function single30dUtxoCountChangeChart(cohort, title) {
-  return {
-    name: "UTXO Count",
-    title: title("UTXO Count 30d Change"),
-    bottom: [
-      baseline({
-        metric: cohort.tree.outputs.unspentCount.delta.change._1m,
-        name: "30d Change",
-        unit: Unit.count,
-      }),
-    ],
-  };
-}
 
 /**
  * @param {CohortAll | CohortAddress | AddressCohortObject} cohort
@@ -261,24 +232,6 @@ function singleAddressCountChart(cohort, title) {
   };
 }
 
-/**
- * @param {CohortAll | CohortAddress | AddressCohortObject} cohort
- * @param {(metric: string) => string} title
- * @returns {PartialChartOption}
- */
-function single30dAddressCountChangeChart(cohort, title) {
-  return {
-    name: "Address Count",
-    title: title("Address Count 30d Change"),
-    bottom: [
-      baseline({
-        metric: cohort.addressCount.delta.change._1m,
-        name: "30d Change",
-        unit: Unit.count,
-      }),
-    ],
-  };
-}
 
 // ============================================================================
 // Single Cohort Holdings Sections
@@ -301,10 +254,10 @@ export function createHoldingsSection({ cohort, title }) {
       },
       singleUtxoCountChart(cohort, title),
       {
-        name: "30d Changes",
+        name: "Change",
         tree: [
-          single30dSupplyChangeChart(cohort, title),
-          single30dUtxoCountChangeChart(cohort, title),
+          singleDeltaTree(cohort.tree.supply.delta, Unit.sats, title, "Supply"),
+          singleDeltaTree(cohort.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
         ],
       },
     ],
@@ -332,11 +285,11 @@ export function createHoldingsSectionAll({ cohort, title }) {
       singleUtxoCountChart(cohort, title),
       singleAddressCountChart(cohort, title),
       {
-        name: "30d Changes",
+        name: "Change",
         tree: [
-          single30dSupplyChangeChart(cohort, title),
-          single30dUtxoCountChangeChart(cohort, title),
-          single30dAddressCountChangeChart(cohort, title),
+          singleDeltaTree(cohort.tree.supply.delta, Unit.sats, title, "Supply"),
+          singleDeltaTree(cohort.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
+          singleDeltaTree(cohort.addressCount.delta, Unit.count, title, "Address Count"),
         ],
       },
     ],
@@ -365,10 +318,10 @@ export function createHoldingsSectionWithRelative({ cohort, title }) {
       },
       singleUtxoCountChart(cohort, title),
       {
-        name: "30d Changes",
+        name: "Change",
         tree: [
-          single30dSupplyChangeChart(cohort, title),
-          single30dUtxoCountChangeChart(cohort, title),
+          singleDeltaTree(cohort.tree.supply.delta, Unit.sats, title, "Supply"),
+          singleDeltaTree(cohort.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
         ],
       },
     ],
@@ -396,10 +349,10 @@ export function createHoldingsSectionWithOwnSupply({ cohort, title }) {
       },
       singleUtxoCountChart(cohort, title),
       {
-        name: "30d Changes",
+        name: "Change",
         tree: [
-          single30dSupplyChangeChart(cohort, title),
-          single30dUtxoCountChangeChart(cohort, title),
+          singleDeltaTree(cohort.tree.supply.delta, Unit.sats, title, "Supply"),
+          singleDeltaTree(cohort.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
         ],
       },
     ],
@@ -423,11 +376,11 @@ export function createHoldingsSectionAddress({ cohort, title }) {
       singleUtxoCountChart(cohort, title),
       singleAddressCountChart(cohort, title),
       {
-        name: "30d Changes",
+        name: "Change",
         tree: [
-          single30dSupplyChangeChart(cohort, title),
-          single30dUtxoCountChangeChart(cohort, title),
-          single30dAddressCountChangeChart(cohort, title),
+          singleDeltaTree(cohort.tree.supply.delta, Unit.sats, title, "Supply"),
+          singleDeltaTree(cohort.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
+          singleDeltaTree(cohort.addressCount.delta, Unit.count, title, "Address Count"),
         ],
       },
     ],
@@ -451,11 +404,11 @@ export function createHoldingsSectionAddressAmount({ cohort, title }) {
       singleUtxoCountChart(cohort, title),
       singleAddressCountChart(cohort, title),
       {
-        name: "30d Changes",
+        name: "Change",
         tree: [
-          single30dSupplyChangeChart(cohort, title),
-          single30dUtxoCountChangeChart(cohort, title),
-          single30dAddressCountChangeChart(cohort, title),
+          singleDeltaTree(cohort.tree.supply.delta, Unit.sats, title, "Supply"),
+          singleDeltaTree(cohort.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
+          singleDeltaTree(cohort.addressCount.delta, Unit.count, title, "Address Count"),
         ],
       },
     ],
@@ -517,22 +470,11 @@ export function createGroupedHoldingsSectionAddress({ list, all, title }) {
         ),
       },
       {
-        name: "30d Changes",
+        name: "Change",
         tree: [
-          grouped30dSupplyChangeChart(list, all, title),
-          grouped30dUtxoCountChangeChart(list, all, title),
-          {
-            name: "Address Count",
-            title: title("Address Count 30d Change"),
-            bottom: mapCohortsWithAll(list, all, ({ name, color, addressCount }) =>
-              baseline({
-                metric: addressCount.delta.change._1m,
-                name,
-                unit: Unit.count,
-                color,
-              }),
-            ),
-          },
+          groupedDeltaTree(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
+          groupedDeltaTree(list, all, (c) => c.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
+          groupedDeltaTree(list, all, (c) => c.addressCount.delta, Unit.count, title, "Address Count"),
         ],
       },
     ],
@@ -573,22 +515,11 @@ export function createGroupedHoldingsSectionAddressAmount({
         ),
       },
       {
-        name: "30d Changes",
+        name: "Change",
         tree: [
-          grouped30dSupplyChangeChart(list, all, title),
-          grouped30dUtxoCountChangeChart(list, all, title),
-          {
-            name: "Address Count",
-            title: title("Address Count 30d Change"),
-            bottom: mapCohortsWithAll(list, all, ({ name, color, addressCount }) =>
-              baseline({
-                metric: addressCount.delta.change._1m,
-                name,
-                unit: Unit.count,
-                color,
-              }),
-            ),
-          },
+          groupedDeltaTree(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
+          groupedDeltaTree(list, all, (c) => c.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
+          groupedDeltaTree(list, all, (c) => c.addressCount.delta, Unit.count, title, "Address Count"),
         ],
       },
     ],
@@ -618,10 +549,10 @@ export function createGroupedHoldingsSection({ list, all, title }) {
       },
       groupedUtxoCountChart(list, all, title),
       {
-        name: "30d Changes",
+        name: "Change",
         tree: [
-          grouped30dSupplyChangeChart(list, all, title),
-          grouped30dUtxoCountChangeChart(list, all, title),
+          groupedDeltaTree(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
+          groupedDeltaTree(list, all, (c) => c.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
         ],
       },
     ],
@@ -708,10 +639,10 @@ export function createGroupedHoldingsSectionWithOwnSupply({
       },
       groupedUtxoCountChart(list, all, title),
       {
-        name: "30d Changes",
+        name: "Change",
         tree: [
-          grouped30dSupplyChangeChart(list, all, title),
-          grouped30dUtxoCountChangeChart(list, all, title),
+          groupedDeltaTree(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
+          groupedDeltaTree(list, all, (c) => c.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
         ],
       },
     ],
@@ -812,10 +743,10 @@ export function createGroupedHoldingsSectionWithRelative({ list, all, title }) {
       },
       groupedUtxoCountChart(list, all, title),
       {
-        name: "30d Changes",
+        name: "Change",
         tree: [
-          grouped30dSupplyChangeChart(list, all, title),
-          grouped30dUtxoCountChangeChart(list, all, title),
+          groupedDeltaTree(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
+          groupedDeltaTree(list, all, (c) => c.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
         ],
       },
     ],

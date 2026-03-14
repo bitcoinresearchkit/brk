@@ -4,7 +4,7 @@ use serde::Serialize;
 
 use super::CohortName;
 
-/// "At least X% profit" threshold names (15 thresholds).
+/// "At least X% profit" threshold names (14 thresholds).
 pub const PROFIT_NAMES: Profit<CohortName> = Profit {
     breakeven: CohortName::new("utxos_in_profit", "≥0%", "In Profit (Breakeven+)"),
     _10pct: CohortName::new("utxos_over_10pct_in_profit", "≥10%", "10%+ Profit"),
@@ -31,7 +31,7 @@ impl Profit<CohortName> {
     }
 }
 
-/// 15 "at least X% profit" aggregate thresholds.
+/// 14 "at least X% profit" aggregate thresholds.
 ///
 /// Each is a prefix sum over the profitability ranges, from most profitable down.
 #[derive(Default, Clone, Traversable, Serialize)]

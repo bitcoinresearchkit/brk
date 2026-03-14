@@ -5,13 +5,18 @@ use brk_types::{Cents, Close, Date, Dollars, High, Low, OHLCCents, Open, Timesta
 
 /// Parse OHLC value from a JSON array element at given index
 pub fn parse_cents(array: &[serde_json::Value], index: usize) -> Cents {
-    Cents::from(Dollars::from(
-        array
-            .get(index)
-            .and_then(|v| v.as_str())
-            .and_then(|s| s.parse::<f64>().ok())
-            .unwrap_or(0.0),
-    ))
+    let value = array
+        .get(index)
+        .and_then(|v| v.as_str())
+        .and_then(|s| s.parse::<f64>().ok())
+        .unwrap_or_else(|| {
+            tracing::warn!(
+                "Failed to parse price at index {index}: {:?}",
+                array.get(index)
+            );
+            0.0
+        });
+    Cents::from(Dollars::from(value))
 }
 
 /// Build OHLCCentsUnsigned from array indices 1-4 (open, high, low, close)

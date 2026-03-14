@@ -142,6 +142,9 @@ pub enum Error {
     #[error("Request weight {requested} exceeds maximum {max}")]
     WeightExceeded { requested: usize, max: usize },
 
+    #[error("Deserialization error: {0}")]
+    Deserialization(String),
+
     #[error("Fetch failed after retries: {0}")]
     FetchFailed(String),
 

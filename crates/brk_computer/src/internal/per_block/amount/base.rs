@@ -13,10 +13,10 @@ use crate::{
 
 #[derive(Traversable)]
 pub struct AmountPerBlock<M: StorageMode = Rw> {
-    pub sats: PerBlock<Sats, M>,
     pub btc: LazyPerBlock<Bitcoin, Sats>,
-    pub cents: PerBlock<Cents, M>,
+    pub sats: PerBlock<Sats, M>,
     pub usd: LazyPerBlock<Dollars, Cents>,
+    pub cents: PerBlock<Cents, M>,
 }
 
 impl AmountPerBlock {
@@ -47,10 +47,10 @@ impl AmountPerBlock {
         );
 
         Ok(Self {
-            sats,
             btc,
-            cents,
+            sats,
             usd,
+            cents,
         })
     }
 

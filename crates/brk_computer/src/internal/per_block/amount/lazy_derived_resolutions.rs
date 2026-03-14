@@ -6,10 +6,10 @@ use crate::internal::{AmountPerBlock, DerivedResolutions};
 
 #[derive(Clone, Traversable)]
 pub struct LazyAmountDerivedResolutions {
-    pub sats: DerivedResolutions<Sats, Sats>,
     pub btc: DerivedResolutions<Bitcoin, Sats>,
-    pub cents: DerivedResolutions<Cents, Cents>,
+    pub sats: DerivedResolutions<Sats, Sats>,
     pub usd: DerivedResolutions<Dollars, Dollars>,
+    pub cents: DerivedResolutions<Cents, Cents>,
 }
 
 impl LazyAmountDerivedResolutions {
@@ -54,10 +54,10 @@ impl LazyAmountDerivedResolutions {
         );
 
         Self {
-            sats,
             btc,
-            cents,
+            sats,
             usd,
+            cents,
         }
     }
 }

@@ -550,7 +550,7 @@ export function createCointimeSection() {
                     unit: Unit.ratio,
                   }),
                   line({
-                    metric: adjusted.txVelocityBtc,
+                    metric: adjusted.txVelocityNative,
                     name: "Cointime-Adjusted",
                     color: colors.adjusted,
                     unit: Unit.ratio,
@@ -568,7 +568,7 @@ export function createCointimeSection() {
                     unit: Unit.ratio,
                   }),
                   line({
-                    metric: adjusted.txVelocityUsd,
+                    metric: adjusted.txVelocityFiat,
                     name: "Cointime-Adjusted",
                     color: colors.vaulted,
                     unit: Unit.ratio,

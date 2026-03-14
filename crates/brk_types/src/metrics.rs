@@ -67,7 +67,7 @@ impl<'de> Deserialize<'de> for Metrics {
         } else if let Some(vec) = value.as_array() {
             if vec.len() <= MAX_VECS {
                 Ok(Self(
-                    sanitize(vec.iter().map(|s| s.as_str().unwrap().to_string()))
+                    sanitize(vec.iter().filter_map(|s| s.as_str().map(String::from)))
                         .into_iter()
                         .map(Metric::from)
                         .collect(),

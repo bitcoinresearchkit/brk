@@ -231,32 +231,32 @@ impl<T> Class<T> {
         .into_par_iter()
     }
 
-    pub fn mut_vec_from_timestamp(&mut self, timestamp: Timestamp) -> &mut T {
+    pub fn mut_vec_from_timestamp(&mut self, timestamp: Timestamp) -> Option<&mut T> {
         let year = Year::from(timestamp);
         self.get_mut(year)
     }
 
-    pub fn get_mut(&mut self, year: Year) -> &mut T {
+    pub fn get_mut(&mut self, year: Year) -> Option<&mut T> {
         match u16::from(year) {
-            2009 => &mut self._2009,
-            2010 => &mut self._2010,
-            2011 => &mut self._2011,
-            2012 => &mut self._2012,
-            2013 => &mut self._2013,
-            2014 => &mut self._2014,
-            2015 => &mut self._2015,
-            2016 => &mut self._2016,
-            2017 => &mut self._2017,
-            2018 => &mut self._2018,
-            2019 => &mut self._2019,
-            2020 => &mut self._2020,
-            2021 => &mut self._2021,
-            2022 => &mut self._2022,
-            2023 => &mut self._2023,
-            2024 => &mut self._2024,
-            2025 => &mut self._2025,
-            2026 => &mut self._2026,
-            _ => todo!("Year {} not yet supported", u16::from(year)),
+            2009 => Some(&mut self._2009),
+            2010 => Some(&mut self._2010),
+            2011 => Some(&mut self._2011),
+            2012 => Some(&mut self._2012),
+            2013 => Some(&mut self._2013),
+            2014 => Some(&mut self._2014),
+            2015 => Some(&mut self._2015),
+            2016 => Some(&mut self._2016),
+            2017 => Some(&mut self._2017),
+            2018 => Some(&mut self._2018),
+            2019 => Some(&mut self._2019),
+            2020 => Some(&mut self._2020),
+            2021 => Some(&mut self._2021),
+            2022 => Some(&mut self._2022),
+            2023 => Some(&mut self._2023),
+            2024 => Some(&mut self._2024),
+            2025 => Some(&mut self._2025),
+            2026 => Some(&mut self._2026),
+            _ => None,
         }
     }
 }
