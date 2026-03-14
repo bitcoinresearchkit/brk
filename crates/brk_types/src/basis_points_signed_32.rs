@@ -95,7 +95,10 @@ impl From<f64> for BasisPointsSigned32 {
 impl From<f32> for BasisPointsSigned32 {
     #[inline]
     fn from(value: f32) -> Self {
-        Self((value * 10000.0).round() as i32)
+        let scaled = (value * 10000.0)
+            .round()
+            .clamp(i32::MIN as f32, i32::MAX as f32);
+        Self(scaled as i32)
     }
 }
 

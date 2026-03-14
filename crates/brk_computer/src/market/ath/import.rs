@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::Database;
+use vecdb::{Database, ReadableCloneableVec};
 
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{PerBlock, DaysToYears, DerivedResolutions, PercentPerBlock, Price},
+    internal::{DaysToYears, LazyPerBlock, PerBlock, PercentPerBlock, Price},
 };
 
 const VERSION: Version = Version::ONE;
@@ -23,18 +23,20 @@ impl Vecs {
         let max_days_between =
             PerBlock::forced_import(db, "max_days_between_price_ath", v, indexes)?;
 
-        let max_years_between = DerivedResolutions::from_computed::<DaysToYears>(
+        let max_years_between = LazyPerBlock::from_computed::<DaysToYears>(
             "max_years_between_price_ath",
             v,
+            max_days_between.height.read_only_boxed_clone(),
             &max_days_between,
         );
 
         let days_since =
             PerBlock::forced_import(db, "days_since_price_ath", v, indexes)?;
 
-        let years_since = DerivedResolutions::from_computed::<DaysToYears>(
+        let years_since = LazyPerBlock::from_computed::<DaysToYears>(
             "years_since_price_ath",
             v,
+            days_since.height.read_only_boxed_clone(),
             &days_since,
         );
 

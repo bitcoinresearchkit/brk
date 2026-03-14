@@ -11,7 +11,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
-use crate::{Close, Sats, StoredU32};
+use crate::{Close, StoredU32};
 
 use super::{Dollars, StoredF64};
 
@@ -140,13 +140,6 @@ impl From<Dollars> for StoredF32 {
     #[inline]
     fn from(value: Dollars) -> Self {
         StoredF32::from(f64::from(value))
-    }
-}
-
-impl From<Sats> for StoredF32 {
-    #[inline]
-    fn from(value: Sats) -> Self {
-        Self(f32::from(value))
     }
 }
 

@@ -4162,9 +4162,9 @@ class MetricsTree_Market_Ath:
         self.high: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_ath')
         self.drawdown: BpsPercentRatioPattern5 = BpsPercentRatioPattern5(client, 'price_drawdown')
         self.days_since: MetricPattern1[StoredF32] = MetricPattern1(client, 'days_since_price_ath')
-        self.years_since: MetricPattern2[StoredF32] = MetricPattern2(client, 'years_since_price_ath')
+        self.years_since: MetricPattern1[StoredF32] = MetricPattern1(client, 'years_since_price_ath')
         self.max_days_between: MetricPattern1[StoredF32] = MetricPattern1(client, 'max_days_between_price_ath')
-        self.max_years_between: MetricPattern2[StoredF32] = MetricPattern2(client, 'max_years_between_price_ath')
+        self.max_years_between: MetricPattern1[StoredF32] = MetricPattern1(client, 'max_years_between_price_ath')
 
 class MetricsTree_Market_Lookback:
     """Metrics tree node."""

@@ -313,22 +313,22 @@ impl RealizedFull {
             .value_created
             .base
             .height
-            .truncate_push(height, accum.profit_value_created)?;
+            .truncate_push(height, accum.profit_value_created())?;
         self.profit
             .value_destroyed
             .base
             .height
-            .truncate_push(height, accum.profit_value_destroyed)?;
+            .truncate_push(height, accum.profit_value_destroyed())?;
         self.loss
             .value_created
             .base
             .height
-            .truncate_push(height, accum.loss_value_created)?;
+            .truncate_push(height, accum.loss_value_created())?;
         self.loss
             .value_destroyed
             .base
             .height
-            .truncate_push(height, accum.loss_value_destroyed)?;
+            .truncate_push(height, accum.loss_value_destroyed())?;
         self.cap_raw
             .truncate_push(height, accum.cap_raw)?;
         self.investor
@@ -353,7 +353,7 @@ impl RealizedFull {
             .value
             .base
             .height
-            .truncate_push(height, accum.peak_regret)?;
+            .truncate_push(height, accum.peak_regret())?;
 
         Ok(())
     }
@@ -600,23 +600,43 @@ impl RealizedFull {
 
 #[derive(Default)]
 pub struct RealizedFullAccum {
-    pub(crate) profit_value_created: Cents,
-    pub(crate) profit_value_destroyed: Cents,
-    pub(crate) loss_value_created: Cents,
-    pub(crate) loss_value_destroyed: Cents,
+    profit_value_created: CentsSats,
+    profit_value_destroyed: CentsSats,
+    loss_value_created: CentsSats,
+    loss_value_destroyed: CentsSats,
     pub(crate) cap_raw: CentsSats,
     pub(crate) investor_cap_raw: CentsSquaredSats,
-    pub(crate) peak_regret: Cents,
+    peak_regret: CentsSats,
 }
 
 impl RealizedFullAccum {
     pub(crate) fn add(&mut self, state: &RealizedState) {
-        self.profit_value_created += state.profit_value_created();
-        self.profit_value_destroyed += state.profit_value_destroyed();
-        self.loss_value_created += state.loss_value_created();
-        self.loss_value_destroyed += state.loss_value_destroyed();
+        self.profit_value_created += CentsSats::new(state.profit_value_created_raw());
+        self.profit_value_destroyed += CentsSats::new(state.profit_value_destroyed_raw());
+        self.loss_value_created += CentsSats::new(state.loss_value_created_raw());
+        self.loss_value_destroyed += CentsSats::new(state.loss_value_destroyed_raw());
         self.cap_raw += state.cap_raw();
         self.investor_cap_raw += state.investor_cap_raw();
-        self.peak_regret += state.peak_regret();
+        self.peak_regret += CentsSats::new(state.peak_regret_raw());
+    }
+
+    pub(crate) fn profit_value_created(&self) -> Cents {
+        self.profit_value_created.to_cents()
+    }
+
+    pub(crate) fn profit_value_destroyed(&self) -> Cents {
+        self.profit_value_destroyed.to_cents()
+    }
+
+    pub(crate) fn loss_value_created(&self) -> Cents {
+        self.loss_value_created.to_cents()
+    }
+
+    pub(crate) fn loss_value_destroyed(&self) -> Cents {
+        self.loss_value_destroyed.to_cents()
+    }
+
+    pub(crate) fn peak_regret(&self) -> Cents {
+        self.peak_regret.to_cents()
     }
 }

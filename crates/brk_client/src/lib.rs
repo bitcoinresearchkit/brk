@@ -5182,9 +5182,9 @@ pub struct MetricsTree_Market_Ath {
     pub high: CentsSatsUsdPattern,
     pub drawdown: BpsPercentRatioPattern5,
     pub days_since: MetricPattern1<StoredF32>,
-    pub years_since: MetricPattern2<StoredF32>,
+    pub years_since: MetricPattern1<StoredF32>,
     pub max_days_between: MetricPattern1<StoredF32>,
-    pub max_years_between: MetricPattern2<StoredF32>,
+    pub max_years_between: MetricPattern1<StoredF32>,
 }
 
 impl MetricsTree_Market_Ath {
@@ -5193,9 +5193,9 @@ impl MetricsTree_Market_Ath {
             high: CentsSatsUsdPattern::new(client.clone(), "price_ath".to_string()),
             drawdown: BpsPercentRatioPattern5::new(client.clone(), "price_drawdown".to_string()),
             days_since: MetricPattern1::new(client.clone(), "days_since_price_ath".to_string()),
-            years_since: MetricPattern2::new(client.clone(), "years_since_price_ath".to_string()),
+            years_since: MetricPattern1::new(client.clone(), "years_since_price_ath".to_string()),
             max_days_between: MetricPattern1::new(client.clone(), "max_days_between_price_ath".to_string()),
-            max_years_between: MetricPattern2::new(client.clone(), "max_years_between_price_ath".to_string()),
+            max_years_between: MetricPattern1::new(client.clone(), "max_years_between_price_ath".to_string()),
         }
     }
 }

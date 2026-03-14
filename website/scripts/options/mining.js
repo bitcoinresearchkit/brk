@@ -10,6 +10,9 @@ import {
   dotted,
   distributionBtcSatsUsd,
   rollingWindowsTree,
+  ROLLING_WINDOWS,
+  percentRatio,
+  percentRatioDots,
 } from "./series.js";
 import {
   satsBtcUsd,
@@ -83,40 +86,11 @@ export function createMiningSection() {
         name: "Dominance",
         title: `Dominance: ${name}`,
         bottom: [
-          dots({
-            metric: pool.dominance._24h.percent,
-            name: "24h",
-            color: colors.time._24h,
-            unit: Unit.percentage,
-            defaultActive: false,
-          }),
-          line({
-            metric: pool.dominance._1w.percent,
-            name: "1w",
-            color: colors.time._1w,
-            unit: Unit.percentage,
-            defaultActive: false,
-          }),
-          line({
-            metric: pool.dominance._1m.percent,
-            name: "1m",
-            color: colors.time._1m,
-            unit: Unit.percentage,
-          }),
-          line({
-            metric: pool.dominance._1y.percent,
-            name: "1y",
-            color: colors.time._1y,
-            unit: Unit.percentage,
-            defaultActive: false,
-          }),
-          line({
-            metric: pool.dominance.percent,
-            name: "All Time",
-            color: colors.time.all,
-            unit: Unit.percentage,
-            defaultActive: false,
-          }),
+          ...percentRatioDots({ pattern: pool.dominance._24h, name: "24h", color: colors.time._24h, defaultActive: false }),
+          ...percentRatio({ pattern: pool.dominance._1w, name: "1w", color: colors.time._1w, defaultActive: false }),
+          ...percentRatio({ pattern: pool.dominance._1m, name: "1m", color: colors.time._1m }),
+          ...percentRatio({ pattern: pool.dominance._1y, name: "1y", color: colors.time._1y, defaultActive: false }),
+          ...percentRatio({ pattern: pool.dominance, name: "All Time", color: colors.time.all, defaultActive: false }),
         ],
       },
       {
@@ -179,14 +153,7 @@ export function createMiningSection() {
       {
         name: "Dominance",
         title: `Dominance: ${name}`,
-        bottom: [
-          line({
-            metric: pool.dominance.percent,
-            name: "All Time",
-            color: colors.time.all,
-            unit: Unit.percentage,
-          }),
-        ],
+        bottom: percentRatio({ pattern: pool.dominance, name: "All Time", color: colors.time.all }),
       },
       {
         name: "Blocks Mined",
@@ -299,14 +266,11 @@ export function createMiningSection() {
           {
             name: "Drawdown",
             title: "Network Hashrate Drawdown",
-            bottom: [
-              line({
-                metric: mining.hashrate.rate.drawdown.percent,
-                name: "Drawdown",
-                unit: Unit.percentage,
-                color: colors.loss,
-              }),
-            ],
+            bottom: percentRatio({
+              pattern: mining.hashrate.rate.drawdown,
+              name: "Drawdown",
+              color: colors.loss,
+            }),
           },
         ],
       },
@@ -599,8 +563,11 @@ export function createMiningSection() {
               },
               {
                 name: "Distribution",
-                title: "Transaction Fee Revenue per Block Distribution",
-                bottom: distributionBtcSatsUsd(mining.rewards.fees._24h),
+                tree: ROLLING_WINDOWS.map((w) => ({
+                  name: w.name,
+                  title: `Fee Revenue per Block Distribution (${w.name})`,
+                  bottom: distributionBtcSatsUsd(mining.rewards.fees[w.key]),
+                })),
               },
               {
                 name: "Cumulative",
@@ -623,72 +590,20 @@ export function createMiningSection() {
                     name: "Subsidy",
                     title: "Subsidy Dominance",
                     bottom: [
-                      line({
-                        metric: mining.rewards.subsidy.dominance.percent,
-                        name: "All-time",
-                        color: colors.time.all,
-                        unit: Unit.percentage,
-                      }),
-                      line({
-                        metric: mining.rewards.subsidy.dominance._24h.percent,
-                        name: "24h",
-                        color: colors.time._24h,
-                        unit: Unit.percentage,
-                      }),
-                      line({
-                        metric: mining.rewards.subsidy.dominance._1w.percent,
-                        name: "7d",
-                        color: colors.time._1w,
-                        unit: Unit.percentage,
-                      }),
-                      line({
-                        metric: mining.rewards.subsidy.dominance._1m.percent,
-                        name: "30d",
-                        color: colors.time._1m,
-                        unit: Unit.percentage,
-                      }),
-                      line({
-                        metric: mining.rewards.subsidy.dominance._1y.percent,
-                        name: "1y",
-                        color: colors.time._1y,
-                        unit: Unit.percentage,
-                      }),
+                      ...percentRatio({ pattern: mining.rewards.subsidy.dominance, name: "All-time", color: colors.time.all }),
+                      ...ROLLING_WINDOWS.flatMap((w) =>
+                        percentRatio({ pattern: mining.rewards.subsidy.dominance[w.key], name: w.name, color: w.color }),
+                      ),
                     ],
                   },
                   {
                     name: "Fees",
                     title: "Fee Dominance",
                     bottom: [
-                      line({
-                        metric: mining.rewards.fees.dominance.percent,
-                        name: "All-time",
-                        color: colors.time.all,
-                        unit: Unit.percentage,
-                      }),
-                      line({
-                        metric: mining.rewards.fees.dominance._24h.percent,
-                        name: "24h",
-                        color: colors.time._24h,
-                        unit: Unit.percentage,
-                      }),
-                      line({
-                        metric: mining.rewards.fees.dominance._1w.percent,
-                        name: "7d",
-                        color: colors.time._1w,
-                        unit: Unit.percentage,
-                      }),
-                      line({
-                        metric: mining.rewards.fees.dominance._1m.percent,
-                        name: "30d",
-                        color: colors.time._1m,
-                        unit: Unit.percentage,
-                      }),
-                      line({
-                        metric: mining.rewards.fees.dominance._1y.percent,
-                        name: "1y",
-                        color: colors.time._1y,
-                        unit: Unit.percentage,
-                      }),
+                      ...percentRatio({ pattern: mining.rewards.fees.dominance, name: "All-time", color: colors.time.all }),
+                      ...ROLLING_WINDOWS.flatMap((w) =>
+                        percentRatio({ pattern: mining.rewards.fees.dominance[w.key], name: w.name, color: w.color }),
+                      ),
                     ],
                   },
                 ],
@@ -697,92 +612,35 @@ export function createMiningSection() {
                 name: "All-time",
                 title: "Revenue Dominance (All-time)",
                 bottom: [
-                  line({
-                    metric: mining.rewards.subsidy.dominance.percent,
-                    name: "Subsidy",
-                    color: colors.mining.subsidy,
-                    unit: Unit.percentage,
-                  }),
-                  line({
-                    metric: mining.rewards.fees.dominance.percent,
-                    name: "Fees",
-                    color: colors.mining.fee,
-                    unit: Unit.percentage,
-                  }),
+                  ...percentRatio({ pattern: mining.rewards.subsidy.dominance, name: "Subsidy", color: colors.mining.subsidy }),
+                  ...percentRatio({ pattern: mining.rewards.fees.dominance, name: "Fees", color: colors.mining.fee }),
                 ],
               },
-              {
-                name: "24h",
-                title: "Revenue Dominance (24h)",
+              ...ROLLING_WINDOWS.map((w) => ({
+                name: w.name,
+                title: `Revenue Dominance (${w.name})`,
                 bottom: [
-                  line({
-                    metric: mining.rewards.subsidy.dominance._24h.percent,
-                    name: "Subsidy",
-                    color: colors.mining.subsidy,
-                    unit: Unit.percentage,
-                  }),
-                  line({
-                    metric: mining.rewards.fees.dominance._24h.percent,
-                    name: "Fees",
-                    color: colors.mining.fee,
-                    unit: Unit.percentage,
-                  }),
+                  ...percentRatio({ pattern: mining.rewards.subsidy.dominance[w.key], name: "Subsidy", color: colors.mining.subsidy }),
+                  ...percentRatio({ pattern: mining.rewards.fees.dominance[w.key], name: "Fees", color: colors.mining.fee }),
                 ],
-              },
+              })),
+            ],
+          },
+          {
+            name: "Fee Multiple",
+            tree: [
               {
-                name: "7d",
-                title: "Revenue Dominance (7d)",
-                bottom: [
-                  line({
-                    metric: mining.rewards.subsidy.dominance._1w.percent,
-                    name: "Subsidy",
-                    color: colors.mining.subsidy,
-                    unit: Unit.percentage,
-                  }),
-                  line({
-                    metric: mining.rewards.fees.dominance._1w.percent,
-                    name: "Fees",
-                    color: colors.mining.fee,
-                    unit: Unit.percentage,
-                  }),
-                ],
+                name: "Compare",
+                title: "Fee-to-Subsidy Ratio",
+                bottom: ROLLING_WINDOWS.map((w) =>
+                  line({ metric: mining.rewards.fees.ratioMultiple[w.key].ratio, name: w.name, color: w.color, unit: Unit.ratio }),
+                ),
               },
-              {
-                name: "30d",
-                title: "Revenue Dominance (30d)",
-                bottom: [
-                  line({
-                    metric: mining.rewards.subsidy.dominance._1m.percent,
-                    name: "Subsidy",
-                    color: colors.mining.subsidy,
-                    unit: Unit.percentage,
-                  }),
-                  line({
-                    metric: mining.rewards.fees.dominance._1m.percent,
-                    name: "Fees",
-                    color: colors.mining.fee,
-                    unit: Unit.percentage,
-                  }),
-                ],
-              },
-              {
-                name: "1y",
-                title: "Revenue Dominance (1y)",
-                bottom: [
-                  line({
-                    metric: mining.rewards.subsidy.dominance._1y.percent,
-                    name: "Subsidy",
-                    color: colors.mining.subsidy,
-                    unit: Unit.percentage,
-                  }),
-                  line({
-                    metric: mining.rewards.fees.dominance._1y.percent,
-                    name: "Fees",
-                    color: colors.mining.fee,
-                    unit: Unit.percentage,
-                  }),
-                ],
-              },
+              ...ROLLING_WINDOWS.map((w) => ({
+                name: w.name,
+                title: `Fee-to-Subsidy Ratio (${w.name})`,
+                bottom: [line({ metric: mining.rewards.fees.ratioMultiple[w.key].ratio, name: w.name, color: w.color, unit: Unit.ratio })],
+              })),
             ],
           },
           {
@@ -796,6 +654,23 @@ export function createMiningSection() {
                   key: "base",
                   name: "sum",
                 }),
+              },
+              {
+                name: "Rolling",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Unclaimed Rewards Rolling",
+                    bottom: ROLLING_WINDOWS.flatMap((w) =>
+                      satsBtcUsd({ pattern: mining.rewards.unclaimed.sum[w.key], name: w.name, color: w.color }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Unclaimed Rewards ${w.name}`,
+                    bottom: satsBtcUsd({ pattern: mining.rewards.unclaimed.sum[w.key], name: w.name, color: w.color }),
+                  })),
+                ],
               },
               {
                 name: "Cumulative",
@@ -879,18 +754,8 @@ export function createMiningSection() {
             name: "Recovery",
             title: "Recovery",
             bottom: [
-              line({
-                metric: mining.hashrate.price.rebound.percent,
-                name: "Hash Price",
-                color: colors.usd,
-                unit: Unit.percentage,
-              }),
-              line({
-                metric: mining.hashrate.value.rebound.percent,
-                name: "Hash Value",
-                color: colors.bitcoin,
-                unit: Unit.percentage,
-              }),
+              ...percentRatio({ pattern: mining.hashrate.price.rebound, name: "Hash Price", color: colors.usd }),
+              ...percentRatio({ pattern: mining.hashrate.value.rebound, name: "Hash Value", color: colors.bitcoin }),
             ],
           },
         ],
@@ -941,12 +806,11 @@ export function createMiningSection() {
               {
                 name: "Dominance",
                 title: "Dominance: Major Pools (1m)",
-                bottom: featuredPools.map((p, i) =>
-                  line({
-                    metric: p.pool.dominance._1m.percent,
+                bottom: featuredPools.flatMap((p, i) =>
+                  percentRatio({
+                    pattern: p.pool.dominance._1m,
                     name: p.name,
                     color: colors.at(i, featuredPools.length),
-                    unit: Unit.percentage,
                   }),
                 ),
               },
@@ -983,12 +847,11 @@ export function createMiningSection() {
               {
                 name: "Dominance",
                 title: "Dominance: AntPool & Friends (1m)",
-                bottom: antpoolFriends.map((p, i) =>
-                  line({
-                    metric: p.pool.dominance._1m.percent,
+                bottom: antpoolFriends.flatMap((p, i) =>
+                  percentRatio({
+                    pattern: p.pool.dominance._1m,
                     name: p.name,
                     color: colors.at(i, antpoolFriends.length),
-                    unit: Unit.percentage,
                   }),
                 ),
               },

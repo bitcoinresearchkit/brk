@@ -4944,9 +4944,9 @@ function createUnspentPattern(client, acc) {
  * @property {CentsSatsUsdPattern} high
  * @property {BpsPercentRatioPattern5} drawdown
  * @property {MetricPattern1<StoredF32>} daysSince
- * @property {MetricPattern2<StoredF32>} yearsSince
+ * @property {MetricPattern1<StoredF32>} yearsSince
  * @property {MetricPattern1<StoredF32>} maxDaysBetween
- * @property {MetricPattern2<StoredF32>} maxYearsBetween
+ * @property {MetricPattern1<StoredF32>} maxYearsBetween
  */
 
 /**
@@ -7498,9 +7498,9 @@ class BrkClient extends BrkClientBase {
           high: createCentsSatsUsdPattern(this, 'price_ath'),
           drawdown: createBpsPercentRatioPattern5(this, 'price_drawdown'),
           daysSince: createMetricPattern1(this, 'days_since_price_ath'),
-          yearsSince: createMetricPattern2(this, 'years_since_price_ath'),
+          yearsSince: createMetricPattern1(this, 'years_since_price_ath'),
           maxDaysBetween: createMetricPattern1(this, 'max_days_between_price_ath'),
-          maxYearsBetween: createMetricPattern2(this, 'max_years_between_price_ath'),
+          maxYearsBetween: createMetricPattern1(this, 'max_years_between_price_ath'),
         },
         lookback: {
           _24h: createCentsSatsUsdPattern(this, 'price_lookback_24h'),
