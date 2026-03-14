@@ -6,7 +6,6 @@ import { includes } from "../utils/array.js";
 import { Unit } from "../utils/units.js";
 import { priceLine, priceLines } from "./constants.js";
 import { baseline, histogram, line, price } from "./series.js";
-import { createPriceRatioCharts } from "./shared.js";
 import { periodIdToName } from "./utils.js";
 
 /**
@@ -26,7 +25,7 @@ import { periodIdToName } from "./utils.js";
  * @typedef {Object} MaPeriod
  * @property {string} id
  * @property {Color} color
- * @property {ActivePriceRatioPattern} ratio
+ * @property {Brk.BpsCentsRatioSatsUsdPattern} ratio
  */
 
 const commonMaIds = /** @type {const} */ ([
@@ -49,13 +48,26 @@ function createMaSubSection(label, averages) {
   /** @param {MaPeriod} a */
   const toFolder = (a) => ({
     name: periodIdToName(a.id, true),
-    tree: createPriceRatioCharts({
-      context: `${periodIdToName(a.id, true)} ${label}`,
-      legend: "average",
-      pricePattern: a.ratio.price,
-      ratio: a.ratio,
-      color: a.color,
-    }),
+    tree: [
+      {
+        name: "Price",
+        title: `${periodIdToName(a.id, true)} ${label}`,
+        top: [price({ metric: a.ratio, name: "average", color: a.color })],
+      },
+      {
+        name: "Ratio",
+        title: `${periodIdToName(a.id, true)} ${label} Ratio`,
+        top: [price({ metric: a.ratio, name: "average", color: a.color })],
+        bottom: [
+          baseline({
+            metric: a.ratio.ratio,
+            name: "Ratio",
+            color: a.color,
+            unit: Unit.ratio,
+          }),
+        ],
+      },
+    ],
   });
 
   return {
@@ -65,7 +77,7 @@ function createMaSubSection(label, averages) {
         name: "Compare",
         title: `Price ${label}s`,
         top: averages.map((a) =>
-          price({ metric: a.ratio.price, name: a.id, color: a.color }),
+          price({ metric: a.ratio, name: a.id, color: a.color }),
         ),
       },
       ...common.map(toFolder),
@@ -184,83 +196,83 @@ function historicalSubSection(name, periods) {
  * @returns {PartialOptionsGroup}
  */
 export function createMarketSection() {
-  const { market, supply, distribution, prices } = brk.metrics;
+  const { market, supply, cohorts, prices, indicators } = brk.metrics;
   const {
     movingAverage: ma,
     ath,
     returns,
     volatility,
     range,
-    indicators,
+    technical,
     lookback,
     dca,
   } = market;
 
   const shortPeriodsBase = [
-    { id: "24h", returns: returns.priceReturns._24h, lookback: lookback._24h },
-    { id: "1w", returns: returns.priceReturns._1w, lookback: lookback._1w },
-    { id: "1m", returns: returns.priceReturns._1m, lookback: lookback._1m },
+    { id: "24h", returns: returns.periods._24h.ratio, lookback: lookback._24h },
+    { id: "1w", returns: returns.periods._1w.ratio, lookback: lookback._1w },
+    { id: "1m", returns: returns.periods._1m.ratio, lookback: lookback._1m },
     {
       id: "3m",
-      returns: returns.priceReturns._3m,
+      returns: returns.periods._3m.ratio,
       lookback: lookback._3m,
       defaultActive: false,
     },
     {
       id: "6m",
-      returns: returns.priceReturns._6m,
+      returns: returns.periods._6m.ratio,
       lookback: lookback._6m,
       defaultActive: false,
     },
-    { id: "1y", returns: returns.priceReturns._1y, lookback: lookback._1y },
+    { id: "1y", returns: returns.periods._1y.ratio, lookback: lookback._1y },
   ];
 
   const longPeriodsBase = [
     {
       id: "2y",
-      returns: returns.priceReturns._2y,
-      cagr: returns.cagr._2y,
+      returns: returns.periods._2y.ratio,
+      cagr: returns.cagr._2y.ratio,
       lookback: lookback._2y,
       defaultActive: false,
     },
     {
       id: "3y",
-      returns: returns.priceReturns._3y,
-      cagr: returns.cagr._3y,
+      returns: returns.periods._3y.ratio,
+      cagr: returns.cagr._3y.ratio,
       lookback: lookback._3y,
       defaultActive: false,
     },
     {
       id: "4y",
-      returns: returns.priceReturns._4y,
-      cagr: returns.cagr._4y,
+      returns: returns.periods._4y.ratio,
+      cagr: returns.cagr._4y.ratio,
       lookback: lookback._4y,
     },
     {
       id: "5y",
-      returns: returns.priceReturns._5y,
-      cagr: returns.cagr._5y,
+      returns: returns.periods._5y.ratio,
+      cagr: returns.cagr._5y.ratio,
       lookback: lookback._5y,
       defaultActive: false,
     },
     {
       id: "6y",
-      returns: returns.priceReturns._6y,
-      cagr: returns.cagr._6y,
+      returns: returns.periods._6y.ratio,
+      cagr: returns.cagr._6y.ratio,
       lookback: lookback._6y,
       defaultActive: false,
     },
     {
       id: "8y",
-      returns: returns.priceReturns._8y,
-      cagr: returns.cagr._8y,
+      returns: returns.periods._8y.ratio,
+      cagr: returns.cagr._8y.ratio,
       lookback: lookback._8y,
       defaultActive: false,
     },
     {
       id: "10y",
-      returns: returns.priceReturns._10y,
-      cagr: returns.cagr._10y,
+      returns: returns.periods._10y.ratio,
+      cagr: returns.cagr._10y.ratio,
       lookback: lookback._10y,
       defaultActive: false,
     },
@@ -282,42 +294,42 @@ export function createMarketSection() {
 
   /** @type {MaPeriod[]} */
   const sma = [
-    { id: "1w", ratio: ma.price1wSma },
-    { id: "8d", ratio: ma.price8dSma },
-    { id: "13d", ratio: ma.price13dSma },
-    { id: "21d", ratio: ma.price21dSma },
-    { id: "1m", ratio: ma.price1mSma },
-    { id: "34d", ratio: ma.price34dSma },
-    { id: "55d", ratio: ma.price55dSma },
-    { id: "89d", ratio: ma.price89dSma },
-    { id: "111d", ratio: ma.price111dSma },
-    { id: "144d", ratio: ma.price144dSma },
-    { id: "200d", ratio: ma.price200dSma },
-    { id: "350d", ratio: ma.price350dSma },
-    { id: "1y", ratio: ma.price1ySma },
-    { id: "2y", ratio: ma.price2ySma },
-    { id: "200w", ratio: ma.price200wSma },
-    { id: "4y", ratio: ma.price4ySma },
+    { id: "1w", ratio: ma.sma._1w },
+    { id: "8d", ratio: ma.sma._8d },
+    { id: "13d", ratio: ma.sma._13d },
+    { id: "21d", ratio: ma.sma._21d },
+    { id: "1m", ratio: ma.sma._1m },
+    { id: "34d", ratio: ma.sma._34d },
+    { id: "55d", ratio: ma.sma._55d },
+    { id: "89d", ratio: ma.sma._89d },
+    { id: "111d", ratio: ma.sma._111d },
+    { id: "144d", ratio: ma.sma._144d },
+    { id: "200d", ratio: ma.sma._200d },
+    { id: "350d", ratio: ma.sma._350d },
+    { id: "1y", ratio: ma.sma._1y },
+    { id: "2y", ratio: ma.sma._2y },
+    { id: "200w", ratio: ma.sma._200w },
+    { id: "4y", ratio: ma.sma._4y },
   ].map((p, i, arr) => ({ ...p, color: colors.at(i, arr.length) }));
 
   /** @type {MaPeriod[]} */
   const ema = [
-    { id: "1w", ratio: ma.price1wEma },
-    { id: "8d", ratio: ma.price8dEma },
-    { id: "12d", ratio: ma.price12dEma },
-    { id: "13d", ratio: ma.price13dEma },
-    { id: "21d", ratio: ma.price21dEma },
-    { id: "26d", ratio: ma.price26dEma },
-    { id: "1m", ratio: ma.price1mEma },
-    { id: "34d", ratio: ma.price34dEma },
-    { id: "55d", ratio: ma.price55dEma },
-    { id: "89d", ratio: ma.price89dEma },
-    { id: "144d", ratio: ma.price144dEma },
-    { id: "200d", ratio: ma.price200dEma },
-    { id: "1y", ratio: ma.price1yEma },
-    { id: "2y", ratio: ma.price2yEma },
-    { id: "200w", ratio: ma.price200wEma },
-    { id: "4y", ratio: ma.price4yEma },
+    { id: "1w", ratio: ma.ema._1w },
+    { id: "8d", ratio: ma.ema._8d },
+    { id: "12d", ratio: ma.ema._12d },
+    { id: "13d", ratio: ma.ema._13d },
+    { id: "21d", ratio: ma.ema._21d },
+    { id: "26d", ratio: ma.ema._26d },
+    { id: "1m", ratio: ma.ema._1m },
+    { id: "34d", ratio: ma.ema._34d },
+    { id: "55d", ratio: ma.ema._55d },
+    { id: "89d", ratio: ma.ema._89d },
+    { id: "144d", ratio: ma.ema._144d },
+    { id: "200d", ratio: ma.ema._200d },
+    { id: "1y", ratio: ma.ema._1y },
+    { id: "2y", ratio: ma.ema._2y },
+    { id: "200w", ratio: ma.ema._200w },
+    { id: "4y", ratio: ma.ema._4y },
   ].map((p, i, arr) => ({ ...p, color: colors.at(i, arr.length) }));
 
   // SMA vs EMA comparison periods (common periods only)
@@ -325,38 +337,38 @@ export function createMarketSection() {
     {
       id: "1w",
       name: "1 Week",
-      sma: ma.price1wSma,
-      ema: ma.price1wEma,
+      sma: ma.sma._1w,
+      ema: ma.ema._1w,
     },
     {
       id: "1m",
       name: "1 Month",
-      sma: ma.price1mSma,
-      ema: ma.price1mEma,
+      sma: ma.sma._1m,
+      ema: ma.ema._1m,
     },
     {
       id: "200d",
       name: "200 Day",
-      sma: ma.price200dSma,
-      ema: ma.price200dEma,
+      sma: ma.sma._200d,
+      ema: ma.ema._200d,
     },
     {
       id: "1y",
       name: "1 Year",
-      sma: ma.price1ySma,
-      ema: ma.price1yEma,
+      sma: ma.sma._1y,
+      ema: ma.ema._1y,
     },
     {
       id: "200w",
       name: "200 Week",
-      sma: ma.price200wSma,
-      ema: ma.price200wEma,
+      sma: ma.sma._200w,
+      ema: ma.ema._200w,
     },
     {
       id: "4y",
       name: "4 Year",
-      sma: ma.price4ySma,
-      ema: ma.price4yEma,
+      sma: ma.sma._4y,
+      ema: ma.ema._4y,
     },
   ].map((p, i, arr) => ({ ...p, color: colors.at(i, arr.length) }));
 
@@ -370,7 +382,7 @@ export function createMarketSection() {
         title: "Sats per Dollar",
         bottom: [
           line({
-            metric: prices.price.sats,
+            metric: prices.spot.sats,
             name: "Sats/$",
             unit: Unit.sats,
           }),
@@ -385,7 +397,7 @@ export function createMarketSection() {
             title: "Market Capitalization",
             bottom: [
               line({
-                metric: supply.marketCap,
+                metric: supply.marketCap.usd,
                 name: "Market Cap",
                 unit: Unit.usd,
               }),
@@ -396,7 +408,7 @@ export function createMarketSection() {
             title: "Realized Capitalization",
             bottom: [
               line({
-                metric: distribution.utxoCohorts.all.realized.realizedCap,
+                metric: cohorts.utxo.all.realized.cap.usd,
                 name: "Realized Cap",
                 color: colors.realized,
                 unit: Unit.usd,
@@ -408,20 +420,14 @@ export function createMarketSection() {
             title: "Capitalization Growth Rate",
             bottom: [
               line({
-                metric: supply.marketCapGrowthRate,
-                name: "Market Cap",
+                metric: supply.marketCap.delta.rate._24h.percent,
+                name: "Market Cap (24h)",
                 color: colors.bitcoin,
                 unit: Unit.percentage,
               }),
-              line({
-                metric: supply.realizedCapGrowthRate,
-                name: "Realized Cap",
-                color: colors.usd,
-                unit: Unit.percentage,
-              }),
               baseline({
-                metric: supply.capGrowthRateDiff,
-                name: "Difference",
+                metric: supply.marketMinusRealizedCapGrowthRate._24h,
+                name: "Market - Realized",
                 unit: Unit.percentage,
               }),
             ],
@@ -435,10 +441,10 @@ export function createMarketSection() {
           {
             name: "Drawdown",
             title: "ATH Drawdown",
-            top: [price({ metric: ath.priceAth, name: "ATH" })],
+            top: [price({ metric: ath.high, name: "ATH" })],
             bottom: [
               line({
-                metric: ath.priceDrawdown,
+                metric: ath.drawdown.percent,
                 name: "Drawdown",
                 color: colors.loss,
                 unit: Unit.percentage,
@@ -448,26 +454,26 @@ export function createMarketSection() {
           {
             name: "Time Since",
             title: "Time Since ATH",
-            top: [price({ metric: ath.priceAth, name: "ATH" })],
+            top: [price({ metric: ath.high, name: "ATH" })],
             bottom: [
               line({
-                metric: ath.daysSincePriceAth,
+                metric: ath.daysSince,
                 name: "Since",
                 unit: Unit.days,
               }),
               line({
-                metric: ath.yearsSincePriceAth,
+                metric: ath.yearsSince,
                 name: "Since",
                 unit: Unit.years,
               }),
               line({
-                metric: ath.maxDaysBetweenPriceAths,
+                metric: ath.maxDaysBetween,
                 name: "Max",
                 color: colors.loss,
                 unit: Unit.days,
               }),
               line({
-                metric: ath.maxYearsBetweenPriceAths,
+                metric: ath.maxYearsBetween,
                 name: "Max",
                 color: colors.loss,
                 unit: Unit.years,
@@ -502,22 +508,22 @@ export function createMarketSection() {
         name: "Volatility",
         tree: [
           volatilityChart("Index", "Volatility Index", Unit.percentage, {
-            _1w: volatility.price1wVolatility,
-            _1m: volatility.price1mVolatility,
-            _1y: volatility.price1yVolatility,
+            _1w: volatility._1w,
+            _1m: volatility._1m,
+            _1y: volatility._1y,
           }),
           {
             name: "True Range",
             title: "True Range",
             bottom: [
               line({
-                metric: range.priceTrueRange,
+                metric: range.trueRange,
                 name: "Daily",
                 color: colors.time._24h,
                 unit: Unit.usd,
               }),
               line({
-                metric: range.priceTrueRange2wSum,
+                metric: range.trueRangeSum2w,
                 name: "2w Sum",
                 color: colors.time._1w,
                 unit: Unit.usd,
@@ -530,7 +536,7 @@ export function createMarketSection() {
             title: "Choppiness Index",
             bottom: [
               line({
-                metric: range.price2wChoppinessIndex,
+                metric: range.choppinessIndex2w.percent,
                 name: "2w",
                 color: colors.indicator.main,
                 unit: Unit.index,
@@ -552,12 +558,12 @@ export function createMarketSection() {
                 title: "SMA vs EMA Comparison",
                 top: smaVsEma.flatMap((p) => [
                   price({
-                    metric: p.sma.price,
+                    metric: p.sma,
                     name: `${p.id} SMA`,
                     color: p.color,
                   }),
                   price({
-                    metric: p.ema.price,
+                    metric: p.ema,
                     name: `${p.id} EMA`,
                     color: p.color,
                     style: 1,
@@ -568,9 +574,9 @@ export function createMarketSection() {
                 name: p.name,
                 title: `${p.name} SMA vs EMA`,
                 top: [
-                  price({ metric: p.sma.price, name: "SMA", color: p.color }),
+                  price({ metric: p.sma, name: "SMA", color: p.color }),
                   price({
-                    metric: p.ema.price,
+                    metric: p.ema,
                     name: "EMA",
                     color: p.color,
                     style: 1,
@@ -593,26 +599,26 @@ export function createMarketSection() {
               {
                 id: "1w",
                 name: "1 Week",
-                min: range.price1wMin,
-                max: range.price1wMax,
+                min: range.min._1w,
+                max: range.max._1w,
               },
               {
                 id: "2w",
                 name: "2 Week",
-                min: range.price2wMin,
-                max: range.price2wMax,
+                min: range.min._2w,
+                max: range.max._2w,
               },
               {
                 id: "1m",
                 name: "1 Month",
-                min: range.price1mMin,
-                max: range.price1mMax,
+                min: range.min._1m,
+                max: range.max._1m,
               },
               {
                 id: "1y",
                 name: "1 Year",
-                min: range.price1yMin,
-                max: range.price1yMax,
+                min: range.min._1y,
+                max: range.max._1y,
               },
             ].map((p) => ({
               name: p.id,
@@ -638,17 +644,17 @@ export function createMarketSection() {
             title: "Mayer Multiple",
             top: [
               price({
-                metric: ma.price200dSma.price,
+                metric: ma.sma._200d,
                 name: "200d SMA",
                 color: colors.indicator.main,
               }),
               price({
-                metric: ma.price200dSmaX24,
+                metric: ma.sma._200d.x24,
                 name: "200d SMA x2.4",
                 color: colors.indicator.upper,
               }),
               price({
-                metric: ma.price200dSmaX08,
+                metric: ma.sma._200d.x08,
                 name: "200d SMA x0.8",
                 color: colors.indicator.lower,
               }),
@@ -668,25 +674,25 @@ export function createMarketSection() {
                 title: "RSI Comparison",
                 bottom: [
                   line({
-                    metric: indicators.rsi._1d.rsi,
+                    metric: technical.rsi._24h.rsi.percent,
                     name: "1d",
                     color: colors.time._24h,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1w.rsi,
+                    metric: technical.rsi._1w.rsi.percent,
                     name: "1w",
                     color: colors.time._1w,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1m.rsi,
+                    metric: technical.rsi._1m.rsi.percent,
                     name: "1m",
                     color: colors.time._1m,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1y.rsi,
+                    metric: technical.rsi._1y.rsi.percent,
                     name: "1y",
                     color: colors.time._1y,
                     unit: Unit.index,
@@ -700,20 +706,20 @@ export function createMarketSection() {
                 title: "RSI (1d)",
                 bottom: [
                   line({
-                    metric: indicators.rsi._1d.rsi,
+                    metric: technical.rsi._24h.rsi.percent,
                     name: "RSI",
                     color: colors.indicator.main,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1d.rsiMax,
+                    metric: technical.rsi._24h.rsiMax.percent,
                     name: "Max",
                     color: colors.stat.max,
                     defaultActive: false,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1d.rsiMin,
+                    metric: technical.rsi._24h.rsiMin.percent,
                     name: "Min",
                     color: colors.stat.min,
                     defaultActive: false,
@@ -733,20 +739,20 @@ export function createMarketSection() {
                 title: "RSI (1w)",
                 bottom: [
                   line({
-                    metric: indicators.rsi._1w.rsi,
+                    metric: technical.rsi._1w.rsi.percent,
                     name: "RSI",
                     color: colors.indicator.main,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1w.rsiMax,
+                    metric: technical.rsi._1w.rsiMax.percent,
                     name: "Max",
                     color: colors.stat.max,
                     defaultActive: false,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1w.rsiMin,
+                    metric: technical.rsi._1w.rsiMin.percent,
                     name: "Min",
                     color: colors.stat.min,
                     defaultActive: false,
@@ -766,20 +772,20 @@ export function createMarketSection() {
                 title: "RSI (1m)",
                 bottom: [
                   line({
-                    metric: indicators.rsi._1m.rsi,
+                    metric: technical.rsi._1m.rsi.percent,
                     name: "RSI",
                     color: colors.indicator.main,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1m.rsiMax,
+                    metric: technical.rsi._1m.rsiMax.percent,
                     name: "Max",
                     color: colors.stat.max,
                     defaultActive: false,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1m.rsiMin,
+                    metric: technical.rsi._1m.rsiMin.percent,
                     name: "Min",
                     color: colors.stat.min,
                     defaultActive: false,
@@ -799,20 +805,20 @@ export function createMarketSection() {
                 title: "RSI (1y)",
                 bottom: [
                   line({
-                    metric: indicators.rsi._1y.rsi,
+                    metric: technical.rsi._1y.rsi.percent,
                     name: "RSI",
                     color: colors.indicator.main,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1y.rsiMax,
+                    metric: technical.rsi._1y.rsiMax.percent,
                     name: "Max",
                     color: colors.stat.max,
                     defaultActive: false,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1y.rsiMin,
+                    metric: technical.rsi._1y.rsiMin.percent,
                     name: "Min",
                     color: colors.stat.min,
                     defaultActive: false,
@@ -837,25 +843,25 @@ export function createMarketSection() {
                 title: "Stochastic RSI Comparison",
                 bottom: [
                   line({
-                    metric: indicators.rsi._1d.stochRsiK,
+                    metric: technical.rsi._24h.stochRsiK.percent,
                     name: "1d K",
                     color: colors.time._24h,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1w.stochRsiK,
+                    metric: technical.rsi._1w.stochRsiK.percent,
                     name: "1w K",
                     color: colors.time._1w,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1m.stochRsiK,
+                    metric: technical.rsi._1m.stochRsiK.percent,
                     name: "1m K",
                     color: colors.time._1m,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1y.stochRsiK,
+                    metric: technical.rsi._1y.stochRsiK.percent,
                     name: "1y K",
                     color: colors.time._1y,
                     unit: Unit.index,
@@ -868,13 +874,13 @@ export function createMarketSection() {
                 title: "Stochastic RSI (1d)",
                 bottom: [
                   line({
-                    metric: indicators.rsi._1d.stochRsiK,
+                    metric: technical.rsi._24h.stochRsiK.percent,
                     name: "K",
                     color: colors.indicator.fast,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1d.stochRsiD,
+                    metric: technical.rsi._24h.stochRsiD.percent,
                     name: "D",
                     color: colors.indicator.slow,
                     unit: Unit.index,
@@ -887,13 +893,13 @@ export function createMarketSection() {
                 title: "Stochastic RSI (1w)",
                 bottom: [
                   line({
-                    metric: indicators.rsi._1w.stochRsiK,
+                    metric: technical.rsi._1w.stochRsiK.percent,
                     name: "K",
                     color: colors.indicator.fast,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1w.stochRsiD,
+                    metric: technical.rsi._1w.stochRsiD.percent,
                     name: "D",
                     color: colors.indicator.slow,
                     unit: Unit.index,
@@ -906,13 +912,13 @@ export function createMarketSection() {
                 title: "Stochastic RSI (1m)",
                 bottom: [
                   line({
-                    metric: indicators.rsi._1m.stochRsiK,
+                    metric: technical.rsi._1m.stochRsiK.percent,
                     name: "K",
                     color: colors.indicator.fast,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1m.stochRsiD,
+                    metric: technical.rsi._1m.stochRsiD.percent,
                     name: "D",
                     color: colors.indicator.slow,
                     unit: Unit.index,
@@ -925,13 +931,13 @@ export function createMarketSection() {
                 title: "Stochastic RSI (1y)",
                 bottom: [
                   line({
-                    metric: indicators.rsi._1y.stochRsiK,
+                    metric: technical.rsi._1y.stochRsiK.percent,
                     name: "K",
                     color: colors.indicator.fast,
                     unit: Unit.index,
                   }),
                   line({
-                    metric: indicators.rsi._1y.stochRsiD,
+                    metric: technical.rsi._1y.stochRsiD.percent,
                     name: "D",
                     color: colors.indicator.slow,
                     unit: Unit.index,
@@ -946,13 +952,13 @@ export function createMarketSection() {
             title: "Stochastic Oscillator",
             bottom: [
               line({
-                metric: indicators.stochK,
+                metric: technical.stochK.percent,
                 name: "K",
                 color: colors.indicator.fast,
                 unit: Unit.index,
               }),
               line({
-                metric: indicators.stochD,
+                metric: technical.stochD.percent,
                 name: "D",
                 color: colors.indicator.slow,
                 unit: Unit.index,
@@ -968,25 +974,25 @@ export function createMarketSection() {
                 title: "MACD Comparison",
                 bottom: [
                   line({
-                    metric: indicators.macd._1d.line,
+                    metric: technical.macd._24h.line,
                     name: "1d",
                     color: colors.time._24h,
                     unit: Unit.usd,
                   }),
                   line({
-                    metric: indicators.macd._1w.line,
+                    metric: technical.macd._1w.line,
                     name: "1w",
                     color: colors.time._1w,
                     unit: Unit.usd,
                   }),
                   line({
-                    metric: indicators.macd._1m.line,
+                    metric: technical.macd._1m.line,
                     name: "1m",
                     color: colors.time._1m,
                     unit: Unit.usd,
                   }),
                   line({
-                    metric: indicators.macd._1y.line,
+                    metric: technical.macd._1y.line,
                     name: "1y",
                     color: colors.time._1y,
                     unit: Unit.usd,
@@ -998,19 +1004,19 @@ export function createMarketSection() {
                 title: "MACD (1d)",
                 bottom: [
                   line({
-                    metric: indicators.macd._1d.line,
+                    metric: technical.macd._24h.line,
                     name: "MACD",
                     color: colors.indicator.fast,
                     unit: Unit.usd,
                   }),
                   line({
-                    metric: indicators.macd._1d.signal,
+                    metric: technical.macd._24h.signal,
                     name: "Signal",
                     color: colors.indicator.slow,
                     unit: Unit.usd,
                   }),
                   histogram({
-                    metric: indicators.macd._1d.histogram,
+                    metric: technical.macd._24h.histogram,
                     name: "Histogram",
                     unit: Unit.usd,
                   }),
@@ -1021,19 +1027,19 @@ export function createMarketSection() {
                 title: "MACD (1w)",
                 bottom: [
                   line({
-                    metric: indicators.macd._1w.line,
+                    metric: technical.macd._1w.line,
                     name: "MACD",
                     color: colors.indicator.fast,
                     unit: Unit.usd,
                   }),
                   line({
-                    metric: indicators.macd._1w.signal,
+                    metric: technical.macd._1w.signal,
                     name: "Signal",
                     color: colors.indicator.slow,
                     unit: Unit.usd,
                   }),
                   histogram({
-                    metric: indicators.macd._1w.histogram,
+                    metric: technical.macd._1w.histogram,
                     name: "Histogram",
                     unit: Unit.usd,
                   }),
@@ -1044,19 +1050,19 @@ export function createMarketSection() {
                 title: "MACD (1m)",
                 bottom: [
                   line({
-                    metric: indicators.macd._1m.line,
+                    metric: technical.macd._1m.line,
                     name: "MACD",
                     color: colors.indicator.fast,
                     unit: Unit.usd,
                   }),
                   line({
-                    metric: indicators.macd._1m.signal,
+                    metric: technical.macd._1m.signal,
                     name: "Signal",
                     color: colors.indicator.slow,
                     unit: Unit.usd,
                   }),
                   histogram({
-                    metric: indicators.macd._1m.histogram,
+                    metric: technical.macd._1m.histogram,
                     name: "Histogram",
                     unit: Unit.usd,
                   }),
@@ -1067,19 +1073,19 @@ export function createMarketSection() {
                 title: "MACD (1y)",
                 bottom: [
                   line({
-                    metric: indicators.macd._1y.line,
+                    metric: technical.macd._1y.line,
                     name: "MACD",
                     color: colors.indicator.fast,
                     unit: Unit.usd,
                   }),
                   line({
-                    metric: indicators.macd._1y.signal,
+                    metric: technical.macd._1y.signal,
                     name: "Signal",
                     color: colors.indicator.slow,
                     unit: Unit.usd,
                   }),
                   histogram({
-                    metric: indicators.macd._1y.histogram,
+                    metric: technical.macd._1y.histogram,
                     name: "Histogram",
                     unit: Unit.usd,
                   }),
@@ -1115,7 +1121,7 @@ export function createMarketSection() {
         title: "Dollar Cost Average Sats/Day",
         bottom: [
           line({
-            metric: dca.dcaSatsPerDay,
+            metric: dca.satsPerDay,
             name: "Sats/Day",
             unit: Unit.sats,
           }),
@@ -1130,19 +1136,19 @@ export function createMarketSection() {
             title: "Pi Cycle",
             top: [
               price({
-                metric: ma.price111dSma.price,
+                metric: ma.sma._111d,
                 name: "111d SMA",
                 color: colors.indicator.upper,
               }),
               price({
-                metric: ma.price350dSmaX2,
+                metric: ma.sma._350d.x2,
                 name: "350d SMA x2",
                 color: colors.indicator.lower,
               }),
             ],
             bottom: [
               baseline({
-                metric: indicators.piCycle,
+                metric: technical.piCycle.ratio,
                 name: "Pi Cycle",
                 unit: Unit.ratio,
                 base: 1,
@@ -1154,7 +1160,7 @@ export function createMarketSection() {
             title: "Puell Multiple",
             bottom: [
               line({
-                metric: indicators.puellMultiple,
+                metric: indicators.puellMultiple.ratio,
                 name: "Puell",
                 color: colors.usd,
                 unit: Unit.ratio,
@@ -1166,7 +1172,7 @@ export function createMarketSection() {
             title: "NVT Ratio",
             bottom: [
               line({
-                metric: indicators.nvt,
+                metric: indicators.nvt.ratio,
                 name: "NVT",
                 color: colors.bitcoin,
                 unit: Unit.ratio,
@@ -1178,9 +1184,100 @@ export function createMarketSection() {
             title: "Gini Coefficient",
             bottom: [
               line({
-                metric: indicators.gini,
+                metric: indicators.gini.percent,
                 name: "Gini",
                 color: colors.loss,
+                unit: Unit.ratio,
+              }),
+            ],
+          },
+          {
+            name: "RHODL Ratio",
+            title: "RHODL Ratio",
+            bottom: [
+              line({
+                metric: indicators.rhodlRatio.ratio,
+                name: "RHODL",
+                color: colors.bitcoin,
+                unit: Unit.ratio,
+              }),
+            ],
+          },
+          {
+            name: "Thermocap Multiple",
+            title: "Thermocap Multiple",
+            bottom: [
+              line({
+                metric: indicators.thermocapMultiple.ratio,
+                name: "Thermocap",
+                color: colors.bitcoin,
+                unit: Unit.ratio,
+              }),
+            ],
+          },
+          {
+            name: "Stock-to-Flow",
+            title: "Stock-to-Flow",
+            bottom: [
+              line({
+                metric: indicators.stockToFlow,
+                name: "S2F",
+                color: colors.bitcoin,
+                unit: Unit.ratio,
+              }),
+            ],
+          },
+          {
+            name: "Dormancy",
+            title: "Dormancy",
+            bottom: [
+              line({
+                metric: indicators.dormancy.supplyAdjusted,
+                name: "Supply Adjusted",
+                color: colors.bitcoin,
+                unit: Unit.ratio,
+              }),
+              line({
+                metric: indicators.dormancy.flow,
+                name: "Flow",
+                color: colors.usd,
+                unit: Unit.ratio,
+                defaultActive: false,
+              }),
+            ],
+          },
+          {
+            name: "Seller Exhaustion",
+            title: "Seller Exhaustion Constant",
+            bottom: [
+              line({
+                metric: indicators.sellerExhaustionConstant,
+                name: "SEC",
+                color: colors.bitcoin,
+                unit: Unit.ratio,
+              }),
+            ],
+          },
+          {
+            name: "CDD Supply Adjusted",
+            title: "Coindays Destroyed (Supply Adjusted)",
+            bottom: [
+              line({
+                metric: indicators.coindaysDestroyedSupplyAdjusted,
+                name: "CDD SA",
+                color: colors.bitcoin,
+                unit: Unit.ratio,
+              }),
+            ],
+          },
+          {
+            name: "CYD Supply Adjusted",
+            title: "Coinyears Destroyed (Supply Adjusted)",
+            bottom: [
+              line({
+                metric: indicators.coinyearsDestroyedSupplyAdjusted,
+                name: "CYD SA",
+                color: colors.bitcoin,
                 unit: Unit.ratio,
               }),
             ],

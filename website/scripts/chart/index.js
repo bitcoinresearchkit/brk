@@ -71,6 +71,8 @@ import { Unit } from "../utils/units.js";
 
 const lineWidth = /** @type {any} */ (1.5);
 
+const MAX_SIZE = 100_000;
+
 /**
  * @param {Object} args
  * @param {HTMLElement} args.parent
@@ -138,7 +140,7 @@ export function createChart({ parent, brk, fitContent }) {
       if (cached) {
         this.data = cached;
       }
-      endpoint.slice(-10000).fetch((/** @type {any} */ result) => {
+      endpoint.slice(-MAX_SIZE).fetch((/** @type {any} */ result) => {
         if (currentGen !== generation) return;
         cache.set(endpoint.path, result);
         this.data = result;
@@ -741,7 +743,7 @@ export function createChart({ parent, brk, fitContent }) {
             valuesVersion = cachedValues.version;
             tryProcess();
           }
-          await valuesEndpoint.slice(-10000).fetch((result) => {
+          await valuesEndpoint.slice(-MAX_SIZE).fetch((result) => {
             cache.set(valuesEndpoint.path, result);
             valuesData = result.data;
             valuesStamp = result.stamp;

@@ -199,7 +199,7 @@ Year1 = int
 Year10 = int
 # Aggregation dimension for querying metrics. Includes time-based (date, week, month, year),
 # block-based (height, tx_index), and address/output type indexes.
-Index = Literal["minute10", "minute30", "hour1", "hour4", "hour12", "day1", "day3", "week1", "month1", "month3", "month6", "year1", "year10", "halving", "epoch", "height", "txindex", "txinindex", "txoutindex", "emptyoutputindex", "opreturnindex", "p2aaddressindex", "p2msoutputindex", "p2pk33addressindex", "p2pk65addressindex", "p2pkhaddressindex", "p2shaddressindex", "p2traddressindex", "p2wpkhaddressindex", "p2wshaddressindex", "unknownoutputindex", "fundedaddressindex", "emptyaddressindex", "pairoutputindex"]
+Index = Literal["minute10", "minute30", "hour1", "hour4", "hour12", "day1", "day3", "week1", "month1", "month3", "month6", "year1", "year10", "halving", "epoch", "height", "tx_index", "txin_index", "txout_index", "empty_output_index", "op_return_index", "p2a_address_index", "p2ms_output_index", "p2pk33_address_index", "p2pk65_address_index", "p2pkh_address_index", "p2sh_address_index", "p2tr_address_index", "p2wpkh_address_index", "p2wsh_address_index", "unknown_output_index", "funded_address_index", "empty_address_index"]
 # Hierarchical tree node for organizing metrics into categories
 TreeNode = Union[dict[str, "TreeNode"], "MetricLeafWithSchema"]
 class AddressChainStats(TypedDict):
@@ -5322,8 +5322,7 @@ class BrkClient(BrkClientBase):
       "p2wsh_address_index",
       "unknown_output_index",
       "funded_address_index",
-      "empty_address_index",
-      "pair_output_index"
+      "empty_address_index"
     ]
 
     POOL_ID_TO_POOL_NAME = {

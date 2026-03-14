@@ -10,14 +10,14 @@ import {
   dots,
   baseline,
   fromSupplyPattern,
-  fromBaseStatsPattern,
   chartsFromFullPerBlock,
   chartsFromCount,
-  chartsFromValueFull,
   fromStatsPattern,
   chartsFromSumPerBlock,
-  statsAtWindow,
   rollingWindowsTree,
+  distributionWindowsTree,
+  mapWindows,
+  ROLLING_WINDOWS,
 } from "./series.js";
 import { satsBtcUsd, satsBtcUsdFrom } from "./shared.js";
 
@@ -33,7 +33,8 @@ export function createNetworkSection() {
     outputs,
     scripts,
     supply,
-    distribution,
+    addresses,
+    cohorts,
   } = brk.metrics;
 
   const st = colors.scriptType;
@@ -60,13 +61,13 @@ export function createNetworkSection() {
       defaultActive: false,
     },
     {
-      key: "emptyoutput",
+      key: "emptyOutput",
       name: "Empty",
       color: st.empty,
       defaultActive: false,
     },
     {
-      key: "unknownoutput",
+      key: "unknownOutput",
       name: "Unknown",
       color: st.unknown,
       defaultActive: false,
@@ -114,42 +115,25 @@ export function createNetworkSection() {
     },
   ]);
 
-  // Balance change types
-  const balanceTypes = /** @type {const} */ ([
-    {
-      key: "balanceIncreased",
-      name: "Accumulating",
-      title: "Accumulating Addresses per Block",
-      compareTitle: "Accumulating Addresses per Block by Type",
-    },
-    {
-      key: "balanceDecreased",
-      name: "Distributing",
-      title: "Distributing Addresses per Block",
-      compareTitle: "Distributing Addresses per Block by Type",
-    },
-  ]);
 
-  // Count types for comparison charts
-  // addrCount and emptyAddrCount have .count, totalAddrCount doesn't
   const countTypes = /** @type {const} */ ([
     {
       name: "Funded",
       title: "Address Count by Type",
       /** @param {AddressableType} t */
-      getMetric: (t) => distribution.addrCount[t].count,
+      getMetric: (t) => addresses.funded[t],
     },
     {
       name: "Empty",
       title: "Empty Address Count by Type",
       /** @param {AddressableType} t */
-      getMetric: (t) => distribution.emptyAddrCount[t].count,
+      getMetric: (t) => addresses.empty[t],
     },
     {
       name: "Total",
       title: "Total Address Count by Type",
       /** @param {AddressableType} t */
-      getMetric: (t) => distribution.totalAddrCount[t],
+      getMetric: (t) => addresses.total[t],
     },
   ]);
 
@@ -164,19 +148,19 @@ export function createNetworkSection() {
       title: `${titlePrefix}Address Count`,
       bottom: [
         line({
-          metric: distribution.addrCount[key].count,
+          metric: addresses.funded[key],
           name: "Funded",
           unit: Unit.count,
         }),
         line({
-          metric: distribution.emptyAddrCount[key].count,
+          metric: addresses.empty[key],
           name: "Empty",
           color: colors.gray,
           unit: Unit.count,
           defaultActive: false,
         }),
         line({
-          metric: distribution.totalAddrCount[key],
+          metric: addresses.total[key],
           name: "Total",
           color: colors.default,
           unit: Unit.count,
@@ -187,35 +171,23 @@ export function createNetworkSection() {
     {
       name: "Trends",
       tree: [
-        {
-          name: "30d Change",
-          title: `${titlePrefix}Address Count 30d Change`,
-          bottom: [
-            baseline({
-              metric: distribution.addrCount[key]._30dChange,
-              name: "Funded",
-              unit: Unit.count,
-            }),
-            baseline({
-              metric: distribution.emptyAddrCount[key]._30dChange,
-              name: "Empty",
-              color: colors.gray,
-              unit: Unit.count,
-              defaultActive: false,
-            }),
-          ],
-        },
+        rollingWindowsTree({
+          windows: addresses.delta[key].change,
+          title: `${titlePrefix}Address Count Change`,
+          unit: Unit.count,
+          series: baseline,
+        }),
         {
           name: "New",
           tree: (() => {
-            const p = distribution.newAddrCount[key];
+            const p = addresses.new[key];
             const t = `${titlePrefix}New Address Count`;
             return [
               {
                 name: "Sum",
                 title: t,
                 bottom: [
-                  line({ metric: p.height, name: "base", unit: Unit.count }),
+                  line({ metric: p.base, name: "base", unit: Unit.count }),
                 ],
               },
               rollingWindowsTree({
@@ -239,46 +211,66 @@ export function createNetworkSection() {
         },
         {
           name: "Reactivated",
-          title: `${titlePrefix}Reactivated Addresses per Block`,
-          bottom: fromBaseStatsPattern({
-            pattern: distribution.addressActivity[key].reactivated,
-            window: "_24h",
-            unit: Unit.count,
-          }),
+          tree: [
+            {
+              name: "Base",
+              title: `${titlePrefix}Reactivated Addresses per Block`,
+              bottom: [
+                dots({
+                  metric: addresses.activity[key].reactivated.height,
+                  name: "base",
+                  unit: Unit.count,
+                }),
+                line({
+                  metric: addresses.activity[key].reactivated._24h,
+                  name: "24h avg",
+                  color: colors.stat.avg,
+                  unit: Unit.count,
+                }),
+              ],
+            },
+            rollingWindowsTree({
+              windows: addresses.activity[key].reactivated,
+              title: `${titlePrefix}Reactivated Addresses`,
+              unit: Unit.count,
+            }),
+          ],
         },
-        {
-          name: "Growth Rate",
-          title: `${titlePrefix}Address Growth Rate per Block`,
-          bottom: fromBaseStatsPattern({
-            pattern: distribution.growthRate[key],
-            window: "_24h",
-            unit: Unit.ratio,
-          }),
-        },
+        rollingWindowsTree({
+          windows: mapWindows(addresses.delta[key].rate, (r) => r.ratio),
+          title: `${titlePrefix}Address Growth Rate`,
+          unit: Unit.ratio,
+        }),
       ],
     },
     {
       name: "Transacting",
       tree: transactingTypes.map((t) => ({
         name: t.name,
-        title: `${titlePrefix}${t.title}`,
-        bottom: fromBaseStatsPattern({
-          pattern: distribution.addressActivity[key][t.key],
-          window: "_24h",
-          unit: Unit.count,
-        }),
-      })),
-    },
-    {
-      name: "Balance",
-      tree: balanceTypes.map((b) => ({
-        name: b.name,
-        title: `${titlePrefix}${b.title}`,
-        bottom: fromBaseStatsPattern({
-          pattern: distribution.addressActivity[key][b.key],
-          window: "_24h",
-          unit: Unit.count,
-        }),
+        tree: [
+          {
+            name: "Base",
+            title: `${titlePrefix}${t.title}`,
+            bottom: [
+              dots({
+                metric: addresses.activity[key][t.key].height,
+                name: "base",
+                unit: Unit.count,
+              }),
+              line({
+                metric: addresses.activity[key][t.key]._24h,
+                name: "24h avg",
+                color: colors.stat.avg,
+                unit: Unit.count,
+              }),
+            ],
+          },
+          rollingWindowsTree({
+            windows: addresses.activity[key][t.key],
+            title: `${titlePrefix}${t.title.replace(" per Block", "")}`,
+            unit: Unit.count,
+          }),
+        ],
       })),
     },
   ];
@@ -312,13 +304,13 @@ export function createNetworkSection() {
         title: `${groupName} New Address Count`,
         bottom: types.flatMap((t) => [
           line({
-            metric: distribution.newAddrCount[t.key].height,
+            metric: addresses.new[t.key].base,
             name: t.name,
             color: t.color,
             unit: Unit.count,
           }),
           line({
-            metric: distribution.newAddrCount[t.key].sum._24h,
+            metric: addresses.new[t.key].sum._24h,
             name: t.name,
             color: t.color,
             unit: Unit.count,
@@ -327,81 +319,78 @@ export function createNetworkSection() {
       },
       {
         name: "Reactivated",
-        title: `${groupName} Reactivated Addresses per Block`,
-        bottom: types.flatMap((t) => [
-          line({
-            metric: distribution.addressActivity[t.key].reactivated.height,
-            name: t.name,
-            color: t.color,
-            unit: Unit.count,
-          }),
-          line({
-            metric:
-              distribution.addressActivity[t.key].reactivated.average._24h,
-            name: t.name,
-            color: t.color,
-            unit: Unit.count,
-          }),
-        ]),
+        tree: [
+          {
+            name: "Base",
+            title: `${groupName} Reactivated Addresses per Block`,
+            bottom: types.map((t) =>
+              line({
+                metric: addresses.activity[t.key].reactivated.height,
+                name: t.name,
+                color: t.color,
+                unit: Unit.count,
+              }),
+            ),
+          },
+          ...ROLLING_WINDOWS.map((w) => ({
+            name: w.name,
+            title: `${groupName} Reactivated Addresses (${w.name})`,
+            bottom: types.map((t) =>
+              line({
+                metric: addresses.activity[t.key].reactivated[w.key],
+                name: t.name,
+                color: t.color,
+                unit: Unit.count,
+              }),
+            ),
+          })),
+        ],
       },
       {
         name: "Growth Rate",
-        title: `${groupName} Address Growth Rate per Block`,
-        bottom: types.flatMap((t) => [
-          dots({
-            metric: distribution.growthRate[t.key].height,
-            name: t.name,
-            color: t.color,
-            unit: Unit.ratio,
-          }),
-          dots({
-            metric: distribution.growthRate[t.key].average._24h,
-            name: t.name,
-            color: t.color,
-            unit: Unit.ratio,
-          }),
-        ]),
+        tree: ROLLING_WINDOWS.map((w) => ({
+          name: w.name,
+          title: `${groupName} Address Growth Rate (${w.name})`,
+          bottom: types.map((t) =>
+            line({
+              metric: addresses.delta[t.key].rate[w.key].ratio,
+              name: t.name,
+              color: t.color,
+              unit: Unit.ratio,
+            }),
+          ),
+        })),
       },
       {
         name: "Transacting",
         tree: transactingTypes.map((tr) => ({
           name: tr.name,
-          title: `${groupName} ${tr.compareTitle}`,
-          bottom: types.flatMap((t) => [
-            line({
-              metric: distribution.addressActivity[t.key][tr.key].height,
-              name: t.name,
-              color: t.color,
-              unit: Unit.count,
-            }),
-            line({
-              metric: distribution.addressActivity[t.key][tr.key].average._24h,
-              name: t.name,
-              color: t.color,
-              unit: Unit.count,
-            }),
-          ]),
-        })),
-      },
-      {
-        name: "Balance",
-        tree: balanceTypes.map((b) => ({
-          name: b.name,
-          title: `${groupName} ${b.compareTitle}`,
-          bottom: types.flatMap((t) => [
-            line({
-              metric: distribution.addressActivity[t.key][b.key].height,
-              name: t.name,
-              color: t.color,
-              unit: Unit.count,
-            }),
-            line({
-              metric: distribution.addressActivity[t.key][b.key].average._24h,
-              name: t.name,
-              color: t.color,
-              unit: Unit.count,
-            }),
-          ]),
+          tree: [
+            {
+              name: "Base",
+              title: `${groupName} ${tr.compareTitle}`,
+              bottom: types.map((t) =>
+                line({
+                  metric: addresses.activity[t.key][tr.key].height,
+                  name: t.name,
+                  color: t.color,
+                  unit: Unit.count,
+                }),
+              ),
+            },
+            ...ROLLING_WINDOWS.map((w) => ({
+              name: w.name,
+              title: `${groupName} ${tr.compareTitle} (${w.name})`,
+              bottom: types.map((t) =>
+                line({
+                  metric: addresses.activity[t.key][tr.key][w.key],
+                  name: t.name,
+                  color: t.color,
+                  unit: Unit.count,
+                }),
+              ),
+            })),
+          ],
         })),
       },
     ],
@@ -478,7 +467,7 @@ export function createNetworkSection() {
             title: "Inflation Rate",
             bottom: [
               dots({
-                metric: supply.inflation,
+                metric: supply.inflationRate.percent,
                 name: "Rate",
                 unit: Unit.percentage,
               }),
@@ -509,10 +498,18 @@ export function createNetworkSection() {
           },
           {
             name: "OP_RETURN",
-            tree: chartsFromValueFull({
-              pattern: scripts.value.opreturn,
-              title: "OP_RETURN Burned",
-            }),
+            tree: [
+              {
+                name: "Sum",
+                title: "OP_RETURN Burned",
+                bottom: satsBtcUsd({ pattern: scripts.value.opreturn.base, name: "sum" }),
+              },
+              {
+                name: "Cumulative",
+                title: "OP_RETURN Burned (Total)",
+                bottom: satsBtcUsd({ pattern: scripts.value.opreturn.cumulative, name: "all-time" }),
+              },
+            ],
           },
         ],
       },
@@ -524,7 +521,7 @@ export function createNetworkSection() {
           {
             name: "Count",
             tree: chartsFromFullPerBlock({
-              pattern: transactions.count.txCount,
+              pattern: transactions.count.total,
               title: "Transaction Count",
               unit: Unit.count,
             }),
@@ -545,11 +542,11 @@ export function createNetworkSection() {
                 title: "Transaction Volume",
                 bottom: [
                   ...satsBtcUsd({
-                    pattern: transactions.volume.sentSum,
+                    pattern: transactions.volume.sentSum.base,
                     name: "Sent",
                   }),
                   ...satsBtcUsd({
-                    pattern: transactions.volume.receivedSum,
+                    pattern: transactions.volume.receivedSum.base,
                     name: "Received",
                     color: colors.entity.output,
                   }),
@@ -559,7 +556,7 @@ export function createNetworkSection() {
                 name: "Annualized",
                 title: "Annualized Transaction Volume",
                 bottom: satsBtcUsd({
-                  pattern: transactions.volume.annualizedVolume,
+                  pattern: transactions.volume.sentSum.sum._1y,
                   name: "Annualized",
                 }),
               },
@@ -588,7 +585,7 @@ export function createNetworkSection() {
                 bottom: entries(transactions.versions).map(
                   ([v, data], i, arr) =>
                     line({
-                      metric: data.height,
+                      metric: data.base,
                       name: v,
                       color: colors.at(i, arr.length),
                       unit: Unit.count,
@@ -642,12 +639,12 @@ export function createNetworkSection() {
                 title: "Block Count",
                 bottom: [
                   line({
-                    metric: blocks.count.blockCount.height,
+                    metric: blocks.count.total.base,
                     name: "base",
                     unit: Unit.count,
                   }),
                   line({
-                    metric: blocks.count.blockCountTarget,
+                    metric: blocks.count.target,
                     name: "Target",
                     color: colors.gray,
                     unit: Unit.count,
@@ -656,7 +653,7 @@ export function createNetworkSection() {
                 ],
               },
               rollingWindowsTree({
-                windows: blocks.count.blockCountSum,
+                windows: blocks.count.total.sum,
                 title: "Block Count",
                 unit: Unit.count,
               }),
@@ -665,7 +662,7 @@ export function createNetworkSection() {
                 title: "Block Count (Total)",
                 bottom: [
                   line({
-                    metric: blocks.count.blockCount.cumulative,
+                    metric: blocks.count.total.cumulative,
                     name: "all-time",
                     unit: Unit.count,
                   }),
@@ -675,14 +672,30 @@ export function createNetworkSection() {
           },
           {
             name: "Interval",
-            title: "Block Interval",
-            bottom: [
-              ...fromBaseStatsPattern({
-                pattern: blocks.interval,
-                window: "_24h",
+            tree: [
+              {
+                name: "Base",
+                title: "Block Interval",
+                bottom: [
+                  dots({
+                    metric: blocks.interval.height,
+                    name: "base",
+                    unit: Unit.secs,
+                  }),
+                  line({
+                    metric: blocks.interval._24h,
+                    name: "24h avg",
+                    color: colors.stat.avg,
+                    unit: Unit.secs,
+                  }),
+                  priceLine({ unit: Unit.secs, name: "Target", number: 600 }),
+                ],
+              },
+              rollingWindowsTree({
+                windows: blocks.interval,
+                title: "Block Interval",
                 unit: Unit.secs,
               }),
-              priceLine({ unit: Unit.secs, name: "Target", number: 600 }),
             ],
           },
           {
@@ -693,7 +706,7 @@ export function createNetworkSection() {
                 title: "Block Size",
                 bottom: [
                   line({
-                    metric: blocks.totalSize,
+                    metric: blocks.size.total,
                     name: "base",
                     unit: Unit.bytes,
                   }),
@@ -704,21 +717,12 @@ export function createNetworkSection() {
                 title: "Block Size",
                 unit: Unit.bytes,
               }),
-              {
-                name: "Distribution",
-                title: "Block Size Distribution",
-                bottom: [
-                  line({
-                    metric: blocks.totalSize,
-                    name: "base",
-                    unit: Unit.bytes,
-                  }),
-                  ...fromStatsPattern({
-                    pattern: statsAtWindow(blocks.size, "_24h"),
-                    unit: Unit.bytes,
-                  }),
-                ],
-              },
+              distributionWindowsTree({
+                pattern: blocks.size,
+                base: blocks.size.total,
+                title: "Block Size",
+                unit: Unit.bytes,
+              }),
               {
                 name: "Cumulative",
                 title: "Block Size (Total)",
@@ -740,7 +744,7 @@ export function createNetworkSection() {
                 title: "Block Weight",
                 bottom: [
                   line({
-                    metric: blocks.weight.base,
+                    metric: blocks.weight.raw,
                     name: "base",
                     unit: Unit.wu,
                   }),
@@ -751,21 +755,12 @@ export function createNetworkSection() {
                 title: "Block Weight",
                 unit: Unit.wu,
               }),
-              {
-                name: "Distribution",
-                title: "Block Weight Distribution",
-                bottom: [
-                  line({
-                    metric: blocks.weight.base,
-                    name: "base",
-                    unit: Unit.wu,
-                  }),
-                  ...fromStatsPattern({
-                    pattern: statsAtWindow(blocks.weight, "_24h"),
-                    unit: Unit.wu,
-                  }),
-                ],
-              },
+              distributionWindowsTree({
+                pattern: blocks.weight,
+                base: blocks.weight.raw,
+                title: "Block Weight",
+                unit: Unit.wu,
+              }),
               {
                 name: "Cumulative",
                 title: "Block Weight (Total)",
@@ -787,7 +782,7 @@ export function createNetworkSection() {
                 title: "Block vBytes",
                 bottom: [
                   line({
-                    metric: blocks.vbytes.height,
+                    metric: blocks.vbytes.base,
                     name: "base",
                     unit: Unit.vb,
                   }),
@@ -798,21 +793,12 @@ export function createNetworkSection() {
                 title: "Block vBytes",
                 unit: Unit.vb,
               }),
-              {
-                name: "Distribution",
-                title: "Block vBytes Distribution",
-                bottom: [
-                  line({
-                    metric: blocks.vbytes.height,
-                    name: "base",
-                    unit: Unit.vb,
-                  }),
-                  ...fromStatsPattern({
-                    pattern: statsAtWindow(blocks.vbytes, "_24h"),
-                    unit: Unit.vb,
-                  }),
-                ],
-              },
+              distributionWindowsTree({
+                pattern: blocks.vbytes,
+                base: blocks.vbytes.base,
+                title: "Block vBytes",
+                unit: Unit.vb,
+              }),
               {
                 name: "Cumulative",
                 title: "Block vBytes (Total)",
@@ -829,11 +815,13 @@ export function createNetworkSection() {
           {
             name: "Fullness",
             title: "Block Fullness",
-            bottom: fromBaseStatsPattern({
-              pattern: blocks.fullness,
-              window: "_24h",
-              unit: Unit.percentage,
-            }),
+            bottom: [
+              dots({
+                metric: blocks.fullness.percent,
+                name: "base",
+                unit: Unit.percentage,
+              }),
+            ],
           },
         ],
       },
@@ -847,7 +835,7 @@ export function createNetworkSection() {
             title: "UTXO Count",
             bottom: [
               line({
-                metric: outputs.count.utxoCount,
+                metric: outputs.count.unspent,
                 name: "Count",
                 unit: Unit.count,
               }),
@@ -858,7 +846,7 @@ export function createNetworkSection() {
             title: "UTXO Count 30d Change",
             bottom: [
               baseline({
-                metric: distribution.utxoCohorts.all.outputs.utxoCount30dChange,
+                metric: cohorts.utxo.all.outputs.unspentCount.delta.change._1m,
                 name: "30d Change",
                 unit: Unit.count,
               }),
@@ -869,7 +857,7 @@ export function createNetworkSection() {
             title: "UTXO Flow",
             bottom: [
               line({
-                metric: outputs.count.totalCount.sum,
+                metric: outputs.count.total.sum,
                 name: "Created",
                 color: colors.entity.output,
                 unit: Unit.count,
@@ -895,7 +883,7 @@ export function createNetworkSection() {
       {
         name: "Outputs",
         tree: chartsFromSumPerBlock({
-          pattern: outputs.count.totalCount,
+          pattern: outputs.count.total,
           title: "Output Count",
           unit: Unit.count,
         }),
@@ -957,14 +945,14 @@ export function createNetworkSection() {
                 title: "New Address Count by Type",
                 bottom: addressTypes.flatMap((t) => [
                   line({
-                    metric: distribution.newAddrCount[t.key].height,
+                    metric: addresses.new[t.key].base,
                     name: t.name,
                     color: t.color,
                     unit: Unit.count,
                     defaultActive: t.defaultActive,
                   }),
                   line({
-                    metric: distribution.newAddrCount[t.key].sum._24h,
+                    metric: addresses.new[t.key].sum._24h,
                     name: t.name,
                     color: t.color,
                     unit: Unit.count,
@@ -974,95 +962,83 @@ export function createNetworkSection() {
               },
               {
                 name: "Reactivated",
-                title: "Reactivated Addresses per Block by Type",
-                bottom: addressTypes.flatMap((t) => [
-                  line({
-                    metric:
-                      distribution.addressActivity[t.key].reactivated.height,
-                    name: t.name,
-                    color: t.color,
-                    unit: Unit.count,
-                    defaultActive: t.defaultActive,
-                  }),
-                  line({
-                    metric:
-                      distribution.addressActivity[t.key].reactivated.average
-                        ._24h,
-                    name: t.name,
-                    color: t.color,
-                    unit: Unit.count,
-                    defaultActive: t.defaultActive,
-                  }),
-                ]),
+                tree: [
+                  {
+                    name: "Base",
+                    title: "Reactivated Addresses per Block by Type",
+                    bottom: addressTypes.map((t) =>
+                      line({
+                        metric: addresses.activity[t.key].reactivated.height,
+                        name: t.name,
+                        color: t.color,
+                        unit: Unit.count,
+                        defaultActive: t.defaultActive,
+                      }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Reactivated Addresses by Type (${w.name})`,
+                    bottom: addressTypes.map((t) =>
+                      line({
+                        metric: addresses.activity[t.key].reactivated[w.key],
+                        name: t.name,
+                        color: t.color,
+                        unit: Unit.count,
+                        defaultActive: t.defaultActive,
+                      }),
+                    ),
+                  })),
+                ],
               },
               {
                 name: "Growth Rate",
-                title: "Address Growth Rate per Block by Type",
-                bottom: addressTypes.flatMap((t) => [
-                  dots({
-                    metric: distribution.growthRate[t.key].height,
-                    name: t.name,
-                    color: t.color,
-                    unit: Unit.ratio,
-                    defaultActive: t.defaultActive,
-                  }),
-                  dots({
-                    metric: distribution.growthRate[t.key].average._24h,
-                    name: t.name,
-                    color: t.color,
-                    unit: Unit.ratio,
-                    defaultActive: t.defaultActive,
-                  }),
-                ]),
+                tree: ROLLING_WINDOWS.map((w) => ({
+                  name: w.name,
+                  title: `Address Growth Rate by Type (${w.name})`,
+                  bottom: addressTypes.map((t) =>
+                    line({
+                      metric: addresses.delta[t.key].rate[w.key].ratio,
+                      name: t.name,
+                      color: t.color,
+                      unit: Unit.ratio,
+                      defaultActive: t.defaultActive,
+                    }),
+                  ),
+                })),
               },
               {
                 name: "Transacting",
                 tree: transactingTypes.map((tr) => ({
                   name: tr.name,
-                  title: tr.compareTitle,
-                  bottom: addressTypes.flatMap((t) => [
-                    line({
-                      metric:
-                        distribution.addressActivity[t.key][tr.key].height,
-                      name: t.name,
-                      color: t.color,
-                      unit: Unit.count,
-                      defaultActive: t.defaultActive,
-                    }),
-                    line({
-                      metric:
-                        distribution.addressActivity[t.key][tr.key].average
-                          ._24h,
-                      name: t.name,
-                      color: t.color,
-                      unit: Unit.count,
-                      defaultActive: t.defaultActive,
-                    }),
-                  ]),
-                })),
-              },
-              {
-                name: "Balance",
-                tree: balanceTypes.map((b) => ({
-                  name: b.name,
-                  title: b.compareTitle,
-                  bottom: addressTypes.flatMap((t) => [
-                    line({
-                      metric: distribution.addressActivity[t.key][b.key].height,
-                      name: t.name,
-                      color: t.color,
-                      unit: Unit.count,
-                      defaultActive: t.defaultActive,
-                    }),
-                    line({
-                      metric:
-                        distribution.addressActivity[t.key][b.key].average._24h,
-                      name: t.name,
-                      color: t.color,
-                      unit: Unit.count,
-                      defaultActive: t.defaultActive,
-                    }),
-                  ]),
+                  tree: [
+                    {
+                      name: "Base",
+                      title: tr.compareTitle,
+                      bottom: addressTypes.map((t) =>
+                        line({
+                          metric: addresses.activity[t.key][tr.key].height,
+                          name: t.name,
+                          color: t.color,
+                          unit: Unit.count,
+                          defaultActive: t.defaultActive,
+                        }),
+                      ),
+                    },
+                    ...ROLLING_WINDOWS.map((w) => ({
+                      name: w.name,
+                      title: `${tr.compareTitle} (${w.name})`,
+                      bottom: addressTypes.map((t) =>
+                        line({
+                          metric: addresses.activity[t.key][tr.key][w.key],
+                          name: t.name,
+                          color: t.color,
+                          unit: Unit.count,
+                          defaultActive: t.defaultActive,
+                        }),
+                      ),
+                    })),
+                  ],
                 })),
               },
             ],
@@ -1237,13 +1213,13 @@ export function createNetworkSection() {
                 title: "Script Adoption",
                 bottom: [
                   line({
-                    metric: scripts.adoption.segwit,
+                    metric: scripts.adoption.segwit.percent,
                     name: "SegWit",
                     color: colors.segwit,
                     unit: Unit.percentage,
                   }),
                   line({
-                    metric: scripts.adoption.taproot,
+                    metric: scripts.adoption.taproot.percent,
                     name: "Taproot",
                     color: taprootAddresses[1].color,
                     unit: Unit.percentage,
@@ -1255,7 +1231,7 @@ export function createNetworkSection() {
                 title: "SegWit Adoption",
                 bottom: [
                   line({
-                    metric: scripts.adoption.segwit,
+                    metric: scripts.adoption.segwit.percent,
                     name: "Adoption",
                     unit: Unit.percentage,
                   }),
@@ -1266,7 +1242,7 @@ export function createNetworkSection() {
                 title: "Taproot Adoption",
                 bottom: [
                   line({
-                    metric: scripts.adoption.taproot,
+                    metric: scripts.adoption.taproot.percent,
                     name: "Adoption",
                     unit: Unit.percentage,
                   }),

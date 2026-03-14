@@ -5,8 +5,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::PrintableIndex;
 
-use crate::PairOutputIndex;
-
 use super::{
     Date, Day1, Day3, EmptyAddressIndex, EmptyOutputIndex, Epoch, FundedAddressIndex, Halving,
     Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3, Month6, OpReturnIndex,
@@ -39,28 +37,44 @@ pub enum Index {
     Halving,
     Epoch,
     Height,
+    #[serde(rename = "tx_index")]
     TxIndex,
+    #[serde(rename = "txin_index")]
     TxInIndex,
+    #[serde(rename = "txout_index")]
     TxOutIndex,
+    #[serde(rename = "empty_output_index")]
     EmptyOutputIndex,
+    #[serde(rename = "op_return_index")]
     OpReturnIndex,
+    #[serde(rename = "p2a_address_index")]
     P2AAddressIndex,
+    #[serde(rename = "p2ms_output_index")]
     P2MSOutputIndex,
+    #[serde(rename = "p2pk33_address_index")]
     P2PK33AddressIndex,
+    #[serde(rename = "p2pk65_address_index")]
     P2PK65AddressIndex,
+    #[serde(rename = "p2pkh_address_index")]
     P2PKHAddressIndex,
+    #[serde(rename = "p2sh_address_index")]
     P2SHAddressIndex,
+    #[serde(rename = "p2tr_address_index")]
     P2TRAddressIndex,
+    #[serde(rename = "p2wpkh_address_index")]
     P2WPKHAddressIndex,
+    #[serde(rename = "p2wsh_address_index")]
     P2WSHAddressIndex,
+    #[serde(rename = "unknown_output_index")]
     UnknownOutputIndex,
+    #[serde(rename = "funded_address_index")]
     FundedAddressIndex,
+    #[serde(rename = "empty_address_index")]
     EmptyAddressIndex,
-    PairOutputIndex,
 }
 
 impl Index {
-    pub const fn all() -> [Self; 34] {
+    pub const fn all() -> [Self; 33] {
         [
             Self::Minute10,
             Self::Minute30,
@@ -95,7 +109,6 @@ impl Index {
             Self::UnknownOutputIndex,
             Self::FundedAddressIndex,
             Self::EmptyAddressIndex,
-            Self::PairOutputIndex,
         ]
     }
 
@@ -134,7 +147,6 @@ impl Index {
             Self::UnknownOutputIndex => UnknownOutputIndex::to_possible_strings(),
             Self::FundedAddressIndex => FundedAddressIndex::to_possible_strings(),
             Self::EmptyAddressIndex => EmptyAddressIndex::to_possible_strings(),
-            Self::PairOutputIndex => PairOutputIndex::to_possible_strings(),
         }
     }
 
@@ -180,7 +192,6 @@ impl Index {
             Self::UnknownOutputIndex => <UnknownOutputIndex as PrintableIndex>::to_string(),
             Self::FundedAddressIndex => <FundedAddressIndex as PrintableIndex>::to_string(),
             Self::EmptyAddressIndex => <EmptyAddressIndex as PrintableIndex>::to_string(),
-            Self::PairOutputIndex => <PairOutputIndex as PrintableIndex>::to_string(),
         }
     }
 

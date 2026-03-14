@@ -16,7 +16,7 @@ const ADDRESSABLE_TYPES = [
 
 /** @type {(key: SpendableType) => key is AddressableType} */
 const isAddressable = (key) =>
-  ADDRESSABLE_TYPES.includes(/** @type {any} */ (key));
+  /** @type {readonly string[]} */ (ADDRESSABLE_TYPES).includes(key);
 
 export function buildCohortData() {
   const utxoCohorts = brk.metrics.cohorts.utxo;

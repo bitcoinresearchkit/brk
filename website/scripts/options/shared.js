@@ -148,7 +148,7 @@ export function satsBtcUsdBaseline({ pattern, name, color, defaultActive }) {
 /**
  * Create sats/btc/usd series from any value pattern using base or cumulative key
  * @param {Object} args
- * @param {AnyValuePatternType} args.source
+ * @param {{ base: AnyValuePattern, cumulative: AnyValuePattern }} args.source
  * @param {'base' | 'cumulative'} args.key
  * @param {string} args.name
  * @param {Color} [args.color]
@@ -167,7 +167,7 @@ export function satsBtcUsdFrom({ source, key, name, color, defaultActive }) {
 /**
  * Create sats/btc/usd series from a full value pattern using base or cumulative key
  * @param {Object} args
- * @param {FullValuePattern} args.source
+ * @param {{ base: AnyValuePattern, cumulative: AnyValuePattern }} args.source
  * @param {'base' | 'cumulative'} args.key
  * @param {string} args.name
  * @param {Color} [args.color]
@@ -192,9 +192,9 @@ export function satsBtcUsdFromFull({
 /**
  * Create coinbase/subsidy/fee series from separate sources
  * @param {Object} args
- * @param {AnyValuePatternType} args.coinbase
- * @param {AnyValuePatternType} args.subsidy
- * @param {AnyValuePatternType} args.fee
+ * @param {{ base: AnyValuePattern, cumulative: AnyValuePattern }} args.coinbase
+ * @param {{ base: AnyValuePattern, cumulative: AnyValuePattern }} args.subsidy
+ * @param {{ base: AnyValuePattern, cumulative: AnyValuePattern }} args.fee
  * @param {'base' | 'cumulative'} args.key
  * @returns {FetchedLineSeriesBlueprint[]}
  */
@@ -267,13 +267,14 @@ export function revenueRollingBtcSatsUsd({ coinbase, subsidy, fee }) {
  * @param {AnyRatioPattern} ratio
  */
 export function percentileUsdMap(ratio) {
+  const p = ratio.percentiles;
   return /** @type {const} */ ([
-    { name: "pct95", prop: ratio.ratioPct95Usd, color: colors.ratioPct._95 },
-    { name: "pct5", prop: ratio.ratioPct5Usd, color: colors.ratioPct._5 },
-    { name: "pct98", prop: ratio.ratioPct98Usd, color: colors.ratioPct._98 },
-    { name: "pct2", prop: ratio.ratioPct2Usd, color: colors.ratioPct._2 },
-    { name: "pct99", prop: ratio.ratioPct99Usd, color: colors.ratioPct._99 },
-    { name: "pct1", prop: ratio.ratioPct1Usd, color: colors.ratioPct._1 },
+    { name: "pct95", prop: p.pct95.price, color: colors.ratioPct._95 },
+    { name: "pct5", prop: p.pct5.price, color: colors.ratioPct._5 },
+    { name: "pct98", prop: p.pct98.price, color: colors.ratioPct._98 },
+    { name: "pct2", prop: p.pct2.price, color: colors.ratioPct._2 },
+    { name: "pct99", prop: p.pct99.price, color: colors.ratioPct._99 },
+    { name: "pct1", prop: p.pct1.price, color: colors.ratioPct._1 },
   ]);
 }
 
@@ -282,13 +283,14 @@ export function percentileUsdMap(ratio) {
  * @param {AnyRatioPattern} ratio
  */
 export function percentileMap(ratio) {
+  const p = ratio.percentiles;
   return /** @type {const} */ ([
-    { name: "pct95", prop: ratio.ratioPct95, color: colors.ratioPct._95 },
-    { name: "pct5", prop: ratio.ratioPct5, color: colors.ratioPct._5 },
-    { name: "pct98", prop: ratio.ratioPct98, color: colors.ratioPct._98 },
-    { name: "pct2", prop: ratio.ratioPct2, color: colors.ratioPct._2 },
-    { name: "pct99", prop: ratio.ratioPct99, color: colors.ratioPct._99 },
-    { name: "pct1", prop: ratio.ratioPct1, color: colors.ratioPct._1 },
+    { name: "pct95", prop: p.pct95.ratio, color: colors.ratioPct._95 },
+    { name: "pct5", prop: p.pct5.ratio, color: colors.ratioPct._5 },
+    { name: "pct98", prop: p.pct98.ratio, color: colors.ratioPct._98 },
+    { name: "pct2", prop: p.pct2.ratio, color: colors.ratioPct._2 },
+    { name: "pct99", prop: p.pct99.ratio, color: colors.ratioPct._99 },
+    { name: "pct1", prop: p.pct1.ratio, color: colors.ratioPct._1 },
   ]);
 }
 
@@ -298,10 +300,10 @@ export function percentileMap(ratio) {
  */
 export function sdPatterns(ratio) {
   return /** @type {const} */ ([
-    { nameAddon: "All Time", titleAddon: "", sd: ratio.ratioSd },
-    { nameAddon: "4y", titleAddon: "4y", sd: ratio.ratio4ySd },
-    { nameAddon: "2y", titleAddon: "2y", sd: ratio.ratio2ySd },
-    { nameAddon: "1y", titleAddon: "1y", sd: ratio.ratio1ySd },
+    { nameAddon: "All Time", titleAddon: "", sd: ratio.stdDev.all, smaRatio: ratio.sma.all.ratio },
+    { nameAddon: "4y", titleAddon: "4y", sd: ratio.stdDev._4y, smaRatio: ratio.sma._4y.ratio },
+    { nameAddon: "2y", titleAddon: "2y", sd: ratio.stdDev._2y, smaRatio: ratio.sma._2y.ratio },
+    { nameAddon: "1y", titleAddon: "1y", sd: ratio.stdDev._1y, smaRatio: ratio.sma._1y.ratio },
   ]);
 }
 
@@ -311,41 +313,42 @@ export function sdPatterns(ratio) {
  */
 export function sdBandsUsd(sd) {
   return /** @type {const} */ ([
-    { name: "0σ", prop: sd._0sdUsd, color: colors.sd._0 },
-    { name: "+0.5σ", prop: sd.p05sdUsd, color: colors.sd.p05 },
-    { name: "−0.5σ", prop: sd.m05sdUsd, color: colors.sd.m05 },
-    { name: "+1σ", prop: sd.p1sdUsd, color: colors.sd.p1 },
-    { name: "−1σ", prop: sd.m1sdUsd, color: colors.sd.m1 },
-    { name: "+1.5σ", prop: sd.p15sdUsd, color: colors.sd.p15 },
-    { name: "−1.5σ", prop: sd.m15sdUsd, color: colors.sd.m15 },
-    { name: "+2σ", prop: sd.p2sdUsd, color: colors.sd.p2 },
-    { name: "−2σ", prop: sd.m2sdUsd, color: colors.sd.m2 },
-    { name: "+2.5σ", prop: sd.p25sdUsd, color: colors.sd.p25 },
-    { name: "−2.5σ", prop: sd.m25sdUsd, color: colors.sd.m25 },
-    { name: "+3σ", prop: sd.p3sdUsd, color: colors.sd.p3 },
-    { name: "−3σ", prop: sd.m3sdUsd, color: colors.sd.m3 },
+    { name: "0σ", prop: sd._0sd, color: colors.sd._0 },
+    { name: "+0.5σ", prop: sd.p05sd.price, color: colors.sd.p05 },
+    { name: "−0.5σ", prop: sd.m05sd.price, color: colors.sd.m05 },
+    { name: "+1σ", prop: sd.p1sd.price, color: colors.sd.p1 },
+    { name: "−1σ", prop: sd.m1sd.price, color: colors.sd.m1 },
+    { name: "+1.5σ", prop: sd.p15sd.price, color: colors.sd.p15 },
+    { name: "−1.5σ", prop: sd.m15sd.price, color: colors.sd.m15 },
+    { name: "+2σ", prop: sd.p2sd.price, color: colors.sd.p2 },
+    { name: "−2σ", prop: sd.m2sd.price, color: colors.sd.m2 },
+    { name: "+2.5σ", prop: sd.p25sd.price, color: colors.sd.p25 },
+    { name: "−2.5σ", prop: sd.m25sd.price, color: colors.sd.m25 },
+    { name: "+3σ", prop: sd.p3sd.price, color: colors.sd.p3 },
+    { name: "−3σ", prop: sd.m3sd.price, color: colors.sd.m3 },
   ]);
 }
 
 /**
  * Build SD band mappings (ratio) from an SD pattern
  * @param {Ratio1ySdPattern} sd
+ * @param {AnyMetricPattern} smaRatio
  */
-export function sdBandsRatio(sd) {
+export function sdBandsRatio(sd, smaRatio) {
   return /** @type {const} */ ([
-    { name: "0σ", prop: sd.sma, color: colors.sd._0 },
-    { name: "+0.5σ", prop: sd.p05sd, color: colors.sd.p05 },
-    { name: "−0.5σ", prop: sd.m05sd, color: colors.sd.m05 },
-    { name: "+1σ", prop: sd.p1sd, color: colors.sd.p1 },
-    { name: "−1σ", prop: sd.m1sd, color: colors.sd.m1 },
-    { name: "+1.5σ", prop: sd.p15sd, color: colors.sd.p15 },
-    { name: "−1.5σ", prop: sd.m15sd, color: colors.sd.m15 },
-    { name: "+2σ", prop: sd.p2sd, color: colors.sd.p2 },
-    { name: "−2σ", prop: sd.m2sd, color: colors.sd.m2 },
-    { name: "+2.5σ", prop: sd.p25sd, color: colors.sd.p25 },
-    { name: "−2.5σ", prop: sd.m25sd, color: colors.sd.m25 },
-    { name: "+3σ", prop: sd.p3sd, color: colors.sd.p3 },
-    { name: "−3σ", prop: sd.m3sd, color: colors.sd.m3 },
+    { name: "0σ", prop: smaRatio, color: colors.sd._0 },
+    { name: "+0.5σ", prop: sd.p05sd.value, color: colors.sd.p05 },
+    { name: "−0.5σ", prop: sd.m05sd.value, color: colors.sd.m05 },
+    { name: "+1σ", prop: sd.p1sd.value, color: colors.sd.p1 },
+    { name: "−1σ", prop: sd.m1sd.value, color: colors.sd.m1 },
+    { name: "+1.5σ", prop: sd.p15sd.value, color: colors.sd.p15 },
+    { name: "−1.5σ", prop: sd.m15sd.value, color: colors.sd.m15 },
+    { name: "+2σ", prop: sd.p2sd.value, color: colors.sd.p2 },
+    { name: "−2σ", prop: sd.m2sd.value, color: colors.sd.m2 },
+    { name: "+2.5σ", prop: sd.p25sd.value, color: colors.sd.p25 },
+    { name: "−2.5σ", prop: sd.m25sd.value, color: colors.sd.m25 },
+    { name: "+3σ", prop: sd.p3sd.value, color: colors.sd.p3 },
+    { name: "−3σ", prop: sd.m3sd.value, color: colors.sd.m3 },
   ]);
 }
 
@@ -355,12 +358,12 @@ export function sdBandsRatio(sd) {
  */
 export function ratioSmas(ratio) {
   return [
-    { name: "1w SMA", metric: ratio.ratio1wSma },
-    { name: "1m SMA", metric: ratio.ratio1mSma },
-    { name: "1y SMA", metric: ratio.ratio1ySd.sma },
-    { name: "2y SMA", metric: ratio.ratio2ySd.sma },
-    { name: "4y SMA", metric: ratio.ratio4ySd.sma },
-    { name: "All SMA", metric: ratio.ratioSd.sma, color: colors.time.all },
+    { name: "1w SMA", metric: ratio.sma._1w.ratio },
+    { name: "1m SMA", metric: ratio.sma._1m.ratio },
+    { name: "1y SMA", metric: ratio.sma._1y.ratio },
+    { name: "2y SMA", metric: ratio.sma._2y.ratio },
+    { name: "4y SMA", metric: ratio.sma._4y.ratio },
+    { name: "All SMA", metric: ratio.sma.all.ratio, color: colors.time.all },
   ].map((s, i, arr) => ({ color: colors.at(i, arr.length), ...s }));
 }
 
@@ -434,10 +437,10 @@ export function createZScoresFolder({
   const sdPats = sdPatterns(ratio);
 
   const zscorePeriods = [
-    { name: "1y", sd: ratio.ratio1ySd },
-    { name: "2y", sd: ratio.ratio2ySd },
-    { name: "4y", sd: ratio.ratio4ySd },
-    { name: "all", sd: ratio.ratioSd, color: colors.time.all },
+    { name: "1y", sd: ratio.stdDev._1y },
+    { name: "2y", sd: ratio.stdDev._2y },
+    { name: "4y", sd: ratio.stdDev._4y },
+    { name: "all", sd: ratio.stdDev.all, color: colors.time.all },
   ].map((s, i, arr) => ({ color: colors.at(i, arr.length), ...s }));
 
   return {
@@ -450,7 +453,7 @@ export function createZScoresFolder({
           price({ metric: pricePattern, name: legend, color }),
           ...zscorePeriods.map((p) =>
             price({
-              metric: p.sd._0sdUsd,
+              metric: p.sd._0sd,
               name: `${p.name} 0σ`,
               color: p.color,
               defaultActive: false,
@@ -473,7 +476,7 @@ export function createZScoresFolder({
           }),
         ],
       },
-      ...sdPats.map(({ nameAddon, titleAddon, sd }) => {
+      ...sdPats.map(({ nameAddon, titleAddon, sd, smaRatio }) => {
         const prefix = titleAddon ? `${titleAddon} ` : "";
         const topPrice = price({ metric: pricePattern, name: legend, color });
         return {
@@ -521,7 +524,7 @@ export function createZScoresFolder({
                   unit: Unit.ratio,
                   base: 1,
                 }),
-                ...sdBandsRatio(sd).map(
+                ...sdBandsRatio(sd, smaRatio).map(
                   ({ name: bandName, prop, color: bandColor }) =>
                     line({
                       metric: prop,

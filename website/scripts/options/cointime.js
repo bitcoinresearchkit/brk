@@ -1,8 +1,8 @@
 import { colors } from "../utils/colors.js";
 import { brk } from "../client.js";
 import { Unit } from "../utils/units.js";
-import { dots, line, price, rollingWindowsTree } from "./series.js";
-import { satsBtcUsd, createPriceRatioCharts } from "./shared.js";
+import { dots, line, baseline, price, rollingWindowsTree } from "./series.js";
+import { satsBtcUsd } from "./shared.js";
 
 /**
  * Create Cointime section
@@ -24,7 +24,7 @@ export function createCointimeSection() {
 
   // Reference lines for cap comparisons
   const capReferenceLines = /** @type {const} */ ([
-    { metric: supply.marketCap, name: "Market", color: colors.default },
+    { metric: supply.marketCap.usd, name: "Market", color: colors.default },
     {
       metric: all.realized.cap.usd,
       name: "Realized",
@@ -153,24 +153,53 @@ export function createCointimeSection() {
               ),
             ],
           },
-          ...prices.map(({ pattern, name, color }) => ({
-            name,
-            tree: createPriceRatioCharts({
-              context: `${name} Price`,
-              legend: name,
-              pricePattern: pattern,
-              ratio: pattern,
-              color,
-              priceReferences: [
-                price({
-                  metric: all.realized.price,
-                  name: "Realized",
-                  color: colors.realized,
-                  defaultActive: false,
-                }),
+          ...prices.map(({ pattern, name, color }) => {
+            const p = pattern.percentiles;
+            const pctUsd = /** @type {const} */ ([
+              { name: "pct95", prop: p.pct95.price, color: colors.ratioPct._95 },
+              { name: "pct5", prop: p.pct5.price, color: colors.ratioPct._5 },
+              { name: "pct99", prop: p.pct99.price, color: colors.ratioPct._99 },
+              { name: "pct1", prop: p.pct1.price, color: colors.ratioPct._1 },
+            ]);
+            const pctRatio = /** @type {const} */ ([
+              { name: "pct95", prop: p.pct95.ratio, color: colors.ratioPct._95 },
+              { name: "pct5", prop: p.pct5.ratio, color: colors.ratioPct._5 },
+              { name: "pct99", prop: p.pct99.ratio, color: colors.ratioPct._99 },
+              { name: "pct1", prop: p.pct1.ratio, color: colors.ratioPct._1 },
+            ]);
+            return {
+              name,
+              tree: [
+                {
+                  name: "Price",
+                  title: `${name} Price`,
+                  top: [
+                    price({ metric: pattern, name, color }),
+                    price({
+                      metric: all.realized.price,
+                      name: "Realized",
+                      color: colors.realized,
+                      defaultActive: false,
+                    }),
+                    ...pctUsd.map(({ name: pName, prop, color: pColor }) =>
+                      price({ metric: prop, name: pName, color: pColor, defaultActive: false, options: { lineStyle: 1 } }),
+                    ),
+                  ],
+                },
+                {
+                  name: "Ratio",
+                  title: `${name} Price Ratio`,
+                  top: [price({ metric: pattern, name, color })],
+                  bottom: [
+                    baseline({ metric: pattern.ratio, name: "Ratio", unit: Unit.ratio, base: 1 }),
+                    ...pctRatio.map(({ name: pName, prop, color: pColor }) =>
+                      line({ metric: prop, name: pName, color: pColor, defaultActive: false, unit: Unit.ratio, options: { lineStyle: 1 } }),
+                    ),
+                  ],
+                },
               ],
-            }),
-          })),
+            };
+          }),
         ],
       },
 

@@ -6,7 +6,7 @@ import { line } from "./series.js";
 
 /**
  * Get constant pattern by number dynamically from tree
- * Examples: 0 → constant0, 38.2 → constant382, -1 → constantMinus1
+ * Examples: 0 → _0, 38.2 → _382, -1 → minus1
  * @param {BrkClient["metrics"]["constants"]} constants
  * @param {number} num
  * @returns {AnyMetricPattern}
@@ -14,8 +14,8 @@ import { line } from "./series.js";
 export function getConstant(constants, num) {
   const key =
     num >= 0
-      ? `constant${String(num).replace(".", "")}`
-      : `constantMinus${Math.abs(num)}`;
+      ? `_${String(num).replace(".", "")}`
+      : `minus${Math.abs(num)}`;
   const constant = /** @type {AnyMetricPattern | undefined} */ (
     /** @type {Record<string, AnyMetricPattern>} */ (constants)[key]
   );

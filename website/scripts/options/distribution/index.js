@@ -38,9 +38,7 @@ import {
   createGroupedPricesSection,
 } from "./prices.js";
 import {
-  createCostBasisSection,
   createCostBasisSectionWithPercentiles,
-  createGroupedCostBasisSection,
   createGroupedCostBasisSectionWithPercentiles,
 } from "./cost-basis.js";
 import {
@@ -60,8 +58,12 @@ import {
 import {
   createActivitySection,
   createActivitySectionWithAdjusted,
+  createActivitySectionWithActivity,
+  createActivitySectionMinimal,
   createGroupedActivitySection,
   createGroupedActivitySectionWithAdjusted,
+  createGroupedActivitySectionWithActivity,
+  createGroupedActivitySectionMinimal,
 } from "./activity.js";
 
 // Re-export data builder
@@ -121,12 +123,11 @@ export function createCohortFolderWithAdjusted(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSectionWithRelative({ cohort, title }),
+      createHoldingsSectionWithOwnSupply({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
-      createCostBasisSection({ cohort, title }),
       createProfitabilitySectionWithNupl({ cohort, title }),
-      createActivitySectionWithAdjusted({ cohort, title }),
+      createActivitySectionWithActivity({ cohort, title }),
     ],
   };
 }
@@ -182,11 +183,10 @@ export function createCohortFolderAgeRange(cohort) {
     name: cohort.name || "all",
     tree: [
       createHoldingsSectionWithOwnSupply({ cohort, title }),
-      createValuationSectionFull({ cohort, title }),
-      createPricesSectionFull({ cohort, title }),
-      createCostBasisSectionWithPercentiles({ cohort, title }),
+      createValuationSection({ cohort, title }),
+      createPricesSectionBasic({ cohort, title }),
       createProfitabilitySectionWithInvestedCapitalPct({ cohort, title }),
-      createActivitySection({ cohort, title }),
+      createActivitySectionWithActivity({ cohort, title }),
     ],
   };
 }
@@ -201,12 +201,11 @@ export function createCohortFolderBasicWithMarketCap(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSectionWithRelative({ cohort, title }),
+      createHoldingsSection({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
-      createCostBasisSection({ cohort, title }),
       createProfitabilitySectionWithNupl({ cohort, title }),
-      createActivitySection({ cohort, title }),
+      createActivitySectionMinimal({ cohort, title }),
     ],
   };
 }
@@ -221,12 +220,11 @@ export function createCohortFolderBasicWithoutMarketCap(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSectionWithOwnSupply({ cohort, title }),
+      createHoldingsSection({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
-      createCostBasisSection({ cohort, title }),
       createProfitabilitySectionBasicWithInvestedCapitalPct({ cohort, title }),
-      createActivitySection({ cohort, title }),
+      createActivitySectionMinimal({ cohort, title }),
     ],
   };
 }
@@ -244,9 +242,8 @@ export function createCohortFolderAddress(cohort) {
       createHoldingsSectionAddress({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
-      createCostBasisSection({ cohort, title }),
       createProfitabilitySectionBasicWithInvestedCapitalPct({ cohort, title }),
-      createActivitySection({ cohort, title }),
+      createActivitySectionMinimal({ cohort, title }),
     ],
   };
 }
@@ -264,9 +261,8 @@ export function createCohortFolderWithoutRelative(cohort) {
       createHoldingsSection({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
-      createCostBasisSection({ cohort, title }),
       createProfitabilitySection({ cohort, title }),
-      createActivitySection({ cohort, title }),
+      createActivitySectionMinimal({ cohort, title }),
     ],
   };
 }
@@ -284,9 +280,8 @@ export function createAddressCohortFolder(cohort) {
       createHoldingsSectionAddressAmount({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
-      createCostBasisSection({ cohort, title }),
       createProfitabilitySectionWithNupl({ cohort, title }),
-      createActivitySection({ cohort, title }),
+      createActivitySectionMinimal({ cohort, title }),
     ],
   };
 }
@@ -333,12 +328,11 @@ export function createGroupedCohortFolderWithAdjusted({
   return {
     name: name || "all",
     tree: [
-      createGroupedHoldingsSectionWithRelative({ list, all, title }),
+      createGroupedHoldingsSectionWithOwnSupply({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
-      createGroupedCostBasisSection({ list, all, title }),
-      createGroupedProfitabilitySectionWithNupl({ list, all, title }),
-      createGroupedActivitySectionWithAdjusted({ list, all, title }),
+      createGroupedProfitabilitySectionWithInvestedCapitalPct({ list, all, title }),
+      createGroupedActivitySectionWithActivity({ list, all, title }),
     ],
   };
 }
@@ -406,15 +400,14 @@ export function createGroupedCohortFolderAgeRange({
     name: name || "all",
     tree: [
       createGroupedHoldingsSectionWithOwnSupply({ list, all, title }),
-      createGroupedValuationSectionWithOwnMarketCap({ list, all, title }),
+      createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
-      createGroupedCostBasisSectionWithPercentiles({ list, all, title }),
       createGroupedProfitabilitySectionWithInvestedCapitalPct({
         list,
         all,
         title,
       }),
-      createGroupedActivitySection({ list, all, title }),
+      createGroupedActivitySectionWithActivity({ list, all, title }),
     ],
   };
 }
@@ -433,12 +426,11 @@ export function createGroupedCohortFolderBasicWithMarketCap({
   return {
     name: name || "all",
     tree: [
-      createGroupedHoldingsSectionWithRelative({ list, all, title }),
+      createGroupedHoldingsSection({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
-      createGroupedCostBasisSection({ list, all, title }),
-      createGroupedProfitabilitySectionWithNupl({ list, all, title }),
-      createGroupedActivitySection({ list, all, title }),
+      createGroupedProfitabilitySection({ list, all, title }),
+      createGroupedActivitySectionMinimal({ list, all, title }),
     ],
   };
 }
@@ -457,16 +449,15 @@ export function createGroupedCohortFolderBasicWithoutMarketCap({
   return {
     name: name || "all",
     tree: [
-      createGroupedHoldingsSectionWithOwnSupply({ list, all, title }),
+      createGroupedHoldingsSection({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
-      createGroupedCostBasisSection({ list, all, title }),
       createGroupedProfitabilitySectionBasicWithInvestedCapitalPct({
         list,
         all,
         title,
       }),
-      createGroupedActivitySection({ list, all, title }),
+      createGroupedActivitySectionMinimal({ list, all, title }),
     ],
   };
 }
@@ -488,13 +479,12 @@ export function createGroupedCohortFolderAddress({
       createGroupedHoldingsSectionAddress({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
-      createGroupedCostBasisSection({ list, all, title }),
       createGroupedProfitabilitySectionBasicWithInvestedCapitalPct({
         list,
         all,
         title,
       }),
-      createGroupedActivitySection({ list, all, title }),
+      createGroupedActivitySectionMinimal({ list, all, title }),
     ],
   };
 }
@@ -516,9 +506,8 @@ export function createGroupedCohortFolderWithoutRelative({
       createGroupedHoldingsSection({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
-      createGroupedCostBasisSection({ list, all, title }),
       createGroupedProfitabilitySection({ list, all, title }),
-      createGroupedActivitySection({ list, all, title }),
+      createGroupedActivitySectionMinimal({ list, all, title }),
     ],
   };
 }
@@ -540,9 +529,8 @@ export function createGroupedAddressCohortFolder({
       createGroupedHoldingsSectionAddressAmount({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
-      createGroupedCostBasisSection({ list, all, title }),
-      createGroupedProfitabilitySectionWithNupl({ list, all, title }),
-      createGroupedActivitySection({ list, all, title }),
+      createGroupedProfitabilitySection({ list, all, title }),
+      createGroupedActivitySectionMinimal({ list, all, title }),
     ],
   };
 }

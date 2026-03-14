@@ -30,6 +30,8 @@ function walkMetrics(node, map, path) {
         key.endsWith("Cents") ||
         key.endsWith("State") ||
         key.endsWith("Start") ||
+        kn === "cents" ||
+        kn === "bps" ||
         kn === "mvrv" ||
         kn === "constants" ||
         kn === "blockhash" ||
@@ -144,8 +146,10 @@ export function extractTreeStructure(options) {
     /** @type {Record<string, string[]>} */
     const grouped = {};
     for (const s of series) {
-      const metric = /** @type {any} */ (s.metric);
-      if (isTop && metric?.usd && metric?.sats) {
+      const metric = /** @type {AnyMetricPattern | AnyPricePattern} */ (
+        s.metric
+      );
+      if (isTop && "usd" in metric && "sats" in metric) {
         const title = s.title || s.key || "unnamed";
         (grouped["USD"] ??= []).push(title);
         (grouped["sats"] ??= []).push(title);

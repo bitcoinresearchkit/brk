@@ -15,7 +15,7 @@ pub struct Vecs<M: StorageMode = Rw> {
 impl Vecs {
     pub(crate) fn forced_import(db: &Database, version: Version) -> Result<Self> {
         Ok(Self {
-            identity: EagerVec::forced_import(db, "day1", version)?,
+            identity: EagerVec::forced_import(db, "day1_index", version)?,
             date: EagerVec::forced_import(db, "date", version + Version::ONE)?,
             first_height: EagerVec::forced_import(db, "first_height", version)?,
             height_count: EagerVec::forced_import(db, "height_count", version)?,

@@ -4,6 +4,36 @@ import { colors } from "../utils/colors.js";
 import { Unit } from "../utils/units.js";
 
 // ============================================================================
+// Rolling window constants
+// ============================================================================
+
+/** @typedef {'_24h' | '_1w' | '_1m' | '_1y'} RollingWindowKey */
+
+/** @type {ReadonlyArray<{key: RollingWindowKey, name: string, color: Color}>} */
+export const ROLLING_WINDOWS = [
+  { key: "_24h", name: "24h", color: colors.time._24h },
+  { key: "_1w", name: "1w", color: colors.time._1w },
+  { key: "_1m", name: "1m", color: colors.time._1m },
+  { key: "_1y", name: "1y", color: colors.time._1y },
+];
+
+/**
+ * Extract a metric from each rolling window via a mapping function
+ * @template T
+ * @param {{ _24h: T, _1w: T, _1m: T, _1y: T }} windows
+ * @param {(v: T) => AnyMetricPattern} extract
+ * @returns {{ _24h: AnyMetricPattern, _1w: AnyMetricPattern, _1m: AnyMetricPattern, _1y: AnyMetricPattern }}
+ */
+export function mapWindows(windows, extract) {
+  return {
+    _24h: extract(windows._24h),
+    _1w: extract(windows._1w),
+    _1m: extract(windows._1m),
+    _1y: extract(windows._1y),
+  };
+}
+
+// ============================================================================
 // Price helper for top pane (auto-expands to USD + sats)
 // ============================================================================
 
@@ -439,43 +469,64 @@ export function statsAtWindow(pattern, window) {
  * @param {{ _24h: AnyMetricPattern, _1w: AnyMetricPattern, _1m: AnyMetricPattern, _1y: AnyMetricPattern }} args.windows
  * @param {string} args.title
  * @param {Unit} args.unit
+ * @param {(args: {metric: AnyMetricPattern, name: string, color: Color, unit: Unit}) => AnyFetchedSeriesBlueprint} [args.series]
  * @returns {PartialOptionsGroup}
  */
-export function rollingWindowsTree({ windows, title, unit }) {
+export function rollingWindowsTree({ windows, title, unit, series = line }) {
   return {
     name: "Rolling",
     tree: [
       {
         name: "Compare",
         title: `${title} Rolling`,
+        bottom: ROLLING_WINDOWS.map((w) =>
+          series({
+            metric: windows[w.key],
+            name: w.name,
+            color: w.color,
+            unit,
+          }),
+        ),
+      },
+      ...ROLLING_WINDOWS.map((w) => ({
+        name: w.name,
+        title: `${title} ${w.name}`,
         bottom: [
-          line({ metric: windows._24h, name: "24h", color: colors.time._24h, unit }),
-          line({ metric: windows._1w, name: "7d", color: colors.time._1w, unit }),
-          line({ metric: windows._1m, name: "30d", color: colors.time._1m, unit }),
-          line({ metric: windows._1y, name: "1y", color: colors.time._1y, unit }),
+          series({
+            metric: windows[w.key],
+            name: w.name,
+            color: w.color,
+            unit,
+          }),
         ],
-      },
-      {
-        name: "24h",
-        title: `${title} 24h`,
-        bottom: [line({ metric: windows._24h, name: "24h", color: colors.time._24h, unit })],
-      },
-      {
-        name: "7d",
-        title: `${title} 7d`,
-        bottom: [line({ metric: windows._1w, name: "7d", color: colors.time._1w, unit })],
-      },
-      {
-        name: "30d",
-        title: `${title} 30d`,
-        bottom: [line({ metric: windows._1m, name: "30d", color: colors.time._1m, unit })],
-      },
-      {
-        name: "1y",
-        title: `${title} 1y`,
-        bottom: [line({ metric: windows._1y, name: "1y", color: colors.time._1y, unit })],
-      },
+      })),
     ],
+  };
+}
+
+/**
+ * Create a Distribution folder tree with stats at each rolling window (24h/7d/30d/1y)
+ * @param {Object} args
+ * @param {Record<string, any>} args.pattern - Pattern with pct10/pct25/... and average/median/... as _1y24h30d7dPattern
+ * @param {AnyMetricPattern} [args.base] - Optional base metric to show as dots on each chart
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @returns {PartialOptionsGroup}
+ */
+export function distributionWindowsTree({ pattern, base, title, unit }) {
+  return {
+    name: "Distribution",
+    tree: ROLLING_WINDOWS.map((w) => ({
+      name: w.name,
+      title: `${title} Distribution (${w.name})`,
+      bottom: [
+        ...(base ? [line({ metric: base, name: "base", unit })] : []),
+        ...fromStatsPattern({
+          pattern: statsAtWindow(pattern, w.key),
+          unit,
+        }),
+      ],
+    })),
   };
 }
 
@@ -503,9 +554,18 @@ function rollingSlotForUnit(slot, unitKey) {
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export const distributionBtcSatsUsd = (slot) => [
-  ...fromStatsPattern({ pattern: rollingSlotForUnit(slot, "btc"), unit: Unit.btc }),
-  ...fromStatsPattern({ pattern: rollingSlotForUnit(slot, "sats"), unit: Unit.sats }),
-  ...fromStatsPattern({ pattern: rollingSlotForUnit(slot, "usd"), unit: Unit.usd }),
+  ...fromStatsPattern({
+    pattern: rollingSlotForUnit(slot, "btc"),
+    unit: Unit.btc,
+  }),
+  ...fromStatsPattern({
+    pattern: rollingSlotForUnit(slot, "sats"),
+    unit: Unit.sats,
+  }),
+  ...fromStatsPattern({
+    pattern: rollingSlotForUnit(slot, "usd"),
+    unit: Unit.usd,
+  }),
 ];
 
 /**
@@ -658,20 +718,16 @@ export function chartsFromFull({
   distributionSuffix = "",
 }) {
   const distTitle = distributionSuffix
-    ? `${title} ${distributionSuffix} Distribution`
-    : `${title} Distribution`;
+    ? `${title} ${distributionSuffix}`
+    : title;
   return [
     {
       name: "Sum",
       title,
-      bottom: [{ metric: pattern.height, title: "base", unit }],
+      bottom: [{ metric: pattern.base, title: "base", unit }],
     },
     rollingWindowsTree({ windows: pattern.sum, title, unit }),
-    {
-      name: "Distribution",
-      title: distTitle,
-      bottom: distributionSeries(statsAtWindow(pattern, "_24h"), unit),
-    },
+    distributionWindowsTree({ pattern, title: distTitle, unit }),
     {
       name: "Cumulative",
       title: `${title} (Total)`,
@@ -708,17 +764,19 @@ export function chartsFromSum({
 }) {
   const { stat } = colors;
   const distTitle = distributionSuffix
-    ? `${title} ${distributionSuffix} Distribution`
-    : `${title} Distribution`;
+    ? `${title} ${distributionSuffix}`
+    : title;
   return [
     {
       name: "Sum",
       title,
       bottom: [{ metric: pattern.sum, title: "sum", color: stat.sum, unit }],
     },
+    rollingWindowsTree({ windows: pattern.rolling.sum, title, unit }),
+    distributionWindowsTree({ pattern: pattern.rolling, title: distTitle, unit }),
     {
       name: "Distribution",
-      title: distTitle,
+      title: `${distTitle} Distribution`,
       bottom: distributionSeries(pattern, unit),
     },
     {
@@ -775,21 +833,19 @@ export function chartsFromValueFull({ pattern, title }) {
       bottom: [
         ...btcSatsUsdSeries({ metrics: pattern.base, name: "sum" }),
         ...btcSatsUsdSeries({
-          metrics: pattern._24h.sum,
+          metrics: pattern.sum._24h,
           name: "24h sum",
           defaultActive: false,
         }),
       ],
     },
     {
-      name: "Distribution",
-      title: `${title} Distribution`,
-      bottom: distributionBtcSatsUsd(pattern._24h),
-    },
-    {
       name: "Cumulative",
       title: `${title} (Total)`,
-      bottom: btcSatsUsdSeries({ metrics: pattern.cumulative, name: "all-time" }),
+      bottom: btcSatsUsdSeries({
+        metrics: pattern.cumulative,
+        name: "all-time",
+      }),
     },
   ];
 }

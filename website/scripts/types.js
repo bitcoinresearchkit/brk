@@ -30,63 +30,63 @@
  * @typedef {SeriesMarker<Time>} TimeSeriesMarker
  *
  * Brk tree types (stable across regenerations)
- * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts} UtxoCohortTree
- * @typedef {Brk.MetricsTree_Distribution_AddressCohorts} AddressCohortTree
- * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_All} AllUtxoPattern
- * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_Sth} ShortTermPattern
- * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} LongTermPattern
- * @typedef {Brk.MetricsTree_Distribution_UtxoCohorts_All_Relative} AllRelativePattern
- * @typedef {keyof Brk.BtcSatsUsdPattern} BtcSatsUsdKey
- * @typedef {Brk.BtcSatsUsdPattern} SupplyPattern
- * @typedef {Brk.AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} BlockSizePattern
+ * @typedef {Brk.MetricsTree_Cohorts_Utxo} UtxoCohortTree
+ * @typedef {Brk.MetricsTree_Cohorts_Address} AddressCohortTree
+ * @typedef {Brk.MetricsTree_Cohorts_Utxo_All} AllUtxoPattern
+ * @typedef {Brk.MetricsTree_Cohorts_Utxo_Sth} ShortTermPattern
+ * @typedef {Brk.MetricsTree_Cohorts_Utxo_Lth} LongTermPattern
+ * @typedef {Brk.MetricsTree_Cohorts_Utxo_All_Unrealized} AllRelativePattern
+ * @typedef {keyof Brk.BtcCentsSatsUsdPattern} BtcSatsUsdKey
+ * @typedef {Brk.BtcCentsSatsUsdPattern} SupplyPattern
+ * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} BlockSizePattern
  * @typedef {keyof Brk.MetricsTree_Cohorts_Utxo_Type} SpendableType
  * @typedef {keyof Brk.MetricsTree_Addresses_Raw} AddressableType
  *
  * Brk pattern types (using new pattern names)
- * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4} MaxAgePattern
- * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern} AgeRangePattern
- * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} UtxoAmountPattern
- * @typedef {Brk.ActivityAddrCostOutputsRealizedRelativeSupplyUnrealizedPattern} AddressAmountPattern
- * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern4} BasicUtxoPattern
- * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} EpochPattern
- * @typedef {Brk.ActivityCostOutputsRealizedRelativeSupplyUnrealizedPattern3} EmptyPattern
- * @typedef {Brk._0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdSmaZscorePattern} Ratio1ySdPattern
+ * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern} MaxAgePattern
+ * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern} AgeRangePattern
+ * @typedef {Brk.OutputsRealizedSupplyUnrealizedPattern} UtxoAmountPattern
+ * @typedef {Brk.AddressOutputsRealizedSupplyUnrealizedPattern} AddressAmountPattern
+ * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern} BasicUtxoPattern
+ * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern} EpochPattern
+ * @typedef {Brk.OutputsRealizedSupplyUnrealizedPattern} EmptyPattern
+ * @typedef {Brk._0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern} Ratio1ySdPattern
  * @typedef {Brk.Dollars} Dollars
  * CoinbasePattern: base + cumulative + rolling windows (flattened)
- * @typedef {Brk._1y24h30d7dBaseCumulativePattern} CoinbasePattern
+ * @typedef {Brk.BaseCumulativeSumPattern4} CoinbasePattern
  * ActivePriceRatioPattern: ratio pattern with price (extended)
- * @typedef {Brk.PriceRatioPattern} ActivePriceRatioPattern
- * AnyRatioPattern: full ratio patterns (with or without price) - has ratio, percentiles, z-scores
- * @typedef {Brk.RatioPattern | Brk.PriceRatioPattern} AnyRatioPattern
+ * @typedef {Brk.BpsPriceRatioPattern} ActivePriceRatioPattern
+ * AnyRatioPattern: full ratio pattern with percentiles, SMAs, and std dev bands
+ * @typedef {Brk.BpsCentsPercentilesRatioSatsSmaStdUsdPattern} AnyRatioPattern
  * ValuePattern: patterns with base + cumulative (no rolling)
- * @typedef {Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativePattern} ValuePattern
+ * @typedef {Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativeRelPattern} ValuePattern
  * FullValuePattern: base + cumulative + rolling windows (flattened)
- * @typedef {Brk._1y24h30d7dBaseCumulativePattern} FullValuePattern
- * RollingWindowSlot: a single rolling window with stats (average, pct10, pct25, median, pct75, pct90, max, min, sum) per unit
- * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern2} RollingWindowSlot
+ * @typedef {Brk.BaseCumulativeSumPattern4} FullValuePattern
+ * RollingWindowSlot: a single rolling window with stats (average, pct10, pct25, median, pct75, pct90, max, min) per unit
+ * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern} RollingWindowSlot
  * AnyValuePatternType: union of all value pattern types
- * @typedef {Brk._1y24h30d7dBaseCumulativePattern | Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativePattern} AnyValuePatternType
+ * @typedef {Brk.BaseCumulativeSumPattern4 | Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativeRelPattern} AnyValuePatternType
  * @typedef {Brk.AnyMetricPattern} AnyMetricPattern
- * @typedef {Brk.SatsUsdPattern} ActivePricePattern
+ * @typedef {Brk.CentsSatsUsdPattern} ActivePricePattern
  * @typedef {Brk.AnyMetricEndpointBuilder} AnyMetricEndpoint
  * @typedef {Brk.AnyMetricData} AnyMetricData
- * @typedef {Brk.AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern} AddrCountPattern
+ * @typedef {Brk.AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} AddrCountPattern
  * Relative patterns by capability:
  * - BasicRelativePattern: minimal relative (investedCapitalIn*Pct, supplyIn*RelToOwnSupply only)
  * - GlobalRelativePattern: has RelToMarketCap metrics (netUnrealizedPnlRelToMarketCap, etc)
  * - OwnRelativePattern: has RelToOwnMarketCap metrics (netUnrealizedPnlRelToOwnMarketCap, etc)
  * - FullRelativePattern: has BOTH RelToMarketCap AND RelToOwnMarketCap
- * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern} BasicRelativePattern
- * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern} GlobalRelativePattern
- * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern2} OwnRelativePattern
- * @typedef {Brk.InvestedNegNetNuplSupplyUnrealizedPattern2} FullRelativePattern
- * @typedef {Brk.GreedInvestedInvestorNegNetPainSupplyTotalUnrealizedPattern} UnrealizedPattern
+ * @typedef {Brk.LossNetNuplProfitPattern} BasicRelativePattern
+ * @typedef {Brk.LossNetNuplProfitPattern} GlobalRelativePattern
+ * @typedef {Brk.GrossInvestedLossNetNuplProfitSentimentPattern2} OwnRelativePattern
+ * @typedef {Brk.GrossInvestedLossNetNuplProfitSentimentPattern2} FullRelativePattern
+ * @typedef {Brk.GrossInvestedLossNetNuplProfitSentimentPattern2} UnrealizedPattern
  *
  * Realized patterns
- * @typedef {Brk.CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern} RealizedPattern
- * @typedef {Brk.CapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2} RealizedPattern2
- * @typedef {Brk.AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern} RealizedPattern3
- * @typedef {Brk.AdjustedCapCapitulationInvestorLossLowerMvrvNegNetPeakProfitRealizedSellSentSoprTotalUpperValuePattern2} RealizedPattern4
+ * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern
+ * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern2
+ * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern3
+ * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern4
  */
 
 /**
@@ -98,9 +98,8 @@
  * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern} StatsPattern
  */
 /**
- * Base stats pattern: height, average, min, max, percentiles (windowed, NO sum/cumulative)
- * @template T
- * @typedef {Brk.AverageHeightMaxMedianMinPct10Pct25Pct75Pct90Pattern<T>} BaseStatsPattern
+ * Base stats pattern: average, min, max, percentiles
+ * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern} BaseStatsPattern
  */
 /**
  * Full stats pattern: cumulative, sum, average, min, max, percentiles + rolling
@@ -117,11 +116,11 @@
 /**
  * Count pattern: height, cumulative, and rolling sum windows
  * @template T
- * @typedef {Brk.CumulativeHeightSumPattern<T>} CountPattern
+ * @typedef {Brk.BaseCumulativeSumPattern<T>} CountPattern
  */
 /**
  * Full per-block pattern: height, cumulative, sum, and distribution stats (all flat)
- * @typedef {Brk.AverageCumulativeHeightMaxMedianMinPct10Pct25Pct75Pct90SumPattern} FullPerBlockPattern
+ * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} FullPerBlockPattern
  */
 /**
  * Any stats pattern union - patterns with sum/cumulative + percentiles

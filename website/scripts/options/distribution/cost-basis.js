@@ -5,9 +5,9 @@
  * - Summary: Key stats (avg + median active, quartiles/extremes available)
  * - By Coin: BTC-weighted percentiles (IQR active: p25, p50, p75)
  * - By Capital: USD-weighted percentiles (IQR active: p25, p50, p75)
- * - Price Position: Spot percentile (both perspectives active)
+ * - Supply Density: Cost basis supply density percentage
  *
- * For cohorts WITHOUT percentiles: Summary only
+ * Only for cohorts WITH costBasis (All, STH, LTH)
  */
 
 import { colors } from "../../utils/colors.js";
@@ -38,37 +38,14 @@ function createCorePercentileSeries(p, n = (x) => x) {
 }
 
 /**
- * @param {UtxoCohortObject | CohortWithoutRelative} cohort
+ * @param {CohortAll | CohortFull | CohortLongTerm} cohort
  * @returns {FetchedPriceSeriesBlueprint[]}
  */
-function createSingleSummarySeriesBasic(cohort) {
-  const { color, tree } = cohort;
-  return [
-    price({ metric: tree.realized.realizedPrice, name: "Average", color }),
-    price({
-      metric: tree.costBasis.max,
-      name: "Max",
-      color: colors.stat.max,
-      defaultActive: false,
-    }),
-    price({
-      metric: tree.costBasis.min,
-      name: "Min",
-      color: colors.stat.min,
-      defaultActive: false,
-    }),
-  ];
-}
-
-/**
- * @param {CohortAll | CohortFull | CohortWithPercentiles} cohort
- * @returns {FetchedPriceSeriesBlueprint[]}
- */
-function createSingleSummarySeriesWithPercentiles(cohort) {
+function createSingleSummarySeries(cohort) {
   const { color, tree } = cohort;
   const p = tree.costBasis.percentiles;
   return [
-    price({ metric: tree.realized.realizedPrice, name: "Average", color }),
+    price({ metric: tree.realized.price, name: "Average", color }),
     price({
       metric: tree.costBasis.max,
       name: "Max (p100)",
@@ -98,25 +75,25 @@ function createSingleSummarySeriesWithPercentiles(cohort) {
 }
 
 /**
- * @param {readonly CohortObject[]} list
+ * @param {readonly (CohortAll | CohortFull | CohortLongTerm)[]} list
  * @param {CohortAll} all
  * @returns {FetchedPriceSeriesBlueprint[]}
  */
 function createGroupedSummarySeries(list, all) {
   return mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-    price({ metric: tree.realized.realizedPrice, name, color }),
+    price({ metric: tree.realized.price, name, color }),
   );
 }
 
 /**
- * @param {CohortAll | CohortFull | CohortWithPercentiles} cohort
+ * @param {CohortAll | CohortFull | CohortLongTerm} cohort
  * @returns {FetchedPriceSeriesBlueprint[]}
  */
 function createSingleByCoinSeries(cohort) {
   const { color, tree } = cohort;
   const cb = tree.costBasis;
   return [
-    price({ metric: tree.realized.realizedPrice, name: "Average", color }),
+    price({ metric: tree.realized.price, name: "Average", color }),
     price({
       metric: cb.max,
       name: "p100",
@@ -134,34 +111,28 @@ function createSingleByCoinSeries(cohort) {
 }
 
 /**
- * @param {CohortAll | CohortFull | CohortWithPercentiles} cohort
+ * @param {CohortAll | CohortFull | CohortLongTerm} cohort
  * @returns {FetchedPriceSeriesBlueprint[]}
  */
 function createSingleByCapitalSeries(cohort) {
   const { color, tree } = cohort;
   return [
-    price({ metric: tree.realized.investorPrice, name: "Average", color }),
+    price({ metric: tree.realized.investor.price, name: "Average", color }),
     ...createCorePercentileSeries(tree.costBasis.investedCapital),
   ];
 }
 
 /**
- * @param {CohortAll | CohortFull | CohortWithPercentiles} cohort
+ * @param {CohortAll | CohortFull | CohortLongTerm} cohort
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-function createSinglePricePositionSeries(cohort) {
+function createSingleSupplyDensitySeries(cohort) {
   const { tree } = cohort;
   return [
     line({
-      metric: tree.costBasis.spotCostBasisPercentile,
-      name: "By Coin",
+      metric: tree.costBasis.supplyDensity.percent,
+      name: "Supply Density",
       color: colors.bitcoin,
-      unit: Unit.percentage,
-    }),
-    line({
-      metric: tree.costBasis.spotInvestedCapitalPercentile,
-      name: "By Capital",
-      color: colors.usd,
       unit: Unit.percentage,
     }),
     ...priceLines({ numbers: [100, 50, 0], unit: Unit.percentage }),
@@ -169,24 +140,7 @@ function createSinglePricePositionSeries(cohort) {
 }
 
 /**
- * @param {{ cohort: UtxoCohortObject | CohortWithoutRelative, title: (metric: string) => string }} args
- * @returns {PartialOptionsGroup}
- */
-export function createCostBasisSection({ cohort, title }) {
-  return {
-    name: "Cost Basis",
-    tree: [
-      {
-        name: "Summary",
-        title: title("Cost Basis Summary"),
-        top: createSingleSummarySeriesBasic(cohort),
-      },
-    ],
-  };
-}
-
-/**
- * @param {{ cohort: CohortAll | CohortFull | CohortWithPercentiles, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortAll | CohortFull | CohortLongTerm, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createCostBasisSectionWithPercentiles({ cohort, title }) {
@@ -196,7 +150,7 @@ export function createCostBasisSectionWithPercentiles({ cohort, title }) {
       {
         name: "Summary",
         title: title("Cost Basis Summary"),
-        top: createSingleSummarySeriesWithPercentiles(cohort),
+        top: createSingleSummarySeries(cohort),
       },
       {
         name: "By Coin",
@@ -209,33 +163,16 @@ export function createCostBasisSectionWithPercentiles({ cohort, title }) {
         top: createSingleByCapitalSeries(cohort),
       },
       {
-        name: "Price Position",
-        title: title("Current Price Position"),
-        bottom: createSinglePricePositionSeries(cohort),
+        name: "Supply Density",
+        title: title("Cost Basis Supply Density"),
+        bottom: createSingleSupplyDensitySeries(cohort),
       },
     ],
   };
 }
 
 /**
- * @param {{ list: readonly (UtxoCohortObject | CohortWithoutRelative)[], all: CohortAll, title: (metric: string) => string }} args
- * @returns {PartialOptionsGroup}
- */
-export function createGroupedCostBasisSection({ list, all, title }) {
-  return {
-    name: "Cost Basis",
-    tree: [
-      {
-        name: "Summary",
-        title: title("Cost Basis Summary"),
-        top: createGroupedSummarySeries(list, all),
-      },
-    ],
-  };
-}
-
-/**
- * @param {{ list: readonly (CohortAll | CohortFull | CohortWithPercentiles)[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly (CohortAll | CohortFull | CohortLongTerm)[], all: CohortAll, title: (metric: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedCostBasisSectionWithPercentiles({
@@ -258,7 +195,7 @@ export function createGroupedCostBasisSectionWithPercentiles({
             name: "Average",
             title: title("Realized Price Comparison"),
             top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              price({ metric: tree.realized.realizedPrice, name, color }),
+              price({ metric: tree.realized.price, name, color }),
             ),
           },
           {
@@ -291,7 +228,7 @@ export function createGroupedCostBasisSectionWithPercentiles({
             name: "Average",
             title: title("Investor Price Comparison"),
             top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              price({ metric: tree.realized.investorPrice, name, color }),
+              price({ metric: tree.realized.investor.price, name, color }),
             ),
           },
           {
@@ -330,39 +267,16 @@ export function createGroupedCostBasisSectionWithPercentiles({
         ],
       },
       {
-        name: "Price Position",
-        tree: [
-          {
-            name: "By Coin",
-            title: title("Price Position (BTC-weighted)"),
-            bottom: [
-              ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                line({
-                  metric: tree.costBasis.spotCostBasisPercentile,
-                  name,
-                  color,
-                  unit: Unit.percentage,
-                }),
-              ),
-              ...priceLines({ numbers: [100, 50, 0], unit: Unit.percentage }),
-            ],
-          },
-          {
-            name: "By Capital",
-            title: title("Price Position (USD-weighted)"),
-            bottom: [
-              ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                line({
-                  metric: tree.costBasis.spotInvestedCapitalPercentile,
-                  name,
-                  color,
-                  unit: Unit.percentage,
-                }),
-              ),
-              ...priceLines({ numbers: [100, 50, 0], unit: Unit.percentage }),
-            ],
-          },
-        ],
+        name: "Supply Density",
+        title: title("Cost Basis Supply Density"),
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+          line({
+            metric: tree.costBasis.supplyDensity.percent,
+            name,
+            color,
+            unit: Unit.percentage,
+          }),
+        ),
       },
     ],
   };

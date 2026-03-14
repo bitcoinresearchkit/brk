@@ -173,9 +173,11 @@
  * Patterns with RelToMarketCap in relative (geAmount.*, ltAmount.*):
  * @typedef {UtxoAmountPattern | AddressAmountPattern} PatternBasicWithMarketCap
  *
- * Patterns without RelToMarketCap in relative (RelativePattern4):
- *   - EpochPattern (epoch.*, amountRange.*, year.*, type.*)
- * @typedef {EpochPattern} PatternBasicWithoutMarketCap
+ * Patterns without RelToMarketCap in relative:
+ *   - EpochPattern (epoch.*, year.*)
+ *   - UtxoAmountPattern (amountRange.*)
+ *   - OutputsRealizedSupplyUnrealizedPattern2 (addressable type.*)
+ * @typedef {EpochPattern | UtxoAmountPattern | Brk.OutputsRealizedSupplyUnrealizedPattern2} PatternBasicWithoutMarketCap
  *
  * Patterns without relative section entirely (edge case output types):
  *   - EmptyPattern (type.empty, type.p2ms, type.unknown)
@@ -259,8 +261,8 @@
  * Extended Cohort Types (with address count)
  * ============================================================================
  *
- * Addressable cohort with address count (for "type" cohorts - no RelToMarketCap)
- * @typedef {CohortBasicWithoutMarketCap & { addressCount: Brk.DeltaInnerPattern }} CohortAddress
+ * Addressable cohort with address count (for "type" cohorts - uses OutputsRealizedSupplyUnrealizedPattern2)
+ * @typedef {{ name: string, title: string, color: Color, tree: Brk.OutputsRealizedSupplyUnrealizedPattern2, addressCount: Brk.DeltaInnerPattern }} CohortAddress
  *
  * ============================================================================
  * Cohort Group Types (by capability)
