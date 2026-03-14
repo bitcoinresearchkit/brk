@@ -30,14 +30,14 @@ impl Vecs {
         self.tx_velocity_btc.height.compute_multiply(
             starting_indexes.height,
             &activity.ratio.height,
-            &supply.velocity.btc.height,
+            &supply.velocity.native.height,
             exit,
         )?;
 
         self.tx_velocity_usd.height.compute_multiply(
             starting_indexes.height,
             &activity.ratio.height,
-            &supply.velocity.usd.height,
+            &supply.velocity.fiat.height,
             exit,
         )?;
 

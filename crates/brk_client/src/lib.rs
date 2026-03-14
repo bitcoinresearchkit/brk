@@ -1916,28 +1916,6 @@ impl BtcCentsRelSatsUsdPattern2 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct CoindaysCoinyearsDormancySentVelocityPattern {
-    pub coindays_destroyed: BaseCumulativeSumPattern<StoredF64>,
-    pub coinyears_destroyed: MetricPattern1<StoredF64>,
-    pub dormancy: MetricPattern1<StoredF32>,
-    pub sent: BaseCumulativeInSumPattern,
-    pub velocity: MetricPattern1<StoredF32>,
-}
-
-impl CoindaysCoinyearsDormancySentVelocityPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            coindays_destroyed: BaseCumulativeSumPattern::new(client.clone(), _m(&acc, "coindays_destroyed")),
-            coinyears_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "coinyears_destroyed")),
-            dormancy: MetricPattern1::new(client.clone(), _m(&acc, "dormancy")),
-            sent: BaseCumulativeInSumPattern::new(client.clone(), _m(&acc, "sent")),
-            velocity: MetricPattern1::new(client.clone(), _m(&acc, "velocity")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct DeltaHalfInTotalPattern2 {
     pub delta: ChangeRatePattern,
     pub half: BtcCentsSatsUsdPattern,
@@ -2323,6 +2301,26 @@ impl CentsRelUsdPattern2 {
             rel_to_own_gross: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rel_to_own_gross_pnl")),
             rel_to_own_mcap: BpsPercentRatioPattern::new(client.clone(), _m(&acc, "rel_to_own_mcap")),
             usd: MetricPattern1::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct CoindaysCoinyearsDormancySentPattern {
+    pub coindays_destroyed: BaseCumulativeSumPattern<StoredF64>,
+    pub coinyears_destroyed: MetricPattern1<StoredF64>,
+    pub dormancy: MetricPattern1<StoredF32>,
+    pub sent: BaseCumulativeInSumPattern,
+}
+
+impl CoindaysCoinyearsDormancySentPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            coindays_destroyed: BaseCumulativeSumPattern::new(client.clone(), _m(&acc, "coindays_destroyed")),
+            coinyears_destroyed: MetricPattern1::new(client.clone(), _m(&acc, "coinyears_destroyed")),
+            dormancy: MetricPattern1::new(client.clone(), _m(&acc, "dormancy")),
+            sent: BaseCumulativeInSumPattern::new(client.clone(), _m(&acc, "sent")),
         }
     }
 }
@@ -3122,9 +3120,9 @@ pub struct MetricsTree_Blocks {
     pub count: MetricsTree_Blocks_Count,
     pub lookback: MetricsTree_Blocks_Lookback,
     pub interval: _1m1w1y24hHeightPattern<Timestamp>,
-    pub halving: MetricsTree_Blocks_Halving,
     pub vbytes: AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
     pub fullness: MetricsTree_Blocks_Fullness,
+    pub halving: MetricsTree_Blocks_Halving,
 }
 
 impl MetricsTree_Blocks {
@@ -3138,9 +3136,9 @@ impl MetricsTree_Blocks {
             count: MetricsTree_Blocks_Count::new(client.clone(), format!("{base_path}_count")),
             lookback: MetricsTree_Blocks_Lookback::new(client.clone(), format!("{base_path}_lookback")),
             interval: _1m1w1y24hHeightPattern::new(client.clone(), "block_interval".to_string()),
-            halving: MetricsTree_Blocks_Halving::new(client.clone(), format!("{base_path}_halving")),
             vbytes: AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), "block_vbytes".to_string()),
             fullness: MetricsTree_Blocks_Fullness::new(client.clone(), format!("{base_path}_fullness")),
+            halving: MetricsTree_Blocks_Halving::new(client.clone(), format!("{base_path}_halving")),
         }
     }
 }
@@ -3364,23 +3362,6 @@ impl MetricsTree_Blocks_Lookback {
 }
 
 /// Metrics tree node.
-pub struct MetricsTree_Blocks_Halving {
-    pub epoch: MetricPattern1<Halving>,
-    pub blocks_before_next: MetricPattern1<StoredU32>,
-    pub days_before_next: MetricPattern1<StoredF32>,
-}
-
-impl MetricsTree_Blocks_Halving {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            epoch: MetricPattern1::new(client.clone(), "halving_epoch".to_string()),
-            blocks_before_next: MetricPattern1::new(client.clone(), "blocks_before_next_halving".to_string()),
-            days_before_next: MetricPattern1::new(client.clone(), "days_before_next_halving".to_string()),
-        }
-    }
-}
-
-/// Metrics tree node.
 pub struct MetricsTree_Blocks_Fullness {
     pub bps: _1m1w1y24hHeightPattern<BasisPoints16>,
     pub ratio: MetricPattern1<StoredF32>,
@@ -3393,6 +3374,23 @@ impl MetricsTree_Blocks_Fullness {
             bps: _1m1w1y24hHeightPattern::new(client.clone(), "block_fullness_bps".to_string()),
             ratio: MetricPattern1::new(client.clone(), "block_fullness_ratio".to_string()),
             percent: MetricPattern1::new(client.clone(), "block_fullness".to_string()),
+        }
+    }
+}
+
+/// Metrics tree node.
+pub struct MetricsTree_Blocks_Halving {
+    pub epoch: MetricPattern1<Halving>,
+    pub blocks_before_next: MetricPattern1<StoredU32>,
+    pub days_before_next: MetricPattern1<StoredF32>,
+}
+
+impl MetricsTree_Blocks_Halving {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            epoch: MetricPattern1::new(client.clone(), "halving_epoch".to_string()),
+            blocks_before_next: MetricPattern1::new(client.clone(), "blocks_before_next_halving".to_string()),
+            days_before_next: MetricPattern1::new(client.clone(), "days_before_next_halving".to_string()),
         }
     }
 }
@@ -6423,6 +6421,7 @@ impl MetricsTree_Prices_Spot {
 
 /// Metrics tree node.
 pub struct MetricsTree_Supply {
+    pub state: MetricPattern18<SupplyState>,
     pub circulating: BtcCentsSatsUsdPattern,
     pub burned: MetricsTree_Supply_Burned,
     pub inflation_rate: BpsPercentRatioPattern,
@@ -6430,12 +6429,12 @@ pub struct MetricsTree_Supply {
     pub market_cap: CentsDeltaUsdPattern,
     pub market_minus_realized_cap_growth_rate: _1m1w1y24hPattern<BasisPointsSigned32>,
     pub hodled_or_lost: BtcCentsSatsUsdPattern,
-    pub state: MetricPattern18<SupplyState>,
 }
 
 impl MetricsTree_Supply {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
+            state: MetricPattern18::new(client.clone(), "supply_state".to_string()),
             circulating: BtcCentsSatsUsdPattern::new(client.clone(), "circulating_supply".to_string()),
             burned: MetricsTree_Supply_Burned::new(client.clone(), format!("{base_path}_burned")),
             inflation_rate: BpsPercentRatioPattern::new(client.clone(), "inflation_rate".to_string()),
@@ -6443,7 +6442,6 @@ impl MetricsTree_Supply {
             market_cap: CentsDeltaUsdPattern::new(client.clone(), "market_cap".to_string()),
             market_minus_realized_cap_growth_rate: _1m1w1y24hPattern::new(client.clone(), "market_minus_realized_cap_growth_rate".to_string()),
             hodled_or_lost: BtcCentsSatsUsdPattern::new(client.clone(), "hodled_or_lost_coins".to_string()),
-            state: MetricPattern18::new(client.clone(), "supply_state".to_string()),
         }
     }
 }
@@ -6465,15 +6463,15 @@ impl MetricsTree_Supply_Burned {
 
 /// Metrics tree node.
 pub struct MetricsTree_Supply_Velocity {
-    pub btc: MetricPattern1<StoredF64>,
-    pub usd: MetricPattern1<StoredF64>,
+    pub native: MetricPattern1<StoredF64>,
+    pub fiat: MetricPattern1<StoredF64>,
 }
 
 impl MetricsTree_Supply_Velocity {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            btc: MetricPattern1::new(client.clone(), "velocity_btc".to_string()),
-            usd: MetricPattern1::new(client.clone(), "velocity_usd".to_string()),
+            native: MetricPattern1::new(client.clone(), "velocity".to_string()),
+            fiat: MetricPattern1::new(client.clone(), "velocity_fiat".to_string()),
         }
     }
 }
@@ -6536,7 +6534,7 @@ impl MetricsTree_Cohorts_Utxo {
 pub struct MetricsTree_Cohorts_Utxo_All {
     pub supply: MetricsTree_Cohorts_Utxo_All_Supply,
     pub outputs: UnspentPattern,
-    pub activity: CoindaysCoinyearsDormancySentVelocityPattern,
+    pub activity: CoindaysCoinyearsDormancySentPattern,
     pub realized: CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern,
     pub cost_basis: InvestedMaxMinPercentilesSupplyPattern,
     pub unrealized: MetricsTree_Cohorts_Utxo_All_Unrealized,
@@ -6547,7 +6545,7 @@ impl MetricsTree_Cohorts_Utxo_All {
         Self {
             supply: MetricsTree_Cohorts_Utxo_All_Supply::new(client.clone(), format!("{base_path}_supply")),
             outputs: UnspentPattern::new(client.clone(), "utxo_count".to_string()),
-            activity: CoindaysCoinyearsDormancySentVelocityPattern::new(client.clone(), "".to_string()),
+            activity: CoindaysCoinyearsDormancySentPattern::new(client.clone(), "".to_string()),
             realized: CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern::new(client.clone(), "".to_string()),
             cost_basis: InvestedMaxMinPercentilesSupplyPattern::new(client.clone(), "".to_string()),
             unrealized: MetricsTree_Cohorts_Utxo_All_Unrealized::new(client.clone(), format!("{base_path}_unrealized")),
@@ -6557,86 +6555,46 @@ impl MetricsTree_Cohorts_Utxo_All {
 
 /// Metrics tree node.
 pub struct MetricsTree_Cohorts_Utxo_All_Supply {
-    pub in_profit: BtcCentsRelSatsUsdPattern2,
-    pub in_loss: BtcCentsRelSatsUsdPattern2,
     pub total: BtcCentsSatsUsdPattern,
     pub half: BtcCentsSatsUsdPattern,
     pub delta: ChangeRatePattern,
+    pub in_profit: BtcCentsRelSatsUsdPattern2,
+    pub in_loss: BtcCentsRelSatsUsdPattern2,
 }
 
 impl MetricsTree_Cohorts_Utxo_All_Supply {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            in_profit: BtcCentsRelSatsUsdPattern2::new(client.clone(), "supply_in_profit".to_string()),
-            in_loss: BtcCentsRelSatsUsdPattern2::new(client.clone(), "supply_in_loss".to_string()),
             total: BtcCentsSatsUsdPattern::new(client.clone(), "supply".to_string()),
             half: BtcCentsSatsUsdPattern::new(client.clone(), "supply_half".to_string()),
             delta: ChangeRatePattern::new(client.clone(), "supply_delta".to_string()),
+            in_profit: BtcCentsRelSatsUsdPattern2::new(client.clone(), "supply_in_profit".to_string()),
+            in_loss: BtcCentsRelSatsUsdPattern2::new(client.clone(), "supply_in_loss".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Cohorts_Utxo_All_Unrealized {
+    pub nupl: BpsRatioPattern,
+    pub profit: MetricsTree_Cohorts_Utxo_All_Unrealized_Profit,
+    pub loss: MetricsTree_Cohorts_Utxo_All_Unrealized_Loss,
+    pub net_pnl: MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl,
     pub gross_pnl: CentsUsdPattern2,
     pub invested_capital: InPattern,
     pub sentiment: GreedNetPainPattern,
-    pub loss: MetricsTree_Cohorts_Utxo_All_Unrealized_Loss,
-    pub net_pnl: MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl,
-    pub profit: MetricsTree_Cohorts_Utxo_All_Unrealized_Profit,
-    pub nupl: BpsRatioPattern,
 }
 
 impl MetricsTree_Cohorts_Utxo_All_Unrealized {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
+            nupl: BpsRatioPattern::new(client.clone(), "nupl".to_string()),
+            profit: MetricsTree_Cohorts_Utxo_All_Unrealized_Profit::new(client.clone(), format!("{base_path}_profit")),
+            loss: MetricsTree_Cohorts_Utxo_All_Unrealized_Loss::new(client.clone(), format!("{base_path}_loss")),
+            net_pnl: MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl::new(client.clone(), format!("{base_path}_net_pnl")),
             gross_pnl: CentsUsdPattern2::new(client.clone(), "unrealized_gross_pnl".to_string()),
             invested_capital: InPattern::new(client.clone(), "invested_capital_in".to_string()),
             sentiment: GreedNetPainPattern::new(client.clone(), "".to_string()),
-            loss: MetricsTree_Cohorts_Utxo_All_Unrealized_Loss::new(client.clone(), format!("{base_path}_loss")),
-            net_pnl: MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl::new(client.clone(), format!("{base_path}_net_pnl")),
-            profit: MetricsTree_Cohorts_Utxo_All_Unrealized_Profit::new(client.clone(), format!("{base_path}_profit")),
-            nupl: BpsRatioPattern::new(client.clone(), "nupl".to_string()),
-        }
-    }
-}
-
-/// Metrics tree node.
-pub struct MetricsTree_Cohorts_Utxo_All_Unrealized_Loss {
-    pub negative: MetricPattern1<Dollars>,
-    pub base: CentsUsdPattern2,
-    pub cumulative: CentsUsdPattern2,
-    pub sum: _1m1w1y24hPattern4,
-    pub rel_to_mcap: BpsPercentRatioPattern3,
-    pub rel_to_own_gross: BpsPercentRatioPattern3,
-}
-
-impl MetricsTree_Cohorts_Utxo_All_Unrealized_Loss {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            negative: MetricPattern1::new(client.clone(), "neg_unrealized_loss".to_string()),
-            base: CentsUsdPattern2::new(client.clone(), "unrealized_loss".to_string()),
-            cumulative: CentsUsdPattern2::new(client.clone(), "unrealized_loss_cumulative".to_string()),
-            sum: _1m1w1y24hPattern4::new(client.clone(), "unrealized_loss_sum".to_string()),
-            rel_to_mcap: BpsPercentRatioPattern3::new(client.clone(), "unrealized_loss_rel_to_mcap".to_string()),
-            rel_to_own_gross: BpsPercentRatioPattern3::new(client.clone(), "unrealized_loss_rel_to_own_gross_pnl".to_string()),
-        }
-    }
-}
-
-/// Metrics tree node.
-pub struct MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl {
-    pub cents: MetricPattern1<CentsSigned>,
-    pub usd: MetricPattern1<Dollars>,
-    pub rel_to_own_gross: BpsPercentRatioPattern,
-}
-
-impl MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            cents: MetricPattern1::new(client.clone(), "net_unrealized_pnl_cents".to_string()),
-            usd: MetricPattern1::new(client.clone(), "net_unrealized_pnl".to_string()),
-            rel_to_own_gross: BpsPercentRatioPattern::new(client.clone(), "net_unrealized_pnl_rel_to_own_gross_pnl".to_string()),
         }
     }
 }
@@ -6663,11 +6621,51 @@ impl MetricsTree_Cohorts_Utxo_All_Unrealized_Profit {
 }
 
 /// Metrics tree node.
+pub struct MetricsTree_Cohorts_Utxo_All_Unrealized_Loss {
+    pub base: CentsUsdPattern2,
+    pub cumulative: CentsUsdPattern2,
+    pub sum: _1m1w1y24hPattern4,
+    pub negative: MetricPattern1<Dollars>,
+    pub rel_to_mcap: BpsPercentRatioPattern3,
+    pub rel_to_own_gross: BpsPercentRatioPattern3,
+}
+
+impl MetricsTree_Cohorts_Utxo_All_Unrealized_Loss {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            base: CentsUsdPattern2::new(client.clone(), "unrealized_loss".to_string()),
+            cumulative: CentsUsdPattern2::new(client.clone(), "unrealized_loss_cumulative".to_string()),
+            sum: _1m1w1y24hPattern4::new(client.clone(), "unrealized_loss_sum".to_string()),
+            negative: MetricPattern1::new(client.clone(), "neg_unrealized_loss".to_string()),
+            rel_to_mcap: BpsPercentRatioPattern3::new(client.clone(), "unrealized_loss_rel_to_mcap".to_string()),
+            rel_to_own_gross: BpsPercentRatioPattern3::new(client.clone(), "unrealized_loss_rel_to_own_gross_pnl".to_string()),
+        }
+    }
+}
+
+/// Metrics tree node.
+pub struct MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl {
+    pub cents: MetricPattern1<CentsSigned>,
+    pub usd: MetricPattern1<Dollars>,
+    pub rel_to_own_gross: BpsPercentRatioPattern,
+}
+
+impl MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            cents: MetricPattern1::new(client.clone(), "net_unrealized_pnl_cents".to_string()),
+            usd: MetricPattern1::new(client.clone(), "net_unrealized_pnl".to_string()),
+            rel_to_own_gross: BpsPercentRatioPattern::new(client.clone(), "net_unrealized_pnl_rel_to_own_gross_pnl".to_string()),
+        }
+    }
+}
+
+/// Metrics tree node.
 pub struct MetricsTree_Cohorts_Utxo_Sth {
-    pub realized: CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern,
     pub supply: DeltaHalfInRelTotalPattern2,
     pub outputs: UnspentPattern,
-    pub activity: CoindaysCoinyearsDormancySentVelocityPattern,
+    pub activity: CoindaysCoinyearsDormancySentPattern,
+    pub realized: CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern,
     pub cost_basis: InvestedMaxMinPercentilesSupplyPattern,
     pub unrealized: GrossInvestedLossNetNuplProfitSentimentPattern2,
 }
@@ -6675,10 +6673,10 @@ pub struct MetricsTree_Cohorts_Utxo_Sth {
 impl MetricsTree_Cohorts_Utxo_Sth {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            realized: CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern::new(client.clone(), "sth".to_string()),
             supply: DeltaHalfInRelTotalPattern2::new(client.clone(), "sth_supply".to_string()),
             outputs: UnspentPattern::new(client.clone(), "sth_utxo_count".to_string()),
-            activity: CoindaysCoinyearsDormancySentVelocityPattern::new(client.clone(), "sth".to_string()),
+            activity: CoindaysCoinyearsDormancySentPattern::new(client.clone(), "sth".to_string()),
+            realized: CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern::new(client.clone(), "sth".to_string()),
             cost_basis: InvestedMaxMinPercentilesSupplyPattern::new(client.clone(), "sth".to_string()),
             unrealized: GrossInvestedLossNetNuplProfitSentimentPattern2::new(client.clone(), "sth".to_string()),
         }
@@ -6689,7 +6687,7 @@ impl MetricsTree_Cohorts_Utxo_Sth {
 pub struct MetricsTree_Cohorts_Utxo_Lth {
     pub supply: DeltaHalfInRelTotalPattern2,
     pub outputs: UnspentPattern,
-    pub activity: CoindaysCoinyearsDormancySentVelocityPattern,
+    pub activity: CoindaysCoinyearsDormancySentPattern,
     pub realized: MetricsTree_Cohorts_Utxo_Lth_Realized,
     pub cost_basis: InvestedMaxMinPercentilesSupplyPattern,
     pub unrealized: GrossInvestedLossNetNuplProfitSentimentPattern2,
@@ -6700,7 +6698,7 @@ impl MetricsTree_Cohorts_Utxo_Lth {
         Self {
             supply: DeltaHalfInRelTotalPattern2::new(client.clone(), "lth_supply".to_string()),
             outputs: UnspentPattern::new(client.clone(), "lth_utxo_count".to_string()),
-            activity: CoindaysCoinyearsDormancySentVelocityPattern::new(client.clone(), "lth".to_string()),
+            activity: CoindaysCoinyearsDormancySentPattern::new(client.clone(), "lth".to_string()),
             realized: MetricsTree_Cohorts_Utxo_Lth_Realized::new(client.clone(), format!("{base_path}_realized")),
             cost_basis: InvestedMaxMinPercentilesSupplyPattern::new(client.clone(), "lth".to_string()),
             unrealized: GrossInvestedLossNetNuplProfitSentimentPattern2::new(client.clone(), "lth".to_string()),
@@ -6710,52 +6708,52 @@ impl MetricsTree_Cohorts_Utxo_Lth {
 
 /// Metrics tree node.
 pub struct MetricsTree_Cohorts_Utxo_Lth_Realized {
+    pub cap: CentsDeltaRelUsdPattern,
     pub profit: BaseCumulativeDistributionRelSumValuePattern,
     pub loss: BaseCapitulationCumulativeNegativeRelSumValuePattern,
+    pub price: BpsCentsPercentilesRatioSatsSmaStdUsdPattern,
+    pub mvrv: MetricPattern1<StoredF32>,
+    pub sopr: MetricsTree_Cohorts_Utxo_Lth_Realized_Sopr,
+    pub net_pnl: BaseChangeCumulativeDeltaRelSumPattern,
     pub gross_pnl: BaseCumulativeSumPattern3,
     pub sell_side_risk_ratio: _1m1w1y24hPattern6,
-    pub net_pnl: BaseChangeCumulativeDeltaRelSumPattern,
-    pub sopr: MetricsTree_Cohorts_Utxo_Lth_Realized_Sopr,
     pub peak_regret: BaseCumulativeRelPattern,
     pub investor: LowerPriceUpperPattern,
     pub profit_to_loss_ratio: _1m1w1y24hPattern<StoredF64>,
-    pub cap: CentsDeltaRelUsdPattern,
-    pub price: BpsCentsPercentilesRatioSatsSmaStdUsdPattern,
-    pub mvrv: MetricPattern1<StoredF32>,
 }
 
 impl MetricsTree_Cohorts_Utxo_Lth_Realized {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
+            cap: CentsDeltaRelUsdPattern::new(client.clone(), "lth_realized_cap".to_string()),
             profit: BaseCumulativeDistributionRelSumValuePattern::new(client.clone(), "lth".to_string()),
             loss: BaseCapitulationCumulativeNegativeRelSumValuePattern::new(client.clone(), "lth".to_string()),
+            price: BpsCentsPercentilesRatioSatsSmaStdUsdPattern::new(client.clone(), "lth_realized_price".to_string()),
+            mvrv: MetricPattern1::new(client.clone(), "lth_mvrv".to_string()),
+            sopr: MetricsTree_Cohorts_Utxo_Lth_Realized_Sopr::new(client.clone(), format!("{base_path}_sopr")),
+            net_pnl: BaseChangeCumulativeDeltaRelSumPattern::new(client.clone(), "lth_net".to_string()),
             gross_pnl: BaseCumulativeSumPattern3::new(client.clone(), "lth_realized_gross_pnl".to_string()),
             sell_side_risk_ratio: _1m1w1y24hPattern6::new(client.clone(), "lth_sell_side_risk_ratio".to_string()),
-            net_pnl: BaseChangeCumulativeDeltaRelSumPattern::new(client.clone(), "lth_net".to_string()),
-            sopr: MetricsTree_Cohorts_Utxo_Lth_Realized_Sopr::new(client.clone(), format!("{base_path}_sopr")),
             peak_regret: BaseCumulativeRelPattern::new(client.clone(), "lth_realized_peak_regret".to_string()),
             investor: LowerPriceUpperPattern::new(client.clone(), "lth".to_string()),
             profit_to_loss_ratio: _1m1w1y24hPattern::new(client.clone(), "lth_realized_profit_to_loss_ratio".to_string()),
-            cap: CentsDeltaRelUsdPattern::new(client.clone(), "lth_realized_cap".to_string()),
-            price: BpsCentsPercentilesRatioSatsSmaStdUsdPattern::new(client.clone(), "lth_realized_price".to_string()),
-            mvrv: MetricPattern1::new(client.clone(), "lth_mvrv".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Cohorts_Utxo_Lth_Realized_Sopr {
-    pub ratio: _1m1w1y24hPattern<StoredF64>,
     pub value_created: BaseCumulativeSumPattern<Cents>,
     pub value_destroyed: BaseCumulativeSumPattern<Cents>,
+    pub ratio: _1m1w1y24hPattern<StoredF64>,
 }
 
 impl MetricsTree_Cohorts_Utxo_Lth_Realized_Sopr {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            ratio: _1m1w1y24hPattern::new(client.clone(), "lth_sopr".to_string()),
             value_created: BaseCumulativeSumPattern::new(client.clone(), "lth_value_created".to_string()),
             value_destroyed: BaseCumulativeSumPattern::new(client.clone(), "lth_value_destroyed".to_string()),
+            ratio: _1m1w1y24hPattern::new(client.clone(), "lth_sopr".to_string()),
         }
     }
 }

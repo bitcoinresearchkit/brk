@@ -10,17 +10,17 @@ use crate::{
 
 #[derive(Traversable)]
 pub struct AdjustedSopr<M: StorageMode = Rw> {
+    pub ratio: RollingWindows<StoredF64, M>,
     pub value_created: PerBlockCumulativeWithSums<Cents, Cents, M>,
     pub value_destroyed: PerBlockCumulativeWithSums<Cents, Cents, M>,
-    pub ratio: RollingWindows<StoredF64, M>,
 }
 
 impl AdjustedSopr {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
+            ratio: cfg.import("asopr", Version::ONE)?,
             value_created: cfg.import("adj_value_created", Version::ONE)?,
             value_destroyed: cfg.import("adj_value_destroyed", Version::ONE)?,
-            ratio: cfg.import("asopr", Version::ONE)?,
         })
     }
 

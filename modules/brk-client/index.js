@@ -2688,31 +2688,6 @@ function createBtcCentsRelSatsUsdPattern2(client, acc) {
 }
 
 /**
- * @typedef {Object} CoindaysCoinyearsDormancySentVelocityPattern
- * @property {BaseCumulativeSumPattern<StoredF64>} coindaysDestroyed
- * @property {MetricPattern1<StoredF64>} coinyearsDestroyed
- * @property {MetricPattern1<StoredF32>} dormancy
- * @property {BaseCumulativeInSumPattern} sent
- * @property {MetricPattern1<StoredF32>} velocity
- */
-
-/**
- * Create a CoindaysCoinyearsDormancySentVelocityPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {CoindaysCoinyearsDormancySentVelocityPattern}
- */
-function createCoindaysCoinyearsDormancySentVelocityPattern(client, acc) {
-  return {
-    coindaysDestroyed: createBaseCumulativeSumPattern(client, _m(acc, 'coindays_destroyed')),
-    coinyearsDestroyed: createMetricPattern1(client, _m(acc, 'coinyears_destroyed')),
-    dormancy: createMetricPattern1(client, _m(acc, 'dormancy')),
-    sent: createBaseCumulativeInSumPattern(client, _m(acc, 'sent')),
-    velocity: createMetricPattern1(client, _m(acc, 'velocity')),
-  };
-}
-
-/**
  * @typedef {Object} DeltaHalfInTotalPattern2
  * @property {ChangeRatePattern} delta
  * @property {BtcCentsSatsUsdPattern} half
@@ -3158,6 +3133,29 @@ function createCentsRelUsdPattern2(client, acc) {
     relToOwnGross: createBpsPercentRatioPattern(client, _m(acc, 'rel_to_own_gross_pnl')),
     relToOwnMcap: createBpsPercentRatioPattern(client, _m(acc, 'rel_to_own_mcap')),
     usd: createMetricPattern1(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} CoindaysCoinyearsDormancySentPattern
+ * @property {BaseCumulativeSumPattern<StoredF64>} coindaysDestroyed
+ * @property {MetricPattern1<StoredF64>} coinyearsDestroyed
+ * @property {MetricPattern1<StoredF32>} dormancy
+ * @property {BaseCumulativeInSumPattern} sent
+ */
+
+/**
+ * Create a CoindaysCoinyearsDormancySentPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {CoindaysCoinyearsDormancySentPattern}
+ */
+function createCoindaysCoinyearsDormancySentPattern(client, acc) {
+  return {
+    coindaysDestroyed: createBaseCumulativeSumPattern(client, _m(acc, 'coindays_destroyed')),
+    coinyearsDestroyed: createMetricPattern1(client, _m(acc, 'coinyears_destroyed')),
+    dormancy: createMetricPattern1(client, _m(acc, 'dormancy')),
+    sent: createBaseCumulativeInSumPattern(client, _m(acc, 'sent')),
   };
 }
 
@@ -4068,9 +4066,9 @@ function createUnspentPattern(client, acc) {
  * @property {MetricsTree_Blocks_Count} count
  * @property {MetricsTree_Blocks_Lookback} lookback
  * @property {_1m1w1y24hHeightPattern<Timestamp>} interval
- * @property {MetricsTree_Blocks_Halving} halving
  * @property {AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} vbytes
  * @property {MetricsTree_Blocks_Fullness} fullness
+ * @property {MetricsTree_Blocks_Halving} halving
  */
 
 /**
@@ -4174,17 +4172,17 @@ function createUnspentPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Blocks_Halving
- * @property {MetricPattern1<Halving>} epoch
- * @property {MetricPattern1<StoredU32>} blocksBeforeNext
- * @property {MetricPattern1<StoredF32>} daysBeforeNext
- */
-
-/**
  * @typedef {Object} MetricsTree_Blocks_Fullness
  * @property {_1m1w1y24hHeightPattern<BasisPoints16>} bps
  * @property {MetricPattern1<StoredF32>} ratio
  * @property {MetricPattern1<StoredF32>} percent
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Blocks_Halving
+ * @property {MetricPattern1<Halving>} epoch
+ * @property {MetricPattern1<StoredU32>} blocksBeforeNext
+ * @property {MetricPattern1<StoredF32>} daysBeforeNext
  */
 
 /**
@@ -5503,6 +5501,7 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Supply
+ * @property {MetricPattern18<SupplyState>} state
  * @property {BtcCentsSatsUsdPattern} circulating
  * @property {MetricsTree_Supply_Burned} burned
  * @property {BpsPercentRatioPattern} inflationRate
@@ -5510,7 +5509,6 @@ function createUnspentPattern(client, acc) {
  * @property {CentsDeltaUsdPattern} marketCap
  * @property {_1m1w1y24hPattern<BasisPointsSigned32>} marketMinusRealizedCapGrowthRate
  * @property {BtcCentsSatsUsdPattern} hodledOrLost
- * @property {MetricPattern18<SupplyState>} state
  */
 
 /**
@@ -5521,8 +5519,8 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Supply_Velocity
- * @property {MetricPattern1<StoredF64>} btc
- * @property {MetricPattern1<StoredF64>} usd
+ * @property {MetricPattern1<StoredF64>} native
+ * @property {MetricPattern1<StoredF64>} fiat
  */
 
 /**
@@ -5553,7 +5551,7 @@ function createUnspentPattern(client, acc) {
  * @typedef {Object} MetricsTree_Cohorts_Utxo_All
  * @property {MetricsTree_Cohorts_Utxo_All_Supply} supply
  * @property {UnspentPattern} outputs
- * @property {CoindaysCoinyearsDormancySentVelocityPattern} activity
+ * @property {CoindaysCoinyearsDormancySentPattern} activity
  * @property {CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} realized
  * @property {InvestedMaxMinPercentilesSupplyPattern} costBasis
  * @property {MetricsTree_Cohorts_Utxo_All_Unrealized} unrealized
@@ -5561,39 +5559,22 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Cohorts_Utxo_All_Supply
- * @property {BtcCentsRelSatsUsdPattern2} inProfit
- * @property {BtcCentsRelSatsUsdPattern2} inLoss
  * @property {BtcCentsSatsUsdPattern} total
  * @property {BtcCentsSatsUsdPattern} half
  * @property {ChangeRatePattern} delta
+ * @property {BtcCentsRelSatsUsdPattern2} inProfit
+ * @property {BtcCentsRelSatsUsdPattern2} inLoss
  */
 
 /**
  * @typedef {Object} MetricsTree_Cohorts_Utxo_All_Unrealized
+ * @property {BpsRatioPattern} nupl
+ * @property {MetricsTree_Cohorts_Utxo_All_Unrealized_Profit} profit
+ * @property {MetricsTree_Cohorts_Utxo_All_Unrealized_Loss} loss
+ * @property {MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl} netPnl
  * @property {CentsUsdPattern2} grossPnl
  * @property {InPattern} investedCapital
  * @property {GreedNetPainPattern} sentiment
- * @property {MetricsTree_Cohorts_Utxo_All_Unrealized_Loss} loss
- * @property {MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl} netPnl
- * @property {MetricsTree_Cohorts_Utxo_All_Unrealized_Profit} profit
- * @property {BpsRatioPattern} nupl
- */
-
-/**
- * @typedef {Object} MetricsTree_Cohorts_Utxo_All_Unrealized_Loss
- * @property {MetricPattern1<Dollars>} negative
- * @property {CentsUsdPattern2} base
- * @property {CentsUsdPattern2} cumulative
- * @property {_1m1w1y24hPattern4} sum
- * @property {BpsPercentRatioPattern3} relToMcap
- * @property {BpsPercentRatioPattern3} relToOwnGross
- */
-
-/**
- * @typedef {Object} MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl
- * @property {MetricPattern1<CentsSigned>} cents
- * @property {MetricPattern1<Dollars>} usd
- * @property {BpsPercentRatioPattern} relToOwnGross
  */
 
 /**
@@ -5606,11 +5587,28 @@ function createUnspentPattern(client, acc) {
  */
 
 /**
+ * @typedef {Object} MetricsTree_Cohorts_Utxo_All_Unrealized_Loss
+ * @property {CentsUsdPattern2} base
+ * @property {CentsUsdPattern2} cumulative
+ * @property {_1m1w1y24hPattern4} sum
+ * @property {MetricPattern1<Dollars>} negative
+ * @property {BpsPercentRatioPattern3} relToMcap
+ * @property {BpsPercentRatioPattern3} relToOwnGross
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Cohorts_Utxo_All_Unrealized_NetPnl
+ * @property {MetricPattern1<CentsSigned>} cents
+ * @property {MetricPattern1<Dollars>} usd
+ * @property {BpsPercentRatioPattern} relToOwnGross
+ */
+
+/**
  * @typedef {Object} MetricsTree_Cohorts_Utxo_Sth
- * @property {CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} realized
  * @property {DeltaHalfInRelTotalPattern2} supply
  * @property {UnspentPattern} outputs
- * @property {CoindaysCoinyearsDormancySentVelocityPattern} activity
+ * @property {CoindaysCoinyearsDormancySentPattern} activity
+ * @property {CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} realized
  * @property {InvestedMaxMinPercentilesSupplyPattern} costBasis
  * @property {GrossInvestedLossNetNuplProfitSentimentPattern2} unrealized
  */
@@ -5619,7 +5617,7 @@ function createUnspentPattern(client, acc) {
  * @typedef {Object} MetricsTree_Cohorts_Utxo_Lth
  * @property {DeltaHalfInRelTotalPattern2} supply
  * @property {UnspentPattern} outputs
- * @property {CoindaysCoinyearsDormancySentVelocityPattern} activity
+ * @property {CoindaysCoinyearsDormancySentPattern} activity
  * @property {MetricsTree_Cohorts_Utxo_Lth_Realized} realized
  * @property {InvestedMaxMinPercentilesSupplyPattern} costBasis
  * @property {GrossInvestedLossNetNuplProfitSentimentPattern2} unrealized
@@ -5627,25 +5625,25 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Cohorts_Utxo_Lth_Realized
+ * @property {CentsDeltaRelUsdPattern} cap
  * @property {BaseCumulativeDistributionRelSumValuePattern} profit
  * @property {BaseCapitulationCumulativeNegativeRelSumValuePattern} loss
+ * @property {BpsCentsPercentilesRatioSatsSmaStdUsdPattern} price
+ * @property {MetricPattern1<StoredF32>} mvrv
+ * @property {MetricsTree_Cohorts_Utxo_Lth_Realized_Sopr} sopr
+ * @property {BaseChangeCumulativeDeltaRelSumPattern} netPnl
  * @property {BaseCumulativeSumPattern3} grossPnl
  * @property {_1m1w1y24hPattern6} sellSideRiskRatio
- * @property {BaseChangeCumulativeDeltaRelSumPattern} netPnl
- * @property {MetricsTree_Cohorts_Utxo_Lth_Realized_Sopr} sopr
  * @property {BaseCumulativeRelPattern} peakRegret
  * @property {LowerPriceUpperPattern} investor
  * @property {_1m1w1y24hPattern<StoredF64>} profitToLossRatio
- * @property {CentsDeltaRelUsdPattern} cap
- * @property {BpsCentsPercentilesRatioSatsSmaStdUsdPattern} price
- * @property {MetricPattern1<StoredF32>} mvrv
  */
 
 /**
  * @typedef {Object} MetricsTree_Cohorts_Utxo_Lth_Realized_Sopr
- * @property {_1m1w1y24hPattern<StoredF64>} ratio
  * @property {BaseCumulativeSumPattern<Cents>} valueCreated
  * @property {BaseCumulativeSumPattern<Cents>} valueDestroyed
+ * @property {_1m1w1y24hPattern<StoredF64>} ratio
  */
 
 /**
@@ -7004,16 +7002,16 @@ class BrkClient extends BrkClientBase {
           _26y: createMetricPattern18(this, 'height_26y_ago'),
         },
         interval: create_1m1w1y24hHeightPattern(this, 'block_interval'),
-        halving: {
-          epoch: createMetricPattern1(this, 'halving_epoch'),
-          blocksBeforeNext: createMetricPattern1(this, 'blocks_before_next_halving'),
-          daysBeforeNext: createMetricPattern1(this, 'days_before_next_halving'),
-        },
         vbytes: createAverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'block_vbytes'),
         fullness: {
           bps: create_1m1w1y24hHeightPattern(this, 'block_fullness_bps'),
           ratio: createMetricPattern1(this, 'block_fullness_ratio'),
           percent: createMetricPattern1(this, 'block_fullness'),
+        },
+        halving: {
+          epoch: createMetricPattern1(this, 'halving_epoch'),
+          blocksBeforeNext: createMetricPattern1(this, 'blocks_before_next_halving'),
+          daysBeforeNext: createMetricPattern1(this, 'days_before_next_halving'),
         },
       },
       transactions: {
@@ -7948,6 +7946,7 @@ class BrkClient extends BrkClientBase {
         },
       },
       supply: {
+        state: createMetricPattern18(this, 'supply_state'),
         circulating: createBtcCentsSatsUsdPattern(this, 'circulating_supply'),
         burned: {
           opReturn: createBaseCumulativeSumPattern4(this, 'op_return_supply'),
@@ -7955,37 +7954,41 @@ class BrkClient extends BrkClientBase {
         },
         inflationRate: createBpsPercentRatioPattern(this, 'inflation_rate'),
         velocity: {
-          btc: createMetricPattern1(this, 'velocity_btc'),
-          usd: createMetricPattern1(this, 'velocity_usd'),
+          native: createMetricPattern1(this, 'velocity'),
+          fiat: createMetricPattern1(this, 'velocity_fiat'),
         },
         marketCap: createCentsDeltaUsdPattern(this, 'market_cap'),
         marketMinusRealizedCapGrowthRate: create_1m1w1y24hPattern(this, 'market_minus_realized_cap_growth_rate'),
         hodledOrLost: createBtcCentsSatsUsdPattern(this, 'hodled_or_lost_coins'),
-        state: createMetricPattern18(this, 'supply_state'),
       },
       cohorts: {
         utxo: {
           all: {
             supply: {
-              inProfit: createBtcCentsRelSatsUsdPattern2(this, 'supply_in_profit'),
-              inLoss: createBtcCentsRelSatsUsdPattern2(this, 'supply_in_loss'),
               total: createBtcCentsSatsUsdPattern(this, 'supply'),
               half: createBtcCentsSatsUsdPattern(this, 'supply_half'),
               delta: createChangeRatePattern(this, 'supply_delta'),
+              inProfit: createBtcCentsRelSatsUsdPattern2(this, 'supply_in_profit'),
+              inLoss: createBtcCentsRelSatsUsdPattern2(this, 'supply_in_loss'),
             },
             outputs: createUnspentPattern(this, 'utxo_count'),
-            activity: createCoindaysCoinyearsDormancySentVelocityPattern(this, ''),
+            activity: createCoindaysCoinyearsDormancySentPattern(this, ''),
             realized: createCapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern(this, ''),
             costBasis: createInvestedMaxMinPercentilesSupplyPattern(this, ''),
             unrealized: {
-              grossPnl: createCentsUsdPattern2(this, 'unrealized_gross_pnl'),
-              investedCapital: createInPattern(this, 'invested_capital_in'),
-              sentiment: createGreedNetPainPattern(this, ''),
+              nupl: createBpsRatioPattern(this, 'nupl'),
+              profit: {
+                base: createCentsUsdPattern2(this, 'unrealized_profit'),
+                cumulative: createCentsUsdPattern2(this, 'unrealized_profit_cumulative'),
+                sum: create_1m1w1y24hPattern4(this, 'unrealized_profit_sum'),
+                relToMcap: createBpsPercentRatioPattern3(this, 'unrealized_profit_rel_to_mcap'),
+                relToOwnGross: createBpsPercentRatioPattern3(this, 'unrealized_profit_rel_to_own_gross_pnl'),
+              },
               loss: {
-                negative: createMetricPattern1(this, 'neg_unrealized_loss'),
                 base: createCentsUsdPattern2(this, 'unrealized_loss'),
                 cumulative: createCentsUsdPattern2(this, 'unrealized_loss_cumulative'),
                 sum: create_1m1w1y24hPattern4(this, 'unrealized_loss_sum'),
+                negative: createMetricPattern1(this, 'neg_unrealized_loss'),
                 relToMcap: createBpsPercentRatioPattern3(this, 'unrealized_loss_rel_to_mcap'),
                 relToOwnGross: createBpsPercentRatioPattern3(this, 'unrealized_loss_rel_to_own_gross_pnl'),
               },
@@ -7994,45 +7997,40 @@ class BrkClient extends BrkClientBase {
                 usd: createMetricPattern1(this, 'net_unrealized_pnl'),
                 relToOwnGross: createBpsPercentRatioPattern(this, 'net_unrealized_pnl_rel_to_own_gross_pnl'),
               },
-              profit: {
-                base: createCentsUsdPattern2(this, 'unrealized_profit'),
-                cumulative: createCentsUsdPattern2(this, 'unrealized_profit_cumulative'),
-                sum: create_1m1w1y24hPattern4(this, 'unrealized_profit_sum'),
-                relToMcap: createBpsPercentRatioPattern3(this, 'unrealized_profit_rel_to_mcap'),
-                relToOwnGross: createBpsPercentRatioPattern3(this, 'unrealized_profit_rel_to_own_gross_pnl'),
-              },
-              nupl: createBpsRatioPattern(this, 'nupl'),
+              grossPnl: createCentsUsdPattern2(this, 'unrealized_gross_pnl'),
+              investedCapital: createInPattern(this, 'invested_capital_in'),
+              sentiment: createGreedNetPainPattern(this, ''),
             },
           },
           sth: {
-            realized: createCapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern(this, 'sth'),
             supply: createDeltaHalfInRelTotalPattern2(this, 'sth_supply'),
             outputs: createUnspentPattern(this, 'sth_utxo_count'),
-            activity: createCoindaysCoinyearsDormancySentVelocityPattern(this, 'sth'),
+            activity: createCoindaysCoinyearsDormancySentPattern(this, 'sth'),
+            realized: createCapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern(this, 'sth'),
             costBasis: createInvestedMaxMinPercentilesSupplyPattern(this, 'sth'),
             unrealized: createGrossInvestedLossNetNuplProfitSentimentPattern2(this, 'sth'),
           },
           lth: {
             supply: createDeltaHalfInRelTotalPattern2(this, 'lth_supply'),
             outputs: createUnspentPattern(this, 'lth_utxo_count'),
-            activity: createCoindaysCoinyearsDormancySentVelocityPattern(this, 'lth'),
+            activity: createCoindaysCoinyearsDormancySentPattern(this, 'lth'),
             realized: {
+              cap: createCentsDeltaRelUsdPattern(this, 'lth_realized_cap'),
               profit: createBaseCumulativeDistributionRelSumValuePattern(this, 'lth'),
               loss: createBaseCapitulationCumulativeNegativeRelSumValuePattern(this, 'lth'),
-              grossPnl: createBaseCumulativeSumPattern3(this, 'lth_realized_gross_pnl'),
-              sellSideRiskRatio: create_1m1w1y24hPattern6(this, 'lth_sell_side_risk_ratio'),
-              netPnl: createBaseChangeCumulativeDeltaRelSumPattern(this, 'lth_net'),
+              price: createBpsCentsPercentilesRatioSatsSmaStdUsdPattern(this, 'lth_realized_price'),
+              mvrv: createMetricPattern1(this, 'lth_mvrv'),
               sopr: {
-                ratio: create_1m1w1y24hPattern(this, 'lth_sopr'),
                 valueCreated: createBaseCumulativeSumPattern(this, 'lth_value_created'),
                 valueDestroyed: createBaseCumulativeSumPattern(this, 'lth_value_destroyed'),
+                ratio: create_1m1w1y24hPattern(this, 'lth_sopr'),
               },
+              netPnl: createBaseChangeCumulativeDeltaRelSumPattern(this, 'lth_net'),
+              grossPnl: createBaseCumulativeSumPattern3(this, 'lth_realized_gross_pnl'),
+              sellSideRiskRatio: create_1m1w1y24hPattern6(this, 'lth_sell_side_risk_ratio'),
               peakRegret: createBaseCumulativeRelPattern(this, 'lth_realized_peak_regret'),
               investor: createLowerPriceUpperPattern(this, 'lth'),
               profitToLossRatio: create_1m1w1y24hPattern(this, 'lth_realized_profit_to_loss_ratio'),
-              cap: createCentsDeltaRelUsdPattern(this, 'lth_realized_cap'),
-              price: createBpsCentsPercentilesRatioSatsSmaStdUsdPattern(this, 'lth_realized_price'),
-              mvrv: createMetricPattern1(this, 'lth_mvrv'),
             },
             costBasis: createInvestedMaxMinPercentilesSupplyPattern(this, 'lth'),
             unrealized: createGrossInvestedLossNetNuplProfitSentimentPattern2(this, 'lth'),

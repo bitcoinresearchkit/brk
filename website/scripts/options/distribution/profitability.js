@@ -327,16 +327,16 @@ function singleRollingRealizedTreeFull(r, title) {
           name: "Compare",
           title: title("Rolling Realized P/L Ratio"),
           bottom: [
-            baseline({ metric: r.profitToLossRatio._24h, name: "24h", color: colors.time._24h, unit: Unit.ratio }),
-            baseline({ metric: r.profitToLossRatio._1w, name: "7d", color: colors.time._1w, unit: Unit.ratio }),
-            baseline({ metric: r.profitToLossRatio._1m, name: "30d", color: colors.time._1m, unit: Unit.ratio }),
-            baseline({ metric: r.profitToLossRatio._1y, name: "1y", color: colors.time._1y, unit: Unit.ratio }),
+            baseline({ metric: r.profitToLossRatio._24h, name: "24h", color: colors.time._24h, unit: Unit.ratio, base: 1 }),
+            baseline({ metric: r.profitToLossRatio._1w, name: "7d", color: colors.time._1w, unit: Unit.ratio, base: 1 }),
+            baseline({ metric: r.profitToLossRatio._1m, name: "30d", color: colors.time._1m, unit: Unit.ratio, base: 1 }),
+            baseline({ metric: r.profitToLossRatio._1y, name: "1y", color: colors.time._1y, unit: Unit.ratio, base: 1 }),
           ],
         },
-        { name: "24h", title: title("Realized P/L Ratio (24h)"), bottom: [baseline({ metric: r.profitToLossRatio._24h, name: "P/L Ratio", unit: Unit.ratio })] },
-        { name: "7d", title: title("Realized P/L Ratio (7d)"), bottom: [baseline({ metric: r.profitToLossRatio._1w, name: "P/L Ratio", unit: Unit.ratio })] },
-        { name: "30d", title: title("Realized P/L Ratio (30d)"), bottom: [baseline({ metric: r.profitToLossRatio._1m, name: "P/L Ratio", unit: Unit.ratio })] },
-        { name: "1y", title: title("Realized P/L Ratio (1y)"), bottom: [baseline({ metric: r.profitToLossRatio._1y, name: "P/L Ratio", unit: Unit.ratio })] },
+        { name: "24h", title: title("Realized P/L Ratio (24h)"), bottom: [baseline({ metric: r.profitToLossRatio._24h, name: "P/L Ratio", unit: Unit.ratio, base: 1 })] },
+        { name: "7d", title: title("Realized P/L Ratio (7d)"), bottom: [baseline({ metric: r.profitToLossRatio._1w, name: "P/L Ratio", unit: Unit.ratio, base: 1 })] },
+        { name: "30d", title: title("Realized P/L Ratio (30d)"), bottom: [baseline({ metric: r.profitToLossRatio._1m, name: "P/L Ratio", unit: Unit.ratio, base: 1 })] },
+        { name: "1y", title: title("Realized P/L Ratio (1y)"), bottom: [baseline({ metric: r.profitToLossRatio._1y, name: "P/L Ratio", unit: Unit.ratio, base: 1 })] },
       ],
     },
   ];
@@ -397,7 +397,7 @@ function realizedSubfolderFull(r, title) {
       {
         name: "P/L Ratio",
         title: title("Realized Profit/Loss Ratio"),
-        bottom: [baseline({ metric: r.profitToLossRatio._1y, name: "P/L Ratio", unit: Unit.ratio })],
+        bottom: [baseline({ metric: r.profitToLossRatio._1y, name: "P/L Ratio", unit: Unit.ratio, base: 1 })],
       },
       {
         name: "Peak Regret",
@@ -750,7 +750,7 @@ function groupedRealizedPnlSumFull(list, all, title) {
       name: "P/L Ratio",
       title: title("Realized Profit/Loss Ratio"),
       bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-        baseline({ metric: tree.realized.profitToLossRatio._1y, name, color, unit: Unit.ratio }),
+        baseline({ metric: tree.realized.profitToLossRatio._1y, name, color, unit: Unit.ratio, base: 1 }),
       ),
     },
   ];
@@ -801,10 +801,10 @@ function groupedRollingRealizedChartsFull(list, all, title) {
     {
       name: "P/L Ratio",
       tree: [
-        { name: "24h", title: title("Realized P/L Ratio (24h)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => baseline({ metric: tree.realized.profitToLossRatio._24h, name, color, unit: Unit.ratio })) },
-        { name: "7d", title: title("Realized P/L Ratio (7d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => baseline({ metric: tree.realized.profitToLossRatio._1w, name, color, unit: Unit.ratio })) },
-        { name: "30d", title: title("Realized P/L Ratio (30d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => baseline({ metric: tree.realized.profitToLossRatio._1m, name, color, unit: Unit.ratio })) },
-        { name: "1y", title: title("Realized P/L Ratio (1y)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => baseline({ metric: tree.realized.profitToLossRatio._1y, name, color, unit: Unit.ratio })) },
+        { name: "24h", title: title("Realized P/L Ratio (24h)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => baseline({ metric: tree.realized.profitToLossRatio._24h, name, color, unit: Unit.ratio, base: 1 })) },
+        { name: "7d", title: title("Realized P/L Ratio (7d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => baseline({ metric: tree.realized.profitToLossRatio._1w, name, color, unit: Unit.ratio, base: 1 })) },
+        { name: "30d", title: title("Realized P/L Ratio (30d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => baseline({ metric: tree.realized.profitToLossRatio._1m, name, color, unit: Unit.ratio, base: 1 })) },
+        { name: "1y", title: title("Realized P/L Ratio (1y)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => baseline({ metric: tree.realized.profitToLossRatio._1y, name, color, unit: Unit.ratio, base: 1 })) },
       ],
     },
   ];

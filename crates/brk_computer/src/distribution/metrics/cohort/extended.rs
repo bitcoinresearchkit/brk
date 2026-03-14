@@ -125,7 +125,6 @@ impl ExtendedCohortMetrics {
 
         self.activity.compute_rest_part2(
             starting_indexes,
-            &self.supply.total.sats.height,
             exit,
         )?;
 

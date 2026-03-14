@@ -394,89 +394,94 @@ fn build_where_clause(
 }
 
 fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::TokenStream {
-    let normal_entries: Vec<_> = infos
+    // Process all fields in declaration order (interleaving normal and flatten)
+    // so that struct field order determines tree key order.
+    let field_operations: Vec<_> = infos
         .iter()
-        .filter(|i| matches!(i.attr, FieldAttr::Normal) && !i.hidden)
+        .filter(|i| !i.hidden)
         .map(|info| {
-            let field_name = info.name;
-            let field_name_str = {
-                let s = field_name.to_string();
-                let s = s.strip_prefix("r#").unwrap_or(&s).to_string();
-                s.strip_prefix('_').map(String::from).unwrap_or(s)
-            };
+            match info.attr {
+                FieldAttr::Normal => {
+                    let field_name = info.name;
+                    let field_name_str = {
+                        let s = field_name.to_string();
+                        let s = s.strip_prefix("r#").unwrap_or(&s).to_string();
+                        s.strip_prefix('_').map(String::from).unwrap_or(s)
+                    };
 
-            // Determine the tree key and optional wrapping path.
-            // wrap = "a/b" means: outer_key = "a", wrap the node under "b" then under the rename/field name.
-            // wrap = "a" means: outer_key = "a", wrap under rename or field name.
-            // No wrap: outer_key = rename or field name, no wrapping.
-            let (outer_key, wrap_path): (String, Vec<&str>) =
-                match (info.wrap.as_deref(), info.rename.as_deref()) {
-                    (Some(wrap), Some(rename)) => {
-                        let parts: Vec<&str> = wrap.split('/').collect();
-                        let outer = parts[0].to_string();
-                        let mut path: Vec<&str> = parts[1..].to_vec();
-                        path.push(rename);
-                        (outer, path)
-                    }
-                    (Some(wrap), None) => {
-                        let parts: Vec<&str> = wrap.split('/').collect();
-                        let outer = parts[0].to_string();
-                        let mut path: Vec<&str> = parts[1..].to_vec();
-                        path.push(&field_name_str);
-                        (outer, path)
-                    }
-                    (None, Some(rename)) => (rename.to_string(), vec![]),
-                    (None, None) => (field_name_str.clone(), vec![]),
-                };
+                    // Determine the tree key and optional wrapping path.
+                    // wrap = "a/b" means: outer_key = "a", wrap the node under "b" then under the rename/field name.
+                    // wrap = "a" means: outer_key = "a", wrap under rename or field name.
+                    // No wrap: outer_key = rename or field name, no wrapping.
+                    let (outer_key, wrap_path): (String, Vec<&str>) =
+                        match (info.wrap.as_deref(), info.rename.as_deref()) {
+                            (Some(wrap), Some(rename)) => {
+                                let parts: Vec<&str> = wrap.split('/').collect();
+                                let outer = parts[0].to_string();
+                                let mut path: Vec<&str> = parts[1..].to_vec();
+                                path.push(rename);
+                                (outer, path)
+                            }
+                            (Some(wrap), None) => {
+                                let parts: Vec<&str> = wrap.split('/').collect();
+                                let outer = parts[0].to_string();
+                                let mut path: Vec<&str> = parts[1..].to_vec();
+                                path.push(&field_name_str);
+                                (outer, path)
+                            }
+                            (None, Some(rename)) => (rename.to_string(), vec![]),
+                            (None, None) => (field_name_str.clone(), vec![]),
+                        };
 
-            // Build nested wrapping: wrap(path[last], wrap(path[last-1], ... node))
-            let build_wrapped = |base: proc_macro2::TokenStream| -> proc_macro2::TokenStream {
-                wrap_path.iter().rev().fold(base, |inner, key| {
-                    quote! { brk_traversable::TreeNode::wrap(#key, #inner) }
-                })
-            };
+                    // Build nested wrapping: wrap(path[last], wrap(path[last-1], ... node))
+                    let build_wrapped = |base: proc_macro2::TokenStream| -> proc_macro2::TokenStream {
+                        wrap_path.iter().rev().fold(base, |inner, key| {
+                            quote! { brk_traversable::TreeNode::wrap(#key, #inner) }
+                        })
+                    };
 
-            if info.is_option {
-                let node_expr = build_wrapped(quote! { nested.to_tree_node() });
-                quote! {
-                    self.#field_name.as_ref().map(|nested| (String::from(#outer_key), #node_expr))
-                }
-            } else {
-                let node_expr_self = build_wrapped(quote! { self.#field_name.to_tree_node() });
-                quote! {
-                    Some((String::from(#outer_key), #node_expr_self))
-                }
-            }
-        })
-        .collect();
-
-    let flatten_entries: Vec<_> = infos
-        .iter()
-        .filter(|i| matches!(i.attr, FieldAttr::Flatten) && !i.hidden)
-        .map(|info| {
-            let field_name = info.name;
-            let merge_branch = quote! {
-                brk_traversable::TreeNode::Branch(map) => {
-                    for (key, node) in map {
-                        brk_traversable::TreeNode::merge_node(&mut collected, key, node)
-                            .expect("Conflicting values for same key during flatten");
+                    if info.is_option {
+                        let node_expr = build_wrapped(quote! { nested.to_tree_node() });
+                        quote! {
+                            if let Some(entry) = self.#field_name.as_ref().map(|nested| (String::from(#outer_key), #node_expr)) {
+                                brk_traversable::TreeNode::merge_node(&mut collected, entry.0, entry.1)
+                                    .expect("Conflicting values for same key");
+                            }
+                        }
+                    } else {
+                        let node_expr_self = build_wrapped(quote! { self.#field_name.to_tree_node() });
+                        quote! {
+                            brk_traversable::TreeNode::merge_node(&mut collected, String::from(#outer_key), #node_expr_self)
+                                .expect("Conflicting values for same key");
+                        }
                     }
                 }
-                leaf @ brk_traversable::TreeNode::Leaf(_) => {
-                    brk_traversable::TreeNode::merge_node(&mut collected, String::from(stringify!(#field_name)), leaf)
-                        .expect("Conflicting values for same key during flatten");
-                }
-            };
+                FieldAttr::Flatten => {
+                    let field_name = info.name;
+                    let merge_branch = quote! {
+                        brk_traversable::TreeNode::Branch(map) => {
+                            for (key, node) in map {
+                                brk_traversable::TreeNode::merge_node(&mut collected, key, node)
+                                    .expect("Conflicting values for same key during flatten");
+                            }
+                        }
+                        leaf @ brk_traversable::TreeNode::Leaf(_) => {
+                            brk_traversable::TreeNode::merge_node(&mut collected, String::from(stringify!(#field_name)), leaf)
+                                .expect("Conflicting values for same key during flatten");
+                        }
+                    };
 
-            if info.is_option {
-                quote! {
-                    if let Some(ref nested) = self.#field_name {
-                        match nested.to_tree_node() { #merge_branch }
+                    if info.is_option {
+                        quote! {
+                            if let Some(ref nested) = self.#field_name {
+                                match nested.to_tree_node() { #merge_branch }
+                            }
+                        }
+                    } else {
+                        quote! {
+                            match self.#field_name.to_tree_node() { #merge_branch }
+                        }
                     }
-                }
-            } else {
-                quote! {
-                    match self.#field_name.to_tree_node() { #merge_branch }
                 }
             }
         })
@@ -493,23 +498,9 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
             brk_traversable::IndexMap::new();
     };
 
-    let normal_insert = if !normal_entries.is_empty() {
-        quote! {
-            for entry in [#(#normal_entries,)*].into_iter().flatten() {
-                brk_traversable::TreeNode::merge_node(&mut collected, entry.0, entry.1)
-                    .expect("Conflicting values for same key");
-            }
-        }
-    } else {
-        quote! {}
-    };
-
-    let flatten_insert = quote! { #(#flatten_entries)* };
-
     quote! {
         #init_collected
-        #normal_insert
-        #flatten_insert
+        #(#field_operations)*
         #final_expr
     }
 }

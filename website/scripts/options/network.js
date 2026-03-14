@@ -819,12 +819,12 @@ export function createNetworkSection() {
             title: "Transaction Velocity",
             bottom: [
               line({
-                metric: supply.velocity.btc,
+                metric: supply.velocity.native,
                 name: "BTC",
                 unit: Unit.ratio,
               }),
               line({
-                metric: supply.velocity.usd,
+                metric: supply.velocity.fiat,
                 name: "USD",
                 color: colors.usd,
                 unit: Unit.ratio,

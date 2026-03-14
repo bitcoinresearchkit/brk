@@ -17,8 +17,8 @@ impl Vecs {
         // velocity = rolling_1y_sum(volume) / circulating_supply
         let circulating_supply = &distribution.utxo_cohorts.all.metrics.supply.total;
 
-        // BTC velocity at height level
-        self.btc.height.compute_rolling_ratio(
+        // Native velocity at height level
+        self.native.height.compute_rolling_ratio(
             starting_indexes.height,
             &blocks.lookback._1y,
             &transactions.volume.sent_sum.base.sats.height,
@@ -26,8 +26,8 @@ impl Vecs {
             exit,
         )?;
 
-        // USD velocity at height level
-        self.usd.height.compute_rolling_ratio(
+        // Fiat velocity at height level
+        self.fiat.height.compute_rolling_ratio(
             starting_indexes.height,
             &blocks.lookback._1y,
             &transactions.volume.sent_sum.base.usd.height,

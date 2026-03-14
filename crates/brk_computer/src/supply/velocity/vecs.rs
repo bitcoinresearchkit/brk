@@ -6,6 +6,6 @@ use crate::internal::PerBlock;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub btc: PerBlock<StoredF64, M>,
-    pub usd: PerBlock<StoredF64, M>,
+    pub native: PerBlock<StoredF64, M>,
+    pub fiat: PerBlock<StoredF64, M>,
 }

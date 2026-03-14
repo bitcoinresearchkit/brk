@@ -153,6 +153,10 @@ export const colors = {
   destroyed: palette.red,
   created: palette.orange,
   stored: palette.green,
+  transfer: palette.cyan,
+  balanced: palette.indigo,
+  terminal: palette.fuchsia,
+  delta: palette.violet,
 
   // Valuations
   realized: palette.orange,

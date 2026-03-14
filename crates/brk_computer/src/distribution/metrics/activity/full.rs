@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF32, StoredF64, Version};
+use brk_types::{Bitcoin, Height, Indexes, StoredF32, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Exit, ReadableCloneableVec, Rw, StorageMode};
 
-use crate::internal::{PerBlock, Identity, LazyPerBlock};
+use crate::internal::{Identity, LazyPerBlock, PerBlock};
 
 use crate::distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}};
 
@@ -20,7 +20,6 @@ pub struct ActivityFull<M: StorageMode = Rw> {
     pub coinyears_destroyed: LazyPerBlock<StoredF64, StoredF64>,
 
     pub dormancy: PerBlock<StoredF32, M>,
-    pub velocity: PerBlock<StoredF32, M>,
 }
 
 impl ActivityFull {
@@ -39,7 +38,6 @@ impl ActivityFull {
             inner,
             coinyears_destroyed,
             dormancy: cfg.import("dormancy", v1)?,
-            velocity: cfg.import("velocity", v1)?,
         })
     }
 
@@ -58,7 +56,6 @@ impl ActivityFull {
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.inner.collect_vecs_mut();
         vecs.push(&mut self.dormancy.height);
-        vecs.push(&mut self.velocity.height);
         vecs
     }
 
@@ -83,7 +80,6 @@ impl ActivityFull {
     pub(crate) fn compute_rest_part2(
         &mut self,
         starting_indexes: &Indexes,
-        supply_total_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {
         self.dormancy.height.compute_transform2(
@@ -96,21 +92,6 @@ impl ActivityFull {
                     (i, StoredF32::from(0.0f32))
                 } else {
                     (i, StoredF32::from((f64::from(cdd) / sent_btc) as f32))
-                }
-            },
-            exit,
-        )?;
-
-        self.velocity.height.compute_transform2(
-            starting_indexes.height,
-            &self.inner.sent.base.height,
-            supply_total_sats,
-            |(i, sent_sats, supply_sats, ..)| {
-                let supply = supply_sats.as_u128() as f64;
-                if supply == 0.0 {
-                    (i, StoredF32::from(0.0f32))
-                } else {
-                    (i, StoredF32::from((sent_sats.as_u128() as f64 / supply) as f32))
                 }
             },
             exit,

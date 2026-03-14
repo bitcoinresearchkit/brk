@@ -12,6 +12,7 @@ import {
   price,
   percentRatio,
   percentRatioBaseline,
+  ROLLING_WINDOWS,
 } from "./series.js";
 import { periodIdToName } from "./utils.js";
 
@@ -996,98 +997,15 @@ export function createMarketSection() {
                   }),
                 ],
               },
-              {
-                name: "1 Day",
-                title: "MACD (1d)",
+              ...ROLLING_WINDOWS.map((w) => ({
+                name: w.name,
+                title: `MACD (${w.name})`,
                 bottom: [
-                  line({
-                    metric: technical.macd._24h.line,
-                    name: "MACD",
-                    color: colors.indicator.fast,
-                    unit: Unit.usd,
-                  }),
-                  line({
-                    metric: technical.macd._24h.signal,
-                    name: "Signal",
-                    color: colors.indicator.slow,
-                    unit: Unit.usd,
-                  }),
-                  histogram({
-                    metric: technical.macd._24h.histogram,
-                    name: "Histogram",
-                    unit: Unit.usd,
-                  }),
+                  line({ metric: technical.macd[w.key].line, name: "MACD", color: colors.indicator.fast, unit: Unit.usd }),
+                  line({ metric: technical.macd[w.key].signal, name: "Signal", color: colors.indicator.slow, unit: Unit.usd }),
+                  histogram({ metric: technical.macd[w.key].histogram, name: "Histogram", unit: Unit.usd }),
                 ],
-              },
-              {
-                name: "1 Week",
-                title: "MACD (1w)",
-                bottom: [
-                  line({
-                    metric: technical.macd._1w.line,
-                    name: "MACD",
-                    color: colors.indicator.fast,
-                    unit: Unit.usd,
-                  }),
-                  line({
-                    metric: technical.macd._1w.signal,
-                    name: "Signal",
-                    color: colors.indicator.slow,
-                    unit: Unit.usd,
-                  }),
-                  histogram({
-                    metric: technical.macd._1w.histogram,
-                    name: "Histogram",
-                    unit: Unit.usd,
-                  }),
-                ],
-              },
-              {
-                name: "1 Month",
-                title: "MACD (1m)",
-                bottom: [
-                  line({
-                    metric: technical.macd._1m.line,
-                    name: "MACD",
-                    color: colors.indicator.fast,
-                    unit: Unit.usd,
-                  }),
-                  line({
-                    metric: technical.macd._1m.signal,
-                    name: "Signal",
-                    color: colors.indicator.slow,
-                    unit: Unit.usd,
-                  }),
-                  histogram({
-                    metric: technical.macd._1m.histogram,
-                    name: "Histogram",
-                    unit: Unit.usd,
-                  }),
-                ],
-              },
-              {
-                name: "1 Year",
-                title: "MACD (1y)",
-                bottom: [
-                  line({
-                    metric: technical.macd._1y.line,
-                    name: "MACD",
-                    color: colors.indicator.fast,
-                    unit: Unit.usd,
-                  }),
-                  line({
-                    metric: technical.macd._1y.signal,
-                    name: "Signal",
-                    color: colors.indicator.slow,
-                    unit: Unit.usd,
-                  }),
-                  histogram({
-                    metric: technical.macd._1y.histogram,
-                    name: "Histogram",
-                    unit: Unit.usd,
-                  }),
-                ],
-              },
+              })),
             ],
           },
         ],

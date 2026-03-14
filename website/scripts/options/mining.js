@@ -134,6 +134,23 @@ export function createMiningSection() {
             }),
           },
           {
+            name: "Rolling",
+            tree: [
+              {
+                name: "Compare",
+                title: `Rewards: ${name} Rolling`,
+                bottom: ROLLING_WINDOWS.flatMap((w) =>
+                  satsBtcUsd({ pattern: pool.rewards.sum[w.key], name: w.name, color: w.color }),
+                ),
+              },
+              ...ROLLING_WINDOWS.map((w) => ({
+                name: w.name,
+                title: `Rewards: ${name} (${w.name})`,
+                bottom: satsBtcUsd({ pattern: pool.rewards.sum[w.key], name: w.name, color: w.color }),
+              })),
+            ],
+          },
+          {
             name: "Cumulative",
             title: `Rewards: ${name} (Total)`,
             bottom: satsBtcUsdFrom({
