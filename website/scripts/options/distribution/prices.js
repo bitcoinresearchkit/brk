@@ -98,12 +98,24 @@ export function createPricesSectionBasic({ cohort, title }) {
             top: [price({ metric: tree.realized.price, name: "Realized", color })],
           },
           {
-            name: "Ratio",
-            title: title("Realized Price Ratio"),
+            name: "MVRV",
+            title: title("MVRV"),
             bottom: [
               baseline({
                 metric: tree.realized.mvrv,
                 name: "MVRV",
+                unit: Unit.ratio,
+                base: 1,
+              }),
+            ],
+          },
+          {
+            name: "Price Ratio",
+            title: title("Realized Price Ratio"),
+            bottom: [
+              baseline({
+                metric: tree.realized.price.ratio,
+                name: "Price Ratio",
                 unit: Unit.ratio,
                 base: 1,
               }),

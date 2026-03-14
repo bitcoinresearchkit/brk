@@ -16,8 +16,8 @@ impl UTXOCohorts<Rw> {
     /// Since timestamps are monotonic, positions only advance forward.
     /// Complexity: O(k * c) where k = 20 boundaries, c = ~1 (forward scan steps).
     ///
-    /// Returns how many sats matured INTO each cohort from the younger adjacent one.
-    /// `under_1h` is always zero since nothing ages into the youngest cohort.
+    /// Returns how many sats matured OUT OF each cohort into the older adjacent one.
+    /// `over_15y` is always zero since nothing ages out of the oldest cohort.
     pub(crate) fn tick_tock_next_block(
         &mut self,
         chain_state: &[BlockState],
@@ -92,7 +92,7 @@ impl UTXOCohorts<Rw> {
                 if let Some(state) = age_cohorts[boundary_idx + 1].as_mut() {
                     state.increment_snapshot(&snapshot);
                 }
-                matured[boundary_idx + 1] += block_state.supply.value;
+                matured[boundary_idx] += block_state.supply.value;
             }
         }
 

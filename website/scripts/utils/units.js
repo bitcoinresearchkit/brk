@@ -19,11 +19,6 @@ export const Unit = /** @type {const} */ ({
   // Relative percentages
   pctSupply: { id: "pct-supply", name: "% of circulating" },
   pctOwn: { id: "pct-own", name: "% of Own" },
-  pctMcap: { id: "pct-mcap", name: "% of Market Cap" },
-  pctRcap: { id: "pct-rcap", name: "% of Realized Cap" },
-  pctOwnRcap: { id: "pct-own-rcap", name: "% of Own Realized Cap" },
-  pctOwnMcap: { id: "pct-own-mcap", name: "% of Own Market Cap" },
-  pctOwnPnl: { id: "pct-own-pnl", name: "% of Own P&L" },
 
   // Time
   days: { id: "days", name: "Days" },

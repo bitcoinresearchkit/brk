@@ -2,17 +2,15 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, CentsSigned, Height, Indexes, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, Exit, ReadableCloneableVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
 
 use crate::{
     distribution::{
         metrics::ImportConfig,
         state::UnrealizedState,
     },
-    internal::{CentsSubtractToCentsSigned, FiatPerBlock, LazyPerBlock, NegCentsUnsignedToDollars},
+    internal::{CentsSubtractToCentsSigned, FiatPerBlock},
 };
-
-use brk_types::Dollars;
 
 use super::UnrealizedBasic;
 
@@ -23,27 +21,16 @@ pub struct UnrealizedCore<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub basic: UnrealizedBasic<M>,
 
-    #[traversable(wrap = "loss", rename = "negative")]
-    pub neg_loss: LazyPerBlock<Dollars, Cents>,
     pub net_pnl: FiatPerBlock<CentsSigned, M>,
 }
 
 impl UnrealizedCore {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let basic = UnrealizedBasic::forced_import(cfg)?;
-
-        let neg_unrealized_loss = LazyPerBlock::from_computed::<NegCentsUnsignedToDollars>(
-            &cfg.name("neg_unrealized_loss"),
-            cfg.version,
-            basic.loss.base.cents.height.read_only_boxed_clone(),
-            &basic.loss.base.cents,
-        );
-
         let net_unrealized_pnl = cfg.import("net_unrealized_pnl", Version::ZERO)?;
 
         Ok(Self {
             basic,
-            neg_loss: neg_unrealized_loss,
             net_pnl: net_unrealized_pnl,
         })
     }

@@ -26,8 +26,18 @@ impl<A> Windows<A> {
         [&self._24h, &self._1w, &self._1m, &self._1y]
     }
 
+    /// Largest window first (1y, 1m, 1w, 24h).
+    pub fn as_array_largest_first(&self) -> [&A; 4] {
+        [&self._1y, &self._1m, &self._1w, &self._24h]
+    }
+
     pub fn as_mut_array(&mut self) -> [&mut A; 4] {
         [&mut self._24h, &mut self._1w, &mut self._1m, &mut self._1y]
+    }
+
+    /// Largest window first (1y, 1m, 1w, 24h).
+    pub fn as_mut_array_largest_first(&mut self) -> [&mut A; 4] {
+        [&mut self._1y, &mut self._1m, &mut self._1w, &mut self._24h]
     }
 
     pub fn as_mut_array_from_1w(&mut self) -> [&mut A; 3] {

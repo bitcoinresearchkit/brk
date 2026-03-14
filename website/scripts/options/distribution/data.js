@@ -83,6 +83,7 @@ export function buildCohortData() {
     title: `UTXOs ${names.long}`,
     color: colors.at(i, arr.length),
     tree: utxoCohorts.ageRange[key],
+    matured: utxoCohorts.matured[key],
   }));
 
   const epoch = entries(EPOCH_NAMES).map(([key, names], i, arr) => ({

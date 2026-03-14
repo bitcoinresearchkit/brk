@@ -118,7 +118,6 @@ export function createNetworkSection() {
     },
   ]);
 
-
   const countTypes = /** @type {const} */ ([
     {
       name: "Funded",
@@ -568,7 +567,7 @@ export function createNetworkSection() {
                 name: "Base",
                 title: "OP_RETURN Burned",
                 bottom: satsBtcUsd({
-                  pattern: supply.burned.opReturn.base,
+                  pattern: scripts.value.opReturn.base,
                   name: "sum",
                 }),
               },
@@ -580,7 +579,7 @@ export function createNetworkSection() {
                     title: "OP_RETURN Burned Rolling",
                     bottom: ROLLING_WINDOWS.flatMap((w) =>
                       satsBtcUsd({
-                        pattern: supply.burned.opReturn.sum[w.key],
+                        pattern: scripts.value.opReturn.sum[w.key],
                         name: w.name,
                         color: w.color,
                       }),
@@ -590,7 +589,7 @@ export function createNetworkSection() {
                     name: w.name,
                     title: `OP_RETURN Burned ${w.name}`,
                     bottom: satsBtcUsd({
-                      pattern: supply.burned.opReturn.sum[w.key],
+                      pattern: scripts.value.opReturn.sum[w.key],
                       name: w.name,
                       color: w.color,
                     }),
@@ -601,7 +600,7 @@ export function createNetworkSection() {
                 name: "Cumulative",
                 title: "OP_RETURN Burned (Total)",
                 bottom: satsBtcUsd({
-                  pattern: supply.burned.opReturn.cumulative,
+                  pattern: scripts.value.opReturn.cumulative,
                   name: "all-time",
                 }),
               },
@@ -1074,7 +1073,8 @@ export function createNetworkSection() {
             title: "UTXO Count 30d Change",
             bottom: [
               baseline({
-                metric: cohorts.utxo.all.outputs.unspentCount.delta.absolute._1m,
+                metric:
+                  cohorts.utxo.all.outputs.unspentCount.delta.absolute._1m,
                 name: "30d Change",
                 unit: Unit.count,
               }),

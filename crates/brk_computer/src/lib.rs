@@ -325,25 +325,33 @@ impl Computer {
                     .compute(indexer, &self.indexes, &starting_indexes, exit)
             })?;
 
-            timed("Computed inputs", || {
-                self.inputs.compute(
-                    indexer,
-                    &self.indexes,
-                    &self.blocks,
-                    &starting_indexes,
-                    exit,
-                )
-            })?;
-
-            timed("Computed scripts", || {
-                self.scripts.compute(
-                    indexer,
-                    &self.outputs,
-                    &self.prices,
-                    &starting_indexes,
-                    exit,
-                )
-            })?;
+            // inputs and scripts are independent — parallelize
+            let (inputs_result, scripts_result) = rayon::join(
+                || {
+                    timed("Computed inputs", || {
+                        self.inputs.compute(
+                            indexer,
+                            &self.indexes,
+                            &self.blocks,
+                            &starting_indexes,
+                            exit,
+                        )
+                    })
+                },
+                || {
+                    timed("Computed scripts", || {
+                        self.scripts.compute(
+                            indexer,
+                            &self.outputs,
+                            &self.prices,
+                            &starting_indexes,
+                            exit,
+                        )
+                    })
+                },
+            );
+            inputs_result?;
+            scripts_result?;
 
             timed("Computed outputs", || {
                 self.outputs.compute(

@@ -36,6 +36,18 @@ import { periodIdToName } from "./utils.js";
  * @property {Brk.BpsCentsRatioSatsUsdPattern} ratio
  */
 
+/**
+ * Create index (percent) + ratio line pair from a BpsPercentRatioPattern
+ * @param {{ pattern: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, name: string, color?: Color, defaultActive?: boolean }} args
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+function indexRatio({ pattern, name, color, defaultActive }) {
+  return [
+    line({ metric: pattern.percent, name, color, defaultActive, unit: Unit.index }),
+    line({ metric: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
+  ];
+}
+
 const commonMaIds = /** @type {const} */ ([
   "1w",
   "1m",
@@ -671,166 +683,43 @@ export function createMarketSection() {
                 name: "Compare",
                 title: "RSI Comparison",
                 bottom: [
-                  line({
-                    metric: technical.rsi._24h.rsi.percent,
-                    name: "1d",
-                    color: colors.time._24h,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1w.rsi.percent,
-                    name: "1w",
-                    color: colors.time._1w,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1m.rsi.percent,
-                    name: "1m",
-                    color: colors.time._1m,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1y.rsi.percent,
-                    name: "1y",
-                    color: colors.time._1y,
-                    unit: Unit.index,
-                  }),
+                  ...ROLLING_WINDOWS.flatMap((w) =>
+                    indexRatio({ pattern: technical.rsi[w.key].rsi, name: w.name, color: w.color }),
+                  ),
                   priceLine({ unit: Unit.index, number: 70 }),
                   priceLine({ unit: Unit.index, number: 30 }),
                 ],
               },
-              {
-                name: "1 Day",
-                title: "RSI (1d)",
-                bottom: [
-                  line({
-                    metric: technical.rsi._24h.rsi.percent,
-                    name: "RSI",
-                    color: colors.indicator.main,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._24h.rsiMax.percent,
-                    name: "Max",
-                    color: colors.stat.max,
-                    defaultActive: false,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._24h.rsiMin.percent,
-                    name: "Min",
-                    color: colors.stat.min,
-                    defaultActive: false,
-                    unit: Unit.index,
-                  }),
-                  priceLine({ unit: Unit.index, number: 70 }),
-                  priceLine({
-                    unit: Unit.index,
-                    number: 50,
-                    defaultActive: false,
-                  }),
-                  priceLine({ unit: Unit.index, number: 30 }),
-                ],
-              },
-              {
-                name: "1 Week",
-                title: "RSI (1w)",
-                bottom: [
-                  line({
-                    metric: technical.rsi._1w.rsi.percent,
-                    name: "RSI",
-                    color: colors.indicator.main,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1w.rsiMax.percent,
-                    name: "Max",
-                    color: colors.stat.max,
-                    defaultActive: false,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1w.rsiMin.percent,
-                    name: "Min",
-                    color: colors.stat.min,
-                    defaultActive: false,
-                    unit: Unit.index,
-                  }),
-                  priceLine({ unit: Unit.index, number: 70 }),
-                  priceLine({
-                    unit: Unit.index,
-                    number: 50,
-                    defaultActive: false,
-                  }),
-                  priceLine({ unit: Unit.index, number: 30 }),
-                ],
-              },
-              {
-                name: "1 Month",
-                title: "RSI (1m)",
-                bottom: [
-                  line({
-                    metric: technical.rsi._1m.rsi.percent,
-                    name: "RSI",
-                    color: colors.indicator.main,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1m.rsiMax.percent,
-                    name: "Max",
-                    color: colors.stat.max,
-                    defaultActive: false,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1m.rsiMin.percent,
-                    name: "Min",
-                    color: colors.stat.min,
-                    defaultActive: false,
-                    unit: Unit.index,
-                  }),
-                  priceLine({ unit: Unit.index, number: 70 }),
-                  priceLine({
-                    unit: Unit.index,
-                    number: 50,
-                    defaultActive: false,
-                  }),
-                  priceLine({ unit: Unit.index, number: 30 }),
-                ],
-              },
-              {
-                name: "1 Year",
-                title: "RSI (1y)",
-                bottom: [
-                  line({
-                    metric: technical.rsi._1y.rsi.percent,
-                    name: "RSI",
-                    color: colors.indicator.main,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1y.rsiMax.percent,
-                    name: "Max",
-                    color: colors.stat.max,
-                    defaultActive: false,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1y.rsiMin.percent,
-                    name: "Min",
-                    color: colors.stat.min,
-                    defaultActive: false,
-                    unit: Unit.index,
-                  }),
-                  priceLine({ unit: Unit.index, number: 70 }),
-                  priceLine({
-                    unit: Unit.index,
-                    number: 50,
-                    defaultActive: false,
-                  }),
-                  priceLine({ unit: Unit.index, number: 30 }),
-                ],
-              },
+              ...ROLLING_WINDOWS.map((w) => {
+                const rsi = technical.rsi[w.key];
+                return {
+                  name: w.name,
+                  tree: [
+                    {
+                      name: "Value",
+                      title: `RSI (${w.name})`,
+                      bottom: [
+                        ...indexRatio({ pattern: rsi.rsi, name: "RSI", color: colors.indicator.main }),
+                        ...indexRatio({ pattern: rsi.rsiMax, name: "Max", color: colors.stat.max, defaultActive: false }),
+                        ...indexRatio({ pattern: rsi.rsiMin, name: "Min", color: colors.stat.min, defaultActive: false }),
+                        priceLine({ unit: Unit.index, number: 70 }),
+                        priceLine({ unit: Unit.index, number: 50, defaultActive: false }),
+                        priceLine({ unit: Unit.index, number: 30 }),
+                      ],
+                    },
+                    {
+                      name: "Components",
+                      title: `RSI Components (${w.name})`,
+                      bottom: [
+                        line({ metric: rsi.averageGain, name: "Avg Gain", color: colors.profit, unit: Unit.usd }),
+                        line({ metric: rsi.averageLoss, name: "Avg Loss", color: colors.loss, unit: Unit.usd }),
+                        line({ metric: rsi.gains, name: "Gains", color: colors.profit, defaultActive: false, unit: Unit.usd }),
+                        line({ metric: rsi.losses, name: "Losses", color: colors.loss, defaultActive: false, unit: Unit.usd }),
+                      ],
+                    },
+                  ],
+                };
+              }),
             ],
           },
           {
@@ -840,127 +729,33 @@ export function createMarketSection() {
                 name: "Compare",
                 title: "Stochastic RSI Comparison",
                 bottom: [
-                  line({
-                    metric: technical.rsi._24h.stochRsiK.percent,
-                    name: "1d K",
-                    color: colors.time._24h,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1w.stochRsiK.percent,
-                    name: "1w K",
-                    color: colors.time._1w,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1m.stochRsiK.percent,
-                    name: "1m K",
-                    color: colors.time._1m,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1y.stochRsiK.percent,
-                    name: "1y K",
-                    color: colors.time._1y,
-                    unit: Unit.index,
-                  }),
+                  ...ROLLING_WINDOWS.flatMap((w) =>
+                    indexRatio({ pattern: technical.rsi[w.key].stochRsiK, name: `${w.name} K`, color: w.color }),
+                  ),
                   ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
                 ],
               },
-              {
-                name: "1 Day",
-                title: "Stochastic RSI (1d)",
-                bottom: [
-                  line({
-                    metric: technical.rsi._24h.stochRsiK.percent,
-                    name: "K",
-                    color: colors.indicator.fast,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._24h.stochRsiD.percent,
-                    name: "D",
-                    color: colors.indicator.slow,
-                    unit: Unit.index,
-                  }),
-                  ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
-                ],
-              },
-              {
-                name: "1 Week",
-                title: "Stochastic RSI (1w)",
-                bottom: [
-                  line({
-                    metric: technical.rsi._1w.stochRsiK.percent,
-                    name: "K",
-                    color: colors.indicator.fast,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1w.stochRsiD.percent,
-                    name: "D",
-                    color: colors.indicator.slow,
-                    unit: Unit.index,
-                  }),
-                  ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
-                ],
-              },
-              {
-                name: "1 Month",
-                title: "Stochastic RSI (1m)",
-                bottom: [
-                  line({
-                    metric: technical.rsi._1m.stochRsiK.percent,
-                    name: "K",
-                    color: colors.indicator.fast,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1m.stochRsiD.percent,
-                    name: "D",
-                    color: colors.indicator.slow,
-                    unit: Unit.index,
-                  }),
-                  ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
-                ],
-              },
-              {
-                name: "1 Year",
-                title: "Stochastic RSI (1y)",
-                bottom: [
-                  line({
-                    metric: technical.rsi._1y.stochRsiK.percent,
-                    name: "K",
-                    color: colors.indicator.fast,
-                    unit: Unit.index,
-                  }),
-                  line({
-                    metric: technical.rsi._1y.stochRsiD.percent,
-                    name: "D",
-                    color: colors.indicator.slow,
-                    unit: Unit.index,
-                  }),
-                  ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
-                ],
-              },
+              ...ROLLING_WINDOWS.map((w) => {
+                const rsi = technical.rsi[w.key];
+                return {
+                  name: w.name,
+                  title: `Stochastic RSI (${w.name})`,
+                  bottom: [
+                    ...indexRatio({ pattern: rsi.stochRsi, name: "Raw", color: colors.indicator.main, defaultActive: false }),
+                    ...indexRatio({ pattern: rsi.stochRsiK, name: "K", color: colors.indicator.fast }),
+                    ...indexRatio({ pattern: rsi.stochRsiD, name: "D", color: colors.indicator.slow }),
+                    ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
+                  ],
+                };
+              }),
             ],
           },
           {
             name: "Stochastic",
             title: "Stochastic Oscillator",
             bottom: [
-              line({
-                metric: technical.stochK.percent,
-                name: "K",
-                color: colors.indicator.fast,
-                unit: Unit.index,
-              }),
-              line({
-                metric: technical.stochD.percent,
-                name: "D",
-                color: colors.indicator.slow,
-                unit: Unit.index,
-              }),
+              ...indexRatio({ pattern: technical.stochK, name: "K", color: colors.indicator.fast }),
+              ...indexRatio({ pattern: technical.stochD, name: "D", color: colors.indicator.slow }),
               ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
             ],
           },
@@ -970,32 +765,9 @@ export function createMarketSection() {
               {
                 name: "Compare",
                 title: "MACD Comparison",
-                bottom: [
-                  line({
-                    metric: technical.macd._24h.line,
-                    name: "1d",
-                    color: colors.time._24h,
-                    unit: Unit.usd,
-                  }),
-                  line({
-                    metric: technical.macd._1w.line,
-                    name: "1w",
-                    color: colors.time._1w,
-                    unit: Unit.usd,
-                  }),
-                  line({
-                    metric: technical.macd._1m.line,
-                    name: "1m",
-                    color: colors.time._1m,
-                    unit: Unit.usd,
-                  }),
-                  line({
-                    metric: technical.macd._1y.line,
-                    name: "1y",
-                    color: colors.time._1y,
-                    unit: Unit.usd,
-                  }),
-                ],
+                bottom: ROLLING_WINDOWS.map((w) =>
+                  line({ metric: technical.macd[w.key].line, name: w.name, color: w.color, unit: Unit.usd }),
+                ),
               },
               ...ROLLING_WINDOWS.map((w) => ({
                 name: w.name,

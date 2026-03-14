@@ -42,11 +42,13 @@ impl RollingDistributionSlot {
         sats_source: &impl ReadableVec<Height, Sats>,
         cents_source: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
+        sats_cache: &mut Option<(usize, Vec<f64>)>,
+        cents_cache: &mut Option<(usize, Vec<f64>)>,
     ) -> Result<()> {
         let d = &mut self.distribution;
 
         macro_rules! compute_unit {
-            ($unit:ident, $source:expr) => {
+            ($unit:ident, $source:expr, $cache:expr) => {
                 compute_rolling_distribution_from_starts(
                     max_from,
                     starts,
@@ -60,11 +62,12 @@ impl RollingDistributionSlot {
                     &mut d.pct75.$unit.height,
                     &mut d.pct90.$unit.height,
                     exit,
+                    $cache,
                 )?
             };
         }
-        compute_unit!(sats, sats_source);
-        compute_unit!(cents, cents_source);
+        compute_unit!(sats, sats_source, sats_cache);
+        compute_unit!(cents, cents_source, cents_cache);
 
         Ok(())
     }
@@ -104,8 +107,23 @@ impl RollingDistributionAmountPerBlock {
         cents_source: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
-        for (slot, starts) in self.0.as_mut_array().into_iter().zip(windows.as_array()) {
-            slot.compute(max_from, *starts, sats_source, cents_source, exit)?;
+        let mut sats_cache = None;
+        let mut cents_cache = None;
+        for (slot, starts) in self
+            .0
+            .as_mut_array_largest_first()
+            .into_iter()
+            .zip(windows.as_array_largest_first())
+        {
+            slot.compute(
+                max_from,
+                *starts,
+                sats_source,
+                cents_source,
+                exit,
+                &mut sats_cache,
+                &mut cents_cache,
+            )?;
         }
         Ok(())
     }

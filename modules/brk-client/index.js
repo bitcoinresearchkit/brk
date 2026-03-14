@@ -2634,6 +2634,31 @@ function createBpsCentsRatioSatsUsdPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} BtcCentsDeltaSatsUsdPattern
+ * @property {MetricPattern1<Bitcoin>} btc
+ * @property {MetricPattern1<Cents>} cents
+ * @property {AbsoluteRatePattern} delta
+ * @property {MetricPattern1<Sats>} sats
+ * @property {MetricPattern1<Dollars>} usd
+ */
+
+/**
+ * Create a BtcCentsDeltaSatsUsdPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {BtcCentsDeltaSatsUsdPattern}
+ */
+function createBtcCentsDeltaSatsUsdPattern(client, acc) {
+  return {
+    btc: createMetricPattern1(client, acc),
+    cents: createMetricPattern1(client, _m(acc, 'cents')),
+    delta: createAbsoluteRatePattern(client, _m(acc, 'delta')),
+    sats: createMetricPattern1(client, _m(acc, 'sats')),
+    usd: createMetricPattern1(client, _m(acc, 'usd')),
+  };
+}
+
+/**
  * @typedef {Object} BtcCentsRelSatsUsdPattern
  * @property {MetricPattern1<Bitcoin>} btc
  * @property {MetricPattern1<Cents>} cents
@@ -2755,6 +2780,31 @@ function createInvestedMaxMinPercentilesSupplyPattern(client, acc) {
     min: createCentsSatsUsdPattern(client, _m(acc, 'cost_basis_min')),
     percentiles: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, _m(acc, 'cost_basis')),
     supplyDensity: createBpsPercentRatioPattern3(client, _m(acc, 'supply_density')),
+  };
+}
+
+/**
+ * @typedef {Object} MvrvNuplRealizedSupplyPattern
+ * @property {MetricPattern1<StoredF32>} mvrv
+ * @property {BpsRatioPattern} nupl
+ * @property {AllSthPattern} realizedCap
+ * @property {BpsCentsRatioSatsUsdPattern} realizedPrice
+ * @property {AllSthPattern2} supply
+ */
+
+/**
+ * Create a MvrvNuplRealizedSupplyPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {MvrvNuplRealizedSupplyPattern}
+ */
+function createMvrvNuplRealizedSupplyPattern(client, acc) {
+  return {
+    mvrv: createMetricPattern1(client, _m(acc, 'mvrv')),
+    nupl: createBpsRatioPattern(client, _m(acc, 'nupl')),
+    realizedCap: createAllSthPattern(client, acc),
+    realizedPrice: createBpsCentsRatioSatsUsdPattern(client, _m(acc, 'realized_price')),
+    supply: createAllSthPattern2(client, acc),
   };
 }
 
@@ -3566,7 +3616,7 @@ function createGreedNetPainPattern(client, acc) {
 
 /**
  * @typedef {Object} LossNuplProfitPattern
- * @property {BaseCumulativeSumPattern3} loss
+ * @property {BaseCumulativeNegativeSumPattern} loss
  * @property {BpsRatioPattern} nupl
  * @property {BaseCumulativeSumPattern3} profit
  */
@@ -3579,7 +3629,7 @@ function createGreedNetPainPattern(client, acc) {
  */
 function createLossNuplProfitPattern(client, acc) {
   return {
-    loss: createBaseCumulativeSumPattern3(client, _m(acc, 'unrealized_loss')),
+    loss: createBaseCumulativeNegativeSumPattern(client, acc),
     nupl: createBpsRatioPattern(client, _m(acc, 'nupl')),
     profit: createBaseCumulativeSumPattern3(client, _m(acc, 'unrealized_profit')),
   };
@@ -3729,6 +3779,44 @@ function createAbsoluteRatePattern2(client, acc) {
   return {
     absolute: create_1m1w1y24hPattern3(client, acc),
     rate: create_1m1w1y24hPattern2(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} AllSthPattern2
+ * @property {BtcCentsDeltaSatsUsdPattern} all
+ * @property {BtcCentsSatsUsdPattern} sth
+ */
+
+/**
+ * Create a AllSthPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {AllSthPattern2}
+ */
+function createAllSthPattern2(client, acc) {
+  return {
+    all: createBtcCentsDeltaSatsUsdPattern(client, _m(acc, 'supply')),
+    sth: createBtcCentsSatsUsdPattern(client, _m(acc, 'sth_supply')),
+  };
+}
+
+/**
+ * @typedef {Object} AllSthPattern
+ * @property {MetricPattern1<Dollars>} all
+ * @property {MetricPattern1<Dollars>} sth
+ */
+
+/**
+ * Create a AllSthPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {AllSthPattern}
+ */
+function createAllSthPattern(client, acc) {
+  return {
+    all: createMetricPattern1(client, _m(acc, 'realized_cap')),
+    sth: createMetricPattern1(client, _m(acc, 'sth_realized_cap')),
   };
 }
 
@@ -3900,25 +3988,6 @@ function createPriceValuePattern(client, acc) {
   return {
     price: createCentsSatsUsdPattern(client, _m(acc, 'p3sd_4y')),
     value: createMetricPattern1(client, _m(acc, 'ratio_p3sd_4y')),
-  };
-}
-
-/**
- * @typedef {Object} RealizedSupplyPattern
- * @property {MetricPattern1<Dollars>} realizedCap
- * @property {MetricPattern1<Sats>} supply
- */
-
-/**
- * Create a RealizedSupplyPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {RealizedSupplyPattern}
- */
-function createRealizedSupplyPattern(client, acc) {
-  return {
-    realizedCap: createMetricPattern1(client, _m(acc, 'realized_cap')),
-    supply: createMetricPattern1(client, _m(acc, 'supply')),
   };
 }
 
@@ -4481,13 +4550,7 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Scripts_Value
- * @property {MetricsTree_Scripts_Value_OpReturn} opReturn
- */
-
-/**
- * @typedef {Object} MetricsTree_Scripts_Value_OpReturn
- * @property {BtcCentsSatsUsdPattern} base
- * @property {BtcCentsSatsUsdPattern} cumulative
+ * @property {BaseCumulativeSumPattern4} opReturn
  */
 
 /**
@@ -5509,7 +5572,6 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Supply_Burned
- * @property {BaseCumulativeSumPattern4} opReturn
  * @property {BaseCumulativeSumPattern4} unspendable
  */
 
@@ -5819,87 +5881,87 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Cohorts_Utxo_Profitability_Range
- * @property {RealizedSupplyPattern} over1000pctInProfit
- * @property {RealizedSupplyPattern} _500pctTo1000pctInProfit
- * @property {RealizedSupplyPattern} _300pctTo500pctInProfit
- * @property {RealizedSupplyPattern} _200pctTo300pctInProfit
- * @property {RealizedSupplyPattern} _100pctTo200pctInProfit
- * @property {RealizedSupplyPattern} _90pctTo100pctInProfit
- * @property {RealizedSupplyPattern} _80pctTo90pctInProfit
- * @property {RealizedSupplyPattern} _70pctTo80pctInProfit
- * @property {RealizedSupplyPattern} _60pctTo70pctInProfit
- * @property {RealizedSupplyPattern} _50pctTo60pctInProfit
- * @property {RealizedSupplyPattern} _40pctTo50pctInProfit
- * @property {RealizedSupplyPattern} _30pctTo40pctInProfit
- * @property {RealizedSupplyPattern} _20pctTo30pctInProfit
- * @property {RealizedSupplyPattern} _10pctTo20pctInProfit
- * @property {RealizedSupplyPattern} _0pctTo10pctInProfit
- * @property {RealizedSupplyPattern} _0pctTo10pctInLoss
- * @property {RealizedSupplyPattern} _10pctTo20pctInLoss
- * @property {RealizedSupplyPattern} _20pctTo30pctInLoss
- * @property {RealizedSupplyPattern} _30pctTo40pctInLoss
- * @property {RealizedSupplyPattern} _40pctTo50pctInLoss
- * @property {RealizedSupplyPattern} _50pctTo60pctInLoss
- * @property {RealizedSupplyPattern} _60pctTo70pctInLoss
- * @property {RealizedSupplyPattern} _70pctTo80pctInLoss
- * @property {RealizedSupplyPattern} _80pctTo90pctInLoss
- * @property {RealizedSupplyPattern} _90pctTo100pctInLoss
+ * @property {MvrvNuplRealizedSupplyPattern} over1000pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _500pctTo1000pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _300pctTo500pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _200pctTo300pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _100pctTo200pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _90pctTo100pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _80pctTo90pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _70pctTo80pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _60pctTo70pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _50pctTo60pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _40pctTo50pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _30pctTo40pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _20pctTo30pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _10pctTo20pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _0pctTo10pctInProfit
+ * @property {MvrvNuplRealizedSupplyPattern} _0pctTo10pctInLoss
+ * @property {MvrvNuplRealizedSupplyPattern} _10pctTo20pctInLoss
+ * @property {MvrvNuplRealizedSupplyPattern} _20pctTo30pctInLoss
+ * @property {MvrvNuplRealizedSupplyPattern} _30pctTo40pctInLoss
+ * @property {MvrvNuplRealizedSupplyPattern} _40pctTo50pctInLoss
+ * @property {MvrvNuplRealizedSupplyPattern} _50pctTo60pctInLoss
+ * @property {MvrvNuplRealizedSupplyPattern} _60pctTo70pctInLoss
+ * @property {MvrvNuplRealizedSupplyPattern} _70pctTo80pctInLoss
+ * @property {MvrvNuplRealizedSupplyPattern} _80pctTo90pctInLoss
+ * @property {MvrvNuplRealizedSupplyPattern} _90pctTo100pctInLoss
  */
 
 /**
  * @typedef {Object} MetricsTree_Cohorts_Utxo_Profitability_Profit
- * @property {RealizedSupplyPattern} breakeven
- * @property {RealizedSupplyPattern} _10pct
- * @property {RealizedSupplyPattern} _20pct
- * @property {RealizedSupplyPattern} _30pct
- * @property {RealizedSupplyPattern} _40pct
- * @property {RealizedSupplyPattern} _50pct
- * @property {RealizedSupplyPattern} _60pct
- * @property {RealizedSupplyPattern} _70pct
- * @property {RealizedSupplyPattern} _80pct
- * @property {RealizedSupplyPattern} _90pct
- * @property {RealizedSupplyPattern} _100pct
- * @property {RealizedSupplyPattern} _200pct
- * @property {RealizedSupplyPattern} _300pct
- * @property {RealizedSupplyPattern} _500pct
+ * @property {MvrvNuplRealizedSupplyPattern} breakeven
+ * @property {MvrvNuplRealizedSupplyPattern} _10pct
+ * @property {MvrvNuplRealizedSupplyPattern} _20pct
+ * @property {MvrvNuplRealizedSupplyPattern} _30pct
+ * @property {MvrvNuplRealizedSupplyPattern} _40pct
+ * @property {MvrvNuplRealizedSupplyPattern} _50pct
+ * @property {MvrvNuplRealizedSupplyPattern} _60pct
+ * @property {MvrvNuplRealizedSupplyPattern} _70pct
+ * @property {MvrvNuplRealizedSupplyPattern} _80pct
+ * @property {MvrvNuplRealizedSupplyPattern} _90pct
+ * @property {MvrvNuplRealizedSupplyPattern} _100pct
+ * @property {MvrvNuplRealizedSupplyPattern} _200pct
+ * @property {MvrvNuplRealizedSupplyPattern} _300pct
+ * @property {MvrvNuplRealizedSupplyPattern} _500pct
  */
 
 /**
  * @typedef {Object} MetricsTree_Cohorts_Utxo_Profitability_Loss
- * @property {RealizedSupplyPattern} breakeven
- * @property {RealizedSupplyPattern} _10pct
- * @property {RealizedSupplyPattern} _20pct
- * @property {RealizedSupplyPattern} _30pct
- * @property {RealizedSupplyPattern} _40pct
- * @property {RealizedSupplyPattern} _50pct
- * @property {RealizedSupplyPattern} _60pct
- * @property {RealizedSupplyPattern} _70pct
- * @property {RealizedSupplyPattern} _80pct
+ * @property {MvrvNuplRealizedSupplyPattern} breakeven
+ * @property {MvrvNuplRealizedSupplyPattern} _10pct
+ * @property {MvrvNuplRealizedSupplyPattern} _20pct
+ * @property {MvrvNuplRealizedSupplyPattern} _30pct
+ * @property {MvrvNuplRealizedSupplyPattern} _40pct
+ * @property {MvrvNuplRealizedSupplyPattern} _50pct
+ * @property {MvrvNuplRealizedSupplyPattern} _60pct
+ * @property {MvrvNuplRealizedSupplyPattern} _70pct
+ * @property {MvrvNuplRealizedSupplyPattern} _80pct
  */
 
 /**
  * @typedef {Object} MetricsTree_Cohorts_Utxo_Matured
- * @property {BtcCentsSatsUsdPattern} under1h
- * @property {BtcCentsSatsUsdPattern} _1hTo1d
- * @property {BtcCentsSatsUsdPattern} _1dTo1w
- * @property {BtcCentsSatsUsdPattern} _1wTo1m
- * @property {BtcCentsSatsUsdPattern} _1mTo2m
- * @property {BtcCentsSatsUsdPattern} _2mTo3m
- * @property {BtcCentsSatsUsdPattern} _3mTo4m
- * @property {BtcCentsSatsUsdPattern} _4mTo5m
- * @property {BtcCentsSatsUsdPattern} _5mTo6m
- * @property {BtcCentsSatsUsdPattern} _6mTo1y
- * @property {BtcCentsSatsUsdPattern} _1yTo2y
- * @property {BtcCentsSatsUsdPattern} _2yTo3y
- * @property {BtcCentsSatsUsdPattern} _3yTo4y
- * @property {BtcCentsSatsUsdPattern} _4yTo5y
- * @property {BtcCentsSatsUsdPattern} _5yTo6y
- * @property {BtcCentsSatsUsdPattern} _6yTo7y
- * @property {BtcCentsSatsUsdPattern} _7yTo8y
- * @property {BtcCentsSatsUsdPattern} _8yTo10y
- * @property {BtcCentsSatsUsdPattern} _10yTo12y
- * @property {BtcCentsSatsUsdPattern} _12yTo15y
- * @property {BtcCentsSatsUsdPattern} over15y
+ * @property {BaseCumulativeSumPattern4} under1h
+ * @property {BaseCumulativeSumPattern4} _1hTo1d
+ * @property {BaseCumulativeSumPattern4} _1dTo1w
+ * @property {BaseCumulativeSumPattern4} _1wTo1m
+ * @property {BaseCumulativeSumPattern4} _1mTo2m
+ * @property {BaseCumulativeSumPattern4} _2mTo3m
+ * @property {BaseCumulativeSumPattern4} _3mTo4m
+ * @property {BaseCumulativeSumPattern4} _4mTo5m
+ * @property {BaseCumulativeSumPattern4} _5mTo6m
+ * @property {BaseCumulativeSumPattern4} _6mTo1y
+ * @property {BaseCumulativeSumPattern4} _1yTo2y
+ * @property {BaseCumulativeSumPattern4} _2yTo3y
+ * @property {BaseCumulativeSumPattern4} _3yTo4y
+ * @property {BaseCumulativeSumPattern4} _4yTo5y
+ * @property {BaseCumulativeSumPattern4} _5yTo6y
+ * @property {BaseCumulativeSumPattern4} _6yTo7y
+ * @property {BaseCumulativeSumPattern4} _7yTo8y
+ * @property {BaseCumulativeSumPattern4} _8yTo10y
+ * @property {BaseCumulativeSumPattern4} _10yTo12y
+ * @property {BaseCumulativeSumPattern4} _12yTo15y
+ * @property {BaseCumulativeSumPattern4} over15y
  */
 
 /**
@@ -6870,6 +6932,255 @@ class BrkClient extends BrkClientBase {
     }
   });
 
+  PROFITABILITY_RANGE_NAMES = /** @type {const} */ ({
+    "over1000pctInProfit": {
+      "id": "utxos_over_1000pct_in_profit",
+      "short": ">1000%",
+      "long": "Over 1000% Profit"
+    },
+    "_500pctTo1000pctInProfit": {
+      "id": "utxos_500pct_to_1000pct_in_profit",
+      "short": "500-1000%",
+      "long": "500-1000% Profit"
+    },
+    "_300pctTo500pctInProfit": {
+      "id": "utxos_300pct_to_500pct_in_profit",
+      "short": "300-500%",
+      "long": "300-500% Profit"
+    },
+    "_200pctTo300pctInProfit": {
+      "id": "utxos_200pct_to_300pct_in_profit",
+      "short": "200-300%",
+      "long": "200-300% Profit"
+    },
+    "_100pctTo200pctInProfit": {
+      "id": "utxos_100pct_to_200pct_in_profit",
+      "short": "100-200%",
+      "long": "100-200% Profit"
+    },
+    "_90pctTo100pctInProfit": {
+      "id": "utxos_90pct_to_100pct_in_profit",
+      "short": "90-100%",
+      "long": "90-100% Profit"
+    },
+    "_80pctTo90pctInProfit": {
+      "id": "utxos_80pct_to_90pct_in_profit",
+      "short": "80-90%",
+      "long": "80-90% Profit"
+    },
+    "_70pctTo80pctInProfit": {
+      "id": "utxos_70pct_to_80pct_in_profit",
+      "short": "70-80%",
+      "long": "70-80% Profit"
+    },
+    "_60pctTo70pctInProfit": {
+      "id": "utxos_60pct_to_70pct_in_profit",
+      "short": "60-70%",
+      "long": "60-70% Profit"
+    },
+    "_50pctTo60pctInProfit": {
+      "id": "utxos_50pct_to_60pct_in_profit",
+      "short": "50-60%",
+      "long": "50-60% Profit"
+    },
+    "_40pctTo50pctInProfit": {
+      "id": "utxos_40pct_to_50pct_in_profit",
+      "short": "40-50%",
+      "long": "40-50% Profit"
+    },
+    "_30pctTo40pctInProfit": {
+      "id": "utxos_30pct_to_40pct_in_profit",
+      "short": "30-40%",
+      "long": "30-40% Profit"
+    },
+    "_20pctTo30pctInProfit": {
+      "id": "utxos_20pct_to_30pct_in_profit",
+      "short": "20-30%",
+      "long": "20-30% Profit"
+    },
+    "_10pctTo20pctInProfit": {
+      "id": "utxos_10pct_to_20pct_in_profit",
+      "short": "10-20%",
+      "long": "10-20% Profit"
+    },
+    "_0pctTo10pctInProfit": {
+      "id": "utxos_0pct_to_10pct_in_profit",
+      "short": "0-10%",
+      "long": "0-10% Profit"
+    },
+    "_0pctTo10pctInLoss": {
+      "id": "utxos_0pct_to_10pct_in_loss",
+      "short": "0-10%L",
+      "long": "0-10% Loss"
+    },
+    "_10pctTo20pctInLoss": {
+      "id": "utxos_10pct_to_20pct_in_loss",
+      "short": "10-20%L",
+      "long": "10-20% Loss"
+    },
+    "_20pctTo30pctInLoss": {
+      "id": "utxos_20pct_to_30pct_in_loss",
+      "short": "20-30%L",
+      "long": "20-30% Loss"
+    },
+    "_30pctTo40pctInLoss": {
+      "id": "utxos_30pct_to_40pct_in_loss",
+      "short": "30-40%L",
+      "long": "30-40% Loss"
+    },
+    "_40pctTo50pctInLoss": {
+      "id": "utxos_40pct_to_50pct_in_loss",
+      "short": "40-50%L",
+      "long": "40-50% Loss"
+    },
+    "_50pctTo60pctInLoss": {
+      "id": "utxos_50pct_to_60pct_in_loss",
+      "short": "50-60%L",
+      "long": "50-60% Loss"
+    },
+    "_60pctTo70pctInLoss": {
+      "id": "utxos_60pct_to_70pct_in_loss",
+      "short": "60-70%L",
+      "long": "60-70% Loss"
+    },
+    "_70pctTo80pctInLoss": {
+      "id": "utxos_70pct_to_80pct_in_loss",
+      "short": "70-80%L",
+      "long": "70-80% Loss"
+    },
+    "_80pctTo90pctInLoss": {
+      "id": "utxos_80pct_to_90pct_in_loss",
+      "short": "80-90%L",
+      "long": "80-90% Loss"
+    },
+    "_90pctTo100pctInLoss": {
+      "id": "utxos_90pct_to_100pct_in_loss",
+      "short": "90-100%L",
+      "long": "90-100% Loss"
+    }
+  });
+
+  PROFIT_NAMES = /** @type {const} */ ({
+    "breakeven": {
+      "id": "utxos_in_profit",
+      "short": "≥0%",
+      "long": "In Profit (Breakeven+)"
+    },
+    "_10pct": {
+      "id": "utxos_over_10pct_in_profit",
+      "short": "≥10%",
+      "long": "10%+ Profit"
+    },
+    "_20pct": {
+      "id": "utxos_over_20pct_in_profit",
+      "short": "≥20%",
+      "long": "20%+ Profit"
+    },
+    "_30pct": {
+      "id": "utxos_over_30pct_in_profit",
+      "short": "≥30%",
+      "long": "30%+ Profit"
+    },
+    "_40pct": {
+      "id": "utxos_over_40pct_in_profit",
+      "short": "≥40%",
+      "long": "40%+ Profit"
+    },
+    "_50pct": {
+      "id": "utxos_over_50pct_in_profit",
+      "short": "≥50%",
+      "long": "50%+ Profit"
+    },
+    "_60pct": {
+      "id": "utxos_over_60pct_in_profit",
+      "short": "≥60%",
+      "long": "60%+ Profit"
+    },
+    "_70pct": {
+      "id": "utxos_over_70pct_in_profit",
+      "short": "≥70%",
+      "long": "70%+ Profit"
+    },
+    "_80pct": {
+      "id": "utxos_over_80pct_in_profit",
+      "short": "≥80%",
+      "long": "80%+ Profit"
+    },
+    "_90pct": {
+      "id": "utxos_over_90pct_in_profit",
+      "short": "≥90%",
+      "long": "90%+ Profit"
+    },
+    "_100pct": {
+      "id": "utxos_over_100pct_in_profit",
+      "short": "≥100%",
+      "long": "100%+ Profit"
+    },
+    "_200pct": {
+      "id": "utxos_over_200pct_in_profit",
+      "short": "≥200%",
+      "long": "200%+ Profit"
+    },
+    "_300pct": {
+      "id": "utxos_over_300pct_in_profit",
+      "short": "≥300%",
+      "long": "300%+ Profit"
+    },
+    "_500pct": {
+      "id": "utxos_over_500pct_in_profit",
+      "short": "≥500%",
+      "long": "500%+ Profit"
+    }
+  });
+
+  LOSS_NAMES = /** @type {const} */ ({
+    "breakeven": {
+      "id": "utxos_in_loss",
+      "short": "<0%",
+      "long": "In Loss (Below Breakeven)"
+    },
+    "_10pct": {
+      "id": "utxos_over_10pct_in_loss",
+      "short": "≥10%L",
+      "long": "10%+ Loss"
+    },
+    "_20pct": {
+      "id": "utxos_over_20pct_in_loss",
+      "short": "≥20%L",
+      "long": "20%+ Loss"
+    },
+    "_30pct": {
+      "id": "utxos_over_30pct_in_loss",
+      "short": "≥30%L",
+      "long": "30%+ Loss"
+    },
+    "_40pct": {
+      "id": "utxos_over_40pct_in_loss",
+      "short": "≥40%L",
+      "long": "40%+ Loss"
+    },
+    "_50pct": {
+      "id": "utxos_over_50pct_in_loss",
+      "short": "≥50%L",
+      "long": "50%+ Loss"
+    },
+    "_60pct": {
+      "id": "utxos_over_60pct_in_loss",
+      "short": "≥60%L",
+      "long": "60%+ Loss"
+    },
+    "_70pct": {
+      "id": "utxos_over_70pct_in_loss",
+      "short": "≥70%L",
+      "long": "70%+ Loss"
+    },
+    "_80pct": {
+      "id": "utxos_over_80pct_in_loss",
+      "short": "≥80%L",
+      "long": "80%+ Loss"
+    }
+  });
+
   /**
    * Convert an index value to a Date for date-based indexes.
    * @param {Index} index - The index type
@@ -7203,10 +7514,7 @@ class BrkClient extends BrkClientBase {
           segwit: createBaseCumulativeSumPattern(this, 'segwit_count'),
         },
         value: {
-          opReturn: {
-            base: createBtcCentsSatsUsdPattern(this, 'op_return_value'),
-            cumulative: createBtcCentsSatsUsdPattern(this, 'op_return_value_cumulative'),
-          },
+          opReturn: createBaseCumulativeSumPattern4(this, 'op_return_value'),
         },
         adoption: {
           taproot: createBpsPercentRatioPattern3(this, 'taproot_adoption'),
@@ -7945,7 +8253,6 @@ class BrkClient extends BrkClientBase {
         state: createMetricPattern18(this, 'supply_state'),
         circulating: createBtcCentsSatsUsdPattern(this, 'circulating_supply'),
         burned: {
-          opReturn: createBaseCumulativeSumPattern4(this, 'op_return_supply'),
           unspendable: createBaseCumulativeSumPattern4(this, 'unspendable_supply'),
         },
         inflationRate: createBpsPercentRatioPattern(this, 'inflation_rate'),
@@ -8183,82 +8490,82 @@ class BrkClient extends BrkClientBase {
           },
           profitability: {
             range: {
-              over1000pctInProfit: createRealizedSupplyPattern(this, 'utxos_over_1000pct_in_profit'),
-              _500pctTo1000pctInProfit: createRealizedSupplyPattern(this, 'utxos_500pct_to_1000pct_in_profit'),
-              _300pctTo500pctInProfit: createRealizedSupplyPattern(this, 'utxos_300pct_to_500pct_in_profit'),
-              _200pctTo300pctInProfit: createRealizedSupplyPattern(this, 'utxos_200pct_to_300pct_in_profit'),
-              _100pctTo200pctInProfit: createRealizedSupplyPattern(this, 'utxos_100pct_to_200pct_in_profit'),
-              _90pctTo100pctInProfit: createRealizedSupplyPattern(this, 'utxos_90pct_to_100pct_in_profit'),
-              _80pctTo90pctInProfit: createRealizedSupplyPattern(this, 'utxos_80pct_to_90pct_in_profit'),
-              _70pctTo80pctInProfit: createRealizedSupplyPattern(this, 'utxos_70pct_to_80pct_in_profit'),
-              _60pctTo70pctInProfit: createRealizedSupplyPattern(this, 'utxos_60pct_to_70pct_in_profit'),
-              _50pctTo60pctInProfit: createRealizedSupplyPattern(this, 'utxos_50pct_to_60pct_in_profit'),
-              _40pctTo50pctInProfit: createRealizedSupplyPattern(this, 'utxos_40pct_to_50pct_in_profit'),
-              _30pctTo40pctInProfit: createRealizedSupplyPattern(this, 'utxos_30pct_to_40pct_in_profit'),
-              _20pctTo30pctInProfit: createRealizedSupplyPattern(this, 'utxos_20pct_to_30pct_in_profit'),
-              _10pctTo20pctInProfit: createRealizedSupplyPattern(this, 'utxos_10pct_to_20pct_in_profit'),
-              _0pctTo10pctInProfit: createRealizedSupplyPattern(this, 'utxos_0pct_to_10pct_in_profit'),
-              _0pctTo10pctInLoss: createRealizedSupplyPattern(this, 'utxos_0pct_to_10pct_in_loss'),
-              _10pctTo20pctInLoss: createRealizedSupplyPattern(this, 'utxos_10pct_to_20pct_in_loss'),
-              _20pctTo30pctInLoss: createRealizedSupplyPattern(this, 'utxos_20pct_to_30pct_in_loss'),
-              _30pctTo40pctInLoss: createRealizedSupplyPattern(this, 'utxos_30pct_to_40pct_in_loss'),
-              _40pctTo50pctInLoss: createRealizedSupplyPattern(this, 'utxos_40pct_to_50pct_in_loss'),
-              _50pctTo60pctInLoss: createRealizedSupplyPattern(this, 'utxos_50pct_to_60pct_in_loss'),
-              _60pctTo70pctInLoss: createRealizedSupplyPattern(this, 'utxos_60pct_to_70pct_in_loss'),
-              _70pctTo80pctInLoss: createRealizedSupplyPattern(this, 'utxos_70pct_to_80pct_in_loss'),
-              _80pctTo90pctInLoss: createRealizedSupplyPattern(this, 'utxos_80pct_to_90pct_in_loss'),
-              _90pctTo100pctInLoss: createRealizedSupplyPattern(this, 'utxos_90pct_to_100pct_in_loss'),
+              over1000pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_1000pct_in_profit'),
+              _500pctTo1000pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_500pct_to_1000pct_in_profit'),
+              _300pctTo500pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_300pct_to_500pct_in_profit'),
+              _200pctTo300pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_200pct_to_300pct_in_profit'),
+              _100pctTo200pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_100pct_to_200pct_in_profit'),
+              _90pctTo100pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_90pct_to_100pct_in_profit'),
+              _80pctTo90pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_80pct_to_90pct_in_profit'),
+              _70pctTo80pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_70pct_to_80pct_in_profit'),
+              _60pctTo70pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_60pct_to_70pct_in_profit'),
+              _50pctTo60pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_50pct_to_60pct_in_profit'),
+              _40pctTo50pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_40pct_to_50pct_in_profit'),
+              _30pctTo40pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_30pct_to_40pct_in_profit'),
+              _20pctTo30pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_20pct_to_30pct_in_profit'),
+              _10pctTo20pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_10pct_to_20pct_in_profit'),
+              _0pctTo10pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_0pct_to_10pct_in_profit'),
+              _0pctTo10pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_0pct_to_10pct_in_loss'),
+              _10pctTo20pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_10pct_to_20pct_in_loss'),
+              _20pctTo30pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_20pct_to_30pct_in_loss'),
+              _30pctTo40pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_30pct_to_40pct_in_loss'),
+              _40pctTo50pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_40pct_to_50pct_in_loss'),
+              _50pctTo60pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_50pct_to_60pct_in_loss'),
+              _60pctTo70pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_60pct_to_70pct_in_loss'),
+              _70pctTo80pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_70pct_to_80pct_in_loss'),
+              _80pctTo90pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_80pct_to_90pct_in_loss'),
+              _90pctTo100pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_90pct_to_100pct_in_loss'),
             },
             profit: {
-              breakeven: createRealizedSupplyPattern(this, 'utxos_in_profit'),
-              _10pct: createRealizedSupplyPattern(this, 'utxos_over_10pct_in_profit'),
-              _20pct: createRealizedSupplyPattern(this, 'utxos_over_20pct_in_profit'),
-              _30pct: createRealizedSupplyPattern(this, 'utxos_over_30pct_in_profit'),
-              _40pct: createRealizedSupplyPattern(this, 'utxos_over_40pct_in_profit'),
-              _50pct: createRealizedSupplyPattern(this, 'utxos_over_50pct_in_profit'),
-              _60pct: createRealizedSupplyPattern(this, 'utxos_over_60pct_in_profit'),
-              _70pct: createRealizedSupplyPattern(this, 'utxos_over_70pct_in_profit'),
-              _80pct: createRealizedSupplyPattern(this, 'utxos_over_80pct_in_profit'),
-              _90pct: createRealizedSupplyPattern(this, 'utxos_over_90pct_in_profit'),
-              _100pct: createRealizedSupplyPattern(this, 'utxos_over_100pct_in_profit'),
-              _200pct: createRealizedSupplyPattern(this, 'utxos_over_200pct_in_profit'),
-              _300pct: createRealizedSupplyPattern(this, 'utxos_over_300pct_in_profit'),
-              _500pct: createRealizedSupplyPattern(this, 'utxos_over_500pct_in_profit'),
+              breakeven: createMvrvNuplRealizedSupplyPattern(this, 'utxos_in_profit'),
+              _10pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_10pct_in_profit'),
+              _20pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_20pct_in_profit'),
+              _30pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_30pct_in_profit'),
+              _40pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_40pct_in_profit'),
+              _50pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_50pct_in_profit'),
+              _60pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_60pct_in_profit'),
+              _70pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_70pct_in_profit'),
+              _80pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_80pct_in_profit'),
+              _90pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_90pct_in_profit'),
+              _100pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_100pct_in_profit'),
+              _200pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_200pct_in_profit'),
+              _300pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_300pct_in_profit'),
+              _500pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_500pct_in_profit'),
             },
             loss: {
-              breakeven: createRealizedSupplyPattern(this, 'utxos_in_loss'),
-              _10pct: createRealizedSupplyPattern(this, 'utxos_over_10pct_in_loss'),
-              _20pct: createRealizedSupplyPattern(this, 'utxos_over_20pct_in_loss'),
-              _30pct: createRealizedSupplyPattern(this, 'utxos_over_30pct_in_loss'),
-              _40pct: createRealizedSupplyPattern(this, 'utxos_over_40pct_in_loss'),
-              _50pct: createRealizedSupplyPattern(this, 'utxos_over_50pct_in_loss'),
-              _60pct: createRealizedSupplyPattern(this, 'utxos_over_60pct_in_loss'),
-              _70pct: createRealizedSupplyPattern(this, 'utxos_over_70pct_in_loss'),
-              _80pct: createRealizedSupplyPattern(this, 'utxos_over_80pct_in_loss'),
+              breakeven: createMvrvNuplRealizedSupplyPattern(this, 'utxos_in_loss'),
+              _10pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_10pct_in_loss'),
+              _20pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_20pct_in_loss'),
+              _30pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_30pct_in_loss'),
+              _40pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_40pct_in_loss'),
+              _50pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_50pct_in_loss'),
+              _60pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_60pct_in_loss'),
+              _70pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_70pct_in_loss'),
+              _80pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_80pct_in_loss'),
             },
           },
           matured: {
-            under1h: createBtcCentsSatsUsdPattern(this, 'utxo_under_1h_old_matured'),
-            _1hTo1d: createBtcCentsSatsUsdPattern(this, 'utxo_1h_to_1d_old_matured'),
-            _1dTo1w: createBtcCentsSatsUsdPattern(this, 'utxo_1d_to_1w_old_matured'),
-            _1wTo1m: createBtcCentsSatsUsdPattern(this, 'utxo_1w_to_1m_old_matured'),
-            _1mTo2m: createBtcCentsSatsUsdPattern(this, 'utxo_1m_to_2m_old_matured'),
-            _2mTo3m: createBtcCentsSatsUsdPattern(this, 'utxo_2m_to_3m_old_matured'),
-            _3mTo4m: createBtcCentsSatsUsdPattern(this, 'utxo_3m_to_4m_old_matured'),
-            _4mTo5m: createBtcCentsSatsUsdPattern(this, 'utxo_4m_to_5m_old_matured'),
-            _5mTo6m: createBtcCentsSatsUsdPattern(this, 'utxo_5m_to_6m_old_matured'),
-            _6mTo1y: createBtcCentsSatsUsdPattern(this, 'utxo_6m_to_1y_old_matured'),
-            _1yTo2y: createBtcCentsSatsUsdPattern(this, 'utxo_1y_to_2y_old_matured'),
-            _2yTo3y: createBtcCentsSatsUsdPattern(this, 'utxo_2y_to_3y_old_matured'),
-            _3yTo4y: createBtcCentsSatsUsdPattern(this, 'utxo_3y_to_4y_old_matured'),
-            _4yTo5y: createBtcCentsSatsUsdPattern(this, 'utxo_4y_to_5y_old_matured'),
-            _5yTo6y: createBtcCentsSatsUsdPattern(this, 'utxo_5y_to_6y_old_matured'),
-            _6yTo7y: createBtcCentsSatsUsdPattern(this, 'utxo_6y_to_7y_old_matured'),
-            _7yTo8y: createBtcCentsSatsUsdPattern(this, 'utxo_7y_to_8y_old_matured'),
-            _8yTo10y: createBtcCentsSatsUsdPattern(this, 'utxo_8y_to_10y_old_matured'),
-            _10yTo12y: createBtcCentsSatsUsdPattern(this, 'utxo_10y_to_12y_old_matured'),
-            _12yTo15y: createBtcCentsSatsUsdPattern(this, 'utxo_12y_to_15y_old_matured'),
-            over15y: createBtcCentsSatsUsdPattern(this, 'utxo_over_15y_old_matured'),
+            under1h: createBaseCumulativeSumPattern4(this, 'utxos_under_1h_old_matured_supply'),
+            _1hTo1d: createBaseCumulativeSumPattern4(this, 'utxos_1h_to_1d_old_matured_supply'),
+            _1dTo1w: createBaseCumulativeSumPattern4(this, 'utxos_1d_to_1w_old_matured_supply'),
+            _1wTo1m: createBaseCumulativeSumPattern4(this, 'utxos_1w_to_1m_old_matured_supply'),
+            _1mTo2m: createBaseCumulativeSumPattern4(this, 'utxos_1m_to_2m_old_matured_supply'),
+            _2mTo3m: createBaseCumulativeSumPattern4(this, 'utxos_2m_to_3m_old_matured_supply'),
+            _3mTo4m: createBaseCumulativeSumPattern4(this, 'utxos_3m_to_4m_old_matured_supply'),
+            _4mTo5m: createBaseCumulativeSumPattern4(this, 'utxos_4m_to_5m_old_matured_supply'),
+            _5mTo6m: createBaseCumulativeSumPattern4(this, 'utxos_5m_to_6m_old_matured_supply'),
+            _6mTo1y: createBaseCumulativeSumPattern4(this, 'utxos_6m_to_1y_old_matured_supply'),
+            _1yTo2y: createBaseCumulativeSumPattern4(this, 'utxos_1y_to_2y_old_matured_supply'),
+            _2yTo3y: createBaseCumulativeSumPattern4(this, 'utxos_2y_to_3y_old_matured_supply'),
+            _3yTo4y: createBaseCumulativeSumPattern4(this, 'utxos_3y_to_4y_old_matured_supply'),
+            _4yTo5y: createBaseCumulativeSumPattern4(this, 'utxos_4y_to_5y_old_matured_supply'),
+            _5yTo6y: createBaseCumulativeSumPattern4(this, 'utxos_5y_to_6y_old_matured_supply'),
+            _6yTo7y: createBaseCumulativeSumPattern4(this, 'utxos_6y_to_7y_old_matured_supply'),
+            _7yTo8y: createBaseCumulativeSumPattern4(this, 'utxos_7y_to_8y_old_matured_supply'),
+            _8yTo10y: createBaseCumulativeSumPattern4(this, 'utxos_8y_to_10y_old_matured_supply'),
+            _10yTo12y: createBaseCumulativeSumPattern4(this, 'utxos_10y_to_12y_old_matured_supply'),
+            _12yTo15y: createBaseCumulativeSumPattern4(this, 'utxos_12y_to_15y_old_matured_supply'),
+            over15y: createBaseCumulativeSumPattern4(this, 'utxos_over_15y_old_matured_supply'),
           },
         },
         address: {

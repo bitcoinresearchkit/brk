@@ -14,7 +14,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.op_return.compute_with(
+        self.op_return.compute(
             starting_indexes.height,
             prices,
             exit,

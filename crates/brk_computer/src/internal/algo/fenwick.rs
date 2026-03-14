@@ -54,42 +54,15 @@ impl<N: FenwickNode> FenwickTree<N> {
         result
     }
 
-    /// Find the 0-indexed bucket containing the k-th element (0-indexed k).
+    /// Find the 0-indexed bucket containing the k-th element for each target.
     ///
     /// `field_fn` extracts the relevant count field from a node.
-    /// The value type `V` must support comparison and subtraction
-    /// (works with `u32`, `i64`, `i128`).
-    #[inline]
-    pub fn kth<V, F>(&self, k: V, field_fn: F) -> usize
-    where
-        V: Copy + PartialOrd + std::ops::SubAssign,
-        F: Fn(&N) -> V,
-    {
-        debug_assert!(self.size > 0);
-        let mut pos = 0usize;
-        let mut remaining = k;
-        let mut bit = 1usize << (usize::BITS - 1 - self.size.leading_zeros());
-        while bit > 0 {
-            let next = pos + bit;
-            if next <= self.size {
-                let val = field_fn(&self.tree[next]);
-                if remaining >= val {
-                    remaining -= val;
-                    pos = next;
-                }
-            }
-            bit >>= 1;
-        }
-        pos // 0-indexed bucket
-    }
-
-    /// Batch kth for sorted targets. Processes all targets at each tree level
-    /// for better cache locality vs individual kth() calls.
+    /// `sorted_targets` must be sorted ascending. `out` receives the 0-indexed
+    /// bucket for each target. Both slices must have the same length.
     ///
-    /// `sorted_targets` must be sorted ascending. `out` receives the 0-indexed bucket
-    /// for each target. Both slices must have the same length.
+    /// Processes all targets at each tree level for better cache locality.
     #[inline]
-    pub fn batch_kth<V, F>(&self, sorted_targets: &[V], field_fn: &F, out: &mut [usize])
+    pub fn kth<V, F>(&self, sorted_targets: &[V], field_fn: &F, out: &mut [usize])
     where
         V: Copy + PartialOrd + std::ops::SubAssign,
         F: Fn(&N) -> V,
@@ -162,18 +135,14 @@ mod tests {
         tree.add(3, &5);
         tree.add(4, &1);
 
-        // kth(0) = first element → bucket 0
-        assert_eq!(tree.kth(0u32, |n| *n), 0);
-        // kth(2) = 3rd element → bucket 0 (last of bucket 0)
-        assert_eq!(tree.kth(2u32, |n| *n), 0);
-        // kth(3) = 4th element → bucket 1
-        assert_eq!(tree.kth(3u32, |n| *n), 1);
-        // kth(4) = 5th element → bucket 1
-        assert_eq!(tree.kth(4u32, |n| *n), 1);
-        // kth(5) = 6th element → bucket 3 (bucket 2 is empty)
-        assert_eq!(tree.kth(5u32, |n| *n), 3);
-        // kth(10) = 11th element → bucket 4
-        assert_eq!(tree.kth(10u32, |n| *n), 4);
+        let mut out = [0usize; 6];
+        tree.kth(&[0u32, 2, 3, 4, 5, 10], &|n: &u32| *n, &mut out);
+        assert_eq!(out[0], 0); // kth(0) → bucket 0
+        assert_eq!(out[1], 0); // kth(2) → bucket 0 (last of bucket 0)
+        assert_eq!(out[2], 1); // kth(3) → bucket 1
+        assert_eq!(out[3], 1); // kth(4) → bucket 1
+        assert_eq!(out[4], 3); // kth(5) → bucket 3 (bucket 2 is empty)
+        assert_eq!(out[5], 4); // kth(10) → bucket 4
     }
 
     #[test]

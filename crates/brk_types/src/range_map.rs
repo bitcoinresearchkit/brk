@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 
 /// Direct-mapped cache size. Power of 2 for fast masking.
-const CACHE_SIZE: usize = 128;
+/// 1024 entries × ~32 bytes = 32 KB (fits in L1 cache).
+const CACHE_SIZE: usize = 1024;
 const CACHE_MASK: usize = CACHE_SIZE - 1;
 
 /// Cache entry: (range_low, range_high, value, occupied).

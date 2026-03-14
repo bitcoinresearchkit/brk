@@ -18,62 +18,68 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.coinbase.compute(
-            starting_indexes.height,
-            prices,
-            exit,
-            |vec| {
-                // Cursors avoid per-height PcoVec page decompression for the
-                // tx-indexed lookups.  Coinbase tx_index values are strictly
-                // increasing, so the cursors only advance forward.
-                let mut txout_cursor = indexer.vecs.transactions.first_txout_index.cursor();
-                let mut count_cursor = indexes.tx_index.output_count.cursor();
-
-                vec.compute_transform(
-                    starting_indexes.height,
-                    &indexer.vecs.transactions.first_tx_index,
-                    |(height, tx_index, ..)| {
-                        let ti = tx_index.to_usize();
-
-                        txout_cursor.advance(ti - txout_cursor.position());
-                        let first_txout_index = txout_cursor.next().unwrap().to_usize();
-
-                        count_cursor.advance(ti - count_cursor.position());
-                        let output_count: usize = count_cursor.next().unwrap().into();
-
-                        let sats = indexer.vecs.outputs.value.fold_range_at(
-                            first_txout_index,
-                            first_txout_index + output_count,
-                            Sats::ZERO,
-                            |acc, v| acc + v,
-                        );
-                        (height, sats)
-                    },
-                    exit,
-                )?;
-                Ok(())
-            },
-        )?;
-
-        // Coinbase fee is 0, so including it in the sum doesn't affect the result
+        // coinbase and fees are independent — parallelize
         let window_starts = lookback.window_starts();
-
-        self.fees.compute(
-            starting_indexes.height,
-            &window_starts,
-            prices,
-            exit,
-            |vec| {
-                vec.compute_sum_from_indexes(
+        let (r_coinbase, r_fees) = rayon::join(
+            || {
+                self.coinbase.compute(
                     starting_indexes.height,
-                    &indexer.vecs.transactions.first_tx_index,
-                    &indexes.height.tx_index_count,
-                    &transactions_fees.fee.tx_index,
+                    prices,
                     exit,
-                )?;
-                Ok(())
+                    |vec| {
+                        let mut txout_cursor =
+                            indexer.vecs.transactions.first_txout_index.cursor();
+                        let mut count_cursor = indexes.tx_index.output_count.cursor();
+
+                        vec.compute_transform(
+                            starting_indexes.height,
+                            &indexer.vecs.transactions.first_tx_index,
+                            |(height, tx_index, ..)| {
+                                let ti = tx_index.to_usize();
+
+                                txout_cursor.advance(ti - txout_cursor.position());
+                                let first_txout_index =
+                                    txout_cursor.next().unwrap().to_usize();
+
+                                count_cursor.advance(ti - count_cursor.position());
+                                let output_count: usize =
+                                    count_cursor.next().unwrap().into();
+
+                                let sats = indexer.vecs.outputs.value.fold_range_at(
+                                    first_txout_index,
+                                    first_txout_index + output_count,
+                                    Sats::ZERO,
+                                    |acc, v| acc + v,
+                                );
+                                (height, sats)
+                            },
+                            exit,
+                        )?;
+                        Ok(())
+                    },
+                )
             },
-        )?;
+            || {
+                self.fees.compute(
+                    starting_indexes.height,
+                    &window_starts,
+                    prices,
+                    exit,
+                    |vec| {
+                        vec.compute_sum_from_indexes(
+                            starting_indexes.height,
+                            &indexer.vecs.transactions.first_tx_index,
+                            &indexes.height.tx_index_count,
+                            &transactions_fees.fee.tx_index,
+                            exit,
+                        )?;
+                        Ok(())
+                    },
+                )
+            },
+        );
+        r_coinbase?;
+        r_fees?;
 
         self.subsidy.base.sats.height.compute_transform2(
             starting_indexes.height,
@@ -110,7 +116,6 @@ impl Vecs {
             },
         )?;
 
-        // All-time cumulative fee dominance
         self.fee_dominance
             .compute_binary::<Sats, Sats, RatioSatsBp16>(
                 starting_indexes.height,
@@ -119,7 +124,6 @@ impl Vecs {
                 exit,
             )?;
 
-        // Rolling fee dominance = sum(fees) / sum(coinbase)
         self.fee_dominance_rolling
             .compute_binary::<Sats, Sats, RatioSatsBp16, _, _>(
                 starting_indexes.height,
@@ -128,7 +132,6 @@ impl Vecs {
                 exit,
             )?;
 
-        // All-time cumulative subsidy dominance
         self.subsidy_dominance
             .compute_binary::<Sats, Sats, RatioSatsBp16>(
                 starting_indexes.height,
@@ -144,7 +147,6 @@ impl Vecs {
             exit,
         )?;
 
-        // Fee Ratio Multiple: sum(coinbase) / sum(fees) per rolling window
         self.fee_ratio_multiple
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32, _, _>(
                 starting_indexes.height,

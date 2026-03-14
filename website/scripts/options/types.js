@@ -233,6 +233,9 @@
  * @property {Color} color
  * @property {AgeRangePattern} tree
  *
+ * Age range cohort with matured supply
+ * @typedef {CohortAgeRange & { matured: AnyValuePattern }} CohortAgeRangeWithMatured
+ *
  * Basic cohort WITH RelToMarketCap (geAmount.*, ltAmount.*)
  * @typedef {Object} CohortBasicWithMarketCap
  * @property {string} name

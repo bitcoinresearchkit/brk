@@ -71,18 +71,23 @@ impl ExpandingPercentiles {
         self.tree.add(Self::to_bucket(value), &1);
     }
 
-    /// Compute 6 percentiles in one call. O(6 × log N).
-    /// Quantiles q must be in (0, 1). Output is in BPS.
+    /// Compute 6 percentiles in one call via kth. O(6 × log N) but with
+    /// shared tree traversal across all 6 targets for better cache locality.
+    /// Quantiles q must be sorted ascending in (0, 1). Output is in BPS.
     pub fn quantiles(&self, qs: &[f64; 6], out: &mut [u32; 6]) {
         if self.count == 0 {
             out.iter_mut().for_each(|o| *o = 0);
             return;
         }
+        let mut targets = [0u32; 6];
         for (i, &q) in qs.iter().enumerate() {
             let k = ((q * self.count as f64).ceil() as u32).clamp(1, self.count);
-            // kth with 0-indexed k: k-1; result is 0-indexed bucket
-            let bucket = self.tree.kth(k - 1, |n| *n);
-            out[i] = bucket as u32 * BUCKET_BPS as u32;
+            targets[i] = k - 1; // 0-indexed
+        }
+        let mut buckets = [0usize; 6];
+        self.tree.kth(&targets, &|n: &u32| *n, &mut buckets);
+        for (i, bucket) in buckets.iter().enumerate() {
+            out[i] = *bucket as u32 * BUCKET_BPS as u32;
         }
     }
 }

@@ -10,7 +10,7 @@
  * - activity.js: SOPR, Volume, Lifespan
  */
 
-import { formatCohortTitle } from "../shared.js";
+import { formatCohortTitle, satsBtcUsd } from "../shared.js";
 
 // Section builders
 import {
@@ -18,9 +18,11 @@ import {
   createHoldingsSectionAll,
   createHoldingsSectionAddress,
   createHoldingsSectionAddressAmount,
+  createHoldingsSectionWithProfitLoss,
   createHoldingsSectionWithRelative,
   createHoldingsSectionWithOwnSupply,
   createGroupedHoldingsSection,
+  createGroupedHoldingsSectionWithProfitLoss,
   createGroupedHoldingsSectionAddress,
   createGroupedHoldingsSectionAddressAmount,
   createGroupedHoldingsSectionWithRelative,
@@ -42,14 +44,16 @@ import {
   createGroupedCostBasisSectionWithPercentiles,
 } from "./cost-basis.js";
 import {
-  createProfitabilitySection,
   createProfitabilitySectionAll,
   createProfitabilitySectionFull,
   createProfitabilitySectionWithNupl,
   createProfitabilitySectionWithInvestedCapitalPct,
   createProfitabilitySectionBasicWithInvestedCapitalPct,
+  createProfitabilitySectionAddress,
+  createProfitabilitySectionWithProfitLoss,
   createProfitabilitySectionLongTerm,
   createGroupedProfitabilitySection,
+  createGroupedProfitabilitySectionWithProfitLoss,
   createGroupedProfitabilitySectionWithNupl,
   createGroupedProfitabilitySectionWithInvestedCapitalPct,
   createGroupedProfitabilitySectionBasicWithInvestedCapitalPct,
@@ -126,7 +130,7 @@ export function createCohortFolderWithAdjusted(cohort) {
       createHoldingsSectionWithOwnSupply({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
-      createProfitabilitySectionWithNupl({ cohort, title }),
+      createProfitabilitySectionWithInvestedCapitalPct({ cohort, title }),
       createActivitySectionWithActivity({ cohort, title }),
     ],
   };
@@ -192,6 +196,22 @@ export function createCohortFolderAgeRange(cohort) {
 }
 
 /**
+ * Age range folder with matured supply
+ * @param {CohortAgeRangeWithMatured} cohort
+ * @returns {PartialOptionsGroup}
+ */
+export function createCohortFolderAgeRangeWithMatured(cohort) {
+  const folder = createCohortFolderAgeRange(cohort);
+  const title = formatCohortTitle(cohort.name);
+  folder.tree.push({
+    name: "Matured",
+    title: title("Matured Supply"),
+    bottom: satsBtcUsd({ pattern: cohort.matured, name: cohort.name }),
+  });
+  return folder;
+}
+
+/**
  * Basic folder WITH RelToMarketCap
  * @param {CohortBasicWithMarketCap} cohort
  * @returns {PartialOptionsGroup}
@@ -242,7 +262,7 @@ export function createCohortFolderAddress(cohort) {
       createHoldingsSectionAddress({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
-      createProfitabilitySectionBasicWithInvestedCapitalPct({ cohort, title }),
+      createProfitabilitySectionAddress({ cohort, title }),
       createActivitySectionMinimal({ cohort, title }),
     ],
   };
@@ -258,10 +278,10 @@ export function createCohortFolderWithoutRelative(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSection({ cohort, title }),
+      createHoldingsSectionWithProfitLoss({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
-      createProfitabilitySection({ cohort, title }),
+      createProfitabilitySectionWithProfitLoss({ cohort, title }),
       createActivitySectionMinimal({ cohort, title }),
     ],
   };
@@ -331,7 +351,11 @@ export function createGroupedCohortFolderWithAdjusted({
       createGroupedHoldingsSectionWithOwnSupply({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
-      createGroupedProfitabilitySectionWithInvestedCapitalPct({ list, all, title }),
+      createGroupedProfitabilitySectionWithInvestedCapitalPct({
+        list,
+        all,
+        title,
+      }),
       createGroupedActivitySectionWithActivity({ list, all, title }),
     ],
   };
@@ -410,6 +434,28 @@ export function createGroupedCohortFolderAgeRange({
       createGroupedActivitySectionWithActivity({ list, all, title }),
     ],
   };
+}
+
+/**
+ * @param {{ name: string, title: string, list: readonly CohortAgeRangeWithMatured[], all: CohortAll }} args
+ * @returns {PartialOptionsGroup}
+ */
+export function createGroupedCohortFolderAgeRangeWithMatured({
+  name,
+  title: groupTitle,
+  list,
+  all,
+}) {
+  const folder = createGroupedCohortFolderAgeRange({ name, title: groupTitle, list, all });
+  const title = formatCohortTitle(groupTitle);
+  folder.tree.push({
+    name: "Matured",
+    title: title("Matured Supply"),
+    bottom: list.flatMap((cohort) =>
+      satsBtcUsd({ pattern: cohort.matured, name: cohort.name, color: cohort.color }),
+    ),
+  });
+  return folder;
 }
 
 /**
@@ -503,10 +549,10 @@ export function createGroupedCohortFolderWithoutRelative({
   return {
     name: name || "all",
     tree: [
-      createGroupedHoldingsSection({ list, all, title }),
+      createGroupedHoldingsSectionWithProfitLoss({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
-      createGroupedProfitabilitySection({ list, all, title }),
+      createGroupedProfitabilitySectionWithProfitLoss({ list, all, title }),
       createGroupedActivitySectionMinimal({ list, all, title }),
     ],
   };

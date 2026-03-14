@@ -116,6 +116,34 @@ function circulatingSupplyPctSeries(supply) {
 }
 
 /**
+ * Ratio of Circulating Supply series (total, profit, loss)
+ * @param {{ relToCirculating: { ratio: AnyMetricPattern }, inProfit: { relToCirculating: { ratio: AnyMetricPattern } }, inLoss: { relToCirculating: { ratio: AnyMetricPattern } } }} supply
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+function circulatingSupplyRatioSeries(supply) {
+  return [
+    line({
+      metric: supply.relToCirculating.ratio,
+      name: "Total",
+      color: colors.default,
+      unit: Unit.ratio,
+    }),
+    line({
+      metric: supply.inProfit.relToCirculating.ratio,
+      name: "In Profit",
+      color: colors.profit,
+      unit: Unit.ratio,
+    }),
+    line({
+      metric: supply.inLoss.relToCirculating.ratio,
+      name: "In Loss",
+      color: colors.loss,
+      unit: Unit.ratio,
+    }),
+  ];
+}
+
+/**
  * @param {readonly (UtxoCohortObject | CohortWithoutRelative)[]} list
  * @param {CohortAll} all
  * @param {(metric: string) => string} title
@@ -157,7 +185,7 @@ function singleDeltaTree(delta, unit, title, name) {
  * @template {{ name: string, color: Color }} A
  * @param {readonly T[]} list
  * @param {A} all
- * @param {(c: T | A) => ChangeRatePattern | ChangeRatePattern2} getDelta
+ * @param {(c: T | A) => DeltaPattern} getDelta
  * @param {Unit} unit
  * @param {(metric: string) => string} title
  * @param {string} name
@@ -309,11 +337,21 @@ export function createHoldingsSectionWithRelative({ cohort, title }) {
     tree: [
       {
         name: "Supply",
-        title: title("Supply"),
-        bottom: [
-          ...fullSupplySeries(supply),
-          ...circulatingSupplyPctSeries(supply),
-          ...ownSupplyPctSeries(supply),
+        tree: [
+          {
+            name: "Overview",
+            title: title("Supply"),
+            bottom: [
+              ...fullSupplySeries(supply),
+              ...circulatingSupplyPctSeries(supply),
+              ...ownSupplyPctSeries(supply),
+            ],
+          },
+          {
+            name: "Ratio",
+            title: title("Supply (% of Circulating)"),
+            bottom: circulatingSupplyRatioSeries(supply),
+          },
         ],
       },
       singleUtxoCountChart(cohort, title),
@@ -341,11 +379,48 @@ export function createHoldingsSectionWithOwnSupply({ cohort, title }) {
     tree: [
       {
         name: "Supply",
-        title: title("Supply"),
-        bottom: [
-          ...fullSupplySeries(supply),
-          ...circulatingSupplyPctSeries(supply),
+        tree: [
+          {
+            name: "Overview",
+            title: title("Supply"),
+            bottom: [
+              ...fullSupplySeries(supply),
+              ...circulatingSupplyPctSeries(supply),
+            ],
+          },
+          {
+            name: "Ratio",
+            title: title("Supply (% of Circulating)"),
+            bottom: circulatingSupplyRatioSeries(supply),
+          },
         ],
+      },
+      singleUtxoCountChart(cohort, title),
+      {
+        name: "Change",
+        tree: [
+          singleDeltaTree(cohort.tree.supply.delta, Unit.sats, title, "Supply"),
+          singleDeltaTree(cohort.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
+        ],
+      },
+    ],
+  };
+}
+
+/**
+ * Holdings with inProfit/inLoss (no rel, no address count)
+ * For: CohortWithoutRelative (p2ms, unknown, empty)
+ * @param {{ cohort: CohortWithoutRelative, title: (metric: string) => string }} args
+ * @returns {PartialOptionsGroup}
+ */
+export function createHoldingsSectionWithProfitLoss({ cohort, title }) {
+  return {
+    name: "Holdings",
+    tree: [
+      {
+        name: "Supply",
+        title: title("Supply"),
+        bottom: fullSupplySeries(cohort.tree.supply),
       },
       singleUtxoCountChart(cohort, title),
       {
@@ -543,6 +618,66 @@ export function createGroupedHoldingsSection({ list, all, title }) {
             title: title("Supply"),
             bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
               satsBtcUsd({ pattern: tree.supply.total, name, color }),
+            ),
+          },
+        ],
+      },
+      groupedUtxoCountChart(list, all, title),
+      {
+        name: "Change",
+        tree: [
+          groupedDeltaTree(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
+          groupedDeltaTree(list, all, (c) => c.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
+        ],
+      },
+    ],
+  };
+}
+
+/**
+ * Grouped holdings with inProfit/inLoss (no rel, no address count)
+ * For: CohortWithoutRelative (p2ms, unknown, empty)
+ * @param {{ list: readonly CohortWithoutRelative[], all: CohortAll, title: (metric: string) => string }} args
+ * @returns {PartialOptionsGroup}
+ */
+export function createGroupedHoldingsSectionWithProfitLoss({
+  list,
+  all,
+  title,
+}) {
+  return {
+    name: "Holdings",
+    tree: [
+      {
+        name: "Supply",
+        tree: [
+          {
+            name: "Total",
+            title: title("Supply"),
+            bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
+              satsBtcUsd({ pattern: tree.supply.total, name, color }),
+            ),
+          },
+          {
+            name: "In Profit",
+            title: title("Supply In Profit"),
+            bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
+              satsBtcUsd({
+                pattern: tree.supply.inProfit,
+                name,
+                color,
+              }),
+            ),
+          },
+          {
+            name: "In Loss",
+            title: title("Supply In Loss"),
+            bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
+              satsBtcUsd({
+                pattern: tree.supply.inLoss,
+                name,
+                color,
+              }),
             ),
           },
         ],

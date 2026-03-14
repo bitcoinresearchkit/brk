@@ -22,36 +22,44 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.sent_sum.compute(
-            starting_indexes.height,
-            prices,
-            exit,
-            |sats_vec| {
-                Ok(sats_vec.compute_filtered_sum_from_indexes(
+        // sent_sum and received_sum are independent — parallelize
+        let (r1, r2) = rayon::join(
+            || {
+                self.sent_sum.compute(
                     starting_indexes.height,
-                    &indexer.vecs.transactions.first_tx_index,
-                    &indexes.height.tx_index_count,
-                    &fees_vecs.input_value,
-                    |sats| !sats.is_max(),
+                    prices,
                     exit,
-                )?)
+                    |sats_vec| {
+                        Ok(sats_vec.compute_filtered_sum_from_indexes(
+                            starting_indexes.height,
+                            &indexer.vecs.transactions.first_tx_index,
+                            &indexes.height.tx_index_count,
+                            &fees_vecs.input_value,
+                            |sats| !sats.is_max(),
+                            exit,
+                        )?)
+                    },
+                )
             },
-        )?;
-
-        self.received_sum.compute(
-            starting_indexes.height,
-            prices,
-            exit,
-            |sats_vec| {
-                Ok(sats_vec.compute_sum_from_indexes(
+            || {
+                self.received_sum.compute(
                     starting_indexes.height,
-                    &indexer.vecs.transactions.first_tx_index,
-                    &indexes.height.tx_index_count,
-                    &fees_vecs.output_value,
+                    prices,
                     exit,
-                )?)
+                    |sats_vec| {
+                        Ok(sats_vec.compute_sum_from_indexes(
+                            starting_indexes.height,
+                            &indexer.vecs.transactions.first_tx_index,
+                            &indexes.height.tx_index_count,
+                            &fees_vecs.output_value,
+                            exit,
+                        )?)
+                    },
+                )
             },
-        )?;
+        );
+        r1?;
+        r2?;
 
         self.tx_per_sec
             .height

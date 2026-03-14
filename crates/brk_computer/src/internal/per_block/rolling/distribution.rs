@@ -46,6 +46,7 @@ where
         T: Copy + Ord + From<f64> + Default,
         f64: From<T>,
     {
+        let mut values_cache = None;
         macro_rules! compute_window {
             ($w:ident) => {
                 compute_rolling_distribution_from_starts(
@@ -61,13 +62,15 @@ where
                     &mut self.0.pct75.$w.height,
                     &mut self.0.pct90.$w.height,
                     exit,
+                    &mut values_cache,
                 )?
             };
         }
-        compute_window!(_24h);
-        compute_window!(_1w);
-        compute_window!(_1m);
+        // Largest window first: its cache covers all smaller windows.
         compute_window!(_1y);
+        compute_window!(_1m);
+        compute_window!(_1w);
+        compute_window!(_24h);
 
         Ok(())
     }

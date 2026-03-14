@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Indexes, Sats, TxInIndex, TxIndex, TxOutIndex, Vout};
+use brk_types::{Indexes, Sats, TxIndex, TxOutIndex, Vout};
 use tracing::info;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, VecIndex, WritableVec};
 
@@ -98,11 +98,11 @@ impl Vecs {
                 out_value[entry.original_idx] = entry.value;
             }
 
+            self.txout_index.truncate_if_needed_at(batch_start)?;
+            self.value.truncate_if_needed_at(batch_start)?;
             for i in 0..batch_len {
-                let txin_index = TxInIndex::from(batch_start + i);
-                self.txout_index
-                    .truncate_push(txin_index, out_txout_index[i])?;
-                self.value.truncate_push(txin_index, out_value[i])?;
+                self.txout_index.push(out_txout_index[i]);
+                self.value.push(out_value[i]);
             }
 
             if batch_end < target {

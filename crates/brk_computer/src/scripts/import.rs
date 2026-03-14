@@ -22,7 +22,7 @@ impl Vecs {
         let version = parent_version;
 
         let count = CountVecs::forced_import(&db, version, indexes, cached_starts)?;
-        let value = ValueVecs::forced_import(&db, version, indexes)?;
+        let value = ValueVecs::forced_import(&db, version, indexes, cached_starts)?;
         let adoption = AdoptionVecs::forced_import(&db, version, indexes)?;
 
         let this = Self {

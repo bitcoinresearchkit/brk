@@ -13,13 +13,6 @@ impl Vecs {
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         Ok(Self {
-            op_return: AmountPerBlockCumulativeWithSums::forced_import(
-                db,
-                "op_return_supply",
-                version,
-                indexes,
-                cached_starts,
-            )?,
             unspendable: AmountPerBlockCumulativeWithSums::forced_import(
                 db,
                 "unspendable_supply",

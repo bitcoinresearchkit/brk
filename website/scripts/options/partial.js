@@ -6,7 +6,7 @@ import {
   createCohortFolderFull,
   createCohortFolderWithAdjusted,
   createCohortFolderLongTerm,
-  createCohortFolderAgeRange,
+  createCohortFolderAgeRangeWithMatured,
   createCohortFolderBasicWithMarketCap,
   createCohortFolderBasicWithoutMarketCap,
   createCohortFolderWithoutRelative,
@@ -14,12 +14,13 @@ import {
   createAddressCohortFolder,
   createGroupedCohortFolderWithAdjusted,
   createGroupedCohortFolderWithNupl,
-  createGroupedCohortFolderAgeRange,
+  createGroupedCohortFolderAgeRangeWithMatured,
   createGroupedCohortFolderBasicWithMarketCap,
   createGroupedCohortFolderBasicWithoutMarketCap,
   createGroupedCohortFolderAddress,
   createGroupedAddressCohortFolder,
 } from "./distribution/index.js";
+import { createUtxoProfitabilitySection } from "./distribution/utxo-profitability.js";
 import { createMarketSection } from "./market.js";
 import { createNetworkSection } from "./network.js";
 import { createMiningSection } from "./mining.js";
@@ -110,26 +111,26 @@ export function createPartialOptions() {
                 {
                   name: "Older Than",
                   tree: [
-                    createGroupedCohortFolderBasicWithMarketCap({
+                    createGroupedCohortFolderWithAdjusted({
                       name: "Compare",
                       title: "Over Age",
                       list: overAge,
                       all: cohortAll,
                     }),
-                    ...overAge.map(createCohortFolderBasicWithMarketCap),
+                    ...overAge.map(createCohortFolderWithAdjusted),
                   ],
                 },
                 // Range
                 {
                   name: "Range",
                   tree: [
-                    createGroupedCohortFolderAgeRange({
+                    createGroupedCohortFolderAgeRangeWithMatured({
                       name: "Compare",
                       title: "Age Ranges",
                       list: ageRange,
                       all: cohortAll,
                     }),
-                    ...ageRange.map(createCohortFolderAgeRange),
+                    ...ageRange.map(createCohortFolderAgeRangeWithMatured),
                   ],
                 },
               ],
@@ -246,13 +247,13 @@ export function createPartialOptions() {
             {
               name: "Epochs",
               tree: [
-                createGroupedCohortFolderBasicWithoutMarketCap({
+                createGroupedCohortFolderWithAdjusted({
                   name: "Compare",
                   title: "Epochs",
                   list: epoch,
                   all: cohortAll,
                 }),
-                ...epoch.map(createCohortFolderBasicWithoutMarketCap),
+                ...epoch.map(createCohortFolderWithAdjusted),
               ],
             },
 
@@ -260,15 +261,18 @@ export function createPartialOptions() {
             {
               name: "Years",
               tree: [
-                createGroupedCohortFolderBasicWithoutMarketCap({
+                createGroupedCohortFolderWithAdjusted({
                   name: "Compare",
                   title: "Years",
                   list: class_,
                   all: cohortAll,
                 }),
-                ...class_.map(createCohortFolderBasicWithoutMarketCap),
+                ...class_.map(createCohortFolderWithAdjusted),
               ],
             },
+
+            // UTXO Profitability bands
+            createUtxoProfitabilitySection(),
           ],
         },
 

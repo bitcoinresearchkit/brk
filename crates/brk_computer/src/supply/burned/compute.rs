@@ -14,47 +14,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.op_return.compute(
-            starting_indexes.height,
-            prices,
-            exit,
-            |height_vec| {
-                // Validate computed versions against dependencies
-
-                let op_return_dep_version = scripts.value.op_return.base.sats.height.version();
-                height_vec.validate_computed_version_or_reset(op_return_dep_version)?;
-
-                // Copy per-block op_return values from scripts
-                let scripts_target = scripts.value.op_return.base.sats.height.len();
-                if scripts_target > 0 {
-                    let target_height = Height::from(scripts_target - 1);
-                    let current_len = height_vec.len();
-                    let starting_height =
-                        Height::from(current_len.min(starting_indexes.height.to_usize()));
-
-                    if starting_height <= target_height {
-                        let start = starting_height.to_usize();
-                        let end = target_height.to_usize() + 1;
-                        scripts.value.op_return.base.sats.height.fold_range_at(
-                            start,
-                            end,
-                            start,
-                            |idx, value| {
-                                height_vec.truncate_push(Height::from(idx), value).unwrap();
-                                idx + 1
-                            },
-                        );
-                    }
-                }
-
-                height_vec.write()?;
-                Ok(())
-            },
-        )?;
-
-        // 2. Compute unspendable supply = op_return + unclaimed_rewards + genesis (at height 0)
-        // Get reference to op_return height vec for computing unspendable
-        let op_return_height = &self.op_return.base.sats.height;
+        let op_return_height = &scripts.value.op_return.base.sats.height;
         let unclaimed_height = &mining.rewards.unclaimed.base.sats.height;
 
         self.unspendable.compute(

@@ -6,7 +6,7 @@ use brk_types::{BasisPoints16, Cents, CentsCompact, CostBasisDistribution, Date,
 
 use crate::distribution::metrics::{CostBasis, ProfitabilityMetrics};
 
-use super::fenwick::PercentileResult;
+use super::fenwick::{PercentileResult, ProfitabilityRangeResult};
 use super::groups::UTXOCohorts;
 
 use super::COST_BASIS_PRICE_DIGITS;
@@ -104,7 +104,7 @@ fn push_cost_basis(
 }
 
 /// Convert raw (cents × sats) accumulator to Dollars (÷ 100 for cents→dollars, ÷ 1e8 for sats).
-#[inline]
+#[inline(always)]
 fn raw_usd_to_dollars(raw: u128) -> Dollars {
     Dollars::from(raw as f64 / 1e10)
 }
@@ -112,25 +112,41 @@ fn raw_usd_to_dollars(raw: u128) -> Dollars {
 /// Push profitability range + profit/loss aggregate values to vecs.
 fn push_profitability(
     height: Height,
-    buckets: &[(u64, u128); PROFITABILITY_RANGE_COUNT],
+    buckets: &[ProfitabilityRangeResult; PROFITABILITY_RANGE_COUNT],
     metrics: &mut ProfitabilityMetrics,
 ) -> Result<()> {
+    // Truncate all buckets once upfront to avoid per-push checks
+    metrics.truncate(height)?;
+
     // Push 25 range buckets
     for (i, bucket) in metrics.range.as_array_mut().into_iter().enumerate() {
-        let (sats, usd_raw) = buckets[i];
-        bucket.truncate_push(height, Sats::from(sats), raw_usd_to_dollars(usd_raw))?;
+        let r = &buckets[i];
+        bucket.push(
+            Sats::from(r.all_sats),
+            Sats::from(r.sth_sats),
+            raw_usd_to_dollars(r.all_usd),
+            raw_usd_to_dollars(r.sth_usd),
+        );
     }
 
     // Profit: forward cumulative sum over ranges[0..15], pushed in reverse.
     // profit[0] (breakeven) = sum(0..=13), ..., profit[13] (_500pct) = ranges[0]
     let profit_arr = metrics.profit.as_array_mut();
     let mut cum_sats = 0u64;
+    let mut cum_sth_sats = 0u64;
     let mut cum_usd = 0u128;
+    let mut cum_sth_usd = 0u128;
     for i in 0..PROFIT_COUNT {
-        cum_sats += buckets[i].0;
-        cum_usd += buckets[i].1;
-        profit_arr[PROFIT_COUNT - 1 - i]
-            .truncate_push(height, Sats::from(cum_sats), raw_usd_to_dollars(cum_usd))?;
+        cum_sats += buckets[i].all_sats;
+        cum_sth_sats += buckets[i].sth_sats;
+        cum_usd += buckets[i].all_usd;
+        cum_sth_usd += buckets[i].sth_usd;
+        profit_arr[PROFIT_COUNT - 1 - i].push(
+            Sats::from(cum_sats),
+            Sats::from(cum_sth_sats),
+            raw_usd_to_dollars(cum_usd),
+            raw_usd_to_dollars(cum_sth_usd),
+        );
     }
 
     // Loss: backward cumulative sum over ranges[15..25], pushed in reverse.
@@ -138,12 +154,21 @@ fn push_profitability(
     let loss_arr = metrics.loss.as_array_mut();
     let loss_count = loss_arr.len();
     cum_sats = 0;
+    cum_sth_sats = 0;
     cum_usd = 0;
+    cum_sth_usd = 0;
     for i in 0..loss_count {
-        cum_sats += buckets[PROFITABILITY_RANGE_COUNT - 1 - i].0;
-        cum_usd += buckets[PROFITABILITY_RANGE_COUNT - 1 - i].1;
-        loss_arr[loss_count - 1 - i]
-            .truncate_push(height, Sats::from(cum_sats), raw_usd_to_dollars(cum_usd))?;
+        let r = &buckets[PROFITABILITY_RANGE_COUNT - 1 - i];
+        cum_sats += r.all_sats;
+        cum_sth_sats += r.sth_sats;
+        cum_usd += r.all_usd;
+        cum_sth_usd += r.sth_usd;
+        loss_arr[loss_count - 1 - i].push(
+            Sats::from(cum_sats),
+            Sats::from(cum_sth_sats),
+            raw_usd_to_dollars(cum_usd),
+            raw_usd_to_dollars(cum_sth_usd),
+        );
     }
 
     Ok(())

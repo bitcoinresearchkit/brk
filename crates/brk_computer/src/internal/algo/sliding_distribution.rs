@@ -8,6 +8,11 @@ use super::sliding_window::SlidingWindowSorted;
 
 /// Compute all 8 rolling distribution stats (avg, min, max, p10, p25, median, p75, p90)
 /// in a single sorted-vec pass per window.
+///
+/// When computing multiple windows from the same source, pass the same
+/// `&mut Option<(usize, Vec<f64>)>` cache to each call — the first call reads
+/// and caches, subsequent calls reuse if their range is covered.
+/// Process the largest window first (1y) so its cache covers all smaller windows.
 #[allow(clippy::too_many_arguments)]
 pub fn compute_rolling_distribution_from_starts<I, T, A>(
     max_from: I,
@@ -22,6 +27,7 @@ pub fn compute_rolling_distribution_from_starts<I, T, A>(
     p75_out: &mut EagerVec<PcoVec<I, T>>,
     p90_out: &mut EagerVec<PcoVec<I, T>>,
     exit: &Exit,
+    values_cache: &mut Option<(usize, Vec<f64>)>,
 ) -> Result<()>
 where
     I: VecIndex,
@@ -68,8 +74,21 @@ where
     } else {
         0
     };
-    let mut partial_values: Vec<f64> = Vec::with_capacity(end - range_start);
-    values.for_each_range_at(range_start, end, |a: A| partial_values.push(f64::from(a)));
+
+    // Reuse cached values if the cache covers our range, otherwise read and cache.
+    let need_read = match values_cache.as_ref() {
+        Some((cached_start, cached)) => {
+            range_start < *cached_start || end > *cached_start + cached.len()
+        }
+        None => true,
+    };
+    if need_read {
+        let mut v = Vec::with_capacity(end - range_start);
+        values.for_each_range_at(range_start, end, |a: A| v.push(f64::from(a)));
+        *values_cache = Some((range_start, v));
+    }
+    let (cached_start, cached) = values_cache.as_ref().unwrap();
+    let partial_values = &cached[(range_start - cached_start)..(end - cached_start)];
 
     let capacity = if skip > 0 && skip < end {
         let first_start = window_starts.collect_one_at(skip).unwrap().to_usize();
@@ -83,7 +102,7 @@ where
     let mut window = SlidingWindowSorted::with_capacity(capacity);
 
     if skip > 0 {
-        window.reconstruct(&partial_values, range_start, skip);
+        window.reconstruct(partial_values, range_start, skip);
     }
 
     let starts_batch = window_starts.collect_range_at(skip, end);
@@ -92,7 +111,7 @@ where
         let i = skip + j;
         let v = partial_values[i - range_start];
         let start_usize = start.to_usize();
-        window.advance(v, start_usize, &partial_values, range_start);
+        window.advance(v, start_usize, partial_values, range_start);
 
         if window.is_empty() {
             let zero = T::from(0.0);

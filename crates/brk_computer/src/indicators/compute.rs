@@ -1,6 +1,6 @@
 use brk_error::Result;
-use brk_types::{Bitcoin, Dollars, Indexes, Sats, StoredF32};
-use vecdb::{Exit, ReadableVec};
+use brk_types::{Bitcoin, Dollars, Indexes, StoredF32};
+use vecdb::Exit;
 
 use super::{gini, Vecs};
 use crate::{distribution, internal::RatioDollarsBp32, market, mining, transactions};
@@ -180,14 +180,12 @@ impl Vecs {
         // Seller Exhaustion Constant: % supply_in_profit × 30d_volatility
         self.seller_exhaustion_constant
             .height
-            .compute_transform2(
+            .compute_transform3(
                 starting_indexes.height,
                 &all_metrics.supply.in_profit.sats.height,
                 &market.volatility._1m.height,
-                |(i, profit_sats, volatility, ..)| {
-                    let total_sats: Sats = supply_total_sats
-                        .collect_one(i)
-                        .unwrap_or_default();
+                supply_total_sats,
+                |(i, profit_sats, volatility, total_sats, ..)| {
                     let total = total_sats.as_u128() as f64;
                     if total == 0.0 {
                         (i, StoredF32::from(0.0f32))

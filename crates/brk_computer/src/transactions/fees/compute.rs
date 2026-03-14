@@ -18,21 +18,29 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.input_value.compute_sum_from_indexes(
-            starting_indexes.tx_index,
-            &indexer.vecs.transactions.first_txin_index,
-            &indexes.tx_index.input_count,
-            &txins.spent.value,
-            exit,
-        )?;
-
-        self.output_value.compute_sum_from_indexes(
-            starting_indexes.tx_index,
-            &indexer.vecs.transactions.first_txout_index,
-            &indexes.tx_index.output_count,
-            &indexer.vecs.outputs.value,
-            exit,
-        )?;
+        // input_value and output_value are independent — parallelize
+        let (r1, r2) = rayon::join(
+            || {
+                self.input_value.compute_sum_from_indexes(
+                    starting_indexes.tx_index,
+                    &indexer.vecs.transactions.first_txin_index,
+                    &indexes.tx_index.input_count,
+                    &txins.spent.value,
+                    exit,
+                )
+            },
+            || {
+                self.output_value.compute_sum_from_indexes(
+                    starting_indexes.tx_index,
+                    &indexer.vecs.transactions.first_txout_index,
+                    &indexes.tx_index.output_count,
+                    &indexer.vecs.outputs.value,
+                    exit,
+                )
+            },
+        );
+        r1?;
+        r2?;
 
         self.fee.tx_index.compute_transform2(
             starting_indexes.tx_index,

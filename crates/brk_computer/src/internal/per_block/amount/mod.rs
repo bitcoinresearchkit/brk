@@ -6,6 +6,7 @@ mod lazy;
 mod lazy_derived_resolutions;
 mod lazy_rolling_sum;
 mod rolling_distribution;
+mod with_deltas;
 
 pub use base::*;
 pub use cumulative::*;
@@ -15,3 +16,4 @@ pub use lazy::*;
 pub use lazy_derived_resolutions::*;
 pub use lazy_rolling_sum::*;
 pub use rolling_distribution::*;
+pub use with_deltas::*;

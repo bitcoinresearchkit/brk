@@ -25,7 +25,7 @@ use crate::{
         state::UTXOCohortState,
     },
     indexes,
-    internal::{AmountPerBlock, CachedWindowStarts},
+    internal::{AmountPerBlockCumulativeWithSums, CachedWindowStarts},
     prices,
 };
 
@@ -50,7 +50,7 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     #[traversable(rename = "type")]
     pub type_: SpendableType<UTXOCohortVecs<TypeCohortMetrics<M>>>,
     pub profitability: ProfitabilityMetrics<M>,
-    pub matured: AgeRange<AmountPerBlock<M>>,
+    pub matured: AgeRange<AmountPerBlockCumulativeWithSums<M>>,
     #[traversable(skip)]
     pub(super) fenwick: CostBasisFenwick,
     /// Cached partition_point positions for tick_tock boundary searches.
@@ -178,7 +178,7 @@ impl UTXOCohorts<Rw> {
         );
 
         // Phase 3b: Import profitability metrics (derived from "all" during k-way merge).
-        let profitability = ProfitabilityMetrics::forced_import(db, v, indexes)?;
+        let profitability = ProfitabilityMetrics::forced_import(db, v, indexes, cached_starts)?;
 
         // Phase 4: Import aggregate cohorts.
 
@@ -256,10 +256,17 @@ impl UTXOCohorts<Rw> {
         let under_amount = UnderAmount::try_new(&minimal_no_state)?;
         let over_amount = OverAmount::try_new(&minimal_no_state)?;
 
+        let prefix = CohortContext::Utxo.prefix();
         let matured = AgeRange::try_new(&|_f: Filter,
                                             name: &'static str|
-         -> Result<AmountPerBlock> {
-            AmountPerBlock::forced_import(db, &format!("utxo_{name}_matured"), v, indexes)
+         -> Result<AmountPerBlockCumulativeWithSums> {
+            AmountPerBlockCumulativeWithSums::forced_import(
+                db,
+                &format!("{prefix}_{name}_matured_supply"),
+                v,
+                indexes,
+                cached_starts,
+            )
         })?;
 
         Ok(Self {
@@ -338,7 +345,7 @@ impl UTXOCohorts<Rw> {
         matured: &AgeRange<Sats>,
     ) -> Result<()> {
         for (v, &sats) in self.matured.iter_mut().zip(matured.iter()) {
-            v.sats.height.truncate_push(height, sats)?;
+            v.base.sats.height.truncate_push(height, sats)?;
         }
         Ok(())
     }
@@ -509,10 +516,13 @@ impl UTXOCohorts<Rw> {
                 .try_for_each(|v| v.compute_rest_part1(prices, starting_indexes, exit))?;
         }
 
-        // Compute matured cents from sats × price
+        // Compute matured cumulative + cents from sats × price
         self.matured
             .par_iter_mut()
-            .try_for_each(|v| v.compute(prices, starting_indexes.height, exit))?;
+            .try_for_each(|v| v.compute_rest(starting_indexes.height, prices, exit))?;
+
+        // Compute profitability supply cents and realized price
+        self.profitability.compute(prices, starting_indexes, exit)?;
 
         Ok(())
     }
@@ -709,8 +719,10 @@ impl UTXOCohorts<Rw> {
         }
         vecs.extend(self.profitability.collect_all_vecs_mut());
         for v in self.matured.iter_mut() {
-            vecs.push(&mut v.sats.height);
-            vecs.push(&mut v.cents.height);
+            vecs.push(&mut v.base.sats.height);
+            vecs.push(&mut v.base.cents.height);
+            vecs.push(&mut v.cumulative.sats.height);
+            vecs.push(&mut v.cumulative.cents.height);
         }
         vecs.into_par_iter()
     }
@@ -727,7 +739,7 @@ impl UTXOCohorts<Rw> {
             .chain(
                 self.matured
                     .iter()
-                    .map(|v| Height::from(v.min_stateful_len())),
+                    .map(|v| Height::from(v.base.min_stateful_len())),
             )
             .min()
             .unwrap_or_default()

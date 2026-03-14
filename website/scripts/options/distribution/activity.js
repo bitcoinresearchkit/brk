@@ -77,6 +77,127 @@ function volumeAndCoinsTree(activity, color, title) {
   ];
 }
 
+/**
+ * Sent in profit/loss breakdown tree (shared by full and mid-level activity)
+ * @param {Brk.BaseCumulativeInSumPattern} sent
+ * @param {(metric: string) => string} title
+ * @returns {PartialOptionsTree}
+ */
+function sentProfitLossTree(sent, title) {
+  return [
+    {
+      name: "Sent In Profit",
+      tree: [
+        {
+          name: "USD",
+          title: title("Sent Volume In Profit"),
+          bottom: [
+            line({ metric: sent.inProfit.base.usd, name: "Base", color: colors.profit, unit: Unit.usd }),
+            line({ metric: sent.inProfit.sum._24h.usd, name: "24h", color: colors.time._24h, unit: Unit.usd, defaultActive: false }),
+            line({ metric: sent.inProfit.sum._1w.usd, name: "1w", color: colors.time._1w, unit: Unit.usd, defaultActive: false }),
+            line({ metric: sent.inProfit.sum._1m.usd, name: "1m", color: colors.time._1m, unit: Unit.usd, defaultActive: false }),
+            line({ metric: sent.inProfit.sum._1y.usd, name: "1y", color: colors.time._1y, unit: Unit.usd, defaultActive: false }),
+          ],
+        },
+        {
+          name: "BTC",
+          title: title("Sent Volume In Profit (BTC)"),
+          bottom: [
+            line({ metric: sent.inProfit.base.btc, name: "Base", color: colors.profit, unit: Unit.btc }),
+            line({ metric: sent.inProfit.sum._24h.btc, name: "24h", color: colors.time._24h, unit: Unit.btc, defaultActive: false }),
+            line({ metric: sent.inProfit.sum._1w.btc, name: "1w", color: colors.time._1w, unit: Unit.btc, defaultActive: false }),
+            line({ metric: sent.inProfit.sum._1m.btc, name: "1m", color: colors.time._1m, unit: Unit.btc, defaultActive: false }),
+            line({ metric: sent.inProfit.sum._1y.btc, name: "1y", color: colors.time._1y, unit: Unit.btc, defaultActive: false }),
+          ],
+        },
+        {
+          name: "Sats",
+          title: title("Sent Volume In Profit (Sats)"),
+          bottom: [
+            line({ metric: sent.inProfit.base.sats, name: "Base", color: colors.profit, unit: Unit.sats }),
+            line({ metric: sent.inProfit.sum._24h.sats, name: "24h", color: colors.time._24h, unit: Unit.sats, defaultActive: false }),
+            line({ metric: sent.inProfit.sum._1w.sats, name: "1w", color: colors.time._1w, unit: Unit.sats, defaultActive: false }),
+            line({ metric: sent.inProfit.sum._1m.sats, name: "1m", color: colors.time._1m, unit: Unit.sats, defaultActive: false }),
+            line({ metric: sent.inProfit.sum._1y.sats, name: "1y", color: colors.time._1y, unit: Unit.sats, defaultActive: false }),
+          ],
+        },
+        { name: "Cumulative", title: title("Cumulative Sent In Profit"), bottom: [
+          line({ metric: sent.inProfit.cumulative.usd, name: "USD", color: colors.profit, unit: Unit.usd }),
+          line({ metric: sent.inProfit.cumulative.btc, name: "BTC", color: colors.profit, unit: Unit.btc, defaultActive: false }),
+          line({ metric: sent.inProfit.cumulative.sats, name: "Sats", color: colors.profit, unit: Unit.sats, defaultActive: false }),
+        ]},
+      ],
+    },
+    {
+      name: "Sent In Loss",
+      tree: [
+        {
+          name: "USD",
+          title: title("Sent Volume In Loss"),
+          bottom: [
+            line({ metric: sent.inLoss.base.usd, name: "Base", color: colors.loss, unit: Unit.usd }),
+            line({ metric: sent.inLoss.sum._24h.usd, name: "24h", color: colors.time._24h, unit: Unit.usd, defaultActive: false }),
+            line({ metric: sent.inLoss.sum._1w.usd, name: "1w", color: colors.time._1w, unit: Unit.usd, defaultActive: false }),
+            line({ metric: sent.inLoss.sum._1m.usd, name: "1m", color: colors.time._1m, unit: Unit.usd, defaultActive: false }),
+            line({ metric: sent.inLoss.sum._1y.usd, name: "1y", color: colors.time._1y, unit: Unit.usd, defaultActive: false }),
+          ],
+        },
+        {
+          name: "BTC",
+          title: title("Sent Volume In Loss (BTC)"),
+          bottom: [
+            line({ metric: sent.inLoss.base.btc, name: "Base", color: colors.loss, unit: Unit.btc }),
+            line({ metric: sent.inLoss.sum._24h.btc, name: "24h", color: colors.time._24h, unit: Unit.btc, defaultActive: false }),
+            line({ metric: sent.inLoss.sum._1w.btc, name: "1w", color: colors.time._1w, unit: Unit.btc, defaultActive: false }),
+            line({ metric: sent.inLoss.sum._1m.btc, name: "1m", color: colors.time._1m, unit: Unit.btc, defaultActive: false }),
+            line({ metric: sent.inLoss.sum._1y.btc, name: "1y", color: colors.time._1y, unit: Unit.btc, defaultActive: false }),
+          ],
+        },
+        {
+          name: "Sats",
+          title: title("Sent Volume In Loss (Sats)"),
+          bottom: [
+            line({ metric: sent.inLoss.base.sats, name: "Base", color: colors.loss, unit: Unit.sats }),
+            line({ metric: sent.inLoss.sum._24h.sats, name: "24h", color: colors.time._24h, unit: Unit.sats, defaultActive: false }),
+            line({ metric: sent.inLoss.sum._1w.sats, name: "1w", color: colors.time._1w, unit: Unit.sats, defaultActive: false }),
+            line({ metric: sent.inLoss.sum._1m.sats, name: "1m", color: colors.time._1m, unit: Unit.sats, defaultActive: false }),
+            line({ metric: sent.inLoss.sum._1y.sats, name: "1y", color: colors.time._1y, unit: Unit.sats, defaultActive: false }),
+          ],
+        },
+        { name: "Cumulative", title: title("Cumulative Sent In Loss"), bottom: [
+          line({ metric: sent.inLoss.cumulative.usd, name: "USD", color: colors.loss, unit: Unit.usd }),
+          line({ metric: sent.inLoss.cumulative.btc, name: "BTC", color: colors.loss, unit: Unit.btc, defaultActive: false }),
+          line({ metric: sent.inLoss.cumulative.sats, name: "Sats", color: colors.loss, unit: Unit.sats, defaultActive: false }),
+        ]},
+      ],
+    },
+  ];
+}
+
+/**
+ * Volume and coins tree with coinyears, dormancy, and sent in profit/loss (All/STH/LTH)
+ * @param {Brk.CoindaysCoinyearsDormancySentPattern} activity
+ * @param {Color} color
+ * @param {(metric: string) => string} title
+ * @returns {PartialOptionsTree}
+ */
+function fullVolumeTree(activity, color, title) {
+  return [
+    ...volumeAndCoinsTree(activity, color, title),
+    ...sentProfitLossTree(activity.sent, title),
+    {
+      name: "Coinyears Destroyed",
+      title: title("Coinyears Destroyed"),
+      bottom: [line({ metric: activity.coinyearsDestroyed, name: "CYD", color, unit: Unit.years })],
+    },
+    {
+      name: "Dormancy",
+      title: title("Dormancy"),
+      bottom: [line({ metric: activity.dormancy, name: "Dormancy", color, unit: Unit.days })],
+    },
+  ];
+}
+
 // ============================================================================
 // Shared SOPR Helpers
 // ============================================================================
@@ -349,7 +470,7 @@ export function createActivitySectionWithAdjusted({ cohort, title }) {
   return {
     name: "Activity",
     tree: [
-      ...volumeAndCoinsTree(tree.activity, color, title),
+      ...fullVolumeTree(tree.activity, color, title),
       {
         name: "SOPR",
         tree: [
@@ -400,7 +521,7 @@ export function createActivitySection({ cohort, title }) {
   return {
     name: "Activity",
     tree: [
-      ...volumeAndCoinsTree(tree.activity, color, title),
+      ...fullVolumeTree(tree.activity, color, title),
       {
         name: "SOPR",
         tree: singleRollingSoprTree(sopr.ratio, title),
@@ -430,6 +551,7 @@ export function createActivitySectionWithActivity({ cohort, title }) {
     name: "Activity",
     tree: [
       ...volumeAndCoinsTree(tree.activity, color, title),
+      ...sentProfitLossTree(tree.activity.sent, title),
       {
         name: "SOPR",
         title: title("SOPR (24h)"),

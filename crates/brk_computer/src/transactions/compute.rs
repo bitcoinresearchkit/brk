@@ -20,17 +20,19 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        // Count computes first
-        self.count
-            .compute(indexer, &blocks.lookback, starting_indexes, exit)?;
-
-        // Versions depends on count
-        self.versions
-            .compute(indexer, starting_indexes, exit)?;
-
-        // Size computes next (uses 6-block rolling window)
-        self.size
-            .compute(indexer, indexes, starting_indexes, exit)?;
+        // count, versions, size are independent — parallelize
+        let (r1, (r2, r3)) = rayon::join(
+            || self.count.compute(indexer, &blocks.lookback, starting_indexes, exit),
+            || {
+                rayon::join(
+                    || self.versions.compute(indexer, starting_indexes, exit),
+                    || self.size.compute(indexer, indexes, starting_indexes, exit),
+                )
+            },
+        );
+        r1?;
+        r2?;
+        r3?;
 
         // Fees depends on size
         self.fees

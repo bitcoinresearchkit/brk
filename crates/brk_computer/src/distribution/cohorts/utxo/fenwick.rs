@@ -32,7 +32,7 @@ pub(super) struct CostBasisNode {
 }
 
 impl CostBasisNode {
-    #[inline]
+    #[inline(always)]
     fn new(sats: i64, usd: i128, is_sth: bool) -> Self {
         Self {
             all_sats: sats,
@@ -237,7 +237,7 @@ impl CostBasisFenwick {
 
         let mut sat_buckets = [0usize; PERCENTILES_LEN + 2];
         self.tree
-            .batch_kth(&sat_targets, &sat_field, &mut sat_buckets);
+            .kth(&sat_targets, &sat_field, &mut sat_buckets);
 
         result.min_price = bucket_to_cents(sat_buckets[0]);
         (0..PERCENTILES_LEN).for_each(|i| {
@@ -254,7 +254,7 @@ impl CostBasisFenwick {
 
             let mut usd_buckets = [0usize; PERCENTILES_LEN];
             self.tree
-                .batch_kth(&usd_targets, &usd_field, &mut usd_buckets);
+                .kth(&usd_targets, &usd_field, &mut usd_buckets);
 
             (0..PERCENTILES_LEN).for_each(|i| {
                 result.usd_prices[i] = bucket_to_cents(usd_buckets[i]);
@@ -310,16 +310,16 @@ impl CostBasisFenwick {
     }
 
     // -----------------------------------------------------------------------
-    // Profitability queries (all cohort only)
+    // Profitability queries
     // -----------------------------------------------------------------------
 
     /// Compute profitability range buckets from current spot price.
-    /// Returns 25 ranges: (sats, usd_raw) per range.
+    /// Returns 25 ranges with all/sth splits.
     pub(super) fn profitability(
         &self,
         spot_price: Cents,
-    ) -> [(u64, u128); PROFITABILITY_RANGE_COUNT] {
-        let mut result = [(0u64, 0u128); PROFITABILITY_RANGE_COUNT];
+    ) -> [ProfitabilityRangeResult; PROFITABILITY_RANGE_COUNT] {
+        let mut result = [ProfitabilityRangeResult::ZERO; PROFITABILITY_RANGE_COUNT];
 
         if self.totals.all_sats <= 0 {
             return result;
@@ -327,32 +327,52 @@ impl CostBasisFenwick {
 
         let boundaries = compute_profitability_boundaries(spot_price);
 
-        let mut prev_sats: i64 = 0;
-        let mut prev_usd: i128 = 0;
+        let mut prev = CostBasisNode::default();
 
         for (i, &boundary) in boundaries.iter().enumerate() {
             let boundary_bucket = cents_to_bucket(boundary);
-            // prefix_sum through the bucket BEFORE the boundary
             let cum = if boundary_bucket > 0 {
                 self.tree.prefix_sum(boundary_bucket - 1)
             } else {
                 CostBasisNode::default()
             };
-            let range_sats = cum.all_sats - prev_sats;
-            let range_usd = cum.all_usd - prev_usd;
-            result[i] = (range_sats.max(0) as u64, range_usd.max(0) as u128);
-            prev_sats = cum.all_sats;
-            prev_usd = cum.all_usd;
+            result[i] = ProfitabilityRangeResult {
+                all_sats: (cum.all_sats - prev.all_sats).max(0) as u64,
+                all_usd: (cum.all_usd - prev.all_usd).max(0) as u128,
+                sth_sats: (cum.sth_sats - prev.sth_sats).max(0) as u64,
+                sth_usd: (cum.sth_usd - prev.sth_usd).max(0) as u128,
+            };
+            prev = cum;
         }
 
         // Last range: everything >= last boundary
-        let remaining_sats = self.totals.all_sats - prev_sats;
-        let remaining_usd = self.totals.all_usd - prev_usd;
-        result[PROFITABILITY_RANGE_COUNT - 1] =
-            (remaining_sats.max(0) as u64, remaining_usd.max(0) as u128);
+        result[PROFITABILITY_RANGE_COUNT - 1] = ProfitabilityRangeResult {
+            all_sats: (self.totals.all_sats - prev.all_sats).max(0) as u64,
+            all_usd: (self.totals.all_usd - prev.all_usd).max(0) as u128,
+            sth_sats: (self.totals.sth_sats - prev.sth_sats).max(0) as u64,
+            sth_usd: (self.totals.sth_usd - prev.sth_usd).max(0) as u128,
+        };
 
         result
     }
+}
+
+/// Per-range profitability result with all/sth split.
+#[derive(Clone, Copy)]
+pub(super) struct ProfitabilityRangeResult {
+    pub all_sats: u64,
+    pub all_usd: u128,
+    pub sth_sats: u64,
+    pub sth_usd: u128,
+}
+
+impl ProfitabilityRangeResult {
+    const ZERO: Self = Self {
+        all_sats: 0,
+        all_usd: 0,
+        sth_sats: 0,
+        sth_usd: 0,
+    };
 }
 
 /// Result of a percentile computation for one cohort.
