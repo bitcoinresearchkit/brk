@@ -5,13 +5,14 @@ use brk_error::Error;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, Serializer};
+use vecdb::Formattable;
 
 use crate::AddressBytes;
 
 use super::OutputType;
 
 /// Bitcoin address string
-#[derive(Debug, Deref, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Deref, Deserialize, JsonSchema)]
 #[serde(transparent)]
 #[schemars(
     example = &"04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f",
@@ -97,5 +98,17 @@ impl Address {
     /// Get the script for this address
     pub fn script(&self) -> Result<ScriptBuf, Error> {
         AddressBytes::address_to_script(&self.0)
+    }
+}
+
+impl Formattable for Address {
+    fn write_to(&self, buf: &mut Vec<u8>) {
+        buf.extend_from_slice(self.0.as_bytes());
+    }
+
+    fn fmt_json(&self, buf: &mut Vec<u8>) {
+        buf.push(b'"');
+        self.write_to(buf);
+        buf.push(b'"');
     }
 }

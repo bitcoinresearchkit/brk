@@ -122,21 +122,18 @@ function returnsSubSection(name, periods) {
       {
         name: "Compare",
         title: `${name} Returns`,
-        bottom: periods.map((p) =>
-          baseline({
-            metric: p.returns,
+        bottom: periods.flatMap((p) =>
+          percentRatioBaseline({
+            pattern: p.returns,
             name: p.id,
             color: p.color,
-            unit: Unit.percentage,
           }),
         ),
       },
       ...periods.map((p) => ({
         name: periodIdToName(p.id, true),
         title: `${periodIdToName(p.id, true)} Returns`,
-        bottom: [
-          baseline({ metric: p.returns, name: "Total", unit: Unit.percentage }),
-        ],
+        bottom: percentRatioBaseline({ pattern: p.returns, name: "Total" }),
       })),
     ],
   };
@@ -153,12 +150,11 @@ function returnsSubSectionWithCagr(name, periods) {
       {
         name: "Compare",
         title: `${name} Returns`,
-        bottom: periods.map((p) =>
-          baseline({
-            metric: p.returns,
+        bottom: periods.flatMap((p) =>
+          percentRatioBaseline({
+            pattern: p.returns,
             name: p.id,
             color: p.color,
-            unit: Unit.percentage,
           }),
         ),
       },
@@ -166,8 +162,8 @@ function returnsSubSectionWithCagr(name, periods) {
         name: periodIdToName(p.id, true),
         title: `${periodIdToName(p.id, true)} Returns`,
         bottom: [
-          baseline({ metric: p.returns, name: "Total", unit: Unit.percentage }),
-          baseline({ metric: p.cagr, name: "annual", unit: Unit.cagr }),
+          ...percentRatioBaseline({ pattern: p.returns, name: "Total" }),
+          ...percentRatioBaseline({ pattern: p.cagr, name: "annual" }),
         ],
       })),
     ],
@@ -216,70 +212,70 @@ export function createMarketSection() {
   } = market;
 
   const shortPeriodsBase = [
-    { id: "24h", returns: returns.periods._24h.ratio, lookback: lookback._24h },
-    { id: "1w", returns: returns.periods._1w.ratio, lookback: lookback._1w },
-    { id: "1m", returns: returns.periods._1m.ratio, lookback: lookback._1m },
+    { id: "24h", returns: returns.periods._24h, lookback: lookback._24h },
+    { id: "1w", returns: returns.periods._1w, lookback: lookback._1w },
+    { id: "1m", returns: returns.periods._1m, lookback: lookback._1m },
     {
       id: "3m",
-      returns: returns.periods._3m.ratio,
+      returns: returns.periods._3m,
       lookback: lookback._3m,
       defaultActive: false,
     },
     {
       id: "6m",
-      returns: returns.periods._6m.ratio,
+      returns: returns.periods._6m,
       lookback: lookback._6m,
       defaultActive: false,
     },
-    { id: "1y", returns: returns.periods._1y.ratio, lookback: lookback._1y },
+    { id: "1y", returns: returns.periods._1y, lookback: lookback._1y },
   ];
 
   const longPeriodsBase = [
     {
       id: "2y",
-      returns: returns.periods._2y.ratio,
-      cagr: returns.cagr._2y.ratio,
+      returns: returns.periods._2y,
+      cagr: returns.cagr._2y,
       lookback: lookback._2y,
       defaultActive: false,
     },
     {
       id: "3y",
-      returns: returns.periods._3y.ratio,
-      cagr: returns.cagr._3y.ratio,
+      returns: returns.periods._3y,
+      cagr: returns.cagr._3y,
       lookback: lookback._3y,
       defaultActive: false,
     },
     {
       id: "4y",
-      returns: returns.periods._4y.ratio,
-      cagr: returns.cagr._4y.ratio,
+      returns: returns.periods._4y,
+      cagr: returns.cagr._4y,
       lookback: lookback._4y,
     },
     {
       id: "5y",
-      returns: returns.periods._5y.ratio,
-      cagr: returns.cagr._5y.ratio,
+      returns: returns.periods._5y,
+      cagr: returns.cagr._5y,
       lookback: lookback._5y,
       defaultActive: false,
     },
     {
       id: "6y",
-      returns: returns.periods._6y.ratio,
-      cagr: returns.cagr._6y.ratio,
+      returns: returns.periods._6y,
+      cagr: returns.cagr._6y,
       lookback: lookback._6y,
       defaultActive: false,
     },
     {
       id: "8y",
-      returns: returns.periods._8y.ratio,
-      cagr: returns.cagr._8y.ratio,
+      returns: returns.periods._8y,
+      cagr: returns.cagr._8y,
       lookback: lookback._8y,
       defaultActive: false,
     },
     {
       id: "10y",
-      returns: returns.periods._10y.ratio,
-      cagr: returns.cagr._10y.ratio,
+      returns: returns.periods._10y,
+      cagr: returns.cagr._10y,
       lookback: lookback._10y,
       defaultActive: false,
     },
@@ -426,11 +422,10 @@ export function createMarketSection() {
             name: "Growth Rate",
             title: "Capitalization Growth Rate",
             bottom: [
-              line({
-                metric: supply.marketCap.delta.rate._24h.percent,
+              ...percentRatio({
+                pattern: supply.marketCap.delta.rate._24h,
                 name: "Market Cap (24h)",
                 color: colors.bitcoin,
-                unit: Unit.percentage,
               }),
               baseline({
                 metric: supply.marketMinusRealizedCapGrowthRate._24h,
@@ -493,12 +488,11 @@ export function createMarketSection() {
           {
             name: "Compare",
             title: "Returns Comparison",
-            bottom: [...shortPeriods, ...longPeriods].map((p) =>
-              baseline({
-                metric: p.returns,
+            bottom: [...shortPeriods, ...longPeriods].flatMap((p) =>
+              percentRatioBaseline({
+                pattern: p.returns,
                 name: p.id,
                 color: p.color,
-                unit: Unit.percentage,
                 defaultActive: p.defaultActive,
               }),
             ),

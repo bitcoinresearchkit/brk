@@ -22,7 +22,7 @@ pub struct ScriptTypeVecs<I: VecIndex + PcoVecValue + Formattable + Serialize + 
 #[derive(Traversable)]
 pub struct ScriptsVecs<M: StorageMode = Rw> {
     pub empty: ScriptTypeVecs<EmptyOutputIndex, M>,
-    pub opreturn: ScriptTypeVecs<OpReturnIndex, M>,
+    pub op_return: ScriptTypeVecs<OpReturnIndex, M>,
     pub p2ms: ScriptTypeVecs<P2MSOutputIndex, M>,
     pub unknown: ScriptTypeVecs<UnknownOutputIndex, M>,
 }
@@ -50,7 +50,7 @@ impl ScriptsVecs {
         };
         Ok(Self {
             empty: ScriptTypeVecs { first_index: first_empty_output_index, to_tx_index: empty_output_index_to_tx_index },
-            opreturn: ScriptTypeVecs { first_index: first_op_return_index, to_tx_index: op_return_index_to_tx_index },
+            op_return: ScriptTypeVecs { first_index: first_op_return_index, to_tx_index: op_return_index_to_tx_index },
             p2ms: ScriptTypeVecs { first_index: first_p2ms_output_index, to_tx_index: p2ms_output_index_to_tx_index },
             unknown: ScriptTypeVecs { first_index: first_unknown_output_index, to_tx_index: unknown_output_index_to_tx_index },
         })
@@ -67,7 +67,7 @@ impl ScriptsVecs {
     ) -> Result<()> {
         self.empty.first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.opreturn.first_index
+        self.op_return.first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.p2ms.first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
@@ -75,7 +75,7 @@ impl ScriptsVecs {
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.empty.to_tx_index
             .truncate_if_needed_with_stamp(empty_output_index, stamp)?;
-        self.opreturn.to_tx_index
+        self.op_return.to_tx_index
             .truncate_if_needed_with_stamp(op_return_index, stamp)?;
         self.p2ms.to_tx_index
             .truncate_if_needed_with_stamp(p2ms_output_index, stamp)?;
@@ -87,11 +87,11 @@ impl ScriptsVecs {
     pub fn par_iter_mut_any(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
             &mut self.empty.first_index as &mut dyn AnyStoredVec,
-            &mut self.opreturn.first_index,
+            &mut self.op_return.first_index,
             &mut self.p2ms.first_index,
             &mut self.unknown.first_index,
             &mut self.empty.to_tx_index,
-            &mut self.opreturn.to_tx_index,
+            &mut self.op_return.to_tx_index,
             &mut self.p2ms.to_tx_index,
             &mut self.unknown.to_tx_index,
         ]

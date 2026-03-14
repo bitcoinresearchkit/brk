@@ -3147,8 +3147,7 @@ impl MetricsTree_Blocks {
 
 /// Metrics tree node.
 pub struct MetricsTree_Blocks_Difficulty {
-    pub raw: MetricPattern18<StoredF64>,
-    pub base: MetricPattern2<StoredF64>,
+    pub value: MetricPattern1<StoredF64>,
     pub as_hash: MetricPattern1<StoredF64>,
     pub adjustment: BpsPercentRatioPattern,
     pub epoch: MetricPattern1<Epoch>,
@@ -3159,8 +3158,7 @@ pub struct MetricsTree_Blocks_Difficulty {
 impl MetricsTree_Blocks_Difficulty {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            raw: MetricPattern18::new(client.clone(), "difficulty".to_string()),
-            base: MetricPattern2::new(client.clone(), "difficulty".to_string()),
+            value: MetricPattern1::new(client.clone(), "difficulty".to_string()),
             as_hash: MetricPattern1::new(client.clone(), "difficulty_as_hash".to_string()),
             adjustment: BpsPercentRatioPattern::new(client.clone(), "difficulty_adjustment".to_string()),
             epoch: MetricPattern1::new(client.clone(), "difficulty_epoch".to_string()),
@@ -3990,7 +3988,7 @@ impl MetricsTree_Scripts {
 /// Metrics tree node.
 pub struct MetricsTree_Scripts_Raw {
     pub empty: MetricsTree_Scripts_Raw_Empty,
-    pub opreturn: MetricsTree_Scripts_Raw_Opreturn,
+    pub op_return: MetricsTree_Scripts_Raw_OpReturn,
     pub p2ms: MetricsTree_Scripts_Raw_P2ms,
     pub unknown: MetricsTree_Scripts_Raw_Unknown,
 }
@@ -3999,7 +3997,7 @@ impl MetricsTree_Scripts_Raw {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             empty: MetricsTree_Scripts_Raw_Empty::new(client.clone(), format!("{base_path}_empty")),
-            opreturn: MetricsTree_Scripts_Raw_Opreturn::new(client.clone(), format!("{base_path}_opreturn")),
+            op_return: MetricsTree_Scripts_Raw_OpReturn::new(client.clone(), format!("{base_path}_op_return")),
             p2ms: MetricsTree_Scripts_Raw_P2ms::new(client.clone(), format!("{base_path}_p2ms")),
             unknown: MetricsTree_Scripts_Raw_Unknown::new(client.clone(), format!("{base_path}_unknown")),
         }
@@ -4022,12 +4020,12 @@ impl MetricsTree_Scripts_Raw_Empty {
 }
 
 /// Metrics tree node.
-pub struct MetricsTree_Scripts_Raw_Opreturn {
+pub struct MetricsTree_Scripts_Raw_OpReturn {
     pub first_index: MetricPattern18<OpReturnIndex>,
     pub to_tx_index: MetricPattern23<TxIndex>,
 }
 
-impl MetricsTree_Scripts_Raw_Opreturn {
+impl MetricsTree_Scripts_Raw_OpReturn {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             first_index: MetricPattern18::new(client.clone(), "first_op_return_index".to_string()),
@@ -4077,7 +4075,7 @@ pub struct MetricsTree_Scripts_Count {
     pub p2tr: BaseCumulativeSumPattern<StoredU64>,
     pub p2wpkh: BaseCumulativeSumPattern<StoredU64>,
     pub p2wsh: BaseCumulativeSumPattern<StoredU64>,
-    pub opreturn: BaseCumulativeSumPattern<StoredU64>,
+    pub op_return: BaseCumulativeSumPattern<StoredU64>,
     pub empty_output: BaseCumulativeSumPattern<StoredU64>,
     pub unknown_output: BaseCumulativeSumPattern<StoredU64>,
     pub segwit: BaseCumulativeSumPattern<StoredU64>,
@@ -4095,7 +4093,7 @@ impl MetricsTree_Scripts_Count {
             p2tr: BaseCumulativeSumPattern::new(client.clone(), "p2tr_count".to_string()),
             p2wpkh: BaseCumulativeSumPattern::new(client.clone(), "p2wpkh_count".to_string()),
             p2wsh: BaseCumulativeSumPattern::new(client.clone(), "p2wsh_count".to_string()),
-            opreturn: BaseCumulativeSumPattern::new(client.clone(), "opreturn_count".to_string()),
+            op_return: BaseCumulativeSumPattern::new(client.clone(), "op_return_count".to_string()),
             empty_output: BaseCumulativeSumPattern::new(client.clone(), "empty_output_count".to_string()),
             unknown_output: BaseCumulativeSumPattern::new(client.clone(), "unknown_output_count".to_string()),
             segwit: BaseCumulativeSumPattern::new(client.clone(), "segwit_count".to_string()),
@@ -4105,28 +4103,28 @@ impl MetricsTree_Scripts_Count {
 
 /// Metrics tree node.
 pub struct MetricsTree_Scripts_Value {
-    pub opreturn: MetricsTree_Scripts_Value_Opreturn,
+    pub op_return: MetricsTree_Scripts_Value_OpReturn,
 }
 
 impl MetricsTree_Scripts_Value {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            opreturn: MetricsTree_Scripts_Value_Opreturn::new(client.clone(), format!("{base_path}_opreturn")),
+            op_return: MetricsTree_Scripts_Value_OpReturn::new(client.clone(), format!("{base_path}_op_return")),
         }
     }
 }
 
 /// Metrics tree node.
-pub struct MetricsTree_Scripts_Value_Opreturn {
+pub struct MetricsTree_Scripts_Value_OpReturn {
     pub base: BtcCentsSatsUsdPattern,
     pub cumulative: BtcCentsSatsUsdPattern,
 }
 
-impl MetricsTree_Scripts_Value_Opreturn {
+impl MetricsTree_Scripts_Value_OpReturn {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            base: BtcCentsSatsUsdPattern::new(client.clone(), "opreturn_value".to_string()),
-            cumulative: BtcCentsSatsUsdPattern::new(client.clone(), "opreturn_value_cumulative".to_string()),
+            base: BtcCentsSatsUsdPattern::new(client.clone(), "op_return_value".to_string()),
+            cumulative: BtcCentsSatsUsdPattern::new(client.clone(), "op_return_value_cumulative".to_string()),
         }
     }
 }
@@ -4581,7 +4579,7 @@ pub struct MetricsTree_Indexes_Address {
     pub p2ms: MetricsTree_Indexes_Address_P2ms,
     pub empty: MetricsTree_Indexes_Address_Empty,
     pub unknown: MetricsTree_Indexes_Address_Unknown,
-    pub opreturn: MetricsTree_Indexes_Address_Opreturn,
+    pub op_return: MetricsTree_Indexes_Address_OpReturn,
 }
 
 impl MetricsTree_Indexes_Address {
@@ -4598,7 +4596,7 @@ impl MetricsTree_Indexes_Address {
             p2ms: MetricsTree_Indexes_Address_P2ms::new(client.clone(), format!("{base_path}_p2ms")),
             empty: MetricsTree_Indexes_Address_Empty::new(client.clone(), format!("{base_path}_empty")),
             unknown: MetricsTree_Indexes_Address_Unknown::new(client.clone(), format!("{base_path}_unknown")),
-            opreturn: MetricsTree_Indexes_Address_Opreturn::new(client.clone(), format!("{base_path}_opreturn")),
+            op_return: MetricsTree_Indexes_Address_OpReturn::new(client.clone(), format!("{base_path}_op_return")),
         }
     }
 }
@@ -4606,12 +4604,14 @@ impl MetricsTree_Indexes_Address {
 /// Metrics tree node.
 pub struct MetricsTree_Indexes_Address_P2pk33 {
     pub identity: MetricPattern26<P2PK33AddressIndex>,
+    pub address: MetricPattern26<Address>,
 }
 
 impl MetricsTree_Indexes_Address_P2pk33 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             identity: MetricPattern26::new(client.clone(), "p2pk33_address_index".to_string()),
+            address: MetricPattern26::new(client.clone(), "p2pk33_address".to_string()),
         }
     }
 }
@@ -4619,12 +4619,14 @@ impl MetricsTree_Indexes_Address_P2pk33 {
 /// Metrics tree node.
 pub struct MetricsTree_Indexes_Address_P2pk65 {
     pub identity: MetricPattern27<P2PK65AddressIndex>,
+    pub address: MetricPattern27<Address>,
 }
 
 impl MetricsTree_Indexes_Address_P2pk65 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             identity: MetricPattern27::new(client.clone(), "p2pk65_address_index".to_string()),
+            address: MetricPattern27::new(client.clone(), "p2pk65_address".to_string()),
         }
     }
 }
@@ -4632,12 +4634,14 @@ impl MetricsTree_Indexes_Address_P2pk65 {
 /// Metrics tree node.
 pub struct MetricsTree_Indexes_Address_P2pkh {
     pub identity: MetricPattern28<P2PKHAddressIndex>,
+    pub address: MetricPattern28<Address>,
 }
 
 impl MetricsTree_Indexes_Address_P2pkh {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             identity: MetricPattern28::new(client.clone(), "p2pkh_address_index".to_string()),
+            address: MetricPattern28::new(client.clone(), "p2pkh_address".to_string()),
         }
     }
 }
@@ -4645,12 +4649,14 @@ impl MetricsTree_Indexes_Address_P2pkh {
 /// Metrics tree node.
 pub struct MetricsTree_Indexes_Address_P2sh {
     pub identity: MetricPattern29<P2SHAddressIndex>,
+    pub address: MetricPattern29<Address>,
 }
 
 impl MetricsTree_Indexes_Address_P2sh {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             identity: MetricPattern29::new(client.clone(), "p2sh_address_index".to_string()),
+            address: MetricPattern29::new(client.clone(), "p2sh_address".to_string()),
         }
     }
 }
@@ -4658,12 +4664,14 @@ impl MetricsTree_Indexes_Address_P2sh {
 /// Metrics tree node.
 pub struct MetricsTree_Indexes_Address_P2tr {
     pub identity: MetricPattern30<P2TRAddressIndex>,
+    pub address: MetricPattern30<Address>,
 }
 
 impl MetricsTree_Indexes_Address_P2tr {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             identity: MetricPattern30::new(client.clone(), "p2tr_address_index".to_string()),
+            address: MetricPattern30::new(client.clone(), "p2tr_address".to_string()),
         }
     }
 }
@@ -4671,12 +4679,14 @@ impl MetricsTree_Indexes_Address_P2tr {
 /// Metrics tree node.
 pub struct MetricsTree_Indexes_Address_P2wpkh {
     pub identity: MetricPattern31<P2WPKHAddressIndex>,
+    pub address: MetricPattern31<Address>,
 }
 
 impl MetricsTree_Indexes_Address_P2wpkh {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             identity: MetricPattern31::new(client.clone(), "p2wpkh_address_index".to_string()),
+            address: MetricPattern31::new(client.clone(), "p2wpkh_address".to_string()),
         }
     }
 }
@@ -4684,12 +4694,14 @@ impl MetricsTree_Indexes_Address_P2wpkh {
 /// Metrics tree node.
 pub struct MetricsTree_Indexes_Address_P2wsh {
     pub identity: MetricPattern32<P2WSHAddressIndex>,
+    pub address: MetricPattern32<Address>,
 }
 
 impl MetricsTree_Indexes_Address_P2wsh {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             identity: MetricPattern32::new(client.clone(), "p2wsh_address_index".to_string()),
+            address: MetricPattern32::new(client.clone(), "p2wsh_address".to_string()),
         }
     }
 }
@@ -4697,12 +4709,14 @@ impl MetricsTree_Indexes_Address_P2wsh {
 /// Metrics tree node.
 pub struct MetricsTree_Indexes_Address_P2a {
     pub identity: MetricPattern24<P2AAddressIndex>,
+    pub address: MetricPattern24<Address>,
 }
 
 impl MetricsTree_Indexes_Address_P2a {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             identity: MetricPattern24::new(client.clone(), "p2a_address_index".to_string()),
+            address: MetricPattern24::new(client.clone(), "p2a_address".to_string()),
         }
     }
 }
@@ -4747,11 +4761,11 @@ impl MetricsTree_Indexes_Address_Unknown {
 }
 
 /// Metrics tree node.
-pub struct MetricsTree_Indexes_Address_Opreturn {
+pub struct MetricsTree_Indexes_Address_OpReturn {
     pub identity: MetricPattern23<OpReturnIndex>,
 }
 
-impl MetricsTree_Indexes_Address_Opreturn {
+impl MetricsTree_Indexes_Address_OpReturn {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             identity: MetricPattern23::new(client.clone(), "op_return_index".to_string()),
@@ -4845,8 +4859,8 @@ pub struct MetricsTree_Indexes_Minute10 {
 impl MetricsTree_Indexes_Minute10 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: MetricPattern3::new(client.clone(), "minute10".to_string()),
-            first_height: MetricPattern3::new(client.clone(), "minute10_first_height".to_string()),
+            identity: MetricPattern3::new(client.clone(), "minute10_index".to_string()),
+            first_height: MetricPattern3::new(client.clone(), "first_height".to_string()),
         }
     }
 }
@@ -4860,8 +4874,8 @@ pub struct MetricsTree_Indexes_Minute30 {
 impl MetricsTree_Indexes_Minute30 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: MetricPattern4::new(client.clone(), "minute30".to_string()),
-            first_height: MetricPattern4::new(client.clone(), "minute30_first_height".to_string()),
+            identity: MetricPattern4::new(client.clone(), "minute30_index".to_string()),
+            first_height: MetricPattern4::new(client.clone(), "first_height".to_string()),
         }
     }
 }
@@ -4875,8 +4889,8 @@ pub struct MetricsTree_Indexes_Hour1 {
 impl MetricsTree_Indexes_Hour1 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: MetricPattern5::new(client.clone(), "hour1".to_string()),
-            first_height: MetricPattern5::new(client.clone(), "hour1_first_height".to_string()),
+            identity: MetricPattern5::new(client.clone(), "hour1_index".to_string()),
+            first_height: MetricPattern5::new(client.clone(), "first_height".to_string()),
         }
     }
 }
@@ -4890,8 +4904,8 @@ pub struct MetricsTree_Indexes_Hour4 {
 impl MetricsTree_Indexes_Hour4 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: MetricPattern6::new(client.clone(), "hour4".to_string()),
-            first_height: MetricPattern6::new(client.clone(), "hour4_first_height".to_string()),
+            identity: MetricPattern6::new(client.clone(), "hour4_index".to_string()),
+            first_height: MetricPattern6::new(client.clone(), "first_height".to_string()),
         }
     }
 }
@@ -4905,8 +4919,8 @@ pub struct MetricsTree_Indexes_Hour12 {
 impl MetricsTree_Indexes_Hour12 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: MetricPattern7::new(client.clone(), "hour12".to_string()),
-            first_height: MetricPattern7::new(client.clone(), "hour12_first_height".to_string()),
+            identity: MetricPattern7::new(client.clone(), "hour12_index".to_string()),
+            first_height: MetricPattern7::new(client.clone(), "first_height".to_string()),
         }
     }
 }
@@ -4922,7 +4936,7 @@ pub struct MetricsTree_Indexes_Day1 {
 impl MetricsTree_Indexes_Day1 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: MetricPattern8::new(client.clone(), "day1".to_string()),
+            identity: MetricPattern8::new(client.clone(), "day1_index".to_string()),
             date: MetricPattern8::new(client.clone(), "date".to_string()),
             first_height: MetricPattern8::new(client.clone(), "first_height".to_string()),
             height_count: MetricPattern8::new(client.clone(), "height_count".to_string()),
@@ -4939,8 +4953,8 @@ pub struct MetricsTree_Indexes_Day3 {
 impl MetricsTree_Indexes_Day3 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: MetricPattern9::new(client.clone(), "day3".to_string()),
-            first_height: MetricPattern9::new(client.clone(), "day3_first_height".to_string()),
+            identity: MetricPattern9::new(client.clone(), "day3_index".to_string()),
+            first_height: MetricPattern9::new(client.clone(), "first_height".to_string()),
         }
     }
 }
@@ -4955,9 +4969,9 @@ pub struct MetricsTree_Indexes_Week1 {
 impl MetricsTree_Indexes_Week1 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: MetricPattern10::new(client.clone(), "week1".to_string()),
+            identity: MetricPattern10::new(client.clone(), "week1_index".to_string()),
             date: MetricPattern10::new(client.clone(), "date".to_string()),
-            first_height: MetricPattern10::new(client.clone(), "week1_first_height".to_string()),
+            first_height: MetricPattern10::new(client.clone(), "first_height".to_string()),
         }
     }
 }
@@ -4972,9 +4986,9 @@ pub struct MetricsTree_Indexes_Month1 {
 impl MetricsTree_Indexes_Month1 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: MetricPattern11::new(client.clone(), "month1".to_string()),
+            identity: MetricPattern11::new(client.clone(), "month1_index".to_string()),
             date: MetricPattern11::new(client.clone(), "date".to_string()),
-            first_height: MetricPattern11::new(client.clone(), "month1_first_height".to_string()),
+            first_height: MetricPattern11::new(client.clone(), "first_height".to_string()),
         }
     }
 }
@@ -4989,9 +5003,9 @@ pub struct MetricsTree_Indexes_Month3 {
 impl MetricsTree_Indexes_Month3 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: MetricPattern12::new(client.clone(), "month3".to_string()),
+            identity: MetricPattern12::new(client.clone(), "month3_index".to_string()),
             date: MetricPattern12::new(client.clone(), "date".to_string()),
-            first_height: MetricPattern12::new(client.clone(), "month3_first_height".to_string()),
+            first_height: MetricPattern12::new(client.clone(), "first_height".to_string()),
         }
     }
 }
@@ -5006,9 +5020,9 @@ pub struct MetricsTree_Indexes_Month6 {
 impl MetricsTree_Indexes_Month6 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: MetricPattern13::new(client.clone(), "month6".to_string()),
+            identity: MetricPattern13::new(client.clone(), "month6_index".to_string()),
             date: MetricPattern13::new(client.clone(), "date".to_string()),
-            first_height: MetricPattern13::new(client.clone(), "month6_first_height".to_string()),
+            first_height: MetricPattern13::new(client.clone(), "first_height".to_string()),
         }
     }
 }
@@ -5023,9 +5037,9 @@ pub struct MetricsTree_Indexes_Year1 {
 impl MetricsTree_Indexes_Year1 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: MetricPattern14::new(client.clone(), "year1".to_string()),
+            identity: MetricPattern14::new(client.clone(), "year1_index".to_string()),
             date: MetricPattern14::new(client.clone(), "date".to_string()),
-            first_height: MetricPattern14::new(client.clone(), "year1_first_height".to_string()),
+            first_height: MetricPattern14::new(client.clone(), "first_height".to_string()),
         }
     }
 }
@@ -5040,9 +5054,9 @@ pub struct MetricsTree_Indexes_Year10 {
 impl MetricsTree_Indexes_Year10 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: MetricPattern15::new(client.clone(), "year10".to_string()),
+            identity: MetricPattern15::new(client.clone(), "year10_index".to_string()),
             date: MetricPattern15::new(client.clone(), "date".to_string()),
-            first_height: MetricPattern15::new(client.clone(), "year10_first_height".to_string()),
+            first_height: MetricPattern15::new(client.clone(), "first_height".to_string()),
         }
     }
 }
@@ -6436,14 +6450,14 @@ impl MetricsTree_Supply {
 
 /// Metrics tree node.
 pub struct MetricsTree_Supply_Burned {
-    pub opreturn: BaseCumulativeSumPattern4,
+    pub op_return: BaseCumulativeSumPattern4,
     pub unspendable: BaseCumulativeSumPattern4,
 }
 
 impl MetricsTree_Supply_Burned {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            opreturn: BaseCumulativeSumPattern4::new(client.clone(), "opreturn_supply".to_string()),
+            op_return: BaseCumulativeSumPattern4::new(client.clone(), "op_return_supply".to_string()),
             unspendable: BaseCumulativeSumPattern4::new(client.clone(), "unspendable_supply".to_string()),
         }
     }

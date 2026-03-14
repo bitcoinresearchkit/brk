@@ -102,12 +102,12 @@ impl Vecs {
                 )?)
             })?;
 
-        self.opreturn
+        self.op_return
             .compute(starting_indexes.height, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.scripts.opreturn.first_index,
-                    &indexer.vecs.scripts.opreturn.to_tx_index,
+                    &indexer.vecs.scripts.op_return.first_index,
+                    &indexer.vecs.scripts.op_return.to_tx_index,
                     exit,
                 )?)
             })?;

@@ -42,14 +42,19 @@ impl Vecs {
         );
 
         Ok(Self {
-            base: Resolutions::forced_import(
+            value: Resolutions::forced_import(
                 "difficulty",
                 indexer.vecs.blocks.difficulty.read_only_boxed_clone(),
                 version,
                 indexes,
             ),
             as_hash,
-            adjustment: PercentPerBlock::forced_import(db, "difficulty_adjustment", version, indexes)?,
+            adjustment: PercentPerBlock::forced_import(
+                db,
+                "difficulty_adjustment",
+                version,
+                indexes,
+            )?,
             epoch: PerBlock::forced_import(db, "difficulty_epoch", version, indexes)?,
             blocks_before_next,
             days_before_next,

@@ -14,7 +14,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.opreturn.compute_with(
+        self.op_return.compute_with(
             starting_indexes.height,
             prices,
             exit,
@@ -81,14 +81,14 @@ impl Vecs {
                         .value
                         .collect_range_into_at(out_start, out_end, &mut values_buf);
 
-                    let mut opreturn_value = Sats::ZERO;
+                    let mut op_return_value = Sats::ZERO;
                     for (ot, val) in output_types_buf.iter().zip(values_buf.iter()) {
                         if *ot == OutputType::OpReturn {
-                            opreturn_value += *val;
+                            op_return_value += *val;
                         }
                     }
 
-                    height_vec.truncate_push(height, opreturn_value)?;
+                    height_vec.truncate_push(height, op_return_value)?;
                 }
 
                 height_vec.write()?;

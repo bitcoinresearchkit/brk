@@ -320,7 +320,7 @@ export function createMiningSection() {
             title: "Mining Difficulty",
             bottom: [
               line({
-                metric: blocks.difficulty.raw,
+                metric: blocks.difficulty.value,
                 name: "Difficulty",
                 unit: Unit.difficulty,
               }),

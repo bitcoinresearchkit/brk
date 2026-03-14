@@ -72,7 +72,7 @@ impl PrintableIndex for OpReturnIndex {
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["op", "opreturn", "op_return_index"]
+        &["op", "opreturn", "op_return", "op_return_index"]
     }
 }
 

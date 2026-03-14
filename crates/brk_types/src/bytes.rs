@@ -1,5 +1,5 @@
 use derive_more::{Deref, DerefMut};
-use schemars::JsonSchema;
+use schemars::{JsonSchema, SchemaGenerator};
 use serde::{Deserialize, Serialize};
 use vecdb::Bytes;
 
@@ -99,9 +99,8 @@ impl JsonSchema for U8x33 {
         "U8x33".into()
     }
 
-    fn json_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        // Represent as a byte string
-        String::json_schema(_gen)
+    fn json_schema(generator: &mut SchemaGenerator) -> schemars::Schema {
+        Vec::<u8>::json_schema(generator)
     }
 }
 
@@ -135,9 +134,8 @@ impl JsonSchema for U8x65 {
         "U8x65".into()
     }
 
-    fn json_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        // Represent as a byte string
-        String::json_schema(_gen)
+    fn json_schema(generator: &mut SchemaGenerator) -> schemars::Schema {
+        Vec::<u8>::json_schema(generator)
     }
 }
 

@@ -174,7 +174,7 @@ pub(super) fn finalize_outputs(
                 }
                 OutputType::OpReturn => {
                     scripts
-                        .opreturn.to_tx_index
+                        .op_return.to_tx_index
                         .checked_push(indexes.op_return_index, tx_index)?;
                     indexes.op_return_index.copy_then_increment()
                 }

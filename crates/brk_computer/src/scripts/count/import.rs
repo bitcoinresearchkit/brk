@@ -46,9 +46,9 @@ impl Vecs {
             p2tr,
             p2wpkh,
             p2wsh,
-            opreturn: PerBlockCumulativeWithSums::forced_import(
+            op_return: PerBlockCumulativeWithSums::forced_import(
                 db,
-                "opreturn_count",
+                "op_return_count",
                 version,
                 indexes,
                 cached_starts,

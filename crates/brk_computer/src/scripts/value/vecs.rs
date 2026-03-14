@@ -5,5 +5,5 @@ use crate::internal::AmountPerBlockCumulative;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub opreturn: AmountPerBlockCumulative<M>,
+    pub op_return: AmountPerBlockCumulative<M>,
 }

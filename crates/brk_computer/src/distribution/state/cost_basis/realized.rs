@@ -461,4 +461,34 @@ impl RealizedState {
         }
         Cents::new((self.peak_regret_raw / Sats::ONE_BTC_U128) as u64)
     }
+
+    /// Raw profit value created for lossless aggregation.
+    #[inline]
+    pub(crate) fn profit_value_created_raw(&self) -> u128 {
+        self.profit_value_created_raw
+    }
+
+    /// Raw profit value destroyed for lossless aggregation.
+    #[inline]
+    pub(crate) fn profit_value_destroyed_raw(&self) -> u128 {
+        self.profit_value_destroyed_raw
+    }
+
+    /// Raw loss value created for lossless aggregation.
+    #[inline]
+    pub(crate) fn loss_value_created_raw(&self) -> u128 {
+        self.loss_value_created_raw
+    }
+
+    /// Raw loss value destroyed for lossless aggregation.
+    #[inline]
+    pub(crate) fn loss_value_destroyed_raw(&self) -> u128 {
+        self.loss_value_destroyed_raw
+    }
+
+    /// Raw peak regret for lossless aggregation.
+    #[inline]
+    pub(crate) fn peak_regret_raw(&self) -> u128 {
+        self.peak_regret_raw
+    }
 }

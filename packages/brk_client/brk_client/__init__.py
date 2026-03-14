@@ -134,10 +134,10 @@ U8x2 = List[int]
 P2ABytes = U8x2
 P2MSOutputIndex = TypeIndex
 P2PK33AddressIndex = TypeIndex
-U8x33 = str
+U8x33 = List[int]
 P2PK33Bytes = U8x33
 P2PK65AddressIndex = TypeIndex
-U8x65 = str
+U8x65 = List[int]
 P2PK65Bytes = U8x65
 P2PKHAddressIndex = TypeIndex
 U8x20 = List[int]
@@ -3190,8 +3190,7 @@ class MetricsTree_Blocks_Difficulty:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.raw: MetricPattern18[StoredF64] = MetricPattern18(client, 'difficulty')
-        self.base: MetricPattern2[StoredF64] = MetricPattern2(client, 'difficulty')
+        self.value: MetricPattern1[StoredF64] = MetricPattern1(client, 'difficulty')
         self.as_hash: MetricPattern1[StoredF64] = MetricPattern1(client, 'difficulty_as_hash')
         self.adjustment: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'difficulty_adjustment')
         self.epoch: MetricPattern1[Epoch] = MetricPattern1(client, 'difficulty_epoch')
@@ -3602,7 +3601,7 @@ class MetricsTree_Scripts_Raw_Empty:
         self.first_index: MetricPattern18[EmptyOutputIndex] = MetricPattern18(client, 'first_empty_output_index')
         self.to_tx_index: MetricPattern22[TxIndex] = MetricPattern22(client, 'tx_index')
 
-class MetricsTree_Scripts_Raw_Opreturn:
+class MetricsTree_Scripts_Raw_OpReturn:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -3628,7 +3627,7 @@ class MetricsTree_Scripts_Raw:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.empty: MetricsTree_Scripts_Raw_Empty = MetricsTree_Scripts_Raw_Empty(client)
-        self.opreturn: MetricsTree_Scripts_Raw_Opreturn = MetricsTree_Scripts_Raw_Opreturn(client)
+        self.op_return: MetricsTree_Scripts_Raw_OpReturn = MetricsTree_Scripts_Raw_OpReturn(client)
         self.p2ms: MetricsTree_Scripts_Raw_P2ms = MetricsTree_Scripts_Raw_P2ms(client)
         self.unknown: MetricsTree_Scripts_Raw_Unknown = MetricsTree_Scripts_Raw_Unknown(client)
 
@@ -3645,23 +3644,23 @@ class MetricsTree_Scripts_Count:
         self.p2tr: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2tr_count')
         self.p2wpkh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2wpkh_count')
         self.p2wsh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2wsh_count')
-        self.opreturn: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'opreturn_count')
+        self.op_return: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'op_return_count')
         self.empty_output: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'empty_output_count')
         self.unknown_output: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'unknown_output_count')
         self.segwit: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'segwit_count')
 
-class MetricsTree_Scripts_Value_Opreturn:
+class MetricsTree_Scripts_Value_OpReturn:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.base: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'opreturn_value')
-        self.cumulative: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'opreturn_value_cumulative')
+        self.base: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'op_return_value')
+        self.cumulative: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'op_return_value_cumulative')
 
 class MetricsTree_Scripts_Value:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.opreturn: MetricsTree_Scripts_Value_Opreturn = MetricsTree_Scripts_Value_Opreturn(client)
+        self.op_return: MetricsTree_Scripts_Value_OpReturn = MetricsTree_Scripts_Value_OpReturn(client)
 
 class MetricsTree_Scripts_Adoption:
     """Metrics tree node."""
@@ -3861,48 +3860,56 @@ class MetricsTree_Indexes_Address_P2pk33:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.identity: MetricPattern26[P2PK33AddressIndex] = MetricPattern26(client, 'p2pk33_address_index')
+        self.address: MetricPattern26[Address] = MetricPattern26(client, 'p2pk33_address')
 
 class MetricsTree_Indexes_Address_P2pk65:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.identity: MetricPattern27[P2PK65AddressIndex] = MetricPattern27(client, 'p2pk65_address_index')
+        self.address: MetricPattern27[Address] = MetricPattern27(client, 'p2pk65_address')
 
 class MetricsTree_Indexes_Address_P2pkh:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.identity: MetricPattern28[P2PKHAddressIndex] = MetricPattern28(client, 'p2pkh_address_index')
+        self.address: MetricPattern28[Address] = MetricPattern28(client, 'p2pkh_address')
 
 class MetricsTree_Indexes_Address_P2sh:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.identity: MetricPattern29[P2SHAddressIndex] = MetricPattern29(client, 'p2sh_address_index')
+        self.address: MetricPattern29[Address] = MetricPattern29(client, 'p2sh_address')
 
 class MetricsTree_Indexes_Address_P2tr:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.identity: MetricPattern30[P2TRAddressIndex] = MetricPattern30(client, 'p2tr_address_index')
+        self.address: MetricPattern30[Address] = MetricPattern30(client, 'p2tr_address')
 
 class MetricsTree_Indexes_Address_P2wpkh:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.identity: MetricPattern31[P2WPKHAddressIndex] = MetricPattern31(client, 'p2wpkh_address_index')
+        self.address: MetricPattern31[Address] = MetricPattern31(client, 'p2wpkh_address')
 
 class MetricsTree_Indexes_Address_P2wsh:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.identity: MetricPattern32[P2WSHAddressIndex] = MetricPattern32(client, 'p2wsh_address_index')
+        self.address: MetricPattern32[Address] = MetricPattern32(client, 'p2wsh_address')
 
 class MetricsTree_Indexes_Address_P2a:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.identity: MetricPattern24[P2AAddressIndex] = MetricPattern24(client, 'p2a_address_index')
+        self.address: MetricPattern24[Address] = MetricPattern24(client, 'p2a_address')
 
 class MetricsTree_Indexes_Address_P2ms:
     """Metrics tree node."""
@@ -3922,7 +3929,7 @@ class MetricsTree_Indexes_Address_Unknown:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.identity: MetricPattern33[UnknownOutputIndex] = MetricPattern33(client, 'unknown_output_index')
 
-class MetricsTree_Indexes_Address_Opreturn:
+class MetricsTree_Indexes_Address_OpReturn:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -3943,7 +3950,7 @@ class MetricsTree_Indexes_Address:
         self.p2ms: MetricsTree_Indexes_Address_P2ms = MetricsTree_Indexes_Address_P2ms(client)
         self.empty: MetricsTree_Indexes_Address_Empty = MetricsTree_Indexes_Address_Empty(client)
         self.unknown: MetricsTree_Indexes_Address_Unknown = MetricsTree_Indexes_Address_Unknown(client)
-        self.opreturn: MetricsTree_Indexes_Address_Opreturn = MetricsTree_Indexes_Address_Opreturn(client)
+        self.op_return: MetricsTree_Indexes_Address_OpReturn = MetricsTree_Indexes_Address_OpReturn(client)
 
 class MetricsTree_Indexes_Height:
     """Metrics tree node."""
@@ -3986,42 +3993,42 @@ class MetricsTree_Indexes_Minute10:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern3[Minute10] = MetricPattern3(client, 'minute10')
-        self.first_height: MetricPattern3[Height] = MetricPattern3(client, 'minute10_first_height')
+        self.identity: MetricPattern3[Minute10] = MetricPattern3(client, 'minute10_index')
+        self.first_height: MetricPattern3[Height] = MetricPattern3(client, 'first_height')
 
 class MetricsTree_Indexes_Minute30:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern4[Minute30] = MetricPattern4(client, 'minute30')
-        self.first_height: MetricPattern4[Height] = MetricPattern4(client, 'minute30_first_height')
+        self.identity: MetricPattern4[Minute30] = MetricPattern4(client, 'minute30_index')
+        self.first_height: MetricPattern4[Height] = MetricPattern4(client, 'first_height')
 
 class MetricsTree_Indexes_Hour1:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern5[Hour1] = MetricPattern5(client, 'hour1')
-        self.first_height: MetricPattern5[Height] = MetricPattern5(client, 'hour1_first_height')
+        self.identity: MetricPattern5[Hour1] = MetricPattern5(client, 'hour1_index')
+        self.first_height: MetricPattern5[Height] = MetricPattern5(client, 'first_height')
 
 class MetricsTree_Indexes_Hour4:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern6[Hour4] = MetricPattern6(client, 'hour4')
-        self.first_height: MetricPattern6[Height] = MetricPattern6(client, 'hour4_first_height')
+        self.identity: MetricPattern6[Hour4] = MetricPattern6(client, 'hour4_index')
+        self.first_height: MetricPattern6[Height] = MetricPattern6(client, 'first_height')
 
 class MetricsTree_Indexes_Hour12:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern7[Hour12] = MetricPattern7(client, 'hour12')
-        self.first_height: MetricPattern7[Height] = MetricPattern7(client, 'hour12_first_height')
+        self.identity: MetricPattern7[Hour12] = MetricPattern7(client, 'hour12_index')
+        self.first_height: MetricPattern7[Height] = MetricPattern7(client, 'first_height')
 
 class MetricsTree_Indexes_Day1:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern8[Day1] = MetricPattern8(client, 'day1')
+        self.identity: MetricPattern8[Day1] = MetricPattern8(client, 'day1_index')
         self.date: MetricPattern8[Date] = MetricPattern8(client, 'date')
         self.first_height: MetricPattern8[Height] = MetricPattern8(client, 'first_height')
         self.height_count: MetricPattern8[StoredU64] = MetricPattern8(client, 'height_count')
@@ -4030,56 +4037,56 @@ class MetricsTree_Indexes_Day3:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern9[Day3] = MetricPattern9(client, 'day3')
-        self.first_height: MetricPattern9[Height] = MetricPattern9(client, 'day3_first_height')
+        self.identity: MetricPattern9[Day3] = MetricPattern9(client, 'day3_index')
+        self.first_height: MetricPattern9[Height] = MetricPattern9(client, 'first_height')
 
 class MetricsTree_Indexes_Week1:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern10[Week1] = MetricPattern10(client, 'week1')
+        self.identity: MetricPattern10[Week1] = MetricPattern10(client, 'week1_index')
         self.date: MetricPattern10[Date] = MetricPattern10(client, 'date')
-        self.first_height: MetricPattern10[Height] = MetricPattern10(client, 'week1_first_height')
+        self.first_height: MetricPattern10[Height] = MetricPattern10(client, 'first_height')
 
 class MetricsTree_Indexes_Month1:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern11[Month1] = MetricPattern11(client, 'month1')
+        self.identity: MetricPattern11[Month1] = MetricPattern11(client, 'month1_index')
         self.date: MetricPattern11[Date] = MetricPattern11(client, 'date')
-        self.first_height: MetricPattern11[Height] = MetricPattern11(client, 'month1_first_height')
+        self.first_height: MetricPattern11[Height] = MetricPattern11(client, 'first_height')
 
 class MetricsTree_Indexes_Month3:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern12[Month3] = MetricPattern12(client, 'month3')
+        self.identity: MetricPattern12[Month3] = MetricPattern12(client, 'month3_index')
         self.date: MetricPattern12[Date] = MetricPattern12(client, 'date')
-        self.first_height: MetricPattern12[Height] = MetricPattern12(client, 'month3_first_height')
+        self.first_height: MetricPattern12[Height] = MetricPattern12(client, 'first_height')
 
 class MetricsTree_Indexes_Month6:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern13[Month6] = MetricPattern13(client, 'month6')
+        self.identity: MetricPattern13[Month6] = MetricPattern13(client, 'month6_index')
         self.date: MetricPattern13[Date] = MetricPattern13(client, 'date')
-        self.first_height: MetricPattern13[Height] = MetricPattern13(client, 'month6_first_height')
+        self.first_height: MetricPattern13[Height] = MetricPattern13(client, 'first_height')
 
 class MetricsTree_Indexes_Year1:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern14[Year1] = MetricPattern14(client, 'year1')
+        self.identity: MetricPattern14[Year1] = MetricPattern14(client, 'year1_index')
         self.date: MetricPattern14[Date] = MetricPattern14(client, 'date')
-        self.first_height: MetricPattern14[Height] = MetricPattern14(client, 'year1_first_height')
+        self.first_height: MetricPattern14[Height] = MetricPattern14(client, 'first_height')
 
 class MetricsTree_Indexes_Year10:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: MetricPattern15[Year10] = MetricPattern15(client, 'year10')
+        self.identity: MetricPattern15[Year10] = MetricPattern15(client, 'year10_index')
         self.date: MetricPattern15[Date] = MetricPattern15(client, 'date')
-        self.first_height: MetricPattern15[Height] = MetricPattern15(client, 'year10_first_height')
+        self.first_height: MetricPattern15[Height] = MetricPattern15(client, 'first_height')
 
 class MetricsTree_Indexes_TxIndex:
     """Metrics tree node."""
@@ -4767,7 +4774,7 @@ class MetricsTree_Supply_Burned:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.opreturn: BaseCumulativeSumPattern4 = BaseCumulativeSumPattern4(client, 'opreturn_supply')
+        self.op_return: BaseCumulativeSumPattern4 = BaseCumulativeSumPattern4(client, 'op_return_supply')
         self.unspendable: BaseCumulativeSumPattern4 = BaseCumulativeSumPattern4(client, 'unspendable_supply')
 
 class MetricsTree_Supply_Velocity:

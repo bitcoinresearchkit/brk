@@ -900,8 +900,8 @@
 /** @typedef {number[]} U8x2 */
 /** @typedef {number[]} U8x20 */
 /** @typedef {number[]} U8x32 */
-/** @typedef {string} U8x33 */
-/** @typedef {string} U8x65 */
+/** @typedef {number[]} U8x33 */
+/** @typedef {number[]} U8x65 */
 /** @typedef {TypeIndex} UnknownOutputIndex */
 /**
  * Unspent transaction output
@@ -4075,8 +4075,7 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Blocks_Difficulty
- * @property {MetricPattern18<StoredF64>} raw
- * @property {MetricPattern2<StoredF64>} base
+ * @property {MetricPattern1<StoredF64>} value
  * @property {MetricPattern1<StoredF64>} asHash
  * @property {BpsPercentRatioPattern} adjustment
  * @property {MetricPattern1<Epoch>} epoch
@@ -4440,7 +4439,7 @@ function createUnspentPattern(client, acc) {
 /**
  * @typedef {Object} MetricsTree_Scripts_Raw
  * @property {MetricsTree_Scripts_Raw_Empty} empty
- * @property {MetricsTree_Scripts_Raw_Opreturn} opreturn
+ * @property {MetricsTree_Scripts_Raw_OpReturn} opReturn
  * @property {MetricsTree_Scripts_Raw_P2ms} p2ms
  * @property {MetricsTree_Scripts_Raw_Unknown} unknown
  */
@@ -4452,7 +4451,7 @@ function createUnspentPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Scripts_Raw_Opreturn
+ * @typedef {Object} MetricsTree_Scripts_Raw_OpReturn
  * @property {MetricPattern18<OpReturnIndex>} firstIndex
  * @property {MetricPattern23<TxIndex>} toTxIndex
  */
@@ -4480,7 +4479,7 @@ function createUnspentPattern(client, acc) {
  * @property {BaseCumulativeSumPattern<StoredU64>} p2tr
  * @property {BaseCumulativeSumPattern<StoredU64>} p2wpkh
  * @property {BaseCumulativeSumPattern<StoredU64>} p2wsh
- * @property {BaseCumulativeSumPattern<StoredU64>} opreturn
+ * @property {BaseCumulativeSumPattern<StoredU64>} opReturn
  * @property {BaseCumulativeSumPattern<StoredU64>} emptyOutput
  * @property {BaseCumulativeSumPattern<StoredU64>} unknownOutput
  * @property {BaseCumulativeSumPattern<StoredU64>} segwit
@@ -4488,11 +4487,11 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Scripts_Value
- * @property {MetricsTree_Scripts_Value_Opreturn} opreturn
+ * @property {MetricsTree_Scripts_Value_OpReturn} opReturn
  */
 
 /**
- * @typedef {Object} MetricsTree_Scripts_Value_Opreturn
+ * @typedef {Object} MetricsTree_Scripts_Value_OpReturn
  * @property {BtcCentsSatsUsdPattern} base
  * @property {BtcCentsSatsUsdPattern} cumulative
  */
@@ -4700,47 +4699,55 @@ function createUnspentPattern(client, acc) {
  * @property {MetricsTree_Indexes_Address_P2ms} p2ms
  * @property {MetricsTree_Indexes_Address_Empty} empty
  * @property {MetricsTree_Indexes_Address_Unknown} unknown
- * @property {MetricsTree_Indexes_Address_Opreturn} opreturn
+ * @property {MetricsTree_Indexes_Address_OpReturn} opReturn
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2pk33
  * @property {MetricPattern26<P2PK33AddressIndex>} identity
+ * @property {MetricPattern26<Address>} address
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2pk65
  * @property {MetricPattern27<P2PK65AddressIndex>} identity
+ * @property {MetricPattern27<Address>} address
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2pkh
  * @property {MetricPattern28<P2PKHAddressIndex>} identity
+ * @property {MetricPattern28<Address>} address
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2sh
  * @property {MetricPattern29<P2SHAddressIndex>} identity
+ * @property {MetricPattern29<Address>} address
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2tr
  * @property {MetricPattern30<P2TRAddressIndex>} identity
+ * @property {MetricPattern30<Address>} address
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2wpkh
  * @property {MetricPattern31<P2WPKHAddressIndex>} identity
+ * @property {MetricPattern31<Address>} address
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2wsh
  * @property {MetricPattern32<P2WSHAddressIndex>} identity
+ * @property {MetricPattern32<Address>} address
  */
 
 /**
  * @typedef {Object} MetricsTree_Indexes_Address_P2a
  * @property {MetricPattern24<P2AAddressIndex>} identity
+ * @property {MetricPattern24<Address>} address
  */
 
 /**
@@ -4759,7 +4766,7 @@ function createUnspentPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} MetricsTree_Indexes_Address_Opreturn
+ * @typedef {Object} MetricsTree_Indexes_Address_OpReturn
  * @property {MetricPattern23<OpReturnIndex>} identity
  */
 
@@ -5508,7 +5515,7 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Supply_Burned
- * @property {BaseCumulativeSumPattern4} opreturn
+ * @property {BaseCumulativeSumPattern4} opReturn
  * @property {BaseCumulativeSumPattern4} unspendable
  */
 
@@ -6909,8 +6916,7 @@ class BrkClient extends BrkClientBase {
       blocks: {
         blockhash: createMetricPattern18(this, 'blockhash'),
         difficulty: {
-          raw: createMetricPattern18(this, 'difficulty'),
-          base: createMetricPattern2(this, 'difficulty'),
+          value: createMetricPattern1(this, 'difficulty'),
           asHash: createMetricPattern1(this, 'difficulty_as_hash'),
           adjustment: createBpsPercentRatioPattern(this, 'difficulty_adjustment'),
           epoch: createMetricPattern1(this, 'difficulty_epoch'),
@@ -7174,7 +7180,7 @@ class BrkClient extends BrkClientBase {
             firstIndex: createMetricPattern18(this, 'first_empty_output_index'),
             toTxIndex: createMetricPattern22(this, 'tx_index'),
           },
-          opreturn: {
+          opReturn: {
             firstIndex: createMetricPattern18(this, 'first_op_return_index'),
             toTxIndex: createMetricPattern23(this, 'tx_index'),
           },
@@ -7197,15 +7203,15 @@ class BrkClient extends BrkClientBase {
           p2tr: createBaseCumulativeSumPattern(this, 'p2tr_count'),
           p2wpkh: createBaseCumulativeSumPattern(this, 'p2wpkh_count'),
           p2wsh: createBaseCumulativeSumPattern(this, 'p2wsh_count'),
-          opreturn: createBaseCumulativeSumPattern(this, 'opreturn_count'),
+          opReturn: createBaseCumulativeSumPattern(this, 'op_return_count'),
           emptyOutput: createBaseCumulativeSumPattern(this, 'empty_output_count'),
           unknownOutput: createBaseCumulativeSumPattern(this, 'unknown_output_count'),
           segwit: createBaseCumulativeSumPattern(this, 'segwit_count'),
         },
         value: {
-          opreturn: {
-            base: createBtcCentsSatsUsdPattern(this, 'opreturn_value'),
-            cumulative: createBtcCentsSatsUsdPattern(this, 'opreturn_value_cumulative'),
+          opReturn: {
+            base: createBtcCentsSatsUsdPattern(this, 'op_return_value'),
+            cumulative: createBtcCentsSatsUsdPattern(this, 'op_return_value_cumulative'),
           },
         },
         adoption: {
@@ -7329,27 +7335,35 @@ class BrkClient extends BrkClientBase {
         address: {
           p2pk33: {
             identity: createMetricPattern26(this, 'p2pk33_address_index'),
+            address: createMetricPattern26(this, 'p2pk33_address'),
           },
           p2pk65: {
             identity: createMetricPattern27(this, 'p2pk65_address_index'),
+            address: createMetricPattern27(this, 'p2pk65_address'),
           },
           p2pkh: {
             identity: createMetricPattern28(this, 'p2pkh_address_index'),
+            address: createMetricPattern28(this, 'p2pkh_address'),
           },
           p2sh: {
             identity: createMetricPattern29(this, 'p2sh_address_index'),
+            address: createMetricPattern29(this, 'p2sh_address'),
           },
           p2tr: {
             identity: createMetricPattern30(this, 'p2tr_address_index'),
+            address: createMetricPattern30(this, 'p2tr_address'),
           },
           p2wpkh: {
             identity: createMetricPattern31(this, 'p2wpkh_address_index'),
+            address: createMetricPattern31(this, 'p2wpkh_address'),
           },
           p2wsh: {
             identity: createMetricPattern32(this, 'p2wsh_address_index'),
+            address: createMetricPattern32(this, 'p2wsh_address'),
           },
           p2a: {
             identity: createMetricPattern24(this, 'p2a_address_index'),
+            address: createMetricPattern24(this, 'p2a_address'),
           },
           p2ms: {
             identity: createMetricPattern25(this, 'p2ms_output_index'),
@@ -7360,7 +7374,7 @@ class BrkClient extends BrkClientBase {
           unknown: {
             identity: createMetricPattern33(this, 'unknown_output_index'),
           },
-          opreturn: {
+          opReturn: {
             identity: createMetricPattern23(this, 'op_return_index'),
           },
         },
@@ -7393,64 +7407,64 @@ class BrkClient extends BrkClientBase {
           firstHeight: createMetricPattern16(this, 'first_height'),
         },
         minute10: {
-          identity: createMetricPattern3(this, 'minute10'),
-          firstHeight: createMetricPattern3(this, 'minute10_first_height'),
+          identity: createMetricPattern3(this, 'minute10_index'),
+          firstHeight: createMetricPattern3(this, 'first_height'),
         },
         minute30: {
-          identity: createMetricPattern4(this, 'minute30'),
-          firstHeight: createMetricPattern4(this, 'minute30_first_height'),
+          identity: createMetricPattern4(this, 'minute30_index'),
+          firstHeight: createMetricPattern4(this, 'first_height'),
         },
         hour1: {
-          identity: createMetricPattern5(this, 'hour1'),
-          firstHeight: createMetricPattern5(this, 'hour1_first_height'),
+          identity: createMetricPattern5(this, 'hour1_index'),
+          firstHeight: createMetricPattern5(this, 'first_height'),
         },
         hour4: {
-          identity: createMetricPattern6(this, 'hour4'),
-          firstHeight: createMetricPattern6(this, 'hour4_first_height'),
+          identity: createMetricPattern6(this, 'hour4_index'),
+          firstHeight: createMetricPattern6(this, 'first_height'),
         },
         hour12: {
-          identity: createMetricPattern7(this, 'hour12'),
-          firstHeight: createMetricPattern7(this, 'hour12_first_height'),
+          identity: createMetricPattern7(this, 'hour12_index'),
+          firstHeight: createMetricPattern7(this, 'first_height'),
         },
         day1: {
-          identity: createMetricPattern8(this, 'day1'),
+          identity: createMetricPattern8(this, 'day1_index'),
           date: createMetricPattern8(this, 'date'),
           firstHeight: createMetricPattern8(this, 'first_height'),
           heightCount: createMetricPattern8(this, 'height_count'),
         },
         day3: {
-          identity: createMetricPattern9(this, 'day3'),
-          firstHeight: createMetricPattern9(this, 'day3_first_height'),
+          identity: createMetricPattern9(this, 'day3_index'),
+          firstHeight: createMetricPattern9(this, 'first_height'),
         },
         week1: {
-          identity: createMetricPattern10(this, 'week1'),
+          identity: createMetricPattern10(this, 'week1_index'),
           date: createMetricPattern10(this, 'date'),
-          firstHeight: createMetricPattern10(this, 'week1_first_height'),
+          firstHeight: createMetricPattern10(this, 'first_height'),
         },
         month1: {
-          identity: createMetricPattern11(this, 'month1'),
+          identity: createMetricPattern11(this, 'month1_index'),
           date: createMetricPattern11(this, 'date'),
-          firstHeight: createMetricPattern11(this, 'month1_first_height'),
+          firstHeight: createMetricPattern11(this, 'first_height'),
         },
         month3: {
-          identity: createMetricPattern12(this, 'month3'),
+          identity: createMetricPattern12(this, 'month3_index'),
           date: createMetricPattern12(this, 'date'),
-          firstHeight: createMetricPattern12(this, 'month3_first_height'),
+          firstHeight: createMetricPattern12(this, 'first_height'),
         },
         month6: {
-          identity: createMetricPattern13(this, 'month6'),
+          identity: createMetricPattern13(this, 'month6_index'),
           date: createMetricPattern13(this, 'date'),
-          firstHeight: createMetricPattern13(this, 'month6_first_height'),
+          firstHeight: createMetricPattern13(this, 'first_height'),
         },
         year1: {
-          identity: createMetricPattern14(this, 'year1'),
+          identity: createMetricPattern14(this, 'year1_index'),
           date: createMetricPattern14(this, 'date'),
-          firstHeight: createMetricPattern14(this, 'year1_first_height'),
+          firstHeight: createMetricPattern14(this, 'first_height'),
         },
         year10: {
-          identity: createMetricPattern15(this, 'year10'),
+          identity: createMetricPattern15(this, 'year10_index'),
           date: createMetricPattern15(this, 'date'),
-          firstHeight: createMetricPattern15(this, 'year10_first_height'),
+          firstHeight: createMetricPattern15(this, 'first_height'),
         },
         txIndex: {
           identity: createMetricPattern19(this, 'tx_index'),
@@ -7936,7 +7950,7 @@ class BrkClient extends BrkClientBase {
       supply: {
         circulating: createBtcCentsSatsUsdPattern(this, 'circulating_supply'),
         burned: {
-          opreturn: createBaseCumulativeSumPattern4(this, 'opreturn_supply'),
+          opReturn: createBaseCumulativeSumPattern4(this, 'op_return_supply'),
           unspendable: createBaseCumulativeSumPattern4(this, 'unspendable_supply'),
         },
         inflationRate: createBpsPercentRatioPattern(this, 'inflation_rate'),

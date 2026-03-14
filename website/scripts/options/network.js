@@ -58,9 +58,9 @@ export function createNetworkSection() {
   const nonAddressableTypes = /** @type {const} */ ([
     { key: "p2ms", name: "P2MS", color: st.p2ms, defaultActive: false },
     {
-      key: "opreturn",
+      key: "opReturn",
       name: "OP_RETURN",
-      color: st.opreturn,
+      color: st.opReturn,
       defaultActive: false,
     },
     {
@@ -568,7 +568,7 @@ export function createNetworkSection() {
                 name: "Base",
                 title: "OP_RETURN Burned",
                 bottom: satsBtcUsd({
-                  pattern: supply.burned.opreturn.base,
+                  pattern: supply.burned.opReturn.base,
                   name: "sum",
                 }),
               },
@@ -580,7 +580,7 @@ export function createNetworkSection() {
                     title: "OP_RETURN Burned Rolling",
                     bottom: ROLLING_WINDOWS.flatMap((w) =>
                       satsBtcUsd({
-                        pattern: supply.burned.opreturn.sum[w.key],
+                        pattern: supply.burned.opReturn.sum[w.key],
                         name: w.name,
                         color: w.color,
                       }),
@@ -590,7 +590,7 @@ export function createNetworkSection() {
                     name: w.name,
                     title: `OP_RETURN Burned ${w.name}`,
                     bottom: satsBtcUsd({
-                      pattern: supply.burned.opreturn.sum[w.key],
+                      pattern: supply.burned.opReturn.sum[w.key],
                       name: w.name,
                       color: w.color,
                     }),
@@ -601,7 +601,7 @@ export function createNetworkSection() {
                 name: "Cumulative",
                 title: "OP_RETURN Burned (Total)",
                 bottom: satsBtcUsd({
-                  pattern: supply.burned.opreturn.cumulative,
+                  pattern: supply.burned.opReturn.cumulative,
                   name: "all-time",
                 }),
               },
@@ -1035,7 +1035,7 @@ export function createNetworkSection() {
                 title: "Mining Difficulty",
                 bottom: [
                   line({
-                    metric: blocks.difficulty.base,
+                    metric: blocks.difficulty.value,
                     name: "Difficulty",
                     unit: Unit.count,
                   }),

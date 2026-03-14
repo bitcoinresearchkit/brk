@@ -297,7 +297,7 @@ impl CostBasisFenwick {
             if total <= 0 {
                 0
             } else {
-                (range as f64 / total as f64 * 10000.0) as u16
+                (range as f64 / total as f64 * 10000.0).round() as u16
             }
         };
 

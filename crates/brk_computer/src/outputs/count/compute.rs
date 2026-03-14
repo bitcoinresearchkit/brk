@@ -35,12 +35,12 @@ impl Vecs {
             starting_indexes.height,
             &self.total.full.cumulative,
             &inputs_count.full.cumulative,
-            &scripts_count.opreturn.cumulative.height,
-            |(h, output_count, input_count, opreturn_count, ..)| {
+            &scripts_count.op_return.cumulative.height,
+            |(h, output_count, input_count, op_return_count, ..)| {
                 let block_count = u64::from(h + 1_usize);
                 // -1 > genesis output is unspendable
                 let mut utxo_count =
-                    *output_count - (*input_count - block_count) - *opreturn_count - 1;
+                    *output_count - (*input_count - block_count) - *op_return_count - 1;
 
                 // txid dup: e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468
                 // Block 91_722 https://mempool.space/block/00000000000271a2dc26e7667f8419f2e15416dc6955e5a6c6cdf3f2574dd08e

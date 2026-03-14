@@ -36,7 +36,7 @@ impl IndexesExt for Indexes {
             .p2ms.first_index
             .checked_push(height, self.p2ms_output_index)?;
         vecs.scripts
-            .opreturn.first_index
+            .op_return.first_index
             .checked_push(height, self.op_return_index)?;
         vecs.addresses
             .p2a.first_index
@@ -110,8 +110,8 @@ impl IndexesExt for Indexes {
         )?;
 
         let op_return_index = starting_index(
-            &vecs.scripts.opreturn.first_index,
-            &vecs.scripts.opreturn.to_tx_index,
+            &vecs.scripts.op_return.first_index,
+            &vecs.scripts.op_return.to_tx_index,
             starting_height,
         )?;
 

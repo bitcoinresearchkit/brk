@@ -1,10 +1,11 @@
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
-    EmptyOutputIndex, OpReturnIndex, P2AAddressIndex, P2ABytes, P2MSOutputIndex,
-    P2PK33AddressIndex, P2PK33Bytes, P2PK65AddressIndex, P2PK65Bytes, P2PKHAddressIndex,
-    P2PKHBytes, P2SHAddressIndex, P2SHBytes, P2TRAddressIndex, P2TRBytes, P2WPKHAddressIndex,
-    P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, TxIndex, UnknownOutputIndex, Version,
+    Address, AddressBytes, EmptyOutputIndex, OpReturnIndex, P2AAddressIndex, P2ABytes,
+    P2MSOutputIndex, P2PK33AddressIndex, P2PK33Bytes, P2PK65AddressIndex, P2PK65Bytes,
+    P2PKHAddressIndex, P2PKHBytes, P2SHAddressIndex, P2SHBytes, P2TRAddressIndex, P2TRBytes,
+    P2WPKHAddressIndex, P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, TxIndex, UnknownOutputIndex,
+    Version,
 };
 use vecdb::{LazyVecFrom1, ReadableCloneableVec};
 
@@ -21,50 +22,58 @@ pub struct Vecs {
     pub p2ms: P2MSVecs,
     pub empty: EmptyVecs,
     pub unknown: UnknownVecs,
-    pub opreturn: OpReturnVecs,
+    pub op_return: OpReturnVecs,
 }
 
 #[derive(Clone, Traversable)]
 pub struct P2PK33Vecs {
     pub identity:
         LazyVecFrom1<P2PK33AddressIndex, P2PK33AddressIndex, P2PK33AddressIndex, P2PK33Bytes>,
+    pub address: LazyVecFrom1<P2PK33AddressIndex, Address, P2PK33AddressIndex, P2PK33Bytes>,
 }
 
 #[derive(Clone, Traversable)]
 pub struct P2PK65Vecs {
     pub identity:
         LazyVecFrom1<P2PK65AddressIndex, P2PK65AddressIndex, P2PK65AddressIndex, P2PK65Bytes>,
+    pub address: LazyVecFrom1<P2PK65AddressIndex, Address, P2PK65AddressIndex, P2PK65Bytes>,
 }
 
 #[derive(Clone, Traversable)]
 pub struct P2PKHVecs {
     pub identity: LazyVecFrom1<P2PKHAddressIndex, P2PKHAddressIndex, P2PKHAddressIndex, P2PKHBytes>,
+    pub address: LazyVecFrom1<P2PKHAddressIndex, Address, P2PKHAddressIndex, P2PKHBytes>,
 }
 
 #[derive(Clone, Traversable)]
 pub struct P2SHVecs {
     pub identity: LazyVecFrom1<P2SHAddressIndex, P2SHAddressIndex, P2SHAddressIndex, P2SHBytes>,
+    pub address: LazyVecFrom1<P2SHAddressIndex, Address, P2SHAddressIndex, P2SHBytes>,
 }
 
 #[derive(Clone, Traversable)]
 pub struct P2TRVecs {
     pub identity: LazyVecFrom1<P2TRAddressIndex, P2TRAddressIndex, P2TRAddressIndex, P2TRBytes>,
+    pub address: LazyVecFrom1<P2TRAddressIndex, Address, P2TRAddressIndex, P2TRBytes>,
 }
 
 #[derive(Clone, Traversable)]
 pub struct P2WPKHVecs {
     pub identity:
         LazyVecFrom1<P2WPKHAddressIndex, P2WPKHAddressIndex, P2WPKHAddressIndex, P2WPKHBytes>,
+    pub address: LazyVecFrom1<P2WPKHAddressIndex, Address, P2WPKHAddressIndex, P2WPKHBytes>,
 }
 
 #[derive(Clone, Traversable)]
 pub struct P2WSHVecs {
     pub identity: LazyVecFrom1<P2WSHAddressIndex, P2WSHAddressIndex, P2WSHAddressIndex, P2WSHBytes>,
+    pub address: LazyVecFrom1<P2WSHAddressIndex, Address, P2WSHAddressIndex, P2WSHBytes>,
 }
 
 #[derive(Clone, Traversable)]
 pub struct P2AVecs {
     pub identity: LazyVecFrom1<P2AAddressIndex, P2AAddressIndex, P2AAddressIndex, P2ABytes>,
+    pub address: LazyVecFrom1<P2AAddressIndex, Address, P2AAddressIndex, P2ABytes>,
 }
 
 #[derive(Clone, Traversable)]
@@ -97,6 +106,12 @@ impl Vecs {
                     indexer.vecs.addresses.p2pk33.bytes.read_only_boxed_clone(),
                     |index, _| index,
                 ),
+                address: LazyVecFrom1::init(
+                    "p2pk33_address",
+                    version,
+                    indexer.vecs.addresses.p2pk33.bytes.read_only_boxed_clone(),
+                    |_, bytes| Address::try_from(&AddressBytes::from(bytes)).unwrap(),
+                ),
             },
             p2pk65: P2PK65Vecs {
                 identity: LazyVecFrom1::init(
@@ -104,6 +119,12 @@ impl Vecs {
                     version,
                     indexer.vecs.addresses.p2pk65.bytes.read_only_boxed_clone(),
                     |index, _| index,
+                ),
+                address: LazyVecFrom1::init(
+                    "p2pk65_address",
+                    version,
+                    indexer.vecs.addresses.p2pk65.bytes.read_only_boxed_clone(),
+                    |_, bytes| Address::try_from(&AddressBytes::from(bytes)).unwrap(),
                 ),
             },
             p2pkh: P2PKHVecs {
@@ -113,6 +134,12 @@ impl Vecs {
                     indexer.vecs.addresses.p2pkh.bytes.read_only_boxed_clone(),
                     |index, _| index,
                 ),
+                address: LazyVecFrom1::init(
+                    "p2pkh_address",
+                    version,
+                    indexer.vecs.addresses.p2pkh.bytes.read_only_boxed_clone(),
+                    |_, bytes| Address::try_from(&AddressBytes::from(bytes)).unwrap(),
+                ),
             },
             p2sh: P2SHVecs {
                 identity: LazyVecFrom1::init(
@@ -120,6 +147,12 @@ impl Vecs {
                     version,
                     indexer.vecs.addresses.p2sh.bytes.read_only_boxed_clone(),
                     |index, _| index,
+                ),
+                address: LazyVecFrom1::init(
+                    "p2sh_address",
+                    version,
+                    indexer.vecs.addresses.p2sh.bytes.read_only_boxed_clone(),
+                    |_, bytes| Address::try_from(&AddressBytes::from(bytes)).unwrap(),
                 ),
             },
             p2tr: P2TRVecs {
@@ -129,6 +162,12 @@ impl Vecs {
                     indexer.vecs.addresses.p2tr.bytes.read_only_boxed_clone(),
                     |index, _| index,
                 ),
+                address: LazyVecFrom1::init(
+                    "p2tr_address",
+                    version,
+                    indexer.vecs.addresses.p2tr.bytes.read_only_boxed_clone(),
+                    |_, bytes| Address::try_from(&AddressBytes::from(bytes)).unwrap(),
+                ),
             },
             p2wpkh: P2WPKHVecs {
                 identity: LazyVecFrom1::init(
@@ -136,6 +175,12 @@ impl Vecs {
                     version,
                     indexer.vecs.addresses.p2wpkh.bytes.read_only_boxed_clone(),
                     |index, _| index,
+                ),
+                address: LazyVecFrom1::init(
+                    "p2wpkh_address",
+                    version,
+                    indexer.vecs.addresses.p2wpkh.bytes.read_only_boxed_clone(),
+                    |_, bytes| Address::try_from(&AddressBytes::from(bytes)).unwrap(),
                 ),
             },
             p2wsh: P2WSHVecs {
@@ -145,6 +190,12 @@ impl Vecs {
                     indexer.vecs.addresses.p2wsh.bytes.read_only_boxed_clone(),
                     |index, _| index,
                 ),
+                address: LazyVecFrom1::init(
+                    "p2wsh_address",
+                    version,
+                    indexer.vecs.addresses.p2wsh.bytes.read_only_boxed_clone(),
+                    |_, bytes| Address::try_from(&AddressBytes::from(bytes)).unwrap(),
+                ),
             },
             p2a: P2AVecs {
                 identity: LazyVecFrom1::init(
@@ -152,6 +203,12 @@ impl Vecs {
                     version,
                     indexer.vecs.addresses.p2a.bytes.read_only_boxed_clone(),
                     |index, _| index,
+                ),
+                address: LazyVecFrom1::init(
+                    "p2a_address",
+                    version,
+                    indexer.vecs.addresses.p2a.bytes.read_only_boxed_clone(),
+                    |_, bytes| Address::try_from(&AddressBytes::from(bytes)).unwrap(),
                 ),
             },
             p2ms: P2MSVecs {
@@ -186,14 +243,14 @@ impl Vecs {
                     |index, _| index,
                 ),
             },
-            opreturn: OpReturnVecs {
+            op_return: OpReturnVecs {
                 identity: LazyVecFrom1::init(
                     "op_return_index",
                     version,
                     indexer
                         .vecs
                         .scripts
-                        .opreturn.to_tx_index
+                        .op_return.to_tx_index
                         .read_only_boxed_clone(),
                     |index, _| index,
                 ),

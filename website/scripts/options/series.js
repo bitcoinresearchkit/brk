@@ -640,7 +640,7 @@ export function percentRatioDots({ pattern, name, color, defaultActive }) {
  * @param {Object} args
  * @param {{ percent: AnyMetricPattern, ratio: AnyMetricPattern }} args.pattern
  * @param {string} args.name
- * @param {Color} [args.color]
+ * @param {Color | [Color, Color]} [args.color]
  * @param {boolean} [args.defaultActive]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */

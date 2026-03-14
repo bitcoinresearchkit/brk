@@ -2,8 +2,7 @@
 
 import { colors } from "../utils/colors.js";
 import { brk } from "../client.js";
-import { Unit } from "../utils/units.js";
-import { baseline, price } from "./series.js";
+import { percentRatioBaseline, price } from "./series.js";
 import { satsBtcUsd } from "./shared.js";
 import { periodIdToName } from "./utils.js";
 
@@ -31,7 +30,7 @@ const LONG_PERIODS = /** @type {const} */ ([
 /**
  * Add CAGR to a base entry item
  * @param {BaseEntryItem} entry
- * @param {AnyMetricPattern} cagr
+ * @param {PercentRatioPattern} cagr
  * @returns {LongEntryItem}
  */
 const withCagr = (entry, cagr) => ({ ...entry, cagr });
@@ -48,18 +47,22 @@ const YEARS_2010S = /** @type {const} */ ([2019, 2018, 2017, 2016, 2015]);
 const periodName = (key) => periodIdToName(key.slice(1), true);
 
 /**
+ * @typedef {{ percent: AnyMetricPattern, ratio: AnyMetricPattern }} PercentRatioPattern
+ */
+
+/**
  * Base entry item for compare and single-entry charts
  * @typedef {Object} BaseEntryItem
  * @property {string} name - Display name
  * @property {Color} color - Item color
  * @property {AnyPricePattern} costBasis - Cost basis metric
- * @property {AnyMetricPattern} returns - Returns metric
+ * @property {PercentRatioPattern} returns - Returns metric
  * @property {AnyValuePattern} stack - Stack pattern
  */
 
 /**
  * Long-term entry item with CAGR
- * @typedef {BaseEntryItem & { cagr: AnyMetricPattern }} LongEntryItem
+ * @typedef {BaseEntryItem & { cagr: PercentRatioPattern }} LongEntryItem
  */
 
 const ALL_YEARS = /** @type {const} */ ([...YEARS_2020S, ...YEARS_2010S]);
@@ -77,7 +80,7 @@ function buildYearEntry(dca, year, i) {
     name: `${year}`,
     color: colors.at(i, ALL_YEARS.length),
     costBasis: dca.class.costBasis[key],
-    returns: dca.class.return[key].ratio,
+    returns: dca.class.return[key],
     stack: dca.class.stack[key],
   };
 }
@@ -122,12 +125,11 @@ function createCompareFolder(context, items) {
         name: "Returns",
         title: `Returns: ${context}`,
         top: topPane,
-        bottom: items.map(({ name, color, returns }) =>
-          baseline({
-            metric: returns,
+        bottom: items.flatMap(({ name, color, returns }) =>
+          percentRatioBaseline({
+            pattern: returns,
             name,
             color: [color, color],
-            unit: Unit.percentage,
           }),
         ),
       },
@@ -176,9 +178,7 @@ function createSingleEntryTree(item, returnsBottom) {
  * @param {BaseEntryItem & { titlePrefix?: string }} item
  */
 function createShortSingleEntry(item) {
-  return createSingleEntryTree(item, [
-    baseline({ metric: item.returns, name: "Current", unit: Unit.percentage }),
-  ]);
+  return createSingleEntryTree(item, percentRatioBaseline({ pattern: item.returns, name: "Current" }));
 }
 
 /**
@@ -187,8 +187,8 @@ function createShortSingleEntry(item) {
  */
 function createLongSingleEntry(item) {
   return createSingleEntryTree(item, [
-    baseline({ metric: item.returns, name: "Current", unit: Unit.percentage }),
-    baseline({ metric: item.cagr, name: "CAGR", unit: Unit.cagr }),
+    ...percentRatioBaseline({ pattern: item.returns, name: "Current" }),
+    ...percentRatioBaseline({ pattern: item.cagr, name: "CAGR" }),
   ]);
 }
 
@@ -223,16 +223,14 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
     title: `Returns: ${name} DCA vs Lump Sum`,
     top: topPane(key),
     bottom: [
-      baseline({
-        metric: dca.period.return[key].ratio,
+      ...percentRatioBaseline({
+        pattern: dca.period.return[key],
         name: "DCA",
-        unit: Unit.percentage,
       }),
-      baseline({
-        metric: dca.period.lumpSumReturn[key].ratio,
+      ...percentRatioBaseline({
+        pattern: dca.period.lumpSumReturn[key],
         name: "Lump Sum",
         color: colors.bi.p2,
-        unit: Unit.percentage,
       }),
     ],
   });
@@ -243,27 +241,23 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
     title: `Returns: ${name} DCA vs Lump Sum`,
     top: topPane(key),
     bottom: [
-      baseline({
-        metric: dca.period.return[key].ratio,
+      ...percentRatioBaseline({
+        pattern: dca.period.return[key],
         name: "DCA",
-        unit: Unit.percentage,
       }),
-      baseline({
-        metric: dca.period.lumpSumReturn[key].ratio,
+      ...percentRatioBaseline({
+        pattern: dca.period.lumpSumReturn[key],
         name: "Lump Sum",
         color: colors.bi.p2,
-        unit: Unit.percentage,
       }),
-      baseline({
-        metric: dca.period.cagr[key].ratio,
+      ...percentRatioBaseline({
+        pattern: dca.period.cagr[key],
         name: "DCA CAGR",
-        unit: Unit.cagr,
       }),
-      baseline({
-        metric: returns.cagr[key].ratio,
+      ...percentRatioBaseline({
+        pattern: returns.cagr[key],
         name: "Lump Sum CAGR",
         color: colors.bi.p2,
-        unit: Unit.cagr,
       }),
     ],
   });
@@ -350,8 +344,8 @@ function createPeriodSection({ dca, lookback, returns }) {
     color: colors.at(i, allPeriods.length),
     costBasis: isLumpSum ? lookback[key] : dca.period.costBasis[key],
     returns: isLumpSum
-      ? dca.period.lumpSumReturn[key].ratio
-      : dca.period.return[key].ratio,
+      ? dca.period.lumpSumReturn[key]
+      : dca.period.return[key],
     stack: isLumpSum
       ? dca.period.lumpSumStack[key]
       : dca.period.stack[key],
@@ -361,7 +355,7 @@ function createPeriodSection({ dca, lookback, returns }) {
   const buildLongEntry = (key, i) =>
     withCagr(
       buildBaseEntry(key, i),
-      isLumpSum ? returns.cagr[key].ratio : dca.period.cagr[key].ratio,
+      isLumpSum ? returns.cagr[key] : dca.period.cagr[key],
     );
 
   /** @param {BaseEntryItem} entry */

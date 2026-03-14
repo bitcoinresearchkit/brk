@@ -12,9 +12,9 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            opreturn: AmountPerBlockCumulative::forced_import(
+            op_return: AmountPerBlockCumulative::forced_import(
                 db,
-                "opreturn_value",
+                "op_return_value",
                 version,
                 indexes,
             )?,

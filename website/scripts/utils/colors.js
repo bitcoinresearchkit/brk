@@ -254,7 +254,7 @@ export const colors = {
     p2wsh: palette.yellow,
     p2tr: palette.cyan,
     p2a: palette.indigo,
-    opreturn: palette.purple,
+    opReturn: palette.purple,
     unknown: palette.violet,
     empty: palette.fuchsia,
   },
