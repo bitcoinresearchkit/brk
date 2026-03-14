@@ -14,7 +14,7 @@ impl Vecs {
     pub(crate) fn forced_import(db: &Database, version: Version) -> Result<Self> {
         Ok(Self {
             identity: EagerVec::forced_import(db, "minute10_index", version)?,
-            first_height: EagerVec::forced_import(db, "minute10_first_height", version)?,
+            first_height: EagerVec::forced_import(db, "first_height", version)?,
         })
     }
 }

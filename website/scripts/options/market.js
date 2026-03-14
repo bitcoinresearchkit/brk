@@ -5,20 +5,27 @@ import { brk } from "../client.js";
 import { includes } from "../utils/array.js";
 import { Unit } from "../utils/units.js";
 import { priceLine, priceLines } from "./constants.js";
-import { baseline, histogram, line, price } from "./series.js";
+import {
+  baseline,
+  histogram,
+  line,
+  price,
+  percentRatio,
+  percentRatioBaseline,
+} from "./series.js";
 import { periodIdToName } from "./utils.js";
 
 /**
  * @typedef {Object} Period
  * @property {string} id
  * @property {Color} color
- * @property {AnyMetricPattern} returns
+ * @property {{ percent: AnyMetricPattern, ratio: AnyMetricPattern }} returns
  * @property {AnyPricePattern} lookback
  * @property {boolean} [defaultActive]
  */
 
 /**
- * @typedef {Period & { cagr: AnyMetricPattern }} PeriodWithCagr
+ * @typedef {Period & { cagr: { percent: AnyMetricPattern, ratio: AnyMetricPattern } }} PeriodWithCagr
  */
 
 /**
@@ -442,14 +449,11 @@ export function createMarketSection() {
             name: "Drawdown",
             title: "ATH Drawdown",
             top: [price({ metric: ath.high, name: "ATH" })],
-            bottom: [
-              line({
-                metric: ath.drawdown.percent,
-                name: "Drawdown",
-                color: colors.loss,
-                unit: Unit.percentage,
-              }),
-            ],
+            bottom: percentRatio({
+              pattern: ath.drawdown,
+              name: "Drawdown",
+              color: colors.loss,
+            }),
           },
           {
             name: "Time Since",
@@ -535,11 +539,10 @@ export function createMarketSection() {
             name: "Choppiness",
             title: "Choppiness Index",
             bottom: [
-              line({
-                metric: range.choppinessIndex2w.percent,
+              ...percentRatio({
+                pattern: range.choppinessIndex2w,
                 name: "2w",
                 color: colors.indicator.main,
-                unit: Unit.index,
               }),
               ...priceLines({ unit: Unit.index, numbers: [61.8, 38.2] }),
             ],
@@ -1182,14 +1185,11 @@ export function createMarketSection() {
           {
             name: "Gini",
             title: "Gini Coefficient",
-            bottom: [
-              line({
-                metric: indicators.gini.percent,
-                name: "Gini",
-                color: colors.loss,
-                unit: Unit.ratio,
-              }),
-            ],
+            bottom: percentRatio({
+              pattern: indicators.gini,
+              name: "Gini",
+              color: colors.loss,
+            }),
           },
           {
             name: "RHODL Ratio",

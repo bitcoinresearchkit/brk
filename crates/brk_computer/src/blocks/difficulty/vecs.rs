@@ -5,7 +5,7 @@ use vecdb::{Rw, StorageMode};
 use crate::internal::{LazyPerBlock, PerBlock, Resolutions, PercentPerBlock};
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub base: Resolutions<StoredF64>,
+    pub value: Resolutions<StoredF64>,
     pub as_hash: LazyPerBlock<StoredF64>,
     pub adjustment: PercentPerBlock<BasisPointsSigned32, M>,
     pub epoch: PerBlock<Epoch, M>,

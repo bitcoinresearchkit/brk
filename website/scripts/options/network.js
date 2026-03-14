@@ -12,12 +12,15 @@ import {
   fromSupplyPattern,
   chartsFromFullPerBlock,
   chartsFromCount,
-  fromStatsPattern,
   chartsFromSumPerBlock,
   rollingWindowsTree,
   distributionWindowsTree,
   mapWindows,
   ROLLING_WINDOWS,
+  chartsFromBlockAnd6b,
+  percentRatio,
+  percentRatioDots,
+  rollingPercentRatioTree,
 } from "./series.js";
 import { satsBtcUsd, satsBtcUsdFrom } from "./shared.js";
 
@@ -236,10 +239,9 @@ export function createNetworkSection() {
             }),
           ],
         },
-        rollingWindowsTree({
-          windows: mapWindows(addresses.delta[key].rate, (r) => r.ratio),
+        rollingPercentRatioTree({
+          windows: addresses.delta[key].rate,
           title: `${titlePrefix}Address Growth Rate`,
-          unit: Unit.ratio,
         }),
       ],
     },
@@ -351,12 +353,11 @@ export function createNetworkSection() {
         tree: ROLLING_WINDOWS.map((w) => ({
           name: w.name,
           title: `${groupName} Address Growth Rate (${w.name})`,
-          bottom: types.map((t) =>
-            line({
-              metric: addresses.delta[t.key].rate[w.key].ratio,
+          bottom: types.flatMap((t) =>
+            percentRatio({
+              pattern: addresses.delta[t.key].rate[w.key],
               name: t.name,
               color: t.color,
-              unit: Unit.ratio,
             }),
           ),
         })),
@@ -465,25 +466,89 @@ export function createNetworkSection() {
           {
             name: "Inflation",
             title: "Inflation Rate",
-            bottom: [
-              dots({
-                metric: supply.inflationRate.percent,
-                name: "Rate",
-                unit: Unit.percentage,
+            bottom: percentRatioDots({
+              pattern: supply.inflationRate,
+              name: "Rate",
+            }),
+          },
+          {
+            name: "Market Cap",
+            tree: [
+              {
+                name: "Base",
+                title: "Market Cap",
+                bottom: [
+                  line({
+                    metric: supply.marketCap.usd,
+                    name: "Market Cap",
+                    unit: Unit.usd,
+                  }),
+                ],
+              },
+              rollingWindowsTree({
+                windows: mapWindows(
+                  supply.marketCap.delta.change,
+                  (c) => c.usd,
+                ),
+                title: "Market Cap Change",
+                unit: Unit.usd,
+                series: baseline,
+              }),
+              rollingPercentRatioTree({
+                windows: supply.marketCap.delta.rate,
+                title: "Market Cap Growth Rate",
               }),
             ],
           },
           {
+            name: "Hodled or Lost",
+            title: "Hodled or Lost Supply",
+            bottom: satsBtcUsd({
+              pattern: supply.hodledOrLost,
+              name: "Supply",
+            }),
+          },
+          rollingWindowsTree({
+            windows: supply.marketMinusRealizedCapGrowthRate,
+            title: "Market - Realized Cap Growth Rate",
+            unit: Unit.ratio,
+          }),
+          {
             name: "Unspendable",
             tree: [
               {
-                name: "Sum",
+                name: "Base",
                 title: "Unspendable Supply",
                 bottom: satsBtcUsdFrom({
                   source: supply.burned.unspendable,
                   key: "base",
                   name: "sum",
                 }),
+              },
+              {
+                name: "Rolling",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Unspendable Supply Rolling",
+                    bottom: ROLLING_WINDOWS.flatMap((w) =>
+                      satsBtcUsd({
+                        pattern: supply.burned.unspendable.sum[w.key],
+                        name: w.name,
+                        color: w.color,
+                      }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Unspendable Supply ${w.name}`,
+                    bottom: satsBtcUsd({
+                      pattern: supply.burned.unspendable.sum[w.key],
+                      name: w.name,
+                      color: w.color,
+                    }),
+                  })),
+                ],
               },
               {
                 name: "Cumulative",
@@ -500,14 +565,45 @@ export function createNetworkSection() {
             name: "OP_RETURN",
             tree: [
               {
-                name: "Sum",
+                name: "Base",
                 title: "OP_RETURN Burned",
-                bottom: satsBtcUsd({ pattern: scripts.value.opreturn.base, name: "sum" }),
+                bottom: satsBtcUsd({
+                  pattern: supply.burned.opreturn.base,
+                  name: "sum",
+                }),
+              },
+              {
+                name: "Rolling",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "OP_RETURN Burned Rolling",
+                    bottom: ROLLING_WINDOWS.flatMap((w) =>
+                      satsBtcUsd({
+                        pattern: supply.burned.opreturn.sum[w.key],
+                        name: w.name,
+                        color: w.color,
+                      }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `OP_RETURN Burned ${w.name}`,
+                    bottom: satsBtcUsd({
+                      pattern: supply.burned.opreturn.sum[w.key],
+                      name: w.name,
+                      color: w.color,
+                    }),
+                  })),
+                ],
               },
               {
                 name: "Cumulative",
                 title: "OP_RETURN Burned (Total)",
-                bottom: satsBtcUsd({ pattern: scripts.value.opreturn.cumulative, name: "all-time" }),
+                bottom: satsBtcUsd({
+                  pattern: supply.burned.opreturn.cumulative,
+                  name: "all-time",
+                }),
               },
             ],
           },
@@ -527,12 +623,25 @@ export function createNetworkSection() {
             }),
           },
           {
-            name: "Fee Rate",
-            title: "Transaction Fee Rate",
-            bottom: fromStatsPattern({
-              pattern: transactions.fees.feeRate.block,
-              unit: Unit.feeRate,
-            }),
+            name: "Fees",
+            tree: [
+              {
+                name: "Fee Rate",
+                tree: chartsFromBlockAnd6b({
+                  pattern: transactions.fees.feeRate,
+                  title: "Transaction Fee Rate",
+                  unit: Unit.feeRate,
+                }),
+              },
+              {
+                name: "Fee",
+                tree: chartsFromBlockAnd6b({
+                  pattern: transactions.fees.fee,
+                  title: "Transaction Fee",
+                  unit: Unit.sats,
+                }),
+              },
+            ],
           },
           {
             name: "Volume",
@@ -553,27 +662,92 @@ export function createNetworkSection() {
                 ],
               },
               {
-                name: "Annualized",
-                title: "Annualized Transaction Volume",
+                name: "Sent Rolling",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Sent Volume Rolling",
+                    bottom: ROLLING_WINDOWS.flatMap((w) =>
+                      satsBtcUsd({
+                        pattern: transactions.volume.sentSum.sum[w.key],
+                        name: w.name,
+                        color: w.color,
+                      }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Sent Volume ${w.name}`,
+                    bottom: satsBtcUsd({
+                      pattern: transactions.volume.sentSum.sum[w.key],
+                      name: w.name,
+                      color: w.color,
+                    }),
+                  })),
+                ],
+              },
+              {
+                name: "Sent Cumulative",
+                title: "Sent Volume (Total)",
                 bottom: satsBtcUsd({
-                  pattern: transactions.volume.sentSum.sum._1y,
-                  name: "Annualized",
+                  pattern: transactions.volume.sentSum.cumulative,
+                  name: "all-time",
+                }),
+              },
+              {
+                name: "Received Rolling",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Received Volume Rolling",
+                    bottom: ROLLING_WINDOWS.flatMap((w) =>
+                      satsBtcUsd({
+                        pattern: transactions.volume.receivedSum.sum[w.key],
+                        name: w.name,
+                        color: w.color,
+                      }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Received Volume ${w.name}`,
+                    bottom: satsBtcUsd({
+                      pattern: transactions.volume.receivedSum.sum[w.key],
+                      name: w.name,
+                      color: w.color,
+                    }),
+                  })),
+                ],
+              },
+              {
+                name: "Received Cumulative",
+                title: "Received Volume (Total)",
+                bottom: satsBtcUsd({
+                  pattern: transactions.volume.receivedSum.cumulative,
+                  name: "all-time",
                 }),
               },
             ],
           },
           {
             name: "Size",
-            title: "Transaction Size",
-            bottom: [
-              ...fromStatsPattern({
-                pattern: transactions.size.weight.block,
-                unit: Unit.wu,
-              }),
-              ...fromStatsPattern({
-                pattern: transactions.size.vsize.block,
-                unit: Unit.vb,
-              }),
+            tree: [
+              {
+                name: "Weight",
+                tree: chartsFromBlockAnd6b({
+                  pattern: transactions.size.weight,
+                  title: "Transaction Weight",
+                  unit: Unit.wu,
+                }),
+              },
+              {
+                name: "vSize",
+                tree: chartsFromBlockAnd6b({
+                  pattern: transactions.size.vsize,
+                  title: "Transaction vSize",
+                  unit: Unit.vb,
+                }),
+              },
             ],
           },
           {
@@ -591,6 +765,39 @@ export function createNetworkSection() {
                       unit: Unit.count,
                     }),
                 ),
+              },
+              {
+                name: "Rolling",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Transaction Versions Rolling",
+                    bottom: entries(transactions.versions).flatMap(
+                      ([v, data], i, arr) =>
+                        ROLLING_WINDOWS.map((w) =>
+                          line({
+                            metric: data.sum[w.key],
+                            name: `${v} ${w.name}`,
+                            color: colors.at(i, arr.length),
+                            unit: Unit.count,
+                          }),
+                        ),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Transaction Versions (${w.name})`,
+                    bottom: entries(transactions.versions).map(
+                      ([v, data], i, arr) =>
+                        line({
+                          metric: data.sum[w.key],
+                          name: v,
+                          color: colors.at(i, arr.length),
+                          unit: Unit.count,
+                        }),
+                    ),
+                  })),
+                ],
               },
               {
                 name: "Cumulative",
@@ -815,12 +1022,33 @@ export function createNetworkSection() {
           {
             name: "Fullness",
             title: "Block Fullness",
-            bottom: [
-              dots({
-                metric: blocks.fullness.percent,
-                name: "base",
-                unit: Unit.percentage,
-              }),
+            bottom: percentRatioDots({
+              pattern: blocks.fullness,
+              name: "base",
+            }),
+          },
+          {
+            name: "Difficulty",
+            tree: [
+              {
+                name: "Base",
+                title: "Mining Difficulty",
+                bottom: [
+                  line({
+                    metric: blocks.difficulty.base,
+                    name: "Difficulty",
+                    unit: Unit.count,
+                  }),
+                ],
+              },
+              {
+                name: "Adjustment",
+                title: "Difficulty Adjustment",
+                bottom: percentRatioDots({
+                  pattern: blocks.difficulty.adjustment,
+                  name: "Adjustment",
+                }),
+              },
             ],
           },
         ],
@@ -996,12 +1224,11 @@ export function createNetworkSection() {
                 tree: ROLLING_WINDOWS.map((w) => ({
                   name: w.name,
                   title: `Address Growth Rate by Type (${w.name})`,
-                  bottom: addressTypes.map((t) =>
-                    line({
-                      metric: addresses.delta[t.key].rate[w.key].ratio,
+                  bottom: addressTypes.flatMap((t) =>
+                    percentRatio({
+                      pattern: addresses.delta[t.key].rate[w.key],
                       name: t.name,
                       color: t.color,
-                      unit: Unit.ratio,
                       defaultActive: t.defaultActive,
                     }),
                   ),
@@ -1219,10 +1446,22 @@ export function createNetworkSection() {
                     unit: Unit.percentage,
                   }),
                   line({
+                    metric: scripts.adoption.segwit.ratio,
+                    name: "SegWit",
+                    color: colors.segwit,
+                    unit: Unit.ratio,
+                  }),
+                  line({
                     metric: scripts.adoption.taproot.percent,
                     name: "Taproot",
                     color: taprootAddresses[1].color,
                     unit: Unit.percentage,
+                  }),
+                  line({
+                    metric: scripts.adoption.taproot.ratio,
+                    name: "Taproot",
+                    color: taprootAddresses[1].color,
+                    unit: Unit.ratio,
                   }),
                 ],
               },
@@ -1235,6 +1474,11 @@ export function createNetworkSection() {
                     name: "Adoption",
                     unit: Unit.percentage,
                   }),
+                  line({
+                    metric: scripts.adoption.segwit.ratio,
+                    name: "Adoption",
+                    unit: Unit.ratio,
+                  }),
                 ],
               },
               {
@@ -1245,6 +1489,11 @@ export function createNetworkSection() {
                     metric: scripts.adoption.taproot.percent,
                     name: "Adoption",
                     unit: Unit.percentage,
+                  }),
+                  line({
+                    metric: scripts.adoption.taproot.ratio,
+                    name: "Adoption",
+                    unit: Unit.ratio,
                   }),
                 ],
               },

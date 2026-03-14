@@ -11,7 +11,7 @@ use crate::parallel_import;
 #[derive(Traversable)]
 pub struct BlocksVecs<M: StorageMode = Rw> {
     pub blockhash: M::Stored<BytesVec<Height, BlockHash>>,
-    #[traversable(wrap = "difficulty", rename = "raw")]
+    #[traversable(wrap = "difficulty", rename = "value")]
     pub difficulty: M::Stored<PcoVec<Height, StoredF64>>,
     /// Doesn't guarantee continuity due to possible reorgs and more generally the nature of mining
     #[traversable(wrap = "time")]

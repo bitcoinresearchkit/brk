@@ -16,7 +16,7 @@ impl Vecs {
         Ok(Self {
             identity: EagerVec::forced_import(db, "month3_index", version)?,
             date: EagerVec::forced_import(db, "date", version)?,
-            first_height: EagerVec::forced_import(db, "month3_first_height", version)?,
+            first_height: EagerVec::forced_import(db, "first_height", version)?,
         })
     }
 }

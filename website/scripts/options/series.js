@@ -600,6 +600,86 @@ export function fromSupplyPattern({ pattern, title, color }) {
 }
 
 // ============================================================================
+// Percent + Ratio helpers
+// ============================================================================
+
+/**
+ * Create percent + ratio series from a BpsPercentRatioPattern
+ * @param {Object} args
+ * @param {{ percent: AnyMetricPattern, ratio: AnyMetricPattern }} args.pattern
+ * @param {string} args.name
+ * @param {Color} [args.color]
+ * @param {boolean} [args.defaultActive]
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function percentRatio({ pattern, name, color, defaultActive }) {
+  return [
+    line({ metric: pattern.percent, name, color, defaultActive, unit: Unit.percentage }),
+    line({ metric: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
+  ];
+}
+
+/**
+ * Create percent + ratio dots series from a BpsPercentRatioPattern
+ * @param {Object} args
+ * @param {{ percent: AnyMetricPattern, ratio: AnyMetricPattern }} args.pattern
+ * @param {string} args.name
+ * @param {Color} [args.color]
+ * @param {boolean} [args.defaultActive]
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function percentRatioDots({ pattern, name, color, defaultActive }) {
+  return [
+    dots({ metric: pattern.percent, name, color, defaultActive, unit: Unit.percentage }),
+    dots({ metric: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
+  ];
+}
+
+/**
+ * Create percent + ratio baseline series from a BpsPercentRatioPattern
+ * @param {Object} args
+ * @param {{ percent: AnyMetricPattern, ratio: AnyMetricPattern }} args.pattern
+ * @param {string} args.name
+ * @param {Color} [args.color]
+ * @param {boolean} [args.defaultActive]
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function percentRatioBaseline({ pattern, name, color, defaultActive }) {
+  return [
+    baseline({ metric: pattern.percent, name, color, defaultActive, unit: Unit.percentage }),
+    baseline({ metric: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
+  ];
+}
+
+/**
+ * Create a Rolling folder tree where each window is a BpsPercentRatioPattern (percent + ratio)
+ * @param {Object} args
+ * @param {{ _24h: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, _1w: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, _1m: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, _1y: { percent: AnyMetricPattern, ratio: AnyMetricPattern } }} args.windows
+ * @param {string} args.title
+ * @param {(args: {pattern: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, name: string, color: Color}) => AnyFetchedSeriesBlueprint[]} [args.series]
+ * @returns {PartialOptionsGroup}
+ */
+export function rollingPercentRatioTree({ windows, title, series = percentRatio }) {
+  return {
+    name: "Rolling",
+    tree: [
+      {
+        name: "Compare",
+        title: `${title} Rolling`,
+        bottom: ROLLING_WINDOWS.flatMap((w) =>
+          series({ pattern: windows[w.key], name: w.name, color: w.color }),
+        ),
+      },
+      ...ROLLING_WINDOWS.map((w) => ({
+        name: w.name,
+        title: `${title} ${w.name}`,
+        bottom: series({ pattern: windows[w.key], name: w.name, color: w.color }),
+      })),
+    ],
+  };
+}
+
+// ============================================================================
 // Chart-generating helpers (return PartialOptionsTree for folder structures)
 // ============================================================================
 // These split patterns into separate Sum/Distribution/Cumulative charts
@@ -799,6 +879,29 @@ export const chartsFromSumPerBlock = (args) =>
   chartsFromSum({ ...args, distributionSuffix: "per Block" });
 
 /**
+ * Create Per Block + Per 6 Blocks stats charts from a _6bBlockTxPattern
+ * @param {Object} args
+ * @param {{ block: DistributionStats, _6b: DistributionStats }} args.pattern
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @returns {PartialOptionsTree}
+ */
+export function chartsFromBlockAnd6b({ pattern, title, unit }) {
+  return [
+    {
+      name: "Per Block",
+      title: `${title} per Block`,
+      bottom: fromStatsPattern({ pattern: pattern.block, unit }),
+    },
+    {
+      name: "Per 6 Blocks",
+      title: `${title} per 6 Blocks`,
+      bottom: fromStatsPattern({ pattern: pattern._6b, unit }),
+    },
+  ];
+}
+
+/**
  * Split pattern with rolling sum windows + cumulative into charts
  * @param {Object} args
  * @param {CountPattern<any>} args.pattern
@@ -809,6 +912,11 @@ export const chartsFromSumPerBlock = (args) =>
  */
 export function chartsFromCount({ pattern, title, unit, color }) {
   return [
+    {
+      name: "Base",
+      title,
+      bottom: [{ metric: pattern.base, title: "base", color, unit }],
+    },
     rollingWindowsTree({ windows: pattern.sum, title, unit }),
     {
       name: "Cumulative",
