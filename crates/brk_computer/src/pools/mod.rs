@@ -144,12 +144,14 @@ impl Vecs {
         first_tx_index_cursor.advance(min);
         let mut output_count_cursor = indexes.tx_index.output_count.cursor();
 
+        self.height_to_pool.truncate_if_needed_at(min)?;
+
         indexer
             .stores
             .height_to_coinbase_tag
             .iter()
             .skip(min)
-            .try_for_each(|(height, coinbase_tag)| -> Result<()> {
+            .try_for_each(|(_, coinbase_tag)| -> Result<()> {
                 let tx_index = first_tx_index_cursor.next().unwrap();
                 let out_start = first_txout_index.get(tx_index.to_usize());
 
@@ -179,7 +181,7 @@ impl Vecs {
                     .or_else(|| self.pools.find_from_coinbase_tag(&coinbase_tag))
                     .unwrap_or(unknown);
 
-                self.height_to_pool.truncate_push(height, pool.slug)?;
+                self.height_to_pool.push(pool.slug);
                 Ok(())
             })?;
 

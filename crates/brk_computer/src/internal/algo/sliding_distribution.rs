@@ -107,9 +107,21 @@ where
 
     let starts_batch = window_starts.collect_range_at(skip, end);
 
+    for v in [
+        &mut *average_out,
+        &mut *min_out,
+        &mut *max_out,
+        &mut *p10_out,
+        &mut *p25_out,
+        &mut *median_out,
+        &mut *p75_out,
+        &mut *p90_out,
+    ] {
+        v.truncate_if_needed_at(skip)?;
+    }
+
     for (j, start) in starts_batch.into_iter().enumerate() {
-        let i = skip + j;
-        let v = partial_values[i - range_start];
+        let v = partial_values[skip + j - range_start];
         let start_usize = start.to_usize();
         window.advance(v, start_usize, partial_values, range_start);
 
@@ -125,19 +137,19 @@ where
                 &mut *p75_out,
                 &mut *p90_out,
             ] {
-                v.truncate_push_at(i, zero)?;
+                v.push(zero);
             }
         } else {
-            average_out.truncate_push_at(i, T::from(window.average()))?;
-            min_out.truncate_push_at(i, T::from(window.min()))?;
-            max_out.truncate_push_at(i, T::from(window.max()))?;
+            average_out.push(T::from(window.average()));
+            min_out.push(T::from(window.min()));
+            max_out.push(T::from(window.max()));
             let [p10, p25, p50, p75, p90] =
                 window.percentiles(&[0.10, 0.25, 0.50, 0.75, 0.90]);
-            p10_out.truncate_push_at(i, T::from(p10))?;
-            p25_out.truncate_push_at(i, T::from(p25))?;
-            median_out.truncate_push_at(i, T::from(p50))?;
-            p75_out.truncate_push_at(i, T::from(p75))?;
-            p90_out.truncate_push_at(i, T::from(p90))?;
+            p10_out.push(T::from(p10));
+            p25_out.push(T::from(p25));
+            median_out.push(T::from(p50));
+            p75_out.push(T::from(p75));
+            p90_out.push(T::from(p90));
         }
 
         if average_out.batch_limit_reached() {

@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Height, Indexes, StoredF32, StoredF64, Version};
+use brk_types::{Bitcoin, Indexes, StoredF32, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, Exit, ReadableCloneableVec, Rw, StorageMode};
 
@@ -45,12 +45,12 @@ impl ActivityFull {
         self.inner.min_len()
     }
 
-    pub(crate) fn full_truncate_push(
+    #[inline(always)]
+    pub(crate) fn full_push_state(
         &mut self,
-        height: Height,
         state: &CohortState<impl RealizedOps, impl CostBasisOps>,
-    ) -> Result<()> {
-        self.inner.truncate_push(height, state)
+    ) {
+        self.inner.push_state(state);
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

@@ -140,22 +140,12 @@ impl ActivityCountVecs {
         Ok(())
     }
 
-    pub(crate) fn truncate_push_height(
-        &mut self,
-        height: Height,
-        counts: &BlockActivityCounts,
-    ) -> Result<()> {
-        self.reactivated
-            .height
-            .truncate_push(height, counts.reactivated.into())?;
-        self.sending
-            .height
-            .truncate_push(height, counts.sending.into())?;
-        self.receiving
-            .height
-            .truncate_push(height, counts.receiving.into())?;
-        self.both.height.truncate_push(height, counts.both.into())?;
-        Ok(())
+    #[inline(always)]
+    pub(crate) fn push_height(&mut self, counts: &BlockActivityCounts) {
+        self.reactivated.height.push(counts.reactivated.into());
+        self.sending.height.push(counts.sending.into());
+        self.receiving.height.push(counts.receiving.into());
+        self.both.height.push(counts.both.into());
     }
 
     pub(crate) fn compute_rest(
@@ -242,15 +232,11 @@ impl AddressTypeToActivityCountVecs {
         Ok(())
     }
 
-    pub(crate) fn truncate_push_height(
-        &mut self,
-        height: Height,
-        counts: &AddressTypeToActivityCounts,
-    ) -> Result<()> {
+    #[inline(always)]
+    pub(crate) fn push_height(&mut self, counts: &AddressTypeToActivityCounts) {
         for (vecs, c) in self.0.values_mut().zip(counts.0.values()) {
-            vecs.truncate_push_height(height, c)?;
+            vecs.push_height(c);
         }
-        Ok(())
     }
 }
 
@@ -308,14 +294,10 @@ impl AddressActivityVecs {
         Ok(())
     }
 
-    pub(crate) fn truncate_push_height(
-        &mut self,
-        height: Height,
-        counts: &AddressTypeToActivityCounts,
-    ) -> Result<()> {
+    #[inline(always)]
+    pub(crate) fn push_height(&mut self, counts: &AddressTypeToActivityCounts) {
         let totals = counts.totals();
-        self.all.truncate_push_height(height, &totals)?;
-        self.by_address_type.truncate_push_height(height, counts)?;
-        Ok(())
+        self.all.push_height(&totals);
+        self.by_address_type.push_height(counts);
     }
 }

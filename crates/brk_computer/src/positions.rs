@@ -8,7 +8,7 @@ use brk_types::{BlkPosition, Height, Indexes, TxIndex, Version};
 use tracing::info;
 use vecdb::{
     AnyStoredVec, AnyVec, Database, Exit, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode,
-    VecIndex, WritableVec,
+    WritableVec,
 };
 
 use crate::internal::db_utils::{finalize_db, open_db};
@@ -102,10 +102,15 @@ impl Vecs {
             return Ok(());
         };
 
-        // Cursor avoids per-height PcoVec page decompression.
-        // Heights are sequential, so the cursor only advances forward.
-        let mut first_tx_index_cursor = indexer.vecs.transactions.first_tx_index.cursor();
-        first_tx_index_cursor.advance(min_height.to_usize());
+        let first_tx_at_min_height = indexer
+            .vecs
+            .transactions
+            .first_tx_index
+            .collect_one(min_height)
+            .unwrap();
+
+        self.block.truncate_if_needed(min_height)?;
+        self.tx.truncate_if_needed(first_tx_at_min_height)?;
 
         parser
             .read(
@@ -114,23 +119,13 @@ impl Vecs {
             )
             .iter()
             .try_for_each(|block| -> Result<()> {
-                let height = block.height();
+                self.block.push(block.metadata().position());
 
-                self.block
-                    .truncate_push(height, block.metadata().position())?;
+                block.tx_metadata().iter().for_each(|metadata| {
+                    self.tx.push(metadata.position());
+                });
 
-                let tx_index = first_tx_index_cursor.next().unwrap();
-
-                block.tx_metadata().iter().enumerate().try_for_each(
-                    |(index, metadata)| -> Result<()> {
-                        let tx_index = tx_index + index;
-                        self.tx
-                            .truncate_push(tx_index, metadata.position())?;
-                        Ok(())
-                    },
-                )?;
-
-                if *height % 1_000 == 0 {
+                if *block.height() % 1_000 == 0 {
                     let _lock = exit.lock();
                     self.block.flush()?;
                     self.tx.flush()?;

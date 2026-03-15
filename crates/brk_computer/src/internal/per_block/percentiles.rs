@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::{Traversable, TreeNode};
-use brk_types::{Cents, Height, Version};
+use brk_types::{Cents, Version};
 use vecdb::{AnyExportableVec, Database, ReadOnlyClone, Ro, Rw, StorageMode, WritableVec};
 
 use crate::indexes;
@@ -38,16 +38,12 @@ impl PercentilesVecs {
         Ok(Self { vecs })
     }
 
-    /// Push percentile prices at this height (in cents).
-    pub(crate) fn truncate_push(
-        &mut self,
-        height: Height,
-        percentile_prices: &[Cents; PERCENTILES_LEN],
-    ) -> Result<()> {
+    /// Push percentile prices (in cents).
+    #[inline(always)]
+    pub(crate) fn push(&mut self, percentile_prices: &[Cents; PERCENTILES_LEN]) {
         for (i, v) in self.vecs.iter_mut().enumerate() {
-            v.cents.height.truncate_push(height, percentile_prices[i])?;
+            v.cents.height.push(percentile_prices[i]);
         }
-        Ok(())
     }
 
     /// Validate computed versions or reset if mismatched.

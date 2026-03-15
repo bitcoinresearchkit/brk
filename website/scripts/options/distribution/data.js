@@ -33,6 +33,9 @@ export function buildCohortData() {
     AMOUNT_RANGE_NAMES,
     SPENDABLE_TYPE_NAMES,
     CLASS_NAMES,
+    PROFITABILITY_RANGE_NAMES,
+    PROFIT_NAMES,
+    LOSS_NAMES,
   } = brk;
 
   const cohortAll = {
@@ -191,6 +194,28 @@ export function buildCohortData() {
       tree: utxoCohorts.class[key],
     }));
 
+  const { range, profit, loss } = utxoCohorts.profitability;
+
+  const profitabilityRange = entries(PROFITABILITY_RANGE_NAMES).map(
+    ([key, names], i, arr) => ({
+      name: names.short,
+      color: colors.at(i, arr.length),
+      pattern: range[key],
+    }),
+  );
+
+  const profitabilityProfit = entries(PROFIT_NAMES).map(([key, names], i, arr) => ({
+    name: names.short,
+    color: colors.at(i, arr.length),
+    pattern: profit[key],
+  }));
+
+  const profitabilityLoss = entries(LOSS_NAMES).map(([key, names], i, arr) => ({
+    name: names.short,
+    color: colors.at(i, arr.length),
+    pattern: loss[key],
+  }));
+
   return {
     cohortAll,
     termShort,
@@ -208,5 +233,8 @@ export function buildCohortData() {
     typeAddressable,
     typeOther,
     class: class_,
+    profitabilityRange,
+    profitabilityProfit,
+    profitabilityLoss,
   };
 }

@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Cents, Height, Version};
+use brk_types::{BasisPoints16, Cents, Version};
 use vecdb::{AnyStoredVec, AnyVec, Rw, StorageMode, WritableVec};
 
 use crate::internal::{PerBlock, PercentPerBlock, PercentilesVecs, Price, PERCENTILES_LEN};
@@ -53,34 +53,25 @@ impl CostBasis {
             .min(self.supply_density.bps.height.len())
     }
 
-    pub(crate) fn truncate_push_minmax(
-        &mut self,
-        height: Height,
-        min_price: Cents,
-        max_price: Cents,
-    ) -> Result<()> {
-        self.min.cents.height.truncate_push(height, min_price)?;
-        self.max.cents.height.truncate_push(height, max_price)?;
-        Ok(())
+    #[inline(always)]
+    pub(crate) fn push_minmax(&mut self, min_price: Cents, max_price: Cents) {
+        self.min.cents.height.push(min_price);
+        self.max.cents.height.push(max_price);
     }
 
-    pub(crate) fn truncate_push_percentiles(
+    #[inline(always)]
+    pub(crate) fn push_percentiles(
         &mut self,
-        height: Height,
         sat_prices: &[Cents; PERCENTILES_LEN],
         usd_prices: &[Cents; PERCENTILES_LEN],
-    ) -> Result<()> {
-        self.percentiles.truncate_push(height, sat_prices)?;
-        self.invested_capital.truncate_push(height, usd_prices)?;
-        Ok(())
+    ) {
+        self.percentiles.push(sat_prices);
+        self.invested_capital.push(usd_prices);
     }
 
-    pub(crate) fn truncate_push_density(
-        &mut self,
-        height: Height,
-        density_bps: BasisPoints16,
-    ) -> Result<()> {
-        Ok(self.supply_density.bps.height.truncate_push(height, density_bps)?)
+    #[inline(always)]
+    pub(crate) fn push_density(&mut self, density_bps: BasisPoints16) {
+        self.supply_density.bps.height.push(density_bps);
     }
 
     pub(crate) fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {

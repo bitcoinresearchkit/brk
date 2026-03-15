@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPointsSigned32, Height, Indexes, StoredI64, StoredU64, Version};
+use brk_types::{BasisPointsSigned32, Indexes, StoredI64, StoredU64, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
@@ -35,11 +35,11 @@ impl OutputsBase {
         self.unspent_count.height.len()
     }
 
-    pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState<impl RealizedOps, impl CostBasisOps>) -> Result<()> {
+    #[inline(always)]
+    pub(crate) fn push_state(&mut self, state: &CohortState<impl RealizedOps, impl CostBasisOps>) {
         self.unspent_count
             .height
-            .truncate_push(height, StoredU64::from(state.supply.utxo_count))?;
-        Ok(())
+            .push(StoredU64::from(state.supply.utxo_count));
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

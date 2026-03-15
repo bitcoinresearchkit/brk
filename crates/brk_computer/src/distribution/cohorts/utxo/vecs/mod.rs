@@ -166,29 +166,21 @@ impl<M: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<M> {
         self.metrics.validate_computed_versions(base_version)
     }
 
-    fn truncate_push(&mut self, height: Height) -> Result<()> {
+    fn push_state(&mut self, height: Height) {
         if self.state_starting_height.is_some_and(|h| h > height) {
-            return Ok(());
+            return;
         }
 
         if let Some(state) = self.state.as_ref() {
-            self.metrics.truncate_push(height, state)?;
+            self.metrics.push_state(state);
         }
-
-        Ok(())
     }
 
-    fn compute_then_truncate_push_unrealized_states(
-        &mut self,
-        height: Height,
-        height_price: Cents,
-        _is_day_boundary: bool,
-    ) -> Result<()> {
+    fn push_unrealized_state(&mut self, height_price: Cents) {
         if let Some(state) = self.state.as_mut() {
             self.metrics
-                .compute_and_push_unrealized(height, height_price, state)?;
+                .compute_and_push_unrealized(height_price, state);
         }
-        Ok(())
     }
 
     fn compute_rest_part1(

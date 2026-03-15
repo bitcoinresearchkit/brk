@@ -20,16 +20,12 @@ pub trait DynCohortVecs: Send + Sync {
     /// Validate that computed vectors have correct versions.
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()>;
 
-    /// Push state to height-indexed vectors (truncating if needed).
-    fn truncate_push(&mut self, height: Height) -> Result<()>;
+    /// Push state to height-indexed vectors.
+    /// Height is used for the state_starting_height guard check.
+    fn push_state(&mut self, height: Height);
 
-    /// Compute and push unrealized profit/loss states and percentiles.
-    fn compute_then_truncate_push_unrealized_states(
-        &mut self,
-        height: Height,
-        height_price: Cents,
-        is_day_boundary: bool,
-    ) -> Result<()>;
+    /// Compute and push unrealized profit/loss states.
+    fn push_unrealized_state(&mut self, height_price: Cents);
 
     /// First phase of post-processing computations.
     fn compute_rest_part1(

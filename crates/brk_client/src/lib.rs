@@ -2161,10 +2161,10 @@ impl _1m1w1y24hPattern3 {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            _1m: CentsUsdPattern::new(client.clone(), _m(&acc, "1m_change")),
-            _1w: CentsUsdPattern::new(client.clone(), _m(&acc, "1w_change")),
-            _1y: CentsUsdPattern::new(client.clone(), _m(&acc, "1y_change")),
-            _24h: CentsUsdPattern::new(client.clone(), _m(&acc, "24h_change")),
+            _1m: CentsUsdPattern::new(client.clone(), _m(&acc, "1m")),
+            _1w: CentsUsdPattern::new(client.clone(), _m(&acc, "1w")),
+            _1y: CentsUsdPattern::new(client.clone(), _m(&acc, "1y")),
+            _24h: CentsUsdPattern::new(client.clone(), _m(&acc, "24h")),
         }
     }
 }
@@ -2965,8 +2965,8 @@ impl CentsUsdPattern {
     /// Create a new pattern node with accumulated metric name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            cents: MetricPattern1::new(client.clone(), acc.clone()),
-            usd: MetricPattern1::new(client.clone(), _m(&acc, "usd")),
+            cents: MetricPattern1::new(client.clone(), _m(&acc, "cents")),
+            usd: MetricPattern1::new(client.clone(), acc.clone()),
         }
     }
 }

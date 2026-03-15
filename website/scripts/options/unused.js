@@ -26,6 +26,14 @@ function walkMetrics(node, map, path) {
     for (const [key, value] of Object.entries(node)) {
       const kn = key.toLowerCase();
       if (
+        key === "lookback" ||
+        key === "cumulativeMarketCap" ||
+        key === "sd24h" ||
+        key === "spot" ||
+        key === "ohlc" ||
+        key === "state" ||
+        key === "emaSlow" ||
+        key === "emaFast" ||
         key.endsWith("Raw") ||
         key.endsWith("Cents") ||
         key.endsWith("State") ||

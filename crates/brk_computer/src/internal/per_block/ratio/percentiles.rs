@@ -46,12 +46,7 @@ impl RatioPerBlockPercentiles {
 
         macro_rules! import_ratio {
             ($suffix:expr) => {
-                RatioPerBlock::forced_import_raw(
-                    db,
-                    &format!("{name}_{}", $suffix),
-                    v,
-                    indexes,
-                )?
+                RatioPerBlock::forced_import_raw(db, &format!("{name}_{}", $suffix), v, indexes)?
             };
         }
 
@@ -126,12 +121,15 @@ impl RatioPerBlockPercentiles {
             const PCTS: [f64; 6] = [0.01, 0.02, 0.05, 0.95, 0.98, 0.99];
             let mut out = [0u32; 6];
 
-            for (offset, &ratio) in new_ratios.iter().enumerate() {
+            for vec in pct_vecs.iter_mut() {
+                vec.truncate_if_needed_at(start)?;
+            }
+
+            for &ratio in new_ratios.iter() {
                 self.expanding_pct.add(*ratio);
                 self.expanding_pct.quantiles(&PCTS, &mut out);
-                let idx = start + offset;
                 for (vec, &val) in pct_vecs.iter_mut().zip(out.iter()) {
-                    vec.truncate_push_at(idx, BasisPoints32::from(val))?;
+                    vec.push(BasisPoints32::from(val));
                 }
             }
         }

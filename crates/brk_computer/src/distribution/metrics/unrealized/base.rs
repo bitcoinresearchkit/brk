@@ -55,31 +55,18 @@ impl UnrealizedBase {
             .min(self.investor_cap_in_loss_raw.len())
     }
 
-    pub(crate) fn truncate_push(
-        &mut self,
-        height: Height,
-        height_state: &UnrealizedState,
-    ) -> Result<()> {
-        self.core.truncate_push(height, height_state)?;
+    #[inline(always)]
+    pub(crate) fn push_state(&mut self, state: &UnrealizedState) {
+        self.core.push_state(state);
 
-        self.invested_capital_in_profit_raw.truncate_push(
-            height,
-            CentsSats::new(height_state.invested_capital_in_profit_raw),
-        )?;
-        self.invested_capital_in_loss_raw.truncate_push(
-            height,
-            CentsSats::new(height_state.invested_capital_in_loss_raw),
-        )?;
-        self.investor_cap_in_profit_raw.truncate_push(
-            height,
-            CentsSquaredSats::new(height_state.investor_cap_in_profit_raw),
-        )?;
-        self.investor_cap_in_loss_raw.truncate_push(
-            height,
-            CentsSquaredSats::new(height_state.investor_cap_in_loss_raw),
-        )?;
-
-        Ok(())
+        self.invested_capital_in_profit_raw
+            .push(CentsSats::new(state.invested_capital_in_profit_raw));
+        self.invested_capital_in_loss_raw
+            .push(CentsSats::new(state.invested_capital_in_loss_raw));
+        self.investor_cap_in_profit_raw
+            .push(CentsSquaredSats::new(state.investor_cap_in_profit_raw));
+        self.investor_cap_in_loss_raw
+            .push(CentsSquaredSats::new(state.investor_cap_in_loss_raw));
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
@@ -134,8 +121,16 @@ impl UnrealizedBase {
             .map(|o| o.investor_cap_in_loss_raw.collect_range_at(start, end))
             .collect();
 
+        self.invested_capital_in_profit_raw
+            .truncate_if_needed_at(start)?;
+        self.invested_capital_in_loss_raw
+            .truncate_if_needed_at(start)?;
+        self.investor_cap_in_profit_raw
+            .truncate_if_needed_at(start)?;
+        self.investor_cap_in_loss_raw
+            .truncate_if_needed_at(start)?;
+
         for i in start..end {
-            let height = Height::from(i);
             let local_i = i - start;
 
             let mut sum_invested_profit = CentsSats::ZERO;
@@ -151,13 +146,13 @@ impl UnrealizedBase {
             }
 
             self.invested_capital_in_profit_raw
-                .truncate_push(height, sum_invested_profit)?;
+                .push(sum_invested_profit);
             self.invested_capital_in_loss_raw
-                .truncate_push(height, sum_invested_loss)?;
+                .push(sum_invested_loss);
             self.investor_cap_in_profit_raw
-                .truncate_push(height, sum_investor_profit)?;
+                .push(sum_investor_profit);
             self.investor_cap_in_loss_raw
-                .truncate_push(height, sum_investor_loss)?;
+                .push(sum_investor_loss);
         }
 
         Ok(())

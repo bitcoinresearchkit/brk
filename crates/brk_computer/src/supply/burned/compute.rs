@@ -37,6 +37,7 @@ impl Vecs {
                         let start = starting_height.to_usize();
                         let end = target_height.to_usize() + 1;
                         let unclaimed_data = unclaimed_height.collect_range_at(start, end);
+                        height_vec.truncate_if_needed(starting_height)?;
                         op_return_height.fold_range_at(start, end, start, |idx, op_return| {
                             let unclaimed = unclaimed_data[idx - start];
                             let genesis = if idx == 0 {
@@ -45,9 +46,7 @@ impl Vecs {
                                 Sats::ZERO
                             };
                             let unspendable = genesis + op_return + unclaimed;
-                            height_vec
-                                .truncate_push(Height::from(idx), unspendable)
-                                .unwrap();
+                            height_vec.push(unspendable);
                             idx + 1
                         });
                     }

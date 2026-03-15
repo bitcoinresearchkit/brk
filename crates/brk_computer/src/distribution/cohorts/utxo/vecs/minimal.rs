@@ -31,28 +31,19 @@ impl DynCohortVecs for UTXOCohortVecs<MinimalCohortMetrics> {
         Ok(())
     }
 
-    fn truncate_push(&mut self, height: Height) -> Result<()> {
+    fn push_state(&mut self, height: Height) {
         if self.state_starting_height.is_some_and(|h| h > height) {
-            return Ok(());
+            return;
         }
 
         if let Some(state) = self.state.as_ref() {
-            self.metrics.supply.truncate_push(height, state)?;
-            self.metrics.outputs.truncate_push(height, state)?;
-            self.metrics.realized.truncate_push(height, state)?;
+            self.metrics.supply.push_state(state);
+            self.metrics.outputs.push_state(state);
+            self.metrics.realized.push_state(state);
         }
-
-        Ok(())
     }
 
-    fn compute_then_truncate_push_unrealized_states(
-        &mut self,
-        _height: Height,
-        _height_price: Cents,
-        _is_day_boundary: bool,
-    ) -> Result<()> {
-        Ok(())
-    }
+    fn push_unrealized_state(&mut self, _height_price: Cents) {}
 
     fn compute_rest_part1(
         &mut self,

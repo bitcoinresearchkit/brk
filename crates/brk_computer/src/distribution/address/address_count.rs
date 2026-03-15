@@ -137,19 +137,14 @@ impl AddressTypeToAddressCountVecs {
             .map(|v| &mut v.height as &mut dyn AnyStoredVec)
     }
 
-    pub(crate) fn truncate_push_height(
-        &mut self,
-        height: Height,
-        address_counts: &AddressTypeToAddressCount,
-    ) -> Result<()> {
+    #[inline(always)]
+    pub(crate) fn push_height(&mut self, address_counts: &AddressTypeToAddressCount) {
         for (vecs, &count) in self.0.values_mut().zip(address_counts.values()) {
-            vecs.height.truncate_push(height, count.into())?;
+            vecs.height.push(count.into());
         }
-        Ok(())
     }
 
     pub(crate) fn reset_height(&mut self) -> Result<()> {
-        use vecdb::WritableVec;
         for v in self.0.values_mut() {
             v.height.reset()?;
         }
@@ -198,16 +193,10 @@ impl AddressCountsVecs {
         Ok(())
     }
 
-    pub(crate) fn truncate_push_height(
-        &mut self,
-        height: Height,
-        total: u64,
-        address_counts: &AddressTypeToAddressCount,
-    ) -> Result<()> {
-        self.all.height.truncate_push(height, total.into())?;
-        self.by_address_type
-            .truncate_push_height(height, address_counts)?;
-        Ok(())
+    #[inline(always)]
+    pub(crate) fn push_height(&mut self, total: u64, address_counts: &AddressTypeToAddressCount) {
+        self.all.height.push(total.into());
+        self.by_address_type.push_height(address_counts);
     }
 
     pub(crate) fn compute_rest(

@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Height, Indexes, Sats, StoredF64, Version};
+use brk_types::{Bitcoin, Indexes, Sats, StoredF64, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
@@ -40,27 +40,25 @@ impl ActivityCore {
             .min(self.sent_in_loss.base.sats.height.len())
     }
 
-    pub(crate) fn truncate_push(
+    #[inline(always)]
+    pub(crate) fn push_state(
         &mut self,
-        height: Height,
         state: &CohortState<impl RealizedOps, impl CostBasisOps>,
-    ) -> Result<()> {
-        self.sent.base.height.truncate_push(height, state.sent)?;
-        self.coindays_destroyed.base.height.truncate_push(
-            height,
+    ) {
+        self.sent.base.height.push(state.sent);
+        self.coindays_destroyed.base.height.push(
             StoredF64::from(Bitcoin::from(state.satdays_destroyed)),
-        )?;
+        );
         self.sent_in_profit
             .base
             .sats
             .height
-            .truncate_push(height, state.realized.sent_in_profit())?;
+            .push(state.realized.sent_in_profit());
         self.sent_in_loss
             .base
             .sats
             .height
-            .truncate_push(height, state.realized.sent_in_loss())?;
-        Ok(())
+            .push(state.realized.sent_in_loss());
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

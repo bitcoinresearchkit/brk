@@ -80,21 +80,21 @@ impl RealizedMinimal {
             .min(self.sopr.value_destroyed.base.height.len())
     }
 
-    pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState<impl RealizedOps, impl CostBasisOps>) -> Result<()> {
-        self.cap.cents.height.truncate_push(height, state.realized.cap())?;
-        self.profit.base.cents.height.truncate_push(height, state.realized.profit())?;
-        self.loss.base.cents.height.truncate_push(height, state.realized.loss())?;
+    #[inline(always)]
+    pub(crate) fn push_state(&mut self, state: &CohortState<impl RealizedOps, impl CostBasisOps>) {
+        self.cap.cents.height.push(state.realized.cap());
+        self.profit.base.cents.height.push(state.realized.profit());
+        self.loss.base.cents.height.push(state.realized.loss());
         self.sopr
             .value_created
             .base
             .height
-            .truncate_push(height, state.realized.value_created())?;
+            .push(state.realized.value_created());
         self.sopr
             .value_destroyed
             .base
             .height
-            .truncate_push(height, state.realized.value_destroyed())?;
-        Ok(())
+            .push(state.realized.value_destroyed());
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

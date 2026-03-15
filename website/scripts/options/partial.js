@@ -19,8 +19,8 @@ import {
   createGroupedCohortFolderBasicWithoutMarketCap,
   createGroupedCohortFolderAddress,
   createGroupedAddressCohortFolder,
+  createUtxoProfitabilitySection,
 } from "./distribution/index.js";
-import { createUtxoProfitabilitySection } from "./distribution/utxo-profitability.js";
 import { createMarketSection } from "./market.js";
 import { createNetworkSection } from "./network.js";
 import { createMiningSection } from "./mining.js";
@@ -53,6 +53,9 @@ export function createPartialOptions() {
     typeAddressable,
     typeOther,
     class: class_,
+    profitabilityRange,
+    profitabilityProfit,
+    profitabilityLoss,
   } = buildCohortData();
 
   return [
@@ -92,7 +95,7 @@ export function createPartialOptions() {
 
             // Ages cohorts
             {
-              name: "UTXO Ages",
+              name: "UTXO Age",
               tree: [
                 // Younger Than (< X old)
                 {
@@ -138,7 +141,7 @@ export function createPartialOptions() {
 
             // Sizes cohorts (UTXO size)
             {
-              name: "UTXO Sizes",
+              name: "UTXO Size",
               tree: [
                 // Less Than (< X sats)
                 {
@@ -184,7 +187,7 @@ export function createPartialOptions() {
 
             // Balances cohorts (Address balance)
             {
-              name: "Address Balances",
+              name: "Address Balance",
               tree: [
                 // Less Than (< X sats)
                 {
@@ -230,11 +233,11 @@ export function createPartialOptions() {
 
             // Script Types - addressable types have addrCount, others don't
             {
-              name: "Script Types",
+              name: "Script Type",
               tree: [
                 createGroupedCohortFolderAddress({
                   name: "Compare",
-                  title: "Script Types",
+                  title: "Script Type",
                   list: typeAddressable,
                   all: cohortAll,
                 }),
@@ -245,11 +248,11 @@ export function createPartialOptions() {
 
             // Epochs
             {
-              name: "Epochs",
+              name: "Epoch",
               tree: [
                 createGroupedCohortFolderWithAdjusted({
                   name: "Compare",
-                  title: "Epochs",
+                  title: "Epoch",
                   list: epoch,
                   all: cohortAll,
                 }),
@@ -257,13 +260,13 @@ export function createPartialOptions() {
               ],
             },
 
-            // Years
+            // Classes
             {
-              name: "Years",
+              name: "Class",
               tree: [
                 createGroupedCohortFolderWithAdjusted({
                   name: "Compare",
-                  title: "Years",
+                  title: "Class",
                   list: class_,
                   all: cohortAll,
                 }),
@@ -272,7 +275,11 @@ export function createPartialOptions() {
             },
 
             // UTXO Profitability bands
-            createUtxoProfitabilitySection(),
+            createUtxoProfitabilitySection({
+              range: profitabilityRange,
+              profit: profitabilityProfit,
+              loss: profitabilityLoss,
+            }),
           ],
         },
 

@@ -85,7 +85,7 @@ pub use unrealized::{
 
 use brk_cohort::Filter;
 use brk_error::Result;
-use brk_types::{Cents, Height, Indexes, Version};
+use brk_types::{Cents, Indexes, Version};
 use vecdb::{AnyStoredVec, Exit, StorageMode};
 
 use crate::{
@@ -183,17 +183,13 @@ pub trait CohortMetricsBase:
     /// Apply pending state, compute and push unrealized state.
     fn compute_and_push_unrealized(
         &mut self,
-        height: Height,
         height_price: Cents,
         state: &mut CohortState<RealizedState, CostBasisData<WithCapital>>,
-    ) -> Result<()> {
+    ) {
         state.apply_pending();
         let unrealized_state = state.compute_unrealized_state(height_price);
-        self.unrealized_mut()
-            .truncate_push(height, &unrealized_state)?;
-        self.supply_mut()
-            .truncate_push_profitability(height, &unrealized_state)?;
-        Ok(())
+        self.unrealized_mut().push_state(&unrealized_state);
+        self.supply_mut().push_profitability(&unrealized_state);
     }
 
     fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec>;
@@ -207,16 +203,14 @@ pub trait CohortMetricsBase:
             .min(self.unrealized().min_stateful_len())
     }
 
-    fn truncate_push(
+    fn push_state(
         &mut self,
-        height: Height,
         state: &CohortState<RealizedState, CostBasisData<WithCapital>>,
-    ) -> Result<()> {
-        self.supply_mut().truncate_push(height, state)?;
-        self.outputs_mut().truncate_push(height, state)?;
-        self.activity_mut().truncate_push(height, state)?;
-        self.realized_mut().truncate_push(height, state)?;
-        Ok(())
+    ) {
+        self.supply_mut().push_state(state);
+        self.outputs_mut().push_state(state);
+        self.activity_mut().push_state(state);
+        self.realized_mut().push_state(state);
     }
 
     /// First phase of computed metrics (indexes from height).

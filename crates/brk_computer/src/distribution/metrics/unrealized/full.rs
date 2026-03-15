@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, CentsSats, CentsSigned, Height, Indexes, Version};
+use brk_types::{Cents, CentsSats, CentsSigned, Indexes, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, Exit, Rw, StorageMode, WritableVec};
 
@@ -58,21 +58,17 @@ impl UnrealizedFull {
         })
     }
 
-    pub(crate) fn truncate_push_all(
-        &mut self,
-        height: Height,
-        state: &UnrealizedState,
-    ) -> Result<()> {
-        self.inner.truncate_push(height, state)?;
+    #[inline(always)]
+    pub(crate) fn push_state_all(&mut self, state: &UnrealizedState) {
+        self.inner.push_state(state);
         self.invested_capital_in_profit
             .cents
             .height
-            .truncate_push(height, state.invested_capital_in_profit)?;
+            .push(state.invested_capital_in_profit);
         self.invested_capital_in_loss
             .cents
             .height
-            .truncate_push(height, state.invested_capital_in_loss)?;
-        Ok(())
+            .push(state.invested_capital_in_loss);
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

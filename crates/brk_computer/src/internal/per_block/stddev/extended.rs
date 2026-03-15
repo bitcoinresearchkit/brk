@@ -163,11 +163,11 @@ impl StdDevPerBlockExtended {
             0.5, 1.0, 1.5, 2.0, 2.5, 3.0, -0.5, -1.0, -1.5, -2.0, -2.5, -3.0,
         ];
         for (vec, mult) in self.mut_band_height_vecs().zip(MULTIPLIERS) {
+            vec.truncate_if_needed_at(start)?;
             for (offset, _) in source_data.iter().enumerate() {
-                let index = start + offset;
                 let average = sma_data[offset];
                 let sd = sd_data[offset];
-                vec.truncate_push_at(index, average + StoredF32::from(mult * *sd))?;
+                vec.push(average + StoredF32::from(mult * *sd));
             }
         }
 

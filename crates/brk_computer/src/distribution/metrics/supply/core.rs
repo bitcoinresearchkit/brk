@@ -43,20 +43,10 @@ impl SupplyCore {
             .min(self.in_loss.sats.height.len())
     }
 
-    pub(crate) fn truncate_push_profitability(
-        &mut self,
-        height: Height,
-        state: &UnrealizedState,
-    ) -> Result<()> {
-        self.in_profit
-            .sats
-            .height
-            .truncate_push(height, state.supply_in_profit)?;
-        self.in_loss
-            .sats
-            .height
-            .truncate_push(height, state.supply_in_loss)?;
-        Ok(())
+    #[inline(always)]
+    pub(crate) fn push_profitability(&mut self, state: &UnrealizedState) {
+        self.in_profit.sats.height.push(state.supply_in_profit);
+        self.in_loss.sats.height.push(state.supply_in_loss);
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

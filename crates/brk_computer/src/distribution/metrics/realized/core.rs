@@ -73,9 +73,9 @@ impl RealizedCore {
         self.minimal.min_stateful_len()
     }
 
-    pub(crate) fn truncate_push(&mut self, height: Height, state: &CohortState<impl RealizedOps, impl CostBasisOps>) -> Result<()> {
-        self.minimal.truncate_push(height, state)?;
-        Ok(())
+    #[inline(always)]
+    pub(crate) fn push_state(&mut self, state: &CohortState<impl RealizedOps, impl CostBasisOps>) {
+        self.minimal.push_state(state);
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

@@ -5,7 +5,7 @@ pub use self::core::ActivityCore;
 pub use full::ActivityFull;
 
 use brk_error::Result;
-use brk_types::{Height, Indexes, Version};
+use brk_types::{Indexes, Version};
 use vecdb::Exit;
 
 use crate::distribution::state::{CohortState, CostBasisOps, RealizedOps};
@@ -14,11 +14,10 @@ pub trait ActivityLike: Send + Sync {
     fn as_core(&self) -> &ActivityCore;
     fn as_core_mut(&mut self) -> &mut ActivityCore;
     fn min_len(&self) -> usize;
-    fn truncate_push<R: RealizedOps>(
+    fn push_state<R: RealizedOps>(
         &mut self,
-        height: Height,
         state: &CohortState<R, impl CostBasisOps>,
-    ) -> Result<()>;
+    );
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()>;
     fn compute_from_stateful(
         &mut self,
@@ -37,8 +36,8 @@ impl ActivityLike for ActivityCore {
     fn as_core(&self) -> &ActivityCore { self }
     fn as_core_mut(&mut self) -> &mut ActivityCore { self }
     fn min_len(&self) -> usize { self.min_len() }
-    fn truncate_push<R: RealizedOps>(&mut self, height: Height, state: &CohortState<R, impl CostBasisOps>) -> Result<()> {
-        self.truncate_push(height, state)
+    fn push_state<R: RealizedOps>(&mut self, state: &CohortState<R, impl CostBasisOps>) {
+        self.push_state(state);
     }
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.validate_computed_versions(base_version)
@@ -55,8 +54,8 @@ impl ActivityLike for ActivityFull {
     fn as_core(&self) -> &ActivityCore { &self.inner }
     fn as_core_mut(&mut self) -> &mut ActivityCore { &mut self.inner }
     fn min_len(&self) -> usize { self.full_min_len() }
-    fn truncate_push<R: RealizedOps>(&mut self, height: Height, state: &CohortState<R, impl CostBasisOps>) -> Result<()> {
-        self.full_truncate_push(height, state)
+    fn push_state<R: RealizedOps>(&mut self, state: &CohortState<R, impl CostBasisOps>) {
+        self.full_push_state(state);
     }
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.inner.validate_computed_versions(base_version)

@@ -14,7 +14,7 @@
  */
 
 import { colors } from "../../utils/colors.js";
-import { createPriceRatioCharts, mapCohortsWithAll } from "../shared.js";
+import { createPriceRatioCharts, mapCohortsWithAll, priceRatioPercentilesTree } from "../shared.js";
 import { baseline, price } from "../series.js";
 import { Unit } from "../../utils/units.js";
 
@@ -53,26 +53,12 @@ export function createPricesSectionFull({ cohort, title }) {
       },
       {
         name: "Investor",
-        tree: [
-          {
-            name: "Price",
-            title: title("Investor Price"),
-            top: [price({ metric: tree.realized.investor.price, name: "Investor", color })],
-          },
-          {
-            name: "Ratio",
-            title: title("Investor Price Ratio"),
-            top: [price({ metric: tree.realized.investor.price, name: "Investor", color })],
-            bottom: [
-              baseline({
-                metric: tree.realized.investor.price.ratio,
-                name: "Ratio",
-                unit: Unit.ratio,
-                base: 1,
-              }),
-            ],
-          },
-        ],
+        tree: priceRatioPercentilesTree({
+          pattern: tree.realized.investor.price,
+          title: title("Investor Price"),
+          legend: "Investor",
+          color,
+        }),
       },
     ],
   };

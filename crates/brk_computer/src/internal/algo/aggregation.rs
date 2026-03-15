@@ -89,6 +89,17 @@ where
     });
 
     let start = index.to_usize();
+
+    // Truncate all vecs to start once, so the loop only pushes
+    macro_rules! truncate_vec {
+        ($($vec:ident),*) => {
+            $(if let Some(ref mut v) = $vec {
+                v.truncate_if_needed_at(start)?;
+            })*
+        };
+    }
+    truncate_vec!(first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90);
+
     let fi_len = first_indexes.len();
     let first_indexes_batch: Vec<A> = first_indexes.collect_range_at(start, fi_len);
     let count_indexes_batch: Vec<StoredU64> = count_indexes.collect_range_at(start, fi_len);
@@ -97,8 +108,7 @@ where
         .into_iter()
         .zip(count_indexes_batch)
         .enumerate()
-        .try_for_each(|(j, (first_index, count_index))| -> Result<()> {
-            let idx = start + j;
+        .try_for_each(|(_, (first_index, count_index))| -> Result<()> {
             let count = u64::from(count_index) as usize;
 
             // Effective count after skipping (e.g., skip coinbase for fee calculations)
@@ -113,17 +123,15 @@ where
                 } else {
                     T::from(0_usize)
                 };
-                first_vec.truncate_push_at(idx, f)?;
+                first_vec.push(f);
             }
 
             if let Some(ref mut last_vec) = last {
                 if effective_count == 0 {
-                    // If all items skipped, use zero
-                    last_vec.truncate_push_at(idx, T::from(0_usize))?;
+                    last_vec.push(T::from(0_usize));
                 } else {
                     let last_index = first_index + (count - 1);
-                    let v = source.collect_one_at(last_index.to_usize()).unwrap();
-                    last_vec.truncate_push_at(idx, v)?;
+                    last_vec.push(source.collect_one_at(last_index.to_usize()).unwrap());
                 }
             }
 
@@ -143,12 +151,10 @@ where
                 });
 
                 if let Some(ref mut min_vec) = min {
-                    let v = min_val.or(max_val).unwrap_or_else(|| T::from(0_usize));
-                    min_vec.truncate_push_at(idx, v)?;
+                    min_vec.push(min_val.or(max_val).unwrap_or_else(|| T::from(0_usize)));
                 }
                 if let Some(ref mut max_vec) = max {
-                    let v = max_val.or(min_val).unwrap_or_else(|| T::from(0_usize));
-                    max_vec.truncate_push_at(idx, v)?;
+                    max_vec.push(max_val.or(min_val).unwrap_or_else(|| T::from(0_usize)));
                 }
             } else if needs_percentiles || needs_minmax {
                 let mut values: Vec<T> = source.collect_range_at(
@@ -157,21 +163,18 @@ where
                 );
 
                 if values.is_empty() {
-                    // Handle edge case where all items were skipped
                     macro_rules! push_zero {
                         ($($vec:ident),*) => {
                             $(if let Some(ref mut v) = $vec {
-                                v.truncate_push_at(idx, T::from(0_usize))?;
+                                v.push(T::from(0_usize));
                             })*
                         };
                     }
                     push_zero!(max, pct90, pct75, median, pct25, pct10, min, average, sum);
                     if let Some(ref mut cumulative_vec) = cumulative {
-                        let t = cumulative_val.unwrap();
-                        cumulative_vec.truncate_push_at(idx, t)?;
+                        cumulative_vec.push(cumulative_val.unwrap());
                     }
                 } else if needs_percentiles {
-                    // Compute aggregates from unsorted values first to avoid clone
                     let aggregate_result = if needs_aggregates {
                         let len = values.len();
                         let sum_val = values.iter().copied().fold(T::from(0), |a, b| a + b);
@@ -180,53 +183,52 @@ where
                         None
                     };
 
-                    // Sort in-place — no clone needed
                     values.sort_unstable();
 
                     if let Some(ref mut max_vec) = max {
-                        max_vec.truncate_push_at(idx, *values.last().unwrap())?;
+                        max_vec.push(*values.last().unwrap());
                     }
                     if let Some(ref mut pct90_vec) = pct90 {
-                        pct90_vec.truncate_push_at(idx, get_percentile(&values, 0.90))?;
+                        pct90_vec.push(get_percentile(&values, 0.90));
                     }
                     if let Some(ref mut pct75_vec) = pct75 {
-                        pct75_vec.truncate_push_at(idx, get_percentile(&values, 0.75))?;
+                        pct75_vec.push(get_percentile(&values, 0.75));
                     }
                     if let Some(ref mut median_vec) = median {
-                        median_vec.truncate_push_at(idx, get_percentile(&values, 0.50))?;
+                        median_vec.push(get_percentile(&values, 0.50));
                     }
                     if let Some(ref mut pct25_vec) = pct25 {
-                        pct25_vec.truncate_push_at(idx, get_percentile(&values, 0.25))?;
+                        pct25_vec.push(get_percentile(&values, 0.25));
                     }
                     if let Some(ref mut pct10_vec) = pct10 {
-                        pct10_vec.truncate_push_at(idx, get_percentile(&values, 0.10))?;
+                        pct10_vec.push(get_percentile(&values, 0.10));
                     }
                     if let Some(ref mut min_vec) = min {
-                        min_vec.truncate_push_at(idx, *values.first().unwrap())?;
+                        min_vec.push(*values.first().unwrap());
                     }
 
                     if let Some((len, sum_val)) = aggregate_result {
                         if let Some(ref mut average_vec) = average {
-                            average_vec.truncate_push_at(idx, sum_val / len)?;
+                            average_vec.push(sum_val / len);
                         }
 
                         if needs_sum_or_cumulative {
                             if let Some(ref mut sum_vec) = sum {
-                                sum_vec.truncate_push_at(idx, sum_val)?;
+                                sum_vec.push(sum_val);
                             }
                             if let Some(ref mut cumulative_vec) = cumulative {
                                 let t = cumulative_val.unwrap() + sum_val;
                                 cumulative_val.replace(t);
-                                cumulative_vec.truncate_push_at(idx, t)?;
+                                cumulative_vec.push(t);
                             }
                         }
                     }
                 } else if needs_minmax {
                     if let Some(ref mut min_vec) = min {
-                        min_vec.truncate_push_at(idx, *values.iter().min().unwrap())?;
+                        min_vec.push(*values.iter().min().unwrap());
                     }
                     if let Some(ref mut max_vec) = max {
-                        max_vec.truncate_push_at(idx, *values.iter().max().unwrap())?;
+                        max_vec.push(*values.iter().max().unwrap());
                     }
 
                     if needs_aggregates {
@@ -234,23 +236,22 @@ where
                         let sum_val = values.into_iter().fold(T::from(0), |a, b| a + b);
 
                         if let Some(ref mut average_vec) = average {
-                            average_vec.truncate_push_at(idx, sum_val / len)?;
+                            average_vec.push(sum_val / len);
                         }
 
                         if needs_sum_or_cumulative {
                             if let Some(ref mut sum_vec) = sum {
-                                sum_vec.truncate_push_at(idx, sum_val)?;
+                                sum_vec.push(sum_val);
                             }
                             if let Some(ref mut cumulative_vec) = cumulative {
                                 let t = cumulative_val.unwrap() + sum_val;
                                 cumulative_val.replace(t);
-                                cumulative_vec.truncate_push_at(idx, t)?;
+                                cumulative_vec.push(t);
                             }
                         }
                     }
                 }
             } else if needs_aggregates {
-                // Aggregates only (sum/average/cumulative) — no Vec allocation needed
                 let efi = effective_first_index.to_usize();
                 let (sum_val, len) = source.fold_range_at(
                     efi,
@@ -265,17 +266,17 @@ where
                     } else {
                         T::from(0_usize)
                     };
-                    average_vec.truncate_push_at(idx, avg)?;
+                    average_vec.push(avg);
                 }
 
                 if needs_sum_or_cumulative {
                     if let Some(ref mut sum_vec) = sum {
-                        sum_vec.truncate_push_at(idx, sum_val)?;
+                        sum_vec.push(sum_val);
                     }
                     if let Some(ref mut cumulative_vec) = cumulative {
                         let t = cumulative_val.unwrap() + sum_val;
                         cumulative_val.replace(t);
-                        cumulative_vec.truncate_push_at(idx, t)?;
+                        cumulative_vec.push(t);
                     }
                 }
             }
@@ -348,6 +349,19 @@ where
     let zero = T::from(0_usize);
     let mut values: Vec<T> = Vec::new();
 
+    for vec in [
+        &mut *min,
+        &mut *max,
+        &mut *average,
+        &mut *median,
+        &mut *pct10,
+        &mut *pct25,
+        &mut *pct75,
+        &mut *pct90,
+    ] {
+        vec.truncate_if_needed_at(start)?;
+    }
+
     count_indexes_batch
         .iter()
         .enumerate()
@@ -378,7 +392,7 @@ where
                     &mut *pct75,
                     &mut *pct90,
                 ] {
-                    vec.truncate_push_at(idx, zero)?;
+                    vec.push(zero);
                 }
             } else {
                 source.collect_range_into_at(range_start_usize, range_end_usize, &mut values);
@@ -390,14 +404,14 @@ where
 
                 values.sort_unstable();
 
-                max.truncate_push_at(idx, *values.last().unwrap())?;
-                pct90.truncate_push_at(idx, get_percentile(&values, 0.90))?;
-                pct75.truncate_push_at(idx, get_percentile(&values, 0.75))?;
-                median.truncate_push_at(idx, get_percentile(&values, 0.50))?;
-                pct25.truncate_push_at(idx, get_percentile(&values, 0.25))?;
-                pct10.truncate_push_at(idx, get_percentile(&values, 0.10))?;
-                min.truncate_push_at(idx, *values.first().unwrap())?;
-                average.truncate_push_at(idx, avg)?;
+                max.push(*values.last().unwrap());
+                pct90.push(get_percentile(&values, 0.90));
+                pct75.push(get_percentile(&values, 0.75));
+                median.push(get_percentile(&values, 0.50));
+                pct25.push(get_percentile(&values, 0.25));
+                pct10.push(get_percentile(&values, 0.10));
+                min.push(*values.first().unwrap());
+                average.push(avg);
             }
 
             Ok(())

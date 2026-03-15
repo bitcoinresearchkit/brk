@@ -11,7 +11,7 @@ pub use full::UnrealizedFull;
 pub use minimal::UnrealizedMinimal;
 
 use brk_error::Result;
-use brk_types::{Height, Indexes};
+use brk_types::Indexes;
 use vecdb::Exit;
 
 use crate::{distribution::state::UnrealizedState, prices};
@@ -20,7 +20,7 @@ pub trait UnrealizedLike: Send + Sync {
     fn as_base(&self) -> &UnrealizedBase;
     fn as_base_mut(&mut self) -> &mut UnrealizedBase;
     fn min_stateful_len(&self) -> usize;
-    fn truncate_push(&mut self, height: Height, state: &UnrealizedState) -> Result<()>;
+    fn push_state(&mut self, state: &UnrealizedState);
     fn compute_rest(
         &mut self,
         prices: &prices::Vecs,
@@ -44,8 +44,9 @@ impl UnrealizedLike for UnrealizedBase {
     fn min_stateful_len(&self) -> usize {
         self.min_stateful_len()
     }
-    fn truncate_push(&mut self, height: Height, state: &UnrealizedState) -> Result<()> {
-        self.truncate_push(height, state)
+    #[inline(always)]
+    fn push_state(&mut self, state: &UnrealizedState) {
+        self.push_state(state);
     }
     fn compute_rest(
         &mut self,
@@ -74,8 +75,9 @@ impl UnrealizedLike for UnrealizedFull {
     fn min_stateful_len(&self) -> usize {
         self.inner.min_stateful_len()
     }
-    fn truncate_push(&mut self, height: Height, state: &UnrealizedState) -> Result<()> {
-        self.truncate_push_all(height, state)
+    #[inline(always)]
+    fn push_state(&mut self, state: &UnrealizedState) {
+        self.push_state_all(state);
     }
     fn compute_rest(
         &mut self,

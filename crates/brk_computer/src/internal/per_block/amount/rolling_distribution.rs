@@ -35,6 +35,7 @@ impl RollingDistributionSlot {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
         max_from: Height,

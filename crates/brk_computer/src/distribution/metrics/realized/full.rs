@@ -234,49 +234,47 @@ impl RealizedFull {
             .min(self.peak_regret.value.base.height.len())
     }
 
-    pub(crate) fn truncate_push(
+    #[inline(always)]
+    pub(crate) fn push_state(
         &mut self,
-        height: Height,
         state: &CohortState<RealizedState, CostBasisData<WithCapital>>,
-    ) -> Result<()> {
-        self.core.truncate_push(height, state)?;
+    ) {
+        self.core.push_state(state);
         self.profit
             .value_created
             .base
             .height
-            .truncate_push(height, state.realized.profit_value_created())?;
+            .push(state.realized.profit_value_created());
         self.profit
             .value_destroyed
             .base
             .height
-            .truncate_push(height, state.realized.profit_value_destroyed())?;
+            .push(state.realized.profit_value_destroyed());
         self.loss
             .value_created
             .base
             .height
-            .truncate_push(height, state.realized.loss_value_created())?;
+            .push(state.realized.loss_value_created());
         self.loss
             .value_destroyed
             .base
             .height
-            .truncate_push(height, state.realized.loss_value_destroyed())?;
+            .push(state.realized.loss_value_destroyed());
         self.investor
             .price
             .cents
             .height
-            .truncate_push(height, state.realized.investor_price())?;
+            .push(state.realized.investor_price());
         self.cap_raw
-            .truncate_push(height, state.realized.cap_raw())?;
+            .push(state.realized.cap_raw());
         self.investor
             .cap_raw
-            .truncate_push(height, state.realized.investor_cap_raw())?;
+            .push(state.realized.investor_cap_raw());
         self.peak_regret
             .value
             .base
             .height
-            .truncate_push(height, state.realized.peak_regret())?;
-
-        Ok(())
+            .push(state.realized.peak_regret());
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
@@ -304,36 +302,36 @@ impl RealizedFull {
         Ok(())
     }
 
-    pub(crate) fn push_from_accum(
+    #[inline(always)]
+    pub(crate) fn push_accum(
         &mut self,
         accum: &RealizedFullAccum,
-        height: Height,
-    ) -> Result<()> {
+    ) {
         self.profit
             .value_created
             .base
             .height
-            .truncate_push(height, accum.profit_value_created())?;
+            .push(accum.profit_value_created());
         self.profit
             .value_destroyed
             .base
             .height
-            .truncate_push(height, accum.profit_value_destroyed())?;
+            .push(accum.profit_value_destroyed());
         self.loss
             .value_created
             .base
             .height
-            .truncate_push(height, accum.loss_value_created())?;
+            .push(accum.loss_value_created());
         self.loss
             .value_destroyed
             .base
             .height
-            .truncate_push(height, accum.loss_value_destroyed())?;
+            .push(accum.loss_value_destroyed());
         self.cap_raw
-            .truncate_push(height, accum.cap_raw)?;
+            .push(accum.cap_raw);
         self.investor
             .cap_raw
-            .truncate_push(height, accum.investor_cap_raw)?;
+            .push(accum.investor_cap_raw);
 
         let investor_price = {
             let cap = accum.cap_raw.as_u128();
@@ -347,15 +345,13 @@ impl RealizedFull {
             .price
             .cents
             .height
-            .truncate_push(height, investor_price)?;
+            .push(investor_price);
 
         self.peak_regret
             .value
             .base
             .height
-            .truncate_push(height, accum.peak_regret())?;
-
-        Ok(())
+            .push(accum.peak_regret());
     }
 
     pub(crate) fn compute_rest_part1(

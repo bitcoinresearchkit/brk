@@ -10,7 +10,9 @@
  * - activity.js: SOPR, Volume, Lifespan
  */
 
-import { formatCohortTitle, satsBtcUsd } from "../shared.js";
+import { formatCohortTitle, satsBtcUsd, satsBtcUsdFullTree, simplePriceRatioTree, groupedSimplePriceRatioTree } from "../shared.js";
+import { ROLLING_WINDOWS, line, baseline, percentRatio, rollingWindowsTree, rollingPercentRatioTree } from "../series.js";
+import { Unit } from "../../utils/units.js";
 
 // Section builders
 import {
@@ -205,8 +207,11 @@ export function createCohortFolderAgeRangeWithMatured(cohort) {
   const title = formatCohortTitle(cohort.name);
   folder.tree.push({
     name: "Matured",
-    title: title("Matured Supply"),
-    bottom: satsBtcUsd({ pattern: cohort.matured, name: cohort.name }),
+    tree: satsBtcUsdFullTree({
+      pattern: cohort.matured,
+      name: cohort.name,
+      title: title("Matured Supply"),
+    }),
   });
   return folder;
 }
@@ -452,7 +457,7 @@ export function createGroupedCohortFolderAgeRangeWithMatured({
     name: "Matured",
     title: title("Matured Supply"),
     bottom: list.flatMap((cohort) =>
-      satsBtcUsd({ pattern: cohort.matured, name: cohort.name, color: cohort.color }),
+      satsBtcUsd({ pattern: cohort.matured.base, name: cohort.name, color: cohort.color }),
     ),
   });
   return folder;
@@ -577,6 +582,215 @@ export function createGroupedAddressCohortFolder({
       createGroupedPricesSection({ list, all, title }),
       createGroupedProfitabilitySection({ list, all, title }),
       createGroupedActivitySectionMinimal({ list, all, title }),
+    ],
+  };
+}
+
+// ============================================================================
+// UTXO Profitability Folder Builders
+// ============================================================================
+
+/**
+ * @param {{ name: string, color: Color, pattern: RealizedSupplyPattern }} bucket
+ * @returns {PartialOptionsGroup}
+ */
+function singleBucketFolder({ name, color, pattern }) {
+  return {
+    name,
+    tree: [
+      {
+        name: "Supply",
+        tree: [
+          {
+            name: "All",
+            title: `${name}: Supply`,
+            bottom: satsBtcUsd({ pattern: pattern.supply.all, name, color }),
+          },
+          {
+            name: "STH",
+            title: `${name}: STH Supply`,
+            bottom: satsBtcUsd({ pattern: pattern.supply.sth, name, color }),
+          },
+          {
+            name: "Change",
+            tree: [
+              { ...rollingWindowsTree({ windows: pattern.supply.all.delta.absolute, title: `${name}: Supply Change`, unit: Unit.sats, series: baseline }), name: "Absolute" },
+              { ...rollingPercentRatioTree({ windows: pattern.supply.all.delta.rate, title: `${name}: Supply Rate` }), name: "Rate" },
+            ],
+          },
+        ],
+      },
+      {
+        name: "Realized Cap",
+        tree: [
+          {
+            name: "All",
+            title: `${name}: Realized Cap`,
+            bottom: [line({ metric: pattern.realizedCap.all, name, color, unit: Unit.usd })],
+          },
+          {
+            name: "STH",
+            title: `${name}: STH Realized Cap`,
+            bottom: [line({ metric: pattern.realizedCap.sth, name, color, unit: Unit.usd })],
+          },
+        ],
+      },
+      {
+        name: "Realized Price",
+        tree: simplePriceRatioTree({
+          pattern: pattern.realizedPrice,
+          title: `${name}: Realized Price`,
+          legend: name,
+          color,
+        }),
+      },
+      {
+        name: "NUPL",
+        title: `${name}: NUPL`,
+        bottom: [line({ metric: pattern.nupl.ratio, name, color, unit: Unit.ratio })],
+      },
+    ],
+  };
+}
+
+/**
+ * @param {{ name: string, color: Color, pattern: RealizedSupplyPattern }[]} list
+ * @param {string} titlePrefix
+ * @returns {PartialOptionsTree}
+ */
+function groupedBucketCharts(list, titlePrefix) {
+  return [
+    {
+      name: "Supply",
+      tree: [
+        {
+          name: "All",
+          title: `${titlePrefix}: Supply`,
+          bottom: list.flatMap(({ name, color, pattern }) =>
+            satsBtcUsd({ pattern: pattern.supply.all, name, color }),
+          ),
+        },
+        {
+          name: "STH",
+          title: `${titlePrefix}: STH Supply`,
+          bottom: list.flatMap(({ name, color, pattern }) =>
+            satsBtcUsd({ pattern: pattern.supply.sth, name, color }),
+          ),
+        },
+        {
+          name: "Change",
+          tree: [
+            {
+              name: "Absolute",
+              tree: [
+                {
+                  name: "Compare",
+                  title: `${titlePrefix}: Supply Change`,
+                  bottom: ROLLING_WINDOWS.flatMap((w) =>
+                    list.map(({ name, color, pattern }) =>
+                      baseline({ metric: pattern.supply.all.delta.absolute[w.key], name: `${name} ${w.name}`, color, unit: Unit.sats }),
+                    ),
+                  ),
+                },
+                ...ROLLING_WINDOWS.map((w) => ({
+                  name: w.name,
+                  title: `${titlePrefix}: Supply Change ${w.name}`,
+                  bottom: list.map(({ name, color, pattern }) =>
+                    baseline({ metric: pattern.supply.all.delta.absolute[w.key], name, color, unit: Unit.sats }),
+                  ),
+                })),
+              ],
+            },
+            {
+              name: "Rate",
+              tree: [
+                {
+                  name: "Compare",
+                  title: `${titlePrefix}: Supply Rate`,
+                  bottom: ROLLING_WINDOWS.flatMap((w) =>
+                    list.flatMap(({ name, color, pattern }) =>
+                      percentRatio({ pattern: pattern.supply.all.delta.rate[w.key], name: `${name} ${w.name}`, color }),
+                    ),
+                  ),
+                },
+                ...ROLLING_WINDOWS.map((w) => ({
+                  name: w.name,
+                  title: `${titlePrefix}: Supply Rate ${w.name}`,
+                  bottom: list.flatMap(({ name, color, pattern }) =>
+                    percentRatio({ pattern: pattern.supply.all.delta.rate[w.key], name, color }),
+                  ),
+                })),
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: "Realized Cap",
+      tree: [
+        {
+          name: "All",
+          title: `${titlePrefix}: Realized Cap`,
+          bottom: list.map(({ name, color, pattern }) =>
+            line({ metric: pattern.realizedCap.all, name, color, unit: Unit.usd }),
+          ),
+        },
+        {
+          name: "STH",
+          title: `${titlePrefix}: STH Realized Cap`,
+          bottom: list.map(({ name, color, pattern }) =>
+            line({ metric: pattern.realizedCap.sth, name, color, unit: Unit.usd }),
+          ),
+        },
+      ],
+    },
+    {
+      name: "Realized Price",
+      tree: groupedSimplePriceRatioTree({
+        list: list.map(({ name, color, pattern }) => ({ name, color, pattern: pattern.realizedPrice })),
+        title: `${titlePrefix}: Realized Price`,
+      }),
+    },
+    {
+      name: "NUPL",
+      title: `${titlePrefix}: NUPL`,
+      bottom: list.map(({ name, color, pattern }) =>
+        line({ metric: pattern.nupl.ratio, name, color, unit: Unit.ratio }),
+      ),
+    },
+  ];
+}
+
+/**
+ * @param {{ range: { name: string, color: Color, pattern: RealizedSupplyPattern }[], profit: { name: string, color: Color, pattern: RealizedSupplyPattern }[], loss: { name: string, color: Color, pattern: RealizedSupplyPattern }[] }} args
+ * @returns {PartialOptionsGroup}
+ */
+export function createUtxoProfitabilitySection({ range, profit, loss }) {
+  return {
+    name: "UTXO Profitability",
+    tree: [
+      {
+        name: "Range",
+        tree: [
+          { name: "Compare", tree: groupedBucketCharts(range, "Profitability Range") },
+          ...range.map(singleBucketFolder),
+        ],
+      },
+      {
+        name: "In Profit",
+        tree: [
+          { name: "Compare", tree: groupedBucketCharts(profit, "In Profit") },
+          ...profit.map(singleBucketFolder),
+        ],
+      },
+      {
+        name: "In Loss",
+        tree: [
+          { name: "Compare", tree: groupedBucketCharts(loss, "In Loss") },
+          ...loss.map(singleBucketFolder),
+        ],
+      },
     ],
   };
 }

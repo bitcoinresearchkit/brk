@@ -14,6 +14,7 @@ import {
   percentRatioBaseline,
   ROLLING_WINDOWS,
 } from "./series.js";
+import { simplePriceRatioTree } from "./shared.js";
 import { periodIdToName } from "./utils.js";
 
 /**
@@ -68,26 +69,12 @@ function createMaSubSection(label, averages) {
   /** @param {MaPeriod} a */
   const toFolder = (a) => ({
     name: periodIdToName(a.id, true),
-    tree: [
-      {
-        name: "Price",
-        title: `${periodIdToName(a.id, true)} ${label}`,
-        top: [price({ metric: a.ratio, name: "average", color: a.color })],
-      },
-      {
-        name: "Ratio",
-        title: `${periodIdToName(a.id, true)} ${label} Ratio`,
-        top: [price({ metric: a.ratio, name: "average", color: a.color })],
-        bottom: [
-          baseline({
-            metric: a.ratio.ratio,
-            name: "Ratio",
-            color: a.color,
-            unit: Unit.ratio,
-          }),
-        ],
-      },
-    ],
+    tree: simplePriceRatioTree({
+      pattern: a.ratio,
+      title: `${periodIdToName(a.id, true)} ${label}`,
+      legend: "average",
+      color: a.color,
+    }),
   });
 
   return {

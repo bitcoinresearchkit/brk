@@ -79,9 +79,9 @@ where
             let cached = cached_start.clone();
             let starts_version = cached.version();
 
-            // Change: source[h] - source[ago] as C (via f64)
+            // Absolute change: source[h] - source[ago] as C (via f64)
             let change_vec = LazyDeltaVec::<Height, S, C, DeltaChange>::new(
-                &format!("{full_name}_change"),
+                &full_name,
                 version,
                 src.clone(),
                 starts_version,
@@ -91,7 +91,7 @@ where
                 },
             );
             let change_resolutions = Resolutions::forced_import(
-                &format!("{full_name}_change"),
+                &full_name,
                 change_vec.read_only_boxed_clone(),
                 version,
                 indexes,
@@ -102,15 +102,16 @@ where
             };
 
             // Rate BPS: (source[h] - source[ago]) / source[ago] as B (via f64)
+            let rate_bps_name = format!("{full_name}_rate_bps");
             let rate_vec = LazyDeltaVec::<Height, S, B, DeltaRate>::new(
-                &format!("{full_name}_rate_bps"),
+                &rate_bps_name,
                 version,
                 src.clone(),
                 starts_version,
                 move || cached.get(),
             );
             let rate_resolutions = Resolutions::forced_import(
-                &format!("{full_name}_rate_bps"),
+                &rate_bps_name,
                 rate_vec.read_only_boxed_clone(),
                 version,
                 indexes,
@@ -121,28 +122,30 @@ where
             };
 
             // Ratio: bps / 10000
+            let rate_ratio_name = format!("{full_name}_rate_ratio");
             let ratio = LazyPerBlock {
                 height: LazyVecFrom1::transformed::<B::ToRatio>(
-                    &format!("{full_name}_rate_ratio"),
+                    &rate_ratio_name,
                     version,
                     bps.height.read_only_boxed_clone(),
                 ),
                 resolutions: Box::new(DerivedResolutions::from_derived_computed::<B::ToRatio>(
-                    &format!("{full_name}_rate_ratio"),
+                    &rate_ratio_name,
                     version,
                     &bps.resolutions,
                 )),
             };
 
             // Percent: bps / 100
+            let rate_name = format!("{full_name}_rate");
             let percent = LazyPerBlock {
                 height: LazyVecFrom1::transformed::<B::ToPercent>(
-                    &format!("{full_name}_rate"),
+                    &rate_name,
                     version,
                     bps.height.read_only_boxed_clone(),
                 ),
                 resolutions: Box::new(DerivedResolutions::from_derived_computed::<B::ToPercent>(
-                    &format!("{full_name}_rate"),
+                    &rate_name,
                     version,
                     &bps.resolutions,
                 )),
@@ -214,9 +217,10 @@ where
             let cached = cached_start.clone();
             let starts_version = cached.version();
 
-            // Change cents: source[h] - source[ago] as C (via f64)
+            // Absolute change (cents): source[h] - source[ago] as C (via f64)
+            let cents_name = format!("{full_name}_cents");
             let change_vec = LazyDeltaVec::<Height, S, C, DeltaChange>::new(
-                &format!("{full_name}_change"),
+                &cents_name,
                 version,
                 src.clone(),
                 starts_version,
@@ -226,7 +230,7 @@ where
                 },
             );
             let change_resolutions = Resolutions::forced_import(
-                &format!("{full_name}_change"),
+                &cents_name,
                 change_vec.read_only_boxed_clone(),
                 version,
                 indexes,
@@ -236,15 +240,15 @@ where
                 resolutions: Box::new(change_resolutions),
             };
 
-            // Change USD: lazy from cents delta
+            // Absolute change (usd): lazy from cents delta
             let usd = LazyPerBlock {
                 height: LazyVecFrom1::transformed::<C::ToDollars>(
-                    &format!("{full_name}_change_usd"),
+                    &full_name,
                     version,
                     cents.height.read_only_boxed_clone(),
                 ),
                 resolutions: Box::new(DerivedResolutions::from_derived_computed::<C::ToDollars>(
-                    &format!("{full_name}_change_usd"),
+                    &full_name,
                     version,
                     &cents.resolutions,
                 )),
@@ -253,15 +257,16 @@ where
             let absolute = LazyDeltaFiatFromHeight { usd, cents };
 
             // Rate BPS: (source[h] - source[ago]) / source[ago] as B (via f64)
+            let rate_bps_name = format!("{full_name}_rate_bps");
             let rate_vec = LazyDeltaVec::<Height, S, B, DeltaRate>::new(
-                &format!("{full_name}_rate_bps"),
+                &rate_bps_name,
                 version,
                 src.clone(),
                 starts_version,
                 move || cached.get(),
             );
             let rate_resolutions = Resolutions::forced_import(
-                &format!("{full_name}_rate_bps"),
+                &rate_bps_name,
                 rate_vec.read_only_boxed_clone(),
                 version,
                 indexes,
@@ -271,27 +276,29 @@ where
                 resolutions: Box::new(rate_resolutions),
             };
 
+            let rate_ratio_name = format!("{full_name}_rate_ratio");
             let ratio = LazyPerBlock {
                 height: LazyVecFrom1::transformed::<B::ToRatio>(
-                    &format!("{full_name}_rate_ratio"),
+                    &rate_ratio_name,
                     version,
                     bps.height.read_only_boxed_clone(),
                 ),
                 resolutions: Box::new(DerivedResolutions::from_derived_computed::<B::ToRatio>(
-                    &format!("{full_name}_rate_ratio"),
+                    &rate_ratio_name,
                     version,
                     &bps.resolutions,
                 )),
             };
 
+            let rate_name = format!("{full_name}_rate");
             let percent = LazyPerBlock {
                 height: LazyVecFrom1::transformed::<B::ToPercent>(
-                    &format!("{full_name}_rate"),
+                    &rate_name,
                     version,
                     bps.height.read_only_boxed_clone(),
                 ),
                 resolutions: Box::new(DerivedResolutions::from_derived_computed::<B::ToPercent>(
-                    &format!("{full_name}_rate"),
+                    &rate_name,
                     version,
                     &bps.resolutions,
                 )),

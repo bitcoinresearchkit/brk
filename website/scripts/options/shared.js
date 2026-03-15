@@ -1,7 +1,7 @@
 /** Shared helpers for options */
 
 import { Unit } from "../utils/units.js";
-import { line, baseline, price } from "./series.js";
+import { line, baseline, price, ROLLING_WINDOWS } from "./series.js";
 import { priceLine, priceLines } from "./constants.js";
 import { colors } from "../utils/colors.js";
 
@@ -232,6 +232,159 @@ export function revenueBtcSatsUsd({ coinbase, subsidy, fee, key }) {
  */
 export function satsBtcUsdRolling({ pattern, name, color, defaultActive }) {
   return satsBtcUsd({ pattern, name, color, defaultActive });
+}
+
+/**
+ * Build a full Sum / Rolling / Cumulative tree from a FullValuePattern
+ * @param {Object} args
+ * @param {FullValuePattern} args.pattern
+ * @param {string} args.name
+ * @param {string} args.title
+ * @param {Color} [args.color]
+ * @returns {PartialOptionsTree}
+ */
+export function satsBtcUsdFullTree({ pattern, name, title, color }) {
+  return [
+    {
+      name: "Sum",
+      title,
+      bottom: satsBtcUsd({ pattern: pattern.base, name, color }),
+    },
+    {
+      name: "Rolling",
+      tree: [
+        {
+          name: "Compare",
+          title: `${title} Rolling Sum`,
+          bottom: ROLLING_WINDOWS.flatMap((w) =>
+            satsBtcUsd({ pattern: pattern.sum[w.key], name: w.name, color: w.color }),
+          ),
+        },
+        ...ROLLING_WINDOWS.map((w) => ({
+          name: w.name,
+          title: `${title} ${w.name} Rolling Sum`,
+          bottom: satsBtcUsd({ pattern: pattern.sum[w.key], name: w.name, color: w.color }),
+        })),
+      ],
+    },
+    {
+      name: "Cumulative",
+      title: `${title} (Total)`,
+      bottom: satsBtcUsd({ pattern: pattern.cumulative, name: "all-time", color }),
+    },
+  ];
+}
+
+/**
+ * Create Price + Ratio charts from a simple price pattern (BpsCentsRatioSatsUsdPattern)
+ * @param {Object} args
+ * @param {AnyPricePattern & { ratio: AnyMetricPattern }} args.pattern
+ * @param {string} args.title
+ * @param {string} args.legend
+ * @param {Color} [args.color]
+ * @returns {PartialOptionsTree}
+ */
+export function simplePriceRatioTree({ pattern, title, legend, color }) {
+  return [
+    {
+      name: "Price",
+      title,
+      top: [price({ metric: pattern, name: legend, color })],
+    },
+    {
+      name: "Ratio",
+      title: `${title} Ratio`,
+      top: [price({ metric: pattern, name: legend, color })],
+      bottom: [
+        baseline({ metric: pattern.ratio, name: "Ratio", unit: Unit.ratio, base: 1 }),
+      ],
+    },
+  ];
+}
+
+/**
+ * Create Price + Ratio charts with percentile bands (no SMAs/z-scores)
+ * @param {Object} args
+ * @param {PriceRatioPercentilesPattern} args.pattern
+ * @param {string} args.title
+ * @param {string} args.legend
+ * @param {Color} [args.color]
+ * @param {FetchedPriceSeriesBlueprint[]} [args.priceReferences]
+ * @returns {PartialOptionsTree}
+ */
+export function priceRatioPercentilesTree({ pattern, title, legend, color, priceReferences }) {
+  const p = pattern.percentiles;
+  const pctUsd = [
+    { name: "pct95", prop: p.pct95.price, color: colors.ratioPct._95 },
+    { name: "pct5", prop: p.pct5.price, color: colors.ratioPct._5 },
+    { name: "pct98", prop: p.pct98.price, color: colors.ratioPct._98 },
+    { name: "pct2", prop: p.pct2.price, color: colors.ratioPct._2 },
+    { name: "pct99", prop: p.pct99.price, color: colors.ratioPct._99 },
+    { name: "pct1", prop: p.pct1.price, color: colors.ratioPct._1 },
+  ];
+  const pctRatio = [
+    { name: "pct95", prop: p.pct95.ratio, color: colors.ratioPct._95 },
+    { name: "pct5", prop: p.pct5.ratio, color: colors.ratioPct._5 },
+    { name: "pct98", prop: p.pct98.ratio, color: colors.ratioPct._98 },
+    { name: "pct2", prop: p.pct2.ratio, color: colors.ratioPct._2 },
+    { name: "pct99", prop: p.pct99.ratio, color: colors.ratioPct._99 },
+    { name: "pct1", prop: p.pct1.ratio, color: colors.ratioPct._1 },
+  ];
+  return [
+    {
+      name: "Price",
+      title,
+      top: [
+        price({ metric: pattern, name: legend, color }),
+        ...(priceReferences ?? []),
+        ...pctUsd.map(({ name, prop, color }) =>
+          price({ metric: prop, name, color, defaultActive: false, options: { lineStyle: 1 } }),
+        ),
+      ],
+    },
+    {
+      name: "Ratio",
+      title: `${title} Ratio`,
+      top: [
+        price({ metric: pattern, name: legend, color }),
+        ...pctUsd.map(({ name, prop, color }) =>
+          price({ metric: prop, name, color, defaultActive: false, options: { lineStyle: 1 } }),
+        ),
+      ],
+      bottom: [
+        baseline({ metric: pattern.ratio, name: "Ratio", unit: Unit.ratio, base: 1 }),
+        ...pctRatio.map(({ name, prop, color }) =>
+          line({ metric: prop, name, color, defaultActive: false, unit: Unit.ratio, options: { lineStyle: 1 } }),
+        ),
+      ],
+    },
+  ];
+}
+
+/**
+ * Create grouped Price + Ratio charts overlaying multiple series
+ * @param {Object} args
+ * @param {{ name: string, color?: Color, pattern: AnyPricePattern & { ratio: AnyMetricPattern } }[]} args.list
+ * @param {string} args.title
+ * @returns {PartialOptionsTree}
+ */
+export function groupedSimplePriceRatioTree({ list, title }) {
+  return [
+    {
+      name: "Price",
+      title,
+      top: list.map(({ name, color, pattern }) =>
+        price({ metric: pattern, name, color }),
+      ),
+    },
+    {
+      name: "Ratio",
+      title: `${title} Ratio`,
+      bottom: list.map(({ name, color, pattern }) =>
+        baseline({ metric: pattern.ratio, name, color, unit: Unit.ratio, base: 1 }),
+      ),
+    },
+  ];
 }
 
 /**

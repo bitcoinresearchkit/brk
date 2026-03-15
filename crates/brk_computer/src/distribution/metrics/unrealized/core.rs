@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, CentsSigned, Height, Indexes, Version};
+use brk_types::{Cents, CentsSigned, Indexes, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
 
@@ -39,13 +39,9 @@ impl UnrealizedCore {
         self.basic.min_stateful_len()
     }
 
-    pub(crate) fn truncate_push(
-        &mut self,
-        height: Height,
-        height_state: &UnrealizedState,
-    ) -> Result<()> {
-        self.basic.truncate_push(height, height_state)?;
-        Ok(())
+    #[inline(always)]
+    pub(crate) fn push_state(&mut self, state: &UnrealizedState) {
+        self.basic.push_state(state);
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

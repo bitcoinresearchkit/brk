@@ -2,7 +2,7 @@ use brk_cohort::{Loss, Profit, ProfitabilityRange};
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    BasisPoints32, BasisPointsSigned32, Cents, Dollars, Height, Indexes, Sats, StoredF32, Version,
+    BasisPoints32, BasisPointsSigned32, Cents, Dollars, Indexes, Sats, StoredF32, Version,
 };
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 
@@ -101,15 +101,6 @@ impl ProfitabilityBucket {
                 indexes,
             )?,
         })
-    }
-
-    #[inline(always)]
-    pub(crate) fn truncate(&mut self, height: Height) -> Result<()> {
-        self.supply.all.sats.height.truncate_if_needed(height)?;
-        self.supply.sth.sats.height.truncate_if_needed(height)?;
-        self.realized_cap.all.height.truncate_if_needed(height)?;
-        self.realized_cap.sth.height.truncate_if_needed(height)?;
-        Ok(())
     }
 
     #[inline(always)]
@@ -223,10 +214,6 @@ impl<M: StorageMode> ProfitabilityMetrics<M> {
 }
 
 impl ProfitabilityMetrics {
-    pub(crate) fn truncate(&mut self, height: Height) -> Result<()> {
-        self.iter_mut().try_for_each(|b| b.truncate(height))
-    }
-
     pub(crate) fn forced_import(
         db: &Database,
         version: Version,

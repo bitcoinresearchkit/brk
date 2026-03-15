@@ -2968,10 +2968,10 @@ function create_1m1w1y2wPattern(client, acc) {
  */
 function create_1m1w1y24hPattern3(client, acc) {
   return {
-    _1m: createCentsUsdPattern(client, _m(acc, '1m_change')),
-    _1w: createCentsUsdPattern(client, _m(acc, '1w_change')),
-    _1y: createCentsUsdPattern(client, _m(acc, '1y_change')),
-    _24h: createCentsUsdPattern(client, _m(acc, '24h_change')),
+    _1m: createCentsUsdPattern(client, _m(acc, '1m')),
+    _1w: createCentsUsdPattern(client, _m(acc, '1w')),
+    _1y: createCentsUsdPattern(client, _m(acc, '1y')),
+    _24h: createCentsUsdPattern(client, _m(acc, '24h')),
   };
 }
 
@@ -3910,8 +3910,8 @@ function createCentsUsdPattern2(client, acc) {
  */
 function createCentsUsdPattern(client, acc) {
   return {
-    cents: createMetricPattern1(client, acc),
-    usd: createMetricPattern1(client, _m(acc, 'usd')),
+    cents: createMetricPattern1(client, _m(acc, 'cents')),
+    usd: createMetricPattern1(client, acc),
   };
 }
 

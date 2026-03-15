@@ -2729,10 +2729,10 @@ class _1m1w1y24hPattern3:
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self._1m: CentsUsdPattern = CentsUsdPattern(client, _m(acc, '1m_change'))
-        self._1w: CentsUsdPattern = CentsUsdPattern(client, _m(acc, '1w_change'))
-        self._1y: CentsUsdPattern = CentsUsdPattern(client, _m(acc, '1y_change'))
-        self._24h: CentsUsdPattern = CentsUsdPattern(client, _m(acc, '24h_change'))
+        self._1m: CentsUsdPattern = CentsUsdPattern(client, _m(acc, '1m'))
+        self._1w: CentsUsdPattern = CentsUsdPattern(client, _m(acc, '1w'))
+        self._1y: CentsUsdPattern = CentsUsdPattern(client, _m(acc, '1y'))
+        self._24h: CentsUsdPattern = CentsUsdPattern(client, _m(acc, '24h'))
 
 class _1m1w1y24hPattern4:
     """Pattern struct for repeated tree structure."""
@@ -3132,8 +3132,8 @@ class CentsUsdPattern:
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated metric name."""
-        self.cents: MetricPattern1[CentsSigned] = MetricPattern1(client, acc)
-        self.usd: MetricPattern1[Dollars] = MetricPattern1(client, _m(acc, 'usd'))
+        self.cents: MetricPattern1[CentsSigned] = MetricPattern1(client, _m(acc, 'cents'))
+        self.usd: MetricPattern1[Dollars] = MetricPattern1(client, acc)
 
 class CoindaysSentPattern:
     """Pattern struct for repeated tree structure."""

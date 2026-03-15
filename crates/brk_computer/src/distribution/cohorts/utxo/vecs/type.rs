@@ -28,37 +28,29 @@ impl DynCohortVecs for UTXOCohortVecs<TypeCohortMetrics> {
         Ok(())
     }
 
-    fn truncate_push(&mut self, height: Height) -> Result<()> {
+    fn push_state(&mut self, height: Height) {
         if self.state_starting_height.is_some_and(|h| h > height) {
-            return Ok(());
+            return;
         }
 
         if let Some(state) = self.state.as_ref() {
-            self.metrics.supply.truncate_push(height, state)?;
-            self.metrics.outputs.truncate_push(height, state)?;
-            self.metrics.realized.truncate_push(height, state)?;
+            self.metrics.supply.push_state(state);
+            self.metrics.outputs.push_state(state);
+            self.metrics.realized.push_state(state);
         }
-
-        Ok(())
     }
 
-    fn compute_then_truncate_push_unrealized_states(
-        &mut self,
-        height: Height,
-        height_price: Cents,
-        _is_day_boundary: bool,
-    ) -> Result<()> {
+    fn push_unrealized_state(&mut self, height_price: Cents) {
         if let Some(state) = self.state.as_mut() {
             state.apply_pending();
             let unrealized_state = state.compute_unrealized_state(height_price);
             self.metrics
                 .unrealized
-                .truncate_push(height, &unrealized_state)?;
+                .push_state(&unrealized_state);
             self.metrics
                 .supply
-                .truncate_push_profitability(height, &unrealized_state)?;
+                .push_profitability(&unrealized_state);
         }
-        Ok(())
     }
 
     fn compute_rest_part1(

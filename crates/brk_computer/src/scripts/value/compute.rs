@@ -52,9 +52,10 @@ impl Vecs {
                 let mut output_types_buf: Vec<OutputType> = Vec::new();
                 let mut values_buf: Vec<Sats> = Vec::new();
 
+                height_vec.truncate_if_needed(starting_height)?;
+
                 // Iterate blocks
                 for h in starting_height.to_usize()..=target_height.to_usize() {
-                    let height = Height::from(h);
                     let local_idx = h - starting_height.to_usize();
 
                     // Get output range for this block
@@ -88,7 +89,7 @@ impl Vecs {
                         }
                     }
 
-                    height_vec.truncate_push(height, op_return_value)?;
+                    height_vec.push(op_return_value);
                 }
 
                 height_vec.write()?;

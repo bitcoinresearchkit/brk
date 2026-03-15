@@ -56,6 +56,8 @@
  * @typedef {Brk.BaseCumulativeSumPattern4} CoinbasePattern
  * ActivePriceRatioPattern: ratio pattern with price (extended)
  * @typedef {Brk.BpsPriceRatioPattern} ActivePriceRatioPattern
+ * PriceRatioPercentilesPattern: price pattern with ratio + percentiles (no SMAs/stdDev)
+ * @typedef {Brk.BpsCentsPercentilesRatioSatsUsdPattern} PriceRatioPercentilesPattern
  * AnyRatioPattern: full ratio pattern with percentiles, SMAs, and std dev bands
  * @typedef {Brk.BpsCentsPercentilesRatioSatsSmaStdUsdPattern} AnyRatioPattern
  * ValuePattern: patterns with base + cumulative (no rolling)
@@ -83,7 +85,7 @@
  * @typedef {Brk.GrossInvestedLossNetNuplProfitSentimentPattern2} UnrealizedPattern
  *
  * Profitability bucket pattern
- * @typedef {Brk.RealizedSupplyPattern} RealizedSupplyPattern
+ * @typedef {Brk.MvrvNuplRealizedSupplyPattern} RealizedSupplyPattern
  *
  * Realized patterns
  * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern

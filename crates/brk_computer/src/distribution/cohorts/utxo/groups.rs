@@ -339,15 +339,11 @@ impl UTXOCohorts<Rw> {
     }
 
     /// Push maturation sats to the matured vecs for the given height.
-    pub(crate) fn push_maturation(
-        &mut self,
-        height: Height,
-        matured: &AgeRange<Sats>,
-    ) -> Result<()> {
+    #[inline(always)]
+    pub(crate) fn push_maturation(&mut self, matured: &AgeRange<Sats>) {
         for (v, &sats) in self.matured.iter_mut().zip(matured.iter()) {
-            v.base.sats.height.truncate_push(height, sats)?;
+            v.base.sats.height.push(sats);
         }
-        Ok(())
     }
 
     pub(crate) fn par_iter_separate_mut(
@@ -795,8 +791,8 @@ impl UTXOCohorts<Rw> {
     }
 
     /// Aggregate RealizedFull fields from age_range states and push to all/sth/lth.
-    /// Called during the block loop after separate cohorts' truncate_push but before reset.
-    pub(crate) fn push_overlapping_realized_full(&mut self, height: Height) -> Result<()> {
+    /// Called during the block loop after separate cohorts' push_state but before reset.
+    pub(crate) fn push_overlapping_realized_full(&mut self) {
         let Self {
             all,
             sth,
@@ -823,11 +819,9 @@ impl UTXOCohorts<Rw> {
             }
         }
 
-        all.metrics.realized.push_from_accum(&all_acc, height)?;
-        sth.metrics.realized.push_from_accum(&sth_acc, height)?;
-        lth.metrics.realized.push_from_accum(&lth_acc, height)?;
-
-        Ok(())
+        all.metrics.realized.push_accum(&all_acc);
+        sth.metrics.realized.push_accum(&sth_acc);
+        lth.metrics.realized.push_accum(&lth_acc);
     }
 }
 
