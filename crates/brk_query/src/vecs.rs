@@ -8,7 +8,7 @@ use brk_types::{
 };
 use derive_more::{Deref, DerefMut};
 use quickmatch::{QuickMatch, QuickMatchConfig};
-use vecdb::{AnyExportableVec, Ro};
+use vecdb::AnyExportableVec;
 
 #[derive(Default)]
 pub struct Vecs<'a> {
@@ -25,17 +25,34 @@ pub struct Vecs<'a> {
 }
 
 impl<'a> Vecs<'a> {
-    pub fn build(indexer: &'a Indexer<Ro>, computer: &'a Computer<Ro>) -> Self {
+    pub fn build(indexer: &'a Indexer<vecdb::Ro>, computer: &'a Computer<vecdb::Ro>) -> Self {
+        Self::build_from(
+            indexer.vecs.iter_any_exportable(),
+            indexer.vecs.to_tree_node(),
+            computer.iter_named_exportable(),
+            computer.to_tree_node(),
+        )
+    }
+
+    pub fn build_rw(indexer: &'a Indexer, computer: &'a Computer) -> Self {
+        Self::build_from(
+            indexer.vecs.iter_any_exportable(),
+            indexer.vecs.to_tree_node(),
+            computer.iter_named_exportable(),
+            computer.to_tree_node(),
+        )
+    }
+
+    fn build_from(
+        indexed_vecs: impl Iterator<Item = &'a dyn AnyExportableVec>,
+        indexed_tree: TreeNode,
+        computed_vecs: impl Iterator<Item = (&'static str, &'a dyn AnyExportableVec)>,
+        computed_tree: TreeNode,
+    ) -> Self {
         let mut this = Vecs::default();
 
-        indexer
-            .vecs
-            .iter_any_exportable()
-            .for_each(|vec| this.insert(vec, "indexed"));
-
-        computer
-            .iter_named_exportable()
-            .for_each(|(db, vec)| this.insert(vec, db));
+        indexed_vecs.for_each(|vec| this.insert(vec, "indexed"));
+        computed_vecs.for_each(|(db, vec)| this.insert(vec, db));
 
         let mut ids = this
             .metric_to_index_to_vec
@@ -97,8 +114,8 @@ impl<'a> Vecs<'a> {
         this.catalog.replace(
             TreeNode::Branch(
                 [
-                    ("indexed".to_string(), indexer.vecs.to_tree_node()),
-                    ("computed".to_string(), computer.to_tree_node()),
+                    ("indexed".to_string(), indexed_tree),
+                    ("computed".to_string(), computed_tree),
                 ]
                 .into_iter()
                 .collect(),

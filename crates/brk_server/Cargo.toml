@@ -41,4 +41,6 @@ tower-http = { workspace = true }
 tower-layer = { workspace = true }
 
 [dev-dependencies]
+brk_bindgen = { workspace = true }
 brk_mempool = { workspace = true }
+color-eyre = { workspace = true }

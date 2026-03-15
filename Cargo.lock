@@ -653,6 +653,7 @@ dependencies = [
  "brk_types",
  "brk_website",
  "brotli",
+ "color-eyre",
  "derive_more",
  "flate2",
  "jiff",

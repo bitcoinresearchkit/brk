@@ -8,7 +8,7 @@ use brk_reader::Reader;
 use brk_traversable::Traversable;
 use brk_types::Version;
 use tracing::info;
-use vecdb::{Exit, Ro, Rw, StorageMode};
+use vecdb::{AnyExportableVec, Exit, Ro, Rw, StorageMode};
 
 mod blocks;
 mod cointime;
@@ -493,40 +493,26 @@ impl Computer {
     }
 }
 
-impl Computer<Ro> {
-    /// Iterate over all exportable vecs with their database name.
-    pub fn iter_named_exportable(
-        &self,
-    ) -> impl Iterator<Item = (&'static str, &dyn vecdb::AnyExportableVec)> {
-        use brk_traversable::Traversable;
-
-        macro_rules! named {
-            ($($field:ident),+ $(,)?) => {
+macro_rules! impl_iter_named_exportable {
+    ($($field:ident),+ $(,)?) => {
+        impl_iter_named_exportable!(@mode Ro, $($field),+);
+        impl_iter_named_exportable!(@mode Rw, $($field),+);
+    };
+    (@mode $mode:ty, $($field:ident),+) => {
+        impl Computer<$mode> {
+            pub fn iter_named_exportable(
+                &self,
+            ) -> impl Iterator<Item = (&'static str, &dyn AnyExportableVec)> {
+                use brk_traversable::Traversable;
                 std::iter::empty()
                     $(.chain(self.$field.iter_any_exportable().map(|v| ($field::DB_NAME, v))))+
-            };
+            }
         }
-
-        named!(
-            blocks,
-            mining,
-            transactions,
-            scripts,
-            positions,
-            cointime,
-            constants,
-            indicators,
-            indexes,
-            market,
-            pools,
-            prices,
-            distribution,
-            supply,
-            inputs,
-            outputs,
-        )
-    }
+    };
 }
+
+impl_iter_named_exportable!(blocks, mining, transactions, scripts, positions, cointime,
+    constants, indicators, indexes, market, pools, prices, distribution, supply, inputs, outputs);
 
 fn timed<T>(label: &str, f: impl FnOnce() -> T) -> T {
     let start = Instant::now();

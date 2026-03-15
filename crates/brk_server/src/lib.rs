@@ -39,6 +39,7 @@ mod extended;
 mod state;
 
 use api::*;
+pub use api::ApiRoutes;
 pub use brk_types::Port;
 pub use brk_website::Website;
 pub use cache::{CacheParams, CacheStrategy};
@@ -253,8 +254,7 @@ impl Server {
 
         info!("Starting server on port {port}...");
 
-        let mut openapi = create_openapi();
-        let router = router.finish_api(&mut openapi);
+        let (router, openapi) = finish_openapi(router);
 
         #[cfg(feature = "bindgen")]
         {
@@ -269,10 +269,8 @@ impl Server {
                 .javascript(workspace_root.join("modules/brk-client/index.js"))
                 .python(workspace_root.join("packages/brk_client/brk_client/__init__.py"));
 
-            let openapi_json = serde_json::to_string(&openapi).unwrap();
-
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                brk_bindgen::generate_clients(vecs, &openapi_json, &output_paths)
+                generate_bindings(vecs, &openapi, &output_paths)
             }));
 
             match result {
@@ -299,4 +297,24 @@ impl Server {
 
         Ok(())
     }
+}
+
+/// Finalize a router and extract the OpenAPI spec.
+pub fn finish_openapi<S: Clone + Send + Sync + 'static>(
+    router: ApiRouter<S>,
+) -> (axum::Router<S>, aide::openapi::OpenApi) {
+    let mut openapi = create_openapi();
+    let router = router.finish_api(&mut openapi);
+    (router, openapi)
+}
+
+#[cfg(feature = "bindgen")]
+pub fn generate_bindings(
+    vecs: &brk_query::Vecs,
+    openapi: &aide::openapi::OpenApi,
+    output_paths: &brk_bindgen::ClientOutputPaths,
+) -> std::io::Result<()> {
+    let openapi_json = serde_json::to_string(openapi)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+    brk_bindgen::generate_clients(vecs, &openapi_json, output_paths)
 }
