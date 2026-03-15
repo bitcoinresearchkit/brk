@@ -16,7 +16,7 @@ use super::{find_common_prefix, find_common_suffix, normalize_prefix};
 ///
 /// This is useful for pattern base analysis where we want the "base" case
 /// (e.g., the leaf without suffix like `_btc` or `_usd`).
-fn get_shortest_leaf_name(node: &TreeNode) -> Option<String> {
+pub(super) fn get_shortest_leaf_name(node: &TreeNode) -> Option<String> {
     match node {
         TreeNode::Leaf(leaf) => Some(leaf.name().to_string()),
         TreeNode::Branch(children) => children

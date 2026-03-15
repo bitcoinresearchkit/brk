@@ -98,17 +98,37 @@ fn generate_tree_node(
             .unwrap();
         } else {
             // Pattern type - use ::new() constructor
-            // All patterns have ::new(), parameterizable ones use detected mode,
-            // non-parameterizable ones use field name fallback
-            generate_tree_node_field(
-                output,
-                &syntax,
-                &child.field,
-                metadata,
-                "            ",
-                child.name,
-                Some(&child.base_result.base),
-            );
+            let pattern = metadata.find_pattern(&child.field.rust_type);
+            if pattern.is_some_and(|p| p.is_templated()) {
+                // Templated pattern: pass base and disc
+                let disc = child
+                    .base_result
+                    .field_parts
+                    .values()
+                    .filter(|v| !v.is_empty())
+                    .min_by_key(|v| v.len())
+                    .cloned()
+                    .unwrap_or_default();
+                writeln!(
+                    output,
+                    "            {}: {}::new(client.clone(), {}, {}.to_string()),",
+                    field_name,
+                    child.field.rust_type,
+                    syntax.string_literal(&child.base_result.base),
+                    syntax.string_literal(&disc),
+                )
+                .unwrap();
+            } else {
+                generate_tree_node_field(
+                    output,
+                    &syntax,
+                    &child.field,
+                    metadata,
+                    "            ",
+                    child.name,
+                    Some(&child.base_result.base),
+                );
+            }
         }
     }
 

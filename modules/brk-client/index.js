@@ -1656,18 +1656,18 @@ function createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65
 /**
  * @typedef {Object} _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern
  * @property {CentsSatsUsdPattern} _0sd
- * @property {PriceValuePattern} m05sd
- * @property {PriceValuePattern} m15sd
- * @property {PriceValuePattern} m1sd
- * @property {PriceValuePattern} m25sd
- * @property {PriceValuePattern} m2sd
- * @property {PriceValuePattern} m3sd
- * @property {PriceValuePattern} p05sd
- * @property {PriceValuePattern} p15sd
- * @property {PriceValuePattern} p1sd
- * @property {PriceValuePattern} p25sd
- * @property {PriceValuePattern} p2sd
- * @property {PriceValuePattern} p3sd
+ * @property {PriceRatioPattern} m05sd
+ * @property {PriceRatioPattern} m15sd
+ * @property {PriceRatioPattern} m1sd
+ * @property {PriceRatioPattern} m25sd
+ * @property {PriceRatioPattern} m2sd
+ * @property {PriceRatioPattern} m3sd
+ * @property {PriceRatioPattern} p05sd
+ * @property {PriceRatioPattern} p15sd
+ * @property {PriceRatioPattern} p1sd
+ * @property {PriceRatioPattern} p25sd
+ * @property {PriceRatioPattern} p2sd
+ * @property {PriceRatioPattern} p3sd
  * @property {MetricPattern1<StoredF32>} sd
  * @property {MetricPattern1<StoredF32>} zscore
  */
@@ -1676,25 +1676,26 @@ function createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65
  * Create a _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
+ * @param {string} disc - Discriminator suffix
  * @returns {_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern}
  */
-function create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern(client, acc) {
+function create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern(client, acc, disc) {
   return {
-    _0sd: createCentsSatsUsdPattern(client, _m(acc, '0sd_4y')),
-    m05sd: createPriceValuePattern(client, acc),
-    m15sd: createPriceValuePattern(client, acc),
-    m1sd: createPriceValuePattern(client, acc),
-    m25sd: createPriceValuePattern(client, acc),
-    m2sd: createPriceValuePattern(client, acc),
-    m3sd: createPriceValuePattern(client, acc),
-    p05sd: createPriceValuePattern(client, acc),
-    p15sd: createPriceValuePattern(client, acc),
-    p1sd: createPriceValuePattern(client, acc),
-    p25sd: createPriceValuePattern(client, acc),
-    p2sd: createPriceValuePattern(client, acc),
-    p3sd: createPriceValuePattern(client, acc),
-    sd: createMetricPattern1(client, _m(acc, 'sd_4y')),
-    zscore: createMetricPattern1(client, _m(acc, 'zscore_4y')),
+    _0sd: createCentsSatsUsdPattern(client, _m(_m(acc, '0sd'), disc)),
+    m05sd: createPriceRatioPattern(client, acc, _m('m0_5sd', disc)),
+    m15sd: createPriceRatioPattern(client, acc, _m('m1_5sd', disc)),
+    m1sd: createPriceRatioPattern(client, acc, _m('m1sd', disc)),
+    m25sd: createPriceRatioPattern(client, acc, _m('m2_5sd', disc)),
+    m2sd: createPriceRatioPattern(client, acc, _m('m2sd', disc)),
+    m3sd: createPriceRatioPattern(client, acc, _m('m3sd', disc)),
+    p05sd: createPriceRatioPattern(client, acc, _m('p0_5sd', disc)),
+    p15sd: createPriceRatioPattern(client, acc, _m('p1_5sd', disc)),
+    p1sd: createPriceRatioPattern(client, acc, _m('p1sd', disc)),
+    p25sd: createPriceRatioPattern(client, acc, _m('p2_5sd', disc)),
+    p2sd: createPriceRatioPattern(client, acc, _m('p2sd', disc)),
+    p3sd: createPriceRatioPattern(client, acc, _m('p3sd', disc)),
+    sd: createMetricPattern1(client, _m(_m(acc, 'ratio_sd'), disc)),
+    zscore: createMetricPattern1(client, _m(_m(acc, 'ratio_zscore'), disc)),
   };
 }
 
@@ -1907,20 +1908,21 @@ function createAverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(c
  * Create a AverageGainsLossesRsiStochPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
+ * @param {string} disc - Discriminator suffix
  * @returns {AverageGainsLossesRsiStochPattern}
  */
-function createAverageGainsLossesRsiStochPattern(client, acc) {
+function createAverageGainsLossesRsiStochPattern(client, acc, disc) {
   return {
-    averageGain: createMetricPattern1(client, _m(acc, 'average_gain_24h')),
-    averageLoss: createMetricPattern1(client, _m(acc, 'average_loss_24h')),
-    gains: createMetricPattern1(client, _m(acc, 'gains_24h')),
-    losses: createMetricPattern1(client, _m(acc, 'losses_24h')),
-    rsi: createBpsPercentRatioPattern3(client, _m(acc, '24h')),
-    rsiMax: createBpsPercentRatioPattern3(client, _m(acc, 'max_24h')),
-    rsiMin: createBpsPercentRatioPattern3(client, _m(acc, 'min_24h')),
-    stochRsi: createBpsPercentRatioPattern3(client, _m(acc, 'stoch_24h')),
-    stochRsiD: createBpsPercentRatioPattern3(client, _m(acc, 'stoch_d_24h')),
-    stochRsiK: createBpsPercentRatioPattern3(client, _m(acc, 'stoch_k_24h')),
+    averageGain: createMetricPattern1(client, _m(_m(acc, 'average_gain'), disc)),
+    averageLoss: createMetricPattern1(client, _m(_m(acc, 'average_loss'), disc)),
+    gains: createMetricPattern1(client, _m(_m(acc, 'gains'), disc)),
+    losses: createMetricPattern1(client, _m(_m(acc, 'losses'), disc)),
+    rsi: createBpsPercentRatioPattern3(client, _m(acc, disc)),
+    rsiMax: createBpsPercentRatioPattern3(client, _m(_m(acc, 'max'), disc)),
+    rsiMin: createBpsPercentRatioPattern3(client, _m(_m(acc, 'min'), disc)),
+    stochRsi: createBpsPercentRatioPattern3(client, _m(_m(acc, 'stoch'), disc)),
+    stochRsiD: createBpsPercentRatioPattern3(client, _m(_m(acc, 'stoch_d'), disc)),
+    stochRsiK: createBpsPercentRatioPattern3(client, _m(_m(acc, 'stoch_k'), disc)),
   };
 }
 
@@ -2078,7 +2080,7 @@ function createBpsCentsPercentilesRatioSatsSmaStdUsdPattern(client, acc) {
     ratio: createMetricPattern1(client, _m(acc, 'ratio')),
     sats: createMetricPattern1(client, _m(acc, 'sats')),
     sma: create_1m1w1y2y4yAllPattern(client, _m(acc, 'ratio_sma')),
-    stdDev: create_1y2y4yAllPattern(client, _m(acc, 'ratio')),
+    stdDev: create_1y2y4yAllPattern(client, acc),
     usd: createMetricPattern1(client, acc),
   };
 }
@@ -2252,7 +2254,7 @@ function createBaseCumulativeNegativeRelSumPattern2(client, acc) {
 function createCapLossMvrvNetPriceProfitSoprPattern(client, acc) {
   return {
     cap: createCentsDeltaUsdPattern(client, _m(acc, 'realized_cap')),
-    loss: createBaseCumulativeNegativeSumPattern(client, acc),
+    loss: createBaseCumulativeNegativeSumPattern(client, acc, ''),
     mvrv: createMetricPattern1(client, _m(acc, 'mvrv')),
     netPnl: createBaseCumulativeDeltaSumPattern(client, _m(acc, 'net_realized_pnl')),
     price: createBpsCentsRatioSatsUsdPattern(client, _m(acc, 'realized_price')),
@@ -2524,12 +2526,12 @@ function createDeltaHalfInRelTotalPattern2(client, acc) {
  */
 function createPct1Pct2Pct5Pct95Pct98Pct99Pattern(client, acc) {
   return {
-    pct1: createBpsPriceRatioPattern(client, acc),
-    pct2: createBpsPriceRatioPattern(client, acc),
-    pct5: createBpsPriceRatioPattern(client, acc),
-    pct95: createBpsPriceRatioPattern(client, acc),
-    pct98: createBpsPriceRatioPattern(client, acc),
-    pct99: createBpsPriceRatioPattern(client, acc),
+    pct1: createBpsPriceRatioPattern(client, acc, 'pct1'),
+    pct2: createBpsPriceRatioPattern(client, acc, 'pct2'),
+    pct5: createBpsPriceRatioPattern(client, acc, 'pct5'),
+    pct95: createBpsPriceRatioPattern(client, acc, 'pct95'),
+    pct98: createBpsPriceRatioPattern(client, acc, 'pct98'),
+    pct99: createBpsPriceRatioPattern(client, acc, 'pct99'),
   };
 }
 
@@ -2750,11 +2752,11 @@ function createDeltaHalfInTotalPattern2(client, acc) {
  */
 function createEmaHistogramLineSignalPattern(client, acc) {
   return {
-    emaFast: createMetricPattern1(client, _m(acc, 'ema_fast_24h')),
-    emaSlow: createMetricPattern1(client, _m(acc, 'ema_slow_24h')),
-    histogram: createMetricPattern1(client, _m(acc, 'histogram_24h')),
-    line: createMetricPattern1(client, _m(acc, 'line_24h')),
-    signal: createMetricPattern1(client, _m(acc, 'signal_24h')),
+    emaFast: createMetricPattern1(client, `${acc}_ema_fast`),
+    emaSlow: createMetricPattern1(client, `${acc}_ema_slow`),
+    histogram: createMetricPattern1(client, `${acc}_histogram`),
+    line: createMetricPattern1(client, `${acc}_line`),
+    signal: createMetricPattern1(client, `${acc}_signal`),
   };
 }
 
@@ -3014,10 +3016,10 @@ function create_1m1w1y24hPattern4(client, acc) {
  */
 function create_1y2y4yAllPattern(client, acc) {
   return {
-    _1y: create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern(client, acc),
-    _2y: create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern(client, acc),
-    _4y: create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern(client, acc),
-    all: create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern(client, acc),
+    _1y: create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern(client, acc, ''),
+    _2y: create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern(client, acc, ''),
+    _4y: create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern(client, acc, ''),
+    all: create_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern(client, acc, ''),
   };
 }
 
@@ -3079,14 +3081,15 @@ function createBaseCumulativeDeltaSumPattern(client, acc) {
  * Create a BaseCumulativeNegativeSumPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
+ * @param {string} disc - Discriminator suffix
  * @returns {BaseCumulativeNegativeSumPattern}
  */
-function createBaseCumulativeNegativeSumPattern(client, acc) {
+function createBaseCumulativeNegativeSumPattern(client, acc, disc) {
   return {
-    base: createCentsUsdPattern2(client, _m(acc, 'unrealized_loss')),
-    cumulative: createCentsUsdPattern2(client, _m(acc, 'unrealized_loss_cumulative')),
-    negative: createMetricPattern1(client, _m(acc, 'neg_unrealized_loss')),
-    sum: create_1m1w1y24hPattern4(client, _m(acc, 'unrealized_loss_sum')),
+    base: createCentsUsdPattern2(client, _m(acc, disc)),
+    cumulative: createCentsUsdPattern2(client, _m(acc, `${disc}_cumulative`)),
+    negative: createMetricPattern1(client, _m(_m(acc, 'neg'), disc)),
+    sum: create_1m1w1y24hPattern4(client, _m(acc, `${disc}_sum`)),
   };
 }
 
@@ -3221,7 +3224,7 @@ function createCoindaysCoinyearsDormancySentPattern(client, acc) {
  */
 function createLossNetNuplProfitPattern(client, acc) {
   return {
-    loss: createBaseCumulativeNegativeSumPattern(client, acc),
+    loss: createBaseCumulativeNegativeSumPattern(client, acc, ''),
     netPnl: createCentsUsdPattern(client, _m(acc, 'net_unrealized_pnl')),
     nupl: createBpsRatioPattern(client, _m(acc, 'nupl')),
     profit: createBaseCumulativeSumPattern3(client, _m(acc, 'unrealized_profit')),
@@ -3457,13 +3460,14 @@ function createBpsPercentRatioPattern4(client, acc) {
  * Create a BpsPriceRatioPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
+ * @param {string} disc - Discriminator suffix
  * @returns {BpsPriceRatioPattern}
  */
-function createBpsPriceRatioPattern(client, acc) {
+function createBpsPriceRatioPattern(client, acc, disc) {
   return {
-    bps: createMetricPattern1(client, _m(acc, 'ratio_pct99_bps')),
-    price: createCentsSatsUsdPattern(client, _m(acc, 'pct99')),
-    ratio: createMetricPattern1(client, _m(acc, 'ratio_pct99')),
+    bps: createMetricPattern1(client, _m(acc, `ratio_${disc}_bps`)),
+    price: createCentsSatsUsdPattern(client, _m(acc, disc)),
+    ratio: createMetricPattern1(client, _m(_m(acc, 'ratio'), disc)),
   };
 }
 
@@ -3629,7 +3633,7 @@ function createGreedNetPainPattern(client, acc) {
  */
 function createLossNuplProfitPattern(client, acc) {
   return {
-    loss: createBaseCumulativeNegativeSumPattern(client, acc),
+    loss: createBaseCumulativeNegativeSumPattern(client, acc, ''),
     nupl: createBpsRatioPattern(client, _m(acc, 'nupl')),
     profit: createBaseCumulativeSumPattern3(client, _m(acc, 'unrealized_profit')),
   };
@@ -3671,9 +3675,9 @@ function createLowerPriceUpperPattern(client, acc) {
  */
 function createRatioValuePattern2(client, acc) {
   return {
-    ratio: create_1m1w1y24hPattern(client, _m(acc, 'asopr')),
-    valueCreated: createBaseCumulativeSumPattern(client, _m(acc, 'adj_value_created')),
-    valueDestroyed: createBaseCumulativeSumPattern(client, _m(acc, 'adj_value_destroyed')),
+    ratio: create_1m1w1y24hPattern(client, `${acc}_ratio`),
+    valueCreated: createBaseCumulativeSumPattern(client, `${acc}_value_created`),
+    valueDestroyed: createBaseCumulativeSumPattern(client, `${acc}_value_destroyed`),
   };
 }
 
@@ -3973,21 +3977,22 @@ function createInPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} PriceValuePattern
+ * @typedef {Object} PriceRatioPattern
  * @property {CentsSatsUsdPattern} price
- * @property {MetricPattern1<StoredF32>} value
+ * @property {MetricPattern1<StoredF32>} ratio
  */
 
 /**
- * Create a PriceValuePattern pattern node
+ * Create a PriceRatioPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated metric name
- * @returns {PriceValuePattern}
+ * @param {string} disc - Discriminator suffix
+ * @returns {PriceRatioPattern}
  */
-function createPriceValuePattern(client, acc) {
+function createPriceRatioPattern(client, acc, disc) {
   return {
-    price: createCentsSatsUsdPattern(client, _m(acc, 'p3sd_4y')),
-    value: createMetricPattern1(client, _m(acc, 'ratio_p3sd_4y')),
+    price: createCentsSatsUsdPattern(client, _m(acc, disc)),
+    ratio: createMetricPattern1(client, _m(_m(acc, 'ratio'), disc)),
   };
 }
 
@@ -4024,8 +4029,8 @@ function createRelPattern(client, acc) {
  */
 function createSdSmaPattern(client, acc) {
   return {
-    sd: createMetricPattern1(client, _m(acc, 'sd_1y')),
-    sma: createMetricPattern1(client, _m(acc, 'sma_1y')),
+    sd: createMetricPattern1(client, `${acc}_sd`),
+    sma: createMetricPattern1(client, `${acc}_sma`),
   };
 }
 
@@ -5051,7 +5056,7 @@ function createUnspentPattern(client, acc) {
  * @typedef {Object} MetricsTree_Market_Returns_Sd24h
  * @property {MetricsTree_Market_Returns_Sd24h_1w} _1w
  * @property {MetricsTree_Market_Returns_Sd24h_1m} _1m
- * @property {SdSmaPattern} _1y
+ * @property {MetricsTree_Market_Returns_Sd24h_1y} _1y
  */
 
 /**
@@ -5062,6 +5067,12 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Market_Returns_Sd24h_1m
+ * @property {MetricPattern1<StoredF32>} sma
+ * @property {MetricPattern1<StoredF32>} sd
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_Returns_Sd24h_1y
  * @property {MetricPattern1<StoredF32>} sma
  * @property {MetricPattern1<StoredF32>} sd
  */
@@ -5115,22 +5126,8 @@ function createUnspentPattern(client, acc) {
  * @property {MetricPattern1<SatsFract>} sats
  * @property {MetricPattern1<BasisPoints32>} bps
  * @property {MetricPattern1<StoredF32>} ratio
- * @property {MetricsTree_Market_MovingAverage_Sma_200d_X24} x24
- * @property {MetricsTree_Market_MovingAverage_Sma_200d_X08} x08
- */
-
-/**
- * @typedef {Object} MetricsTree_Market_MovingAverage_Sma_200d_X24
- * @property {MetricPattern1<Dollars>} usd
- * @property {MetricPattern1<Cents>} cents
- * @property {MetricPattern1<SatsFract>} sats
- */
-
-/**
- * @typedef {Object} MetricsTree_Market_MovingAverage_Sma_200d_X08
- * @property {MetricPattern1<Dollars>} usd
- * @property {MetricPattern1<Cents>} cents
- * @property {MetricPattern1<SatsFract>} sats
+ * @property {CentsSatsUsdPattern} x24
+ * @property {CentsSatsUsdPattern} x08
  */
 
 /**
@@ -5140,14 +5137,7 @@ function createUnspentPattern(client, acc) {
  * @property {MetricPattern1<SatsFract>} sats
  * @property {MetricPattern1<BasisPoints32>} bps
  * @property {MetricPattern1<StoredF32>} ratio
- * @property {MetricsTree_Market_MovingAverage_Sma_350d_X2} x2
- */
-
-/**
- * @typedef {Object} MetricsTree_Market_MovingAverage_Sma_350d_X2
- * @property {MetricPattern1<Dollars>} usd
- * @property {MetricPattern1<Cents>} cents
- * @property {MetricPattern1<SatsFract>} sats
+ * @property {CentsSatsUsdPattern} x2
  */
 
 /**
@@ -5270,59 +5260,26 @@ function createUnspentPattern(client, acc) {
 /**
  * @typedef {Object} MetricsTree_Market_Technical_Rsi
  * @property {AverageGainsLossesRsiStochPattern} _24h
- * @property {MetricsTree_Market_Technical_Rsi_1w} _1w
- * @property {MetricsTree_Market_Technical_Rsi_1m} _1m
- * @property {MetricsTree_Market_Technical_Rsi_1y} _1y
- */
-
-/**
- * @typedef {Object} MetricsTree_Market_Technical_Rsi_1w
- * @property {MetricPattern1<StoredF32>} gains
- * @property {MetricPattern1<StoredF32>} losses
- * @property {MetricPattern1<StoredF32>} averageGain
- * @property {MetricPattern1<StoredF32>} averageLoss
- * @property {BpsPercentRatioPattern3} rsi
- * @property {BpsPercentRatioPattern3} rsiMin
- * @property {BpsPercentRatioPattern3} rsiMax
- * @property {BpsPercentRatioPattern3} stochRsi
- * @property {BpsPercentRatioPattern3} stochRsiK
- * @property {BpsPercentRatioPattern3} stochRsiD
- */
-
-/**
- * @typedef {Object} MetricsTree_Market_Technical_Rsi_1m
- * @property {MetricPattern1<StoredF32>} gains
- * @property {MetricPattern1<StoredF32>} losses
- * @property {MetricPattern1<StoredF32>} averageGain
- * @property {MetricPattern1<StoredF32>} averageLoss
- * @property {BpsPercentRatioPattern3} rsi
- * @property {BpsPercentRatioPattern3} rsiMin
- * @property {BpsPercentRatioPattern3} rsiMax
- * @property {BpsPercentRatioPattern3} stochRsi
- * @property {BpsPercentRatioPattern3} stochRsiK
- * @property {BpsPercentRatioPattern3} stochRsiD
- */
-
-/**
- * @typedef {Object} MetricsTree_Market_Technical_Rsi_1y
- * @property {MetricPattern1<StoredF32>} gains
- * @property {MetricPattern1<StoredF32>} losses
- * @property {MetricPattern1<StoredF32>} averageGain
- * @property {MetricPattern1<StoredF32>} averageLoss
- * @property {BpsPercentRatioPattern3} rsi
- * @property {BpsPercentRatioPattern3} rsiMin
- * @property {BpsPercentRatioPattern3} rsiMax
- * @property {BpsPercentRatioPattern3} stochRsi
- * @property {BpsPercentRatioPattern3} stochRsiK
- * @property {BpsPercentRatioPattern3} stochRsiD
+ * @property {AverageGainsLossesRsiStochPattern} _1w
+ * @property {AverageGainsLossesRsiStochPattern} _1m
+ * @property {AverageGainsLossesRsiStochPattern} _1y
  */
 
 /**
  * @typedef {Object} MetricsTree_Market_Technical_Macd
- * @property {EmaHistogramLineSignalPattern} _24h
+ * @property {MetricsTree_Market_Technical_Macd_24h} _24h
  * @property {MetricsTree_Market_Technical_Macd_1w} _1w
  * @property {MetricsTree_Market_Technical_Macd_1m} _1m
  * @property {MetricsTree_Market_Technical_Macd_1y} _1y
+ */
+
+/**
+ * @typedef {Object} MetricsTree_Market_Technical_Macd_24h
+ * @property {MetricPattern1<StoredF32>} emaFast
+ * @property {MetricPattern1<StoredF32>} emaSlow
+ * @property {MetricPattern1<StoredF32>} line
+ * @property {MetricPattern1<StoredF32>} signal
+ * @property {MetricPattern1<StoredF32>} histogram
  */
 
 /**
@@ -7845,7 +7802,10 @@ class BrkClient extends BrkClientBase {
               sma: createMetricPattern1(this, 'price_return_24h_sma_1m'),
               sd: createMetricPattern1(this, 'price_return_24h_sd_1m'),
             },
-            _1y: createSdSmaPattern(this, 'price_return_24h'),
+            _1y: {
+              sma: createMetricPattern1(this, 'price_return_24h_sma_1y'),
+              sd: createMetricPattern1(this, 'price_return_24h_sd_1y'),
+            },
           },
         },
         volatility: {
@@ -7878,16 +7838,8 @@ class BrkClient extends BrkClientBase {
               sats: createMetricPattern1(this, 'price_sma_200d_sats'),
               bps: createMetricPattern1(this, 'price_sma_200d_ratio_bps'),
               ratio: createMetricPattern1(this, 'price_sma_200d_ratio'),
-              x24: {
-                usd: createMetricPattern1(this, 'price_sma_200d_x2_4_usd'),
-                cents: createMetricPattern1(this, 'price_sma_200d_x2_4_cents'),
-                sats: createMetricPattern1(this, 'price_sma_200d_x2_4_sats'),
-              },
-              x08: {
-                usd: createMetricPattern1(this, 'price_sma_200d_x0_8_usd'),
-                cents: createMetricPattern1(this, 'price_sma_200d_x0_8_cents'),
-                sats: createMetricPattern1(this, 'price_sma_200d_x0_8_sats'),
-              },
+              x24: createCentsSatsUsdPattern(this, 'price_sma_200d_x2_4'),
+              x08: createCentsSatsUsdPattern(this, 'price_sma_200d_x0_8'),
             },
             _350d: {
               usd: createMetricPattern1(this, 'price_sma_350d'),
@@ -7895,11 +7847,7 @@ class BrkClient extends BrkClientBase {
               sats: createMetricPattern1(this, 'price_sma_350d_sats'),
               bps: createMetricPattern1(this, 'price_sma_350d_ratio_bps'),
               ratio: createMetricPattern1(this, 'price_sma_350d_ratio'),
-              x2: {
-                usd: createMetricPattern1(this, 'price_sma_350d_x2_usd'),
-                cents: createMetricPattern1(this, 'price_sma_350d_x2_cents'),
-                sats: createMetricPattern1(this, 'price_sma_350d_x2_sats'),
-              },
+              x2: createCentsSatsUsdPattern(this, 'price_sma_350d_x2'),
             },
             _1y: createBpsCentsRatioSatsUsdPattern(this, 'price_sma_1y'),
             _2y: createBpsCentsRatioSatsUsdPattern(this, 'price_sma_2y'),
@@ -7995,49 +7943,22 @@ class BrkClient extends BrkClientBase {
         },
         technical: {
           rsi: {
-            _24h: createAverageGainsLossesRsiStochPattern(this, 'rsi'),
-            _1w: {
-              gains: createMetricPattern1(this, 'rsi_gains_1w'),
-              losses: createMetricPattern1(this, 'rsi_losses_1w'),
-              averageGain: createMetricPattern1(this, 'rsi_average_gain_1w'),
-              averageLoss: createMetricPattern1(this, 'rsi_average_loss_1w'),
-              rsi: createBpsPercentRatioPattern3(this, 'rsi_1w'),
-              rsiMin: createBpsPercentRatioPattern3(this, 'rsi_min_1w'),
-              rsiMax: createBpsPercentRatioPattern3(this, 'rsi_max_1w'),
-              stochRsi: createBpsPercentRatioPattern3(this, 'rsi_stoch_1w'),
-              stochRsiK: createBpsPercentRatioPattern3(this, 'rsi_stoch_k_1w'),
-              stochRsiD: createBpsPercentRatioPattern3(this, 'rsi_stoch_d_1w'),
-            },
-            _1m: {
-              gains: createMetricPattern1(this, 'rsi_gains_1m'),
-              losses: createMetricPattern1(this, 'rsi_losses_1m'),
-              averageGain: createMetricPattern1(this, 'rsi_average_gain_1m'),
-              averageLoss: createMetricPattern1(this, 'rsi_average_loss_1m'),
-              rsi: createBpsPercentRatioPattern3(this, 'rsi_1m'),
-              rsiMin: createBpsPercentRatioPattern3(this, 'rsi_min_1m'),
-              rsiMax: createBpsPercentRatioPattern3(this, 'rsi_max_1m'),
-              stochRsi: createBpsPercentRatioPattern3(this, 'rsi_stoch_1m'),
-              stochRsiK: createBpsPercentRatioPattern3(this, 'rsi_stoch_k_1m'),
-              stochRsiD: createBpsPercentRatioPattern3(this, 'rsi_stoch_d_1m'),
-            },
-            _1y: {
-              gains: createMetricPattern1(this, 'rsi_gains_1y'),
-              losses: createMetricPattern1(this, 'rsi_losses_1y'),
-              averageGain: createMetricPattern1(this, 'rsi_average_gain_1y'),
-              averageLoss: createMetricPattern1(this, 'rsi_average_loss_1y'),
-              rsi: createBpsPercentRatioPattern3(this, 'rsi_1y'),
-              rsiMin: createBpsPercentRatioPattern3(this, 'rsi_min_1y'),
-              rsiMax: createBpsPercentRatioPattern3(this, 'rsi_max_1y'),
-              stochRsi: createBpsPercentRatioPattern3(this, 'rsi_stoch_1y'),
-              stochRsiK: createBpsPercentRatioPattern3(this, 'rsi_stoch_k_1y'),
-              stochRsiD: createBpsPercentRatioPattern3(this, 'rsi_stoch_d_1y'),
-            },
+            _24h: createAverageGainsLossesRsiStochPattern(this, 'rsi', '24h'),
+            _1w: createAverageGainsLossesRsiStochPattern(this, 'rsi', '1w'),
+            _1m: createAverageGainsLossesRsiStochPattern(this, 'rsi', '1m'),
+            _1y: createAverageGainsLossesRsiStochPattern(this, 'rsi', '1y'),
           },
           stochK: createBpsPercentRatioPattern3(this, 'stoch_k'),
           stochD: createBpsPercentRatioPattern3(this, 'stoch_d'),
           piCycle: createBpsRatioPattern2(this, 'pi_cycle'),
           macd: {
-            _24h: createEmaHistogramLineSignalPattern(this, 'macd'),
+            _24h: {
+              emaFast: createMetricPattern1(this, 'macd_ema_fast_24h'),
+              emaSlow: createMetricPattern1(this, 'macd_ema_slow_24h'),
+              line: createMetricPattern1(this, 'macd_line_24h'),
+              signal: createMetricPattern1(this, 'macd_signal_24h'),
+              histogram: createMetricPattern1(this, 'macd_histogram_24h'),
+            },
             _1w: {
               emaFast: createMetricPattern1(this, 'macd_ema_fast_1w'),
               emaSlow: createMetricPattern1(this, 'macd_ema_slow_1w'),

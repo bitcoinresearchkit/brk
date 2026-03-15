@@ -55,4 +55,48 @@ impl LanguageSyntax for RustSyntax {
     fn constructor_name(&self, type_name: &str) -> String {
         format!("{}::new", type_name)
     }
+
+    fn disc_arg_expr(&self, template: &str) -> String {
+        if template == "{disc}" {
+            "disc.clone()".to_string()
+        } else if template.is_empty() {
+            "String::new()".to_string()
+        } else if !template.contains("{disc}") {
+            format!("\"{}\".to_string()", template)
+        } else if template.ends_with("{disc}") {
+            let static_part = template.trim_end_matches("{disc}").trim_end_matches('_');
+            format!("_m(\"{}\", &disc)", static_part)
+        } else {
+            let rust_template = template
+                .replace("{disc}", "{disc}")
+                .replace('{', "{{")
+                .replace('}', "}}")
+                .replace("{{disc}}", "{disc}");
+            format!("format!(\"{}\")", rust_template)
+        }
+    }
+
+    fn template_expr(&self, acc_var: &str, template: &str) -> String {
+        if template == "{disc}" {
+            // _m(acc, disc) in Rust
+            format!("_m(&{}, &disc)", acc_var)
+        } else if template.is_empty() {
+            // Identity
+            acc_var.to_string()
+        } else if !template.contains("{disc}") {
+            // Static suffix
+            format!("_m(&{}, \"{}\")", acc_var, template)
+        } else {
+            // Template with disc: _m(&acc, &format!("ratio_{disc}_bps", disc=disc))
+            let rust_template = template
+                .replace("{disc}", "{disc}")
+                .replace('{', "{{")
+                .replace('}', "}}")
+                .replace("{{disc}}", "{disc}");
+            format!(
+                "_m(&{}, &format!(\"{}\", disc=disc))",
+                acc_var, rust_template
+            )
+        }
+    }
 }

@@ -46,7 +46,10 @@ export function flatMapCohorts(list, fn) {
  * @returns {R[]}
  */
 export function mapCohortsWithAll(list, all, fn) {
-  return [...list.map(fn), { ...fn({ ...all, name: "All" }), defaultActive: false }];
+  return [
+    ...list.map(fn),
+    { ...fn({ ...all, name: "All" }), defaultActive: false },
+  ];
 }
 
 /**
@@ -60,7 +63,10 @@ export function mapCohortsWithAll(list, all, fn) {
  * @returns {R[]}
  */
 export function flatMapCohortsWithAll(list, all, fn) {
-  return [...list.flatMap(fn), ...fn({ ...all, name: "All" }).map((s) => ({ ...s, defaultActive: false }))];
+  return [
+    ...list.flatMap(fn),
+    ...fn({ ...all, name: "All" }).map((s) => ({ ...s, defaultActive: false })),
+  ];
 }
 
 /**
@@ -257,20 +263,32 @@ export function satsBtcUsdFullTree({ pattern, name, title, color }) {
           name: "Compare",
           title: `${title} Rolling Sum`,
           bottom: ROLLING_WINDOWS.flatMap((w) =>
-            satsBtcUsd({ pattern: pattern.sum[w.key], name: w.name, color: w.color }),
+            satsBtcUsd({
+              pattern: pattern.sum[w.key],
+              name: w.name,
+              color: w.color,
+            }),
           ),
         },
         ...ROLLING_WINDOWS.map((w) => ({
           name: w.name,
           title: `${title} ${w.name} Rolling Sum`,
-          bottom: satsBtcUsd({ pattern: pattern.sum[w.key], name: w.name, color: w.color }),
+          bottom: satsBtcUsd({
+            pattern: pattern.sum[w.key],
+            name: w.name,
+            color: w.color,
+          }),
         })),
       ],
     },
     {
       name: "Cumulative",
       title: `${title} (Total)`,
-      bottom: satsBtcUsd({ pattern: pattern.cumulative, name: "all-time", color }),
+      bottom: satsBtcUsd({
+        pattern: pattern.cumulative,
+        name: "all-time",
+        color,
+      }),
     },
   ];
 }
@@ -296,7 +314,12 @@ export function simplePriceRatioTree({ pattern, title, legend, color }) {
       title: `${title} Ratio`,
       top: [price({ metric: pattern, name: legend, color })],
       bottom: [
-        baseline({ metric: pattern.ratio, name: "Ratio", unit: Unit.ratio, base: 1 }),
+        baseline({
+          metric: pattern.ratio,
+          name: "Ratio",
+          unit: Unit.ratio,
+          base: 1,
+        }),
       ],
     },
   ];
@@ -312,7 +335,13 @@ export function simplePriceRatioTree({ pattern, title, legend, color }) {
  * @param {FetchedPriceSeriesBlueprint[]} [args.priceReferences]
  * @returns {PartialOptionsTree}
  */
-export function priceRatioPercentilesTree({ pattern, title, legend, color, priceReferences }) {
+export function priceRatioPercentilesTree({
+  pattern,
+  title,
+  legend,
+  color,
+  priceReferences,
+}) {
   const p = pattern.percentiles;
   const pctUsd = [
     { name: "pct95", prop: p.pct95.price, color: colors.ratioPct._95 },
@@ -338,7 +367,13 @@ export function priceRatioPercentilesTree({ pattern, title, legend, color, price
         price({ metric: pattern, name: legend, color }),
         ...(priceReferences ?? []),
         ...pctUsd.map(({ name, prop, color }) =>
-          price({ metric: prop, name, color, defaultActive: false, options: { lineStyle: 1 } }),
+          price({
+            metric: prop,
+            name,
+            color,
+            defaultActive: false,
+            options: { lineStyle: 1 },
+          }),
         ),
       ],
     },
@@ -348,13 +383,31 @@ export function priceRatioPercentilesTree({ pattern, title, legend, color, price
       top: [
         price({ metric: pattern, name: legend, color }),
         ...pctUsd.map(({ name, prop, color }) =>
-          price({ metric: prop, name, color, defaultActive: false, options: { lineStyle: 1 } }),
+          price({
+            metric: prop,
+            name,
+            color,
+            defaultActive: false,
+            options: { lineStyle: 1 },
+          }),
         ),
       ],
       bottom: [
-        baseline({ metric: pattern.ratio, name: "Ratio", unit: Unit.ratio, base: 1 }),
+        baseline({
+          metric: pattern.ratio,
+          name: "Ratio",
+          unit: Unit.ratio,
+          base: 1,
+        }),
         ...pctRatio.map(({ name, prop, color }) =>
-          line({ metric: prop, name, color, defaultActive: false, unit: Unit.ratio, options: { lineStyle: 1 } }),
+          line({
+            metric: prop,
+            name,
+            color,
+            defaultActive: false,
+            unit: Unit.ratio,
+            options: { lineStyle: 1 },
+          }),
         ),
       ],
     },
@@ -381,7 +434,13 @@ export function groupedSimplePriceRatioTree({ list, title }) {
       name: "Ratio",
       title: `${title} Ratio`,
       bottom: list.map(({ name, color, pattern }) =>
-        baseline({ metric: pattern.ratio, name, color, unit: Unit.ratio, base: 1 }),
+        baseline({
+          metric: pattern.ratio,
+          name,
+          color,
+          unit: Unit.ratio,
+          base: 1,
+        }),
       ),
     },
   ];
@@ -453,10 +512,30 @@ export function percentileMap(ratio) {
  */
 export function sdPatterns(ratio) {
   return /** @type {const} */ ([
-    { nameAddon: "All Time", titleAddon: "", sd: ratio.stdDev.all, smaRatio: ratio.sma.all.ratio },
-    { nameAddon: "4y", titleAddon: "4y", sd: ratio.stdDev._4y, smaRatio: ratio.sma._4y.ratio },
-    { nameAddon: "2y", titleAddon: "2y", sd: ratio.stdDev._2y, smaRatio: ratio.sma._2y.ratio },
-    { nameAddon: "1y", titleAddon: "1y", sd: ratio.stdDev._1y, smaRatio: ratio.sma._1y.ratio },
+    {
+      nameAddon: "All Time",
+      titleAddon: "",
+      sd: ratio.stdDev.all,
+      smaRatio: ratio.sma.all.ratio,
+    },
+    {
+      nameAddon: "4y",
+      titleAddon: "4y",
+      sd: ratio.stdDev._4y,
+      smaRatio: ratio.sma._4y.ratio,
+    },
+    {
+      nameAddon: "2y",
+      titleAddon: "2y",
+      sd: ratio.stdDev._2y,
+      smaRatio: ratio.sma._2y.ratio,
+    },
+    {
+      nameAddon: "1y",
+      titleAddon: "1y",
+      sd: ratio.stdDev._1y,
+      smaRatio: ratio.sma._1y.ratio,
+    },
   ]);
 }
 
@@ -490,18 +569,18 @@ export function sdBandsUsd(sd) {
 export function sdBandsRatio(sd, smaRatio) {
   return /** @type {const} */ ([
     { name: "0σ", prop: smaRatio, color: colors.sd._0 },
-    { name: "+0.5σ", prop: sd.p05sd.value, color: colors.sd.p05 },
-    { name: "−0.5σ", prop: sd.m05sd.value, color: colors.sd.m05 },
-    { name: "+1σ", prop: sd.p1sd.value, color: colors.sd.p1 },
-    { name: "−1σ", prop: sd.m1sd.value, color: colors.sd.m1 },
-    { name: "+1.5σ", prop: sd.p15sd.value, color: colors.sd.p15 },
-    { name: "−1.5σ", prop: sd.m15sd.value, color: colors.sd.m15 },
-    { name: "+2σ", prop: sd.p2sd.value, color: colors.sd.p2 },
-    { name: "−2σ", prop: sd.m2sd.value, color: colors.sd.m2 },
-    { name: "+2.5σ", prop: sd.p25sd.value, color: colors.sd.p25 },
-    { name: "−2.5σ", prop: sd.m25sd.value, color: colors.sd.m25 },
-    { name: "+3σ", prop: sd.p3sd.value, color: colors.sd.p3 },
-    { name: "−3σ", prop: sd.m3sd.value, color: colors.sd.m3 },
+    { name: "+0.5σ", prop: sd.p05sd.ratio, color: colors.sd.p05 },
+    { name: "−0.5σ", prop: sd.m05sd.ratio, color: colors.sd.m05 },
+    { name: "+1σ", prop: sd.p1sd.ratio, color: colors.sd.p1 },
+    { name: "−1σ", prop: sd.m1sd.ratio, color: colors.sd.m1 },
+    { name: "+1.5σ", prop: sd.p15sd.ratio, color: colors.sd.p15 },
+    { name: "−1.5σ", prop: sd.m15sd.ratio, color: colors.sd.m15 },
+    { name: "+2σ", prop: sd.p2sd.ratio, color: colors.sd.p2 },
+    { name: "−2σ", prop: sd.m2sd.ratio, color: colors.sd.m2 },
+    { name: "+2.5σ", prop: sd.p25sd.ratio, color: colors.sd.p25 },
+    { name: "−2.5σ", prop: sd.m25sd.ratio, color: colors.sd.m25 },
+    { name: "+3σ", prop: sd.p3sd.ratio, color: colors.sd.p3 },
+    { name: "−3σ", prop: sd.m3sd.ratio, color: colors.sd.m3 },
   ]);
 }
 

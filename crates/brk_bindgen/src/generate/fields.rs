@@ -29,7 +29,10 @@ fn compute_path_expr<S: LanguageSyntax>(
 ) -> String {
     match pattern.get_field_part(&field.name) {
         Some(part) => {
-            if pattern.is_suffix_mode() {
+            if pattern.is_templated() {
+                // Templated: replace {disc} with disc variable at runtime
+                syntax.template_expr(base_var, part)
+            } else if pattern.is_suffix_mode() {
                 syntax.suffix_expr(base_var, part)
             } else {
                 syntax.prefix_expr(part, base_var)
@@ -76,7 +79,20 @@ pub fn generate_parameterized_field<S: LanguageSyntax>(
     let type_ann =
         metadata.field_type_annotation(field, pattern.is_generic, None, syntax.generic_syntax());
     let path_expr = compute_path_expr(syntax, pattern, field, "acc");
-    let value = compute_field_value(syntax, field, metadata, &path_expr);
+
+    // When calling a templated child pattern, pass acc and disc separately
+    let value = if let Some(child_pattern) = metadata.find_pattern(&field.rust_type)
+        && child_pattern.is_templated()
+    {
+        let disc_template = pattern
+            .get_field_part(&field.name)
+            .unwrap_or(&field.name);
+        let disc_arg = syntax.disc_arg_expr(disc_template);
+        let acc_arg = syntax.suffix_expr("acc", ""); // identity — returns acc or acc.clone()
+        syntax.constructor(&field.rust_type, &format!("{acc_arg}, {disc_arg}"))
+    } else {
+        compute_field_value(syntax, field, metadata, &path_expr)
+    };
 
     writeln!(
         output,

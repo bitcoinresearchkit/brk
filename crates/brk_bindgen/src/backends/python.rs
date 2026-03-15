@@ -54,4 +54,29 @@ impl LanguageSyntax for PythonSyntax {
     fn constructor_name(&self, type_name: &str) -> String {
         type_name.to_string()
     }
+
+    fn disc_arg_expr(&self, template: &str) -> String {
+        if template == "{disc}" {
+            "disc".to_string()
+        } else if template.is_empty() {
+            "''".to_string()
+        } else if !template.contains("{disc}") {
+            format!("'{}'", template)
+        } else if template.ends_with("{disc}") {
+            let static_part = template.trim_end_matches("{disc}").trim_end_matches('_');
+            format!("_m('{}', disc)", static_part)
+        } else {
+            format!("f'{}'", template)
+        }
+    }
+
+    fn template_expr(&self, acc_var: &str, template: &str) -> String {
+        if template == "{disc}" {
+            format!("_m({}, disc)", acc_var)
+        } else if !template.contains("{disc}") {
+            format!("_m({}, '{}')", acc_var, template)
+        } else {
+            format!("_m({}, f'{}')", acc_var, template)
+        }
+    }
 }

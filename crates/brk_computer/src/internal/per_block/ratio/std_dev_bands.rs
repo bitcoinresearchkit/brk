@@ -27,10 +27,10 @@ impl RatioPerBlockStdDevBands {
         let v = version + VERSION;
 
         macro_rules! import_sd {
-            ($suffix:expr, $period:expr, $days:expr) => {
+            ($period:expr, $days:expr) => {
                 StdDevPerBlockExtended::forced_import(
                     db,
-                    &format!("{name}_{}", $suffix),
+                    name,
                     $period,
                     $days,
                     v,
@@ -40,10 +40,10 @@ impl RatioPerBlockStdDevBands {
         }
 
         Ok(Self {
-            all: import_sd!("ratio", "", usize::MAX),
-            _1y: import_sd!("ratio", "1y", 365),
-            _2y: import_sd!("ratio", "2y", 2 * 365),
-            _4y: import_sd!("ratio", "4y", 4 * 365),
+            all: import_sd!("", usize::MAX),
+            _1y: import_sd!("1y", 365),
+            _2y: import_sd!("2y", 2 * 365),
+            _4y: import_sd!("4y", 4 * 365),
         })
     }
 

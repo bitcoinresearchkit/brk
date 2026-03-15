@@ -25,6 +25,7 @@ pub fn main() -> color_eyre::Result<()> {
         .to_path_buf();
 
     let output_paths = brk_bindgen::ClientOutputPaths::new()
+        .rust(workspace_root.join("crates/brk_client/src/lib.rs"))
         .javascript(workspace_root.join("website/scripts/modules/brk-client/index.js"));
 
     generate_bindings(&vecs, &openapi, &output_paths)?;

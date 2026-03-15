@@ -221,12 +221,31 @@ fn generate_tree_initializer(
             writeln!(output, "{}}},", indent_str).unwrap();
         } else {
             // Use pattern factory
-            writeln!(
-                output,
-                "{}{}: create{}(this, '{}'),",
-                indent_str, field_name, child.field.rust_type, child.base_result.base
-            )
-            .unwrap();
+            let pattern = metadata.find_pattern(&child.field.rust_type);
+            if pattern.is_some_and(|p| p.is_templated()) {
+                // Templated: extract discriminator from field_parts
+                let disc = child
+                    .base_result
+                    .field_parts
+                    .values()
+                    .filter(|v| !v.is_empty())
+                    .min_by_key(|v| v.len())
+                    .cloned()
+                    .unwrap_or_default();
+                writeln!(
+                    output,
+                    "{}{}: create{}(this, '{}', '{}'),",
+                    indent_str, field_name, child.field.rust_type, child.base_result.base, disc
+                )
+                .unwrap();
+            } else {
+                writeln!(
+                    output,
+                    "{}{}: create{}(this, '{}'),",
+                    indent_str, field_name, child.field.rust_type, child.base_result.base
+                )
+                .unwrap();
+            }
         }
     }
 }

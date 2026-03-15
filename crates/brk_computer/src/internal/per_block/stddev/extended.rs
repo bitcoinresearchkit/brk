@@ -8,13 +8,13 @@ use vecdb::{
 
 use crate::{
     blocks, indexes,
-    internal::{PerBlock, Price, PriceTimesRatioCents},
+    internal::{PerBlock, Price, PriceTimesRatioCents, per_block::stddev::period_suffix},
 };
 
 #[derive(Traversable)]
 pub struct StdDevBand<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub value: PerBlock<StoredF32, M>,
+    pub ratio: PerBlock<StoredF32, M>,
     pub price: Price<PerBlock<Cents, M>>,
 }
 
@@ -49,16 +49,11 @@ impl StdDevPerBlockExtended {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let version = parent_version + Version::TWO;
-        let p = super::period_suffix(period);
+        let p = period_suffix(period);
 
         macro_rules! import {
             ($suffix:expr) => {
-                PerBlock::forced_import(
-                    db,
-                    &format!("{name}_{}{p}", $suffix),
-                    version,
-                    indexes,
-                )?
+                PerBlock::forced_import(db, &format!("{name}_{}{p}", $suffix), version, indexes)?
             };
         }
 
@@ -69,18 +64,18 @@ impl StdDevPerBlockExtended {
         }
 
         macro_rules! import_band {
-            ($suffix:expr) => {
+            ($suffix:expr) => {{
                 StdDevBand {
-                    value: import!(concat!("ratio_", $suffix)),
+                    ratio: import!(concat!("ratio_", $suffix)),
                     price: import_price!($suffix),
                 }
-            };
+            }};
         }
 
         Ok(Self {
             days,
-            sd: import!("sd"),
-            zscore: import!("zscore"),
+            sd: import!("ratio_sd"),
+            zscore: import!("ratio_zscore"),
             _0sd: import_price!("0sd"),
             p0_5sd: import_band!("p0_5sd"),
             p1sd: import_band!("p1sd"),
@@ -106,12 +101,9 @@ impl StdDevPerBlockExtended {
         sma: &impl ReadableVec<Height, StoredF32>,
     ) -> Result<()> {
         if self.days == usize::MAX {
-            self.sd.height.compute_expanding_sd(
-                starting_indexes.height,
-                source,
-                sma,
-                exit,
-            )?;
+            self.sd
+                .height
+                .compute_expanding_sd(starting_indexes.height, source, sma, exit)?;
         } else {
             let window_starts = blocks.lookback.start_vec(self.days);
             self.sd.height.compute_rolling_sd(
@@ -154,10 +146,7 @@ impl StdDevPerBlockExtended {
         let source_data = source.collect_range_at(start, source_len);
 
         let sma_data = sma.collect_range_at(start, sma.len());
-        let sd_data = self
-            .sd
-            .height
-            .collect_range_at(start, self.sd.height.len());
+        let sd_data = self.sd.height.collect_range_at(start, self.sd.height.len());
 
         const MULTIPLIERS: [f32; 12] = [
             0.5, 1.0, 1.5, 2.0, 2.5, 3.0, -0.5, -1.0, -1.5, -2.0, -2.5, -3.0,
@@ -208,18 +197,18 @@ impl StdDevPerBlockExtended {
         }
 
         compute_band_price!(&mut self._0sd, sma);
-        compute_band_price!(&mut self.p0_5sd.price, &self.p0_5sd.value.height);
-        compute_band_price!(&mut self.p1sd.price, &self.p1sd.value.height);
-        compute_band_price!(&mut self.p1_5sd.price, &self.p1_5sd.value.height);
-        compute_band_price!(&mut self.p2sd.price, &self.p2sd.value.height);
-        compute_band_price!(&mut self.p2_5sd.price, &self.p2_5sd.value.height);
-        compute_band_price!(&mut self.p3sd.price, &self.p3sd.value.height);
-        compute_band_price!(&mut self.m0_5sd.price, &self.m0_5sd.value.height);
-        compute_band_price!(&mut self.m1sd.price, &self.m1sd.value.height);
-        compute_band_price!(&mut self.m1_5sd.price, &self.m1_5sd.value.height);
-        compute_band_price!(&mut self.m2sd.price, &self.m2sd.value.height);
-        compute_band_price!(&mut self.m2_5sd.price, &self.m2_5sd.value.height);
-        compute_band_price!(&mut self.m3sd.price, &self.m3sd.value.height);
+        compute_band_price!(&mut self.p0_5sd.price, &self.p0_5sd.ratio.height);
+        compute_band_price!(&mut self.p1sd.price, &self.p1sd.ratio.height);
+        compute_band_price!(&mut self.p1_5sd.price, &self.p1_5sd.ratio.height);
+        compute_band_price!(&mut self.p2sd.price, &self.p2sd.ratio.height);
+        compute_band_price!(&mut self.p2_5sd.price, &self.p2_5sd.ratio.height);
+        compute_band_price!(&mut self.p3sd.price, &self.p3sd.ratio.height);
+        compute_band_price!(&mut self.m0_5sd.price, &self.m0_5sd.ratio.height);
+        compute_band_price!(&mut self.m1sd.price, &self.m1sd.ratio.height);
+        compute_band_price!(&mut self.m1_5sd.price, &self.m1_5sd.ratio.height);
+        compute_band_price!(&mut self.m2sd.price, &self.m2sd.ratio.height);
+        compute_band_price!(&mut self.m2_5sd.price, &self.m2_5sd.ratio.height);
+        compute_band_price!(&mut self.m3sd.price, &self.m3sd.ratio.height);
 
         Ok(())
     }
@@ -228,18 +217,18 @@ impl StdDevPerBlockExtended {
         &mut self,
     ) -> impl Iterator<Item = &mut EagerVec<PcoVec<Height, StoredF32>>> {
         [
-            &mut self.p0_5sd.value.height,
-            &mut self.p1sd.value.height,
-            &mut self.p1_5sd.value.height,
-            &mut self.p2sd.value.height,
-            &mut self.p2_5sd.value.height,
-            &mut self.p3sd.value.height,
-            &mut self.m0_5sd.value.height,
-            &mut self.m1sd.value.height,
-            &mut self.m1_5sd.value.height,
-            &mut self.m2sd.value.height,
-            &mut self.m2_5sd.value.height,
-            &mut self.m3sd.value.height,
+            &mut self.p0_5sd.ratio.height,
+            &mut self.p1sd.ratio.height,
+            &mut self.p1_5sd.ratio.height,
+            &mut self.p2sd.ratio.height,
+            &mut self.p2_5sd.ratio.height,
+            &mut self.p3sd.ratio.height,
+            &mut self.m0_5sd.ratio.height,
+            &mut self.m1sd.ratio.height,
+            &mut self.m1_5sd.ratio.height,
+            &mut self.m2sd.ratio.height,
+            &mut self.m2_5sd.ratio.height,
+            &mut self.m3sd.ratio.height,
         ]
         .into_iter()
     }

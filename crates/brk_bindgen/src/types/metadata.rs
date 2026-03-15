@@ -69,26 +69,10 @@ impl ClientMetadata {
         self.find_pattern(name).is_some_and(|p| p.is_generic)
     }
 
-    /// Check if a pattern by name is fully parameterizable.
-    /// A pattern is parameterizable if it has a mode AND all its branch fields
-    /// are also parameterizable (or not patterns at all).
+    /// Check if a pattern by name is parameterizable (has a mode).
     pub fn is_parameterizable(&self, name: &str) -> bool {
-        self.find_pattern(name).is_some_and(|p| {
-            if !p.is_parameterizable() {
-                return false;
-            }
-            // Check all branch fields have parameterizable types (or are not patterns)
-            p.fields.iter().all(|f| {
-                if f.is_branch() {
-                    self.structural_patterns
-                        .iter()
-                        .find(|pat| pat.name == f.rust_type)
-                        .is_none_or(|pat| pat.is_parameterizable())
-                } else {
-                    true
-                }
-            })
-        })
+        self.find_pattern(name)
+            .is_some_and(|p| p.is_parameterizable())
     }
 
     /// Check if child fields match ANY pattern (parameterizable or not).

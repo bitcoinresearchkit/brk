@@ -701,7 +701,7 @@ pub fn generate_structural_patterns(
         }
         writeln!(output, " */\n").unwrap();
 
-        // Generate factory function for ALL patterns
+
         writeln!(output, "/**").unwrap();
         writeln!(output, " * Create a {} pattern node", pattern.name).unwrap();
         if pattern.is_generic {
@@ -709,6 +709,9 @@ pub fn generate_structural_patterns(
         }
         writeln!(output, " * @param {{BrkClientBase}} client").unwrap();
         writeln!(output, " * @param {{string}} acc - Accumulated metric name").unwrap();
+        if pattern.is_templated() {
+            writeln!(output, " * @param {{string}} disc - Discriminator suffix").unwrap();
+        }
         let return_type = if pattern.is_generic {
             format!("{}<T>", pattern.name)
         } else {
@@ -717,7 +720,11 @@ pub fn generate_structural_patterns(
         writeln!(output, " * @returns {{{}}}", return_type).unwrap();
         writeln!(output, " */").unwrap();
 
-        writeln!(output, "function create{}(client, acc) {{", pattern.name).unwrap();
+        if pattern.is_templated() {
+            writeln!(output, "function create{}(client, acc, disc) {{", pattern.name).unwrap();
+        } else {
+            writeln!(output, "function create{}(client, acc) {{", pattern.name).unwrap();
+        }
         writeln!(output, "  return {{").unwrap();
 
         let syntax = JavaScriptSyntax;

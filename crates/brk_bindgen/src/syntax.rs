@@ -92,4 +92,23 @@ pub trait LanguageSyntax {
     /// - JavaScript: `createTypeName`
     /// - Rust: `TypeName::new`
     fn constructor_name(&self, type_name: &str) -> String;
+
+    /// Format a discriminator argument for passing to a templated child.
+    ///
+    /// Returns an expression computing the disc value from a template.
+    /// - `"pct99"` (static) → `'pct99'` (JS) / `"pct99".to_string()` (Rust)
+    /// - `""` (empty) → `disc` (pass parent's disc through)
+    /// - `"p1sd{disc}"` (suffix) → `_m('p1sd', disc)` (composed)
+    /// - `"ratio_{disc}_bps"` (embedded) → `` `ratio_${disc}_bps` `` (template literal)
+    fn disc_arg_expr(&self, template: &str) -> String;
+
+    /// Format a templated mode expression: substitute `{disc}` at runtime.
+    ///
+    /// The template contains `{disc}` placeholder. The generated code should
+    /// construct `_m(acc, template_with_disc_substituted)` at runtime.
+    ///
+    /// # Arguments
+    /// * `acc_var` - The accumulator variable (e.g., "acc")
+    /// * `template` - Template like `"ratio_{disc}_bps"` or `"{disc}"`
+    fn template_expr(&self, acc_var: &str, template: &str) -> String;
 }

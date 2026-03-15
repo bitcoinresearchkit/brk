@@ -8,7 +8,10 @@ use std::collections::BTreeMap;
 
 use brk_types::TreeNode;
 
-use super::{find_common_prefix, find_common_suffix, get_node_fields, normalize_prefix};
+use super::{
+    find_common_prefix, find_common_suffix, get_node_fields, get_shortest_leaf_name,
+    normalize_prefix,
+};
 use crate::{PatternBaseResult, PatternField, PatternMode, StructuralPattern, build_child_path};
 
 /// Result of analyzing a single pattern instance.
@@ -91,7 +94,47 @@ fn collect_instance_analyses(
             }
 
             // Analyze this instance
-            let analysis = analyze_instance(&child_bases);
+            let mut analysis = analyze_instance(&child_bases);
+
+            // When some field_parts are empty (children returned the same base),
+            // replace empty parts with discriminators derived from shortest leaf names.
+            let has_empty = analysis.field_parts.values().any(|v| v.is_empty());
+            let has_nonempty = analysis.field_parts.values().any(|v| !v.is_empty());
+            if has_empty && has_nonempty {
+                // Mixed case: some fields have parts, some don't.
+                // Use shortest leaf to derive discriminators for empty fields.
+                let prefix = format!("{}_", analysis.base);
+                for (field_name, child_node) in children {
+                    if let Some(part) = analysis.field_parts.get(field_name)
+                        && part.is_empty()
+                        && let Some(leaf) = get_shortest_leaf_name(child_node)
+                        && let Some(suffix) = leaf.strip_prefix(&prefix)
+                        && !suffix.is_empty()
+                        // Only use if the suffix starts with the field key,
+                        // avoiding internal sub-field names like "0sd" from a Price child
+                        && suffix.starts_with(field_name.trim_start_matches('_'))
+                    {
+                        analysis
+                            .field_parts
+                            .insert(field_name.clone(), suffix.to_string());
+                    }
+                }
+            } else if has_empty && analysis.field_parts.len() > 1 {
+                // All-empty case: all children returned the same base.
+                // Re-analyze using shortest leaf names which may differentiate.
+                let mut leaf_bases: BTreeMap<String, String> = BTreeMap::new();
+                for (field_name, child_node) in children {
+                    if let Some(leaf) = get_shortest_leaf_name(child_node) {
+                        leaf_bases.insert(field_name.clone(), leaf);
+                    }
+                }
+                if leaf_bases.len() == child_bases.len() {
+                    let leaf_analysis = analyze_instance(&leaf_bases);
+                    if !leaf_analysis.field_parts.values().all(|v| v.is_empty()) {
+                        analysis.field_parts = leaf_analysis.field_parts;
+                    }
+                }
+            }
 
             // Store the base result for this node
             // Note: has_outlier is false because we use recursive base computation
@@ -121,6 +164,126 @@ fn collect_instance_analyses(
     }
 }
 
+/// Try to detect a template pattern when instances have different field_parts.
+///
+/// Supports two cases:
+/// 1. **Embedded discriminator**: a substring varies per instance within field_parts.
+///    E.g., `ratio_pct99_bps` vs `ratio_pct1_bps` → template `ratio_{disc}_bps`
+/// 2. **Suffix discriminator**: a common suffix is appended to all field_parts.
+///    E.g., `ratio_sd` vs `ratio_sd_4y` → template `ratio_sd{disc}`
+fn try_detect_template(
+    majority: &[&InstanceAnalysis],
+    fields: &[PatternField],
+) -> Option<PatternMode> {
+    if majority.len() < 2 {
+        return None;
+    }
+
+    // Strategy 1: Find an embedded discriminator (shortest non-empty field_part
+    // that differs between instances and appears as substring in other parts)
+    if let Some(mode) = try_embedded_disc(majority, fields) {
+        return Some(mode);
+    }
+
+    // Strategy 2: Find a common suffix difference across ALL field_parts
+    try_suffix_disc(majority, fields)
+}
+
+/// Strategy 1: embedded discriminator (e.g., pct99 inside ratio_pct99_bps)
+fn try_embedded_disc(
+    majority: &[&InstanceAnalysis],
+    fields: &[PatternField],
+) -> Option<PatternMode> {
+    let first = &majority[0];
+    let second = &majority[1];
+
+    // Find the discriminator: shortest non-empty field_part that differs
+    let disc_field = fields
+        .iter()
+        .filter_map(|f| first.field_parts.get(&f.name).map(|v| (&f.name, v)))
+        .filter(|(_, v)| !v.is_empty())
+        .min_by_key(|(_, v)| v.len())?;
+
+    let disc_first = disc_field.1;
+    let disc_second = second.field_parts.get(disc_field.0)?;
+
+    if disc_first == disc_second || disc_first.is_empty() || disc_second.is_empty() {
+        return None;
+    }
+
+    // Build templates by replacing the discriminator with {disc}
+    let mut templates = BTreeMap::new();
+    for field in fields {
+        let part = first.field_parts.get(&field.name)?;
+        let template = part.replacen(disc_first, "{disc}", 1);
+        templates.insert(field.name.clone(), template);
+    }
+
+    // Verify ALL instances match
+    for analysis in majority {
+        let inst_disc = analysis.field_parts.get(disc_field.0)?;
+        for field in fields {
+            let part = analysis.field_parts.get(&field.name)?;
+            let expected = templates.get(&field.name)?.replace("{disc}", inst_disc);
+            if part != &expected {
+                return None;
+            }
+        }
+    }
+
+    Some(PatternMode::Templated { templates })
+}
+
+/// Strategy 2: suffix discriminator (e.g., all field_parts differ by `_4y` suffix)
+fn try_suffix_disc(
+    majority: &[&InstanceAnalysis],
+    fields: &[PatternField],
+) -> Option<PatternMode> {
+    let first = &majority[0];
+
+    // For each other instance, check if ALL field_parts differ from the first
+    // by the same suffix. Use the first field to detect the suffix.
+    let ref_field = &fields[0].name;
+    let ref_first = first.field_parts.get(ref_field)?;
+
+    // Build templates from the first instance
+    // Non-empty parts get {disc} appended; empty parts (identity) stay empty
+    let mut templates = BTreeMap::new();
+    for field in fields {
+        let part = first.field_parts.get(&field.name)?;
+        if part.is_empty() {
+            templates.insert(field.name.clone(), String::new());
+        } else {
+            templates.insert(field.name.clone(), format!("{part}{{disc}}"));
+        }
+    }
+
+    // Verify ALL other instances: non-empty parts differ by the same suffix
+    for analysis in &majority[1..] {
+        let ref_other = analysis.field_parts.get(ref_field)?;
+        let suffix = ref_other.strip_prefix(ref_first)?;
+
+        for field in fields {
+            let first_part = first.field_parts.get(&field.name)?;
+            let other_part = analysis.field_parts.get(&field.name)?;
+
+            if first_part.is_empty() {
+                // Identity field — must stay empty in all instances
+                if !other_part.is_empty() {
+                    return None;
+                }
+            } else {
+                let expected = format!("{first_part}{suffix}");
+                if other_part != &expected {
+                    return None;
+                }
+            }
+        }
+    }
+
+    Some(PatternMode::Templated { templates })
+}
+
 /// Analyze a single pattern instance from its child bases.
 fn analyze_instance(child_bases: &BTreeMap<String, String>) -> InstanceAnalysis {
     let bases: Vec<&str> = child_bases.values().map(|s| s.as_str()).collect();
@@ -142,6 +305,19 @@ fn analyze_instance(child_bases: &BTreeMap<String, String>) -> InstanceAnalysis 
                     .to_string()
             };
             field_parts.insert(field_name.clone(), relative);
+        }
+
+        // If all field_parts are empty (all children returned the same base),
+        // use the field keys as suffix discriminators. This handles patterns like
+        // period windows (all/_4y/_2y/_1y) where children differ by a suffix
+        // that corresponds to the tree key.
+        if field_parts.len() > 1 && field_parts.values().all(|v| v.is_empty()) {
+            // Can't differentiate — this pattern is non-parameterizable
+            return InstanceAnalysis {
+                base,
+                field_parts,
+                is_suffix_mode: true,
+            };
         }
 
         return InstanceAnalysis {
@@ -188,64 +364,56 @@ fn analyze_instance(child_bases: &BTreeMap<String, String>) -> InstanceAnalysis 
 }
 
 /// Determine the consistent mode for a pattern from all its instances.
-/// Uses majority voting: if most instances agree on mode and field_parts,
-/// use those. Minority instances will be inlined at usage sites.
+/// Picks the majority mode (suffix vs prefix), then requires all instances
+/// in that mode to agree on field_parts. Minority-mode instances get inlined.
 fn determine_pattern_mode(
     analyses: &[InstanceAnalysis],
     fields: &[PatternField],
 ) -> Option<PatternMode> {
-    if analyses.is_empty() {
-        return None;
-    }
+    analyses.first()?;
 
-    // Group instances by (mode, field_parts) signature
-    let suffix_instances: Vec<_> = analyses.iter().filter(|a| a.is_suffix_mode).collect();
-    let prefix_instances: Vec<_> = analyses.iter().filter(|a| !a.is_suffix_mode).collect();
+    // Pick the majority mode
+    let suffix_count = analyses.iter().filter(|a| a.is_suffix_mode).count();
+    let is_suffix = suffix_count * 2 >= analyses.len();
 
-    // Pick the majority mode group
-    let (majority_instances, is_suffix) = if suffix_instances.len() >= prefix_instances.len() {
-        (suffix_instances, true)
-    } else {
-        (prefix_instances, false)
-    };
-
-    if majority_instances.is_empty() {
-        return None;
-    }
-
-    // Find the most common field_parts within the majority group
-    // Convert to sorted Vec for comparison since BTreeMap isn't hashable
-    let mut parts_counts: BTreeMap<Vec<(String, String)>, usize> = BTreeMap::new();
-    for analysis in &majority_instances {
-        let mut sorted: Vec<_> = analysis
-            .field_parts
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
-        sorted.sort();
-        *parts_counts.entry(sorted).or_insert(0) += 1;
-    }
-
-    let (best_parts_vec, _count) = parts_counts.into_iter().max_by_key(|(_, count)| *count)?;
-    let best_parts: BTreeMap<String, String> = best_parts_vec.into_iter().collect();
+    // All instances of the majority mode must agree on field_parts
+    let majority: Vec<_> = analyses
+        .iter()
+        .filter(|a| a.is_suffix_mode == is_suffix)
+        .collect();
+    let first_majority = majority.first()?;
 
     // Verify all required fields have parts
     for field in fields {
-        if !best_parts.contains_key(&field.name) {
+        if !first_majority.field_parts.contains_key(&field.name) {
             return None;
         }
     }
 
-    let field_parts = best_parts;
+    if majority
+        .iter()
+        .all(|a| a.field_parts == first_majority.field_parts)
+    {
+        let field_parts = first_majority.field_parts.clone();
 
+        return if is_suffix {
+            Some(PatternMode::Suffix {
+                relatives: field_parts,
+            })
+        } else {
+            Some(PatternMode::Prefix {
+                prefixes: field_parts,
+            })
+        };
+    }
+
+    // Instances disagree on field_parts. Try to detect a template pattern:
+    // if each field's value varies by exactly one substring that's different
+    // per instance, we can use a Templated mode with {disc} placeholder.
     if is_suffix {
-        Some(PatternMode::Suffix {
-            relatives: field_parts,
-        })
+        try_detect_template(&majority, fields)
     } else {
-        Some(PatternMode::Prefix {
-            prefixes: field_parts,
-        })
+        None
     }
 }
 
@@ -402,9 +570,8 @@ mod tests {
                 assert_eq!(relatives.get("min"), Some(&"min".to_string()));
                 assert_eq!(relatives.get("percentiles"), Some(&"".to_string()));
             }
-            PatternMode::Prefix { .. } => {
-                panic!("Expected suffix mode, got prefix mode");
-            }
+            PatternMode::Prefix { .. } => panic!("Expected suffix mode, got prefix mode"),
+            PatternMode::Templated { .. } => panic!("Expected suffix mode, got templated mode"),
         }
     }
 
@@ -460,9 +627,8 @@ mod tests {
                 assert_eq!(relatives.get("max"), Some(&"max".to_string()));
                 assert_eq!(relatives.get("min"), Some(&"min".to_string()));
             }
-            PatternMode::Prefix { .. } => {
-                panic!("Expected suffix mode");
-            }
+            PatternMode::Prefix { .. } => panic!("Expected suffix mode"),
+            PatternMode::Templated { .. } => panic!("Expected suffix mode, got templated"),
         }
     }
 }

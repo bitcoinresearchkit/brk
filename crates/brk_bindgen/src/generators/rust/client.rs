@@ -552,11 +552,19 @@ pub fn generate_pattern_structs(
             "    /// Create a new pattern node with accumulated metric name."
         )
         .unwrap();
-        writeln!(
-            output,
-            "    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {{"
-        )
-        .unwrap();
+        if pattern.is_templated() {
+            writeln!(
+                output,
+                "    pub fn new(client: Arc<BrkClientBase>, acc: String, disc: String) -> Self {{"
+            )
+            .unwrap();
+        } else {
+            writeln!(
+                output,
+                "    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {{"
+            )
+            .unwrap();
+        }
         writeln!(output, "        Self {{").unwrap();
 
         let syntax = RustSyntax;

@@ -10,7 +10,7 @@ use brk_types::{Cents, Dollars, SatsFract, Version};
 use schemars::JsonSchema;
 use vecdb::{Database, ReadableCloneableVec, UnaryTransform};
 
-use super::{PerBlock, LazyPerBlock};
+use super::{LazyPerBlock, PerBlock};
 use crate::{
     indexes,
     internal::{CentsUnsignedToDollars, ComputedVecValue, DollarsToSatsFract, NumericValue},
@@ -32,8 +32,7 @@ impl Price<PerBlock<Cents>> {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let cents =
-            PerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
+        let cents = PerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
         let usd = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
             name,
             version,
@@ -65,11 +64,7 @@ where
             source.height.read_only_boxed_clone(),
             source,
         );
-        let usd = LazyPerBlock::from_lazy::<CentsUnsignedToDollars, ST>(
-            &format!("{name}_usd"),
-            version,
-            &cents,
-        );
+        let usd = LazyPerBlock::from_lazy::<CentsUnsignedToDollars, ST>(name, version, &cents);
         let sats = LazyPerBlock::from_lazy::<DollarsToSatsFract, Cents>(
             &format!("{name}_sats"),
             version,

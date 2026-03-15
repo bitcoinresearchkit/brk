@@ -59,4 +59,52 @@ impl LanguageSyntax for JavaScriptSyntax {
     fn constructor_name(&self, type_name: &str) -> String {
         format!("create{}", type_name)
     }
+
+    fn disc_arg_expr(&self, template: &str) -> String {
+        if template == "{disc}" {
+            "disc".to_string()
+        } else if template.is_empty() {
+            "''".to_string()
+        } else if !template.contains("{disc}") {
+            format!("'{}'", template)
+        } else if template.ends_with("{disc}") {
+            let static_part = template.trim_end_matches("{disc}").trim_end_matches('_');
+            format!("_m('{}', disc)", static_part)
+        } else {
+            let js_template = template.replace("{disc}", "${disc}");
+            format!("`{}`", js_template)
+        }
+    }
+
+    fn template_expr(&self, acc_var: &str, template: &str) -> String {
+        let var_name = to_camel_case(acc_var);
+        if template.is_empty() {
+            // Identity — just pass disc
+            format!("_m({}, disc)", var_name)
+        } else if template == "{disc}" {
+            // Template IS the discriminator
+            format!("_m({}, disc)", var_name)
+        } else if !template.contains("{disc}") {
+            // Static suffix — no disc involved
+            format!("_m({}, '{}')", var_name, template)
+        } else {
+            // Template with {disc}: use nested _m for proper separator handling
+            // "ratio_{disc}_bps" → split on {disc} → _m(_m(acc, 'ratio'), disc) then _bps
+            // But this is complex. For embedded disc, use string interpolation.
+            // For suffix disc (ends with {disc}), use _m composition.
+            if template.ends_with("{disc}") {
+                let static_part = &template[..template.len() - "{disc}".len()];
+                if static_part.is_empty() {
+                    format!("_m({}, disc)", var_name)
+                } else {
+                    let static_part = static_part.trim_end_matches('_');
+                    format!("_m(_m({}, '{}'), disc)", var_name, static_part)
+                }
+            } else {
+                // Embedded disc — use template literal
+                let js_template = template.replace("{disc}", "${disc}");
+                format!("_m({}, `{}`)", var_name, js_template)
+            }
+        }
+    }
 }

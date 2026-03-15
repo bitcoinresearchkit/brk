@@ -41,21 +41,30 @@ impl StructuralPattern {
                 relatives.get(field_name).map(|s| s.as_str())
             }
             Some(PatternMode::Prefix { prefixes }) => prefixes.get(field_name).map(|s| s.as_str()),
+            Some(PatternMode::Templated { templates }) => {
+                templates.get(field_name).map(|s| s.as_str())
+            }
             None => None,
         }
     }
 
     /// Returns true if this pattern is in suffix mode.
     pub fn is_suffix_mode(&self) -> bool {
-        matches!(&self.mode, Some(PatternMode::Suffix { .. }))
+        matches!(
+            &self.mode,
+            Some(PatternMode::Suffix { .. } | PatternMode::Templated { .. })
+        )
+    }
+
+    /// Returns true if this pattern uses templated mode with a discriminator.
+    pub fn is_templated(&self) -> bool {
+        matches!(&self.mode, Some(PatternMode::Templated { .. }))
     }
 
     /// Check if the given instance field parts match this pattern's field parts.
-    /// Returns true if all field parts in the pattern match the instance's field parts.
     pub fn field_parts_match(&self, instance_field_parts: &BTreeMap<String, String>) -> bool {
         match &self.mode {
             Some(PatternMode::Suffix { relatives }) => {
-                // For each field in the pattern, check if the instance has the same suffix
                 relatives.iter().all(|(field_name, pattern_suffix)| {
                     instance_field_parts
                         .get(field_name)
@@ -63,16 +72,54 @@ impl StructuralPattern {
                 })
             }
             Some(PatternMode::Prefix { prefixes }) => {
-                // For each field in the pattern, check if the instance has the same prefix
                 prefixes.iter().all(|(field_name, pattern_prefix)| {
                     instance_field_parts
                         .get(field_name)
                         .is_some_and(|instance_prefix| instance_prefix == pattern_prefix)
                 })
             }
-            None => false, // Non-parameterizable patterns don't use field parts
+            Some(PatternMode::Templated { templates }) => {
+                // For templated patterns, check if the instance's field_parts
+                // can be produced by substituting some discriminator into the templates
+                let first_template_field = templates.iter().next();
+                let Some((ref_field, ref_template)) = first_template_field else {
+                    return false;
+                };
+                let Some(ref_value) = instance_field_parts.get(ref_field) else {
+                    return false;
+                };
+                // Extract discriminator from the reference field
+                let Some(disc) = extract_disc(ref_template, ref_value) else {
+                    return false;
+                };
+                // Verify all fields match with this discriminator
+                templates.iter().all(|(field_name, template)| {
+                    instance_field_parts
+                        .get(field_name)
+                        .is_some_and(|value| *value == template.replace("{disc}", &disc))
+                })
+            }
+            None => false,
         }
     }
+}
+
+/// Extract the discriminator value by matching a template against a concrete string.
+/// E.g., template `"ratio_{disc}_bps"` matched against `"ratio_pct99_bps"` yields `"pct99"`.
+fn extract_disc(template: &str, value: &str) -> Option<String> {
+    let parts: Vec<&str> = template.split("{disc}").collect();
+    if parts.len() != 2 {
+        return None;
+    }
+    let prefix = parts[0];
+    let suffix = parts[1];
+    if value.starts_with(prefix) && value.ends_with(suffix) {
+        let disc = &value[prefix.len()..value.len() - suffix.len()];
+        if !disc.is_empty() {
+            return Some(disc.to_string());
+        }
+    }
+    None
 }
 
 /// A field in a structural pattern.

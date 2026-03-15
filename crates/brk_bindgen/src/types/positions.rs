@@ -23,4 +23,12 @@ pub enum PatternMode {
         /// Maps field name to its prefix (empty string for identity)
         prefixes: BTreeMap<String, String>,
     },
+    /// Fields construct metric names using a template with a discriminator placeholder.
+    /// Factory takes two params: `acc` (base) and `disc` (discriminator).
+    /// Formula: `_m(acc, template.replace("{disc}", disc))`
+    /// Example: template `"ratio_{disc}_bps"` with disc `"pct99"` → `_m(acc, "ratio_pct99_bps")`
+    Templated {
+        /// Maps field name to its template string containing `{disc}` placeholder
+        templates: BTreeMap<String, String>,
+    },
 }
