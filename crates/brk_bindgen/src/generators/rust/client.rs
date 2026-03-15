@@ -534,7 +534,11 @@ pub fn generate_pattern_structs(
 
         writeln!(output, "}}\n").unwrap();
 
-        // Generate impl block with constructor for ALL patterns
+        // Skip constructor for non-parameterizable patterns (inlined at tree level)
+        if !metadata.is_parameterizable(&pattern.name) {
+            continue;
+        }
+
         let impl_generic = if pattern.is_generic {
             "<T: DeserializeOwned>"
         } else {

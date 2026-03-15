@@ -127,10 +127,18 @@ pub fn prepare_tree_node<'a>(
                         && p.field_parts_match(&base_result.field_parts)
                 });
 
+            // Check if the matching pattern is fully parameterizable (including children)
+            let is_parameterizable = child_fields
+                .as_ref()
+                .and_then(|cf| metadata.find_pattern_by_fields(cf))
+                .is_none_or(|p| metadata.is_parameterizable(&p.name));
+
             // should_inline determines if we generate an inline struct type
-            // We inline if: it's a branch AND (doesn't match any pattern OR pattern incompatible OR has outlier)
             let should_inline = !is_leaf
-                && (!matches_any_pattern || !pattern_compatible || base_result.has_outlier);
+                && (!matches_any_pattern
+                    || !pattern_compatible
+                    || !is_parameterizable
+                    || base_result.has_outlier);
 
             // Inline type name (only used when should_inline is true)
             let inline_type_name = if should_inline {

@@ -701,6 +701,10 @@ pub fn generate_structural_patterns(
         }
         writeln!(output, " */\n").unwrap();
 
+        // Skip factory for non-parameterizable patterns (inlined at tree level)
+        if !metadata.is_parameterizable(&pattern.name) {
+            continue;
+        }
 
         writeln!(output, "/**").unwrap();
         writeln!(output, " * Create a {} pattern node", pattern.name).unwrap();

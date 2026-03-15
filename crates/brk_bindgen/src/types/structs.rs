@@ -61,6 +61,29 @@ impl StructuralPattern {
         matches!(&self.mode, Some(PatternMode::Templated { .. }))
     }
 
+    /// Extract the discriminator value from a concrete instance's field_parts.
+    /// Uses the pattern's templates to reverse-match and find the disc.
+    pub fn extract_disc_from_instance(
+        &self,
+        instance_field_parts: &BTreeMap<String, String>,
+    ) -> Option<String> {
+        let templates = match &self.mode {
+            Some(PatternMode::Templated { templates }) => templates,
+            _ => return None,
+        };
+        // Find a template with {disc} and extract the disc from the instance value.
+        // Strip leading underscore since _m() handles separators.
+        for (field_name, template) in templates {
+            if let Some(value) = instance_field_parts.get(field_name) {
+                if let Some(disc) = extract_disc(template, value) {
+                    return Some(disc.trim_start_matches('_').to_string());
+                }
+            }
+        }
+        // If no template matched (all empty templates), disc is empty
+        Some(String::new())
+    }
+
     /// Check if the given instance field parts match this pattern's field parts.
     pub fn field_parts_match(&self, instance_field_parts: &BTreeMap<String, String>) -> bool {
         match &self.mode {

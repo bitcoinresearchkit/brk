@@ -99,15 +99,11 @@ fn generate_tree_node(
         } else {
             // Pattern type - use ::new() constructor
             let pattern = metadata.find_pattern(&child.field.rust_type);
-            if pattern.is_some_and(|p| p.is_templated()) {
-                // Templated pattern: pass base and disc
-                let disc = child
-                    .base_result
-                    .field_parts
-                    .values()
-                    .filter(|v| !v.is_empty())
-                    .min_by_key(|v| v.len())
-                    .cloned()
+            if let Some(pat) = pattern
+                && pat.is_templated()
+            {
+                let disc = pat
+                    .extract_disc_from_instance(&child.base_result.field_parts)
                     .unwrap_or_default();
                 writeln!(
                     output,
