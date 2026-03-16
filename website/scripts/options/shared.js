@@ -170,7 +170,6 @@ export function satsBtcUsdFrom({ source, key, name, color, defaultActive }) {
   });
 }
 
-
 /**
  * Create coinbase/subsidy/fee series from separate sources
  * @param {Object} args
@@ -386,38 +385,6 @@ export function priceRatioPercentilesTree({
           }),
         ),
       ],
-    },
-  ];
-}
-
-/**
- * Create grouped Price + Ratio charts overlaying multiple series
- * @param {Object} args
- * @param {{ name: string, color?: Color, pattern: AnyPricePattern & { ratio: AnyMetricPattern } }[]} args.list
- * @param {string} args.title
- * @returns {PartialOptionsTree}
- */
-export function groupedSimplePriceRatioTree({ list, title }) {
-  return [
-    {
-      name: "Price",
-      title,
-      top: list.map(({ name, color, pattern }) =>
-        price({ metric: pattern, name, color }),
-      ),
-    },
-    {
-      name: "Ratio",
-      title: `${title} Ratio`,
-      bottom: list.map(({ name, color, pattern }) =>
-        baseline({
-          metric: pattern.ratio,
-          name,
-          color,
-          unit: Unit.ratio,
-          base: 1,
-        }),
-      ),
     },
   ];
 }

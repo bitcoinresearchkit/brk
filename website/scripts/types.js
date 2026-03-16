@@ -84,8 +84,8 @@
  * @typedef {Brk.GrossInvestedLossNetNuplProfitSentimentPattern2} FullRelativePattern
  * @typedef {Brk.GrossInvestedLossNetNuplProfitSentimentPattern2} UnrealizedPattern
  *
- * Profitability bucket pattern
- * @typedef {Brk.MvrvNuplRealizedSupplyPattern} RealizedSupplyPattern
+ * Profitability bucket pattern (supply + realized_cap + nupl)
+ * @typedef {Brk.NuplRealizedSupplyPattern} RealizedSupplyPattern
  *
  * Realized patterns
  * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern
