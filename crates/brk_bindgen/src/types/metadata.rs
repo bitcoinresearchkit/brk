@@ -17,8 +17,8 @@ pub struct ClientMetadata {
     pub structural_patterns: Vec<StructuralPattern>,
     /// Index set patterns - sets of indexes that appear together on metrics
     pub index_set_patterns: Vec<IndexSetPattern>,
-    /// Maps concrete field signatures to pattern names
-    concrete_to_pattern: BTreeMap<Vec<PatternField>, String>,
+    /// Maps field signatures to pattern names (merged from concrete instances + pattern definitions)
+    pattern_lookup: BTreeMap<Vec<PatternField>, String>,
     /// Maps concrete field signatures to their type parameter (for generic patterns)
     concrete_to_type_param: BTreeMap<Vec<PatternField>, String>,
     /// Maps tree paths to their computed PatternBaseResult
@@ -37,11 +37,17 @@ impl ClientMetadata {
             analysis::detect_structural_patterns(&catalog);
         let index_set_patterns = analysis::detect_index_patterns(&catalog);
 
+        // Build merged pattern lookup: concrete instances + pattern definitions
+        let mut pattern_lookup = concrete_to_pattern;
+        for p in &structural_patterns {
+            pattern_lookup.insert(p.fields.clone(), p.name.clone());
+        }
+
         ClientMetadata {
             catalog,
             structural_patterns,
             index_set_patterns,
-            concrete_to_pattern,
+            pattern_lookup,
             concrete_to_type_param,
             node_bases,
         }
@@ -54,19 +60,9 @@ impl ClientMetadata {
             .find(|p| &p.indexes == indexes)
     }
 
-    /// Check if a type is a structural pattern name.
-    pub fn is_pattern_type(&self, type_name: &str) -> bool {
-        self.structural_patterns.iter().any(|p| p.name == type_name)
-    }
-
     /// Find a pattern by name.
     pub fn find_pattern(&self, name: &str) -> Option<&StructuralPattern> {
         self.structural_patterns.iter().find(|p| p.name == name)
-    }
-
-    /// Check if a pattern is generic.
-    pub fn is_pattern_generic(&self, name: &str) -> bool {
-        self.find_pattern(name).is_some_and(|p| p.is_generic)
     }
 
     /// Check if a pattern is fully parameterizable (recursively).
@@ -82,41 +78,11 @@ impl ClientMetadata {
         })
     }
 
-    /// Check if child fields match ANY pattern (parameterizable or not).
-    /// Used for type annotations - we want to reuse pattern types for all patterns.
-    pub fn matches_pattern(&self, fields: &[PatternField]) -> bool {
-        self.concrete_to_pattern.contains_key(fields)
-            || self.structural_patterns.iter().any(|p| p.fields == fields)
-    }
-
-    /// Find a pattern by its fields.
+    /// Find a pattern by its concrete fields.
     pub fn find_pattern_by_fields(&self, fields: &[PatternField]) -> Option<&StructuralPattern> {
-        self.concrete_to_pattern
+        self.pattern_lookup
             .get(fields)
             .and_then(|name| self.find_pattern(name))
-            .or_else(|| self.structural_patterns.iter().find(|p| p.fields == fields))
-    }
-
-    /// Resolve the type name for a tree field.
-    /// If the field matches ANY pattern (parameterizable or not), returns pattern type.
-    /// Otherwise returns the inline type name (parent_child format).
-    pub fn resolve_tree_field_type(
-        &self,
-        field: &PatternField,
-        child_fields: Option<&[PatternField]>,
-        parent_name: &str,
-        child_name: &str,
-        syntax: GenericSyntax,
-    ) -> String {
-        match child_fields {
-            // Use pattern type for ANY matching pattern (parameterizable or not)
-            Some(cf) if self.matches_pattern(cf) => {
-                let generic_value_type = self.get_type_param(cf).map(String::as_str);
-                self.field_type_annotation(field, false, generic_value_type, syntax)
-            }
-            Some(_) => crate::child_type_name(parent_name, child_name),
-            None => self.field_type_annotation(field, false, None, syntax),
-        }
     }
 
     /// Get the type parameter for a generic pattern given its concrete fields.
@@ -124,13 +90,9 @@ impl ClientMetadata {
         self.concrete_to_type_param.get(fields)
     }
 
-    /// Build a lookup map from field signatures to pattern names.
-    pub fn pattern_lookup(&self) -> BTreeMap<Vec<PatternField>, String> {
-        let mut lookup = self.concrete_to_pattern.clone();
-        for p in &self.structural_patterns {
-            lookup.insert(p.fields.clone(), p.name.clone());
-        }
-        lookup
+    /// Get the pre-computed pattern lookup map.
+    pub fn pattern_lookup(&self) -> &BTreeMap<Vec<PatternField>, String> {
+        &self.pattern_lookup
     }
 
     /// Get the pre-computed PatternBaseResult for a tree path.
@@ -146,14 +108,9 @@ impl ClientMetadata {
         generic_value_type: Option<&str>,
         syntax: GenericSyntax,
     ) -> String {
-        let value_type = if is_generic && field.rust_type == "T" {
-            "T".to_string()
-        } else {
-            extract_inner_type(&field.rust_type)
-        };
-
-        if self.is_pattern_type(&field.rust_type) {
-            if self.is_pattern_generic(&field.rust_type) {
+        // Pattern type — single lookup instead of is_pattern_type + is_pattern_generic
+        if let Some(pattern) = self.find_pattern(&field.rust_type) {
+            if pattern.is_generic {
                 let type_param = field
                     .type_param
                     .as_deref()
@@ -161,10 +118,21 @@ impl ClientMetadata {
                     .unwrap_or(if is_generic { "T" } else { syntax.default_type });
                 return syntax.wrap(&field.rust_type, type_param);
             }
-            field.rust_type.clone()
-        } else if field.is_branch() {
-            field.rust_type.clone()
-        } else if let Some(accessor) = self.find_index_set_pattern(&field.indexes) {
+            return field.rust_type.clone();
+        }
+
+        // Branch type (non-pattern)
+        if field.is_branch() {
+            return field.rust_type.clone();
+        }
+
+        // Leaf type
+        let value_type = if is_generic && field.rust_type == "T" {
+            "T".to_string()
+        } else {
+            extract_inner_type(&field.rust_type)
+        };
+        if let Some(accessor) = self.find_index_set_pattern(&field.indexes) {
             syntax.wrap(&accessor.name, &value_type)
         } else {
             syntax.wrap("MetricNode", &value_type)

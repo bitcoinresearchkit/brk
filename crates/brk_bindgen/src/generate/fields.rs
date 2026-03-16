@@ -51,18 +51,16 @@ fn compute_parameterized_value<S: LanguageSyntax>(
         None => syntax.path_expr("acc", &path_suffix(&field.name)),
     };
 
-    // Wrap in constructor
-    if metadata.is_pattern_type(&field.rust_type) {
-        syntax.constructor(&field.rust_type, &path_expr)
-    } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
+    // Wrap in constructor — leaves use their index accessor, everything else uses the type name
+    if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
         syntax.constructor(&accessor.name, &path_expr)
-    } else if field.is_branch() {
-        syntax.constructor(&field.rust_type, &path_expr)
-    } else {
+    } else if field.is_leaf() {
         panic!(
-            "Field '{}' has no matching pattern or index accessor. All metrics must be indexed.",
+            "Field '{}' has no matching index accessor. All metrics must be indexed.",
             field.name
         )
+    } else {
+        syntax.constructor(&field.rust_type, &path_expr)
     }
 }
 
@@ -108,67 +106,31 @@ pub fn generate_tree_node_field<S: LanguageSyntax>(
     let field_name = syntax.field_name(&field.name);
     let type_ann = metadata.field_type_annotation(field, false, None, syntax.generic_syntax());
 
-    let value = if metadata.is_pattern_type(&field.rust_type) {
-        let pattern = metadata.find_pattern(&field.rust_type);
-        let use_base = pattern.is_some_and(|p| p.is_parameterizable()) && base_result.is_some();
+    let ctor = |type_name: &str, args: &str| {
+        format!("{}({}, {})", syntax.constructor_name(type_name), client_expr, args)
+    };
 
-        if use_base {
-            let br = base_result.unwrap();
-            let base_arg = syntax.string_literal(&br.base);
-            if let Some(pat) = pattern
-                && pat.is_templated()
-            {
-                let disc = pat
-                    .extract_disc_from_instance(&br.field_parts)
-                    .unwrap_or_default();
-                let disc_arg = syntax.string_literal(&disc);
-                format!(
-                    "{}({}, {}, {})",
-                    syntax.constructor_name(&field.rust_type),
-                    client_expr,
-                    base_arg,
-                    disc_arg
-                )
-            } else {
-                format!(
-                    "{}({}, {})",
-                    syntax.constructor_name(&field.rust_type),
-                    client_expr,
-                    base_arg
-                )
-            }
+    let value = if let Some(pattern) = metadata.find_pattern(&field.rust_type)
+        && pattern.is_parameterizable()
+        && let Some(br) = base_result
+    {
+        let base_arg = syntax.string_literal(&br.base);
+        if pattern.is_templated() {
+            let disc = pattern
+                .extract_disc_from_instance(&br.field_parts)
+                .unwrap_or_default();
+            ctor(&field.rust_type, &format!("{}, {}", base_arg, syntax.string_literal(&disc)))
         } else {
-            let path_arg = syntax.path_expr("base_path", &path_suffix(child_name));
-            format!(
-                "{}({}, {})",
-                syntax.constructor_name(&field.rust_type),
-                client_expr,
-                path_arg
-            )
+            ctor(&field.rust_type, &base_arg)
         }
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
         let path_arg = base_result
             .map(|br| syntax.string_literal(&br.base))
             .unwrap_or_else(|| syntax.path_expr("base_path", &path_suffix(child_name)));
-        format!(
-            "{}({}, {})",
-            syntax.constructor_name(&accessor.name),
-            client_expr,
-            path_arg
-        )
-    } else if field.is_branch() {
-        let path_expr = syntax.path_expr("base_path", &path_suffix(child_name));
-        format!(
-            "{}({}, {})",
-            syntax.constructor_name(&field.rust_type),
-            client_expr,
-            path_expr
-        )
+        ctor(&accessor.name, &path_arg)
     } else {
-        panic!(
-            "Field '{}' is a leaf with no index accessor. All metrics must be indexed.",
-            field.name
-        )
+        let path_arg = syntax.path_expr("base_path", &path_suffix(child_name));
+        ctor(&field.rust_type, &path_arg)
     };
 
     writeln!(

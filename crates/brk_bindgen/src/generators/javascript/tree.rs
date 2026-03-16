@@ -50,13 +50,7 @@ fn generate_tree_typedef(
         let js_type = if child.should_inline {
             child.inline_type_name.clone()
         } else {
-            metadata.resolve_tree_field_type(
-                &child.field,
-                child.child_fields.as_deref(),
-                name,
-                child.name,
-                GenericSyntax::JAVASCRIPT,
-            )
+            metadata.field_type_annotation(&child.field, false, None, GenericSyntax::JAVASCRIPT)
         };
 
         writeln!(

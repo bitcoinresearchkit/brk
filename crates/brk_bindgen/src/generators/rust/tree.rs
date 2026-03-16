@@ -49,13 +49,7 @@ fn generate_tree_node(
         let type_annotation = if child.should_inline {
             child.inline_type_name.clone()
         } else {
-            metadata.resolve_tree_field_type(
-                &child.field,
-                child.child_fields.as_deref(),
-                name,
-                child.name,
-                GenericSyntax::RUST,
-            )
+            metadata.field_type_annotation(&child.field, false, None, GenericSyntax::RUST)
         };
         writeln!(output, "    pub {}: {},", field_name, type_annotation).unwrap();
     }

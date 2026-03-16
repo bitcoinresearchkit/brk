@@ -25,10 +25,8 @@ pub struct ChildContext<'a> {
     pub name: &'a str,
     /// The child node.
     pub node: &'a TreeNode,
-    /// The field info for this child.
+    /// The field info for this child (with type_param set for generic patterns).
     pub field: PatternField,
-    /// Child fields if this is a branch (for pattern lookup).
-    pub child_fields: Option<Vec<PatternField>>,
     /// Pattern analysis result.
     pub base_result: PatternBaseResult,
     /// Whether this is a leaf node.
@@ -102,8 +100,13 @@ pub fn prepare_tree_node<'a>(
     let children: Vec<ChildContext<'a>> = branch_children
         .iter()
         .zip(fields_with_child_info)
-        .map(|((child_name, child_node), (field, child_fields))| {
+        .map(|((child_name, child_node), (mut field, child_fields))| {
             let is_leaf = matches!(child_node, TreeNode::Leaf(_));
+
+            // Set type_param for generic patterns so field_type_annotation works directly
+            if let Some(cf) = &child_fields {
+                field.type_param = metadata.get_type_param(cf).cloned();
+            }
 
             // Build child path and look up its pre-computed base result
             let child_path = build_child_path(path, child_name);
@@ -112,25 +115,17 @@ pub fn prepare_tree_node<'a>(
                 .cloned()
                 .unwrap_or_else(PatternBaseResult::force_inline);
 
-            // For type annotations: use pattern type if ANY pattern matches
-            let matches_any_pattern = child_fields
+            // Single lookup for the child's matching pattern (avoids repeated scans)
+            let matching_pattern = child_fields
                 .as_ref()
-                .is_some_and(|cf| metadata.matches_pattern(cf));
+                .and_then(|cf| metadata.find_pattern_by_fields(cf));
 
-            // Check if the pattern mode AND field parts match the instance
-            // Uses is_none_or so that "no pattern" doesn't trigger inlining
-            let pattern_compatible = child_fields
-                .as_ref()
-                .and_then(|cf| metadata.find_pattern_by_fields(cf))
-                .is_none_or(|p| {
-                    p.is_suffix_mode() == base_result.is_suffix_mode
-                        && p.field_parts_match(&base_result.field_parts)
-                });
-
-            // Check if the matching pattern is fully parameterizable (including children)
-            let is_parameterizable = child_fields
-                .as_ref()
-                .and_then(|cf| metadata.find_pattern_by_fields(cf))
+            let matches_any_pattern = matching_pattern.is_some();
+            let pattern_compatible = matching_pattern.is_none_or(|p| {
+                p.is_suffix_mode() == base_result.is_suffix_mode
+                    && p.field_parts_match(&base_result.field_parts)
+            });
+            let is_parameterizable = matching_pattern
                 .is_none_or(|p| metadata.is_parameterizable(&p.name));
 
             // should_inline determines if we generate an inline struct type
@@ -140,7 +135,6 @@ pub fn prepare_tree_node<'a>(
                     || !is_parameterizable
                     || base_result.has_outlier);
 
-            // Inline type name (only used when should_inline is true)
             let inline_type_name = if should_inline {
                 child_type_name(name, child_name)
             } else {
@@ -151,7 +145,6 @@ pub fn prepare_tree_node<'a>(
                 name: child_name,
                 node: child_node,
                 field,
-                child_fields,
                 base_result,
                 is_leaf,
                 should_inline,
