@@ -8,10 +8,9 @@ use std::fmt::Write;
 
 use brk_types::MetricLeafWithSchema;
 
-use crate::{ClientMetadata, LanguageSyntax, PatternBaseResult, PatternField, StructuralPattern};
+use crate::{ClientMetadata, LanguageSyntax, PatternBaseResult, PatternField, PatternMode, StructuralPattern};
 
 /// Create a path suffix from a name.
-/// Adds `_` prefix only if the name doesn't already start with `_`.
 fn path_suffix(name: &str) -> String {
     if name.starts_with('_') {
         name.to_string()
@@ -20,41 +19,45 @@ fn path_suffix(name: &str) -> String {
     }
 }
 
-/// Compute path expression from pattern mode and field part.
-fn compute_path_expr<S: LanguageSyntax>(
+/// Compute the constructor value for a parameterized field (factory context).
+///
+/// Handles all three pattern modes (Suffix/Prefix/Templated) and the special
+/// case of templated child patterns that need (acc, disc) instead of a path.
+fn compute_parameterized_value<S: LanguageSyntax>(
     syntax: &S,
+    field: &PatternField,
     pattern: &StructuralPattern,
-    field: &PatternField,
-    base_var: &str,
-) -> String {
-    match pattern.get_field_part(&field.name) {
-        Some(part) => {
-            if pattern.is_templated() {
-                // Templated: replace {disc} with disc variable at runtime
-                syntax.template_expr(base_var, part)
-            } else if pattern.is_suffix_mode() {
-                syntax.suffix_expr(base_var, part)
-            } else {
-                syntax.prefix_expr(part, base_var)
-            }
-        }
-        None => syntax.path_expr(base_var, &path_suffix(&field.name)),
-    }
-}
-
-/// Compute field value from path expression.
-fn compute_field_value<S: LanguageSyntax>(
-    syntax: &S,
-    field: &PatternField,
     metadata: &ClientMetadata,
-    path_expr: &str,
 ) -> String {
+    // Templated child patterns receive acc and disc as separate arguments
+    if let Some(child_pattern) = metadata.find_pattern(&field.rust_type)
+        && child_pattern.is_templated()
+    {
+        let disc_template = pattern
+            .get_field_part(&field.name)
+            .unwrap_or(&field.name);
+        let disc_arg = syntax.disc_arg_expr(disc_template);
+        let acc_arg = syntax.suffix_expr("acc", ""); // identity — acc.clone() in Rust, acc in others
+        return syntax.constructor(&field.rust_type, &format!("{acc_arg}, {disc_arg}"));
+    }
+
+    // Compute path expression from pattern mode
+    let path_expr = match pattern.get_field_part(&field.name) {
+        Some(part) => match &pattern.mode {
+            Some(PatternMode::Templated { .. }) => syntax.template_expr("acc", part),
+            Some(PatternMode::Prefix { .. }) => syntax.prefix_expr(part, "acc"),
+            _ => syntax.suffix_expr("acc", part),
+        },
+        None => syntax.path_expr("acc", &path_suffix(&field.name)),
+    };
+
+    // Wrap in constructor
     if metadata.is_pattern_type(&field.rust_type) {
-        syntax.constructor(&field.rust_type, path_expr)
+        syntax.constructor(&field.rust_type, &path_expr)
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
-        syntax.constructor(&accessor.name, path_expr)
+        syntax.constructor(&accessor.name, &path_expr)
     } else if field.is_branch() {
-        syntax.constructor(&field.rust_type, path_expr)
+        syntax.constructor(&field.rust_type, &path_expr)
     } else {
         panic!(
             "Field '{}' has no matching pattern or index accessor. All metrics must be indexed.",
@@ -63,10 +66,9 @@ fn compute_field_value<S: LanguageSyntax>(
     }
 }
 
-/// Generate a parameterized field using the language syntax.
+/// Generate a parameterized field for a pattern factory.
 ///
-/// This is used for pattern instances where fields use an accumulated
-/// metric name that's built up through the tree traversal.
+/// Used for pattern instances where fields build metric names from an accumulated base.
 pub fn generate_parameterized_field<S: LanguageSyntax>(
     output: &mut String,
     syntax: &S,
@@ -78,21 +80,7 @@ pub fn generate_parameterized_field<S: LanguageSyntax>(
     let field_name = syntax.field_name(&field.name);
     let type_ann =
         metadata.field_type_annotation(field, pattern.is_generic, None, syntax.generic_syntax());
-    let path_expr = compute_path_expr(syntax, pattern, field, "acc");
-
-    // When calling a templated child pattern, pass acc and disc separately
-    let value = if let Some(child_pattern) = metadata.find_pattern(&field.rust_type)
-        && child_pattern.is_templated()
-    {
-        let disc_template = pattern
-            .get_field_part(&field.name)
-            .unwrap_or(&field.name);
-        let disc_arg = syntax.disc_arg_expr(disc_template);
-        let acc_arg = syntax.suffix_expr("acc", ""); // identity — returns acc or acc.clone()
-        syntax.constructor(&field.rust_type, &format!("{acc_arg}, {disc_arg}"))
-    } else {
-        compute_field_value(syntax, field, metadata, &path_expr)
-    };
+    let value = compute_parameterized_value(syntax, field, pattern, metadata);
 
     writeln!(
         output,

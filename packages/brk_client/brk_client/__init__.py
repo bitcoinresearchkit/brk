@@ -3119,15 +3119,15 @@ class MetricsTree_Blocks_Size:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.total: MetricPattern18[StoredU64] = MetricPattern18(client, 'total_size')
         self.cumulative: MetricPattern1[StoredU64] = MetricPattern1(client, 'block_size_cumulative')
-        self.sum: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, 'block_size_sum')
-        self.average: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, 'block_size_average')
-        self.min: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, 'block_size_min')
-        self.max: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, 'block_size_max')
-        self.pct10: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, 'block_size_pct10')
-        self.pct25: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, 'block_size_pct25')
-        self.median: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, 'block_size_median')
-        self.pct75: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, 'block_size_pct75')
-        self.pct90: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, 'block_size_pct90')
+        self.sum: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_size_sum')
+        self.average: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_size_average')
+        self.min: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_size_min')
+        self.max: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_size_max')
+        self.pct10: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_size_pct10')
+        self.pct25: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_size_pct25')
+        self.median: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_size_median')
+        self.pct75: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_size_pct75')
+        self.pct90: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_size_pct90')
 
 class MetricsTree_Blocks_Weight:
     """Metrics tree node."""
@@ -3135,15 +3135,15 @@ class MetricsTree_Blocks_Weight:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.raw: MetricPattern18[Weight] = MetricPattern18(client, 'block_weight')
         self.cumulative: MetricPattern1[Weight] = MetricPattern1(client, 'block_weight_cumulative')
-        self.sum: _1m1w1y24hPattern[Weight] = _1m1w1y24hPattern(client, 'block_weight_sum')
-        self.average: _1m1w1y24hPattern[Weight] = _1m1w1y24hPattern(client, 'block_weight_average')
-        self.min: _1m1w1y24hPattern[Weight] = _1m1w1y24hPattern(client, 'block_weight_min')
-        self.max: _1m1w1y24hPattern[Weight] = _1m1w1y24hPattern(client, 'block_weight_max')
-        self.pct10: _1m1w1y24hPattern[Weight] = _1m1w1y24hPattern(client, 'block_weight_pct10')
-        self.pct25: _1m1w1y24hPattern[Weight] = _1m1w1y24hPattern(client, 'block_weight_pct25')
-        self.median: _1m1w1y24hPattern[Weight] = _1m1w1y24hPattern(client, 'block_weight_median')
-        self.pct75: _1m1w1y24hPattern[Weight] = _1m1w1y24hPattern(client, 'block_weight_pct75')
-        self.pct90: _1m1w1y24hPattern[Weight] = _1m1w1y24hPattern(client, 'block_weight_pct90')
+        self.sum: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_weight_sum')
+        self.average: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_weight_average')
+        self.min: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_weight_min')
+        self.max: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_weight_max')
+        self.pct10: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_weight_pct10')
+        self.pct25: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_weight_pct25')
+        self.median: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_weight_median')
+        self.pct75: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_weight_pct75')
+        self.pct90: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'block_weight_pct90')
 
 class MetricsTree_Blocks_Count:
     """Metrics tree node."""
@@ -3204,7 +3204,7 @@ class MetricsTree_Blocks_Fullness:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.bps: _1m1w1y24hHeightPattern[BasisPoints16] = _1m1w1y24hHeightPattern(client, 'block_fullness_bps')
+        self.bps: _1m1w1y24hHeightPattern[Any] = _1m1w1y24hHeightPattern(client, 'block_fullness_bps')
         self.ratio: MetricPattern1[StoredF32] = MetricPattern1(client, 'block_fullness_ratio')
         self.percent: MetricPattern1[StoredF32] = MetricPattern1(client, 'block_fullness')
 
@@ -3227,7 +3227,7 @@ class MetricsTree_Blocks:
         self.weight: MetricsTree_Blocks_Weight = MetricsTree_Blocks_Weight(client)
         self.count: MetricsTree_Blocks_Count = MetricsTree_Blocks_Count(client)
         self.lookback: MetricsTree_Blocks_Lookback = MetricsTree_Blocks_Lookback(client)
-        self.interval: _1m1w1y24hHeightPattern[Timestamp] = _1m1w1y24hHeightPattern(client, 'block_interval')
+        self.interval: _1m1w1y24hHeightPattern[Any] = _1m1w1y24hHeightPattern(client, 'block_interval')
         self.vbytes: AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'block_vbytes')
         self.fullness: MetricsTree_Blocks_Fullness = MetricsTree_Blocks_Fullness(client)
         self.halving: MetricsTree_Blocks_Halving = MetricsTree_Blocks_Halving(client)
@@ -3258,8 +3258,8 @@ class MetricsTree_Transactions_Size:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.vsize: _6bBlockTxPattern[VSize] = _6bBlockTxPattern(client, 'tx_vsize')
-        self.weight: _6bBlockTxPattern[Weight] = _6bBlockTxPattern(client, 'tx_weight')
+        self.vsize: _6bBlockTxPattern[Any] = _6bBlockTxPattern(client, 'tx_vsize')
+        self.weight: _6bBlockTxPattern[Any] = _6bBlockTxPattern(client, 'tx_weight')
 
 class MetricsTree_Transactions_Fees:
     """Metrics tree node."""
@@ -3267,16 +3267,16 @@ class MetricsTree_Transactions_Fees:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.input_value: MetricPattern19[Sats] = MetricPattern19(client, 'input_value')
         self.output_value: MetricPattern19[Sats] = MetricPattern19(client, 'output_value')
-        self.fee: _6bBlockTxPattern[Sats] = _6bBlockTxPattern(client, 'fee')
-        self.fee_rate: _6bBlockTxPattern[FeeRate] = _6bBlockTxPattern(client, 'fee_rate')
+        self.fee: _6bBlockTxPattern[Any] = _6bBlockTxPattern(client, 'fee')
+        self.fee_rate: _6bBlockTxPattern[Any] = _6bBlockTxPattern(client, 'fee_rate')
 
 class MetricsTree_Transactions_Versions:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.v1: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'tx_v1')
-        self.v2: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'tx_v2')
-        self.v3: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'tx_v3')
+        self.v1: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'tx_v1')
+        self.v2: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'tx_v2')
+        self.v3: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'tx_v3')
 
 class MetricsTree_Transactions_Volume:
     """Metrics tree node."""
@@ -3464,15 +3464,15 @@ class MetricsTree_Addresses_New:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.all: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'new_address_count')
-        self.p2pk65: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2pk65_new_address_count')
-        self.p2pk33: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2pk33_new_address_count')
-        self.p2pkh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2pkh_new_address_count')
-        self.p2sh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2sh_new_address_count')
-        self.p2wpkh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2wpkh_new_address_count')
-        self.p2wsh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2wsh_new_address_count')
-        self.p2tr: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2tr_new_address_count')
-        self.p2a: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2a_new_address_count')
+        self.all: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'new_address_count')
+        self.p2pk65: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2pk65_new_address_count')
+        self.p2pk33: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2pk33_new_address_count')
+        self.p2pkh: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2pkh_new_address_count')
+        self.p2sh: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2sh_new_address_count')
+        self.p2wpkh: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2wpkh_new_address_count')
+        self.p2wsh: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2wsh_new_address_count')
+        self.p2tr: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2tr_new_address_count')
+        self.p2a: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2a_new_address_count')
 
 class MetricsTree_Addresses_Delta:
     """Metrics tree node."""
@@ -3543,19 +3543,19 @@ class MetricsTree_Scripts_Count:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.p2a: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2a_count')
-        self.p2ms: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2ms_count')
-        self.p2pk33: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2pk33_count')
-        self.p2pk65: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2pk65_count')
-        self.p2pkh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2pkh_count')
-        self.p2sh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2sh_count')
-        self.p2tr: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2tr_count')
-        self.p2wpkh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2wpkh_count')
-        self.p2wsh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2wsh_count')
-        self.op_return: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'op_return_count')
-        self.empty_output: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'empty_output_count')
-        self.unknown_output: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'unknown_output_count')
-        self.segwit: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'segwit_count')
+        self.p2a: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2a_count')
+        self.p2ms: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2ms_count')
+        self.p2pk33: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2pk33_count')
+        self.p2pk65: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2pk65_count')
+        self.p2pkh: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2pkh_count')
+        self.p2sh: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2sh_count')
+        self.p2tr: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2tr_count')
+        self.p2wpkh: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2wpkh_count')
+        self.p2wsh: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'p2wsh_count')
+        self.op_return: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'op_return_count')
+        self.empty_output: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'empty_output_count')
+        self.unknown_output: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'unknown_output_count')
+        self.segwit: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'segwit_count')
 
 class MetricsTree_Scripts_Value:
     """Metrics tree node."""
@@ -3657,8 +3657,8 @@ class MetricsTree_Cointime_Activity:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.coinblocks_created: BaseCumulativeSumPattern[StoredF64] = BaseCumulativeSumPattern(client, 'coinblocks_created')
-        self.coinblocks_stored: BaseCumulativeSumPattern[StoredF64] = BaseCumulativeSumPattern(client, 'coinblocks_stored')
+        self.coinblocks_created: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'coinblocks_created')
+        self.coinblocks_stored: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'coinblocks_stored')
         self.liveliness: MetricPattern1[StoredF64] = MetricPattern1(client, 'liveliness')
         self.vaultedness: MetricPattern1[StoredF64] = MetricPattern1(client, 'vaultedness')
         self.ratio: MetricPattern1[StoredF64] = MetricPattern1(client, 'activity_to_vaultedness_ratio')
@@ -3674,10 +3674,10 @@ class MetricsTree_Cointime_Value:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.destroyed: BaseCumulativeSumPattern[StoredF64] = BaseCumulativeSumPattern(client, 'cointime_value_destroyed')
-        self.created: BaseCumulativeSumPattern[StoredF64] = BaseCumulativeSumPattern(client, 'cointime_value_created')
-        self.stored: BaseCumulativeSumPattern[StoredF64] = BaseCumulativeSumPattern(client, 'cointime_value_stored')
-        self.vocdd: BaseCumulativeSumPattern[StoredF64] = BaseCumulativeSumPattern(client, 'vocdd')
+        self.destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'cointime_value_destroyed')
+        self.created: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'cointime_value_created')
+        self.stored: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'cointime_value_stored')
+        self.vocdd: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'vocdd')
 
 class MetricsTree_Cointime_Cap:
     """Metrics tree node."""
@@ -3731,7 +3731,7 @@ class MetricsTree_Cointime:
         self.prices: MetricsTree_Cointime_Prices = MetricsTree_Cointime_Prices(client)
         self.adjusted: MetricsTree_Cointime_Adjusted = MetricsTree_Cointime_Adjusted(client)
         self.reserve_risk: MetricsTree_Cointime_ReserveRisk = MetricsTree_Cointime_ReserveRisk(client)
-        self.coinblocks_destroyed: BaseCumulativeSumPattern[StoredF64] = BaseCumulativeSumPattern(client, 'coinblocks_destroyed')
+        self.coinblocks_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'coinblocks_destroyed')
 
 class MetricsTree_Constants:
     """Metrics tree node."""
@@ -4642,7 +4642,7 @@ class MetricsTree_Supply:
         self.inflation_rate: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'inflation_rate')
         self.velocity: MetricsTree_Supply_Velocity = MetricsTree_Supply_Velocity(client)
         self.market_cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'market_cap')
-        self.market_minus_realized_cap_growth_rate: _1m1w1y24hPattern[BasisPointsSigned32] = _1m1w1y24hPattern(client, 'market_minus_realized_cap_growth_rate')
+        self.market_minus_realized_cap_growth_rate: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'market_minus_realized_cap_growth_rate')
         self.hodled_or_lost: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'hodled_or_lost_coins')
 
 class MetricsTree_Cohorts_Utxo_All_Supply:
@@ -4660,7 +4660,7 @@ class MetricsTree_Cohorts_Utxo_All_Activity:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.sent: BaseCumulativeInSumPattern = BaseCumulativeInSumPattern(client, 'sent')
-        self.coindays_destroyed: BaseCumulativeSumPattern[StoredF64] = BaseCumulativeSumPattern(client, 'coindays_destroyed')
+        self.coindays_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'coindays_destroyed')
         self.coinyears_destroyed: MetricPattern1[StoredF64] = MetricPattern1(client, 'coinyears_destroyed')
         self.dormancy: MetricPattern1[StoredF32] = MetricPattern1(client, 'dormancy')
 
@@ -4672,8 +4672,8 @@ class MetricsTree_Cohorts_Utxo_All_Realized_Profit:
         self.cumulative: CentsUsdPattern2 = CentsUsdPattern2(client, 'realized_profit_cumulative')
         self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, 'realized_profit_sum')
         self.rel_to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, 'realized_profit_rel_to_rcap')
-        self.value_created: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'profit_value_created')
-        self.value_destroyed: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'profit_value_destroyed')
+        self.value_created: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'profit_value_created')
+        self.value_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'profit_value_destroyed')
         self.distribution_flow: MetricPattern1[Dollars] = MetricPattern1(client, 'distribution_flow')
 
 class MetricsTree_Cohorts_Utxo_All_Realized_Loss:
@@ -4685,8 +4685,8 @@ class MetricsTree_Cohorts_Utxo_All_Realized_Loss:
         self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, 'realized_loss_sum')
         self.negative: MetricPattern1[Dollars] = MetricPattern1(client, 'neg_realized_loss')
         self.rel_to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, 'realized_loss_rel_to_rcap')
-        self.value_created: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'loss_value_created')
-        self.value_destroyed: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'loss_value_destroyed')
+        self.value_created: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'loss_value_created')
+        self.value_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'loss_value_destroyed')
         self.capitulation_flow: MetricPattern1[Dollars] = MetricPattern1(client, 'capitulation_flow')
 
 class MetricsTree_Cohorts_Utxo_All_Realized_Price_StdDev_All:
@@ -4795,17 +4795,17 @@ class MetricsTree_Cohorts_Utxo_All_Realized_Sopr_Adjusted:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'asopr')
-        self.value_created: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'adj_value_created')
-        self.value_destroyed: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'adj_value_destroyed')
+        self.ratio: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'asopr')
+        self.value_created: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'adj_value_created')
+        self.value_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'adj_value_destroyed')
 
 class MetricsTree_Cohorts_Utxo_All_Realized_Sopr:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.value_created: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'value_created')
-        self.value_destroyed: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'value_destroyed')
-        self.ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'sopr')
+        self.value_created: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'value_created')
+        self.value_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'value_destroyed')
+        self.ratio: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'sopr')
         self.adjusted: MetricsTree_Cohorts_Utxo_All_Realized_Sopr_Adjusted = MetricsTree_Cohorts_Utxo_All_Realized_Sopr_Adjusted(client)
 
 class MetricsTree_Cohorts_Utxo_All_Realized_Investor:
@@ -4831,7 +4831,7 @@ class MetricsTree_Cohorts_Utxo_All_Realized:
         self.sell_side_risk_ratio: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'sell_side_risk_ratio')
         self.peak_regret: BaseCumulativeRelPattern = BaseCumulativeRelPattern(client, 'realized_peak_regret')
         self.investor: MetricsTree_Cohorts_Utxo_All_Realized_Investor = MetricsTree_Cohorts_Utxo_All_Realized_Investor(client)
-        self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'realized_profit_to_loss_ratio')
+        self.profit_to_loss_ratio: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'realized_profit_to_loss_ratio')
 
 class MetricsTree_Cohorts_Utxo_All_CostBasis:
     """Metrics tree node."""
@@ -4908,7 +4908,7 @@ class MetricsTree_Cohorts_Utxo_Sth_Activity:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.sent: BaseCumulativeInSumPattern = BaseCumulativeInSumPattern(client, 'sth_sent')
-        self.coindays_destroyed: BaseCumulativeSumPattern[StoredF64] = BaseCumulativeSumPattern(client, 'sth_coindays_destroyed')
+        self.coindays_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'sth_coindays_destroyed')
         self.coinyears_destroyed: MetricPattern1[StoredF64] = MetricPattern1(client, 'sth_coinyears_destroyed')
         self.dormancy: MetricPattern1[StoredF32] = MetricPattern1(client, 'sth_dormancy')
 
@@ -4920,8 +4920,8 @@ class MetricsTree_Cohorts_Utxo_Sth_Realized_Profit:
         self.cumulative: CentsUsdPattern2 = CentsUsdPattern2(client, 'sth_realized_profit_cumulative')
         self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, 'sth_realized_profit_sum')
         self.rel_to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, 'sth_realized_profit_rel_to_rcap')
-        self.value_created: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'sth_profit_value_created')
-        self.value_destroyed: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'sth_profit_value_destroyed')
+        self.value_created: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'sth_profit_value_created')
+        self.value_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'sth_profit_value_destroyed')
         self.distribution_flow: MetricPattern1[Dollars] = MetricPattern1(client, 'sth_distribution_flow')
 
 class MetricsTree_Cohorts_Utxo_Sth_Realized_Loss:
@@ -4933,8 +4933,8 @@ class MetricsTree_Cohorts_Utxo_Sth_Realized_Loss:
         self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, 'sth_realized_loss_sum')
         self.negative: MetricPattern1[Dollars] = MetricPattern1(client, 'sth_neg_realized_loss')
         self.rel_to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, 'sth_realized_loss_rel_to_rcap')
-        self.value_created: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'sth_loss_value_created')
-        self.value_destroyed: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'sth_loss_value_destroyed')
+        self.value_created: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'sth_loss_value_created')
+        self.value_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'sth_loss_value_destroyed')
         self.capitulation_flow: MetricPattern1[Dollars] = MetricPattern1(client, 'sth_capitulation_flow')
 
 class MetricsTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_All:
@@ -5043,17 +5043,17 @@ class MetricsTree_Cohorts_Utxo_Sth_Realized_Sopr_Adjusted:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'sth_asopr')
-        self.value_created: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'sth_adj_value_created')
-        self.value_destroyed: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'sth_adj_value_destroyed')
+        self.ratio: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'sth_asopr')
+        self.value_created: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'sth_adj_value_created')
+        self.value_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'sth_adj_value_destroyed')
 
 class MetricsTree_Cohorts_Utxo_Sth_Realized_Sopr:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.value_created: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'sth_value_created')
-        self.value_destroyed: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'sth_value_destroyed')
-        self.ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'sth_sopr')
+        self.value_created: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'sth_value_created')
+        self.value_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'sth_value_destroyed')
+        self.ratio: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'sth_sopr')
         self.adjusted: MetricsTree_Cohorts_Utxo_Sth_Realized_Sopr_Adjusted = MetricsTree_Cohorts_Utxo_Sth_Realized_Sopr_Adjusted(client)
 
 class MetricsTree_Cohorts_Utxo_Sth_Realized_Investor:
@@ -5079,7 +5079,7 @@ class MetricsTree_Cohorts_Utxo_Sth_Realized:
         self.sell_side_risk_ratio: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'sth_sell_side_risk_ratio')
         self.peak_regret: BaseCumulativeRelPattern = BaseCumulativeRelPattern(client, 'sth_realized_peak_regret')
         self.investor: MetricsTree_Cohorts_Utxo_Sth_Realized_Investor = MetricsTree_Cohorts_Utxo_Sth_Realized_Investor(client)
-        self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'sth_realized_profit_to_loss_ratio')
+        self.profit_to_loss_ratio: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'sth_realized_profit_to_loss_ratio')
 
 class MetricsTree_Cohorts_Utxo_Sth_CostBasis:
     """Metrics tree node."""
@@ -5127,7 +5127,7 @@ class MetricsTree_Cohorts_Utxo_Lth_Activity:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.sent: BaseCumulativeInSumPattern = BaseCumulativeInSumPattern(client, 'lth_sent')
-        self.coindays_destroyed: BaseCumulativeSumPattern[StoredF64] = BaseCumulativeSumPattern(client, 'lth_coindays_destroyed')
+        self.coindays_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'lth_coindays_destroyed')
         self.coinyears_destroyed: MetricPattern1[StoredF64] = MetricPattern1(client, 'lth_coinyears_destroyed')
         self.dormancy: MetricPattern1[StoredF32] = MetricPattern1(client, 'lth_dormancy')
 
@@ -5139,8 +5139,8 @@ class MetricsTree_Cohorts_Utxo_Lth_Realized_Profit:
         self.cumulative: CentsUsdPattern2 = CentsUsdPattern2(client, 'lth_realized_profit_cumulative')
         self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, 'lth_realized_profit_sum')
         self.rel_to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, 'lth_realized_profit_rel_to_rcap')
-        self.value_created: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'lth_profit_value_created')
-        self.value_destroyed: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'lth_profit_value_destroyed')
+        self.value_created: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'lth_profit_value_created')
+        self.value_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'lth_profit_value_destroyed')
         self.distribution_flow: MetricPattern1[Dollars] = MetricPattern1(client, 'lth_distribution_flow')
 
 class MetricsTree_Cohorts_Utxo_Lth_Realized_Loss:
@@ -5152,8 +5152,8 @@ class MetricsTree_Cohorts_Utxo_Lth_Realized_Loss:
         self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, 'lth_realized_loss_sum')
         self.negative: MetricPattern1[Dollars] = MetricPattern1(client, 'lth_neg_realized_loss')
         self.rel_to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, 'lth_realized_loss_rel_to_rcap')
-        self.value_created: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'lth_loss_value_created')
-        self.value_destroyed: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'lth_loss_value_destroyed')
+        self.value_created: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'lth_loss_value_created')
+        self.value_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'lth_loss_value_destroyed')
         self.capitulation_flow: MetricPattern1[Dollars] = MetricPattern1(client, 'lth_capitulation_flow')
 
 class MetricsTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_All:
@@ -5262,9 +5262,9 @@ class MetricsTree_Cohorts_Utxo_Lth_Realized_Sopr:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.value_created: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'lth_value_created')
-        self.value_destroyed: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'lth_value_destroyed')
-        self.ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'lth_sopr')
+        self.value_created: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'lth_value_created')
+        self.value_destroyed: BaseCumulativeSumPattern[Any] = BaseCumulativeSumPattern(client, 'lth_value_destroyed')
+        self.ratio: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'lth_sopr')
 
 class MetricsTree_Cohorts_Utxo_Lth_Realized_Investor:
     """Metrics tree node."""
@@ -5289,7 +5289,7 @@ class MetricsTree_Cohorts_Utxo_Lth_Realized:
         self.sell_side_risk_ratio: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'lth_sell_side_risk_ratio')
         self.peak_regret: BaseCumulativeRelPattern = BaseCumulativeRelPattern(client, 'lth_realized_peak_regret')
         self.investor: MetricsTree_Cohorts_Utxo_Lth_Realized_Investor = MetricsTree_Cohorts_Utxo_Lth_Realized_Investor(client)
-        self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'lth_realized_profit_to_loss_ratio')
+        self.profit_to_loss_ratio: _1m1w1y24hPattern[Any] = _1m1w1y24hPattern(client, 'lth_realized_profit_to_loss_ratio')
 
 class MetricsTree_Cohorts_Utxo_Lth_CostBasis:
     """Metrics tree node."""
