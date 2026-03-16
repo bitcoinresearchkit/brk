@@ -122,32 +122,32 @@ export function initOptions() {
     for (let i = 0; i < arr.length; i++) {
       const blueprint = arr[i];
 
-      // Check for undefined metric
-      if (!blueprint.metric) {
-        throw new Error(`Blueprint has undefined metric: ${blueprint.title}`);
+      // Check for undefined series
+      if (!blueprint.series) {
+        throw new Error(`Blueprint has undefined series: ${blueprint.title}`);
       }
 
-      // Check for price pattern blueprint (has usd/sats sub-metrics)
+      // Check for price pattern blueprint (has usd/sats sub-series)
       // Use unknown cast for safe property access check
-      const maybePriceMetric =
-        /** @type {{ usd?: AnyMetricPattern, sats?: AnyMetricPattern }} */ (
-          /** @type {unknown} */ (blueprint.metric)
+      const maybePriceSeries =
+        /** @type {{ usd?: AnySeriesPattern, sats?: AnySeriesPattern }} */ (
+          /** @type {unknown} */ (blueprint.series)
         );
-      if (maybePriceMetric.usd?.by && maybePriceMetric.sats?.by) {
-        const { usd, sats } = maybePriceMetric;
+      if (maybePriceSeries.usd?.by && maybePriceSeries.sats?.by) {
+        const { usd, sats } = maybePriceSeries;
         if (!usdArr) map.set(Unit.usd, (usdArr = []));
-        usdArr.push({ ...blueprint, metric: usd, unit: Unit.usd });
+        usdArr.push({ ...blueprint, series: usd, unit: Unit.usd });
 
         if (!satsArr) map.set(Unit.sats, (satsArr = []));
-        satsArr.push({ ...blueprint, metric: sats, unit: Unit.sats });
+        satsArr.push({ ...blueprint, series: sats, unit: Unit.sats });
         continue;
       }
 
-      // After continue, we know this is a regular metric blueprint
+      // After continue, we know this is a regular series blueprint
       const regularBlueprint = /** @type {AnyFetchedSeriesBlueprint} */ (
         blueprint
       );
-      const metric = regularBlueprint.metric;
+      const s = regularBlueprint.series;
       const unit = regularBlueprint.unit;
       if (!unit) continue;
 
@@ -163,7 +163,7 @@ export function initOptions() {
         priceSet.add(regularBlueprint.options?.baseValue?.price ?? 0);
       } else if (!type || type === "Line") {
         // Check if manual price line - avoid Object.values() array allocation
-        const by = metric.by;
+        const by = s.by;
         for (const k in by) {
           if (by[/** @type {Index} */ (k)]?.path?.includes("constant_")) {
             priceLines.get(unit)?.delete(parseFloat(regularBlueprint.title));
@@ -178,9 +178,9 @@ export function initOptions() {
       const arr = map.get(unit);
       if (!arr) continue;
       for (const baseValue of values) {
-        const metric = getConstant(brk.metrics.constants, baseValue);
+        const s = getConstant(brk.series.constants, baseValue);
         arr.push({
-          metric,
+          series: s,
           title: `${baseValue}`,
           color: colors.gray,
           unit,
@@ -371,7 +371,7 @@ export function initOptions() {
     return { nodes, count: totalCount };
   }
 
-  logUnused(brk.metrics, partialOptions);
+  logUnused(brk.series, partialOptions);
   const { nodes: processedTree } = processPartialTree(partialOptions);
 
   /**

@@ -17,12 +17,12 @@ pub fn main() -> brk_error::Result<()> {
 
     let vecs = Vecs::build(&indexer_ro, &computer_ro);
 
-    let out_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("metrics.txt");
-    let content = vecs.metrics.join("\n");
+    let out_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("series.txt");
+    let content = vecs.series.join("\n");
     fs::write(&out_path, &content)?;
     eprintln!(
-        "Wrote {} metrics to {}",
-        vecs.metrics.len(),
+        "Wrote {} series to {}",
+        vecs.series.len(),
         out_path.display()
     );
 

@@ -40,14 +40,14 @@ impl From<&str> for Etag {
 }
 
 impl Etag {
-    /// Create ETag from metric data response info.
+    /// Create ETag from series data response info.
     ///
     /// Format varies based on whether the slice touches the end:
-    /// - Slice ends before total: `{version:x}-{start}-{end}` (len irrelevant, data won't change if metric grows)
+    /// - Slice ends before total: `{version:x}-{start}-{end}` (len irrelevant, data won't change if series grows)
     /// - Slice reaches the end: `{version:x}-{start}-{total}-{height}` (includes height since last value may be recomputed each block)
     ///
-    /// `version` is the metric version for single queries, or the sum of versions for bulk queries.
-    pub fn from_metric(
+    /// `version` is the series version for single queries, or the sum of versions for bulk queries.
+    pub fn from_series(
         version: super::Version,
         total: usize,
         start: usize,

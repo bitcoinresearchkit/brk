@@ -179,7 +179,7 @@ fn collect_instance_analyses(
 ) -> Option<String> {
     match node {
         TreeNode::Leaf(leaf) => {
-            // Leaves return their metric name as the base
+            // Leaves return their series name as the base
             Some(leaf.name().to_string())
         }
         TreeNode::Branch(children) => {
@@ -213,7 +213,7 @@ fn collect_instance_analyses(
             if all_empty {
                 // All-empty case: all children returned the same base.
                 // Use shortest leaf to derive field_parts for fields whose key
-                // matches the metric suffix (e.g., pct1 → suffix "pct1").
+                // matches the series suffix (e.g., pct1 → suffix "pct1").
                 let prefix = format!("{}_", analysis.base);
                 let mut any_filled = false;
                 for (field_name, child_node) in children {
@@ -234,7 +234,7 @@ fn collect_instance_analyses(
                 // If no fields could be filled and all children are the same type,
                 // mark as outlier so the tree inlines instead of using identity
                 // (handles patterns like period windows where field keys differ
-                // from metric suffixes: all/_4y don't match 0sd/0sd_4y).
+                // from series suffixes: all/_4y don't match 0sd/0sd_4y).
                 // When children are different types (like absolute/rate), identity
                 // is correct — each child handles its own suffixes internally.
                 if !any_filled {
@@ -462,7 +462,7 @@ fn analyze_instance(child_bases: &BTreeMap<String, String>) -> InstanceAnalysis 
 
     // No common prefix or suffix - use empty base so _m(base, relative) returns just the relative.
     // No common prefix or suffix — outlier naming (e.g., sopr/asopr/adj_).
-    // Children have unrelated metric names that can't be parameterized.
+    // Children have unrelated series names that can't be parameterized.
     let field_parts = child_bases
         .iter()
         .map(|(k, v)| (k.clone(), v.clone()))
@@ -561,7 +561,7 @@ mod tests {
 
     #[test]
     fn test_analyze_instance_prefix_mode() {
-        // Period-prefixed metrics like "1y_lump_sum_stack", "1m_lump_sum_stack"
+        // Period-prefixed series like "1y_lump_sum_stack", "1m_lump_sum_stack"
         // share a common suffix "_lump_sum_stack" with different period prefixes
         let mut child_bases = BTreeMap::new();
         child_bases.insert("_1y".to_string(), "1y_lump_sum_stack".to_string());
@@ -721,7 +721,7 @@ mod tests {
         ];
 
         let instance1 = InstanceAnalysis {
-            base: "metric_a".to_string(),
+            base: "series_a".to_string(),
             field_parts: [
                 ("max".to_string(), "max".to_string()),
                 ("min".to_string(), "min".to_string()),
@@ -732,7 +732,7 @@ mod tests {
             has_outlier: false,
         };
         let instance2 = InstanceAnalysis {
-            base: "metric_b".to_string(),
+            base: "series_b".to_string(),
             field_parts: [
                 ("max".to_string(), "max".to_string()),
                 ("min".to_string(), "min".to_string()),
@@ -882,7 +882,7 @@ mod tests {
         ];
         // SOPR case: one instance has outlier naming (no common prefix)
         let normal = InstanceAnalysis {
-            base: "metric".into(),
+            base: "series".into(),
             field_parts: [("ratio".into(), "ratio".into()), ("value".into(), "value".into())].into_iter().collect(),
             is_suffix_mode: true, has_outlier: false,
         };
@@ -1067,11 +1067,11 @@ mod tests {
         // Integration test: "loss" child returns same base as parent (because
         // its children like neg_realized_loss break the prefix). The mixed-empty
         // fix should fill it from shortest leaf "utxos_realized_loss".
-        use brk_types::{MetricLeaf, MetricLeafWithSchema, TreeNode};
+        use brk_types::{SeriesLeaf, SeriesLeafWithSchema, TreeNode};
 
         fn leaf(name: &str) -> TreeNode {
-            TreeNode::Leaf(MetricLeafWithSchema::new(
-                MetricLeaf::new(name.into(), "f32".into(), std::collections::BTreeSet::new()),
+            TreeNode::Leaf(SeriesLeafWithSchema::new(
+                SeriesLeaf::new(name.into(), "f32".into(), std::collections::BTreeSet::new()),
                 serde_json::Value::Null,
             ))
         }

@@ -64,7 +64,7 @@ pub fn get_node_fields(
     fields
 }
 
-/// Detect index patterns (sets of indexes that appear together on metrics).
+/// Detect index patterns (sets of indexes that appear together on series).
 pub fn detect_index_patterns(tree: &TreeNode) -> Vec<IndexSetPattern> {
     let mut unique_index_sets: BTreeSet<BTreeSet<Index>> = BTreeSet::new();
     collect_index_sets_from_tree(tree, &mut unique_index_sets);
@@ -85,7 +85,7 @@ pub fn detect_index_patterns(tree: &TreeNode) -> Vec<IndexSetPattern> {
         .into_iter()
         .enumerate()
         .map(|(i, indexes)| IndexSetPattern {
-            name: format!("MetricPattern{}", i + 1),
+            name: format!("SeriesPattern{}", i + 1),
             indexes,
         })
         .collect()
@@ -147,7 +147,7 @@ impl PatternBaseResult {
     }
 }
 
-/// Get the metric base for a pattern instance by analyzing direct children.
+/// Get the series base for a pattern instance by analyzing direct children.
 ///
 /// Uses the shortest leaf names from direct children to find common prefix/suffix.
 ///
@@ -194,7 +194,7 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
     }
 
     // Fallback: no common prefix/suffix found - this is a root-level pattern
-    // Return empty base so metric names are used directly
+    // Return empty base so series names are used directly
     PatternBaseResult::empty()
 }
 
@@ -346,15 +346,15 @@ pub fn get_fields_with_child_info(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use brk_types::{MetricLeaf, MetricLeafWithSchema, TreeNode};
+    use brk_types::{SeriesLeaf, SeriesLeafWithSchema, TreeNode};
 
     fn make_leaf(name: &str) -> TreeNode {
-        let leaf = MetricLeaf {
+        let leaf = SeriesLeaf {
             name: name.to_string(),
             kind: "TestType".to_string(),
             indexes: BTreeSet::new(),
         };
-        TreeNode::Leaf(MetricLeafWithSchema::new(leaf, serde_json::json!({})))
+        TreeNode::Leaf(SeriesLeafWithSchema::new(leaf, serde_json::json!({})))
     }
 
     fn make_branch(children: Vec<(&str, TreeNode)>) -> TreeNode {
@@ -390,7 +390,7 @@ mod tests {
 
     #[test]
     fn test_get_pattern_instance_base_without_base_field() {
-        // Simulates weight tree: NO base field, only suffixed metrics
+        // Simulates weight tree: NO base field, only suffixed series
         let tree = make_branch(vec![
             (
                 "average",
@@ -447,7 +447,7 @@ mod tests {
     #[test]
     fn test_get_pattern_instance_base_with_mismatched_base_name() {
         // Simulates the actual bug: indexed tree's "base" field has name "weight"
-        // but computed tree's derived metrics use "block_weight_*" prefix.
+        // but computed tree's derived series use "block_weight_*" prefix.
         // After tree merge, we get a base field with mismatched naming.
         let tree = make_branch(vec![
             ("base", make_leaf("weight")), // Outlier - doesn't match pattern
@@ -466,11 +466,11 @@ mod tests {
 
     #[test]
     fn test_get_pattern_instance_base_root_level_no_common_pattern() {
-        // Simulates root-level pattern with metrics that have no common prefix/suffix.
+        // Simulates root-level pattern with series that have no common prefix/suffix.
         // These names have no shared prefix or suffix, even when excluding any one.
-        // In this case, we should return empty base so metric names are used directly.
+        // In this case, we should return empty base so series names are used directly.
         let tree = make_branch(vec![
-            ("alpha", make_leaf("foo_metric")),
+            ("alpha", make_leaf("foo_series")),
             ("beta", make_leaf("bar_value")),
             ("gamma", make_leaf("baz_count")),
         ]);

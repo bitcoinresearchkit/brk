@@ -21,13 +21,13 @@ import { periodIdToName } from "./utils.js";
  * @typedef {Object} Period
  * @property {string} id
  * @property {Color} color
- * @property {{ percent: AnyMetricPattern, ratio: AnyMetricPattern }} returns
+ * @property {{ percent: AnySeriesPattern, ratio: AnySeriesPattern }} returns
  * @property {AnyPricePattern} lookback
  * @property {boolean} [defaultActive]
  */
 
 /**
- * @typedef {Period & { cagr: { percent: AnyMetricPattern, ratio: AnyMetricPattern } }} PeriodWithCagr
+ * @typedef {Period & { cagr: { percent: AnySeriesPattern, ratio: AnySeriesPattern } }} PeriodWithCagr
  */
 
 /**
@@ -39,13 +39,13 @@ import { periodIdToName } from "./utils.js";
 
 /**
  * Create index (percent) + ratio line pair from a BpsPercentRatioPattern
- * @param {{ pattern: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, name: string, color?: Color, defaultActive?: boolean }} args
+ * @param {{ pattern: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, name: string, color?: Color, defaultActive?: boolean }} args
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function indexRatio({ pattern, name, color, defaultActive }) {
   return [
-    line({ metric: pattern.percent, name, color, defaultActive, unit: Unit.index }),
-    line({ metric: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
+    line({ series: pattern.percent, name, color, defaultActive, unit: Unit.index }),
+    line({ series: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
   ];
 }
 
@@ -84,7 +84,7 @@ function createMaSubSection(label, averages) {
         name: "Compare",
         title: `Price ${label}s`,
         top: averages.map((a) =>
-          price({ metric: a.ratio, name: a.id, color: a.color }),
+          price({ series: a.ratio, name: a.id, color: a.color }),
         ),
       },
       ...common.map(toFolder),
@@ -97,16 +97,16 @@ function createMaSubSection(label, averages) {
  * @param {string} name
  * @param {string} title
  * @param {Unit} unit
- * @param {{ _1w: AnyMetricPattern, _1m: AnyMetricPattern, _1y: AnyMetricPattern }} metrics
+ * @param {{ _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} patterns
  */
-function volatilityChart(name, title, unit, metrics) {
+function volatilityChart(name, title, unit, patterns) {
   return {
     name,
     title,
     bottom: [
-      line({ metric: metrics._1w, name: "1w", color: colors.time._1w, unit }),
-      line({ metric: metrics._1m, name: "1m", color: colors.time._1m, unit }),
-      line({ metric: metrics._1y, name: "1y", color: colors.time._1y, unit }),
+      line({ series: patterns._1w, name: "1w", color: colors.time._1w, unit }),
+      line({ series: patterns._1m, name: "1m", color: colors.time._1m, unit }),
+      line({ series: patterns._1y, name: "1y", color: colors.time._1y, unit }),
     ],
   };
 }
@@ -182,13 +182,13 @@ function historicalSubSection(name, periods) {
         name: "Compare",
         title: `${name} Historical`,
         top: periods.map((p) =>
-          price({ metric: p.lookback, name: p.id, color: p.color }),
+          price({ series: p.lookback, name: p.id, color: p.color }),
         ),
       },
       ...periods.map((p) => ({
         name: periodIdToName(p.id, true),
         title: `${periodIdToName(p.id, true)} Ago`,
-        top: [price({ metric: p.lookback, name: "Price" })],
+        top: [price({ series: p.lookback, name: "Price" })],
       })),
     ],
   };
@@ -199,7 +199,7 @@ function historicalSubSection(name, periods) {
  * @returns {PartialOptionsGroup}
  */
 export function createMarketSection() {
-  const { market, supply, cohorts, prices, indicators } = brk.metrics;
+  const { market, supply, cohorts, prices, indicators } = brk.series;
   const {
     movingAverage: ma,
     ath,
@@ -385,7 +385,7 @@ export function createMarketSection() {
         title: "Sats per Dollar",
         bottom: [
           line({
-            metric: prices.spot.sats,
+            series: prices.spot.sats,
             name: "Sats/$",
             unit: Unit.sats,
           }),
@@ -400,7 +400,7 @@ export function createMarketSection() {
             title: "Market Capitalization",
             bottom: [
               line({
-                metric: supply.marketCap.usd,
+                series: supply.marketCap.usd,
                 name: "Market Cap",
                 unit: Unit.usd,
               }),
@@ -411,7 +411,7 @@ export function createMarketSection() {
             title: "Realized Capitalization",
             bottom: [
               line({
-                metric: cohorts.utxo.all.realized.cap.usd,
+                series: cohorts.utxo.all.realized.cap.usd,
                 name: "Realized Cap",
                 color: colors.realized,
                 unit: Unit.usd,
@@ -428,7 +428,7 @@ export function createMarketSection() {
                 color: colors.bitcoin,
               }),
               baseline({
-                metric: supply.marketMinusRealizedCapGrowthRate._24h,
+                series: supply.marketMinusRealizedCapGrowthRate._24h,
                 name: "Market - Realized",
                 unit: Unit.percentage,
               }),
@@ -443,7 +443,7 @@ export function createMarketSection() {
           {
             name: "Drawdown",
             title: "ATH Drawdown",
-            top: [price({ metric: ath.high, name: "ATH" })],
+            top: [price({ series: ath.high, name: "ATH" })],
             bottom: percentRatio({
               pattern: ath.drawdown,
               name: "Drawdown",
@@ -453,26 +453,26 @@ export function createMarketSection() {
           {
             name: "Time Since",
             title: "Time Since ATH",
-            top: [price({ metric: ath.high, name: "ATH" })],
+            top: [price({ series: ath.high, name: "ATH" })],
             bottom: [
               line({
-                metric: ath.daysSince,
+                series: ath.daysSince,
                 name: "Since",
                 unit: Unit.days,
               }),
               line({
-                metric: ath.yearsSince,
+                series: ath.yearsSince,
                 name: "Since",
                 unit: Unit.years,
               }),
               line({
-                metric: ath.maxDaysBetween,
+                series: ath.maxDaysBetween,
                 name: "Max",
                 color: colors.loss,
                 unit: Unit.days,
               }),
               line({
-                metric: ath.maxYearsBetween,
+                series: ath.maxYearsBetween,
                 name: "Max",
                 color: colors.loss,
                 unit: Unit.years,
@@ -515,13 +515,13 @@ export function createMarketSection() {
             title: "True Range",
             bottom: [
               line({
-                metric: range.trueRange,
+                series: range.trueRange,
                 name: "Daily",
                 color: colors.time._24h,
                 unit: Unit.usd,
               }),
               line({
-                metric: range.trueRangeSum2w,
+                series: range.trueRangeSum2w,
                 name: "2w Sum",
                 color: colors.time._1w,
                 unit: Unit.usd,
@@ -555,12 +555,12 @@ export function createMarketSection() {
                 title: "SMA vs EMA Comparison",
                 top: smaVsEma.flatMap((p) => [
                   price({
-                    metric: p.sma,
+                    series: p.sma,
                     name: `${p.id} SMA`,
                     color: p.color,
                   }),
                   price({
-                    metric: p.ema,
+                    series: p.ema,
                     name: `${p.id} EMA`,
                     color: p.color,
                     style: 1,
@@ -571,9 +571,9 @@ export function createMarketSection() {
                 name: p.name,
                 title: `${p.name} SMA vs EMA`,
                 top: [
-                  price({ metric: p.sma, name: "SMA", color: p.color }),
+                  price({ series: p.sma, name: "SMA", color: p.color }),
                   price({
-                    metric: p.ema,
+                    series: p.ema,
                     name: "EMA",
                     color: p.color,
                     style: 1,
@@ -622,13 +622,13 @@ export function createMarketSection() {
               title: `${p.name} MinMax`,
               top: [
                 price({
-                  metric: p.max,
+                  series: p.max,
                   name: "Max",
                   key: "price-max",
                   color: colors.stat.max,
                 }),
                 price({
-                  metric: p.min,
+                  series: p.min,
                   name: "Min",
                   key: "price-min",
                   color: colors.stat.min,
@@ -641,17 +641,17 @@ export function createMarketSection() {
             title: "Mayer Multiple",
             top: [
               price({
-                metric: ma.sma._200d,
+                series: ma.sma._200d,
                 name: "200d SMA",
                 color: colors.indicator.main,
               }),
               price({
-                metric: ma.sma._200d.x24,
+                series: ma.sma._200d.x24,
                 name: "200d SMA x2.4",
                 color: colors.indicator.upper,
               }),
               price({
-                metric: ma.sma._200d.x08,
+                series: ma.sma._200d.x08,
                 name: "200d SMA x0.8",
                 color: colors.indicator.lower,
               }),
@@ -698,10 +698,10 @@ export function createMarketSection() {
                       name: "Components",
                       title: `RSI Components (${w.name})`,
                       bottom: [
-                        line({ metric: rsi.averageGain, name: "Avg Gain", color: colors.profit, unit: Unit.usd }),
-                        line({ metric: rsi.averageLoss, name: "Avg Loss", color: colors.loss, unit: Unit.usd }),
-                        line({ metric: rsi.gains, name: "Gains", color: colors.profit, defaultActive: false, unit: Unit.usd }),
-                        line({ metric: rsi.losses, name: "Losses", color: colors.loss, defaultActive: false, unit: Unit.usd }),
+                        line({ series: rsi.averageGain, name: "Avg Gain", color: colors.profit, unit: Unit.usd }),
+                        line({ series: rsi.averageLoss, name: "Avg Loss", color: colors.loss, unit: Unit.usd }),
+                        line({ series: rsi.gains, name: "Gains", color: colors.profit, defaultActive: false, unit: Unit.usd }),
+                        line({ series: rsi.losses, name: "Losses", color: colors.loss, defaultActive: false, unit: Unit.usd }),
                       ],
                     },
                   ],
@@ -753,16 +753,16 @@ export function createMarketSection() {
                 name: "Compare",
                 title: "MACD Comparison",
                 bottom: ROLLING_WINDOWS.map((w) =>
-                  line({ metric: technical.macd[w.key].line, name: w.name, color: w.color, unit: Unit.usd }),
+                  line({ series: technical.macd[w.key].line, name: w.name, color: w.color, unit: Unit.usd }),
                 ),
               },
               ...ROLLING_WINDOWS.map((w) => ({
                 name: w.name,
                 title: `MACD (${w.name})`,
                 bottom: [
-                  line({ metric: technical.macd[w.key].line, name: "MACD", color: colors.indicator.fast, unit: Unit.usd }),
-                  line({ metric: technical.macd[w.key].signal, name: "Signal", color: colors.indicator.slow, unit: Unit.usd }),
-                  histogram({ metric: technical.macd[w.key].histogram, name: "Histogram", unit: Unit.usd }),
+                  line({ series: technical.macd[w.key].line, name: "MACD", color: colors.indicator.fast, unit: Unit.usd }),
+                  line({ series: technical.macd[w.key].signal, name: "Signal", color: colors.indicator.slow, unit: Unit.usd }),
+                  histogram({ series: technical.macd[w.key].histogram, name: "Histogram", unit: Unit.usd }),
                 ],
               })),
             ],
@@ -778,7 +778,7 @@ export function createMarketSection() {
             title: "Historical Comparison",
             top: [...shortPeriods, ...longPeriods].map((p) =>
               price({
-                metric: p.lookback,
+                series: p.lookback,
                 name: p.id,
                 color: p.color,
                 defaultActive: p.defaultActive,
@@ -795,7 +795,7 @@ export function createMarketSection() {
         title: "Dollar Cost Average Sats/Day",
         bottom: [
           line({
-            metric: dca.satsPerDay,
+            series: dca.satsPerDay,
             name: "Sats/Day",
             unit: Unit.sats,
           }),
@@ -810,19 +810,19 @@ export function createMarketSection() {
             title: "Pi Cycle",
             top: [
               price({
-                metric: ma.sma._111d,
+                series: ma.sma._111d,
                 name: "111d SMA",
                 color: colors.indicator.upper,
               }),
               price({
-                metric: ma.sma._350d.x2,
+                series: ma.sma._350d.x2,
                 name: "350d SMA x2",
                 color: colors.indicator.lower,
               }),
             ],
             bottom: [
               baseline({
-                metric: technical.piCycle.ratio,
+                series: technical.piCycle.ratio,
                 name: "Pi Cycle",
                 unit: Unit.ratio,
                 base: 1,
@@ -834,7 +834,7 @@ export function createMarketSection() {
             title: "Puell Multiple",
             bottom: [
               line({
-                metric: indicators.puellMultiple.ratio,
+                series: indicators.puellMultiple.ratio,
                 name: "Puell",
                 color: colors.usd,
                 unit: Unit.ratio,
@@ -846,7 +846,7 @@ export function createMarketSection() {
             title: "NVT Ratio",
             bottom: [
               line({
-                metric: indicators.nvt.ratio,
+                series: indicators.nvt.ratio,
                 name: "NVT",
                 color: colors.bitcoin,
                 unit: Unit.ratio,
@@ -867,7 +867,7 @@ export function createMarketSection() {
             title: "RHODL Ratio",
             bottom: [
               line({
-                metric: indicators.rhodlRatio.ratio,
+                series: indicators.rhodlRatio.ratio,
                 name: "RHODL",
                 color: colors.bitcoin,
                 unit: Unit.ratio,
@@ -879,7 +879,7 @@ export function createMarketSection() {
             title: "Thermocap Multiple",
             bottom: [
               line({
-                metric: indicators.thermocapMultiple.ratio,
+                series: indicators.thermocapMultiple.ratio,
                 name: "Thermocap",
                 color: colors.bitcoin,
                 unit: Unit.ratio,
@@ -891,7 +891,7 @@ export function createMarketSection() {
             title: "Stock-to-Flow",
             bottom: [
               line({
-                metric: indicators.stockToFlow,
+                series: indicators.stockToFlow,
                 name: "S2F",
                 color: colors.bitcoin,
                 unit: Unit.ratio,
@@ -903,13 +903,13 @@ export function createMarketSection() {
             title: "Dormancy",
             bottom: [
               line({
-                metric: indicators.dormancy.supplyAdjusted,
+                series: indicators.dormancy.supplyAdjusted,
                 name: "Supply Adjusted",
                 color: colors.bitcoin,
                 unit: Unit.ratio,
               }),
               line({
-                metric: indicators.dormancy.flow,
+                series: indicators.dormancy.flow,
                 name: "Flow",
                 color: colors.usd,
                 unit: Unit.ratio,
@@ -922,7 +922,7 @@ export function createMarketSection() {
             title: "Seller Exhaustion Constant",
             bottom: [
               line({
-                metric: indicators.sellerExhaustionConstant,
+                series: indicators.sellerExhaustionConstant,
                 name: "SEC",
                 color: colors.bitcoin,
                 unit: Unit.ratio,
@@ -934,7 +934,7 @@ export function createMarketSection() {
             title: "Coindays Destroyed (Supply Adjusted)",
             bottom: [
               line({
-                metric: indicators.coindaysDestroyedSupplyAdjusted,
+                series: indicators.coindaysDestroyedSupplyAdjusted,
                 name: "CDD SA",
                 color: colors.bitcoin,
                 unit: Unit.ratio,
@@ -946,7 +946,7 @@ export function createMarketSection() {
             title: "Coinyears Destroyed (Supply Adjusted)",
             bottom: [
               line({
-                metric: indicators.coinyearsDestroyedSupplyAdjusted,
+                series: indicators.coinyearsDestroyedSupplyAdjusted,
                 name: "CYD SA",
                 color: colors.bitcoin,
                 unit: Unit.ratio,

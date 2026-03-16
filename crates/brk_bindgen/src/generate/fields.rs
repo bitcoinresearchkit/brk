@@ -6,7 +6,7 @@
 
 use std::fmt::Write;
 
-use brk_types::MetricLeafWithSchema;
+use brk_types::SeriesLeafWithSchema;
 
 use crate::{ClientMetadata, LanguageSyntax, PatternBaseResult, PatternField, PatternMode, StructuralPattern};
 
@@ -56,7 +56,7 @@ fn compute_parameterized_value<S: LanguageSyntax>(
         syntax.constructor(&accessor.name, &path_expr)
     } else if field.is_leaf() {
         panic!(
-            "Field '{}' has no matching index accessor. All metrics must be indexed.",
+            "Field '{}' has no matching index accessor. All series must be indexed.",
             field.name
         )
     } else {
@@ -66,7 +66,7 @@ fn compute_parameterized_value<S: LanguageSyntax>(
 
 /// Generate a parameterized field for a pattern factory.
 ///
-/// Used for pattern instances where fields build metric names from an accumulated base.
+/// Used for pattern instances where fields build series names from an accumulated base.
 pub fn generate_parameterized_field<S: LanguageSyntax>(
     output: &mut String,
     syntax: &S,
@@ -135,10 +135,10 @@ pub fn generate_tree_node_field<S: LanguageSyntax>(
     .unwrap();
 }
 
-/// Generate a leaf field using the actual metric name from the TreeNode::Leaf.
+/// Generate a leaf field using the actual series name from the TreeNode::Leaf.
 ///
 /// This is the shared implementation for all language backends. It uses
-/// `leaf.name()` directly to get the correct metric name, avoiding any
+/// `leaf.name()` directly to get the correct series name, avoiding any
 /// path concatenation that could produce incorrect names.
 ///
 /// # Arguments
@@ -146,7 +146,7 @@ pub fn generate_tree_node_field<S: LanguageSyntax>(
 /// * `syntax` - The language syntax implementation
 /// * `client_expr` - The client expression (e.g., "client.clone()", "this", "client")
 /// * `tree_field_name` - The field name from the tree structure
-/// * `leaf` - The Leaf node containing the actual metric name and indexes
+/// * `leaf` - The Leaf node containing the actual series name and indexes
 /// * `metadata` - Client metadata for looking up index patterns
 /// * `indent` - Indentation string
 pub fn generate_leaf_field<S: LanguageSyntax>(
@@ -154,7 +154,7 @@ pub fn generate_leaf_field<S: LanguageSyntax>(
     syntax: &S,
     client_expr: &str,
     tree_field_name: &str,
-    leaf: &MetricLeafWithSchema,
+    leaf: &SeriesLeafWithSchema,
     metadata: &ClientMetadata,
     indent: &str,
 ) {
@@ -163,18 +163,18 @@ pub fn generate_leaf_field<S: LanguageSyntax>(
         .find_index_set_pattern(leaf.indexes())
         .unwrap_or_else(|| {
             panic!(
-                "Metric '{}' has no matching index pattern. All metrics must be indexed.",
+                "Series '{}' has no matching index pattern. All series must be indexed.",
                 leaf.name()
             )
         });
 
     let type_ann = metadata.field_type_annotation_from_leaf(leaf, syntax.generic_syntax());
-    let metric_name = syntax.string_literal(leaf.name());
+    let series_name = syntax.string_literal(leaf.name());
     let value = format!(
         "{}({}, {})",
         syntax.constructor_name(&accessor.name),
         client_expr,
-        metric_name
+        series_name
     );
 
     writeln!(

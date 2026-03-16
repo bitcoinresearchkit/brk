@@ -3,7 +3,7 @@
 // import { randomFromArray } from "../utils/array.js";
 // import { createButtonElement, createHeader, createSelect } from "../utils/dom.js";
 // import { tableElement } from "../utils/elements.js";
-// import { serdeMetrics, serdeString } from "../utils/serde.js";
+// import { serdeSeries, serdeString } from "../utils/serde.js";
 // import { resetParams } from "../utils/url.js";
 
 // export function init() {
@@ -45,7 +45,7 @@
 // //  * @param {Resources} args.resources
 // //  */
 // // function createTable({ brk, signals, option, resources }) {
-// //   const indexToMetrics = createIndexToMetrics(metricToIndexes);
+// //   const indexToSeries = createIndexToMetrics(seriesToIndexes);
 
 // //   const serializedIndexes = createSerializedIndexes();
 // //   /** @type {SerializedIndex} */
@@ -78,17 +78,17 @@
 // //       resetParams(option);
 // //     }
 
-// //     const possibleMetrics = indexToMetrics[index];
+// //     const possibleSeries = indexToSeries[index];
 
 // //     const columns = signals.createSignal(/** @type {Metric[]} */ ([]), {
 // //       equals: false,
 // //       save: {
-// //         ...serdeMetrics,
+// //         ...serdeSeries,
 // //         keyPrefix: `table-${serializedIndex()}`,
 // //         key: `columns`,
 // //       },
 // //     });
-// //     columns.set((l) => l.filter((id) => possibleMetrics.includes(id)));
+// //     columns.set((l) => l.filter((id) => possibleSeries.includes(id)));
 
 // //     signals.createEffect(columns, (columns) => {
 // //       console.log(columns);
@@ -204,35 +204,35 @@
 // //     const owner = signals.getOwner();
 
 // //     /**
-// //      * @param {Metric} metric
+// //      * @param {Series} s
 // //      * @param {number} [_colIndex]
 // //      */
-// //     function addCol(metric, _colIndex = columns().length) {
+// //     function addCol(s, _colIndex = columns().length) {
 // //       signals.runWithOwner(owner, () => {
 // //         /** @type {VoidFunction | undefined} */
 // //         let dispose;
 // //         signals.createRoot((_dispose) => {
 // //           dispose = _dispose;
 
-// //           const metricOption = signals.createSignal({
-// //             name: metric,
-// //             value: metric,
+// //           const seriesOption = signals.createSignal({
+// //             name: s,
+// //             value: s,
 // //           });
 // //           const { select } = createSelect({
-// //             list: possibleMetrics.map((metric) => ({
-// //               name: metric,
-// //               value: metric,
+// //             list: possibleSeries.map((s) => ({
+// //               name: s,
+// //               value: s,
 // //             })),
-// //             signal: metricOption,
+// //             signal: seriesOption,
 // //           });
 
-// //           signals.createEffect(metricOption, (metricOption) => {
-// //             select.style.width = `${21 + 7.25 * metricOption.name.length}px`;
+// //           signals.createEffect(seriesOption, (seriesOption) => {
+// //             select.style.width = `${21 + 7.25 * seriesOption.name.length}px`;
 // //           });
 
 // //           if (_colIndex === columns().length) {
 // //             columns.set((l) => {
-// //               l.push(metric);
+// //               l.push(s);
 // //               return l;
 // //             });
 // //           }
@@ -282,7 +282,7 @@
 
 // //           const th = addThCol({
 // //             select,
-// //             unit: serdeUnit.deserialize(metric),
+// //             unit: serdeUnit.deserialize(s),
 // //             onLeft: createMoveColumnFunction(false),
 // //             onRight: createMoveColumnFunction(true),
 // //             onRemove: () => {
@@ -314,23 +314,23 @@
 // //             }
 
 // //             signals.createEffect(
-// //               () => metricOption().name,
-// //               (metric, prevMetric) => {
-// //                 const unit = serdeUnit.deserialize(metric);
+// //               () => seriesOption().name,
+// //               (s, prevSeries) => {
+// //                 const unit = serdeUnit.deserialize(s);
 // //                 th.setUnit(unit);
 
-// //                 const vec = resources.getOrCreate(index, metric);
+// //                 const vec = resources.getOrCreate(index, s);
 
 // //                 vec.fetch({ from, to });
 
 // //                 const fetchedKey = resources.genFetchedKey({ from, to });
 
 // //                 columns.set((l) => {
-// //                   const i = l.indexOf(prevMetric ?? metric);
+// //                   const i = l.indexOf(prevSeries ?? s);
 // //                   if (i === -1) {
-// //                     l.push(metric);
+// //                     l.push(s);
 // //                   } else {
-// //                     l[i] = metric;
+// //                     l[i] = s;
 // //                   }
 // //                   return l;
 // //                 });
@@ -355,7 +355,7 @@
 // //                   },
 // //                 );
 
-// //                 return () => metric;
+// //                 return () => s;
 // //               },
 // //             );
 // //           });
@@ -367,10 +367,10 @@
 // //       });
 // //     }
 
-// //     columns().forEach((metric, colIndex) => addCol(metric, colIndex));
+// //     columns().forEach((s, colIndex) => addCol(s, colIndex));
 
 // //     obj.addRandomCol = function () {
-// //       addCol(randomFromArray(possibleMetrics));
+// //       addCol(randomFromArray(possibleSeries));
 // //     };
 
 // //     return () => index;
@@ -380,24 +380,24 @@
 // // }
 
 // /**
-//  * @param {MetricToIndexes} metricToIndexes
+//  * @param {SeriesToIndexes} seriesToIndexes
 //  */
-// function createIndexToMetrics(metricToIndexes) {
-//   // const indexToMetrics = Object.entries(metricToIndexes).reduce(
+// function createIndexToMetrics(seriesToIndexes) {
+//   // const indexToSeries = Object.entries(seriesToIndexes).reduce(
 //   //   (arr, [_id, indexes]) => {
-//   //     const id = /** @type {Metric} */ (_id);
+//   //     const id = /** @type {Series} */ (_id);
 //   //     indexes.forEach((i) => {
 //   //       arr[i] ??= [];
 //   //       arr[i].push(id);
 //   //     });
 //   //     return arr;
 //   //   },
-//   //   /** @type {Metric[][]} */ (Array.from({ length: 24 })),
+//   //   /** @type {Series[][]} */ (Array.from({ length: 24 })),
 //   // );
-//   // indexToMetrics.forEach((arr) => {
+//   // indexToSeries.forEach((arr) => {
 //   //   arr.sort();
 //   // });
-//   // return indexToMetrics;
+//   // return indexToSeries;
 // }
 
 // /**

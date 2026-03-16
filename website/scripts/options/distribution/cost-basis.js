@@ -27,9 +27,9 @@ const ACTIVE_PCTS = new Set(["pct75", "pct50", "pct25"]);
 function createCorePercentileSeries(p, n = (x) => x) {
   return entries(p)
     .reverse()
-    .map(([key, metric], i, arr) =>
+    .map(([key, s], i, arr) =>
       price({
-        metric,
+        series: s,
         name: n(key.replace("pct", "p")),
         color: colors.at(i, arr.length),
         ...(ACTIVE_PCTS.has(key) ? {} : { defaultActive: false }),
@@ -45,28 +45,28 @@ function createSingleSummarySeries(cohort) {
   const { color, tree } = cohort;
   const p = tree.costBasis.percentiles;
   return [
-    price({ metric: tree.realized.price, name: "Average", color }),
+    price({ series: tree.realized.price, name: "Average", color }),
     price({
-      metric: tree.costBasis.max,
+      series: tree.costBasis.max,
       name: "Max (p100)",
       color: colors.stat.max,
       defaultActive: false,
     }),
     price({
-      metric: p.pct75,
+      series: p.pct75,
       name: "Q3 (p75)",
       color: colors.stat.pct75,
       defaultActive: false,
     }),
-    price({ metric: p.pct50, name: "Median (p50)", color: colors.stat.median }),
+    price({ series: p.pct50, name: "Median (p50)", color: colors.stat.median }),
     price({
-      metric: p.pct25,
+      series: p.pct25,
       name: "Q1 (p25)",
       color: colors.stat.pct25,
       defaultActive: false,
     }),
     price({
-      metric: tree.costBasis.min,
+      series: tree.costBasis.min,
       name: "Min (p0)",
       color: colors.stat.min,
       defaultActive: false,
@@ -81,7 +81,7 @@ function createSingleSummarySeries(cohort) {
  */
 function createGroupedSummarySeries(list, all) {
   return mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-    price({ metric: tree.realized.price, name, color }),
+    price({ series: tree.realized.price, name, color }),
   );
 }
 
@@ -93,16 +93,16 @@ function createSingleByCoinSeries(cohort) {
   const { color, tree } = cohort;
   const cb = tree.costBasis;
   return [
-    price({ metric: tree.realized.price, name: "Average", color }),
+    price({ series: tree.realized.price, name: "Average", color }),
     price({
-      metric: cb.max,
+      series: cb.max,
       name: "p100",
       color: colors.stat.max,
       defaultActive: false,
     }),
     ...createCorePercentileSeries(cb.percentiles),
     price({
-      metric: cb.min,
+      series: cb.min,
       name: "p0",
       color: colors.stat.min,
       defaultActive: false,
@@ -117,7 +117,7 @@ function createSingleByCoinSeries(cohort) {
 function createSingleByCapitalSeries(cohort) {
   const { color, tree } = cohort;
   return [
-    price({ metric: tree.realized.investor.price, name: "Average", color }),
+    price({ series: tree.realized.investor.price, name: "Average", color }),
     ...createCorePercentileSeries(tree.costBasis.investedCapital),
   ];
 }
@@ -139,7 +139,7 @@ function createSingleSupplyDensitySeries(cohort) {
 }
 
 /**
- * @param {{ cohort: CohortAll | CohortFull | CohortLongTerm, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortAll | CohortFull | CohortLongTerm, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createCostBasisSectionWithPercentiles({ cohort, title }) {
@@ -171,7 +171,7 @@ export function createCostBasisSectionWithPercentiles({ cohort, title }) {
 }
 
 /**
- * @param {{ list: readonly (CohortAll | CohortFull | CohortLongTerm)[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly (CohortAll | CohortFull | CohortLongTerm)[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedCostBasisSectionWithPercentiles({
@@ -194,28 +194,28 @@ export function createGroupedCostBasisSectionWithPercentiles({
             name: "Average",
             title: title("Realized Price Comparison"),
             top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              price({ metric: tree.realized.price, name, color }),
+              price({ series: tree.realized.price, name, color }),
             ),
           },
           {
             name: "Median",
             title: title("Cost Basis Median (BTC-weighted)"),
             top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              price({ metric: tree.costBasis.percentiles.pct50, name, color }),
+              price({ series: tree.costBasis.percentiles.pct50, name, color }),
             ),
           },
           {
             name: "Q3",
             title: title("Cost Basis Q3 (BTC-weighted)"),
             top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              price({ metric: tree.costBasis.percentiles.pct75, name, color }),
+              price({ series: tree.costBasis.percentiles.pct75, name, color }),
             ),
           },
           {
             name: "Q1",
             title: title("Cost Basis Q1 (BTC-weighted)"),
             top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              price({ metric: tree.costBasis.percentiles.pct25, name, color }),
+              price({ series: tree.costBasis.percentiles.pct25, name, color }),
             ),
           },
         ],
@@ -227,7 +227,7 @@ export function createGroupedCostBasisSectionWithPercentiles({
             name: "Average",
             title: title("Investor Price Comparison"),
             top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              price({ metric: tree.realized.investor.price, name, color }),
+              price({ series: tree.realized.investor.price, name, color }),
             ),
           },
           {
@@ -235,7 +235,7 @@ export function createGroupedCostBasisSectionWithPercentiles({
             title: title("Cost Basis Median (USD-weighted)"),
             top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               price({
-                metric: tree.costBasis.investedCapital.pct50,
+                series: tree.costBasis.investedCapital.pct50,
                 name,
                 color,
               }),
@@ -246,7 +246,7 @@ export function createGroupedCostBasisSectionWithPercentiles({
             title: title("Cost Basis Q3 (USD-weighted)"),
             top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               price({
-                metric: tree.costBasis.investedCapital.pct75,
+                series: tree.costBasis.investedCapital.pct75,
                 name,
                 color,
               }),
@@ -257,7 +257,7 @@ export function createGroupedCostBasisSectionWithPercentiles({
             title: title("Cost Basis Q1 (USD-weighted)"),
             top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               price({
-                metric: tree.costBasis.investedCapital.pct25,
+                series: tree.costBasis.investedCapital.pct25,
                 name,
                 color,
               }),

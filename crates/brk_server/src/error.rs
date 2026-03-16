@@ -23,7 +23,7 @@ struct ErrorDetail {
     /// Error category: "invalid_request", "forbidden", "not_found", "unavailable", or "internal"
     #[schemars(with = "String")]
     r#type: &'static str,
-    /// Machine-readable error code (e.g. "invalid_address", "metric_not_found")
+    /// Machine-readable error code (e.g. "invalid_address", "series_not_found")
     #[schemars(with = "String")]
     code: &'static str,
     /// Human-readable description
@@ -50,8 +50,8 @@ fn error_status(e: &BrkError) -> StatusCode {
         | BrkError::InvalidAddress
         | BrkError::UnsupportedType(_)
         | BrkError::Parse(_)
-        | BrkError::NoMetrics
-        | BrkError::MetricUnsupportedIndex { .. }
+        | BrkError::NoSeries
+        | BrkError::SeriesUnsupportedIndex { .. }
         | BrkError::WeightExceeded { .. } => StatusCode::BAD_REQUEST,
 
         BrkError::UnknownAddress
@@ -59,7 +59,7 @@ fn error_status(e: &BrkError) -> StatusCode {
         | BrkError::NotFound(_)
         | BrkError::NoData
         | BrkError::OutOfRange(_)
-        | BrkError::MetricNotFound(_) => StatusCode::NOT_FOUND,
+        | BrkError::SeriesNotFound(_) => StatusCode::NOT_FOUND,
 
         BrkError::AuthFailed => StatusCode::FORBIDDEN,
         BrkError::MempoolNotAvailable => StatusCode::SERVICE_UNAVAILABLE,
@@ -75,15 +75,15 @@ fn error_code(e: &BrkError) -> &'static str {
         BrkError::InvalidNetwork => "invalid_network",
         BrkError::UnsupportedType(_) => "unsupported_type",
         BrkError::Parse(_) => "parse_error",
-        BrkError::NoMetrics => "no_metrics",
-        BrkError::MetricUnsupportedIndex { .. } => "metric_unsupported_index",
+        BrkError::NoSeries => "no_series",
+        BrkError::SeriesUnsupportedIndex { .. } => "series_unsupported_index",
         BrkError::WeightExceeded { .. } => "weight_exceeded",
         BrkError::UnknownAddress => "unknown_address",
         BrkError::UnknownTxid => "unknown_txid",
         BrkError::NotFound(_) => "not_found",
         BrkError::OutOfRange(_) => "out_of_range",
         BrkError::NoData => "no_data",
-        BrkError::MetricNotFound(_) => "metric_not_found",
+        BrkError::SeriesNotFound(_) => "series_not_found",
         BrkError::MempoolNotAvailable => "mempool_not_available",
         BrkError::AuthFailed => "auth_failed",
         _ => "internal_error",

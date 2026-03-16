@@ -6,18 +6,18 @@ use serde::{Deserialize, Serialize};
 
 use super::Index;
 
-/// Leaf node containing metric metadata
+/// Leaf node containing series metadata
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, JsonSchema)]
-pub struct MetricLeaf {
-    /// The metric name/identifier
+pub struct SeriesLeaf {
+    /// The series name/identifier
     pub name: String,
     /// The Rust type (e.g., "Sats", "StoredF64")
     pub kind: String,
-    /// Available indexes for this metric
+    /// Available indexes for this series
     pub indexes: BTreeSet<Index>,
 }
 
-impl MetricLeaf {
+impl SeriesLeaf {
     pub fn new(name: String, kind: String, indexes: BTreeSet<Index>) -> Self {
         Self {
             name,
@@ -27,17 +27,17 @@ impl MetricLeaf {
     }
 
     /// Merge another leaf's indexes into this one (union)
-    pub fn merge_indexes(&mut self, other: &MetricLeaf) {
+    pub fn merge_indexes(&mut self, other: &SeriesLeaf) {
         self.indexes.extend(other.indexes.iter().copied());
     }
 }
 
-/// MetricLeaf with JSON Schema for client generation
+/// SeriesLeaf with JSON Schema for client generation
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct MetricLeafWithSchema {
-    /// The core metric metadata
+pub struct SeriesLeafWithSchema {
+    /// The core series metadata
     #[serde(flatten)]
-    pub leaf: MetricLeaf,
+    pub leaf: SeriesLeaf,
     /// JSON Schema type (e.g., "integer", "number", "string", "boolean", "array", "object")
     #[serde(rename = "type")]
     pub openapi_type: String,
@@ -92,8 +92,8 @@ fn extract_json_type_inner(node: &serde_json::Value, root: &serde_json::Value) -
     "object".to_string()
 }
 
-impl MetricLeafWithSchema {
-    pub fn new(leaf: MetricLeaf, schema: serde_json::Value) -> Self {
+impl SeriesLeafWithSchema {
+    pub fn new(leaf: SeriesLeaf, schema: serde_json::Value) -> Self {
         let openapi_type = extract_json_type(&schema);
         Self {
             leaf,
@@ -107,7 +107,7 @@ impl MetricLeafWithSchema {
         &self.openapi_type
     }
 
-    /// The metric name/identifier
+    /// The series name/identifier
     pub fn name(&self) -> &str {
         &self.leaf.name
     }
@@ -117,38 +117,38 @@ impl MetricLeafWithSchema {
         &self.leaf.kind
     }
 
-    /// Available indexes for this metric
+    /// Available indexes for this series
     pub fn indexes(&self) -> &BTreeSet<Index> {
         &self.leaf.indexes
     }
 
-    /// Check if this leaf refers to the same metric as another
-    pub fn is_same_metric(&self, other: &MetricLeafWithSchema) -> bool {
+    /// Check if this leaf refers to the same series as another
+    pub fn is_same_series(&self, other: &SeriesLeafWithSchema) -> bool {
         self.leaf.name == other.leaf.name
     }
 
     /// Merge another leaf's indexes into this one (union)
-    pub fn merge_indexes(&mut self, other: &MetricLeafWithSchema) {
+    pub fn merge_indexes(&mut self, other: &SeriesLeafWithSchema) {
         self.leaf.merge_indexes(&other.leaf);
     }
 }
 
-impl PartialEq for MetricLeafWithSchema {
+impl PartialEq for SeriesLeafWithSchema {
     fn eq(&self, other: &Self) -> bool {
         self.leaf == other.leaf
     }
 }
 
-impl Eq for MetricLeafWithSchema {}
+impl Eq for SeriesLeafWithSchema {}
 
-/// Hierarchical tree node for organizing metrics into categories
+/// Hierarchical tree node for organizing series into categories
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Deserialize, JsonSchema)]
 #[serde(untagged)]
 pub enum TreeNode {
     /// Branch node containing subcategories
     Branch(IndexMap<String, TreeNode>),
-    /// Leaf node containing metric metadata with schema
-    Leaf(MetricLeafWithSchema),
+    /// Leaf node containing series metadata with schema
+    Leaf(SeriesLeafWithSchema),
 }
 
 const BASE: &str = "raw";
@@ -180,7 +180,7 @@ impl TreeNode {
     /// Merges all first-level branches into a single flattened structure (consuming version).
     /// Direct leaves use their key (use #[traversable(rename = "...")] to control).
     /// Branch children are lifted with their keys.
-    /// If all resulting children are leaves with the same metric name, collapses to a single leaf.
+    /// If all resulting children are leaves with the same series name, collapses to a single leaf.
     /// Returns None if conflicts are found (same key with incompatible values).
     pub fn merge_branches(self) -> Option<Self> {
         let Self::Branch(tree) = self else {
@@ -204,11 +204,11 @@ impl TreeNode {
             }
         }
 
-        // If all children are leaves with the same metric name, collapse into single leaf
+        // If all children are leaves with the same series name, collapse into single leaf
         Some(Self::try_collapse_same_name_leaves(merged))
     }
 
-    /// If all entries in the map are leaves with the same metric name,
+    /// If all entries in the map are leaves with the same series name,
     /// collapse them into a single leaf with merged indexes.
     fn try_collapse_same_name_leaves(map: IndexMap<String, TreeNode>) -> Self {
         if map.is_empty() {
@@ -216,7 +216,7 @@ impl TreeNode {
         }
 
         // Check if all entries are leaves with the same name
-        let mut first_leaf: Option<&MetricLeafWithSchema> = None;
+        let mut first_leaf: Option<&SeriesLeafWithSchema> = None;
         let mut merged_indexes = BTreeSet::new();
 
         for node in map.values() {
@@ -241,8 +241,8 @@ impl TreeNode {
 
         // All entries were leaves with the same name
         let first = first_leaf.unwrap();
-        Self::Leaf(MetricLeafWithSchema::new(
-            MetricLeaf::new(
+        Self::Leaf(SeriesLeafWithSchema::new(
+            SeriesLeaf::new(
                 first.name().to_string(),
                 first.kind().to_string(),
                 merged_indexes,
@@ -265,7 +265,7 @@ impl TreeNode {
             }
             Some(existing) => {
                 match (existing, node) {
-                    (Self::Leaf(a), Self::Leaf(b)) if a.is_same_metric(&b) => {
+                    (Self::Leaf(a), Self::Leaf(b)) if a.is_same_series(&b) => {
                         a.merge_indexes(&b);
                         Some(())
                     }
@@ -313,8 +313,8 @@ mod tests {
     use super::*;
 
     fn leaf(name: &str, index: Index) -> TreeNode {
-        TreeNode::Leaf(MetricLeafWithSchema {
-            leaf: MetricLeaf {
+        TreeNode::Leaf(SeriesLeafWithSchema {
+            leaf: SeriesLeaf {
                 name: name.to_string(),
                 kind: "TestType".to_string(),
                 indexes: BTreeSet::from([index]),
@@ -344,7 +344,7 @@ mod tests {
 
     #[test]
     fn merge_leaf_passthrough() {
-        let tree = leaf("metric", Index::Height);
+        let tree = leaf("s", Index::Height);
         let merged = tree.merge_branches().unwrap();
         assert!(matches!(merged, TreeNode::Leaf(_)));
     }
@@ -365,8 +365,8 @@ mod tests {
     fn merge_direct_leaves_keep_keys() {
         // Direct leaves with different keys stay separate
         let tree = branch(vec![
-            ("sum", leaf("metric_sum", Index::Height)),
-            ("cumulative", leaf("metric_cumulative", Index::Height)),
+            ("sum", leaf("s_sum", Index::Height)),
+            ("cumulative", leaf("s_cumulative", Index::Height)),
         ]);
         let merged = tree.merge_branches().unwrap();
 
@@ -388,8 +388,8 @@ mod tests {
         let tree = branch(vec![(
             "week1",
             branch(vec![
-                ("sum", leaf("metric_sum", Index::Week1)),
-                ("cumulative", leaf("metric_cumulative", Index::Week1)),
+                ("sum", leaf("s_sum", Index::Week1)),
+                ("cumulative", leaf("s_cumulative", Index::Week1)),
             ]),
         )]);
         let merged = tree.merge_branches().unwrap();
@@ -411,15 +411,15 @@ mod tests {
             (
                 "week1",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::Week1)),
-                    ("cumulative", leaf("metric_cumulative", Index::Week1)),
+                    ("sum", leaf("s_sum", Index::Week1)),
+                    ("cumulative", leaf("s_cumulative", Index::Week1)),
                 ]),
             ),
             (
                 "month1",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::Month1)),
-                    ("cumulative", leaf("metric_cumulative", Index::Month1)),
+                    ("sum", leaf("s_sum", Index::Month1)),
+                    ("cumulative", leaf("s_cumulative", Index::Month1)),
                 ]),
             ),
         ]);
@@ -446,12 +446,12 @@ mod tests {
         // Direct leaf with key "cumulative" merges with lifted "cumulative" from branch
         // This simulates: height_cumulative (renamed) + day1 branch
         let tree = branch(vec![
-            ("cumulative", leaf("metric_cumulative", Index::Height)),
+            ("cumulative", leaf("s_cumulative", Index::Height)),
             (
                 "day1",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::Day1)),
-                    ("cumulative", leaf("metric_cumulative", Index::Day1)),
+                    ("sum", leaf("s_sum", Index::Day1)),
+                    ("cumulative", leaf("s_cumulative", Index::Day1)),
                 ]),
             ),
         ]);
@@ -483,26 +483,26 @@ mod tests {
         // - week1 (flattened from dates) → branch with sum/cumulative at Week1
         // - epoch → branch with sum/cumulative at Epoch
         let tree = branch(vec![
-            ("cumulative", leaf("metric_cumulative", Index::Height)),
+            ("cumulative", leaf("s_cumulative", Index::Height)),
             (
                 "day1",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::Day1)),
-                    ("cumulative", leaf("metric_cumulative", Index::Day1)),
+                    ("sum", leaf("s_sum", Index::Day1)),
+                    ("cumulative", leaf("s_cumulative", Index::Day1)),
                 ]),
             ),
             (
                 "week1",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::Week1)),
-                    ("cumulative", leaf("metric_cumulative", Index::Week1)),
+                    ("sum", leaf("s_sum", Index::Week1)),
+                    ("cumulative", leaf("s_cumulative", Index::Week1)),
                 ]),
             ),
             (
                 "epoch",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::Epoch)),
-                    ("cumulative", leaf("metric_cumulative", Index::Epoch)),
+                    ("sum", leaf("s_sum", Index::Epoch)),
+                    ("cumulative", leaf("s_cumulative", Index::Epoch)),
                 ]),
             ),
         ]);
@@ -535,24 +535,24 @@ mod tests {
 
     #[test]
     fn merge_conflict_from_lifted_branches() {
-        // Two branches lifting children with same key but different metric names → conflict
+        // Two branches lifting children with same key but different series names → conflict
         let tree = branch(vec![
-            ("a", branch(vec![("data", leaf("metric_a", Index::Height))])),
-            ("b", branch(vec![("data", leaf("metric_b", Index::Day1))])),
+            ("a", branch(vec![("data", leaf("s_a", Index::Height))])),
+            ("b", branch(vec![("data", leaf("s_b", Index::Day1))])),
         ]);
         let result = tree.merge_branches();
         assert!(result.is_none(), "Should detect conflict");
     }
 
     #[test]
-    fn merge_no_conflict_same_metric_different_indexes() {
-        // Same key, same metric name, different indexes → merges indexes → collapses to Leaf
+    fn merge_no_conflict_same_series_different_indexes() {
+        // Same key, same series name, different indexes → merges indexes → collapses to Leaf
         let tree = branch(vec![
             (
                 "a",
-                branch(vec![("sum", leaf("metric_sum", Index::Height))]),
+                branch(vec![("sum", leaf("s_sum", Index::Height))]),
             ),
-            ("b", branch(vec![("sum", leaf("metric_sum", Index::Day1))])),
+            ("b", branch(vec![("sum", leaf("s_sum", Index::Day1))])),
         ]);
         let result = tree.merge_branches();
         assert!(result.is_some(), "Should merge successfully");
@@ -560,7 +560,7 @@ mod tests {
         let merged = result.unwrap();
         match merged {
             TreeNode::Leaf(leaf) => {
-                assert_eq!(leaf.name(), "metric_sum");
+                assert_eq!(leaf.name(), "s_sum");
                 let indexes = leaf.indexes();
                 assert!(indexes.contains(&Index::Height));
                 assert!(indexes.contains(&Index::Day1));
@@ -578,7 +578,7 @@ mod tests {
             "outer",
             branch(vec![(
                 "inner",
-                branch(vec![("leaf", leaf("metric", Index::Height))]),
+                branch(vec![("leaf", leaf("s", Index::Height))]),
             )]),
         )]);
         let merged = tree.merge_branches().unwrap();
@@ -600,7 +600,7 @@ mod tests {
         // ComputedVecsDateLast pattern:
         // - day1: direct leaf (field name as key)
         // - rest (flattened): DerivedDateLast → branches with "last" children
-        // All leaves have same metric name → collapse to single Leaf
+        // All leaves have same series name → collapse to single Leaf
         let tree = branch(vec![
             // Direct leaf from day1 field (no wrap attribute)
             ("day1", leaf("1m_block_count", Index::Day1)),
@@ -635,11 +635,11 @@ mod tests {
         }
     }
 
-    // ========== Case 1: DerivedDateLast (all same metric name) ==========
+    // ========== Case 1: DerivedDateLast (all same series name) ==========
 
     #[test]
     fn case1_derived_date_last() {
-        // All leaves have the same metric name, all wrapped as "last"
+        // All leaves have the same series name, all wrapped as "last"
         // All branches lift to same key → collapses to single Leaf
         let tree = branch(vec![
             (
@@ -686,15 +686,15 @@ mod tests {
             (
                 "day1",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::Day1)),
-                    ("cumulative", leaf("metric_cumulative", Index::Day1)),
+                    ("sum", leaf("s_sum", Index::Day1)),
+                    ("cumulative", leaf("s_cumulative", Index::Day1)),
                 ]),
             ),
             (
                 "week1",
                 branch(vec![
-                    ("sum", leaf("metric_sum", Index::Week1)),
-                    ("cumulative", leaf("metric_cumulative", Index::Week1)),
+                    ("sum", leaf("s_sum", Index::Week1)),
+                    ("cumulative", leaf("s_cumulative", Index::Week1)),
                 ]),
             ),
         ]);
@@ -729,16 +729,16 @@ mod tests {
             // height wrapped as "raw"
             (
                 "height",
-                branch(vec![("raw", leaf("metric", Index::Height))]),
+                branch(vec![("raw", leaf("s", Index::Height))]),
             ),
             // rest (flattened) produces branches
             (
                 "day1",
-                branch(vec![("sum", leaf("metric_sum", Index::Day1))]),
+                branch(vec![("sum", leaf("s_sum", Index::Day1))]),
             ),
             (
                 "week1",
-                branch(vec![("sum", leaf("metric_sum", Index::Week1))]),
+                branch(vec![("sum", leaf("s_sum", Index::Week1))]),
             ),
         ]);
 
@@ -780,16 +780,16 @@ mod tests {
             // height wrapped as "raw"
             (
                 "height",
-                branch(vec![("raw", leaf("metric", Index::Height))]),
+                branch(vec![("raw", leaf("s", Index::Height))]),
             ),
             // rest (flattened) produces branches with "last" key
             (
                 "day1",
-                branch(vec![("last", leaf("metric_last", Index::Day1))]),
+                branch(vec![("last", leaf("s_last", Index::Day1))]),
             ),
             (
                 "week1",
-                branch(vec![("last", leaf("metric_last", Index::Week1))]),
+                branch(vec![("last", leaf("s_last", Index::Week1))]),
             ),
         ]);
 
@@ -835,36 +835,36 @@ mod tests {
             // height wrapped as "raw" (raw values at height granularity)
             (
                 "height",
-                branch(vec![("raw", leaf("metric", Index::Height))]),
+                branch(vec![("raw", leaf("s", Index::Height))]),
             ),
             // height_cumulative wrapped as cumulative
             (
                 "height_cumulative",
                 branch(vec![(
                     "cumulative",
-                    leaf("metric_cumulative", Index::Height),
+                    leaf("s_cumulative", Index::Height),
                 )]),
             ),
             // day1 Full
             (
                 "day1",
                 branch(vec![
-                    ("average", leaf("metric_average", Index::Day1)),
-                    ("min", leaf("metric_min", Index::Day1)),
-                    ("max", leaf("metric_max", Index::Day1)),
-                    ("sum", leaf("metric_sum", Index::Day1)),
-                    ("cumulative", leaf("metric_cumulative", Index::Day1)),
+                    ("average", leaf("s_average", Index::Day1)),
+                    ("min", leaf("s_min", Index::Day1)),
+                    ("max", leaf("s_max", Index::Day1)),
+                    ("sum", leaf("s_sum", Index::Day1)),
+                    ("cumulative", leaf("s_cumulative", Index::Day1)),
                 ]),
             ),
             // week1 (from flattened dates)
             (
                 "week1",
                 branch(vec![
-                    ("average", leaf("metric_average", Index::Week1)),
-                    ("min", leaf("metric_min", Index::Week1)),
-                    ("max", leaf("metric_max", Index::Week1)),
-                    ("sum", leaf("metric_sum", Index::Week1)),
-                    ("cumulative", leaf("metric_cumulative", Index::Week1)),
+                    ("average", leaf("s_average", Index::Week1)),
+                    ("min", leaf("s_min", Index::Week1)),
+                    ("max", leaf("s_max", Index::Week1)),
+                    ("sum", leaf("s_sum", Index::Week1)),
+                    ("cumulative", leaf("s_cumulative", Index::Week1)),
                 ]),
             ),
         ]);
@@ -912,7 +912,7 @@ mod tests {
     #[test]
     fn case6_lazy_date_last_all_branches_same_key_collapses() {
         // LazyDateLast pattern: All fields are branches with same inner key "last"
-        // All leaves have the same metric name → should collapse to single Leaf
+        // All leaves have the same series name → should collapse to single Leaf
         let tree = branch(vec![
             (
                 "day1",
@@ -938,7 +938,7 @@ mod tests {
 
         let merged = tree.merge_branches().unwrap();
 
-        // All branches lifted to same "last" key, all same metric name → collapse to Leaf
+        // All branches lifted to same "last" key, all same series name → collapse to Leaf
         match &merged {
             TreeNode::Leaf(leaf) => {
                 assert_eq!(leaf.name(), "price_200d_sma");
@@ -973,14 +973,14 @@ mod tests {
             // sats with wrap="sats" produces Branch { sats: Leaf }
             (
                 "sats",
-                branch(vec![("sats", leaf("metric", Index::Height))]),
+                branch(vec![("sats", leaf("s", Index::Height))]),
             ),
             // rest with flatten: LazyDerivedBlockValue fields lifted
             (
                 "rest",
                 branch(vec![
-                    ("bitcoin", leaf("metric_btc", Index::Height)),
-                    ("dollars", leaf("metric_usd", Index::Height)),
+                    ("bitcoin", leaf("s_btc", Index::Height)),
+                    ("dollars", leaf("s_usd", Index::Height)),
                 ]),
             ),
         ]);
@@ -1020,25 +1020,25 @@ mod tests {
             // height with wrap="raw"
             (
                 "height",
-                branch(vec![("raw", leaf("metric", Index::Height))]),
+                branch(vec![("raw", leaf("s", Index::Height))]),
             ),
             // height_cumulative with wrap="cumulative"
             (
                 "height_cumulative",
                 branch(vec![(
                     "cumulative",
-                    leaf("metric_cumulative", Index::Height),
+                    leaf("s_cumulative", Index::Height),
                 )]),
             ),
             // From rest (flatten) - inner struct already merged to { sum, cumulative }
             // Each leaf has merged indexes from all time periods
             (
                 "sum",
-                leaf("metric_sum", Index::Day1), // Would have all time indexes
+                leaf("s_sum", Index::Day1), // Would have all time indexes
             ),
             (
                 "cumulative",
-                leaf("metric_cumulative", Index::Day1), // Would have all time indexes
+                leaf("s_cumulative", Index::Day1), // Would have all time indexes
             ),
         ]);
 
@@ -1082,21 +1082,21 @@ mod tests {
         // Each denomination has already been merged internally
         // Simulating the output after inner merge
         let sats_merged = branch(vec![
-            ("raw", leaf("metric", Index::Height)),
-            ("sum", leaf("metric_sum", Index::Day1)),
-            ("cumulative", leaf("metric_cumulative", Index::Height)),
+            ("raw", leaf("s", Index::Height)),
+            ("sum", leaf("s_sum", Index::Day1)),
+            ("cumulative", leaf("s_cumulative", Index::Height)),
         ]);
 
         let bitcoin_merged = branch(vec![
-            ("raw", leaf("metric_btc", Index::Height)),
-            ("sum", leaf("metric_btc_sum", Index::Day1)),
-            ("cumulative", leaf("metric_btc_cumulative", Index::Height)),
+            ("raw", leaf("s_btc", Index::Height)),
+            ("sum", leaf("s_btc_sum", Index::Day1)),
+            ("cumulative", leaf("s_btc_cumulative", Index::Height)),
         ]);
 
         let dollars_merged = branch(vec![
-            ("raw", leaf("metric_usd", Index::Height)),
-            ("sum", leaf("metric_usd_sum", Index::Day1)),
-            ("cumulative", leaf("metric_usd_cumulative", Index::Height)),
+            ("raw", leaf("s_usd", Index::Height)),
+            ("sum", leaf("s_usd_sum", Index::Day1)),
+            ("cumulative", leaf("s_usd_cumulative", Index::Height)),
         ]);
 
         // Outer struct has no merge, so denominations stay as branches
@@ -1133,19 +1133,19 @@ mod tests {
     fn case10_derived_date_last_collapses_to_leaf() {
         // DerivedDateLast<T> with merge: all fields have wrap="last"
         // week1: { last: Leaf }, month1: { last: Leaf }, etc.
-        // After merge: all "last" keys merge, same metric name → collapses to Leaf
+        // After merge: all "last" keys merge, same series name → collapses to Leaf
         let tree = branch(vec![
             (
                 "week1",
-                branch(vec![("last", leaf("metric", Index::Week1))]),
+                branch(vec![("last", leaf("s", Index::Week1))]),
             ),
             (
                 "month1",
-                branch(vec![("last", leaf("metric", Index::Month1))]),
+                branch(vec![("last", leaf("s", Index::Month1))]),
             ),
             (
                 "year1",
-                branch(vec![("last", leaf("metric", Index::Year1))]),
+                branch(vec![("last", leaf("s", Index::Year1))]),
             ),
         ]);
 
@@ -1175,18 +1175,18 @@ mod tests {
         //   - rest (flatten): DerivedDateLast already merged to Leaf
         //     → flatten inserts with field name "rest" as key
         //
-        // Both have same metric name → collapses to single Leaf
+        // Both have same series name → collapses to single Leaf
         let tree = branch(vec![
             // day1 with wrap="raw"
-            ("day1", branch(vec![("raw", leaf("metric", Index::Day1))])),
+            ("day1", branch(vec![("raw", leaf("s", Index::Day1))])),
             // rest (flatten): DerivedDateLast merged to Leaf
-            // Same metric name as base
-            ("rest", leaf("metric", Index::Week1)),
+            // Same series name as base
+            ("rest", leaf("s", Index::Week1)),
         ]);
 
         let merged = tree.merge_branches().unwrap();
 
-        // Same metric name → collapses to single Leaf with all indexes
+        // Same series name → collapses to single Leaf with all indexes
         match &merged {
             TreeNode::Leaf(leaf) => {
                 let indexes = leaf.indexes();
@@ -1216,23 +1216,23 @@ mod tests {
             // From sats_day1 with wrap="sats"
             (
                 "sats_day1",
-                branch(vec![("sats", leaf("metric", Index::Day1))]),
+                branch(vec![("sats", leaf("s", Index::Day1))]),
             ),
             // From rest (flatten): ValueDerivedDateLast
             (
                 "rest",
                 branch(vec![
                     // sats field: DerivedDateLast merged to Leaf
-                    ("sats", leaf("metric", Index::Week1)), // Same metric name!
-                    ("bitcoin", leaf("metric_btc", Index::Day1)),
-                    ("dollars", leaf("metric_usd", Index::Day1)),
+                    ("sats", leaf("s", Index::Week1)), // Same series name!
+                    ("bitcoin", leaf("s_btc", Index::Day1)),
+                    ("dollars", leaf("s_usd", Index::Day1)),
                 ]),
             ),
         ]);
 
         let merged = tree.merge_branches();
 
-        // Should succeed because both "sats" have the same metric name
+        // Should succeed because both "sats" have the same series name
         // Indexes should be merged
         match merged {
             Some(TreeNode::Branch(map)) => {
@@ -1258,9 +1258,9 @@ mod tests {
 
         // Simulating final merged output
         let tree = branch(vec![
-            ("sats", leaf("metric", Index::Day1)), // placeholder, would have all indexes
-            ("bitcoin", leaf("metric_btc", Index::Day1)),
-            ("dollars", leaf("metric_usd", Index::Day1)),
+            ("sats", leaf("s", Index::Day1)), // placeholder, would have all indexes
+            ("bitcoin", leaf("s_btc", Index::Day1)),
+            ("dollars", leaf("s_usd", Index::Day1)),
         ]);
 
         match &tree {

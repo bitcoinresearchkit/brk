@@ -40,14 +40,14 @@ export function init() {
     /** @type {Map<Unit, AnyFetchedSeriesBlueprint[]>} */
     const result = new Map();
 
-    const { ohlc, spot } = brk.metrics.prices;
+    const { ohlc, spot } = brk.series.prices;
 
     result.set(Unit.usd, [
       /** @type {AnyFetchedSeriesBlueprint} */ ({
         type: "Price",
         title: "Price",
-        metric: spot.usd,
-        ohlcMetric: ohlc.usd,
+        series: spot.usd,
+        ohlcSeries: ohlc.usd,
       }),
       ...(optionTop.get(Unit.usd) ?? []),
     ]);
@@ -56,8 +56,8 @@ export function init() {
       /** @type {AnyFetchedSeriesBlueprint} */ ({
         type: "Price",
         title: "Price",
-        metric: spot.sats,
-        ohlcMetric: ohlc.sats,
+        series: spot.sats,
+        ohlcSeries: ohlc.sats,
         colors: /** @type {const} */ ([colors.bi.p1[1], colors.bi.p1[0]]),
       }),
       ...(optionTop.get(Unit.sats) ?? []),
@@ -143,10 +143,10 @@ function computeChoices(opt) {
     [Array.from(opt.top().values()), Array.from(opt.bottom().values())]
       .flat(2)
       .filter((blueprint) => {
-        const path = Object.values(blueprint.metric.by)[0]?.path ?? "";
+        const path = Object.values(blueprint.series.by)[0]?.path ?? "";
         return !path.includes("constant_");
       })
-      .flatMap((blueprint) => blueprint.metric.indexes()),
+      .flatMap((blueprint) => blueprint.series.indexes()),
   );
 
   const groups = ALL_GROUPS

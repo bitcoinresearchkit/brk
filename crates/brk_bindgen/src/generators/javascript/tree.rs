@@ -13,7 +13,7 @@ use crate::{
 use super::api::generate_api_methods;
 use super::client::generate_static_constants;
 
-/// Generate JSDoc typedefs for the metrics tree.
+/// Generate JSDoc typedefs for the series tree.
 pub fn generate_tree_typedefs(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
     writeln!(output, "// Catalog tree typedefs\n").unwrap();
 
@@ -21,7 +21,7 @@ pub fn generate_tree_typedefs(output: &mut String, catalog: &TreeNode, metadata:
     let mut generated = BTreeSet::new();
     generate_tree_typedef(
         output,
-        "MetricsTree",
+        "SeriesTree",
         "",
         catalog,
         pattern_lookup,
@@ -93,7 +93,7 @@ pub fn generate_main_client(
     writeln!(output, "/**").unwrap();
     writeln!(
         output,
-        " * Main BRK client with metrics tree and API methods"
+        " * Main BRK client with series tree and API methods"
     )
     .unwrap();
     writeln!(output, " * @extends BrkClientBase").unwrap();
@@ -107,14 +107,14 @@ pub fn generate_main_client(
     writeln!(output, "   */").unwrap();
     writeln!(output, "  constructor(options) {{").unwrap();
     writeln!(output, "    super(options);").unwrap();
-    writeln!(output, "    /** @type {{MetricsTree}} */").unwrap();
-    writeln!(output, "    this.metrics = this._buildTree('');").unwrap();
+    writeln!(output, "    /** @type {{SeriesTree}} */").unwrap();
+    writeln!(output, "    this.series = this._buildTree('');").unwrap();
     writeln!(output, "  }}\n").unwrap();
 
     writeln!(output, "  /**").unwrap();
     writeln!(output, "   * @private").unwrap();
     writeln!(output, "   * @param {{string}} basePath").unwrap();
-    writeln!(output, "   * @returns {{MetricsTree}}").unwrap();
+    writeln!(output, "   * @returns {{SeriesTree}}").unwrap();
     writeln!(output, "   */").unwrap();
     writeln!(output, "  _buildTree(basePath) {{").unwrap();
     writeln!(output, "    return {{").unwrap();
@@ -122,7 +122,7 @@ pub fn generate_main_client(
     generate_tree_initializer(
         output,
         catalog,
-        "MetricsTree",
+        "SeriesTree",
         "",
         3,
         pattern_lookup,
@@ -135,27 +135,27 @@ pub fn generate_main_client(
     writeln!(output, "  /**").unwrap();
     writeln!(
         output,
-        "   * Create a dynamic metric endpoint builder for any metric/index combination."
+        "   * Create a dynamic series endpoint builder for any series/index combination."
     )
     .unwrap();
     writeln!(output, "   *").unwrap();
     writeln!(
         output,
-        "   * Use this for programmatic access when the metric name is determined at runtime."
+        "   * Use this for programmatic access when the series name is determined at runtime."
     )
     .unwrap();
     writeln!(
         output,
-        "   * For type-safe access, use the `metrics` tree instead."
+        "   * For type-safe access, use the `series` tree instead."
     )
     .unwrap();
     writeln!(output, "   *").unwrap();
-    writeln!(output, "   * @param {{string}} metric - The metric name").unwrap();
+    writeln!(output, "   * @param {{string}} series - The series name").unwrap();
     writeln!(output, "   * @param {{Index}} index - The index name").unwrap();
-    writeln!(output, "   * @returns {{MetricEndpointBuilder<unknown>}}").unwrap();
+    writeln!(output, "   * @returns {{SeriesEndpointBuilder<unknown>}}").unwrap();
     writeln!(output, "   */").unwrap();
-    writeln!(output, "  metric(metric, index) {{").unwrap();
-    writeln!(output, "    return _endpoint(this, metric, index);").unwrap();
+    writeln!(output, "  seriesEndpoint(series, index) {{").unwrap();
+    writeln!(output, "    return _endpoint(this, series, index);").unwrap();
     writeln!(output, "  }}\n").unwrap();
 
     generate_api_methods(output, endpoints);

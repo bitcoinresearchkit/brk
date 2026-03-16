@@ -19,7 +19,7 @@ import urllib.request
 import concurrent.futures
 from pathlib import Path
 
-API_BASE = "https://bitview.space/api/metric"
+API_BASE = "https://bitview.space/api/series"
 POOLSLUG_PATH = Path(__file__).resolve().parent.parent / "crates/brk_types/src/poolslug.rs"
 HEADERS = {"User-Agent": "pool-threshold-script"}
 WINDOWS = {"1w": 7, "1m": 30, "1y": 365}

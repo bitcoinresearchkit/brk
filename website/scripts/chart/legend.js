@@ -119,7 +119,7 @@ export function createLegend() {
         anchor.href = series.url;
         anchor.target = "_blank";
         anchor.rel = "noopener noreferrer";
-        anchor.title = "Open the metric data in a new tab";
+        anchor.title = "Open the series data in a new tab";
         div.append(anchor);
       }
     },

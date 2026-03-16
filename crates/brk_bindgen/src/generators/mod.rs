@@ -18,7 +18,7 @@ pub use python::generate_python_client;
 pub use rust::generate_rust_client;
 
 /// Types that are manually defined as generics in client code, not from schema.
-pub const MANUAL_GENERIC_TYPES: &[&str] = &["MetricData", "MetricEndpoint"];
+pub const MANUAL_GENERIC_TYPES: &[&str] = &["SeriesData", "SeriesEndpoint"];
 
 /// Write a multi-line description with the given prefix for each line.
 /// `empty_prefix` is used for blank lines (e.g., "   *" without trailing space).

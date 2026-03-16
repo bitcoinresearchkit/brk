@@ -4,9 +4,9 @@ use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use super::Metric;
+use super::Series;
 
-/// Comma-separated list of metric names
+/// Comma-separated list of series names
 #[derive(Debug, Deref, JsonSchema)]
 #[schemars(
     with = "String",
@@ -15,38 +15,38 @@ use super::Metric;
     example = &"price_close,market_cap",
     example = &"realized_price,market_cap,mvrv"
 )]
-pub struct Metrics(Vec<Metric>);
+pub struct SeriesList(Vec<Series>);
 
 const MAX_VECS: usize = 32;
 const MAX_STRING_SIZE: usize = 64 * MAX_VECS;
 
-impl From<Metric> for Metrics {
+impl From<Series> for SeriesList {
     #[inline]
-    fn from(metric: Metric) -> Self {
-        Self(vec![metric])
+    fn from(series: Series) -> Self {
+        Self(vec![series])
     }
 }
 
-impl From<String> for Metrics {
+impl From<String> for SeriesList {
     #[inline]
     fn from(value: String) -> Self {
-        Self::from(Metric::from(value.replace("-", "_").to_lowercase()))
+        Self::from(Series::from(value.replace("-", "_").to_lowercase()))
     }
 }
 
-impl<'a> From<Vec<&'a str>> for Metrics {
+impl<'a> From<Vec<&'a str>> for SeriesList {
     #[inline]
     fn from(value: Vec<&'a str>) -> Self {
         Self(
             value
                 .iter()
-                .map(|s| Metric::from(s.replace("-", "_").to_lowercase()))
+                .map(|s| Series::from(s.replace("-", "_").to_lowercase()))
                 .collect::<Vec<_>>(),
         )
     }
 }
 
-impl<'de> Deserialize<'de> for Metrics {
+impl<'de> Deserialize<'de> for SeriesList {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -58,7 +58,7 @@ impl<'de> Deserialize<'de> for Metrics {
                 Ok(Self(
                     sanitize(str.split(",").map(|s| s.to_string()))
                         .into_iter()
-                        .map(Metric::from)
+                        .map(Series::from)
                         .collect(),
                 ))
             } else {
@@ -69,7 +69,7 @@ impl<'de> Deserialize<'de> for Metrics {
                 Ok(Self(
                     sanitize(vec.iter().filter_map(|s| s.as_str().map(String::from)))
                         .into_iter()
-                        .map(Metric::from)
+                        .map(Series::from)
                         .collect(),
                 ))
             } else {
@@ -81,7 +81,7 @@ impl<'de> Deserialize<'de> for Metrics {
     }
 }
 
-impl fmt::Display for Metrics {
+impl fmt::Display for SeriesList {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = self
             .0

@@ -23,7 +23,7 @@ import { colors } from "../../utils/colors.js";
 /**
  * @param {{ sent: Brk.BaseCumulativeInSumPattern, coindaysDestroyed: Brk.BaseCumulativeSumPattern<number> }} activity
  * @param {Color} color
- * @param {(metric: string) => string} title
+ * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
 function volumeAndCoinsTree(activity, color, title) {
@@ -35,18 +35,18 @@ function volumeAndCoinsTree(activity, color, title) {
           name: "Sum",
           title: title("Sent Volume"),
           bottom: [
-            line({ metric: activity.sent.base, name: "Sum", color, unit: Unit.sats }),
-            line({ metric: activity.sent.sum._24h, name: "24h", color: colors.time._24h, unit: Unit.sats, defaultActive: false }),
-            line({ metric: activity.sent.sum._1w, name: "1w", color: colors.time._1w, unit: Unit.sats, defaultActive: false }),
-            line({ metric: activity.sent.sum._1m, name: "1m", color: colors.time._1m, unit: Unit.sats, defaultActive: false }),
-            line({ metric: activity.sent.sum._1y, name: "1y", color: colors.time._1y, unit: Unit.sats, defaultActive: false }),
+            line({ series: activity.sent.base, name: "Sum", color, unit: Unit.sats }),
+            line({ series: activity.sent.sum._24h, name: "24h", color: colors.time._24h, unit: Unit.sats, defaultActive: false }),
+            line({ series: activity.sent.sum._1w, name: "1w", color: colors.time._1w, unit: Unit.sats, defaultActive: false }),
+            line({ series: activity.sent.sum._1m, name: "1m", color: colors.time._1m, unit: Unit.sats, defaultActive: false }),
+            line({ series: activity.sent.sum._1y, name: "1y", color: colors.time._1y, unit: Unit.sats, defaultActive: false }),
           ],
         },
         {
           name: "Cumulative",
           title: title("Sent Volume (Total)"),
           bottom: [
-            line({ metric: activity.sent.cumulative, name: "All-time", color, unit: Unit.sats }),
+            line({ series: activity.sent.cumulative, name: "All-time", color, unit: Unit.sats }),
           ],
         },
       ],
@@ -58,18 +58,18 @@ function volumeAndCoinsTree(activity, color, title) {
           name: "Base",
           title: title("Coindays Destroyed"),
           bottom: [
-            line({ metric: activity.coindaysDestroyed.base, name: "Base", color, unit: Unit.coindays }),
-            line({ metric: activity.coindaysDestroyed.sum._24h, name: "24h", color: colors.time._24h, unit: Unit.coindays, defaultActive: false }),
-            line({ metric: activity.coindaysDestroyed.sum._1w, name: "1w", color: colors.time._1w, unit: Unit.coindays, defaultActive: false }),
-            line({ metric: activity.coindaysDestroyed.sum._1m, name: "1m", color: colors.time._1m, unit: Unit.coindays, defaultActive: false }),
-            line({ metric: activity.coindaysDestroyed.sum._1y, name: "1y", color: colors.time._1y, unit: Unit.coindays, defaultActive: false }),
+            line({ series: activity.coindaysDestroyed.base, name: "Base", color, unit: Unit.coindays }),
+            line({ series: activity.coindaysDestroyed.sum._24h, name: "24h", color: colors.time._24h, unit: Unit.coindays, defaultActive: false }),
+            line({ series: activity.coindaysDestroyed.sum._1w, name: "1w", color: colors.time._1w, unit: Unit.coindays, defaultActive: false }),
+            line({ series: activity.coindaysDestroyed.sum._1m, name: "1m", color: colors.time._1m, unit: Unit.coindays, defaultActive: false }),
+            line({ series: activity.coindaysDestroyed.sum._1y, name: "1y", color: colors.time._1y, unit: Unit.coindays, defaultActive: false }),
           ],
         },
         {
           name: "Cumulative",
           title: title("Cumulative Coindays Destroyed"),
           bottom: [
-            line({ metric: activity.coindaysDestroyed.cumulative, name: "All-time", color, unit: Unit.coindays }),
+            line({ series: activity.coindaysDestroyed.cumulative, name: "All-time", color, unit: Unit.coindays }),
           ],
         },
       ],
@@ -80,7 +80,7 @@ function volumeAndCoinsTree(activity, color, title) {
 /**
  * Sent in profit/loss breakdown tree (shared by full and mid-level activity)
  * @param {Brk.BaseCumulativeInSumPattern} sent
- * @param {(metric: string) => string} title
+ * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
 function sentProfitLossTree(sent, title) {
@@ -92,39 +92,39 @@ function sentProfitLossTree(sent, title) {
           name: "USD",
           title: title("Sent Volume In Profit"),
           bottom: [
-            line({ metric: sent.inProfit.base.usd, name: "Base", color: colors.profit, unit: Unit.usd }),
-            line({ metric: sent.inProfit.sum._24h.usd, name: "24h", color: colors.time._24h, unit: Unit.usd, defaultActive: false }),
-            line({ metric: sent.inProfit.sum._1w.usd, name: "1w", color: colors.time._1w, unit: Unit.usd, defaultActive: false }),
-            line({ metric: sent.inProfit.sum._1m.usd, name: "1m", color: colors.time._1m, unit: Unit.usd, defaultActive: false }),
-            line({ metric: sent.inProfit.sum._1y.usd, name: "1y", color: colors.time._1y, unit: Unit.usd, defaultActive: false }),
+            line({ series: sent.inProfit.base.usd, name: "Base", color: colors.profit, unit: Unit.usd }),
+            line({ series: sent.inProfit.sum._24h.usd, name: "24h", color: colors.time._24h, unit: Unit.usd, defaultActive: false }),
+            line({ series: sent.inProfit.sum._1w.usd, name: "1w", color: colors.time._1w, unit: Unit.usd, defaultActive: false }),
+            line({ series: sent.inProfit.sum._1m.usd, name: "1m", color: colors.time._1m, unit: Unit.usd, defaultActive: false }),
+            line({ series: sent.inProfit.sum._1y.usd, name: "1y", color: colors.time._1y, unit: Unit.usd, defaultActive: false }),
           ],
         },
         {
           name: "BTC",
           title: title("Sent Volume In Profit (BTC)"),
           bottom: [
-            line({ metric: sent.inProfit.base.btc, name: "Base", color: colors.profit, unit: Unit.btc }),
-            line({ metric: sent.inProfit.sum._24h.btc, name: "24h", color: colors.time._24h, unit: Unit.btc, defaultActive: false }),
-            line({ metric: sent.inProfit.sum._1w.btc, name: "1w", color: colors.time._1w, unit: Unit.btc, defaultActive: false }),
-            line({ metric: sent.inProfit.sum._1m.btc, name: "1m", color: colors.time._1m, unit: Unit.btc, defaultActive: false }),
-            line({ metric: sent.inProfit.sum._1y.btc, name: "1y", color: colors.time._1y, unit: Unit.btc, defaultActive: false }),
+            line({ series: sent.inProfit.base.btc, name: "Base", color: colors.profit, unit: Unit.btc }),
+            line({ series: sent.inProfit.sum._24h.btc, name: "24h", color: colors.time._24h, unit: Unit.btc, defaultActive: false }),
+            line({ series: sent.inProfit.sum._1w.btc, name: "1w", color: colors.time._1w, unit: Unit.btc, defaultActive: false }),
+            line({ series: sent.inProfit.sum._1m.btc, name: "1m", color: colors.time._1m, unit: Unit.btc, defaultActive: false }),
+            line({ series: sent.inProfit.sum._1y.btc, name: "1y", color: colors.time._1y, unit: Unit.btc, defaultActive: false }),
           ],
         },
         {
           name: "Sats",
           title: title("Sent Volume In Profit (Sats)"),
           bottom: [
-            line({ metric: sent.inProfit.base.sats, name: "Base", color: colors.profit, unit: Unit.sats }),
-            line({ metric: sent.inProfit.sum._24h.sats, name: "24h", color: colors.time._24h, unit: Unit.sats, defaultActive: false }),
-            line({ metric: sent.inProfit.sum._1w.sats, name: "1w", color: colors.time._1w, unit: Unit.sats, defaultActive: false }),
-            line({ metric: sent.inProfit.sum._1m.sats, name: "1m", color: colors.time._1m, unit: Unit.sats, defaultActive: false }),
-            line({ metric: sent.inProfit.sum._1y.sats, name: "1y", color: colors.time._1y, unit: Unit.sats, defaultActive: false }),
+            line({ series: sent.inProfit.base.sats, name: "Base", color: colors.profit, unit: Unit.sats }),
+            line({ series: sent.inProfit.sum._24h.sats, name: "24h", color: colors.time._24h, unit: Unit.sats, defaultActive: false }),
+            line({ series: sent.inProfit.sum._1w.sats, name: "1w", color: colors.time._1w, unit: Unit.sats, defaultActive: false }),
+            line({ series: sent.inProfit.sum._1m.sats, name: "1m", color: colors.time._1m, unit: Unit.sats, defaultActive: false }),
+            line({ series: sent.inProfit.sum._1y.sats, name: "1y", color: colors.time._1y, unit: Unit.sats, defaultActive: false }),
           ],
         },
         { name: "Cumulative", title: title("Cumulative Sent In Profit"), bottom: [
-          line({ metric: sent.inProfit.cumulative.usd, name: "USD", color: colors.profit, unit: Unit.usd }),
-          line({ metric: sent.inProfit.cumulative.btc, name: "BTC", color: colors.profit, unit: Unit.btc, defaultActive: false }),
-          line({ metric: sent.inProfit.cumulative.sats, name: "Sats", color: colors.profit, unit: Unit.sats, defaultActive: false }),
+          line({ series: sent.inProfit.cumulative.usd, name: "USD", color: colors.profit, unit: Unit.usd }),
+          line({ series: sent.inProfit.cumulative.btc, name: "BTC", color: colors.profit, unit: Unit.btc, defaultActive: false }),
+          line({ series: sent.inProfit.cumulative.sats, name: "Sats", color: colors.profit, unit: Unit.sats, defaultActive: false }),
         ]},
       ],
     },
@@ -135,39 +135,39 @@ function sentProfitLossTree(sent, title) {
           name: "USD",
           title: title("Sent Volume In Loss"),
           bottom: [
-            line({ metric: sent.inLoss.base.usd, name: "Base", color: colors.loss, unit: Unit.usd }),
-            line({ metric: sent.inLoss.sum._24h.usd, name: "24h", color: colors.time._24h, unit: Unit.usd, defaultActive: false }),
-            line({ metric: sent.inLoss.sum._1w.usd, name: "1w", color: colors.time._1w, unit: Unit.usd, defaultActive: false }),
-            line({ metric: sent.inLoss.sum._1m.usd, name: "1m", color: colors.time._1m, unit: Unit.usd, defaultActive: false }),
-            line({ metric: sent.inLoss.sum._1y.usd, name: "1y", color: colors.time._1y, unit: Unit.usd, defaultActive: false }),
+            line({ series: sent.inLoss.base.usd, name: "Base", color: colors.loss, unit: Unit.usd }),
+            line({ series: sent.inLoss.sum._24h.usd, name: "24h", color: colors.time._24h, unit: Unit.usd, defaultActive: false }),
+            line({ series: sent.inLoss.sum._1w.usd, name: "1w", color: colors.time._1w, unit: Unit.usd, defaultActive: false }),
+            line({ series: sent.inLoss.sum._1m.usd, name: "1m", color: colors.time._1m, unit: Unit.usd, defaultActive: false }),
+            line({ series: sent.inLoss.sum._1y.usd, name: "1y", color: colors.time._1y, unit: Unit.usd, defaultActive: false }),
           ],
         },
         {
           name: "BTC",
           title: title("Sent Volume In Loss (BTC)"),
           bottom: [
-            line({ metric: sent.inLoss.base.btc, name: "Base", color: colors.loss, unit: Unit.btc }),
-            line({ metric: sent.inLoss.sum._24h.btc, name: "24h", color: colors.time._24h, unit: Unit.btc, defaultActive: false }),
-            line({ metric: sent.inLoss.sum._1w.btc, name: "1w", color: colors.time._1w, unit: Unit.btc, defaultActive: false }),
-            line({ metric: sent.inLoss.sum._1m.btc, name: "1m", color: colors.time._1m, unit: Unit.btc, defaultActive: false }),
-            line({ metric: sent.inLoss.sum._1y.btc, name: "1y", color: colors.time._1y, unit: Unit.btc, defaultActive: false }),
+            line({ series: sent.inLoss.base.btc, name: "Base", color: colors.loss, unit: Unit.btc }),
+            line({ series: sent.inLoss.sum._24h.btc, name: "24h", color: colors.time._24h, unit: Unit.btc, defaultActive: false }),
+            line({ series: sent.inLoss.sum._1w.btc, name: "1w", color: colors.time._1w, unit: Unit.btc, defaultActive: false }),
+            line({ series: sent.inLoss.sum._1m.btc, name: "1m", color: colors.time._1m, unit: Unit.btc, defaultActive: false }),
+            line({ series: sent.inLoss.sum._1y.btc, name: "1y", color: colors.time._1y, unit: Unit.btc, defaultActive: false }),
           ],
         },
         {
           name: "Sats",
           title: title("Sent Volume In Loss (Sats)"),
           bottom: [
-            line({ metric: sent.inLoss.base.sats, name: "Base", color: colors.loss, unit: Unit.sats }),
-            line({ metric: sent.inLoss.sum._24h.sats, name: "24h", color: colors.time._24h, unit: Unit.sats, defaultActive: false }),
-            line({ metric: sent.inLoss.sum._1w.sats, name: "1w", color: colors.time._1w, unit: Unit.sats, defaultActive: false }),
-            line({ metric: sent.inLoss.sum._1m.sats, name: "1m", color: colors.time._1m, unit: Unit.sats, defaultActive: false }),
-            line({ metric: sent.inLoss.sum._1y.sats, name: "1y", color: colors.time._1y, unit: Unit.sats, defaultActive: false }),
+            line({ series: sent.inLoss.base.sats, name: "Base", color: colors.loss, unit: Unit.sats }),
+            line({ series: sent.inLoss.sum._24h.sats, name: "24h", color: colors.time._24h, unit: Unit.sats, defaultActive: false }),
+            line({ series: sent.inLoss.sum._1w.sats, name: "1w", color: colors.time._1w, unit: Unit.sats, defaultActive: false }),
+            line({ series: sent.inLoss.sum._1m.sats, name: "1m", color: colors.time._1m, unit: Unit.sats, defaultActive: false }),
+            line({ series: sent.inLoss.sum._1y.sats, name: "1y", color: colors.time._1y, unit: Unit.sats, defaultActive: false }),
           ],
         },
         { name: "Cumulative", title: title("Cumulative Sent In Loss"), bottom: [
-          line({ metric: sent.inLoss.cumulative.usd, name: "USD", color: colors.loss, unit: Unit.usd }),
-          line({ metric: sent.inLoss.cumulative.btc, name: "BTC", color: colors.loss, unit: Unit.btc, defaultActive: false }),
-          line({ metric: sent.inLoss.cumulative.sats, name: "Sats", color: colors.loss, unit: Unit.sats, defaultActive: false }),
+          line({ series: sent.inLoss.cumulative.usd, name: "USD", color: colors.loss, unit: Unit.usd }),
+          line({ series: sent.inLoss.cumulative.btc, name: "BTC", color: colors.loss, unit: Unit.btc, defaultActive: false }),
+          line({ series: sent.inLoss.cumulative.sats, name: "Sats", color: colors.loss, unit: Unit.sats, defaultActive: false }),
         ]},
       ],
     },
@@ -178,7 +178,7 @@ function sentProfitLossTree(sent, title) {
  * Volume and coins tree with coinyears, dormancy, and sent in profit/loss (All/STH/LTH)
  * @param {Brk.CoindaysCoinyearsDormancySentPattern} activity
  * @param {Color} color
- * @param {(metric: string) => string} title
+ * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
 function fullVolumeTree(activity, color, title) {
@@ -188,12 +188,12 @@ function fullVolumeTree(activity, color, title) {
     {
       name: "Coinyears Destroyed",
       title: title("Coinyears Destroyed"),
-      bottom: [line({ metric: activity.coinyearsDestroyed, name: "CYD", color, unit: Unit.years })],
+      bottom: [line({ series: activity.coinyearsDestroyed, name: "CYD", color, unit: Unit.years })],
     },
     {
       name: "Dormancy",
       title: title("Dormancy"),
-      bottom: [line({ metric: activity.dormancy, name: "Dormancy", color, unit: Unit.days })],
+      bottom: [line({ series: activity.dormancy, name: "Dormancy", color, unit: Unit.days })],
     },
   ];
 }
@@ -204,7 +204,7 @@ function fullVolumeTree(activity, color, title) {
 
 /**
  * @param {Brk._1m1w1y24hPattern<number>} ratio
- * @param {(metric: string) => string} title
+ * @param {(name: string) => string} title
  * @param {string} [prefix]
  * @returns {PartialOptionsTree}
  */
@@ -214,31 +214,31 @@ function singleRollingSoprTree(ratio, title, prefix = "") {
       name: "Compare",
       title: title(`Rolling ${prefix}SOPR`),
       bottom: [
-        baseline({ metric: ratio._24h, name: "24h", color: colors.time._24h, unit: Unit.ratio, base: 1 }),
-        baseline({ metric: ratio._1w, name: "7d", color: colors.time._1w, unit: Unit.ratio, base: 1 }),
-        baseline({ metric: ratio._1m, name: "30d", color: colors.time._1m, unit: Unit.ratio, base: 1 }),
-        baseline({ metric: ratio._1y, name: "1y", color: colors.time._1y, unit: Unit.ratio, base: 1 }),
+        baseline({ series: ratio._24h, name: "24h", color: colors.time._24h, unit: Unit.ratio, base: 1 }),
+        baseline({ series: ratio._1w, name: "7d", color: colors.time._1w, unit: Unit.ratio, base: 1 }),
+        baseline({ series: ratio._1m, name: "30d", color: colors.time._1m, unit: Unit.ratio, base: 1 }),
+        baseline({ series: ratio._1y, name: "1y", color: colors.time._1y, unit: Unit.ratio, base: 1 }),
       ],
     },
     {
       name: "24h",
       title: title(`${prefix}SOPR (24h)`),
-      bottom: [dotsBaseline({ metric: ratio._24h, name: "24h", unit: Unit.ratio, base: 1 })],
+      bottom: [dotsBaseline({ series: ratio._24h, name: "24h", unit: Unit.ratio, base: 1 })],
     },
     {
       name: "7d",
       title: title(`${prefix}SOPR (7d)`),
-      bottom: [baseline({ metric: ratio._1w, name: "SOPR", unit: Unit.ratio, base: 1 })],
+      bottom: [baseline({ series: ratio._1w, name: "SOPR", unit: Unit.ratio, base: 1 })],
     },
     {
       name: "30d",
       title: title(`${prefix}SOPR (30d)`),
-      bottom: [baseline({ metric: ratio._1m, name: "SOPR", unit: Unit.ratio, base: 1 })],
+      bottom: [baseline({ series: ratio._1m, name: "SOPR", unit: Unit.ratio, base: 1 })],
     },
     {
       name: "1y",
       title: title(`${prefix}SOPR (1y)`),
-      bottom: [baseline({ metric: ratio._1y, name: "SOPR", unit: Unit.ratio, base: 1 })],
+      bottom: [baseline({ series: ratio._1y, name: "SOPR", unit: Unit.ratio, base: 1 })],
     },
   ];
 }
@@ -249,7 +249,7 @@ function singleRollingSoprTree(ratio, title, prefix = "") {
 
 /**
  * @param {Brk._1m1w1y24hPattern6} sellSideRisk
- * @param {(metric: string) => string} title
+ * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
 function singleSellSideRiskTree(sellSideRisk, title) {
@@ -294,7 +294,7 @@ function singleSellSideRiskTree(sellSideRisk, title) {
 /**
  * @param {Brk.BaseCumulativeSumPattern<number>} valueCreated
  * @param {Brk.BaseCumulativeSumPattern<number>} valueDestroyed
- * @param {(metric: string) => string} title
+ * @param {(name: string) => string} title
  * @param {string} [prefix]
  * @returns {PartialOptionsTree}
  */
@@ -307,20 +307,20 @@ function singleRollingValueTree(valueCreated, valueDestroyed, title, prefix = ""
           name: "Created",
           title: title(`Rolling ${prefix}Value Created`),
           bottom: [
-            line({ metric: valueCreated.sum._24h, name: "24h", color: colors.time._24h, unit: Unit.usd }),
-            line({ metric: valueCreated.sum._1w, name: "7d", color: colors.time._1w, unit: Unit.usd }),
-            line({ metric: valueCreated.sum._1m, name: "30d", color: colors.time._1m, unit: Unit.usd }),
-            line({ metric: valueCreated.sum._1y, name: "1y", color: colors.time._1y, unit: Unit.usd }),
+            line({ series: valueCreated.sum._24h, name: "24h", color: colors.time._24h, unit: Unit.usd }),
+            line({ series: valueCreated.sum._1w, name: "7d", color: colors.time._1w, unit: Unit.usd }),
+            line({ series: valueCreated.sum._1m, name: "30d", color: colors.time._1m, unit: Unit.usd }),
+            line({ series: valueCreated.sum._1y, name: "1y", color: colors.time._1y, unit: Unit.usd }),
           ],
         },
         {
           name: "Destroyed",
           title: title(`Rolling ${prefix}Value Destroyed`),
           bottom: [
-            line({ metric: valueDestroyed.sum._24h, name: "24h", color: colors.time._24h, unit: Unit.usd }),
-            line({ metric: valueDestroyed.sum._1w, name: "7d", color: colors.time._1w, unit: Unit.usd }),
-            line({ metric: valueDestroyed.sum._1m, name: "30d", color: colors.time._1m, unit: Unit.usd }),
-            line({ metric: valueDestroyed.sum._1y, name: "1y", color: colors.time._1y, unit: Unit.usd }),
+            line({ series: valueDestroyed.sum._24h, name: "24h", color: colors.time._24h, unit: Unit.usd }),
+            line({ series: valueDestroyed.sum._1w, name: "7d", color: colors.time._1w, unit: Unit.usd }),
+            line({ series: valueDestroyed.sum._1m, name: "30d", color: colors.time._1m, unit: Unit.usd }),
+            line({ series: valueDestroyed.sum._1y, name: "1y", color: colors.time._1y, unit: Unit.usd }),
           ],
         },
       ],
@@ -329,40 +329,40 @@ function singleRollingValueTree(valueCreated, valueDestroyed, title, prefix = ""
       name: "24h",
       title: title(`${prefix}Value Created & Destroyed (24h)`),
       bottom: [
-        line({ metric: valueCreated.sum._24h, name: "Created", color: colors.usd, unit: Unit.usd }),
-        line({ metric: valueDestroyed.sum._24h, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
+        line({ series: valueCreated.sum._24h, name: "Created", color: colors.usd, unit: Unit.usd }),
+        line({ series: valueDestroyed.sum._24h, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
       ],
     },
     {
       name: "7d",
       title: title(`${prefix}Value Created & Destroyed (7d)`),
       bottom: [
-        line({ metric: valueCreated.sum._1w, name: "Created", color: colors.usd, unit: Unit.usd }),
-        line({ metric: valueDestroyed.sum._1w, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
+        line({ series: valueCreated.sum._1w, name: "Created", color: colors.usd, unit: Unit.usd }),
+        line({ series: valueDestroyed.sum._1w, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
       ],
     },
     {
       name: "30d",
       title: title(`${prefix}Value Created & Destroyed (30d)`),
       bottom: [
-        line({ metric: valueCreated.sum._1m, name: "Created", color: colors.usd, unit: Unit.usd }),
-        line({ metric: valueDestroyed.sum._1m, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
+        line({ series: valueCreated.sum._1m, name: "Created", color: colors.usd, unit: Unit.usd }),
+        line({ series: valueDestroyed.sum._1m, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
       ],
     },
     {
       name: "1y",
       title: title(`${prefix}Value Created & Destroyed (1y)`),
       bottom: [
-        line({ metric: valueCreated.sum._1y, name: "Created", color: colors.usd, unit: Unit.usd }),
-        line({ metric: valueDestroyed.sum._1y, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
+        line({ series: valueCreated.sum._1y, name: "Created", color: colors.usd, unit: Unit.usd }),
+        line({ series: valueDestroyed.sum._1y, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
       ],
     },
     {
       name: "Cumulative",
       title: title(`${prefix}Value Created & Destroyed (Total)`),
       bottom: [
-        line({ metric: valueCreated.cumulative, name: "Created", color: colors.usd, unit: Unit.usd }),
-        line({ metric: valueDestroyed.cumulative, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
+        line({ series: valueCreated.cumulative, name: "Created", color: colors.usd, unit: Unit.usd }),
+        line({ series: valueDestroyed.cumulative, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
       ],
     },
   ];
@@ -374,12 +374,12 @@ function singleRollingValueTree(valueCreated, valueDestroyed, title, prefix = ""
  * @param {Brk.BaseCapitulationCumulativeNegativeRelSumValuePattern} loss
  * @param {Brk.BaseCumulativeSumPattern<number>} valueCreated
  * @param {Brk.BaseCumulativeSumPattern<number>} valueDestroyed
- * @param {AnyFetchedSeriesBlueprint[]} extraValueMetrics
+ * @param {AnyFetchedSeriesBlueprint[]} extraValueSeries
  * @param {PartialOptionsTree} rollingTree
- * @param {(metric: string) => string} title
+ * @param {(name: string) => string} title
  * @returns {PartialOptionsGroup}
  */
-function fullValueSection(profit, loss, valueCreated, valueDestroyed, extraValueMetrics, rollingTree, title) {
+function fullValueSection(profit, loss, valueCreated, valueDestroyed, extraValueSeries, rollingTree, title) {
   return {
     name: "Value",
     tree: [
@@ -387,17 +387,17 @@ function fullValueSection(profit, loss, valueCreated, valueDestroyed, extraValue
         name: "Flows",
         title: title("Profit & Capitulation Flows"),
         bottom: [
-          line({ metric: profit.distributionFlow, name: "Distribution Flow", color: colors.profit, unit: Unit.usd }),
-          line({ metric: loss.capitulationFlow, name: "Capitulation Flow", color: colors.loss, unit: Unit.usd }),
+          line({ series: profit.distributionFlow, name: "Distribution Flow", color: colors.profit, unit: Unit.usd }),
+          line({ series: loss.capitulationFlow, name: "Capitulation Flow", color: colors.loss, unit: Unit.usd }),
         ],
       },
       {
         name: "Created & Destroyed",
         title: title("Value Created & Destroyed"),
         bottom: [
-          line({ metric: valueCreated.base, name: "Created", color: colors.usd, unit: Unit.usd }),
-          line({ metric: valueDestroyed.base, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
-          ...extraValueMetrics,
+          line({ series: valueCreated.base, name: "Created", color: colors.usd, unit: Unit.usd }),
+          line({ series: valueDestroyed.base, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
+          ...extraValueSeries,
         ],
       },
       {
@@ -407,16 +407,16 @@ function fullValueSection(profit, loss, valueCreated, valueDestroyed, extraValue
             name: "Profit",
             title: title("Profit Value Created & Destroyed"),
             bottom: [
-              line({ metric: profit.valueCreated.base, name: "Created", color: colors.profit, unit: Unit.usd }),
-              line({ metric: profit.valueDestroyed.base, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
+              line({ series: profit.valueCreated.base, name: "Created", color: colors.profit, unit: Unit.usd }),
+              line({ series: profit.valueDestroyed.base, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
             ],
           },
           {
             name: "Loss",
             title: title("Loss Value Created & Destroyed"),
             bottom: [
-              line({ metric: loss.valueCreated.base, name: "Created", color: colors.profit, unit: Unit.usd }),
-              line({ metric: loss.valueDestroyed.base, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
+              line({ series: loss.valueCreated.base, name: "Created", color: colors.profit, unit: Unit.usd }),
+              line({ series: loss.valueDestroyed.base, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
             ],
           },
         ],
@@ -430,7 +430,7 @@ function fullValueSection(profit, loss, valueCreated, valueDestroyed, extraValue
  * Simple value section (created & destroyed + rolling)
  * @param {Brk.BaseCumulativeSumPattern<number>} valueCreated
  * @param {Brk.BaseCumulativeSumPattern<number>} valueDestroyed
- * @param {(metric: string) => string} title
+ * @param {(name: string) => string} title
  * @returns {PartialOptionsGroup}
  */
 function simpleValueSection(valueCreated, valueDestroyed, title) {
@@ -441,8 +441,8 @@ function simpleValueSection(valueCreated, valueDestroyed, title) {
         name: "Created & Destroyed",
         title: title("Value Created & Destroyed"),
         bottom: [
-          line({ metric: valueCreated.base, name: "Created", color: colors.usd, unit: Unit.usd }),
-          line({ metric: valueDestroyed.base, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
+          line({ series: valueCreated.base, name: "Created", color: colors.usd, unit: Unit.usd }),
+          line({ series: valueDestroyed.base, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
         ],
       },
       {
@@ -459,7 +459,7 @@ function simpleValueSection(valueCreated, valueDestroyed, title) {
 
 /**
  * Full activity with adjusted SOPR (All/STH)
- * @param {{ cohort: CohortAll | CohortFull, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortAll | CohortFull, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createActivitySectionWithAdjusted({ cohort, title }) {
@@ -489,8 +489,8 @@ export function createActivitySectionWithAdjusted({ cohort, title }) {
         r.profit, r.loss,
         sopr.valueCreated, sopr.valueDestroyed,
         [
-          line({ metric: sopr.adjusted.valueCreated.base, name: "Adjusted Created", color: colors.adjustedCreated, unit: Unit.usd, defaultActive: false }),
-          line({ metric: sopr.adjusted.valueDestroyed.base, name: "Adjusted Destroyed", color: colors.adjustedDestroyed, unit: Unit.usd, defaultActive: false }),
+          line({ series: sopr.adjusted.valueCreated.base, name: "Adjusted Created", color: colors.adjustedCreated, unit: Unit.usd, defaultActive: false }),
+          line({ series: sopr.adjusted.valueDestroyed.base, name: "Adjusted Destroyed", color: colors.adjustedDestroyed, unit: Unit.usd, defaultActive: false }),
         ],
         [
           {
@@ -510,7 +510,7 @@ export function createActivitySectionWithAdjusted({ cohort, title }) {
 
 /**
  * Activity section for cohorts with rolling SOPR + sell side risk (LTH, also CohortFull | CohortLongTerm)
- * @param {{ cohort: CohortFull | CohortLongTerm, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortFull | CohortLongTerm, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createActivitySection({ cohort, title }) {
@@ -540,7 +540,7 @@ export function createActivitySection({ cohort, title }) {
 
 /**
  * Activity section for cohorts with activity but basic realized (AgeRange/MaxAge — 24h SOPR only)
- * @param {{ cohort: CohortAgeRange | CohortWithAdjusted, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortAgeRange | CohortWithAdjusted, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createActivitySectionWithActivity({ cohort, title }) {
@@ -555,7 +555,7 @@ export function createActivitySectionWithActivity({ cohort, title }) {
       {
         name: "SOPR",
         title: title("SOPR (24h)"),
-        bottom: [dotsBaseline({ metric: sopr.ratio._24h, name: "SOPR", unit: Unit.ratio, base: 1 })],
+        bottom: [dotsBaseline({ series: sopr.ratio._24h, name: "SOPR", unit: Unit.ratio, base: 1 })],
       },
       simpleValueSection(sopr.valueCreated, sopr.valueDestroyed, title),
     ],
@@ -564,7 +564,7 @@ export function createActivitySectionWithActivity({ cohort, title }) {
 
 /**
  * Minimal activity section for cohorts without activity field (value only)
- * @param {{ cohort: CohortBasicWithMarketCap | CohortBasicWithoutMarketCap | CohortWithoutRelative | CohortAddress | AddressCohortObject, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortBasicWithMarketCap | CohortBasicWithoutMarketCap | CohortWithoutRelative | CohortAddress | AddressCohortObject, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createActivitySectionMinimal({ cohort, title }) {
@@ -587,10 +587,10 @@ export function createActivitySectionMinimal({ cohort, title }) {
  * @template {{ color: Color, name: string }} A
  * @param {readonly T[]} list
  * @param {A} all
- * @param {(item: T | A) => AnyMetricPattern} getRaw
- * @param {(item: T | A) => AnyMetricPattern} get7d
- * @param {(item: T | A) => AnyMetricPattern} get30d
- * @param {(metric: string) => string} title
+ * @param {(item: T | A) => AnySeriesPattern} getRaw
+ * @param {(item: T | A) => AnySeriesPattern} get7d
+ * @param {(item: T | A) => AnySeriesPattern} get30d
+ * @param {(name: string) => string} title
  * @param {string} [prefix]
  * @returns {PartialOptionsTree}
  */
@@ -600,21 +600,21 @@ function groupedSoprCharts(list, all, getRaw, get7d, get30d, title, prefix = "")
       name: "Raw",
       title: title(`${prefix}SOPR`),
       bottom: mapCohortsWithAll(list, all, (item) =>
-        baseline({ metric: getRaw(item), name: item.name, color: item.color, unit: Unit.ratio, base: 1 }),
+        baseline({ series: getRaw(item), name: item.name, color: item.color, unit: Unit.ratio, base: 1 }),
       ),
     },
     {
       name: "7d",
       title: title(`${prefix}SOPR (7d)`),
       bottom: mapCohortsWithAll(list, all, (item) =>
-        baseline({ metric: get7d(item), name: item.name, color: item.color, unit: Unit.ratio, base: 1 }),
+        baseline({ series: get7d(item), name: item.name, color: item.color, unit: Unit.ratio, base: 1 }),
       ),
     },
     {
       name: "30d",
       title: title(`${prefix}SOPR (30d)`),
       bottom: mapCohortsWithAll(list, all, (item) =>
-        baseline({ metric: get30d(item), name: item.name, color: item.color, unit: Unit.ratio, base: 1 }),
+        baseline({ series: get30d(item), name: item.name, color: item.color, unit: Unit.ratio, base: 1 }),
       ),
     },
   ];
@@ -625,11 +625,11 @@ function groupedSoprCharts(list, all, getRaw, get7d, get30d, title, prefix = "")
  * @template {{ color: Color, name: string }} A
  * @param {readonly T[]} list
  * @param {A} all
- * @param {(item: T | A) => AnyMetricPattern} get24h
- * @param {(item: T | A) => AnyMetricPattern} get7d
- * @param {(item: T | A) => AnyMetricPattern} get30d
- * @param {(item: T | A) => AnyMetricPattern} get1y
- * @param {(metric: string) => string} title
+ * @param {(item: T | A) => AnySeriesPattern} get24h
+ * @param {(item: T | A) => AnySeriesPattern} get7d
+ * @param {(item: T | A) => AnySeriesPattern} get30d
+ * @param {(item: T | A) => AnySeriesPattern} get1y
+ * @param {(name: string) => string} title
  * @param {string} [prefix]
  * @returns {PartialOptionsTree}
  */
@@ -639,28 +639,28 @@ function groupedRollingSoprCharts(list, all, get24h, get7d, get30d, get1y, title
       name: "24h",
       title: title(`${prefix}SOPR (24h)`),
       bottom: mapCohortsWithAll(list, all, (c) =>
-        baseline({ metric: get24h(c), name: c.name, color: c.color, unit: Unit.ratio, base: 1 }),
+        baseline({ series: get24h(c), name: c.name, color: c.color, unit: Unit.ratio, base: 1 }),
       ),
     },
     {
       name: "7d",
       title: title(`${prefix}SOPR (7d)`),
       bottom: mapCohortsWithAll(list, all, (c) =>
-        baseline({ metric: get7d(c), name: c.name, color: c.color, unit: Unit.ratio, base: 1 }),
+        baseline({ series: get7d(c), name: c.name, color: c.color, unit: Unit.ratio, base: 1 }),
       ),
     },
     {
       name: "30d",
       title: title(`${prefix}SOPR (30d)`),
       bottom: mapCohortsWithAll(list, all, (c) =>
-        baseline({ metric: get30d(c), name: c.name, color: c.color, unit: Unit.ratio, base: 1 }),
+        baseline({ series: get30d(c), name: c.name, color: c.color, unit: Unit.ratio, base: 1 }),
       ),
     },
     {
       name: "1y",
       title: title(`${prefix}SOPR (1y)`),
       bottom: mapCohortsWithAll(list, all, (c) =>
-        baseline({ metric: get1y(c), name: c.name, color: c.color, unit: Unit.ratio, base: 1 }),
+        baseline({ series: get1y(c), name: c.name, color: c.color, unit: Unit.ratio, base: 1 }),
       ),
     },
   ];
@@ -675,8 +675,8 @@ function groupedRollingSoprCharts(list, all, get24h, get7d, get30d, get1y, title
  * @template {{ color: Color, name: string }} A
  * @param {readonly T[]} list
  * @param {A} all
- * @param {readonly { name: string, getCreated: (item: T | A) => AnyMetricPattern, getDestroyed: (item: T | A) => AnyMetricPattern }[]} windows
- * @param {(metric: string) => string} title
+ * @param {readonly { name: string, getCreated: (item: T | A) => AnySeriesPattern, getDestroyed: (item: T | A) => AnySeriesPattern }[]} windows
+ * @param {(name: string) => string} title
  * @param {string} [prefix]
  * @returns {PartialOptionsTree}
  */
@@ -688,7 +688,7 @@ function groupedRollingValueCharts(list, all, windows, title, prefix = "") {
         name: w.name,
         title: title(`${prefix}Value Created (${w.name})`),
         bottom: mapCohortsWithAll(list, all, (item) =>
-          line({ metric: w.getCreated(item), name: item.name, color: item.color, unit: Unit.usd }),
+          line({ series: w.getCreated(item), name: item.name, color: item.color, unit: Unit.usd }),
         ),
       })),
     },
@@ -698,7 +698,7 @@ function groupedRollingValueCharts(list, all, windows, title, prefix = "") {
         name: w.name,
         title: title(`${prefix}Value Destroyed (${w.name})`),
         bottom: mapCohortsWithAll(list, all, (item) =>
-          line({ metric: w.getDestroyed(item), name: item.name, color: item.color, unit: Unit.usd }),
+          line({ series: w.getDestroyed(item), name: item.name, color: item.color, unit: Unit.usd }),
         ),
       })),
     },
@@ -723,7 +723,7 @@ function valueWindows(list, all) {
 // ============================================================================
 
 /**
- * @param {{ list: readonly CohortFull[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly CohortFull[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
@@ -734,7 +734,7 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
         name: "Volume",
         title: title("Sent Volume"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ metric: tree.activity.sent.sum._24h, name, color, unit: Unit.sats }),
+          line({ series: tree.activity.sent.sum._24h, name, color, unit: Unit.sats }),
         ]),
       },
       {
@@ -793,10 +793,10 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
       {
         name: "Sell Side Risk",
         tree: [
-          { name: "24h", title: title("Sell Side Risk (24h)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sellSideRiskRatio._24h.ratio, name, color, unit: Unit.ratio })) },
-          { name: "7d", title: title("Sell Side Risk (7d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sellSideRiskRatio._1w.ratio, name, color, unit: Unit.ratio })) },
-          { name: "30d", title: title("Sell Side Risk (30d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sellSideRiskRatio._1m.ratio, name, color, unit: Unit.ratio })) },
-          { name: "1y", title: title("Sell Side Risk (1y)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sellSideRiskRatio._1y.ratio, name, color, unit: Unit.ratio })) },
+          { name: "24h", title: title("Sell Side Risk (24h)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sellSideRiskRatio._24h.ratio, name, color, unit: Unit.ratio })) },
+          { name: "7d", title: title("Sell Side Risk (7d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sellSideRiskRatio._1w.ratio, name, color, unit: Unit.ratio })) },
+          { name: "30d", title: title("Sell Side Risk (30d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sellSideRiskRatio._1m.ratio, name, color, unit: Unit.ratio })) },
+          { name: "1y", title: title("Sell Side Risk (1y)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sellSideRiskRatio._1y.ratio, name, color, unit: Unit.ratio })) },
         ],
       },
       {
@@ -805,12 +805,12 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
           {
             name: "Flows",
             tree: [
-              { name: "Distribution", title: title("Distribution Flow"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.profit.distributionFlow, name, color, unit: Unit.usd })) },
-              { name: "Capitulation", title: title("Capitulation Flow"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.loss.capitulationFlow, name, color, unit: Unit.usd })) },
+              { name: "Distribution", title: title("Distribution Flow"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.profit.distributionFlow, name, color, unit: Unit.usd })) },
+              { name: "Capitulation", title: title("Capitulation Flow"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.loss.capitulationFlow, name, color, unit: Unit.usd })) },
             ],
           },
-          { name: "Created", title: title("Value Created"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sopr.valueCreated.base, name, color, unit: Unit.usd })) },
-          { name: "Destroyed", title: title("Value Destroyed"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sopr.valueDestroyed.base, name, color, unit: Unit.usd })) },
+          { name: "Created", title: title("Value Created"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sopr.valueCreated.base, name, color, unit: Unit.usd })) },
+          { name: "Destroyed", title: title("Value Destroyed"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sopr.valueDestroyed.base, name, color, unit: Unit.usd })) },
           {
             name: "Rolling",
             tree: [
@@ -840,7 +840,7 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
         name: "Coins Destroyed",
         title: title("Coindays Destroyed"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ metric: tree.activity.coindaysDestroyed.sum._24h, name, color, unit: Unit.coindays }),
+          line({ series: tree.activity.coindaysDestroyed.sum._24h, name, color, unit: Unit.coindays }),
         ]),
       },
     ],
@@ -849,7 +849,7 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
 
 /**
  * Grouped activity for cohorts with rolling SOPR + sell side risk (LTH-like)
- * @param {{ list: readonly (CohortFull | CohortLongTerm)[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly (CohortFull | CohortLongTerm)[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedActivitySection({ list, all, title }) {
@@ -860,7 +860,7 @@ export function createGroupedActivitySection({ list, all, title }) {
         name: "Volume",
         title: title("Sent Volume"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ metric: tree.activity.sent.sum._24h, name, color, unit: Unit.sats }),
+          line({ series: tree.activity.sent.sum._24h, name, color, unit: Unit.sats }),
         ]),
       },
       {
@@ -889,10 +889,10 @@ export function createGroupedActivitySection({ list, all, title }) {
       {
         name: "Sell Side Risk",
         tree: [
-          { name: "24h", title: title("Sell Side Risk (24h)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sellSideRiskRatio._24h.ratio, name, color, unit: Unit.ratio })) },
-          { name: "7d", title: title("Sell Side Risk (7d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sellSideRiskRatio._1w.ratio, name, color, unit: Unit.ratio })) },
-          { name: "30d", title: title("Sell Side Risk (30d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sellSideRiskRatio._1m.ratio, name, color, unit: Unit.ratio })) },
-          { name: "1y", title: title("Sell Side Risk (1y)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sellSideRiskRatio._1y.ratio, name, color, unit: Unit.ratio })) },
+          { name: "24h", title: title("Sell Side Risk (24h)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sellSideRiskRatio._24h.ratio, name, color, unit: Unit.ratio })) },
+          { name: "7d", title: title("Sell Side Risk (7d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sellSideRiskRatio._1w.ratio, name, color, unit: Unit.ratio })) },
+          { name: "30d", title: title("Sell Side Risk (30d)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sellSideRiskRatio._1m.ratio, name, color, unit: Unit.ratio })) },
+          { name: "1y", title: title("Sell Side Risk (1y)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sellSideRiskRatio._1y.ratio, name, color, unit: Unit.ratio })) },
         ],
       },
       {
@@ -901,12 +901,12 @@ export function createGroupedActivitySection({ list, all, title }) {
           {
             name: "Flows",
             tree: [
-              { name: "Distribution", title: title("Distribution Flow"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.profit.distributionFlow, name, color, unit: Unit.usd })) },
-              { name: "Capitulation", title: title("Capitulation Flow"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.loss.capitulationFlow, name, color, unit: Unit.usd })) },
+              { name: "Distribution", title: title("Distribution Flow"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.profit.distributionFlow, name, color, unit: Unit.usd })) },
+              { name: "Capitulation", title: title("Capitulation Flow"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.loss.capitulationFlow, name, color, unit: Unit.usd })) },
             ],
           },
-          { name: "Created", title: title("Value Created"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sopr.valueCreated.base, name, color, unit: Unit.usd })) },
-          { name: "Destroyed", title: title("Value Destroyed"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sopr.valueDestroyed.base, name, color, unit: Unit.usd })) },
+          { name: "Created", title: title("Value Created"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sopr.valueCreated.base, name, color, unit: Unit.usd })) },
+          { name: "Destroyed", title: title("Value Destroyed"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sopr.valueDestroyed.base, name, color, unit: Unit.usd })) },
           {
             name: "Rolling",
             tree: groupedRollingValueCharts(list, all, valueWindows(list, all), title),
@@ -917,7 +917,7 @@ export function createGroupedActivitySection({ list, all, title }) {
         name: "Coins Destroyed",
         title: title("Coindays Destroyed"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ metric: tree.activity.coindaysDestroyed.sum._24h, name, color, unit: Unit.coindays }),
+          line({ series: tree.activity.coindaysDestroyed.sum._24h, name, color, unit: Unit.coindays }),
         ]),
       },
     ],
@@ -926,7 +926,7 @@ export function createGroupedActivitySection({ list, all, title }) {
 
 /**
  * Grouped activity for cohorts with activity but basic realized (AgeRange/MaxAge)
- * @param {{ list: readonly (CohortAgeRange | CohortWithAdjusted)[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly (CohortAgeRange | CohortWithAdjusted)[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedActivitySectionWithActivity({ list, all, title }) {
@@ -937,28 +937,28 @@ export function createGroupedActivitySectionWithActivity({ list, all, title }) {
         name: "Volume",
         title: title("Sent Volume"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ metric: tree.activity.sent.sum._24h, name, color, unit: Unit.sats }),
+          line({ series: tree.activity.sent.sum._24h, name, color, unit: Unit.sats }),
         ]),
       },
       {
         name: "SOPR",
         title: title("SOPR (24h)"),
         bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-          baseline({ metric: tree.realized.sopr.ratio._24h, name, color, unit: Unit.ratio, base: 1 }),
+          baseline({ series: tree.realized.sopr.ratio._24h, name, color, unit: Unit.ratio, base: 1 }),
         ),
       },
       {
         name: "Value",
         tree: [
-          { name: "Created", title: title("Value Created"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sopr.valueCreated.base, name, color, unit: Unit.usd })) },
-          { name: "Destroyed", title: title("Value Destroyed"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sopr.valueDestroyed.base, name, color, unit: Unit.usd })) },
+          { name: "Created", title: title("Value Created"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sopr.valueCreated.base, name, color, unit: Unit.usd })) },
+          { name: "Destroyed", title: title("Value Destroyed"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sopr.valueDestroyed.base, name, color, unit: Unit.usd })) },
         ],
       },
       {
         name: "Coins Destroyed",
         title: title("Coindays Destroyed"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ metric: tree.activity.coindaysDestroyed.sum._24h, name, color, unit: Unit.coindays }),
+          line({ series: tree.activity.coindaysDestroyed.sum._24h, name, color, unit: Unit.coindays }),
         ]),
       },
     ],
@@ -967,15 +967,15 @@ export function createGroupedActivitySectionWithActivity({ list, all, title }) {
 
 /**
  * Grouped minimal activity (value only, no activity field)
- * @param {{ list: readonly (UtxoCohortObject | CohortWithoutRelative | CohortAddress | AddressCohortObject)[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly (UtxoCohortObject | CohortWithoutRelative | CohortAddress | AddressCohortObject)[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedActivitySectionMinimal({ list, all, title }) {
   return {
     name: "Activity",
     tree: [
-      { name: "Value Created", title: title("Value Created"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sopr.valueCreated.base, name, color, unit: Unit.usd })) },
-      { name: "Value Destroyed", title: title("Value Destroyed"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ metric: tree.realized.sopr.valueDestroyed.base, name, color, unit: Unit.usd })) },
+      { name: "Value Created", title: title("Value Created"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sopr.valueCreated.base, name, color, unit: Unit.usd })) },
+      { name: "Value Destroyed", title: title("Value Destroyed"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sopr.valueDestroyed.base, name, color, unit: Unit.usd })) },
     ],
   };
 }

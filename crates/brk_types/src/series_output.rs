@@ -1,8 +1,8 @@
 use crate::{Output, OutputLegacy, Version};
 
-/// Metric output with metadata for caching.
+/// Series output with metadata for caching.
 #[derive(Debug)]
-pub struct MetricOutput {
+pub struct SeriesOutput {
     pub output: Output,
     pub version: Version,
     pub total: usize,
@@ -10,9 +10,9 @@ pub struct MetricOutput {
     pub end: usize,
 }
 
-/// Deprecated: Legacy metric output with metadata for caching.
+/// Deprecated: Legacy series output with metadata for caching.
 #[derive(Debug)]
-pub struct MetricOutputLegacy {
+pub struct SeriesOutputLegacy {
     pub output: OutputLegacy,
     pub version: Version,
     pub total: usize,

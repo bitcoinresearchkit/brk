@@ -113,13 +113,13 @@ class BrkClientBase:
 
 
 def _m(acc: str, s: str) -> str:
-    """Build metric name with suffix."""
+    """Build series name with suffix."""
     if not s: return acc
     return f"{{acc}}_{{s}}" if acc else s
 
 
 def _p(prefix: str, acc: str) -> str:
-    """Build metric name with prefix."""
+    """Build series name with prefix."""
     return f"{{prefix}}_{{acc}}" if acc else prefix
 
 "#
@@ -127,7 +127,7 @@ def _p(prefix: str, acc: str) -> str:
     .unwrap();
 }
 
-/// Generate the MetricData and MetricEndpointBuilder classes
+/// Generate the SeriesData and SeriesEndpointBuilder classes
 pub fn generate_endpoint_class(output: &mut String) {
     writeln!(
         output,
@@ -216,8 +216,8 @@ def _date_to_index(index: str, d: Union[date, datetime]) -> int:
 
 
 @dataclass
-class MetricData(Generic[T]):
-    """Metric data with range information. Always int-indexed."""
+class SeriesData(Generic[T]):
+    """Series data with range information. Always int-indexed."""
     version: int
     index: Index
     type: str
@@ -229,7 +229,7 @@ class MetricData(Generic[T]):
 
     @property
     def is_date_based(self) -> bool:
-        """Whether this metric uses a date-based index."""
+        """Whether this series uses a date-based index."""
         return self.index in _DATE_INDEXES
 
     def indexes(self) -> List[int]:
@@ -273,8 +273,8 @@ class MetricData(Generic[T]):
 
 
 @dataclass
-class DateMetricData(MetricData[T]):
-    """Metric data with date-based index. Extends MetricData with date methods."""
+class DateSeriesData(SeriesData[T]):
+    """Series data with date-based index. Extends SeriesData with date methods."""
 
     def dates(self) -> List[Union[date, datetime]]:
         """Get dates for the index range. Returns datetime for sub-daily indexes, date for daily+."""
@@ -320,8 +320,8 @@ class DateMetricData(MetricData[T]):
 
 
 # Type aliases for non-generic usage
-AnyMetricData = MetricData[Any]
-AnyDateMetricData = DateMetricData[Any]
+AnySeriesData = SeriesData[Any]
+AnyDateSeriesData = DateSeriesData[Any]
 
 
 class _EndpointConfig:
@@ -341,7 +341,7 @@ class _EndpointConfig:
         self.end = end
 
     def path(self) -> str:
-        return f"/api/metric/{{self.name}}/{{self.index}}"
+        return f"/api/series/{{self.name}}/{{self.index}}"
 
     def _build_path(self, format: Optional[str] = None) -> str:
         params = []
@@ -358,11 +358,11 @@ class _EndpointConfig:
     def _new(self, start: Optional[int] = None, end: Optional[int] = None) -> _EndpointConfig:
         return _EndpointConfig(self.client, self.name, self.index, start, end)
 
-    def get_metric(self) -> MetricData[Any]:
-        return MetricData(**self.client.get_json(self._build_path()))
+    def get_series(self) -> SeriesData[Any]:
+        return SeriesData(**self.client.get_json(self._build_path()))
 
-    def get_date_metric(self) -> DateMetricData[Any]:
-        return DateMetricData(**self.client.get_json(self._build_path()))
+    def get_date_series(self) -> DateSeriesData[Any]:
+        return DateSeriesData(**self.client.get_json(self._build_path()))
 
     def get_csv(self) -> str:
         return self.client.get_text(self._build_path(format='csv'))
@@ -374,9 +374,9 @@ class RangeBuilder(Generic[T]):
     def __init__(self, config: _EndpointConfig):
         self._config = config
 
-    def fetch(self) -> MetricData[T]:
+    def fetch(self) -> SeriesData[T]:
         """Fetch the range as parsed JSON."""
-        return self._config.get_metric()
+        return self._config.get_series()
 
     def fetch_csv(self) -> str:
         """Fetch the range as CSV string."""
@@ -389,9 +389,9 @@ class SingleItemBuilder(Generic[T]):
     def __init__(self, config: _EndpointConfig):
         self._config = config
 
-    def fetch(self) -> MetricData[T]:
+    def fetch(self) -> SeriesData[T]:
         """Fetch the single item."""
-        return self._config.get_metric()
+        return self._config.get_series()
 
     def fetch_csv(self) -> str:
         """Fetch as CSV."""
@@ -409,9 +409,9 @@ class SkippedBuilder(Generic[T]):
         start = self._config.start or 0
         return RangeBuilder(self._config._new(start, start + n))
 
-    def fetch(self) -> MetricData[T]:
+    def fetch(self) -> SeriesData[T]:
         """Fetch from skipped position to end."""
-        return self._config.get_metric()
+        return self._config.get_series()
 
     def fetch_csv(self) -> str:
         """Fetch as CSV."""
@@ -419,28 +419,28 @@ class SkippedBuilder(Generic[T]):
 
 
 class DateRangeBuilder(RangeBuilder[T]):
-    """Range builder that returns DateMetricData."""
-    def fetch(self) -> DateMetricData[T]:
-        return self._config.get_date_metric()
+    """Range builder that returns DateSeriesData."""
+    def fetch(self) -> DateSeriesData[T]:
+        return self._config.get_date_series()
 
 
 class DateSingleItemBuilder(SingleItemBuilder[T]):
-    """Single item builder that returns DateMetricData."""
-    def fetch(self) -> DateMetricData[T]:
-        return self._config.get_date_metric()
+    """Single item builder that returns DateSeriesData."""
+    def fetch(self) -> DateSeriesData[T]:
+        return self._config.get_date_series()
 
 
 class DateSkippedBuilder(SkippedBuilder[T]):
-    """Skipped builder that returns DateMetricData."""
+    """Skipped builder that returns DateSeriesData."""
     def take(self, n: int) -> DateRangeBuilder[T]:
         start = self._config.start or 0
         return DateRangeBuilder(self._config._new(start, start + n))
-    def fetch(self) -> DateMetricData[T]:
-        return self._config.get_date_metric()
+    def fetch(self) -> DateSeriesData[T]:
+        return self._config.get_date_series()
 
 
-class MetricEndpointBuilder(Generic[T]):
-    """Builder for metric endpoint queries with int-based indexing.
+class SeriesEndpointBuilder(Generic[T]):
+    """Builder for series endpoint queries with int-based indexing.
 
     Examples:
         data = endpoint.fetch()
@@ -476,9 +476,9 @@ class MetricEndpointBuilder(Generic[T]):
         """Skip the first n items."""
         return SkippedBuilder(self._config._new(start=n))
 
-    def fetch(self) -> MetricData[T]:
+    def fetch(self) -> SeriesData[T]:
         """Fetch all data."""
-        return self._config.get_metric()
+        return self._config.get_series()
 
     def fetch_csv(self) -> str:
         """Fetch all data as CSV."""
@@ -489,10 +489,10 @@ class MetricEndpointBuilder(Generic[T]):
         return self._config.path()
 
 
-class DateMetricEndpointBuilder(Generic[T]):
-    """Builder for metric endpoint queries with date-based indexing.
+class DateSeriesEndpointBuilder(Generic[T]):
+    """Builder for series endpoint queries with date-based indexing.
 
-    Accepts dates in __getitem__ and returns DateMetricData from fetch().
+    Accepts dates in __getitem__ and returns DateSeriesData from fetch().
 
     Examples:
         data = endpoint.fetch()
@@ -539,9 +539,9 @@ class DateMetricEndpointBuilder(Generic[T]):
         """Skip the first n items."""
         return DateSkippedBuilder(self._config._new(start=n))
 
-    def fetch(self) -> DateMetricData[T]:
+    def fetch(self) -> DateSeriesData[T]:
         """Fetch all data."""
-        return self._config.get_date_metric()
+        return self._config.get_date_series()
 
     def fetch_csv(self) -> str:
         """Fetch all data as CSV."""
@@ -553,23 +553,23 @@ class DateMetricEndpointBuilder(Generic[T]):
 
 
 # Type aliases for non-generic usage
-AnyMetricEndpointBuilder = MetricEndpointBuilder[Any]
-AnyDateMetricEndpointBuilder = DateMetricEndpointBuilder[Any]
+AnySeriesEndpointBuilder = SeriesEndpointBuilder[Any]
+AnyDateSeriesEndpointBuilder = DateSeriesEndpointBuilder[Any]
 
 
-class MetricPattern(Protocol[T]):
-    """Protocol for metric patterns with different index sets."""
+class SeriesPattern(Protocol[T]):
+    """Protocol for series patterns with different index sets."""
 
     @property
     def name(self) -> str:
-        """Get the metric name."""
+        """Get the series name."""
         ...
 
     def indexes(self) -> List[str]:
-        """Get the list of available indexes for this metric."""
+        """Get the list of available indexes for this series."""
         ...
 
-    def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]:
+    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]:
         """Get an endpoint builder for a specific index, if supported."""
         ...
 
@@ -605,11 +605,11 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
     // Generate helper functions
     writeln!(
         output,
-        r#"def _ep(c: BrkClientBase, n: str, i: Index) -> MetricEndpointBuilder[Any]:
-    return MetricEndpointBuilder(c, n, i)
+        r#"def _ep(c: BrkClientBase, n: str, i: Index) -> SeriesEndpointBuilder[Any]:
+    return SeriesEndpointBuilder(c, n, i)
 
-def _dep(c: BrkClientBase, n: str, i: Index) -> DateMetricEndpointBuilder[Any]:
-    return DateMetricEndpointBuilder(c, n, i)
+def _dep(c: BrkClientBase, n: str, i: Index) -> DateSeriesEndpointBuilder[Any]:
+    return DateSeriesEndpointBuilder(c, n, i)
 "#
     )
     .unwrap();
@@ -631,9 +631,9 @@ def _dep(c: BrkClientBase, n: str, i: Index) -> DateMetricEndpointBuilder[Any]:
             let method_name = index_to_field_name(index);
             let index_name = index.name();
             let (builder_type, helper) = if index.is_date_based() {
-                ("DateMetricEndpointBuilder", "_dep")
+                ("DateSeriesEndpointBuilder", "_dep")
             } else {
-                ("MetricEndpointBuilder", "_ep")
+                ("SeriesEndpointBuilder", "_ep")
             };
             writeln!(
                 output,
@@ -663,7 +663,7 @@ def _dep(c: BrkClientBase, n: str, i: Index) -> DateMetricEndpointBuilder[Any]:
         .unwrap();
         writeln!(
             output,
-            "    def get(self, index: Index) -> Optional[MetricEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in {} else None",
+            "    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in {} else None",
             idx_var
         )
         .unwrap();
@@ -719,7 +719,7 @@ pub fn generate_structural_patterns(
         }
         writeln!(
             output,
-            "        \"\"\"Create pattern node with accumulated metric name.\"\"\""
+            "        \"\"\"Create pattern node with accumulated series name.\"\"\""
         )
         .unwrap();
 

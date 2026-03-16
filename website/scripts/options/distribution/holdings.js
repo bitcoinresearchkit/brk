@@ -3,7 +3,7 @@
  *
  * Supply pattern capabilities by cohort type:
  * - DeltaHalfInRelTotalPattern2 (STH/LTH): inProfit + inLoss + relToCirculating + relToOwn
- * - MetricsTree_Cohorts_Utxo_All_Supply (All): inProfit + inLoss + relToOwn (no relToCirculating)
+ * - SeriesTree_Cohorts_Utxo_All_Supply (All): inProfit + inLoss + relToOwn (no relToCirculating)
  * - DeltaHalfInRelTotalPattern (AgeRange/MaxAge/Epoch): inProfit + inLoss + relToCirculating (no relToOwn)
  * - DeltaHalfInTotalPattern2 (Type.*): inProfit + inLoss (no rel)
  * - DeltaHalfTotalPattern (Empty/UtxoAmount/AddrAmount): total + half only
@@ -74,40 +74,40 @@ function fullSupplySeries(supply) {
 
 /**
  * % of Own Supply series (profit/loss relative to own supply)
- * @param {{ inProfit: { relToOwn: { percent: AnyMetricPattern, ratio: AnyMetricPattern } }, inLoss: { relToOwn: { percent: AnyMetricPattern, ratio: AnyMetricPattern } } }} supply
+ * @param {{ inProfit: { relToOwn: { percent: AnySeriesPattern, ratio: AnySeriesPattern } }, inLoss: { relToOwn: { percent: AnySeriesPattern, ratio: AnySeriesPattern } } }} supply
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function ownSupplyPctSeries(supply) {
   return [
-    line({ metric: supply.inProfit.relToOwn.percent, name: "In Profit", color: colors.profit, unit: Unit.pctOwn }),
-    line({ metric: supply.inLoss.relToOwn.percent, name: "In Loss", color: colors.loss, unit: Unit.pctOwn }),
-    line({ metric: supply.inProfit.relToOwn.ratio, name: "In Profit", color: colors.profit, unit: Unit.ratio }),
-    line({ metric: supply.inLoss.relToOwn.ratio, name: "In Loss", color: colors.loss, unit: Unit.ratio }),
+    line({ series: supply.inProfit.relToOwn.percent, name: "In Profit", color: colors.profit, unit: Unit.pctOwn }),
+    line({ series: supply.inLoss.relToOwn.percent, name: "In Loss", color: colors.loss, unit: Unit.pctOwn }),
+    line({ series: supply.inProfit.relToOwn.ratio, name: "In Profit", color: colors.profit, unit: Unit.ratio }),
+    line({ series: supply.inLoss.relToOwn.ratio, name: "In Loss", color: colors.loss, unit: Unit.ratio }),
     ...priceLines({ numbers: [100, 50, 0], unit: Unit.pctOwn }),
   ];
 }
 
 /**
  * % of Circulating Supply series (total, profit, loss)
- * @param {{ relToCirculating: { percent: AnyMetricPattern }, inProfit: { relToCirculating: { percent: AnyMetricPattern } }, inLoss: { relToCirculating: { percent: AnyMetricPattern } } }} supply
+ * @param {{ relToCirculating: { percent: AnySeriesPattern }, inProfit: { relToCirculating: { percent: AnySeriesPattern } }, inLoss: { relToCirculating: { percent: AnySeriesPattern } } }} supply
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function circulatingSupplyPctSeries(supply) {
   return [
     line({
-      metric: supply.relToCirculating.percent,
+      series: supply.relToCirculating.percent,
       name: "Total",
       color: colors.default,
       unit: Unit.pctSupply,
     }),
     line({
-      metric: supply.inProfit.relToCirculating.percent,
+      series: supply.inProfit.relToCirculating.percent,
       name: "In Profit",
       color: colors.profit,
       unit: Unit.pctSupply,
     }),
     line({
-      metric: supply.inLoss.relToCirculating.percent,
+      series: supply.inLoss.relToCirculating.percent,
       name: "In Loss",
       color: colors.loss,
       unit: Unit.pctSupply,
@@ -117,25 +117,25 @@ function circulatingSupplyPctSeries(supply) {
 
 /**
  * Ratio of Circulating Supply series (total, profit, loss)
- * @param {{ relToCirculating: { ratio: AnyMetricPattern }, inProfit: { relToCirculating: { ratio: AnyMetricPattern } }, inLoss: { relToCirculating: { ratio: AnyMetricPattern } } }} supply
+ * @param {{ relToCirculating: { ratio: AnySeriesPattern }, inProfit: { relToCirculating: { ratio: AnySeriesPattern } }, inLoss: { relToCirculating: { ratio: AnySeriesPattern } } }} supply
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function circulatingSupplyRatioSeries(supply) {
   return [
     line({
-      metric: supply.relToCirculating.ratio,
+      series: supply.relToCirculating.ratio,
       name: "Total",
       color: colors.default,
       unit: Unit.ratio,
     }),
     line({
-      metric: supply.inProfit.relToCirculating.ratio,
+      series: supply.inProfit.relToCirculating.ratio,
       name: "In Profit",
       color: colors.profit,
       unit: Unit.ratio,
     }),
     line({
-      metric: supply.inLoss.relToCirculating.ratio,
+      series: supply.inLoss.relToCirculating.ratio,
       name: "In Loss",
       color: colors.loss,
       unit: Unit.ratio,
@@ -146,7 +146,7 @@ function circulatingSupplyRatioSeries(supply) {
 /**
  * @param {readonly (UtxoCohortObject | CohortWithoutRelative)[]} list
  * @param {CohortAll} all
- * @param {(metric: string) => string} title
+ * @param {(name: string) => string} title
  */
 function groupedUtxoCountChart(list, all, title) {
   return {
@@ -154,7 +154,7 @@ function groupedUtxoCountChart(list, all, title) {
     title: title("UTXO Count"),
     bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
       line({
-        metric: tree.outputs.unspentCount.inner,
+        series: tree.outputs.unspentCount.inner,
         name,
         color,
         unit: Unit.count,
@@ -164,9 +164,9 @@ function groupedUtxoCountChart(list, all, title) {
 }
 
 /**
- * @param {{ absolute: { _24h: AnyMetricPattern, _1w: AnyMetricPattern, _1m: AnyMetricPattern, _1y: AnyMetricPattern }, rate: { _24h: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, _1w: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, _1m: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, _1y: { percent: AnyMetricPattern, ratio: AnyMetricPattern } } }} delta
+ * @param {{ absolute: { _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }, rate: { _24h: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1w: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1m: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1y: { percent: AnySeriesPattern, ratio: AnySeriesPattern } } }} delta
  * @param {Unit} unit
- * @param {(metric: string) => string} title
+ * @param {(name: string) => string} title
  * @param {string} name
  * @returns {PartialOptionsGroup}
  */
@@ -187,7 +187,7 @@ function singleDeltaTree(delta, unit, title, name) {
  * @param {A} all
  * @param {(c: T | A) => DeltaPattern} getDelta
  * @param {Unit} unit
- * @param {(metric: string) => string} title
+ * @param {(name: string) => string} title
  * @param {string} name
  * @returns {PartialOptionsGroup}
  */
@@ -201,7 +201,7 @@ function groupedDeltaTree(list, all, getDelta, unit, title, name) {
           name: w.name,
           title: title(`${name} Change (${w.name})`),
           bottom: mapCohortsWithAll(list, all, (c) =>
-            baseline({ metric: getDelta(c).absolute[w.key], name: c.name, color: c.color, unit }),
+            baseline({ series: getDelta(c).absolute[w.key], name: c.name, color: c.color, unit }),
           ),
         })),
       },
@@ -221,7 +221,7 @@ function groupedDeltaTree(list, all, getDelta, unit, title, name) {
 
 /**
  * @param {UtxoCohortObject | CohortWithoutRelative} cohort
- * @param {(metric: string) => string} title
+ * @param {(name: string) => string} title
  * @returns {PartialChartOption}
  */
 function singleUtxoCountChart(cohort, title) {
@@ -230,7 +230,7 @@ function singleUtxoCountChart(cohort, title) {
     title: title("UTXO Count"),
     bottom: [
       line({
-        metric: cohort.tree.outputs.unspentCount.inner,
+        series: cohort.tree.outputs.unspentCount.inner,
         name: "UTXO Count",
         color: cohort.color,
         unit: Unit.count,
@@ -242,7 +242,7 @@ function singleUtxoCountChart(cohort, title) {
 
 /**
  * @param {CohortAll | CohortAddress | AddressCohortObject} cohort
- * @param {(metric: string) => string} title
+ * @param {(name: string) => string} title
  * @returns {PartialChartOption}
  */
 function singleAddressCountChart(cohort, title) {
@@ -251,7 +251,7 @@ function singleAddressCountChart(cohort, title) {
     title: title("Address Count"),
     bottom: [
       line({
-        metric: cohort.addressCount.inner,
+        series: cohort.addressCount.inner,
         name: "Address Count",
         color: cohort.color,
         unit: Unit.count,
@@ -268,7 +268,7 @@ function singleAddressCountChart(cohort, title) {
 /**
  * Basic holdings (total + half only, no supply breakdown)
  * For: CohortWithoutRelative, CohortBasicWithMarketCap, CohortBasicWithoutMarketCap
- * @param {{ cohort: UtxoCohortObject | CohortWithoutRelative, title: (metric: string) => string }} args
+ * @param {{ cohort: UtxoCohortObject | CohortWithoutRelative, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createHoldingsSection({ cohort, title }) {
@@ -294,7 +294,7 @@ export function createHoldingsSection({ cohort, title }) {
 
 /**
  * Holdings for CohortAll (has inProfit/inLoss with relToOwn but no relToCirculating)
- * @param {{ cohort: CohortAll, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createHoldingsSectionAll({ cohort, title }) {
@@ -325,9 +325,9 @@ export function createHoldingsSectionAll({ cohort, title }) {
 }
 
 /**
- * Holdings with full relative metrics (relToCirculating + relToOwn)
+ * Holdings with full relative series (relToCirculating + relToOwn)
  * For: CohortFull, CohortLongTerm (have DeltaHalfInRelTotalPattern2)
- * @param {{ cohort: CohortFull | CohortLongTerm, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortFull | CohortLongTerm, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createHoldingsSectionWithRelative({ cohort, title }) {
@@ -369,7 +369,7 @@ export function createHoldingsSectionWithRelative({ cohort, title }) {
 /**
  * Holdings with inProfit/inLoss + relToCirculating (no relToOwn)
  * For: CohortWithAdjusted, CohortAgeRange (have DeltaHalfInRelTotalPattern)
- * @param {{ cohort: CohortWithAdjusted | CohortAgeRange, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortWithAdjusted | CohortAgeRange, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createHoldingsSectionWithOwnSupply({ cohort, title }) {
@@ -410,7 +410,7 @@ export function createHoldingsSectionWithOwnSupply({ cohort, title }) {
 /**
  * Holdings with inProfit/inLoss (no rel, no address count)
  * For: CohortWithoutRelative (p2ms, unknown, empty)
- * @param {{ cohort: CohortWithoutRelative, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortWithoutRelative, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createHoldingsSectionWithProfitLoss({ cohort, title }) {
@@ -436,7 +436,7 @@ export function createHoldingsSectionWithProfitLoss({ cohort, title }) {
 
 /**
  * Holdings for CohortAddress (has inProfit/inLoss but no rel, plus address count)
- * @param {{ cohort: CohortAddress, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortAddress, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createHoldingsSectionAddress({ cohort, title }) {
@@ -464,7 +464,7 @@ export function createHoldingsSectionAddress({ cohort, title }) {
 
 /**
  * Holdings for address amount cohorts (no inProfit/inLoss, has address count)
- * @param {{ cohort: AddressCohortObject, title: (metric: string) => string }} args
+ * @param {{ cohort: AddressCohortObject, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createHoldingsSectionAddressAmount({ cohort, title }) {
@@ -495,7 +495,7 @@ export function createHoldingsSectionAddressAmount({ cohort, title }) {
 // ============================================================================
 
 /**
- * @param {{ list: readonly CohortAddress[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly CohortAddress[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedHoldingsSectionAddress({ list, all, title }) {
@@ -541,7 +541,7 @@ export function createGroupedHoldingsSectionAddress({ list, all, title }) {
         name: "Address Count",
         title: title("Address Count"),
         bottom: mapCohortsWithAll(list, all, ({ name, color, addressCount }) =>
-          line({ metric: addressCount.inner, name, color, unit: Unit.count }),
+          line({ series: addressCount.inner, name, color, unit: Unit.count }),
         ),
       },
       {
@@ -558,7 +558,7 @@ export function createGroupedHoldingsSectionAddress({ list, all, title }) {
 
 /**
  * Grouped holdings for address amount cohorts (no inProfit/inLoss, has address count)
- * @param {{ list: readonly AddressCohortObject[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly AddressCohortObject[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedHoldingsSectionAddressAmount({
@@ -586,7 +586,7 @@ export function createGroupedHoldingsSectionAddressAmount({
         name: "Address Count",
         title: title("Address Count"),
         bottom: mapCohortsWithAll(list, all, ({ name, color, addressCount }) =>
-          line({ metric: addressCount.inner, name, color, unit: Unit.count }),
+          line({ series: addressCount.inner, name, color, unit: Unit.count }),
         ),
       },
       {
@@ -603,7 +603,7 @@ export function createGroupedHoldingsSectionAddressAmount({
 
 /**
  * Basic grouped holdings (total + half only)
- * @param {{ list: readonly (UtxoCohortObject | CohortWithoutRelative)[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly (UtxoCohortObject | CohortWithoutRelative)[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedHoldingsSection({ list, all, title }) {
@@ -637,7 +637,7 @@ export function createGroupedHoldingsSection({ list, all, title }) {
 /**
  * Grouped holdings with inProfit/inLoss (no rel, no address count)
  * For: CohortWithoutRelative (p2ms, unknown, empty)
- * @param {{ list: readonly CohortWithoutRelative[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly CohortWithoutRelative[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedHoldingsSectionWithProfitLoss({
@@ -697,7 +697,7 @@ export function createGroupedHoldingsSectionWithProfitLoss({
 /**
  * Grouped holdings with inProfit/inLoss + relToCirculating (no relToOwn)
  * For: CohortWithAdjusted, CohortAgeRange
- * @param {{ list: readonly (CohortWithAdjusted | CohortAgeRange)[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly (CohortWithAdjusted | CohortAgeRange)[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedHoldingsSectionWithOwnSupply({
@@ -720,7 +720,7 @@ export function createGroupedHoldingsSectionWithOwnSupply({
               ),
               ...mapCohorts(list, ({ name, color, tree }) =>
                 line({
-                  metric: tree.supply.relToCirculating.percent,
+                  series: tree.supply.relToCirculating.percent,
                   name,
                   color,
                   unit: Unit.pctSupply,
@@ -741,7 +741,7 @@ export function createGroupedHoldingsSectionWithOwnSupply({
               ),
               ...mapCohorts(list, ({ name, color, tree }) =>
                 line({
-                  metric: tree.supply.inProfit.relToCirculating.percent,
+                  series: tree.supply.inProfit.relToCirculating.percent,
                   name,
                   color,
                   unit: Unit.pctSupply,
@@ -762,7 +762,7 @@ export function createGroupedHoldingsSectionWithOwnSupply({
               ),
               ...mapCohorts(list, ({ name, color, tree }) =>
                 line({
-                  metric: tree.supply.inLoss.relToCirculating.percent,
+                  series: tree.supply.inLoss.relToCirculating.percent,
                   name,
                   color,
                   unit: Unit.pctSupply,
@@ -785,9 +785,9 @@ export function createGroupedHoldingsSectionWithOwnSupply({
 }
 
 /**
- * Grouped holdings with full relative metrics (relToCirculating + relToOwn)
+ * Grouped holdings with full relative series (relToCirculating + relToOwn)
  * For: CohortFull, CohortLongTerm
- * @param {{ list: readonly (CohortFull | CohortLongTerm)[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly (CohortFull | CohortLongTerm)[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedHoldingsSectionWithRelative({ list, all, title }) {
@@ -806,7 +806,7 @@ export function createGroupedHoldingsSectionWithRelative({ list, all, title }) {
               ),
               ...mapCohorts(list, ({ name, color, tree }) =>
                 line({
-                  metric: tree.supply.relToCirculating.percent,
+                  series: tree.supply.relToCirculating.percent,
                   name,
                   color,
                   unit: Unit.pctSupply,
@@ -827,7 +827,7 @@ export function createGroupedHoldingsSectionWithRelative({ list, all, title }) {
               ),
               ...mapCohorts(list, ({ name, color, tree }) =>
                 line({
-                  metric: tree.supply.inProfit.relToCirculating.percent,
+                  series: tree.supply.inProfit.relToCirculating.percent,
                   name,
                   color,
                   unit: Unit.pctSupply,
@@ -835,7 +835,7 @@ export function createGroupedHoldingsSectionWithRelative({ list, all, title }) {
               ),
               ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
                 line({
-                  metric: tree.supply.inProfit.relToOwn.percent,
+                  series: tree.supply.inProfit.relToOwn.percent,
                   name,
                   color,
                   unit: Unit.pctOwn,
@@ -857,7 +857,7 @@ export function createGroupedHoldingsSectionWithRelative({ list, all, title }) {
               ),
               ...mapCohorts(list, ({ name, color, tree }) =>
                 line({
-                  metric: tree.supply.inLoss.relToCirculating.percent,
+                  series: tree.supply.inLoss.relToCirculating.percent,
                   name,
                   color,
                   unit: Unit.pctSupply,
@@ -865,7 +865,7 @@ export function createGroupedHoldingsSectionWithRelative({ list, all, title }) {
               ),
               ...mapCohortsWithAll(list, all, ({ name, color, tree }) =>
                 line({
-                  metric: tree.supply.inLoss.relToOwn.percent,
+                  series: tree.supply.inLoss.relToOwn.percent,
                   name,
                   color,
                   unit: Unit.pctOwn,

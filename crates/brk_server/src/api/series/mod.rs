@@ -10,24 +10,23 @@ use axum::{
 use brk_traversable::TreeNode;
 use brk_types::{
     CostBasisCohortParam, CostBasisFormatted, CostBasisParams, CostBasisQuery, DataRangeFormat,
-    Date, Index, IndexInfo, Metric, MetricCount, MetricData, MetricInfo, MetricParam,
-    MetricSelection, MetricSelectionLegacy, MetricWithIndex, Metrics, PaginatedMetrics, Pagination,
-    SearchQuery,
+    Date, IndexInfo, PaginatedSeries, Pagination, SearchQuery, SeriesCount, SeriesData,
+    SeriesInfo, SeriesParam, SeriesSelection, SeriesWithIndex,
 };
 
-use crate::{CacheStrategy, Error, extended::TransformResponseExtended};
+use crate::{CacheStrategy, extended::TransformResponseExtended};
 
 use super::AppState;
 
 mod bulk;
 mod data;
-mod legacy;
+pub mod legacy;
 
 /// Maximum allowed request weight in bytes (650KB)
 const MAX_WEIGHT: usize = 65 * 10_000;
 /// Maximum allowed request weight for localhost (50MB)
 const MAX_WEIGHT_LOCALHOST: usize = 50 * 1_000_000;
-/// Cache control header for metric data responses
+/// Cache control header for series data responses
 const CACHE_CONTROL: &str = "public, max-age=1, must-revalidate";
 
 /// Returns the max weight for a request based on the client address.
@@ -40,51 +39,51 @@ fn max_weight(addr: &SocketAddr) -> usize {
     }
 }
 
-pub trait ApiMetricsRoutes {
-    fn add_metrics_routes(self) -> Self;
+pub trait ApiSeriesRoutes {
+    fn add_series_routes(self) -> Self;
 }
 
-impl ApiMetricsRoutes for ApiRouter<AppState> {
-    fn add_metrics_routes(self) -> Self {
+impl ApiSeriesRoutes for ApiRouter<AppState> {
+    fn add_series_routes(self) -> Self {
         self.api_route(
-            "/api/metrics",
+            "/api/series",
             get_with(
                 async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::Static, &uri, |q| Ok(q.metrics_catalog().clone())).await
+                    state.cached_json(&headers, CacheStrategy::Static, &uri, |q| Ok(q.series_catalog().clone())).await
                 },
                 |op| op
-                    .id("get_metrics_tree")
-                    .metrics_tag()
-                    .summary("Metrics catalog")
+                    .id("get_series_tree")
+                    .series_tag()
+                    .summary("Series catalog")
                     .description(
-                        "Returns the complete hierarchical catalog of available metrics organized as a tree structure. \
-                        Metrics are grouped by categories and subcategories."
+                        "Returns the complete hierarchical catalog of available series organized as a tree structure. \
+                        Series are grouped by categories and subcategories."
                     )
                     .ok_response::<TreeNode>()
                     .not_modified(),
             ),
         )
         .api_route(
-            "/api/metrics/count",
+            "/api/series/count",
             get_with(
                 async |
                     uri: Uri,
                     headers: HeaderMap,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, &uri, |q| Ok(q.metric_count())).await
+                    state.cached_json(&headers, CacheStrategy::Static, &uri, |q| Ok(q.series_count())).await
                 },
                 |op| op
-                    .id("get_metrics_count")
-                    .metrics_tag()
-                    .summary("Metric count")
-                    .description("Returns the number of metrics available per index type.")
-                    .ok_response::<Vec<MetricCount>>()
+                    .id("get_series_count")
+                    .series_tag()
+                    .summary("Series count")
+                    .description("Returns the number of series available per index type.")
+                    .ok_response::<Vec<SeriesCount>>()
                     .not_modified(),
             ),
         )
         .api_route(
-            "/api/metrics/indexes",
+            "/api/series/indexes",
             get_with(
                 async |
                     uri: Uri,
@@ -95,17 +94,17 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                 },
                 |op| op
                     .id("get_indexes")
-                    .metrics_tag()
+                    .series_tag()
                     .summary("List available indexes")
                     .description(
-                        "Returns all available indexes with their accepted query aliases. Use any alias when querying metrics."
+                        "Returns all available indexes with their accepted query aliases. Use any alias when querying series."
                     )
                     .ok_response::<Vec<IndexInfo>>()
                     .not_modified(),
             ),
         )
         .api_route(
-            "/api/metrics/list",
+            "/api/series/list",
             get_with(
                 async |
                     uri: Uri,
@@ -113,19 +112,19 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     State(state): State<AppState>,
                     Query(pagination): Query<Pagination>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| Ok(q.metrics(pagination))).await
+                    state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| Ok(q.series_list(pagination))).await
                 },
                 |op| op
-                    .id("list_metrics")
-                    .metrics_tag()
-                    .summary("Metrics list")
-                    .description("Paginated flat list of all available metric names. Use `page` query param for pagination.")
-                    .ok_response::<PaginatedMetrics>()
+                    .id("list_series")
+                    .series_tag()
+                    .summary("Series list")
+                    .description("Paginated flat list of all available series names. Use `page` query param for pagination.")
+                    .ok_response::<PaginatedSeries>()
                     .not_modified(),
             ),
         )
         .api_route(
-            "/api/metrics/search",
+            "/api/series/search",
             get_with(
                 async |
                     uri: Uri,
@@ -133,104 +132,104 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                     State(state): State<AppState>,
                     Query(query): Query<SearchQuery>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| Ok(q.search_metrics(&query))).await
+                    state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| Ok(q.search_series(&query))).await
                 },
                 |op| op
-                    .id("search_metrics")
-                    .metrics_tag()
-                    .summary("Search metrics")
-                    .description("Fuzzy search for metrics by name. Supports partial matches and typos.")
-                    .ok_response::<Vec<Metric>>()
+                    .id("search_series")
+                    .series_tag()
+                    .summary("Search series")
+                    .description("Fuzzy search for series by name. Supports partial matches and typos.")
+                    .ok_response::<Vec<&str>>()
                     .not_modified()
                     .server_error(),
             ),
         )
         .api_route(
-            "/api/metric/{metric}",
+            "/api/series/{series}",
             get_with(
                 async |
                     uri: Uri,
                     headers: HeaderMap,
                     State(state): State<AppState>,
-                    Path(path): Path<MetricParam>
+                    Path(path): Path<SeriesParam>
                 | {
                     state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| {
-                        q.metric_info(&path.metric).ok_or_else(|| q.metric_not_found_error(&path.metric))
+                        q.series_info(&path.series).ok_or_else(|| q.series_not_found_error(&path.series))
                     }).await
                 },
                 |op| op
-                    .id("get_metric_info")
-                    .metrics_tag()
-                    .summary("Get metric info")
+                    .id("get_series_info")
+                    .series_tag()
+                    .summary("Get series info")
                     .description(
-                        "Returns the supported indexes and value type for the specified metric."
+                        "Returns the supported indexes and value type for the specified series."
                     )
-                    .ok_response::<MetricInfo>()
+                    .ok_response::<SeriesInfo>()
                     .not_modified()
                     .not_found()
                     .server_error(),
             ),
         )
         .api_route(
-            "/api/metric/{metric}/{index}",
+            "/api/series/{series}/{index}",
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
                        addr: Extension<SocketAddr>,
                        state: State<AppState>,
-                       Path(path): Path<MetricWithIndex>,
+                       Path(path): Path<SeriesWithIndex>,
                        Query(range): Query<DataRangeFormat>|
                        -> Response {
                     data::handler(
                         uri,
                         headers,
                         addr,
-                        Query(MetricSelection::from((path.index, path.metric, range))),
+                        Query(SeriesSelection::from((path.index, path.series, range))),
                         state,
                     )
                     .await
                     .into_response()
                 },
                 |op| op
-                    .id("get_metric")
-                    .metrics_tag()
-                    .summary("Get metric data")
+                    .id("get_series")
+                    .series_tag()
+                    .summary("Get series data")
                     .description(
-                        "Fetch data for a specific metric at the given index. \
+                        "Fetch data for a specific series at the given index. \
                         Use query parameters to filter by date range and format (json/csv)."
                     )
-                    .ok_response::<MetricData>()
+                    .ok_response::<SeriesData>()
                     .csv_response()
                     .not_modified()
                     .not_found(),
             ),
         )
         .api_route(
-            "/api/metric/{metric}/{index}/data",
+            "/api/series/{series}/{index}/data",
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
                        addr: Extension<SocketAddr>,
                        state: State<AppState>,
-                       Path(path): Path<MetricWithIndex>,
+                       Path(path): Path<SeriesWithIndex>,
                        Query(range): Query<DataRangeFormat>|
                        -> Response {
                     data::raw_handler(
                         uri,
                         headers,
                         addr,
-                        Query(MetricSelection::from((path.index, path.metric, range))),
+                        Query(SeriesSelection::from((path.index, path.series, range))),
                         state,
                     )
                     .await
                     .into_response()
                 },
                 |op| op
-                    .id("get_metric_data")
-                    .metrics_tag()
-                    .summary("Get raw metric data")
+                    .id("get_series_data")
+                    .series_tag()
+                    .summary("Get raw series data")
                     .description(
-                        "Returns just the data array without the MetricData wrapper. \
+                        "Returns just the data array without the SeriesData wrapper. \
                         Supports the same range and format parameters as the standard endpoint."
                     )
                     .ok_response::<Vec<serde_json::Value>>()
@@ -240,95 +239,95 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/metric/{metric}/{index}/latest",
+            "/api/series/{series}/{index}/latest",
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
                        State(state): State<AppState>,
-                       Path(path): Path<MetricWithIndex>| {
+                       Path(path): Path<SeriesWithIndex>| {
                     state
                         .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
-                            q.latest(&path.metric, path.index)
+                            q.latest(&path.series, path.index)
                         })
                         .await
                 },
                 |op| op
-                    .id("get_metric_latest")
-                    .metrics_tag()
-                    .summary("Get latest metric value")
+                    .id("get_series_latest")
+                    .series_tag()
+                    .summary("Get latest series value")
                     .description(
-                        "Returns the single most recent value for a metric, unwrapped (not inside a MetricData object)."
+                        "Returns the single most recent value for a series, unwrapped (not inside a SeriesData object)."
                     )
                     .ok_response::<serde_json::Value>()
                     .not_found(),
             ),
         )
         .api_route(
-            "/api/metric/{metric}/{index}/len",
+            "/api/series/{series}/{index}/len",
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
                        State(state): State<AppState>,
-                       Path(path): Path<MetricWithIndex>| {
+                       Path(path): Path<SeriesWithIndex>| {
                     state
                         .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
-                            q.len(&path.metric, path.index)
+                            q.len(&path.series, path.index)
                         })
                         .await
                 },
                 |op| op
-                    .id("get_metric_len")
-                    .metrics_tag()
-                    .summary("Get metric data length")
-                    .description("Returns the total number of data points for a metric at the given index.")
+                    .id("get_series_len")
+                    .series_tag()
+                    .summary("Get series data length")
+                    .description("Returns the total number of data points for a series at the given index.")
                     .ok_response::<usize>()
                     .not_found(),
             ),
         )
         .api_route(
-            "/api/metric/{metric}/{index}/version",
+            "/api/series/{series}/{index}/version",
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
                        State(state): State<AppState>,
-                       Path(path): Path<MetricWithIndex>| {
+                       Path(path): Path<SeriesWithIndex>| {
                     state
                         .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
-                            q.version(&path.metric, path.index)
+                            q.version(&path.series, path.index)
                         })
                         .await
                 },
                 |op| op
-                    .id("get_metric_version")
-                    .metrics_tag()
-                    .summary("Get metric version")
-                    .description("Returns the current version of a metric. Changes when the metric data is updated.")
+                    .id("get_series_version")
+                    .series_tag()
+                    .summary("Get series version")
+                    .description("Returns the current version of a series. Changes when the series data is updated.")
                     .ok_response::<brk_types::Version>()
                     .not_found(),
             ),
         )
         .api_route(
-            "/api/metrics/bulk",
+            "/api/series/bulk",
             get_with(
                 |uri, headers, addr, query, state| async move {
                     bulk::handler(uri, headers, addr, query, state).await.into_response()
                 },
                 |op| op
-                    .id("get_metrics")
-                    .metrics_tag()
-                    .summary("Bulk metric data")
+                    .id("get_series_bulk")
+                    .series_tag()
+                    .summary("Bulk series data")
                     .description(
-                        "Fetch multiple metrics in a single request. Supports filtering by index and date range. \
-                        Returns an array of MetricData objects. For a single metric, use `get_metric` instead."
+                        "Fetch multiple series in a single request. Supports filtering by index and date range. \
+                        Returns an array of SeriesData objects. For a single series, use `get_series` instead."
                     )
-                    .ok_response::<Vec<MetricData>>()
+                    .ok_response::<Vec<SeriesData>>()
                     .csv_response()
                     .not_modified(),
             ),
         )
         // Cost basis distribution endpoints
         .api_route(
-            "/api/metrics/cost-basis",
+            "/api/series/cost-basis",
             get_with(
                 async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
                     state
@@ -337,7 +336,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                 },
                 |op| {
                     op.id("get_cost_basis_cohorts")
-                        .metrics_tag()
+                        .series_tag()
                         .summary("Available cost basis cohorts")
                         .description("List available cohorts for cost basis distribution.")
                         .ok_response::<Vec<String>>()
@@ -346,7 +345,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/metrics/cost-basis/{cohort}/dates",
+            "/api/series/cost-basis/{cohort}/dates",
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
@@ -360,7 +359,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                 },
                 |op| {
                     op.id("get_cost_basis_dates")
-                        .metrics_tag()
+                        .series_tag()
                         .summary("Available cost basis dates")
                         .description("List available dates for a cohort's cost basis distribution.")
                         .ok_response::<Vec<Date>>()
@@ -370,7 +369,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/metrics/cost-basis/{cohort}/{date}",
+            "/api/series/cost-basis/{cohort}/{date}",
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
@@ -390,7 +389,7 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                 },
                 |op| {
                     op.id("get_cost_basis")
-                        .metrics_tag()
+                        .series_tag()
                         .summary("Cost basis distribution")
                         .description(
                             "Get the cost basis distribution for a cohort on a specific date.\n\n\
@@ -402,78 +401,6 @@ impl ApiMetricsRoutes for ApiRouter<AppState> {
                         .not_found()
                         .server_error()
                 },
-            ),
-        )
-        // Deprecated endpoints
-        .api_route(
-            "/api/vecs/{variant}",
-            get_with(
-                async |uri: Uri,
-                       headers: HeaderMap,
-                       addr: Extension<SocketAddr>,
-                       Path(variant): Path<String>,
-                       Query(range): Query<DataRangeFormat>,
-                       state: State<AppState>|
-                       -> Response {
-                    let separator = "_to_";
-                    let variant = variant.replace("-", "_");
-                    let mut split = variant.split(separator);
-
-                    let ser_index = split.next().unwrap();
-                    let Ok(index) = Index::try_from(ser_index) else {
-                        return Error::not_found(
-                            format!("Index '{ser_index}' doesn't exist")
-                        ).into_response();
-                    };
-
-                    let params = MetricSelection::from((
-                        index,
-                        Metrics::from(split.collect::<Vec<_>>().join(separator)),
-                        range,
-                    ));
-                    legacy::handler(uri, headers, addr, Query(params), state)
-                        .await
-                        .into_response()
-                },
-                |op| op
-                    .metrics_tag()
-                    .summary("Legacy variant endpoint")
-                    .description(
-                        "**DEPRECATED** - Use `/api/metric/{metric}/{index}` instead.\n\n\
-                        Sunset date: 2027-01-01. May be removed earlier in case of abuse.\n\n\
-                        Legacy endpoint for querying metrics by variant path (e.g., `day1_to_price`). \
-                        Returns raw data without the MetricData wrapper."
-                    )
-                    .deprecated()
-                    .ok_response::<serde_json::Value>()
-                    .not_modified(),
-            ),
-        )
-        .api_route(
-            "/api/vecs/query",
-            get_with(
-                async |uri: Uri,
-                       headers: HeaderMap,
-                       addr: Extension<SocketAddr>,
-                       Query(params): Query<MetricSelectionLegacy>,
-                       state: State<AppState>|
-                       -> Response {
-                    let params: MetricSelection = params.into();
-                    legacy::handler(uri, headers, addr, Query(params), state)
-                        .await
-                        .into_response()
-                },
-                |op| op
-                    .metrics_tag()
-                    .summary("Legacy query endpoint")
-                    .description(
-                        "**DEPRECATED** - Use `/api/metric/{metric}/{index}` or `/api/metrics/bulk` instead.\n\n\
-                        Sunset date: 2027-01-01. May be removed earlier in case of abuse.\n\n\
-                        Legacy endpoint for querying metrics. Returns raw data without the MetricData wrapper."
-                    )
-                    .deprecated()
-                    .ok_response::<serde_json::Value>()
-                    .not_modified(),
             ),
         )
     }

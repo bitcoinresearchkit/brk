@@ -52,13 +52,13 @@ impl RatioPerBlock<BasisPoints32> {
         &mut self,
         starting_indexes: &Indexes,
         close_price: &impl ReadableVec<Height, Cents>,
-        metric_price: &impl ReadableVec<Height, Cents>,
+        series_price: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
         self.bps.height.compute_transform2(
             starting_indexes.height,
             close_price,
-            metric_price,
+            series_price,
             |(i, close, price, ..)| {
                 if price == Cents::ZERO {
                     (i, BasisPoints32::from(1.0))

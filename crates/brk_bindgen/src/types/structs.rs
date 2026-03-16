@@ -6,7 +6,7 @@ use brk_types::Index;
 
 use super::PatternMode;
 
-/// A pattern of indexes that appear together on multiple metrics.
+/// A pattern of indexes that appear together on multiple series.
 #[derive(Debug, Clone)]
 pub struct IndexSetPattern {
     /// Pattern name (e.g., "DateHeightIndexes")
@@ -22,7 +22,7 @@ pub struct StructuralPattern {
     pub name: String,
     /// Ordered list of child fields
     pub fields: Vec<PatternField>,
-    /// How fields construct metric names from acc (None = not parameterizable)
+    /// How fields construct series names from acc (None = not parameterizable)
     pub mode: Option<PatternMode>,
     /// If true, all leaf fields use a type parameter T
     pub is_generic: bool,

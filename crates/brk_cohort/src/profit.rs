@@ -6,20 +6,20 @@ use super::CohortName;
 
 /// "At least X% profit" threshold names (14 thresholds).
 pub const PROFIT_NAMES: Profit<CohortName> = Profit {
-    breakeven: CohortName::new("utxos_in_profit", "≥0%", "In Profit (Breakeven+)"),
-    _10pct: CohortName::new("utxos_over_10pct_in_profit", "≥10%", "10%+ Profit"),
-    _20pct: CohortName::new("utxos_over_20pct_in_profit", "≥20%", "20%+ Profit"),
-    _30pct: CohortName::new("utxos_over_30pct_in_profit", "≥30%", "30%+ Profit"),
-    _40pct: CohortName::new("utxos_over_40pct_in_profit", "≥40%", "40%+ Profit"),
-    _50pct: CohortName::new("utxos_over_50pct_in_profit", "≥50%", "50%+ Profit"),
-    _60pct: CohortName::new("utxos_over_60pct_in_profit", "≥60%", "60%+ Profit"),
-    _70pct: CohortName::new("utxos_over_70pct_in_profit", "≥70%", "70%+ Profit"),
-    _80pct: CohortName::new("utxos_over_80pct_in_profit", "≥80%", "80%+ Profit"),
-    _90pct: CohortName::new("utxos_over_90pct_in_profit", "≥90%", "90%+ Profit"),
-    _100pct: CohortName::new("utxos_over_100pct_in_profit", "≥100%", "100%+ Profit"),
-    _200pct: CohortName::new("utxos_over_200pct_in_profit", "≥200%", "200%+ Profit"),
-    _300pct: CohortName::new("utxos_over_300pct_in_profit", "≥300%", "300%+ Profit"),
-    _500pct: CohortName::new("utxos_over_500pct_in_profit", "≥500%", "500%+ Profit"),
+    all: CohortName::new("utxos_in_profit", "All", "In Profit"),
+    _10pct: CohortName::new("utxos_over_10pct_in_profit", ">=10%", "Over 10% in Profit"),
+    _20pct: CohortName::new("utxos_over_20pct_in_profit", ">=20%", "Over 20% in Profit"),
+    _30pct: CohortName::new("utxos_over_30pct_in_profit", ">=30%", "Over 30% in Profit"),
+    _40pct: CohortName::new("utxos_over_40pct_in_profit", ">=40%", "Over 40% in Profit"),
+    _50pct: CohortName::new("utxos_over_50pct_in_profit", ">=50%", "Over 50% in Profit"),
+    _60pct: CohortName::new("utxos_over_60pct_in_profit", ">=60%", "Over 60% in Profit"),
+    _70pct: CohortName::new("utxos_over_70pct_in_profit", ">=70%", "Over 70% in Profit"),
+    _80pct: CohortName::new("utxos_over_80pct_in_profit", ">=80%", "Over 80% in Profit"),
+    _90pct: CohortName::new("utxos_over_90pct_in_profit", ">=90%", "Over 90% in Profit"),
+    _100pct: CohortName::new("utxos_over_100pct_in_profit", ">=100%", "Over 100% in Profit"),
+    _200pct: CohortName::new("utxos_over_200pct_in_profit", ">=200%", "Over 200% in Profit"),
+    _300pct: CohortName::new("utxos_over_300pct_in_profit", ">=300%", "Over 300% in Profit"),
+    _500pct: CohortName::new("utxos_over_500pct_in_profit", ">=500%", "Over 500% in Profit"),
 };
 
 /// Number of profit thresholds.
@@ -36,7 +36,7 @@ impl Profit<CohortName> {
 /// Each is a prefix sum over the profitability ranges, from most profitable down.
 #[derive(Default, Clone, Traversable, Serialize)]
 pub struct Profit<T> {
-    pub breakeven: T,
+    pub all: T,
     pub _10pct: T,
     pub _20pct: T,
     pub _30pct: T,
@@ -59,7 +59,7 @@ impl<T> Profit<T> {
     {
         let n = &PROFIT_NAMES;
         Self {
-            breakeven: create(n.breakeven.id),
+            all: create(n.all.id),
             _10pct: create(n._10pct.id),
             _20pct: create(n._20pct.id),
             _30pct: create(n._30pct.id),
@@ -82,7 +82,7 @@ impl<T> Profit<T> {
     {
         let n = &PROFIT_NAMES;
         Ok(Self {
-            breakeven: create(n.breakeven.id)?,
+            all: create(n.all.id)?,
             _10pct: create(n._10pct.id)?,
             _20pct: create(n._20pct.id)?,
             _30pct: create(n._30pct.id)?,
@@ -101,7 +101,7 @@ impl<T> Profit<T> {
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         [
-            &self.breakeven,
+            &self.all,
             &self._10pct,
             &self._20pct,
             &self._30pct,
@@ -121,7 +121,7 @@ impl<T> Profit<T> {
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
-            &mut self.breakeven,
+            &mut self.all,
             &mut self._10pct,
             &mut self._20pct,
             &mut self._30pct,
@@ -144,7 +144,7 @@ impl<T> Profit<T> {
         T: Send + Sync,
     {
         [
-            &mut self.breakeven,
+            &mut self.all,
             &mut self._10pct,
             &mut self._20pct,
             &mut self._30pct,
@@ -165,7 +165,7 @@ impl<T> Profit<T> {
     /// Access as array for indexed accumulation.
     pub fn as_array_mut(&mut self) -> [&mut T; PROFIT_COUNT] {
         [
-            &mut self.breakeven,
+            &mut self.all,
             &mut self._10pct,
             &mut self._20pct,
             &mut self._30pct,

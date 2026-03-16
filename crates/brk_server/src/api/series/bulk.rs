@@ -7,11 +7,11 @@ use axum::{
     http::{HeaderMap, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
-use brk_types::{Format, MetricSelection, Output};
+use brk_types::{Format, Output, SeriesSelection};
 
 use crate::{
     Result,
-    api::metrics::{CACHE_CONTROL, max_weight},
+    api::series::{CACHE_CONTROL, max_weight},
     extended::{ContentEncoding, HeaderMapExtended},
 };
 
@@ -21,7 +21,7 @@ pub async fn handler(
     uri: Uri,
     headers: HeaderMap,
     Extension(addr): Extension<SocketAddr>,
-    Query(params): Query<MetricSelection>,
+    Query(params): Query<SeriesSelection>,
     State(state): State<AppState>,
 ) -> Result<Response> {
     // Phase 1: Search and resolve metadata (cheap)

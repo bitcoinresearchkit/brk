@@ -88,8 +88,8 @@ export function createChart({ parent, brk, fitContent }) {
   /** @param {ChartableIndex} idx */
   const getTimeEndpoint = (idx) =>
     idx === "height"
-      ? brk.metrics.blocks.time.timestampMonotonic.by[idx]
-      : brk.metrics.blocks.time.timestamp.by[idx];
+      ? brk.series.blocks.time.timestampMonotonic.by[idx]
+      : brk.series.blocks.time.timestamp.by[idx];
 
   const index = {
     /** @type {Set<(index: ChartableIndex) => void>} */
@@ -118,9 +118,9 @@ export function createChart({ parent, brk, fitContent }) {
   let generation = 0;
 
   const time = {
-    /** @type {MetricData<number> | null} */
+    /** @type {SeriesData<number> | null} */
     data: null,
-    /** @type {Set<(data: MetricData<number>) => void>} */
+    /** @type {Set<(data: SeriesData<number>) => void>} */
     callbacks: new Set(),
     /** @type {ReturnType<typeof getTimeEndpoint> | null} */
     endpoint: null,
@@ -150,7 +150,7 @@ export function createChart({ parent, brk, fitContent }) {
   };
 
   // Memory cache for instant index switching
-  /** @type {Map<string, MetricData<any>>} */
+  /** @type {Map<string, SeriesData<any>>} */
   const cache = new Map();
 
   // Range state: localStorage stores all ranges per-index, URL stores current range only
@@ -425,7 +425,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {string} args.name
      * @param {number} args.order
      * @param {Color[]} args.colors
-     * @param {AnyMetricPattern} args.metric
+     * @param {AnySeriesPattern} args.source
      * @param {number} args.paneIndex
      * @param {Unit} args.unit
      * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
@@ -438,7 +438,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {() => void} args.onRemove
      */
     create({
-      metric,
+      source,
       name,
       order,
       paneIndex,
@@ -486,7 +486,7 @@ export function createChart({ parent, brk, fitContent }) {
         lastTimeVersion: null,
         /** @type {VoidFunction | null} */
         fetch: null,
-        /** @type {((data: MetricData<number>) => void) | null} */
+        /** @type {((data: SeriesData<number>) => void) | null} */
         onTime: null,
         reset() {
           this.hasData = false;
@@ -572,8 +572,8 @@ export function createChart({ parent, brk, fitContent }) {
         state.reset();
         state.fetch = null;
 
-        const _valuesEndpoint = metric.by[idx];
-        // Gracefully skip - series may be about to be removed by option change
+        const _valuesEndpoint = source.by[idx];
+        // Gracefully skip - source may be about to be removed by option change
         if (!_valuesEndpoint) return;
         const valuesEndpoint = _valuesEndpoint;
 
@@ -702,7 +702,7 @@ export function createChart({ parent, brk, fitContent }) {
         }
 
         async function fetchAndProcess() {
-          /** @type {MetricData<number> | null} */
+          /** @type {SeriesData<number> | null} */
           let timeData = null;
           /** @type {(number | null | [number, number, number, number])[] | null} */
           let valuesData = null;
@@ -769,7 +769,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {Object} args
      * @param {string} args.name
      * @param {number} args.order
-     * @param {AnyMetricPattern} args.metric
+     * @param {AnySeriesPattern} args.source
      * @param {Unit} args.unit
      * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
      * @param {number} [args.paneIndex]
@@ -778,7 +778,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {CandlestickSeriesPartialOptions} [args.options]
      */
     addCandlestick({
-      metric,
+      source,
       name,
       key,
       order,
@@ -830,7 +830,7 @@ export function createChart({ parent, brk, fitContent }) {
         paneIndex,
         unit,
         defaultActive,
-        metric,
+        source,
         setOrder(order) {
           candlestickISeries.setSeriesOrder(order);
           lineISeries.setSeriesOrder(order);
@@ -880,7 +880,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {Object} args
      * @param {string} args.name
      * @param {number} args.order
-     * @param {AnyMetricPattern} args.metric
+     * @param {AnySeriesPattern} args.source
      * @param {Unit} args.unit
      * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
      * @param {Color | [Color, Color]} [args.color] - Single color or [positive, negative] colors
@@ -889,7 +889,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {HistogramSeriesPartialOptions} [args.options]
      */
     addHistogram({
-      metric,
+      source,
       name,
       key,
       color = colors.bi.p1,
@@ -920,7 +920,7 @@ export function createChart({ parent, brk, fitContent }) {
         paneIndex,
         unit,
         defaultActive,
-        metric,
+        source,
         setOrder: (order) => iseries.setSeriesOrder(order),
         applyOptions(active, highlighted) {
           iseries.applyOptions({
@@ -953,7 +953,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {Object} args
      * @param {string} args.name
      * @param {number} args.order
-     * @param {AnyMetricPattern} args.metric
+     * @param {AnySeriesPattern} args.source
      * @param {Unit} args.unit
      * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
      * @param {Color} args.color
@@ -962,7 +962,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {LineSeriesPartialOptions} [args.options]
      */
     addLine({
-      metric,
+      source,
       name,
       key,
       order,
@@ -991,7 +991,7 @@ export function createChart({ parent, brk, fitContent }) {
         paneIndex,
         unit,
         defaultActive,
-        metric,
+        source,
         setOrder: (order) => iseries.setSeriesOrder(order),
         applyOptions(active, highlighted) {
           iseries.applyOptions({
@@ -1010,7 +1010,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {Object} args
      * @param {string} args.name
      * @param {number} args.order
-     * @param {AnyMetricPattern} args.metric
+     * @param {AnySeriesPattern} args.source
      * @param {Unit} args.unit
      * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
      * @param {Color} args.color
@@ -1019,7 +1019,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {LineSeriesPartialOptions} [args.options]
      */
     addDots({
-      metric,
+      source,
       name,
       key,
       order,
@@ -1063,7 +1063,7 @@ export function createChart({ parent, brk, fitContent }) {
         paneIndex,
         unit,
         defaultActive,
-        metric,
+        source,
         setOrder: (order) => iseries.setSeriesOrder(order),
         applyOptions(active, highlighted) {
           iseries.applyOptions({
@@ -1089,7 +1089,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {Object} args
      * @param {string} args.name
      * @param {number} args.order
-     * @param {AnyMetricPattern} args.metric
+     * @param {AnySeriesPattern} args.source
      * @param {Unit} args.unit
      * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
      * @param {number} [args.paneIndex]
@@ -1099,7 +1099,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {BaselineSeriesPartialOptions} [args.options]
      */
     addBaseline({
-      metric,
+      source,
       name,
       key,
       order,
@@ -1139,7 +1139,7 @@ export function createChart({ parent, brk, fitContent }) {
         paneIndex,
         unit,
         defaultActive,
-        metric,
+        source,
         setOrder: (order) => iseries.setSeriesOrder(order),
         applyOptions(active, highlighted) {
           iseries.applyOptions({
@@ -1159,7 +1159,7 @@ export function createChart({ parent, brk, fitContent }) {
     /**
      * Add a DotsBaseline series (baseline with point markers instead of line)
      * @param {Object} args
-     * @param {AnyMetricPattern} args.metric
+     * @param {AnySeriesPattern} args.source
      * @param {string} args.name
      * @param {string} [args.key]
      * @param {number} args.order
@@ -1171,7 +1171,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {BaselineSeriesPartialOptions} [args.options]
      */
     addDotsBaseline({
-      metric,
+      source,
       name,
       key,
       order,
@@ -1224,7 +1224,7 @@ export function createChart({ parent, brk, fitContent }) {
         paneIndex,
         unit,
         defaultActive,
-        metric,
+        source,
         setOrder: (order) => iseries.setSeriesOrder(order),
         applyOptions(active, highlighted) {
           iseries.applyOptions({
@@ -1343,10 +1343,10 @@ export function createChart({ parent, brk, fitContent }) {
       const defaultColor = unit === Unit.usd ? colors.usd : colors.bitcoin;
 
       map.get(unit)?.forEach((blueprint, order) => {
-        if (!Object.keys(blueprint.metric.by).includes(idx)) return;
+        if (!Object.keys(blueprint.series.by).includes(idx)) return;
 
         const common = {
-          metric: blueprint.metric,
+          source: blueprint.series,
           name: blueprint.title,
           key: blueprint.key,
           defaultActive: blueprint.defaultActive,
@@ -1398,7 +1398,7 @@ export function createChart({ parent, brk, fitContent }) {
               pane.series.push(
                 serieses.addCandlestick({
                   ...common,
-                  metric: blueprint.ohlcMetric,
+                  source: blueprint.ohlcSeries,
                   colors: blueprint.colors,
                 }),
               );

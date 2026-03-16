@@ -22,7 +22,7 @@ function createSingleRealizedCapSeries(cohort) {
   const { color, tree } = cohort;
   return [
     line({
-      metric: tree.realized.cap.usd,
+      series: tree.realized.cap.usd,
       name: "Realized Cap",
       color,
       unit: Unit.usd,
@@ -33,7 +33,7 @@ function createSingleRealizedCapSeries(cohort) {
 /**
  * Create valuation section for cohorts with full ratio patterns
  * (CohortAll, CohortFull, CohortWithPercentiles)
- * @param {{ cohort: CohortAll | CohortFull | CohortLongTerm, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortAll | CohortFull | CohortLongTerm, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createValuationSectionFull({ cohort, title }) {
@@ -77,7 +77,7 @@ export function createValuationSectionFull({ cohort, title }) {
 /**
  * Create valuation section for cohorts with basic ratio patterns
  * (CohortWithAdjusted, CohortBasic, CohortAddress, CohortWithoutRelative)
- * @param {{ cohort: CohortWithAdjusted | CohortBasic | CohortAddress | CohortWithoutRelative, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortWithAdjusted | CohortBasic | CohortAddress | CohortWithoutRelative, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createValuationSection({ cohort, title }) {
@@ -102,7 +102,7 @@ export function createValuationSection({ cohort, title }) {
         title: title("MVRV"),
         bottom: [
           baseline({
-            metric: tree.realized.mvrv,
+            series: tree.realized.mvrv,
             name: "MVRV",
             unit: Unit.ratio,
             base: 1,
@@ -114,7 +114,7 @@ export function createValuationSection({ cohort, title }) {
 }
 
 /**
- * @param {{ list: readonly (UtxoCohortObject | CohortWithoutRelative)[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly (UtxoCohortObject | CohortWithoutRelative)[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedValuationSection({ list, all, title }) {
@@ -126,7 +126,7 @@ export function createGroupedValuationSection({ list, all, title }) {
         title: title("Realized Cap"),
         bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
-            metric: tree.realized.cap.usd,
+            series: tree.realized.cap.usd,
             name,
             color,
             unit: Unit.usd,
@@ -142,7 +142,7 @@ export function createGroupedValuationSection({ list, all, title }) {
               name: w.name,
               title: title(`Realized Cap Change (${w.name})`),
               bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                baseline({ metric: tree.realized.cap.delta.absolute[w.key].usd, name, color, unit: Unit.usd }),
+                baseline({ series: tree.realized.cap.delta.absolute[w.key].usd, name, color, unit: Unit.usd }),
               ),
             })),
           },
@@ -163,7 +163,7 @@ export function createGroupedValuationSection({ list, all, title }) {
         title: title("MVRV"),
         bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
-            metric: tree.realized.mvrv,
+            series: tree.realized.mvrv,
             name,
             color,
             unit: Unit.ratio,
@@ -176,7 +176,7 @@ export function createGroupedValuationSection({ list, all, title }) {
 }
 
 /**
- * @param {{ list: readonly (CohortAll | CohortFull | CohortLongTerm)[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly (CohortAll | CohortFull | CohortLongTerm)[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedValuationSectionWithOwnMarketCap({
@@ -194,7 +194,7 @@ export function createGroupedValuationSectionWithOwnMarketCap({
             name: "USD",
             title: title("Realized Cap"),
             bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              line({ metric: tree.realized.cap.usd, name, color, unit: Unit.usd }),
+              line({ series: tree.realized.cap.usd, name, color, unit: Unit.usd }),
             ),
           },
           {
@@ -215,7 +215,7 @@ export function createGroupedValuationSectionWithOwnMarketCap({
               name: w.name,
               title: title(`Realized Cap Change (${w.name})`),
               bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                baseline({ metric: tree.realized.cap.delta.absolute[w.key].usd, name, color, unit: Unit.usd }),
+                baseline({ series: tree.realized.cap.delta.absolute[w.key].usd, name, color, unit: Unit.usd }),
               ),
             })),
           },
@@ -236,7 +236,7 @@ export function createGroupedValuationSectionWithOwnMarketCap({
         title: title("MVRV"),
         bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
-            metric: tree.realized.mvrv,
+            series: tree.realized.mvrv,
             name,
             color,
             unit: Unit.ratio,

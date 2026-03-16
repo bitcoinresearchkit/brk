@@ -10,10 +10,10 @@ use super::types::js_type_to_rust;
 pub fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     writeln!(
         output,
-        r#"/// Main BRK client with metrics tree and API methods.
+        r#"/// Main BRK client with series tree and API methods.
 pub struct BrkClient {{
     base: Arc<BrkClientBase>,
-    metrics: MetricsTree,
+    series: SeriesTree,
 }}
 
 impl BrkClient {{
@@ -23,51 +23,51 @@ impl BrkClient {{
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {{
         let base = Arc::new(BrkClientBase::new(base_url));
-        let metrics = MetricsTree::new(base.clone(), String::new());
-        Self {{ base, metrics }}
+        let series = SeriesTree::new(base.clone(), String::new());
+        Self {{ base, series }}
     }}
 
     /// Create a new client with options.
     pub fn with_options(options: BrkClientOptions) -> Self {{
         let base = Arc::new(BrkClientBase::with_options(options));
-        let metrics = MetricsTree::new(base.clone(), String::new());
-        Self {{ base, metrics }}
+        let series = SeriesTree::new(base.clone(), String::new());
+        Self {{ base, series }}
     }}
 
-    /// Get the metrics tree for navigating metrics.
-    pub fn metrics(&self) -> &MetricsTree {{
-        &self.metrics
+    /// Get the series tree for navigating series.
+    pub fn series(&self) -> &SeriesTree {{
+        &self.series
     }}
 
-    /// Create a dynamic metric endpoint builder for any metric/index combination.
+    /// Create a dynamic series endpoint builder for any series/index combination.
     ///
-    /// Use this for programmatic access when the metric name is determined at runtime.
-    /// For type-safe access, use the `metrics()` tree instead.
+    /// Use this for programmatic access when the series name is determined at runtime.
+    /// For type-safe access, use the `series()` tree instead.
     ///
     /// # Example
     /// ```ignore
-    /// let data = client.metric("realized_price", Index::Height)
+    /// let data = client.series("realized_price", Index::Height)
     ///     .last(10)
     ///     .json::<f64>()?;
     /// ```
-    pub fn metric(&self, metric: impl Into<Metric>, index: Index) -> MetricEndpointBuilder<serde_json::Value> {{
-        MetricEndpointBuilder::new(
+    pub fn series_endpoint(&self, series: impl Into<Series>, index: Index) -> SeriesEndpointBuilder<serde_json::Value> {{
+        SeriesEndpointBuilder::new(
             self.base.clone(),
-            Arc::from(metric.into().as_str()),
+            Arc::from(series.into().as_str()),
             index,
         )
     }}
 
-    /// Create a dynamic date-based metric endpoint builder.
+    /// Create a dynamic date-based series endpoint builder.
     ///
     /// Returns `Err` if the index is not date-based.
-    pub fn date_metric(&self, metric: impl Into<Metric>, index: Index) -> Result<DateMetricEndpointBuilder<serde_json::Value>> {{
+    pub fn date_series_endpoint(&self, series: impl Into<Series>, index: Index) -> Result<DateSeriesEndpointBuilder<serde_json::Value>> {{
         if !index.is_date_based() {{
             return Err(BrkError {{ message: format!("{{}} is not a date-based index", index.name()) }});
         }}
-        Ok(DateMetricEndpointBuilder::new(
+        Ok(DateSeriesEndpointBuilder::new(
             self.base.clone(),
-            Arc::from(metric.into().as_str()),
+            Arc::from(series.into().as_str()),
             index,
         ))
     }}
@@ -217,7 +217,7 @@ fn param_type_to_rust(param_type: &str) -> String {
         "string" | "*" => "&str".to_string(),
         "integer" | "number" => "i64".to_string(),
         "boolean" => "bool".to_string(),
-        other => other.to_string(), // Domain types like Index, Metric, Format
+        other => other.to_string(), // Domain types like Index, Series, Format
     }
 }
 

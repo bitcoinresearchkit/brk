@@ -218,7 +218,7 @@ fn check_csv_support(operation: &Operation) -> bool {
 
 /// Extract path parameters in the order they appear in the path URL.
 fn extract_path_parameters(path: &str, operation: &Operation) -> Vec<Parameter> {
-    // Extract parameter names from the path in order (e.g., "/api/metric/{metric}/{index}" -> ["metric", "index"])
+    // Extract parameter names from the path in order (e.g., "/api/series/{series}/{index}" -> ["series", "index"])
     let path_order: Vec<&str> = path
         .split('/')
         .filter_map(|segment| segment.strip_prefix('{').and_then(|s| s.strip_suffix('}')))

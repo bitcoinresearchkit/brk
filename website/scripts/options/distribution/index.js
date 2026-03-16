@@ -13,6 +13,7 @@
 import { formatCohortTitle, satsBtcUsd, satsBtcUsdFullTree } from "../shared.js";
 import { ROLLING_WINDOWS, line, baseline, percentRatio, rollingWindowsTree, rollingPercentRatioTree } from "../series.js";
 import { Unit } from "../../utils/units.js";
+import { colors } from "../../utils/colors.js";
 
 // Section builders
 import {
@@ -602,14 +603,12 @@ function singleBucketFolder({ name, color, pattern }) {
         name: "Supply",
         tree: [
           {
-            name: "All",
+            name: "Value",
             title: `${name}: Supply`,
-            bottom: satsBtcUsd({ pattern: pattern.supply.all, name, color }),
-          },
-          {
-            name: "STH",
-            title: `${name}: STH Supply`,
-            bottom: satsBtcUsd({ pattern: pattern.supply.sth, name, color }),
+            bottom: [
+              ...satsBtcUsd({ pattern: pattern.supply.all, name: "Total" }),
+              ...satsBtcUsd({ pattern: pattern.supply.sth, name: "STH", color: colors.term.short }),
+            ],
           },
           {
             name: "Change",
@@ -622,23 +621,16 @@ function singleBucketFolder({ name, color, pattern }) {
       },
       {
         name: "Realized Cap",
-        tree: [
-          {
-            name: "All",
-            title: `${name}: Realized Cap`,
-            bottom: [line({ metric: pattern.realizedCap.all, name, color, unit: Unit.usd })],
-          },
-          {
-            name: "STH",
-            title: `${name}: STH Realized Cap`,
-            bottom: [line({ metric: pattern.realizedCap.sth, name, color, unit: Unit.usd })],
-          },
+        title: `${name}: Realized Cap`,
+        bottom: [
+          line({ series: pattern.realizedCap.all, name: "Total", unit: Unit.usd }),
+          line({ series: pattern.realizedCap.sth, name: "STH", color: colors.term.short, unit: Unit.usd }),
         ],
       },
       {
         name: "NUPL",
         title: `${name}: NUPL`,
-        bottom: [line({ metric: pattern.nupl.ratio, name, color, unit: Unit.ratio })],
+        bottom: [line({ series: pattern.nupl.ratio, name, color, unit: Unit.ratio })],
       },
     ],
   };
@@ -679,7 +671,7 @@ function groupedBucketCharts(list, titlePrefix) {
                   title: `${titlePrefix}: Supply Change`,
                   bottom: ROLLING_WINDOWS.flatMap((w) =>
                     list.map(({ name, color, pattern }) =>
-                      baseline({ metric: pattern.supply.all.delta.absolute[w.key], name: `${name} ${w.name}`, color, unit: Unit.sats }),
+                      baseline({ series: pattern.supply.all.delta.absolute[w.key], name: `${name} ${w.name}`, color, unit: Unit.sats }),
                     ),
                   ),
                 },
@@ -687,7 +679,7 @@ function groupedBucketCharts(list, titlePrefix) {
                   name: w.name,
                   title: `${titlePrefix}: Supply Change ${w.name}`,
                   bottom: list.map(({ name, color, pattern }) =>
-                    baseline({ metric: pattern.supply.all.delta.absolute[w.key], name, color, unit: Unit.sats }),
+                    baseline({ series: pattern.supply.all.delta.absolute[w.key], name, color, unit: Unit.sats }),
                   ),
                 })),
               ],
@@ -724,14 +716,14 @@ function groupedBucketCharts(list, titlePrefix) {
           name: "All",
           title: `${titlePrefix}: Realized Cap`,
           bottom: list.map(({ name, color, pattern }) =>
-            line({ metric: pattern.realizedCap.all, name, color, unit: Unit.usd }),
+            line({ series: pattern.realizedCap.all, name, color, unit: Unit.usd }),
           ),
         },
         {
           name: "STH",
           title: `${titlePrefix}: STH Realized Cap`,
           bottom: list.map(({ name, color, pattern }) =>
-            line({ metric: pattern.realizedCap.sth, name, color, unit: Unit.usd }),
+            line({ series: pattern.realizedCap.sth, name, color, unit: Unit.usd }),
           ),
         },
       ],
@@ -740,7 +732,7 @@ function groupedBucketCharts(list, titlePrefix) {
       name: "NUPL",
       title: `${titlePrefix}: NUPL`,
       bottom: list.map(({ name, color, pattern }) =>
-        line({ metric: pattern.nupl.ratio, name, color, unit: Unit.ratio }),
+        line({ series: pattern.nupl.ratio, name, color, unit: Unit.ratio }),
       ),
     },
   ];

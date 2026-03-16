@@ -8,7 +8,7 @@ pub enum CacheStrategy {
     /// Etag = VERSION-{height}, Cache-Control: must-revalidate
     Height,
 
-    /// Static/immutable data (blocks by hash, validate-address, metrics catalog)
+    /// Static/immutable data (blocks by hash, validate-address, series catalog)
     /// Etag = VERSION only, Cache-Control: must-revalidate
     Static,
 

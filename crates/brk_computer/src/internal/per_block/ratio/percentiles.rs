@@ -81,7 +81,7 @@ impl RatioPerBlockPercentiles {
         starting_indexes: &Indexes,
         exit: &Exit,
         ratio_source: &impl ReadableVec<Height, StoredF32>,
-        metric_price: &impl ReadableVec<Height, Cents>,
+        series_price: &impl ReadableVec<Height, Cents>,
     ) -> Result<()> {
         let ratio_version = ratio_source.version();
         self.mut_pct_vecs().try_for_each(|v| -> Result<()> {
@@ -147,7 +147,7 @@ impl RatioPerBlockPercentiles {
                     .cents
                     .compute_binary::<Cents, BasisPoints32, PriceTimesRatioBp32Cents>(
                         starting_indexes.height,
-                        metric_price,
+                        series_price,
                         &self.$band.ratio.bps.height,
                         exit,
                     )?;

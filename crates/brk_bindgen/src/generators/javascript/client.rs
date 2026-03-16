@@ -121,15 +121,15 @@ function dateToIndex(index, d) {{
 }}
 
 /**
- * Wrap raw metric data with helper methods.
+ * Wrap raw series data with helper methods.
  * @template T
- * @param {{MetricData<T>}} raw - Raw JSON response
- * @returns {{DateMetricData<T>}}
+ * @param {{SeriesData<T>}} raw - Raw JSON response
+ * @returns {{DateSeriesData<T>}}
  */
-function _wrapMetricData(raw) {{
+function _wrapSeriesData(raw) {{
   const {{ index, start, end, data }} = raw;
   const _dateBased = _DATE_INDEXES.has(index);
-  return /** @type {{DateMetricData<T>}} */ ({{
+  return /** @type {{DateSeriesData<T>}} */ ({{
     ...raw,
     isDateBased: _dateBased,
     indexes() {{
@@ -156,7 +156,7 @@ function _wrapMetricData(raw) {{
     *[Symbol.iterator]() {{
       for (let i = 0; i < data.length; i++) yield /** @type {{[number, T]}} */ ([start + i, data[i]]);
     }},
-    // DateMetricData methods (only meaningful for date-based indexes)
+    // DateSeriesData methods (only meaningful for date-based indexes)
     dates() {{
       /** @type {{globalThis.Date[]}} */
       const result = [];
@@ -180,47 +180,47 @@ function _wrapMetricData(raw) {{
 
 /**
  * @template T
- * @typedef {{Object}} MetricDataBase
- * @property {{number}} version - Version of the metric data
+ * @typedef {{Object}} SeriesDataBase
+ * @property {{number}} version - Version of the series data
  * @property {{Index}} index - The index type used for this query
  * @property {{string}} type - Value type (e.g. "f32", "u64", "Sats")
  * @property {{number}} total - Total number of data points
  * @property {{number}} start - Start index (inclusive)
  * @property {{number}} end - End index (exclusive)
  * @property {{string}} stamp - ISO 8601 timestamp of when the response was generated
- * @property {{T[]}} data - The metric data
- * @property {{boolean}} isDateBased - Whether this metric uses a date-based index
+ * @property {{T[]}} data - The series data
+ * @property {{boolean}} isDateBased - Whether this series uses a date-based index
  * @property {{() => number[]}} indexes - Get index numbers
  * @property {{() => number[]}} keys - Get keys as index numbers (alias for indexes)
  * @property {{() => Array<[number, T]>}} entries - Get [index, value] pairs
  * @property {{() => Map<number, T>}} toMap - Convert to Map<index, value>
  */
 
-/** @template T @typedef {{MetricDataBase<T> & Iterable<[number, T]>}} MetricData */
+/** @template T @typedef {{SeriesDataBase<T> & Iterable<[number, T]>}} SeriesData */
 
 /**
  * @template T
- * @typedef {{Object}} DateMetricDataExtras
+ * @typedef {{Object}} DateSeriesDataExtras
  * @property {{() => globalThis.Date[]}} dates - Get dates for each data point
  * @property {{() => Array<[globalThis.Date, T]>}} dateEntries - Get [date, value] pairs
  * @property {{() => Map<globalThis.Date, T>}} toDateMap - Convert to Map<date, value>
  */
 
-/** @template T @typedef {{MetricData<T> & DateMetricDataExtras<T>}} DateMetricData */
-/** @typedef {{MetricData<any>}} AnyMetricData */
+/** @template T @typedef {{SeriesData<T> & DateSeriesDataExtras<T>}} DateSeriesData */
+/** @typedef {{SeriesData<any>}} AnySeriesData */
 
-/** @template T @typedef {{(onfulfilled?: (value: MetricData<T>) => any, onrejected?: (reason: Error) => never) => Promise<MetricData<T>>}} Thenable */
-/** @template T @typedef {{(onfulfilled?: (value: DateMetricData<T>) => any, onrejected?: (reason: Error) => never) => Promise<DateMetricData<T>>}} DateThenable */
+/** @template T @typedef {{(onfulfilled?: (value: SeriesData<T>) => any, onrejected?: (reason: Error) => never) => Promise<SeriesData<T>>}} Thenable */
+/** @template T @typedef {{(onfulfilled?: (value: DateSeriesData<T>) => any, onrejected?: (reason: Error) => never) => Promise<DateSeriesData<T>>}} DateThenable */
 
 /**
  * @template T
- * @typedef {{Object}} MetricEndpointBuilder
+ * @typedef {{Object}} SeriesEndpointBuilder
  * @property {{(index: number) => SingleItemBuilder<T>}} get - Get single item at index
  * @property {{(start?: number, end?: number) => RangeBuilder<T>}} slice - Slice by index
  * @property {{(n: number) => RangeBuilder<T>}} first - Get first n items
  * @property {{(n: number) => RangeBuilder<T>}} last - Get last n items
  * @property {{(n: number) => SkippedBuilder<T>}} skip - Skip first n items, chain with take()
- * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} fetch - Fetch all data
+ * @property {{(onUpdate?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>}} fetch - Fetch all data
  * @property {{() => Promise<string>}} fetchCsv - Fetch all data as CSV
  * @property {{Thenable<T>}} then - Thenable (await endpoint)
  * @property {{string}} path - The endpoint path
@@ -228,79 +228,79 @@ function _wrapMetricData(raw) {{
 
 /**
  * @template T
- * @typedef {{Object}} DateMetricEndpointBuilder
+ * @typedef {{Object}} DateSeriesEndpointBuilder
  * @property {{(index: number | globalThis.Date) => DateSingleItemBuilder<T>}} get - Get single item at index or Date
  * @property {{(start?: number | globalThis.Date, end?: number | globalThis.Date) => DateRangeBuilder<T>}} slice - Slice by index or Date
  * @property {{(n: number) => DateRangeBuilder<T>}} first - Get first n items
  * @property {{(n: number) => DateRangeBuilder<T>}} last - Get last n items
  * @property {{(n: number) => DateSkippedBuilder<T>}} skip - Skip first n items, chain with take()
- * @property {{(onUpdate?: (value: DateMetricData<T>) => void) => Promise<DateMetricData<T>>}} fetch - Fetch all data
+ * @property {{(onUpdate?: (value: DateSeriesData<T>) => void) => Promise<DateSeriesData<T>>}} fetch - Fetch all data
  * @property {{() => Promise<string>}} fetchCsv - Fetch all data as CSV
  * @property {{DateThenable<T>}} then - Thenable (await endpoint)
  * @property {{string}} path - The endpoint path
  */
 
-/** @typedef {{MetricEndpointBuilder<any>}} AnyMetricEndpointBuilder */
+/** @typedef {{SeriesEndpointBuilder<any>}} AnySeriesEndpointBuilder */
 
 /** @template T @typedef {{Object}} SingleItemBuilder
- * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} fetch - Fetch the item
+ * @property {{(onUpdate?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>}} fetch - Fetch the item
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{Thenable<T>}} then - Thenable
  */
 
 /** @template T @typedef {{Object}} DateSingleItemBuilder
- * @property {{(onUpdate?: (value: DateMetricData<T>) => void) => Promise<DateMetricData<T>>}} fetch - Fetch the item
+ * @property {{(onUpdate?: (value: DateSeriesData<T>) => void) => Promise<DateSeriesData<T>>}} fetch - Fetch the item
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{DateThenable<T>}} then - Thenable
  */
 
 /** @template T @typedef {{Object}} SkippedBuilder
  * @property {{(n: number) => RangeBuilder<T>}} take - Take n items after skipped position
- * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} fetch - Fetch from skipped position to end
+ * @property {{(onUpdate?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>}} fetch - Fetch from skipped position to end
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{Thenable<T>}} then - Thenable
  */
 
 /** @template T @typedef {{Object}} DateSkippedBuilder
  * @property {{(n: number) => DateRangeBuilder<T>}} take - Take n items after skipped position
- * @property {{(onUpdate?: (value: DateMetricData<T>) => void) => Promise<DateMetricData<T>>}} fetch - Fetch from skipped position to end
+ * @property {{(onUpdate?: (value: DateSeriesData<T>) => void) => Promise<DateSeriesData<T>>}} fetch - Fetch from skipped position to end
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{DateThenable<T>}} then - Thenable
  */
 
 /** @template T @typedef {{Object}} RangeBuilder
- * @property {{(onUpdate?: (value: MetricData<T>) => void) => Promise<MetricData<T>>}} fetch - Fetch the range
+ * @property {{(onUpdate?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>}} fetch - Fetch the range
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{Thenable<T>}} then - Thenable
  */
 
 /** @template T @typedef {{Object}} DateRangeBuilder
- * @property {{(onUpdate?: (value: DateMetricData<T>) => void) => Promise<DateMetricData<T>>}} fetch - Fetch the range
+ * @property {{(onUpdate?: (value: DateSeriesData<T>) => void) => Promise<DateSeriesData<T>>}} fetch - Fetch the range
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{DateThenable<T>}} then - Thenable
  */
 
 /**
  * @template T
- * @typedef {{Object}} MetricPattern
- * @property {{string}} name - The metric name
- * @property {{Readonly<Partial<Record<Index, MetricEndpointBuilder<T>>>>}} by - Index endpoints as lazy getters
+ * @typedef {{Object}} SeriesPattern
+ * @property {{string}} name - The series name
+ * @property {{Readonly<Partial<Record<Index, SeriesEndpointBuilder<T>>>>}} by - Index endpoints as lazy getters
  * @property {{() => readonly Index[]}} indexes - Get the list of available indexes
- * @property {{(index: Index) => MetricEndpointBuilder<T>|undefined}} get - Get an endpoint for a specific index
+ * @property {{(index: Index) => SeriesEndpointBuilder<T>|undefined}} get - Get an endpoint for a specific index
  */
 
-/** @typedef {{MetricPattern<any>}} AnyMetricPattern */
+/** @typedef {{SeriesPattern<any>}} AnySeriesPattern */
 
 /**
- * Create a metric endpoint builder with typestate pattern.
+ * Create a series endpoint builder with typestate pattern.
  * @template T
  * @param {{BrkClientBase}} client
- * @param {{string}} name - The metric vec name
+ * @param {{string}} name - The series vec name
  * @param {{Index}} index - The index name
- * @returns {{DateMetricEndpointBuilder<T>}}
+ * @returns {{DateSeriesEndpointBuilder<T>}}
  */
 function _endpoint(client, name, index) {{
-  const p = `/api/metric/${{name}}/${{index}}`;
+  const p = `/api/series/${{name}}/${{index}}`;
 
   /**
    * @param {{number}} [start]
@@ -323,7 +323,7 @@ function _endpoint(client, name, index) {{
    * @returns {{DateRangeBuilder<T>}}
    */
   const rangeBuilder = (start, end) => ({{
-    fetch(onUpdate) {{ return client._fetchMetricData(buildPath(start, end), onUpdate); }},
+    fetch(onUpdate) {{ return client._fetchSeriesData(buildPath(start, end), onUpdate); }},
     fetchCsv() {{ return client.getText(buildPath(start, end, 'csv')); }},
     then(resolve, reject) {{ return this.fetch().then(resolve, reject); }},
   }});
@@ -333,7 +333,7 @@ function _endpoint(client, name, index) {{
    * @returns {{DateSingleItemBuilder<T>}}
    */
   const singleItemBuilder = (idx) => ({{
-    fetch(onUpdate) {{ return client._fetchMetricData(buildPath(idx, idx + 1), onUpdate); }},
+    fetch(onUpdate) {{ return client._fetchSeriesData(buildPath(idx, idx + 1), onUpdate); }},
     fetchCsv() {{ return client.getText(buildPath(idx, idx + 1, 'csv')); }},
     then(resolve, reject) {{ return this.fetch().then(resolve, reject); }},
   }});
@@ -344,12 +344,12 @@ function _endpoint(client, name, index) {{
    */
   const skippedBuilder = (start) => ({{
     take(n) {{ return rangeBuilder(start, start + n); }},
-    fetch(onUpdate) {{ return client._fetchMetricData(buildPath(start, undefined), onUpdate); }},
+    fetch(onUpdate) {{ return client._fetchSeriesData(buildPath(start, undefined), onUpdate); }},
     fetchCsv() {{ return client.getText(buildPath(start, undefined, 'csv')); }},
     then(resolve, reject) {{ return this.fetch().then(resolve, reject); }},
   }});
 
-  /** @type {{DateMetricEndpointBuilder<T>}} */
+  /** @type {{DateSeriesEndpointBuilder<T>}} */
   const endpoint = {{
     get(idx) {{ if (idx instanceof Date) idx = dateToIndex(index, idx); return singleItemBuilder(idx); }},
     slice(start, end) {{
@@ -360,7 +360,7 @@ function _endpoint(client, name, index) {{
     first(n) {{ return rangeBuilder(undefined, n); }},
     last(n) {{ return n === 0 ? rangeBuilder(undefined, 0) : rangeBuilder(-n, undefined); }},
     skip(n) {{ return skippedBuilder(n); }},
-    fetch(onUpdate) {{ return client._fetchMetricData(buildPath(), onUpdate); }},
+    fetch(onUpdate) {{ return client._fetchSeriesData(buildPath(), onUpdate); }},
     fetchCsv() {{ return client.getText(buildPath(undefined, undefined, 'csv')); }},
     then(resolve, reject) {{ return this.fetch().then(resolve, reject); }},
     get path() {{ return p; }},
@@ -466,29 +466,29 @@ class BrkClientBase {{
   }}
 
   /**
-   * Fetch metric data and wrap with helper methods (internal)
+   * Fetch series data and wrap with helper methods (internal)
    * @template T
    * @param {{string}} path
-   * @param {{(value: DateMetricData<T>) => void}} [onUpdate]
-   * @returns {{Promise<DateMetricData<T>>}}
+   * @param {{(value: DateSeriesData<T>) => void}} [onUpdate]
+   * @returns {{Promise<DateSeriesData<T>>}}
    */
-  async _fetchMetricData(path, onUpdate) {{
-    const wrappedOnUpdate = onUpdate ? (/** @type {{MetricData<T>}} */ raw) => onUpdate(_wrapMetricData(raw)) : undefined;
+  async _fetchSeriesData(path, onUpdate) {{
+    const wrappedOnUpdate = onUpdate ? (/** @type {{SeriesData<T>}} */ raw) => onUpdate(_wrapSeriesData(raw)) : undefined;
     const raw = await this.getJson(path, wrappedOnUpdate);
-    return _wrapMetricData(raw);
+    return _wrapSeriesData(raw);
   }}
 }}
 
 /**
- * Build metric name with suffix.
+ * Build series name with suffix.
  * @param {{string}} acc - Accumulated prefix
- * @param {{string}} s - Metric suffix
+ * @param {{string}} s - Series suffix
  * @returns {{string}}
  */
 const _m = (acc, s) => s ? (acc ? `${{acc}}_${{s}}` : s) : acc;
 
 /**
- * Build metric name with prefix.
+ * Build series name with prefix.
  * @param {{string}} prefix - Prefix to prepend
  * @param {{string}} acc - Accumulated name
  * @returns {{string}}
@@ -591,14 +591,14 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
     }
     writeln!(output).unwrap();
 
-    // Generate ONE generic metric pattern factory
+    // Generate ONE generic series pattern factory
     writeln!(
         output,
         r#"/**
- * Generic metric pattern factory.
+ * Generic series pattern factory.
  * @template T
  * @param {{BrkClientBase}} client
- * @param {{string}} name - The metric vec name
+ * @param {{string}} name - The series vec name
  * @param {{readonly Index[]}} indexes - The supported indexes
  */
 function _mp(client, name, indexes) {{
@@ -615,7 +615,7 @@ function _mp(client, name, indexes) {{
     by,
     /** @returns {{readonly Index[]}} */
     indexes() {{ return indexes; }},
-    /** @param {{Index}} index @returns {{MetricEndpointBuilder<T>|undefined}} */
+    /** @param {{Index}} index @returns {{SeriesEndpointBuilder<T>|undefined}} */
     get(index) {{ return indexes.includes(index) ? _endpoint(client, name, index) : undefined; }}
   }};
 }}
@@ -631,9 +631,9 @@ function _mp(client, name, indexes) {{
             .iter()
             .map(|idx| {
                 let builder = if idx.is_date_based() {
-                    "DateMetricEndpointBuilder"
+                    "DateSeriesEndpointBuilder"
                 } else {
-                    "MetricEndpointBuilder"
+                    "SeriesEndpointBuilder"
                 };
                 format!("readonly {}: {}<T>", idx.name(), builder)
             })
@@ -642,7 +642,7 @@ function _mp(client, name, indexes) {{
 
         writeln!(
             output,
-            "/** @template T @typedef {{{{ name: string, by: {}, indexes: () => readonly Index[], get: (index: Index) => MetricEndpointBuilder<T>|undefined }}}} {} */",
+            "/** @template T @typedef {{{{ name: string, by: {}, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }}}} {} */",
             by_type, pattern.name
         )
         .unwrap();
@@ -713,7 +713,7 @@ pub fn generate_structural_patterns(
             writeln!(output, " * @template T").unwrap();
         }
         writeln!(output, " * @param {{BrkClientBase}} client").unwrap();
-        writeln!(output, " * @param {{string}} acc - Accumulated metric name").unwrap();
+        writeln!(output, " * @param {{string}} acc - Accumulated series name").unwrap();
         if pattern.is_templated() {
             writeln!(output, " * @param {{string}} disc - Discriminator suffix").unwrap();
         }

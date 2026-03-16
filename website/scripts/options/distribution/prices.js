@@ -21,7 +21,7 @@ import { Unit } from "../../utils/units.js";
 /**
  * Create prices section for cohorts with full ratio patterns
  * (CohortAll, CohortFull, CohortLongTerm)
- * @param {{ cohort: CohortAll | CohortFull | CohortLongTerm, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortAll | CohortFull | CohortLongTerm, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createPricesSectionFull({ cohort, title }) {
@@ -33,10 +33,10 @@ export function createPricesSectionFull({ cohort, title }) {
         name: "Compare",
         title: title("Prices"),
         top: [
-          price({ metric: tree.realized.price, name: "Realized", color: colors.realized }),
-          price({ metric: tree.realized.investor.price, name: "Investor", color: colors.investor }),
-          price({ metric: tree.realized.investor.upperPriceBand, name: "I²/R", color: colors.stat.max, style: 2, defaultActive: false }),
-          price({ metric: tree.realized.investor.lowerPriceBand, name: "R²/I", color: colors.stat.min, style: 2, defaultActive: false }),
+          price({ series: tree.realized.price, name: "Realized", color: colors.realized }),
+          price({ series: tree.realized.investor.price, name: "Investor", color: colors.investor }),
+          price({ series: tree.realized.investor.upperPriceBand, name: "I²/R", color: colors.stat.max, style: 2, defaultActive: false }),
+          price({ series: tree.realized.investor.lowerPriceBand, name: "R²/I", color: colors.stat.min, style: 2, defaultActive: false }),
         ],
       },
       {
@@ -67,7 +67,7 @@ export function createPricesSectionFull({ cohort, title }) {
 /**
  * Create prices section for cohorts with basic ratio patterns only
  * (CohortWithAdjusted, CohortBasic, CohortAddress, CohortWithoutRelative)
- * @param {{ cohort: CohortWithAdjusted | CohortBasic | CohortAddress | CohortWithoutRelative | CohortAgeRange, title: (metric: string) => string }} args
+ * @param {{ cohort: CohortWithAdjusted | CohortBasic | CohortAddress | CohortWithoutRelative | CohortAgeRange, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createPricesSectionBasic({ cohort, title }) {
@@ -81,14 +81,14 @@ export function createPricesSectionBasic({ cohort, title }) {
           {
             name: "Price",
             title: title("Realized Price"),
-            top: [price({ metric: tree.realized.price, name: "Realized", color })],
+            top: [price({ series: tree.realized.price, name: "Realized", color })],
           },
           {
             name: "MVRV",
             title: title("MVRV"),
             bottom: [
               baseline({
-                metric: tree.realized.mvrv,
+                series: tree.realized.mvrv,
                 name: "MVRV",
                 unit: Unit.ratio,
                 base: 1,
@@ -100,7 +100,7 @@ export function createPricesSectionBasic({ cohort, title }) {
             title: title("Realized Price Ratio"),
             bottom: [
               baseline({
-                metric: tree.realized.price.ratio,
+                series: tree.realized.price.ratio,
                 name: "Price Ratio",
                 unit: Unit.ratio,
                 base: 1,
@@ -115,7 +115,7 @@ export function createPricesSectionBasic({ cohort, title }) {
 
 /**
  * Create prices section for grouped cohorts
- * @param {{ list: readonly CohortObject[], all: CohortAll, title: (metric: string) => string }} args
+ * @param {{ list: readonly CohortObject[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedPricesSection({ list, all, title }) {
@@ -129,7 +129,7 @@ export function createGroupedPricesSection({ list, all, title }) {
             name: "Price",
             title: title("Realized Price"),
             top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              price({ metric: tree.realized.price, name, color }),
+              price({ series: tree.realized.price, name, color }),
             ),
           },
           {
@@ -137,7 +137,7 @@ export function createGroupedPricesSection({ list, all, title }) {
             title: title("MVRV"),
             bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               baseline({
-                metric: tree.realized.mvrv,
+                series: tree.realized.mvrv,
                 name,
                 color,
                 unit: Unit.ratio,

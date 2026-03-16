@@ -7,20 +7,20 @@ use vecdb::AnySerializableVec;
 
 use super::{Date, Index, Timestamp, Version};
 
-/// Metric data with range information.
+/// Series data with range information.
 ///
-/// All metric data endpoints return this structure when format is JSON.
-/// This type is not instantiated - use `MetricData::serialize()` to write JSON bytes directly.
+/// All series data endpoints return this structure when format is JSON.
+/// This type is not instantiated - use `SeriesData::serialize()` to write JSON bytes directly.
 #[derive(Debug, JsonSchema, Deserialize)]
-pub struct MetricData<T = Value> {
-    /// Version of the metric data
+pub struct SeriesData<T = Value> {
+    /// Version of the series data
     pub version: Version,
     /// The index type used for this query
     pub index: Index,
     /// Value type (e.g. "f32", "u64", "Sats")
     #[serde(rename = "type", default)]
     pub value_type: String,
-    /// Total number of data points in the metric
+    /// Total number of data points in the series
     pub total: usize,
     /// Start index (inclusive) of the returned range
     pub start: usize,
@@ -28,12 +28,12 @@ pub struct MetricData<T = Value> {
     pub end: usize,
     /// ISO 8601 timestamp of when the response was generated
     pub stamp: String,
-    /// The metric data
+    /// The series data
     pub data: Vec<T>,
 }
 
-impl MetricData {
-    /// Write metric data as JSON to buffer: `{"version":N,"index":"...","total":N,"start":N,"end":N,"stamp":"...","data":[...]}`
+impl SeriesData {
+    /// Write series data as JSON to buffer: `{"version":N,"index":"...","total":N,"start":N,"end":N,"stamp":"...","data":[...]}`
     pub fn serialize(
         vec: &dyn AnySerializableVec,
         index: Index,
@@ -69,13 +69,13 @@ impl MetricData {
     }
 }
 
-impl<T> MetricData<T> {
+impl<T> SeriesData<T> {
     /// Returns an iterator over the index range.
     pub fn indexes(&self) -> std::ops::Range<usize> {
         self.start..self.end
     }
 
-    /// Returns true if this metric uses a date-based index.
+    /// Returns true if this series uses a date-based index.
     pub fn is_date_based(&self) -> bool {
         self.index.is_date_based()
     }
@@ -122,16 +122,16 @@ impl<T> MetricData<T> {
     }
 }
 
-/// Metric data that is guaranteed to use a date-based index.
+/// Series data that is guaranteed to use a date-based index.
 ///
-/// This is a newtype around `MetricData<T>` that guarantees `is_date_based()` is true,
+/// This is a newtype around `SeriesData<T>` that guarantees `is_date_based()` is true,
 /// making date methods infallible.
 #[derive(Debug)]
-pub struct DateMetricData<T>(MetricData<T>);
+pub struct DateSeriesData<T>(SeriesData<T>);
 
-impl<T> DateMetricData<T> {
-    /// Create a `DateMetricData` from a `MetricData`, returning `Err` if the index is not date-based.
-    pub fn try_new(inner: MetricData<T>) -> Result<Self, MetricData<T>> {
+impl<T> DateSeriesData<T> {
+    /// Create a `DateSeriesData` from a `SeriesData`, returning `Err` if the index is not date-based.
+    pub fn try_new(inner: SeriesData<T>) -> Result<Self, SeriesData<T>> {
         if inner.is_date_based() {
             Ok(Self(inner))
         } else {
@@ -139,8 +139,8 @@ impl<T> DateMetricData<T> {
         }
     }
 
-    /// Consume and return the inner `MetricData`.
-    pub fn into_inner(self) -> MetricData<T> {
+    /// Consume and return the inner `SeriesData`.
+    pub fn into_inner(self) -> SeriesData<T> {
         self.0
     }
 
@@ -161,7 +161,7 @@ impl<T> DateMetricData<T> {
     pub fn timestamps(&self) -> impl Iterator<Item = Timestamp> + '_ {
         self.0
             .timestamps()
-            .expect("DateMetricData is always date-based")
+            .expect("DateSeriesData is always date-based")
     }
 
     /// Iterate over (timestamp, &value) pairs (infallible).
@@ -169,23 +169,23 @@ impl<T> DateMetricData<T> {
     pub fn iter_timestamps(&self) -> impl Iterator<Item = (Timestamp, &T)> + '_ {
         self.0
             .iter_timestamps()
-            .expect("DateMetricData is always date-based")
+            .expect("DateSeriesData is always date-based")
     }
 }
 
-impl<T> Deref for DateMetricData<T> {
-    type Target = MetricData<T>;
+impl<T> Deref for DateSeriesData<T> {
+    type Target = SeriesData<T>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<'de, T: DeserializeOwned> Deserialize<'de> for DateMetricData<T> {
+impl<'de, T: DeserializeOwned> Deserialize<'de> for DateSeriesData<T> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        let inner = MetricData::<T>::deserialize(deserializer)?;
+        let inner = SeriesData::<T>::deserialize(deserializer)?;
         Self::try_new(inner).map_err(|m| {
             serde::de::Error::custom(format!("expected date-based index, got {:?}", m.index))
         })

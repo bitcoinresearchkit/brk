@@ -56,7 +56,7 @@ const ANTPOOL_AND_FRIENDS_IDS = /** @type {const} */ ([
  * @returns {PartialOptionsGroup}
  */
 export function createMiningSection() {
-  const { blocks, pools, mining } = brk.metrics;
+  const { blocks, pools, mining } = brk.series;
 
   // Pre-compute pool entries with resolved names
   const majorPoolData = entries(pools.major).map(([id, pool]) => ({
@@ -101,7 +101,7 @@ export function createMiningSection() {
             title: `Blocks Mined: ${name}`,
             bottom: [
               line({
-                metric: pool.blocksMined.base,
+                series: pool.blocksMined.base,
                 name: "base",
                 unit: Unit.count,
               }),
@@ -113,7 +113,7 @@ export function createMiningSection() {
             title: `Blocks Mined: ${name} (Total)`,
             bottom: [
               line({
-                metric: pool.blocksMined.cumulative,
+                series: pool.blocksMined.cumulative,
                 name: "all-time",
                 unit: Unit.count,
               }),
@@ -180,7 +180,7 @@ export function createMiningSection() {
             title: `Blocks Mined: ${name}`,
             bottom: [
               line({
-                metric: pool.blocksMined.base,
+                series: pool.blocksMined.base,
                 name: "base",
                 unit: Unit.count,
               }),
@@ -192,7 +192,7 @@ export function createMiningSection() {
             title: `Blocks Mined: ${name} (Total)`,
             bottom: [
               line({
-                metric: pool.blocksMined.cumulative,
+                series: pool.blocksMined.cumulative,
                 name: "all-time",
                 unit: Unit.count,
               }),
@@ -215,46 +215,46 @@ export function createMiningSection() {
             title: "Network Hashrate",
             bottom: [
               dots({
-                metric: mining.hashrate.rate.base,
+                series: mining.hashrate.rate.base,
                 name: "Hashrate",
                 unit: Unit.hashRate,
               }),
               line({
-                metric: mining.hashrate.rate.sma._1w,
+                series: mining.hashrate.rate.sma._1w,
                 name: "1w SMA",
                 color: colors.time._1w,
                 unit: Unit.hashRate,
                 defaultActive: false,
               }),
               line({
-                metric: mining.hashrate.rate.sma._1m,
+                series: mining.hashrate.rate.sma._1m,
                 name: "1m SMA",
                 color: colors.time._1m,
                 unit: Unit.hashRate,
                 defaultActive: false,
               }),
               line({
-                metric: mining.hashrate.rate.sma._2m,
+                series: mining.hashrate.rate.sma._2m,
                 name: "2m SMA",
                 color: colors.indicator.main,
                 unit: Unit.hashRate,
                 defaultActive: false,
               }),
               line({
-                metric: mining.hashrate.rate.sma._1y,
+                series: mining.hashrate.rate.sma._1y,
                 name: "1y SMA",
                 color: colors.time._1y,
                 unit: Unit.hashRate,
                 defaultActive: false,
               }),
               dotted({
-                metric: blocks.difficulty.asHash,
+                series: blocks.difficulty.asHash,
                 name: "Difficulty",
                 color: colors.default,
                 unit: Unit.hashRate,
               }),
               line({
-                metric: mining.hashrate.rate.ath,
+                series: mining.hashrate.rate.ath,
                 name: "ATH",
                 color: colors.loss,
                 unit: Unit.hashRate,
@@ -267,13 +267,13 @@ export function createMiningSection() {
             title: "Network Hashrate ATH",
             bottom: [
               line({
-                metric: mining.hashrate.rate.ath,
+                series: mining.hashrate.rate.ath,
                 name: "ATH",
                 color: colors.loss,
                 unit: Unit.hashRate,
               }),
               dots({
-                metric: mining.hashrate.rate.base,
+                series: mining.hashrate.rate.base,
                 name: "Hashrate",
                 color: colors.bitcoin,
                 unit: Unit.hashRate,
@@ -301,7 +301,7 @@ export function createMiningSection() {
             title: "Mining Difficulty",
             bottom: [
               line({
-                metric: blocks.difficulty.value,
+                series: blocks.difficulty.value,
                 name: "Difficulty",
                 unit: Unit.difficulty,
               }),
@@ -312,7 +312,7 @@ export function createMiningSection() {
             title: "Difficulty Epoch",
             bottom: [
               line({
-                metric: blocks.difficulty.epoch,
+                series: blocks.difficulty.epoch,
                 name: "Epoch",
                 unit: Unit.epoch,
               }),
@@ -323,7 +323,7 @@ export function createMiningSection() {
             title: "Difficulty Adjustment",
             bottom: [
               baseline({
-                metric: blocks.difficulty.adjustment.percent,
+                series: blocks.difficulty.adjustment.percent,
                 name: "Change",
                 unit: Unit.percentage,
               }),
@@ -334,12 +334,12 @@ export function createMiningSection() {
             title: "Next Difficulty Adjustment",
             bottom: [
               line({
-                metric: blocks.difficulty.blocksBeforeNext,
+                series: blocks.difficulty.blocksBeforeNext,
                 name: "Remaining",
                 unit: Unit.blocks,
               }),
               line({
-                metric: blocks.difficulty.daysBeforeNext,
+                series: blocks.difficulty.daysBeforeNext,
                 name: "Remaining",
                 unit: Unit.days,
               }),
@@ -480,7 +480,7 @@ export function createMiningSection() {
                     name: "sum",
                   }),
                   line({
-                    metric: mining.rewards.subsidy.sma1y.usd,
+                    series: mining.rewards.subsidy.sma1y.usd,
                     name: "1y SMA",
                     color: colors.time._1y,
                     unit: Unit.usd,
@@ -650,13 +650,13 @@ export function createMiningSection() {
                 name: "Compare",
                 title: "Fee-to-Subsidy Ratio",
                 bottom: ROLLING_WINDOWS.map((w) =>
-                  line({ metric: mining.rewards.fees.ratioMultiple[w.key].ratio, name: w.name, color: w.color, unit: Unit.ratio }),
+                  line({ series: mining.rewards.fees.ratioMultiple[w.key].ratio, name: w.name, color: w.color, unit: Unit.ratio }),
                 ),
               },
               ...ROLLING_WINDOWS.map((w) => ({
                 name: w.name,
                 title: `Fee-to-Subsidy Ratio (${w.name})`,
-                bottom: [line({ metric: mining.rewards.fees.ratioMultiple[w.key].ratio, name: w.name, color: w.color, unit: Unit.ratio })],
+                bottom: [line({ series: mining.rewards.fees.ratioMultiple[w.key].ratio, name: w.name, color: w.color, unit: Unit.ratio })],
               })),
             ],
           },
@@ -712,25 +712,25 @@ export function createMiningSection() {
             title: "Hash Price",
             bottom: [
               line({
-                metric: mining.hashrate.price.ths,
+                series: mining.hashrate.price.ths,
                 name: "TH/s",
                 color: colors.usd,
                 unit: Unit.usdPerThsPerDay,
               }),
               line({
-                metric: mining.hashrate.price.phs,
+                series: mining.hashrate.price.phs,
                 name: "PH/s",
                 color: colors.usd,
                 unit: Unit.usdPerPhsPerDay,
               }),
               dotted({
-                metric: mining.hashrate.price.thsMin,
+                series: mining.hashrate.price.thsMin,
                 name: "TH/s Min",
                 color: colors.stat.min,
                 unit: Unit.usdPerThsPerDay,
               }),
               dotted({
-                metric: mining.hashrate.price.phsMin,
+                series: mining.hashrate.price.phsMin,
                 name: "PH/s Min",
                 color: colors.stat.min,
                 unit: Unit.usdPerPhsPerDay,
@@ -742,25 +742,25 @@ export function createMiningSection() {
             title: "Hash Value",
             bottom: [
               line({
-                metric: mining.hashrate.value.ths,
+                series: mining.hashrate.value.ths,
                 name: "TH/s",
                 color: colors.bitcoin,
                 unit: Unit.satsPerThsPerDay,
               }),
               line({
-                metric: mining.hashrate.value.phs,
+                series: mining.hashrate.value.phs,
                 name: "PH/s",
                 color: colors.bitcoin,
                 unit: Unit.satsPerPhsPerDay,
               }),
               dotted({
-                metric: mining.hashrate.value.thsMin,
+                series: mining.hashrate.value.thsMin,
                 name: "TH/s Min",
                 color: colors.stat.min,
                 unit: Unit.satsPerThsPerDay,
               }),
               dotted({
-                metric: mining.hashrate.value.phsMin,
+                series: mining.hashrate.value.phsMin,
                 name: "PH/s Min",
                 color: colors.stat.min,
                 unit: Unit.satsPerPhsPerDay,
@@ -787,12 +787,12 @@ export function createMiningSection() {
             title: "Next Halving",
             bottom: [
               line({
-                metric: blocks.halving.blocksBeforeNext,
+                series: blocks.halving.blocksBeforeNext,
                 name: "Remaining",
                 unit: Unit.blocks,
               }),
               line({
-                metric: blocks.halving.daysBeforeNext,
+                series: blocks.halving.daysBeforeNext,
                 name: "Remaining",
                 unit: Unit.days,
               }),
@@ -803,7 +803,7 @@ export function createMiningSection() {
             title: "Halving Epoch",
             bottom: [
               line({
-                metric: blocks.halving.epoch,
+                series: blocks.halving.epoch,
                 name: "Epoch",
                 unit: Unit.epoch,
               }),
@@ -836,7 +836,7 @@ export function createMiningSection() {
                 title: "Blocks Mined: Major Pools (1m)",
                 bottom: featuredPools.map((p, i) =>
                   line({
-                    metric: p.pool.blocksMined.sum._1m,
+                    series: p.pool.blocksMined.sum._1m,
                     name: p.name,
                     color: colors.at(i, featuredPools.length),
                     unit: Unit.count,
@@ -877,7 +877,7 @@ export function createMiningSection() {
                 title: "Blocks Mined: AntPool & Friends (1m)",
                 bottom: antpoolFriends.map((p, i) =>
                   line({
-                    metric: p.pool.blocksMined.sum._1m,
+                    series: p.pool.blocksMined.sum._1m,
                     name: p.name,
                     color: colors.at(i, antpoolFriends.length),
                     unit: Unit.count,

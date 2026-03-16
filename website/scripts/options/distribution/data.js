@@ -19,9 +19,9 @@ const isAddressable = (key) =>
   /** @type {readonly string[]} */ (ADDRESSABLE_TYPES).includes(key);
 
 export function buildCohortData() {
-  const utxoCohorts = brk.metrics.cohorts.utxo;
-  const addressCohorts = brk.metrics.cohorts.address;
-  const { addresses } = brk.metrics;
+  const utxoCohorts = brk.series.cohorts.utxo;
+  const addressCohorts = brk.series.cohorts.address;
+  const { addresses } = brk.series;
   const {
     TERM_NAMES,
     EPOCH_NAMES,

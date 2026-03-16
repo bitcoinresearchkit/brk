@@ -7,17 +7,17 @@ import { line } from "./series.js";
 /**
  * Get constant pattern by number dynamically from tree
  * Examples: 0 → _0, 38.2 → _382, -1 → minus1
- * @param {BrkClient["metrics"]["constants"]} constants
+ * @param {BrkClient["series"]["constants"]} constants
  * @param {number} num
- * @returns {AnyMetricPattern}
+ * @returns {AnySeriesPattern}
  */
 export function getConstant(constants, num) {
   const key =
     num >= 0
       ? `_${String(num).replace(".", "")}`
       : `minus${Math.abs(num)}`;
-  const constant = /** @type {AnyMetricPattern | undefined} */ (
-    /** @type {Record<string, AnyMetricPattern>} */ (constants)[key]
+  const constant = /** @type {AnySeriesPattern | undefined} */ (
+    /** @type {Record<string, AnySeriesPattern>} */ (constants)[key]
   );
   if (!constant) throw new Error(`Unknown constant: ${num} (key: ${key})`);
   return constant;
@@ -25,12 +25,12 @@ export function getConstant(constants, num) {
 
 /**
  * Create a price line series (horizontal reference line)
- * @param {{ number?: number, name?: string } & Omit<(Parameters<typeof line>)[0], 'name' | 'metric'>} args
+ * @param {{ number?: number, name?: string } & Omit<(Parameters<typeof line>)[0], 'name' | 'series'>} args
  */
 export function priceLine(args) {
   return line({
     ...args,
-    metric: getConstant(brk.metrics.constants, args.number || 0),
+    series: getConstant(brk.series.constants, args.number || 0),
     name: args.name || `${args.number ?? 0}`,
     color: args.color ?? colors.gray,
     options: {

@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, fmt::Display};
 
-pub use brk_types::{Index, MetricLeaf, MetricLeafWithSchema, TreeNode};
+pub use brk_types::{Index, SeriesLeaf, SeriesLeafWithSchema, TreeNode};
 pub use indexmap::IndexMap;
 
 #[cfg(feature = "derive")]
@@ -18,13 +18,13 @@ pub trait Traversable {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec>;
 }
 
-/// Helper to create a MetricLeafWithSchema from a vec
+/// Helper to create a SeriesLeafWithSchema from a vec
 fn make_leaf<I: VecIndex, T: JsonSchema, V: AnyVec>(vec: &V) -> TreeNode {
     let index_str = I::to_string();
     let index = Index::try_from(index_str).ok();
     let indexes = index.into_iter().collect();
 
-    let leaf = MetricLeaf::new(
+    let leaf = SeriesLeaf::new(
         vec.name().to_string(),
         vec.value_type_to_string().to_string(),
         indexes,
@@ -33,7 +33,7 @@ fn make_leaf<I: VecIndex, T: JsonSchema, V: AnyVec>(vec: &V) -> TreeNode {
     let schema = schemars::SchemaGenerator::default().into_root_schema_for::<T>();
     let schema_json = serde_json::to_value(schema).unwrap_or_default();
 
-    TreeNode::Leaf(MetricLeafWithSchema::new(leaf, schema_json))
+    TreeNode::Leaf(SeriesLeafWithSchema::new(leaf, schema_json))
 }
 
 // BytesVec implementation

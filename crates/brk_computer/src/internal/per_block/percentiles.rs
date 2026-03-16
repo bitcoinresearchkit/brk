@@ -27,8 +27,8 @@ impl PercentilesVecs {
         let vecs = PERCENTILES
             .into_iter()
             .map(|p| {
-                let metric_name = format!("{prefix}_pct{p:02}");
-                Price::forced_import(db, &metric_name, version + VERSION, indexes)
+                let series_name = format!("{prefix}_pct{p:02}");
+                Price::forced_import(db, &series_name, version + VERSION, indexes)
             })
             .collect::<Result<Vec<_>>>()?
             .try_into()

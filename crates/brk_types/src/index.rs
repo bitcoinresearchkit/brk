@@ -15,7 +15,7 @@ use super::{
     minute10::MINUTE10_INTERVAL, minute30::MINUTE30_INTERVAL, timestamp::INDEX_EPOCH,
 };
 
-/// Aggregation dimension for querying metrics. Includes time-based (date, week, month, year),
+/// Aggregation dimension for querying series. Includes time-based (date, week, month, year),
 /// block-based (height, tx_index), and address/output type indexes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]

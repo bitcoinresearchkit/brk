@@ -7,24 +7,45 @@ use axum::{
     http::{HeaderMap, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
-use brk_types::{Format, MetricSelection, OutputLegacy};
+use brk_error::Result as BrkResult;
+use brk_query::{Query as BrkQuery, ResolvedQuery};
+use brk_types::{Format, Output, SeriesOutput, SeriesSelection};
 
 use crate::{
     Result,
-    api::metrics::{CACHE_CONTROL, max_weight},
+    api::series::{CACHE_CONTROL, max_weight},
     extended::{ContentEncoding, HeaderMapExtended},
 };
-
-const SUNSET: &str = "2027-01-01T00:00:00Z";
 
 use super::AppState;
 
 pub async fn handler(
     uri: Uri,
     headers: HeaderMap,
+    addr: Extension<SocketAddr>,
+    Query(params): Query<SeriesSelection>,
+    state: State<AppState>,
+) -> Result<Response> {
+    format_and_respond(uri, headers, addr, params, state, |q, r| q.format(r)).await
+}
+
+pub async fn raw_handler(
+    uri: Uri,
+    headers: HeaderMap,
+    addr: Extension<SocketAddr>,
+    Query(params): Query<SeriesSelection>,
+    state: State<AppState>,
+) -> Result<Response> {
+    format_and_respond(uri, headers, addr, params, state, |q, r| q.format_raw(r)).await
+}
+
+async fn format_and_respond(
+    uri: Uri,
+    headers: HeaderMap,
     Extension(addr): Extension<SocketAddr>,
-    Query(params): Query<MetricSelection>,
-    State(state): State<AppState>,
+    params: SeriesSelection,
+    state: State<AppState>,
+    formatter: fn(&BrkQuery, ResolvedQuery) -> BrkResult<SeriesOutput>,
 ) -> Result<Response> {
     // Phase 1: Search and resolve metadata (cheap)
     let resolved = state
@@ -42,7 +63,7 @@ pub async fn handler(
     // Phase 2: Format (expensive, server-side cached)
     let encoding = ContentEncoding::negotiate(&headers);
     let cache_key = format!(
-        "legacy-{}{}{}-{}",
+        "single-{}{}{}-{}",
         uri.path(),
         uri.query().unwrap_or(""),
         etag,
@@ -53,10 +74,10 @@ pub async fn handler(
         .get_or_insert(&cache_key, async move {
             query
                 .run(move |q| {
-                    let out = q.format_legacy(resolved)?;
+                    let out = formatter(q, resolved)?;
                     let raw = match out.output {
-                        OutputLegacy::CSV(s) => Bytes::from(s),
-                        OutputLegacy::Json(v) => Bytes::from(v.to_vec()),
+                        Output::CSV(s) => Bytes::from(s),
+                        Output::Json(v) => Bytes::from(v),
                     };
                     Ok(encoding.compress(raw))
                 })
@@ -76,7 +97,6 @@ pub async fn handler(
         }
         Format::JSON => h.insert_content_type_application_json(),
     }
-    h.insert_deprecation(SUNSET);
 
     Ok(response)
 }

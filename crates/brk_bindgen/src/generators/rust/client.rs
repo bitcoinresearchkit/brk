@@ -105,7 +105,7 @@ impl BrkClientBase {{
     }}
 }}
 
-/// Build metric name with suffix.
+/// Build series name with suffix.
 #[inline]
 fn _m(acc: &str, s: &str) -> String {{
     if s.is_empty() {{ acc.to_string() }}
@@ -113,7 +113,7 @@ fn _m(acc: &str, s: &str) -> String {{
     else {{ format!("{{acc}}_{{s}}") }}
 }}
 
-/// Build metric name with prefix.
+/// Build series name with prefix.
 #[inline]
 fn _p(prefix: &str, acc: &str) -> String {{
     if acc.is_empty() {{ prefix.to_string() }} else {{ format!("{{prefix}}_{{acc}}") }}
@@ -124,23 +124,23 @@ fn _p(prefix: &str, acc: &str) -> String {{
     .unwrap();
 }
 
-/// Generate the MetricPattern trait.
-pub fn generate_metric_pattern_trait(output: &mut String) {
+/// Generate the SeriesPattern trait.
+pub fn generate_series_pattern_trait(output: &mut String) {
     writeln!(
         output,
-        r#"/// Non-generic trait for metric patterns (usable in collections).
-pub trait AnyMetricPattern {{
-    /// Get the metric name.
+        r#"/// Non-generic trait for series patterns (usable in collections).
+pub trait AnySeriesPattern {{
+    /// Get the series name.
     fn name(&self) -> &str;
 
-    /// Get the list of available indexes for this metric.
+    /// Get the list of available indexes for this series.
     fn indexes(&self) -> &'static [Index];
 }}
 
-/// Generic trait for metric patterns with endpoint access.
-pub trait MetricPattern<T>: AnyMetricPattern {{
+/// Generic trait for series patterns with endpoint access.
+pub trait SeriesPattern<T>: AnySeriesPattern {{
     /// Get an endpoint builder for a specific index, if supported.
-    fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>>;
+    fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>>;
 }}
 
 "#
@@ -148,7 +148,7 @@ pub trait MetricPattern<T>: AnyMetricPattern {{
     .unwrap();
 }
 
-/// Generate the MetricEndpointBuilder structs with typestate pattern.
+/// Generate the SeriesEndpointBuilder structs with typestate pattern.
 pub fn generate_endpoint(output: &mut String) {
     writeln!(
         output,
@@ -168,7 +168,7 @@ impl EndpointConfig {{
     }}
 
     fn path(&self) -> String {{
-        format!("/api/metric/{{}}/{{}}", self.name, self.index.name())
+        format!("/api/series/{{}}/{{}}", self.name, self.index.name())
     }}
 
     fn build_path(&self, format: Option<&str>) -> String {{
@@ -189,10 +189,10 @@ impl EndpointConfig {{
     }}
 }}
 
-/// Builder for metric endpoint queries.
+/// Builder for series endpoint queries.
 ///
-/// Parameterized by element type `T` and response type `D` (defaults to `MetricData<T>`).
-/// For date-based indexes, use `DateMetricEndpointBuilder<T>` which sets `D = DateMetricData<T>`.
+/// Parameterized by element type `T` and response type `D` (defaults to `SeriesData<T>`).
+/// For date-based indexes, use `DateSeriesEndpointBuilder<T>` which sets `D = DateSeriesData<T>`.
 ///
 /// # Examples
 /// ```ignore
@@ -204,18 +204,18 @@ impl EndpointConfig {{
 /// let data = endpoint.last(10).fetch()?;           // last 10
 /// let data = endpoint.skip(100).take(10).fetch()?; // iterator-style
 /// ```
-pub struct MetricEndpointBuilder<T, D = MetricData<T>> {{
+pub struct SeriesEndpointBuilder<T, D = SeriesData<T>> {{
     config: EndpointConfig,
     _marker: std::marker::PhantomData<fn() -> (T, D)>,
 }}
 
-/// Builder for date-based metric endpoint queries.
+/// Builder for date-based series endpoint queries.
 ///
-/// Like `MetricEndpointBuilder` but returns `DateMetricData` and provides
+/// Like `SeriesEndpointBuilder` but returns `DateSeriesData` and provides
 /// date-based access methods (`get_date`, `date_range`).
-pub type DateMetricEndpointBuilder<T> = MetricEndpointBuilder<T, DateMetricData<T>>;
+pub type DateSeriesEndpointBuilder<T> = SeriesEndpointBuilder<T, DateSeriesData<T>>;
 
-impl<T: DeserializeOwned, D: DeserializeOwned> MetricEndpointBuilder<T, D> {{
+impl<T: DeserializeOwned, D: DeserializeOwned> SeriesEndpointBuilder<T, D> {{
     pub fn new(client: Arc<BrkClientBase>, name: Arc<str>, index: Index) -> Self {{
         Self {{ config: EndpointConfig::new(client, name, index), _marker: std::marker::PhantomData }}
     }}
@@ -286,29 +286,29 @@ impl<T: DeserializeOwned, D: DeserializeOwned> MetricEndpointBuilder<T, D> {{
     }}
 }}
 
-/// Date-specific methods available only on `DateMetricEndpointBuilder`.
-impl<T: DeserializeOwned> MetricEndpointBuilder<T, DateMetricData<T>> {{
+/// Date-specific methods available only on `DateSeriesEndpointBuilder`.
+impl<T: DeserializeOwned> SeriesEndpointBuilder<T, DateSeriesData<T>> {{
     /// Select a specific date position (for day-precision or coarser indexes).
-    pub fn get_date(self, date: Date) -> SingleItemBuilder<T, DateMetricData<T>> {{
+    pub fn get_date(self, date: Date) -> SingleItemBuilder<T, DateSeriesData<T>> {{
         let index = self.config.index.date_to_index(date).unwrap_or(0);
         self.get(index)
     }}
 
     /// Select a date range (for day-precision or coarser indexes).
-    pub fn date_range(self, start: Date, end: Date) -> RangeBuilder<T, DateMetricData<T>> {{
+    pub fn date_range(self, start: Date, end: Date) -> RangeBuilder<T, DateSeriesData<T>> {{
         let s = self.config.index.date_to_index(start).unwrap_or(0);
         let e = self.config.index.date_to_index(end).unwrap_or(0);
         self.range(s..e)
     }}
 
     /// Select a specific timestamp position (works for all date-based indexes including sub-daily).
-    pub fn get_timestamp(self, ts: Timestamp) -> SingleItemBuilder<T, DateMetricData<T>> {{
+    pub fn get_timestamp(self, ts: Timestamp) -> SingleItemBuilder<T, DateSeriesData<T>> {{
         let index = self.config.index.timestamp_to_index(ts).unwrap_or(0);
         self.get(index)
     }}
 
     /// Select a timestamp range (works for all date-based indexes including sub-daily).
-    pub fn timestamp_range(self, start: Timestamp, end: Timestamp) -> RangeBuilder<T, DateMetricData<T>> {{
+    pub fn timestamp_range(self, start: Timestamp, end: Timestamp) -> RangeBuilder<T, DateSeriesData<T>> {{
         let s = self.config.index.timestamp_to_index(start).unwrap_or(0);
         let e = self.config.index.timestamp_to_index(end).unwrap_or(0);
         self.range(s..e)
@@ -316,13 +316,13 @@ impl<T: DeserializeOwned> MetricEndpointBuilder<T, DateMetricData<T>> {{
 }}
 
 /// Builder for single item access.
-pub struct SingleItemBuilder<T, D = MetricData<T>> {{
+pub struct SingleItemBuilder<T, D = SeriesData<T>> {{
     config: EndpointConfig,
     _marker: std::marker::PhantomData<fn() -> (T, D)>,
 }}
 
 /// Date-aware single item builder.
-pub type DateSingleItemBuilder<T> = SingleItemBuilder<T, DateMetricData<T>>;
+pub type DateSingleItemBuilder<T> = SingleItemBuilder<T, DateSeriesData<T>>;
 
 impl<T: DeserializeOwned, D: DeserializeOwned> SingleItemBuilder<T, D> {{
     /// Fetch the single item.
@@ -337,13 +337,13 @@ impl<T: DeserializeOwned, D: DeserializeOwned> SingleItemBuilder<T, D> {{
 }}
 
 /// Builder after calling `skip(n)`. Chain with `take(n)` to specify count.
-pub struct SkippedBuilder<T, D = MetricData<T>> {{
+pub struct SkippedBuilder<T, D = SeriesData<T>> {{
     config: EndpointConfig,
     _marker: std::marker::PhantomData<fn() -> (T, D)>,
 }}
 
 /// Date-aware skipped builder.
-pub type DateSkippedBuilder<T> = SkippedBuilder<T, DateMetricData<T>>;
+pub type DateSkippedBuilder<T> = SkippedBuilder<T, DateSeriesData<T>>;
 
 impl<T: DeserializeOwned, D: DeserializeOwned> SkippedBuilder<T, D> {{
     /// Take n items after the skipped position.
@@ -365,13 +365,13 @@ impl<T: DeserializeOwned, D: DeserializeOwned> SkippedBuilder<T, D> {{
 }}
 
 /// Builder with range fully specified.
-pub struct RangeBuilder<T, D = MetricData<T>> {{
+pub struct RangeBuilder<T, D = SeriesData<T>> {{
     config: EndpointConfig,
     _marker: std::marker::PhantomData<fn() -> (T, D)>,
 }}
 
 /// Date-aware range builder.
-pub type DateRangeBuilder<T> = RangeBuilder<T, DateMetricData<T>>;
+pub type DateRangeBuilder<T> = RangeBuilder<T, DateSeriesData<T>>;
 
 impl<T: DeserializeOwned, D: DeserializeOwned> RangeBuilder<T, D> {{
     /// Fetch the range as parsed JSON.
@@ -414,13 +414,13 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
     writeln!(
         output,
         r#"#[inline]
-fn _ep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> MetricEndpointBuilder<T> {{
-    MetricEndpointBuilder::new(c.clone(), n.clone(), i)
+fn _ep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> SeriesEndpointBuilder<T> {{
+    SeriesEndpointBuilder::new(c.clone(), n.clone(), i)
 }}
 
 #[inline]
-fn _dep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> DateMetricEndpointBuilder<T> {{
-    DateMetricEndpointBuilder::new(c.clone(), n.clone(), i)
+fn _dep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> DateSeriesEndpointBuilder<T> {{
+    DateSeriesEndpointBuilder::new(c.clone(), n.clone(), i)
 }}
 "#
     )
@@ -441,14 +441,14 @@ fn _dep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> 
             if index.is_date_based() {
                 writeln!(
                     output,
-                    "    pub fn {}(&self) -> DateMetricEndpointBuilder<T> {{ _dep(&self.client, &self.name, Index::{}) }}",
+                    "    pub fn {}(&self) -> DateSeriesEndpointBuilder<T> {{ _dep(&self.client, &self.name, Index::{}) }}",
                     method_name, index
                 )
                 .unwrap();
             } else {
                 writeln!(
                     output,
-                    "    pub fn {}(&self) -> MetricEndpointBuilder<T> {{ _ep(&self.client, &self.name, Index::{}) }}",
+                    "    pub fn {}(&self) -> SeriesEndpointBuilder<T> {{ _ep(&self.client, &self.name, Index::{}) }}",
                     method_name, index
                 )
                 .unwrap();
@@ -473,18 +473,18 @@ fn _dep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> 
         writeln!(output, "    pub fn name(&self) -> &str {{ &self.name }}").unwrap();
         writeln!(output, "}}\n").unwrap();
 
-        // Implement AnyMetricPattern trait
+        // Implement AnySeriesPattern trait
         writeln!(
             output,
-            "impl<T> AnyMetricPattern for {}<T> {{ fn name(&self) -> &str {{ &self.name }} fn indexes(&self) -> &'static [Index] {{ {} }} }}",
+            "impl<T> AnySeriesPattern for {}<T> {{ fn name(&self) -> &str {{ &self.name }} fn indexes(&self) -> &'static [Index] {{ {} }} }}",
             pattern.name, idx_const
         )
         .unwrap();
 
-        // Implement MetricPattern<T> trait
+        // Implement SeriesPattern<T> trait
         writeln!(
             output,
-            "impl<T: DeserializeOwned> MetricPattern<T> for {}<T> {{ fn get(&self, index: Index) -> Option<MetricEndpointBuilder<T>> {{ {}.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) }} }}\n",
+            "impl<T: DeserializeOwned> SeriesPattern<T> for {}<T> {{ fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> {{ {}.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) }} }}\n",
             pattern.name, idx_const
         )
         .unwrap();
@@ -542,7 +542,7 @@ pub fn generate_pattern_structs(
 
         writeln!(
             output,
-            "    /// Create a new pattern node with accumulated metric name."
+            "    /// Create a new pattern node with accumulated series name."
         )
         .unwrap();
         if pattern.is_templated() {

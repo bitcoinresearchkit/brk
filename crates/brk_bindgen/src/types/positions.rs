@@ -1,4 +1,4 @@
-//! Pattern mode and field parts for metric name reconstruction.
+//! Pattern mode and field parts for series name reconstruction.
 //!
 //! Patterns are either suffix mode or prefix mode:
 //! - Suffix mode: `_m(acc, relative)` → `acc_relative` or just `relative` if acc empty
@@ -6,14 +6,14 @@
 
 use std::collections::BTreeMap;
 
-/// How a pattern constructs metric names from the accumulator.
+/// How a pattern constructs series names from the accumulator.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PatternMode {
     /// Fields append their relative name to acc.
     /// Formula: `_m(acc, relative)` → `{acc}_{relative}` or `{relative}` if acc empty
     /// Example: `_m("lth", "max_cost_basis")` → `"lth_max_cost_basis"`
     Suffix {
-        /// Maps field name to its relative name (full metric name when acc = "")
+        /// Maps field name to its relative name (full series name when acc = "")
         relatives: BTreeMap<String, String>,
     },
     /// Fields prepend their prefix to acc.
@@ -23,7 +23,7 @@ pub enum PatternMode {
         /// Maps field name to its prefix (empty string for identity)
         prefixes: BTreeMap<String, String>,
     },
-    /// Fields construct metric names using a template with a discriminator placeholder.
+    /// Fields construct series names using a template with a discriminator placeholder.
     /// Factory takes two params: `acc` (base) and `disc` (discriminator).
     /// Formula: `_m(acc, template.replace("{disc}", disc))`
     /// Example: template `"ratio_{disc}_bps"` with disc `"pct99"` → `_m(acc, "ratio_pct99_bps")`

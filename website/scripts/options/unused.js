@@ -2,8 +2,8 @@ import { localhost } from "../utils/env.js";
 import { INDEX_LABEL } from "../utils/serde.js";
 
 /**
- * Check if a metric pattern has at least one chartable index
- * @param {AnyMetricPattern} node
+ * Check if a series pattern has at least one chartable index
+ * @param {AnySeriesPattern} node
  * @returns {boolean}
  */
 function hasChartableIndex(node) {
@@ -12,16 +12,16 @@ function hasChartableIndex(node) {
 }
 
 /**
- * Walk a metrics tree and collect all chartable metric patterns
+ * Walk a series tree and collect all chartable series patterns
  * @param {TreeNode | null | undefined} node
- * @param {Map<AnyMetricPattern, string[]>} map
+ * @param {Map<AnySeriesPattern, string[]>} map
  * @param {string[]} path
  */
-function walkMetrics(node, map, path) {
+function walkSeries(node, map, path) {
   if (node && "by" in node) {
-    const metricNode = /** @type {AnyMetricPattern} */ (node);
-    if (!hasChartableIndex(metricNode)) return;
-    map.set(metricNode, path);
+    const seriesNode = /** @type {AnySeriesPattern} */ (node);
+    if (!hasChartableIndex(seriesNode)) return;
+    map.set(seriesNode, path);
   } else if (node && typeof node === "object") {
     for (const [key, value] of Object.entries(node)) {
       const kn = key.toLowerCase();
@@ -56,7 +56,7 @@ function walkMetrics(node, map, path) {
         kn.endsWith("indexes")
       )
         continue;
-      walkMetrics(/** @type {TreeNode | null | undefined} */ (value), map, [
+      walkSeries(/** @type {TreeNode | null | undefined} */ (value), map, [
         ...path,
         key,
       ]);
@@ -65,9 +65,9 @@ function walkMetrics(node, map, path) {
 }
 
 /**
- * Walk partial options tree and delete referenced metrics from the map
+ * Walk partial options tree and delete referenced series from the map
  * @param {PartialOptionsTree} options
- * @param {Map<AnyMetricPattern, string[]>} map
+ * @param {Map<AnySeriesPattern, string[]>} map
  */
 function walkOptions(options, map) {
   for (const node of options) {
@@ -82,40 +82,40 @@ function walkOptions(options, map) {
 }
 
 /**
- * @param {Map<AnyMetricPattern, string[]>} map
+ * @param {Map<AnySeriesPattern, string[]>} map
  * @param {(AnyFetchedSeriesBlueprint | FetchedPriceSeriesBlueprint)[]} [arr]
  */
 function markUsedBlueprints(map, arr) {
   if (!arr) return;
   for (let i = 0; i < arr.length; i++) {
-    const metric = arr[i].metric;
-    if (!metric) continue;
-    const maybePriceMetric =
-      /** @type {{ usd?: AnyMetricPattern, sats?: AnyMetricPattern }} */ (
-        /** @type {unknown} */ (metric)
+    const s = arr[i].series;
+    if (!s) continue;
+    const maybePriceSeries =
+      /** @type {{ usd?: AnySeriesPattern, sats?: AnySeriesPattern }} */ (
+        /** @type {unknown} */ (s)
       );
-    if (maybePriceMetric.usd?.by && maybePriceMetric.sats?.by) {
-      map.delete(maybePriceMetric.usd);
-      map.delete(maybePriceMetric.sats);
+    if (maybePriceSeries.usd?.by && maybePriceSeries.sats?.by) {
+      map.delete(maybePriceSeries.usd);
+      map.delete(maybePriceSeries.sats);
     } else {
-      map.delete(/** @type {AnyMetricPattern} */ (metric));
+      map.delete(/** @type {AnySeriesPattern} */ (s));
     }
   }
 }
 
 /**
- * Log unused metrics to console (localhost only)
- * @param {TreeNode} metricsTree
+ * Log unused series to console (localhost only)
+ * @param {TreeNode} seriesTree
  * @param {PartialOptionsTree} partialOptions
  */
-export function logUnused(metricsTree, partialOptions) {
+export function logUnused(seriesTree, partialOptions) {
   if (!localhost) return;
 
   console.log(extractTreeStructure(partialOptions));
 
-  /** @type {Map<AnyMetricPattern, string[]>} */
+  /** @type {Map<AnySeriesPattern, string[]>} */
   const all = new Map();
-  walkMetrics(metricsTree, all, []);
+  walkSeries(seriesTree, all, []);
   walkOptions(partialOptions, all);
 
   if (!all.size) return;
@@ -135,7 +135,7 @@ export function logUnused(metricsTree, partialOptions) {
     }
   }
 
-  console.log("Unused metrics:", { count: all.size, tree });
+  console.log("Unused series:", { count: all.size, tree });
 }
 
 /**
@@ -154,10 +154,10 @@ export function extractTreeStructure(options) {
     /** @type {Record<string, string[]>} */
     const grouped = {};
     for (const s of series) {
-      const metric = /** @type {AnyMetricPattern | AnyPricePattern} */ (
-        s.metric
+      const pattern = /** @type {AnySeriesPattern | AnyPricePattern} */ (
+        s.series
       );
-      if (isTop && "usd" in metric && "sats" in metric) {
+      if (isTop && "usd" in pattern && "sats" in pattern) {
         const title = s.title || s.key || "unnamed";
         (grouped["USD"] ??= []).push(title);
         (grouped["sats"] ??= []).push(title);

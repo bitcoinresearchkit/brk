@@ -12,13 +12,13 @@ use crate::{
 
 /// Generate tree classes
 pub fn generate_tree_classes(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
-    writeln!(output, "# Metrics tree classes\n").unwrap();
+    writeln!(output, "# Series tree classes\n").unwrap();
 
     let pattern_lookup = metadata.pattern_lookup();
     let mut generated = BTreeSet::new();
     generate_tree_class(
         output,
-        "MetricsTree",
+        "SeriesTree",
         "",
         catalog,
         pattern_lookup,
@@ -60,7 +60,7 @@ fn generate_tree_class(
 
     // THEN generate the current class (after all children are defined)
     writeln!(output, "class {}:", name).unwrap();
-    writeln!(output, "    \"\"\"Metrics tree node.\"\"\"").unwrap();
+    writeln!(output, "    \"\"\"Series tree node.\"\"\"").unwrap();
     writeln!(output, "    ").unwrap();
     writeln!(
         output,

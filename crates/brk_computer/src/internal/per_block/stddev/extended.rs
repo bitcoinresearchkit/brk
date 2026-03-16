@@ -179,7 +179,7 @@ impl StdDevPerBlockExtended {
     pub(crate) fn compute_cents_bands(
         &mut self,
         starting_indexes: &Indexes,
-        metric_price: &impl ReadableVec<Height, Cents>,
+        series_price: &impl ReadableVec<Height, Cents>,
         sma: &impl ReadableVec<Height, StoredF32>,
         exit: &Exit,
     ) -> Result<()> {
@@ -189,7 +189,7 @@ impl StdDevPerBlockExtended {
                     .cents
                     .compute_binary::<Cents, StoredF32, PriceTimesRatioCents>(
                         starting_indexes.height,
-                        metric_price,
+                        series_price,
                         $band_source,
                         exit,
                     )?;

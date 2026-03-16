@@ -44,7 +44,7 @@
  *
  * @typedef {Object} PriceSeriesBlueprintSpecific
  * @property {"Price"} type
- * @property {AnyMetricPattern} ohlcMetric - OHLC metric for candlestick (>= 1h indexes)
+ * @property {AnySeriesPattern} ohlcSeries - OHLC series for candlestick (>= 1h indexes)
  * @property {[Color, Color]} [colors]
  * @property {CandlestickSeriesPartialOptions} [options]
  * @typedef {BaseSeriesBlueprint & PriceSeriesBlueprintSpecific} PriceSeriesBlueprint
@@ -53,7 +53,7 @@
  *
  * @typedef {AnySeriesBlueprint["type"]} SeriesType
  *
- * @typedef {{ metric: AnyMetricPattern, unit?: Unit }} FetchedAnySeriesOptions
+ * @typedef {{ series: AnySeriesPattern, unit?: Unit }} FetchedAnySeriesOptions
  *
  * @typedef {BaselineSeriesBlueprint & FetchedAnySeriesOptions} FetchedBaselineSeriesBlueprint
  * @typedef {CandlestickSeriesBlueprint & FetchedAnySeriesOptions} FetchedCandlestickSeriesBlueprint
@@ -63,14 +63,14 @@
  * @typedef {DotsBaselineSeriesBlueprint & FetchedAnySeriesOptions} FetchedDotsBaselineSeriesBlueprint
  * @typedef {AnySeriesBlueprint & FetchedAnySeriesOptions} AnyFetchedSeriesBlueprint
  *
- * Any pattern with usd and sats sub-metrics (auto-expands to USD + sats)
- * @typedef {{ usd: AnyMetricPattern, sats: AnyMetricPattern }} AnyPricePattern
+ * Any pattern with usd and sats sub-series (auto-expands to USD + sats)
+ * @typedef {{ usd: AnySeriesPattern, sats: AnySeriesPattern }} AnyPricePattern
  *
- * Any pattern with sats, btc, and usd sub-metrics (value patterns like stack)
- * @typedef {{ sats: AnyMetricPattern, btc: AnyMetricPattern, usd: AnyMetricPattern }} AnyValuePattern
+ * Any pattern with sats, btc, and usd sub-series (value patterns like stack)
+ * @typedef {{ sats: AnySeriesPattern, btc: AnySeriesPattern, usd: AnySeriesPattern }} AnyValuePattern
  *
  * Top pane price series - requires a price pattern with usd/sats, auto-expands to USD + sats
- * @typedef {{ metric: AnyPricePattern }} FetchedPriceSeriesOptions
+ * @typedef {{ series: AnyPricePattern }} FetchedPriceSeriesOptions
  * @typedef {LineSeriesBlueprint & FetchedPriceSeriesOptions} FetchedPriceSeriesBlueprint
  *
  * @typedef {Object} PartialOption

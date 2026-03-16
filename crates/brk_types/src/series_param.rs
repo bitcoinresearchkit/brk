@@ -1,9 +1,9 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::Metric;
+use crate::Series;
 
 #[derive(Deserialize, JsonSchema)]
-pub struct MetricParam {
-    pub metric: Metric,
+pub struct SeriesParam {
+    pub series: Series,
 }

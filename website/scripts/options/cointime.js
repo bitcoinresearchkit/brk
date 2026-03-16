@@ -9,7 +9,7 @@ import { satsBtcUsd, priceRatioPercentilesTree } from "./shared.js";
  * @returns {PartialOptionsGroup}
  */
 export function createCointimeSection() {
-  const { cointime, cohorts, supply } = brk.metrics;
+  const { cointime, cohorts, supply } = brk.series;
   const {
     prices: cointimePrices,
     cap,
@@ -24,9 +24,9 @@ export function createCointimeSection() {
 
   // Reference lines for cap comparisons
   const capReferenceLines = /** @type {const} */ ([
-    { metric: supply.marketCap.usd, name: "Market", color: colors.default },
+    { series: supply.marketCap.usd, name: "Market", color: colors.default },
     {
-      metric: all.realized.cap.usd,
+      series: all.realized.cap.usd,
       name: "Realized",
       color: colors.realized,
     },
@@ -76,11 +76,11 @@ export function createCointimeSection() {
   ]);
 
   const caps = /** @type {const} */ ([
-    { metric: cap.vaulted.usd, name: "Vaulted", color: colors.vaulted },
-    { metric: cap.active.usd, name: "Active", color: colors.active },
-    { metric: cap.cointime.usd, name: "Cointime", color: colors.cointime },
-    { metric: cap.investor.usd, name: "Investor", color: colors.investor },
-    { metric: cap.thermo.usd, name: "Thermo", color: colors.thermo },
+    { series: cap.vaulted.usd, name: "Vaulted", color: colors.vaulted },
+    { series: cap.active.usd, name: "Active", color: colors.active },
+    { series: cap.cointime.usd, name: "Cointime", color: colors.cointime },
+    { series: cap.investor.usd, name: "Investor", color: colors.investor },
+    { series: cap.thermo.usd, name: "Thermo", color: colors.thermo },
   ]);
 
   const supplyBreakdown = /** @type {const} */ ([
@@ -159,17 +159,17 @@ export function createCointimeSection() {
             title: "Cointime Prices",
             top: [
               price({
-                metric: all.realized.price,
+                series: all.realized.price,
                 name: "Realized",
                 color: colors.realized,
               }),
               price({
-                metric: all.realized.investor.price,
+                series: all.realized.investor.price,
                 name: "Investor",
                 color: colors.investor,
               }),
               ...prices.map(({ pattern, name, color }) =>
-                price({ metric: pattern, name, color }),
+                price({ series: pattern, name, color }),
               ),
             ],
           },
@@ -181,7 +181,7 @@ export function createCointimeSection() {
               legend: name,
               color,
               priceReferences: [
-                price({ metric: all.realized.price, name: "Realized", color: colors.realized, defaultActive: false }),
+                price({ series: all.realized.price, name: "Realized", color: colors.realized, defaultActive: false }),
               ],
             }),
           })),
@@ -196,22 +196,22 @@ export function createCointimeSection() {
             name: "Compare",
             title: "Cointime Caps",
             bottom: [
-              ...capReferenceLines.map(({ metric, name, color }) =>
-                line({ metric, name, color, unit: Unit.usd }),
+              ...capReferenceLines.map(({ series, name, color }) =>
+                line({ series, name, color, unit: Unit.usd }),
               ),
-              ...caps.map(({ metric, name, color }) =>
-                line({ metric, name, color, unit: Unit.usd }),
+              ...caps.map(({ series, name, color }) =>
+                line({ series, name, color, unit: Unit.usd }),
               ),
             ],
           },
-          ...caps.map(({ metric, name, color }) => ({
+          ...caps.map(({ series, name, color }) => ({
             name,
             title: `${name} Cap`,
             bottom: [
-              line({ metric, name, color, unit: Unit.usd }),
+              line({ series, name, color, unit: Unit.usd }),
               ...capReferenceLines.map((ref) =>
                 line({
-                  metric: ref.metric,
+                  series: ref.series,
                   name: ref.name,
                   color: ref.color,
                   unit: Unit.usd,
@@ -237,19 +237,19 @@ export function createCointimeSection() {
         title: "Liveliness & Vaultedness",
         bottom: [
           line({
-            metric: activity.liveliness,
+            series: activity.liveliness,
             name: "Liveliness",
             color: colors.liveliness,
             unit: Unit.ratio,
           }),
           line({
-            metric: activity.vaultedness,
+            series: activity.vaultedness,
             name: "Vaultedness",
             color: colors.vaulted,
             unit: Unit.ratio,
           }),
           line({
-            metric: activity.ratio,
+            series: activity.ratio,
             name: "L/V Ratio",
             color: colors.activity,
             unit: Unit.ratio,
@@ -270,7 +270,7 @@ export function createCointimeSection() {
                 title: "Coinblocks",
                 bottom: coinblocks.map(({ pattern, name, color }) =>
                   line({
-                    metric: pattern.base,
+                    series: pattern.base,
                     name,
                     color,
                     unit: Unit.coinblocks,
@@ -282,7 +282,7 @@ export function createCointimeSection() {
                 title: "Coinblocks (Total)",
                 bottom: coinblocks.map(({ pattern, name, color }) =>
                   line({
-                    metric: pattern.cumulative,
+                    series: pattern.cumulative,
                     name,
                     color,
                     unit: Unit.coinblocks,
@@ -299,7 +299,7 @@ export function createCointimeSection() {
                 title,
                 bottom: [
                   line({
-                    metric: pattern.base,
+                    series: pattern.base,
                     name,
                     color,
                     unit: Unit.coinblocks,
@@ -312,7 +312,7 @@ export function createCointimeSection() {
                 title: `${title} (Total)`,
                 bottom: [
                   line({
-                    metric: pattern.cumulative,
+                    series: pattern.cumulative,
                     name,
                     color,
                     unit: Unit.coinblocks,
@@ -336,10 +336,10 @@ export function createCointimeSection() {
                 title: "Cointime Value",
                 bottom: [
                   ...cointimeValues.map(({ pattern, name, color }) =>
-                    line({ metric: pattern.base, name, color, unit: Unit.usd }),
+                    line({ series: pattern.base, name, color, unit: Unit.usd }),
                   ),
                   line({
-                    metric: vocdd.pattern.base,
+                    series: vocdd.pattern.base,
                     name: vocdd.name,
                     color: vocdd.color,
                     unit: Unit.usd,
@@ -352,14 +352,14 @@ export function createCointimeSection() {
                 bottom: [
                   ...cointimeValues.map(({ pattern, name, color }) =>
                     line({
-                      metric: pattern.cumulative,
+                      series: pattern.cumulative,
                       name,
                       color,
                       unit: Unit.usd,
                     }),
                   ),
                   line({
-                    metric: vocdd.pattern.cumulative,
+                    series: vocdd.pattern.cumulative,
                     name: vocdd.name,
                     color: vocdd.color,
                     unit: Unit.usd,
@@ -375,7 +375,7 @@ export function createCointimeSection() {
                 name: "Base",
                 title,
                 bottom: [
-                  line({ metric: pattern.base, name, color, unit: Unit.usd }),
+                  line({ series: pattern.base, name, color, unit: Unit.usd }),
                 ],
               },
               rollingWindowsTree({ windows: pattern.sum, title, unit: Unit.usd }),
@@ -384,7 +384,7 @@ export function createCointimeSection() {
                 title: `${title} (Total)`,
                 bottom: [
                   line({
-                    metric: pattern.cumulative,
+                    series: pattern.cumulative,
                     name,
                     color,
                     unit: Unit.usd,
@@ -401,13 +401,13 @@ export function createCointimeSection() {
                 title: vocdd.title,
                 bottom: [
                   line({
-                    metric: vocdd.pattern.base,
+                    series: vocdd.pattern.base,
                     name: vocdd.name,
                     color: vocdd.color,
                     unit: Unit.usd,
                   }),
                   line({
-                    metric: reserveRisk.vocddMedian1y,
+                    series: reserveRisk.vocddMedian1y,
                     name: "365d Median",
                     color: colors.time._1y,
                     unit: Unit.usd,
@@ -420,7 +420,7 @@ export function createCointimeSection() {
                 title: `${vocdd.title} (Total)`,
                 bottom: [
                   line({
-                    metric: vocdd.pattern.cumulative,
+                    series: vocdd.pattern.cumulative,
                     name: vocdd.name,
                     color: vocdd.color,
                     unit: Unit.usd,
@@ -432,7 +432,7 @@ export function createCointimeSection() {
         ],
       },
 
-      // Indicators - derived decision metrics
+      // Indicators - derived decision series
       {
         name: "Indicators",
         tree: [
@@ -441,7 +441,7 @@ export function createCointimeSection() {
             title: "Reserve Risk",
             bottom: [
               line({
-                metric: reserveRisk.value,
+                series: reserveRisk.value,
                 name: "Ratio",
                 color: colors.reserveRisk,
                 unit: Unit.ratio,
@@ -453,7 +453,7 @@ export function createCointimeSection() {
             title: "AVIV Ratio",
             bottom: [
               baseline({
-                metric: cap.aviv.ratio,
+                series: cap.aviv.ratio,
                 name: "Ratio",
                 color: colors.reserveRisk,
                 unit: Unit.ratio,
@@ -466,7 +466,7 @@ export function createCointimeSection() {
             title: "HODL Bank",
             bottom: [
               line({
-                metric: reserveRisk.hodlBank,
+                series: reserveRisk.hodlBank,
                 name: "Value",
                 color: colors.hodlBank,
                 unit: Unit.usd,
@@ -476,7 +476,7 @@ export function createCointimeSection() {
         ],
       },
 
-      // Cointime-Adjusted - comparing base vs adjusted metrics
+      // Cointime-Adjusted - comparing base vs adjusted series
       {
         name: "Cointime-Adjusted",
         tree: [
@@ -485,7 +485,7 @@ export function createCointimeSection() {
             title: "Cointime-Adjusted Inflation",
             bottom: [
               dots({
-                metric: supply.inflationRate.percent,
+                series: supply.inflationRate.percent,
                 name: "Base",
                 color: colors.base,
                 unit: Unit.percentage,
@@ -505,13 +505,13 @@ export function createCointimeSection() {
                 title: "Cointime-Adjusted BTC Velocity",
                 bottom: [
                   line({
-                    metric: supply.velocity.native,
+                    series: supply.velocity.native,
                     name: "Base",
                     color: colors.base,
                     unit: Unit.ratio,
                   }),
                   line({
-                    metric: adjusted.txVelocityNative,
+                    series: adjusted.txVelocityNative,
                     name: "Cointime-Adjusted",
                     color: colors.adjusted,
                     unit: Unit.ratio,
@@ -523,13 +523,13 @@ export function createCointimeSection() {
                 title: "Cointime-Adjusted USD Velocity",
                 bottom: [
                   line({
-                    metric: supply.velocity.fiat,
+                    series: supply.velocity.fiat,
                     name: "Base",
                     color: colors.thermo,
                     unit: Unit.ratio,
                   }),
                   line({
-                    metric: adjusted.txVelocityFiat,
+                    series: adjusted.txVelocityFiat,
                     name: "Cointime-Adjusted",
                     color: colors.vaulted,
                     unit: Unit.ratio,

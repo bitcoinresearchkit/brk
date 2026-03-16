@@ -1,7 +1,7 @@
-//! Common prefix/suffix detection for metric names.
+//! Common prefix/suffix detection for series names.
 //!
 //! This module provides utilities to find common prefixes and suffixes
-//! among metric names, which is used to detect pattern mode (suffix vs prefix).
+//! among series names, which is used to detect pattern mode (suffix vs prefix).
 
 /// Find the longest common prefix among all strings.
 /// Returns the prefix WITH trailing underscore if found at word boundary.

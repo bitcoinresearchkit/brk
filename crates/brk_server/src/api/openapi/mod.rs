@@ -22,12 +22,12 @@ pub fn create_openapi() -> OpenApi {
     let info = Info {
         title: "Bitcoin Research Kit".to_string(),
         description: Some(
-            r#"API for querying Bitcoin blockchain data and on-chain metrics.
+            r#"API for querying Bitcoin blockchain data and on-chain series.
 
 ### Features
 
-- **Metrics**: Thousands of time-series metrics across multiple indexes (date, block height, etc.)
-- **[Mempool.space](https://mempool.space/docs/api/rest) compatible** (WIP): Most non-metrics endpoints follow the mempool.space API format
+- **Series**: Thousands of time-series across multiple indexes (date, block height, etc.)
+- **[Mempool.space](https://mempool.space/docs/api/rest) compatible** (WIP): Most non-series endpoints follow the mempool.space API format
 - **Multiple formats**: JSON and CSV output
 - **LLM-optimized**: [`/llms.txt`](/llms.txt) for discovery, [`/api.json`](/api.json) compact OpenAPI spec for tool use (full spec at [`/openapi.json`](/openapi.json))
 
@@ -35,9 +35,9 @@ pub fn create_openapi() -> OpenApi {
 
 ```bash
 curl -s https://bitview.space/api/block-height/0
-curl -s https://bitview.space/api/metrics/search?q=price
-curl -s https://bitview.space/api/metric/price/day
-curl -s https://bitview.space/api/metric/price/day/latest
+curl -s https://bitview.space/api/series/search?q=price
+curl -s https://bitview.space/api/series/price/day
+curl -s https://bitview.space/api/series/price/day/latest
 ```
 
 ### Errors
@@ -48,7 +48,7 @@ All errors return structured JSON with a consistent format:
 {
   "error": {
     "type": "not_found",
-    "code": "metric_not_found",
+    "code": "series_not_found",
     "message": "'foo' not found, did you mean 'bar'?",
     "doc_url": "https://bitcoinresearchkit.org/api"
   }
@@ -56,7 +56,7 @@ All errors return structured JSON with a consistent format:
 ```
 
 - **`type`**: Error category — `invalid_request` (400), `forbidden` (403), `not_found` (404), `unavailable` (503), or `internal` (500)
-- **`code`**: Machine-readable error code (e.g. `invalid_address`, `metric_not_found`, `weight_exceeded`)
+- **`code`**: Machine-readable error code (e.g. `invalid_address`, `series_not_found`, `weight_exceeded`)
 - **`message`**: Human-readable description
 - **`doc_url`**: Link to API documentation
 
@@ -98,12 +98,19 @@ All errors return structured JSON with a consistent format:
             ..Default::default()
         },
         Tag {
+            name: "Series".to_string(),
+            description: Some(
+                "Access thousands of Bitcoin network time-series data. Query historical statistics \
+                across various indexes (date, week, month, block height) with JSON or CSV output.\n\n\
+                **Note:** Series names are subject to change while the project is in active development."
+                    .to_string(),
+            ),
+            ..Default::default()
+        },
+        Tag {
             name: "Metrics".to_string(),
             description: Some(
-                "Access thousands of Bitcoin network metrics and time-series data. Query historical statistics \
-                across various indexes (date, week, month, block height) with JSON or CSV output.\n\n\
-                **Note:** Metric names are subject to change while the project is in active development."
-                    .to_string(),
+                "Deprecated — use Series".to_string(),
             ),
             ..Default::default()
         },

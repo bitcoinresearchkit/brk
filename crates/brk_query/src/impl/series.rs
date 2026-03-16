@@ -3,9 +3,9 @@ use std::{collections::BTreeMap, sync::LazyLock};
 use brk_error::{Error, Result};
 use brk_traversable::TreeNode;
 use brk_types::{
-    Date, DetailedMetricCount, Epoch, Etag, Format, Halving, Height, Index, IndexInfo, LegacyValue,
-    Limit, Metric, MetricData, MetricInfo, MetricOutput, MetricOutputLegacy, MetricSelection,
-    Output, OutputLegacy, PaginatedMetrics, Pagination, PaginationIndex, RangeIndex, RangeMap,
+    Date, DetailedSeriesCount, Epoch, Etag, Format, Halving, Height, Index, IndexInfo, LegacyValue,
+    Limit, Series, SeriesData, SeriesInfo, SeriesOutput, SeriesOutputLegacy, SeriesSelection,
+    Output, OutputLegacy, PaginatedSeries, Pagination, PaginationIndex, RangeIndex, RangeMap,
     SearchQuery, Timestamp, Version,
 };
 use parking_lot::RwLock;
@@ -13,7 +13,7 @@ use vecdb::{AnyExportableVec, ReadableVec};
 
 use crate::{
     Query,
-    vecs::{IndexToVec, MetricToVec},
+    vecs::{IndexToVec, SeriesToVec},
 };
 
 /// Monotonic block timestamps → height. Lazily extended as new blocks are indexed.
@@ -26,31 +26,31 @@ const CSV_HEADER_BYTES_PER_COL: usize = 10;
 const CSV_CELL_BYTES: usize = 15;
 
 impl Query {
-    pub fn search_metrics(&self, query: &SearchQuery) -> Vec<&'static str> {
+    pub fn search_series(&self, query: &SearchQuery) -> Vec<&'static str> {
         self.vecs().matches(&query.q, query.limit)
     }
 
-    pub fn metric_not_found_error(&self, metric: &Metric) -> Error {
-        // Check if metric exists but with different indexes
-        if let Some(indexes) = self.vecs().metric_to_indexes(metric.clone()) {
+    pub fn series_not_found_error(&self, series: &Series) -> Error {
+        // Check if series exists but with different indexes
+        if let Some(indexes) = self.vecs().series_to_indexes(series.clone()) {
             let supported = indexes
                 .iter()
-                .map(|i| format!("/api/metric/{metric}/{}", i.name()))
+                .map(|i| format!("/api/series/{series}/{}", i.name()))
                 .collect::<Vec<_>>()
                 .join(", ");
-            return Error::MetricUnsupportedIndex {
-                metric: metric.to_string(),
+            return Error::SeriesUnsupportedIndex {
+                series: series.to_string(),
                 supported,
             };
         }
 
-        // Metric doesn't exist, suggest alternatives
+        // Series doesn't exist, suggest alternatives
         let matches = self
-            .vecs().matches(metric, Limit::DEFAULT)
+            .vecs().matches(series, Limit::DEFAULT)
             .into_iter()
             .map(|s| s.to_string())
             .collect();
-        Error::MetricNotFound(brk_error::MetricNotFound::new(metric.to_string(), matches))
+        Error::SeriesNotFound(brk_error::SeriesNotFound::new(series.to_string(), matches))
     }
 
     pub(crate) fn columns_to_csv(
@@ -107,44 +107,44 @@ impl Query {
         Ok(csv)
     }
 
-    /// Returns the latest value for a single metric as a JSON value.
-    pub fn latest(&self, metric: &Metric, index: Index) -> Result<serde_json::Value> {
+    /// Returns the latest value for a single series as a JSON value.
+    pub fn latest(&self, series: &Series, index: Index) -> Result<serde_json::Value> {
         let vec = self
             .vecs()
-            .get(metric, index)
-            .ok_or_else(|| self.metric_not_found_error(metric))?;
+            .get(series, index)
+            .ok_or_else(|| self.series_not_found_error(series))?;
         vec.last_json_value().ok_or(Error::NoData)
     }
 
-    /// Returns the length (total data points) for a single metric.
-    pub fn len(&self, metric: &Metric, index: Index) -> Result<usize> {
+    /// Returns the length (total data points) for a single series.
+    pub fn len(&self, series: &Series, index: Index) -> Result<usize> {
         let vec = self
             .vecs()
-            .get(metric, index)
-            .ok_or_else(|| self.metric_not_found_error(metric))?;
+            .get(series, index)
+            .ok_or_else(|| self.series_not_found_error(series))?;
         Ok(vec.len())
     }
 
-    /// Returns the version for a single metric.
-    pub fn version(&self, metric: &Metric, index: Index) -> Result<Version> {
+    /// Returns the version for a single series.
+    pub fn version(&self, series: &Series, index: Index) -> Result<Version> {
         let vec = self
             .vecs()
-            .get(metric, index)
-            .ok_or_else(|| self.metric_not_found_error(metric))?;
+            .get(series, index)
+            .ok_or_else(|| self.series_not_found_error(series))?;
         Ok(vec.version())
     }
 
-    /// Search for vecs matching the given metrics and index.
-    /// Returns error if no metrics requested or any requested metric is not found.
-    pub fn search(&self, params: &MetricSelection) -> Result<Vec<&'static dyn AnyExportableVec>> {
-        if params.metrics.is_empty() {
-            return Err(Error::NoMetrics);
+    /// Search for vecs matching the given series and index.
+    /// Returns error if no series requested or any requested series is not found.
+    pub fn search(&self, params: &SeriesSelection) -> Result<Vec<&'static dyn AnyExportableVec>> {
+        if params.series.is_empty() {
+            return Err(Error::NoSeries);
         }
-        let mut vecs = Vec::with_capacity(params.metrics.len());
-        for metric in params.metrics.iter() {
-            match self.vecs().get(metric, params.index) {
+        let mut vecs = Vec::with_capacity(params.series.len());
+        for series in params.series.iter() {
+            match self.vecs().get(series, params.index) {
                 Some(vec) => vecs.push(vec),
-                None => return Err(self.metric_not_found_error(metric)),
+                None => return Err(self.series_not_found_error(series)),
             }
         }
         Ok(vecs)
@@ -157,7 +157,7 @@ impl Query {
 
     /// Resolve query metadata without formatting (cheap).
     /// Use with `format` for lazy formatting after ETag check.
-    pub fn resolve(&self, params: MetricSelection, max_weight: usize) -> Result<ResolvedQuery> {
+    pub fn resolve(&self, params: SeriesSelection, max_weight: usize) -> Result<ResolvedQuery> {
         let vecs = self.search(&params)?;
 
         let total = vecs.iter().map(|v| v.len()).min().unwrap_or(0);
@@ -209,7 +209,7 @@ impl Query {
 
     /// Format a resolved query (expensive).
     /// Call after ETag/cache checks to avoid unnecessary work.
-    pub fn format(&self, resolved: ResolvedQuery) -> Result<MetricOutput> {
+    pub fn format(&self, resolved: ResolvedQuery) -> Result<SeriesOutput> {
         let ResolvedQuery {
             vecs,
             format,
@@ -227,7 +227,7 @@ impl Query {
                 let count = end.saturating_sub(start);
                 if vecs.len() == 1 {
                     let mut buf = Vec::with_capacity(count * 12 + 256);
-                    MetricData::serialize(vecs[0], index, start, end, &mut buf)?;
+                    SeriesData::serialize(vecs[0], index, start, end, &mut buf)?;
                     Output::Json(buf)
                 } else {
                     let mut buf = Vec::with_capacity(count * 12 * vecs.len() + 256);
@@ -236,7 +236,7 @@ impl Query {
                         if i > 0 {
                             buf.push(b',');
                         }
-                        MetricData::serialize(*vec, index, start, end, &mut buf)?;
+                        SeriesData::serialize(*vec, index, start, end, &mut buf)?;
                     }
                     buf.push(b']');
                     Output::Json(buf)
@@ -244,7 +244,7 @@ impl Query {
             }
         };
 
-        Ok(MetricOutput {
+        Ok(SeriesOutput {
             output,
             version,
             total,
@@ -253,9 +253,9 @@ impl Query {
         })
     }
 
-    /// Format a resolved query as raw data (just the JSON array, no MetricData wrapper).
+    /// Format a resolved query as raw data (just the JSON array, no SeriesData wrapper).
     /// CSV output is identical to `format` (no wrapper distinction for CSV).
-    pub fn format_raw(&self, resolved: ResolvedQuery) -> Result<MetricOutput> {
+    pub fn format_raw(&self, resolved: ResolvedQuery) -> Result<SeriesOutput> {
         if resolved.format() == Format::CSV {
             return self.format(resolved);
         }
@@ -268,7 +268,7 @@ impl Query {
         let mut buf = Vec::with_capacity(count * 12 + 2);
         vecs[0].write_json(Some(start), Some(end), &mut buf)?;
 
-        Ok(MetricOutput {
+        Ok(SeriesOutput {
             output: Output::Json(buf),
             version,
             total,
@@ -277,16 +277,16 @@ impl Query {
         })
     }
 
-    pub fn metric_to_index_to_vec(&self) -> &BTreeMap<&str, IndexToVec<'_>> {
-        &self.vecs().metric_to_index_to_vec
+    pub fn series_to_index_to_vec(&self) -> &BTreeMap<&str, IndexToVec<'_>> {
+        &self.vecs().series_to_index_to_vec
     }
 
-    pub fn index_to_metric_to_vec(&self) -> &BTreeMap<Index, MetricToVec<'_>> {
-        &self.vecs().index_to_metric_to_vec
+    pub fn index_to_series_to_vec(&self) -> &BTreeMap<Index, SeriesToVec<'_>> {
+        &self.vecs().index_to_series_to_vec
     }
 
-    pub fn metric_count(&self) -> DetailedMetricCount {
-        DetailedMetricCount {
+    pub fn series_count(&self) -> DetailedSeriesCount {
+        DetailedSeriesCount {
             total: self.vecs().counts.clone(),
             by_db: self.vecs().counts_by_db.clone(),
         }
@@ -296,11 +296,11 @@ impl Query {
         &self.vecs().indexes
     }
 
-    pub fn metrics(&self, pagination: Pagination) -> PaginatedMetrics {
-        self.vecs().metrics(pagination)
+    pub fn series_list(&self, pagination: Pagination) -> PaginatedSeries {
+        self.vecs().series(pagination)
     }
 
-    pub fn metrics_catalog(&self) -> &TreeNode {
+    pub fn series_catalog(&self) -> &TreeNode {
         self.vecs().catalog()
     }
 
@@ -308,18 +308,18 @@ impl Query {
         self.vecs().index_to_ids(paginated_index)
     }
 
-    pub fn metric_info(&self, metric: &Metric) -> Option<MetricInfo> {
-        let index_to_vec = self.vecs().metric_to_index_to_vec.get(metric.replace("-", "_").as_str())?;
+    pub fn series_info(&self, series: &Series) -> Option<SeriesInfo> {
+        let index_to_vec = self.vecs().series_to_index_to_vec.get(series.replace("-", "_").as_str())?;
         let value_type = index_to_vec.values().next()?.value_type_to_string();
         let indexes = index_to_vec.keys().copied().collect();
-        Some(MetricInfo {
+        Some(SeriesInfo {
             indexes,
             value_type: value_type.into(),
         })
     }
 
-    pub fn metric_to_indexes(&self, metric: Metric) -> Option<&Vec<Index>> {
-        self.vecs().metric_to_indexes(metric)
+    pub fn series_to_indexes(&self, series: Series) -> Option<&Vec<Index>> {
+        self.vecs().series_to_indexes(series)
     }
 
     /// Resolve a RangeIndex to an i64 offset for the given index type.
@@ -379,7 +379,7 @@ impl Query {
     }
 
     /// Deprecated - format a resolved query as legacy output (expensive).
-    pub fn format_legacy(&self, resolved: ResolvedQuery) -> Result<MetricOutputLegacy> {
+    pub fn format_legacy(&self, resolved: ResolvedQuery) -> Result<SeriesOutputLegacy> {
         let ResolvedQuery {
             vecs,
             format,
@@ -391,7 +391,7 @@ impl Query {
         } = resolved;
 
         if vecs.is_empty() {
-            return Ok(MetricOutputLegacy {
+            return Ok(SeriesOutputLegacy {
                 output: OutputLegacy::default(format),
                 version: Version::ZERO,
                 total: 0,
@@ -407,14 +407,14 @@ impl Query {
             Format::CSV => OutputLegacy::CSV(Self::columns_to_csv(&vecs, start, end)?),
             Format::JSON => {
                 if vecs.len() == 1 {
-                    let metric = vecs[0];
-                    let count = metric.range_count(from, to);
+                    let col = vecs[0];
+                    let count = col.range_count(from, to);
                     let mut buf = Vec::new();
                     if count == 1 {
-                        metric.write_json_value(Some(start), &mut buf)?;
+                        col.write_json_value(Some(start), &mut buf)?;
                         OutputLegacy::Json(LegacyValue::Value(buf))
                     } else {
-                        metric.write_json(Some(start), Some(end), &mut buf)?;
+                        col.write_json(Some(start), Some(end), &mut buf)?;
                         OutputLegacy::Json(LegacyValue::List(buf))
                     }
                 } else {
@@ -429,7 +429,7 @@ impl Query {
             }
         };
 
-        Ok(MetricOutputLegacy {
+        Ok(SeriesOutputLegacy {
             output,
             version,
             total,
@@ -439,7 +439,7 @@ impl Query {
     }
 }
 
-/// A resolved metric query ready for formatting.
+/// A resolved series query ready for formatting.
 /// Contains the vecs and metadata needed to build an ETag or format the output.
 pub struct ResolvedQuery {
     pub vecs: Vec<&'static dyn AnyExportableVec>,
@@ -454,7 +454,7 @@ pub struct ResolvedQuery {
 
 impl ResolvedQuery {
     pub fn etag(&self) -> Etag {
-        Etag::from_metric(self.version, self.total, self.start, self.end, self.height)
+        Etag::from_series(self.version, self.total, self.start, self.end, self.height)
     }
 
     pub fn format(&self) -> Format {

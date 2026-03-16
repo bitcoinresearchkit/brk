@@ -6,15 +6,15 @@ use super::CohortName;
 
 /// "At least X% loss" threshold names (9 thresholds).
 pub const LOSS_NAMES: Loss<CohortName> = Loss {
-    breakeven: CohortName::new("utxos_in_loss", "<0%", "In Loss (Below Breakeven)"),
-    _10pct: CohortName::new("utxos_over_10pct_in_loss", "≥10%L", "10%+ Loss"),
-    _20pct: CohortName::new("utxos_over_20pct_in_loss", "≥20%L", "20%+ Loss"),
-    _30pct: CohortName::new("utxos_over_30pct_in_loss", "≥30%L", "30%+ Loss"),
-    _40pct: CohortName::new("utxos_over_40pct_in_loss", "≥40%L", "40%+ Loss"),
-    _50pct: CohortName::new("utxos_over_50pct_in_loss", "≥50%L", "50%+ Loss"),
-    _60pct: CohortName::new("utxos_over_60pct_in_loss", "≥60%L", "60%+ Loss"),
-    _70pct: CohortName::new("utxos_over_70pct_in_loss", "≥70%L", "70%+ Loss"),
-    _80pct: CohortName::new("utxos_over_80pct_in_loss", "≥80%L", "80%+ Loss"),
+    all: CohortName::new("utxos_in_loss", "All", "In Loss"),
+    _10pct: CohortName::new("utxos_over_10pct_in_loss", ">=10%", "Over 10% in Loss"),
+    _20pct: CohortName::new("utxos_over_20pct_in_loss", ">=20%", "Over 20% in Loss"),
+    _30pct: CohortName::new("utxos_over_30pct_in_loss", ">=30%", "Over 30% in Loss"),
+    _40pct: CohortName::new("utxos_over_40pct_in_loss", ">=40%", "Over 40% in Loss"),
+    _50pct: CohortName::new("utxos_over_50pct_in_loss", ">=50%", "Over 50% in Loss"),
+    _60pct: CohortName::new("utxos_over_60pct_in_loss", ">=60%", "Over 60% in Loss"),
+    _70pct: CohortName::new("utxos_over_70pct_in_loss", ">=70%", "Over 70% in Loss"),
+    _80pct: CohortName::new("utxos_over_80pct_in_loss", ">=80%", "Over 80% in Loss"),
 };
 
 /// Number of loss thresholds.
@@ -31,7 +31,7 @@ impl Loss<CohortName> {
 /// Each is a suffix sum over the profitability ranges, from most loss-making up.
 #[derive(Default, Clone, Traversable, Serialize)]
 pub struct Loss<T> {
-    pub breakeven: T,
+    pub all: T,
     pub _10pct: T,
     pub _20pct: T,
     pub _30pct: T,
@@ -49,7 +49,7 @@ impl<T> Loss<T> {
     {
         let n = &LOSS_NAMES;
         Self {
-            breakeven: create(n.breakeven.id),
+            all: create(n.all.id),
             _10pct: create(n._10pct.id),
             _20pct: create(n._20pct.id),
             _30pct: create(n._30pct.id),
@@ -67,7 +67,7 @@ impl<T> Loss<T> {
     {
         let n = &LOSS_NAMES;
         Ok(Self {
-            breakeven: create(n.breakeven.id)?,
+            all: create(n.all.id)?,
             _10pct: create(n._10pct.id)?,
             _20pct: create(n._20pct.id)?,
             _30pct: create(n._30pct.id)?,
@@ -81,7 +81,7 @@ impl<T> Loss<T> {
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         [
-            &self.breakeven,
+            &self.all,
             &self._10pct,
             &self._20pct,
             &self._30pct,
@@ -96,7 +96,7 @@ impl<T> Loss<T> {
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         [
-            &mut self.breakeven,
+            &mut self.all,
             &mut self._10pct,
             &mut self._20pct,
             &mut self._30pct,
@@ -114,7 +114,7 @@ impl<T> Loss<T> {
         T: Send + Sync,
     {
         [
-            &mut self.breakeven,
+            &mut self.all,
             &mut self._10pct,
             &mut self._20pct,
             &mut self._30pct,
@@ -130,7 +130,7 @@ impl<T> Loss<T> {
     /// Access as array for indexed accumulation.
     pub fn as_array_mut(&mut self) -> [&mut T; LOSS_COUNT] {
         [
-            &mut self.breakeven,
+            &mut self.all,
             &mut self._10pct,
             &mut self._20pct,
             &mut self._30pct,

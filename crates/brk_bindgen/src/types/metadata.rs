@@ -3,7 +3,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use brk_query::Vecs;
-use brk_types::{Index, MetricLeafWithSchema};
+use brk_types::{Index, SeriesLeafWithSchema};
 
 use super::{GenericSyntax, IndexSetPattern, PatternField, StructuralPattern, extract_inner_type};
 use crate::{PatternBaseResult, analysis};
@@ -15,7 +15,7 @@ pub struct ClientMetadata {
     pub catalog: brk_types::TreeNode,
     /// Structural patterns - tree node shapes that repeat
     pub structural_patterns: Vec<StructuralPattern>,
-    /// Index set patterns - sets of indexes that appear together on metrics
+    /// Index set patterns - sets of indexes that appear together on series
     pub index_set_patterns: Vec<IndexSetPattern>,
     /// Maps field signatures to pattern names (merged from concrete instances + pattern definitions)
     pattern_lookup: BTreeMap<Vec<PatternField>, String>,
@@ -135,24 +135,24 @@ impl ClientMetadata {
         if let Some(accessor) = self.find_index_set_pattern(&field.indexes) {
             syntax.wrap(&accessor.name, &value_type)
         } else {
-            syntax.wrap("MetricNode", &value_type)
+            syntax.wrap("SeriesNode", &value_type)
         }
     }
 
     /// Generate type annotation for a leaf node with language-specific syntax.
     ///
     /// This is a simpler version of `field_type_annotation` that works directly
-    /// with a `MetricLeafWithSchema` node instead of a `PatternField`.
+    /// with a `SeriesLeafWithSchema` node instead of a `PatternField`.
     pub fn field_type_annotation_from_leaf(
         &self,
-        leaf: &MetricLeafWithSchema,
+        leaf: &SeriesLeafWithSchema,
         syntax: GenericSyntax,
     ) -> String {
         let value_type = leaf.kind().to_string();
         if let Some(accessor) = self.find_index_set_pattern(leaf.indexes()) {
             syntax.wrap(&accessor.name, &value_type)
         } else {
-            syntax.wrap("MetricNode", &value_type)
+            syntax.wrap("SeriesNode", &value_type)
         }
     }
 }

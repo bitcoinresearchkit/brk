@@ -126,15 +126,15 @@ pub enum Error {
     #[error("Authentication failed")]
     AuthFailed,
 
-    // Metric-specific errors
+    // Series-specific errors
     #[error("{0}")]
-    MetricNotFound(MetricNotFound),
+    SeriesNotFound(SeriesNotFound),
 
-    #[error("'{metric}' doesn't support the requested index. Try: {supported}")]
-    MetricUnsupportedIndex { metric: String, supported: String },
+    #[error("'{series}' doesn't support the requested index. Try: {supported}")]
+    SeriesUnsupportedIndex { series: String, supported: String },
 
-    #[error("No metrics specified")]
-    NoMetrics,
+    #[error("No series specified")]
+    NoSeries,
 
     #[error("No data available")]
     NoData,
@@ -221,31 +221,31 @@ fn is_io_error_permanent(e: &std::io::Error) -> bool {
 }
 
 #[derive(Debug)]
-pub struct MetricNotFound {
-    pub metric: String,
+pub struct SeriesNotFound {
+    pub series: String,
     pub suggestions: Vec<String>,
     pub total_matches: usize,
 }
 
-impl MetricNotFound {
-    pub fn new(mut metric: String, all_matches: Vec<String>) -> Self {
+impl SeriesNotFound {
+    pub fn new(mut series: String, all_matches: Vec<String>) -> Self {
         let total_matches = all_matches.len();
         let suggestions = all_matches.into_iter().take(3).collect();
-        if metric.len() > 100 {
-            metric.truncate(100);
-            metric.push_str("...");
+        if series.len() > 100 {
+            series.truncate(100);
+            series.push_str("...");
         }
         Self {
-            metric,
+            series,
             suggestions,
             total_matches,
         }
     }
 }
 
-impl fmt::Display for MetricNotFound {
+impl fmt::Display for SeriesNotFound {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "'{}' not found", self.metric)?;
+        write!(f, "'{}' not found", self.series)?;
 
         if self.suggestions.is_empty() {
             return Ok(());
@@ -258,8 +258,8 @@ impl fmt::Display for MetricNotFound {
         if remaining > 0 {
             write!(
                 f,
-                " ({remaining} more — /api/metrics/search?q={} for all)",
-                self.metric
+                " ({remaining} more — /api/series/search?q={} for all)",
+                self.series
             )?;
         }
 

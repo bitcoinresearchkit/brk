@@ -16,7 +16,7 @@ pub fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     writeln!(output, "class BrkClient(BrkClientBase):").unwrap();
     writeln!(
         output,
-        "    \"\"\"Main BRK client with metrics tree and API methods.\"\"\""
+        "    \"\"\"Main BRK client with series tree and API methods.\"\"\""
     )
     .unwrap();
     writeln!(output).unwrap();
@@ -30,35 +30,35 @@ pub fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     )
     .unwrap();
     writeln!(output, "        super().__init__(base_url, timeout)").unwrap();
-    writeln!(output, "        self.metrics = MetricsTree(self)").unwrap();
+    writeln!(output, "        self.series = SeriesTree(self)").unwrap();
     writeln!(output).unwrap();
 
-    // Generate metric() method for dynamic metric access
+    // Generate series_endpoint() method for dynamic series access
     writeln!(
         output,
-        "    def metric(self, metric: str, index: Index) -> MetricEndpointBuilder[Any]:"
+        "    def series_endpoint(self, series: str, index: Index) -> SeriesEndpointBuilder[Any]:"
     )
     .unwrap();
     writeln!(
         output,
-        "        \"\"\"Create a dynamic metric endpoint builder for any metric/index combination."
+        "        \"\"\"Create a dynamic series endpoint builder for any series/index combination."
     )
     .unwrap();
     writeln!(output).unwrap();
     writeln!(
         output,
-        "        Use this for programmatic access when the metric name is determined at runtime."
+        "        Use this for programmatic access when the series name is determined at runtime."
     )
     .unwrap();
     writeln!(
         output,
-        "        For type-safe access, use the `metrics` tree instead."
+        "        For type-safe access, use the `series` tree instead."
     )
     .unwrap();
     writeln!(output, "        \"\"\"").unwrap();
     writeln!(
         output,
-        "        return MetricEndpointBuilder(self, metric, index)"
+        "        return SeriesEndpointBuilder(self, series, index)"
     )
     .unwrap();
     writeln!(output).unwrap();

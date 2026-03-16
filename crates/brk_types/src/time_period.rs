@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 /// Time period for mining statistics.
 ///
 /// Used to specify the lookback window for pool statistics, hashrate calculations,
-/// and other time-based mining metrics.
+/// and other time-based mining series.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum TimePeriod {
     #[default]

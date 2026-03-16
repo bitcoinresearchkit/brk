@@ -18,11 +18,11 @@ export const ROLLING_WINDOWS = [
 ];
 
 /**
- * Extract a metric from each rolling window via a mapping function
+ * Extract a series from each rolling window via a mapping function
  * @template T
  * @param {{ _24h: T, _1w: T, _1m: T, _1y: T }} windows
- * @param {(v: T) => AnyMetricPattern} extract
- * @returns {{ _24h: AnyMetricPattern, _1w: AnyMetricPattern, _1m: AnyMetricPattern, _1y: AnyMetricPattern }}
+ * @param {(v: T) => AnySeriesPattern} extract
+ * @returns {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }}
  */
 export function mapWindows(windows, extract) {
   return {
@@ -40,7 +40,7 @@ export function mapWindows(windows, extract) {
 /**
  * Create a price series for the top pane (auto-expands to USD + sats versions)
  * @param {Object} args
- * @param {AnyPricePattern} args.metric - Price pattern with usd and sats
+ * @param {AnyPricePattern} args.series - Price pattern with usd and sats
  * @param {string} args.name
  * @param {string} [args.key]
  * @param {LineStyle} [args.style]
@@ -50,7 +50,7 @@ export function mapWindows(windows, extract) {
  * @returns {FetchedPriceSeriesBlueprint}
  */
 export function price({
-  metric,
+  series,
   name,
   key,
   style,
@@ -59,7 +59,7 @@ export function price({
   options,
 }) {
   return {
-    metric,
+    series,
     title: name,
     key,
     color,
@@ -86,49 +86,49 @@ function percentileSeries(pattern, unit, title) {
   const { stat } = colors;
   return [
     dots({
-      metric: pattern.max,
+      series: pattern.max,
       name: `${title} max`.trim(),
       color: stat.max,
       unit,
       defaultActive: false,
     }),
     dots({
-      metric: pattern.min,
+      series: pattern.min,
       name: `${title} min`.trim(),
       color: stat.min,
       unit,
       defaultActive: false,
     }),
     dots({
-      metric: pattern.median,
+      series: pattern.median,
       name: `${title} median`.trim(),
       color: stat.median,
       unit,
       defaultActive: false,
     }),
     dots({
-      metric: pattern.pct75,
+      series: pattern.pct75,
       name: `${title} pct75`.trim(),
       color: stat.pct75,
       unit,
       defaultActive: false,
     }),
     dots({
-      metric: pattern.pct25,
+      series: pattern.pct25,
       name: `${title} pct25`.trim(),
       color: stat.pct25,
       unit,
       defaultActive: false,
     }),
     dots({
-      metric: pattern.pct90,
+      series: pattern.pct90,
       name: `${title} pct90`.trim(),
       color: stat.pct90,
       unit,
       defaultActive: false,
     }),
     dots({
-      metric: pattern.pct10,
+      series: pattern.pct10,
       name: `${title} pct10`.trim(),
       color: stat.pct10,
       unit,
@@ -140,7 +140,7 @@ function percentileSeries(pattern, unit, title) {
 /**
  * Create a Line series
  * @param {Object} args
- * @param {AnyMetricPattern} args.metric
+ * @param {AnySeriesPattern} args.series
  * @param {string} args.name
  * @param {Unit} args.unit
  * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
@@ -151,7 +151,7 @@ function percentileSeries(pattern, unit, title) {
  * @returns {FetchedLineSeriesBlueprint}
  */
 export function line({
-  metric,
+  series,
   name,
   key,
   style,
@@ -161,7 +161,7 @@ export function line({
   options,
 }) {
   return {
-    metric,
+    series,
     title: name,
     key,
     color,
@@ -195,7 +195,7 @@ export function sparseDotted(args) {
 /**
  * Create a Dots series (line with only point markers visible)
  * @param {Object} args
- * @param {AnyMetricPattern} args.metric
+ * @param {AnySeriesPattern} args.series
  * @param {string} args.name
  * @param {Unit} args.unit
  * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
@@ -205,7 +205,7 @@ export function sparseDotted(args) {
  * @returns {FetchedDotsSeriesBlueprint}
  */
 export function dots({
-  metric,
+  series,
   name,
   key,
   color,
@@ -215,7 +215,7 @@ export function dots({
 }) {
   return {
     type: /** @type {const} */ ("Dots"),
-    metric,
+    series,
     title: name,
     key,
     color,
@@ -228,7 +228,7 @@ export function dots({
 /**
  * Create a Candlestick series
  * @param {Object} args
- * @param {AnyMetricPattern} args.metric
+ * @param {AnySeriesPattern} args.series
  * @param {string} args.name
  * @param {Unit} args.unit
  * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
@@ -238,7 +238,7 @@ export function dots({
  * @returns {FetchedCandlestickSeriesBlueprint}
  */
 export function candlestick({
-  metric,
+  series,
   name,
   key,
   defaultActive,
@@ -247,7 +247,7 @@ export function candlestick({
 }) {
   return {
     type: /** @type {const} */ ("Candlestick"),
-    metric,
+    series,
     title: name,
     key,
     unit,
@@ -259,7 +259,7 @@ export function candlestick({
 /**
  * Create a Baseline series
  * @param {Object} args
- * @param {AnyMetricPattern} args.metric
+ * @param {AnySeriesPattern} args.series
  * @param {string} args.name
  * @param {Unit} args.unit
  * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
@@ -271,7 +271,7 @@ export function candlestick({
  * @returns {FetchedBaselineSeriesBlueprint}
  */
 export function baseline({
-  metric,
+  series,
   name,
   key,
   color,
@@ -284,7 +284,7 @@ export function baseline({
   const isTuple = Array.isArray(color);
   return {
     type: /** @type {const} */ ("Baseline"),
-    metric,
+    series,
     title: name,
     key,
     color: isTuple ? undefined : color,
@@ -313,7 +313,7 @@ export function dottedBaseline(args) {
 /**
  * Baseline series rendered as dots (points only, no line)
  * @param {Object} args
- * @param {AnyMetricPattern} args.metric
+ * @param {AnySeriesPattern} args.series
  * @param {string} args.name
  * @param {Unit} args.unit
  * @param {string} [args.key]
@@ -324,7 +324,7 @@ export function dottedBaseline(args) {
  * @returns {FetchedDotsBaselineSeriesBlueprint}
  */
 export function dotsBaseline({
-  metric,
+  series,
   name,
   key,
   color,
@@ -336,7 +336,7 @@ export function dotsBaseline({
   const isTuple = Array.isArray(color);
   return {
     type: /** @type {const} */ ("DotsBaseline"),
-    metric,
+    series,
     title: name,
     key,
     color: isTuple ? undefined : color,
@@ -355,7 +355,7 @@ export function dotsBaseline({
 /**
  * Create a Histogram series
  * @param {Object} args
- * @param {AnyMetricPattern} args.metric
+ * @param {AnySeriesPattern} args.series
  * @param {string} args.name
  * @param {Unit} args.unit
  * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
@@ -365,7 +365,7 @@ export function dotsBaseline({
  * @returns {FetchedHistogramSeriesBlueprint}
  */
 export function histogram({
-  metric,
+  series,
   name,
   key,
   color,
@@ -375,7 +375,7 @@ export function histogram({
 }) {
   return {
     type: /** @type {const} */ ("Histogram"),
-    metric,
+    series,
     title: name,
     key,
     color,
@@ -388,7 +388,7 @@ export function histogram({
 /**
  * Create series from an AverageHeightMaxMedianMinP10P25P75P90Pattern (height + rolling stats)
  * @param {Object} args
- * @param {{ height: AnyMetricPattern } & Record<string, any>} args.pattern - Pattern with .height and rolling stats (p10/p25/p75/p90 as _1y24h30d7dPattern)
+ * @param {{ height: AnySeriesPattern } & Record<string, any>} args.pattern - Pattern with .height and rolling stats (p10/p25/p75/p90 as _1y24h30d7dPattern)
  * @param {string} args.window - Rolling window key (e.g., '_24h', '_7d', '_30d', '_1y')
  * @param {Unit} args.unit
  * @param {string} [args.title]
@@ -408,13 +408,13 @@ export function fromBaseStatsPattern({
   const stats = statsAtWindow(pattern, window);
   return [
     dots({
-      metric: pattern.height,
+      series: pattern.height,
       name: title || "base",
       color: baseColor,
       unit,
     }),
     dots({
-      metric: stats.average,
+      series: stats.average,
       name: `${title} avg`.trim(),
       color: stat.avg,
       unit,
@@ -425,10 +425,10 @@ export function fromBaseStatsPattern({
 }
 
 /**
- * Create series from a flat stats pattern (average + pct percentiles as single metrics)
+ * Create series from a flat stats pattern (average + pct percentiles as single series)
  * Use statsAtWindow() to extract from patterns with _1y24h30d7dPattern stats
  * @param {Object} args
- * @param {{ average: AnyMetricPattern, median: AnyMetricPattern, max: AnyMetricPattern, min: AnyMetricPattern, pct75: AnyMetricPattern, pct25: AnyMetricPattern, pct90: AnyMetricPattern, pct10: AnyMetricPattern }} args.pattern
+ * @param {{ average: AnySeriesPattern, median: AnySeriesPattern, max: AnySeriesPattern, min: AnySeriesPattern, pct75: AnySeriesPattern, pct25: AnySeriesPattern, pct90: AnySeriesPattern, pct10: AnySeriesPattern }} args.pattern
  * @param {Unit} args.unit
  * @param {string} [args.title]
  * @returns {AnyFetchedSeriesBlueprint[]}
@@ -437,7 +437,7 @@ export function fromStatsPattern({ pattern, unit, title = "" }) {
   return [
     {
       type: "Dots",
-      metric: pattern.average,
+      series: pattern.average,
       title: `${title} avg`.trim(),
       unit,
     },
@@ -466,10 +466,10 @@ export function statsAtWindow(pattern, window) {
 /**
  * Create a Rolling folder tree from a _1m1w1y24hPattern (4 rolling windows)
  * @param {Object} args
- * @param {{ _24h: AnyMetricPattern, _1w: AnyMetricPattern, _1m: AnyMetricPattern, _1y: AnyMetricPattern }} args.windows
+ * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.windows
  * @param {string} args.title
  * @param {Unit} args.unit
- * @param {(args: {metric: AnyMetricPattern, name: string, color: Color, unit: Unit}) => AnyFetchedSeriesBlueprint} [args.series]
+ * @param {(args: {series: AnySeriesPattern, name: string, color: Color, unit: Unit}) => AnyFetchedSeriesBlueprint} [args.series]
  * @returns {PartialOptionsGroup}
  */
 export function rollingWindowsTree({ windows, title, unit, series = line }) {
@@ -481,7 +481,7 @@ export function rollingWindowsTree({ windows, title, unit, series = line }) {
         title: `${title} Rolling`,
         bottom: ROLLING_WINDOWS.map((w) =>
           series({
-            metric: windows[w.key],
+            series: windows[w.key],
             name: w.name,
             color: w.color,
             unit,
@@ -493,7 +493,7 @@ export function rollingWindowsTree({ windows, title, unit, series = line }) {
         title: `${title} ${w.name}`,
         bottom: [
           series({
-            metric: windows[w.key],
+            series: windows[w.key],
             name: w.name,
             color: w.color,
             unit,
@@ -508,7 +508,7 @@ export function rollingWindowsTree({ windows, title, unit, series = line }) {
  * Create a Distribution folder tree with stats at each rolling window (24h/7d/30d/1y)
  * @param {Object} args
  * @param {Record<string, any>} args.pattern - Pattern with pct10/pct25/... and average/median/... as _1y24h30d7dPattern
- * @param {AnyMetricPattern} [args.base] - Optional base metric to show as dots on each chart
+ * @param {AnySeriesPattern} [args.base] - Optional base series to show as dots on each chart
  * @param {string} args.title
  * @param {Unit} args.unit
  * @returns {PartialOptionsGroup}
@@ -520,7 +520,7 @@ export function distributionWindowsTree({ pattern, base, title, unit }) {
       name: w.name,
       title: `${title} Distribution (${w.name})`,
       bottom: [
-        ...(base ? [line({ metric: base, name: "base", unit })] : []),
+        ...(base ? [line({ series: base, name: "base", unit })] : []),
         ...fromStatsPattern({
           pattern: statsAtWindow(pattern, w.key),
           unit,
@@ -579,19 +579,19 @@ export const distributionBtcSatsUsd = (slot) => [
 export function fromSupplyPattern({ pattern, title, color }) {
   return [
     {
-      metric: pattern.btc,
+      series: pattern.btc,
       title,
       color,
       unit: Unit.btc,
     },
     {
-      metric: pattern.sats,
+      series: pattern.sats,
       title,
       color,
       unit: Unit.sats,
     },
     {
-      metric: pattern.usd,
+      series: pattern.usd,
       title,
       color,
       unit: Unit.usd,
@@ -606,7 +606,7 @@ export function fromSupplyPattern({ pattern, title, color }) {
 /**
  * Create percent + ratio series from a BpsPercentRatioPattern
  * @param {Object} args
- * @param {{ percent: AnyMetricPattern, ratio: AnyMetricPattern }} args.pattern
+ * @param {{ percent: AnySeriesPattern, ratio: AnySeriesPattern }} args.pattern
  * @param {string} args.name
  * @param {Color} [args.color]
  * @param {boolean} [args.defaultActive]
@@ -614,15 +614,15 @@ export function fromSupplyPattern({ pattern, title, color }) {
  */
 export function percentRatio({ pattern, name, color, defaultActive }) {
   return [
-    line({ metric: pattern.percent, name, color, defaultActive, unit: Unit.percentage }),
-    line({ metric: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
+    line({ series: pattern.percent, name, color, defaultActive, unit: Unit.percentage }),
+    line({ series: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
   ];
 }
 
 /**
  * Create percent + ratio dots series from a BpsPercentRatioPattern
  * @param {Object} args
- * @param {{ percent: AnyMetricPattern, ratio: AnyMetricPattern }} args.pattern
+ * @param {{ percent: AnySeriesPattern, ratio: AnySeriesPattern }} args.pattern
  * @param {string} args.name
  * @param {Color} [args.color]
  * @param {boolean} [args.defaultActive]
@@ -630,15 +630,15 @@ export function percentRatio({ pattern, name, color, defaultActive }) {
  */
 export function percentRatioDots({ pattern, name, color, defaultActive }) {
   return [
-    dots({ metric: pattern.percent, name, color, defaultActive, unit: Unit.percentage }),
-    dots({ metric: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
+    dots({ series: pattern.percent, name, color, defaultActive, unit: Unit.percentage }),
+    dots({ series: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
   ];
 }
 
 /**
  * Create percent + ratio baseline series from a BpsPercentRatioPattern
  * @param {Object} args
- * @param {{ percent: AnyMetricPattern, ratio: AnyMetricPattern }} args.pattern
+ * @param {{ percent: AnySeriesPattern, ratio: AnySeriesPattern }} args.pattern
  * @param {string} args.name
  * @param {Color | [Color, Color]} [args.color]
  * @param {boolean} [args.defaultActive]
@@ -646,17 +646,17 @@ export function percentRatioDots({ pattern, name, color, defaultActive }) {
  */
 export function percentRatioBaseline({ pattern, name, color, defaultActive }) {
   return [
-    baseline({ metric: pattern.percent, name, color, defaultActive, unit: Unit.percentage }),
-    baseline({ metric: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
+    baseline({ series: pattern.percent, name, color, defaultActive, unit: Unit.percentage }),
+    baseline({ series: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
   ];
 }
 
 /**
  * Create a Rolling folder tree where each window is a BpsPercentRatioPattern (percent + ratio)
  * @param {Object} args
- * @param {{ _24h: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, _1w: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, _1m: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, _1y: { percent: AnyMetricPattern, ratio: AnyMetricPattern } }} args.windows
+ * @param {{ _24h: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1w: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1m: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1y: { percent: AnySeriesPattern, ratio: AnySeriesPattern } }} args.windows
  * @param {string} args.title
- * @param {(args: {pattern: { percent: AnyMetricPattern, ratio: AnyMetricPattern }, name: string, color: Color}) => AnyFetchedSeriesBlueprint[]} [args.series]
+ * @param {(args: {pattern: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, name: string, color: Color}) => AnyFetchedSeriesBlueprint[]} [args.series]
  * @returns {PartialOptionsGroup}
  */
 export function rollingPercentRatioTree({ windows, title, series = percentRatio }) {
@@ -693,51 +693,51 @@ export function rollingPercentRatioTree({ windows, title, series = percentRatio 
 function distributionSeries(pattern, unit) {
   const { stat } = colors;
   return [
-    dots({ metric: pattern.average, name: "avg", color: stat.avg, unit }),
+    dots({ series: pattern.average, name: "avg", color: stat.avg, unit }),
     dots({
-      metric: pattern.median,
+      series: pattern.median,
       name: "median",
       color: stat.median,
       unit,
       defaultActive: false,
     }),
     dots({
-      metric: pattern.max,
+      series: pattern.max,
       name: "max",
       color: stat.max,
       unit,
       defaultActive: false,
     }),
     dots({
-      metric: pattern.min,
+      series: pattern.min,
       name: "min",
       color: stat.min,
       unit,
       defaultActive: false,
     }),
     dots({
-      metric: pattern.pct75,
+      series: pattern.pct75,
       name: "pct75",
       color: stat.pct75,
       unit,
       defaultActive: false,
     }),
     dots({
-      metric: pattern.pct25,
+      series: pattern.pct25,
       name: "pct25",
       color: stat.pct25,
       unit,
       defaultActive: false,
     }),
     dots({
-      metric: pattern.pct90,
+      series: pattern.pct90,
       name: "pct90",
       color: stat.pct90,
       unit,
       defaultActive: false,
     }),
     dots({
-      metric: pattern.pct10,
+      series: pattern.pct10,
       name: "pct10",
       color: stat.pct10,
       unit,
@@ -747,32 +747,32 @@ function distributionSeries(pattern, unit) {
 }
 
 /**
- * Create btc/sats/usd series from metrics
+ * Create btc/sats/usd series from patterns
  * @param {Object} args
- * @param {{ btc: AnyMetricPattern, sats: AnyMetricPattern, usd: AnyMetricPattern }} args.metrics
+ * @param {{ btc: AnySeriesPattern, sats: AnySeriesPattern, usd: AnySeriesPattern }} args.patterns
  * @param {string} args.name
  * @param {Color} [args.color]
  * @param {boolean} [args.defaultActive]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-function btcSatsUsdSeries({ metrics, name, color, defaultActive }) {
+function btcSatsUsdSeries({ patterns, name, color, defaultActive }) {
   return [
     {
-      metric: metrics.btc,
+      series: patterns.btc,
       title: name,
       color,
       unit: Unit.btc,
       defaultActive,
     },
     {
-      metric: metrics.sats,
+      series: patterns.sats,
       title: name,
       color,
       unit: Unit.sats,
       defaultActive,
     },
     {
-      metric: metrics.usd,
+      series: patterns.usd,
       title: name,
       color,
       unit: Unit.usd,
@@ -804,14 +804,14 @@ export function chartsFromFull({
     {
       name: "Sum",
       title,
-      bottom: [{ metric: pattern.base, title: "base", unit }],
+      bottom: [{ series: pattern.base, title: "base", unit }],
     },
     rollingWindowsTree({ windows: pattern.sum, title, unit }),
     distributionWindowsTree({ pattern, title: distTitle, unit }),
     {
       name: "Cumulative",
       title: `${title} (Total)`,
-      bottom: [{ metric: pattern.cumulative, title: "all-time", unit }],
+      bottom: [{ series: pattern.cumulative, title: "all-time", unit }],
     },
   ];
 }
@@ -850,7 +850,7 @@ export function chartsFromSum({
     {
       name: "Sum",
       title,
-      bottom: [{ metric: pattern.sum, title: "sum", color: stat.sum, unit }],
+      bottom: [{ series: pattern.sum, title: "sum", color: stat.sum, unit }],
     },
     rollingWindowsTree({ windows: pattern.rolling.sum, title, unit }),
     distributionWindowsTree({ pattern: pattern.rolling, title: distTitle, unit }),
@@ -862,7 +862,7 @@ export function chartsFromSum({
     {
       name: "Cumulative",
       title: `${title} (Total)`,
-      bottom: [{ metric: pattern.cumulative, title: "all-time", unit }],
+      bottom: [{ series: pattern.cumulative, title: "all-time", unit }],
     },
   ];
 }
@@ -915,13 +915,13 @@ export function chartsFromCount({ pattern, title, unit, color }) {
     {
       name: "Base",
       title,
-      bottom: [{ metric: pattern.base, title: "base", color, unit }],
+      bottom: [{ series: pattern.base, title: "base", color, unit }],
     },
     rollingWindowsTree({ windows: pattern.sum, title, unit }),
     {
       name: "Cumulative",
       title: `${title} (Total)`,
-      bottom: [{ metric: pattern.cumulative, title: "all-time", color, unit }],
+      bottom: [{ series: pattern.cumulative, title: "all-time", color, unit }],
     },
   ];
 }
@@ -939,9 +939,9 @@ export function chartsFromValueFull({ pattern, title }) {
       name: "Sum",
       title,
       bottom: [
-        ...btcSatsUsdSeries({ metrics: pattern.base, name: "sum" }),
+        ...btcSatsUsdSeries({ patterns: pattern.base, name: "sum" }),
         ...btcSatsUsdSeries({
-          metrics: pattern.sum._24h,
+          patterns: pattern.sum._24h,
           name: "24h sum",
           defaultActive: false,
         }),
@@ -951,7 +951,7 @@ export function chartsFromValueFull({ pattern, title }) {
       name: "Cumulative",
       title: `${title} (Total)`,
       bottom: btcSatsUsdSeries({
-        metrics: pattern.cumulative,
+        patterns: pattern.cumulative,
         name: "all-time",
       }),
     },

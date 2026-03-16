@@ -15,8 +15,8 @@ use crate::{
     Error,
     api::{
         addresses::AddressRoutes, blocks::BlockRoutes, mempool::MempoolRoutes,
-        metrics::ApiMetricsRoutes, mining::MiningRoutes, server::ServerRoutes,
-        transactions::TxRoutes,
+        metrics_legacy::ApiMetricsLegacyRoutes, mining::MiningRoutes,
+        series::ApiSeriesRoutes, server::ServerRoutes, transactions::TxRoutes,
     },
     extended::{ResponseExtended, TransformResponseExtended},
 };
@@ -26,7 +26,8 @@ use super::AppState;
 mod addresses;
 mod blocks;
 mod mempool;
-mod metrics;
+mod metrics_legacy;
+mod series;
 mod mining;
 mod openapi;
 mod server;
@@ -41,7 +42,8 @@ pub trait ApiRoutes {
 impl ApiRoutes for ApiRouter<AppState> {
     fn add_api_routes(self) -> Self {
         self.add_server_routes()
-            .add_metrics_routes()
+            .add_series_routes()
+            .add_metrics_legacy_routes()
             .add_block_routes()
             .add_tx_routes()
             .add_addresses_routes()

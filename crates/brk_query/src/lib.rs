@@ -61,7 +61,7 @@ impl Query {
         Height::from(self.indexer().vecs.blocks.blockhash.stamp())
     }
 
-    /// Current computed height (metrics)
+    /// Current computed height (series)
     pub fn computed_height(&self) -> Height {
         Height::from(self.computer().distribution.supply_state.len())
     }

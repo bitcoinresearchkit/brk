@@ -11,6 +11,7 @@ pub trait TransformResponseExtended<'t> {
     fn mempool_tag(self) -> Self;
     fn metrics_tag(self) -> Self;
     fn mining_tag(self) -> Self;
+    fn series_tag(self) -> Self;
     fn server_tag(self) -> Self;
     fn transactions_tag(self) -> Self;
 
@@ -53,6 +54,10 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
 
     fn metrics_tag(self) -> Self {
         self.tag("Metrics")
+    }
+
+    fn series_tag(self) -> Self {
+        self.tag("Series")
     }
 
     fn mining_tag(self) -> Self {

@@ -32,7 +32,7 @@ pub fn generate_rust_client(
 
     client::generate_imports(&mut output);
     client::generate_base_client(&mut output);
-    client::generate_metric_pattern_trait(&mut output);
+    client::generate_series_pattern_trait(&mut output);
     client::generate_endpoint(&mut output);
     client::generate_index_accessors(&mut output, &metadata.index_set_patterns);
     client::generate_pattern_structs(&mut output, &metadata.structural_patterns, metadata);

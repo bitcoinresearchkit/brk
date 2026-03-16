@@ -53,7 +53,7 @@ impl RatioPerBlockStdDevBands {
         starting_indexes: &Indexes,
         exit: &Exit,
         ratio_source: &impl ReadableVec<Height, StoredF32>,
-        metric_price: &impl ReadableVec<Height, Cents>,
+        series_price: &impl ReadableVec<Height, Cents>,
         sma: &RatioSma,
     ) -> Result<()> {
         for (sd, sma_ratio) in [
@@ -63,7 +63,7 @@ impl RatioPerBlockStdDevBands {
             (&mut self._1y, &sma._1y.ratio.height),
         ] {
             sd.compute_all(blocks, starting_indexes, exit, ratio_source, sma_ratio)?;
-            sd.compute_cents_bands(starting_indexes, metric_price, sma_ratio, exit)?;
+            sd.compute_cents_bands(starting_indexes, series_price, sma_ratio, exit)?;
         }
 
         Ok(())

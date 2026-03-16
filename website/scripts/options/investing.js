@@ -47,7 +47,7 @@ const YEARS_2010S = /** @type {const} */ ([2019, 2018, 2017, 2016, 2015]);
 const periodName = (key) => periodIdToName(key.slice(1), true);
 
 /**
- * @typedef {{ percent: AnyMetricPattern, ratio: AnyMetricPattern }} PercentRatioPattern
+ * @typedef {{ percent: AnySeriesPattern, ratio: AnySeriesPattern }} PercentRatioPattern
  */
 
 /**
@@ -55,8 +55,8 @@ const periodName = (key) => periodIdToName(key.slice(1), true);
  * @typedef {Object} BaseEntryItem
  * @property {string} name - Display name
  * @property {Color} color - Item color
- * @property {AnyPricePattern} costBasis - Cost basis metric
- * @property {PercentRatioPattern} returns - Returns metric
+ * @property {AnyPricePattern} costBasis - Cost basis series
+ * @property {PercentRatioPattern} returns - Returns series
  * @property {AnyValuePattern} stack - Stack pattern
  */
 
@@ -90,7 +90,7 @@ function buildYearEntry(dca, year, i) {
  * @returns {PartialOptionsGroup}
  */
 export function createInvestingSection() {
-  const { market } = brk.metrics;
+  const { market } = brk.series;
   const { dca, lookback, returns } = market;
 
   return {
@@ -111,7 +111,7 @@ export function createInvestingSection() {
  */
 function createCompareFolder(context, items) {
   const topPane = items.map(({ name, color, costBasis }) =>
-    price({ metric: costBasis, name, color }),
+    price({ series: costBasis, name, color }),
   );
   return {
     name: "Compare",
@@ -152,7 +152,7 @@ function createCompareFolder(context, items) {
  */
 function createSingleEntryTree(item, returnsBottom) {
   const { name, titlePrefix = name, color, costBasis, stack } = item;
-  const top = [price({ metric: costBasis, name: "Cost Basis", color })];
+  const top = [price({ series: costBasis, name: "Cost Basis", color })];
   return {
     name,
     tree: [
@@ -203,11 +203,11 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
   /** @param {AllPeriodKey} key */
   const topPane = (key) => [
     price({
-      metric: dca.period.costBasis[key],
+      series: dca.period.costBasis[key],
       name: "DCA",
       color: colors.profit,
     }),
-    price({ metric: lookback[key], name: "Lump Sum", color: colors.bitcoin }),
+    price({ series: lookback[key], name: "Lump Sum", color: colors.bitcoin }),
   ];
 
   /** @param {string} name @param {AllPeriodKey} key */

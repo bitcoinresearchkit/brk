@@ -2,7 +2,7 @@
  * @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType as LCSeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData, createChart as CreateLCChart, LineStyle, createSeriesMarkers as CreateSeriesMarkers, SeriesMarker, ISeriesMarkersPluginApi } from './modules/lightweight-charts/5.1.0/dist/typings.js'
  *
  * @import * as Brk from "./modules/brk-client/index.js"
- * @import { BrkClient, Index, Metric, MetricData } from "./modules/brk-client/index.js"
+ * @import { BrkClient, Index, Series as BrkSeries, SeriesData } from "./modules/brk-client/index.js"
  *
  * @import { Options } from './options/full.js'
  *
@@ -30,17 +30,17 @@
  * @typedef {SeriesMarker<Time>} TimeSeriesMarker
  *
  * Brk tree types (stable across regenerations)
- * @typedef {Brk.MetricsTree_Cohorts_Utxo} UtxoCohortTree
- * @typedef {Brk.MetricsTree_Cohorts_Address} AddressCohortTree
- * @typedef {Brk.MetricsTree_Cohorts_Utxo_All} AllUtxoPattern
- * @typedef {Brk.MetricsTree_Cohorts_Utxo_Sth} ShortTermPattern
- * @typedef {Brk.MetricsTree_Cohorts_Utxo_Lth} LongTermPattern
- * @typedef {Brk.MetricsTree_Cohorts_Utxo_All_Unrealized} AllRelativePattern
+ * @typedef {Brk.SeriesTree_Cohorts_Utxo} UtxoCohortTree
+ * @typedef {Brk.SeriesTree_Cohorts_Address} AddressCohortTree
+ * @typedef {Brk.SeriesTree_Cohorts_Utxo_All} AllUtxoPattern
+ * @typedef {Brk.SeriesTree_Cohorts_Utxo_Sth} ShortTermPattern
+ * @typedef {Brk.SeriesTree_Cohorts_Utxo_Lth} LongTermPattern
+ * @typedef {Brk.SeriesTree_Cohorts_Utxo_All_Unrealized} AllRelativePattern
  * @typedef {keyof Brk.BtcCentsSatsUsdPattern} BtcSatsUsdKey
  * @typedef {Brk.BtcCentsSatsUsdPattern} SupplyPattern
  * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} BlockSizePattern
- * @typedef {keyof Brk.MetricsTree_Cohorts_Utxo_Type} SpendableType
- * @typedef {keyof Brk.MetricsTree_Addresses_Raw} AddressableType
+ * @typedef {keyof Brk.SeriesTree_Cohorts_Utxo_Type} SpendableType
+ * @typedef {keyof Brk.SeriesTree_Addresses_Raw} AddressableType
  *
  * Brk pattern types (using new pattern names)
  * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern} MaxAgePattern
@@ -68,15 +68,15 @@
  * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern} RollingWindowSlot
  * AnyValuePatternType: union of all value pattern types
  * @typedef {Brk.BaseCumulativeSumPattern4 | Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativeRelPattern} AnyValuePatternType
- * @typedef {Brk.AnyMetricPattern} AnyMetricPattern
+ * @typedef {Brk.AnySeriesPattern} AnySeriesPattern
  * @typedef {Brk.CentsSatsUsdPattern} ActivePricePattern
- * @typedef {Brk.AnyMetricEndpointBuilder} AnyMetricEndpoint
- * @typedef {Brk.AnyMetricData} AnyMetricData
+ * @typedef {Brk.AnySeriesEndpointBuilder} AnySeriesEndpoint
+ * @typedef {Brk.AnySeriesData} AnySeriesData
  * @typedef {Brk.AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} AddrCountPattern
  * Relative patterns by capability:
  * - BasicRelativePattern: minimal relative (investedCapitalIn*Pct, supplyIn*RelToOwnSupply only)
- * - GlobalRelativePattern: has RelToMarketCap metrics (netUnrealizedPnlRelToMarketCap, etc)
- * - OwnRelativePattern: has RelToOwnMarketCap metrics (netUnrealizedPnlRelToOwnMarketCap, etc)
+ * - GlobalRelativePattern: has RelToMarketCap series (netUnrealizedPnlRelToMarketCap, etc)
+ * - OwnRelativePattern: has RelToOwnMarketCap series (netUnrealizedPnlRelToOwnMarketCap, etc)
  * - FullRelativePattern: has BOTH RelToMarketCap AND RelToOwnMarketCap
  * @typedef {Brk.LossNetNuplProfitPattern} BasicRelativePattern
  * @typedef {Brk.LossNetNuplProfitPattern} GlobalRelativePattern
@@ -96,7 +96,7 @@
 
 /**
  * @template T
- * @typedef {Brk.MetricEndpointBuilder<T>} MetricEndpoint
+ * @typedef {Brk.SeriesEndpointBuilder<T>} SeriesEndpoint
  */
 /**
  * Stats pattern: average, min, max, percentiles (height-only indexes, NO base)
@@ -132,8 +132,8 @@
  * @typedef {FullStatsPattern | BtcFullStatsPattern} AnyStatsPattern
  */
 /**
- * Distribution stats: 8 metric fields (average, min, max, median, pct10/25/75/90)
- * @typedef {{ average: AnyMetricPattern, min: AnyMetricPattern, max: AnyMetricPattern, median: AnyMetricPattern, pct10: AnyMetricPattern, pct25: AnyMetricPattern, pct75: AnyMetricPattern, pct90: AnyMetricPattern }} DistributionStats
+ * Distribution stats: 8 series fields (average, min, max, median, pct10/25/75/90)
+ * @typedef {{ average: AnySeriesPattern, min: AnySeriesPattern, max: AnySeriesPattern, median: AnySeriesPattern, pct10: AnySeriesPattern, pct25: AnySeriesPattern, pct75: AnySeriesPattern, pct90: AnySeriesPattern }} DistributionStats
  */
 
 /**
@@ -144,9 +144,9 @@
  * @typedef {keyof PoolIdToPoolName} PoolId
  *
  * Tree branch types
- * @typedef {Brk.MetricsTree_Market} Market
- * @typedef {Brk.MetricsTree_Market_MovingAverage} MarketMovingAverage
- * @typedef {Brk.MetricsTree_Market_Dca} MarketDca
+ * @typedef {Brk.SeriesTree_Market} Market
+ * @typedef {Brk.SeriesTree_Market_MovingAverage} MarketMovingAverage
+ * @typedef {Brk.SeriesTree_Market_Dca} MarketDca
  * @typedef {Brk._10y2y3y4y5y6y8yPattern} PeriodCagrPattern
  * Full stats pattern union (both generic and non-generic variants)
  * @typedef {FullStatsPattern | BtcFullStatsPattern} AnyFullStatsPattern
@@ -199,14 +199,14 @@
  * Cohorts with RealizedWithExtras (realizedCapRelToOwnMarketCap + realizedProfitToLossRatio)
  * @typedef {CohortAll | CohortFull | CohortWithPercentiles} CohortWithRealizedExtras
  *
- * Cohorts with circulating supply relative metrics (supplyRelToCirculatingSupply etc.)
+ * Cohorts with circulating supply relative series (supplyRelToCirculatingSupply etc.)
  * These have GlobalRelativePattern or FullRelativePattern (same as RelativeWithMarketCap/RelativeWithNupl)
  * @typedef {CohortFull | CohortLongTerm | CohortWithAdjusted | CohortBasicWithMarketCap} UtxoCohortWithCirculatingSupplyRelative
  *
- * Address cohorts with circulating supply relative metrics (all address amount cohorts have these)
+ * Address cohorts with circulating supply relative series (all address amount cohorts have these)
  * @typedef {AddressCohortObject} AddressCohortWithCirculatingSupplyRelative
  *
- * All cohorts with circulating supply relative metrics
+ * All cohorts with circulating supply relative series
  * @typedef {UtxoCohortWithCirculatingSupplyRelative | AddressCohortWithCirculatingSupplyRelative} CohortWithCirculatingSupplyRelative
  *
  * Delta patterns with absolute + rate rolling windows
@@ -218,6 +218,6 @@
  * @typedef {Brk.BpsPriceRatioPattern} InvestorPercentileEntry
  *
  * Generic tree node type for walking
- * @typedef {AnyMetricPattern | Record<string, unknown>} TreeNode
+ * @typedef {AnySeriesPattern | Record<string, unknown>} TreeNode
  *
  */

@@ -67,14 +67,14 @@ pub fn main() -> Result<()> {
         "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string()
     )));
 
-    // dbg!(query.search_and_format(MetricSelection {
+    // dbg!(query.search_and_format(SeriesSelection {
     //     index: Index::Height,
-    //     metrics: vec!["date"].into(),
+    //     series: vec!["date"].into(),
     //     range: DataRangeFormat::default().set_from(-1),
     // })?);
-    // dbg!(query.search_and_format(MetricSelection {
+    // dbg!(query.search_and_format(SeriesSelection {
     //     index: Index::Height,
-    //     metrics: vec!["date", "timestamp"].into(),
+    //     series: vec!["date", "timestamp"].into(),
     //     range: DataRangeFormat::default().set_from(-10).set_count(5),
     // })?);
 
