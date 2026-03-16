@@ -152,7 +152,7 @@ pub fn generate_main_client(
     writeln!(output, "   *").unwrap();
     writeln!(output, "   * @param {{string}} series - The series name").unwrap();
     writeln!(output, "   * @param {{Index}} index - The index name").unwrap();
-    writeln!(output, "   * @returns {{SeriesEndpointBuilder<unknown>}}").unwrap();
+    writeln!(output, "   * @returns {{SeriesEndpoint<unknown>}}").unwrap();
     writeln!(output, "   */").unwrap();
     writeln!(output, "  seriesEndpoint(series, index) {{").unwrap();
     writeln!(output, "    return _endpoint(this, series, index);").unwrap();

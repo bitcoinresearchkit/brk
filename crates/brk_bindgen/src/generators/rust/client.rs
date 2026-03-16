@@ -140,7 +140,7 @@ pub trait AnySeriesPattern {{
 /// Generic trait for series patterns with endpoint access.
 pub trait SeriesPattern<T>: AnySeriesPattern {{
     /// Get an endpoint builder for a specific index, if supported.
-    fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>>;
+    fn get(&self, index: Index) -> Option<SeriesEndpoint<T>>;
 }}
 
 "#
@@ -148,7 +148,7 @@ pub trait SeriesPattern<T>: AnySeriesPattern {{
     .unwrap();
 }
 
-/// Generate the SeriesEndpointBuilder structs with typestate pattern.
+/// Generate the SeriesEndpoint structs with typestate pattern.
 pub fn generate_endpoint(output: &mut String) {
     writeln!(
         output,
@@ -192,7 +192,7 @@ impl EndpointConfig {{
 /// Builder for series endpoint queries.
 ///
 /// Parameterized by element type `T` and response type `D` (defaults to `SeriesData<T>`).
-/// For date-based indexes, use `DateSeriesEndpointBuilder<T>` which sets `D = DateSeriesData<T>`.
+/// For date-based indexes, use `DateSeriesEndpoint<T>` which sets `D = DateSeriesData<T>`.
 ///
 /// # Examples
 /// ```ignore
@@ -204,18 +204,18 @@ impl EndpointConfig {{
 /// let data = endpoint.last(10).fetch()?;           // last 10
 /// let data = endpoint.skip(100).take(10).fetch()?; // iterator-style
 /// ```
-pub struct SeriesEndpointBuilder<T, D = SeriesData<T>> {{
+pub struct SeriesEndpoint<T, D = SeriesData<T>> {{
     config: EndpointConfig,
     _marker: std::marker::PhantomData<fn() -> (T, D)>,
 }}
 
 /// Builder for date-based series endpoint queries.
 ///
-/// Like `SeriesEndpointBuilder` but returns `DateSeriesData` and provides
+/// Like `SeriesEndpoint` but returns `DateSeriesData` and provides
 /// date-based access methods (`get_date`, `date_range`).
-pub type DateSeriesEndpointBuilder<T> = SeriesEndpointBuilder<T, DateSeriesData<T>>;
+pub type DateSeriesEndpoint<T> = SeriesEndpoint<T, DateSeriesData<T>>;
 
-impl<T: DeserializeOwned, D: DeserializeOwned> SeriesEndpointBuilder<T, D> {{
+impl<T: DeserializeOwned, D: DeserializeOwned> SeriesEndpoint<T, D> {{
     pub fn new(client: Arc<BrkClientBase>, name: Arc<str>, index: Index) -> Self {{
         Self {{ config: EndpointConfig::new(client, name, index), _marker: std::marker::PhantomData }}
     }}
@@ -286,8 +286,8 @@ impl<T: DeserializeOwned, D: DeserializeOwned> SeriesEndpointBuilder<T, D> {{
     }}
 }}
 
-/// Date-specific methods available only on `DateSeriesEndpointBuilder`.
-impl<T: DeserializeOwned> SeriesEndpointBuilder<T, DateSeriesData<T>> {{
+/// Date-specific methods available only on `DateSeriesEndpoint`.
+impl<T: DeserializeOwned> SeriesEndpoint<T, DateSeriesData<T>> {{
     /// Select a specific date position (for day-precision or coarser indexes).
     pub fn get_date(self, date: Date) -> SingleItemBuilder<T, DateSeriesData<T>> {{
         let index = self.config.index.date_to_index(date).unwrap_or(0);
@@ -414,13 +414,13 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
     writeln!(
         output,
         r#"#[inline]
-fn _ep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> SeriesEndpointBuilder<T> {{
-    SeriesEndpointBuilder::new(c.clone(), n.clone(), i)
+fn _ep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> SeriesEndpoint<T> {{
+    SeriesEndpoint::new(c.clone(), n.clone(), i)
 }}
 
 #[inline]
-fn _dep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> DateSeriesEndpointBuilder<T> {{
-    DateSeriesEndpointBuilder::new(c.clone(), n.clone(), i)
+fn _dep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> DateSeriesEndpoint<T> {{
+    DateSeriesEndpoint::new(c.clone(), n.clone(), i)
 }}
 "#
     )
@@ -441,14 +441,14 @@ fn _dep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> 
             if index.is_date_based() {
                 writeln!(
                     output,
-                    "    pub fn {}(&self) -> DateSeriesEndpointBuilder<T> {{ _dep(&self.client, &self.name, Index::{}) }}",
+                    "    pub fn {}(&self) -> DateSeriesEndpoint<T> {{ _dep(&self.client, &self.name, Index::{}) }}",
                     method_name, index
                 )
                 .unwrap();
             } else {
                 writeln!(
                     output,
-                    "    pub fn {}(&self) -> SeriesEndpointBuilder<T> {{ _ep(&self.client, &self.name, Index::{}) }}",
+                    "    pub fn {}(&self) -> SeriesEndpoint<T> {{ _ep(&self.client, &self.name, Index::{}) }}",
                     method_name, index
                 )
                 .unwrap();
@@ -484,7 +484,7 @@ fn _dep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> 
         // Implement SeriesPattern<T> trait
         writeln!(
             output,
-            "impl<T: DeserializeOwned> SeriesPattern<T> for {}<T> {{ fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> {{ {}.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) }} }}\n",
+            "impl<T: DeserializeOwned> SeriesPattern<T> for {}<T> {{ fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> {{ {}.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) }} }}\n",
             pattern.name, idx_const
         )
         .unwrap();

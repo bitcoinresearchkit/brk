@@ -50,8 +50,8 @@ impl BrkClient {{
     ///     .last(10)
     ///     .json::<f64>()?;
     /// ```
-    pub fn series_endpoint(&self, series: impl Into<Series>, index: Index) -> SeriesEndpointBuilder<serde_json::Value> {{
-        SeriesEndpointBuilder::new(
+    pub fn series_endpoint(&self, series: impl Into<SeriesName>, index: Index) -> SeriesEndpoint<serde_json::Value> {{
+        SeriesEndpoint::new(
             self.base.clone(),
             Arc::from(series.into().as_str()),
             index,
@@ -61,11 +61,11 @@ impl BrkClient {{
     /// Create a dynamic date-based series endpoint builder.
     ///
     /// Returns `Err` if the index is not date-based.
-    pub fn date_series_endpoint(&self, series: impl Into<Series>, index: Index) -> Result<DateSeriesEndpointBuilder<serde_json::Value>> {{
+    pub fn date_series_endpoint(&self, series: impl Into<SeriesName>, index: Index) -> Result<DateSeriesEndpoint<serde_json::Value>> {{
         if !index.is_date_based() {{
             return Err(BrkError {{ message: format!("{{}} is not a date-based index", index.name()) }});
         }}
-        Ok(DateSeriesEndpointBuilder::new(
+        Ok(DateSeriesEndpoint::new(
             self.base.clone(),
             Arc::from(series.into().as_str()),
             index,
@@ -217,7 +217,7 @@ fn param_type_to_rust(param_type: &str) -> String {
         "string" | "*" => "&str".to_string(),
         "integer" | "number" => "i64".to_string(),
         "boolean" => "bool".to_string(),
-        other => other.to_string(), // Domain types like Index, Series, Format
+        other => other.to_string(), // Domain types like Index, SeriesName, Format
     }
 }
 

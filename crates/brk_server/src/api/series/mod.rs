@@ -10,8 +10,8 @@ use axum::{
 use brk_traversable::TreeNode;
 use brk_types::{
     CostBasisCohortParam, CostBasisFormatted, CostBasisParams, CostBasisQuery, DataRangeFormat,
-    Date, IndexInfo, PaginatedSeries, Pagination, SearchQuery, SeriesCount, SeriesData,
-    SeriesInfo, SeriesParam, SeriesSelection, SeriesWithIndex,
+    Date, IndexInfo, PaginatedSeries, Pagination, SearchQuery, SeriesCount, SeriesData, SeriesInfo,
+    SeriesNameWithIndex, SeriesParam, SeriesSelection,
 };
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};
@@ -177,7 +177,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                        headers: HeaderMap,
                        addr: Extension<SocketAddr>,
                        state: State<AppState>,
-                       Path(path): Path<SeriesWithIndex>,
+                       Path(path): Path<SeriesNameWithIndex>,
                        Query(range): Query<DataRangeFormat>|
                        -> Response {
                     data::handler(
@@ -211,7 +211,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                        headers: HeaderMap,
                        addr: Extension<SocketAddr>,
                        state: State<AppState>,
-                       Path(path): Path<SeriesWithIndex>,
+                       Path(path): Path<SeriesNameWithIndex>,
                        Query(range): Query<DataRangeFormat>|
                        -> Response {
                     data::raw_handler(
@@ -244,7 +244,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                 async |uri: Uri,
                        headers: HeaderMap,
                        State(state): State<AppState>,
-                       Path(path): Path<SeriesWithIndex>| {
+                       Path(path): Path<SeriesNameWithIndex>| {
                     state
                         .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
                             q.latest(&path.series, path.index)
@@ -268,7 +268,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                 async |uri: Uri,
                        headers: HeaderMap,
                        State(state): State<AppState>,
-                       Path(path): Path<SeriesWithIndex>| {
+                       Path(path): Path<SeriesNameWithIndex>| {
                     state
                         .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
                             q.len(&path.series, path.index)
@@ -290,7 +290,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                 async |uri: Uri,
                        headers: HeaderMap,
                        State(state): State<AppState>,
-                       Path(path): Path<SeriesWithIndex>| {
+                       Path(path): Path<SeriesNameWithIndex>| {
                     state
                         .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
                             q.version(&path.series, path.index)

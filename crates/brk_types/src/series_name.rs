@@ -13,23 +13,23 @@ use serde::{Deserialize, Serialize};
     example = &"market_cap",
     example = &"realized_price"
 )]
-pub struct Series(String);
+pub struct SeriesName(String);
 
-impl From<String> for Series {
+impl From<String> for SeriesName {
     #[inline]
     fn from(series: String) -> Self {
         Self(series)
     }
 }
 
-impl From<&str> for Series {
+impl From<&str> for SeriesName {
     #[inline]
     fn from(series: &str) -> Self {
         Self(series.to_owned())
     }
 }
 
-impl Display for Series {
+impl Display for SeriesName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }

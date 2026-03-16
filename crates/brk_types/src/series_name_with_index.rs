@@ -1,19 +1,19 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Index, Series};
+use crate::{Index, SeriesName};
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-pub struct SeriesWithIndex {
+pub struct SeriesNameWithIndex {
     /// Series name
-    pub series: Series,
+    pub series: SeriesName,
 
     /// Aggregation index
     pub index: Index,
 }
 
-impl SeriesWithIndex {
-    pub fn new(series: impl Into<Series>, index: Index) -> Self {
+impl SeriesNameWithIndex {
+    pub fn new(series: impl Into<SeriesName>, index: Index) -> Self {
         Self {
             series: series.into(),
             index,
@@ -21,13 +21,13 @@ impl SeriesWithIndex {
     }
 }
 
-impl From<(Series, Index)> for SeriesWithIndex {
-    fn from((series, index): (Series, Index)) -> Self {
+impl From<(SeriesName, Index)> for SeriesNameWithIndex {
+    fn from((series, index): (SeriesName, Index)) -> Self {
         Self { series, index }
     }
 }
 
-impl From<(&str, Index)> for SeriesWithIndex {
+impl From<(&str, Index)> for SeriesNameWithIndex {
     fn from((series, index): (&str, Index)) -> Self {
         Self {
             series: series.into(),

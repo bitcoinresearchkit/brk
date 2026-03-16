@@ -214,7 +214,7 @@ function _wrapSeriesData(raw) {{
 
 /**
  * @template T
- * @typedef {{Object}} SeriesEndpointBuilder
+ * @typedef {{Object}} SeriesEndpoint
  * @property {{(index: number) => SingleItemBuilder<T>}} get - Get single item at index
  * @property {{(start?: number, end?: number) => RangeBuilder<T>}} slice - Slice by index
  * @property {{(n: number) => RangeBuilder<T>}} first - Get first n items
@@ -228,7 +228,7 @@ function _wrapSeriesData(raw) {{
 
 /**
  * @template T
- * @typedef {{Object}} DateSeriesEndpointBuilder
+ * @typedef {{Object}} DateSeriesEndpoint
  * @property {{(index: number | globalThis.Date) => DateSingleItemBuilder<T>}} get - Get single item at index or Date
  * @property {{(start?: number | globalThis.Date, end?: number | globalThis.Date) => DateRangeBuilder<T>}} slice - Slice by index or Date
  * @property {{(n: number) => DateRangeBuilder<T>}} first - Get first n items
@@ -240,7 +240,7 @@ function _wrapSeriesData(raw) {{
  * @property {{string}} path - The endpoint path
  */
 
-/** @typedef {{SeriesEndpointBuilder<any>}} AnySeriesEndpointBuilder */
+/** @typedef {{SeriesEndpoint<any>}} AnySeriesEndpoint */
 
 /** @template T @typedef {{Object}} SingleItemBuilder
  * @property {{(onUpdate?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>}} fetch - Fetch the item
@@ -284,9 +284,9 @@ function _wrapSeriesData(raw) {{
  * @template T
  * @typedef {{Object}} SeriesPattern
  * @property {{string}} name - The series name
- * @property {{Readonly<Partial<Record<Index, SeriesEndpointBuilder<T>>>>}} by - Index endpoints as lazy getters
+ * @property {{Readonly<Partial<Record<Index, SeriesEndpoint<T>>>>}} by - Index endpoints as lazy getters
  * @property {{() => readonly Index[]}} indexes - Get the list of available indexes
- * @property {{(index: Index) => SeriesEndpointBuilder<T>|undefined}} get - Get an endpoint for a specific index
+ * @property {{(index: Index) => SeriesEndpoint<T>|undefined}} get - Get an endpoint for a specific index
  */
 
 /** @typedef {{SeriesPattern<any>}} AnySeriesPattern */
@@ -297,7 +297,7 @@ function _wrapSeriesData(raw) {{
  * @param {{BrkClientBase}} client
  * @param {{string}} name - The series vec name
  * @param {{Index}} index - The index name
- * @returns {{DateSeriesEndpointBuilder<T>}}
+ * @returns {{DateSeriesEndpoint<T>}}
  */
 function _endpoint(client, name, index) {{
   const p = `/api/series/${{name}}/${{index}}`;
@@ -349,7 +349,7 @@ function _endpoint(client, name, index) {{
     then(resolve, reject) {{ return this.fetch().then(resolve, reject); }},
   }});
 
-  /** @type {{DateSeriesEndpointBuilder<T>}} */
+  /** @type {{DateSeriesEndpoint<T>}} */
   const endpoint = {{
     get(idx) {{ if (idx instanceof Date) idx = dateToIndex(index, idx); return singleItemBuilder(idx); }},
     slice(start, end) {{
@@ -615,7 +615,7 @@ function _mp(client, name, indexes) {{
     by,
     /** @returns {{readonly Index[]}} */
     indexes() {{ return indexes; }},
-    /** @param {{Index}} index @returns {{SeriesEndpointBuilder<T>|undefined}} */
+    /** @param {{Index}} index @returns {{SeriesEndpoint<T>|undefined}} */
     get(index) {{ return indexes.includes(index) ? _endpoint(client, name, index) : undefined; }}
   }};
 }}
@@ -631,9 +631,9 @@ function _mp(client, name, indexes) {{
             .iter()
             .map(|idx| {
                 let builder = if idx.is_date_based() {
-                    "DateSeriesEndpointBuilder"
+                    "DateSeriesEndpoint"
                 } else {
-                    "SeriesEndpointBuilder"
+                    "SeriesEndpoint"
                 };
                 format!("readonly {}: {}<T>", idx.name(), builder)
             })
@@ -642,7 +642,7 @@ function _mp(client, name, indexes) {{
 
         writeln!(
             output,
-            "/** @template T @typedef {{{{ name: string, by: {}, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }}}} {} */",
+            "/** @template T @typedef {{{{ name: string, by: {}, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }}}} {} */",
             by_type, pattern.name
         )
         .unwrap();

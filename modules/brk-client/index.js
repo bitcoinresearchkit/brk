@@ -449,13 +449,13 @@
  * Legacy path parameter for `/api/metric/{metric}`
  *
  * @typedef {Object} LegacySeriesParam
- * @property {Series} metric
+ * @property {SeriesName} metric
  */
 /**
  * Legacy path parameters for `/api/metric/{metric}/{index}`
  *
  * @typedef {Object} LegacySeriesWithIndex
- * @property {Series} metric
+ * @property {SeriesName} metric
  * @property {Index} index
  */
 /**
@@ -692,13 +692,8 @@
  */
 /**
  * @typedef {Object} SearchQuery
- * @property {Series} q - Search query string
+ * @property {SeriesName} q - Search query string
  * @property {Limit=} limit - Maximum number of results
- */
-/**
- * Series name
- *
- * @typedef {string} Series
  */
 /**
  * Series count statistics - distinct series and total series-index combinations
@@ -731,8 +726,18 @@
  * @typedef {string} SeriesList
  */
 /**
+ * Series name
+ *
+ * @typedef {string} SeriesName
+ */
+/**
+ * @typedef {Object} SeriesNameWithIndex
+ * @property {SeriesName} series - Series name
+ * @property {Index} index - Aggregation index
+ */
+/**
  * @typedef {Object} SeriesParam
- * @property {Series} series
+ * @property {SeriesName} series
  */
 /**
  * Selection of series to query
@@ -755,11 +760,6 @@
  * @property {(RangeIndex|null)=} end - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
  * @property {(Limit|null)=} limit - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
  * @property {Format=} format - Format of the output
- */
-/**
- * @typedef {Object} SeriesWithIndex
- * @property {Series} series - Series name
- * @property {Index} index - Aggregation index
  */
 /** @typedef {boolean} StoredBool */
 /**
@@ -1170,7 +1170,7 @@ function _wrapSeriesData(raw) {
 
 /**
  * @template T
- * @typedef {Object} SeriesEndpointBuilder
+ * @typedef {Object} SeriesEndpoint
  * @property {(index: number) => SingleItemBuilder<T>} get - Get single item at index
  * @property {(start?: number, end?: number) => RangeBuilder<T>} slice - Slice by index
  * @property {(n: number) => RangeBuilder<T>} first - Get first n items
@@ -1184,7 +1184,7 @@ function _wrapSeriesData(raw) {
 
 /**
  * @template T
- * @typedef {Object} DateSeriesEndpointBuilder
+ * @typedef {Object} DateSeriesEndpoint
  * @property {(index: number | globalThis.Date) => DateSingleItemBuilder<T>} get - Get single item at index or Date
  * @property {(start?: number | globalThis.Date, end?: number | globalThis.Date) => DateRangeBuilder<T>} slice - Slice by index or Date
  * @property {(n: number) => DateRangeBuilder<T>} first - Get first n items
@@ -1196,7 +1196,7 @@ function _wrapSeriesData(raw) {
  * @property {string} path - The endpoint path
  */
 
-/** @typedef {SeriesEndpointBuilder<any>} AnySeriesEndpointBuilder */
+/** @typedef {SeriesEndpoint<any>} AnySeriesEndpoint */
 
 /** @template T @typedef {Object} SingleItemBuilder
  * @property {(onUpdate?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>} fetch - Fetch the item
@@ -1240,9 +1240,9 @@ function _wrapSeriesData(raw) {
  * @template T
  * @typedef {Object} SeriesPattern
  * @property {string} name - The series name
- * @property {Readonly<Partial<Record<Index, SeriesEndpointBuilder<T>>>>} by - Index endpoints as lazy getters
+ * @property {Readonly<Partial<Record<Index, SeriesEndpoint<T>>>>} by - Index endpoints as lazy getters
  * @property {() => readonly Index[]} indexes - Get the list of available indexes
- * @property {(index: Index) => SeriesEndpointBuilder<T>|undefined} get - Get an endpoint for a specific index
+ * @property {(index: Index) => SeriesEndpoint<T>|undefined} get - Get an endpoint for a specific index
  */
 
 /** @typedef {SeriesPattern<any>} AnySeriesPattern */
@@ -1253,7 +1253,7 @@ function _wrapSeriesData(raw) {
  * @param {BrkClientBase} client
  * @param {string} name - The series vec name
  * @param {Index} index - The index name
- * @returns {DateSeriesEndpointBuilder<T>}
+ * @returns {DateSeriesEndpoint<T>}
  */
 function _endpoint(client, name, index) {
   const p = `/api/series/${name}/${index}`;
@@ -1305,7 +1305,7 @@ function _endpoint(client, name, index) {
     then(resolve, reject) { return this.fetch().then(resolve, reject); },
   });
 
-  /** @type {DateSeriesEndpointBuilder<T>} */
+  /** @type {DateSeriesEndpoint<T>} */
   const endpoint = {
     get(idx) { if (idx instanceof Date) idx = dateToIndex(index, idx); return singleItemBuilder(idx); },
     slice(start, end) {
@@ -1511,114 +1511,114 @@ function _mp(client, name, indexes) {
     by,
     /** @returns {readonly Index[]} */
     indexes() { return indexes; },
-    /** @param {Index} index @returns {SeriesEndpointBuilder<T>|undefined} */
+    /** @param {Index} index @returns {SeriesEndpoint<T>|undefined} */
     get(index) { return indexes.includes(index) ? _endpoint(client, name, index) : undefined; }
   };
 }
 
-/** @template T @typedef {{ name: string, by: { readonly minute10: DateSeriesEndpointBuilder<T>, readonly minute30: DateSeriesEndpointBuilder<T>, readonly hour1: DateSeriesEndpointBuilder<T>, readonly hour4: DateSeriesEndpointBuilder<T>, readonly hour12: DateSeriesEndpointBuilder<T>, readonly day1: DateSeriesEndpointBuilder<T>, readonly day3: DateSeriesEndpointBuilder<T>, readonly week1: DateSeriesEndpointBuilder<T>, readonly month1: DateSeriesEndpointBuilder<T>, readonly month3: DateSeriesEndpointBuilder<T>, readonly month6: DateSeriesEndpointBuilder<T>, readonly year1: DateSeriesEndpointBuilder<T>, readonly year10: DateSeriesEndpointBuilder<T>, readonly halving: SeriesEndpointBuilder<T>, readonly epoch: SeriesEndpointBuilder<T>, readonly height: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern1 */
+/** @template T @typedef {{ name: string, by: { readonly minute10: DateSeriesEndpoint<T>, readonly minute30: DateSeriesEndpoint<T>, readonly hour1: DateSeriesEndpoint<T>, readonly hour4: DateSeriesEndpoint<T>, readonly hour12: DateSeriesEndpoint<T>, readonly day1: DateSeriesEndpoint<T>, readonly day3: DateSeriesEndpoint<T>, readonly week1: DateSeriesEndpoint<T>, readonly month1: DateSeriesEndpoint<T>, readonly month3: DateSeriesEndpoint<T>, readonly month6: DateSeriesEndpoint<T>, readonly year1: DateSeriesEndpoint<T>, readonly year10: DateSeriesEndpoint<T>, readonly halving: SeriesEndpoint<T>, readonly epoch: SeriesEndpoint<T>, readonly height: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern1 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern1<T>} */
 function createSeriesPattern1(client, name) { return /** @type {SeriesPattern1<T>} */ (_mp(client, name, _i1)); }
-/** @template T @typedef {{ name: string, by: { readonly minute10: DateSeriesEndpointBuilder<T>, readonly minute30: DateSeriesEndpointBuilder<T>, readonly hour1: DateSeriesEndpointBuilder<T>, readonly hour4: DateSeriesEndpointBuilder<T>, readonly hour12: DateSeriesEndpointBuilder<T>, readonly day1: DateSeriesEndpointBuilder<T>, readonly day3: DateSeriesEndpointBuilder<T>, readonly week1: DateSeriesEndpointBuilder<T>, readonly month1: DateSeriesEndpointBuilder<T>, readonly month3: DateSeriesEndpointBuilder<T>, readonly month6: DateSeriesEndpointBuilder<T>, readonly year1: DateSeriesEndpointBuilder<T>, readonly year10: DateSeriesEndpointBuilder<T>, readonly halving: SeriesEndpointBuilder<T>, readonly epoch: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern2 */
+/** @template T @typedef {{ name: string, by: { readonly minute10: DateSeriesEndpoint<T>, readonly minute30: DateSeriesEndpoint<T>, readonly hour1: DateSeriesEndpoint<T>, readonly hour4: DateSeriesEndpoint<T>, readonly hour12: DateSeriesEndpoint<T>, readonly day1: DateSeriesEndpoint<T>, readonly day3: DateSeriesEndpoint<T>, readonly week1: DateSeriesEndpoint<T>, readonly month1: DateSeriesEndpoint<T>, readonly month3: DateSeriesEndpoint<T>, readonly month6: DateSeriesEndpoint<T>, readonly year1: DateSeriesEndpoint<T>, readonly year10: DateSeriesEndpoint<T>, readonly halving: SeriesEndpoint<T>, readonly epoch: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern2 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern2<T>} */
 function createSeriesPattern2(client, name) { return /** @type {SeriesPattern2<T>} */ (_mp(client, name, _i2)); }
-/** @template T @typedef {{ name: string, by: { readonly minute10: DateSeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern3 */
+/** @template T @typedef {{ name: string, by: { readonly minute10: DateSeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern3 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern3<T>} */
 function createSeriesPattern3(client, name) { return /** @type {SeriesPattern3<T>} */ (_mp(client, name, _i3)); }
-/** @template T @typedef {{ name: string, by: { readonly minute30: DateSeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern4 */
+/** @template T @typedef {{ name: string, by: { readonly minute30: DateSeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern4 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern4<T>} */
 function createSeriesPattern4(client, name) { return /** @type {SeriesPattern4<T>} */ (_mp(client, name, _i4)); }
-/** @template T @typedef {{ name: string, by: { readonly hour1: DateSeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern5 */
+/** @template T @typedef {{ name: string, by: { readonly hour1: DateSeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern5 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern5<T>} */
 function createSeriesPattern5(client, name) { return /** @type {SeriesPattern5<T>} */ (_mp(client, name, _i5)); }
-/** @template T @typedef {{ name: string, by: { readonly hour4: DateSeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern6 */
+/** @template T @typedef {{ name: string, by: { readonly hour4: DateSeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern6 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern6<T>} */
 function createSeriesPattern6(client, name) { return /** @type {SeriesPattern6<T>} */ (_mp(client, name, _i6)); }
-/** @template T @typedef {{ name: string, by: { readonly hour12: DateSeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern7 */
+/** @template T @typedef {{ name: string, by: { readonly hour12: DateSeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern7 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern7<T>} */
 function createSeriesPattern7(client, name) { return /** @type {SeriesPattern7<T>} */ (_mp(client, name, _i7)); }
-/** @template T @typedef {{ name: string, by: { readonly day1: DateSeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern8 */
+/** @template T @typedef {{ name: string, by: { readonly day1: DateSeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern8 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern8<T>} */
 function createSeriesPattern8(client, name) { return /** @type {SeriesPattern8<T>} */ (_mp(client, name, _i8)); }
-/** @template T @typedef {{ name: string, by: { readonly day3: DateSeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern9 */
+/** @template T @typedef {{ name: string, by: { readonly day3: DateSeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern9 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern9<T>} */
 function createSeriesPattern9(client, name) { return /** @type {SeriesPattern9<T>} */ (_mp(client, name, _i9)); }
-/** @template T @typedef {{ name: string, by: { readonly week1: DateSeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern10 */
+/** @template T @typedef {{ name: string, by: { readonly week1: DateSeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern10 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern10<T>} */
 function createSeriesPattern10(client, name) { return /** @type {SeriesPattern10<T>} */ (_mp(client, name, _i10)); }
-/** @template T @typedef {{ name: string, by: { readonly month1: DateSeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern11 */
+/** @template T @typedef {{ name: string, by: { readonly month1: DateSeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern11 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern11<T>} */
 function createSeriesPattern11(client, name) { return /** @type {SeriesPattern11<T>} */ (_mp(client, name, _i11)); }
-/** @template T @typedef {{ name: string, by: { readonly month3: DateSeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern12 */
+/** @template T @typedef {{ name: string, by: { readonly month3: DateSeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern12 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern12<T>} */
 function createSeriesPattern12(client, name) { return /** @type {SeriesPattern12<T>} */ (_mp(client, name, _i12)); }
-/** @template T @typedef {{ name: string, by: { readonly month6: DateSeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern13 */
+/** @template T @typedef {{ name: string, by: { readonly month6: DateSeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern13 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern13<T>} */
 function createSeriesPattern13(client, name) { return /** @type {SeriesPattern13<T>} */ (_mp(client, name, _i13)); }
-/** @template T @typedef {{ name: string, by: { readonly year1: DateSeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern14 */
+/** @template T @typedef {{ name: string, by: { readonly year1: DateSeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern14 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern14<T>} */
 function createSeriesPattern14(client, name) { return /** @type {SeriesPattern14<T>} */ (_mp(client, name, _i14)); }
-/** @template T @typedef {{ name: string, by: { readonly year10: DateSeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern15 */
+/** @template T @typedef {{ name: string, by: { readonly year10: DateSeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern15 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern15<T>} */
 function createSeriesPattern15(client, name) { return /** @type {SeriesPattern15<T>} */ (_mp(client, name, _i15)); }
-/** @template T @typedef {{ name: string, by: { readonly halving: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern16 */
+/** @template T @typedef {{ name: string, by: { readonly halving: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern16 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern16<T>} */
 function createSeriesPattern16(client, name) { return /** @type {SeriesPattern16<T>} */ (_mp(client, name, _i16)); }
-/** @template T @typedef {{ name: string, by: { readonly epoch: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern17 */
+/** @template T @typedef {{ name: string, by: { readonly epoch: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern17 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern17<T>} */
 function createSeriesPattern17(client, name) { return /** @type {SeriesPattern17<T>} */ (_mp(client, name, _i17)); }
-/** @template T @typedef {{ name: string, by: { readonly height: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern18 */
+/** @template T @typedef {{ name: string, by: { readonly height: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern18 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern18<T>} */
 function createSeriesPattern18(client, name) { return /** @type {SeriesPattern18<T>} */ (_mp(client, name, _i18)); }
-/** @template T @typedef {{ name: string, by: { readonly tx_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern19 */
+/** @template T @typedef {{ name: string, by: { readonly tx_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern19 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern19<T>} */
 function createSeriesPattern19(client, name) { return /** @type {SeriesPattern19<T>} */ (_mp(client, name, _i19)); }
-/** @template T @typedef {{ name: string, by: { readonly txin_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern20 */
+/** @template T @typedef {{ name: string, by: { readonly txin_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern20 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern20<T>} */
 function createSeriesPattern20(client, name) { return /** @type {SeriesPattern20<T>} */ (_mp(client, name, _i20)); }
-/** @template T @typedef {{ name: string, by: { readonly txout_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern21 */
+/** @template T @typedef {{ name: string, by: { readonly txout_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern21 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern21<T>} */
 function createSeriesPattern21(client, name) { return /** @type {SeriesPattern21<T>} */ (_mp(client, name, _i21)); }
-/** @template T @typedef {{ name: string, by: { readonly empty_output_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern22 */
+/** @template T @typedef {{ name: string, by: { readonly empty_output_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern22 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern22<T>} */
 function createSeriesPattern22(client, name) { return /** @type {SeriesPattern22<T>} */ (_mp(client, name, _i22)); }
-/** @template T @typedef {{ name: string, by: { readonly op_return_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern23 */
+/** @template T @typedef {{ name: string, by: { readonly op_return_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern23 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern23<T>} */
 function createSeriesPattern23(client, name) { return /** @type {SeriesPattern23<T>} */ (_mp(client, name, _i23)); }
-/** @template T @typedef {{ name: string, by: { readonly p2a_address_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern24 */
+/** @template T @typedef {{ name: string, by: { readonly p2a_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern24 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern24<T>} */
 function createSeriesPattern24(client, name) { return /** @type {SeriesPattern24<T>} */ (_mp(client, name, _i24)); }
-/** @template T @typedef {{ name: string, by: { readonly p2ms_output_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern25 */
+/** @template T @typedef {{ name: string, by: { readonly p2ms_output_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern25 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern25<T>} */
 function createSeriesPattern25(client, name) { return /** @type {SeriesPattern25<T>} */ (_mp(client, name, _i25)); }
-/** @template T @typedef {{ name: string, by: { readonly p2pk33_address_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern26 */
+/** @template T @typedef {{ name: string, by: { readonly p2pk33_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern26 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern26<T>} */
 function createSeriesPattern26(client, name) { return /** @type {SeriesPattern26<T>} */ (_mp(client, name, _i26)); }
-/** @template T @typedef {{ name: string, by: { readonly p2pk65_address_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern27 */
+/** @template T @typedef {{ name: string, by: { readonly p2pk65_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern27 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern27<T>} */
 function createSeriesPattern27(client, name) { return /** @type {SeriesPattern27<T>} */ (_mp(client, name, _i27)); }
-/** @template T @typedef {{ name: string, by: { readonly p2pkh_address_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern28 */
+/** @template T @typedef {{ name: string, by: { readonly p2pkh_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern28 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern28<T>} */
 function createSeriesPattern28(client, name) { return /** @type {SeriesPattern28<T>} */ (_mp(client, name, _i28)); }
-/** @template T @typedef {{ name: string, by: { readonly p2sh_address_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern29 */
+/** @template T @typedef {{ name: string, by: { readonly p2sh_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern29 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern29<T>} */
 function createSeriesPattern29(client, name) { return /** @type {SeriesPattern29<T>} */ (_mp(client, name, _i29)); }
-/** @template T @typedef {{ name: string, by: { readonly p2tr_address_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern30 */
+/** @template T @typedef {{ name: string, by: { readonly p2tr_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern30 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern30<T>} */
 function createSeriesPattern30(client, name) { return /** @type {SeriesPattern30<T>} */ (_mp(client, name, _i30)); }
-/** @template T @typedef {{ name: string, by: { readonly p2wpkh_address_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern31 */
+/** @template T @typedef {{ name: string, by: { readonly p2wpkh_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern31 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern31<T>} */
 function createSeriesPattern31(client, name) { return /** @type {SeriesPattern31<T>} */ (_mp(client, name, _i31)); }
-/** @template T @typedef {{ name: string, by: { readonly p2wsh_address_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern32 */
+/** @template T @typedef {{ name: string, by: { readonly p2wsh_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern32 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern32<T>} */
 function createSeriesPattern32(client, name) { return /** @type {SeriesPattern32<T>} */ (_mp(client, name, _i32)); }
-/** @template T @typedef {{ name: string, by: { readonly unknown_output_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern33 */
+/** @template T @typedef {{ name: string, by: { readonly unknown_output_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern33 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern33<T>} */
 function createSeriesPattern33(client, name) { return /** @type {SeriesPattern33<T>} */ (_mp(client, name, _i33)); }
-/** @template T @typedef {{ name: string, by: { readonly funded_address_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern34 */
+/** @template T @typedef {{ name: string, by: { readonly funded_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern34 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern34<T>} */
 function createSeriesPattern34(client, name) { return /** @type {SeriesPattern34<T>} */ (_mp(client, name, _i34)); }
-/** @template T @typedef {{ name: string, by: { readonly empty_address_index: SeriesEndpointBuilder<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpointBuilder<T>|undefined }} SeriesPattern35 */
+/** @template T @typedef {{ name: string, by: { readonly empty_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern35 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern35<T>} */
 function createSeriesPattern35(client, name) { return /** @type {SeriesPattern35<T>} */ (_mp(client, name, _i35)); }
 
@@ -9250,7 +9250,7 @@ class BrkClient extends BrkClientBase {
    *
    * @param {string} series - The series name
    * @param {Index} index - The index name
-   * @returns {SeriesEndpointBuilder<unknown>}
+   * @returns {SeriesEndpoint<unknown>}
    */
   seriesEndpoint(series, index) {
     return _endpoint(this, series, index);
@@ -9688,7 +9688,7 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/series/search`
    *
-   * @param {Series} [q] - Search query string
+   * @param {SeriesName} [q] - Search query string
    * @param {Limit=} [limit] - Maximum number of results
    * @returns {Promise<string[]>}
    */
@@ -9708,7 +9708,7 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/series/{series}`
    *
-   * @param {Series} series
+   * @param {SeriesName} series
    * @returns {Promise<SeriesInfo>}
    */
   async getSeriesInfo(series) {
@@ -9722,7 +9722,7 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/series/{series}/{index}`
    *
-   * @param {Series} series - Series name
+   * @param {SeriesName} series - Series name
    * @param {Index} index - Aggregation index
    * @param {RangeIndex=} [start] - Inclusive start: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `from`, `f`, `s`
    * @param {RangeIndex=} [end] - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
@@ -9751,7 +9751,7 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/series/{series}/{index}/data`
    *
-   * @param {Series} series - Series name
+   * @param {SeriesName} series - Series name
    * @param {Index} index - Aggregation index
    * @param {RangeIndex=} [start] - Inclusive start: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `from`, `f`, `s`
    * @param {RangeIndex=} [end] - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
@@ -9780,7 +9780,7 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/series/{series}/{index}/latest`
    *
-   * @param {Series} series - Series name
+   * @param {SeriesName} series - Series name
    * @param {Index} index - Aggregation index
    * @returns {Promise<*>}
    */
@@ -9795,7 +9795,7 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/series/{series}/{index}/len`
    *
-   * @param {Series} series - Series name
+   * @param {SeriesName} series - Series name
    * @param {Index} index - Aggregation index
    * @returns {Promise<number>}
    */
@@ -9810,7 +9810,7 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/series/{series}/{index}/version`
    *
-   * @param {Series} series - Series name
+   * @param {SeriesName} series - Series name
    * @param {Index} index - Aggregation index
    * @returns {Promise<Version>}
    */

@@ -127,7 +127,7 @@ def _p(prefix: str, acc: str) -> str:
     .unwrap();
 }
 
-/// Generate the SeriesData and SeriesEndpointBuilder classes
+/// Generate the SeriesData and SeriesEndpoint classes
 pub fn generate_endpoint_class(output: &mut String) {
     writeln!(
         output,
@@ -439,7 +439,7 @@ class DateSkippedBuilder(SkippedBuilder[T]):
         return self._config.get_date_series()
 
 
-class SeriesEndpointBuilder(Generic[T]):
+class SeriesEndpoint(Generic[T]):
     """Builder for series endpoint queries with int-based indexing.
 
     Examples:
@@ -489,7 +489,7 @@ class SeriesEndpointBuilder(Generic[T]):
         return self._config.path()
 
 
-class DateSeriesEndpointBuilder(Generic[T]):
+class DateSeriesEndpoint(Generic[T]):
     """Builder for series endpoint queries with date-based indexing.
 
     Accepts dates in __getitem__ and returns DateSeriesData from fetch().
@@ -553,8 +553,8 @@ class DateSeriesEndpointBuilder(Generic[T]):
 
 
 # Type aliases for non-generic usage
-AnySeriesEndpointBuilder = SeriesEndpointBuilder[Any]
-AnyDateSeriesEndpointBuilder = DateSeriesEndpointBuilder[Any]
+AnySeriesEndpoint = SeriesEndpoint[Any]
+AnyDateSeriesEndpoint = DateSeriesEndpoint[Any]
 
 
 class SeriesPattern(Protocol[T]):
@@ -569,7 +569,7 @@ class SeriesPattern(Protocol[T]):
         """Get the list of available indexes for this series."""
         ...
 
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]:
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]:
         """Get an endpoint builder for a specific index, if supported."""
         ...
 
@@ -605,11 +605,11 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
     // Generate helper functions
     writeln!(
         output,
-        r#"def _ep(c: BrkClientBase, n: str, i: Index) -> SeriesEndpointBuilder[Any]:
-    return SeriesEndpointBuilder(c, n, i)
+        r#"def _ep(c: BrkClientBase, n: str, i: Index) -> SeriesEndpoint[Any]:
+    return SeriesEndpoint(c, n, i)
 
-def _dep(c: BrkClientBase, n: str, i: Index) -> DateSeriesEndpointBuilder[Any]:
-    return DateSeriesEndpointBuilder(c, n, i)
+def _dep(c: BrkClientBase, n: str, i: Index) -> DateSeriesEndpoint[Any]:
+    return DateSeriesEndpoint(c, n, i)
 "#
     )
     .unwrap();
@@ -631,9 +631,9 @@ def _dep(c: BrkClientBase, n: str, i: Index) -> DateSeriesEndpointBuilder[Any]:
             let method_name = index_to_field_name(index);
             let index_name = index.name();
             let (builder_type, helper) = if index.is_date_based() {
-                ("DateSeriesEndpointBuilder", "_dep")
+                ("DateSeriesEndpoint", "_dep")
             } else {
-                ("SeriesEndpointBuilder", "_ep")
+                ("SeriesEndpoint", "_ep")
             };
             writeln!(
                 output,
@@ -663,7 +663,7 @@ def _dep(c: BrkClientBase, n: str, i: Index) -> DateSeriesEndpointBuilder[Any]:
         .unwrap();
         writeln!(
             output,
-            "    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in {} else None",
+            "    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in {} else None",
             idx_var
         )
         .unwrap();

@@ -5,7 +5,7 @@
 import { BrkClient } from "../index.js";
 
 /**
- * @typedef {import('../index.js').AnyMetricPattern} AnyMetricPattern
+ * @typedef {import('../index.js').AnySeriesPattern} AnyMetricPattern
  */
 
 /**
@@ -59,7 +59,7 @@ async function testAllEndpoints() {
     timeout: 15000,
   });
 
-  const metrics = getAllMetrics(client.metrics);
+  const metrics = getAllMetrics(client.series);
   console.log(`\nFound ${metrics.length} metrics`);
 
   let success = 0;

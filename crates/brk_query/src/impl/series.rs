@@ -4,7 +4,7 @@ use brk_error::{Error, Result};
 use brk_traversable::TreeNode;
 use brk_types::{
     Date, DetailedSeriesCount, Epoch, Etag, Format, Halving, Height, Index, IndexInfo, LegacyValue,
-    Limit, Series, SeriesData, SeriesInfo, SeriesOutput, SeriesOutputLegacy, SeriesSelection,
+    Limit, SeriesName, SeriesData, SeriesInfo, SeriesOutput, SeriesOutputLegacy, SeriesSelection,
     Output, OutputLegacy, PaginatedSeries, Pagination, PaginationIndex, RangeIndex, RangeMap,
     SearchQuery, Timestamp, Version,
 };
@@ -30,7 +30,7 @@ impl Query {
         self.vecs().matches(&query.q, query.limit)
     }
 
-    pub fn series_not_found_error(&self, series: &Series) -> Error {
+    pub fn series_not_found_error(&self, series: &SeriesName) -> Error {
         // Check if series exists but with different indexes
         if let Some(indexes) = self.vecs().series_to_indexes(series.clone()) {
             let supported = indexes
@@ -108,7 +108,7 @@ impl Query {
     }
 
     /// Returns the latest value for a single series as a JSON value.
-    pub fn latest(&self, series: &Series, index: Index) -> Result<serde_json::Value> {
+    pub fn latest(&self, series: &SeriesName, index: Index) -> Result<serde_json::Value> {
         let vec = self
             .vecs()
             .get(series, index)
@@ -117,7 +117,7 @@ impl Query {
     }
 
     /// Returns the length (total data points) for a single series.
-    pub fn len(&self, series: &Series, index: Index) -> Result<usize> {
+    pub fn len(&self, series: &SeriesName, index: Index) -> Result<usize> {
         let vec = self
             .vecs()
             .get(series, index)
@@ -126,7 +126,7 @@ impl Query {
     }
 
     /// Returns the version for a single series.
-    pub fn version(&self, series: &Series, index: Index) -> Result<Version> {
+    pub fn version(&self, series: &SeriesName, index: Index) -> Result<Version> {
         let vec = self
             .vecs()
             .get(series, index)
@@ -308,7 +308,7 @@ impl Query {
         self.vecs().index_to_ids(paginated_index)
     }
 
-    pub fn series_info(&self, series: &Series) -> Option<SeriesInfo> {
+    pub fn series_info(&self, series: &SeriesName) -> Option<SeriesInfo> {
         let index_to_vec = self.vecs().series_to_index_to_vec.get(series.replace("-", "_").as_str())?;
         let value_type = index_to_vec.values().next()?.value_type_to_string();
         let indexes = index_to_vec.keys().copied().collect();
@@ -318,7 +318,7 @@ impl Query {
         })
     }
 
-    pub fn series_to_indexes(&self, series: Series) -> Option<&Vec<Index>> {
+    pub fn series_to_indexes(&self, series: SeriesName) -> Option<&Vec<Index>> {
         self.vecs().series_to_indexes(series)
     }
 

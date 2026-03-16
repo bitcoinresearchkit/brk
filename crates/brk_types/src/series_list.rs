@@ -4,7 +4,7 @@ use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use super::Series;
+use super::SeriesName;
 
 /// Comma-separated list of series names
 #[derive(Debug, Deref, JsonSchema)]
@@ -15,14 +15,14 @@ use super::Series;
     example = &"price_close,market_cap",
     example = &"realized_price,market_cap,mvrv"
 )]
-pub struct SeriesList(Vec<Series>);
+pub struct SeriesList(Vec<SeriesName>);
 
 const MAX_VECS: usize = 32;
 const MAX_STRING_SIZE: usize = 64 * MAX_VECS;
 
-impl From<Series> for SeriesList {
+impl From<SeriesName> for SeriesList {
     #[inline]
-    fn from(series: Series) -> Self {
+    fn from(series: SeriesName) -> Self {
         Self(vec![series])
     }
 }
@@ -30,7 +30,7 @@ impl From<Series> for SeriesList {
 impl From<String> for SeriesList {
     #[inline]
     fn from(value: String) -> Self {
-        Self::from(Series::from(value.replace("-", "_").to_lowercase()))
+        Self::from(SeriesName::from(value.replace("-", "_").to_lowercase()))
     }
 }
 
@@ -40,7 +40,7 @@ impl<'a> From<Vec<&'a str>> for SeriesList {
         Self(
             value
                 .iter()
-                .map(|s| Series::from(s.replace("-", "_").to_lowercase()))
+                .map(|s| SeriesName::from(s.replace("-", "_").to_lowercase()))
                 .collect::<Vec<_>>(),
         )
     }
@@ -58,7 +58,7 @@ impl<'de> Deserialize<'de> for SeriesList {
                 Ok(Self(
                     sanitize(str.split(",").map(|s| s.to_string()))
                         .into_iter()
-                        .map(Series::from)
+                        .map(SeriesName::from)
                         .collect(),
                 ))
             } else {
@@ -69,7 +69,7 @@ impl<'de> Deserialize<'de> for SeriesList {
                 Ok(Self(
                     sanitize(vec.iter().filter_map(|s| s.as_str().map(String::from)))
                         .into_iter()
-                        .map(Series::from)
+                        .map(SeriesName::from)
                         .collect(),
                 ))
             } else {

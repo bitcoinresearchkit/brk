@@ -120,7 +120,7 @@ pub trait AnySeriesPattern {
 /// Generic trait for series patterns with endpoint access.
 pub trait SeriesPattern<T>: AnySeriesPattern {
     /// Get an endpoint builder for a specific index, if supported.
-    fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>>;
+    fn get(&self, index: Index) -> Option<SeriesEndpoint<T>>;
 }
 
 
@@ -164,7 +164,7 @@ impl EndpointConfig {
 /// Builder for series endpoint queries.
 ///
 /// Parameterized by element type `T` and response type `D` (defaults to `SeriesData<T>`).
-/// For date-based indexes, use `DateSeriesEndpointBuilder<T>` which sets `D = DateSeriesData<T>`.
+/// For date-based indexes, use `DateSeriesEndpoint<T>` which sets `D = DateSeriesData<T>`.
 ///
 /// # Examples
 /// ```ignore
@@ -176,18 +176,18 @@ impl EndpointConfig {
 /// let data = endpoint.last(10).fetch()?;           // last 10
 /// let data = endpoint.skip(100).take(10).fetch()?; // iterator-style
 /// ```
-pub struct SeriesEndpointBuilder<T, D = SeriesData<T>> {
+pub struct SeriesEndpoint<T, D = SeriesData<T>> {
     config: EndpointConfig,
     _marker: std::marker::PhantomData<fn() -> (T, D)>,
 }
 
 /// Builder for date-based series endpoint queries.
 ///
-/// Like `SeriesEndpointBuilder` but returns `DateSeriesData` and provides
+/// Like `SeriesEndpoint` but returns `DateSeriesData` and provides
 /// date-based access methods (`get_date`, `date_range`).
-pub type DateSeriesEndpointBuilder<T> = SeriesEndpointBuilder<T, DateSeriesData<T>>;
+pub type DateSeriesEndpoint<T> = SeriesEndpoint<T, DateSeriesData<T>>;
 
-impl<T: DeserializeOwned, D: DeserializeOwned> SeriesEndpointBuilder<T, D> {
+impl<T: DeserializeOwned, D: DeserializeOwned> SeriesEndpoint<T, D> {
     pub fn new(client: Arc<BrkClientBase>, name: Arc<str>, index: Index) -> Self {
         Self { config: EndpointConfig::new(client, name, index), _marker: std::marker::PhantomData }
     }
@@ -258,8 +258,8 @@ impl<T: DeserializeOwned, D: DeserializeOwned> SeriesEndpointBuilder<T, D> {
     }
 }
 
-/// Date-specific methods available only on `DateSeriesEndpointBuilder`.
-impl<T: DeserializeOwned> SeriesEndpointBuilder<T, DateSeriesData<T>> {
+/// Date-specific methods available only on `DateSeriesEndpoint`.
+impl<T: DeserializeOwned> SeriesEndpoint<T, DateSeriesData<T>> {
     /// Select a specific date position (for day-precision or coarser indexes).
     pub fn get_date(self, date: Date) -> SingleItemBuilder<T, DateSeriesData<T>> {
         let index = self.config.index.date_to_index(date).unwrap_or(0);
@@ -396,35 +396,35 @@ const _I34: &[Index] = &[Index::FundedAddressIndex];
 const _I35: &[Index] = &[Index::EmptyAddressIndex];
 
 #[inline]
-fn _ep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> SeriesEndpointBuilder<T> {
-    SeriesEndpointBuilder::new(c.clone(), n.clone(), i)
+fn _ep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> SeriesEndpoint<T> {
+    SeriesEndpoint::new(c.clone(), n.clone(), i)
 }
 
 #[inline]
-fn _dep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> DateSeriesEndpointBuilder<T> {
-    DateSeriesEndpointBuilder::new(c.clone(), n.clone(), i)
+fn _dep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> DateSeriesEndpoint<T> {
+    DateSeriesEndpoint::new(c.clone(), n.clone(), i)
 }
 
 // Index accessor structs
 
 pub struct SeriesPattern1By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern1By<T> {
-    pub fn minute10(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute10) }
-    pub fn minute30(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute30) }
-    pub fn hour1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour1) }
-    pub fn hour4(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour4) }
-    pub fn hour12(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour12) }
-    pub fn day1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Day1) }
-    pub fn day3(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Day3) }
-    pub fn week1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Week1) }
-    pub fn month1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month1) }
-    pub fn month3(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month3) }
-    pub fn month6(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month6) }
-    pub fn year1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year1) }
-    pub fn year10(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year10) }
-    pub fn halving(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Halving) }
-    pub fn epoch(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Epoch) }
-    pub fn height(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Height) }
+    pub fn minute10(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Minute10) }
+    pub fn minute30(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Minute30) }
+    pub fn hour1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Hour1) }
+    pub fn hour4(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Hour4) }
+    pub fn hour12(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Hour12) }
+    pub fn day1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Day1) }
+    pub fn day3(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Day3) }
+    pub fn week1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Week1) }
+    pub fn month1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Month1) }
+    pub fn month3(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Month3) }
+    pub fn month6(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Month6) }
+    pub fn year1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Year1) }
+    pub fn year10(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Year10) }
+    pub fn halving(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::Halving) }
+    pub fn epoch(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::Epoch) }
+    pub fn height(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::Height) }
 }
 
 pub struct SeriesPattern1<T> { name: Arc<str>, pub by: SeriesPattern1By<T> }
@@ -434,25 +434,25 @@ impl<T: DeserializeOwned> SeriesPattern1<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern1<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I1 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern1<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I1.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern1<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I1.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern2By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern2By<T> {
-    pub fn minute10(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute10) }
-    pub fn minute30(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute30) }
-    pub fn hour1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour1) }
-    pub fn hour4(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour4) }
-    pub fn hour12(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour12) }
-    pub fn day1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Day1) }
-    pub fn day3(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Day3) }
-    pub fn week1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Week1) }
-    pub fn month1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month1) }
-    pub fn month3(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month3) }
-    pub fn month6(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month6) }
-    pub fn year1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year1) }
-    pub fn year10(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year10) }
-    pub fn halving(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Halving) }
-    pub fn epoch(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Epoch) }
+    pub fn minute10(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Minute10) }
+    pub fn minute30(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Minute30) }
+    pub fn hour1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Hour1) }
+    pub fn hour4(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Hour4) }
+    pub fn hour12(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Hour12) }
+    pub fn day1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Day1) }
+    pub fn day3(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Day3) }
+    pub fn week1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Week1) }
+    pub fn month1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Month1) }
+    pub fn month3(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Month3) }
+    pub fn month6(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Month6) }
+    pub fn year1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Year1) }
+    pub fn year10(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Year10) }
+    pub fn halving(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::Halving) }
+    pub fn epoch(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::Epoch) }
 }
 
 pub struct SeriesPattern2<T> { name: Arc<str>, pub by: SeriesPattern2By<T> }
@@ -462,11 +462,11 @@ impl<T: DeserializeOwned> SeriesPattern2<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern2<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I2 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern2<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I2.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern2<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I2.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern3By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern3By<T> {
-    pub fn minute10(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute10) }
+    pub fn minute10(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Minute10) }
 }
 
 pub struct SeriesPattern3<T> { name: Arc<str>, pub by: SeriesPattern3By<T> }
@@ -476,11 +476,11 @@ impl<T: DeserializeOwned> SeriesPattern3<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern3<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I3 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern3<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I3.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern3<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I3.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern4By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern4By<T> {
-    pub fn minute30(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Minute30) }
+    pub fn minute30(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Minute30) }
 }
 
 pub struct SeriesPattern4<T> { name: Arc<str>, pub by: SeriesPattern4By<T> }
@@ -490,11 +490,11 @@ impl<T: DeserializeOwned> SeriesPattern4<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern4<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I4 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern4<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I4.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern4<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I4.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern5By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern5By<T> {
-    pub fn hour1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour1) }
+    pub fn hour1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Hour1) }
 }
 
 pub struct SeriesPattern5<T> { name: Arc<str>, pub by: SeriesPattern5By<T> }
@@ -504,11 +504,11 @@ impl<T: DeserializeOwned> SeriesPattern5<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern5<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I5 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern5<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I5.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern5<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I5.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern6By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern6By<T> {
-    pub fn hour4(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour4) }
+    pub fn hour4(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Hour4) }
 }
 
 pub struct SeriesPattern6<T> { name: Arc<str>, pub by: SeriesPattern6By<T> }
@@ -518,11 +518,11 @@ impl<T: DeserializeOwned> SeriesPattern6<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern6<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I6 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern6<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I6.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern6<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I6.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern7By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern7By<T> {
-    pub fn hour12(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Hour12) }
+    pub fn hour12(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Hour12) }
 }
 
 pub struct SeriesPattern7<T> { name: Arc<str>, pub by: SeriesPattern7By<T> }
@@ -532,11 +532,11 @@ impl<T: DeserializeOwned> SeriesPattern7<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern7<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I7 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern7<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I7.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern7<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I7.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern8By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern8By<T> {
-    pub fn day1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Day1) }
+    pub fn day1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Day1) }
 }
 
 pub struct SeriesPattern8<T> { name: Arc<str>, pub by: SeriesPattern8By<T> }
@@ -546,11 +546,11 @@ impl<T: DeserializeOwned> SeriesPattern8<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern8<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I8 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern8<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I8.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern8<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I8.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern9By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern9By<T> {
-    pub fn day3(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Day3) }
+    pub fn day3(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Day3) }
 }
 
 pub struct SeriesPattern9<T> { name: Arc<str>, pub by: SeriesPattern9By<T> }
@@ -560,11 +560,11 @@ impl<T: DeserializeOwned> SeriesPattern9<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern9<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I9 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern9<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I9.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern9<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I9.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern10By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern10By<T> {
-    pub fn week1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Week1) }
+    pub fn week1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Week1) }
 }
 
 pub struct SeriesPattern10<T> { name: Arc<str>, pub by: SeriesPattern10By<T> }
@@ -574,11 +574,11 @@ impl<T: DeserializeOwned> SeriesPattern10<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern10<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I10 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern10<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I10.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern10<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I10.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern11By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern11By<T> {
-    pub fn month1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month1) }
+    pub fn month1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Month1) }
 }
 
 pub struct SeriesPattern11<T> { name: Arc<str>, pub by: SeriesPattern11By<T> }
@@ -588,11 +588,11 @@ impl<T: DeserializeOwned> SeriesPattern11<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern11<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I11 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern11<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I11.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern11<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I11.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern12By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern12By<T> {
-    pub fn month3(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month3) }
+    pub fn month3(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Month3) }
 }
 
 pub struct SeriesPattern12<T> { name: Arc<str>, pub by: SeriesPattern12By<T> }
@@ -602,11 +602,11 @@ impl<T: DeserializeOwned> SeriesPattern12<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern12<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I12 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern12<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I12.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern12<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I12.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern13By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern13By<T> {
-    pub fn month6(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Month6) }
+    pub fn month6(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Month6) }
 }
 
 pub struct SeriesPattern13<T> { name: Arc<str>, pub by: SeriesPattern13By<T> }
@@ -616,11 +616,11 @@ impl<T: DeserializeOwned> SeriesPattern13<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern13<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I13 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern13<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I13.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern13<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I13.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern14By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern14By<T> {
-    pub fn year1(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year1) }
+    pub fn year1(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Year1) }
 }
 
 pub struct SeriesPattern14<T> { name: Arc<str>, pub by: SeriesPattern14By<T> }
@@ -630,11 +630,11 @@ impl<T: DeserializeOwned> SeriesPattern14<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern14<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I14 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern14<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I14.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern14<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I14.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern15By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern15By<T> {
-    pub fn year10(&self) -> DateSeriesEndpointBuilder<T> { _dep(&self.client, &self.name, Index::Year10) }
+    pub fn year10(&self) -> DateSeriesEndpoint<T> { _dep(&self.client, &self.name, Index::Year10) }
 }
 
 pub struct SeriesPattern15<T> { name: Arc<str>, pub by: SeriesPattern15By<T> }
@@ -644,11 +644,11 @@ impl<T: DeserializeOwned> SeriesPattern15<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern15<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I15 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern15<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I15.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern15<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I15.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern16By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern16By<T> {
-    pub fn halving(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Halving) }
+    pub fn halving(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::Halving) }
 }
 
 pub struct SeriesPattern16<T> { name: Arc<str>, pub by: SeriesPattern16By<T> }
@@ -658,11 +658,11 @@ impl<T: DeserializeOwned> SeriesPattern16<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern16<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I16 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern16<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I16.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern16<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I16.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern17By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern17By<T> {
-    pub fn epoch(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Epoch) }
+    pub fn epoch(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::Epoch) }
 }
 
 pub struct SeriesPattern17<T> { name: Arc<str>, pub by: SeriesPattern17By<T> }
@@ -672,11 +672,11 @@ impl<T: DeserializeOwned> SeriesPattern17<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern17<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I17 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern17<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I17.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern17<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I17.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern18By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern18By<T> {
-    pub fn height(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::Height) }
+    pub fn height(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::Height) }
 }
 
 pub struct SeriesPattern18<T> { name: Arc<str>, pub by: SeriesPattern18By<T> }
@@ -686,11 +686,11 @@ impl<T: DeserializeOwned> SeriesPattern18<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern18<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I18 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern18<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I18.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern18<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I18.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern19By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern19By<T> {
-    pub fn tx_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::TxIndex) }
+    pub fn tx_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::TxIndex) }
 }
 
 pub struct SeriesPattern19<T> { name: Arc<str>, pub by: SeriesPattern19By<T> }
@@ -700,11 +700,11 @@ impl<T: DeserializeOwned> SeriesPattern19<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern19<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I19 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern19<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I19.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern19<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I19.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern20By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern20By<T> {
-    pub fn txin_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::TxInIndex) }
+    pub fn txin_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::TxInIndex) }
 }
 
 pub struct SeriesPattern20<T> { name: Arc<str>, pub by: SeriesPattern20By<T> }
@@ -714,11 +714,11 @@ impl<T: DeserializeOwned> SeriesPattern20<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern20<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I20 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern20<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I20.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern20<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I20.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern21By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern21By<T> {
-    pub fn txout_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::TxOutIndex) }
+    pub fn txout_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::TxOutIndex) }
 }
 
 pub struct SeriesPattern21<T> { name: Arc<str>, pub by: SeriesPattern21By<T> }
@@ -728,11 +728,11 @@ impl<T: DeserializeOwned> SeriesPattern21<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern21<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I21 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern21<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I21.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern21<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I21.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern22By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern22By<T> {
-    pub fn empty_output_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::EmptyOutputIndex) }
+    pub fn empty_output_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::EmptyOutputIndex) }
 }
 
 pub struct SeriesPattern22<T> { name: Arc<str>, pub by: SeriesPattern22By<T> }
@@ -742,11 +742,11 @@ impl<T: DeserializeOwned> SeriesPattern22<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern22<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I22 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern22<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I22.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern22<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I22.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern23By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern23By<T> {
-    pub fn op_return_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::OpReturnIndex) }
+    pub fn op_return_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::OpReturnIndex) }
 }
 
 pub struct SeriesPattern23<T> { name: Arc<str>, pub by: SeriesPattern23By<T> }
@@ -756,11 +756,11 @@ impl<T: DeserializeOwned> SeriesPattern23<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern23<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I23 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern23<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I23.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern23<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I23.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern24By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern24By<T> {
-    pub fn p2a_address_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2AAddressIndex) }
+    pub fn p2a_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2AAddressIndex) }
 }
 
 pub struct SeriesPattern24<T> { name: Arc<str>, pub by: SeriesPattern24By<T> }
@@ -770,11 +770,11 @@ impl<T: DeserializeOwned> SeriesPattern24<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern24<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I24 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern24<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I24.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern24<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I24.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern25By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern25By<T> {
-    pub fn p2ms_output_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2MSOutputIndex) }
+    pub fn p2ms_output_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2MSOutputIndex) }
 }
 
 pub struct SeriesPattern25<T> { name: Arc<str>, pub by: SeriesPattern25By<T> }
@@ -784,11 +784,11 @@ impl<T: DeserializeOwned> SeriesPattern25<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern25<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I25 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern25<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I25.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern25<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I25.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern26By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern26By<T> {
-    pub fn p2pk33_address_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2PK33AddressIndex) }
+    pub fn p2pk33_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2PK33AddressIndex) }
 }
 
 pub struct SeriesPattern26<T> { name: Arc<str>, pub by: SeriesPattern26By<T> }
@@ -798,11 +798,11 @@ impl<T: DeserializeOwned> SeriesPattern26<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern26<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I26 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern26<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I26.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern26<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I26.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern27By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern27By<T> {
-    pub fn p2pk65_address_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2PK65AddressIndex) }
+    pub fn p2pk65_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2PK65AddressIndex) }
 }
 
 pub struct SeriesPattern27<T> { name: Arc<str>, pub by: SeriesPattern27By<T> }
@@ -812,11 +812,11 @@ impl<T: DeserializeOwned> SeriesPattern27<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern27<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I27 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern27<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I27.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern27<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I27.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern28By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern28By<T> {
-    pub fn p2pkh_address_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2PKHAddressIndex) }
+    pub fn p2pkh_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2PKHAddressIndex) }
 }
 
 pub struct SeriesPattern28<T> { name: Arc<str>, pub by: SeriesPattern28By<T> }
@@ -826,11 +826,11 @@ impl<T: DeserializeOwned> SeriesPattern28<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern28<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I28 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern28<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I28.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern28<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I28.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern29By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern29By<T> {
-    pub fn p2sh_address_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2SHAddressIndex) }
+    pub fn p2sh_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2SHAddressIndex) }
 }
 
 pub struct SeriesPattern29<T> { name: Arc<str>, pub by: SeriesPattern29By<T> }
@@ -840,11 +840,11 @@ impl<T: DeserializeOwned> SeriesPattern29<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern29<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I29 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern29<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I29.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern29<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I29.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern30By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern30By<T> {
-    pub fn p2tr_address_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2TRAddressIndex) }
+    pub fn p2tr_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2TRAddressIndex) }
 }
 
 pub struct SeriesPattern30<T> { name: Arc<str>, pub by: SeriesPattern30By<T> }
@@ -854,11 +854,11 @@ impl<T: DeserializeOwned> SeriesPattern30<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern30<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I30 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern30<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I30.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern30<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I30.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern31By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern31By<T> {
-    pub fn p2wpkh_address_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2WPKHAddressIndex) }
+    pub fn p2wpkh_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2WPKHAddressIndex) }
 }
 
 pub struct SeriesPattern31<T> { name: Arc<str>, pub by: SeriesPattern31By<T> }
@@ -868,11 +868,11 @@ impl<T: DeserializeOwned> SeriesPattern31<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern31<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I31 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern31<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I31.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern31<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I31.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern32By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern32By<T> {
-    pub fn p2wsh_address_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::P2WSHAddressIndex) }
+    pub fn p2wsh_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2WSHAddressIndex) }
 }
 
 pub struct SeriesPattern32<T> { name: Arc<str>, pub by: SeriesPattern32By<T> }
@@ -882,11 +882,11 @@ impl<T: DeserializeOwned> SeriesPattern32<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern32<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I32 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern32<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I32.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern32<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I32.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern33By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern33By<T> {
-    pub fn unknown_output_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::UnknownOutputIndex) }
+    pub fn unknown_output_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::UnknownOutputIndex) }
 }
 
 pub struct SeriesPattern33<T> { name: Arc<str>, pub by: SeriesPattern33By<T> }
@@ -896,11 +896,11 @@ impl<T: DeserializeOwned> SeriesPattern33<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern33<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I33 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern33<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I33.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern33<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I33.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern34By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern34By<T> {
-    pub fn funded_address_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::FundedAddressIndex) }
+    pub fn funded_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::FundedAddressIndex) }
 }
 
 pub struct SeriesPattern34<T> { name: Arc<str>, pub by: SeriesPattern34By<T> }
@@ -910,11 +910,11 @@ impl<T: DeserializeOwned> SeriesPattern34<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern34<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I34 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern34<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I34.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern34<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I34.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 pub struct SeriesPattern35By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern35By<T> {
-    pub fn empty_address_index(&self) -> SeriesEndpointBuilder<T> { _ep(&self.client, &self.name, Index::EmptyAddressIndex) }
+    pub fn empty_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::EmptyAddressIndex) }
 }
 
 pub struct SeriesPattern35<T> { name: Arc<str>, pub by: SeriesPattern35By<T> }
@@ -924,7 +924,7 @@ impl<T: DeserializeOwned> SeriesPattern35<T> {
 }
 
 impl<T> AnySeriesPattern for SeriesPattern35<T> { fn name(&self) -> &str { &self.name } fn indexes(&self) -> &'static [Index] { _I35 } }
-impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern35<T> { fn get(&self, index: Index) -> Option<SeriesEndpointBuilder<T>> { _I35.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
+impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern35<T> { fn get(&self, index: Index) -> Option<SeriesEndpoint<T>> { _I35.contains(&index).then(|| _ep(&self.by.client, &self.by.name, index)) } }
 
 // Reusable pattern structs
 
@@ -8402,8 +8402,8 @@ impl BrkClient {
     ///     .last(10)
     ///     .json::<f64>()?;
     /// ```
-    pub fn series_endpoint(&self, series: impl Into<Series>, index: Index) -> SeriesEndpointBuilder<serde_json::Value> {
-        SeriesEndpointBuilder::new(
+    pub fn series_endpoint(&self, series: impl Into<SeriesName>, index: Index) -> SeriesEndpoint<serde_json::Value> {
+        SeriesEndpoint::new(
             self.base.clone(),
             Arc::from(series.into().as_str()),
             index,
@@ -8413,11 +8413,11 @@ impl BrkClient {
     /// Create a dynamic date-based series endpoint builder.
     ///
     /// Returns `Err` if the index is not date-based.
-    pub fn date_series_endpoint(&self, series: impl Into<Series>, index: Index) -> Result<DateSeriesEndpointBuilder<serde_json::Value>> {
+    pub fn date_series_endpoint(&self, series: impl Into<SeriesName>, index: Index) -> Result<DateSeriesEndpoint<serde_json::Value>> {
         if !index.is_date_based() {
             return Err(BrkError { message: format!("{} is not a date-based index", index.name()) });
         }
-        Ok(DateSeriesEndpointBuilder::new(
+        Ok(DateSeriesEndpoint::new(
             self.base.clone(),
             Arc::from(series.into().as_str()),
             index,
@@ -8730,7 +8730,7 @@ impl BrkClient {
     /// Fuzzy search for series by name. Supports partial matches and typos.
     ///
     /// Endpoint: `GET /api/series/search`
-    pub fn search_series(&self, q: Series, limit: Option<Limit>) -> Result<Vec<String>> {
+    pub fn search_series(&self, q: SeriesName, limit: Option<Limit>) -> Result<Vec<String>> {
         let mut query = Vec::new();
         query.push(format!("q={}", q));
         if let Some(v) = limit { query.push(format!("limit={}", v)); }
@@ -8744,7 +8744,7 @@ impl BrkClient {
     /// Returns the supported indexes and value type for the specified series.
     ///
     /// Endpoint: `GET /api/series/{series}`
-    pub fn get_series_info(&self, series: Series) -> Result<SeriesInfo> {
+    pub fn get_series_info(&self, series: SeriesName) -> Result<SeriesInfo> {
         self.base.get_json(&format!("/api/series/{series}"))
     }
 
@@ -8753,7 +8753,7 @@ impl BrkClient {
     /// Fetch data for a specific series at the given index. Use query parameters to filter by date range and format (json/csv).
     ///
     /// Endpoint: `GET /api/series/{series}/{index}`
-    pub fn get_series(&self, series: Series, index: Index, start: Option<RangeIndex>, end: Option<RangeIndex>, limit: Option<Limit>, format: Option<Format>) -> Result<FormatResponse<SeriesData>> {
+    pub fn get_series(&self, series: SeriesName, index: Index, start: Option<RangeIndex>, end: Option<RangeIndex>, limit: Option<Limit>, format: Option<Format>) -> Result<FormatResponse<SeriesData>> {
         let mut query = Vec::new();
         if let Some(v) = start { query.push(format!("start={}", v)); }
         if let Some(v) = end { query.push(format!("end={}", v)); }
@@ -8773,7 +8773,7 @@ impl BrkClient {
     /// Returns just the data array without the SeriesData wrapper. Supports the same range and format parameters as the standard endpoint.
     ///
     /// Endpoint: `GET /api/series/{series}/{index}/data`
-    pub fn get_series_data(&self, series: Series, index: Index, start: Option<RangeIndex>, end: Option<RangeIndex>, limit: Option<Limit>, format: Option<Format>) -> Result<FormatResponse<Vec<bool>>> {
+    pub fn get_series_data(&self, series: SeriesName, index: Index, start: Option<RangeIndex>, end: Option<RangeIndex>, limit: Option<Limit>, format: Option<Format>) -> Result<FormatResponse<Vec<bool>>> {
         let mut query = Vec::new();
         if let Some(v) = start { query.push(format!("start={}", v)); }
         if let Some(v) = end { query.push(format!("end={}", v)); }
@@ -8793,7 +8793,7 @@ impl BrkClient {
     /// Returns the single most recent value for a series, unwrapped (not inside a SeriesData object).
     ///
     /// Endpoint: `GET /api/series/{series}/{index}/latest`
-    pub fn get_series_latest(&self, series: Series, index: Index) -> Result<serde_json::Value> {
+    pub fn get_series_latest(&self, series: SeriesName, index: Index) -> Result<serde_json::Value> {
         self.base.get_json(&format!("/api/series/{series}/{}/latest", index.name()))
     }
 
@@ -8802,7 +8802,7 @@ impl BrkClient {
     /// Returns the total number of data points for a series at the given index.
     ///
     /// Endpoint: `GET /api/series/{series}/{index}/len`
-    pub fn get_series_len(&self, series: Series, index: Index) -> Result<f64> {
+    pub fn get_series_len(&self, series: SeriesName, index: Index) -> Result<f64> {
         self.base.get_json(&format!("/api/series/{series}/{}/len", index.name()))
     }
 
@@ -8811,7 +8811,7 @@ impl BrkClient {
     /// Returns the current version of a series. Changes when the series data is updated.
     ///
     /// Endpoint: `GET /api/series/{series}/{index}/version`
-    pub fn get_series_version(&self, series: Series, index: Index) -> Result<Version> {
+    pub fn get_series_version(&self, series: SeriesName, index: Index) -> Result<Version> {
         self.base.get_json(&format!("/api/series/{series}/{}/version", index.name()))
     }
 

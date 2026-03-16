@@ -70,7 +70,7 @@
  * @typedef {Brk.BaseCumulativeSumPattern4 | Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativeRelPattern} AnyValuePatternType
  * @typedef {Brk.AnySeriesPattern} AnySeriesPattern
  * @typedef {Brk.CentsSatsUsdPattern} ActivePricePattern
- * @typedef {Brk.AnySeriesEndpointBuilder} AnySeriesEndpoint
+ * @typedef {Brk.AnySeriesEndpoint} AnySeriesEndpoint
  * @typedef {Brk.AnySeriesData} AnySeriesData
  * @typedef {Brk.AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} AddrCountPattern
  * Relative patterns by capability:
@@ -96,7 +96,7 @@
 
 /**
  * @template T
- * @typedef {Brk.SeriesEndpointBuilder<T>} SeriesEndpoint
+ * @typedef {Brk.SeriesEndpoint<T>} SeriesEndpoint
  */
 /**
  * Stats pattern: average, min, max, percentiles (height-only indexes, NO base)

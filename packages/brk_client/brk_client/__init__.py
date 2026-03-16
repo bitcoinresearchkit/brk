@@ -105,7 +105,7 @@ Hour1 = int
 Hour12 = int
 Hour4 = int
 # Series name
-Series = str
+SeriesName = str
 # Lowest price value for a time period
 Low = Dollars
 # Virtual size in vbytes (weight / 4, rounded up)
@@ -658,13 +658,13 @@ class LegacySeriesParam(TypedDict):
     """
     Legacy path parameter for `/api/metric/{metric}`
     """
-    metric: Series
+    metric: SeriesName
 
 class LegacySeriesWithIndex(TypedDict):
     """
     Legacy path parameters for `/api/metric/{metric}/{index}`
     """
-    metric: Series
+    metric: SeriesName
     index: Index
 
 class MempoolBlock(TypedDict):
@@ -907,7 +907,7 @@ class SearchQuery(TypedDict):
         q: Search query string
         limit: Maximum number of results
     """
-    q: Series
+    q: SeriesName
     limit: Limit
 
 class SeriesInfo(TypedDict):
@@ -921,8 +921,17 @@ class SeriesInfo(TypedDict):
     indexes: List[Index]
     type: str
 
+class SeriesNameWithIndex(TypedDict):
+    """
+    Attributes:
+        series: Series name
+        index: Aggregation index
+    """
+    series: SeriesName
+    index: Index
+
 class SeriesParam(TypedDict):
-    series: Series
+    series: SeriesName
 
 class SeriesSelection(TypedDict):
     """
@@ -959,15 +968,6 @@ class SeriesSelectionLegacy(TypedDict):
     end: Union[RangeIndex, None]
     limit: Union[Limit, None]
     format: Format
-
-class SeriesWithIndex(TypedDict):
-    """
-    Attributes:
-        series: Series name
-        index: Aggregation index
-    """
-    series: Series
-    index: Index
 
 class SupplyState(TypedDict):
     """
@@ -1519,7 +1519,7 @@ class DateSkippedBuilder(SkippedBuilder[T]):
         return self._config.get_date_series()
 
 
-class SeriesEndpointBuilder(Generic[T]):
+class SeriesEndpoint(Generic[T]):
     """Builder for series endpoint queries with int-based indexing.
 
     Examples:
@@ -1569,7 +1569,7 @@ class SeriesEndpointBuilder(Generic[T]):
         return self._config.path()
 
 
-class DateSeriesEndpointBuilder(Generic[T]):
+class DateSeriesEndpoint(Generic[T]):
     """Builder for series endpoint queries with date-based indexing.
 
     Accepts dates in __getitem__ and returns DateSeriesData from fetch().
@@ -1633,8 +1633,8 @@ class DateSeriesEndpointBuilder(Generic[T]):
 
 
 # Type aliases for non-generic usage
-AnySeriesEndpointBuilder = SeriesEndpointBuilder[Any]
-AnyDateSeriesEndpointBuilder = DateSeriesEndpointBuilder[Any]
+AnySeriesEndpoint = SeriesEndpoint[Any]
+AnyDateSeriesEndpoint = DateSeriesEndpoint[Any]
 
 
 class SeriesPattern(Protocol[T]):
@@ -1649,7 +1649,7 @@ class SeriesPattern(Protocol[T]):
         """Get the list of available indexes for this series."""
         ...
 
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]:
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]:
         """Get an endpoint builder for a specific index, if supported."""
         ...
 
@@ -1691,32 +1691,32 @@ _i33 = ('unknown_output_index',)
 _i34 = ('funded_address_index',)
 _i35 = ('empty_address_index',)
 
-def _ep(c: BrkClientBase, n: str, i: Index) -> SeriesEndpointBuilder[Any]:
-    return SeriesEndpointBuilder(c, n, i)
+def _ep(c: BrkClientBase, n: str, i: Index) -> SeriesEndpoint[Any]:
+    return SeriesEndpoint(c, n, i)
 
-def _dep(c: BrkClientBase, n: str, i: Index) -> DateSeriesEndpointBuilder[Any]:
-    return DateSeriesEndpointBuilder(c, n, i)
+def _dep(c: BrkClientBase, n: str, i: Index) -> DateSeriesEndpoint[Any]:
+    return DateSeriesEndpoint(c, n, i)
 
 # Index accessor classes
 
 class _SeriesPattern1By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute10(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'minute10')
-    def minute30(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'minute30')
-    def hour1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'hour1')
-    def hour4(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'hour4')
-    def hour12(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'hour12')
-    def day1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'day1')
-    def day3(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'day3')
-    def week1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'week1')
-    def month1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'month1')
-    def month3(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'month3')
-    def month6(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'month6')
-    def year1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'year1')
-    def year10(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'year10')
-    def halving(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'halving')
-    def epoch(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'epoch')
-    def height(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'height')
+    def minute10(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'minute10')
+    def minute30(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'minute30')
+    def hour1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'hour1')
+    def hour4(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'hour4')
+    def hour12(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'hour12')
+    def day1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'day1')
+    def day3(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'day3')
+    def week1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'week1')
+    def month1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'month1')
+    def month3(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'month3')
+    def month6(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'month6')
+    def year1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'year1')
+    def year10(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'year10')
+    def halving(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'halving')
+    def epoch(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'epoch')
+    def height(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'height')
 
 class SeriesPattern1(Generic[T]):
     by: _SeriesPattern1By[T]
@@ -1724,25 +1724,25 @@ class SeriesPattern1(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i1)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i1 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i1 else None
 
 class _SeriesPattern2By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute10(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'minute10')
-    def minute30(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'minute30')
-    def hour1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'hour1')
-    def hour4(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'hour4')
-    def hour12(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'hour12')
-    def day1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'day1')
-    def day3(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'day3')
-    def week1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'week1')
-    def month1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'month1')
-    def month3(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'month3')
-    def month6(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'month6')
-    def year1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'year1')
-    def year10(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'year10')
-    def halving(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'halving')
-    def epoch(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'epoch')
+    def minute10(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'minute10')
+    def minute30(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'minute30')
+    def hour1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'hour1')
+    def hour4(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'hour4')
+    def hour12(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'hour12')
+    def day1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'day1')
+    def day3(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'day3')
+    def week1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'week1')
+    def month1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'month1')
+    def month3(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'month3')
+    def month6(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'month6')
+    def year1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'year1')
+    def year10(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'year10')
+    def halving(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'halving')
+    def epoch(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'epoch')
 
 class SeriesPattern2(Generic[T]):
     by: _SeriesPattern2By[T]
@@ -1750,11 +1750,11 @@ class SeriesPattern2(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i2)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i2 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i2 else None
 
 class _SeriesPattern3By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute10(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'minute10')
+    def minute10(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'minute10')
 
 class SeriesPattern3(Generic[T]):
     by: _SeriesPattern3By[T]
@@ -1762,11 +1762,11 @@ class SeriesPattern3(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i3)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i3 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i3 else None
 
 class _SeriesPattern4By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def minute30(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'minute30')
+    def minute30(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'minute30')
 
 class SeriesPattern4(Generic[T]):
     by: _SeriesPattern4By[T]
@@ -1774,11 +1774,11 @@ class SeriesPattern4(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i4)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i4 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i4 else None
 
 class _SeriesPattern5By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def hour1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'hour1')
+    def hour1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'hour1')
 
 class SeriesPattern5(Generic[T]):
     by: _SeriesPattern5By[T]
@@ -1786,11 +1786,11 @@ class SeriesPattern5(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i5)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i5 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i5 else None
 
 class _SeriesPattern6By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def hour4(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'hour4')
+    def hour4(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'hour4')
 
 class SeriesPattern6(Generic[T]):
     by: _SeriesPattern6By[T]
@@ -1798,11 +1798,11 @@ class SeriesPattern6(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i6)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i6 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i6 else None
 
 class _SeriesPattern7By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def hour12(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'hour12')
+    def hour12(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'hour12')
 
 class SeriesPattern7(Generic[T]):
     by: _SeriesPattern7By[T]
@@ -1810,11 +1810,11 @@ class SeriesPattern7(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i7)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i7 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i7 else None
 
 class _SeriesPattern8By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def day1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'day1')
+    def day1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'day1')
 
 class SeriesPattern8(Generic[T]):
     by: _SeriesPattern8By[T]
@@ -1822,11 +1822,11 @@ class SeriesPattern8(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i8)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i8 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i8 else None
 
 class _SeriesPattern9By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def day3(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'day3')
+    def day3(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'day3')
 
 class SeriesPattern9(Generic[T]):
     by: _SeriesPattern9By[T]
@@ -1834,11 +1834,11 @@ class SeriesPattern9(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i9)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i9 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i9 else None
 
 class _SeriesPattern10By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def week1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'week1')
+    def week1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'week1')
 
 class SeriesPattern10(Generic[T]):
     by: _SeriesPattern10By[T]
@@ -1846,11 +1846,11 @@ class SeriesPattern10(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i10)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i10 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i10 else None
 
 class _SeriesPattern11By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def month1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'month1')
+    def month1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'month1')
 
 class SeriesPattern11(Generic[T]):
     by: _SeriesPattern11By[T]
@@ -1858,11 +1858,11 @@ class SeriesPattern11(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i11)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i11 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i11 else None
 
 class _SeriesPattern12By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def month3(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'month3')
+    def month3(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'month3')
 
 class SeriesPattern12(Generic[T]):
     by: _SeriesPattern12By[T]
@@ -1870,11 +1870,11 @@ class SeriesPattern12(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i12)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i12 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i12 else None
 
 class _SeriesPattern13By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def month6(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'month6')
+    def month6(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'month6')
 
 class SeriesPattern13(Generic[T]):
     by: _SeriesPattern13By[T]
@@ -1882,11 +1882,11 @@ class SeriesPattern13(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i13)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i13 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i13 else None
 
 class _SeriesPattern14By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def year1(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'year1')
+    def year1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'year1')
 
 class SeriesPattern14(Generic[T]):
     by: _SeriesPattern14By[T]
@@ -1894,11 +1894,11 @@ class SeriesPattern14(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i14)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i14 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i14 else None
 
 class _SeriesPattern15By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def year10(self) -> DateSeriesEndpointBuilder[T]: return _dep(self._c, self._n, 'year10')
+    def year10(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'year10')
 
 class SeriesPattern15(Generic[T]):
     by: _SeriesPattern15By[T]
@@ -1906,11 +1906,11 @@ class SeriesPattern15(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i15)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i15 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i15 else None
 
 class _SeriesPattern16By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def halving(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'halving')
+    def halving(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'halving')
 
 class SeriesPattern16(Generic[T]):
     by: _SeriesPattern16By[T]
@@ -1918,11 +1918,11 @@ class SeriesPattern16(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i16)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i16 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i16 else None
 
 class _SeriesPattern17By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def epoch(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'epoch')
+    def epoch(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'epoch')
 
 class SeriesPattern17(Generic[T]):
     by: _SeriesPattern17By[T]
@@ -1930,11 +1930,11 @@ class SeriesPattern17(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i17)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i17 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i17 else None
 
 class _SeriesPattern18By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def height(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'height')
+    def height(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'height')
 
 class SeriesPattern18(Generic[T]):
     by: _SeriesPattern18By[T]
@@ -1942,11 +1942,11 @@ class SeriesPattern18(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i18)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i18 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i18 else None
 
 class _SeriesPattern19By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def tx_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'tx_index')
+    def tx_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'tx_index')
 
 class SeriesPattern19(Generic[T]):
     by: _SeriesPattern19By[T]
@@ -1954,11 +1954,11 @@ class SeriesPattern19(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i19)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i19 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i19 else None
 
 class _SeriesPattern20By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def txin_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'txin_index')
+    def txin_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'txin_index')
 
 class SeriesPattern20(Generic[T]):
     by: _SeriesPattern20By[T]
@@ -1966,11 +1966,11 @@ class SeriesPattern20(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i20)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i20 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i20 else None
 
 class _SeriesPattern21By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def txout_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'txout_index')
+    def txout_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'txout_index')
 
 class SeriesPattern21(Generic[T]):
     by: _SeriesPattern21By[T]
@@ -1978,11 +1978,11 @@ class SeriesPattern21(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i21)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i21 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i21 else None
 
 class _SeriesPattern22By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def empty_output_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'empty_output_index')
+    def empty_output_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'empty_output_index')
 
 class SeriesPattern22(Generic[T]):
     by: _SeriesPattern22By[T]
@@ -1990,11 +1990,11 @@ class SeriesPattern22(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i22)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i22 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i22 else None
 
 class _SeriesPattern23By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def op_return_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'op_return_index')
+    def op_return_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'op_return_index')
 
 class SeriesPattern23(Generic[T]):
     by: _SeriesPattern23By[T]
@@ -2002,11 +2002,11 @@ class SeriesPattern23(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i23)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i23 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i23 else None
 
 class _SeriesPattern24By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2a_address_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'p2a_address_index')
+    def p2a_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2a_address_index')
 
 class SeriesPattern24(Generic[T]):
     by: _SeriesPattern24By[T]
@@ -2014,11 +2014,11 @@ class SeriesPattern24(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i24)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i24 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i24 else None
 
 class _SeriesPattern25By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2ms_output_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'p2ms_output_index')
+    def p2ms_output_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2ms_output_index')
 
 class SeriesPattern25(Generic[T]):
     by: _SeriesPattern25By[T]
@@ -2026,11 +2026,11 @@ class SeriesPattern25(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i25)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i25 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i25 else None
 
 class _SeriesPattern26By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2pk33_address_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'p2pk33_address_index')
+    def p2pk33_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2pk33_address_index')
 
 class SeriesPattern26(Generic[T]):
     by: _SeriesPattern26By[T]
@@ -2038,11 +2038,11 @@ class SeriesPattern26(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i26)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i26 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i26 else None
 
 class _SeriesPattern27By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2pk65_address_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'p2pk65_address_index')
+    def p2pk65_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2pk65_address_index')
 
 class SeriesPattern27(Generic[T]):
     by: _SeriesPattern27By[T]
@@ -2050,11 +2050,11 @@ class SeriesPattern27(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i27)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i27 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i27 else None
 
 class _SeriesPattern28By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2pkh_address_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'p2pkh_address_index')
+    def p2pkh_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2pkh_address_index')
 
 class SeriesPattern28(Generic[T]):
     by: _SeriesPattern28By[T]
@@ -2062,11 +2062,11 @@ class SeriesPattern28(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i28)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i28 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i28 else None
 
 class _SeriesPattern29By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2sh_address_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'p2sh_address_index')
+    def p2sh_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2sh_address_index')
 
 class SeriesPattern29(Generic[T]):
     by: _SeriesPattern29By[T]
@@ -2074,11 +2074,11 @@ class SeriesPattern29(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i29)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i29 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i29 else None
 
 class _SeriesPattern30By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2tr_address_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'p2tr_address_index')
+    def p2tr_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2tr_address_index')
 
 class SeriesPattern30(Generic[T]):
     by: _SeriesPattern30By[T]
@@ -2086,11 +2086,11 @@ class SeriesPattern30(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i30)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i30 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i30 else None
 
 class _SeriesPattern31By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2wpkh_address_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'p2wpkh_address_index')
+    def p2wpkh_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2wpkh_address_index')
 
 class SeriesPattern31(Generic[T]):
     by: _SeriesPattern31By[T]
@@ -2098,11 +2098,11 @@ class SeriesPattern31(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i31)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i31 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i31 else None
 
 class _SeriesPattern32By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2wsh_address_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'p2wsh_address_index')
+    def p2wsh_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2wsh_address_index')
 
 class SeriesPattern32(Generic[T]):
     by: _SeriesPattern32By[T]
@@ -2110,11 +2110,11 @@ class SeriesPattern32(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i32)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i32 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i32 else None
 
 class _SeriesPattern33By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def unknown_output_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'unknown_output_index')
+    def unknown_output_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'unknown_output_index')
 
 class SeriesPattern33(Generic[T]):
     by: _SeriesPattern33By[T]
@@ -2122,11 +2122,11 @@ class SeriesPattern33(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i33)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i33 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i33 else None
 
 class _SeriesPattern34By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def funded_address_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'funded_address_index')
+    def funded_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'funded_address_index')
 
 class SeriesPattern34(Generic[T]):
     by: _SeriesPattern34By[T]
@@ -2134,11 +2134,11 @@ class SeriesPattern34(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i34)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i34 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i34 else None
 
 class _SeriesPattern35By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def empty_address_index(self) -> SeriesEndpointBuilder[T]: return _ep(self._c, self._n, 'empty_address_index')
+    def empty_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'empty_address_index')
 
 class SeriesPattern35(Generic[T]):
     by: _SeriesPattern35By[T]
@@ -2146,7 +2146,7 @@ class SeriesPattern35(Generic[T]):
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i35)
-    def get(self, index: Index) -> Optional[SeriesEndpointBuilder[T]]: return _ep(self.by._c, self._n, index) if index in _i35 else None
+    def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i35 else None
 
 # Reusable structural pattern classes
 
@@ -6905,13 +6905,13 @@ class BrkClient(BrkClientBase):
         super().__init__(base_url, timeout)
         self.series = SeriesTree(self)
 
-    def series_endpoint(self, series: str, index: Index) -> SeriesEndpointBuilder[Any]:
+    def series_endpoint(self, series: str, index: Index) -> SeriesEndpoint[Any]:
         """Create a dynamic series endpoint builder for any series/index combination.
 
         Use this for programmatic access when the series name is determined at runtime.
         For type-safe access, use the `series` tree instead.
         """
-        return SeriesEndpointBuilder(self, series, index)
+        return SeriesEndpoint(self, series, index)
 
     def index_to_date(self, index: Index, i: int) -> Union[date, datetime]:
         """Convert an index value to a date/datetime for date-based indexes."""
@@ -7194,7 +7194,7 @@ class BrkClient(BrkClientBase):
         path = f'/api/series/list{"?" + query if query else ""}'
         return self.get_json(path)
 
-    def search_series(self, q: Series, limit: Optional[Limit] = None) -> List[str]:
+    def search_series(self, q: SeriesName, limit: Optional[Limit] = None) -> List[str]:
         """Search series.
 
         Fuzzy search for series by name. Supports partial matches and typos.
@@ -7207,7 +7207,7 @@ class BrkClient(BrkClientBase):
         path = f'/api/series/search{"?" + query if query else ""}'
         return self.get_json(path)
 
-    def get_series_info(self, series: Series) -> SeriesInfo:
+    def get_series_info(self, series: SeriesName) -> SeriesInfo:
         """Get series info.
 
         Returns the supported indexes and value type for the specified series.
@@ -7215,7 +7215,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/series/{series}`"""
         return self.get_json(f'/api/series/{series}')
 
-    def get_series(self, series: Series, index: Index, start: Optional[RangeIndex] = None, end: Optional[RangeIndex] = None, limit: Optional[Limit] = None, format: Optional[Format] = None) -> Union[AnySeriesData, str]:
+    def get_series(self, series: SeriesName, index: Index, start: Optional[RangeIndex] = None, end: Optional[RangeIndex] = None, limit: Optional[Limit] = None, format: Optional[Format] = None) -> Union[AnySeriesData, str]:
         """Get series data.
 
         Fetch data for a specific series at the given index. Use query parameters to filter by date range and format (json/csv).
@@ -7232,7 +7232,7 @@ class BrkClient(BrkClientBase):
             return self.get_text(path)
         return self.get_json(path)
 
-    def get_series_data(self, series: Series, index: Index, start: Optional[RangeIndex] = None, end: Optional[RangeIndex] = None, limit: Optional[Limit] = None, format: Optional[Format] = None) -> Union[List[bool], str]:
+    def get_series_data(self, series: SeriesName, index: Index, start: Optional[RangeIndex] = None, end: Optional[RangeIndex] = None, limit: Optional[Limit] = None, format: Optional[Format] = None) -> Union[List[bool], str]:
         """Get raw series data.
 
         Returns just the data array without the SeriesData wrapper. Supports the same range and format parameters as the standard endpoint.
@@ -7249,7 +7249,7 @@ class BrkClient(BrkClientBase):
             return self.get_text(path)
         return self.get_json(path)
 
-    def get_series_latest(self, series: Series, index: Index) -> Any:
+    def get_series_latest(self, series: SeriesName, index: Index) -> Any:
         """Get latest series value.
 
         Returns the single most recent value for a series, unwrapped (not inside a SeriesData object).
@@ -7257,7 +7257,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/series/{series}/{index}/latest`"""
         return self.get_json(f'/api/series/{series}/{index}/latest')
 
-    def get_series_len(self, series: Series, index: Index) -> float:
+    def get_series_len(self, series: SeriesName, index: Index) -> float:
         """Get series data length.
 
         Returns the total number of data points for a series at the given index.
@@ -7265,7 +7265,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/series/{series}/{index}/len`"""
         return self.get_json(f'/api/series/{series}/{index}/len')
 
-    def get_series_version(self, series: Series, index: Index) -> Version:
+    def get_series_version(self, series: SeriesName, index: Index) -> Version:
         """Get series version.
 
         Returns the current version of a series. Changes when the series data is updated.

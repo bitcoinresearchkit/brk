@@ -10,7 +10,7 @@ use axum::{
 use brk_traversable::TreeNode;
 use brk_types::{
     CostBasisCohortParam, CostBasisFormatted, CostBasisParams, CostBasisQuery, DataRangeFormat,
-    Date, DetailedSeriesCount, Index, IndexInfo, PaginatedSeries, Pagination, SearchQuery, Series,
+    Date, DetailedSeriesCount, Index, IndexInfo, PaginatedSeries, Pagination, SearchQuery, SeriesName,
     SeriesData, SeriesInfo, SeriesList, SeriesSelection, SeriesSelectionLegacy,
 };
 use schemars::JsonSchema;
@@ -24,13 +24,13 @@ use super::series::legacy;
 /// Legacy path parameter for `/api/metric/{metric}`
 #[derive(Deserialize, JsonSchema)]
 struct LegacySeriesParam {
-    metric: Series,
+    metric: SeriesName,
 }
 
 /// Legacy path parameters for `/api/metric/{metric}/{index}`
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 struct LegacySeriesWithIndex {
-    metric: Series,
+    metric: SeriesName,
     index: Index,
 }
 

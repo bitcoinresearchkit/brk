@@ -2,7 +2,7 @@ use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{DataRangeFormat, Index, Series, SeriesList};
+use crate::{DataRangeFormat, Index, SeriesName, SeriesList};
 
 /// Selection of series to query
 #[derive(Debug, Deref, Deserialize, JsonSchema)]
@@ -20,9 +20,9 @@ pub struct SeriesSelection {
     pub range: DataRangeFormat,
 }
 
-impl From<(Index, Series, DataRangeFormat)> for SeriesSelection {
+impl From<(Index, SeriesName, DataRangeFormat)> for SeriesSelection {
     #[inline]
-    fn from((index, series, range): (Index, Series, DataRangeFormat)) -> Self {
+    fn from((index, series, range): (Index, SeriesName, DataRangeFormat)) -> Self {
         Self {
             index,
             series: SeriesList::from(series),

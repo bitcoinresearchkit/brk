@@ -1,9 +1,9 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::Series;
+use crate::SeriesName;
 
 #[derive(Deserialize, JsonSchema)]
 pub struct SeriesParam {
-    pub series: Series,
+    pub series: SeriesName,
 }

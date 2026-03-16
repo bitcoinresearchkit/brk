@@ -1,7 +1,7 @@
 //! Basic example of using the BRK client.
 
 use brk_client::{BrkClient, BrkClientOptions};
-use brk_types::{FormatResponse, Index, Metric, RangeIndex};
+use brk_types::{FormatResponse, Index, RangeIndex};
 
 fn main() -> brk_client::Result<()> {
     // Create client with default options
@@ -16,7 +16,7 @@ fn main() -> brk_client::Result<()> {
     // Fetch price data using the typed metrics API
     // day1() returns DateMetricEndpointBuilder, so fetch() returns DateMetricData
     let price_close = client
-        .metrics()
+        .series()
         .prices
         .split
         .close
@@ -37,7 +37,7 @@ fn main() -> brk_client::Result<()> {
 
     // Fetch block data with height index (non-date, returns MetricData)
     let block_count = client
-        .metrics()
+        .series()
         .blocks
         .count
         .total
@@ -53,9 +53,9 @@ fn main() -> brk_client::Result<()> {
     }
 
     // Fetch supply data as CSV
-    dbg!(client.metrics().supply.circulating.btc.by.day1().path());
+    dbg!(client.series().supply.circulating.btc.by.day1().path());
     let circulating = client
-        .metrics()
+        .series()
         .supply
         .circulating
         .btc
@@ -67,7 +67,7 @@ fn main() -> brk_client::Result<()> {
 
     // Using dynamic metric fetching with date_metric() for date-based indexes
     let date_metric = client
-        .date_metric(Metric::from("price_close"), Index::Day1)?
+        .date_series_endpoint("price_close", Index::Day1)?
         .last(3)
         .fetch()?;
     println!("Dynamic date metric fetch:");
@@ -76,8 +76,8 @@ fn main() -> brk_client::Result<()> {
     }
 
     // Using generic metric fetching (returns FormatResponse)
-    let metricdata = client.get_metric(
-        Metric::from("price_close"),
+    let metricdata = client.get_series(
+        "price_close".into(),
         Index::Day1,
         Some(RangeIndex::Int(-3)),
         None,

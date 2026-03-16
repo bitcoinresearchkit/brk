@@ -36,7 +36,7 @@ pub fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     // Generate series_endpoint() method for dynamic series access
     writeln!(
         output,
-        "    def series_endpoint(self, series: str, index: Index) -> SeriesEndpointBuilder[Any]:"
+        "    def series_endpoint(self, series: str, index: Index) -> SeriesEndpoint[Any]:"
     )
     .unwrap();
     writeln!(
@@ -58,7 +58,7 @@ pub fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     writeln!(output, "        \"\"\"").unwrap();
     writeln!(
         output,
-        "        return SeriesEndpointBuilder(self, series, index)"
+        "        return SeriesEndpoint(self, series, index)"
     )
     .unwrap();
     writeln!(output).unwrap();

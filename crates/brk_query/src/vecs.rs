@@ -4,7 +4,7 @@ use brk_computer::Computer;
 use brk_indexer::Indexer;
 use brk_traversable::{Traversable, TreeNode};
 use brk_types::{
-    Index, IndexInfo, Limit, PaginatedSeries, Pagination, PaginationIndex, Series, SeriesCount,
+    Index, IndexInfo, Limit, PaginatedSeries, Pagination, PaginationIndex, SeriesName, SeriesCount,
 };
 use derive_more::{Deref, DerefMut};
 use quickmatch::{QuickMatch, QuickMatchConfig};
@@ -182,7 +182,7 @@ impl<'a> Vecs<'a> {
         }
     }
 
-    pub fn series_to_indexes(&self, series: Series) -> Option<&Vec<Index>> {
+    pub fn series_to_indexes(&self, series: SeriesName) -> Option<&Vec<Index>> {
         self.series_to_indexes
             .get(series.replace("-", "_").as_str())
     }
@@ -204,7 +204,7 @@ impl<'a> Vecs<'a> {
         self.catalog.as_ref().expect("catalog not initialized")
     }
 
-    pub fn matches(&self, series: &Series, limit: Limit) -> Vec<&'_ str> {
+    pub fn matches(&self, series: &SeriesName, limit: Limit) -> Vec<&'_ str> {
         if limit.is_zero() {
             return Vec::new();
         }
@@ -215,7 +215,7 @@ impl<'a> Vecs<'a> {
     }
 
     /// Look up a vec by series name and index
-    pub fn get(&self, series: &Series, index: Index) -> Option<&'a dyn AnyExportableVec> {
+    pub fn get(&self, series: &SeriesName, index: Index) -> Option<&'a dyn AnyExportableVec> {
         let series_name = series.replace("-", "_");
         self.series_to_index_to_vec
             .get(series_name.as_str())
