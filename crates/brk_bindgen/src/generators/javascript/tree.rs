@@ -7,7 +7,7 @@ use brk_types::TreeNode;
 
 use crate::{
     ClientMetadata, Endpoint, GenericSyntax, JavaScriptSyntax, PatternField, build_child_path,
-    generate_leaf_field, prepare_tree_node, to_camel_case,
+    generate_leaf_field, generate_tree_node_field, prepare_tree_node, to_camel_case,
 };
 
 use super::api::generate_api_methods;
@@ -220,29 +220,16 @@ fn generate_tree_initializer(
             );
             writeln!(output, "{}}},", indent_str).unwrap();
         } else {
-            // Use pattern factory
-            let pattern = metadata.find_pattern(&child.field.rust_type);
-            if let Some(pat) = pattern
-                && pat.is_templated()
-            {
-                // Templated: extract discriminator using the pattern's templates
-                let disc = pat
-                    .extract_disc_from_instance(&child.base_result.field_parts)
-                    .unwrap_or_default();
-                writeln!(
-                    output,
-                    "{}{}: create{}(this, '{}', '{}'),",
-                    indent_str, field_name, child.field.rust_type, child.base_result.base, disc
-                )
-                .unwrap();
-            } else {
-                writeln!(
-                    output,
-                    "{}{}: create{}(this, '{}'),",
-                    indent_str, field_name, child.field.rust_type, child.base_result.base
-                )
-                .unwrap();
-            }
+            generate_tree_node_field(
+                output,
+                &syntax,
+                &child.field,
+                metadata,
+                &indent_str,
+                child.name,
+                "this",
+                Some(&child.base_result),
+            );
         }
     }
 }

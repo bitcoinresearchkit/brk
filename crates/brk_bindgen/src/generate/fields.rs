@@ -8,7 +8,7 @@ use std::fmt::Write;
 
 use brk_types::MetricLeafWithSchema;
 
-use crate::{ClientMetadata, LanguageSyntax, PatternField, StructuralPattern};
+use crate::{ClientMetadata, LanguageSyntax, PatternBaseResult, PatternField, StructuralPattern};
 
 /// Create a path suffix from a name.
 /// Adds `_` prefix only if the name doesn't already start with `_`.
@@ -102,10 +102,11 @@ pub fn generate_parameterized_field<S: LanguageSyntax>(
     .unwrap();
 }
 
-/// Generate a tree node field with a specific child node for pattern instance base detection.
+/// Generate a tree node field using pre-computed base results.
 ///
-/// This is used when generating tree nodes where we need to detect the pattern instance
-/// base from descendant leaf names.
+/// Handles pattern fields (both templated and non-templated), leaf fields,
+/// and non-pattern branch fields. For templated patterns, extracts the
+/// discriminator from the base result's field_parts.
 pub fn generate_tree_node_field<S: LanguageSyntax>(
     output: &mut String,
     syntax: &S,
@@ -113,36 +114,69 @@ pub fn generate_tree_node_field<S: LanguageSyntax>(
     metadata: &ClientMetadata,
     indent: &str,
     child_name: &str,
-    pattern_base: Option<&str>,
+    client_expr: &str,
+    base_result: Option<&PatternBaseResult>,
 ) {
     let field_name = syntax.field_name(&field.name);
     let type_ann = metadata.field_type_annotation(field, false, None, syntax.generic_syntax());
 
     let value = if metadata.is_pattern_type(&field.rust_type) {
-        // Use metric base only for parameterizable patterns
-        let use_base = metadata
-            .find_pattern(&field.rust_type)
-            .is_some_and(|p| p.is_parameterizable())
-            && pattern_base.is_some();
+        let pattern = metadata.find_pattern(&field.rust_type);
+        let use_base = pattern.is_some_and(|p| p.is_parameterizable()) && base_result.is_some();
 
-        let path_arg = if use_base {
-            syntax.string_literal(pattern_base.unwrap())
+        if use_base {
+            let br = base_result.unwrap();
+            let base_arg = syntax.string_literal(&br.base);
+            if let Some(pat) = pattern
+                && pat.is_templated()
+            {
+                let disc = pat
+                    .extract_disc_from_instance(&br.field_parts)
+                    .unwrap_or_default();
+                let disc_arg = syntax.string_literal(&disc);
+                format!(
+                    "{}({}, {}, {})",
+                    syntax.constructor_name(&field.rust_type),
+                    client_expr,
+                    base_arg,
+                    disc_arg
+                )
+            } else {
+                format!(
+                    "{}({}, {})",
+                    syntax.constructor_name(&field.rust_type),
+                    client_expr,
+                    base_arg
+                )
+            }
         } else {
-            syntax.path_expr("base_path", &path_suffix(child_name))
-        };
-        syntax.constructor(&field.rust_type, &path_arg)
+            let path_arg = syntax.path_expr("base_path", &path_suffix(child_name));
+            format!(
+                "{}({}, {})",
+                syntax.constructor_name(&field.rust_type),
+                client_expr,
+                path_arg
+            )
+        }
     } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
-        // Leaf field - use metric name if provided, else tree path
-        let path_arg = pattern_base
-            .map(|name| syntax.string_literal(name))
+        let path_arg = base_result
+            .map(|br| syntax.string_literal(&br.base))
             .unwrap_or_else(|| syntax.path_expr("base_path", &path_suffix(child_name)));
-        syntax.constructor(&accessor.name, &path_arg)
+        format!(
+            "{}({}, {})",
+            syntax.constructor_name(&accessor.name),
+            client_expr,
+            path_arg
+        )
     } else if field.is_branch() {
-        // Non-pattern branch - instantiate the nested struct
         let path_expr = syntax.path_expr("base_path", &path_suffix(child_name));
-        syntax.constructor(&field.rust_type, &path_expr)
+        format!(
+            "{}({}, {})",
+            syntax.constructor_name(&field.rust_type),
+            client_expr,
+            path_expr
+        )
     } else {
-        // All metrics must be indexed
         panic!(
             "Field '{}' is a leaf with no index accessor. All metrics must be indexed.",
             field.name

@@ -43,65 +43,53 @@ pub fn analyze_pattern_modes(
 ) -> BTreeMap<String, PatternBaseResult> {
     // Collect analyses from all instances, keyed by pattern name
     let mut all_analyses: BTreeMap<String, Vec<InstanceAnalysis>> = BTreeMap::new();
-    // Also collect base results for each node, keyed by tree path
+    // Base results for each node, keyed by tree path
     let mut node_bases: BTreeMap<String, PatternBaseResult> = BTreeMap::new();
+    // Track which tree path belongs to which pattern (avoids re-traversal)
+    let mut path_to_pattern: BTreeMap<String, String> = BTreeMap::new();
 
-    // Bottom-up traversal
-    collect_instance_analyses(tree, "", pattern_lookup, &mut all_analyses, &mut node_bases);
+    // Pass 1: bottom-up traversal
+    collect_instance_analyses(
+        tree,
+        "",
+        pattern_lookup,
+        &mut all_analyses,
+        &mut node_bases,
+        &mut path_to_pattern,
+    );
 
-    // For each pattern, determine mode from collected instances
+    // Determine initial modes
     for pattern in patterns.iter_mut() {
         if let Some(analyses) = all_analyses.get(&pattern.name) {
             pattern.mode = determine_pattern_mode(analyses, &pattern.fields);
         }
     }
 
-    // Second pass: fill mixed-empty field_parts now that pattern modes are known.
+    // Pass 2: fill mixed-empty field_parts now that pattern modes are known
     fill_mixed_empty_field_parts(tree, "", pattern_lookup, patterns, &mut node_bases);
 
-    // Re-collect analyses from updated node_bases and re-determine pattern modes
-    let mut all_analyses2: BTreeMap<String, Vec<InstanceAnalysis>> = BTreeMap::new();
-    collect_updated_analyses(tree, "", pattern_lookup, &node_bases, &mut all_analyses2);
+    // Re-determine modes from updated node_bases (no tree re-traversal needed)
+    let mut updated_analyses: BTreeMap<String, Vec<InstanceAnalysis>> = BTreeMap::new();
+    for (path, pattern_name) in &path_to_pattern {
+        if let Some(br) = node_bases.get(path) {
+            updated_analyses
+                .entry(pattern_name.clone())
+                .or_default()
+                .push(InstanceAnalysis {
+                    base: br.base.clone(),
+                    field_parts: br.field_parts.clone(),
+                    is_suffix_mode: br.is_suffix_mode,
+                    has_outlier: br.has_outlier,
+                });
+        }
+    }
     for pattern in patterns.iter_mut() {
-        if let Some(analyses) = all_analyses2.get(&pattern.name) {
+        if let Some(analyses) = updated_analyses.get(&pattern.name) {
             pattern.mode = determine_pattern_mode(analyses, &pattern.fields);
         }
     }
 
     node_bases
-}
-
-/// Re-collect instance analyses from updated node_bases for pattern mode redetermination.
-fn collect_updated_analyses(
-    node: &TreeNode,
-    path: &str,
-    pattern_lookup: &BTreeMap<Vec<PatternField>, String>,
-    node_bases: &BTreeMap<String, PatternBaseResult>,
-    all_analyses: &mut BTreeMap<String, Vec<InstanceAnalysis>>,
-) {
-    let TreeNode::Branch(children) = node else {
-        return;
-    };
-
-    for (field_name, child_node) in children {
-        let child_path = build_child_path(path, field_name);
-        collect_updated_analyses(child_node, &child_path, pattern_lookup, node_bases, all_analyses);
-    }
-
-    let fields = get_node_fields(children, pattern_lookup);
-    if let Some(pattern_name) = pattern_lookup.get(&fields) {
-        if let Some(base_result) = node_bases.get(path) {
-            all_analyses
-                .entry(pattern_name.clone())
-                .or_default()
-                .push(InstanceAnalysis {
-                    base: base_result.base.clone(),
-                    field_parts: base_result.field_parts.clone(),
-                    is_suffix_mode: base_result.is_suffix_mode,
-                    has_outlier: base_result.has_outlier,
-                });
-        }
-    }
 }
 
 /// Second pass: fill empty field_parts for nodes that have a mix of empty and
@@ -187,6 +175,7 @@ fn collect_instance_analyses(
     pattern_lookup: &BTreeMap<Vec<PatternField>, String>,
     all_analyses: &mut BTreeMap<String, Vec<InstanceAnalysis>>,
     node_bases: &mut BTreeMap<String, PatternBaseResult>,
+    path_to_pattern: &mut BTreeMap<String, String>,
 ) -> Option<String> {
     match node {
         TreeNode::Leaf(leaf) => {
@@ -204,6 +193,7 @@ fn collect_instance_analyses(
                     pattern_lookup,
                     all_analyses,
                     node_bases,
+                    path_to_pattern,
                 ) {
                     child_bases.insert(field_name.clone(), base);
                 }
@@ -272,6 +262,7 @@ fn collect_instance_analyses(
             // Get the pattern name for this node (if any)
             let fields = get_node_fields(children, pattern_lookup);
             if let Some(pattern_name) = pattern_lookup.get(&fields) {
+                path_to_pattern.insert(path.to_string(), pattern_name.clone());
                 all_analyses
                     .entry(pattern_name.clone())
                     .or_default()
@@ -1107,6 +1098,7 @@ mod tests {
 
         let mut all_analyses = BTreeMap::new();
         let mut node_bases = BTreeMap::new();
+        let mut path_to_pattern = BTreeMap::new();
         let pattern_lookup = BTreeMap::new();
 
         collect_instance_analyses(
@@ -1115,6 +1107,7 @@ mod tests {
             &pattern_lookup,
             &mut all_analyses,
             &mut node_bases,
+            &mut path_to_pattern,
         );
 
         let result = node_bases.get("test").expect("should have node_bases entry");

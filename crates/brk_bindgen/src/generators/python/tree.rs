@@ -6,8 +6,8 @@ use std::fmt::Write;
 use brk_types::TreeNode;
 
 use crate::{
-    ClientMetadata, GenericSyntax, PatternField, PythonSyntax, build_child_path,
-    escape_python_keyword, generate_leaf_field, prepare_tree_node, to_snake_case,
+    ClientMetadata, LanguageSyntax, PatternField, PythonSyntax, build_child_path,
+    generate_leaf_field, generate_tree_node_field, prepare_tree_node,
 };
 
 /// Generate tree classes
@@ -70,8 +70,6 @@ fn generate_tree_class(
 
     let syntax = PythonSyntax;
     for child in &ctx.children {
-        let field_name_py = escape_python_keyword(&to_snake_case(child.name));
-
         if child.is_leaf {
             if let TreeNode::Leaf(leaf) = child.node {
                 generate_leaf_field(
@@ -79,43 +77,24 @@ fn generate_tree_class(
                 );
             }
         } else if child.should_inline {
-            // Inline class
+            let field_name = syntax.field_name(child.name);
             writeln!(
                 output,
                 "        self.{}: {} = {}(client)",
-                field_name_py, child.inline_type_name, child.inline_type_name
+                field_name, child.inline_type_name, child.inline_type_name
             )
             .unwrap();
         } else {
-            // Use pattern class with metric base
-            let py_type = metadata.resolve_tree_field_type(
+            generate_tree_node_field(
+                output,
+                &syntax,
                 &child.field,
-                child.child_fields.as_deref(),
-                name,
+                metadata,
+                "        ",
                 child.name,
-                GenericSyntax::PYTHON,
+                "client",
+                Some(&child.base_result),
             );
-            let pattern = metadata.find_pattern(&child.field.rust_type);
-            if let Some(pat) = pattern
-                && pat.is_templated()
-            {
-                let disc = pat
-                    .extract_disc_from_instance(&child.base_result.field_parts)
-                    .unwrap_or_default();
-                writeln!(
-                    output,
-                    "        self.{}: {} = {}(client, '{}', '{}')",
-                    field_name_py, py_type, child.field.rust_type, child.base_result.base, disc
-                )
-                .unwrap();
-            } else {
-                writeln!(
-                    output,
-                    "        self.{}: {} = {}(client, '{}')",
-                    field_name_py, py_type, child.field.rust_type, child.base_result.base
-                )
-                .unwrap();
-            }
         }
     }
 
