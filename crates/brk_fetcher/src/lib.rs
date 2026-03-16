@@ -25,9 +25,11 @@ pub use source::{PriceSource, TrackedSource};
 const MAX_RETRIES: usize = 12 * 60; // 12 hours of retrying
 
 /// Create a shared HTTP agent with connection pooling and default timeout.
+/// Status codes are not treated as errors — callers use `checked_get` for status handling.
 pub fn new_agent(timeout_secs: u64) -> Agent {
     Agent::config_builder()
         .timeout_global(Some(Duration::from_secs(timeout_secs)))
+        .http_status_as_error(false)
         .build()
         .into()
 }
@@ -63,9 +65,9 @@ impl Fetcher {
     pub fn new(hars_path: Option<&Path>) -> Result<Self> {
         let agent = new_agent(30);
         Ok(Self {
-            binance: TrackedSource::new(Binance::new(hars_path, agent.clone())),
-            kraken: TrackedSource::new(Kraken::new(agent.clone())),
-            brk: TrackedSource::new(BRK::new(agent.clone())),
+            binance: TrackedSource::new(Binance::new_with_agent(hars_path, agent.clone())),
+            kraken: TrackedSource::new(Kraken::new_with_agent(agent.clone())),
+            brk: TrackedSource::new(BRK::new_with_agent(agent.clone())),
             agent,
         })
     }

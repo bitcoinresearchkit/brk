@@ -21,7 +21,7 @@ pub fn generate_tree_classes(output: &mut String, catalog: &TreeNode, metadata: 
         "MetricsTree",
         "",
         catalog,
-        &pattern_lookup,
+        pattern_lookup,
         metadata,
         &mut generated,
     );

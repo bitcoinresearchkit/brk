@@ -14,25 +14,25 @@ pub fn to_pascal_case(s: &str) -> String {
         .collect()
 }
 
-/// Convert a string to snake_case, handling Rust keywords.
+/// Convert a string to snake_case (no keyword escaping — backends handle that).
 pub fn to_snake_case(s: &str) -> String {
-    // Convert to lowercase and replace dashes with underscores
     let sanitized = s.to_lowercase().replace('-', "_");
 
-    // Prefix with _ if starts with digit
-    let sanitized = if sanitized.chars().next().is_some_and(|c| c.is_ascii_digit()) {
+    if sanitized.chars().next().is_some_and(|c| c.is_ascii_digit()) {
         format!("_{}", sanitized)
     } else {
         sanitized
-    };
+    }
+}
 
-    // Handle Rust keywords
-    match sanitized.as_str() {
+/// Escape Rust reserved keywords with `_` suffix (consistent with Python).
+pub fn escape_rust_keyword(name: &str) -> String {
+    match name {
         "type" | "const" | "static" | "match" | "if" | "else" | "loop" | "while" | "for"
         | "break" | "continue" | "return" | "fn" | "let" | "mut" | "ref" | "self" | "super"
         | "mod" | "use" | "pub" | "crate" | "extern" | "impl" | "trait" | "struct" | "enum"
-        | "where" | "async" | "await" | "dyn" | "move" => format!("r#{}", sanitized),
-        _ => sanitized,
+        | "where" | "async" | "await" | "dyn" | "move" => format!("{}_", name),
+        _ => name.to_string(),
     }
 }
 

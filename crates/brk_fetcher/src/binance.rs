@@ -26,7 +26,11 @@ pub struct Binance {
 }
 
 impl Binance {
-    pub fn new(path: Option<&Path>, agent: Agent) -> Self {
+    pub fn new(path: Option<&Path>) -> Self {
+        Self::new_with_agent(path, crate::new_agent(30))
+    }
+
+    pub fn new_with_agent(path: Option<&Path>, agent: Agent) -> Self {
         Self {
             agent,
             path: path.map(|p| p.to_owned()),

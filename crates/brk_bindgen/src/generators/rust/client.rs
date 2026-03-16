@@ -4,15 +4,14 @@ use std::fmt::Write;
 
 use crate::{
     ClientMetadata, GenericSyntax, IndexSetPattern, RustSyntax, StructuralPattern,
-    generate_parameterized_field, index_to_field_name, to_snake_case,
+    escape_rust_keyword, generate_parameterized_field, index_to_field_name, to_snake_case,
 };
 
 /// Generate import statements.
 pub fn generate_imports(output: &mut String) {
     writeln!(
         output,
-        r#"use std::io::Read as _;
-use std::sync::Arc;
+        r#"use std::sync::Arc;
 use std::ops::{{Bound, RangeBounds}};
 use serde::de::DeserializeOwned;
 pub use brk_cohort::*;
@@ -81,40 +80,27 @@ impl BrkClientBase {{
             .into();
         Self {{
             agent,
-            base_url: options.base_url,
+            base_url: options.base_url.trim_end_matches('/').to_string(),
         }}
     }}
 
-    fn get(&self, path: &str) -> Result<Vec<u8>> {{
-        let base = self.base_url.trim_end_matches('/');
-        let url = format!("{{}}{{}}", base, path);
-        let mut response = self.agent.get(&url)
-            .call()
-            .map_err(|e| BrkError {{ message: e.to_string() }})?;
-
-        if response.status().as_u16() >= 400 {{
-            return Err(BrkError {{
-                message: format!("HTTP {{}}", response.status().as_u16()),
-            }});
-        }}
-
-        let mut bytes = Vec::new();
-        response.body_mut().as_reader().read_to_end(&mut bytes)
-            .map_err(|e| BrkError {{ message: e.to_string() }})?;
-        Ok(bytes)
+    fn url(&self, path: &str) -> String {{
+        format!("{{}}{{}}", self.base_url, path)
     }}
 
     /// Make a GET request and deserialize JSON response.
     pub fn get_json<T: DeserializeOwned>(&self, path: &str) -> Result<T> {{
-        let bytes = self.get(path)?;
-        serde_json::from_slice(&bytes)
+        self.agent.get(&self.url(path))
+            .call()
+            .and_then(|mut r| r.body_mut().read_json())
             .map_err(|e| BrkError {{ message: e.to_string() }})
     }}
 
     /// Make a GET request and return raw text response.
     pub fn get_text(&self, path: &str) -> Result<String> {{
-        let bytes = self.get(path)?;
-        String::from_utf8(bytes)
+        self.agent.get(&self.url(path))
+            .call()
+            .and_then(|mut r| r.body_mut().read_to_string())
             .map_err(|e| BrkError {{ message: e.to_string() }})
     }}
 }}
@@ -525,7 +511,7 @@ pub fn generate_pattern_structs(
         writeln!(output, "pub struct {}{} {{", pattern.name, generic_params).unwrap();
 
         for field in &pattern.fields {
-            let field_name = to_snake_case(&field.name);
+            let field_name = escape_rust_keyword(&to_snake_case(&field.name));
             let type_annotation = metadata.field_type_annotation(
                 field,
                 pattern.is_generic,

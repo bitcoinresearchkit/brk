@@ -5,22 +5,25 @@ use brk_types::{Date, Height};
 fn main() -> Result<()> {
     brk_logger::init(None)?;
 
-    let mut brk = BRK::default();
+    let mut brk = BRK::new();
     dbg!(brk.get_from_height(Height::new(900_000))?);
     dbg!(brk.get_from_date(Date::new(2025, 6, 7))?);
 
     let mut fetcher = Fetcher::new(None)?;
 
-    let _ = Binance::fetch_1d().map(|b| {
+    let binance = Binance::new(None);
+    let kraken = Kraken::new();
+
+    let _ = binance.fetch_1d().map(|b| {
         dbg!(b.last_key_value());
     });
-    let _ = Kraken::fetch_1d().map(|b| {
+    let _ = kraken.fetch_1d().map(|b| {
         dbg!(b.last_key_value());
     });
-    let _ = Binance::fetch_1mn().map(|b| {
+    let _ = binance.fetch_1mn().map(|b| {
         dbg!(b.last_key_value());
     });
-    let _ = Kraken::fetch_1mn().map(|b| {
+    let _ = kraken.fetch_1mn().map(|b| {
         dbg!(b.last_key_value());
     });
 

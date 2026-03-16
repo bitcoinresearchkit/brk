@@ -183,6 +183,7 @@ function _wrapMetricData(raw) {{
  * @typedef {{Object}} MetricDataBase
  * @property {{number}} version - Version of the metric data
  * @property {{Index}} index - The index type used for this query
+ * @property {{string}} type - Value type (e.g. "f32", "u64", "Sats")
  * @property {{number}} total - Total number of data points
  * @property {{number}} start - Start index (inclusive)
  * @property {{number}} end - End index (exclusive)

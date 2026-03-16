@@ -92,8 +92,7 @@ impl LanguageSyntax for JavaScriptSyntax {
             // "ratio_{disc}_bps" → split on {disc} → _m(_m(acc, 'ratio'), disc) then _bps
             // But this is complex. For embedded disc, use string interpolation.
             // For suffix disc (ends with {disc}), use _m composition.
-            if template.ends_with("{disc}") {
-                let static_part = &template[..template.len() - "{disc}".len()];
+            if let Some(static_part) = template.strip_suffix("{disc}") {
                 if static_part.is_empty() {
                     format!("_m({}, disc)", var_name)
                 } else {

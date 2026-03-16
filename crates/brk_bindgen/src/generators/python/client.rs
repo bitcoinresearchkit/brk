@@ -220,6 +220,7 @@ class MetricData(Generic[T]):
     """Metric data with range information. Always int-indexed."""
     version: int
     index: Index
+    type: str
     total: int
     start: int
     end: int

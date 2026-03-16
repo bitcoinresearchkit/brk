@@ -19,7 +19,11 @@ pub struct BRK {
 }
 
 impl BRK {
-    pub fn new(agent: Agent) -> Self {
+    pub fn new() -> Self {
+        Self::new_with_agent(crate::new_agent(30))
+    }
+
+    pub fn new_with_agent(agent: Agent) -> Self {
         Self {
             agent,
             height_to_ohlc: BTreeMap::new(),

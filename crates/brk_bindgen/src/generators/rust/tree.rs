@@ -7,7 +7,8 @@ use brk_types::TreeNode;
 
 use crate::{
     ClientMetadata, GenericSyntax, LanguageSyntax, PatternField, RustSyntax, build_child_path,
-    generate_leaf_field, generate_tree_node_field, prepare_tree_node, to_snake_case,
+    escape_rust_keyword, generate_leaf_field, generate_tree_node_field, prepare_tree_node,
+    to_snake_case,
 };
 
 /// Generate tree structs.
@@ -21,7 +22,7 @@ pub fn generate_tree(output: &mut String, catalog: &TreeNode, metadata: &ClientM
         "MetricsTree",
         "",
         catalog,
-        &pattern_lookup,
+        pattern_lookup,
         metadata,
         &mut generated,
     );
@@ -45,7 +46,7 @@ fn generate_tree_node(
     writeln!(output, "pub struct {} {{", name).unwrap();
 
     for child in &ctx.children {
-        let field_name = to_snake_case(child.name);
+        let field_name = escape_rust_keyword(&to_snake_case(child.name));
         let type_annotation = if child.should_inline {
             child.inline_type_name.clone()
         } else {
@@ -67,7 +68,7 @@ fn generate_tree_node(
 
     let syntax = RustSyntax;
     for child in &ctx.children {
-        let field_name = to_snake_case(child.name);
+        let field_name = escape_rust_keyword(&to_snake_case(child.name));
 
         if child.is_leaf {
             if let TreeNode::Leaf(leaf) = child.node {

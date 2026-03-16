@@ -1,6 +1,6 @@
 //! Rust language syntax implementation.
 
-use crate::{GenericSyntax, LanguageSyntax, to_snake_case};
+use crate::{GenericSyntax, LanguageSyntax, escape_rust_keyword, to_snake_case};
 
 /// Rust-specific code generation syntax.
 pub struct RustSyntax;
@@ -15,7 +15,7 @@ fn escape_rust_format(template: &str) -> String {
 
 impl LanguageSyntax for RustSyntax {
     fn field_name(&self, name: &str) -> String {
-        to_snake_case(name)
+        escape_rust_keyword(&to_snake_case(name))
     }
 
     fn path_expr(&self, base_var: &str, suffix: &str) -> String {

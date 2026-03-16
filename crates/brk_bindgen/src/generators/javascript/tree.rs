@@ -24,7 +24,7 @@ pub fn generate_tree_typedefs(output: &mut String, catalog: &TreeNode, metadata:
         "MetricsTree",
         "",
         catalog,
-        &pattern_lookup,
+        pattern_lookup,
         metadata,
         &mut generated,
     );
@@ -125,7 +125,7 @@ pub fn generate_main_client(
         "MetricsTree",
         "",
         3,
-        &pattern_lookup,
+        pattern_lookup,
         metadata,
         &mut generated,
     );

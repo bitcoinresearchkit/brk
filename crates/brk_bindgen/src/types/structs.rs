@@ -74,10 +74,10 @@ impl StructuralPattern {
         // Find a template with {disc} and extract the disc from the instance value.
         // Strip leading underscore since _m() handles separators.
         for (field_name, template) in templates {
-            if let Some(value) = instance_field_parts.get(field_name) {
-                if let Some(disc) = extract_disc(template, value) {
-                    return Some(disc.trim_start_matches('_').to_string());
-                }
+            if let Some(value) = instance_field_parts.get(field_name)
+                && let Some(disc) = extract_disc(template, value)
+            {
+                return Some(disc.trim_start_matches('_').to_string());
             }
         }
         // If no template matched (all empty templates), disc is empty

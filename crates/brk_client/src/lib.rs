@@ -7,7 +7,6 @@
 #![allow(clippy::useless_format)]
 #![allow(clippy::unnecessary_to_owned)]
 
-use std::io::Read as _;
 use std::sync::Arc;
 use std::ops::{Bound, RangeBounds};
 use serde::de::DeserializeOwned;
@@ -69,40 +68,27 @@ impl BrkClientBase {
             .into();
         Self {
             agent,
-            base_url: options.base_url,
+            base_url: options.base_url.trim_end_matches('/').to_string(),
         }
     }
 
-    fn get(&self, path: &str) -> Result<Vec<u8>> {
-        let base = self.base_url.trim_end_matches('/');
-        let url = format!("{}{}", base, path);
-        let mut response = self.agent.get(&url)
-            .call()
-            .map_err(|e| BrkError { message: e.to_string() })?;
-
-        if response.status().as_u16() >= 400 {
-            return Err(BrkError {
-                message: format!("HTTP {}", response.status().as_u16()),
-            });
-        }
-
-        let mut bytes = Vec::new();
-        response.body_mut().as_reader().read_to_end(&mut bytes)
-            .map_err(|e| BrkError { message: e.to_string() })?;
-        Ok(bytes)
+    fn url(&self, path: &str) -> String {
+        format!("{}{}", self.base_url, path)
     }
 
     /// Make a GET request and deserialize JSON response.
     pub fn get_json<T: DeserializeOwned>(&self, path: &str) -> Result<T> {
-        let bytes = self.get(path)?;
-        serde_json::from_slice(&bytes)
+        self.agent.get(&self.url(path))
+            .call()
+            .and_then(|mut r| r.body_mut().read_json())
             .map_err(|e| BrkError { message: e.to_string() })
     }
 
     /// Make a GET request and return raw text response.
     pub fn get_text(&self, path: &str) -> Result<String> {
-        let bytes = self.get(path)?;
-        String::from_utf8(bytes)
+        self.agent.get(&self.url(path))
+            .call()
+            .and_then(|mut r| r.body_mut().read_to_string())
             .map_err(|e| BrkError { message: e.to_string() })
     }
 }
@@ -5397,7 +5383,7 @@ impl MetricsTree_Market_Dca {
 pub struct MetricsTree_Market_Dca_Period {
     pub stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3,
     pub cost_basis: MetricsTree_Market_Dca_Period_CostBasis,
-    pub r#return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2,
+    pub return_: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2,
     pub cagr: _10y2y3y4y5y6y8yPattern,
     pub lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3,
     pub lump_sum_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2,
@@ -5408,7 +5394,7 @@ impl MetricsTree_Market_Dca_Period {
         Self {
             stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3::new(client.clone(), "dca_stack".to_string()),
             cost_basis: MetricsTree_Market_Dca_Period_CostBasis::new(client.clone(), format!("{base_path}_cost_basis")),
-            r#return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "dca_return".to_string()),
+            return_: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "dca_return".to_string()),
             cagr: _10y2y3y4y5y6y8yPattern::new(client.clone(), "dca_cagr".to_string()),
             lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3::new(client.clone(), "lump_sum_stack".to_string()),
             lump_sum_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "lump_sum_return".to_string()),
@@ -5455,7 +5441,7 @@ impl MetricsTree_Market_Dca_Period_CostBasis {
 pub struct MetricsTree_Market_Dca_Class {
     pub stack: MetricsTree_Market_Dca_Class_Stack,
     pub cost_basis: MetricsTree_Market_Dca_Class_CostBasis,
-    pub r#return: MetricsTree_Market_Dca_Class_Return,
+    pub return_: MetricsTree_Market_Dca_Class_Return,
 }
 
 impl MetricsTree_Market_Dca_Class {
@@ -5463,7 +5449,7 @@ impl MetricsTree_Market_Dca_Class {
         Self {
             stack: MetricsTree_Market_Dca_Class_Stack::new(client.clone(), format!("{base_path}_stack")),
             cost_basis: MetricsTree_Market_Dca_Class_CostBasis::new(client.clone(), format!("{base_path}_cost_basis")),
-            r#return: MetricsTree_Market_Dca_Class_Return::new(client.clone(), format!("{base_path}_return")),
+            return_: MetricsTree_Market_Dca_Class_Return::new(client.clone(), format!("{base_path}_return")),
         }
     }
 }
@@ -6232,7 +6218,7 @@ pub struct MetricsTree_Cohorts_Utxo {
     pub over_amount: MetricsTree_Cohorts_Utxo_OverAmount,
     pub amount_range: MetricsTree_Cohorts_Utxo_AmountRange,
     pub under_amount: MetricsTree_Cohorts_Utxo_UnderAmount,
-    pub r#type: MetricsTree_Cohorts_Utxo_Type,
+    pub type_: MetricsTree_Cohorts_Utxo_Type,
     pub profitability: MetricsTree_Cohorts_Utxo_Profitability,
     pub matured: MetricsTree_Cohorts_Utxo_Matured,
 }
@@ -6251,7 +6237,7 @@ impl MetricsTree_Cohorts_Utxo {
             over_amount: MetricsTree_Cohorts_Utxo_OverAmount::new(client.clone(), format!("{base_path}_over_amount")),
             amount_range: MetricsTree_Cohorts_Utxo_AmountRange::new(client.clone(), format!("{base_path}_amount_range")),
             under_amount: MetricsTree_Cohorts_Utxo_UnderAmount::new(client.clone(), format!("{base_path}_under_amount")),
-            r#type: MetricsTree_Cohorts_Utxo_Type::new(client.clone(), format!("{base_path}_type")),
+            type_: MetricsTree_Cohorts_Utxo_Type::new(client.clone(), format!("{base_path}_type")),
             profitability: MetricsTree_Cohorts_Utxo_Profitability::new(client.clone(), format!("{base_path}_profitability")),
             matured: MetricsTree_Cohorts_Utxo_Matured::new(client.clone(), format!("{base_path}_matured")),
         }

@@ -1270,6 +1270,7 @@ class MetricData(Generic[T]):
     """Metric data with range information. Always int-indexed."""
     version: int
     index: Index
+    type: str
     total: int
     start: int
     end: int
@@ -4253,7 +4254,7 @@ class MetricsTree_Market_Dca_Period:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'dca_stack')
         self.cost_basis: MetricsTree_Market_Dca_Period_CostBasis = MetricsTree_Market_Dca_Period_CostBasis(client)
-        self.r#return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_return')
+        self.return_: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_return')
         self.cagr: _10y2y3y4y5y6y8yPattern = _10y2y3y4y5y6y8yPattern(client, 'dca_cagr')
         self.lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'lump_sum_stack')
         self.lump_sum_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_return')
@@ -4315,7 +4316,7 @@ class MetricsTree_Market_Dca_Class:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.stack: MetricsTree_Market_Dca_Class_Stack = MetricsTree_Market_Dca_Class_Stack(client)
         self.cost_basis: MetricsTree_Market_Dca_Class_CostBasis = MetricsTree_Market_Dca_Class_CostBasis(client)
-        self.r#return: MetricsTree_Market_Dca_Class_Return = MetricsTree_Market_Dca_Class_Return(client)
+        self.return_: MetricsTree_Market_Dca_Class_Return = MetricsTree_Market_Dca_Class_Return(client)
 
 class MetricsTree_Market_Dca:
     """Metrics tree node."""
@@ -5621,7 +5622,7 @@ class MetricsTree_Cohorts_Utxo:
         self.over_amount: MetricsTree_Cohorts_Utxo_OverAmount = MetricsTree_Cohorts_Utxo_OverAmount(client)
         self.amount_range: MetricsTree_Cohorts_Utxo_AmountRange = MetricsTree_Cohorts_Utxo_AmountRange(client)
         self.under_amount: MetricsTree_Cohorts_Utxo_UnderAmount = MetricsTree_Cohorts_Utxo_UnderAmount(client)
-        self.r#type: MetricsTree_Cohorts_Utxo_Type = MetricsTree_Cohorts_Utxo_Type(client)
+        self.type: MetricsTree_Cohorts_Utxo_Type = MetricsTree_Cohorts_Utxo_Type(client)
         self.profitability: MetricsTree_Cohorts_Utxo_Profitability = MetricsTree_Cohorts_Utxo_Profitability(client)
         self.matured: MetricsTree_Cohorts_Utxo_Matured = MetricsTree_Cohorts_Utxo_Matured(client)
 
