@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Indexes, Sats, StoredF64, Version};
+use brk_types::{Bitcoin, Indexes, StoredF64, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
@@ -11,7 +11,7 @@ use crate::{
 
 #[derive(Traversable)]
 pub struct ActivityCore<M: StorageMode = Rw> {
-    pub transfer_volume: PerBlockCumulativeWithSums<Sats, Sats, M>,
+    pub transfer_volume: AmountPerBlockCumulativeWithSums<M>,
     pub coindays_destroyed: PerBlockCumulativeWithSums<StoredF64, StoredF64, M>,
     #[traversable(wrap = "transfer_volume", rename = "in_profit")]
     pub transfer_volume_in_profit: AmountPerBlockCumulativeWithSums<M>,
@@ -33,6 +33,7 @@ impl ActivityCore {
     pub(crate) fn min_len(&self) -> usize {
         self.transfer_volume
             .base
+            .sats
             .height
             .len()
             .min(self.coindays_destroyed.base.height.len())
@@ -45,7 +46,7 @@ impl ActivityCore {
         &mut self,
         state: &CohortState<impl RealizedOps, impl CostBasisOps>,
     ) {
-        self.transfer_volume.base.height.push(state.sent);
+        self.transfer_volume.base.sats.height.push(state.sent);
         self.coindays_destroyed.base.height.push(
             StoredF64::from(Bitcoin::from(state.satdays_destroyed)),
         );
@@ -63,7 +64,8 @@ impl ActivityCore {
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
-            &mut self.transfer_volume.base.height as &mut dyn AnyStoredVec,
+            &mut self.transfer_volume.base.sats.height as &mut dyn AnyStoredVec,
+            &mut self.transfer_volume.base.cents.height,
             &mut self.coindays_destroyed.base.height,
             &mut self.transfer_volume_in_profit.base.sats.height,
             &mut self.transfer_volume_in_profit.base.cents.height,
@@ -82,11 +84,11 @@ impl ActivityCore {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.transfer_volume.base.height.compute_sum_of_others(
+        self.transfer_volume.base.sats.height.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.transfer_volume.base.height)
+                .map(|v| &v.transfer_volume.base.sats.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
@@ -100,11 +102,12 @@ impl ActivityCore {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
+        prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.transfer_volume
-            .compute_rest(starting_indexes.height, exit)?;
+            .compute_rest(starting_indexes.height, prices, exit)?;
         self.coindays_destroyed
             .compute_rest(starting_indexes.height, exit)?;
         Ok(())

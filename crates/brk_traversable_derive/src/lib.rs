@@ -10,6 +10,7 @@ use syn::{Data, DeriveInput, Fields, Type, parse_macro_input};
 struct StructAttr {
     merge: bool,
     transparent: bool,
+    hidden: bool,
     wrap: Option<String>,
 }
 
@@ -24,6 +25,7 @@ fn get_struct_attr(attrs: &[syn::Attribute]) -> StructAttr {
             match ident.to_string().as_str() {
                 "merge" => result.merge = true,
                 "transparent" => result.transparent = true,
+                "hidden" => result.hidden = true,
                 _ => {}
             }
             continue;
@@ -244,6 +246,10 @@ fn gen_traversable(input: &DeriveInput) -> proc_macro2::TokenStream {
                 fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
                     self.0.iter_any_exportable()
                 }
+
+                fn iter_any_visible(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
+                    self.0.iter_any_visible()
+                }
             }
         };
     }
@@ -284,6 +290,10 @@ fn gen_traversable(input: &DeriveInput) -> proc_macro2::TokenStream {
                 fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
                     self.#field_name.iter_any_exportable()
                 }
+
+                fn iter_any_visible(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
+                    self.#field_name.iter_any_visible()
+                }
             }
         };
     }
@@ -294,7 +304,7 @@ fn gen_traversable(input: &DeriveInput) -> proc_macro2::TokenStream {
         analyze_fields(named_fields, &generic_params);
 
     let field_traversals = generate_field_traversals(&field_infos, struct_attr.merge);
-    let iterator_impl = generate_iterator_impl(&field_infos);
+    let iterator_impl = generate_iterator_impl(&field_infos, struct_attr.hidden);
     let where_clause = build_where_clause(
         generics,
         &generics_needing_traversable,
@@ -505,41 +515,31 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
     }
 }
 
-fn generate_iterator_impl(infos: &[FieldInfo]) -> proc_macro2::TokenStream {
-    let regular_fields: Vec<_> = infos
-        .iter()
-        .filter(|i| !i.is_option)
-        .map(|i| i.name)
-        .collect();
+fn generate_iter_body(
+    fields: &[&syn::Ident],
+    option_fields: &[&syn::Ident],
+    method: &str,
+) -> proc_macro2::TokenStream {
+    let method_ident = syn::Ident::new(method, proc_macro2::Span::call_site());
 
-    let option_fields: Vec<_> = infos
-        .iter()
-        .filter(|i| i.is_option)
-        .map(|i| i.name)
-        .collect();
-
-    if regular_fields.is_empty() && option_fields.is_empty() {
-        return quote! {
-            fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
-                std::iter::empty()
-            }
-        };
+    if fields.is_empty() && option_fields.is_empty() {
+        return quote! { std::iter::empty() };
     }
 
-    let (init_part, chain_part) = if let Some((&first, rest)) = regular_fields.split_first() {
+    let (init_part, chain_part) = if let Some((&first, rest)) = fields.split_first() {
         (
             quote! {
-                let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyExportableVec>> =
-                    Box::new(self.#first.iter_any_exportable());
+                let mut iter: Box<dyn Iterator<Item = &dyn vecdb::AnyExportableVec>> =
+                    Box::new(self.#first.#method_ident());
             },
             quote! {
-                #(regular_iter = Box::new(regular_iter.chain(self.#rest.iter_any_exportable()));)*
+                #(iter = Box::new(iter.chain(self.#rest.#method_ident()));)*
             },
         )
     } else {
         (
             quote! {
-                let mut regular_iter: Box<dyn Iterator<Item = &dyn vecdb::AnyExportableVec>> =
+                let mut iter: Box<dyn Iterator<Item = &dyn vecdb::AnyExportableVec>> =
                     Box::new(std::iter::empty());
             },
             quote! {},
@@ -550,7 +550,7 @@ fn generate_iterator_impl(infos: &[FieldInfo]) -> proc_macro2::TokenStream {
         let chains = option_fields.iter().map(|f| {
             quote! {
                 if let Some(ref x) = self.#f {
-                    regular_iter = Box::new(regular_iter.chain(x.iter_any_exportable()));
+                    iter = Box::new(iter.chain(x.#method_ident()));
                 }
             }
         });
@@ -560,12 +560,46 @@ fn generate_iterator_impl(infos: &[FieldInfo]) -> proc_macro2::TokenStream {
     };
 
     quote! {
-        fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
-            #init_part
-            #chain_part
-            #option_part
-            regular_iter
+        #init_part
+        #chain_part
+        #option_part
+        iter
+    }
+}
+
+fn generate_iterator_impl(infos: &[FieldInfo], struct_hidden: bool) -> proc_macro2::TokenStream {
+    let all_regular: Vec<_> = infos.iter().filter(|i| !i.is_option).map(|i| i.name).collect();
+    let all_option: Vec<_> = infos.iter().filter(|i| i.is_option).map(|i| i.name).collect();
+
+    let exportable_body = generate_iter_body(&all_regular, &all_option, "iter_any_exportable");
+
+    let has_hidden_fields = infos.iter().any(|i| i.hidden);
+
+    let visible_impl = if struct_hidden {
+        // Entire struct is hidden — iter_any_visible returns nothing
+        quote! {
+            fn iter_any_visible(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
+                std::iter::empty()
+            }
         }
+    } else {
+        // Always generate iter_any_visible that calls iter_any_visible on children
+        // (skipping hidden fields if any), so hidden propagates through the tree
+        let visible_regular: Vec<_> = infos.iter().filter(|i| !i.is_option && !i.hidden).map(|i| i.name).collect();
+        let visible_option: Vec<_> = infos.iter().filter(|i| i.is_option && !i.hidden).map(|i| i.name).collect();
+        let visible_body = generate_iter_body(&visible_regular, &visible_option, "iter_any_visible");
+        quote! {
+            fn iter_any_visible(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
+                #visible_body
+            }
+        }
+    };
+
+    quote! {
+        fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
+            #exportable_body
+        }
+        #visible_impl
     }
 }
 

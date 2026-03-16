@@ -27,18 +27,18 @@ pub struct Vecs<'a> {
 impl<'a> Vecs<'a> {
     pub fn build(indexer: &'a Indexer<vecdb::Ro>, computer: &'a Computer<vecdb::Ro>) -> Self {
         Self::build_from(
-            indexer.vecs.iter_any_exportable(),
+            indexer.vecs.iter_any_visible(),
             indexer.vecs.to_tree_node(),
-            computer.iter_named_exportable(),
+            computer.iter_named_visible(),
             computer.to_tree_node(),
         )
     }
 
     pub fn build_rw(indexer: &'a Indexer, computer: &'a Computer) -> Self {
         Self::build_from(
-            indexer.vecs.iter_any_exportable(),
+            indexer.vecs.iter_any_visible(),
             indexer.vecs.to_tree_node(),
-            computer.iter_named_exportable(),
+            computer.iter_named_visible(),
             computer.to_tree_node(),
         )
     }

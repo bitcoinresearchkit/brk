@@ -6,7 +6,10 @@ use vecdb::{AnyStoredVec, Exit, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::internal::{Identity, LazyPerBlock, PerBlock};
 
-use crate::distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}};
+use crate::{
+    distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}},
+    prices,
+};
 
 use super::ActivityCore;
 
@@ -71,10 +74,11 @@ impl ActivityFull {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
+        prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.inner.compute_rest_part1(starting_indexes, exit)
+        self.inner.compute_rest_part1(prices, starting_indexes, exit)
     }
 
     pub(crate) fn compute_rest_part2(
@@ -85,7 +89,7 @@ impl ActivityFull {
         self.dormancy.height.compute_transform2(
             starting_indexes.height,
             &self.inner.coindays_destroyed.base.height,
-            &self.inner.transfer_volume.base.height,
+            &self.inner.transfer_volume.base.sats.height,
             |(i, cdd, sent_sats, ..)| {
                 let sent_btc = f64::from(Bitcoin::from(sent_sats));
                 if sent_btc == 0.0 {

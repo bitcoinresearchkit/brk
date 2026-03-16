@@ -34,7 +34,6 @@ pub struct Computer<M: StorageMode = Rw> {
     pub mining: Box<mining::Vecs<M>>,
     pub transactions: Box<transactions::Vecs<M>>,
     pub scripts: Box<scripts::Vecs<M>>,
-    #[traversable(hidden)]
     pub positions: Box<positions::Vecs<M>>,
     pub cointime: Box<cointime::Vecs<M>>,
     pub constants: Box<constants::Vecs>,
@@ -493,10 +492,10 @@ impl Computer {
     }
 }
 
-macro_rules! impl_iter_named_exportable {
+macro_rules! impl_iter_named {
     ($($field:ident),+ $(,)?) => {
-        impl_iter_named_exportable!(@mode Ro, $($field),+);
-        impl_iter_named_exportable!(@mode Rw, $($field),+);
+        impl_iter_named!(@mode Ro, $($field),+);
+        impl_iter_named!(@mode Rw, $($field),+);
     };
     (@mode $mode:ty, $($field:ident),+) => {
         impl Computer<$mode> {
@@ -507,11 +506,19 @@ macro_rules! impl_iter_named_exportable {
                 std::iter::empty()
                     $(.chain(self.$field.iter_any_exportable().map(|v| ($field::DB_NAME, v))))+
             }
+
+            pub fn iter_named_visible(
+                &self,
+            ) -> impl Iterator<Item = (&'static str, &dyn AnyExportableVec)> {
+                use brk_traversable::Traversable;
+                std::iter::empty()
+                    $(.chain(self.$field.iter_any_visible().map(|v| ($field::DB_NAME, v))))+
+            }
         }
     };
 }
 
-impl_iter_named_exportable!(blocks, mining, transactions, scripts, positions, cointime,
+impl_iter_named!(blocks, mining, transactions, scripts, positions, cointime,
     constants, indicators, indexes, market, pools, prices, distribution, supply, inputs, outputs);
 
 fn timed<T>(label: &str, f: impl FnOnce() -> T) -> T {

@@ -109,7 +109,7 @@ impl CoreCohortMetrics {
             .compute(prices, starting_indexes.height, exit)?;
 
         self.activity
-            .compute_rest_part1(starting_indexes, exit)?;
+            .compute_rest_part1(prices, starting_indexes, exit)?;
         self.activity
             .compute_sent_profitability(prices, starting_indexes, exit)?;
 

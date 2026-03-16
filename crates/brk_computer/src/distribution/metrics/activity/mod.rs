@@ -8,7 +8,10 @@ use brk_error::Result;
 use brk_types::{Indexes, Version};
 use vecdb::Exit;
 
-use crate::distribution::state::{CohortState, CostBasisOps, RealizedOps};
+use crate::{
+    distribution::state::{CohortState, CostBasisOps, RealizedOps},
+    prices,
+};
 
 pub trait ActivityLike: Send + Sync {
     fn as_core(&self) -> &ActivityCore;
@@ -27,6 +30,7 @@ pub trait ActivityLike: Send + Sync {
     ) -> Result<()>;
     fn compute_rest_part1(
         &mut self,
+        prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()>;
@@ -45,8 +49,8 @@ impl ActivityLike for ActivityCore {
     fn compute_from_stateful(&mut self, starting_indexes: &Indexes, others: &[&ActivityCore], exit: &Exit) -> Result<()> {
         self.compute_from_stateful(starting_indexes, others, exit)
     }
-    fn compute_rest_part1(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
-        self.compute_rest_part1(starting_indexes, exit)
+    fn compute_rest_part1(&mut self, prices: &prices::Vecs, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
+        self.compute_rest_part1(prices, starting_indexes, exit)
     }
 }
 
@@ -63,7 +67,7 @@ impl ActivityLike for ActivityFull {
     fn compute_from_stateful(&mut self, starting_indexes: &Indexes, others: &[&ActivityCore], exit: &Exit) -> Result<()> {
         self.compute_from_stateful(starting_indexes, others, exit)
     }
-    fn compute_rest_part1(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
-        self.compute_rest_part1(starting_indexes, exit)
+    fn compute_rest_part1(&mut self, prices: &prices::Vecs, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
+        self.compute_rest_part1(prices, starting_indexes, exit)
     }
 }

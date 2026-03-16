@@ -223,7 +223,7 @@ pub trait CohortMetricsBase:
         self.supply_mut()
             .compute(prices, starting_indexes.height, exit)?;
         self.activity_mut()
-            .compute_rest_part1(starting_indexes, exit)?;
+            .compute_rest_part1(prices, starting_indexes, exit)?;
         self.activity_core_mut()
             .compute_sent_profitability(prices, starting_indexes, exit)?;
 

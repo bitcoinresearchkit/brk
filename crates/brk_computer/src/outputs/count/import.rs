@@ -25,7 +25,7 @@ impl Vecs {
             )?,
             unspent: PerBlock::forced_import(
                 db,
-                "exact_utxo_count",
+                "utxo_count_bis",
                 version,
                 indexes,
             )?,

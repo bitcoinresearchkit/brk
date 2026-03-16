@@ -16,6 +16,7 @@ use crate::internal::db_utils::{finalize_db, open_db};
 pub const DB_NAME: &str = "positions";
 
 #[derive(Traversable)]
+#[traversable(hidden)]
 pub struct Vecs<M: StorageMode = Rw> {
     db: Database,
 

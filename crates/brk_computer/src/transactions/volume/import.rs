@@ -19,7 +19,7 @@ impl Vecs {
         Ok(Self {
             transfer_volume: AmountPerBlockCumulativeWithSums::forced_import(
                 db,
-                "exact_transfer_volume",
+                "transfer_volume_bis",
                 version,
                 indexes,
                 cached_starts,
