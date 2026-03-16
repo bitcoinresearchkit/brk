@@ -1862,28 +1862,6 @@ pub struct InvestedMaxMinPercentilesSupplyPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct MvrvNuplRealizedSupplyPattern {
-    pub mvrv: MetricPattern1<StoredF32>,
-    pub nupl: BpsRatioPattern,
-    pub realized_cap: AllSthPattern,
-    pub realized_price: BpsCentsRatioSatsUsdPattern,
-    pub supply: AllSthPattern2,
-}
-
-impl MvrvNuplRealizedSupplyPattern {
-    /// Create a new pattern node with accumulated metric name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            mvrv: MetricPattern1::new(client.clone(), _m(&acc, "mvrv")),
-            nupl: BpsRatioPattern::new(client.clone(), _m(&acc, "nupl")),
-            realized_cap: AllSthPattern::new(client.clone(), acc.clone()),
-            realized_price: BpsCentsRatioSatsUsdPattern::new(client.clone(), _m(&acc, "realized_price")),
-            supply: AllSthPattern2::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct PhsReboundThsPattern {
     pub phs: MetricPattern1<StoredF32>,
     pub phs_min: MetricPattern1<StoredF32>,
@@ -2553,6 +2531,24 @@ pub struct LowerPriceUpperPattern {
     pub lower_price_band: CentsSatsUsdPattern,
     pub price: BpsCentsPercentilesRatioSatsUsdPattern,
     pub upper_price_band: CentsSatsUsdPattern,
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct NuplRealizedSupplyPattern {
+    pub nupl: BpsRatioPattern,
+    pub realized_cap: AllSthPattern,
+    pub supply: AllSthPattern2,
+}
+
+impl NuplRealizedSupplyPattern {
+    /// Create a new pattern node with accumulated metric name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            nupl: BpsRatioPattern::new(client.clone(), _m(&acc, "nupl")),
+            realized_cap: AllSthPattern::new(client.clone(), acc.clone()),
+            supply: AllSthPattern2::new(client.clone(), acc.clone()),
+        }
+    }
 }
 
 /// Pattern struct for repeated tree structure.
@@ -8054,129 +8050,129 @@ impl MetricsTree_Cohorts_Utxo_Profitability {
 
 /// Metrics tree node.
 pub struct MetricsTree_Cohorts_Utxo_Profitability_Range {
-    pub over_1000pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _500pct_to_1000pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _300pct_to_500pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _200pct_to_300pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _100pct_to_200pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _90pct_to_100pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _80pct_to_90pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _70pct_to_80pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _60pct_to_70pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _50pct_to_60pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _40pct_to_50pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _30pct_to_40pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _20pct_to_30pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _10pct_to_20pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _0pct_to_10pct_in_profit: MvrvNuplRealizedSupplyPattern,
-    pub _0pct_to_10pct_in_loss: MvrvNuplRealizedSupplyPattern,
-    pub _10pct_to_20pct_in_loss: MvrvNuplRealizedSupplyPattern,
-    pub _20pct_to_30pct_in_loss: MvrvNuplRealizedSupplyPattern,
-    pub _30pct_to_40pct_in_loss: MvrvNuplRealizedSupplyPattern,
-    pub _40pct_to_50pct_in_loss: MvrvNuplRealizedSupplyPattern,
-    pub _50pct_to_60pct_in_loss: MvrvNuplRealizedSupplyPattern,
-    pub _60pct_to_70pct_in_loss: MvrvNuplRealizedSupplyPattern,
-    pub _70pct_to_80pct_in_loss: MvrvNuplRealizedSupplyPattern,
-    pub _80pct_to_90pct_in_loss: MvrvNuplRealizedSupplyPattern,
-    pub _90pct_to_100pct_in_loss: MvrvNuplRealizedSupplyPattern,
+    pub over_1000pct_in_profit: NuplRealizedSupplyPattern,
+    pub _500pct_to_1000pct_in_profit: NuplRealizedSupplyPattern,
+    pub _300pct_to_500pct_in_profit: NuplRealizedSupplyPattern,
+    pub _200pct_to_300pct_in_profit: NuplRealizedSupplyPattern,
+    pub _100pct_to_200pct_in_profit: NuplRealizedSupplyPattern,
+    pub _90pct_to_100pct_in_profit: NuplRealizedSupplyPattern,
+    pub _80pct_to_90pct_in_profit: NuplRealizedSupplyPattern,
+    pub _70pct_to_80pct_in_profit: NuplRealizedSupplyPattern,
+    pub _60pct_to_70pct_in_profit: NuplRealizedSupplyPattern,
+    pub _50pct_to_60pct_in_profit: NuplRealizedSupplyPattern,
+    pub _40pct_to_50pct_in_profit: NuplRealizedSupplyPattern,
+    pub _30pct_to_40pct_in_profit: NuplRealizedSupplyPattern,
+    pub _20pct_to_30pct_in_profit: NuplRealizedSupplyPattern,
+    pub _10pct_to_20pct_in_profit: NuplRealizedSupplyPattern,
+    pub _0pct_to_10pct_in_profit: NuplRealizedSupplyPattern,
+    pub _0pct_to_10pct_in_loss: NuplRealizedSupplyPattern,
+    pub _10pct_to_20pct_in_loss: NuplRealizedSupplyPattern,
+    pub _20pct_to_30pct_in_loss: NuplRealizedSupplyPattern,
+    pub _30pct_to_40pct_in_loss: NuplRealizedSupplyPattern,
+    pub _40pct_to_50pct_in_loss: NuplRealizedSupplyPattern,
+    pub _50pct_to_60pct_in_loss: NuplRealizedSupplyPattern,
+    pub _60pct_to_70pct_in_loss: NuplRealizedSupplyPattern,
+    pub _70pct_to_80pct_in_loss: NuplRealizedSupplyPattern,
+    pub _80pct_to_90pct_in_loss: NuplRealizedSupplyPattern,
+    pub _90pct_to_100pct_in_loss: NuplRealizedSupplyPattern,
 }
 
 impl MetricsTree_Cohorts_Utxo_Profitability_Range {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            over_1000pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_1000pct_in_profit".to_string()),
-            _500pct_to_1000pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_500pct_to_1000pct_in_profit".to_string()),
-            _300pct_to_500pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_300pct_to_500pct_in_profit".to_string()),
-            _200pct_to_300pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_200pct_to_300pct_in_profit".to_string()),
-            _100pct_to_200pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_100pct_to_200pct_in_profit".to_string()),
-            _90pct_to_100pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_90pct_to_100pct_in_profit".to_string()),
-            _80pct_to_90pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_80pct_to_90pct_in_profit".to_string()),
-            _70pct_to_80pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_70pct_to_80pct_in_profit".to_string()),
-            _60pct_to_70pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_60pct_to_70pct_in_profit".to_string()),
-            _50pct_to_60pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_50pct_to_60pct_in_profit".to_string()),
-            _40pct_to_50pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_40pct_to_50pct_in_profit".to_string()),
-            _30pct_to_40pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_30pct_to_40pct_in_profit".to_string()),
-            _20pct_to_30pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_20pct_to_30pct_in_profit".to_string()),
-            _10pct_to_20pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_10pct_to_20pct_in_profit".to_string()),
-            _0pct_to_10pct_in_profit: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_0pct_to_10pct_in_profit".to_string()),
-            _0pct_to_10pct_in_loss: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_0pct_to_10pct_in_loss".to_string()),
-            _10pct_to_20pct_in_loss: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_10pct_to_20pct_in_loss".to_string()),
-            _20pct_to_30pct_in_loss: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_20pct_to_30pct_in_loss".to_string()),
-            _30pct_to_40pct_in_loss: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_30pct_to_40pct_in_loss".to_string()),
-            _40pct_to_50pct_in_loss: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_40pct_to_50pct_in_loss".to_string()),
-            _50pct_to_60pct_in_loss: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_50pct_to_60pct_in_loss".to_string()),
-            _60pct_to_70pct_in_loss: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_60pct_to_70pct_in_loss".to_string()),
-            _70pct_to_80pct_in_loss: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_70pct_to_80pct_in_loss".to_string()),
-            _80pct_to_90pct_in_loss: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_80pct_to_90pct_in_loss".to_string()),
-            _90pct_to_100pct_in_loss: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_90pct_to_100pct_in_loss".to_string()),
+            over_1000pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_1000pct_in_profit".to_string()),
+            _500pct_to_1000pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_500pct_to_1000pct_in_profit".to_string()),
+            _300pct_to_500pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_300pct_to_500pct_in_profit".to_string()),
+            _200pct_to_300pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_200pct_to_300pct_in_profit".to_string()),
+            _100pct_to_200pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_100pct_to_200pct_in_profit".to_string()),
+            _90pct_to_100pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_90pct_to_100pct_in_profit".to_string()),
+            _80pct_to_90pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_80pct_to_90pct_in_profit".to_string()),
+            _70pct_to_80pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_70pct_to_80pct_in_profit".to_string()),
+            _60pct_to_70pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_60pct_to_70pct_in_profit".to_string()),
+            _50pct_to_60pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_50pct_to_60pct_in_profit".to_string()),
+            _40pct_to_50pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_40pct_to_50pct_in_profit".to_string()),
+            _30pct_to_40pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_30pct_to_40pct_in_profit".to_string()),
+            _20pct_to_30pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_20pct_to_30pct_in_profit".to_string()),
+            _10pct_to_20pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_10pct_to_20pct_in_profit".to_string()),
+            _0pct_to_10pct_in_profit: NuplRealizedSupplyPattern::new(client.clone(), "utxos_0pct_to_10pct_in_profit".to_string()),
+            _0pct_to_10pct_in_loss: NuplRealizedSupplyPattern::new(client.clone(), "utxos_0pct_to_10pct_in_loss".to_string()),
+            _10pct_to_20pct_in_loss: NuplRealizedSupplyPattern::new(client.clone(), "utxos_10pct_to_20pct_in_loss".to_string()),
+            _20pct_to_30pct_in_loss: NuplRealizedSupplyPattern::new(client.clone(), "utxos_20pct_to_30pct_in_loss".to_string()),
+            _30pct_to_40pct_in_loss: NuplRealizedSupplyPattern::new(client.clone(), "utxos_30pct_to_40pct_in_loss".to_string()),
+            _40pct_to_50pct_in_loss: NuplRealizedSupplyPattern::new(client.clone(), "utxos_40pct_to_50pct_in_loss".to_string()),
+            _50pct_to_60pct_in_loss: NuplRealizedSupplyPattern::new(client.clone(), "utxos_50pct_to_60pct_in_loss".to_string()),
+            _60pct_to_70pct_in_loss: NuplRealizedSupplyPattern::new(client.clone(), "utxos_60pct_to_70pct_in_loss".to_string()),
+            _70pct_to_80pct_in_loss: NuplRealizedSupplyPattern::new(client.clone(), "utxos_70pct_to_80pct_in_loss".to_string()),
+            _80pct_to_90pct_in_loss: NuplRealizedSupplyPattern::new(client.clone(), "utxos_80pct_to_90pct_in_loss".to_string()),
+            _90pct_to_100pct_in_loss: NuplRealizedSupplyPattern::new(client.clone(), "utxos_90pct_to_100pct_in_loss".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Cohorts_Utxo_Profitability_Profit {
-    pub breakeven: MvrvNuplRealizedSupplyPattern,
-    pub _10pct: MvrvNuplRealizedSupplyPattern,
-    pub _20pct: MvrvNuplRealizedSupplyPattern,
-    pub _30pct: MvrvNuplRealizedSupplyPattern,
-    pub _40pct: MvrvNuplRealizedSupplyPattern,
-    pub _50pct: MvrvNuplRealizedSupplyPattern,
-    pub _60pct: MvrvNuplRealizedSupplyPattern,
-    pub _70pct: MvrvNuplRealizedSupplyPattern,
-    pub _80pct: MvrvNuplRealizedSupplyPattern,
-    pub _90pct: MvrvNuplRealizedSupplyPattern,
-    pub _100pct: MvrvNuplRealizedSupplyPattern,
-    pub _200pct: MvrvNuplRealizedSupplyPattern,
-    pub _300pct: MvrvNuplRealizedSupplyPattern,
-    pub _500pct: MvrvNuplRealizedSupplyPattern,
+    pub breakeven: NuplRealizedSupplyPattern,
+    pub _10pct: NuplRealizedSupplyPattern,
+    pub _20pct: NuplRealizedSupplyPattern,
+    pub _30pct: NuplRealizedSupplyPattern,
+    pub _40pct: NuplRealizedSupplyPattern,
+    pub _50pct: NuplRealizedSupplyPattern,
+    pub _60pct: NuplRealizedSupplyPattern,
+    pub _70pct: NuplRealizedSupplyPattern,
+    pub _80pct: NuplRealizedSupplyPattern,
+    pub _90pct: NuplRealizedSupplyPattern,
+    pub _100pct: NuplRealizedSupplyPattern,
+    pub _200pct: NuplRealizedSupplyPattern,
+    pub _300pct: NuplRealizedSupplyPattern,
+    pub _500pct: NuplRealizedSupplyPattern,
 }
 
 impl MetricsTree_Cohorts_Utxo_Profitability_Profit {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            breakeven: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_in_profit".to_string()),
-            _10pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_10pct_in_profit".to_string()),
-            _20pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_20pct_in_profit".to_string()),
-            _30pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_30pct_in_profit".to_string()),
-            _40pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_40pct_in_profit".to_string()),
-            _50pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_50pct_in_profit".to_string()),
-            _60pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_60pct_in_profit".to_string()),
-            _70pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_70pct_in_profit".to_string()),
-            _80pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_80pct_in_profit".to_string()),
-            _90pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_90pct_in_profit".to_string()),
-            _100pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_100pct_in_profit".to_string()),
-            _200pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_200pct_in_profit".to_string()),
-            _300pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_300pct_in_profit".to_string()),
-            _500pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_500pct_in_profit".to_string()),
+            breakeven: NuplRealizedSupplyPattern::new(client.clone(), "utxos_in_profit".to_string()),
+            _10pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_10pct_in_profit".to_string()),
+            _20pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_20pct_in_profit".to_string()),
+            _30pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_30pct_in_profit".to_string()),
+            _40pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_40pct_in_profit".to_string()),
+            _50pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_50pct_in_profit".to_string()),
+            _60pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_60pct_in_profit".to_string()),
+            _70pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_70pct_in_profit".to_string()),
+            _80pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_80pct_in_profit".to_string()),
+            _90pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_90pct_in_profit".to_string()),
+            _100pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_100pct_in_profit".to_string()),
+            _200pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_200pct_in_profit".to_string()),
+            _300pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_300pct_in_profit".to_string()),
+            _500pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_500pct_in_profit".to_string()),
         }
     }
 }
 
 /// Metrics tree node.
 pub struct MetricsTree_Cohorts_Utxo_Profitability_Loss {
-    pub breakeven: MvrvNuplRealizedSupplyPattern,
-    pub _10pct: MvrvNuplRealizedSupplyPattern,
-    pub _20pct: MvrvNuplRealizedSupplyPattern,
-    pub _30pct: MvrvNuplRealizedSupplyPattern,
-    pub _40pct: MvrvNuplRealizedSupplyPattern,
-    pub _50pct: MvrvNuplRealizedSupplyPattern,
-    pub _60pct: MvrvNuplRealizedSupplyPattern,
-    pub _70pct: MvrvNuplRealizedSupplyPattern,
-    pub _80pct: MvrvNuplRealizedSupplyPattern,
+    pub breakeven: NuplRealizedSupplyPattern,
+    pub _10pct: NuplRealizedSupplyPattern,
+    pub _20pct: NuplRealizedSupplyPattern,
+    pub _30pct: NuplRealizedSupplyPattern,
+    pub _40pct: NuplRealizedSupplyPattern,
+    pub _50pct: NuplRealizedSupplyPattern,
+    pub _60pct: NuplRealizedSupplyPattern,
+    pub _70pct: NuplRealizedSupplyPattern,
+    pub _80pct: NuplRealizedSupplyPattern,
 }
 
 impl MetricsTree_Cohorts_Utxo_Profitability_Loss {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            breakeven: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_in_loss".to_string()),
-            _10pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_10pct_in_loss".to_string()),
-            _20pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_20pct_in_loss".to_string()),
-            _30pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_30pct_in_loss".to_string()),
-            _40pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_40pct_in_loss".to_string()),
-            _50pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_50pct_in_loss".to_string()),
-            _60pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_60pct_in_loss".to_string()),
-            _70pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_70pct_in_loss".to_string()),
-            _80pct: MvrvNuplRealizedSupplyPattern::new(client.clone(), "utxos_over_80pct_in_loss".to_string()),
+            breakeven: NuplRealizedSupplyPattern::new(client.clone(), "utxos_in_loss".to_string()),
+            _10pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_10pct_in_loss".to_string()),
+            _20pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_20pct_in_loss".to_string()),
+            _30pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_30pct_in_loss".to_string()),
+            _40pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_40pct_in_loss".to_string()),
+            _50pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_50pct_in_loss".to_string()),
+            _60pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_60pct_in_loss".to_string()),
+            _70pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_70pct_in_loss".to_string()),
+            _80pct: NuplRealizedSupplyPattern::new(client.clone(), "utxos_over_80pct_in_loss".to_string()),
         }
     }
 }

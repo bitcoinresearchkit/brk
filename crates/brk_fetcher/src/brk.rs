@@ -19,6 +19,7 @@ pub struct BRK {
 }
 
 impl BRK {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self::new_with_agent(crate::new_agent(30))
     }

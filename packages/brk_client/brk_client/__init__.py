@@ -2569,17 +2569,6 @@ class InvestedMaxMinPercentilesSupplyPattern:
     """Pattern struct for repeated tree structure."""
     pass
 
-class MvrvNuplRealizedSupplyPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated metric name."""
-        self.mvrv: MetricPattern1[StoredF32] = MetricPattern1(client, _m(acc, 'mvrv'))
-        self.nupl: BpsRatioPattern = BpsRatioPattern(client, _m(acc, 'nupl'))
-        self.realized_cap: AllSthPattern = AllSthPattern(client, acc)
-        self.realized_price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, _m(acc, 'realized_price'))
-        self.supply: AllSthPattern2 = AllSthPattern2(client, acc)
-
 class PhsReboundThsPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2916,6 +2905,15 @@ class LossNuplProfitPattern:
 class LowerPriceUpperPattern:
     """Pattern struct for repeated tree structure."""
     pass
+
+class NuplRealizedSupplyPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated metric name."""
+        self.nupl: BpsRatioPattern = BpsRatioPattern(client, _m(acc, 'nupl'))
+        self.realized_cap: AllSthPattern = AllSthPattern(client, acc)
+        self.supply: AllSthPattern2 = AllSthPattern2(client, acc)
 
 class RatioValuePattern2:
     """Pattern struct for repeated tree structure."""
@@ -5514,64 +5512,64 @@ class MetricsTree_Cohorts_Utxo_Profitability_Range:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.over_1000pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_1000pct_in_profit')
-        self._500pct_to_1000pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_500pct_to_1000pct_in_profit')
-        self._300pct_to_500pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_300pct_to_500pct_in_profit')
-        self._200pct_to_300pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_200pct_to_300pct_in_profit')
-        self._100pct_to_200pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_100pct_to_200pct_in_profit')
-        self._90pct_to_100pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_90pct_to_100pct_in_profit')
-        self._80pct_to_90pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_80pct_to_90pct_in_profit')
-        self._70pct_to_80pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_70pct_to_80pct_in_profit')
-        self._60pct_to_70pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_60pct_to_70pct_in_profit')
-        self._50pct_to_60pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_50pct_to_60pct_in_profit')
-        self._40pct_to_50pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_40pct_to_50pct_in_profit')
-        self._30pct_to_40pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_30pct_to_40pct_in_profit')
-        self._20pct_to_30pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_20pct_to_30pct_in_profit')
-        self._10pct_to_20pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_10pct_to_20pct_in_profit')
-        self._0pct_to_10pct_in_profit: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_0pct_to_10pct_in_profit')
-        self._0pct_to_10pct_in_loss: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_0pct_to_10pct_in_loss')
-        self._10pct_to_20pct_in_loss: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_10pct_to_20pct_in_loss')
-        self._20pct_to_30pct_in_loss: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_20pct_to_30pct_in_loss')
-        self._30pct_to_40pct_in_loss: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_30pct_to_40pct_in_loss')
-        self._40pct_to_50pct_in_loss: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_40pct_to_50pct_in_loss')
-        self._50pct_to_60pct_in_loss: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_50pct_to_60pct_in_loss')
-        self._60pct_to_70pct_in_loss: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_60pct_to_70pct_in_loss')
-        self._70pct_to_80pct_in_loss: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_70pct_to_80pct_in_loss')
-        self._80pct_to_90pct_in_loss: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_80pct_to_90pct_in_loss')
-        self._90pct_to_100pct_in_loss: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_90pct_to_100pct_in_loss')
+        self.over_1000pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_1000pct_in_profit')
+        self._500pct_to_1000pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_500pct_to_1000pct_in_profit')
+        self._300pct_to_500pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_300pct_to_500pct_in_profit')
+        self._200pct_to_300pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_200pct_to_300pct_in_profit')
+        self._100pct_to_200pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_100pct_to_200pct_in_profit')
+        self._90pct_to_100pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_90pct_to_100pct_in_profit')
+        self._80pct_to_90pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_80pct_to_90pct_in_profit')
+        self._70pct_to_80pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_70pct_to_80pct_in_profit')
+        self._60pct_to_70pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_60pct_to_70pct_in_profit')
+        self._50pct_to_60pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_50pct_to_60pct_in_profit')
+        self._40pct_to_50pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_40pct_to_50pct_in_profit')
+        self._30pct_to_40pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_30pct_to_40pct_in_profit')
+        self._20pct_to_30pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_20pct_to_30pct_in_profit')
+        self._10pct_to_20pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_10pct_to_20pct_in_profit')
+        self._0pct_to_10pct_in_profit: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_0pct_to_10pct_in_profit')
+        self._0pct_to_10pct_in_loss: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_0pct_to_10pct_in_loss')
+        self._10pct_to_20pct_in_loss: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_10pct_to_20pct_in_loss')
+        self._20pct_to_30pct_in_loss: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_20pct_to_30pct_in_loss')
+        self._30pct_to_40pct_in_loss: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_30pct_to_40pct_in_loss')
+        self._40pct_to_50pct_in_loss: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_40pct_to_50pct_in_loss')
+        self._50pct_to_60pct_in_loss: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_50pct_to_60pct_in_loss')
+        self._60pct_to_70pct_in_loss: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_60pct_to_70pct_in_loss')
+        self._70pct_to_80pct_in_loss: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_70pct_to_80pct_in_loss')
+        self._80pct_to_90pct_in_loss: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_80pct_to_90pct_in_loss')
+        self._90pct_to_100pct_in_loss: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_90pct_to_100pct_in_loss')
 
 class MetricsTree_Cohorts_Utxo_Profitability_Profit:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.breakeven: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_in_profit')
-        self._10pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_10pct_in_profit')
-        self._20pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_20pct_in_profit')
-        self._30pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_30pct_in_profit')
-        self._40pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_40pct_in_profit')
-        self._50pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_50pct_in_profit')
-        self._60pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_60pct_in_profit')
-        self._70pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_70pct_in_profit')
-        self._80pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_80pct_in_profit')
-        self._90pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_90pct_in_profit')
-        self._100pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_100pct_in_profit')
-        self._200pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_200pct_in_profit')
-        self._300pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_300pct_in_profit')
-        self._500pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_500pct_in_profit')
+        self.breakeven: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_in_profit')
+        self._10pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_10pct_in_profit')
+        self._20pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_20pct_in_profit')
+        self._30pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_30pct_in_profit')
+        self._40pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_40pct_in_profit')
+        self._50pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_50pct_in_profit')
+        self._60pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_60pct_in_profit')
+        self._70pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_70pct_in_profit')
+        self._80pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_80pct_in_profit')
+        self._90pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_90pct_in_profit')
+        self._100pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_100pct_in_profit')
+        self._200pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_200pct_in_profit')
+        self._300pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_300pct_in_profit')
+        self._500pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_500pct_in_profit')
 
 class MetricsTree_Cohorts_Utxo_Profitability_Loss:
     """Metrics tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.breakeven: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_in_loss')
-        self._10pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_10pct_in_loss')
-        self._20pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_20pct_in_loss')
-        self._30pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_30pct_in_loss')
-        self._40pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_40pct_in_loss')
-        self._50pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_50pct_in_loss')
-        self._60pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_60pct_in_loss')
-        self._70pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_70pct_in_loss')
-        self._80pct: MvrvNuplRealizedSupplyPattern = MvrvNuplRealizedSupplyPattern(client, 'utxos_over_80pct_in_loss')
+        self.breakeven: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_in_loss')
+        self._10pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_10pct_in_loss')
+        self._20pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_20pct_in_loss')
+        self._30pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_30pct_in_loss')
+        self._40pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_40pct_in_loss')
+        self._50pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_50pct_in_loss')
+        self._60pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_60pct_in_loss')
+        self._70pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_70pct_in_loss')
+        self._80pct: NuplRealizedSupplyPattern = NuplRealizedSupplyPattern(client, 'utxos_over_80pct_in_loss')
 
 class MetricsTree_Cohorts_Utxo_Profitability:
     """Metrics tree node."""

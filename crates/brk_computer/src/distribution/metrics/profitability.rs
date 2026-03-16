@@ -1,17 +1,12 @@
 use brk_cohort::{Loss, Profit, ProfitabilityRange};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{
-    BasisPoints32, BasisPointsSigned32, Cents, Dollars, Indexes, Sats, StoredF32, Version,
-};
+use brk_types::{BasisPointsSigned32, Cents, Dollars, Indexes, Sats, Version};
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
     indexes,
-    internal::{
-        AmountPerBlock, AmountPerBlockWithDeltas, CachedWindowStarts, Identity, LazyPerBlock,
-        PerBlock, PriceWithRatioPerBlock, RatioPerBlock,
-    },
+    internal::{AmountPerBlock, AmountPerBlockWithDeltas, CachedWindowStarts, PerBlock, RatioPerBlock},
     prices,
 };
 
@@ -25,8 +20,6 @@ pub struct WithSth<All, Sth = All> {
 pub struct ProfitabilityBucket<M: StorageMode = Rw> {
     pub supply: WithSth<AmountPerBlockWithDeltas<M>, AmountPerBlock<M>>,
     pub realized_cap: WithSth<PerBlock<Dollars, M>>,
-    pub realized_price: PriceWithRatioPerBlock<M>,
-    pub mvrv: LazyPerBlock<StoredF32>,
     pub nupl: RatioPerBlock<BasisPointsSigned32, M>,
 }
 
@@ -49,19 +42,6 @@ impl ProfitabilityBucket {
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let realized_price = PriceWithRatioPerBlock::forced_import(
-            db,
-            &format!("{name}_realized_price"),
-            version,
-            indexes,
-        )?;
-
-        let mvrv = LazyPerBlock::from_lazy::<Identity<StoredF32>, BasisPoints32>(
-            &format!("{name}_mvrv"),
-            version,
-            &realized_price.ratio,
-        );
-
         Ok(Self {
             supply: WithSth {
                 all: AmountPerBlockWithDeltas::forced_import(
@@ -92,8 +72,6 @@ impl ProfitabilityBucket {
                     indexes,
                 )?,
             },
-            realized_price,
-            mvrv,
             nupl: RatioPerBlock::forced_import_raw(
                 db,
                 &format!("{name}_nupl"),
@@ -128,38 +106,20 @@ impl ProfitabilityBucket {
         self.supply.all.compute(prices, max_from, exit)?;
         self.supply.sth.compute(prices, max_from, exit)?;
 
-        // Realized price cents = realized_cap_cents × ONE_BTC / supply_sats
-        self.realized_price.cents.height.compute_transform2(
-            max_from,
-            &self.realized_cap.all.height,
-            &self.supply.all.sats.height,
-            |(i, cap_dollars, supply_sats, ..)| {
-                let cap_cents = Cents::from(cap_dollars).as_u128();
-                let supply = supply_sats.as_u128();
-                if supply == 0 {
-                    (i, Cents::ZERO)
-                } else {
-                    (i, Cents::from(cap_cents * Sats::ONE_BTC_U128 / supply))
-                }
-            },
-            exit,
-        )?;
-
-        // Ratio (spot / realized_price) → feeds MVRV lazily
-        self.realized_price
-            .compute_ratio(starting_indexes, &prices.spot.cents.height, exit)?;
-
         // NUPL = (spot - realized_price) / spot
-        self.nupl.bps.height.compute_transform2(
+        // where realized_price = realized_cap_cents × ONE_BTC / supply_sats
+        self.nupl.bps.height.compute_transform3(
             max_from,
             &prices.spot.cents.height,
-            &self.realized_price.cents.height,
-            |(i, spot, realized, ..)| {
+            &self.realized_cap.all.height,
+            &self.supply.all.sats.height,
+            |(i, spot, cap_dollars, supply_sats, ..)| {
                 let p = spot.as_u128();
-                if p == 0 {
+                let supply = supply_sats.as_u128();
+                if p == 0 || supply == 0 {
                     (i, BasisPointsSigned32::ZERO)
                 } else {
-                    let rp = realized.as_u128();
+                    let rp = Cents::from(cap_dollars).as_u128() * Sats::ONE_BTC_U128 / supply;
                     let bps = ((p as i128 - rp as i128) * 10000) / p as i128;
                     (i, BasisPointsSigned32::from(bps as i32))
                 }
@@ -173,14 +133,12 @@ impl ProfitabilityBucket {
     pub(crate) fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
             &mut self.supply.all.inner.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply.all.inner.cents.height as &mut dyn AnyStoredVec,
-            &mut self.supply.sth.sats.height as &mut dyn AnyStoredVec,
-            &mut self.supply.sth.cents.height as &mut dyn AnyStoredVec,
-            &mut self.realized_cap.all.height as &mut dyn AnyStoredVec,
-            &mut self.realized_cap.sth.height as &mut dyn AnyStoredVec,
-            &mut self.realized_price.cents.height as &mut dyn AnyStoredVec,
-            &mut self.realized_price.bps.height as &mut dyn AnyStoredVec,
-            &mut self.nupl.bps.height as &mut dyn AnyStoredVec,
+            &mut self.supply.all.inner.cents.height,
+            &mut self.supply.sth.sats.height,
+            &mut self.supply.sth.cents.height,
+            &mut self.realized_cap.all.height,
+            &mut self.realized_cap.sth.height,
+            &mut self.nupl.bps.height,
         ]
     }
 }

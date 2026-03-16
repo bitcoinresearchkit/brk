@@ -10,7 +10,7 @@
  * - activity.js: SOPR, Volume, Lifespan
  */
 
-import { formatCohortTitle, satsBtcUsd, satsBtcUsdFullTree, simplePriceRatioTree, groupedSimplePriceRatioTree } from "../shared.js";
+import { formatCohortTitle, satsBtcUsd, satsBtcUsdFullTree } from "../shared.js";
 import { ROLLING_WINDOWS, line, baseline, percentRatio, rollingWindowsTree, rollingPercentRatioTree } from "../series.js";
 import { Unit } from "../../utils/units.js";
 
@@ -636,15 +636,6 @@ function singleBucketFolder({ name, color, pattern }) {
         ],
       },
       {
-        name: "Realized Price",
-        tree: simplePriceRatioTree({
-          pattern: pattern.realizedPrice,
-          title: `${name}: Realized Price`,
-          legend: name,
-          color,
-        }),
-      },
-      {
         name: "NUPL",
         title: `${name}: NUPL`,
         bottom: [line({ metric: pattern.nupl.ratio, name, color, unit: Unit.ratio })],
@@ -744,13 +735,6 @@ function groupedBucketCharts(list, titlePrefix) {
           ),
         },
       ],
-    },
-    {
-      name: "Realized Price",
-      tree: groupedSimplePriceRatioTree({
-        list: list.map(({ name, color, pattern }) => ({ name, color, pattern: pattern.realizedPrice })),
-        title: `${titlePrefix}: Realized Price`,
-      }),
     },
     {
       name: "NUPL",

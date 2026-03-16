@@ -2631,31 +2631,6 @@ function createDeltaHalfInTotalPattern2(client, acc) {
  */
 
 /**
- * @typedef {Object} MvrvNuplRealizedSupplyPattern
- * @property {MetricPattern1<StoredF32>} mvrv
- * @property {BpsRatioPattern} nupl
- * @property {AllSthPattern} realizedCap
- * @property {BpsCentsRatioSatsUsdPattern} realizedPrice
- * @property {AllSthPattern2} supply
- */
-
-/**
- * Create a MvrvNuplRealizedSupplyPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated metric name
- * @returns {MvrvNuplRealizedSupplyPattern}
- */
-function createMvrvNuplRealizedSupplyPattern(client, acc) {
-  return {
-    mvrv: createMetricPattern1(client, _m(acc, 'mvrv')),
-    nupl: createBpsRatioPattern(client, _m(acc, 'nupl')),
-    realizedCap: createAllSthPattern(client, acc),
-    realizedPrice: createBpsCentsRatioSatsUsdPattern(client, _m(acc, 'realized_price')),
-    supply: createAllSthPattern2(client, acc),
-  };
-}
-
-/**
  * @typedef {Object} PhsReboundThsPattern
  * @property {MetricPattern1<StoredF32>} phs
  * @property {MetricPattern1<StoredF32>} phsMin
@@ -3431,6 +3406,27 @@ function createLossNuplProfitPattern(client, acc) {
  * @property {BpsCentsPercentilesRatioSatsUsdPattern} price
  * @property {CentsSatsUsdPattern} upperPriceBand
  */
+
+/**
+ * @typedef {Object} NuplRealizedSupplyPattern
+ * @property {BpsRatioPattern} nupl
+ * @property {AllSthPattern} realizedCap
+ * @property {AllSthPattern2} supply
+ */
+
+/**
+ * Create a NuplRealizedSupplyPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated metric name
+ * @returns {NuplRealizedSupplyPattern}
+ */
+function createNuplRealizedSupplyPattern(client, acc) {
+  return {
+    nupl: createBpsRatioPattern(client, _m(acc, 'nupl')),
+    realizedCap: createAllSthPattern(client, acc),
+    supply: createAllSthPattern2(client, acc),
+  };
+}
 
 /**
  * @typedef {Object} RatioValuePattern2
@@ -6117,62 +6113,62 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} MetricsTree_Cohorts_Utxo_Profitability_Range
- * @property {MvrvNuplRealizedSupplyPattern} over1000pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _500pctTo1000pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _300pctTo500pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _200pctTo300pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _100pctTo200pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _90pctTo100pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _80pctTo90pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _70pctTo80pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _60pctTo70pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _50pctTo60pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _40pctTo50pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _30pctTo40pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _20pctTo30pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _10pctTo20pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _0pctTo10pctInProfit
- * @property {MvrvNuplRealizedSupplyPattern} _0pctTo10pctInLoss
- * @property {MvrvNuplRealizedSupplyPattern} _10pctTo20pctInLoss
- * @property {MvrvNuplRealizedSupplyPattern} _20pctTo30pctInLoss
- * @property {MvrvNuplRealizedSupplyPattern} _30pctTo40pctInLoss
- * @property {MvrvNuplRealizedSupplyPattern} _40pctTo50pctInLoss
- * @property {MvrvNuplRealizedSupplyPattern} _50pctTo60pctInLoss
- * @property {MvrvNuplRealizedSupplyPattern} _60pctTo70pctInLoss
- * @property {MvrvNuplRealizedSupplyPattern} _70pctTo80pctInLoss
- * @property {MvrvNuplRealizedSupplyPattern} _80pctTo90pctInLoss
- * @property {MvrvNuplRealizedSupplyPattern} _90pctTo100pctInLoss
+ * @property {NuplRealizedSupplyPattern} over1000pctInProfit
+ * @property {NuplRealizedSupplyPattern} _500pctTo1000pctInProfit
+ * @property {NuplRealizedSupplyPattern} _300pctTo500pctInProfit
+ * @property {NuplRealizedSupplyPattern} _200pctTo300pctInProfit
+ * @property {NuplRealizedSupplyPattern} _100pctTo200pctInProfit
+ * @property {NuplRealizedSupplyPattern} _90pctTo100pctInProfit
+ * @property {NuplRealizedSupplyPattern} _80pctTo90pctInProfit
+ * @property {NuplRealizedSupplyPattern} _70pctTo80pctInProfit
+ * @property {NuplRealizedSupplyPattern} _60pctTo70pctInProfit
+ * @property {NuplRealizedSupplyPattern} _50pctTo60pctInProfit
+ * @property {NuplRealizedSupplyPattern} _40pctTo50pctInProfit
+ * @property {NuplRealizedSupplyPattern} _30pctTo40pctInProfit
+ * @property {NuplRealizedSupplyPattern} _20pctTo30pctInProfit
+ * @property {NuplRealizedSupplyPattern} _10pctTo20pctInProfit
+ * @property {NuplRealizedSupplyPattern} _0pctTo10pctInProfit
+ * @property {NuplRealizedSupplyPattern} _0pctTo10pctInLoss
+ * @property {NuplRealizedSupplyPattern} _10pctTo20pctInLoss
+ * @property {NuplRealizedSupplyPattern} _20pctTo30pctInLoss
+ * @property {NuplRealizedSupplyPattern} _30pctTo40pctInLoss
+ * @property {NuplRealizedSupplyPattern} _40pctTo50pctInLoss
+ * @property {NuplRealizedSupplyPattern} _50pctTo60pctInLoss
+ * @property {NuplRealizedSupplyPattern} _60pctTo70pctInLoss
+ * @property {NuplRealizedSupplyPattern} _70pctTo80pctInLoss
+ * @property {NuplRealizedSupplyPattern} _80pctTo90pctInLoss
+ * @property {NuplRealizedSupplyPattern} _90pctTo100pctInLoss
  */
 
 /**
  * @typedef {Object} MetricsTree_Cohorts_Utxo_Profitability_Profit
- * @property {MvrvNuplRealizedSupplyPattern} breakeven
- * @property {MvrvNuplRealizedSupplyPattern} _10pct
- * @property {MvrvNuplRealizedSupplyPattern} _20pct
- * @property {MvrvNuplRealizedSupplyPattern} _30pct
- * @property {MvrvNuplRealizedSupplyPattern} _40pct
- * @property {MvrvNuplRealizedSupplyPattern} _50pct
- * @property {MvrvNuplRealizedSupplyPattern} _60pct
- * @property {MvrvNuplRealizedSupplyPattern} _70pct
- * @property {MvrvNuplRealizedSupplyPattern} _80pct
- * @property {MvrvNuplRealizedSupplyPattern} _90pct
- * @property {MvrvNuplRealizedSupplyPattern} _100pct
- * @property {MvrvNuplRealizedSupplyPattern} _200pct
- * @property {MvrvNuplRealizedSupplyPattern} _300pct
- * @property {MvrvNuplRealizedSupplyPattern} _500pct
+ * @property {NuplRealizedSupplyPattern} breakeven
+ * @property {NuplRealizedSupplyPattern} _10pct
+ * @property {NuplRealizedSupplyPattern} _20pct
+ * @property {NuplRealizedSupplyPattern} _30pct
+ * @property {NuplRealizedSupplyPattern} _40pct
+ * @property {NuplRealizedSupplyPattern} _50pct
+ * @property {NuplRealizedSupplyPattern} _60pct
+ * @property {NuplRealizedSupplyPattern} _70pct
+ * @property {NuplRealizedSupplyPattern} _80pct
+ * @property {NuplRealizedSupplyPattern} _90pct
+ * @property {NuplRealizedSupplyPattern} _100pct
+ * @property {NuplRealizedSupplyPattern} _200pct
+ * @property {NuplRealizedSupplyPattern} _300pct
+ * @property {NuplRealizedSupplyPattern} _500pct
  */
 
 /**
  * @typedef {Object} MetricsTree_Cohorts_Utxo_Profitability_Loss
- * @property {MvrvNuplRealizedSupplyPattern} breakeven
- * @property {MvrvNuplRealizedSupplyPattern} _10pct
- * @property {MvrvNuplRealizedSupplyPattern} _20pct
- * @property {MvrvNuplRealizedSupplyPattern} _30pct
- * @property {MvrvNuplRealizedSupplyPattern} _40pct
- * @property {MvrvNuplRealizedSupplyPattern} _50pct
- * @property {MvrvNuplRealizedSupplyPattern} _60pct
- * @property {MvrvNuplRealizedSupplyPattern} _70pct
- * @property {MvrvNuplRealizedSupplyPattern} _80pct
+ * @property {NuplRealizedSupplyPattern} breakeven
+ * @property {NuplRealizedSupplyPattern} _10pct
+ * @property {NuplRealizedSupplyPattern} _20pct
+ * @property {NuplRealizedSupplyPattern} _30pct
+ * @property {NuplRealizedSupplyPattern} _40pct
+ * @property {NuplRealizedSupplyPattern} _50pct
+ * @property {NuplRealizedSupplyPattern} _60pct
+ * @property {NuplRealizedSupplyPattern} _70pct
+ * @property {NuplRealizedSupplyPattern} _80pct
  */
 
 /**
@@ -9092,58 +9088,58 @@ class BrkClient extends BrkClientBase {
           },
           profitability: {
             range: {
-              over1000pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_1000pct_in_profit'),
-              _500pctTo1000pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_500pct_to_1000pct_in_profit'),
-              _300pctTo500pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_300pct_to_500pct_in_profit'),
-              _200pctTo300pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_200pct_to_300pct_in_profit'),
-              _100pctTo200pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_100pct_to_200pct_in_profit'),
-              _90pctTo100pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_90pct_to_100pct_in_profit'),
-              _80pctTo90pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_80pct_to_90pct_in_profit'),
-              _70pctTo80pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_70pct_to_80pct_in_profit'),
-              _60pctTo70pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_60pct_to_70pct_in_profit'),
-              _50pctTo60pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_50pct_to_60pct_in_profit'),
-              _40pctTo50pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_40pct_to_50pct_in_profit'),
-              _30pctTo40pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_30pct_to_40pct_in_profit'),
-              _20pctTo30pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_20pct_to_30pct_in_profit'),
-              _10pctTo20pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_10pct_to_20pct_in_profit'),
-              _0pctTo10pctInProfit: createMvrvNuplRealizedSupplyPattern(this, 'utxos_0pct_to_10pct_in_profit'),
-              _0pctTo10pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_0pct_to_10pct_in_loss'),
-              _10pctTo20pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_10pct_to_20pct_in_loss'),
-              _20pctTo30pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_20pct_to_30pct_in_loss'),
-              _30pctTo40pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_30pct_to_40pct_in_loss'),
-              _40pctTo50pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_40pct_to_50pct_in_loss'),
-              _50pctTo60pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_50pct_to_60pct_in_loss'),
-              _60pctTo70pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_60pct_to_70pct_in_loss'),
-              _70pctTo80pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_70pct_to_80pct_in_loss'),
-              _80pctTo90pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_80pct_to_90pct_in_loss'),
-              _90pctTo100pctInLoss: createMvrvNuplRealizedSupplyPattern(this, 'utxos_90pct_to_100pct_in_loss'),
+              over1000pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_over_1000pct_in_profit'),
+              _500pctTo1000pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_500pct_to_1000pct_in_profit'),
+              _300pctTo500pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_300pct_to_500pct_in_profit'),
+              _200pctTo300pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_200pct_to_300pct_in_profit'),
+              _100pctTo200pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_100pct_to_200pct_in_profit'),
+              _90pctTo100pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_90pct_to_100pct_in_profit'),
+              _80pctTo90pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_80pct_to_90pct_in_profit'),
+              _70pctTo80pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_70pct_to_80pct_in_profit'),
+              _60pctTo70pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_60pct_to_70pct_in_profit'),
+              _50pctTo60pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_50pct_to_60pct_in_profit'),
+              _40pctTo50pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_40pct_to_50pct_in_profit'),
+              _30pctTo40pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_30pct_to_40pct_in_profit'),
+              _20pctTo30pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_20pct_to_30pct_in_profit'),
+              _10pctTo20pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_10pct_to_20pct_in_profit'),
+              _0pctTo10pctInProfit: createNuplRealizedSupplyPattern(this, 'utxos_0pct_to_10pct_in_profit'),
+              _0pctTo10pctInLoss: createNuplRealizedSupplyPattern(this, 'utxos_0pct_to_10pct_in_loss'),
+              _10pctTo20pctInLoss: createNuplRealizedSupplyPattern(this, 'utxos_10pct_to_20pct_in_loss'),
+              _20pctTo30pctInLoss: createNuplRealizedSupplyPattern(this, 'utxos_20pct_to_30pct_in_loss'),
+              _30pctTo40pctInLoss: createNuplRealizedSupplyPattern(this, 'utxos_30pct_to_40pct_in_loss'),
+              _40pctTo50pctInLoss: createNuplRealizedSupplyPattern(this, 'utxos_40pct_to_50pct_in_loss'),
+              _50pctTo60pctInLoss: createNuplRealizedSupplyPattern(this, 'utxos_50pct_to_60pct_in_loss'),
+              _60pctTo70pctInLoss: createNuplRealizedSupplyPattern(this, 'utxos_60pct_to_70pct_in_loss'),
+              _70pctTo80pctInLoss: createNuplRealizedSupplyPattern(this, 'utxos_70pct_to_80pct_in_loss'),
+              _80pctTo90pctInLoss: createNuplRealizedSupplyPattern(this, 'utxos_80pct_to_90pct_in_loss'),
+              _90pctTo100pctInLoss: createNuplRealizedSupplyPattern(this, 'utxos_90pct_to_100pct_in_loss'),
             },
             profit: {
-              breakeven: createMvrvNuplRealizedSupplyPattern(this, 'utxos_in_profit'),
-              _10pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_10pct_in_profit'),
-              _20pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_20pct_in_profit'),
-              _30pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_30pct_in_profit'),
-              _40pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_40pct_in_profit'),
-              _50pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_50pct_in_profit'),
-              _60pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_60pct_in_profit'),
-              _70pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_70pct_in_profit'),
-              _80pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_80pct_in_profit'),
-              _90pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_90pct_in_profit'),
-              _100pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_100pct_in_profit'),
-              _200pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_200pct_in_profit'),
-              _300pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_300pct_in_profit'),
-              _500pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_500pct_in_profit'),
+              breakeven: createNuplRealizedSupplyPattern(this, 'utxos_in_profit'),
+              _10pct: createNuplRealizedSupplyPattern(this, 'utxos_over_10pct_in_profit'),
+              _20pct: createNuplRealizedSupplyPattern(this, 'utxos_over_20pct_in_profit'),
+              _30pct: createNuplRealizedSupplyPattern(this, 'utxos_over_30pct_in_profit'),
+              _40pct: createNuplRealizedSupplyPattern(this, 'utxos_over_40pct_in_profit'),
+              _50pct: createNuplRealizedSupplyPattern(this, 'utxos_over_50pct_in_profit'),
+              _60pct: createNuplRealizedSupplyPattern(this, 'utxos_over_60pct_in_profit'),
+              _70pct: createNuplRealizedSupplyPattern(this, 'utxos_over_70pct_in_profit'),
+              _80pct: createNuplRealizedSupplyPattern(this, 'utxos_over_80pct_in_profit'),
+              _90pct: createNuplRealizedSupplyPattern(this, 'utxos_over_90pct_in_profit'),
+              _100pct: createNuplRealizedSupplyPattern(this, 'utxos_over_100pct_in_profit'),
+              _200pct: createNuplRealizedSupplyPattern(this, 'utxos_over_200pct_in_profit'),
+              _300pct: createNuplRealizedSupplyPattern(this, 'utxos_over_300pct_in_profit'),
+              _500pct: createNuplRealizedSupplyPattern(this, 'utxos_over_500pct_in_profit'),
             },
             loss: {
-              breakeven: createMvrvNuplRealizedSupplyPattern(this, 'utxos_in_loss'),
-              _10pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_10pct_in_loss'),
-              _20pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_20pct_in_loss'),
-              _30pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_30pct_in_loss'),
-              _40pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_40pct_in_loss'),
-              _50pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_50pct_in_loss'),
-              _60pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_60pct_in_loss'),
-              _70pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_70pct_in_loss'),
-              _80pct: createMvrvNuplRealizedSupplyPattern(this, 'utxos_over_80pct_in_loss'),
+              breakeven: createNuplRealizedSupplyPattern(this, 'utxos_in_loss'),
+              _10pct: createNuplRealizedSupplyPattern(this, 'utxos_over_10pct_in_loss'),
+              _20pct: createNuplRealizedSupplyPattern(this, 'utxos_over_20pct_in_loss'),
+              _30pct: createNuplRealizedSupplyPattern(this, 'utxos_over_30pct_in_loss'),
+              _40pct: createNuplRealizedSupplyPattern(this, 'utxos_over_40pct_in_loss'),
+              _50pct: createNuplRealizedSupplyPattern(this, 'utxos_over_50pct_in_loss'),
+              _60pct: createNuplRealizedSupplyPattern(this, 'utxos_over_60pct_in_loss'),
+              _70pct: createNuplRealizedSupplyPattern(this, 'utxos_over_70pct_in_loss'),
+              _80pct: createNuplRealizedSupplyPattern(this, 'utxos_over_80pct_in_loss'),
             },
           },
           matured: {
