@@ -13,6 +13,6 @@ exclude = ["examples/"]
 [dependencies]
 brk_cohort = { workspace = true }
 brk_types = { workspace = true }
-minreq = { workspace = true }
+ureq = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

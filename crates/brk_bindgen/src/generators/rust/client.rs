@@ -11,7 +11,8 @@ use crate::{
 pub fn generate_imports(output: &mut String) {
     writeln!(
         output,
-        r#"use std::sync::Arc;
+        r#"use std::io::Read as _;
+use std::sync::Arc;
 use std::ops::{{Bound, RangeBounds}};
 use serde::de::DeserializeOwned;
 pub use brk_cohort::*;
@@ -59,59 +60,61 @@ impl Default for BrkClientOptions {{
     }}
 }}
 
-/// Base HTTP client for making requests.
+/// Base HTTP client for making requests. Reuses connections via ureq::Agent.
 #[derive(Debug, Clone)]
 pub struct BrkClientBase {{
+    agent: ureq::Agent,
     base_url: String,
-    timeout_secs: u64,
 }}
 
 impl BrkClientBase {{
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {{
-        Self {{
-            base_url: base_url.into(),
-            timeout_secs: 30,
-        }}
+        Self::with_options(BrkClientOptions {{ base_url: base_url.into(), ..Default::default() }})
     }}
 
     /// Create a new client with options.
     pub fn with_options(options: BrkClientOptions) -> Self {{
+        let agent = ureq::Agent::config_builder()
+            .timeout_global(Some(std::time::Duration::from_secs(options.timeout_secs)))
+            .build()
+            .into();
         Self {{
+            agent,
             base_url: options.base_url,
-            timeout_secs: options.timeout_secs,
         }}
     }}
 
-    fn get(&self, path: &str) -> Result<minreq::Response> {{
+    fn get(&self, path: &str) -> Result<Vec<u8>> {{
         let base = self.base_url.trim_end_matches('/');
         let url = format!("{{}}{{}}", base, path);
-        let response = minreq::get(&url)
-            .with_timeout(self.timeout_secs)
-            .send()
+        let mut response = self.agent.get(&url)
+            .call()
             .map_err(|e| BrkError {{ message: e.to_string() }})?;
 
-        if response.status_code >= 400 {{
+        if response.status().as_u16() >= 400 {{
             return Err(BrkError {{
-                message: format!("HTTP {{}}", response.status_code),
+                message: format!("HTTP {{}}", response.status().as_u16()),
             }});
         }}
 
-        Ok(response)
+        let mut bytes = Vec::new();
+        response.body_mut().as_reader().read_to_end(&mut bytes)
+            .map_err(|e| BrkError {{ message: e.to_string() }})?;
+        Ok(bytes)
     }}
 
     /// Make a GET request and deserialize JSON response.
     pub fn get_json<T: DeserializeOwned>(&self, path: &str) -> Result<T> {{
-        self.get(path)?
-            .json()
+        let bytes = self.get(path)?;
+        serde_json::from_slice(&bytes)
             .map_err(|e| BrkError {{ message: e.to_string() }})
     }}
 
     /// Make a GET request and return raw text response.
     pub fn get_text(&self, path: &str) -> Result<String> {{
-        self.get(path)?
-            .as_str()
-            .map(|s| s.to_string())
+        let bytes = self.get(path)?;
+        String::from_utf8(bytes)
             .map_err(|e| BrkError {{ message: e.to_string() }})
     }}
 }}

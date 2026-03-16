@@ -13,7 +13,7 @@ bitcoincore-rpc = ["dep:bitcoincore-rpc"]
 corepc = ["dep:corepc-client"]
 fjall = ["dep:fjall"]
 jiff = ["dep:jiff"]
-minreq = ["dep:minreq"]
+ureq = ["dep:ureq"]
 pco = ["dep:pco"]
 serde_json = ["dep:serde_json"]
 tokio = ["dep:tokio"]
@@ -25,7 +25,7 @@ bitcoincore-rpc = { workspace = true, optional = true }
 corepc-client = { workspace = true, optional = true }
 fjall = { workspace = true, optional = true }
 jiff = { workspace = true, optional = true }
-minreq = { workspace = true, optional = true }
+ureq = { workspace = true, optional = true }
 pco = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 thiserror = "2.0"

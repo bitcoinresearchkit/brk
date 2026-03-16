@@ -6,14 +6,26 @@ use brk_types::{
 };
 use serde_json::Value;
 use tracing::info;
+use ureq::Agent;
 
-use crate::{PriceSource, check_response, default_retry};
+use crate::{PriceSource, checked_get, default_retry};
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub struct BRK {
+    agent: Agent,
     height_to_ohlc: BTreeMap<Height, Vec<OHLCCents>>,
     day1_to_ohlc: BTreeMap<Day1, Vec<OHLCCents>>,
+}
+
+impl BRK {
+    pub fn new(agent: Agent) -> Self {
+        Self {
+            agent,
+            height_to_ohlc: BTreeMap::new(),
+            day1_to_ohlc: BTreeMap::new(),
+        }
+    }
 }
 
 const API_URL: &str = "https://bitview.space/api/vecs";
@@ -28,7 +40,7 @@ impl BRK {
             || ((key + self.height_to_ohlc.get(&key).unwrap().len()) <= height)
         {
             self.height_to_ohlc
-                .insert(key, Self::fetch_height_prices(key)?);
+                .insert(key, self.fetch_height_prices(key)?);
         }
 
         self.height_to_ohlc
@@ -39,7 +51,8 @@ impl BRK {
             .ok_or(Error::NotFound("Couldn't find height in BRK".into()))
     }
 
-    fn fetch_height_prices(height: Height) -> Result<Vec<OHLCCents>> {
+    fn fetch_height_prices(&self, height: Height) -> Result<Vec<OHLCCents>> {
+        let agent = &self.agent;
         default_retry(|_| {
             let url = format!(
                 "{API_URL}/height-to-price-ohlc?from={}&to={}",
@@ -48,7 +61,7 @@ impl BRK {
             );
             info!("Fetching {url} ...");
 
-            let bytes = check_response(minreq::get(&url).with_timeout(30).send()?, &url)?;
+            let bytes = checked_get(agent, &url)?;
             let body: Value = serde_json::from_slice(&bytes)?;
 
             body.as_array()
@@ -68,7 +81,7 @@ impl BRK {
         if !self.day1_to_ohlc.contains_key(&key)
             || ((key + self.day1_to_ohlc.get(&key).unwrap().len()) <= day1)
         {
-            self.day1_to_ohlc.insert(key, Self::fetch_date_prices(key)?);
+            self.day1_to_ohlc.insert(key, self.fetch_date_prices(key)?);
         }
 
         self.day1_to_ohlc
@@ -79,7 +92,8 @@ impl BRK {
             .ok_or(Error::NotFound("Couldn't find date in BRK".into()))
     }
 
-    fn fetch_date_prices(day1: Day1) -> Result<Vec<OHLCCents>> {
+    fn fetch_date_prices(&self, day1: Day1) -> Result<Vec<OHLCCents>> {
+        let agent = &self.agent;
         default_retry(|_| {
             let url = format!(
                 "{API_URL}/day1-to-price-ohlc?from={}&to={}",
@@ -88,7 +102,7 @@ impl BRK {
             );
             info!("Fetching {url}...");
 
-            let bytes = check_response(minreq::get(&url).with_timeout(30).send()?, &url)?;
+            let bytes = checked_get(agent, &url)?;
             let body: Value = serde_json::from_slice(&bytes)?;
 
             body.as_array()
@@ -121,8 +135,8 @@ impl BRK {
         )))
     }
 
-    pub fn ping() -> Result<()> {
-        minreq::get(API_URL).with_timeout(10).send()?;
+    pub fn ping(&self) -> Result<()> {
+        self.agent.get(API_URL).call()?;
         Ok(())
     }
 }
@@ -149,7 +163,7 @@ impl PriceSource for BRK {
     }
 
     fn ping(&self) -> Result<()> {
-        Self::ping()
+        self.ping()
     }
 
     fn clear(&mut self) {

@@ -1,10 +1,12 @@
 #![doc = include_str!("../README.md")]
 
+use std::io::Read as _;
 use std::{path::Path, thread::sleep, time::Duration};
 
 use brk_error::{Error, Result};
 use brk_types::{Date, Height, OHLCCents, Timestamp};
 use tracing::{info, warn};
+use ureq::Agent;
 
 mod binance;
 mod brk;
@@ -22,21 +24,32 @@ pub use source::{PriceSource, TrackedSource};
 
 const MAX_RETRIES: usize = 12 * 60; // 12 hours of retrying
 
-/// Check HTTP response status and return bytes or error
-pub fn check_response(response: minreq::Response, url: &str) -> Result<Vec<u8>> {
-    let status = response.status_code as u16;
-    if (200..300).contains(&status) {
-        Ok(response.into_bytes())
-    } else {
-        Err(Error::HttpStatus {
+/// Create a shared HTTP agent with connection pooling and default timeout.
+pub fn new_agent(timeout_secs: u64) -> Agent {
+    Agent::config_builder()
+        .timeout_global(Some(Duration::from_secs(timeout_secs)))
+        .build()
+        .into()
+}
+
+/// Perform a GET request and check the response status.
+pub fn checked_get(agent: &Agent, url: &str) -> Result<Vec<u8>> {
+    let mut response = agent.get(url).call()?;
+    let status = response.status().as_u16();
+    if status >= 400 {
+        return Err(Error::HttpStatus {
             status,
             url: url.to_string(),
-        })
+        });
     }
+    let mut bytes = Vec::new();
+    response.body_mut().as_reader().read_to_end(&mut bytes)?;
+    Ok(bytes)
 }
 
 #[derive(Clone)]
 pub struct Fetcher {
+    pub agent: Agent,
     pub binance: TrackedSource<Binance>,
     pub kraken: TrackedSource<Kraken>,
     pub brk: TrackedSource<BRK>,
@@ -48,10 +61,12 @@ impl Fetcher {
     }
 
     pub fn new(hars_path: Option<&Path>) -> Result<Self> {
+        let agent = new_agent(30);
         Ok(Self {
-            binance: TrackedSource::new(Binance::init(hars_path)),
-            kraken: TrackedSource::new(Kraken::default()),
-            brk: TrackedSource::new(BRK::default()),
+            binance: TrackedSource::new(Binance::new(hars_path, agent.clone())),
+            kraken: TrackedSource::new(Kraken::new(agent.clone())),
+            brk: TrackedSource::new(BRK::new(agent.clone())),
+            agent,
         })
     }
 

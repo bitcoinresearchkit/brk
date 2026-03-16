@@ -4,16 +4,28 @@ use brk_error::{Error, Result};
 use brk_types::{Date, Height, OHLCCents, Timestamp};
 use serde_json::Value;
 use tracing::info;
+use ureq::Agent;
 
 use crate::{
-    PriceSource, check_response, default_retry,
+    PriceSource, checked_get, default_retry,
     ohlc::{compute_ohlc_from_range, date_from_timestamp, ohlc_from_array, timestamp_from_secs},
 };
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Kraken {
+    agent: Agent,
     _1mn: Option<BTreeMap<Timestamp, OHLCCents>>,
     _1d: Option<BTreeMap<Date, OHLCCents>>,
+}
+
+impl Kraken {
+    pub fn new(agent: Agent) -> Self {
+        Self {
+            agent,
+            _1mn: None,
+            _1d: None,
+        }
+    }
 }
 
 impl Kraken {
@@ -24,7 +36,7 @@ impl Kraken {
     ) -> Result<OHLCCents> {
         if self._1mn.as_ref().and_then(|m| m.last_key_value()).is_none_or(|(k, _)| k <= &timestamp)
         {
-            self._1mn.replace(Self::fetch_1mn()?);
+            self._1mn.replace(self.fetch_1mn()?);
         }
         compute_ohlc_from_range(
             self._1mn.as_ref().unwrap(),
@@ -34,11 +46,12 @@ impl Kraken {
         )
     }
 
-    pub fn fetch_1mn() -> Result<BTreeMap<Timestamp, OHLCCents>> {
+    pub fn fetch_1mn(&self) -> Result<BTreeMap<Timestamp, OHLCCents>> {
+        let agent = &self.agent;
         default_retry(|_| {
             let url = Self::url(1);
             info!("Fetching {url} ...");
-            let bytes = check_response(minreq::get(&url).with_timeout(30).send()?, &url)?;
+            let bytes = checked_get(agent, &url)?;
             let json: Value = serde_json::from_slice(&bytes)?;
             Self::parse_ohlc_response(&json)
         })
@@ -46,7 +59,7 @@ impl Kraken {
 
     fn get_from_1d(&mut self, date: &Date) -> Result<OHLCCents> {
         if self._1d.as_ref().and_then(|m| m.last_key_value()).is_none_or(|(k, _)| k <= date) {
-            self._1d.replace(Self::fetch_1d()?);
+            self._1d.replace(self.fetch_1d()?);
         }
         self._1d
             .as_ref()
@@ -56,11 +69,12 @@ impl Kraken {
             .ok_or(Error::NotFound("Couldn't find date".into()))
     }
 
-    pub fn fetch_1d() -> Result<BTreeMap<Date, OHLCCents>> {
+    pub fn fetch_1d(&self) -> Result<BTreeMap<Date, OHLCCents>> {
+        let agent = &self.agent;
         default_retry(|_| {
             let url = Self::url(1440);
             info!("Fetching {url} ...");
-            let bytes = check_response(minreq::get(&url).with_timeout(30).send()?, &url)?;
+            let bytes = checked_get(agent, &url)?;
             let json: Value = serde_json::from_slice(&bytes)?;
             Self::parse_date_ohlc_response(&json)
         })
@@ -95,10 +109,8 @@ impl Kraken {
         format!("https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval={interval}")
     }
 
-    pub fn ping() -> Result<()> {
-        minreq::get("https://api.kraken.com/0/public/Time")
-            .with_timeout(10)
-            .send()?;
+    pub fn ping(&self) -> Result<()> {
+        self.agent.get("https://api.kraken.com/0/public/Time").call()?;
         Ok(())
     }
 }
@@ -125,7 +137,7 @@ impl PriceSource for Kraken {
     }
 
     fn ping(&self) -> Result<()> {
-        Self::ping()
+        self.ping()
     }
 
     fn clear(&mut self) {
