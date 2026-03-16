@@ -170,30 +170,6 @@ export function satsBtcUsdFrom({ source, key, name, color, defaultActive }) {
   });
 }
 
-/**
- * Create sats/btc/usd series from a full value pattern using base or cumulative key
- * @param {Object} args
- * @param {{ base: AnyValuePattern, cumulative: AnyValuePattern }} args.source
- * @param {'base' | 'cumulative'} args.key
- * @param {string} args.name
- * @param {Color} [args.color]
- * @param {boolean} [args.defaultActive]
- * @returns {FetchedLineSeriesBlueprint[]}
- */
-export function satsBtcUsdFromFull({
-  source,
-  key,
-  name,
-  color,
-  defaultActive,
-}) {
-  return satsBtcUsd({
-    pattern: source[key],
-    name,
-    color,
-    defaultActive,
-  });
-}
 
 /**
  * Create coinbase/subsidy/fee series from separate sources

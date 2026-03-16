@@ -439,19 +439,6 @@ fn analyze_instance(child_bases: &BTreeMap<String, String>) -> InstanceAnalysis 
             field_parts.insert(field_name.clone(), relative);
         }
 
-        // If all field_parts are empty (all children returned the same base),
-        // use the field keys as suffix discriminators. This handles patterns like
-        // period windows (all/_4y/_2y/_1y) where children differ by a suffix
-        // that corresponds to the tree key.
-        if field_parts.len() > 1 && field_parts.values().all(|v| v.is_empty()) {
-            return InstanceAnalysis {
-                base,
-                field_parts,
-                is_suffix_mode: true,
-                has_outlier: false,
-            };
-        }
-
         return InstanceAnalysis {
             base,
             field_parts,

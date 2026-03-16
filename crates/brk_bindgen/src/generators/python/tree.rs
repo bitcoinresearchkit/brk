@@ -95,12 +95,27 @@ fn generate_tree_class(
                 child.name,
                 GenericSyntax::PYTHON,
             );
-            writeln!(
-                output,
-                "        self.{}: {} = {}(client, '{}')",
-                field_name_py, py_type, child.field.rust_type, child.base_result.base
-            )
-            .unwrap();
+            let pattern = metadata.find_pattern(&child.field.rust_type);
+            if let Some(pat) = pattern
+                && pat.is_templated()
+            {
+                let disc = pat
+                    .extract_disc_from_instance(&child.base_result.field_parts)
+                    .unwrap_or_default();
+                writeln!(
+                    output,
+                    "        self.{}: {} = {}(client, '{}', '{}')",
+                    field_name_py, py_type, child.field.rust_type, child.base_result.base, disc
+                )
+                .unwrap();
+            } else {
+                writeln!(
+                    output,
+                    "        self.{}: {} = {}(client, '{}')",
+                    field_name_py, py_type, child.field.rust_type, child.base_result.base
+                )
+                .unwrap();
+            }
         }
     }
 

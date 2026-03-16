@@ -5,6 +5,14 @@ use crate::{GenericSyntax, LanguageSyntax, to_snake_case};
 /// Rust-specific code generation syntax.
 pub struct RustSyntax;
 
+/// Escape braces in a template string for use in `format!()`, preserving `{disc}`.
+fn escape_rust_format(template: &str) -> String {
+    template
+        .replace('{', "{{")
+        .replace('}', "}}")
+        .replace("{{disc}}", "{disc}")
+}
+
 impl LanguageSyntax for RustSyntax {
     fn field_name(&self, name: &str) -> String {
         to_snake_case(name)
@@ -67,35 +75,22 @@ impl LanguageSyntax for RustSyntax {
             let static_part = template.trim_end_matches("{disc}").trim_end_matches('_');
             format!("_m(\"{}\", &disc)", static_part)
         } else {
-            let rust_template = template
-                .replace("{disc}", "{disc}")
-                .replace('{', "{{")
-                .replace('}', "}}")
-                .replace("{{disc}}", "{disc}");
-            format!("format!(\"{}\")", rust_template)
+            format!("format!(\"{}\")", escape_rust_format(template))
         }
     }
 
     fn template_expr(&self, acc_var: &str, template: &str) -> String {
         if template == "{disc}" {
-            // _m(acc, disc) in Rust
             format!("_m(&{}, &disc)", acc_var)
         } else if template.is_empty() {
-            // Identity
             acc_var.to_string()
         } else if !template.contains("{disc}") {
-            // Static suffix
             format!("_m(&{}, \"{}\")", acc_var, template)
         } else {
-            // Template with disc: _m(&acc, &format!("ratio_{disc}_bps", disc=disc))
-            let rust_template = template
-                .replace("{disc}", "{disc}")
-                .replace('{', "{{")
-                .replace('}', "}}")
-                .replace("{{disc}}", "{disc}");
             format!(
                 "_m(&{}, &format!(\"{}\", disc=disc))",
-                acc_var, rust_template
+                acc_var,
+                escape_rust_format(template)
             )
         }
     }

@@ -695,12 +695,27 @@ pub fn generate_structural_patterns(
             "    \"\"\"Pattern struct for repeated tree structure.\"\"\""
         )
         .unwrap();
+
+        // Skip constructor for non-parameterizable patterns (inlined at tree level)
+        if !metadata.is_parameterizable(&pattern.name) {
+            writeln!(output, "    pass\n").unwrap();
+            continue;
+        }
+
         writeln!(output, "    ").unwrap();
-        writeln!(
-            output,
-            "    def __init__(self, client: BrkClientBase, acc: str):"
-        )
-        .unwrap();
+        if pattern.is_templated() {
+            writeln!(
+                output,
+                "    def __init__(self, client: BrkClientBase, acc: str, disc: str):"
+            )
+            .unwrap();
+        } else {
+            writeln!(
+                output,
+                "    def __init__(self, client: BrkClientBase, acc: str):"
+            )
+            .unwrap();
+        }
         writeln!(
             output,
             "        \"\"\"Create pattern node with accumulated metric name.\"\"\""

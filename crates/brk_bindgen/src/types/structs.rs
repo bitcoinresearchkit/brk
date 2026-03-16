@@ -130,12 +130,7 @@ impl StructuralPattern {
 /// Extract the discriminator value by matching a template against a concrete string.
 /// E.g., template `"ratio_{disc}_bps"` matched against `"ratio_pct99_bps"` yields `"pct99"`.
 fn extract_disc(template: &str, value: &str) -> Option<String> {
-    let parts: Vec<&str> = template.split("{disc}").collect();
-    if parts.len() != 2 {
-        return None;
-    }
-    let prefix = parts[0];
-    let suffix = parts[1];
+    let (prefix, suffix) = template.split_once("{disc}")?;
     if value.starts_with(prefix) && value.ends_with(suffix) {
         let disc = &value[prefix.len()..value.len() - suffix.len()];
         if !disc.is_empty() {
