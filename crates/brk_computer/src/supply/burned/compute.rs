@@ -17,7 +17,7 @@ impl Vecs {
         let op_return_height = &scripts.value.op_return.base.sats.height;
         let unclaimed_height = &mining.rewards.unclaimed.base.sats.height;
 
-        self.unspendable.compute(
+        self.total.compute(
             starting_indexes.height,
             prices,
             exit,

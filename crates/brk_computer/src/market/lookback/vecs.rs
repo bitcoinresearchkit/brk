@@ -7,5 +7,5 @@ use crate::internal::{PerBlock, Price};
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub price_lookback: ByLookbackPeriod<Price<PerBlock<Cents, M>>>,
+    pub price_past: ByLookbackPeriod<Price<PerBlock<Cents, M>>>,
 }

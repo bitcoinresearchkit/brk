@@ -6,6 +6,6 @@ use crate::internal::{LazyPerBlock, PerBlock};
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub epoch: PerBlock<Halving, M>,
-    pub blocks_before_next: PerBlock<StoredU32, M>,
-    pub days_before_next: LazyPerBlock<StoredF32, StoredU32>,
+    pub blocks_to_halving: PerBlock<StoredU32, M>,
+    pub days_to_halving: LazyPerBlock<StoredF32, StoredU32>,
 }

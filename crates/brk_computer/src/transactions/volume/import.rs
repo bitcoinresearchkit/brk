@@ -17,16 +17,16 @@ impl Vecs {
     ) -> Result<Self> {
         let v2 = Version::TWO;
         Ok(Self {
-            sent_sum: AmountPerBlockCumulativeWithSums::forced_import(
+            transfer_volume: AmountPerBlockCumulativeWithSums::forced_import(
                 db,
-                "sent_sum",
+                "exact_transfer_volume",
                 version,
                 indexes,
                 cached_starts,
             )?,
-            received_sum: AmountPerBlockCumulativeWithSums::forced_import(
+            output_volume: AmountPerBlockCumulativeWithSums::forced_import(
                 db,
-                "received_sum",
+                "output_volume",
                 version,
                 indexes,
                 cached_starts,

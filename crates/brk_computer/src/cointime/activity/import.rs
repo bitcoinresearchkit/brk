@@ -35,7 +35,7 @@ impl Vecs {
             )?,
             liveliness,
             vaultedness,
-            ratio: PerBlock::forced_import(db, "activity_to_vaultedness_ratio", version, indexes)?,
+            ratio: PerBlock::forced_import(db, "activity_to_vaultedness", version, indexes)?,
         })
     }
 }

@@ -18,7 +18,7 @@ impl Vecs {
         for ((returns, _), (lookback_price, _)) in self
             .periods
             .iter_mut_with_days()
-            .zip(lookback.price_lookback.iter_with_days())
+            .zip(lookback.price_past.iter_with_days())
         {
             returns.compute_binary::<Dollars, Dollars, RatioDiffDollarsBps32>(
                 starting_indexes.height,

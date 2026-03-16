@@ -4,6 +4,7 @@ use vecdb::{Rw, StorageMode};
 use crate::internal::AmountPerBlockCumulativeWithSums;
 
 #[derive(Traversable)]
+#[traversable(transparent)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub unspendable: AmountPerBlockCumulativeWithSums<M>,
+    pub total: AmountPerBlockCumulativeWithSums<M>,
 }

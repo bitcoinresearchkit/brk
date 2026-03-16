@@ -69,12 +69,12 @@ impl Vecs {
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
                 starting_indexes.height,
                 market_cap,
-                &transactions.volume.sent_sum.sum._24h.usd.height,
+                &transactions.volume.transfer_volume.sum._24h.usd.height,
                 exit,
             )?;
 
         // Thermocap Multiple: market_cap / thermo_cap
-        self.thermocap_multiple
+        self.thermo_cap_multiple
             .bps
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
                 starting_indexes.height,
@@ -178,7 +178,7 @@ impl Vecs {
         )?;
 
         // Seller Exhaustion Constant: % supply_in_profit × 30d_volatility
-        self.seller_exhaustion_constant
+        self.seller_exhaustion
             .height
             .compute_transform3(
                 starting_indexes.height,

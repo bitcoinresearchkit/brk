@@ -20,25 +20,25 @@ impl Vecs {
     ) -> Result<Self> {
         let v2 = Version::TWO;
 
-        let as_hash = LazyPerBlock::from_height_source::<DifficultyToHashF64>(
-            "difficulty_as_hash",
+        let hashrate = LazyPerBlock::from_height_source::<DifficultyToHashF64>(
+            "difficulty_hashrate",
             version,
             indexer.vecs.blocks.difficulty.read_only_boxed_clone(),
             indexes,
         );
 
-        let blocks_before_next = PerBlock::forced_import(
+        let blocks_to_retarget = PerBlock::forced_import(
             db,
-            "blocks_before_next_difficulty_adjustment",
+            "blocks_to_retarget",
             version + v2,
             indexes,
         )?;
 
-        let days_before_next = LazyPerBlock::from_computed::<BlocksToDaysF32>(
-            "days_before_next_difficulty_adjustment",
+        let days_to_retarget = LazyPerBlock::from_computed::<BlocksToDaysF32>(
+            "days_to_retarget",
             version + v2,
-            blocks_before_next.height.read_only_boxed_clone(),
-            &blocks_before_next,
+            blocks_to_retarget.height.read_only_boxed_clone(),
+            &blocks_to_retarget,
         );
 
         Ok(Self {
@@ -48,7 +48,7 @@ impl Vecs {
                 version,
                 indexes,
             ),
-            as_hash,
+            hashrate,
             adjustment: PercentPerBlock::forced_import(
                 db,
                 "difficulty_adjustment",
@@ -56,8 +56,8 @@ impl Vecs {
                 indexes,
             )?,
             epoch: PerBlock::forced_import(db, "difficulty_epoch", version, indexes)?,
-            blocks_before_next,
-            days_before_next,
+            blocks_to_retarget,
+            days_to_retarget,
         })
     }
 }

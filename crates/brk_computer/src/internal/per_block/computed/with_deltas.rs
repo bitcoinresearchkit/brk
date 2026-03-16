@@ -21,8 +21,7 @@ where
 {
     #[deref]
     #[deref_mut]
-    #[traversable(flatten)]
-    pub inner: PerBlock<S, M>,
+    pub base: PerBlock<S, M>,
     pub delta: LazyRollingDeltasFromHeight<S, C, B>,
 }
 
@@ -40,16 +39,16 @@ where
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let inner = PerBlock::forced_import(db, name, version, indexes)?;
+        let base = PerBlock::forced_import(db, name, version, indexes)?;
 
         let delta = LazyRollingDeltasFromHeight::new(
             &format!("{name}_delta"),
             version + delta_version_offset,
-            &inner.height,
+            &base.height,
             cached_starts,
             indexes,
         );
 
-        Ok(Self { inner, delta })
+        Ok(Self { base, delta })
     }
 }

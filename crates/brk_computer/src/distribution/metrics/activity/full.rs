@@ -85,7 +85,7 @@ impl ActivityFull {
         self.dormancy.height.compute_transform2(
             starting_indexes.height,
             &self.inner.coindays_destroyed.base.height,
-            &self.inner.sent.base.height,
+            &self.inner.transfer_volume.base.height,
             |(i, cdd, sent_sats, ..)| {
                 let sent_btc = f64::from(Bitcoin::from(sent_sats));
                 if sent_btc == 0.0 {

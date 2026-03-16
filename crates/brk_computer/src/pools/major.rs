@@ -61,14 +61,14 @@ impl Vecs {
     pub(crate) fn compute(
         &mut self,
         starting_indexes: &Indexes,
-        height_to_pool: &impl ReadableVec<Height, PoolSlug>,
+        pool: &impl ReadableVec<Height, PoolSlug>,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         mining: &mining::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         self.base
-            .compute(starting_indexes, height_to_pool, blocks, exit)?;
+            .compute(starting_indexes, pool, blocks, exit)?;
 
         for (dom, (mined, total)) in self.dominance_rolling.as_mut_array().into_iter().zip(
             self.base

@@ -19,7 +19,7 @@ pub struct PerBlockRollingAverage<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
-    pub height: M::Stored<EagerVec<PcoVec<Height, T>>>,
+    pub base: M::Stored<EagerVec<PcoVec<Height, T>>>,
     #[traversable(hidden)]
     pub cumulative: M::Stored<EagerVec<PcoVec<Height, f64>>>,
     #[traversable(flatten)]
@@ -37,7 +37,7 @@ where
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, version)?;
+        let base: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, version)?;
         let cumulative: EagerVec<PcoVec<Height, f64>> =
             EagerVec::forced_import(db, &format!("{name}_cumulative"), version)?;
         let average = LazyRollingAvgsFromHeight::new(
@@ -49,7 +49,7 @@ where
         );
 
         Ok(Self {
-            height,
+            base,
             cumulative,
             average,
         })
@@ -62,14 +62,14 @@ where
         exit: &Exit,
         compute_height: impl FnOnce(&mut EagerVec<PcoVec<Height, T>>) -> Result<()>,
     ) -> Result<()> {
-        compute_height(&mut self.height)?;
+        compute_height(&mut self.base)?;
         self.compute_rest(max_from, exit)
     }
 
     /// Compute cumulative from already-populated height data. Rolling averages are lazy.
     pub(crate) fn compute_rest(&mut self, max_from: Height, exit: &Exit) -> Result<()> {
         self.cumulative
-            .compute_cumulative(max_from, &self.height, exit)?;
+            .compute_cumulative(max_from, &self.base, exit)?;
         Ok(())
     }
 }

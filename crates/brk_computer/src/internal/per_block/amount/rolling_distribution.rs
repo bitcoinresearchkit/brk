@@ -12,75 +12,14 @@ use crate::{
     },
 };
 
-/// One window slot: 8 distribution stats, each a AmountPerBlock.
+/// Rolling distribution across 4 windows, stat-first naming.
 ///
-/// Tree: `average.sats.height`, `min.sats.height`, etc.
-#[derive(Traversable)]
-pub struct RollingDistributionSlot<M: StorageMode = Rw> {
-    #[traversable(flatten)]
-    pub distribution: DistributionStats<AmountPerBlock<M>>,
-}
-
-impl RollingDistributionSlot {
-    pub(crate) fn forced_import(
-        db: &Database,
-        name: &str,
-        version: Version,
-        indexes: &indexes::Vecs,
-    ) -> Result<Self> {
-        Ok(Self {
-            distribution: DistributionStats::try_from_fn(|suffix| {
-                AmountPerBlock::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
-            })?,
-        })
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn compute(
-        &mut self,
-        max_from: Height,
-        starts: &impl ReadableVec<Height, Height>,
-        sats_source: &impl ReadableVec<Height, Sats>,
-        cents_source: &impl ReadableVec<Height, Cents>,
-        exit: &Exit,
-        sats_cache: &mut Option<(usize, Vec<f64>)>,
-        cents_cache: &mut Option<(usize, Vec<f64>)>,
-    ) -> Result<()> {
-        let d = &mut self.distribution;
-
-        macro_rules! compute_unit {
-            ($unit:ident, $source:expr, $cache:expr) => {
-                compute_rolling_distribution_from_starts(
-                    max_from,
-                    starts,
-                    $source,
-                    &mut d.average.$unit.height,
-                    &mut d.min.$unit.height,
-                    &mut d.max.$unit.height,
-                    &mut d.pct10.$unit.height,
-                    &mut d.pct25.$unit.height,
-                    &mut d.median.$unit.height,
-                    &mut d.pct75.$unit.height,
-                    &mut d.pct90.$unit.height,
-                    exit,
-                    $cache,
-                )?
-            };
-        }
-        compute_unit!(sats, sats_source, sats_cache);
-        compute_unit!(cents, cents_source, cents_cache);
-
-        Ok(())
-    }
-}
-
-/// Rolling distribution across 4 windows, window-first.
-///
-/// Tree: `_24h.average.sats.height`, `_24h.min.sats.height`, etc.
+/// Tree: `average._24h.sats.height`, `max._24h.sats.height`, etc.
+/// Series: `{name}_average_24h`, `{name}_max_24h`, etc.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct RollingDistributionAmountPerBlock<M: StorageMode = Rw>(
-    pub Windows<RollingDistributionSlot<M>>,
+    pub DistributionStats<Windows<AmountPerBlock<M>>>,
 );
 
 impl RollingDistributionAmountPerBlock {
@@ -90,13 +29,15 @@ impl RollingDistributionAmountPerBlock {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        Ok(Self(Windows::try_from_fn(|suffix| {
-            RollingDistributionSlot::forced_import(
-                db,
-                &format!("{name}_{suffix}"),
-                version,
-                indexes,
-            )
+        Ok(Self(DistributionStats::try_from_fn(|stat_suffix| {
+            Windows::try_from_fn(|window_suffix| {
+                AmountPerBlock::forced_import(
+                    db,
+                    &format!("{name}_{stat_suffix}_{window_suffix}"),
+                    version,
+                    indexes,
+                )
+            })
         })?))
     }
 
@@ -110,22 +51,38 @@ impl RollingDistributionAmountPerBlock {
     ) -> Result<()> {
         let mut sats_cache = None;
         let mut cents_cache = None;
-        for (slot, starts) in self
-            .0
-            .as_mut_array_largest_first()
-            .into_iter()
-            .zip(windows.as_array_largest_first())
-        {
-            slot.compute(
-                max_from,
-                *starts,
-                sats_source,
-                cents_source,
-                exit,
-                &mut sats_cache,
-                &mut cents_cache,
-            )?;
+
+        macro_rules! compute_window {
+            ($w:ident, $starts:expr) => {{
+                macro_rules! compute_unit {
+                    ($unit:ident, $source:expr, $cache:expr) => {
+                        compute_rolling_distribution_from_starts(
+                            max_from,
+                            $starts,
+                            $source,
+                            &mut self.0.average.$w.$unit.height,
+                            &mut self.0.min.$w.$unit.height,
+                            &mut self.0.max.$w.$unit.height,
+                            &mut self.0.pct10.$w.$unit.height,
+                            &mut self.0.pct25.$w.$unit.height,
+                            &mut self.0.median.$w.$unit.height,
+                            &mut self.0.pct75.$w.$unit.height,
+                            &mut self.0.pct90.$w.$unit.height,
+                            exit,
+                            $cache,
+                        )?
+                    };
+                }
+                compute_unit!(sats, sats_source, &mut sats_cache);
+                compute_unit!(cents, cents_source, &mut cents_cache);
+            }};
         }
+        // Largest window first: its cache covers all smaller windows.
+        compute_window!(_1y, windows._1y);
+        compute_window!(_1m, windows._1m);
+        compute_window!(_1w, windows._1w);
+        compute_window!(_24h, windows._24h);
+
         Ok(())
     }
 }

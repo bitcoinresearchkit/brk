@@ -14,7 +14,7 @@ impl Query {
         let end = current_height.to_usize();
 
         // No blocks indexed yet
-        if computer.pools.height_to_pool.len() == 0 {
+        if computer.pools.pool.len() == 0 {
             return Ok(PoolsSummary {
                 pools: vec![],
                 block_count: 0,

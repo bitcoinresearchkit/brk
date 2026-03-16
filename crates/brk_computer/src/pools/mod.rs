@@ -29,7 +29,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     db: Database,
     pools: &'static Pools,
 
-    pub height_to_pool: M::Stored<BytesVec<Height, PoolSlug>>,
+    pub pool: M::Stored<BytesVec<Height, PoolSlug>>,
     pub major: BTreeMap<PoolSlug, major::Vecs<M>>,
     pub minor: BTreeMap<PoolSlug, minor::Vecs<M>>,
 }
@@ -64,7 +64,7 @@ impl Vecs {
         }
 
         let this = Self {
-            height_to_pool: BytesVec::forced_import(&db, "pool", version)?,
+            pool: BytesVec::forced_import(&db, "pool", version)?,
             major: major_map,
             minor: minor_map,
             pools,
@@ -86,12 +86,12 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_height_to_pool(indexer, indexes, starting_indexes, exit)?;
+        self.compute_pool(indexer, indexes, starting_indexes, exit)?;
 
         self.major.par_iter_mut().try_for_each(|(_, vecs)| {
             vecs.compute(
                 starting_indexes,
-                &self.height_to_pool,
+                &self.pool,
                 blocks,
                 prices,
                 mining,
@@ -100,7 +100,7 @@ impl Vecs {
         })?;
 
         self.minor.par_iter_mut().try_for_each(|(_, vecs)| {
-            vecs.compute(starting_indexes, &self.height_to_pool, blocks, exit)
+            vecs.compute(starting_indexes, &self.pool, blocks, exit)
         })?;
 
         let _lock = exit.lock();
@@ -108,14 +108,14 @@ impl Vecs {
         Ok(())
     }
 
-    fn compute_height_to_pool(
+    fn compute_pool(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.height_to_pool
+        self.pool
             .validate_computed_version_or_reset(indexer.stores.height_to_coinbase_tag.version())?;
 
         let first_txout_index = indexer.vecs.transactions.first_txout_index.reader();
@@ -135,7 +135,7 @@ impl Vecs {
         let min = starting_indexes
             .height
             .to_usize()
-            .min(self.height_to_pool.len());
+            .min(self.pool.len());
 
         // Cursors avoid per-height PcoVec page decompression.
         // Heights are sequential, tx_index values derived from them are monotonically
@@ -144,7 +144,7 @@ impl Vecs {
         first_tx_index_cursor.advance(min);
         let mut output_count_cursor = indexes.tx_index.output_count.cursor();
 
-        self.height_to_pool.truncate_if_needed_at(min)?;
+        self.pool.truncate_if_needed_at(min)?;
 
         indexer
             .stores
@@ -181,12 +181,12 @@ impl Vecs {
                     .or_else(|| self.pools.find_from_coinbase_tag(&coinbase_tag))
                     .unwrap_or(unknown);
 
-                self.height_to_pool.push(pool.slug);
+                self.pool.push(pool.slug);
                 Ok(())
             })?;
 
         let _lock = exit.lock();
-        self.height_to_pool.write()?;
+        self.pool.write()?;
         Ok(())
     }
 }

@@ -25,7 +25,7 @@ impl Vecs {
         // sent_sum and received_sum are independent — parallelize
         let (r1, r2) = rayon::join(
             || {
-                self.sent_sum.compute(
+                self.transfer_volume.compute(
                     starting_indexes.height,
                     prices,
                     exit,
@@ -42,7 +42,7 @@ impl Vecs {
                 )
             },
             || {
-                self.received_sum.compute(
+                self.output_volume.compute(
                     starting_indexes.height,
                     prices,
                     exit,
@@ -66,7 +66,7 @@ impl Vecs {
             .compute_binary::<_, Timestamp, PerSec>(
                 starting_indexes.height,
                 &count_vecs.total.base.height,
-                &blocks.interval.height,
+                &blocks.interval.base,
                 exit,
             )?;
         self.inputs_per_sec
@@ -74,7 +74,7 @@ impl Vecs {
             .compute_binary::<_, Timestamp, PerSec>(
                 starting_indexes.height,
                 &inputs_count.full.sum,
-                &blocks.interval.height,
+                &blocks.interval.base,
                 exit,
             )?;
         self.outputs_per_sec
@@ -82,7 +82,7 @@ impl Vecs {
             .compute_binary::<_, Timestamp, PerSec>(
                 starting_indexes.height,
                 &outputs_count.total.full.sum,
-                &blocks.interval.height,
+                &blocks.interval.base,
                 exit,
             )?;
 

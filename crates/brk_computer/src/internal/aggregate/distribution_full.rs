@@ -10,13 +10,13 @@ use crate::internal::{ComputedVecValue, algo::compute_aggregations};
 
 use super::Distribution;
 
-/// Full stats aggregate: distribution + sum + cumulative
+/// Full stats aggregate: sum + cumulative + distribution
 #[derive(Traversable)]
 pub struct DistributionFull<I: VecIndex, T: ComputedVecValue + JsonSchema, M: StorageMode = Rw> {
-    #[traversable(flatten)]
-    pub distribution: Distribution<I, T, M>,
     pub sum: M::Stored<EagerVec<PcoVec<I, T>>>,
     pub cumulative: M::Stored<EagerVec<PcoVec<I, T>>>,
+    #[traversable(flatten)]
+    pub distribution: Distribution<I, T, M>,
 }
 
 impl<I: VecIndex, T: ComputedVecValue + JsonSchema> DistributionFull<I, T> {

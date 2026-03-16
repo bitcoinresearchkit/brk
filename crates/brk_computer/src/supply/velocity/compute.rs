@@ -21,7 +21,7 @@ impl Vecs {
         self.native.height.compute_rolling_ratio(
             starting_indexes.height,
             &blocks.lookback._1y,
-            &transactions.volume.sent_sum.base.sats.height,
+            &transactions.volume.transfer_volume.base.sats.height,
             &circulating_supply.sats.height,
             exit,
         )?;
@@ -30,7 +30,7 @@ impl Vecs {
         self.fiat.height.compute_rolling_ratio(
             starting_indexes.height,
             &blocks.lookback._1y,
-            &transactions.volume.sent_sum.base.usd.height,
+            &transactions.volume.transfer_volume.base.usd.height,
             &circulating_supply.usd.height,
             exit,
         )?;

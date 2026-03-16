@@ -10,23 +10,23 @@ use crate::distribution::metrics::{ImportConfig, SupplyCore};
 /// Relative-to-all metrics (not present for the "all" cohort itself).
 #[derive(Traversable)]
 pub struct RelativeToAll<M: StorageMode = Rw> {
-    #[traversable(wrap = "supply", rename = "rel_to_circulating")]
-    pub supply_rel_to_circulating: PercentPerBlock<BasisPoints16, M>,
-    #[traversable(wrap = "supply/in_profit", rename = "rel_to_circulating")]
-    pub supply_in_profit_rel_to_circulating: PercentPerBlock<BasisPoints16, M>,
-    #[traversable(wrap = "supply/in_loss", rename = "rel_to_circulating")]
-    pub supply_in_loss_rel_to_circulating: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "supply", rename = "to_circulating")]
+    pub supply_to_circulating: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "supply/in_profit", rename = "to_circulating")]
+    pub supply_in_profit_to_circulating: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "supply/in_loss", rename = "to_circulating")]
+    pub supply_in_loss_to_circulating: PercentPerBlock<BasisPoints16, M>,
 }
 
 impl RelativeToAll {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            supply_rel_to_circulating: cfg
-                .import("supply_rel_to_circulating", Version::ONE)?,
-            supply_in_profit_rel_to_circulating: cfg
-                .import("supply_in_profit_rel_to_circulating", Version::ONE)?,
-            supply_in_loss_rel_to_circulating: cfg
-                .import("supply_in_loss_rel_to_circulating", Version::ONE)?,
+            supply_to_circulating: cfg
+                .import("supply_to_circulating", Version::ONE)?,
+            supply_in_profit_to_circulating: cfg
+                .import("supply_in_profit_to_circulating", Version::ONE)?,
+            supply_in_loss_to_circulating: cfg
+                .import("supply_in_loss_to_circulating", Version::ONE)?,
         })
     }
 
@@ -37,21 +37,21 @@ impl RelativeToAll {
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {
-        self.supply_rel_to_circulating
+        self.supply_to_circulating
             .compute_binary::<Sats, Sats, RatioSatsBp16>(
                 max_from,
                 &supply.total.sats.height,
                 all_supply_sats,
                 exit,
             )?;
-        self.supply_in_profit_rel_to_circulating
+        self.supply_in_profit_to_circulating
             .compute_binary::<Sats, Sats, RatioSatsBp16>(
                 max_from,
                 &supply.in_profit.sats.height,
                 all_supply_sats,
                 exit,
             )?;
-        self.supply_in_loss_rel_to_circulating
+        self.supply_in_loss_to_circulating
             .compute_binary::<Sats, Sats, RatioSatsBp16>(
                 max_from,
                 &supply.in_loss.sats.height,

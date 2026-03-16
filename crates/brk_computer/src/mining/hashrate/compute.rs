@@ -23,7 +23,7 @@ impl Vecs {
         self.rate.base.height.compute_transform2(
             starting_indexes.height,
             &count_vecs.total.sum._24h.height,
-            &difficulty_vecs.as_hash.height,
+            &difficulty_vecs.hashrate.height,
             |(i, block_count_sum, difficulty_as_hash, ..)| {
                 (
                     i,

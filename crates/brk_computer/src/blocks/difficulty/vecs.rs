@@ -6,9 +6,9 @@ use crate::internal::{LazyPerBlock, PerBlock, Resolutions, PercentPerBlock};
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub value: Resolutions<StoredF64>,
-    pub as_hash: LazyPerBlock<StoredF64>,
+    pub hashrate: LazyPerBlock<StoredF64>,
     pub adjustment: PercentPerBlock<BasisPointsSigned32, M>,
     pub epoch: PerBlock<Epoch, M>,
-    pub blocks_before_next: PerBlock<StoredU32, M>,
-    pub days_before_next: LazyPerBlock<StoredF32, StoredU32>,
+    pub blocks_to_retarget: PerBlock<StoredU32, M>,
+    pub days_to_retarget: LazyPerBlock<StoredF32, StoredU32>,
 }

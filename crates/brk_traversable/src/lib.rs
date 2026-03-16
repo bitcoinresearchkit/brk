@@ -15,7 +15,12 @@ use vecdb::{
 
 pub trait Traversable {
     fn to_tree_node(&self) -> TreeNode;
+    /// All vecs including hidden — used for disk writes, flushes, exports.
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec>;
+    /// Only non-hidden vecs — used for building the public series list.
+    fn iter_any_visible(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        self.iter_any_exportable()
+    }
 }
 
 /// Helper to create a SeriesLeafWithSchema from a vec

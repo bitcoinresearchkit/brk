@@ -148,24 +148,47 @@ function returnsSubSectionWithCagr(name, periods) {
     name,
     tree: [
       {
-        name: "Compare",
-        title: `${name} Returns`,
-        bottom: periods.flatMap((p) =>
-          percentRatioBaseline({
-            pattern: p.returns,
-            name: p.id,
-            color: p.color,
-          }),
-        ),
-      },
-      ...periods.map((p) => ({
-        name: periodIdToName(p.id, true),
-        title: `${periodIdToName(p.id, true)} Returns`,
-        bottom: [
-          ...percentRatioBaseline({ pattern: p.returns, name: "Total" }),
-          ...percentRatioBaseline({ pattern: p.cagr, name: "annual" }),
+        name: "Total",
+        tree: [
+          {
+            name: "Compare",
+            title: `${name} Total Returns`,
+            bottom: periods.flatMap((p) =>
+              percentRatioBaseline({
+                pattern: p.returns,
+                name: p.id,
+                color: p.color,
+              }),
+            ),
+          },
+          ...periods.map((p) => ({
+            name: periodIdToName(p.id, true),
+            title: `${periodIdToName(p.id, true)} Total Returns`,
+            bottom: percentRatioBaseline({ pattern: p.returns, name: "Total" }),
+          })),
         ],
-      })),
+      },
+      {
+        name: "CAGR",
+        tree: [
+          {
+            name: "Compare",
+            title: `${name} CAGR`,
+            bottom: periods.flatMap((p) =>
+              percentRatioBaseline({
+                pattern: p.cagr,
+                name: p.id,
+                color: p.color,
+              }),
+            ),
+          },
+          ...periods.map((p) => ({
+            name: periodIdToName(p.id, true),
+            title: `${periodIdToName(p.id, true)} CAGR`,
+            bottom: percentRatioBaseline({ pattern: p.cagr, name: "CAGR" }),
+          })),
+        ],
+      },
     ],
   };
 }
@@ -396,20 +419,14 @@ export function createMarketSection() {
         name: "Capitalization",
         tree: [
           {
-            name: "Market Cap",
-            title: "Market Capitalization",
+            name: "Compare",
+            title: "Market vs Realized Capitalization",
             bottom: [
               line({
                 series: supply.marketCap.usd,
                 name: "Market Cap",
                 unit: Unit.usd,
               }),
-            ],
-          },
-          {
-            name: "Realized Cap",
-            title: "Realized Capitalization",
-            bottom: [
               line({
                 series: cohorts.utxo.all.realized.cap.usd,
                 name: "Realized Cap",
@@ -419,19 +436,168 @@ export function createMarketSection() {
             ],
           },
           {
-            name: "Growth Rate",
-            title: "Capitalization Growth Rate",
-            bottom: [
-              ...percentRatio({
-                pattern: supply.marketCap.delta.rate._24h,
-                name: "Market Cap (24h)",
-                color: colors.bitcoin,
-              }),
-              baseline({
-                series: supply.marketMinusRealizedCapGrowthRate._24h,
-                name: "Market - Realized",
-                unit: Unit.percentage,
-              }),
+            name: "Market Cap",
+            tree: [
+              {
+                name: "Value",
+                title: "Market Capitalization",
+                bottom: [
+                  line({
+                    series: supply.marketCap.usd,
+                    name: "Market Cap",
+                    unit: Unit.usd,
+                  }),
+                ],
+              },
+              {
+                name: "Absolute",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Market Cap Absolute Change",
+                    bottom: ROLLING_WINDOWS.map((w) =>
+                      baseline({
+                        series: supply.marketCap.delta.absolute[w.key].usd,
+                        name: w.name,
+                        color: w.color,
+                        unit: Unit.usd,
+                      }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Market Cap Absolute Change ${w.name}`,
+                    bottom: [
+                      baseline({
+                        series: supply.marketCap.delta.absolute[w.key].usd,
+                        name: w.name,
+                        unit: Unit.usd,
+                      }),
+                    ],
+                  })),
+                ],
+              },
+              {
+                name: "Rate",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Market Cap Growth Rate",
+                    bottom: ROLLING_WINDOWS.flatMap((w) =>
+                      percentRatio({
+                        pattern: supply.marketCap.delta.rate[w.key],
+                        name: w.name,
+                        color: w.color,
+                      }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Market Cap Growth Rate ${w.name}`,
+                    bottom: percentRatioBaseline({
+                      pattern: supply.marketCap.delta.rate[w.key],
+                      name: w.name,
+                    }),
+                  })),
+                ],
+              },
+            ],
+          },
+          {
+            name: "Realized Cap",
+            tree: [
+              {
+                name: "Value",
+                title: "Realized Capitalization",
+                bottom: [
+                  line({
+                    series: cohorts.utxo.all.realized.cap.usd,
+                    name: "Realized Cap",
+                    color: colors.realized,
+                    unit: Unit.usd,
+                  }),
+                ],
+              },
+              {
+                name: "Absolute",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Realized Cap Absolute Change",
+                    bottom: ROLLING_WINDOWS.map((w) =>
+                      baseline({
+                        series: cohorts.utxo.all.realized.cap.delta.absolute[w.key].usd,
+                        name: w.name,
+                        color: w.color,
+                        unit: Unit.usd,
+                      }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Realized Cap Absolute Change ${w.name}`,
+                    bottom: [
+                      baseline({
+                        series: cohorts.utxo.all.realized.cap.delta.absolute[w.key].usd,
+                        name: w.name,
+                        unit: Unit.usd,
+                      }),
+                    ],
+                  })),
+                ],
+              },
+              {
+                name: "Rate",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Realized Cap Growth Rate",
+                    bottom: ROLLING_WINDOWS.flatMap((w) =>
+                      percentRatio({
+                        pattern: cohorts.utxo.all.realized.cap.delta.rate[w.key],
+                        name: w.name,
+                        color: w.color,
+                      }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Realized Cap Growth Rate ${w.name}`,
+                    bottom: percentRatioBaseline({
+                      pattern: cohorts.utxo.all.realized.cap.delta.rate[w.key],
+                      name: w.name,
+                    }),
+                  })),
+                ],
+              },
+            ],
+          },
+          {
+            name: "Rate Spread",
+            tree: [
+              {
+                name: "Compare",
+                title: "Capitalization Growth Rate Spread",
+                bottom: ROLLING_WINDOWS.map((w) =>
+                  baseline({
+                    series: supply.marketMinusRealizedCapGrowthRate[w.key],
+                    name: w.name,
+                    color: w.color,
+                    unit: Unit.percentage,
+                  }),
+                ),
+              },
+              ...ROLLING_WINDOWS.map((w) => ({
+                name: w.name,
+                title: `Capitalization Growth Rate Spread ${w.name}`,
+                bottom: [
+                  baseline({
+                    series: supply.marketMinusRealizedCapGrowthRate[w.key],
+                    name: w.name,
+                    unit: Unit.percentage,
+                  }),
+                ],
+              })),
             ],
           },
         ],
@@ -681,29 +847,12 @@ export function createMarketSection() {
                 const rsi = technical.rsi[w.key];
                 return {
                   name: w.name,
-                  tree: [
-                    {
-                      name: "Value",
-                      title: `RSI (${w.name})`,
-                      bottom: [
-                        ...indexRatio({ pattern: rsi.rsi, name: "RSI", color: colors.indicator.main }),
-                        ...indexRatio({ pattern: rsi.rsiMax, name: "Max", color: colors.stat.max, defaultActive: false }),
-                        ...indexRatio({ pattern: rsi.rsiMin, name: "Min", color: colors.stat.min, defaultActive: false }),
-                        priceLine({ unit: Unit.index, number: 70 }),
-                        priceLine({ unit: Unit.index, number: 50, defaultActive: false }),
-                        priceLine({ unit: Unit.index, number: 30 }),
-                      ],
-                    },
-                    {
-                      name: "Components",
-                      title: `RSI Components (${w.name})`,
-                      bottom: [
-                        line({ series: rsi.averageGain, name: "Avg Gain", color: colors.profit, unit: Unit.usd }),
-                        line({ series: rsi.averageLoss, name: "Avg Loss", color: colors.loss, unit: Unit.usd }),
-                        line({ series: rsi.gains, name: "Gains", color: colors.profit, defaultActive: false, unit: Unit.usd }),
-                        line({ series: rsi.losses, name: "Losses", color: colors.loss, defaultActive: false, unit: Unit.usd }),
-                      ],
-                    },
+                  title: `RSI (${w.name})`,
+                  bottom: [
+                    ...indexRatio({ pattern: rsi.rsi, name: "RSI", color: colors.indicator.main }),
+                    priceLine({ unit: Unit.index, number: 70 }),
+                    priceLine({ unit: Unit.index, number: 50, defaultActive: false }),
+                    priceLine({ unit: Unit.index, number: 30 }),
                   ],
                 };
               }),

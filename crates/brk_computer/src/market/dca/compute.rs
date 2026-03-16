@@ -120,7 +120,7 @@ impl Vecs {
         }
 
         // Lump sum by period - stack
-        let lookback_dca = lookback.price_lookback.as_dca_period();
+        let lookback_dca = lookback.price_past.as_dca_period();
         for (stack, lookback_price, days) in
             self.period.lump_sum_stack.zip_mut_with_days(&lookback_dca)
         {

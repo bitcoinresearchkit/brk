@@ -147,7 +147,7 @@ impl Vecs {
             exit,
         )?;
 
-        self.fee_ratio_multiple
+        self.fee_to_subsidy_ratio
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32, _, _>(
                 starting_indexes.height,
                 self.coinbase.sum.as_array().map(|w| &w.usd.height),

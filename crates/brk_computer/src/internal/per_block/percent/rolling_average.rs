@@ -37,14 +37,14 @@ impl<B: BpsType> PercentPerBlockRollingAverage<B> {
         let ratio = LazyPerBlock::from_height_source::<B::ToRatio>(
             &format!("{name}_ratio"),
             version,
-            bps.height.read_only_boxed_clone(),
+            bps.base.read_only_boxed_clone(),
             indexes,
         );
 
         let percent = LazyPerBlock::from_height_source::<B::ToPercent>(
             name,
             version,
-            bps.height.read_only_boxed_clone(),
+            bps.base.read_only_boxed_clone(),
             indexes,
         );
 

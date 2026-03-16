@@ -64,7 +64,7 @@ impl Vecs {
         )?;
 
         let hodled_or_lost =
-            LazyAmountPerBlock::identity("hodled_or_lost_coins", &cointime.supply.vaulted, version);
+            LazyAmountPerBlock::identity("hodled_or_lost_supply", &cointime.supply.vaulted, version);
 
         let this = Self {
             db,

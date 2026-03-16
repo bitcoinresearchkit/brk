@@ -113,39 +113,39 @@ impl ActivityCountVecs {
 
     pub(crate) fn min_stateful_len(&self) -> usize {
         self.reactivated
-            .height
+            .base
             .len()
-            .min(self.sending.height.len())
-            .min(self.receiving.height.len())
-            .min(self.both.height.len())
+            .min(self.sending.base.len())
+            .min(self.receiving.base.len())
+            .min(self.both.base.len())
     }
 
     pub(crate) fn par_iter_height_mut(
         &mut self,
     ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
-            &mut self.reactivated.height as &mut dyn AnyStoredVec,
-            &mut self.sending.height as &mut dyn AnyStoredVec,
-            &mut self.receiving.height as &mut dyn AnyStoredVec,
-            &mut self.both.height as &mut dyn AnyStoredVec,
+            &mut self.reactivated.base as &mut dyn AnyStoredVec,
+            &mut self.sending.base as &mut dyn AnyStoredVec,
+            &mut self.receiving.base as &mut dyn AnyStoredVec,
+            &mut self.both.base as &mut dyn AnyStoredVec,
         ]
         .into_par_iter()
     }
 
     pub(crate) fn reset_height(&mut self) -> Result<()> {
-        self.reactivated.height.reset()?;
-        self.sending.height.reset()?;
-        self.receiving.height.reset()?;
-        self.both.height.reset()?;
+        self.reactivated.base.reset()?;
+        self.sending.base.reset()?;
+        self.receiving.base.reset()?;
+        self.both.base.reset()?;
         Ok(())
     }
 
     #[inline(always)]
     pub(crate) fn push_height(&mut self, counts: &BlockActivityCounts) {
-        self.reactivated.height.push(counts.reactivated.into());
-        self.sending.height.push(counts.sending.into());
-        self.receiving.height.push(counts.receiving.into());
-        self.both.height.push(counts.both.into());
+        self.reactivated.base.push(counts.reactivated.into());
+        self.sending.base.push(counts.sending.into());
+        self.receiving.base.push(counts.receiving.into());
+        self.both.base.push(counts.both.into());
     }
 
     pub(crate) fn compute_rest(
@@ -206,10 +206,10 @@ impl AddressTypeToActivityCountVecs {
     ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
         for type_vecs in self.0.values_mut() {
-            vecs.push(&mut type_vecs.reactivated.height);
-            vecs.push(&mut type_vecs.sending.height);
-            vecs.push(&mut type_vecs.receiving.height);
-            vecs.push(&mut type_vecs.both.height);
+            vecs.push(&mut type_vecs.reactivated.base);
+            vecs.push(&mut type_vecs.sending.base);
+            vecs.push(&mut type_vecs.receiving.base);
+            vecs.push(&mut type_vecs.both.base);
         }
         vecs.into_par_iter()
     }

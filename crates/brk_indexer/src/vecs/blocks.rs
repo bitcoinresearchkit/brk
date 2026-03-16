@@ -16,8 +16,9 @@ pub struct BlocksVecs<M: StorageMode = Rw> {
     /// Doesn't guarantee continuity due to possible reorgs and more generally the nature of mining
     #[traversable(wrap = "time")]
     pub timestamp: M::Stored<PcoVec<Height, Timestamp>>,
-    #[traversable(wrap = "size")]
+    #[traversable(wrap = "size", rename = "base")]
     pub total: M::Stored<PcoVec<Height, StoredU64>>,
+    #[traversable(wrap = "weight", rename = "base")]
     pub weight: M::Stored<PcoVec<Height, Weight>>,
 }
 

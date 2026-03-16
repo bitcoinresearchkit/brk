@@ -112,6 +112,7 @@ All errors return structured JSON with a consistent format:
             description: Some(
                 "Deprecated — use Series".to_string(),
             ),
+            extensions: [("x-deprecated".to_string(), serde_json::Value::Bool(true))].into(),
             ..Default::default()
         },
         Tag {

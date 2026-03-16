@@ -24,8 +24,8 @@ impl Vecs {
         let nvt = RatioPerBlock::forced_import_raw(&db, "nvt", v, indexes)?;
         let gini = PercentPerBlock::forced_import(&db, "gini", v, indexes)?;
         let rhodl_ratio = RatioPerBlock::forced_import_raw(&db, "rhodl_ratio", v, indexes)?;
-        let thermocap_multiple =
-            RatioPerBlock::forced_import_raw(&db, "thermocap_multiple", v, indexes)?;
+        let thermo_cap_multiple =
+            RatioPerBlock::forced_import_raw(&db, "thermo_cap_multiple", v, indexes)?;
         let coindays_destroyed_supply_adjusted =
             PerBlock::forced_import(&db, "coindays_destroyed_supply_adjusted", v, indexes)?;
         let coinyears_destroyed_supply_adjusted =
@@ -35,8 +35,8 @@ impl Vecs {
             flow: PerBlock::forced_import(&db, "dormancy_flow", v, indexes)?,
         };
         let stock_to_flow = PerBlock::forced_import(&db, "stock_to_flow", v, indexes)?;
-        let seller_exhaustion_constant =
-            PerBlock::forced_import(&db, "seller_exhaustion_constant", v, indexes)?;
+        let seller_exhaustion =
+            PerBlock::forced_import(&db, "seller_exhaustion", v, indexes)?;
 
         let this = Self {
             db,
@@ -44,12 +44,12 @@ impl Vecs {
             nvt,
             gini,
             rhodl_ratio,
-            thermocap_multiple,
+            thermo_cap_multiple,
             coindays_destroyed_supply_adjusted,
             coinyears_destroyed_supply_adjusted,
             dormancy,
             stock_to_flow,
-            seller_exhaustion_constant,
+            seller_exhaustion,
         };
         finalize_db(&this.db, &this)?;
         Ok(this)

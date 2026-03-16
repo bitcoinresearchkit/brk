@@ -11,10 +11,10 @@ impl Vecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let price_lookback = ByLookbackPeriod::try_new(|name, _days| {
-            Price::forced_import(db, &format!("price_lookback_{name}"), version, indexes)
+        let price_past = ByLookbackPeriod::try_new(|name, _days| {
+            Price::forced_import(db, &format!("price_past_{name}"), version, indexes)
         })?;
 
-        Ok(Self { price_lookback })
+        Ok(Self { price_past })
     }
 }

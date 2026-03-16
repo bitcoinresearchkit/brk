@@ -69,7 +69,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub utxo_cohorts: UTXOCohorts<M>,
     #[traversable(wrap = "cohorts", rename = "address")]
     pub address_cohorts: AddressCohorts<M>,
-    #[traversable(wrap = "cointime")]
+    #[traversable(wrap = "cointime/activity")]
     pub coinblocks_destroyed: PerBlockCumulativeWithSums<StoredF64, StoredF64, M>,
     pub addresses: AddressMetricsVecs<M>,
 

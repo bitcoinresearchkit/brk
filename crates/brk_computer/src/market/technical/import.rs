@@ -106,7 +106,8 @@ impl Vecs {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let rsi = Windows::try_from_fn(|tf| RsiChain::forced_import(db, tf, v, indexes))?;
+        let rsi =
+            Windows::try_from_fn(|tf| RsiChain::forced_import(db, tf, v + Version::ONE, indexes))?;
         let macd = Windows::try_from_fn(|tf| MacdChain::forced_import(db, tf, v, indexes))?;
 
         let stoch_k = PercentPerBlock::forced_import(db, "stoch_k", v, indexes)?;

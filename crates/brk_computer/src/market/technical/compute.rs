@@ -57,19 +57,13 @@ impl Vecs {
             &returns.periods._1m.ratio.height,
             &returns.periods._1y.ratio.height,
         ];
-        for ((rsi_chain, ret), &m) in self
-            .rsi
-            .as_mut_array()
-            .into_iter()
-            .zip(return_sources)
-            .zip(&TF_MULTIPLIERS)
-        {
+        for (rsi_chain, ret) in self.rsi.as_mut_array().into_iter().zip(return_sources) {
             rsi::compute(
                 rsi_chain,
                 blocks,
                 ret,
-                14 * m,
-                3 * m,
+                14,
+                3,
                 starting_indexes,
                 exit,
             )?;

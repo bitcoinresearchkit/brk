@@ -10,12 +10,12 @@ use crate::distribution::metrics::{ImportConfig, UnrealizedCore};
 /// Extended relative metrics for own total unrealized PnL (extended only).
 #[derive(Traversable)]
 pub struct RelativeExtendedOwnPnl<M: StorageMode = Rw> {
-    #[traversable(wrap = "unrealized/profit", rename = "rel_to_own_gross")]
-    pub unrealized_profit_rel_to_own_gross_pnl: PercentPerBlock<BasisPoints16, M>,
-    #[traversable(wrap = "unrealized/loss", rename = "rel_to_own_gross")]
-    pub unrealized_loss_rel_to_own_gross_pnl: PercentPerBlock<BasisPoints16, M>,
-    #[traversable(wrap = "unrealized/net_pnl", rename = "rel_to_own_gross")]
-    pub net_unrealized_pnl_rel_to_own_gross_pnl: PercentPerBlock<BasisPointsSigned32, M>,
+    #[traversable(wrap = "unrealized/profit", rename = "to_own_gross_pnl")]
+    pub unrealized_profit_to_own_gross_pnl: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "unrealized/loss", rename = "to_own_gross_pnl")]
+    pub unrealized_loss_to_own_gross_pnl: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "unrealized/net_pnl", rename = "to_own_gross_pnl")]
+    pub net_unrealized_pnl_to_own_gross_pnl: PercentPerBlock<BasisPointsSigned32, M>,
 
 }
 
@@ -24,12 +24,12 @@ impl RelativeExtendedOwnPnl {
         let v1 = Version::ONE;
 
         Ok(Self {
-            unrealized_profit_rel_to_own_gross_pnl: cfg
-                .import("unrealized_profit_rel_to_own_gross_pnl", v1)?,
-            unrealized_loss_rel_to_own_gross_pnl: cfg
-                .import("unrealized_loss_rel_to_own_gross_pnl", v1)?,
-            net_unrealized_pnl_rel_to_own_gross_pnl: cfg
-                .import("net_unrealized_pnl_rel_to_own_gross_pnl", Version::new(3))?,
+            unrealized_profit_to_own_gross_pnl: cfg
+                .import("unrealized_profit_to_own_gross_pnl", v1)?,
+            unrealized_loss_to_own_gross_pnl: cfg
+                .import("unrealized_loss_to_own_gross_pnl", v1)?,
+            net_unrealized_pnl_to_own_gross_pnl: cfg
+                .import("net_unrealized_pnl_to_own_gross_pnl", Version::new(3))?,
         })
     }
 
@@ -40,21 +40,21 @@ impl RelativeExtendedOwnPnl {
         gross_pnl_usd: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
-        self.unrealized_profit_rel_to_own_gross_pnl
+        self.unrealized_profit_to_own_gross_pnl
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
                 &unrealized.profit.base.usd.height,
                 gross_pnl_usd,
                 exit,
             )?;
-        self.unrealized_loss_rel_to_own_gross_pnl
+        self.unrealized_loss_to_own_gross_pnl
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
                 &unrealized.loss.base.usd.height,
                 gross_pnl_usd,
                 exit,
             )?;
-        self.net_unrealized_pnl_rel_to_own_gross_pnl
+        self.net_unrealized_pnl_to_own_gross_pnl
             .compute_binary::<Dollars, Dollars, RatioDollarsBps32>(
                 max_from,
                 &unrealized.net_pnl.usd.height,

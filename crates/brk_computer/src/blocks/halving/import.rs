@@ -16,21 +16,21 @@ impl Vecs {
     ) -> Result<Self> {
         let v2 = Version::TWO;
 
-        let blocks_before_next = PerBlock::forced_import(
-            db, "blocks_before_next_halving", version + v2, indexes,
+        let blocks_to_halving = PerBlock::forced_import(
+            db, "blocks_to_halving", version + v2, indexes,
         )?;
 
-        let days_before_next = LazyPerBlock::from_computed::<BlocksToDaysF32>(
-            "days_before_next_halving",
+        let days_to_halving = LazyPerBlock::from_computed::<BlocksToDaysF32>(
+            "days_to_halving",
             version + v2,
-            blocks_before_next.height.read_only_boxed_clone(),
-            &blocks_before_next,
+            blocks_to_halving.height.read_only_boxed_clone(),
+            &blocks_to_halving,
         );
 
         Ok(Self {
             epoch: PerBlock::forced_import(db, "halving_epoch", version, indexes)?,
-            blocks_before_next,
-            days_before_next,
+            blocks_to_halving,
+            days_to_halving,
         })
     }
 }

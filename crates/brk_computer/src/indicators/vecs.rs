@@ -18,10 +18,10 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub nvt: RatioPerBlock<BasisPoints32, M>,
     pub gini: PercentPerBlock<BasisPoints16, M>,
     pub rhodl_ratio: RatioPerBlock<BasisPoints32, M>,
-    pub thermocap_multiple: RatioPerBlock<BasisPoints32, M>,
+    pub thermo_cap_multiple: RatioPerBlock<BasisPoints32, M>,
     pub coindays_destroyed_supply_adjusted: PerBlock<StoredF32, M>,
     pub coinyears_destroyed_supply_adjusted: PerBlock<StoredF32, M>,
     pub dormancy: DormancyVecs<M>,
     pub stock_to_flow: PerBlock<StoredF32, M>,
-    pub seller_exhaustion_constant: PerBlock<StoredF32, M>,
+    pub seller_exhaustion: PerBlock<StoredF32, M>,
 }

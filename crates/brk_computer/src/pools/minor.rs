@@ -52,7 +52,7 @@ impl Vecs {
     pub(crate) fn compute(
         &mut self,
         starting_indexes: &Indexes,
-        height_to_pool: &impl ReadableVec<Height, PoolSlug>,
+        pool: &impl ReadableVec<Height, PoolSlug>,
         blocks: &blocks::Vecs,
         exit: &Exit,
     ) -> Result<()> {
@@ -60,7 +60,7 @@ impl Vecs {
             .compute(starting_indexes.height, exit, |vec| {
                 vec.compute_transform(
                     starting_indexes.height,
-                    height_to_pool,
+                    pool,
                     |(h, id, ..)| {
                         (
                             h,

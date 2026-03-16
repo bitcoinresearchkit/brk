@@ -15,9 +15,9 @@ impl Vecs {
     ) -> Result<()> {
         let price = &prices.spot.cents.height;
 
-        for (price_lookback, days) in self.price_lookback.iter_mut_with_days() {
+        for (price_past, days) in self.price_past.iter_mut_with_days() {
             let window_starts = blocks.lookback.start_vec(days as usize);
-            price_lookback.cents.height.compute_lookback(
+            price_past.cents.height.compute_lookback(
                 starting_indexes.height,
                 window_starts,
                 price,
