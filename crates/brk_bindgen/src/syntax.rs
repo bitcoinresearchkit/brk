@@ -93,6 +93,14 @@ pub trait LanguageSyntax {
     /// - Rust: `TypeName::new`
     fn constructor_name(&self, type_name: &str) -> String;
 
+    /// Return a variable as an owned value expression.
+    ///
+    /// - Rust: `var.clone()` (String needs explicit cloning)
+    /// - JavaScript/Python: `var` (no ownership)
+    fn owned_expr(&self, var: &str) -> String {
+        var.to_string()
+    }
+
     /// Format a discriminator argument for passing to a templated child.
     ///
     /// Returns an expression computing the disc value from a template.

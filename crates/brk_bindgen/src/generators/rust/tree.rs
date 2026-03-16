@@ -97,9 +97,8 @@ fn generate_tree_node(
                 &child.field,
                 metadata,
                 "            ",
-                child.name,
                 "client.clone()",
-                Some(&child.base_result),
+                &child.base_result,
             );
         }
     }

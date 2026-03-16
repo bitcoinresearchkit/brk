@@ -220,9 +220,8 @@ fn generate_tree_initializer(
                 &child.field,
                 metadata,
                 &indent_str,
-                child.name,
                 "this",
-                Some(&child.base_result),
+                &child.base_result,
             );
         }
     }

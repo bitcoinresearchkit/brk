@@ -91,9 +91,8 @@ fn generate_tree_class(
                 &child.field,
                 metadata,
                 "        ",
-                child.name,
                 "client",
-                Some(&child.base_result),
+                &child.base_result,
             );
         }
     }

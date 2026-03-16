@@ -24,20 +24,20 @@ impl LanguageSyntax for RustSyntax {
 
     fn suffix_expr(&self, acc_var: &str, relative: &str) -> String {
         if relative.is_empty() {
-            // Identity: just return acc
-            format!("{}.clone()", acc_var)
+            self.owned_expr(acc_var)
         } else {
-            // _m(&acc, relative) -> if acc.is_empty() { relative } else { format!("{acc}_{relative}") }
             format!("_m(&{}, \"{}\")", acc_var, relative)
         }
     }
 
+    fn owned_expr(&self, var: &str) -> String {
+        format!("{}.clone()", var)
+    }
+
     fn prefix_expr(&self, prefix: &str, acc_var: &str) -> String {
         if prefix.is_empty() {
-            // Identity: just return acc
-            format!("{}.clone()", acc_var)
+            self.owned_expr(acc_var)
         } else {
-            // _p(prefix, &acc) -> if acc.is_empty() { prefix_base } else { format!("{prefix}{acc}") }
             let prefix_base = prefix.trim_end_matches('_');
             format!("_p(\"{}\", &{})", prefix_base, acc_var)
         }

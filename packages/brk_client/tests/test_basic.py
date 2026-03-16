@@ -50,7 +50,7 @@ def test_fetch_typed_metric():
     )
     print(d)
     e = (
-        client.metrics.market.dca.class_average_price._2017.usd.by.day1()
+        client.metrics.market.dca.class_.cost_basis.from_2017.usd.by.day1()
         .tail(10)
         .fetch()
     )

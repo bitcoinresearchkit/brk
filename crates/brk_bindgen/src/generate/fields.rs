@@ -37,7 +37,7 @@ fn compute_parameterized_value<S: LanguageSyntax>(
             .get_field_part(&field.name)
             .unwrap_or(&field.name);
         let disc_arg = syntax.disc_arg_expr(disc_template);
-        let acc_arg = syntax.suffix_expr("acc", ""); // identity — acc.clone() in Rust, acc in others
+        let acc_arg = syntax.owned_expr("acc");
         return syntax.constructor(&field.rust_type, &format!("{acc_arg}, {disc_arg}"));
     }
 
@@ -88,49 +88,43 @@ pub fn generate_parameterized_field<S: LanguageSyntax>(
     .unwrap();
 }
 
-/// Generate a tree node field using pre-computed base results.
+/// Generate a tree node field for a pattern-type child.
 ///
-/// Handles pattern fields (both templated and non-templated), leaf fields,
-/// and non-pattern branch fields. For templated patterns, extracts the
-/// discriminator from the base result's field_parts.
+/// Called for non-inline branch children that match a parameterizable pattern.
+/// For templated patterns, extracts the discriminator from the base result.
 pub fn generate_tree_node_field<S: LanguageSyntax>(
     output: &mut String,
     syntax: &S,
     field: &PatternField,
     metadata: &ClientMetadata,
     indent: &str,
-    child_name: &str,
     client_expr: &str,
-    base_result: Option<&PatternBaseResult>,
+    base_result: &PatternBaseResult,
 ) {
     let field_name = syntax.field_name(&field.name);
     let type_ann = metadata.field_type_annotation(field, false, None, syntax.generic_syntax());
-
-    let ctor = |type_name: &str, args: &str| {
-        format!("{}({}, {})", syntax.constructor_name(type_name), client_expr, args)
-    };
+    let base_arg = syntax.string_literal(&base_result.base);
 
     let value = if let Some(pattern) = metadata.find_pattern(&field.rust_type)
-        && pattern.is_parameterizable()
-        && let Some(br) = base_result
+        && pattern.is_templated()
     {
-        let base_arg = syntax.string_literal(&br.base);
-        if pattern.is_templated() {
-            let disc = pattern
-                .extract_disc_from_instance(&br.field_parts)
-                .unwrap_or_default();
-            ctor(&field.rust_type, &format!("{}, {}", base_arg, syntax.string_literal(&disc)))
-        } else {
-            ctor(&field.rust_type, &base_arg)
-        }
-    } else if let Some(accessor) = metadata.find_index_set_pattern(&field.indexes) {
-        let path_arg = base_result
-            .map(|br| syntax.string_literal(&br.base))
-            .unwrap_or_else(|| syntax.path_expr("base_path", &path_suffix(child_name)));
-        ctor(&accessor.name, &path_arg)
+        let disc = pattern
+            .extract_disc_from_instance(&base_result.field_parts)
+            .unwrap_or_default();
+        format!(
+            "{}({}, {}, {})",
+            syntax.constructor_name(&field.rust_type),
+            client_expr,
+            base_arg,
+            syntax.string_literal(&disc)
+        )
     } else {
-        let path_arg = syntax.path_expr("base_path", &path_suffix(child_name));
-        ctor(&field.rust_type, &path_arg)
+        format!(
+            "{}({}, {})",
+            syntax.constructor_name(&field.rust_type),
+            client_expr,
+            base_arg
+        )
     };
 
     writeln!(
