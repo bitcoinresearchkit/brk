@@ -96,38 +96,38 @@ function relPnlChart(profit, loss, name, title) {
 
 /**
  * Unrealized P&L tree for All cohort
- * @param {Brk.SeriesTree_Cohorts_Utxo_All_Unrealized} u
+ * @param {AllRelativePattern} u
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
 function unrealizedPnlTreeAll(u, title) {
   return [
     { name: "USD", title: title("Unrealized P&L"), bottom: unrealizedUsdSeries(u) },
-    relPnlChart(u.profit.relToMcap, u.loss.relToMcap, "% of Mcap", title),
-    relPnlChart(u.profit.relToOwnGross, u.loss.relToOwnGross, "% of Own P&L", title),
+    relPnlChart(u.profit.toMcap, u.loss.toMcap, "% of Mcap", title),
+    relPnlChart(u.profit.toOwnGrossPnl, u.loss.toOwnGrossPnl, "% of Own P&L", title),
     ...unrealizedCumulativeRollingTree(u.profit, u.loss, title),
   ];
 }
 
 /**
  * Unrealized P&L tree for Full cohorts (STH)
- * @param {Brk.GrossInvestedLossNetNuplProfitSentimentPattern2} u
+ * @param {FullRelativePattern} u
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
 function unrealizedPnlTreeFull(u, title) {
   return [
     { name: "USD", title: title("Unrealized P&L"), bottom: unrealizedUsdSeries(u) },
-    relPnlChart(u.profit.relToMcap, u.loss.relToMcap, "% of Mcap", title),
-    relPnlChart(u.profit.relToOwnMcap, u.loss.relToOwnMcap, "% of Own Mcap", title),
-    relPnlChart(u.profit.relToOwnGross, u.loss.relToOwnGross, "% of Own P&L", title),
+    relPnlChart(u.profit.toMcap, u.loss.toMcap, "% of Mcap", title),
+    relPnlChart(u.profit.toOwnMcap, u.loss.toOwnMcap, "% of Own Mcap", title),
+    relPnlChart(u.profit.toOwnGrossPnl, u.loss.toOwnGrossPnl, "% of Own P&L", title),
     ...unrealizedCumulativeRollingTree(u.profit, u.loss, title),
   ];
 }
 
 /**
  * Unrealized P&L tree for LTH (loss relToMcap only)
- * @param {Brk.GrossInvestedLossNetNuplProfitSentimentPattern2} u
+ * @param {FullRelativePattern} u
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
@@ -137,17 +137,17 @@ function unrealizedPnlTreeLongTerm(u, title) {
     {
       name: "% of Mcap",
       title: title("Unrealized Loss (% of Mcap)"),
-      bottom: percentRatio({ pattern: u.loss.relToMcap, name: "Loss", color: colors.loss }),
+      bottom: percentRatio({ pattern: u.loss.toMcap, name: "Loss", color: colors.loss }),
     },
-    relPnlChart(u.profit.relToOwnMcap, u.loss.relToOwnMcap, "% of Own Mcap", title),
-    relPnlChart(u.profit.relToOwnGross, u.loss.relToOwnGross, "% of Own P&L", title),
+    relPnlChart(u.profit.toOwnMcap, u.loss.toOwnMcap, "% of Own Mcap", title),
+    relPnlChart(u.profit.toOwnGrossPnl, u.loss.toOwnGrossPnl, "% of Own P&L", title),
     ...unrealizedCumulativeRollingTree(u.profit, u.loss, title),
   ];
 }
 
 /**
  * Unrealized P&L tree for mid-tier cohorts (AgeRange/MaxAge)
- * @param {Brk.LossNetNuplProfitPattern} u
+ * @param {BasicRelativePattern} u
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
@@ -232,7 +232,7 @@ function unrealizedCumulativeRollingTree(profit, loss, title) {
 // ============================================================================
 
 /**
- * @param {Brk.SeriesTree_Cohorts_Utxo_All_Unrealized} u
+ * @param {AllRelativePattern} u
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
@@ -242,13 +242,13 @@ function netUnrealizedTreeAll(u, title) {
     {
       name: "% of Own P&L",
       title: title("Net Unrealized P&L (% of Own P&L)"),
-      bottom: percentRatioBaseline({ pattern: u.netPnl.relToOwnGross, name: "Net P&L" }),
+      bottom: percentRatioBaseline({ pattern: u.netPnl.toOwnGrossPnl, name: "Net P&L" }),
     },
   ];
 }
 
 /**
- * @param {Brk.GrossInvestedLossNetNuplProfitSentimentPattern2} u
+ * @param {FullRelativePattern} u
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
@@ -258,19 +258,19 @@ function netUnrealizedTreeFull(u, title) {
     {
       name: "% of Own Mcap",
       title: title("Net Unrealized P&L (% of Own Mcap)"),
-      bottom: percentRatioBaseline({ pattern: u.netPnl.relToOwnMcap, name: "Net P&L" }),
+      bottom: percentRatioBaseline({ pattern: u.netPnl.toOwnMcap, name: "Net P&L" }),
     },
     {
       name: "% of Own P&L",
       title: title("Net Unrealized P&L (% of Own P&L)"),
-      bottom: percentRatioBaseline({ pattern: u.netPnl.relToOwnGross, name: "Net P&L" }),
+      bottom: percentRatioBaseline({ pattern: u.netPnl.toOwnGrossPnl, name: "Net P&L" }),
     },
   ];
 }
 
 /**
  * Net P&L for mid-tier cohorts
- * @param {Brk.LossNetNuplProfitPattern} u
+ * @param {BasicRelativePattern} u
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function netUnrealizedMid(u) {
@@ -283,7 +283,7 @@ function netUnrealizedMid(u) {
 
 /**
  * Invested capital (Full unrealized only)
- * @param {Brk.GrossInvestedLossNetNuplProfitSentimentPattern2 | Brk.SeriesTree_Cohorts_Utxo_All_Unrealized} u
+ * @param {FullRelativePattern | AllRelativePattern} u
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function investedCapitalSeries(u) {
@@ -295,7 +295,7 @@ function investedCapitalSeries(u) {
 
 /**
  * Sentiment (Full unrealized only)
- * @param {Brk.GrossInvestedLossNetNuplProfitSentimentPattern2 | Brk.SeriesTree_Cohorts_Utxo_All_Unrealized} u
+ * @param {FullRelativePattern | AllRelativePattern} u
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function sentimentSeries(u) {
@@ -308,7 +308,7 @@ function sentimentSeries(u) {
 
 /**
  * NUPL series
- * @param {Brk.BpsRatioPattern} nupl
+ * @param {NuplPattern} nupl
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function nuplSeries(nupl) {
@@ -320,7 +320,7 @@ function nuplSeries(nupl) {
 // ============================================================================
 
 /**
- * @param {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern | Brk.SeriesTree_Cohorts_Utxo_Lth_Realized} r
+ * @param {RealizedPattern | LthRealizedPattern} r
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
@@ -339,15 +339,15 @@ function realizedPnlSumTreeFull(r, title) {
       name: "% of Rcap",
       title: title("Realized P&L (% of Realized Cap)"),
       bottom: [
-        ...percentRatioBaseline({ pattern: r.profit.relToRcap, name: "Profit", color: colors.profit }),
-        ...percentRatioBaseline({ pattern: r.loss.relToRcap, name: "Loss", color: colors.loss }),
+        ...percentRatioBaseline({ pattern: r.profit.toRcap, name: "Profit", color: colors.profit }),
+        ...percentRatioBaseline({ pattern: r.loss.toRcap, name: "Loss", color: colors.loss }),
       ],
     },
   ];
 }
 
 /**
- * @param {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern | Brk.SeriesTree_Cohorts_Utxo_Lth_Realized} r
+ * @param {RealizedPattern | LthRealizedPattern} r
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
@@ -357,13 +357,13 @@ function realizedNetPnlSumTreeFull(r, title) {
     {
       name: "% of Rcap",
       title: title("Net Realized P&L (% of Realized Cap)"),
-      bottom: percentRatioBaseline({ pattern: r.netPnl.relToRcap, name: "Net" }),
+      bottom: percentRatioBaseline({ pattern: r.netPnl.toRcap, name: "Net" }),
     },
   ];
 }
 
 /**
- * @param {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern | Brk.SeriesTree_Cohorts_Utxo_Lth_Realized} r
+ * @param {RealizedPattern | LthRealizedPattern} r
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
@@ -382,8 +382,8 @@ function realizedPnlCumulativeTreeFull(r, title) {
       name: "% of Rcap",
       title: title("Cumulative Realized P&L (% of Realized Cap)"),
       bottom: [
-        ...percentRatioBaseline({ pattern: r.profit.relToRcap, name: "Profit", color: colors.profit }),
-        ...percentRatioBaseline({ pattern: r.loss.relToRcap, name: "Loss", color: colors.loss }),
+        ...percentRatioBaseline({ pattern: r.profit.toRcap, name: "Profit", color: colors.profit }),
+        ...percentRatioBaseline({ pattern: r.loss.toRcap, name: "Loss", color: colors.loss }),
       ],
     },
   ];
@@ -391,7 +391,7 @@ function realizedPnlCumulativeTreeFull(r, title) {
 
 /**
  * Net realized P&L delta tree (absolute + rate across all rolling windows)
- * @param {Brk.BaseChangeCumulativeDeltaRelSumPattern | Brk.BaseCumulativeDeltaSumPattern} netPnl
+ * @param {NetPnlFullPattern | NetPnlBasicPattern} netPnl
  * @param {(name: string) => string} title
  * @returns {PartialOptionsGroup}
  */
@@ -439,7 +439,7 @@ function realizedNetPnlDeltaTree(netPnl, title) {
 
 /**
  * Full realized delta tree (absolute + rate + rel to mcap/rcap)
- * @param {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern | Brk.SeriesTree_Cohorts_Utxo_Lth_Realized} r
+ * @param {RealizedPattern | LthRealizedPattern} r
  * @param {(name: string) => string} title
  * @returns {PartialOptionsGroup}
  */
@@ -452,12 +452,12 @@ function realizedNetPnlDeltaTreeFull(r, title) {
       {
         name: "% of Mcap",
         title: title("Net Realized P&L Change (% of Mcap)"),
-        bottom: percentRatioBaseline({ pattern: r.netPnl.change1m.relToMcap, name: "30d Change" }),
+        bottom: percentRatioBaseline({ pattern: r.netPnl.change1m.toMcap, name: "30d Change" }),
       },
       {
         name: "% of Rcap",
         title: title("Net Realized P&L Change (% of Rcap)"),
-        bottom: percentRatioBaseline({ pattern: r.netPnl.change1m.relToRcap, name: "30d Change" }),
+        bottom: percentRatioBaseline({ pattern: r.netPnl.change1m.toRcap, name: "30d Change" }),
       },
     ],
   };
@@ -491,7 +491,7 @@ function rollingNetRealizedTree(netPnl, title) {
 
 /**
  * Rolling realized with P/L and ratio (full realized only)
- * @param {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern | Brk.SeriesTree_Cohorts_Utxo_Lth_Realized} r
+ * @param {RealizedPattern | LthRealizedPattern} r
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
@@ -554,8 +554,8 @@ function singleRollingRealizedTreeFull(r, title) {
 
 /**
  * Rolling realized profit/loss sums (basic — no P/L ratio)
- * @param {Brk.BaseCumulativeSumPattern3} profit
- * @param {Brk.BaseCumulativeSumPattern3} loss
+ * @param {RealizedProfitLossPattern} profit
+ * @param {RealizedProfitLossPattern} loss
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
@@ -676,7 +676,7 @@ function investorPricePercentilesTree(percentiles, title) {
 
 /**
  * Full realized subfolder (All/STH/LTH)
- * @param {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern | Brk.SeriesTree_Cohorts_Utxo_Lth_Realized} r
+ * @param {RealizedPattern | LthRealizedPattern} r
  * @param {(name: string) => string} title
  * @returns {PartialOptionsGroup}
  */
@@ -746,7 +746,7 @@ function realizedSubfolderFull(r, title) {
               {
                 name: "% of Rcap",
                 title: title("Cumulative Net P&L (% of Realized Cap)"),
-                bottom: percentRatioBaseline({ pattern: r.netPnl.relToRcap, name: "Net" }),
+                bottom: percentRatioBaseline({ pattern: r.netPnl.toRcap, name: "Net" }),
               },
             ],
           },
@@ -757,7 +757,7 @@ function realizedSubfolderFull(r, title) {
               {
                 name: "% of Rcap",
                 title: title("Cumulative Peak Regret (% of Realized Cap)"),
-                bottom: percentRatioBaseline({ pattern: r.peakRegret.relToRcap, name: "Peak Regret" }),
+                bottom: percentRatioBaseline({ pattern: r.peakRegret.toRcap, name: "Peak Regret" }),
               },
             ],
           },
@@ -769,7 +769,7 @@ function realizedSubfolderFull(r, title) {
 
 /**
  * Mid realized subfolder (AgeRange/MaxAge — has netPnl + delta, no relToRcap/peakRegret)
- * @param {Brk.CapLossMvrvNetPriceProfitSoprPattern} r
+ * @param {MidRealizedPattern} r
  * @param {(name: string) => string} title
  * @returns {PartialOptionsGroup}
  */
@@ -823,7 +823,7 @@ function realizedSubfolderMid(r, title) {
 
 /**
  * Basic realized subfolder (no netPnl, no relToRcap)
- * @param {Brk.CapLossMvrvPriceProfitSoprPattern} r
+ * @param {BasicRealizedPattern} r
  * @param {(name: string) => string} title
  * @returns {PartialOptionsGroup}
  */
@@ -1070,8 +1070,8 @@ export function createProfitabilitySectionBasicWithInvestedCapitalPct({ cohort, 
 }
 
 /**
- * Section for CohortAddress (has unrealized profit/loss + NUPL, basic realized)
- * @param {{ cohort: CohortAddress, title: (name: string) => string }} args
+ * Section for CohortAddr (has unrealized profit/loss + NUPL, basic realized)
+ * @param {{ cohort: CohortAddr, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createProfitabilitySectionAddress({ cohort, title }) {
@@ -1110,8 +1110,8 @@ export function createProfitabilitySectionAddress({ cohort, title }) {
 
 /**
  * Grouped realized P&L sum (basic — all cohorts have profit/loss)
- * @template {{ name: string, color: Color, tree: { realized: { profit: Brk.BaseCumulativeSumPattern3, loss: Brk.BaseCumulativeSumPattern3 } } }} T
- * @template {{ name: string, color: Color, tree: { realized: { profit: Brk.BaseCumulativeSumPattern3, loss: Brk.BaseCumulativeSumPattern3 } } }} A
+ * @template {{ name: string, color: Color, tree: { realized: { profit: RealizedProfitLossPattern, loss: RealizedProfitLossPattern } } }} T
+ * @template {{ name: string, color: Color, tree: { realized: { profit: RealizedProfitLossPattern, loss: RealizedProfitLossPattern } } }} A
  * @param {readonly T[]} list
  * @param {A} all
  * @param {(name: string) => string} title
@@ -1165,8 +1165,8 @@ function groupedRealizedPnlSumFull(list, all, title) {
 
 /**
  * Grouped rolling realized charts (basic — profit/loss sums only)
- * @template {{ name: string, color: Color, tree: { realized: { profit: Brk.BaseCumulativeSumPattern3, loss: Brk.BaseCumulativeSumPattern3 } } }} T
- * @template {{ name: string, color: Color, tree: { realized: { profit: Brk.BaseCumulativeSumPattern3, loss: Brk.BaseCumulativeSumPattern3 } } }} A
+ * @template {{ name: string, color: Color, tree: { realized: { profit: RealizedProfitLossPattern, loss: RealizedProfitLossPattern } } }} T
+ * @template {{ name: string, color: Color, tree: { realized: { profit: RealizedProfitLossPattern, loss: RealizedProfitLossPattern } } }} A
  * @param {readonly T[]} list
  * @param {A} all
  * @param {(name: string) => string} title
@@ -1218,8 +1218,8 @@ function groupedRollingRealizedChartsFull(list, all, title) {
 
 /**
  * Grouped realized subfolder (basic)
- * @template {{ name: string, color: Color, tree: { realized: { profit: Brk.BaseCumulativeSumPattern3, loss: Brk.BaseCumulativeSumPattern3 } } }} T
- * @template {{ name: string, color: Color, tree: { realized: { profit: Brk.BaseCumulativeSumPattern3, loss: Brk.BaseCumulativeSumPattern3 } } }} A
+ * @template {{ name: string, color: Color, tree: { realized: { profit: RealizedProfitLossPattern, loss: RealizedProfitLossPattern } } }} T
+ * @template {{ name: string, color: Color, tree: { realized: { profit: RealizedProfitLossPattern, loss: RealizedProfitLossPattern } } }} A
  * @param {readonly T[]} list
  * @param {A} all
  * @param {(name: string) => string} title
@@ -1364,8 +1364,8 @@ function groupedRealizedSubfolderFull(list, all, title) {
 
 /**
  * Grouped unrealized P&L (USD only — for all cohorts that at least have nupl)
- * @template {{ name: string, color: Color, tree: { unrealized: { nupl: Brk.BpsRatioPattern } } }} T
- * @template {{ name: string, color: Color, tree: { unrealized: { nupl: Brk.BpsRatioPattern } } }} A
+ * @template {{ name: string, color: Color, tree: { unrealized: { nupl: NuplPattern } } }} T
+ * @template {{ name: string, color: Color, tree: { unrealized: { nupl: NuplPattern } } }} A
  * @param {readonly T[]} list
  * @param {A} all
  * @param {(name: string) => string} title
@@ -1406,7 +1406,7 @@ function groupedPnlChartsWithMarketCap(list, all, title) {
           name: "% of Mcap",
           title: title("Unrealized Profit (% of Mcap)"),
           bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            percentRatio({ pattern: tree.unrealized.profit.relToMcap, name, color }),
+            percentRatio({ pattern: tree.unrealized.profit.toMcap, name, color }),
           ),
         },
       ],
@@ -1425,7 +1425,7 @@ function groupedPnlChartsWithMarketCap(list, all, title) {
           name: "% of Mcap",
           title: title("Unrealized Loss (% of Mcap)"),
           bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            percentRatio({ pattern: tree.unrealized.loss.relToMcap, name, color }),
+            percentRatio({ pattern: tree.unrealized.loss.toMcap, name, color }),
           ),
         },
       ],
@@ -1496,14 +1496,14 @@ function groupedPnlChartsLongTerm(list, all, title) {
           name: "% of Own Mcap",
           title: title("Unrealized Profit (% of Own Mcap)"),
           bottom: flatMapCohorts(list, ({ name, color, tree }) =>
-            percentRatio({ pattern: tree.unrealized.profit.relToOwnMcap, name, color }),
+            percentRatio({ pattern: tree.unrealized.profit.toOwnMcap, name, color }),
           ),
         },
         {
           name: "% of Own P&L",
           title: title("Unrealized Profit (% of Own P&L)"),
           bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            percentRatio({ pattern: tree.unrealized.profit.relToOwnGross, name, color }),
+            percentRatio({ pattern: tree.unrealized.profit.toOwnGrossPnl, name, color }),
           ),
         },
       ],
@@ -1522,21 +1522,21 @@ function groupedPnlChartsLongTerm(list, all, title) {
           name: "% of Mcap",
           title: title("Unrealized Loss (% of Mcap)"),
           bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            percentRatio({ pattern: tree.unrealized.loss.relToMcap, name, color }),
+            percentRatio({ pattern: tree.unrealized.loss.toMcap, name, color }),
           ),
         },
         {
           name: "% of Own Mcap",
           title: title("Unrealized Loss (% of Own Mcap)"),
           bottom: flatMapCohorts(list, ({ name, color, tree }) =>
-            percentRatio({ pattern: tree.unrealized.loss.relToOwnMcap, name, color }),
+            percentRatio({ pattern: tree.unrealized.loss.toOwnMcap, name, color }),
           ),
         },
         {
           name: "% of Own P&L",
           title: title("Unrealized Loss (% of Own P&L)"),
           bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            percentRatio({ pattern: tree.unrealized.loss.relToOwnGross, name, color }),
+            percentRatio({ pattern: tree.unrealized.loss.toOwnGrossPnl, name, color }),
           ),
         },
       ],
@@ -1555,14 +1555,14 @@ function groupedPnlChartsLongTerm(list, all, title) {
           name: "% of Own Mcap",
           title: title("Net Unrealized P&L (% of Own Mcap)"),
           bottom: flatMapCohorts(list, ({ name, color, tree }) =>
-            percentRatioBaseline({ pattern: tree.unrealized.netPnl.relToOwnMcap, name, color }),
+            percentRatioBaseline({ pattern: tree.unrealized.netPnl.toOwnMcap, name, color }),
           ),
         },
         {
           name: "% of Own P&L",
           title: title("Net Unrealized P&L (% of Own P&L)"),
           bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            percentRatioBaseline({ pattern: tree.unrealized.netPnl.relToOwnGross, name, color }),
+            percentRatioBaseline({ pattern: tree.unrealized.netPnl.toOwnGrossPnl, name, color }),
           ),
         },
       ],

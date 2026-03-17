@@ -63,9 +63,9 @@ fn main() -> Result<()> {
         }
 
         // Address tracking stats
-        let addresses = mempool.get_addresses();
+        let addrs = mempool.get_addrs();
         println!("\n=== Address Tracking ===");
-        println!("  Addresses with pending txs: {}", addresses.len());
+        println!("  Addresses with pending txs: {}", addrs.len());
 
         println!("\n----------------------------------------");
     }

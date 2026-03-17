@@ -1,13 +1,13 @@
-use brk_cohort::{AmountBucket, ByAddressType};
+use brk_cohort::{AmountBucket, ByAddrType};
 use brk_types::{Cents, Sats, TypeIndex};
 use rustc_hash::FxHashMap;
 
 use crate::distribution::{
-    address::{AddressTypeToActivityCounts, AddressTypeToVec},
-    cohorts::AddressCohorts,
+    addr::{AddrTypeToActivityCounts, AddrTypeToVec},
+    cohorts::AddrCohorts,
 };
 
-use super::super::cache::{AddressLookup, TrackingStatus};
+use super::super::cache::{AddrLookup, TrackingStatus};
 
 /// Aggregated receive data for a single address within a block.
 #[derive(Default)]
@@ -18,13 +18,13 @@ struct AggregatedReceive {
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn process_received(
-    received_data: AddressTypeToVec<(TypeIndex, Sats)>,
-    cohorts: &mut AddressCohorts,
-    lookup: &mut AddressLookup<'_>,
+    received_data: AddrTypeToVec<(TypeIndex, Sats)>,
+    cohorts: &mut AddrCohorts,
+    lookup: &mut AddrLookup<'_>,
     price: Cents,
-    address_count: &mut ByAddressType<u64>,
-    empty_address_count: &mut ByAddressType<u64>,
-    activity_counts: &mut AddressTypeToActivityCounts,
+    addr_count: &mut ByAddrType<u64>,
+    empty_addr_count: &mut ByAddrType<u64>,
+    activity_counts: &mut AddrTypeToActivityCounts,
 ) {
     let max_type_len = received_data.iter().map(|(_, v)| v.len()).max().unwrap_or(0);
     let mut aggregated: FxHashMap<TypeIndex, AggregatedReceive> =
@@ -36,8 +36,8 @@ pub(crate) fn process_received(
         }
 
         // Cache mutable refs for this address type
-        let type_address_count = address_count.get_mut(output_type).unwrap();
-        let type_empty_count = empty_address_count.get_mut(output_type).unwrap();
+        let type_addr_count = addr_count.get_mut(output_type).unwrap();
+        let type_empty_count = empty_addr_count.get_mut(output_type).unwrap();
         let type_activity = activity_counts.get_mut_unwrap(output_type);
 
         // Aggregate receives by address - each address processed exactly once
@@ -55,10 +55,10 @@ pub(crate) fn process_received(
 
             match status {
                 TrackingStatus::New => {
-                    *type_address_count += 1;
+                    *type_addr_count += 1;
                 }
                 TrackingStatus::WasEmpty => {
-                    *type_address_count += 1;
+                    *type_addr_count += 1;
                     *type_empty_count -= 1;
                     // Reactivated - was empty, now has funds
                     type_activity.reactivated += 1;
@@ -100,7 +100,7 @@ pub(crate) fn process_received(
                             "process_received: cohort underflow detected!\n\
                             output_type={:?}, type_index={:?}\n\
                             prev_balance={}, new_balance={}, total_value={}\n\
-                            Address: {:?}",
+                            Addr: {:?}",
                             output_type,
                             type_index,
                             prev_balance,

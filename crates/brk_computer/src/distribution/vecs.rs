@@ -4,7 +4,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
-    Cents, EmptyAddressData, EmptyAddressIndex, FundedAddressData, FundedAddressIndex, Height,
+    Cents, EmptyAddrData, EmptyAddrIndex, FundedAddrData, FundedAddrIndex, Height,
     Indexes, StoredF64, SupplyState, Timestamp, TxIndex, Version,
 };
 use tracing::{debug, info};
@@ -28,28 +28,28 @@ use crate::{
 };
 
 use super::{
-    AddressCohorts, AddressesDataVecs, AnyAddressIndexesVecs, RangeMap, UTXOCohorts,
-    address::{
-        AddressCountsVecs, AddressActivityVecs, DeltaVecs, NewAddressCountVecs, TotalAddressCountVecs,
+    AddrCohorts, AddrsDataVecs, AnyAddrIndexesVecs, RangeMap, UTXOCohorts,
+    addr::{
+        AddrCountsVecs, AddrActivityVecs, DeltaVecs, NewAddrCountVecs, TotalAddrCountVecs,
     },
 };
 
 const VERSION: Version = Version::new(22);
 
 #[derive(Traversable)]
-pub struct AddressMetricsVecs<M: StorageMode = Rw> {
-    pub funded: AddressCountsVecs<M>,
-    pub empty: AddressCountsVecs<M>,
-    pub activity: AddressActivityVecs<M>,
-    pub total: TotalAddressCountVecs<M>,
-    pub new: NewAddressCountVecs<M>,
+pub struct AddrMetricsVecs<M: StorageMode = Rw> {
+    pub funded: AddrCountsVecs<M>,
+    pub empty: AddrCountsVecs<M>,
+    pub activity: AddrActivityVecs<M>,
+    pub total: TotalAddrCountVecs<M>,
+    pub new: NewAddrCountVecs<M>,
     pub delta: DeltaVecs,
     #[traversable(wrap = "indexes", rename = "funded")]
     pub funded_index:
-        LazyVecFrom1<FundedAddressIndex, FundedAddressIndex, FundedAddressIndex, FundedAddressData>,
+        LazyVecFrom1<FundedAddrIndex, FundedAddrIndex, FundedAddrIndex, FundedAddrData>,
     #[traversable(wrap = "indexes", rename = "empty")]
     pub empty_index:
-        LazyVecFrom1<EmptyAddressIndex, EmptyAddressIndex, EmptyAddressIndex, EmptyAddressData>,
+        LazyVecFrom1<EmptyAddrIndex, EmptyAddrIndex, EmptyAddrIndex, EmptyAddrData>,
 }
 
 #[derive(Traversable)]
@@ -61,17 +61,17 @@ pub struct Vecs<M: StorageMode = Rw> {
 
     #[traversable(wrap = "supply", rename = "state")]
     pub supply_state: M::Stored<BytesVec<Height, SupplyState>>,
-    #[traversable(wrap = "addresses", rename = "indexes")]
-    pub any_address_indexes: AnyAddressIndexesVecs<M>,
-    #[traversable(wrap = "addresses", rename = "data")]
-    pub addresses_data: AddressesDataVecs<M>,
+    #[traversable(wrap = "addrs", rename = "indexes")]
+    pub any_addr_indexes: AnyAddrIndexesVecs<M>,
+    #[traversable(wrap = "addrs", rename = "data")]
+    pub addrs_data: AddrsDataVecs<M>,
     #[traversable(wrap = "cohorts", rename = "utxo")]
     pub utxo_cohorts: UTXOCohorts<M>,
-    #[traversable(wrap = "cohorts", rename = "address")]
-    pub address_cohorts: AddressCohorts<M>,
+    #[traversable(wrap = "cohorts", rename = "addr")]
+    pub addr_cohorts: AddrCohorts<M>,
     #[traversable(wrap = "cointime/activity")]
     pub coinblocks_destroyed: PerBlockCumulativeWithSums<StoredF64, StoredF64, M>,
-    pub addresses: AddressMetricsVecs<M>,
+    pub addrs: AddrMetricsVecs<M>,
 
     /// In-memory block state for UTXO processing. Persisted via supply_state.
     /// Kept across compute() calls to avoid O(n) rebuild on resume.
@@ -111,47 +111,47 @@ impl Vecs {
 
         let utxo_cohorts = UTXOCohorts::forced_import(&db, version, indexes, &states_path, cached_starts)?;
 
-        let address_cohorts = AddressCohorts::forced_import(&db, version, indexes, &states_path, cached_starts)?;
+        let addr_cohorts = AddrCohorts::forced_import(&db, version, indexes, &states_path, cached_starts)?;
 
         // Create address data BytesVecs first so we can also use them for identity mappings
-        let funded_address_index_to_funded_address_data = BytesVec::forced_import_with(
-            vecdb::ImportOptions::new(&db, "funded_address_data", version)
+        let funded_addr_index_to_funded_addr_data = BytesVec::forced_import_with(
+            vecdb::ImportOptions::new(&db, "funded_addr_data", version)
                 .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
         )?;
-        let empty_address_index_to_empty_address_data = BytesVec::forced_import_with(
-            vecdb::ImportOptions::new(&db, "empty_address_data", version)
+        let empty_addr_index_to_empty_addr_data = BytesVec::forced_import_with(
+            vecdb::ImportOptions::new(&db, "empty_addr_data", version)
                 .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
         )?;
 
         // Identity mappings for traversable
-        let funded_address_index = LazyVecFrom1::init(
-            "funded_address_index",
+        let funded_addr_index = LazyVecFrom1::init(
+            "funded_addr_index",
             version,
-            funded_address_index_to_funded_address_data.read_only_boxed_clone(),
+            funded_addr_index_to_funded_addr_data.read_only_boxed_clone(),
             |index, _| index,
         );
-        let empty_address_index = LazyVecFrom1::init(
-            "empty_address_index",
+        let empty_addr_index = LazyVecFrom1::init(
+            "empty_addr_index",
             version,
-            empty_address_index_to_empty_address_data.read_only_boxed_clone(),
+            empty_addr_index_to_empty_addr_data.read_only_boxed_clone(),
             |index, _| index,
         );
 
-        let address_count = AddressCountsVecs::forced_import(&db, "address_count", version, indexes)?;
-        let empty_address_count =
-            AddressCountsVecs::forced_import(&db, "empty_address_count", version, indexes)?;
-        let address_activity =
-            AddressActivityVecs::forced_import(&db, "address_activity", version, indexes, cached_starts)?;
+        let addr_count = AddrCountsVecs::forced_import(&db, "addr_count", version, indexes)?;
+        let empty_addr_count =
+            AddrCountsVecs::forced_import(&db, "empty_addr_count", version, indexes)?;
+        let addr_activity =
+            AddrActivityVecs::forced_import(&db, "addr_activity", version, indexes, cached_starts)?;
 
-        // Stored total = address_count + empty_address_count (global + per-type, with all derived indexes)
-        let total_address_count = TotalAddressCountVecs::forced_import(&db, version, indexes)?;
+        // Stored total = addr_count + empty_addr_count (global + per-type, with all derived indexes)
+        let total_addr_count = TotalAddrCountVecs::forced_import(&db, version, indexes)?;
 
         // Per-block delta of total (global + per-type)
-        let new_address_count =
-            NewAddressCountVecs::forced_import(&db, version, indexes, cached_starts)?;
+        let new_addr_count =
+            NewAddrCountVecs::forced_import(&db, version, indexes, cached_starts)?;
 
         // Growth rate: delta change + rate (global + per-type)
-        let delta = DeltaVecs::new(version, &address_count, cached_starts, indexes);
+        let delta = DeltaVecs::new(version, &addr_count, cached_starts, indexes);
 
         let this = Self {
             supply_state: BytesVec::forced_import_with(
@@ -159,19 +159,19 @@ impl Vecs {
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),
             )?,
 
-            addresses: AddressMetricsVecs {
-                funded: address_count,
-                empty: empty_address_count,
-                activity: address_activity,
-                total: total_address_count,
-                new: new_address_count,
+            addrs: AddrMetricsVecs {
+                funded: addr_count,
+                empty: empty_addr_count,
+                activity: addr_activity,
+                total: total_addr_count,
+                new: new_addr_count,
                 delta,
-                funded_index: funded_address_index,
-                empty_index: empty_address_index,
+                funded_index: funded_addr_index,
+                empty_index: empty_addr_index,
             },
 
             utxo_cohorts,
-            address_cohorts,
+            addr_cohorts,
 
             coinblocks_destroyed: PerBlockCumulativeWithSums::forced_import(
                 &db,
@@ -181,10 +181,10 @@ impl Vecs {
                 cached_starts,
             )?,
 
-            any_address_indexes: AnyAddressIndexesVecs::forced_import(&db, version)?,
-            addresses_data: AddressesDataVecs {
-                funded: funded_address_index_to_funded_address_data,
-                empty: empty_address_index_to_empty_address_data,
+            any_addr_indexes: AnyAddrIndexesVecs::forced_import(&db, version)?,
+            addrs_data: AddrsDataVecs {
+                funded: funded_addr_index_to_funded_addr_data,
+                empty: empty_addr_index_to_empty_addr_data,
             },
             chain_state: Vec::new(),
             tx_index_to_height: RangeMap::default(),
@@ -275,10 +275,10 @@ impl Vecs {
                 let recovered = recover_state(
                     height,
                     chain_state_rollback,
-                    &mut self.any_address_indexes,
-                    &mut self.addresses_data,
+                    &mut self.any_addr_indexes,
+                    &mut self.addrs_data,
                     &mut self.utxo_cohorts,
-                    &mut self.address_cohorts,
+                    &mut self.addr_cohorts,
                 )?;
 
                 if recovered.starting_height.is_zero() {
@@ -302,14 +302,14 @@ impl Vecs {
         // Recover or reuse chain_state
         let starting_height = if recovered_height.is_zero() {
             self.supply_state.reset()?;
-            self.addresses.funded.reset_height()?;
-            self.addresses.empty.reset_height()?;
-            self.addresses.activity.reset_height()?;
+            self.addrs.funded.reset_height()?;
+            self.addrs.empty.reset_height()?;
+            self.addrs.activity.reset_height()?;
             reset_state(
-                &mut self.any_address_indexes,
-                &mut self.addresses_data,
+                &mut self.any_addr_indexes,
+                &mut self.addrs_data,
                 &mut self.utxo_cohorts,
-                &mut self.address_cohorts,
+                &mut self.addr_cohorts,
             )?;
 
             chain_state.clear();
@@ -356,7 +356,7 @@ impl Vecs {
         debug!("validating computed versions");
         let base_version = VERSION;
         self.utxo_cohorts.validate_computed_versions(base_version)?;
-        self.address_cohorts
+        self.addr_cohorts
             .validate_computed_versions(base_version)?;
         debug!("computed versions validated");
 
@@ -406,7 +406,7 @@ impl Vecs {
         {
             let (r1, r2) = rayon::join(
                 || self.utxo_cohorts.compute_overlapping_vecs(starting_indexes, exit),
-                || self.address_cohorts.compute_overlapping_vecs(starting_indexes, exit),
+                || self.addr_cohorts.compute_overlapping_vecs(starting_indexes, exit),
             );
             r1?;
             r2?;
@@ -421,30 +421,30 @@ impl Vecs {
         {
             let (r1, r2) = rayon::join(
                 || self.utxo_cohorts.compute_rest_part1(prices, starting_indexes, exit),
-                || self.address_cohorts.compute_rest_part1(prices, starting_indexes, exit),
+                || self.addr_cohorts.compute_rest_part1(prices, starting_indexes, exit),
             );
             r1?;
             r2?;
         }
 
-        // 6b. Compute address count sum (by address_type → all)
-        self.addresses.funded.compute_rest(starting_indexes, exit)?;
-        self.addresses.empty.compute_rest(starting_indexes, exit)?;
+        // 6b. Compute address count sum (by addr_type -> all)
+        self.addrs.funded.compute_rest(starting_indexes, exit)?;
+        self.addrs.empty.compute_rest(starting_indexes, exit)?;
 
-        // 6c. Compute total_address_count = address_count + empty_address_count
-        self.addresses.total.compute(
+        // 6c. Compute total_addr_count = addr_count + empty_addr_count
+        self.addrs.total.compute(
             starting_indexes.height,
-            &self.addresses.funded,
-            &self.addresses.empty,
+            &self.addrs.funded,
+            &self.addrs.empty,
             exit,
         )?;
 
-        self.addresses
+        self.addrs
             .activity
             .compute_rest(starting_indexes.height, exit)?;
-        self.addresses.new.compute(
+        self.addrs.new.compute(
             starting_indexes.height,
-            &self.addresses.total,
+            &self.addrs.total,
             exit,
         )?;
 
@@ -467,7 +467,7 @@ impl Vecs {
             &height_to_market_cap,
             exit,
         )?;
-        self.address_cohorts
+        self.addr_cohorts
             .compute_rest_part2(prices, starting_indexes, exit)?;
 
         let _lock = exit.lock();
@@ -483,13 +483,13 @@ impl Vecs {
     fn min_stateful_len(&self) -> Height {
         self.utxo_cohorts
             .min_stateful_len()
-            .min(self.address_cohorts.min_stateful_len())
+            .min(self.addr_cohorts.min_stateful_len())
             .min(Height::from(self.supply_state.len()))
-            .min(self.any_address_indexes.min_stamped_len())
-            .min(self.addresses_data.min_stamped_len())
-            .min(Height::from(self.addresses.funded.min_stateful_len()))
-            .min(Height::from(self.addresses.empty.min_stateful_len()))
-            .min(Height::from(self.addresses.activity.min_stateful_len()))
+            .min(self.any_addr_indexes.min_stamped_len())
+            .min(self.addrs_data.min_stamped_len())
+            .min(Height::from(self.addrs.funded.min_stateful_len()))
+            .min(Height::from(self.addrs.empty.min_stateful_len()))
+            .min(Height::from(self.addrs.activity.min_stateful_len()))
             .min(Height::from(self.coinblocks_destroyed.base.height.len()))
     }
 }

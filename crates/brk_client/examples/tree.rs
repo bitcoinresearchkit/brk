@@ -45,7 +45,7 @@ fn main() -> brk_client::Result<()> {
     let client = BrkClient::new("http://localhost:3110");
 
     // Get the metrics catalog tree
-    let tree = client.get_metrics_tree()?;
+    let tree = client.get_series_tree()?;
 
     // Recursively collect all metrics
     let metrics = collect_metrics(&tree, "");
@@ -58,7 +58,7 @@ fn main() -> brk_client::Result<()> {
             let index_str = index.name();
             let full_path = format!("{}.by.{}", metric.path, index_str);
 
-            match client.get_metric(
+            match client.get_series(
                 metric.name.as_str().into(),
                 *index,
                 None,

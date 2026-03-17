@@ -1,4 +1,4 @@
-mod addresses;
+mod addrs;
 mod block_builder;
 mod entry;
 mod entry_pool;

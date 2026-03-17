@@ -14,7 +14,8 @@ const TESTNET_IDS: &[u16] = &[145, 146, 149, 150, 156, 163];
 struct JsonPoolEntry {
     id: u16,
     name: String,
-    addresses: Vec<String>,
+    #[serde(rename = "addresses")]
+    addrs: Vec<String>,
     tags: Vec<String>,
     link: String,
 }
@@ -27,7 +28,7 @@ fn empty_pool(id: usize) -> Pool {
     Pool {
         slug: PoolSlug::from(id as u8),
         name: "",
-        addresses: Box::new([]),
+        addrs: Box::new([]),
         tags: Box::new([]),
         tags_lowercase: Box::new([]),
         link: "",
@@ -47,8 +48,8 @@ impl Pools {
         })
     }
 
-    pub fn find_from_address(&self, address: &str) -> Option<&Pool> {
-        self.iter().find(|pool| pool.addresses.contains(&address))
+    pub fn find_from_addr(&self, addr: &str) -> Option<&Pool> {
+        self.iter().find(|pool| pool.addrs.contains(&addr))
     }
 
     pub fn get_unknown(&self) -> &Pool {
@@ -82,7 +83,7 @@ pub fn pools() -> &'static Pools {
         pools[0] = Pool {
             slug: PoolSlug::Unknown,
             name: "Unknown",
-            addresses: Box::new([]),
+            addrs: Box::new([]),
             tags: Box::new([]),
             tags_lowercase: Box::new([]),
             link: "",
@@ -104,8 +105,8 @@ pub fn pools() -> &'static Pools {
                 slug,
                 name: leak_str(entry.name),
                 link: leak_str(entry.link),
-                addresses: entry
-                    .addresses
+                addrs: entry
+                    .addrs
                     .into_iter()
                     .map(leak_str)
                     .collect::<Vec<_>>()

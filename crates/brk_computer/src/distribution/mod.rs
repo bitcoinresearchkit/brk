@@ -1,4 +1,4 @@
-pub mod address;
+pub mod addr;
 mod block;
 pub mod cohorts;
 pub mod compute;
@@ -11,5 +11,5 @@ pub use vecs::Vecs;
 
 pub const DB_NAME: &str = "distribution";
 
-pub use address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs};
-pub use cohorts::{AddressCohorts, DynCohortVecs, UTXOCohorts};
+pub use addr::{AddrTypeToTypeIndexMap, AddrsDataVecs, AnyAddrIndexesVecs};
+pub use cohorts::{AddrCohorts, DynCohortVecs, UTXOCohorts};

@@ -1,4 +1,4 @@
-mod address;
+mod addr;
 mod cached_mappings;
 mod day1;
 mod day3;
@@ -37,7 +37,7 @@ use crate::{
 };
 
 pub use cached_mappings::CachedMappings;
-pub use address::Vecs as AddressVecs;
+pub use addr::Vecs as AddrVecs;
 pub use day1::Vecs as Day1Vecs;
 pub use day3::Vecs as Day3Vecs;
 pub use epoch::Vecs as EpochVecs;
@@ -65,7 +65,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     db: Database,
     #[traversable(skip)]
     pub cached_mappings: CachedMappings,
-    pub address: AddressVecs,
+    pub addr: AddrVecs,
     pub height: HeightVecs<M>,
     pub epoch: EpochVecs<M>,
     pub halving: HalvingVecs<M>,
@@ -97,7 +97,7 @@ impl Vecs {
 
         let version = parent_version;
 
-        let address = AddressVecs::forced_import(version, indexer);
+        let addr = AddrVecs::forced_import(version, indexer);
         let height = HeightVecs::forced_import(&db, version)?;
         let epoch = EpochVecs::forced_import(&db, version)?;
         let halving = HalvingVecs::forced_import(&db, version)?;
@@ -138,7 +138,7 @@ impl Vecs {
 
         let this = Self {
             cached_mappings,
-            address,
+            addr,
             height,
             epoch,
             halving,

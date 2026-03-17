@@ -6,9 +6,9 @@ use tracing::{debug, warn};
 use vecdb::Stamp;
 
 use super::super::{
-    AddressesDataVecs,
-    address::AnyAddressIndexesVecs,
-    cohorts::{AddressCohorts, UTXOCohorts},
+    AddrsDataVecs,
+    addr::AnyAddrIndexesVecs,
+    cohorts::{AddrCohorts, UTXOCohorts},
 };
 
 /// Result of state recovery.
@@ -25,22 +25,22 @@ pub struct RecoveredState {
 pub(crate) fn recover_state(
     height: Height,
     chain_state_rollback: vecdb::Result<Stamp>,
-    any_address_indexes: &mut AnyAddressIndexesVecs,
-    addresses_data: &mut AddressesDataVecs,
+    any_addr_indexes: &mut AnyAddrIndexesVecs,
+    addrs_data: &mut AddrsDataVecs,
     utxo_cohorts: &mut UTXOCohorts,
-    address_cohorts: &mut AddressCohorts,
+    addr_cohorts: &mut AddrCohorts,
 ) -> Result<RecoveredState> {
     let stamp = Stamp::from(height);
 
     // Rollback address state vectors
-    let address_indexes_rollback = any_address_indexes.rollback_before(stamp);
-    let address_data_rollback = addresses_data.rollback_before(stamp);
+    let addr_indexes_rollback = any_addr_indexes.rollback_before(stamp);
+    let addr_data_rollback = addrs_data.rollback_before(stamp);
 
     // Verify rollback consistency - all must agree on the same height
     let consistent_height = rollback_states(
         chain_state_rollback,
-        address_indexes_rollback,
-        address_data_rollback,
+        addr_indexes_rollback,
+        addr_data_rollback,
     );
 
     // If rollbacks are inconsistent, start fresh
@@ -88,19 +88,19 @@ pub(crate) fn recover_state(
 
     // Import address cohort states - all must succeed
     debug!(
-        "importing address cohort states at height {}",
+        "importing addr cohort states at height {}",
         consistent_height
     );
-    if !address_cohorts.import_separate_states(consistent_height) {
+    if !addr_cohorts.import_separate_states(consistent_height) {
         warn!(
-            "Address cohort state import failed at height {}",
+            "Addr cohort state import failed at height {}",
             consistent_height
         );
         return Ok(RecoveredState {
             starting_height: Height::ZERO,
         });
     }
-    debug!("address cohort states imported");
+    debug!("addr cohort states imported");
 
     Ok(RecoveredState {
         starting_height: consistent_height,
@@ -111,22 +111,22 @@ pub(crate) fn recover_state(
 ///
 /// Resets all state vectors and cohort states.
 pub(crate) fn reset_state(
-    any_address_indexes: &mut AnyAddressIndexesVecs,
-    addresses_data: &mut AddressesDataVecs,
+    any_addr_indexes: &mut AnyAddrIndexesVecs,
+    addrs_data: &mut AddrsDataVecs,
     utxo_cohorts: &mut UTXOCohorts,
-    address_cohorts: &mut AddressCohorts,
+    addr_cohorts: &mut AddrCohorts,
 ) -> Result<RecoveredState> {
     // Reset address state
-    any_address_indexes.reset()?;
-    addresses_data.reset()?;
+    any_addr_indexes.reset()?;
+    addrs_data.reset()?;
 
     // Reset cohort state heights
     utxo_cohorts.reset_separate_state_heights();
-    address_cohorts.reset_separate_state_heights();
+    addr_cohorts.reset_separate_state_heights();
 
     // Reset cost_basis_data for all cohorts
     utxo_cohorts.reset_separate_cost_basis_data()?;
-    address_cohorts.reset_separate_cost_basis_data()?;
+    addr_cohorts.reset_separate_cost_basis_data()?;
 
     Ok(RecoveredState {
         starting_height: Height::ZERO,
@@ -164,8 +164,8 @@ pub enum StartMode {
 /// otherwise returns Height::ZERO (need fresh start).
 fn rollback_states(
     chain_state_rollback: vecdb::Result<Stamp>,
-    address_indexes_rollbacks: Result<Vec<Stamp>>,
-    address_data_rollbacks: Result<[Stamp; 2]>,
+    addr_indexes_rollbacks: Result<Vec<Stamp>>,
+    addr_data_rollbacks: Result<[Stamp; 2]>,
 ) -> Height {
     let mut heights: BTreeSet<Height> = BTreeSet::new();
 
@@ -181,30 +181,30 @@ fn rollback_states(
     );
     heights.insert(chain_height);
 
-    let Ok(stamps) = address_indexes_rollbacks else {
+    let Ok(stamps) = addr_indexes_rollbacks else {
         warn!(
-            "address_indexes rollback failed: {:?}",
-            address_indexes_rollbacks
+            "addr_indexes rollback failed: {:?}",
+            addr_indexes_rollbacks
         );
         return Height::ZERO;
     };
     for (i, s) in stamps.iter().enumerate() {
         let h = Height::from(*s).incremented();
         debug!(
-            "address_indexes[{}] rolled back to stamp {:?}, height {}",
+            "addr_indexes[{}] rolled back to stamp {:?}, height {}",
             i, s, h
         );
         heights.insert(h);
     }
 
-    let Ok(stamps) = address_data_rollbacks else {
-        warn!("address_data rollback failed: {:?}", address_data_rollbacks);
+    let Ok(stamps) = addr_data_rollbacks else {
+        warn!("addr_data rollback failed: {:?}", addr_data_rollbacks);
         return Height::ZERO;
     };
     for (i, s) in stamps.iter().enumerate() {
         let h = Height::from(*s).incremented();
         debug!(
-            "address_data[{}] rolled back to stamp {:?}, height {}",
+            "addr_data[{}] rolled back to stamp {:?}, height {}",
             i, s, h
         );
         heights.insert(h);

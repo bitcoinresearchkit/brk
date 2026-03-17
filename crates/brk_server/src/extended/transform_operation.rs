@@ -6,7 +6,7 @@ use schemars::JsonSchema;
 use crate::error::ErrorBody;
 
 pub trait TransformResponseExtended<'t> {
-    fn addresses_tag(self) -> Self;
+    fn addrs_tag(self) -> Self;
     fn blocks_tag(self) -> Self;
     fn mempool_tag(self) -> Self;
     fn metrics_tag(self) -> Self;
@@ -40,7 +40,7 @@ pub trait TransformResponseExtended<'t> {
 }
 
 impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
-    fn addresses_tag(self) -> Self {
+    fn addrs_tag(self) -> Self {
         self.tag("Addresses")
     }
 

@@ -1,4 +1,4 @@
-use crate::{Address, AddressBytes, OutputType, Sats};
+use crate::{Addr, AddrBytes, OutputType, Sats};
 use bitcoin::ScriptBuf;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeStruct};
@@ -35,8 +35,8 @@ pub struct TxOut {
     /// Bitcoin address (if applicable, None for OP_RETURN)
     #[allow(dead_code)]
     #[serde(skip, rename = "scriptpubkey_address")]
-    #[schemars(with = "Option<Address>", example = Some("bc1q8vryck26jhuh0uqr2ttwj96szfnu4nwxfmu39y".to_string()))]
-    script_pubkey_address: (),
+    #[schemars(with = "Option<Addr>", example = Some("bc1q8vryck26jhuh0uqr2ttwj96szfnu4nwxfmu39y".to_string()))]
+    script_pubkey_addr: (),
 
     /// Value of the output in satoshis
     #[schemars(example = Sats::new(7782))]
@@ -44,12 +44,12 @@ pub struct TxOut {
 }
 
 impl TxOut {
-    pub fn address(&self) -> Option<Address> {
-        Address::try_from(&self.script_pubkey).ok()
+    pub fn addr(&self) -> Option<Addr> {
+        Addr::try_from(&self.script_pubkey).ok()
     }
 
-    pub fn address_bytes(&self) -> Option<AddressBytes> {
-        AddressBytes::try_from(&self.script_pubkey).ok()
+    pub fn addr_bytes(&self) -> Option<AddrBytes> {
+        AddrBytes::try_from(&self.script_pubkey).ok()
     }
 
     pub fn type_(&self) -> OutputType {
@@ -68,7 +68,7 @@ impl From<bitcoin::TxOut> for TxOut {
             script_pubkey: txout.script_pubkey,
             value: txout.value.into(),
             script_pubkey_asm: (),
-            script_pubkey_address: (),
+            script_pubkey_addr: (),
             script_pubkey_type: (),
         }
     }
@@ -79,7 +79,7 @@ impl From<(ScriptBuf, Sats)> for TxOut {
     fn from((script, value): (ScriptBuf, Sats)) -> Self {
         Self {
             script_pubkey: script,
-            script_pubkey_address: (),
+            script_pubkey_addr: (),
             script_pubkey_asm: (),
             script_pubkey_type: (),
             value,
@@ -96,7 +96,7 @@ impl Serialize for TxOut {
         state.serialize_field("scriptpubkey", &self.script_pubkey.to_hex_string())?;
         state.serialize_field("scriptpubkey_asm", &self.script_pubkey_asm())?;
         state.serialize_field("scriptpubkey_type", &self.type_())?;
-        state.serialize_field("scriptpubkey_address", &self.address())?;
+        state.serialize_field("scriptpubkey_address", &self.addr())?;
         state.serialize_field("value", &self.value)?;
         state.end()
     }

@@ -69,10 +69,10 @@ impl Filter {
 
     /// Whether to compute extended metrics (realized cap ratios, profit/loss ratios, percentiles)
     /// For UTXO context: true only for age range cohorts (Range) and aggregate cohorts (All, Term)
-    /// For Address context: always false
+    /// For address context: always false
     pub fn is_extended(&self, context: CohortContext) -> bool {
         match context {
-            CohortContext::Address => false,
+            CohortContext::Addr => false,
             CohortContext::Utxo => {
                 matches!(
                     self,
@@ -90,12 +90,12 @@ impl Filter {
 
     /// Whether to compute adjusted metrics (adjusted SOPR, adjusted value created/destroyed)
     /// For UTXO context: true for All, STH, and under_age (LowerThan)
-    /// For Address context: always false
+    /// For address context: always false
     /// Note: LTH doesn't need adjusted (everything >= 5 months is already > 1 hour)
     /// Note: age ranges don't need adjusted (0-1h data lives in its own cohort)
     pub fn compute_adjusted(&self, context: CohortContext) -> bool {
         match context {
-            CohortContext::Address => false,
+            CohortContext::Addr => false,
             CohortContext::Utxo => matches!(
                 self,
                 Filter::All | Filter::Term(Term::Sth) | Filter::Time(TimeFilter::LowerThan(_))

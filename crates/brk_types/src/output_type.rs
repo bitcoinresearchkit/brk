@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use strum::Display;
 use vecdb::{Bytes, Formattable, Pco, TransparentPco};
 
-use crate::AddressBytes;
+use crate::AddrBytes;
 
 #[derive(
     Debug,
@@ -41,7 +41,7 @@ pub enum OutputType {
 }
 
 impl OutputType {
-    pub const ADDRESS_TYPES: [Self; 8] = [
+    pub const ADDR_TYPES: [Self; 8] = [
         Self::P2PK65,
         Self::P2PK33,
         Self::P2PKH,
@@ -73,7 +73,7 @@ impl OutputType {
         }
     }
 
-    pub fn is_address(&self) -> bool {
+    pub fn is_addr(&self) -> bool {
         match self {
             Self::P2PK65 => true,
             Self::P2PK33 => true,
@@ -90,8 +90,8 @@ impl OutputType {
         }
     }
 
-    pub fn is_not_address(&self) -> bool {
-        !self.is_address()
+    pub fn is_not_addr(&self) -> bool {
+        !self.is_addr()
     }
 
     pub fn is_unspendable(&self) -> bool {
@@ -173,18 +173,18 @@ impl From<AddressType> for OutputType {
     }
 }
 
-impl From<&AddressBytes> for OutputType {
+impl From<&AddrBytes> for OutputType {
     #[inline]
-    fn from(bytes: &AddressBytes) -> Self {
+    fn from(bytes: &AddrBytes) -> Self {
         match bytes {
-            AddressBytes::P2PK65(_) => Self::P2PK65,
-            AddressBytes::P2PK33(_) => Self::P2PK33,
-            AddressBytes::P2PKH(_) => Self::P2PKH,
-            AddressBytes::P2SH(_) => Self::P2SH,
-            AddressBytes::P2WPKH(_) => Self::P2WPKH,
-            AddressBytes::P2WSH(_) => Self::P2WSH,
-            AddressBytes::P2TR(_) => Self::P2TR,
-            AddressBytes::P2A(_) => Self::P2A,
+            AddrBytes::P2PK65(_) => Self::P2PK65,
+            AddrBytes::P2PK33(_) => Self::P2PK33,
+            AddrBytes::P2PKH(_) => Self::P2PKH,
+            AddrBytes::P2SH(_) => Self::P2SH,
+            AddrBytes::P2WPKH(_) => Self::P2WPKH,
+            AddrBytes::P2WSH(_) => Self::P2WSH,
+            AddrBytes::P2TR(_) => Self::P2TR,
+            AddrBytes::P2A(_) => Self::P2A,
         }
     }
 }

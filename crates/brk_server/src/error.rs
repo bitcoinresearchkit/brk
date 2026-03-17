@@ -23,7 +23,7 @@ struct ErrorDetail {
     /// Error category: "invalid_request", "forbidden", "not_found", "unavailable", or "internal"
     #[schemars(with = "String")]
     r#type: &'static str,
-    /// Machine-readable error code (e.g. "invalid_address", "series_not_found")
+    /// Machine-readable error code (e.g. "invalid_addr", "series_not_found")
     #[schemars(with = "String")]
     code: &'static str,
     /// Human-readable description
@@ -47,14 +47,14 @@ fn error_status(e: &BrkError) -> StatusCode {
     match e {
         BrkError::InvalidTxid
         | BrkError::InvalidNetwork
-        | BrkError::InvalidAddress
+        | BrkError::InvalidAddr
         | BrkError::UnsupportedType(_)
         | BrkError::Parse(_)
         | BrkError::NoSeries
         | BrkError::SeriesUnsupportedIndex { .. }
         | BrkError::WeightExceeded { .. } => StatusCode::BAD_REQUEST,
 
-        BrkError::UnknownAddress
+        BrkError::UnknownAddr
         | BrkError::UnknownTxid
         | BrkError::NotFound(_)
         | BrkError::NoData
@@ -70,7 +70,7 @@ fn error_status(e: &BrkError) -> StatusCode {
 
 fn error_code(e: &BrkError) -> &'static str {
     match e {
-        BrkError::InvalidAddress => "invalid_address",
+        BrkError::InvalidAddr => "invalid_addr",
         BrkError::InvalidTxid => "invalid_txid",
         BrkError::InvalidNetwork => "invalid_network",
         BrkError::UnsupportedType(_) => "unsupported_type",
@@ -78,7 +78,7 @@ fn error_code(e: &BrkError) -> &'static str {
         BrkError::NoSeries => "no_series",
         BrkError::SeriesUnsupportedIndex { .. } => "series_unsupported_index",
         BrkError::WeightExceeded { .. } => "weight_exceeded",
-        BrkError::UnknownAddress => "unknown_address",
+        BrkError::UnknownAddr => "unknown_addr",
         BrkError::UnknownTxid => "unknown_txid",
         BrkError::NotFound(_) => "not_found",
         BrkError::OutOfRange(_) => "out_of_range",

@@ -18,7 +18,7 @@ T = TypeVar('T')
 # Type definitions
 
 # Bitcoin address string
-Address = str
+Addr = str
 # Satoshis
 Sats = int
 # Index within its type (e.g., 0 for first P2WPKH address)
@@ -26,7 +26,7 @@ TypeIndex = int
 # Transaction ID (hash)
 Txid = str
 # Unified index for any address type (funded or empty)
-AnyAddressIndex = TypeIndex
+AnyAddrIndex = TypeIndex
 # Unsigned basis points stored as u16.
 # 1 bp = 0.0001. Range: 0–6.5535.
 # Use for bounded 0–1 ratios (dominance, adoption, liveliness, etc.).
@@ -45,6 +45,8 @@ BasisPointsSigned16 = int
 BasisPointsSigned32 = int
 # Bitcoin amount as floating point (1 BTC = 100,000,000 satoshis)
 Bitcoin = float
+# Position within a .blk file, encoding file index and byte offset
+BlkPosition = int
 # Block height
 Height = int
 # UNIX timestamp in seconds
@@ -90,12 +92,12 @@ Limit = int
 RangeIndex = Union[int, Date, Timestamp]
 Day1 = int
 Day3 = int
-EmptyAddressIndex = TypeIndex
+EmptyAddrIndex = TypeIndex
 EmptyOutputIndex = TypeIndex
 Epoch = int
 # Fee rate in sats/vB
 FeeRate = float
-FundedAddressIndex = TypeIndex
+FundedAddrIndex = TypeIndex
 Halving = int
 # Hex-encoded string
 Hex = str
@@ -121,27 +123,27 @@ OpReturnIndex = TypeIndex
 OutPoint = int
 # Type (P2PKH, P2WPKH, P2SH, P2TR, etc.)
 OutputType = Literal["p2pk65", "p2pk33", "p2pkh", "p2ms", "p2sh", "opreturn", "p2wpkh", "p2wsh", "p2tr", "p2a", "empty", "unknown"]
-P2AAddressIndex = TypeIndex
+P2AAddrIndex = TypeIndex
 U8x2 = List[int]
 P2ABytes = U8x2
 P2MSOutputIndex = TypeIndex
-P2PK33AddressIndex = TypeIndex
+P2PK33AddrIndex = TypeIndex
 U8x33 = List[int]
 P2PK33Bytes = U8x33
-P2PK65AddressIndex = TypeIndex
+P2PK65AddrIndex = TypeIndex
 U8x65 = List[int]
 P2PK65Bytes = U8x65
-P2PKHAddressIndex = TypeIndex
+P2PKHAddrIndex = TypeIndex
 U8x20 = List[int]
 P2PKHBytes = U8x20
-P2SHAddressIndex = TypeIndex
+P2SHAddrIndex = TypeIndex
 P2SHBytes = U8x20
-P2TRAddressIndex = TypeIndex
+P2TRAddrIndex = TypeIndex
 U8x32 = List[int]
 P2TRBytes = U8x32
-P2WPKHAddressIndex = TypeIndex
+P2WPKHAddrIndex = TypeIndex
 P2WPKHBytes = U8x20
-P2WSHAddressIndex = TypeIndex
+P2WSHAddrIndex = TypeIndex
 P2WSHBytes = U8x32
 PoolSlug = Literal["unknown", "blockfills", "ultimuspool", "terrapool", "luxor", "onethash", "btccom", "bitfarms", "huobipool", "wayicn", "canoepool", "btctop", "bitcoincom", "pool175btc", "gbminers", "axbt", "asicminer", "bitminter", "bitcoinrussia", "btcserv", "simplecoinus", "btcguild", "eligius", "ozcoin", "eclipsemc", "maxbtc", "triplemining", "coinlab", "pool50btc", "ghashio", "stminingcorp", "bitparking", "mmpool", "polmine", "kncminer", "bitalo", "f2pool", "hhtt", "megabigpower", "mtred", "nmcbit", "yourbtcnet", "givemecoins", "braiinspool", "antpool", "multicoinco", "bcpoolio", "cointerra", "kanopool", "solock", "ckpool", "nicehash", "bitclub", "bitcoinaffiliatenetwork", "btcc", "bwpool", "exxbw", "bitsolo", "bitfury", "twentyoneinc", "digitalbtc", "eightbaochi", "mybtccoinpool", "tbdice", "hashpool", "nexious", "bravomining", "hotpool", "okexpool", "bcmonster", "onehash", "bixin", "tatmaspool", "viabtc", "connectbtc", "batpool", "waterhole", "dcexploration", "dcex", "btpool", "fiftyeightcoin", "bitcoinindia", "shawnp0wers", "phashio", "rigpool", "haozhuzhu", "sevenpool", "miningkings", "hashbx", "dpool", "rawpool", "haominer", "helix", "bitcoinukraine", "poolin", "secretsuperstar", "tigerpoolnet", "sigmapoolcom", "okpooltop", "hummerpool", "tangpool", "bytepool", "spiderpool", "novablock", "miningcity", "binancepool", "minerium", "lubiancom", "okkong", "aaopool", "emcdpool", "foundryusa", "sbicrypto", "arkpool", "purebtccom", "marapool", "kucoinpool", "entrustcharitypool", "okminer", "titan", "pegapool", "btcnuggets", "cloudhashing", "digitalxmintsy", "telco214", "btcpoolparty", "multipool", "transactioncoinmining", "btcdig", "trickysbtcpool", "btcmp", "eobot", "unomp", "patels", "gogreenlight", "bitcoinindiapool", "ekanembtc", "canoe", "tiger", "onem1x", "zulupool", "secpool", "ocean", "whitepool", "wiz", "wk057", "futurebitapollosolo", "carbonnegative", "portlandhodl", "phoenix", "neopool", "maxipool", "bitfufupool", "gdpool", "miningdutch", "publicpool", "miningsquared", "innopolistech", "btclab", "parasite", "redrockpool", "est3lar"]
 # Transaction locktime
@@ -198,10 +200,10 @@ Year1 = int
 Year10 = int
 # Aggregation dimension for querying series. Includes time-based (date, week, month, year),
 # block-based (height, tx_index), and address/output type indexes.
-Index = Literal["minute10", "minute30", "hour1", "hour4", "hour12", "day1", "day3", "week1", "month1", "month3", "month6", "year1", "year10", "halving", "epoch", "height", "tx_index", "txin_index", "txout_index", "empty_output_index", "op_return_index", "p2a_address_index", "p2ms_output_index", "p2pk33_address_index", "p2pk65_address_index", "p2pkh_address_index", "p2sh_address_index", "p2tr_address_index", "p2wpkh_address_index", "p2wsh_address_index", "unknown_output_index", "funded_address_index", "empty_address_index"]
+Index = Literal["minute10", "minute30", "hour1", "hour4", "hour12", "day1", "day3", "week1", "month1", "month3", "month6", "year1", "year10", "halving", "epoch", "height", "tx_index", "txin_index", "txout_index", "empty_output_index", "op_return_index", "p2a_addr_index", "p2ms_output_index", "p2pk33_addr_index", "p2pk65_addr_index", "p2pkh_addr_index", "p2sh_addr_index", "p2tr_addr_index", "p2wpkh_addr_index", "p2wsh_addr_index", "unknown_output_index", "funded_addr_index", "empty_addr_index"]
 # Hierarchical tree node for organizing series into categories
 TreeNode = Union[dict[str, "TreeNode"], "SeriesLeafWithSchema"]
-class AddressChainStats(TypedDict):
+class AddrChainStats(TypedDict):
     """
     Address statistics on the blockchain (confirmed transactions only)
     
@@ -222,7 +224,7 @@ class AddressChainStats(TypedDict):
     tx_count: int
     type_index: TypeIndex
 
-class AddressMempoolStats(TypedDict):
+class AddrMempoolStats(TypedDict):
     """
     Address statistics in the mempool (unconfirmed transactions only)
     
@@ -241,10 +243,10 @@ class AddressMempoolStats(TypedDict):
     spent_txo_sum: Sats
     tx_count: int
 
-class AddressParam(TypedDict):
-    address: Address
+class AddrParam(TypedDict):
+    address: Addr
 
-class AddressStats(TypedDict):
+class AddrStats(TypedDict):
     """
     Address information compatible with mempool.space API format
 
@@ -253,18 +255,18 @@ class AddressStats(TypedDict):
         chain_stats: Statistics for confirmed transactions on the blockchain
         mempool_stats: Statistics for unconfirmed transactions in the mempool
     """
-    address: Address
-    chain_stats: AddressChainStats
-    mempool_stats: Union[AddressMempoolStats, None]
+    address: Addr
+    chain_stats: AddrChainStats
+    mempool_stats: Union[AddrMempoolStats, None]
 
-class AddressTxidsParam(TypedDict):
+class AddrTxidsParam(TypedDict):
     """
     Attributes:
         after_txid: Txid to paginate from (return transactions before this one)
     """
     after_txid: Union[Txid, None]
 
-class AddressValidation(TypedDict):
+class AddrValidation(TypedDict):
     """
     Address validation result
 
@@ -537,7 +539,7 @@ class DiskUsage(TypedDict):
     bitcoin_bytes: int
     ratio: float
 
-class EmptyAddressData(TypedDict):
+class EmptyAddrData(TypedDict):
     """
     Data of an empty address
 
@@ -554,7 +556,7 @@ class ErrorDetail(TypedDict):
     """
     Attributes:
         type: Error category: "invalid_request", "forbidden", "not_found", "unavailable", or "internal"
-        code: Machine-readable error code (e.g. "invalid_address", "series_not_found")
+        code: Machine-readable error code (e.g. "invalid_addr", "series_not_found")
         message: Human-readable description
         doc_url: Link to API documentation
     """
@@ -566,7 +568,7 @@ class ErrorDetail(TypedDict):
 class ErrorBody(TypedDict):
     error: ErrorDetail
 
-class FundedAddressData(TypedDict):
+class FundedAddrData(TypedDict):
     """
     Data for a funded (non-empty) address with current balance
 
@@ -790,14 +792,14 @@ class PoolDetailInfo(TypedDict):
         id: Unique pool identifier
         name: Pool name
         link: Pool website URL
-        addresses: Known payout addresses
+        addrs: Known payout addresses
         regexes: Coinbase tag patterns (regexes)
         slug: URL-friendly pool identifier
     """
     id: int
     name: str
     link: str
-    addresses: List[str]
+    addrs: List[str]
     regexes: List[str]
     slug: PoolSlug
 
@@ -1115,7 +1117,7 @@ class Utxo(TypedDict):
     status: TxStatus
     value: Sats
 
-class ValidateAddressParam(TypedDict):
+class ValidateAddrParam(TypedDict):
     """
     Attributes:
         address: Bitcoin address to validate (can be any string)
@@ -1678,18 +1680,18 @@ _i20 = ('txin_index',)
 _i21 = ('txout_index',)
 _i22 = ('empty_output_index',)
 _i23 = ('op_return_index',)
-_i24 = ('p2a_address_index',)
+_i24 = ('p2a_addr_index',)
 _i25 = ('p2ms_output_index',)
-_i26 = ('p2pk33_address_index',)
-_i27 = ('p2pk65_address_index',)
-_i28 = ('p2pkh_address_index',)
-_i29 = ('p2sh_address_index',)
-_i30 = ('p2tr_address_index',)
-_i31 = ('p2wpkh_address_index',)
-_i32 = ('p2wsh_address_index',)
+_i26 = ('p2pk33_addr_index',)
+_i27 = ('p2pk65_addr_index',)
+_i28 = ('p2pkh_addr_index',)
+_i29 = ('p2sh_addr_index',)
+_i30 = ('p2tr_addr_index',)
+_i31 = ('p2wpkh_addr_index',)
+_i32 = ('p2wsh_addr_index',)
 _i33 = ('unknown_output_index',)
-_i34 = ('funded_address_index',)
-_i35 = ('empty_address_index',)
+_i34 = ('funded_addr_index',)
+_i35 = ('empty_addr_index',)
 
 def _ep(c: BrkClientBase, n: str, i: Index) -> SeriesEndpoint[Any]:
     return SeriesEndpoint(c, n, i)
@@ -2006,7 +2008,7 @@ class SeriesPattern23(Generic[T]):
 
 class _SeriesPattern24By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2a_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2a_address_index')
+    def p2a_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2a_addr_index')
 
 class SeriesPattern24(Generic[T]):
     by: _SeriesPattern24By[T]
@@ -2030,7 +2032,7 @@ class SeriesPattern25(Generic[T]):
 
 class _SeriesPattern26By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2pk33_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2pk33_address_index')
+    def p2pk33_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2pk33_addr_index')
 
 class SeriesPattern26(Generic[T]):
     by: _SeriesPattern26By[T]
@@ -2042,7 +2044,7 @@ class SeriesPattern26(Generic[T]):
 
 class _SeriesPattern27By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2pk65_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2pk65_address_index')
+    def p2pk65_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2pk65_addr_index')
 
 class SeriesPattern27(Generic[T]):
     by: _SeriesPattern27By[T]
@@ -2054,7 +2056,7 @@ class SeriesPattern27(Generic[T]):
 
 class _SeriesPattern28By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2pkh_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2pkh_address_index')
+    def p2pkh_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2pkh_addr_index')
 
 class SeriesPattern28(Generic[T]):
     by: _SeriesPattern28By[T]
@@ -2066,7 +2068,7 @@ class SeriesPattern28(Generic[T]):
 
 class _SeriesPattern29By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2sh_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2sh_address_index')
+    def p2sh_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2sh_addr_index')
 
 class SeriesPattern29(Generic[T]):
     by: _SeriesPattern29By[T]
@@ -2078,7 +2080,7 @@ class SeriesPattern29(Generic[T]):
 
 class _SeriesPattern30By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2tr_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2tr_address_index')
+    def p2tr_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2tr_addr_index')
 
 class SeriesPattern30(Generic[T]):
     by: _SeriesPattern30By[T]
@@ -2090,7 +2092,7 @@ class SeriesPattern30(Generic[T]):
 
 class _SeriesPattern31By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2wpkh_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2wpkh_address_index')
+    def p2wpkh_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2wpkh_addr_index')
 
 class SeriesPattern31(Generic[T]):
     by: _SeriesPattern31By[T]
@@ -2102,7 +2104,7 @@ class SeriesPattern31(Generic[T]):
 
 class _SeriesPattern32By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def p2wsh_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2wsh_address_index')
+    def p2wsh_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2wsh_addr_index')
 
 class SeriesPattern32(Generic[T]):
     by: _SeriesPattern32By[T]
@@ -2126,7 +2128,7 @@ class SeriesPattern33(Generic[T]):
 
 class _SeriesPattern34By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def funded_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'funded_address_index')
+    def funded_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'funded_addr_index')
 
 class SeriesPattern34(Generic[T]):
     by: _SeriesPattern34By[T]
@@ -2138,7 +2140,7 @@ class SeriesPattern34(Generic[T]):
 
 class _SeriesPattern35By(Generic[T]):
     def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
-    def empty_address_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'empty_address_index')
+    def empty_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'empty_addr_index')
 
 class SeriesPattern35(Generic[T]):
     by: _SeriesPattern35By[T]
@@ -2504,12 +2506,12 @@ class ActivityOutputsRealizedSupplyUnrealizedPattern:
         self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, _m(acc, 'supply'))
         self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, acc)
 
-class AddressOutputsRealizedSupplyUnrealizedPattern:
+class AddrOutputsRealizedSupplyUnrealizedPattern:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated series name."""
-        self.address_count: BaseDeltaPattern = BaseDeltaPattern(client, _m(acc, 'address_count'))
+        self.addr_count: BaseDeltaPattern = BaseDeltaPattern(client, _m(acc, 'addr_count'))
         self.outputs: UnspentPattern = UnspentPattern(client, _m(acc, 'utxo_count'))
         self.realized: CapLossMvrvPriceProfitSoprPattern = CapLossMvrvPriceProfitSoprPattern(client, acc)
         self.supply: DeltaHalfTotalPattern = DeltaHalfTotalPattern(client, _m(acc, 'supply'))
@@ -2520,11 +2522,11 @@ class BaseCumulativeInSumPattern:
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated series name."""
-        self.base: SeriesPattern1[Sats] = SeriesPattern1(client, acc)
-        self.cumulative: SeriesPattern1[Sats] = SeriesPattern1(client, _m(acc, 'cumulative'))
+        self.base: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, acc)
+        self.cumulative: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'cumulative'))
         self.in_loss: BaseCumulativeSumPattern4 = BaseCumulativeSumPattern4(client, _m(acc, 'in_loss'))
         self.in_profit: BaseCumulativeSumPattern4 = BaseCumulativeSumPattern4(client, _m(acc, 'in_profit'))
-        self.sum: _1m1w1y24hPattern[Sats] = _1m1w1y24hPattern(client, _m(acc, 'sum'))
+        self.sum: _1m1w1y24hPattern5 = _1m1w1y24hPattern5(client, _m(acc, 'sum'))
 
 class BpsCentsRatioSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
@@ -3306,7 +3308,7 @@ class SeriesTree_Transactions_Volume:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.transfer_volume: BaseCumulativeSumPattern4 = BaseCumulativeSumPattern4(client, 'exact_transfer_volume')
+        self.transfer_volume: BaseCumulativeSumPattern4 = BaseCumulativeSumPattern4(client, 'transfer_volume_bis')
         self.output_volume: BaseCumulativeSumPattern4 = BaseCumulativeSumPattern4(client, 'output_volume')
         self.tx_per_sec: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'tx_per_sec')
         self.outputs_per_sec: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'outputs_per_sec')
@@ -3369,7 +3371,7 @@ class SeriesTree_Outputs_Count:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.total: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern = AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern(client, 'output_count')
-        self.unspent: SeriesPattern1[StoredU64] = SeriesPattern1(client, 'exact_utxo_count')
+        self.unspent: SeriesPattern1[StoredU64] = SeriesPattern1(client, 'utxo_count_bis')
 
 class SeriesTree_Outputs:
     """Series tree node."""
@@ -3379,152 +3381,152 @@ class SeriesTree_Outputs:
         self.spent: SeriesTree_Outputs_Spent = SeriesTree_Outputs_Spent(client)
         self.count: SeriesTree_Outputs_Count = SeriesTree_Outputs_Count(client)
 
-class SeriesTree_Addresses_Raw_P2pk65:
+class SeriesTree_Addrs_Raw_P2pk65:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.first_index: SeriesPattern18[P2PK65AddressIndex] = SeriesPattern18(client, 'first_p2pk65_address_index')
+        self.first_index: SeriesPattern18[P2PK65AddrIndex] = SeriesPattern18(client, 'first_p2pk65_addr_index')
         self.bytes: SeriesPattern27[P2PK65Bytes] = SeriesPattern27(client, 'p2pk65_bytes')
 
-class SeriesTree_Addresses_Raw_P2pk33:
+class SeriesTree_Addrs_Raw_P2pk33:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.first_index: SeriesPattern18[P2PK33AddressIndex] = SeriesPattern18(client, 'first_p2pk33_address_index')
+        self.first_index: SeriesPattern18[P2PK33AddrIndex] = SeriesPattern18(client, 'first_p2pk33_addr_index')
         self.bytes: SeriesPattern26[P2PK33Bytes] = SeriesPattern26(client, 'p2pk33_bytes')
 
-class SeriesTree_Addresses_Raw_P2pkh:
+class SeriesTree_Addrs_Raw_P2pkh:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.first_index: SeriesPattern18[P2PKHAddressIndex] = SeriesPattern18(client, 'first_p2pkh_address_index')
+        self.first_index: SeriesPattern18[P2PKHAddrIndex] = SeriesPattern18(client, 'first_p2pkh_addr_index')
         self.bytes: SeriesPattern28[P2PKHBytes] = SeriesPattern28(client, 'p2pkh_bytes')
 
-class SeriesTree_Addresses_Raw_P2sh:
+class SeriesTree_Addrs_Raw_P2sh:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.first_index: SeriesPattern18[P2SHAddressIndex] = SeriesPattern18(client, 'first_p2sh_address_index')
+        self.first_index: SeriesPattern18[P2SHAddrIndex] = SeriesPattern18(client, 'first_p2sh_addr_index')
         self.bytes: SeriesPattern29[P2SHBytes] = SeriesPattern29(client, 'p2sh_bytes')
 
-class SeriesTree_Addresses_Raw_P2wpkh:
+class SeriesTree_Addrs_Raw_P2wpkh:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.first_index: SeriesPattern18[P2WPKHAddressIndex] = SeriesPattern18(client, 'first_p2wpkh_address_index')
+        self.first_index: SeriesPattern18[P2WPKHAddrIndex] = SeriesPattern18(client, 'first_p2wpkh_addr_index')
         self.bytes: SeriesPattern31[P2WPKHBytes] = SeriesPattern31(client, 'p2wpkh_bytes')
 
-class SeriesTree_Addresses_Raw_P2wsh:
+class SeriesTree_Addrs_Raw_P2wsh:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.first_index: SeriesPattern18[P2WSHAddressIndex] = SeriesPattern18(client, 'first_p2wsh_address_index')
+        self.first_index: SeriesPattern18[P2WSHAddrIndex] = SeriesPattern18(client, 'first_p2wsh_addr_index')
         self.bytes: SeriesPattern32[P2WSHBytes] = SeriesPattern32(client, 'p2wsh_bytes')
 
-class SeriesTree_Addresses_Raw_P2tr:
+class SeriesTree_Addrs_Raw_P2tr:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.first_index: SeriesPattern18[P2TRAddressIndex] = SeriesPattern18(client, 'first_p2tr_address_index')
+        self.first_index: SeriesPattern18[P2TRAddrIndex] = SeriesPattern18(client, 'first_p2tr_addr_index')
         self.bytes: SeriesPattern30[P2TRBytes] = SeriesPattern30(client, 'p2tr_bytes')
 
-class SeriesTree_Addresses_Raw_P2a:
+class SeriesTree_Addrs_Raw_P2a:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.first_index: SeriesPattern18[P2AAddressIndex] = SeriesPattern18(client, 'first_p2a_address_index')
+        self.first_index: SeriesPattern18[P2AAddrIndex] = SeriesPattern18(client, 'first_p2a_addr_index')
         self.bytes: SeriesPattern24[P2ABytes] = SeriesPattern24(client, 'p2a_bytes')
 
-class SeriesTree_Addresses_Raw:
+class SeriesTree_Addrs_Raw:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.p2pk65: SeriesTree_Addresses_Raw_P2pk65 = SeriesTree_Addresses_Raw_P2pk65(client)
-        self.p2pk33: SeriesTree_Addresses_Raw_P2pk33 = SeriesTree_Addresses_Raw_P2pk33(client)
-        self.p2pkh: SeriesTree_Addresses_Raw_P2pkh = SeriesTree_Addresses_Raw_P2pkh(client)
-        self.p2sh: SeriesTree_Addresses_Raw_P2sh = SeriesTree_Addresses_Raw_P2sh(client)
-        self.p2wpkh: SeriesTree_Addresses_Raw_P2wpkh = SeriesTree_Addresses_Raw_P2wpkh(client)
-        self.p2wsh: SeriesTree_Addresses_Raw_P2wsh = SeriesTree_Addresses_Raw_P2wsh(client)
-        self.p2tr: SeriesTree_Addresses_Raw_P2tr = SeriesTree_Addresses_Raw_P2tr(client)
-        self.p2a: SeriesTree_Addresses_Raw_P2a = SeriesTree_Addresses_Raw_P2a(client)
+        self.p2pk65: SeriesTree_Addrs_Raw_P2pk65 = SeriesTree_Addrs_Raw_P2pk65(client)
+        self.p2pk33: SeriesTree_Addrs_Raw_P2pk33 = SeriesTree_Addrs_Raw_P2pk33(client)
+        self.p2pkh: SeriesTree_Addrs_Raw_P2pkh = SeriesTree_Addrs_Raw_P2pkh(client)
+        self.p2sh: SeriesTree_Addrs_Raw_P2sh = SeriesTree_Addrs_Raw_P2sh(client)
+        self.p2wpkh: SeriesTree_Addrs_Raw_P2wpkh = SeriesTree_Addrs_Raw_P2wpkh(client)
+        self.p2wsh: SeriesTree_Addrs_Raw_P2wsh = SeriesTree_Addrs_Raw_P2wsh(client)
+        self.p2tr: SeriesTree_Addrs_Raw_P2tr = SeriesTree_Addrs_Raw_P2tr(client)
+        self.p2a: SeriesTree_Addrs_Raw_P2a = SeriesTree_Addrs_Raw_P2a(client)
 
-class SeriesTree_Addresses_Indexes:
+class SeriesTree_Addrs_Indexes:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.p2a: SeriesPattern24[AnyAddressIndex] = SeriesPattern24(client, 'any_address_index')
-        self.p2pk33: SeriesPattern26[AnyAddressIndex] = SeriesPattern26(client, 'any_address_index')
-        self.p2pk65: SeriesPattern27[AnyAddressIndex] = SeriesPattern27(client, 'any_address_index')
-        self.p2pkh: SeriesPattern28[AnyAddressIndex] = SeriesPattern28(client, 'any_address_index')
-        self.p2sh: SeriesPattern29[AnyAddressIndex] = SeriesPattern29(client, 'any_address_index')
-        self.p2tr: SeriesPattern30[AnyAddressIndex] = SeriesPattern30(client, 'any_address_index')
-        self.p2wpkh: SeriesPattern31[AnyAddressIndex] = SeriesPattern31(client, 'any_address_index')
-        self.p2wsh: SeriesPattern32[AnyAddressIndex] = SeriesPattern32(client, 'any_address_index')
-        self.funded: SeriesPattern34[FundedAddressIndex] = SeriesPattern34(client, 'funded_address_index')
-        self.empty: SeriesPattern35[EmptyAddressIndex] = SeriesPattern35(client, 'empty_address_index')
+        self.p2a: SeriesPattern24[AnyAddrIndex] = SeriesPattern24(client, 'any_addr_index')
+        self.p2pk33: SeriesPattern26[AnyAddrIndex] = SeriesPattern26(client, 'any_addr_index')
+        self.p2pk65: SeriesPattern27[AnyAddrIndex] = SeriesPattern27(client, 'any_addr_index')
+        self.p2pkh: SeriesPattern28[AnyAddrIndex] = SeriesPattern28(client, 'any_addr_index')
+        self.p2sh: SeriesPattern29[AnyAddrIndex] = SeriesPattern29(client, 'any_addr_index')
+        self.p2tr: SeriesPattern30[AnyAddrIndex] = SeriesPattern30(client, 'any_addr_index')
+        self.p2wpkh: SeriesPattern31[AnyAddrIndex] = SeriesPattern31(client, 'any_addr_index')
+        self.p2wsh: SeriesPattern32[AnyAddrIndex] = SeriesPattern32(client, 'any_addr_index')
+        self.funded: SeriesPattern34[FundedAddrIndex] = SeriesPattern34(client, 'funded_addr_index')
+        self.empty: SeriesPattern35[EmptyAddrIndex] = SeriesPattern35(client, 'empty_addr_index')
 
-class SeriesTree_Addresses_Data:
+class SeriesTree_Addrs_Data:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.funded: SeriesPattern34[FundedAddressData] = SeriesPattern34(client, 'funded_address_data')
-        self.empty: SeriesPattern35[EmptyAddressData] = SeriesPattern35(client, 'empty_address_data')
+        self.funded: SeriesPattern34[FundedAddrData] = SeriesPattern34(client, 'funded_addr_data')
+        self.empty: SeriesPattern35[EmptyAddrData] = SeriesPattern35(client, 'empty_addr_data')
 
-class SeriesTree_Addresses_Activity:
+class SeriesTree_Addrs_Activity:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.all: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'address_activity')
-        self.p2pk65: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2pk65_address_activity')
-        self.p2pk33: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2pk33_address_activity')
-        self.p2pkh: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2pkh_address_activity')
-        self.p2sh: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2sh_address_activity')
-        self.p2wpkh: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2wpkh_address_activity')
-        self.p2wsh: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2wsh_address_activity')
-        self.p2tr: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2tr_address_activity')
-        self.p2a: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2a_address_activity')
+        self.all: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'addr_activity')
+        self.p2pk65: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2pk65_addr_activity')
+        self.p2pk33: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2pk33_addr_activity')
+        self.p2pkh: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2pkh_addr_activity')
+        self.p2sh: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2sh_addr_activity')
+        self.p2wpkh: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2wpkh_addr_activity')
+        self.p2wsh: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2wsh_addr_activity')
+        self.p2tr: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2tr_addr_activity')
+        self.p2a: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2a_addr_activity')
 
-class SeriesTree_Addresses_New:
+class SeriesTree_Addrs_New:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.all: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'new_address_count')
-        self.p2pk65: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2pk65_new_address_count')
-        self.p2pk33: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2pk33_new_address_count')
-        self.p2pkh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2pkh_new_address_count')
-        self.p2sh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2sh_new_address_count')
-        self.p2wpkh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2wpkh_new_address_count')
-        self.p2wsh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2wsh_new_address_count')
-        self.p2tr: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2tr_new_address_count')
-        self.p2a: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2a_new_address_count')
+        self.all: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'new_addr_count')
+        self.p2pk65: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2pk65_new_addr_count')
+        self.p2pk33: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2pk33_new_addr_count')
+        self.p2pkh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2pkh_new_addr_count')
+        self.p2sh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2sh_new_addr_count')
+        self.p2wpkh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2wpkh_new_addr_count')
+        self.p2wsh: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2wsh_new_addr_count')
+        self.p2tr: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2tr_new_addr_count')
+        self.p2a: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'p2a_new_addr_count')
 
-class SeriesTree_Addresses_Delta:
+class SeriesTree_Addrs_Delta:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.all: AbsoluteRatePattern = AbsoluteRatePattern(client, 'address_count')
-        self.p2pk65: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2pk65_address_count')
-        self.p2pk33: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2pk33_address_count')
-        self.p2pkh: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2pkh_address_count')
-        self.p2sh: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2sh_address_count')
-        self.p2wpkh: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2wpkh_address_count')
-        self.p2wsh: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2wsh_address_count')
-        self.p2tr: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2tr_address_count')
-        self.p2a: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2a_address_count')
+        self.all: AbsoluteRatePattern = AbsoluteRatePattern(client, 'addr_count')
+        self.p2pk65: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2pk65_addr_count')
+        self.p2pk33: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2pk33_addr_count')
+        self.p2pkh: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2pkh_addr_count')
+        self.p2sh: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2sh_addr_count')
+        self.p2wpkh: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2wpkh_addr_count')
+        self.p2wsh: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2wsh_addr_count')
+        self.p2tr: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2tr_addr_count')
+        self.p2a: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2a_addr_count')
 
-class SeriesTree_Addresses:
+class SeriesTree_Addrs:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.raw: SeriesTree_Addresses_Raw = SeriesTree_Addresses_Raw(client)
-        self.indexes: SeriesTree_Addresses_Indexes = SeriesTree_Addresses_Indexes(client)
-        self.data: SeriesTree_Addresses_Data = SeriesTree_Addresses_Data(client)
-        self.funded: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, 'address_count')
-        self.empty: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, 'empty_address_count')
-        self.activity: SeriesTree_Addresses_Activity = SeriesTree_Addresses_Activity(client)
-        self.total: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, 'total_address_count')
-        self.new: SeriesTree_Addresses_New = SeriesTree_Addresses_New(client)
-        self.delta: SeriesTree_Addresses_Delta = SeriesTree_Addresses_Delta(client)
+        self.raw: SeriesTree_Addrs_Raw = SeriesTree_Addrs_Raw(client)
+        self.indexes: SeriesTree_Addrs_Indexes = SeriesTree_Addrs_Indexes(client)
+        self.data: SeriesTree_Addrs_Data = SeriesTree_Addrs_Data(client)
+        self.funded: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, 'addr_count')
+        self.empty: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, 'empty_addr_count')
+        self.activity: SeriesTree_Addrs_Activity = SeriesTree_Addrs_Activity(client)
+        self.total: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, 'total_addr_count')
+        self.new: SeriesTree_Addrs_New = SeriesTree_Addrs_New(client)
+        self.delta: SeriesTree_Addrs_Delta = SeriesTree_Addrs_Delta(client)
 
 class SeriesTree_Scripts_Raw_Empty:
     """Series tree node."""
@@ -3681,6 +3683,13 @@ class SeriesTree_Mining:
         self.rewards: SeriesTree_Mining_Rewards = SeriesTree_Mining_Rewards(client)
         self.hashrate: SeriesTree_Mining_Hashrate = SeriesTree_Mining_Hashrate(client)
 
+class SeriesTree_Positions:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: SeriesPattern18[BlkPosition] = SeriesPattern18(client, 'position')
+        self.tx: SeriesPattern19[BlkPosition] = SeriesPattern19(client, 'position')
+
 class SeriesTree_Cointime_Activity:
     """Series tree node."""
     
@@ -3783,102 +3792,102 @@ class SeriesTree_Constants:
         self.minus_3: SeriesPattern1[StoredI8] = SeriesPattern1(client, 'constant_minus_3')
         self.minus_4: SeriesPattern1[StoredI8] = SeriesPattern1(client, 'constant_minus_4')
 
-class SeriesTree_Indexes_Address_P2pk33:
+class SeriesTree_Indexes_Addr_P2pk33:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern26[P2PK33AddressIndex] = SeriesPattern26(client, 'p2pk33_address_index')
-        self.address: SeriesPattern26[Address] = SeriesPattern26(client, 'p2pk33_address')
+        self.identity: SeriesPattern26[P2PK33AddrIndex] = SeriesPattern26(client, 'p2pk33_addr_index')
+        self.addr: SeriesPattern26[Addr] = SeriesPattern26(client, 'p2pk33_addr')
 
-class SeriesTree_Indexes_Address_P2pk65:
+class SeriesTree_Indexes_Addr_P2pk65:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern27[P2PK65AddressIndex] = SeriesPattern27(client, 'p2pk65_address_index')
-        self.address: SeriesPattern27[Address] = SeriesPattern27(client, 'p2pk65_address')
+        self.identity: SeriesPattern27[P2PK65AddrIndex] = SeriesPattern27(client, 'p2pk65_addr_index')
+        self.addr: SeriesPattern27[Addr] = SeriesPattern27(client, 'p2pk65_addr')
 
-class SeriesTree_Indexes_Address_P2pkh:
+class SeriesTree_Indexes_Addr_P2pkh:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern28[P2PKHAddressIndex] = SeriesPattern28(client, 'p2pkh_address_index')
-        self.address: SeriesPattern28[Address] = SeriesPattern28(client, 'p2pkh_address')
+        self.identity: SeriesPattern28[P2PKHAddrIndex] = SeriesPattern28(client, 'p2pkh_addr_index')
+        self.addr: SeriesPattern28[Addr] = SeriesPattern28(client, 'p2pkh_addr')
 
-class SeriesTree_Indexes_Address_P2sh:
+class SeriesTree_Indexes_Addr_P2sh:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern29[P2SHAddressIndex] = SeriesPattern29(client, 'p2sh_address_index')
-        self.address: SeriesPattern29[Address] = SeriesPattern29(client, 'p2sh_address')
+        self.identity: SeriesPattern29[P2SHAddrIndex] = SeriesPattern29(client, 'p2sh_addr_index')
+        self.addr: SeriesPattern29[Addr] = SeriesPattern29(client, 'p2sh_addr')
 
-class SeriesTree_Indexes_Address_P2tr:
+class SeriesTree_Indexes_Addr_P2tr:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern30[P2TRAddressIndex] = SeriesPattern30(client, 'p2tr_address_index')
-        self.address: SeriesPattern30[Address] = SeriesPattern30(client, 'p2tr_address')
+        self.identity: SeriesPattern30[P2TRAddrIndex] = SeriesPattern30(client, 'p2tr_addr_index')
+        self.addr: SeriesPattern30[Addr] = SeriesPattern30(client, 'p2tr_addr')
 
-class SeriesTree_Indexes_Address_P2wpkh:
+class SeriesTree_Indexes_Addr_P2wpkh:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern31[P2WPKHAddressIndex] = SeriesPattern31(client, 'p2wpkh_address_index')
-        self.address: SeriesPattern31[Address] = SeriesPattern31(client, 'p2wpkh_address')
+        self.identity: SeriesPattern31[P2WPKHAddrIndex] = SeriesPattern31(client, 'p2wpkh_addr_index')
+        self.addr: SeriesPattern31[Addr] = SeriesPattern31(client, 'p2wpkh_addr')
 
-class SeriesTree_Indexes_Address_P2wsh:
+class SeriesTree_Indexes_Addr_P2wsh:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern32[P2WSHAddressIndex] = SeriesPattern32(client, 'p2wsh_address_index')
-        self.address: SeriesPattern32[Address] = SeriesPattern32(client, 'p2wsh_address')
+        self.identity: SeriesPattern32[P2WSHAddrIndex] = SeriesPattern32(client, 'p2wsh_addr_index')
+        self.addr: SeriesPattern32[Addr] = SeriesPattern32(client, 'p2wsh_addr')
 
-class SeriesTree_Indexes_Address_P2a:
+class SeriesTree_Indexes_Addr_P2a:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern24[P2AAddressIndex] = SeriesPattern24(client, 'p2a_address_index')
-        self.address: SeriesPattern24[Address] = SeriesPattern24(client, 'p2a_address')
+        self.identity: SeriesPattern24[P2AAddrIndex] = SeriesPattern24(client, 'p2a_addr_index')
+        self.addr: SeriesPattern24[Addr] = SeriesPattern24(client, 'p2a_addr')
 
-class SeriesTree_Indexes_Address_P2ms:
+class SeriesTree_Indexes_Addr_P2ms:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.identity: SeriesPattern25[P2MSOutputIndex] = SeriesPattern25(client, 'p2ms_output_index')
 
-class SeriesTree_Indexes_Address_Empty:
+class SeriesTree_Indexes_Addr_Empty:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.identity: SeriesPattern22[EmptyOutputIndex] = SeriesPattern22(client, 'empty_output_index')
 
-class SeriesTree_Indexes_Address_Unknown:
+class SeriesTree_Indexes_Addr_Unknown:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.identity: SeriesPattern33[UnknownOutputIndex] = SeriesPattern33(client, 'unknown_output_index')
 
-class SeriesTree_Indexes_Address_OpReturn:
+class SeriesTree_Indexes_Addr_OpReturn:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.identity: SeriesPattern23[OpReturnIndex] = SeriesPattern23(client, 'op_return_index')
 
-class SeriesTree_Indexes_Address:
+class SeriesTree_Indexes_Addr:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.p2pk33: SeriesTree_Indexes_Address_P2pk33 = SeriesTree_Indexes_Address_P2pk33(client)
-        self.p2pk65: SeriesTree_Indexes_Address_P2pk65 = SeriesTree_Indexes_Address_P2pk65(client)
-        self.p2pkh: SeriesTree_Indexes_Address_P2pkh = SeriesTree_Indexes_Address_P2pkh(client)
-        self.p2sh: SeriesTree_Indexes_Address_P2sh = SeriesTree_Indexes_Address_P2sh(client)
-        self.p2tr: SeriesTree_Indexes_Address_P2tr = SeriesTree_Indexes_Address_P2tr(client)
-        self.p2wpkh: SeriesTree_Indexes_Address_P2wpkh = SeriesTree_Indexes_Address_P2wpkh(client)
-        self.p2wsh: SeriesTree_Indexes_Address_P2wsh = SeriesTree_Indexes_Address_P2wsh(client)
-        self.p2a: SeriesTree_Indexes_Address_P2a = SeriesTree_Indexes_Address_P2a(client)
-        self.p2ms: SeriesTree_Indexes_Address_P2ms = SeriesTree_Indexes_Address_P2ms(client)
-        self.empty: SeriesTree_Indexes_Address_Empty = SeriesTree_Indexes_Address_Empty(client)
-        self.unknown: SeriesTree_Indexes_Address_Unknown = SeriesTree_Indexes_Address_Unknown(client)
-        self.op_return: SeriesTree_Indexes_Address_OpReturn = SeriesTree_Indexes_Address_OpReturn(client)
+        self.p2pk33: SeriesTree_Indexes_Addr_P2pk33 = SeriesTree_Indexes_Addr_P2pk33(client)
+        self.p2pk65: SeriesTree_Indexes_Addr_P2pk65 = SeriesTree_Indexes_Addr_P2pk65(client)
+        self.p2pkh: SeriesTree_Indexes_Addr_P2pkh = SeriesTree_Indexes_Addr_P2pkh(client)
+        self.p2sh: SeriesTree_Indexes_Addr_P2sh = SeriesTree_Indexes_Addr_P2sh(client)
+        self.p2tr: SeriesTree_Indexes_Addr_P2tr = SeriesTree_Indexes_Addr_P2tr(client)
+        self.p2wpkh: SeriesTree_Indexes_Addr_P2wpkh = SeriesTree_Indexes_Addr_P2wpkh(client)
+        self.p2wsh: SeriesTree_Indexes_Addr_P2wsh = SeriesTree_Indexes_Addr_P2wsh(client)
+        self.p2a: SeriesTree_Indexes_Addr_P2a = SeriesTree_Indexes_Addr_P2a(client)
+        self.p2ms: SeriesTree_Indexes_Addr_P2ms = SeriesTree_Indexes_Addr_P2ms(client)
+        self.empty: SeriesTree_Indexes_Addr_Empty = SeriesTree_Indexes_Addr_Empty(client)
+        self.unknown: SeriesTree_Indexes_Addr_Unknown = SeriesTree_Indexes_Addr_Unknown(client)
+        self.op_return: SeriesTree_Indexes_Addr_OpReturn = SeriesTree_Indexes_Addr_OpReturn(client)
 
 class SeriesTree_Indexes_Height:
     """Series tree node."""
@@ -4040,7 +4049,7 @@ class SeriesTree_Indexes:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.address: SeriesTree_Indexes_Address = SeriesTree_Indexes_Address(client)
+        self.addr: SeriesTree_Indexes_Addr = SeriesTree_Indexes_Addr(client)
         self.height: SeriesTree_Indexes_Height = SeriesTree_Indexes_Height(client)
         self.epoch: SeriesTree_Indexes_Epoch = SeriesTree_Indexes_Epoch(client)
         self.halving: SeriesTree_Indexes_Halving = SeriesTree_Indexes_Halving(client)
@@ -5622,76 +5631,76 @@ class SeriesTree_Cohorts_Utxo:
         self.profitability: SeriesTree_Cohorts_Utxo_Profitability = SeriesTree_Cohorts_Utxo_Profitability(client)
         self.matured: SeriesTree_Cohorts_Utxo_Matured = SeriesTree_Cohorts_Utxo_Matured(client)
 
-class SeriesTree_Cohorts_Address_OverAmount:
+class SeriesTree_Cohorts_Addr_OverAmount:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._1sat: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1sat')
-        self._10sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10sats')
-        self._100sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_100sats')
-        self._1k_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1k_sats')
-        self._10k_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10k_sats')
-        self._100k_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_100k_sats')
-        self._1m_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1m_sats')
-        self._10m_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10m_sats')
-        self._1btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1btc')
-        self._10btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10btc')
-        self._100btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_100btc')
-        self._1k_btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1k_btc')
-        self._10k_btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10k_btc')
+        self._1sat: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1sat')
+        self._10sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10sats')
+        self._100sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_100sats')
+        self._1k_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1k_sats')
+        self._10k_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10k_sats')
+        self._100k_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_100k_sats')
+        self._1m_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1m_sats')
+        self._10m_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10m_sats')
+        self._1btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1btc')
+        self._10btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10btc')
+        self._100btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_100btc')
+        self._1k_btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1k_btc')
+        self._10k_btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10k_btc')
 
-class SeriesTree_Cohorts_Address_AmountRange:
+class SeriesTree_Cohorts_Addr_AmountRange:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._0sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_0sats')
-        self._1sat_to_10sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_1sat_to_10sats')
-        self._10sats_to_100sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_10sats_to_100sats')
-        self._100sats_to_1k_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_100sats_to_1k_sats')
-        self._1k_sats_to_10k_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_1k_sats_to_10k_sats')
-        self._10k_sats_to_100k_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_10k_sats_to_100k_sats')
-        self._100k_sats_to_1m_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_100k_sats_to_1m_sats')
-        self._1m_sats_to_10m_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_1m_sats_to_10m_sats')
-        self._10m_sats_to_1btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_10m_sats_to_1btc')
-        self._1btc_to_10btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_1btc_to_10btc')
-        self._10btc_to_100btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_10btc_to_100btc')
-        self._100btc_to_1k_btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_100btc_to_1k_btc')
-        self._1k_btc_to_10k_btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_1k_btc_to_10k_btc')
-        self._10k_btc_to_100k_btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_10k_btc_to_100k_btc')
-        self.over_100k_btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_100k_btc')
+        self._0sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_0sats')
+        self._1sat_to_10sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_1sat_to_10sats')
+        self._10sats_to_100sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_10sats_to_100sats')
+        self._100sats_to_1k_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_100sats_to_1k_sats')
+        self._1k_sats_to_10k_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_1k_sats_to_10k_sats')
+        self._10k_sats_to_100k_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_10k_sats_to_100k_sats')
+        self._100k_sats_to_1m_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_100k_sats_to_1m_sats')
+        self._1m_sats_to_10m_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_1m_sats_to_10m_sats')
+        self._10m_sats_to_1btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_10m_sats_to_1btc')
+        self._1btc_to_10btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_1btc_to_10btc')
+        self._10btc_to_100btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_10btc_to_100btc')
+        self._100btc_to_1k_btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_100btc_to_1k_btc')
+        self._1k_btc_to_10k_btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_1k_btc_to_10k_btc')
+        self._10k_btc_to_100k_btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_10k_btc_to_100k_btc')
+        self.over_100k_btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_100k_btc')
 
-class SeriesTree_Cohorts_Address_UnderAmount:
+class SeriesTree_Cohorts_Addr_UnderAmount:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._10sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10sats')
-        self._100sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_100sats')
-        self._1k_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_1k_sats')
-        self._10k_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10k_sats')
-        self._100k_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_100k_sats')
-        self._1m_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_1m_sats')
-        self._10m_sats: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10m_sats')
-        self._1btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_1btc')
-        self._10btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10btc')
-        self._100btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_100btc')
-        self._1k_btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_1k_btc')
-        self._10k_btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10k_btc')
-        self._100k_btc: AddressOutputsRealizedSupplyUnrealizedPattern = AddressOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_100k_btc')
+        self._10sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10sats')
+        self._100sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_100sats')
+        self._1k_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_1k_sats')
+        self._10k_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10k_sats')
+        self._100k_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_100k_sats')
+        self._1m_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_1m_sats')
+        self._10m_sats: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10m_sats')
+        self._1btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_1btc')
+        self._10btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10btc')
+        self._100btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_100btc')
+        self._1k_btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_1k_btc')
+        self._10k_btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10k_btc')
+        self._100k_btc: AddrOutputsRealizedSupplyUnrealizedPattern = AddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_100k_btc')
 
-class SeriesTree_Cohorts_Address:
+class SeriesTree_Cohorts_Addr:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.over_amount: SeriesTree_Cohorts_Address_OverAmount = SeriesTree_Cohorts_Address_OverAmount(client)
-        self.amount_range: SeriesTree_Cohorts_Address_AmountRange = SeriesTree_Cohorts_Address_AmountRange(client)
-        self.under_amount: SeriesTree_Cohorts_Address_UnderAmount = SeriesTree_Cohorts_Address_UnderAmount(client)
+        self.over_amount: SeriesTree_Cohorts_Addr_OverAmount = SeriesTree_Cohorts_Addr_OverAmount(client)
+        self.amount_range: SeriesTree_Cohorts_Addr_AmountRange = SeriesTree_Cohorts_Addr_AmountRange(client)
+        self.under_amount: SeriesTree_Cohorts_Addr_UnderAmount = SeriesTree_Cohorts_Addr_UnderAmount(client)
 
 class SeriesTree_Cohorts:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.utxo: SeriesTree_Cohorts_Utxo = SeriesTree_Cohorts_Utxo(client)
-        self.address: SeriesTree_Cohorts_Address = SeriesTree_Cohorts_Address(client)
+        self.addr: SeriesTree_Cohorts_Addr = SeriesTree_Cohorts_Addr(client)
 
 class SeriesTree:
     """Series tree node."""
@@ -5701,9 +5710,10 @@ class SeriesTree:
         self.transactions: SeriesTree_Transactions = SeriesTree_Transactions(client)
         self.inputs: SeriesTree_Inputs = SeriesTree_Inputs(client)
         self.outputs: SeriesTree_Outputs = SeriesTree_Outputs(client)
-        self.addresses: SeriesTree_Addresses = SeriesTree_Addresses(client)
+        self.addrs: SeriesTree_Addrs = SeriesTree_Addrs(client)
         self.scripts: SeriesTree_Scripts = SeriesTree_Scripts(client)
         self.mining: SeriesTree_Mining = SeriesTree_Mining(client)
+        self.positions: SeriesTree_Positions = SeriesTree_Positions(client)
         self.cointime: SeriesTree_Cointime = SeriesTree_Cointime(client)
         self.constants: SeriesTree_Constants = SeriesTree_Constants(client)
         self.indexes: SeriesTree_Indexes = SeriesTree_Indexes(client)
@@ -5741,18 +5751,18 @@ class BrkClient(BrkClientBase):
       "txout_index",
       "empty_output_index",
       "op_return_index",
-      "p2a_address_index",
+      "p2a_addr_index",
       "p2ms_output_index",
-      "p2pk33_address_index",
-      "p2pk65_address_index",
-      "p2pkh_address_index",
-      "p2sh_address_index",
-      "p2tr_address_index",
-      "p2wpkh_address_index",
-      "p2wsh_address_index",
+      "p2pk33_addr_index",
+      "p2pk65_addr_index",
+      "p2pkh_addr_index",
+      "p2sh_addr_index",
+      "p2tr_addr_index",
+      "p2wpkh_addr_index",
+      "p2wsh_addr_index",
       "unknown_output_index",
-      "funded_address_index",
-      "empty_address_index"
+      "funded_addr_index",
+      "empty_addr_index"
     ]
 
     POOL_ID_TO_POOL_NAME = {
@@ -6897,7 +6907,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api.json`"""
         return self.get_json('/api.json')
 
-    def get_address(self, address: Address) -> AddressStats:
+    def get_address(self, address: Addr) -> AddrStats:
         """Address information.
 
         Retrieve address information including balance and transaction counts. Supports all standard Bitcoin address types (P2PKH, P2SH, P2WPKH, P2WSH, P2TR).
@@ -6907,7 +6917,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/address/{address}`"""
         return self.get_json(f'/api/address/{address}')
 
-    def get_address_txs(self, address: Address, after_txid: Optional[Txid] = None) -> List[Transaction]:
+    def get_address_txs(self, address: Addr, after_txid: Optional[Txid] = None) -> List[Transaction]:
         """Address transactions.
 
         Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. Use ?after_txid=<txid> for pagination.
@@ -6921,7 +6931,7 @@ class BrkClient(BrkClientBase):
         path = f'/api/address/{address}/txs{"?" + query if query else ""}'
         return self.get_json(path)
 
-    def get_address_confirmed_txs(self, address: Address, after_txid: Optional[Txid] = None) -> List[Transaction]:
+    def get_address_confirmed_txs(self, address: Addr, after_txid: Optional[Txid] = None) -> List[Transaction]:
         """Address confirmed transactions.
 
         Get confirmed transactions for an address, 25 per page. Use ?after_txid=<txid> for pagination.
@@ -6935,7 +6945,7 @@ class BrkClient(BrkClientBase):
         path = f'/api/address/{address}/txs/chain{"?" + query if query else ""}'
         return self.get_json(path)
 
-    def get_address_mempool_txs(self, address: Address) -> List[Txid]:
+    def get_address_mempool_txs(self, address: Addr) -> List[Txid]:
         """Address mempool transactions.
 
         Get unconfirmed transaction IDs for an address from the mempool (up to 50).
@@ -6945,7 +6955,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/address/{address}/txs/mempool`"""
         return self.get_json(f'/api/address/{address}/txs/mempool')
 
-    def get_address_utxos(self, address: Address) -> List[Utxo]:
+    def get_address_utxos(self, address: Addr) -> List[Utxo]:
         """Address UTXOs.
 
         Get unspent transaction outputs (UTXOs) for an address. Returns txid, vout, value, and confirmation status for each UTXO.
@@ -7467,7 +7477,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/v1/mining/reward-stats/{block_count}`"""
         return self.get_json(f'/api/v1/mining/reward-stats/{block_count}')
 
-    def validate_address(self, address: str) -> AddressValidation:
+    def validate_address(self, address: str) -> AddrValidation:
         """Validate address.
 
         Validate a Bitcoin address and get information about its type and scriptPubKey.

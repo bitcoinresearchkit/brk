@@ -38,33 +38,33 @@ impl IndexesExt for Indexes {
         vecs.scripts
             .op_return.first_index
             .checked_push(height, self.op_return_index)?;
-        vecs.addresses
+        vecs.addrs
             .p2a.first_index
-            .checked_push(height, self.p2a_address_index)?;
+            .checked_push(height, self.p2a_addr_index)?;
         vecs.scripts
             .unknown.first_index
             .checked_push(height, self.unknown_output_index)?;
-        vecs.addresses
+        vecs.addrs
             .p2pk33.first_index
-            .checked_push(height, self.p2pk33_address_index)?;
-        vecs.addresses
+            .checked_push(height, self.p2pk33_addr_index)?;
+        vecs.addrs
             .p2pk65.first_index
-            .checked_push(height, self.p2pk65_address_index)?;
-        vecs.addresses
+            .checked_push(height, self.p2pk65_addr_index)?;
+        vecs.addrs
             .p2pkh.first_index
-            .checked_push(height, self.p2pkh_address_index)?;
-        vecs.addresses
+            .checked_push(height, self.p2pkh_addr_index)?;
+        vecs.addrs
             .p2sh.first_index
-            .checked_push(height, self.p2sh_address_index)?;
-        vecs.addresses
+            .checked_push(height, self.p2sh_addr_index)?;
+        vecs.addrs
             .p2tr.first_index
-            .checked_push(height, self.p2tr_address_index)?;
-        vecs.addresses
+            .checked_push(height, self.p2tr_addr_index)?;
+        vecs.addrs
             .p2wpkh.first_index
-            .checked_push(height, self.p2wpkh_address_index)?;
-        vecs.addresses
+            .checked_push(height, self.p2wpkh_addr_index)?;
+        vecs.addrs
             .p2wsh.first_index
-            .checked_push(height, self.p2wsh_address_index)?;
+            .checked_push(height, self.p2wsh_addr_index)?;
 
         Ok(())
     }
@@ -115,51 +115,51 @@ impl IndexesExt for Indexes {
             starting_height,
         )?;
 
-        let p2pk33_address_index = starting_index(
-            &vecs.addresses.p2pk33.first_index,
-            &vecs.addresses.p2pk33.bytes,
+        let p2pk33_addr_index = starting_index(
+            &vecs.addrs.p2pk33.first_index,
+            &vecs.addrs.p2pk33.bytes,
             starting_height,
         )?;
 
-        let p2pk65_address_index = starting_index(
-            &vecs.addresses.p2pk65.first_index,
-            &vecs.addresses.p2pk65.bytes,
+        let p2pk65_addr_index = starting_index(
+            &vecs.addrs.p2pk65.first_index,
+            &vecs.addrs.p2pk65.bytes,
             starting_height,
         )?;
 
-        let p2pkh_address_index = starting_index(
-            &vecs.addresses.p2pkh.first_index,
-            &vecs.addresses.p2pkh.bytes,
+        let p2pkh_addr_index = starting_index(
+            &vecs.addrs.p2pkh.first_index,
+            &vecs.addrs.p2pkh.bytes,
             starting_height,
         )?;
 
-        let p2sh_address_index = starting_index(
-            &vecs.addresses.p2sh.first_index,
-            &vecs.addresses.p2sh.bytes,
+        let p2sh_addr_index = starting_index(
+            &vecs.addrs.p2sh.first_index,
+            &vecs.addrs.p2sh.bytes,
             starting_height,
         )?;
 
-        let p2tr_address_index = starting_index(
-            &vecs.addresses.p2tr.first_index,
-            &vecs.addresses.p2tr.bytes,
+        let p2tr_addr_index = starting_index(
+            &vecs.addrs.p2tr.first_index,
+            &vecs.addrs.p2tr.bytes,
             starting_height,
         )?;
 
-        let p2wpkh_address_index = starting_index(
-            &vecs.addresses.p2wpkh.first_index,
-            &vecs.addresses.p2wpkh.bytes,
+        let p2wpkh_addr_index = starting_index(
+            &vecs.addrs.p2wpkh.first_index,
+            &vecs.addrs.p2wpkh.bytes,
             starting_height,
         )?;
 
-        let p2wsh_address_index = starting_index(
-            &vecs.addresses.p2wsh.first_index,
-            &vecs.addresses.p2wsh.bytes,
+        let p2wsh_addr_index = starting_index(
+            &vecs.addrs.p2wsh.first_index,
+            &vecs.addrs.p2wsh.bytes,
             starting_height,
         )?;
 
-        let p2a_address_index = starting_index(
-            &vecs.addresses.p2a.first_index,
-            &vecs.addresses.p2a.bytes,
+        let p2a_addr_index = starting_index(
+            &vecs.addrs.p2a.first_index,
+            &vecs.addrs.p2a.bytes,
             starting_height,
         )?;
 
@@ -192,14 +192,14 @@ impl IndexesExt for Indexes {
             height: starting_height,
             p2ms_output_index,
             op_return_index,
-            p2pk33_address_index,
-            p2pk65_address_index,
-            p2pkh_address_index,
-            p2sh_address_index,
-            p2tr_address_index,
-            p2wpkh_address_index,
-            p2wsh_address_index,
-            p2a_address_index,
+            p2pk33_addr_index,
+            p2pk65_addr_index,
+            p2pkh_addr_index,
+            p2sh_addr_index,
+            p2tr_addr_index,
+            p2wpkh_addr_index,
+            p2wsh_addr_index,
+            p2a_addr_index,
             tx_index,
             txin_index,
             txout_index,

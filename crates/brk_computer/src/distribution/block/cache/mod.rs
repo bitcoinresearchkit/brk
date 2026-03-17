@@ -1,5 +1,5 @@
-mod address;
+mod addr;
 mod lookup;
 
-pub use address::*;
+pub use addr::*;
 pub use lookup::*;

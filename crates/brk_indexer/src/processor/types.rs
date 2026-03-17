@@ -1,7 +1,7 @@
 use bitcoin::{Transaction, TxOut};
-use brk_cohort::ByAddressType;
+use brk_cohort::ByAddrType;
 use brk_types::{
-    AddressBytes, AddressHash, OutPoint, OutputType, TxIndex, TxOutIndex, Txid, TxidPrefix,
+    AddrBytes, AddrHash, OutPoint, OutputType, TxIndex, TxOutIndex, Txid, TxidPrefix,
     TypeIndex, Vin, Vout,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -34,7 +34,7 @@ pub struct ProcessedOutput<'a> {
     pub tx_index: TxIndex,
     pub vout: Vout,
     pub output_type: OutputType,
-    pub address_info: Option<(AddressBytes, AddressHash)>,
+    pub addr_info: Option<(AddrBytes, AddrHash)>,
     pub existing_type_index: Option<TypeIndex>,
 }
 
@@ -53,6 +53,6 @@ pub struct ComputedTx<'a> {
 pub struct BlockBuffers {
     pub txid_prefix_map: FxHashMap<TxidPrefix, TxIndex>,
     pub same_block_spent: FxHashSet<OutPoint>,
-    pub already_added_addresses: ByAddressType<FxHashMap<AddressHash, TypeIndex>>,
+    pub already_added_addrs: ByAddrType<FxHashMap<AddrHash, TypeIndex>>,
     pub same_block_output_info: FxHashMap<OutPoint, SameBlockOutputInfo>,
 }

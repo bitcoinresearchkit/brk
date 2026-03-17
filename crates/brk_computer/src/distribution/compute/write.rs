@@ -1,18 +1,18 @@
 use std::time::Instant;
 
 use brk_error::Result;
-use brk_types::{EmptyAddressData, FundedAddressData, Height};
+use brk_types::{EmptyAddrData, FundedAddrData, Height};
 use rayon::prelude::*;
 use tracing::info;
 use vecdb::{AnyStoredVec, AnyVec, Stamp, VecIndex, WritableVec};
 
 use crate::distribution::{
     Vecs,
-    block::{WithAddressDataSource, process_empty_addresses, process_funded_addresses},
+    block::{WithAddrDataSource, process_empty_addrs, process_funded_addrs},
     state::BlockState,
 };
 
-use super::super::address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs};
+use super::super::addr::{AddrTypeToTypeIndexMap, AddrsDataVecs, AnyAddrIndexesVecs};
 
 /// Process address updates from caches.
 ///
@@ -22,20 +22,20 @@ use super::super::address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAdd
 /// - Updates address indexes
 ///
 /// Call this before `flush()` to prepare data for writing.
-pub(crate) fn process_address_updates(
-    addresses_data: &mut AddressesDataVecs,
-    address_indexes: &mut AnyAddressIndexesVecs,
-    empty_updates: AddressTypeToTypeIndexMap<WithAddressDataSource<EmptyAddressData>>,
-    funded_updates: AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>,
+pub(crate) fn process_addr_updates(
+    addrs_data: &mut AddrsDataVecs,
+    addr_indexes: &mut AnyAddrIndexesVecs,
+    empty_updates: AddrTypeToTypeIndexMap<WithAddrDataSource<EmptyAddrData>>,
+    funded_updates: AddrTypeToTypeIndexMap<WithAddrDataSource<FundedAddrData>>,
 ) -> Result<()> {
-    info!("Processing address updates...");
+    info!("Processing addr updates...");
 
     let i = Instant::now();
-    let empty_result = process_empty_addresses(addresses_data, empty_updates)?;
-    let funded_result = process_funded_addresses(addresses_data, funded_updates)?;
-    address_indexes.par_batch_update(empty_result, funded_result)?;
+    let empty_result = process_empty_addrs(addrs_data, empty_updates)?;
+    let funded_result = process_funded_addrs(addrs_data, funded_updates)?;
+    addr_indexes.par_batch_update(empty_result, funded_result)?;
 
-    info!("Processed address updates in {:?}", i.elapsed());
+    info!("Processed addr updates in {:?}", i.elapsed());
 
     Ok(())
 }
@@ -73,12 +73,12 @@ pub(crate) fn write(
         vecs.supply_state.push(block_state.supply);
     }
 
-    vecs.any_address_indexes
+    vecs.any_addr_indexes
         .par_iter_mut()
-        .chain(vecs.addresses_data.par_iter_mut())
-        .chain(vecs.addresses.funded.par_iter_height_mut())
-        .chain(vecs.addresses.empty.par_iter_height_mut())
-        .chain(vecs.addresses.activity.par_iter_height_mut())
+        .chain(vecs.addrs_data.par_iter_mut())
+        .chain(vecs.addrs.funded.par_iter_height_mut())
+        .chain(vecs.addrs.empty.par_iter_height_mut())
+        .chain(vecs.addrs.activity.par_iter_height_mut())
         .chain(
             [
                 &mut vecs.supply_state as &mut dyn AnyStoredVec,
@@ -87,13 +87,13 @@ pub(crate) fn write(
             .into_par_iter(),
         )
         .chain(vecs.utxo_cohorts.par_iter_vecs_mut())
-        .chain(vecs.address_cohorts.par_iter_vecs_mut())
+        .chain(vecs.addr_cohorts.par_iter_vecs_mut())
         .try_for_each(|v| v.any_stamped_write_maybe_with_changes(stamp, with_changes))?;
 
     // Commit states after vec writes
     let cleanup = with_changes;
     vecs.utxo_cohorts.commit_all_states(height, cleanup)?;
-    vecs.address_cohorts.commit_all_states(height, cleanup)?;
+    vecs.addr_cohorts.commit_all_states(height, cleanup)?;
 
     info!("Wrote in {:?}", i.elapsed());
 

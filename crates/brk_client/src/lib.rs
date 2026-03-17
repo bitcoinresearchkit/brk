@@ -382,18 +382,18 @@ const _I20: &[Index] = &[Index::TxInIndex];
 const _I21: &[Index] = &[Index::TxOutIndex];
 const _I22: &[Index] = &[Index::EmptyOutputIndex];
 const _I23: &[Index] = &[Index::OpReturnIndex];
-const _I24: &[Index] = &[Index::P2AAddressIndex];
+const _I24: &[Index] = &[Index::P2AAddrIndex];
 const _I25: &[Index] = &[Index::P2MSOutputIndex];
-const _I26: &[Index] = &[Index::P2PK33AddressIndex];
-const _I27: &[Index] = &[Index::P2PK65AddressIndex];
-const _I28: &[Index] = &[Index::P2PKHAddressIndex];
-const _I29: &[Index] = &[Index::P2SHAddressIndex];
-const _I30: &[Index] = &[Index::P2TRAddressIndex];
-const _I31: &[Index] = &[Index::P2WPKHAddressIndex];
-const _I32: &[Index] = &[Index::P2WSHAddressIndex];
+const _I26: &[Index] = &[Index::P2PK33AddrIndex];
+const _I27: &[Index] = &[Index::P2PK65AddrIndex];
+const _I28: &[Index] = &[Index::P2PKHAddrIndex];
+const _I29: &[Index] = &[Index::P2SHAddrIndex];
+const _I30: &[Index] = &[Index::P2TRAddrIndex];
+const _I31: &[Index] = &[Index::P2WPKHAddrIndex];
+const _I32: &[Index] = &[Index::P2WSHAddrIndex];
 const _I33: &[Index] = &[Index::UnknownOutputIndex];
-const _I34: &[Index] = &[Index::FundedAddressIndex];
-const _I35: &[Index] = &[Index::EmptyAddressIndex];
+const _I34: &[Index] = &[Index::FundedAddrIndex];
+const _I35: &[Index] = &[Index::EmptyAddrIndex];
 
 #[inline]
 fn _ep<T: DeserializeOwned>(c: &Arc<BrkClientBase>, n: &Arc<str>, i: Index) -> SeriesEndpoint<T> {
@@ -760,7 +760,7 @@ impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern23<T> { fn get(&self
 
 pub struct SeriesPattern24By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern24By<T> {
-    pub fn p2a_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2AAddressIndex) }
+    pub fn p2a_addr_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2AAddrIndex) }
 }
 
 pub struct SeriesPattern24<T> { name: Arc<str>, pub by: SeriesPattern24By<T> }
@@ -788,7 +788,7 @@ impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern25<T> { fn get(&self
 
 pub struct SeriesPattern26By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern26By<T> {
-    pub fn p2pk33_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2PK33AddressIndex) }
+    pub fn p2pk33_addr_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2PK33AddrIndex) }
 }
 
 pub struct SeriesPattern26<T> { name: Arc<str>, pub by: SeriesPattern26By<T> }
@@ -802,7 +802,7 @@ impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern26<T> { fn get(&self
 
 pub struct SeriesPattern27By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern27By<T> {
-    pub fn p2pk65_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2PK65AddressIndex) }
+    pub fn p2pk65_addr_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2PK65AddrIndex) }
 }
 
 pub struct SeriesPattern27<T> { name: Arc<str>, pub by: SeriesPattern27By<T> }
@@ -816,7 +816,7 @@ impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern27<T> { fn get(&self
 
 pub struct SeriesPattern28By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern28By<T> {
-    pub fn p2pkh_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2PKHAddressIndex) }
+    pub fn p2pkh_addr_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2PKHAddrIndex) }
 }
 
 pub struct SeriesPattern28<T> { name: Arc<str>, pub by: SeriesPattern28By<T> }
@@ -830,7 +830,7 @@ impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern28<T> { fn get(&self
 
 pub struct SeriesPattern29By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern29By<T> {
-    pub fn p2sh_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2SHAddressIndex) }
+    pub fn p2sh_addr_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2SHAddrIndex) }
 }
 
 pub struct SeriesPattern29<T> { name: Arc<str>, pub by: SeriesPattern29By<T> }
@@ -844,7 +844,7 @@ impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern29<T> { fn get(&self
 
 pub struct SeriesPattern30By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern30By<T> {
-    pub fn p2tr_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2TRAddressIndex) }
+    pub fn p2tr_addr_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2TRAddrIndex) }
 }
 
 pub struct SeriesPattern30<T> { name: Arc<str>, pub by: SeriesPattern30By<T> }
@@ -858,7 +858,7 @@ impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern30<T> { fn get(&self
 
 pub struct SeriesPattern31By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern31By<T> {
-    pub fn p2wpkh_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2WPKHAddressIndex) }
+    pub fn p2wpkh_addr_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2WPKHAddrIndex) }
 }
 
 pub struct SeriesPattern31<T> { name: Arc<str>, pub by: SeriesPattern31By<T> }
@@ -872,7 +872,7 @@ impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern31<T> { fn get(&self
 
 pub struct SeriesPattern32By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern32By<T> {
-    pub fn p2wsh_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2WSHAddressIndex) }
+    pub fn p2wsh_addr_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::P2WSHAddrIndex) }
 }
 
 pub struct SeriesPattern32<T> { name: Arc<str>, pub by: SeriesPattern32By<T> }
@@ -900,7 +900,7 @@ impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern33<T> { fn get(&self
 
 pub struct SeriesPattern34By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern34By<T> {
-    pub fn funded_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::FundedAddressIndex) }
+    pub fn funded_addr_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::FundedAddrIndex) }
 }
 
 pub struct SeriesPattern34<T> { name: Arc<str>, pub by: SeriesPattern34By<T> }
@@ -914,7 +914,7 @@ impl<T: DeserializeOwned> SeriesPattern<T> for SeriesPattern34<T> { fn get(&self
 
 pub struct SeriesPattern35By<T> { client: Arc<BrkClientBase>, name: Arc<str>, _marker: std::marker::PhantomData<T> }
 impl<T: DeserializeOwned> SeriesPattern35By<T> {
-    pub fn empty_address_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::EmptyAddressIndex) }
+    pub fn empty_addr_index(&self) -> SeriesEndpoint<T> { _ep(&self.client, &self.name, Index::EmptyAddrIndex) }
 }
 
 pub struct SeriesPattern35<T> { name: Arc<str>, pub by: SeriesPattern35By<T> }
@@ -1677,19 +1677,19 @@ impl ActivityOutputsRealizedSupplyUnrealizedPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct AddressOutputsRealizedSupplyUnrealizedPattern {
-    pub address_count: BaseDeltaPattern,
+pub struct AddrOutputsRealizedSupplyUnrealizedPattern {
+    pub addr_count: BaseDeltaPattern,
     pub outputs: UnspentPattern,
     pub realized: CapLossMvrvPriceProfitSoprPattern,
     pub supply: DeltaHalfTotalPattern,
     pub unrealized: NuplPattern,
 }
 
-impl AddressOutputsRealizedSupplyUnrealizedPattern {
+impl AddrOutputsRealizedSupplyUnrealizedPattern {
     /// Create a new pattern node with accumulated series name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            address_count: BaseDeltaPattern::new(client.clone(), _m(&acc, "address_count")),
+            addr_count: BaseDeltaPattern::new(client.clone(), _m(&acc, "addr_count")),
             outputs: UnspentPattern::new(client.clone(), _m(&acc, "utxo_count")),
             realized: CapLossMvrvPriceProfitSoprPattern::new(client.clone(), acc.clone()),
             supply: DeltaHalfTotalPattern::new(client.clone(), _m(&acc, "supply")),
@@ -1700,22 +1700,22 @@ impl AddressOutputsRealizedSupplyUnrealizedPattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct BaseCumulativeInSumPattern {
-    pub base: SeriesPattern1<Sats>,
-    pub cumulative: SeriesPattern1<Sats>,
+    pub base: BtcCentsSatsUsdPattern,
+    pub cumulative: BtcCentsSatsUsdPattern,
     pub in_loss: BaseCumulativeSumPattern4,
     pub in_profit: BaseCumulativeSumPattern4,
-    pub sum: _1m1w1y24hPattern<Sats>,
+    pub sum: _1m1w1y24hPattern5,
 }
 
 impl BaseCumulativeInSumPattern {
     /// Create a new pattern node with accumulated series name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            base: SeriesPattern1::new(client.clone(), acc.clone()),
-            cumulative: SeriesPattern1::new(client.clone(), _m(&acc, "cumulative")),
+            base: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
+            cumulative: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "cumulative")),
             in_loss: BaseCumulativeSumPattern4::new(client.clone(), _m(&acc, "in_loss")),
             in_profit: BaseCumulativeSumPattern4::new(client.clone(), _m(&acc, "in_profit")),
-            sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "sum")),
+            sum: _1m1w1y24hPattern5::new(client.clone(), _m(&acc, "sum")),
         }
     }
 }
@@ -2906,9 +2906,10 @@ pub struct SeriesTree {
     pub transactions: SeriesTree_Transactions,
     pub inputs: SeriesTree_Inputs,
     pub outputs: SeriesTree_Outputs,
-    pub addresses: SeriesTree_Addresses,
+    pub addrs: SeriesTree_Addrs,
     pub scripts: SeriesTree_Scripts,
     pub mining: SeriesTree_Mining,
+    pub positions: SeriesTree_Positions,
     pub cointime: SeriesTree_Cointime,
     pub constants: SeriesTree_Constants,
     pub indexes: SeriesTree_Indexes,
@@ -2927,9 +2928,10 @@ impl SeriesTree {
             transactions: SeriesTree_Transactions::new(client.clone(), format!("{base_path}_transactions")),
             inputs: SeriesTree_Inputs::new(client.clone(), format!("{base_path}_inputs")),
             outputs: SeriesTree_Outputs::new(client.clone(), format!("{base_path}_outputs")),
-            addresses: SeriesTree_Addresses::new(client.clone(), format!("{base_path}_addresses")),
+            addrs: SeriesTree_Addrs::new(client.clone(), format!("{base_path}_addrs")),
             scripts: SeriesTree_Scripts::new(client.clone(), format!("{base_path}_scripts")),
             mining: SeriesTree_Mining::new(client.clone(), format!("{base_path}_mining")),
+            positions: SeriesTree_Positions::new(client.clone(), format!("{base_path}_positions")),
             cointime: SeriesTree_Cointime::new(client.clone(), format!("{base_path}_cointime")),
             constants: SeriesTree_Constants::new(client.clone(), format!("{base_path}_constants")),
             indexes: SeriesTree_Indexes::new(client.clone(), format!("{base_path}_indexes")),
@@ -3360,7 +3362,7 @@ pub struct SeriesTree_Transactions_Volume {
 impl SeriesTree_Transactions_Volume {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            transfer_volume: BaseCumulativeSumPattern4::new(client.clone(), "exact_transfer_volume".to_string()),
+            transfer_volume: BaseCumulativeSumPattern4::new(client.clone(), "transfer_volume_bis".to_string()),
             output_volume: BaseCumulativeSumPattern4::new(client.clone(), "output_volume".to_string()),
             tx_per_sec: SeriesPattern1::new(client.clone(), "tx_per_sec".to_string()),
             outputs_per_sec: SeriesPattern1::new(client.clone(), "outputs_per_sec".to_string()),
@@ -3483,235 +3485,235 @@ impl SeriesTree_Outputs_Count {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             total: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern::new(client.clone(), "output_count".to_string()),
-            unspent: SeriesPattern1::new(client.clone(), "exact_utxo_count".to_string()),
+            unspent: SeriesPattern1::new(client.clone(), "utxo_count_bis".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses {
-    pub raw: SeriesTree_Addresses_Raw,
-    pub indexes: SeriesTree_Addresses_Indexes,
-    pub data: SeriesTree_Addresses_Data,
+pub struct SeriesTree_Addrs {
+    pub raw: SeriesTree_Addrs_Raw,
+    pub indexes: SeriesTree_Addrs_Indexes,
+    pub data: SeriesTree_Addrs_Data,
     pub funded: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3,
     pub empty: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3,
-    pub activity: SeriesTree_Addresses_Activity,
+    pub activity: SeriesTree_Addrs_Activity,
     pub total: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3,
-    pub new: SeriesTree_Addresses_New,
-    pub delta: SeriesTree_Addresses_Delta,
+    pub new: SeriesTree_Addrs_New,
+    pub delta: SeriesTree_Addrs_Delta,
 }
 
-impl SeriesTree_Addresses {
+impl SeriesTree_Addrs {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            raw: SeriesTree_Addresses_Raw::new(client.clone(), format!("{base_path}_raw")),
-            indexes: SeriesTree_Addresses_Indexes::new(client.clone(), format!("{base_path}_indexes")),
-            data: SeriesTree_Addresses_Data::new(client.clone(), format!("{base_path}_data")),
-            funded: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3::new(client.clone(), "address_count".to_string()),
-            empty: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3::new(client.clone(), "empty_address_count".to_string()),
-            activity: SeriesTree_Addresses_Activity::new(client.clone(), format!("{base_path}_activity")),
-            total: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3::new(client.clone(), "total_address_count".to_string()),
-            new: SeriesTree_Addresses_New::new(client.clone(), format!("{base_path}_new")),
-            delta: SeriesTree_Addresses_Delta::new(client.clone(), format!("{base_path}_delta")),
+            raw: SeriesTree_Addrs_Raw::new(client.clone(), format!("{base_path}_raw")),
+            indexes: SeriesTree_Addrs_Indexes::new(client.clone(), format!("{base_path}_indexes")),
+            data: SeriesTree_Addrs_Data::new(client.clone(), format!("{base_path}_data")),
+            funded: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3::new(client.clone(), "addr_count".to_string()),
+            empty: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3::new(client.clone(), "empty_addr_count".to_string()),
+            activity: SeriesTree_Addrs_Activity::new(client.clone(), format!("{base_path}_activity")),
+            total: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3::new(client.clone(), "total_addr_count".to_string()),
+            new: SeriesTree_Addrs_New::new(client.clone(), format!("{base_path}_new")),
+            delta: SeriesTree_Addrs_Delta::new(client.clone(), format!("{base_path}_delta")),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses_Raw {
-    pub p2pk65: SeriesTree_Addresses_Raw_P2pk65,
-    pub p2pk33: SeriesTree_Addresses_Raw_P2pk33,
-    pub p2pkh: SeriesTree_Addresses_Raw_P2pkh,
-    pub p2sh: SeriesTree_Addresses_Raw_P2sh,
-    pub p2wpkh: SeriesTree_Addresses_Raw_P2wpkh,
-    pub p2wsh: SeriesTree_Addresses_Raw_P2wsh,
-    pub p2tr: SeriesTree_Addresses_Raw_P2tr,
-    pub p2a: SeriesTree_Addresses_Raw_P2a,
+pub struct SeriesTree_Addrs_Raw {
+    pub p2pk65: SeriesTree_Addrs_Raw_P2pk65,
+    pub p2pk33: SeriesTree_Addrs_Raw_P2pk33,
+    pub p2pkh: SeriesTree_Addrs_Raw_P2pkh,
+    pub p2sh: SeriesTree_Addrs_Raw_P2sh,
+    pub p2wpkh: SeriesTree_Addrs_Raw_P2wpkh,
+    pub p2wsh: SeriesTree_Addrs_Raw_P2wsh,
+    pub p2tr: SeriesTree_Addrs_Raw_P2tr,
+    pub p2a: SeriesTree_Addrs_Raw_P2a,
 }
 
-impl SeriesTree_Addresses_Raw {
+impl SeriesTree_Addrs_Raw {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            p2pk65: SeriesTree_Addresses_Raw_P2pk65::new(client.clone(), format!("{base_path}_p2pk65")),
-            p2pk33: SeriesTree_Addresses_Raw_P2pk33::new(client.clone(), format!("{base_path}_p2pk33")),
-            p2pkh: SeriesTree_Addresses_Raw_P2pkh::new(client.clone(), format!("{base_path}_p2pkh")),
-            p2sh: SeriesTree_Addresses_Raw_P2sh::new(client.clone(), format!("{base_path}_p2sh")),
-            p2wpkh: SeriesTree_Addresses_Raw_P2wpkh::new(client.clone(), format!("{base_path}_p2wpkh")),
-            p2wsh: SeriesTree_Addresses_Raw_P2wsh::new(client.clone(), format!("{base_path}_p2wsh")),
-            p2tr: SeriesTree_Addresses_Raw_P2tr::new(client.clone(), format!("{base_path}_p2tr")),
-            p2a: SeriesTree_Addresses_Raw_P2a::new(client.clone(), format!("{base_path}_p2a")),
+            p2pk65: SeriesTree_Addrs_Raw_P2pk65::new(client.clone(), format!("{base_path}_p2pk65")),
+            p2pk33: SeriesTree_Addrs_Raw_P2pk33::new(client.clone(), format!("{base_path}_p2pk33")),
+            p2pkh: SeriesTree_Addrs_Raw_P2pkh::new(client.clone(), format!("{base_path}_p2pkh")),
+            p2sh: SeriesTree_Addrs_Raw_P2sh::new(client.clone(), format!("{base_path}_p2sh")),
+            p2wpkh: SeriesTree_Addrs_Raw_P2wpkh::new(client.clone(), format!("{base_path}_p2wpkh")),
+            p2wsh: SeriesTree_Addrs_Raw_P2wsh::new(client.clone(), format!("{base_path}_p2wsh")),
+            p2tr: SeriesTree_Addrs_Raw_P2tr::new(client.clone(), format!("{base_path}_p2tr")),
+            p2a: SeriesTree_Addrs_Raw_P2a::new(client.clone(), format!("{base_path}_p2a")),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses_Raw_P2pk65 {
-    pub first_index: SeriesPattern18<P2PK65AddressIndex>,
+pub struct SeriesTree_Addrs_Raw_P2pk65 {
+    pub first_index: SeriesPattern18<P2PK65AddrIndex>,
     pub bytes: SeriesPattern27<P2PK65Bytes>,
 }
 
-impl SeriesTree_Addresses_Raw_P2pk65 {
+impl SeriesTree_Addrs_Raw_P2pk65 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            first_index: SeriesPattern18::new(client.clone(), "first_p2pk65_address_index".to_string()),
+            first_index: SeriesPattern18::new(client.clone(), "first_p2pk65_addr_index".to_string()),
             bytes: SeriesPattern27::new(client.clone(), "p2pk65_bytes".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses_Raw_P2pk33 {
-    pub first_index: SeriesPattern18<P2PK33AddressIndex>,
+pub struct SeriesTree_Addrs_Raw_P2pk33 {
+    pub first_index: SeriesPattern18<P2PK33AddrIndex>,
     pub bytes: SeriesPattern26<P2PK33Bytes>,
 }
 
-impl SeriesTree_Addresses_Raw_P2pk33 {
+impl SeriesTree_Addrs_Raw_P2pk33 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            first_index: SeriesPattern18::new(client.clone(), "first_p2pk33_address_index".to_string()),
+            first_index: SeriesPattern18::new(client.clone(), "first_p2pk33_addr_index".to_string()),
             bytes: SeriesPattern26::new(client.clone(), "p2pk33_bytes".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses_Raw_P2pkh {
-    pub first_index: SeriesPattern18<P2PKHAddressIndex>,
+pub struct SeriesTree_Addrs_Raw_P2pkh {
+    pub first_index: SeriesPattern18<P2PKHAddrIndex>,
     pub bytes: SeriesPattern28<P2PKHBytes>,
 }
 
-impl SeriesTree_Addresses_Raw_P2pkh {
+impl SeriesTree_Addrs_Raw_P2pkh {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            first_index: SeriesPattern18::new(client.clone(), "first_p2pkh_address_index".to_string()),
+            first_index: SeriesPattern18::new(client.clone(), "first_p2pkh_addr_index".to_string()),
             bytes: SeriesPattern28::new(client.clone(), "p2pkh_bytes".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses_Raw_P2sh {
-    pub first_index: SeriesPattern18<P2SHAddressIndex>,
+pub struct SeriesTree_Addrs_Raw_P2sh {
+    pub first_index: SeriesPattern18<P2SHAddrIndex>,
     pub bytes: SeriesPattern29<P2SHBytes>,
 }
 
-impl SeriesTree_Addresses_Raw_P2sh {
+impl SeriesTree_Addrs_Raw_P2sh {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            first_index: SeriesPattern18::new(client.clone(), "first_p2sh_address_index".to_string()),
+            first_index: SeriesPattern18::new(client.clone(), "first_p2sh_addr_index".to_string()),
             bytes: SeriesPattern29::new(client.clone(), "p2sh_bytes".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses_Raw_P2wpkh {
-    pub first_index: SeriesPattern18<P2WPKHAddressIndex>,
+pub struct SeriesTree_Addrs_Raw_P2wpkh {
+    pub first_index: SeriesPattern18<P2WPKHAddrIndex>,
     pub bytes: SeriesPattern31<P2WPKHBytes>,
 }
 
-impl SeriesTree_Addresses_Raw_P2wpkh {
+impl SeriesTree_Addrs_Raw_P2wpkh {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            first_index: SeriesPattern18::new(client.clone(), "first_p2wpkh_address_index".to_string()),
+            first_index: SeriesPattern18::new(client.clone(), "first_p2wpkh_addr_index".to_string()),
             bytes: SeriesPattern31::new(client.clone(), "p2wpkh_bytes".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses_Raw_P2wsh {
-    pub first_index: SeriesPattern18<P2WSHAddressIndex>,
+pub struct SeriesTree_Addrs_Raw_P2wsh {
+    pub first_index: SeriesPattern18<P2WSHAddrIndex>,
     pub bytes: SeriesPattern32<P2WSHBytes>,
 }
 
-impl SeriesTree_Addresses_Raw_P2wsh {
+impl SeriesTree_Addrs_Raw_P2wsh {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            first_index: SeriesPattern18::new(client.clone(), "first_p2wsh_address_index".to_string()),
+            first_index: SeriesPattern18::new(client.clone(), "first_p2wsh_addr_index".to_string()),
             bytes: SeriesPattern32::new(client.clone(), "p2wsh_bytes".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses_Raw_P2tr {
-    pub first_index: SeriesPattern18<P2TRAddressIndex>,
+pub struct SeriesTree_Addrs_Raw_P2tr {
+    pub first_index: SeriesPattern18<P2TRAddrIndex>,
     pub bytes: SeriesPattern30<P2TRBytes>,
 }
 
-impl SeriesTree_Addresses_Raw_P2tr {
+impl SeriesTree_Addrs_Raw_P2tr {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            first_index: SeriesPattern18::new(client.clone(), "first_p2tr_address_index".to_string()),
+            first_index: SeriesPattern18::new(client.clone(), "first_p2tr_addr_index".to_string()),
             bytes: SeriesPattern30::new(client.clone(), "p2tr_bytes".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses_Raw_P2a {
-    pub first_index: SeriesPattern18<P2AAddressIndex>,
+pub struct SeriesTree_Addrs_Raw_P2a {
+    pub first_index: SeriesPattern18<P2AAddrIndex>,
     pub bytes: SeriesPattern24<P2ABytes>,
 }
 
-impl SeriesTree_Addresses_Raw_P2a {
+impl SeriesTree_Addrs_Raw_P2a {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            first_index: SeriesPattern18::new(client.clone(), "first_p2a_address_index".to_string()),
+            first_index: SeriesPattern18::new(client.clone(), "first_p2a_addr_index".to_string()),
             bytes: SeriesPattern24::new(client.clone(), "p2a_bytes".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses_Indexes {
-    pub p2a: SeriesPattern24<AnyAddressIndex>,
-    pub p2pk33: SeriesPattern26<AnyAddressIndex>,
-    pub p2pk65: SeriesPattern27<AnyAddressIndex>,
-    pub p2pkh: SeriesPattern28<AnyAddressIndex>,
-    pub p2sh: SeriesPattern29<AnyAddressIndex>,
-    pub p2tr: SeriesPattern30<AnyAddressIndex>,
-    pub p2wpkh: SeriesPattern31<AnyAddressIndex>,
-    pub p2wsh: SeriesPattern32<AnyAddressIndex>,
-    pub funded: SeriesPattern34<FundedAddressIndex>,
-    pub empty: SeriesPattern35<EmptyAddressIndex>,
+pub struct SeriesTree_Addrs_Indexes {
+    pub p2a: SeriesPattern24<AnyAddrIndex>,
+    pub p2pk33: SeriesPattern26<AnyAddrIndex>,
+    pub p2pk65: SeriesPattern27<AnyAddrIndex>,
+    pub p2pkh: SeriesPattern28<AnyAddrIndex>,
+    pub p2sh: SeriesPattern29<AnyAddrIndex>,
+    pub p2tr: SeriesPattern30<AnyAddrIndex>,
+    pub p2wpkh: SeriesPattern31<AnyAddrIndex>,
+    pub p2wsh: SeriesPattern32<AnyAddrIndex>,
+    pub funded: SeriesPattern34<FundedAddrIndex>,
+    pub empty: SeriesPattern35<EmptyAddrIndex>,
 }
 
-impl SeriesTree_Addresses_Indexes {
+impl SeriesTree_Addrs_Indexes {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            p2a: SeriesPattern24::new(client.clone(), "any_address_index".to_string()),
-            p2pk33: SeriesPattern26::new(client.clone(), "any_address_index".to_string()),
-            p2pk65: SeriesPattern27::new(client.clone(), "any_address_index".to_string()),
-            p2pkh: SeriesPattern28::new(client.clone(), "any_address_index".to_string()),
-            p2sh: SeriesPattern29::new(client.clone(), "any_address_index".to_string()),
-            p2tr: SeriesPattern30::new(client.clone(), "any_address_index".to_string()),
-            p2wpkh: SeriesPattern31::new(client.clone(), "any_address_index".to_string()),
-            p2wsh: SeriesPattern32::new(client.clone(), "any_address_index".to_string()),
-            funded: SeriesPattern34::new(client.clone(), "funded_address_index".to_string()),
-            empty: SeriesPattern35::new(client.clone(), "empty_address_index".to_string()),
+            p2a: SeriesPattern24::new(client.clone(), "any_addr_index".to_string()),
+            p2pk33: SeriesPattern26::new(client.clone(), "any_addr_index".to_string()),
+            p2pk65: SeriesPattern27::new(client.clone(), "any_addr_index".to_string()),
+            p2pkh: SeriesPattern28::new(client.clone(), "any_addr_index".to_string()),
+            p2sh: SeriesPattern29::new(client.clone(), "any_addr_index".to_string()),
+            p2tr: SeriesPattern30::new(client.clone(), "any_addr_index".to_string()),
+            p2wpkh: SeriesPattern31::new(client.clone(), "any_addr_index".to_string()),
+            p2wsh: SeriesPattern32::new(client.clone(), "any_addr_index".to_string()),
+            funded: SeriesPattern34::new(client.clone(), "funded_addr_index".to_string()),
+            empty: SeriesPattern35::new(client.clone(), "empty_addr_index".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses_Data {
-    pub funded: SeriesPattern34<FundedAddressData>,
-    pub empty: SeriesPattern35<EmptyAddressData>,
+pub struct SeriesTree_Addrs_Data {
+    pub funded: SeriesPattern34<FundedAddrData>,
+    pub empty: SeriesPattern35<EmptyAddrData>,
 }
 
-impl SeriesTree_Addresses_Data {
+impl SeriesTree_Addrs_Data {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            funded: SeriesPattern34::new(client.clone(), "funded_address_data".to_string()),
-            empty: SeriesPattern35::new(client.clone(), "empty_address_data".to_string()),
+            funded: SeriesPattern34::new(client.clone(), "funded_addr_data".to_string()),
+            empty: SeriesPattern35::new(client.clone(), "empty_addr_data".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses_Activity {
+pub struct SeriesTree_Addrs_Activity {
     pub all: BothReactivatedReceivingSendingPattern,
     pub p2pk65: BothReactivatedReceivingSendingPattern,
     pub p2pk33: BothReactivatedReceivingSendingPattern,
@@ -3723,24 +3725,24 @@ pub struct SeriesTree_Addresses_Activity {
     pub p2a: BothReactivatedReceivingSendingPattern,
 }
 
-impl SeriesTree_Addresses_Activity {
+impl SeriesTree_Addrs_Activity {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            all: BothReactivatedReceivingSendingPattern::new(client.clone(), "address_activity".to_string()),
-            p2pk65: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2pk65_address_activity".to_string()),
-            p2pk33: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2pk33_address_activity".to_string()),
-            p2pkh: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2pkh_address_activity".to_string()),
-            p2sh: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2sh_address_activity".to_string()),
-            p2wpkh: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2wpkh_address_activity".to_string()),
-            p2wsh: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2wsh_address_activity".to_string()),
-            p2tr: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2tr_address_activity".to_string()),
-            p2a: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2a_address_activity".to_string()),
+            all: BothReactivatedReceivingSendingPattern::new(client.clone(), "addr_activity".to_string()),
+            p2pk65: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2pk65_addr_activity".to_string()),
+            p2pk33: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2pk33_addr_activity".to_string()),
+            p2pkh: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2pkh_addr_activity".to_string()),
+            p2sh: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2sh_addr_activity".to_string()),
+            p2wpkh: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2wpkh_addr_activity".to_string()),
+            p2wsh: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2wsh_addr_activity".to_string()),
+            p2tr: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2tr_addr_activity".to_string()),
+            p2a: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2a_addr_activity".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses_New {
+pub struct SeriesTree_Addrs_New {
     pub all: BaseCumulativeSumPattern<StoredU64>,
     pub p2pk65: BaseCumulativeSumPattern<StoredU64>,
     pub p2pk33: BaseCumulativeSumPattern<StoredU64>,
@@ -3752,24 +3754,24 @@ pub struct SeriesTree_Addresses_New {
     pub p2a: BaseCumulativeSumPattern<StoredU64>,
 }
 
-impl SeriesTree_Addresses_New {
+impl SeriesTree_Addrs_New {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            all: BaseCumulativeSumPattern::new(client.clone(), "new_address_count".to_string()),
-            p2pk65: BaseCumulativeSumPattern::new(client.clone(), "p2pk65_new_address_count".to_string()),
-            p2pk33: BaseCumulativeSumPattern::new(client.clone(), "p2pk33_new_address_count".to_string()),
-            p2pkh: BaseCumulativeSumPattern::new(client.clone(), "p2pkh_new_address_count".to_string()),
-            p2sh: BaseCumulativeSumPattern::new(client.clone(), "p2sh_new_address_count".to_string()),
-            p2wpkh: BaseCumulativeSumPattern::new(client.clone(), "p2wpkh_new_address_count".to_string()),
-            p2wsh: BaseCumulativeSumPattern::new(client.clone(), "p2wsh_new_address_count".to_string()),
-            p2tr: BaseCumulativeSumPattern::new(client.clone(), "p2tr_new_address_count".to_string()),
-            p2a: BaseCumulativeSumPattern::new(client.clone(), "p2a_new_address_count".to_string()),
+            all: BaseCumulativeSumPattern::new(client.clone(), "new_addr_count".to_string()),
+            p2pk65: BaseCumulativeSumPattern::new(client.clone(), "p2pk65_new_addr_count".to_string()),
+            p2pk33: BaseCumulativeSumPattern::new(client.clone(), "p2pk33_new_addr_count".to_string()),
+            p2pkh: BaseCumulativeSumPattern::new(client.clone(), "p2pkh_new_addr_count".to_string()),
+            p2sh: BaseCumulativeSumPattern::new(client.clone(), "p2sh_new_addr_count".to_string()),
+            p2wpkh: BaseCumulativeSumPattern::new(client.clone(), "p2wpkh_new_addr_count".to_string()),
+            p2wsh: BaseCumulativeSumPattern::new(client.clone(), "p2wsh_new_addr_count".to_string()),
+            p2tr: BaseCumulativeSumPattern::new(client.clone(), "p2tr_new_addr_count".to_string()),
+            p2a: BaseCumulativeSumPattern::new(client.clone(), "p2a_new_addr_count".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addresses_Delta {
+pub struct SeriesTree_Addrs_Delta {
     pub all: AbsoluteRatePattern,
     pub p2pk65: AbsoluteRatePattern,
     pub p2pk33: AbsoluteRatePattern,
@@ -3781,18 +3783,18 @@ pub struct SeriesTree_Addresses_Delta {
     pub p2a: AbsoluteRatePattern,
 }
 
-impl SeriesTree_Addresses_Delta {
+impl SeriesTree_Addrs_Delta {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            all: AbsoluteRatePattern::new(client.clone(), "address_count".to_string()),
-            p2pk65: AbsoluteRatePattern::new(client.clone(), "p2pk65_address_count".to_string()),
-            p2pk33: AbsoluteRatePattern::new(client.clone(), "p2pk33_address_count".to_string()),
-            p2pkh: AbsoluteRatePattern::new(client.clone(), "p2pkh_address_count".to_string()),
-            p2sh: AbsoluteRatePattern::new(client.clone(), "p2sh_address_count".to_string()),
-            p2wpkh: AbsoluteRatePattern::new(client.clone(), "p2wpkh_address_count".to_string()),
-            p2wsh: AbsoluteRatePattern::new(client.clone(), "p2wsh_address_count".to_string()),
-            p2tr: AbsoluteRatePattern::new(client.clone(), "p2tr_address_count".to_string()),
-            p2a: AbsoluteRatePattern::new(client.clone(), "p2a_address_count".to_string()),
+            all: AbsoluteRatePattern::new(client.clone(), "addr_count".to_string()),
+            p2pk65: AbsoluteRatePattern::new(client.clone(), "p2pk65_addr_count".to_string()),
+            p2pk33: AbsoluteRatePattern::new(client.clone(), "p2pk33_addr_count".to_string()),
+            p2pkh: AbsoluteRatePattern::new(client.clone(), "p2pkh_addr_count".to_string()),
+            p2sh: AbsoluteRatePattern::new(client.clone(), "p2sh_addr_count".to_string()),
+            p2wpkh: AbsoluteRatePattern::new(client.clone(), "p2wpkh_addr_count".to_string()),
+            p2wsh: AbsoluteRatePattern::new(client.clone(), "p2wsh_addr_count".to_string()),
+            p2tr: AbsoluteRatePattern::new(client.clone(), "p2tr_addr_count".to_string()),
+            p2a: AbsoluteRatePattern::new(client.clone(), "p2a_addr_count".to_string()),
         }
     }
 }
@@ -4125,6 +4127,21 @@ impl SeriesTree_Mining_Hashrate_Rate_Sma {
 }
 
 /// Series tree node.
+pub struct SeriesTree_Positions {
+    pub block: SeriesPattern18<BlkPosition>,
+    pub tx: SeriesPattern19<BlkPosition>,
+}
+
+impl SeriesTree_Positions {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            block: SeriesPattern18::new(client.clone(), "position".to_string()),
+            tx: SeriesPattern19::new(client.clone(), "position".to_string()),
+        }
+    }
+}
+
+/// Series tree node.
 pub struct SeriesTree_Cointime {
     pub activity: SeriesTree_Cointime_Activity,
     pub supply: SeriesTree_Cointime_Supply,
@@ -4339,7 +4356,7 @@ impl SeriesTree_Constants {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes {
-    pub address: SeriesTree_Indexes_Address,
+    pub addr: SeriesTree_Indexes_Addr,
     pub height: SeriesTree_Indexes_Height,
     pub epoch: SeriesTree_Indexes_Epoch,
     pub halving: SeriesTree_Indexes_Halving,
@@ -4364,7 +4381,7 @@ pub struct SeriesTree_Indexes {
 impl SeriesTree_Indexes {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            address: SeriesTree_Indexes_Address::new(client.clone(), format!("{base_path}_address")),
+            addr: SeriesTree_Indexes_Addr::new(client.clone(), format!("{base_path}_addr")),
             height: SeriesTree_Indexes_Height::new(client.clone(), format!("{base_path}_height")),
             epoch: SeriesTree_Indexes_Epoch::new(client.clone(), format!("{base_path}_epoch")),
             halving: SeriesTree_Indexes_Halving::new(client.clone(), format!("{base_path}_halving")),
@@ -4389,166 +4406,166 @@ impl SeriesTree_Indexes {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indexes_Address {
-    pub p2pk33: SeriesTree_Indexes_Address_P2pk33,
-    pub p2pk65: SeriesTree_Indexes_Address_P2pk65,
-    pub p2pkh: SeriesTree_Indexes_Address_P2pkh,
-    pub p2sh: SeriesTree_Indexes_Address_P2sh,
-    pub p2tr: SeriesTree_Indexes_Address_P2tr,
-    pub p2wpkh: SeriesTree_Indexes_Address_P2wpkh,
-    pub p2wsh: SeriesTree_Indexes_Address_P2wsh,
-    pub p2a: SeriesTree_Indexes_Address_P2a,
-    pub p2ms: SeriesTree_Indexes_Address_P2ms,
-    pub empty: SeriesTree_Indexes_Address_Empty,
-    pub unknown: SeriesTree_Indexes_Address_Unknown,
-    pub op_return: SeriesTree_Indexes_Address_OpReturn,
+pub struct SeriesTree_Indexes_Addr {
+    pub p2pk33: SeriesTree_Indexes_Addr_P2pk33,
+    pub p2pk65: SeriesTree_Indexes_Addr_P2pk65,
+    pub p2pkh: SeriesTree_Indexes_Addr_P2pkh,
+    pub p2sh: SeriesTree_Indexes_Addr_P2sh,
+    pub p2tr: SeriesTree_Indexes_Addr_P2tr,
+    pub p2wpkh: SeriesTree_Indexes_Addr_P2wpkh,
+    pub p2wsh: SeriesTree_Indexes_Addr_P2wsh,
+    pub p2a: SeriesTree_Indexes_Addr_P2a,
+    pub p2ms: SeriesTree_Indexes_Addr_P2ms,
+    pub empty: SeriesTree_Indexes_Addr_Empty,
+    pub unknown: SeriesTree_Indexes_Addr_Unknown,
+    pub op_return: SeriesTree_Indexes_Addr_OpReturn,
 }
 
-impl SeriesTree_Indexes_Address {
+impl SeriesTree_Indexes_Addr {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            p2pk33: SeriesTree_Indexes_Address_P2pk33::new(client.clone(), format!("{base_path}_p2pk33")),
-            p2pk65: SeriesTree_Indexes_Address_P2pk65::new(client.clone(), format!("{base_path}_p2pk65")),
-            p2pkh: SeriesTree_Indexes_Address_P2pkh::new(client.clone(), format!("{base_path}_p2pkh")),
-            p2sh: SeriesTree_Indexes_Address_P2sh::new(client.clone(), format!("{base_path}_p2sh")),
-            p2tr: SeriesTree_Indexes_Address_P2tr::new(client.clone(), format!("{base_path}_p2tr")),
-            p2wpkh: SeriesTree_Indexes_Address_P2wpkh::new(client.clone(), format!("{base_path}_p2wpkh")),
-            p2wsh: SeriesTree_Indexes_Address_P2wsh::new(client.clone(), format!("{base_path}_p2wsh")),
-            p2a: SeriesTree_Indexes_Address_P2a::new(client.clone(), format!("{base_path}_p2a")),
-            p2ms: SeriesTree_Indexes_Address_P2ms::new(client.clone(), format!("{base_path}_p2ms")),
-            empty: SeriesTree_Indexes_Address_Empty::new(client.clone(), format!("{base_path}_empty")),
-            unknown: SeriesTree_Indexes_Address_Unknown::new(client.clone(), format!("{base_path}_unknown")),
-            op_return: SeriesTree_Indexes_Address_OpReturn::new(client.clone(), format!("{base_path}_op_return")),
+            p2pk33: SeriesTree_Indexes_Addr_P2pk33::new(client.clone(), format!("{base_path}_p2pk33")),
+            p2pk65: SeriesTree_Indexes_Addr_P2pk65::new(client.clone(), format!("{base_path}_p2pk65")),
+            p2pkh: SeriesTree_Indexes_Addr_P2pkh::new(client.clone(), format!("{base_path}_p2pkh")),
+            p2sh: SeriesTree_Indexes_Addr_P2sh::new(client.clone(), format!("{base_path}_p2sh")),
+            p2tr: SeriesTree_Indexes_Addr_P2tr::new(client.clone(), format!("{base_path}_p2tr")),
+            p2wpkh: SeriesTree_Indexes_Addr_P2wpkh::new(client.clone(), format!("{base_path}_p2wpkh")),
+            p2wsh: SeriesTree_Indexes_Addr_P2wsh::new(client.clone(), format!("{base_path}_p2wsh")),
+            p2a: SeriesTree_Indexes_Addr_P2a::new(client.clone(), format!("{base_path}_p2a")),
+            p2ms: SeriesTree_Indexes_Addr_P2ms::new(client.clone(), format!("{base_path}_p2ms")),
+            empty: SeriesTree_Indexes_Addr_Empty::new(client.clone(), format!("{base_path}_empty")),
+            unknown: SeriesTree_Indexes_Addr_Unknown::new(client.clone(), format!("{base_path}_unknown")),
+            op_return: SeriesTree_Indexes_Addr_OpReturn::new(client.clone(), format!("{base_path}_op_return")),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indexes_Address_P2pk33 {
-    pub identity: SeriesPattern26<P2PK33AddressIndex>,
-    pub address: SeriesPattern26<Address>,
+pub struct SeriesTree_Indexes_Addr_P2pk33 {
+    pub identity: SeriesPattern26<P2PK33AddrIndex>,
+    pub addr: SeriesPattern26<Addr>,
 }
 
-impl SeriesTree_Indexes_Address_P2pk33 {
+impl SeriesTree_Indexes_Addr_P2pk33 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern26::new(client.clone(), "p2pk33_address_index".to_string()),
-            address: SeriesPattern26::new(client.clone(), "p2pk33_address".to_string()),
+            identity: SeriesPattern26::new(client.clone(), "p2pk33_addr_index".to_string()),
+            addr: SeriesPattern26::new(client.clone(), "p2pk33_addr".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indexes_Address_P2pk65 {
-    pub identity: SeriesPattern27<P2PK65AddressIndex>,
-    pub address: SeriesPattern27<Address>,
+pub struct SeriesTree_Indexes_Addr_P2pk65 {
+    pub identity: SeriesPattern27<P2PK65AddrIndex>,
+    pub addr: SeriesPattern27<Addr>,
 }
 
-impl SeriesTree_Indexes_Address_P2pk65 {
+impl SeriesTree_Indexes_Addr_P2pk65 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern27::new(client.clone(), "p2pk65_address_index".to_string()),
-            address: SeriesPattern27::new(client.clone(), "p2pk65_address".to_string()),
+            identity: SeriesPattern27::new(client.clone(), "p2pk65_addr_index".to_string()),
+            addr: SeriesPattern27::new(client.clone(), "p2pk65_addr".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indexes_Address_P2pkh {
-    pub identity: SeriesPattern28<P2PKHAddressIndex>,
-    pub address: SeriesPattern28<Address>,
+pub struct SeriesTree_Indexes_Addr_P2pkh {
+    pub identity: SeriesPattern28<P2PKHAddrIndex>,
+    pub addr: SeriesPattern28<Addr>,
 }
 
-impl SeriesTree_Indexes_Address_P2pkh {
+impl SeriesTree_Indexes_Addr_P2pkh {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern28::new(client.clone(), "p2pkh_address_index".to_string()),
-            address: SeriesPattern28::new(client.clone(), "p2pkh_address".to_string()),
+            identity: SeriesPattern28::new(client.clone(), "p2pkh_addr_index".to_string()),
+            addr: SeriesPattern28::new(client.clone(), "p2pkh_addr".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indexes_Address_P2sh {
-    pub identity: SeriesPattern29<P2SHAddressIndex>,
-    pub address: SeriesPattern29<Address>,
+pub struct SeriesTree_Indexes_Addr_P2sh {
+    pub identity: SeriesPattern29<P2SHAddrIndex>,
+    pub addr: SeriesPattern29<Addr>,
 }
 
-impl SeriesTree_Indexes_Address_P2sh {
+impl SeriesTree_Indexes_Addr_P2sh {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern29::new(client.clone(), "p2sh_address_index".to_string()),
-            address: SeriesPattern29::new(client.clone(), "p2sh_address".to_string()),
+            identity: SeriesPattern29::new(client.clone(), "p2sh_addr_index".to_string()),
+            addr: SeriesPattern29::new(client.clone(), "p2sh_addr".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indexes_Address_P2tr {
-    pub identity: SeriesPattern30<P2TRAddressIndex>,
-    pub address: SeriesPattern30<Address>,
+pub struct SeriesTree_Indexes_Addr_P2tr {
+    pub identity: SeriesPattern30<P2TRAddrIndex>,
+    pub addr: SeriesPattern30<Addr>,
 }
 
-impl SeriesTree_Indexes_Address_P2tr {
+impl SeriesTree_Indexes_Addr_P2tr {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern30::new(client.clone(), "p2tr_address_index".to_string()),
-            address: SeriesPattern30::new(client.clone(), "p2tr_address".to_string()),
+            identity: SeriesPattern30::new(client.clone(), "p2tr_addr_index".to_string()),
+            addr: SeriesPattern30::new(client.clone(), "p2tr_addr".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indexes_Address_P2wpkh {
-    pub identity: SeriesPattern31<P2WPKHAddressIndex>,
-    pub address: SeriesPattern31<Address>,
+pub struct SeriesTree_Indexes_Addr_P2wpkh {
+    pub identity: SeriesPattern31<P2WPKHAddrIndex>,
+    pub addr: SeriesPattern31<Addr>,
 }
 
-impl SeriesTree_Indexes_Address_P2wpkh {
+impl SeriesTree_Indexes_Addr_P2wpkh {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern31::new(client.clone(), "p2wpkh_address_index".to_string()),
-            address: SeriesPattern31::new(client.clone(), "p2wpkh_address".to_string()),
+            identity: SeriesPattern31::new(client.clone(), "p2wpkh_addr_index".to_string()),
+            addr: SeriesPattern31::new(client.clone(), "p2wpkh_addr".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indexes_Address_P2wsh {
-    pub identity: SeriesPattern32<P2WSHAddressIndex>,
-    pub address: SeriesPattern32<Address>,
+pub struct SeriesTree_Indexes_Addr_P2wsh {
+    pub identity: SeriesPattern32<P2WSHAddrIndex>,
+    pub addr: SeriesPattern32<Addr>,
 }
 
-impl SeriesTree_Indexes_Address_P2wsh {
+impl SeriesTree_Indexes_Addr_P2wsh {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern32::new(client.clone(), "p2wsh_address_index".to_string()),
-            address: SeriesPattern32::new(client.clone(), "p2wsh_address".to_string()),
+            identity: SeriesPattern32::new(client.clone(), "p2wsh_addr_index".to_string()),
+            addr: SeriesPattern32::new(client.clone(), "p2wsh_addr".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indexes_Address_P2a {
-    pub identity: SeriesPattern24<P2AAddressIndex>,
-    pub address: SeriesPattern24<Address>,
+pub struct SeriesTree_Indexes_Addr_P2a {
+    pub identity: SeriesPattern24<P2AAddrIndex>,
+    pub addr: SeriesPattern24<Addr>,
 }
 
-impl SeriesTree_Indexes_Address_P2a {
+impl SeriesTree_Indexes_Addr_P2a {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern24::new(client.clone(), "p2a_address_index".to_string()),
-            address: SeriesPattern24::new(client.clone(), "p2a_address".to_string()),
+            identity: SeriesPattern24::new(client.clone(), "p2a_addr_index".to_string()),
+            addr: SeriesPattern24::new(client.clone(), "p2a_addr".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indexes_Address_P2ms {
+pub struct SeriesTree_Indexes_Addr_P2ms {
     pub identity: SeriesPattern25<P2MSOutputIndex>,
 }
 
-impl SeriesTree_Indexes_Address_P2ms {
+impl SeriesTree_Indexes_Addr_P2ms {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             identity: SeriesPattern25::new(client.clone(), "p2ms_output_index".to_string()),
@@ -4557,11 +4574,11 @@ impl SeriesTree_Indexes_Address_P2ms {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indexes_Address_Empty {
+pub struct SeriesTree_Indexes_Addr_Empty {
     pub identity: SeriesPattern22<EmptyOutputIndex>,
 }
 
-impl SeriesTree_Indexes_Address_Empty {
+impl SeriesTree_Indexes_Addr_Empty {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             identity: SeriesPattern22::new(client.clone(), "empty_output_index".to_string()),
@@ -4570,11 +4587,11 @@ impl SeriesTree_Indexes_Address_Empty {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indexes_Address_Unknown {
+pub struct SeriesTree_Indexes_Addr_Unknown {
     pub identity: SeriesPattern33<UnknownOutputIndex>,
 }
 
-impl SeriesTree_Indexes_Address_Unknown {
+impl SeriesTree_Indexes_Addr_Unknown {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             identity: SeriesPattern33::new(client.clone(), "unknown_output_index".to_string()),
@@ -4583,11 +4600,11 @@ impl SeriesTree_Indexes_Address_Unknown {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indexes_Address_OpReturn {
+pub struct SeriesTree_Indexes_Addr_OpReturn {
     pub identity: SeriesPattern23<OpReturnIndex>,
 }
 
-impl SeriesTree_Indexes_Address_OpReturn {
+impl SeriesTree_Indexes_Addr_OpReturn {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             identity: SeriesPattern23::new(client.clone(), "op_return_index".to_string()),
@@ -6180,14 +6197,14 @@ impl SeriesTree_Supply_Velocity {
 /// Series tree node.
 pub struct SeriesTree_Cohorts {
     pub utxo: SeriesTree_Cohorts_Utxo,
-    pub address: SeriesTree_Cohorts_Address,
+    pub addr: SeriesTree_Cohorts_Addr,
 }
 
 impl SeriesTree_Cohorts {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             utxo: SeriesTree_Cohorts_Utxo::new(client.clone(), format!("{base_path}_utxo")),
-            address: SeriesTree_Cohorts_Address::new(client.clone(), format!("{base_path}_address")),
+            addr: SeriesTree_Cohorts_Addr::new(client.clone(), format!("{base_path}_addr")),
         }
     }
 }
@@ -8171,133 +8188,133 @@ impl SeriesTree_Cohorts_Utxo_Matured {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Cohorts_Address {
-    pub over_amount: SeriesTree_Cohorts_Address_OverAmount,
-    pub amount_range: SeriesTree_Cohorts_Address_AmountRange,
-    pub under_amount: SeriesTree_Cohorts_Address_UnderAmount,
+pub struct SeriesTree_Cohorts_Addr {
+    pub over_amount: SeriesTree_Cohorts_Addr_OverAmount,
+    pub amount_range: SeriesTree_Cohorts_Addr_AmountRange,
+    pub under_amount: SeriesTree_Cohorts_Addr_UnderAmount,
 }
 
-impl SeriesTree_Cohorts_Address {
+impl SeriesTree_Cohorts_Addr {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            over_amount: SeriesTree_Cohorts_Address_OverAmount::new(client.clone(), format!("{base_path}_over_amount")),
-            amount_range: SeriesTree_Cohorts_Address_AmountRange::new(client.clone(), format!("{base_path}_amount_range")),
-            under_amount: SeriesTree_Cohorts_Address_UnderAmount::new(client.clone(), format!("{base_path}_under_amount")),
+            over_amount: SeriesTree_Cohorts_Addr_OverAmount::new(client.clone(), format!("{base_path}_over_amount")),
+            amount_range: SeriesTree_Cohorts_Addr_AmountRange::new(client.clone(), format!("{base_path}_amount_range")),
+            under_amount: SeriesTree_Cohorts_Addr_UnderAmount::new(client.clone(), format!("{base_path}_under_amount")),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Cohorts_Address_OverAmount {
-    pub _1sat: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _10sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _100sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _1k_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _10k_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _100k_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _1m_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _10m_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _1btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _10btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _100btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _1k_btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _10k_btc: AddressOutputsRealizedSupplyUnrealizedPattern,
+pub struct SeriesTree_Cohorts_Addr_OverAmount {
+    pub _1sat: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100k_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1m_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10m_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_btc: AddrOutputsRealizedSupplyUnrealizedPattern,
 }
 
-impl SeriesTree_Cohorts_Address_OverAmount {
+impl SeriesTree_Cohorts_Addr_OverAmount {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _1sat: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1sat".to_string()),
-            _10sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10sats".to_string()),
-            _100sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_100sats".to_string()),
-            _1k_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1k_sats".to_string()),
-            _10k_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10k_sats".to_string()),
-            _100k_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_100k_sats".to_string()),
-            _1m_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1m_sats".to_string()),
-            _10m_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10m_sats".to_string()),
-            _1btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1btc".to_string()),
-            _10btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10btc".to_string()),
-            _100btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_100btc".to_string()),
-            _1k_btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1k_btc".to_string()),
-            _10k_btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10k_btc".to_string()),
+            _1sat: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1sat".to_string()),
+            _10sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10sats".to_string()),
+            _100sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_100sats".to_string()),
+            _1k_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1k_sats".to_string()),
+            _10k_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10k_sats".to_string()),
+            _100k_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_100k_sats".to_string()),
+            _1m_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1m_sats".to_string()),
+            _10m_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10m_sats".to_string()),
+            _1btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1btc".to_string()),
+            _10btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10btc".to_string()),
+            _100btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_100btc".to_string()),
+            _1k_btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_1k_btc".to_string()),
+            _10k_btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_10k_btc".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Cohorts_Address_AmountRange {
-    pub _0sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _1sat_to_10sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _10sats_to_100sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _100sats_to_1k_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _1k_sats_to_10k_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _10k_sats_to_100k_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _100k_sats_to_1m_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _1m_sats_to_10m_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _10m_sats_to_1btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _1btc_to_10btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _10btc_to_100btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _100btc_to_1k_btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _1k_btc_to_10k_btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _10k_btc_to_100k_btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub over_100k_btc: AddressOutputsRealizedSupplyUnrealizedPattern,
+pub struct SeriesTree_Cohorts_Addr_AmountRange {
+    pub _0sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1sat_to_10sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10sats_to_100sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100sats_to_1k_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_sats_to_10k_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_sats_to_100k_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100k_sats_to_1m_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1m_sats_to_10m_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10m_sats_to_1btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1btc_to_10btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10btc_to_100btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100btc_to_1k_btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_btc_to_10k_btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_btc_to_100k_btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub over_100k_btc: AddrOutputsRealizedSupplyUnrealizedPattern,
 }
 
-impl SeriesTree_Cohorts_Address_AmountRange {
+impl SeriesTree_Cohorts_Addr_AmountRange {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _0sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_0sats".to_string()),
-            _1sat_to_10sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_1sat_to_10sats".to_string()),
-            _10sats_to_100sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_10sats_to_100sats".to_string()),
-            _100sats_to_1k_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_100sats_to_1k_sats".to_string()),
-            _1k_sats_to_10k_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_1k_sats_to_10k_sats".to_string()),
-            _10k_sats_to_100k_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_10k_sats_to_100k_sats".to_string()),
-            _100k_sats_to_1m_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_100k_sats_to_1m_sats".to_string()),
-            _1m_sats_to_10m_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_1m_sats_to_10m_sats".to_string()),
-            _10m_sats_to_1btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_10m_sats_to_1btc".to_string()),
-            _1btc_to_10btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_1btc_to_10btc".to_string()),
-            _10btc_to_100btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_10btc_to_100btc".to_string()),
-            _100btc_to_1k_btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_100btc_to_1k_btc".to_string()),
-            _1k_btc_to_10k_btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_1k_btc_to_10k_btc".to_string()),
-            _10k_btc_to_100k_btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_10k_btc_to_100k_btc".to_string()),
-            over_100k_btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_100k_btc".to_string()),
+            _0sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_0sats".to_string()),
+            _1sat_to_10sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_1sat_to_10sats".to_string()),
+            _10sats_to_100sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_10sats_to_100sats".to_string()),
+            _100sats_to_1k_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_100sats_to_1k_sats".to_string()),
+            _1k_sats_to_10k_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_1k_sats_to_10k_sats".to_string()),
+            _10k_sats_to_100k_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_10k_sats_to_100k_sats".to_string()),
+            _100k_sats_to_1m_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_100k_sats_to_1m_sats".to_string()),
+            _1m_sats_to_10m_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_1m_sats_to_10m_sats".to_string()),
+            _10m_sats_to_1btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_10m_sats_to_1btc".to_string()),
+            _1btc_to_10btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_1btc_to_10btc".to_string()),
+            _10btc_to_100btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_10btc_to_100btc".to_string()),
+            _100btc_to_1k_btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_100btc_to_1k_btc".to_string()),
+            _1k_btc_to_10k_btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_1k_btc_to_10k_btc".to_string()),
+            _10k_btc_to_100k_btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_10k_btc_to_100k_btc".to_string()),
+            over_100k_btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_over_100k_btc".to_string()),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Cohorts_Address_UnderAmount {
-    pub _10sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _100sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _1k_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _10k_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _100k_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _1m_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _10m_sats: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _1btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _10btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _100btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _1k_btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _10k_btc: AddressOutputsRealizedSupplyUnrealizedPattern,
-    pub _100k_btc: AddressOutputsRealizedSupplyUnrealizedPattern,
+pub struct SeriesTree_Cohorts_Addr_UnderAmount {
+    pub _10sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100k_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1m_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10m_sats: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _1k_btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _10k_btc: AddrOutputsRealizedSupplyUnrealizedPattern,
+    pub _100k_btc: AddrOutputsRealizedSupplyUnrealizedPattern,
 }
 
-impl SeriesTree_Cohorts_Address_UnderAmount {
+impl SeriesTree_Cohorts_Addr_UnderAmount {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _10sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10sats".to_string()),
-            _100sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100sats".to_string()),
-            _1k_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1k_sats".to_string()),
-            _10k_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10k_sats".to_string()),
-            _100k_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100k_sats".to_string()),
-            _1m_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1m_sats".to_string()),
-            _10m_sats: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10m_sats".to_string()),
-            _1btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1btc".to_string()),
-            _10btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10btc".to_string()),
-            _100btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100btc".to_string()),
-            _1k_btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1k_btc".to_string()),
-            _10k_btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10k_btc".to_string()),
-            _100k_btc: AddressOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100k_btc".to_string()),
+            _10sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10sats".to_string()),
+            _100sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100sats".to_string()),
+            _1k_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1k_sats".to_string()),
+            _10k_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10k_sats".to_string()),
+            _100k_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100k_sats".to_string()),
+            _1m_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1m_sats".to_string()),
+            _10m_sats: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10m_sats".to_string()),
+            _1btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1btc".to_string()),
+            _10btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10btc".to_string()),
+            _100btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100btc".to_string()),
+            _1k_btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_1k_btc".to_string()),
+            _10k_btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_10k_btc".to_string()),
+            _100k_btc: AddrOutputsRealizedSupplyUnrealizedPattern::new(client.clone(), "addrs_under_100k_btc".to_string()),
         }
     }
 }
@@ -8380,7 +8397,7 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address)*
     ///
     /// Endpoint: `GET /api/address/{address}`
-    pub fn get_address(&self, address: Address) -> Result<AddressStats> {
+    pub fn get_address(&self, address: Addr) -> Result<AddrStats> {
         self.base.get_json(&format!("/api/address/{address}"))
     }
 
@@ -8391,7 +8408,7 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
     ///
     /// Endpoint: `GET /api/address/{address}/txs`
-    pub fn get_address_txs(&self, address: Address, after_txid: Option<Txid>) -> Result<Vec<Transaction>> {
+    pub fn get_address_txs(&self, address: Addr, after_txid: Option<Txid>) -> Result<Vec<Transaction>> {
         let mut query = Vec::new();
         if let Some(v) = after_txid { query.push(format!("after_txid={}", v)); }
         let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
@@ -8406,7 +8423,7 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
     ///
     /// Endpoint: `GET /api/address/{address}/txs/chain`
-    pub fn get_address_confirmed_txs(&self, address: Address, after_txid: Option<Txid>) -> Result<Vec<Transaction>> {
+    pub fn get_address_confirmed_txs(&self, address: Addr, after_txid: Option<Txid>) -> Result<Vec<Transaction>> {
         let mut query = Vec::new();
         if let Some(v) = after_txid { query.push(format!("after_txid={}", v)); }
         let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
@@ -8421,7 +8438,7 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-mempool)*
     ///
     /// Endpoint: `GET /api/address/{address}/txs/mempool`
-    pub fn get_address_mempool_txs(&self, address: Address) -> Result<Vec<Txid>> {
+    pub fn get_address_mempool_txs(&self, address: Addr) -> Result<Vec<Txid>> {
         self.base.get_json(&format!("/api/address/{address}/txs/mempool"))
     }
 
@@ -8432,7 +8449,7 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-utxo)*
     ///
     /// Endpoint: `GET /api/address/{address}/utxo`
-    pub fn get_address_utxos(&self, address: Address) -> Result<Vec<Utxo>> {
+    pub fn get_address_utxos(&self, address: Addr) -> Result<Vec<Utxo>> {
         self.base.get_json(&format!("/api/address/{address}/utxo"))
     }
 
@@ -9011,7 +9028,7 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-validate)*
     ///
     /// Endpoint: `GET /api/v1/validate-address/{address}`
-    pub fn validate_address(&self, address: &str) -> Result<AddressValidation> {
+    pub fn validate_address(&self, address: &str) -> Result<AddrValidation> {
         self.base.get_json(&format!("/api/v1/validate-address/{address}"))
     }
 

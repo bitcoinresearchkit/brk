@@ -1,8 +1,8 @@
-use brk_cohort::ByAddressType;
+use brk_cohort::ByAddrType;
 use brk_error::{Error, Result};
 use brk_store::Store;
 use brk_types::{
-    AddressBytes, AddressHash, AddressIndexOutPoint, AddressIndexTxIndex, OutPoint, OutputType,
+    AddrBytes, AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, OutPoint, OutputType,
     Sats, TxIndex, TxOutIndex, TypeIndex, Unit, Vout,
 };
 use rayon::prelude::*;
@@ -11,7 +11,7 @@ use tracing::error;
 use vecdb::{BytesVec, WritableVec};
 
 use super::{BlockProcessor, ProcessedOutput, SameBlockOutputInfo};
-use crate::{AddressesVecs, Indexes, OutputsVecs, ScriptsVecs};
+use crate::{AddrsVecs, Indexes, OutputsVecs, ScriptsVecs};
 
 impl<'a> BlockProcessor<'a> {
     pub fn process_outputs(&self) -> Result<Vec<ProcessedOutput<'a>>> {
@@ -40,48 +40,48 @@ impl<'a> BlockProcessor<'a> {
                     let script = &txout.script_pubkey;
                     let output_type = OutputType::from(script);
 
-                    if output_type.is_not_address() {
+                    if output_type.is_not_addr() {
                         return Ok(ProcessedOutput {
                             txout_index,
                             txout,
                             tx_index,
                             vout,
                             output_type,
-                            address_info: None,
+                            addr_info: None,
                             existing_type_index: None,
                         });
                     }
 
-                    let address_type = output_type;
-                    let address_bytes = AddressBytes::try_from((script, address_type)).unwrap();
-                    let address_hash = AddressHash::from(&address_bytes);
+                    let addr_type = output_type;
+                    let addr_bytes = AddrBytes::try_from((script, addr_type)).unwrap();
+                    let addr_hash = AddrHash::from(&addr_bytes);
 
                     let existing_type_index = self
                         .stores
-                        .address_type_to_address_hash_to_address_index
-                        .get_unwrap(address_type)
-                        .get(&address_hash)?
+                        .addr_type_to_addr_hash_to_addr_index
+                        .get_unwrap(addr_type)
+                        .get(&addr_hash)?
                         .map(|v| *v)
                         .and_then(|type_index_local| {
-                            (type_index_local < self.indexes.to_type_index(address_type))
+                            (type_index_local < self.indexes.to_type_index(addr_type))
                                 .then_some(type_index_local)
                         });
 
                     if check_collisions && let Some(type_index) = existing_type_index {
-                        let prev_addressbytes = self
+                        let prev_addrbytes = self
                             .vecs
-                            .addresses
-                            .get_bytes_by_type(address_type, type_index, &self.readers.addressbytes)
-                            .ok_or(Error::Internal("Missing addressbytes"))?;
+                            .addrs
+                            .get_bytes_by_type(addr_type, type_index, &self.readers.addrbytes)
+                            .ok_or(Error::Internal("Missing addrbytes"))?;
 
-                        if prev_addressbytes != address_bytes {
+                        if prev_addrbytes != addr_bytes {
                             error!(
                                 ?height,
                                 ?vout,
                                 ?block_tx_index,
-                                ?address_type,
-                                ?prev_addressbytes,
-                                ?address_bytes,
+                                ?addr_type,
+                                ?prev_addrbytes,
+                                ?addr_bytes,
                                 ?type_index,
                                 "Address hash collision"
                             );
@@ -95,7 +95,7 @@ impl<'a> BlockProcessor<'a> {
                         tx_index,
                         vout,
                         output_type,
-                        address_info: Some((address_bytes, address_hash)),
+                        addr_info: Some((addr_bytes, addr_hash)),
                         existing_type_index,
                     })
                 },
@@ -109,17 +109,17 @@ pub(super) fn finalize_outputs(
     indexes: &mut Indexes,
     first_txout_index: &mut BytesVec<TxIndex, TxOutIndex>,
     outputs: &mut OutputsVecs,
-    addresses: &mut AddressesVecs,
+    addrs: &mut AddrsVecs,
     scripts: &mut ScriptsVecs,
-    addr_hash_stores: &mut ByAddressType<Store<AddressHash, TypeIndex>>,
-    addr_tx_index_stores: &mut ByAddressType<Store<AddressIndexTxIndex, Unit>>,
-    addr_outpoint_stores: &mut ByAddressType<Store<AddressIndexOutPoint, Unit>>,
+    addr_hash_stores: &mut ByAddrType<Store<AddrHash, TypeIndex>>,
+    addr_tx_index_stores: &mut ByAddrType<Store<AddrIndexTxIndex, Unit>>,
+    addr_outpoint_stores: &mut ByAddrType<Store<AddrIndexOutPoint, Unit>>,
     txouts: Vec<ProcessedOutput>,
     same_block_spent_outpoints: &FxHashSet<OutPoint>,
-    already_added_address_hash: &mut ByAddressType<FxHashMap<AddressHash, TypeIndex>>,
+    already_added_addr_hash: &mut ByAddrType<FxHashMap<AddrHash, TypeIndex>>,
     same_block_output_info: &mut FxHashMap<OutPoint, SameBlockOutputInfo>,
 ) -> Result<()> {
-    already_added_address_hash
+    already_added_addr_hash
         .values_mut()
         .for_each(|m| m.clear());
     same_block_output_info.clear();
@@ -130,7 +130,7 @@ pub(super) fn finalize_outputs(
         tx_index,
         vout,
         output_type,
-        address_info,
+        addr_info,
         existing_type_index,
     } in txouts
     {
@@ -144,23 +144,23 @@ pub(super) fn finalize_outputs(
 
         let type_index = if let Some(ti) = existing_type_index {
             ti
-        } else if let Some((address_bytes, address_hash)) = address_info {
-            let address_type = output_type;
-            if let Some(&ti) = already_added_address_hash
-                .get_unwrap(address_type)
-                .get(&address_hash)
+        } else if let Some((addr_bytes, addr_hash)) = addr_info {
+            let addr_type = output_type;
+            if let Some(&ti) = already_added_addr_hash
+                .get_unwrap(addr_type)
+                .get(&addr_hash)
             {
                 ti
             } else {
-                let ti = indexes.increment_address_index(address_type);
+                let ti = indexes.increment_addr_index(addr_type);
 
-                already_added_address_hash
-                    .get_mut_unwrap(address_type)
-                    .insert(address_hash, ti);
+                already_added_addr_hash
+                    .get_mut_unwrap(addr_type)
+                    .insert(addr_hash, ti);
                 addr_hash_stores
-                    .get_mut_unwrap(address_type)
-                    .insert(address_hash, ti);
-                addresses.push_bytes_if_needed(ti, address_bytes)?;
+                    .get_mut_unwrap(addr_type)
+                    .insert(addr_hash, ti);
+                addrs.push_bytes_if_needed(ti, addr_bytes)?;
 
                 ti
             }
@@ -200,13 +200,13 @@ pub(super) fn finalize_outputs(
 
         if output_type.is_unspendable() {
             continue;
-        } else if output_type.is_address() {
-            let address_type = output_type;
-            let address_index = type_index;
+        } else if output_type.is_addr() {
+            let addr_type = output_type;
+            let addr_index = type_index;
 
             addr_tx_index_stores
-                .get_mut_unwrap(address_type)
-                .insert(AddressIndexTxIndex::from((address_index, tx_index)), Unit);
+                .get_mut_unwrap(addr_type)
+                .insert(AddrIndexTxIndex::from((addr_index, tx_index)), Unit);
         }
 
         let outpoint = OutPoint::new(tx_index, vout);
@@ -219,13 +219,13 @@ pub(super) fn finalize_outputs(
                     type_index,
                 },
             );
-        } else if output_type.is_address() {
-            let address_type = output_type;
-            let address_index = type_index;
+        } else if output_type.is_addr() {
+            let addr_type = output_type;
+            let addr_index = type_index;
 
             addr_outpoint_stores
-                .get_mut_unwrap(address_type)
-                .insert(AddressIndexOutPoint::from((address_index, outpoint)), Unit);
+                .get_mut_unwrap(addr_type)
+                .insert(AddrIndexOutPoint::from((addr_index, outpoint)), Unit);
         }
     }
 

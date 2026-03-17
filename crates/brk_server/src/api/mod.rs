@@ -14,7 +14,7 @@ use axum::{
 use crate::{
     Error,
     api::{
-        addresses::AddressRoutes, blocks::BlockRoutes, mempool::MempoolRoutes,
+        addrs::AddrRoutes, blocks::BlockRoutes, mempool::MempoolRoutes,
         metrics_legacy::ApiMetricsLegacyRoutes, mining::MiningRoutes,
         series::ApiSeriesRoutes, server::ServerRoutes, transactions::TxRoutes,
     },
@@ -23,7 +23,7 @@ use crate::{
 
 use super::AppState;
 
-mod addresses;
+mod addrs;
 mod blocks;
 mod mempool;
 mod metrics_legacy;
@@ -46,7 +46,7 @@ impl ApiRoutes for ApiRouter<AppState> {
             .add_metrics_legacy_routes()
             .add_block_routes()
             .add_tx_routes()
-            .add_addresses_routes()
+            .add_addr_routes()
             .add_mempool_routes()
             .add_mining_routes()
             .route("/api/server", get(Redirect::temporary("/api#tag/server")))

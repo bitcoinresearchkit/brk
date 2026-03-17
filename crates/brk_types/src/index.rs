@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 use vecdb::PrintableIndex;
 
 use super::{
-    Date, Day1, Day3, EmptyAddressIndex, EmptyOutputIndex, Epoch, FundedAddressIndex, Halving,
+    Date, Day1, Day3, EmptyAddrIndex, EmptyOutputIndex, Epoch, FundedAddrIndex, Halving,
     Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3, Month6, OpReturnIndex,
-    P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex,
-    P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, Timestamp,
+    P2AAddrIndex, P2MSOutputIndex, P2PK33AddrIndex, P2PK65AddrIndex, P2PKHAddrIndex,
+    P2SHAddrIndex, P2TRAddrIndex, P2WPKHAddrIndex, P2WSHAddrIndex, Timestamp,
     TxInIndex, TxIndex, TxOutIndex, UnknownOutputIndex, Week1, Year1, Year10,
     hour1::HOUR1_INTERVAL, hour4::HOUR4_INTERVAL, hour12::HOUR12_INTERVAL,
     minute10::MINUTE10_INTERVAL, minute30::MINUTE30_INTERVAL, timestamp::INDEX_EPOCH,
@@ -47,30 +47,30 @@ pub enum Index {
     EmptyOutputIndex,
     #[serde(rename = "op_return_index")]
     OpReturnIndex,
-    #[serde(rename = "p2a_address_index")]
-    P2AAddressIndex,
+    #[serde(rename = "p2a_addr_index")]
+    P2AAddrIndex,
     #[serde(rename = "p2ms_output_index")]
     P2MSOutputIndex,
-    #[serde(rename = "p2pk33_address_index")]
-    P2PK33AddressIndex,
-    #[serde(rename = "p2pk65_address_index")]
-    P2PK65AddressIndex,
-    #[serde(rename = "p2pkh_address_index")]
-    P2PKHAddressIndex,
-    #[serde(rename = "p2sh_address_index")]
-    P2SHAddressIndex,
-    #[serde(rename = "p2tr_address_index")]
-    P2TRAddressIndex,
-    #[serde(rename = "p2wpkh_address_index")]
-    P2WPKHAddressIndex,
-    #[serde(rename = "p2wsh_address_index")]
-    P2WSHAddressIndex,
+    #[serde(rename = "p2pk33_addr_index")]
+    P2PK33AddrIndex,
+    #[serde(rename = "p2pk65_addr_index")]
+    P2PK65AddrIndex,
+    #[serde(rename = "p2pkh_addr_index")]
+    P2PKHAddrIndex,
+    #[serde(rename = "p2sh_addr_index")]
+    P2SHAddrIndex,
+    #[serde(rename = "p2tr_addr_index")]
+    P2TRAddrIndex,
+    #[serde(rename = "p2wpkh_addr_index")]
+    P2WPKHAddrIndex,
+    #[serde(rename = "p2wsh_addr_index")]
+    P2WSHAddrIndex,
     #[serde(rename = "unknown_output_index")]
     UnknownOutputIndex,
-    #[serde(rename = "funded_address_index")]
-    FundedAddressIndex,
-    #[serde(rename = "empty_address_index")]
-    EmptyAddressIndex,
+    #[serde(rename = "funded_addr_index")]
+    FundedAddrIndex,
+    #[serde(rename = "empty_addr_index")]
+    EmptyAddrIndex,
 }
 
 impl Index {
@@ -97,18 +97,18 @@ impl Index {
             Self::TxOutIndex,
             Self::EmptyOutputIndex,
             Self::OpReturnIndex,
-            Self::P2AAddressIndex,
+            Self::P2AAddrIndex,
             Self::P2MSOutputIndex,
-            Self::P2PK33AddressIndex,
-            Self::P2PK65AddressIndex,
-            Self::P2PKHAddressIndex,
-            Self::P2SHAddressIndex,
-            Self::P2TRAddressIndex,
-            Self::P2WPKHAddressIndex,
-            Self::P2WSHAddressIndex,
+            Self::P2PK33AddrIndex,
+            Self::P2PK65AddrIndex,
+            Self::P2PKHAddrIndex,
+            Self::P2SHAddrIndex,
+            Self::P2TRAddrIndex,
+            Self::P2WPKHAddrIndex,
+            Self::P2WSHAddrIndex,
             Self::UnknownOutputIndex,
-            Self::FundedAddressIndex,
-            Self::EmptyAddressIndex,
+            Self::FundedAddrIndex,
+            Self::EmptyAddrIndex,
         ]
     }
 
@@ -135,18 +135,18 @@ impl Index {
             Self::TxOutIndex => TxOutIndex::to_possible_strings(),
             Self::EmptyOutputIndex => EmptyOutputIndex::to_possible_strings(),
             Self::OpReturnIndex => OpReturnIndex::to_possible_strings(),
-            Self::P2AAddressIndex => P2AAddressIndex::to_possible_strings(),
+            Self::P2AAddrIndex => P2AAddrIndex::to_possible_strings(),
             Self::P2MSOutputIndex => P2MSOutputIndex::to_possible_strings(),
-            Self::P2PK33AddressIndex => P2PK33AddressIndex::to_possible_strings(),
-            Self::P2PK65AddressIndex => P2PK65AddressIndex::to_possible_strings(),
-            Self::P2PKHAddressIndex => P2PKHAddressIndex::to_possible_strings(),
-            Self::P2SHAddressIndex => P2SHAddressIndex::to_possible_strings(),
-            Self::P2TRAddressIndex => P2TRAddressIndex::to_possible_strings(),
-            Self::P2WPKHAddressIndex => P2WPKHAddressIndex::to_possible_strings(),
-            Self::P2WSHAddressIndex => P2WSHAddressIndex::to_possible_strings(),
+            Self::P2PK33AddrIndex => P2PK33AddrIndex::to_possible_strings(),
+            Self::P2PK65AddrIndex => P2PK65AddrIndex::to_possible_strings(),
+            Self::P2PKHAddrIndex => P2PKHAddrIndex::to_possible_strings(),
+            Self::P2SHAddrIndex => P2SHAddrIndex::to_possible_strings(),
+            Self::P2TRAddrIndex => P2TRAddrIndex::to_possible_strings(),
+            Self::P2WPKHAddrIndex => P2WPKHAddrIndex::to_possible_strings(),
+            Self::P2WSHAddrIndex => P2WSHAddrIndex::to_possible_strings(),
             Self::UnknownOutputIndex => UnknownOutputIndex::to_possible_strings(),
-            Self::FundedAddressIndex => FundedAddressIndex::to_possible_strings(),
-            Self::EmptyAddressIndex => EmptyAddressIndex::to_possible_strings(),
+            Self::FundedAddrIndex => FundedAddrIndex::to_possible_strings(),
+            Self::EmptyAddrIndex => EmptyAddrIndex::to_possible_strings(),
         }
     }
 
@@ -180,18 +180,18 @@ impl Index {
             Self::TxOutIndex => <TxOutIndex as PrintableIndex>::to_string(),
             Self::EmptyOutputIndex => <EmptyOutputIndex as PrintableIndex>::to_string(),
             Self::OpReturnIndex => <OpReturnIndex as PrintableIndex>::to_string(),
-            Self::P2AAddressIndex => <P2AAddressIndex as PrintableIndex>::to_string(),
+            Self::P2AAddrIndex => <P2AAddrIndex as PrintableIndex>::to_string(),
             Self::P2MSOutputIndex => <P2MSOutputIndex as PrintableIndex>::to_string(),
-            Self::P2PK33AddressIndex => <P2PK33AddressIndex as PrintableIndex>::to_string(),
-            Self::P2PK65AddressIndex => <P2PK65AddressIndex as PrintableIndex>::to_string(),
-            Self::P2PKHAddressIndex => <P2PKHAddressIndex as PrintableIndex>::to_string(),
-            Self::P2SHAddressIndex => <P2SHAddressIndex as PrintableIndex>::to_string(),
-            Self::P2TRAddressIndex => <P2TRAddressIndex as PrintableIndex>::to_string(),
-            Self::P2WPKHAddressIndex => <P2WPKHAddressIndex as PrintableIndex>::to_string(),
-            Self::P2WSHAddressIndex => <P2WSHAddressIndex as PrintableIndex>::to_string(),
+            Self::P2PK33AddrIndex => <P2PK33AddrIndex as PrintableIndex>::to_string(),
+            Self::P2PK65AddrIndex => <P2PK65AddrIndex as PrintableIndex>::to_string(),
+            Self::P2PKHAddrIndex => <P2PKHAddrIndex as PrintableIndex>::to_string(),
+            Self::P2SHAddrIndex => <P2SHAddrIndex as PrintableIndex>::to_string(),
+            Self::P2TRAddrIndex => <P2TRAddrIndex as PrintableIndex>::to_string(),
+            Self::P2WPKHAddrIndex => <P2WPKHAddrIndex as PrintableIndex>::to_string(),
+            Self::P2WSHAddrIndex => <P2WSHAddrIndex as PrintableIndex>::to_string(),
             Self::UnknownOutputIndex => <UnknownOutputIndex as PrintableIndex>::to_string(),
-            Self::FundedAddressIndex => <FundedAddressIndex as PrintableIndex>::to_string(),
-            Self::EmptyAddressIndex => <EmptyAddressIndex as PrintableIndex>::to_string(),
+            Self::FundedAddrIndex => <FundedAddrIndex as PrintableIndex>::to_string(),
+            Self::EmptyAddrIndex => <EmptyAddrIndex as PrintableIndex>::to_string(),
         }
     }
 

@@ -235,7 +235,7 @@ impl Indexer {
                 txouts,
                 txins,
                 &buffers.same_block_spent,
-                &mut buffers.already_added_addresses,
+                &mut buffers.already_added_addrs,
                 &mut buffers.same_block_output_info,
             )?;
 

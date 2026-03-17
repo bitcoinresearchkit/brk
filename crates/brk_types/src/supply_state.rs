@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
-use crate::{CheckedSub, FundedAddressData, Sats};
+use crate::{CheckedSub, FundedAddrData, Sats};
 
 /// Current supply state tracking UTXO count and total value
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, JsonSchema)]
@@ -48,16 +48,16 @@ impl SubAssign<&SupplyState> for SupplyState {
             .checked_sub(rhs.utxo_count)
             .unwrap_or_else(|| {
                 panic!(
-                    "SupplyState underflow: cohort utxo_count {} < address utxo_count {}. \
-                This indicates a desync between cohort state and address data. \
+                    "SupplyState underflow: cohort utxo_count {} < addr utxo_count {}. \
+                This indicates a desync between cohort state and addr data. \
                 Try deleting the compute cache and restarting fresh.",
                     self.utxo_count, rhs.utxo_count
                 )
             });
         self.value = self.value.checked_sub(rhs.value).unwrap_or_else(|| {
             panic!(
-                "SupplyState underflow: cohort value {} < address value {}. \
-                This indicates a desync between cohort state and address data. \
+                "SupplyState underflow: cohort value {} < addr value {}. \
+                This indicates a desync between cohort state and addr data. \
                 Try deleting the compute cache and restarting fresh.",
                 self.value, rhs.value
             )
@@ -65,9 +65,9 @@ impl SubAssign<&SupplyState> for SupplyState {
     }
 }
 
-impl From<&FundedAddressData> for SupplyState {
+impl From<&FundedAddrData> for SupplyState {
     #[inline]
-    fn from(value: &FundedAddressData) -> Self {
+    fn from(value: &FundedAddrData) -> Self {
         Self {
             utxo_count: value.utxo_count() as u64,
             value: value.balance(),

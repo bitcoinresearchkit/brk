@@ -52,7 +52,7 @@ export function createValuationSectionFull({ cohort, title }) {
           {
             name: "% of Own Mcap",
             title: title("Realized Cap (% of Own Mcap)"),
-            bottom: percentRatioBaseline({ pattern: tree.realized.cap.relToOwnMcap, name: "Rel. to Own M.Cap", color }),
+            bottom: percentRatioBaseline({ pattern: tree.realized.cap.toOwnMcap, name: "Rel. to Own M.Cap", color }),
           },
         ],
       },
@@ -76,8 +76,8 @@ export function createValuationSectionFull({ cohort, title }) {
 
 /**
  * Create valuation section for cohorts with basic ratio patterns
- * (CohortWithAdjusted, CohortBasic, CohortAddress, CohortWithoutRelative)
- * @param {{ cohort: CohortWithAdjusted | CohortBasic | CohortAddress | CohortWithoutRelative, title: (name: string) => string }} args
+ * (CohortWithAdjusted, CohortBasic, CohortAddr, CohortWithoutRelative)
+ * @param {{ cohort: CohortWithAdjusted | CohortBasic | CohortAddr | CohortWithoutRelative, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createValuationSection({ cohort, title }) {
@@ -201,7 +201,7 @@ export function createGroupedValuationSectionWithOwnMarketCap({
             name: "% of Own Mcap",
             title: title("Realized Cap (% of Own Mcap)"),
             bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              percentRatio({ pattern: tree.realized.cap.relToOwnMcap, name, color }),
+              percentRatio({ pattern: tree.realized.cap.toOwnMcap, name, color }),
             ),
           },
         ],

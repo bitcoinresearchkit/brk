@@ -1,29 +1,29 @@
 use bitcoin::ScriptBuf;
 use brk_types::{
-    AddressBytes, OutputType, P2AAddressIndex, P2ABytes, P2PK33AddressIndex, P2PK33Bytes,
-    P2PK65AddressIndex, P2PK65Bytes, P2PKHAddressIndex, P2PKHBytes, P2SHAddressIndex, P2SHBytes,
-    P2TRAddressIndex, P2TRBytes, P2WPKHAddressIndex, P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes,
+    AddrBytes, OutputType, P2AAddrIndex, P2ABytes, P2PK33AddrIndex, P2PK33Bytes,
+    P2PK65AddrIndex, P2PK65Bytes, P2PKHAddrIndex, P2PKHBytes, P2SHAddrIndex, P2SHBytes,
+    P2TRAddrIndex, P2TRBytes, P2WPKHAddrIndex, P2WPKHBytes, P2WSHAddrIndex, P2WSHBytes,
     TxIndex, TxOutIndex, Txid, TypeIndex,
 };
 use vecdb::{BytesStrategy, VecReader};
 
 use crate::Vecs;
 
-pub struct AddressReaders {
-    pub p2pk65: VecReader<P2PK65AddressIndex, P2PK65Bytes, BytesStrategy<P2PK65Bytes>>,
-    pub p2pk33: VecReader<P2PK33AddressIndex, P2PK33Bytes, BytesStrategy<P2PK33Bytes>>,
-    pub p2pkh: VecReader<P2PKHAddressIndex, P2PKHBytes, BytesStrategy<P2PKHBytes>>,
-    pub p2sh: VecReader<P2SHAddressIndex, P2SHBytes, BytesStrategy<P2SHBytes>>,
-    pub p2wpkh: VecReader<P2WPKHAddressIndex, P2WPKHBytes, BytesStrategy<P2WPKHBytes>>,
-    pub p2wsh: VecReader<P2WSHAddressIndex, P2WSHBytes, BytesStrategy<P2WSHBytes>>,
-    pub p2tr: VecReader<P2TRAddressIndex, P2TRBytes, BytesStrategy<P2TRBytes>>,
-    pub p2a: VecReader<P2AAddressIndex, P2ABytes, BytesStrategy<P2ABytes>>,
+pub struct AddrReaders {
+    pub p2pk65: VecReader<P2PK65AddrIndex, P2PK65Bytes, BytesStrategy<P2PK65Bytes>>,
+    pub p2pk33: VecReader<P2PK33AddrIndex, P2PK33Bytes, BytesStrategy<P2PK33Bytes>>,
+    pub p2pkh: VecReader<P2PKHAddrIndex, P2PKHBytes, BytesStrategy<P2PKHBytes>>,
+    pub p2sh: VecReader<P2SHAddrIndex, P2SHBytes, BytesStrategy<P2SHBytes>>,
+    pub p2wpkh: VecReader<P2WPKHAddrIndex, P2WPKHBytes, BytesStrategy<P2WPKHBytes>>,
+    pub p2wsh: VecReader<P2WSHAddrIndex, P2WSHBytes, BytesStrategy<P2WSHBytes>>,
+    pub p2tr: VecReader<P2TRAddrIndex, P2TRBytes, BytesStrategy<P2TRBytes>>,
+    pub p2a: VecReader<P2AAddrIndex, P2ABytes, BytesStrategy<P2ABytes>>,
 }
 
-impl AddressReaders {
+impl AddrReaders {
     pub fn script_pubkey(&self, output_type: OutputType, type_index: TypeIndex) -> ScriptBuf {
         let idx = usize::from(type_index);
-        let bytes: Option<AddressBytes> = match output_type {
+        let bytes: Option<AddrBytes> = match output_type {
             OutputType::P2PK65 => self.p2pk65.try_get(idx).map(Into::into),
             OutputType::P2PK33 => self.p2pk33.try_get(idx).map(Into::into),
             OutputType::P2PKH => self.p2pkh.try_get(idx).map(Into::into),
@@ -47,7 +47,7 @@ pub struct Readers {
     pub tx_index_to_first_txout_index: VecReader<TxIndex, TxOutIndex, BytesStrategy<TxOutIndex>>,
     pub txout_index_to_output_type: VecReader<TxOutIndex, OutputType, BytesStrategy<OutputType>>,
     pub txout_index_to_type_index: VecReader<TxOutIndex, TypeIndex, BytesStrategy<TypeIndex>>,
-    pub addressbytes: AddressReaders,
+    pub addrbytes: AddrReaders,
 }
 
 impl Readers {
@@ -57,7 +57,7 @@ impl Readers {
             tx_index_to_first_txout_index: vecs.transactions.first_txout_index.reader(),
             txout_index_to_output_type: vecs.outputs.output_type.reader(),
             txout_index_to_type_index: vecs.outputs.type_index.reader(),
-            addressbytes: vecs.addresses.address_readers(),
+            addrbytes: vecs.addrs.addr_readers(),
         }
     }
 }

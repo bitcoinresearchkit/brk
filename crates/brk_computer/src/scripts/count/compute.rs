@@ -16,8 +16,8 @@ impl Vecs {
             .compute(starting_indexes.height, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.p2a.first_index,
-                    &indexer.vecs.addresses.p2a.bytes,
+                    &indexer.vecs.addrs.p2a.first_index,
+                    &indexer.vecs.addrs.p2a.bytes,
                     exit,
                 )?)
             })?;
@@ -36,8 +36,8 @@ impl Vecs {
             .compute(starting_indexes.height, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.p2pk33.first_index,
-                    &indexer.vecs.addresses.p2pk33.bytes,
+                    &indexer.vecs.addrs.p2pk33.first_index,
+                    &indexer.vecs.addrs.p2pk33.bytes,
                     exit,
                 )?)
             })?;
@@ -46,8 +46,8 @@ impl Vecs {
             .compute(starting_indexes.height, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.p2pk65.first_index,
-                    &indexer.vecs.addresses.p2pk65.bytes,
+                    &indexer.vecs.addrs.p2pk65.first_index,
+                    &indexer.vecs.addrs.p2pk65.bytes,
                     exit,
                 )?)
             })?;
@@ -56,8 +56,8 @@ impl Vecs {
             .compute(starting_indexes.height, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.p2pkh.first_index,
-                    &indexer.vecs.addresses.p2pkh.bytes,
+                    &indexer.vecs.addrs.p2pkh.first_index,
+                    &indexer.vecs.addrs.p2pkh.bytes,
                     exit,
                 )?)
             })?;
@@ -66,8 +66,8 @@ impl Vecs {
             .compute(starting_indexes.height, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.p2sh.first_index,
-                    &indexer.vecs.addresses.p2sh.bytes,
+                    &indexer.vecs.addrs.p2sh.first_index,
+                    &indexer.vecs.addrs.p2sh.bytes,
                     exit,
                 )?)
             })?;
@@ -76,8 +76,8 @@ impl Vecs {
             .compute(starting_indexes.height, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.p2tr.first_index,
-                    &indexer.vecs.addresses.p2tr.bytes,
+                    &indexer.vecs.addrs.p2tr.first_index,
+                    &indexer.vecs.addrs.p2tr.bytes,
                     exit,
                 )?)
             })?;
@@ -86,8 +86,8 @@ impl Vecs {
             .compute(starting_indexes.height, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.p2wpkh.first_index,
-                    &indexer.vecs.addresses.p2wpkh.bytes,
+                    &indexer.vecs.addrs.p2wpkh.first_index,
+                    &indexer.vecs.addrs.p2wpkh.bytes,
                     exit,
                 )?)
             })?;
@@ -96,8 +96,8 @@ impl Vecs {
             .compute(starting_indexes.height, exit, |v| {
                 Ok(v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.addresses.p2wsh.first_index,
-                    &indexer.vecs.addresses.p2wsh.bytes,
+                    &indexer.vecs.addrs.p2wsh.first_index,
+                    &indexer.vecs.addrs.p2wsh.bytes,
                     exit,
                 )?)
             })?;

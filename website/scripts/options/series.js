@@ -532,7 +532,7 @@ export function distributionWindowsTree({ pattern, base, title, unit }) {
 
 /**
  * Map a rolling window slot's stats to a specific unit, producing a stats-compatible pattern
- * @param {RollingWindowSlot} slot - Rolling window slot (e.g., pattern.rolling._24h)
+ * @param {{ average: Record<string, AnySeriesPattern>, median: Record<string, AnySeriesPattern>, max: Record<string, AnySeriesPattern>, min: Record<string, AnySeriesPattern>, pct75: Record<string, AnySeriesPattern>, pct25: Record<string, AnySeriesPattern>, pct90: Record<string, AnySeriesPattern>, pct10: Record<string, AnySeriesPattern> }} slot - Rolling window slot with multi-currency stats
  * @param {BtcSatsUsdKey} unitKey
  */
 function rollingSlotForUnit(slot, unitKey) {
@@ -550,7 +550,7 @@ function rollingSlotForUnit(slot, unitKey) {
 
 /**
  * Create distribution series for btc/sats/usd from a rolling window slot
- * @param {RollingWindowSlot} slot - Rolling window slot (e.g., pattern.rolling._24h)
+ * @param {{ average: Record<string, AnySeriesPattern>, median: Record<string, AnySeriesPattern>, max: Record<string, AnySeriesPattern>, min: Record<string, AnySeriesPattern>, pct75: Record<string, AnySeriesPattern>, pct25: Record<string, AnySeriesPattern>, pct90: Record<string, AnySeriesPattern>, pct10: Record<string, AnySeriesPattern> }} slot - Rolling window slot with multi-currency stats
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export const distributionBtcSatsUsd = (slot) => [

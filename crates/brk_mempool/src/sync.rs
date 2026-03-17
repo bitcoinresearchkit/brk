@@ -10,14 +10,14 @@ use std::{
 
 use brk_error::Result;
 use brk_rpc::Client;
-use brk_types::{AddressBytes, MempoolEntryInfo, MempoolInfo, TxWithHex, Txid, TxidPrefix};
+use brk_types::{AddrBytes, MempoolEntryInfo, MempoolInfo, TxWithHex, Txid, TxidPrefix};
 use derive_more::Deref;
 use parking_lot::{RwLock, RwLockReadGuard};
 use rustc_hash::FxHashMap;
 use tracing::error;
 
 use crate::{
-    addresses::AddressTracker,
+    addrs::AddrTracker,
     block_builder::build_projected_blocks,
     entry::Entry,
     entry_pool::EntryPool,
@@ -49,7 +49,7 @@ pub struct MempoolInner {
 
     info: RwLock<MempoolInfo>,
     txs: RwLock<TxStore>,
-    addresses: RwLock<AddressTracker>,
+    addrs: RwLock<AddrTracker>,
     entries: RwLock<EntryPool>,
 
     snapshot: RwLock<Snapshot>,
@@ -64,7 +64,7 @@ impl MempoolInner {
             client,
             info: RwLock::new(MempoolInfo::default()),
             txs: RwLock::new(TxStore::default()),
-            addresses: RwLock::new(AddressTracker::default()),
+            addrs: RwLock::new(AddrTracker::default()),
             entries: RwLock::new(EntryPool::default()),
             snapshot: RwLock::new(Snapshot::default()),
             dirty: AtomicBool::new(false),
@@ -92,9 +92,9 @@ impl MempoolInner {
         self.snapshot.read().next_block_hash()
     }
 
-    pub fn address_hash(&self, address: &AddressBytes) -> u64 {
-        let addresses = self.addresses.read();
-        let Some((stats, _)) = addresses.get(address) else {
+    pub fn addr_hash(&self, addr: &AddrBytes) -> u64 {
+        let addrs = self.addrs.read();
+        let Some((stats, _)) = addrs.get(addr) else {
             return 0;
         };
         let mut hasher = DefaultHasher::new();
@@ -106,8 +106,8 @@ impl MempoolInner {
         self.txs.read()
     }
 
-    pub fn get_addresses(&self) -> RwLockReadGuard<'_, AddressTracker> {
-        self.addresses.read()
+    pub fn get_addrs(&self) -> RwLockReadGuard<'_, AddrTracker> {
+        self.addrs.read()
     }
 
     /// Start an infinite update loop with a 1 second interval.
@@ -173,7 +173,7 @@ impl MempoolInner {
 
         let mut info = self.info.write();
         let mut txs = self.txs.write();
-        let mut addresses = self.addresses.write();
+        let mut addrs = self.addrs.write();
         let mut entries = self.entries.write();
 
         let mut had_removals = false;
@@ -190,7 +190,7 @@ impl MempoolInner {
                 // Get fee from entries (before removing) - this is the authoritative fee from Bitcoin Core
                 let fee = entries.get(&prefix).map(|e| e.fee).unwrap_or_default();
                 info.remove(tx, fee);
-                addresses.remove_tx(tx, txid);
+                addrs.remove_tx(tx, txid);
                 entries.remove(&prefix);
             },
         );
@@ -205,7 +205,7 @@ impl MempoolInner {
             };
 
             info.add(tx, entry_info.fee);
-            addresses.add_tx(tx, txid);
+            addrs.add_tx(tx, txid);
             entries.insert(prefix, Entry::from_info(entry_info));
         }
         txs.extend(new_txs);

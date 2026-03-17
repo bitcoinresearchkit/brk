@@ -1,8 +1,8 @@
-use brk_cohort::ByAddressType;
+use brk_cohort::ByAddrType;
 use brk_error::{Error, Result};
 use brk_store::Store;
 use brk_types::{
-    AddressIndexOutPoint, AddressIndexTxIndex, OutPoint, OutputType, TxInIndex, TxIndex, Txid,
+    AddrIndexOutPoint, AddrIndexTxIndex, OutPoint, OutputType, TxInIndex, TxIndex, Txid,
     TxidPrefix, TypeIndex, Unit, Vin, Vout,
 };
 use rayon::prelude::*;
@@ -151,8 +151,8 @@ impl<'a> BlockProcessor<'a> {
 pub(super) fn finalize_inputs(
     first_txin_index: &mut PcoVec<TxIndex, TxInIndex>,
     inputs: &mut InputsVecs,
-    addr_tx_index_stores: &mut ByAddressType<Store<AddressIndexTxIndex, Unit>>,
-    addr_outpoint_stores: &mut ByAddressType<Store<AddressIndexOutPoint, Unit>>,
+    addr_tx_index_stores: &mut ByAddrType<Store<AddrIndexTxIndex, Unit>>,
+    addr_outpoint_stores: &mut ByAddrType<Store<AddrIndexOutPoint, Unit>>,
     txins: Vec<(TxInIndex, InputSource)>,
     same_block_output_info: &mut FxHashMap<OutPoint, SameBlockOutputInfo>,
 ) -> Result<()> {
@@ -203,19 +203,19 @@ pub(super) fn finalize_inputs(
         inputs.output_type.checked_push(txin_index, output_type)?;
         inputs.type_index.checked_push(txin_index, type_index)?;
 
-        if !output_type.is_address() {
+        if !output_type.is_addr() {
             continue;
         }
-        let address_type = output_type;
-        let address_index = type_index;
+        let addr_type = output_type;
+        let addr_index = type_index;
 
         addr_tx_index_stores
-            .get_mut_unwrap(address_type)
-            .insert(AddressIndexTxIndex::from((address_index, tx_index)), Unit);
+            .get_mut_unwrap(addr_type)
+            .insert(AddrIndexTxIndex::from((addr_index, tx_index)), Unit);
 
         addr_outpoint_stores
-            .get_mut_unwrap(address_type)
-            .remove(AddressIndexOutPoint::from((address_index, outpoint)));
+            .get_mut_unwrap(addr_type)
+            .remove(AddrIndexOutPoint::from((addr_index, outpoint)));
     }
 
     Ok(())

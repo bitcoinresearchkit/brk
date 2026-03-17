@@ -1,4 +1,4 @@
-use brk_cohort::{ByAddressType, ByAnyAddress};
+use brk_cohort::{ByAddrType, ByAnyAddr};
 use brk_indexer::Indexer;
 use brk_types::{Height, OutPoint, OutputType, Sats, StoredU64, TxIndex, TypeIndex};
 use vecdb::{ReadableVec, Reader, VecIndex};
@@ -6,7 +6,7 @@ use vecdb::{ReadableVec, Reader, VecIndex};
 use crate::{
     distribution::{
         RangeMap,
-        address::{AddressesDataVecs, AnyAddressIndexesVecs},
+        addr::{AddrsDataVecs, AnyAddrIndexesVecs},
     },
     inputs,
 };
@@ -161,37 +161,37 @@ impl<'a> TxInReaders<'a> {
 
 /// Cached readers for stateful vectors.
 pub struct VecsReaders {
-    pub address_type_index_to_any_address_index: ByAddressType<Reader>,
-    pub any_address_index_to_any_address_data: ByAnyAddress<Reader>,
+    pub addr_type_index_to_any_addr_index: ByAddrType<Reader>,
+    pub any_addr_index_to_any_addr_data: ByAnyAddr<Reader>,
 }
 
 impl VecsReaders {
     pub(crate) fn new(
-        any_address_indexes: &AnyAddressIndexesVecs,
-        addresses_data: &AddressesDataVecs,
+        any_addr_indexes: &AnyAddrIndexesVecs,
+        addrs_data: &AddrsDataVecs,
     ) -> Self {
         Self {
-            address_type_index_to_any_address_index: ByAddressType {
-                p2a: any_address_indexes.p2a.create_reader(),
-                p2pk33: any_address_indexes.p2pk33.create_reader(),
-                p2pk65: any_address_indexes.p2pk65.create_reader(),
-                p2pkh: any_address_indexes.p2pkh.create_reader(),
-                p2sh: any_address_indexes.p2sh.create_reader(),
-                p2tr: any_address_indexes.p2tr.create_reader(),
-                p2wpkh: any_address_indexes.p2wpkh.create_reader(),
-                p2wsh: any_address_indexes.p2wsh.create_reader(),
+            addr_type_index_to_any_addr_index: ByAddrType {
+                p2a: any_addr_indexes.p2a.create_reader(),
+                p2pk33: any_addr_indexes.p2pk33.create_reader(),
+                p2pk65: any_addr_indexes.p2pk65.create_reader(),
+                p2pkh: any_addr_indexes.p2pkh.create_reader(),
+                p2sh: any_addr_indexes.p2sh.create_reader(),
+                p2tr: any_addr_indexes.p2tr.create_reader(),
+                p2wpkh: any_addr_indexes.p2wpkh.create_reader(),
+                p2wsh: any_addr_indexes.p2wsh.create_reader(),
             },
-            any_address_index_to_any_address_data: ByAnyAddress {
-                funded: addresses_data.funded.create_reader(),
-                empty: addresses_data.empty.create_reader(),
+            any_addr_index_to_any_addr_data: ByAnyAddr {
+                funded: addrs_data.funded.create_reader(),
+                empty: addrs_data.empty.create_reader(),
             },
         }
     }
 
     /// Get reader for specific address type.
-    pub(crate) fn address_reader(&self, address_type: OutputType) -> &Reader {
-        self.address_type_index_to_any_address_index
-            .get(address_type)
+    pub(crate) fn addr_reader(&self, addr_type: OutputType) -> &Reader {
+        self.addr_type_index_to_any_addr_index
+            .get(addr_type)
             .unwrap()
     }
 }

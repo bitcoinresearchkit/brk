@@ -14,7 +14,7 @@ pub struct Pool {
 
     /// Known payout addresses for pool identification
     #[serde(skip)]
-    pub addresses: Box<[&'static str]>,
+    pub addrs: Box<[&'static str]>,
 
     /// Coinbase tags used to identify blocks mined by this pool
     #[serde(skip)]

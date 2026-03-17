@@ -81,7 +81,7 @@ pub enum Error {
     WrongLength { expected: usize, received: usize },
 
     #[error("Wrong address type")]
-    WrongAddressType,
+    WrongAddrType,
 
     #[error("Date cannot be indexed, must be 2009-01-03, 2009-01-09 or greater")]
     UnindexableDate,
@@ -90,7 +90,7 @@ pub enum Error {
     QuickCacheError,
 
     #[error("The provided address appears to be invalid")]
-    InvalidAddress,
+    InvalidAddr,
 
     #[error("Invalid network")]
     InvalidNetwork,
@@ -102,7 +102,7 @@ pub enum Error {
     MempoolNotAvailable,
 
     #[error("Address not found in the blockchain (no transaction history)")]
-    UnknownAddress,
+    UnknownAddr,
 
     #[error("Failed to find the TXID in the blockchain")]
     UnknownTxid,

@@ -1,7 +1,7 @@
-mod address;
+mod addr;
 mod base;
 mod utxo;
 
-pub use address::*;
+pub use addr::*;
 pub use base::*;
 pub use utxo::*;

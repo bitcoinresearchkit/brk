@@ -18,7 +18,6 @@ export function createCointimeSection() {
     adjusted,
     reserveRisk,
     value,
-    coinblocksDestroyed,
   } = cointime;
   const { all } = cohorts.utxo;
 
@@ -99,7 +98,7 @@ export function createCointimeSection() {
 
   const coinblocks = /** @type {const} */ ([
     {
-      pattern: coinblocksDestroyed,
+      pattern: activity.coinblocksDestroyed,
       name: "Destroyed",
       title: "Coinblocks Destroyed",
       color: colors.destroyed,

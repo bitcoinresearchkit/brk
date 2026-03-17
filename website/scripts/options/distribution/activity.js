@@ -21,7 +21,7 @@ import { colors } from "../../utils/colors.js";
 // ============================================================================
 
 /**
- * @param {{ sent: Brk.BaseCumulativeInSumPattern, coindaysDestroyed: Brk.BaseCumulativeSumPattern<number> }} activity
+ * @param {{ transferVolume: TransferVolumePattern, coindaysDestroyed: CountPattern<number> }} activity
  * @param {Color} color
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
@@ -35,18 +35,18 @@ function volumeAndCoinsTree(activity, color, title) {
           name: "Sum",
           title: title("Sent Volume"),
           bottom: [
-            line({ series: activity.sent.base, name: "Sum", color, unit: Unit.sats }),
-            line({ series: activity.sent.sum._24h, name: "24h", color: colors.time._24h, unit: Unit.sats, defaultActive: false }),
-            line({ series: activity.sent.sum._1w, name: "1w", color: colors.time._1w, unit: Unit.sats, defaultActive: false }),
-            line({ series: activity.sent.sum._1m, name: "1m", color: colors.time._1m, unit: Unit.sats, defaultActive: false }),
-            line({ series: activity.sent.sum._1y, name: "1y", color: colors.time._1y, unit: Unit.sats, defaultActive: false }),
+            line({ series: activity.transferVolume.base.sats, name: "Sum", color, unit: Unit.sats }),
+            line({ series: activity.transferVolume.sum._24h.sats, name: "24h", color: colors.time._24h, unit: Unit.sats, defaultActive: false }),
+            line({ series: activity.transferVolume.sum._1w.sats, name: "1w", color: colors.time._1w, unit: Unit.sats, defaultActive: false }),
+            line({ series: activity.transferVolume.sum._1m.sats, name: "1m", color: colors.time._1m, unit: Unit.sats, defaultActive: false }),
+            line({ series: activity.transferVolume.sum._1y.sats, name: "1y", color: colors.time._1y, unit: Unit.sats, defaultActive: false }),
           ],
         },
         {
           name: "Cumulative",
           title: title("Sent Volume (Total)"),
           bottom: [
-            line({ series: activity.sent.cumulative, name: "All-time", color, unit: Unit.sats }),
+            line({ series: activity.transferVolume.cumulative.sats, name: "All-time", color, unit: Unit.sats }),
           ],
         },
       ],
@@ -79,7 +79,7 @@ function volumeAndCoinsTree(activity, color, title) {
 
 /**
  * Sent in profit/loss breakdown tree (shared by full and mid-level activity)
- * @param {Brk.BaseCumulativeInSumPattern} sent
+ * @param {TransferVolumePattern} sent
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
@@ -176,7 +176,7 @@ function sentProfitLossTree(sent, title) {
 
 /**
  * Volume and coins tree with coinyears, dormancy, and sent in profit/loss (All/STH/LTH)
- * @param {Brk.CoindaysCoinyearsDormancySentPattern} activity
+ * @param {FullActivityPattern} activity
  * @param {Color} color
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
@@ -184,7 +184,7 @@ function sentProfitLossTree(sent, title) {
 function fullVolumeTree(activity, color, title) {
   return [
     ...volumeAndCoinsTree(activity, color, title),
-    ...sentProfitLossTree(activity.sent, title),
+    ...sentProfitLossTree(activity.transferVolume, title),
     {
       name: "Coinyears Destroyed",
       title: title("Coinyears Destroyed"),
@@ -203,7 +203,7 @@ function fullVolumeTree(activity, color, title) {
 // ============================================================================
 
 /**
- * @param {Brk._1m1w1y24hPattern<number>} ratio
+ * @param {RollingWindowPattern<number>} ratio
  * @param {(name: string) => string} title
  * @param {string} [prefix]
  * @returns {PartialOptionsTree}
@@ -248,7 +248,7 @@ function singleRollingSoprTree(ratio, title, prefix = "") {
 // ============================================================================
 
 /**
- * @param {Brk._1m1w1y24hPattern6} sellSideRisk
+ * @param {SellSideRiskPattern} sellSideRisk
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
@@ -292,8 +292,8 @@ function singleSellSideRiskTree(sellSideRisk, title) {
 // ============================================================================
 
 /**
- * @param {Brk.BaseCumulativeSumPattern<number>} valueCreated
- * @param {Brk.BaseCumulativeSumPattern<number>} valueDestroyed
+ * @param {CountPattern<number>} valueCreated
+ * @param {CountPattern<number>} valueDestroyed
  * @param {(name: string) => string} title
  * @param {string} [prefix]
  * @returns {PartialOptionsTree}
@@ -370,10 +370,10 @@ function singleRollingValueTree(valueCreated, valueDestroyed, title, prefix = ""
 
 /**
  * Value section for cohorts with full realized (flows + breakdown)
- * @param {Brk.BaseCumulativeDistributionRelSumValuePattern} profit
- * @param {Brk.BaseCapitulationCumulativeNegativeRelSumValuePattern} loss
- * @param {Brk.BaseCumulativeSumPattern<number>} valueCreated
- * @param {Brk.BaseCumulativeSumPattern<number>} valueDestroyed
+ * @param {ProfitDetailPattern} profit
+ * @param {LossDetailPattern} loss
+ * @param {CountPattern<number>} valueCreated
+ * @param {CountPattern<number>} valueDestroyed
  * @param {AnyFetchedSeriesBlueprint[]} extraValueSeries
  * @param {PartialOptionsTree} rollingTree
  * @param {(name: string) => string} title
@@ -428,8 +428,8 @@ function fullValueSection(profit, loss, valueCreated, valueDestroyed, extraValue
 
 /**
  * Simple value section (created & destroyed + rolling)
- * @param {Brk.BaseCumulativeSumPattern<number>} valueCreated
- * @param {Brk.BaseCumulativeSumPattern<number>} valueDestroyed
+ * @param {CountPattern<number>} valueCreated
+ * @param {CountPattern<number>} valueDestroyed
  * @param {(name: string) => string} title
  * @returns {PartialOptionsGroup}
  */
@@ -551,7 +551,7 @@ export function createActivitySectionWithActivity({ cohort, title }) {
     name: "Activity",
     tree: [
       ...volumeAndCoinsTree(tree.activity, color, title),
-      ...sentProfitLossTree(tree.activity.sent, title),
+      ...sentProfitLossTree(tree.activity.transferVolume, title),
       {
         name: "SOPR",
         title: title("SOPR (24h)"),
@@ -564,7 +564,7 @@ export function createActivitySectionWithActivity({ cohort, title }) {
 
 /**
  * Minimal activity section for cohorts without activity field (value only)
- * @param {{ cohort: CohortBasicWithMarketCap | CohortBasicWithoutMarketCap | CohortWithoutRelative | CohortAddress | AddressCohortObject, title: (name: string) => string }} args
+ * @param {{ cohort: CohortBasicWithMarketCap | CohortBasicWithoutMarketCap | CohortWithoutRelative | CohortAddr | AddrCohortObject, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createActivitySectionMinimal({ cohort, title }) {
@@ -734,7 +734,7 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
         name: "Volume",
         title: title("Sent Volume"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ series: tree.activity.sent.sum._24h, name, color, unit: Unit.sats }),
+          line({ series: tree.activity.transferVolume.sum._24h.sats, name, color, unit: Unit.sats }),
         ]),
       },
       {
@@ -860,7 +860,7 @@ export function createGroupedActivitySection({ list, all, title }) {
         name: "Volume",
         title: title("Sent Volume"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ series: tree.activity.sent.sum._24h, name, color, unit: Unit.sats }),
+          line({ series: tree.activity.transferVolume.sum._24h.sats, name, color, unit: Unit.sats }),
         ]),
       },
       {
@@ -937,7 +937,7 @@ export function createGroupedActivitySectionWithActivity({ list, all, title }) {
         name: "Volume",
         title: title("Sent Volume"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ series: tree.activity.sent.sum._24h, name, color, unit: Unit.sats }),
+          line({ series: tree.activity.transferVolume.sum._24h.sats, name, color, unit: Unit.sats }),
         ]),
       },
       {
@@ -967,7 +967,7 @@ export function createGroupedActivitySectionWithActivity({ list, all, title }) {
 
 /**
  * Grouped minimal activity (value only, no activity field)
- * @param {{ list: readonly (UtxoCohortObject | CohortWithoutRelative | CohortAddress | AddressCohortObject)[], all: CohortAll, title: (name: string) => string }} args
+ * @param {{ list: readonly (UtxoCohortObject | CohortWithoutRelative | CohortAddr | AddrCohortObject)[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedActivitySectionMinimal({ list, all, title }) {

@@ -7,7 +7,7 @@ use brk_mempool::Mempool;
 use brk_query::Query;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use brk_types::{Address, OutputType};
+use brk_types::{Addr, OutputType};
 use vecdb::Exit;
 
 pub fn main() -> Result<()> {
@@ -48,22 +48,22 @@ pub fn main() -> Result<()> {
     dbg!(
         indexer
             .stores
-            .address_type_to_address_hash_to_address_index
+            .addr_type_to_addr_hash_to_addr_index
             .get_unwrap(OutputType::P2WSH)
             .approximate_len()
     );
 
-    let _ = dbg!(query.address(Address::from(
+    let _ = dbg!(query.addr(Addr::from(
         "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string(),
     )));
 
-    let _ = dbg!(query.address_txids(
-        Address::from("bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string()),
+    let _ = dbg!(query.addr_txids(
+        Addr::from("bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string()),
         None,
         25
     ));
 
-    let _ = dbg!(query.address_utxos(Address::from(
+    let _ = dbg!(query.addr_utxos(Addr::from(
         "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string()
     )));
 

@@ -158,7 +158,7 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
         }
     }
 
-    pub(crate) fn receive_address(
+    pub(crate) fn receive_addr(
         &mut self,
         supply: &SupplyState,
         price: Cents,
@@ -224,7 +224,7 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub(crate) fn send_address(
+    pub(crate) fn send_addr(
         &mut self,
         supply: &SupplyState,
         current_price: Cents,

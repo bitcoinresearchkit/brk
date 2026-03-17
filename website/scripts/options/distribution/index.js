@@ -257,7 +257,7 @@ export function createCohortFolderBasicWithoutMarketCap(cohort) {
 
 /**
  * Address folder: like basic but with address count
- * @param {CohortAddress} cohort
+ * @param {CohortAddr} cohort
  * @returns {PartialOptionsGroup}
  */
 export function createCohortFolderAddress(cohort) {
@@ -295,7 +295,7 @@ export function createCohortFolderWithoutRelative(cohort) {
 
 /**
  * Address amount cohort folder: has NUPL + addrCount
- * @param {AddressCohortObject} cohort
+ * @param {AddrCohortObject} cohort
  * @returns {PartialOptionsGroup}
  */
 export function createAddressCohortFolder(cohort) {
@@ -515,7 +515,7 @@ export function createGroupedCohortFolderBasicWithoutMarketCap({
 }
 
 /**
- * @param {CohortGroupAddress} args
+ * @param {CohortGroupAddr} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedCohortFolderAddress({
@@ -565,7 +565,7 @@ export function createGroupedCohortFolderWithoutRelative({
 }
 
 /**
- * @param {AddressCohortGroupObject} args
+ * @param {AddrCohortGroupObject} args
  * @returns {PartialOptionsGroup}
  */
 export function createGroupedAddressCohortFolder({

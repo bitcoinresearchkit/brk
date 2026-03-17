@@ -2,7 +2,7 @@ use std::path::Path;
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{AddressHash, Height, OutputType, Version};
+use brk_types::{AddrHash, Height, OutputType, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Rw, Stamp, StorageMode};
 
@@ -10,7 +10,7 @@ const PAGE_SIZE: usize = 4096;
 
 use crate::parallel_import;
 
-mod addresses;
+mod addrs;
 mod blocks;
 mod inputs;
 mod macros;
@@ -18,7 +18,7 @@ mod outputs;
 mod scripts;
 mod transactions;
 
-pub use addresses::*;
+pub use addrs::*;
 pub use blocks::*;
 pub use inputs::*;
 pub use outputs::*;
@@ -38,8 +38,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub inputs: InputsVecs<M>,
     #[traversable(wrap = "outputs", rename = "raw")]
     pub outputs: OutputsVecs<M>,
-    #[traversable(wrap = "addresses", rename = "raw")]
-    pub addresses: AddressesVecs<M>,
+    #[traversable(wrap = "addrs", rename = "raw")]
+    pub addrs: AddrsVecs<M>,
     #[traversable(wrap = "scripts", rename = "raw")]
     pub scripts: ScriptsVecs<M>,
 }
@@ -51,12 +51,12 @@ impl Vecs {
         tracing::debug!("Setting min len...");
         db.set_min_len(PAGE_SIZE * 50_000_000)?;
 
-        let (blocks, transactions, inputs, outputs, addresses, scripts) = parallel_import! {
+        let (blocks, transactions, inputs, outputs, addrs, scripts) = parallel_import! {
             blocks = BlocksVecs::forced_import(&db, version),
             transactions = TransactionsVecs::forced_import(&db, version),
             inputs = InputsVecs::forced_import(&db, version),
             outputs = OutputsVecs::forced_import(&db, version),
-            addresses = AddressesVecs::forced_import(&db, version),
+            addrs = AddrsVecs::forced_import(&db, version),
             scripts = ScriptsVecs::forced_import(&db, version),
         };
 
@@ -66,7 +66,7 @@ impl Vecs {
             transactions,
             inputs,
             outputs,
-            addresses,
+            addrs,
             scripts,
         };
 
@@ -95,16 +95,16 @@ impl Vecs {
         self.outputs
             .truncate(starting_indexes.height, starting_indexes.txout_index, stamp)?;
 
-        self.addresses.truncate(
+        self.addrs.truncate(
             starting_indexes.height,
-            starting_indexes.p2pk65_address_index,
-            starting_indexes.p2pk33_address_index,
-            starting_indexes.p2pkh_address_index,
-            starting_indexes.p2sh_address_index,
-            starting_indexes.p2wpkh_address_index,
-            starting_indexes.p2wsh_address_index,
-            starting_indexes.p2tr_address_index,
-            starting_indexes.p2a_address_index,
+            starting_indexes.p2pk65_addr_index,
+            starting_indexes.p2pk33_addr_index,
+            starting_indexes.p2pkh_addr_index,
+            starting_indexes.p2sh_addr_index,
+            starting_indexes.p2wpkh_addr_index,
+            starting_indexes.p2wsh_addr_index,
+            starting_indexes.p2tr_addr_index,
+            starting_indexes.p2a_addr_index,
             stamp,
         )?;
 
@@ -148,12 +148,12 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn iter_address_hashes_from(
+    pub fn iter_addr_hashes_from(
         &self,
-        address_type: OutputType,
+        addr_type: OutputType,
         height: Height,
-    ) -> Result<Box<dyn Iterator<Item = AddressHash> + '_>> {
-        self.addresses.iter_hashes_from(address_type, height)
+    ) -> Result<Box<dyn Iterator<Item = AddrHash> + '_>> {
+        self.addrs.iter_hashes_from(addr_type, height)
     }
 
     fn par_iter_mut_any_stored_vec(
@@ -164,7 +164,7 @@ impl Vecs {
             .chain(self.transactions.par_iter_mut_any())
             .chain(self.inputs.par_iter_mut_any())
             .chain(self.outputs.par_iter_mut_any())
-            .chain(self.addresses.par_iter_mut_any())
+            .chain(self.addrs.par_iter_mut_any())
             .chain(self.scripts.par_iter_mut_any())
     }
 

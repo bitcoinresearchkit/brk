@@ -35,8 +35,8 @@ export function createPricesSectionFull({ cohort, title }) {
         top: [
           price({ series: tree.realized.price, name: "Realized", color: colors.realized }),
           price({ series: tree.realized.investor.price, name: "Investor", color: colors.investor }),
-          price({ series: tree.realized.investor.upperPriceBand, name: "I²/R", color: colors.stat.max, style: 2, defaultActive: false }),
-          price({ series: tree.realized.investor.lowerPriceBand, name: "R²/I", color: colors.stat.min, style: 2, defaultActive: false }),
+          price({ series: tree.realized.investor.investorUpperBand, name: "I²/R", color: colors.stat.max, style: 2, defaultActive: false }),
+          price({ series: tree.realized.investor.investorLowerBand, name: "R²/I", color: colors.stat.min, style: 2, defaultActive: false }),
         ],
       },
       {
@@ -66,8 +66,8 @@ export function createPricesSectionFull({ cohort, title }) {
 
 /**
  * Create prices section for cohorts with basic ratio patterns only
- * (CohortWithAdjusted, CohortBasic, CohortAddress, CohortWithoutRelative)
- * @param {{ cohort: CohortWithAdjusted | CohortBasic | CohortAddress | CohortWithoutRelative | CohortAgeRange, title: (name: string) => string }} args
+ * (CohortWithAdjusted, CohortBasic, CohortAddr, CohortWithoutRelative)
+ * @param {{ cohort: CohortWithAdjusted | CohortBasic | CohortAddr | CohortWithoutRelative | CohortAgeRange, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createPricesSectionBasic({ cohort, title }) {

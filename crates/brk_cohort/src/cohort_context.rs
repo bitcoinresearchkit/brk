@@ -6,14 +6,14 @@ pub enum CohortContext {
     /// UTXO-based cohorts: uses "utxos_" prefix for Time/Amount filters
     Utxo,
     /// Address-based cohorts: uses "addrs_" prefix for Amount filters
-    Address,
+    Addr,
 }
 
 impl CohortContext {
     pub fn prefix(&self) -> &'static str {
         match self {
             CohortContext::Utxo => "utxos",
-            CohortContext::Address => "addrs",
+            CohortContext::Addr => "addrs",
         }
     }
 

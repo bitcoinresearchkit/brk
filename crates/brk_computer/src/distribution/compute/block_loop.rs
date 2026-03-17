@@ -1,4 +1,4 @@
-use brk_cohort::ByAddressType;
+use brk_cohort::ByAddrType;
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{
@@ -11,12 +11,12 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
 use crate::{
     distribution::{
-        address::{AddressTypeToActivityCounts, AddressTypeToAddressCount},
+        addr::{AddrTypeToActivityCounts, AddrTypeToAddrCount},
         block::{
-            AddressCache, InputsResult, process_inputs, process_outputs, process_received,
+            AddrCache, InputsResult, process_inputs, process_outputs, process_received,
             process_sent,
         },
-        compute::write::{process_address_updates, write},
+        compute::write::{process_addr_updates, write},
         state::{BlockState, Transacted},
     },
     indexes, inputs, outputs, transactions,
@@ -25,7 +25,7 @@ use crate::{
 use super::{
     super::{
         RangeMap,
-        cohorts::{AddressCohorts, DynCohortVecs, UTXOCohorts},
+        cohorts::{AddrCohorts, DynCohortVecs, UTXOCohorts},
         vecs::Vecs,
     },
     BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
@@ -103,7 +103,7 @@ pub(crate) fn process_blocks(
         .collect();
 
     debug!("creating VecsReaders");
-    let mut vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
+    let mut vr = VecsReaders::new(&vecs.any_addr_indexes, &vecs.addrs_data);
     debug!("VecsReaders created");
 
     // Extend tx_index_to_height RangeMap with new entries (incremental, O(new_blocks))
@@ -143,69 +143,69 @@ pub(crate) fn process_blocks(
     // Pre-collect first address indexes per type for the block range
     let first_p2a_vec = indexer
         .vecs
-        .addresses
+        .addrs
         .p2a.first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2pk33_vec = indexer
         .vecs
-        .addresses
+        .addrs
         .p2pk33.first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2pk65_vec = indexer
         .vecs
-        .addresses
+        .addrs
         .p2pk65.first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2pkh_vec = indexer
         .vecs
-        .addresses
+        .addrs
         .p2pkh.first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2sh_vec = indexer
         .vecs
-        .addresses
+        .addrs
         .p2sh.first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2tr_vec = indexer
         .vecs
-        .addresses
+        .addrs
         .p2tr.first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2wpkh_vec = indexer
         .vecs
-        .addresses
+        .addrs
         .p2wpkh.first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2wsh_vec = indexer
         .vecs
-        .addresses
+        .addrs
         .p2wsh.first_index
         .collect_range_at(start_usize, end_usize);
 
     // Track running totals - recover from previous height if resuming
-    debug!("recovering address_counts from height {}", starting_height);
-    let (mut address_counts, mut empty_address_counts) = if starting_height > Height::ZERO {
-        let address_counts =
-            AddressTypeToAddressCount::from((&vecs.addresses.funded.by_address_type, starting_height));
-        let empty_address_counts = AddressTypeToAddressCount::from((
-            &vecs.addresses.empty.by_address_type,
+    debug!("recovering addr_counts from height {}", starting_height);
+    let (mut addr_counts, mut empty_addr_counts) = if starting_height > Height::ZERO {
+        let addr_counts =
+            AddrTypeToAddrCount::from((&vecs.addrs.funded.by_addr_type, starting_height));
+        let empty_addr_counts = AddrTypeToAddrCount::from((
+            &vecs.addrs.empty.by_addr_type,
             starting_height,
         ));
-        (address_counts, empty_address_counts)
+        (addr_counts, empty_addr_counts)
     } else {
         (
-            AddressTypeToAddressCount::default(),
-            AddressTypeToAddressCount::default(),
+            AddrTypeToAddrCount::default(),
+            AddrTypeToAddrCount::default(),
         )
     };
-    debug!("address_counts recovered");
+    debug!("addr_counts recovered");
 
     // Track activity counts - reset each block
-    let mut activity_counts = AddressTypeToActivityCounts::default();
+    let mut activity_counts = AddrTypeToActivityCounts::default();
 
-    debug!("creating AddressCache");
-    let mut cache = AddressCache::new();
-    debug!("AddressCache created, entering main loop");
+    debug!("creating AddrCache");
+    let mut cache = AddrCache::new();
+    debug!("AddrCache created, entering main loop");
 
     // Initialize Fenwick tree from imported BTreeMap state (one-time)
     vecs.utxo_cohorts.init_fenwick_if_needed();
@@ -216,10 +216,10 @@ pub(crate) fn process_blocks(
         let start = starting_height.to_usize();
         vecs.utxo_cohorts
             .par_iter_vecs_mut()
-            .chain(vecs.address_cohorts.par_iter_vecs_mut())
-            .chain(vecs.addresses.funded.par_iter_height_mut())
-            .chain(vecs.addresses.empty.par_iter_height_mut())
-            .chain(vecs.addresses.activity.par_iter_height_mut())
+            .chain(vecs.addr_cohorts.par_iter_vecs_mut())
+            .chain(vecs.addrs.funded.par_iter_height_mut())
+            .chain(vecs.addrs.empty.par_iter_height_mut())
+            .chain(vecs.addrs.activity.par_iter_height_mut())
             .chain(rayon::iter::once(
                 &mut vecs.coinblocks_destroyed.base.height as &mut dyn AnyStoredVec,
             ))
@@ -227,8 +227,8 @@ pub(crate) fn process_blocks(
     }
 
     // Reusable hashsets (avoid per-block allocation)
-    let mut received_addresses = ByAddressType::<FxHashSet<TypeIndex>>::default();
-    let mut seen_senders = ByAddressType::<FxHashSet<TypeIndex>>::default();
+    let mut received_addrs = ByAddrType::<FxHashSet<TypeIndex>>::default();
+    let mut seen_senders = ByAddrType::<FxHashSet<TypeIndex>>::default();
 
     // Track earliest chain_state modification from sends (for incremental supply_state writes)
     let mut min_supply_modified: Option<Height> = None;
@@ -255,7 +255,7 @@ pub(crate) fn process_blocks(
         debug_assert_eq!(ctx.price_at(height), block_price);
 
         // Get first address indexes for this height from pre-collected vecs
-        let first_address_indexes = ByAddressType {
+        let first_addr_indexes = ByAddrType {
             p2a: TypeIndex::from(first_p2a_vec[offset].to_usize()),
             p2pk33: TypeIndex::from(first_p2pk33_vec[offset].to_usize()),
             p2pk65: TypeIndex::from(first_p2pk65_vec[offset].to_usize()),
@@ -285,11 +285,11 @@ pub(crate) fn process_blocks(
                         process_outputs(
                             txout_index_to_tx_index,
                             txout_data_vec,
-                            &first_address_indexes,
+                            &first_addr_indexes,
                             &cache,
                             &vr,
-                            &vecs.any_address_indexes,
-                            &vecs.addresses_data,
+                            &vecs.any_addr_indexes,
+                            &vecs.addrs_data,
                         )
                     },
                     || -> Result<_> {
@@ -309,17 +309,17 @@ pub(crate) fn process_blocks(
                                 input_output_types,
                                 input_type_indexes,
                                 input_prev_heights,
-                                &first_address_indexes,
+                                &first_addr_indexes,
                                 &cache,
                                 &vr,
-                                &vecs.any_address_indexes,
-                                &vecs.addresses_data,
+                                &vecs.any_addr_indexes,
+                                &vecs.addrs_data,
                             )
                         } else {
                             Ok(InputsResult {
                                 height_to_sent: Default::default(),
                                 sent_data: Default::default(),
-                                address_data: Default::default(),
+                                addr_data: Default::default(),
                                 tx_index_vecs: Default::default(),
                             })
                         }
@@ -331,8 +331,8 @@ pub(crate) fn process_blocks(
         let (outputs_result, inputs_result) = oi_result?;
 
         // Merge new address data into current cache
-        cache.merge_funded(outputs_result.address_data);
-        cache.merge_funded(inputs_result.address_data);
+        cache.merge_funded(outputs_result.addr_data);
+        cache.merge_funded(inputs_result.addr_data);
 
         // Combine tx_index_vecs from outputs and inputs, then update tx_count
         let combined_tx_index_vecs = outputs_result
@@ -390,15 +390,15 @@ pub(crate) fn process_blocks(
 
         // Build set of addresses that received this block (for detecting "both" in sent)
         // Reuse pre-allocated hashsets: clear preserves capacity, avoiding reallocation
-        received_addresses.values_mut().for_each(|set| set.clear());
+        received_addrs.values_mut().for_each(|set| set.clear());
         for (output_type, vec) in outputs_result.received_data.iter() {
-            let set = received_addresses.get_mut_unwrap(output_type);
+            let set = received_addrs.get_mut_unwrap(output_type);
             for (type_index, _) in vec {
                 set.insert(*type_index);
             }
         }
 
-        // Process UTXO cohorts and Address cohorts in parallel
+        // Process UTXO cohorts and Addr cohorts in parallel
         let (_, addr_result) = rayon::join(
             || {
                 // UTXO cohorts receive/send
@@ -418,25 +418,25 @@ pub(crate) fn process_blocks(
                 // Process received outputs (addresses receiving funds)
                 process_received(
                     outputs_result.received_data,
-                    &mut vecs.address_cohorts,
+                    &mut vecs.addr_cohorts,
                     &mut lookup,
                     block_price,
-                    &mut address_counts,
-                    &mut empty_address_counts,
+                    &mut addr_counts,
+                    &mut empty_addr_counts,
                     &mut activity_counts,
                 );
 
                 // Process sent inputs (addresses sending funds)
                 process_sent(
                     inputs_result.sent_data,
-                    &mut vecs.address_cohorts,
+                    &mut vecs.addr_cohorts,
                     &mut lookup,
                     block_price,
                     ctx.price_range_max,
-                    &mut address_counts,
-                    &mut empty_address_counts,
+                    &mut addr_counts,
+                    &mut empty_addr_counts,
                     &mut activity_counts,
-                    &received_addresses,
+                    &received_addrs,
                     height_to_price_vec,
                     height_to_timestamp_vec,
                     height,
@@ -451,18 +451,18 @@ pub(crate) fn process_blocks(
         vecs.utxo_cohorts.update_fenwick_from_pending();
 
         // Push to height-indexed vectors
-        vecs.addresses.funded
-            .push_height(address_counts.sum(), &address_counts);
-        vecs.addresses.empty
-            .push_height(empty_address_counts.sum(), &empty_address_counts);
-        vecs.addresses.activity.push_height(&activity_counts);
+        vecs.addrs.funded
+            .push_height(addr_counts.sum(), &addr_counts);
+        vecs.addrs.empty
+            .push_height(empty_addr_counts.sum(), &empty_addr_counts);
+        vecs.addrs.activity.push_height(&activity_counts);
 
         let is_last_of_day = is_last_of_day[offset];
         let date_opt = is_last_of_day.then(|| Date::from(timestamp));
 
         push_cohort_states(
             &mut vecs.utxo_cohorts,
-            &mut vecs.address_cohorts,
+            &mut vecs.addr_cohorts,
             height,
             block_price,
         );
@@ -484,9 +484,9 @@ pub(crate) fn process_blocks(
             let (empty_updates, funded_updates) = cache.take();
 
             // Process address updates (mutations)
-            process_address_updates(
-                &mut vecs.addresses_data,
-                &mut vecs.any_address_indexes,
+            process_addr_updates(
+                &mut vecs.addrs_data,
+                &mut vecs.any_addr_indexes,
                 empty_updates,
                 funded_updates,
             )?;
@@ -499,7 +499,7 @@ pub(crate) fn process_blocks(
             vecs.flush()?;
 
             // Recreate readers
-            vr = VecsReaders::new(&vecs.any_address_indexes, &vecs.addresses_data);
+            vr = VecsReaders::new(&vecs.any_addr_indexes, &vecs.addrs_data);
         }
     }
 
@@ -511,9 +511,9 @@ pub(crate) fn process_blocks(
     let (empty_updates, funded_updates) = cache.take();
 
     // Process address updates (mutations)
-    process_address_updates(
-        &mut vecs.addresses_data,
-        &mut vecs.any_address_indexes,
+    process_addr_updates(
+        &mut vecs.addrs_data,
+        &mut vecs.any_addr_indexes,
         empty_updates,
         funded_updates,
     )?;
@@ -527,7 +527,7 @@ pub(crate) fn process_blocks(
 /// Push cohort states to height-indexed vectors, then reset per-block values.
 fn push_cohort_states(
     utxo_cohorts: &mut UTXOCohorts,
-    address_cohorts: &mut AddressCohorts,
+    addr_cohorts: &mut AddrCohorts,
     height: Height,
     height_price: Cents,
 ) {
@@ -542,7 +542,7 @@ fn push_cohort_states(
                 })
         },
         || {
-            address_cohorts
+            addr_cohorts
                 .par_iter_separate_mut()
                 .for_each(|v| {
                     v.push_state(height);
@@ -558,7 +558,7 @@ fn push_cohort_states(
     utxo_cohorts
         .iter_separate_mut()
         .for_each(|v| v.reset_single_iteration_values());
-    address_cohorts
+    addr_cohorts
         .iter_separate_mut()
         .for_each(|v| v.reset_single_iteration_values());
 }

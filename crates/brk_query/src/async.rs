@@ -26,7 +26,7 @@ impl AsyncQuery {
     ///
     /// # Example
     /// ```ignore
-    /// let address_stats = query.run(move |q| q.address(address)).await?;
+    /// let addr_stats = query.run(move |q| q.addr(addr)).await?;
     /// ```
     pub async fn run<F, T>(&self, f: F) -> Result<T>
     where

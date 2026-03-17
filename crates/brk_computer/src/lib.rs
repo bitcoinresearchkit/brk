@@ -306,12 +306,8 @@ impl Computer {
                 .compute(indexer, &mut self.blocks, starting_indexes, exit)
         })?;
 
-        timed("Computed prices", || {
-            self.prices
-                .compute(indexer, &self.indexes, &starting_indexes, exit)
-        })?;
-
         thread::scope(|scope| -> Result<()> {
+            // Positions only needs indexer + starting_indexes — start immediately.
             let positions = scope.spawn(|| {
                 timed("Computed positions", || {
                     self.positions
@@ -319,10 +315,37 @@ impl Computer {
                 })
             });
 
-            timed("Computed blocks", || {
-                self.blocks
-                    .compute(indexer, &self.indexes, &starting_indexes, exit)
-            })?;
+            // Prices and blocks are independent — parallelize.
+            let (prices_result, blocks_result) = rayon::join(
+                || {
+                    timed("Computed prices", || {
+                        self.prices
+                            .compute(indexer, &self.indexes, &starting_indexes, exit)
+                    })
+                },
+                || {
+                    timed("Computed blocks", || {
+                        self.blocks
+                            .compute(indexer, &self.indexes, &starting_indexes, exit)
+                    })
+                },
+            );
+            prices_result?;
+            blocks_result?;
+
+            // Market only needs indexes, prices, blocks — start it early
+            // so it runs in the background alongside the rest of the pipeline.
+            let market = scope.spawn(|| {
+                timed("Computed market", || {
+                    self.market.compute(
+                        &self.indexes,
+                        &self.prices,
+                        &self.blocks,
+                        &starting_indexes,
+                        exit,
+                    )
+                })
+            });
 
             // inputs and scripts are independent — parallelize
             let (inputs_result, scripts_result) = rayon::join(
@@ -390,6 +413,7 @@ impl Computer {
             })?;
 
             positions.join().unwrap()?;
+            market.join().unwrap()?;
             Ok(())
         })?;
 
@@ -427,13 +451,16 @@ impl Computer {
             Ok(())
         })?;
 
+        // Indicators doesn't depend on supply or cointime — run it in the
+        // background alongside supply + cointime to save a scope barrier.
         thread::scope(|scope| -> Result<()> {
-            let market = scope.spawn(|| {
-                timed("Computed market", || {
-                    self.market.compute(
-                        &self.indexes,
-                        &self.prices,
-                        &self.blocks,
+            let indicators = scope.spawn(|| {
+                timed("Computed indicators", || {
+                    self.indicators.compute(
+                        &self.mining,
+                        &self.distribution,
+                        &self.transactions,
+                        &self.market,
                         &starting_indexes,
                         exit,
                     )
@@ -452,24 +479,6 @@ impl Computer {
                     exit,
                 )
             })?;
-
-            market.join().unwrap()?;
-            Ok(())
-        })?;
-
-        thread::scope(|scope| -> Result<()> {
-            let indicators = scope.spawn(|| {
-                timed("Computed indicators", || {
-                    self.indicators.compute(
-                        &self.mining,
-                        &self.distribution,
-                        &self.transactions,
-                        &self.market,
-                        &starting_indexes,
-                        exit,
-                    )
-                })
-            });
 
             timed("Computed cointime", || {
                 self.cointime.compute(

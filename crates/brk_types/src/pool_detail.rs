@@ -41,7 +41,7 @@ pub struct PoolDetailInfo {
     pub link: Cow<'static, str>,
 
     /// Known payout addresses
-    pub addresses: Vec<Cow<'static, str>>,
+    pub addrs: Vec<Cow<'static, str>>,
 
     /// Coinbase tag patterns (regexes)
     pub regexes: Vec<Cow<'static, str>>,
@@ -56,7 +56,7 @@ impl From<&'static Pool> for PoolDetailInfo {
             id: pool.unique_id(),
             name: Cow::Borrowed(pool.name),
             link: Cow::Borrowed(pool.link),
-            addresses: pool.addresses.iter().map(|&s| Cow::Borrowed(s)).collect(),
+            addrs: pool.addrs.iter().map(|&s| Cow::Borrowed(s)).collect(),
             regexes: pool.tags.iter().map(|&s| Cow::Borrowed(s)).collect(),
             slug: pool.slug(),
         }

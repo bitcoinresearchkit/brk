@@ -12,7 +12,7 @@
  *
  * @import { Color } from "./utils/colors.js"
  *
- * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddressCohortObject, CohortObject, CohortGroupObject, FetchedLineSeriesBlueprint, FetchedBaselineSeriesBlueprint, FetchedHistogramSeriesBlueprint, FetchedDotsBaselineSeriesBlueprint, PatternAll, PatternFull, PatternWithAdjusted, PatternWithPercentiles, PatternBasic, PatternBasicWithMarketCap, PatternBasicWithoutMarketCap, PatternWithoutRelative, CohortAll, CohortFull, CohortWithAdjusted, CohortWithPercentiles, CohortBasic, CohortBasicWithMarketCap, CohortBasicWithoutMarketCap, CohortWithoutRelative, CohortAddress, CohortLongTerm, CohortAgeRange, CohortAgeRangeWithMatured, CohortGroupFull, CohortGroupWithAdjusted, CohortGroupWithPercentiles, CohortGroupLongTerm, CohortGroupAgeRange, CohortGroupBasic, CohortGroupBasicWithMarketCap, CohortGroupBasicWithoutMarketCap, CohortGroupWithoutRelative, CohortGroupAddress, UtxoCohortGroupObject, AddressCohortGroupObject, FetchedDotsSeriesBlueprint, FetchedCandlestickSeriesBlueprint, FetchedPriceSeriesBlueprint, AnyPricePattern, AnyValuePattern } from "./options/partial.js"
+ * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, TableOption, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddrCohortObject, CohortObject, CohortGroupObject, FetchedLineSeriesBlueprint, FetchedBaselineSeriesBlueprint, FetchedHistogramSeriesBlueprint, FetchedDotsBaselineSeriesBlueprint, PatternAll, PatternFull, PatternWithAdjusted, PatternWithPercentiles, PatternBasic, PatternBasicWithMarketCap, PatternBasicWithoutMarketCap, PatternWithoutRelative, CohortAll, CohortFull, CohortWithAdjusted, CohortWithPercentiles, CohortBasic, CohortBasicWithMarketCap, CohortBasicWithoutMarketCap, CohortWithoutRelative, CohortAddr, CohortLongTerm, CohortAgeRange, CohortAgeRangeWithMatured, CohortGroupFull, CohortGroupWithAdjusted, CohortGroupWithPercentiles, CohortGroupLongTerm, CohortGroupAgeRange, CohortGroupBasic, CohortGroupBasicWithMarketCap, CohortGroupBasicWithoutMarketCap, CohortGroupWithoutRelative, CohortGroupAddr, UtxoCohortGroupObject, AddrCohortGroupObject, FetchedDotsSeriesBlueprint, FetchedCandlestickSeriesBlueprint, FetchedPriceSeriesBlueprint, AnyPricePattern, AnyValuePattern } from "./options/partial.js"
  *
  *
  * @import { UnitObject as Unit } from "./utils/units.js"
@@ -31,22 +31,22 @@
  *
  * Brk tree types (stable across regenerations)
  * @typedef {Brk.SeriesTree_Cohorts_Utxo} UtxoCohortTree
- * @typedef {Brk.SeriesTree_Cohorts_Address} AddressCohortTree
+ * @typedef {Brk.SeriesTree_Cohorts_Addr} AddrCohortTree
  * @typedef {Brk.SeriesTree_Cohorts_Utxo_All} AllUtxoPattern
  * @typedef {Brk.SeriesTree_Cohorts_Utxo_Sth} ShortTermPattern
  * @typedef {Brk.SeriesTree_Cohorts_Utxo_Lth} LongTermPattern
  * @typedef {Brk.SeriesTree_Cohorts_Utxo_All_Unrealized} AllRelativePattern
  * @typedef {keyof Brk.BtcCentsSatsUsdPattern} BtcSatsUsdKey
  * @typedef {Brk.BtcCentsSatsUsdPattern} SupplyPattern
- * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} BlockSizePattern
+ * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<number>} BlockSizePattern
  * @typedef {keyof Brk.SeriesTree_Cohorts_Utxo_Type} SpendableType
- * @typedef {keyof Brk.SeriesTree_Addresses_Raw} AddressableType
+ * @typedef {keyof Brk.SeriesTree_Addrs_Raw} AddressableType
  *
  * Brk pattern types (using new pattern names)
  * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern} MaxAgePattern
  * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern} AgeRangePattern
  * @typedef {Brk.OutputsRealizedSupplyUnrealizedPattern} UtxoAmountPattern
- * @typedef {Brk.AddressOutputsRealizedSupplyUnrealizedPattern} AddressAmountPattern
+ * @typedef {Brk.AddrOutputsRealizedSupplyUnrealizedPattern} AddrAmountPattern
  * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern} BasicUtxoPattern
  * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern} EpochPattern
  * @typedef {Brk.OutputsRealizedSupplyUnrealizedPattern2} EmptyPattern
@@ -65,7 +65,7 @@
  * FullValuePattern: base + cumulative + rolling windows (flattened)
  * @typedef {Brk.BaseCumulativeSumPattern4} FullValuePattern
  * RollingWindowSlot: a single rolling window with stats (average, pct10, pct25, median, pct75, pct90, max, min) per unit
- * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern} RollingWindowSlot
+ * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} RollingWindowSlot
  * AnyValuePatternType: union of all value pattern types
  * @typedef {Brk.BaseCumulativeSumPattern4 | Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativeRelPattern} AnyValuePatternType
  * @typedef {Brk.AnySeriesPattern} AnySeriesPattern
@@ -92,6 +92,45 @@
  * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern2
  * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern3
  * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern4
+ *
+ * Transfer volume pattern (base + cumulative + inProfit/inLoss + sum windows)
+ * @typedef {Brk.BaseCumulativeInSumPattern} TransferVolumePattern
+ *
+ * Realized profit/loss pattern (base + cumulative + sum windows)
+ * @typedef {Brk.BaseCumulativeSumPattern3} RealizedProfitLossPattern
+ *
+ * Full activity pattern (coindays, coinyears, dormancy, transfer volume)
+ * @typedef {Brk.CoindaysCoinyearsDormancyTransferPattern} FullActivityPattern
+ *
+ * Profit distribution detail (base + cumulative + distribution flow + rel + sum + value)
+ * @typedef {Brk.BaseCumulativeDistributionRelSumValuePattern} ProfitDetailPattern
+ *
+ * Loss detail with capitulation (base + capitulation + cumulative + negative + rel + sum + value)
+ * @typedef {Brk.BaseCapitulationCumulativeNegativeRelSumValuePattern} LossDetailPattern
+ *
+ * BPS + ratio pattern (for NUPL and similar)
+ * @typedef {Brk.BpsRatioPattern} NuplPattern
+ *
+ * LTH realized tree
+ * @typedef {Brk.SeriesTree_Cohorts_Utxo_Lth_Realized} LthRealizedPattern
+ *
+ * Net PnL pattern with change (base + change + cumulative + delta + rel + sum)
+ * @typedef {Brk.BaseChangeCumulativeDeltaRelSumPattern} NetPnlFullPattern
+ *
+ * Net PnL basic pattern (base + cumulative + delta + sum)
+ * @typedef {Brk.BaseCumulativeDeltaSumPattern} NetPnlBasicPattern
+ *
+ * Mid realized pattern (cap + loss + MVRV + net + price + profit + SOPR)
+ * @typedef {Brk.CapLossMvrvNetPriceProfitSoprPattern} MidRealizedPattern
+ *
+ * Basic realized pattern (cap + loss + MVRV + price + profit + SOPR, no net)
+ * @typedef {Brk.CapLossMvrvPriceProfitSoprPattern} BasicRealizedPattern
+ *
+ * Moving average price ratio pattern (bps + cents + ratio + sats + usd)
+ * @typedef {Brk.BpsCentsRatioSatsUsdPattern} MaPriceRatioPattern
+ *
+ * Address count delta pattern (inner delta with absolute + rate)
+ * @typedef {Brk.DeltaInnerPattern} AddressCountDeltaPattern
  */
 
 /**
@@ -99,12 +138,21 @@
  * @typedef {Brk.SeriesEndpoint<T>} SeriesEndpoint
  */
 /**
+ * Rolling windows pattern (24h, 1w, 1m, 1y)
+ * @template T
+ * @typedef {Brk._1m1w1y24hPattern<T>} RollingWindowPattern
+ */
+/**
+ * Sell side risk rolling windows pattern
+ * @typedef {Brk._1m1w1y24hPattern6} SellSideRiskPattern
+ */
+/**
  * Stats pattern: average, min, max, percentiles (height-only indexes, NO base)
- * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern} StatsPattern
+ * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} StatsPattern
  */
 /**
  * Base stats pattern: average, min, max, percentiles
- * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern} BaseStatsPattern
+ * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} BaseStatsPattern
  */
 /**
  * Full stats pattern: cumulative, sum, average, min, max, percentiles + rolling
@@ -125,7 +173,7 @@
  */
 /**
  * Full per-block pattern: height, cumulative, sum, and distribution stats (all flat)
- * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} FullPerBlockPattern
+ * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<number>} FullPerBlockPattern
  */
 /**
  * Any stats pattern union - patterns with sum/cumulative + percentiles
@@ -158,8 +206,8 @@
  *
  * Pattern unions by cohort type
  * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} UtxoCohortPattern
- * @typedef {AddressAmountPattern} AddressCohortPattern
- * @typedef {UtxoCohortPattern | AddressCohortPattern} CohortPattern
+ * @typedef {AddrAmountPattern} AddrCohortPattern
+ * @typedef {UtxoCohortPattern | AddrCohortPattern} CohortPattern
  *
  * Relative pattern capability types
  * @typedef {GlobalRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithMarketCap
@@ -204,10 +252,10 @@
  * @typedef {CohortFull | CohortLongTerm | CohortWithAdjusted | CohortBasicWithMarketCap} UtxoCohortWithCirculatingSupplyRelative
  *
  * Address cohorts with circulating supply relative series (all address amount cohorts have these)
- * @typedef {AddressCohortObject} AddressCohortWithCirculatingSupplyRelative
+ * @typedef {AddrCohortObject} AddrCohortWithCirculatingSupplyRelative
  *
  * All cohorts with circulating supply relative series
- * @typedef {UtxoCohortWithCirculatingSupplyRelative | AddressCohortWithCirculatingSupplyRelative} CohortWithCirculatingSupplyRelative
+ * @typedef {UtxoCohortWithCirculatingSupplyRelative | AddrCohortWithCirculatingSupplyRelative} CohortWithCirculatingSupplyRelative
  *
  * Delta patterns with absolute + rate rolling windows
  * @typedef {Brk.AbsoluteRatePattern} DeltaPattern

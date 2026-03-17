@@ -9,6 +9,7 @@ import {
   dots,
   dotted,
   distributionBtcSatsUsd,
+  statsAtWindow,
   rollingWindowsTree,
   ROLLING_WINDOWS,
   percentRatio,
@@ -248,7 +249,7 @@ export function createMiningSection() {
                 defaultActive: false,
               }),
               dotted({
-                series: blocks.difficulty.asHash,
+                series: blocks.difficulty.hashrate,
                 name: "Difficulty",
                 color: colors.default,
                 unit: Unit.hashRate,
@@ -334,12 +335,12 @@ export function createMiningSection() {
             title: "Next Difficulty Adjustment",
             bottom: [
               line({
-                series: blocks.difficulty.blocksBeforeNext,
+                series: blocks.difficulty.blocksToRetarget,
                 name: "Remaining",
                 unit: Unit.blocks,
               }),
               line({
-                series: blocks.difficulty.daysBeforeNext,
+                series: blocks.difficulty.daysToRetarget,
                 name: "Remaining",
                 unit: Unit.days,
               }),
@@ -583,7 +584,7 @@ export function createMiningSection() {
                 tree: ROLLING_WINDOWS.map((w) => ({
                   name: w.name,
                   title: `Fee Revenue per Block Distribution (${w.name})`,
-                  bottom: distributionBtcSatsUsd(mining.rewards.fees[w.key]),
+                  bottom: distributionBtcSatsUsd(statsAtWindow(mining.rewards.fees, w.key)),
                 })),
               },
               {
@@ -650,13 +651,13 @@ export function createMiningSection() {
                 name: "Compare",
                 title: "Fee-to-Subsidy Ratio",
                 bottom: ROLLING_WINDOWS.map((w) =>
-                  line({ series: mining.rewards.fees.ratioMultiple[w.key].ratio, name: w.name, color: w.color, unit: Unit.ratio }),
+                  line({ series: mining.rewards.fees.toSubsidyRatio[w.key].ratio, name: w.name, color: w.color, unit: Unit.ratio }),
                 ),
               },
               ...ROLLING_WINDOWS.map((w) => ({
                 name: w.name,
                 title: `Fee-to-Subsidy Ratio (${w.name})`,
-                bottom: [line({ series: mining.rewards.fees.ratioMultiple[w.key].ratio, name: w.name, color: w.color, unit: Unit.ratio })],
+                bottom: [line({ series: mining.rewards.fees.toSubsidyRatio[w.key].ratio, name: w.name, color: w.color, unit: Unit.ratio })],
               })),
             ],
           },
@@ -787,12 +788,12 @@ export function createMiningSection() {
             title: "Next Halving",
             bottom: [
               line({
-                series: blocks.halving.blocksBeforeNext,
+                series: blocks.halving.blocksToHalving,
                 name: "Remaining",
                 unit: Unit.blocks,
               }),
               line({
-                series: blocks.halving.daysBeforeNext,
+                series: blocks.halving.daysToHalving,
                 name: "Remaining",
                 unit: Unit.days,
               }),

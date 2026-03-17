@@ -6,14 +6,14 @@
 /**
  * Bitcoin address string
  *
- * @typedef {string} Address
+ * @typedef {string} Addr
  */
 /**
  * Address statistics on the blockchain (confirmed transactions only)
  *
  * Based on mempool.space's format with type_index extension.
  *
- * @typedef {Object} AddressChainStats
+ * @typedef {Object} AddrChainStats
  * @property {number} fundedTxoCount - Total number of transaction outputs that funded this address
  * @property {Sats} fundedTxoSum - Total amount in satoshis received by this address across all funded outputs
  * @property {number} spentTxoCount - Total number of transaction outputs spent from this address
@@ -26,7 +26,7 @@
  *
  * Based on mempool.space's format.
  *
- * @typedef {Object} AddressMempoolStats
+ * @typedef {Object} AddrMempoolStats
  * @property {number} fundedTxoCount - Number of unconfirmed transaction outputs funding this address
  * @property {Sats} fundedTxoSum - Total amount in satoshis being received in unconfirmed transactions
  * @property {number} spentTxoCount - Number of unconfirmed transaction inputs spending from this address
@@ -34,25 +34,25 @@
  * @property {number} txCount - Number of unconfirmed transactions involving this address
  */
 /**
- * @typedef {Object} AddressParam
- * @property {Address} address
+ * @typedef {Object} AddrParam
+ * @property {Addr} address
  */
 /**
  * Address information compatible with mempool.space API format
  *
- * @typedef {Object} AddressStats
- * @property {Address} address - Bitcoin address string
- * @property {AddressChainStats} chainStats - Statistics for confirmed transactions on the blockchain
- * @property {(AddressMempoolStats|null)=} mempoolStats - Statistics for unconfirmed transactions in the mempool
+ * @typedef {Object} AddrStats
+ * @property {Addr} address - Bitcoin address string
+ * @property {AddrChainStats} chainStats - Statistics for confirmed transactions on the blockchain
+ * @property {(AddrMempoolStats|null)=} mempoolStats - Statistics for unconfirmed transactions in the mempool
  */
 /**
- * @typedef {Object} AddressTxidsParam
+ * @typedef {Object} AddrTxidsParam
  * @property {(Txid|null)=} afterTxid - Txid to paginate from (return transactions before this one)
  */
 /**
  * Address validation result
  *
- * @typedef {Object} AddressValidation
+ * @typedef {Object} AddrValidation
  * @property {boolean} isvalid - Whether the address is valid
  * @property {?string=} address - The validated address
  * @property {?string=} scriptPubKey - The scriptPubKey in hex
@@ -64,7 +64,7 @@
 /**
  * Unified index for any address type (funded or empty)
  *
- * @typedef {TypeIndex} AnyAddressIndex
+ * @typedef {TypeIndex} AnyAddrIndex
  */
 /**
  * Unsigned basis points stored as u16.
@@ -98,6 +98,11 @@
  * Bitcoin amount as floating point (1 BTC = 100,000,000 satoshis)
  *
  * @typedef {number} Bitcoin
+ */
+/**
+ * Position within a .blk file, encoding file index and byte offset
+ *
+ * @typedef {number} BlkPosition
  */
 /**
  * @typedef {Object} BlockCountParam
@@ -334,12 +339,12 @@
 /**
  * Data of an empty address
  *
- * @typedef {Object} EmptyAddressData
+ * @typedef {Object} EmptyAddrData
  * @property {number} txCount - Total transaction count
  * @property {number} fundedTxoCount - Total funded/spent transaction output count (equal since address is empty)
  * @property {Sats} transfered - Total satoshis transferred
  */
-/** @typedef {TypeIndex} EmptyAddressIndex */
+/** @typedef {TypeIndex} EmptyAddrIndex */
 /** @typedef {TypeIndex} EmptyOutputIndex */
 /** @typedef {number} Epoch */
 /**
@@ -349,7 +354,7 @@
 /**
  * @typedef {Object} ErrorDetail
  * @property {string} type - Error category: "invalid_request", "forbidden", "not_found", "unavailable", or "internal"
- * @property {string} code - Machine-readable error code (e.g. "invalid_address", "series_not_found")
+ * @property {string} code - Machine-readable error code (e.g. "invalid_addr", "series_not_found")
  * @property {string} message - Human-readable description
  * @property {string} docUrl - Link to API documentation
  */
@@ -366,7 +371,7 @@
 /**
  * Data for a funded (non-empty) address with current balance
  *
- * @typedef {Object} FundedAddressData
+ * @typedef {Object} FundedAddrData
  * @property {number} txCount - Total transaction count
  * @property {number} fundedTxoCount - Number of transaction outputs funded to this address
  * @property {number} spentTxoCount - Number of transaction outputs spent by this address
@@ -375,7 +380,7 @@
  * @property {CentsSats} realizedCapRaw - The realized capitalization: Σ(price × sats)
  * @property {CentsSquaredSats} investorCapRaw - The investor capitalization: Σ(price² × sats)
  */
-/** @typedef {TypeIndex} FundedAddressIndex */
+/** @typedef {TypeIndex} FundedAddrIndex */
 /** @typedef {number} Halving */
 /**
  * A single hashrate data point.
@@ -436,7 +441,7 @@
  * Aggregation dimension for querying series. Includes time-based (date, week, month, year),
  * block-based (height, tx_index), and address/output type indexes.
  *
- * @typedef {("minute10"|"minute30"|"hour1"|"hour4"|"hour12"|"day1"|"day3"|"week1"|"month1"|"month3"|"month6"|"year1"|"year10"|"halving"|"epoch"|"height"|"tx_index"|"txin_index"|"txout_index"|"empty_output_index"|"op_return_index"|"p2a_address_index"|"p2ms_output_index"|"p2pk33_address_index"|"p2pk65_address_index"|"p2pkh_address_index"|"p2sh_address_index"|"p2tr_address_index"|"p2wpkh_address_index"|"p2wsh_address_index"|"unknown_output_index"|"funded_address_index"|"empty_address_index")} Index
+ * @typedef {("minute10"|"minute30"|"hour1"|"hour4"|"hour12"|"day1"|"day3"|"week1"|"month1"|"month3"|"month6"|"year1"|"year10"|"halving"|"epoch"|"height"|"tx_index"|"txin_index"|"txout_index"|"empty_output_index"|"op_return_index"|"p2a_addr_index"|"p2ms_output_index"|"p2pk33_addr_index"|"p2pk65_addr_index"|"p2pkh_addr_index"|"p2sh_addr_index"|"p2tr_addr_index"|"p2wpkh_addr_index"|"p2wsh_addr_index"|"unknown_output_index"|"funded_addr_index"|"empty_addr_index")} Index
  */
 /**
  * Information about an available index and its query aliases
@@ -531,22 +536,22 @@
  *
  * @typedef {("p2pk65"|"p2pk33"|"p2pkh"|"p2ms"|"p2sh"|"opreturn"|"p2wpkh"|"p2wsh"|"p2tr"|"p2a"|"empty"|"unknown")} OutputType
  */
-/** @typedef {TypeIndex} P2AAddressIndex */
+/** @typedef {TypeIndex} P2AAddrIndex */
 /** @typedef {U8x2} P2ABytes */
 /** @typedef {TypeIndex} P2MSOutputIndex */
-/** @typedef {TypeIndex} P2PK33AddressIndex */
+/** @typedef {TypeIndex} P2PK33AddrIndex */
 /** @typedef {U8x33} P2PK33Bytes */
-/** @typedef {TypeIndex} P2PK65AddressIndex */
+/** @typedef {TypeIndex} P2PK65AddrIndex */
 /** @typedef {U8x65} P2PK65Bytes */
-/** @typedef {TypeIndex} P2PKHAddressIndex */
+/** @typedef {TypeIndex} P2PKHAddrIndex */
 /** @typedef {U8x20} P2PKHBytes */
-/** @typedef {TypeIndex} P2SHAddressIndex */
+/** @typedef {TypeIndex} P2SHAddrIndex */
 /** @typedef {U8x20} P2SHBytes */
-/** @typedef {TypeIndex} P2TRAddressIndex */
+/** @typedef {TypeIndex} P2TRAddrIndex */
 /** @typedef {U8x32} P2TRBytes */
-/** @typedef {TypeIndex} P2WPKHAddressIndex */
+/** @typedef {TypeIndex} P2WPKHAddrIndex */
 /** @typedef {U8x20} P2WPKHBytes */
-/** @typedef {TypeIndex} P2WSHAddressIndex */
+/** @typedef {TypeIndex} P2WSHAddrIndex */
 /** @typedef {U8x32} P2WSHBytes */
 /**
  * A paginated list of available series names (1000 per page)
@@ -599,7 +604,7 @@
  * @property {number} id - Unique pool identifier
  * @property {string} name - Pool name
  * @property {string} link - Pool website URL
- * @property {string[]} addresses - Known payout addresses
+ * @property {string[]} addrs - Known payout addresses
  * @property {string[]} regexes - Coinbase tag patterns (regexes)
  * @property {PoolSlug} slug - URL-friendly pool identifier
  */
@@ -937,7 +942,7 @@
  * @typedef {number} VSize
  */
 /**
- * @typedef {Object} ValidateAddressParam
+ * @typedef {Object} ValidateAddrParam
  * @property {string} address - Bitcoin address to validate (can be any string)
  */
 /**
@@ -1477,18 +1482,18 @@ const _i20 = /** @type {const} */ (["txin_index"]);
 const _i21 = /** @type {const} */ (["txout_index"]);
 const _i22 = /** @type {const} */ (["empty_output_index"]);
 const _i23 = /** @type {const} */ (["op_return_index"]);
-const _i24 = /** @type {const} */ (["p2a_address_index"]);
+const _i24 = /** @type {const} */ (["p2a_addr_index"]);
 const _i25 = /** @type {const} */ (["p2ms_output_index"]);
-const _i26 = /** @type {const} */ (["p2pk33_address_index"]);
-const _i27 = /** @type {const} */ (["p2pk65_address_index"]);
-const _i28 = /** @type {const} */ (["p2pkh_address_index"]);
-const _i29 = /** @type {const} */ (["p2sh_address_index"]);
-const _i30 = /** @type {const} */ (["p2tr_address_index"]);
-const _i31 = /** @type {const} */ (["p2wpkh_address_index"]);
-const _i32 = /** @type {const} */ (["p2wsh_address_index"]);
+const _i26 = /** @type {const} */ (["p2pk33_addr_index"]);
+const _i27 = /** @type {const} */ (["p2pk65_addr_index"]);
+const _i28 = /** @type {const} */ (["p2pkh_addr_index"]);
+const _i29 = /** @type {const} */ (["p2sh_addr_index"]);
+const _i30 = /** @type {const} */ (["p2tr_addr_index"]);
+const _i31 = /** @type {const} */ (["p2wpkh_addr_index"]);
+const _i32 = /** @type {const} */ (["p2wsh_addr_index"]);
 const _i33 = /** @type {const} */ (["unknown_output_index"]);
-const _i34 = /** @type {const} */ (["funded_address_index"]);
-const _i35 = /** @type {const} */ (["empty_address_index"]);
+const _i34 = /** @type {const} */ (["funded_addr_index"]);
+const _i35 = /** @type {const} */ (["empty_addr_index"]);
 
 /**
  * Generic series pattern factory.
@@ -1585,40 +1590,40 @@ function createSeriesPattern22(client, name) { return /** @type {SeriesPattern22
 /** @template T @typedef {{ name: string, by: { readonly op_return_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern23 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern23<T>} */
 function createSeriesPattern23(client, name) { return /** @type {SeriesPattern23<T>} */ (_mp(client, name, _i23)); }
-/** @template T @typedef {{ name: string, by: { readonly p2a_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern24 */
+/** @template T @typedef {{ name: string, by: { readonly p2a_addr_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern24 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern24<T>} */
 function createSeriesPattern24(client, name) { return /** @type {SeriesPattern24<T>} */ (_mp(client, name, _i24)); }
 /** @template T @typedef {{ name: string, by: { readonly p2ms_output_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern25 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern25<T>} */
 function createSeriesPattern25(client, name) { return /** @type {SeriesPattern25<T>} */ (_mp(client, name, _i25)); }
-/** @template T @typedef {{ name: string, by: { readonly p2pk33_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern26 */
+/** @template T @typedef {{ name: string, by: { readonly p2pk33_addr_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern26 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern26<T>} */
 function createSeriesPattern26(client, name) { return /** @type {SeriesPattern26<T>} */ (_mp(client, name, _i26)); }
-/** @template T @typedef {{ name: string, by: { readonly p2pk65_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern27 */
+/** @template T @typedef {{ name: string, by: { readonly p2pk65_addr_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern27 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern27<T>} */
 function createSeriesPattern27(client, name) { return /** @type {SeriesPattern27<T>} */ (_mp(client, name, _i27)); }
-/** @template T @typedef {{ name: string, by: { readonly p2pkh_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern28 */
+/** @template T @typedef {{ name: string, by: { readonly p2pkh_addr_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern28 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern28<T>} */
 function createSeriesPattern28(client, name) { return /** @type {SeriesPattern28<T>} */ (_mp(client, name, _i28)); }
-/** @template T @typedef {{ name: string, by: { readonly p2sh_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern29 */
+/** @template T @typedef {{ name: string, by: { readonly p2sh_addr_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern29 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern29<T>} */
 function createSeriesPattern29(client, name) { return /** @type {SeriesPattern29<T>} */ (_mp(client, name, _i29)); }
-/** @template T @typedef {{ name: string, by: { readonly p2tr_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern30 */
+/** @template T @typedef {{ name: string, by: { readonly p2tr_addr_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern30 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern30<T>} */
 function createSeriesPattern30(client, name) { return /** @type {SeriesPattern30<T>} */ (_mp(client, name, _i30)); }
-/** @template T @typedef {{ name: string, by: { readonly p2wpkh_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern31 */
+/** @template T @typedef {{ name: string, by: { readonly p2wpkh_addr_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern31 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern31<T>} */
 function createSeriesPattern31(client, name) { return /** @type {SeriesPattern31<T>} */ (_mp(client, name, _i31)); }
-/** @template T @typedef {{ name: string, by: { readonly p2wsh_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern32 */
+/** @template T @typedef {{ name: string, by: { readonly p2wsh_addr_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern32 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern32<T>} */
 function createSeriesPattern32(client, name) { return /** @type {SeriesPattern32<T>} */ (_mp(client, name, _i32)); }
 /** @template T @typedef {{ name: string, by: { readonly unknown_output_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern33 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern33<T>} */
 function createSeriesPattern33(client, name) { return /** @type {SeriesPattern33<T>} */ (_mp(client, name, _i33)); }
-/** @template T @typedef {{ name: string, by: { readonly funded_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern34 */
+/** @template T @typedef {{ name: string, by: { readonly funded_addr_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern34 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern34<T>} */
 function createSeriesPattern34(client, name) { return /** @type {SeriesPattern34<T>} */ (_mp(client, name, _i34)); }
-/** @template T @typedef {{ name: string, by: { readonly empty_address_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern35 */
+/** @template T @typedef {{ name: string, by: { readonly empty_addr_index: SeriesEndpoint<T> }, indexes: () => readonly Index[], get: (index: Index) => SeriesEndpoint<T>|undefined }} SeriesPattern35 */
 /** @template T @param {BrkClientBase} client @param {string} name @returns {SeriesPattern35<T>} */
 function createSeriesPattern35(client, name) { return /** @type {SeriesPattern35<T>} */ (_mp(client, name, _i35)); }
 
@@ -2446,8 +2451,8 @@ function createActivityOutputsRealizedSupplyUnrealizedPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} AddressOutputsRealizedSupplyUnrealizedPattern
- * @property {BaseDeltaPattern} addressCount
+ * @typedef {Object} AddrOutputsRealizedSupplyUnrealizedPattern
+ * @property {BaseDeltaPattern} addrCount
  * @property {UnspentPattern} outputs
  * @property {CapLossMvrvPriceProfitSoprPattern} realized
  * @property {DeltaHalfTotalPattern} supply
@@ -2455,14 +2460,14 @@ function createActivityOutputsRealizedSupplyUnrealizedPattern(client, acc) {
  */
 
 /**
- * Create a AddressOutputsRealizedSupplyUnrealizedPattern pattern node
+ * Create a AddrOutputsRealizedSupplyUnrealizedPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated series name
- * @returns {AddressOutputsRealizedSupplyUnrealizedPattern}
+ * @returns {AddrOutputsRealizedSupplyUnrealizedPattern}
  */
-function createAddressOutputsRealizedSupplyUnrealizedPattern(client, acc) {
+function createAddrOutputsRealizedSupplyUnrealizedPattern(client, acc) {
   return {
-    addressCount: createBaseDeltaPattern(client, _m(acc, 'address_count')),
+    addrCount: createBaseDeltaPattern(client, _m(acc, 'addr_count')),
     outputs: createUnspentPattern(client, _m(acc, 'utxo_count')),
     realized: createCapLossMvrvPriceProfitSoprPattern(client, acc),
     supply: createDeltaHalfTotalPattern(client, _m(acc, 'supply')),
@@ -2472,11 +2477,11 @@ function createAddressOutputsRealizedSupplyUnrealizedPattern(client, acc) {
 
 /**
  * @typedef {Object} BaseCumulativeInSumPattern
- * @property {SeriesPattern1<Sats>} base
- * @property {SeriesPattern1<Sats>} cumulative
+ * @property {BtcCentsSatsUsdPattern} base
+ * @property {BtcCentsSatsUsdPattern} cumulative
  * @property {BaseCumulativeSumPattern4} inLoss
  * @property {BaseCumulativeSumPattern4} inProfit
- * @property {_1m1w1y24hPattern<Sats>} sum
+ * @property {_1m1w1y24hPattern5} sum
  */
 
 /**
@@ -2487,11 +2492,11 @@ function createAddressOutputsRealizedSupplyUnrealizedPattern(client, acc) {
  */
 function createBaseCumulativeInSumPattern(client, acc) {
   return {
-    base: createSeriesPattern1(client, acc),
-    cumulative: createSeriesPattern1(client, _m(acc, 'cumulative')),
+    base: createBtcCentsSatsUsdPattern(client, acc),
+    cumulative: createBtcCentsSatsUsdPattern(client, _m(acc, 'cumulative')),
     inLoss: createBaseCumulativeSumPattern4(client, _m(acc, 'in_loss')),
     inProfit: createBaseCumulativeSumPattern4(client, _m(acc, 'in_profit')),
-    sum: create_1m1w1y24hPattern(client, _m(acc, 'sum')),
+    sum: create_1m1w1y24hPattern5(client, _m(acc, 'sum')),
   };
 }
 
@@ -3875,9 +3880,10 @@ function createUnspentPattern(client, acc) {
  * @property {SeriesTree_Transactions} transactions
  * @property {SeriesTree_Inputs} inputs
  * @property {SeriesTree_Outputs} outputs
- * @property {SeriesTree_Addresses} addresses
+ * @property {SeriesTree_Addrs} addrs
  * @property {SeriesTree_Scripts} scripts
  * @property {SeriesTree_Mining} mining
+ * @property {SeriesTree_Positions} positions
  * @property {SeriesTree_Cointime} cointime
  * @property {SeriesTree_Constants} constants
  * @property {SeriesTree_Indexes} indexes
@@ -4128,100 +4134,100 @@ function createUnspentPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses
- * @property {SeriesTree_Addresses_Raw} raw
- * @property {SeriesTree_Addresses_Indexes} indexes
- * @property {SeriesTree_Addresses_Data} data
+ * @typedef {Object} SeriesTree_Addrs
+ * @property {SeriesTree_Addrs_Raw} raw
+ * @property {SeriesTree_Addrs_Indexes} indexes
+ * @property {SeriesTree_Addrs_Data} data
  * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} funded
  * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} empty
- * @property {SeriesTree_Addresses_Activity} activity
+ * @property {SeriesTree_Addrs_Activity} activity
  * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} total
- * @property {SeriesTree_Addresses_New} new
- * @property {SeriesTree_Addresses_Delta} delta
+ * @property {SeriesTree_Addrs_New} new
+ * @property {SeriesTree_Addrs_Delta} delta
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses_Raw
- * @property {SeriesTree_Addresses_Raw_P2pk65} p2pk65
- * @property {SeriesTree_Addresses_Raw_P2pk33} p2pk33
- * @property {SeriesTree_Addresses_Raw_P2pkh} p2pkh
- * @property {SeriesTree_Addresses_Raw_P2sh} p2sh
- * @property {SeriesTree_Addresses_Raw_P2wpkh} p2wpkh
- * @property {SeriesTree_Addresses_Raw_P2wsh} p2wsh
- * @property {SeriesTree_Addresses_Raw_P2tr} p2tr
- * @property {SeriesTree_Addresses_Raw_P2a} p2a
+ * @typedef {Object} SeriesTree_Addrs_Raw
+ * @property {SeriesTree_Addrs_Raw_P2pk65} p2pk65
+ * @property {SeriesTree_Addrs_Raw_P2pk33} p2pk33
+ * @property {SeriesTree_Addrs_Raw_P2pkh} p2pkh
+ * @property {SeriesTree_Addrs_Raw_P2sh} p2sh
+ * @property {SeriesTree_Addrs_Raw_P2wpkh} p2wpkh
+ * @property {SeriesTree_Addrs_Raw_P2wsh} p2wsh
+ * @property {SeriesTree_Addrs_Raw_P2tr} p2tr
+ * @property {SeriesTree_Addrs_Raw_P2a} p2a
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses_Raw_P2pk65
- * @property {SeriesPattern18<P2PK65AddressIndex>} firstIndex
+ * @typedef {Object} SeriesTree_Addrs_Raw_P2pk65
+ * @property {SeriesPattern18<P2PK65AddrIndex>} firstIndex
  * @property {SeriesPattern27<P2PK65Bytes>} bytes
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses_Raw_P2pk33
- * @property {SeriesPattern18<P2PK33AddressIndex>} firstIndex
+ * @typedef {Object} SeriesTree_Addrs_Raw_P2pk33
+ * @property {SeriesPattern18<P2PK33AddrIndex>} firstIndex
  * @property {SeriesPattern26<P2PK33Bytes>} bytes
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses_Raw_P2pkh
- * @property {SeriesPattern18<P2PKHAddressIndex>} firstIndex
+ * @typedef {Object} SeriesTree_Addrs_Raw_P2pkh
+ * @property {SeriesPattern18<P2PKHAddrIndex>} firstIndex
  * @property {SeriesPattern28<P2PKHBytes>} bytes
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses_Raw_P2sh
- * @property {SeriesPattern18<P2SHAddressIndex>} firstIndex
+ * @typedef {Object} SeriesTree_Addrs_Raw_P2sh
+ * @property {SeriesPattern18<P2SHAddrIndex>} firstIndex
  * @property {SeriesPattern29<P2SHBytes>} bytes
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses_Raw_P2wpkh
- * @property {SeriesPattern18<P2WPKHAddressIndex>} firstIndex
+ * @typedef {Object} SeriesTree_Addrs_Raw_P2wpkh
+ * @property {SeriesPattern18<P2WPKHAddrIndex>} firstIndex
  * @property {SeriesPattern31<P2WPKHBytes>} bytes
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses_Raw_P2wsh
- * @property {SeriesPattern18<P2WSHAddressIndex>} firstIndex
+ * @typedef {Object} SeriesTree_Addrs_Raw_P2wsh
+ * @property {SeriesPattern18<P2WSHAddrIndex>} firstIndex
  * @property {SeriesPattern32<P2WSHBytes>} bytes
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses_Raw_P2tr
- * @property {SeriesPattern18<P2TRAddressIndex>} firstIndex
+ * @typedef {Object} SeriesTree_Addrs_Raw_P2tr
+ * @property {SeriesPattern18<P2TRAddrIndex>} firstIndex
  * @property {SeriesPattern30<P2TRBytes>} bytes
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses_Raw_P2a
- * @property {SeriesPattern18<P2AAddressIndex>} firstIndex
+ * @typedef {Object} SeriesTree_Addrs_Raw_P2a
+ * @property {SeriesPattern18<P2AAddrIndex>} firstIndex
  * @property {SeriesPattern24<P2ABytes>} bytes
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses_Indexes
- * @property {SeriesPattern24<AnyAddressIndex>} p2a
- * @property {SeriesPattern26<AnyAddressIndex>} p2pk33
- * @property {SeriesPattern27<AnyAddressIndex>} p2pk65
- * @property {SeriesPattern28<AnyAddressIndex>} p2pkh
- * @property {SeriesPattern29<AnyAddressIndex>} p2sh
- * @property {SeriesPattern30<AnyAddressIndex>} p2tr
- * @property {SeriesPattern31<AnyAddressIndex>} p2wpkh
- * @property {SeriesPattern32<AnyAddressIndex>} p2wsh
- * @property {SeriesPattern34<FundedAddressIndex>} funded
- * @property {SeriesPattern35<EmptyAddressIndex>} empty
+ * @typedef {Object} SeriesTree_Addrs_Indexes
+ * @property {SeriesPattern24<AnyAddrIndex>} p2a
+ * @property {SeriesPattern26<AnyAddrIndex>} p2pk33
+ * @property {SeriesPattern27<AnyAddrIndex>} p2pk65
+ * @property {SeriesPattern28<AnyAddrIndex>} p2pkh
+ * @property {SeriesPattern29<AnyAddrIndex>} p2sh
+ * @property {SeriesPattern30<AnyAddrIndex>} p2tr
+ * @property {SeriesPattern31<AnyAddrIndex>} p2wpkh
+ * @property {SeriesPattern32<AnyAddrIndex>} p2wsh
+ * @property {SeriesPattern34<FundedAddrIndex>} funded
+ * @property {SeriesPattern35<EmptyAddrIndex>} empty
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses_Data
- * @property {SeriesPattern34<FundedAddressData>} funded
- * @property {SeriesPattern35<EmptyAddressData>} empty
+ * @typedef {Object} SeriesTree_Addrs_Data
+ * @property {SeriesPattern34<FundedAddrData>} funded
+ * @property {SeriesPattern35<EmptyAddrData>} empty
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses_Activity
+ * @typedef {Object} SeriesTree_Addrs_Activity
  * @property {BothReactivatedReceivingSendingPattern} all
  * @property {BothReactivatedReceivingSendingPattern} p2pk65
  * @property {BothReactivatedReceivingSendingPattern} p2pk33
@@ -4234,7 +4240,7 @@ function createUnspentPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses_New
+ * @typedef {Object} SeriesTree_Addrs_New
  * @property {BaseCumulativeSumPattern<StoredU64>} all
  * @property {BaseCumulativeSumPattern<StoredU64>} p2pk65
  * @property {BaseCumulativeSumPattern<StoredU64>} p2pk33
@@ -4247,7 +4253,7 @@ function createUnspentPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} SeriesTree_Addresses_Delta
+ * @typedef {Object} SeriesTree_Addrs_Delta
  * @property {AbsoluteRatePattern} all
  * @property {AbsoluteRatePattern} p2pk65
  * @property {AbsoluteRatePattern} p2pk33
@@ -4398,6 +4404,12 @@ function createUnspentPattern(client, acc) {
  */
 
 /**
+ * @typedef {Object} SeriesTree_Positions
+ * @property {SeriesPattern18<BlkPosition>} block
+ * @property {SeriesPattern19<BlkPosition>} tx
+ */
+
+/**
  * @typedef {Object} SeriesTree_Cointime
  * @property {SeriesTree_Cointime_Activity} activity
  * @property {SeriesTree_Cointime_Supply} supply
@@ -4492,7 +4504,7 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Indexes
- * @property {SeriesTree_Indexes_Address} address
+ * @property {SeriesTree_Indexes_Addr} addr
  * @property {SeriesTree_Indexes_Height} height
  * @property {SeriesTree_Indexes_Epoch} epoch
  * @property {SeriesTree_Indexes_Halving} halving
@@ -4515,86 +4527,86 @@ function createUnspentPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} SeriesTree_Indexes_Address
- * @property {SeriesTree_Indexes_Address_P2pk33} p2pk33
- * @property {SeriesTree_Indexes_Address_P2pk65} p2pk65
- * @property {SeriesTree_Indexes_Address_P2pkh} p2pkh
- * @property {SeriesTree_Indexes_Address_P2sh} p2sh
- * @property {SeriesTree_Indexes_Address_P2tr} p2tr
- * @property {SeriesTree_Indexes_Address_P2wpkh} p2wpkh
- * @property {SeriesTree_Indexes_Address_P2wsh} p2wsh
- * @property {SeriesTree_Indexes_Address_P2a} p2a
- * @property {SeriesTree_Indexes_Address_P2ms} p2ms
- * @property {SeriesTree_Indexes_Address_Empty} empty
- * @property {SeriesTree_Indexes_Address_Unknown} unknown
- * @property {SeriesTree_Indexes_Address_OpReturn} opReturn
+ * @typedef {Object} SeriesTree_Indexes_Addr
+ * @property {SeriesTree_Indexes_Addr_P2pk33} p2pk33
+ * @property {SeriesTree_Indexes_Addr_P2pk65} p2pk65
+ * @property {SeriesTree_Indexes_Addr_P2pkh} p2pkh
+ * @property {SeriesTree_Indexes_Addr_P2sh} p2sh
+ * @property {SeriesTree_Indexes_Addr_P2tr} p2tr
+ * @property {SeriesTree_Indexes_Addr_P2wpkh} p2wpkh
+ * @property {SeriesTree_Indexes_Addr_P2wsh} p2wsh
+ * @property {SeriesTree_Indexes_Addr_P2a} p2a
+ * @property {SeriesTree_Indexes_Addr_P2ms} p2ms
+ * @property {SeriesTree_Indexes_Addr_Empty} empty
+ * @property {SeriesTree_Indexes_Addr_Unknown} unknown
+ * @property {SeriesTree_Indexes_Addr_OpReturn} opReturn
  */
 
 /**
- * @typedef {Object} SeriesTree_Indexes_Address_P2pk33
- * @property {SeriesPattern26<P2PK33AddressIndex>} identity
- * @property {SeriesPattern26<Address>} address
+ * @typedef {Object} SeriesTree_Indexes_Addr_P2pk33
+ * @property {SeriesPattern26<P2PK33AddrIndex>} identity
+ * @property {SeriesPattern26<Addr>} addr
  */
 
 /**
- * @typedef {Object} SeriesTree_Indexes_Address_P2pk65
- * @property {SeriesPattern27<P2PK65AddressIndex>} identity
- * @property {SeriesPattern27<Address>} address
+ * @typedef {Object} SeriesTree_Indexes_Addr_P2pk65
+ * @property {SeriesPattern27<P2PK65AddrIndex>} identity
+ * @property {SeriesPattern27<Addr>} addr
  */
 
 /**
- * @typedef {Object} SeriesTree_Indexes_Address_P2pkh
- * @property {SeriesPattern28<P2PKHAddressIndex>} identity
- * @property {SeriesPattern28<Address>} address
+ * @typedef {Object} SeriesTree_Indexes_Addr_P2pkh
+ * @property {SeriesPattern28<P2PKHAddrIndex>} identity
+ * @property {SeriesPattern28<Addr>} addr
  */
 
 /**
- * @typedef {Object} SeriesTree_Indexes_Address_P2sh
- * @property {SeriesPattern29<P2SHAddressIndex>} identity
- * @property {SeriesPattern29<Address>} address
+ * @typedef {Object} SeriesTree_Indexes_Addr_P2sh
+ * @property {SeriesPattern29<P2SHAddrIndex>} identity
+ * @property {SeriesPattern29<Addr>} addr
  */
 
 /**
- * @typedef {Object} SeriesTree_Indexes_Address_P2tr
- * @property {SeriesPattern30<P2TRAddressIndex>} identity
- * @property {SeriesPattern30<Address>} address
+ * @typedef {Object} SeriesTree_Indexes_Addr_P2tr
+ * @property {SeriesPattern30<P2TRAddrIndex>} identity
+ * @property {SeriesPattern30<Addr>} addr
  */
 
 /**
- * @typedef {Object} SeriesTree_Indexes_Address_P2wpkh
- * @property {SeriesPattern31<P2WPKHAddressIndex>} identity
- * @property {SeriesPattern31<Address>} address
+ * @typedef {Object} SeriesTree_Indexes_Addr_P2wpkh
+ * @property {SeriesPattern31<P2WPKHAddrIndex>} identity
+ * @property {SeriesPattern31<Addr>} addr
  */
 
 /**
- * @typedef {Object} SeriesTree_Indexes_Address_P2wsh
- * @property {SeriesPattern32<P2WSHAddressIndex>} identity
- * @property {SeriesPattern32<Address>} address
+ * @typedef {Object} SeriesTree_Indexes_Addr_P2wsh
+ * @property {SeriesPattern32<P2WSHAddrIndex>} identity
+ * @property {SeriesPattern32<Addr>} addr
  */
 
 /**
- * @typedef {Object} SeriesTree_Indexes_Address_P2a
- * @property {SeriesPattern24<P2AAddressIndex>} identity
- * @property {SeriesPattern24<Address>} address
+ * @typedef {Object} SeriesTree_Indexes_Addr_P2a
+ * @property {SeriesPattern24<P2AAddrIndex>} identity
+ * @property {SeriesPattern24<Addr>} addr
  */
 
 /**
- * @typedef {Object} SeriesTree_Indexes_Address_P2ms
+ * @typedef {Object} SeriesTree_Indexes_Addr_P2ms
  * @property {SeriesPattern25<P2MSOutputIndex>} identity
  */
 
 /**
- * @typedef {Object} SeriesTree_Indexes_Address_Empty
+ * @typedef {Object} SeriesTree_Indexes_Addr_Empty
  * @property {SeriesPattern22<EmptyOutputIndex>} identity
  */
 
 /**
- * @typedef {Object} SeriesTree_Indexes_Address_Unknown
+ * @typedef {Object} SeriesTree_Indexes_Addr_Unknown
  * @property {SeriesPattern33<UnknownOutputIndex>} identity
  */
 
 /**
- * @typedef {Object} SeriesTree_Indexes_Address_OpReturn
+ * @typedef {Object} SeriesTree_Indexes_Addr_OpReturn
  * @property {SeriesPattern23<OpReturnIndex>} identity
  */
 
@@ -5302,7 +5314,7 @@ function createUnspentPattern(client, acc) {
 /**
  * @typedef {Object} SeriesTree_Cohorts
  * @property {SeriesTree_Cohorts_Utxo} utxo
- * @property {SeriesTree_Cohorts_Address} address
+ * @property {SeriesTree_Cohorts_Addr} addr
  */
 
 /**
@@ -6196,63 +6208,63 @@ function createUnspentPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Address
- * @property {SeriesTree_Cohorts_Address_OverAmount} overAmount
- * @property {SeriesTree_Cohorts_Address_AmountRange} amountRange
- * @property {SeriesTree_Cohorts_Address_UnderAmount} underAmount
+ * @typedef {Object} SeriesTree_Cohorts_Addr
+ * @property {SeriesTree_Cohorts_Addr_OverAmount} overAmount
+ * @property {SeriesTree_Cohorts_Addr_AmountRange} amountRange
+ * @property {SeriesTree_Cohorts_Addr_UnderAmount} underAmount
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Address_OverAmount
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _1sat
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10sats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _100sats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _1kSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10kSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _100kSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _1mSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10mSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _1btc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10btc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _100btc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _1kBtc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10kBtc
+ * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _1sat
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10sats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _100sats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _1kSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10kSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _100kSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _1mSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10mSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _1btc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10btc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _100btc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _1kBtc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10kBtc
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Address_AmountRange
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _0sats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _1satTo10sats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10satsTo100sats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _100satsTo1kSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _1kSatsTo10kSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10kSatsTo100kSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _100kSatsTo1mSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _1mSatsTo10mSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10mSatsTo1btc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _1btcTo10btc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10btcTo100btc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _100btcTo1kBtc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _1kBtcTo10kBtc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10kBtcTo100kBtc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} over100kBtc
+ * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _0sats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _1satTo10sats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10satsTo100sats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _100satsTo1kSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _1kSatsTo10kSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10kSatsTo100kSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _100kSatsTo1mSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _1mSatsTo10mSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10mSatsTo1btc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _1btcTo10btc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10btcTo100btc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _100btcTo1kBtc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _1kBtcTo10kBtc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10kBtcTo100kBtc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} over100kBtc
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Address_UnderAmount
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10sats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _100sats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _1kSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10kSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _100kSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _1mSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10mSats
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _1btc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10btc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _100btc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _1kBtc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _10kBtc
- * @property {AddressOutputsRealizedSupplyUnrealizedPattern} _100kBtc
+ * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10sats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _100sats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _1kSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10kSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _100kSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _1mSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10mSats
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _1btc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10btc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _100btc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _1kBtc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _10kBtc
+ * @property {AddrOutputsRealizedSupplyUnrealizedPattern} _100kBtc
  */
 
 /**
@@ -6284,18 +6296,18 @@ class BrkClient extends BrkClientBase {
     "txout_index",
     "empty_output_index",
     "op_return_index",
-    "p2a_address_index",
+    "p2a_addr_index",
     "p2ms_output_index",
-    "p2pk33_address_index",
-    "p2pk65_address_index",
-    "p2pkh_address_index",
-    "p2sh_address_index",
-    "p2tr_address_index",
-    "p2wpkh_address_index",
-    "p2wsh_address_index",
+    "p2pk33_addr_index",
+    "p2pk65_addr_index",
+    "p2pkh_addr_index",
+    "p2sh_addr_index",
+    "p2tr_addr_index",
+    "p2wpkh_addr_index",
+    "p2wsh_addr_index",
     "unknown_output_index",
-    "funded_address_index",
-    "empty_address_index"
+    "funded_addr_index",
+    "empty_addr_index"
   ]);
 
   POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
@@ -7585,7 +7597,7 @@ class BrkClient extends BrkClientBase {
           v3: createBaseCumulativeSumPattern(this, 'tx_v3'),
         },
         volume: {
-          transferVolume: createBaseCumulativeSumPattern4(this, 'exact_transfer_volume'),
+          transferVolume: createBaseCumulativeSumPattern4(this, 'transfer_volume_bis'),
           outputVolume: createBaseCumulativeSumPattern4(this, 'output_volume'),
           txPerSec: createSeriesPattern1(this, 'tx_per_sec'),
           outputsPerSec: createSeriesPattern1(this, 'outputs_per_sec'),
@@ -7619,95 +7631,95 @@ class BrkClient extends BrkClientBase {
         },
         count: {
           total: createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern(this, 'output_count'),
-          unspent: createSeriesPattern1(this, 'exact_utxo_count'),
+          unspent: createSeriesPattern1(this, 'utxo_count_bis'),
         },
       },
-      addresses: {
+      addrs: {
         raw: {
           p2pk65: {
-            firstIndex: createSeriesPattern18(this, 'first_p2pk65_address_index'),
+            firstIndex: createSeriesPattern18(this, 'first_p2pk65_addr_index'),
             bytes: createSeriesPattern27(this, 'p2pk65_bytes'),
           },
           p2pk33: {
-            firstIndex: createSeriesPattern18(this, 'first_p2pk33_address_index'),
+            firstIndex: createSeriesPattern18(this, 'first_p2pk33_addr_index'),
             bytes: createSeriesPattern26(this, 'p2pk33_bytes'),
           },
           p2pkh: {
-            firstIndex: createSeriesPattern18(this, 'first_p2pkh_address_index'),
+            firstIndex: createSeriesPattern18(this, 'first_p2pkh_addr_index'),
             bytes: createSeriesPattern28(this, 'p2pkh_bytes'),
           },
           p2sh: {
-            firstIndex: createSeriesPattern18(this, 'first_p2sh_address_index'),
+            firstIndex: createSeriesPattern18(this, 'first_p2sh_addr_index'),
             bytes: createSeriesPattern29(this, 'p2sh_bytes'),
           },
           p2wpkh: {
-            firstIndex: createSeriesPattern18(this, 'first_p2wpkh_address_index'),
+            firstIndex: createSeriesPattern18(this, 'first_p2wpkh_addr_index'),
             bytes: createSeriesPattern31(this, 'p2wpkh_bytes'),
           },
           p2wsh: {
-            firstIndex: createSeriesPattern18(this, 'first_p2wsh_address_index'),
+            firstIndex: createSeriesPattern18(this, 'first_p2wsh_addr_index'),
             bytes: createSeriesPattern32(this, 'p2wsh_bytes'),
           },
           p2tr: {
-            firstIndex: createSeriesPattern18(this, 'first_p2tr_address_index'),
+            firstIndex: createSeriesPattern18(this, 'first_p2tr_addr_index'),
             bytes: createSeriesPattern30(this, 'p2tr_bytes'),
           },
           p2a: {
-            firstIndex: createSeriesPattern18(this, 'first_p2a_address_index'),
+            firstIndex: createSeriesPattern18(this, 'first_p2a_addr_index'),
             bytes: createSeriesPattern24(this, 'p2a_bytes'),
           },
         },
         indexes: {
-          p2a: createSeriesPattern24(this, 'any_address_index'),
-          p2pk33: createSeriesPattern26(this, 'any_address_index'),
-          p2pk65: createSeriesPattern27(this, 'any_address_index'),
-          p2pkh: createSeriesPattern28(this, 'any_address_index'),
-          p2sh: createSeriesPattern29(this, 'any_address_index'),
-          p2tr: createSeriesPattern30(this, 'any_address_index'),
-          p2wpkh: createSeriesPattern31(this, 'any_address_index'),
-          p2wsh: createSeriesPattern32(this, 'any_address_index'),
-          funded: createSeriesPattern34(this, 'funded_address_index'),
-          empty: createSeriesPattern35(this, 'empty_address_index'),
+          p2a: createSeriesPattern24(this, 'any_addr_index'),
+          p2pk33: createSeriesPattern26(this, 'any_addr_index'),
+          p2pk65: createSeriesPattern27(this, 'any_addr_index'),
+          p2pkh: createSeriesPattern28(this, 'any_addr_index'),
+          p2sh: createSeriesPattern29(this, 'any_addr_index'),
+          p2tr: createSeriesPattern30(this, 'any_addr_index'),
+          p2wpkh: createSeriesPattern31(this, 'any_addr_index'),
+          p2wsh: createSeriesPattern32(this, 'any_addr_index'),
+          funded: createSeriesPattern34(this, 'funded_addr_index'),
+          empty: createSeriesPattern35(this, 'empty_addr_index'),
         },
         data: {
-          funded: createSeriesPattern34(this, 'funded_address_data'),
-          empty: createSeriesPattern35(this, 'empty_address_data'),
+          funded: createSeriesPattern34(this, 'funded_addr_data'),
+          empty: createSeriesPattern35(this, 'empty_addr_data'),
         },
-        funded: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(this, 'address_count'),
-        empty: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(this, 'empty_address_count'),
+        funded: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(this, 'addr_count'),
+        empty: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(this, 'empty_addr_count'),
         activity: {
-          all: createBothReactivatedReceivingSendingPattern(this, 'address_activity'),
-          p2pk65: createBothReactivatedReceivingSendingPattern(this, 'p2pk65_address_activity'),
-          p2pk33: createBothReactivatedReceivingSendingPattern(this, 'p2pk33_address_activity'),
-          p2pkh: createBothReactivatedReceivingSendingPattern(this, 'p2pkh_address_activity'),
-          p2sh: createBothReactivatedReceivingSendingPattern(this, 'p2sh_address_activity'),
-          p2wpkh: createBothReactivatedReceivingSendingPattern(this, 'p2wpkh_address_activity'),
-          p2wsh: createBothReactivatedReceivingSendingPattern(this, 'p2wsh_address_activity'),
-          p2tr: createBothReactivatedReceivingSendingPattern(this, 'p2tr_address_activity'),
-          p2a: createBothReactivatedReceivingSendingPattern(this, 'p2a_address_activity'),
+          all: createBothReactivatedReceivingSendingPattern(this, 'addr_activity'),
+          p2pk65: createBothReactivatedReceivingSendingPattern(this, 'p2pk65_addr_activity'),
+          p2pk33: createBothReactivatedReceivingSendingPattern(this, 'p2pk33_addr_activity'),
+          p2pkh: createBothReactivatedReceivingSendingPattern(this, 'p2pkh_addr_activity'),
+          p2sh: createBothReactivatedReceivingSendingPattern(this, 'p2sh_addr_activity'),
+          p2wpkh: createBothReactivatedReceivingSendingPattern(this, 'p2wpkh_addr_activity'),
+          p2wsh: createBothReactivatedReceivingSendingPattern(this, 'p2wsh_addr_activity'),
+          p2tr: createBothReactivatedReceivingSendingPattern(this, 'p2tr_addr_activity'),
+          p2a: createBothReactivatedReceivingSendingPattern(this, 'p2a_addr_activity'),
         },
-        total: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(this, 'total_address_count'),
+        total: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(this, 'total_addr_count'),
         new: {
-          all: createBaseCumulativeSumPattern(this, 'new_address_count'),
-          p2pk65: createBaseCumulativeSumPattern(this, 'p2pk65_new_address_count'),
-          p2pk33: createBaseCumulativeSumPattern(this, 'p2pk33_new_address_count'),
-          p2pkh: createBaseCumulativeSumPattern(this, 'p2pkh_new_address_count'),
-          p2sh: createBaseCumulativeSumPattern(this, 'p2sh_new_address_count'),
-          p2wpkh: createBaseCumulativeSumPattern(this, 'p2wpkh_new_address_count'),
-          p2wsh: createBaseCumulativeSumPattern(this, 'p2wsh_new_address_count'),
-          p2tr: createBaseCumulativeSumPattern(this, 'p2tr_new_address_count'),
-          p2a: createBaseCumulativeSumPattern(this, 'p2a_new_address_count'),
+          all: createBaseCumulativeSumPattern(this, 'new_addr_count'),
+          p2pk65: createBaseCumulativeSumPattern(this, 'p2pk65_new_addr_count'),
+          p2pk33: createBaseCumulativeSumPattern(this, 'p2pk33_new_addr_count'),
+          p2pkh: createBaseCumulativeSumPattern(this, 'p2pkh_new_addr_count'),
+          p2sh: createBaseCumulativeSumPattern(this, 'p2sh_new_addr_count'),
+          p2wpkh: createBaseCumulativeSumPattern(this, 'p2wpkh_new_addr_count'),
+          p2wsh: createBaseCumulativeSumPattern(this, 'p2wsh_new_addr_count'),
+          p2tr: createBaseCumulativeSumPattern(this, 'p2tr_new_addr_count'),
+          p2a: createBaseCumulativeSumPattern(this, 'p2a_new_addr_count'),
         },
         delta: {
-          all: createAbsoluteRatePattern(this, 'address_count'),
-          p2pk65: createAbsoluteRatePattern(this, 'p2pk65_address_count'),
-          p2pk33: createAbsoluteRatePattern(this, 'p2pk33_address_count'),
-          p2pkh: createAbsoluteRatePattern(this, 'p2pkh_address_count'),
-          p2sh: createAbsoluteRatePattern(this, 'p2sh_address_count'),
-          p2wpkh: createAbsoluteRatePattern(this, 'p2wpkh_address_count'),
-          p2wsh: createAbsoluteRatePattern(this, 'p2wsh_address_count'),
-          p2tr: createAbsoluteRatePattern(this, 'p2tr_address_count'),
-          p2a: createAbsoluteRatePattern(this, 'p2a_address_count'),
+          all: createAbsoluteRatePattern(this, 'addr_count'),
+          p2pk65: createAbsoluteRatePattern(this, 'p2pk65_addr_count'),
+          p2pk33: createAbsoluteRatePattern(this, 'p2pk33_addr_count'),
+          p2pkh: createAbsoluteRatePattern(this, 'p2pkh_addr_count'),
+          p2sh: createAbsoluteRatePattern(this, 'p2sh_addr_count'),
+          p2wpkh: createAbsoluteRatePattern(this, 'p2wpkh_addr_count'),
+          p2wsh: createAbsoluteRatePattern(this, 'p2wsh_addr_count'),
+          p2tr: createAbsoluteRatePattern(this, 'p2tr_addr_count'),
+          p2a: createAbsoluteRatePattern(this, 'p2a_addr_count'),
         },
       },
       scripts: {
@@ -7799,6 +7811,10 @@ class BrkClient extends BrkClientBase {
           value: createPhsReboundThsPattern(this, 'hash_value'),
         },
       },
+      positions: {
+        block: createSeriesPattern18(this, 'position'),
+        tx: createSeriesPattern19(this, 'position'),
+      },
       cointime: {
         activity: {
           coinblocksCreated: createBaseCumulativeSumPattern(this, 'coinblocks_created'),
@@ -7868,38 +7884,38 @@ class BrkClient extends BrkClientBase {
         minus4: createSeriesPattern1(this, 'constant_minus_4'),
       },
       indexes: {
-        address: {
+        addr: {
           p2pk33: {
-            identity: createSeriesPattern26(this, 'p2pk33_address_index'),
-            address: createSeriesPattern26(this, 'p2pk33_address'),
+            identity: createSeriesPattern26(this, 'p2pk33_addr_index'),
+            addr: createSeriesPattern26(this, 'p2pk33_addr'),
           },
           p2pk65: {
-            identity: createSeriesPattern27(this, 'p2pk65_address_index'),
-            address: createSeriesPattern27(this, 'p2pk65_address'),
+            identity: createSeriesPattern27(this, 'p2pk65_addr_index'),
+            addr: createSeriesPattern27(this, 'p2pk65_addr'),
           },
           p2pkh: {
-            identity: createSeriesPattern28(this, 'p2pkh_address_index'),
-            address: createSeriesPattern28(this, 'p2pkh_address'),
+            identity: createSeriesPattern28(this, 'p2pkh_addr_index'),
+            addr: createSeriesPattern28(this, 'p2pkh_addr'),
           },
           p2sh: {
-            identity: createSeriesPattern29(this, 'p2sh_address_index'),
-            address: createSeriesPattern29(this, 'p2sh_address'),
+            identity: createSeriesPattern29(this, 'p2sh_addr_index'),
+            addr: createSeriesPattern29(this, 'p2sh_addr'),
           },
           p2tr: {
-            identity: createSeriesPattern30(this, 'p2tr_address_index'),
-            address: createSeriesPattern30(this, 'p2tr_address'),
+            identity: createSeriesPattern30(this, 'p2tr_addr_index'),
+            addr: createSeriesPattern30(this, 'p2tr_addr'),
           },
           p2wpkh: {
-            identity: createSeriesPattern31(this, 'p2wpkh_address_index'),
-            address: createSeriesPattern31(this, 'p2wpkh_address'),
+            identity: createSeriesPattern31(this, 'p2wpkh_addr_index'),
+            addr: createSeriesPattern31(this, 'p2wpkh_addr'),
           },
           p2wsh: {
-            identity: createSeriesPattern32(this, 'p2wsh_address_index'),
-            address: createSeriesPattern32(this, 'p2wsh_address'),
+            identity: createSeriesPattern32(this, 'p2wsh_addr_index'),
+            addr: createSeriesPattern32(this, 'p2wsh_addr'),
           },
           p2a: {
-            identity: createSeriesPattern24(this, 'p2a_address_index'),
-            address: createSeriesPattern24(this, 'p2a_address'),
+            identity: createSeriesPattern24(this, 'p2a_addr_index'),
+            addr: createSeriesPattern24(this, 'p2a_addr'),
           },
           p2ms: {
             identity: createSeriesPattern25(this, 'p2ms_output_index'),
@@ -9154,53 +9170,53 @@ class BrkClient extends BrkClientBase {
             over15y: createBaseCumulativeSumPattern4(this, 'utxos_over_15y_old_matured_supply'),
           },
         },
-        address: {
+        addr: {
           overAmount: {
-            _1sat: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1sat'),
-            _10sats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10sats'),
-            _100sats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_100sats'),
-            _1kSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1k_sats'),
-            _10kSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10k_sats'),
-            _100kSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_100k_sats'),
-            _1mSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1m_sats'),
-            _10mSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10m_sats'),
-            _1btc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1btc'),
-            _10btc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10btc'),
-            _100btc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_100btc'),
-            _1kBtc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1k_btc'),
-            _10kBtc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10k_btc'),
+            _1sat: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1sat'),
+            _10sats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10sats'),
+            _100sats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_100sats'),
+            _1kSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1k_sats'),
+            _10kSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10k_sats'),
+            _100kSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_100k_sats'),
+            _1mSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1m_sats'),
+            _10mSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10m_sats'),
+            _1btc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1btc'),
+            _10btc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10btc'),
+            _100btc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_100btc'),
+            _1kBtc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1k_btc'),
+            _10kBtc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10k_btc'),
           },
           amountRange: {
-            _0sats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_0sats'),
-            _1satTo10sats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1sat_to_10sats'),
-            _10satsTo100sats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10sats_to_100sats'),
-            _100satsTo1kSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_100sats_to_1k_sats'),
-            _1kSatsTo10kSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1k_sats_to_10k_sats'),
-            _10kSatsTo100kSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10k_sats_to_100k_sats'),
-            _100kSatsTo1mSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_100k_sats_to_1m_sats'),
-            _1mSatsTo10mSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1m_sats_to_10m_sats'),
-            _10mSatsTo1btc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10m_sats_to_1btc'),
-            _1btcTo10btc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1btc_to_10btc'),
-            _10btcTo100btc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10btc_to_100btc'),
-            _100btcTo1kBtc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_100btc_to_1k_btc'),
-            _1kBtcTo10kBtc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1k_btc_to_10k_btc'),
-            _10kBtcTo100kBtc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10k_btc_to_100k_btc'),
-            over100kBtc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_100k_btc'),
+            _0sats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_0sats'),
+            _1satTo10sats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1sat_to_10sats'),
+            _10satsTo100sats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10sats_to_100sats'),
+            _100satsTo1kSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_100sats_to_1k_sats'),
+            _1kSatsTo10kSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1k_sats_to_10k_sats'),
+            _10kSatsTo100kSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10k_sats_to_100k_sats'),
+            _100kSatsTo1mSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_100k_sats_to_1m_sats'),
+            _1mSatsTo10mSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1m_sats_to_10m_sats'),
+            _10mSatsTo1btc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10m_sats_to_1btc'),
+            _1btcTo10btc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1btc_to_10btc'),
+            _10btcTo100btc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10btc_to_100btc'),
+            _100btcTo1kBtc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_100btc_to_1k_btc'),
+            _1kBtcTo10kBtc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1k_btc_to_10k_btc'),
+            _10kBtcTo100kBtc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10k_btc_to_100k_btc'),
+            over100kBtc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_100k_btc'),
           },
           underAmount: {
-            _10sats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10sats'),
-            _100sats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_100sats'),
-            _1kSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_1k_sats'),
-            _10kSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10k_sats'),
-            _100kSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_100k_sats'),
-            _1mSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_1m_sats'),
-            _10mSats: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10m_sats'),
-            _1btc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_1btc'),
-            _10btc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10btc'),
-            _100btc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_100btc'),
-            _1kBtc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_1k_btc'),
-            _10kBtc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10k_btc'),
-            _100kBtc: createAddressOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_100k_btc'),
+            _10sats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10sats'),
+            _100sats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_100sats'),
+            _1kSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_1k_sats'),
+            _10kSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10k_sats'),
+            _100kSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_100k_sats'),
+            _1mSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_1m_sats'),
+            _10mSats: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10m_sats'),
+            _1btc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_1btc'),
+            _10btc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10btc'),
+            _100btc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_100btc'),
+            _1kBtc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_1k_btc'),
+            _10kBtc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10k_btc'),
+            _100kBtc: createAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_100k_btc'),
           },
         },
       },
@@ -9242,8 +9258,8 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/address/{address}`
    *
-   * @param {Address} address
-   * @returns {Promise<AddressStats>}
+   * @param {Addr} address
+   * @returns {Promise<AddrStats>}
    */
   async getAddress(address) {
     return this.getJson(`/api/address/${address}`);
@@ -9258,7 +9274,7 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/address/{address}/txs`
    *
-   * @param {Address} address
+   * @param {Addr} address
    * @param {Txid=} [after_txid] - Txid to paginate from (return transactions before this one)
    * @returns {Promise<Transaction[]>}
    */
@@ -9279,7 +9295,7 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/address/{address}/txs/chain`
    *
-   * @param {Address} address
+   * @param {Addr} address
    * @param {Txid=} [after_txid] - Txid to paginate from (return transactions before this one)
    * @returns {Promise<Transaction[]>}
    */
@@ -9300,7 +9316,7 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/address/{address}/txs/mempool`
    *
-   * @param {Address} address
+   * @param {Addr} address
    * @returns {Promise<Txid[]>}
    */
   async getAddressMempoolTxs(address) {
@@ -9316,7 +9332,7 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/address/{address}/utxo`
    *
-   * @param {Address} address
+   * @param {Addr} address
    * @returns {Promise<Utxo[]>}
    */
   async getAddressUtxos(address) {
@@ -10142,7 +10158,7 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/v1/validate-address/{address}`
    *
    * @param {string} address - Bitcoin address to validate (can be any string)
-   * @returns {Promise<AddressValidation>}
+   * @returns {Promise<AddrValidation>}
    */
   async validateAddress(address) {
     return this.getJson(`/api/v1/validate-address/${address}`);

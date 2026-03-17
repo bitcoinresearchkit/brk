@@ -34,7 +34,7 @@ import { periodIdToName } from "./utils.js";
  * @typedef {Object} MaPeriod
  * @property {string} id
  * @property {Color} color
- * @property {Brk.BpsCentsRatioSatsUsdPattern} ratio
+ * @property {MaPriceRatioPattern} ratio
  */
 
 /**
@@ -1028,7 +1028,7 @@ export function createMarketSection() {
             title: "Thermocap Multiple",
             bottom: [
               line({
-                series: indicators.thermocapMultiple.ratio,
+                series: indicators.thermoCapMultiple.ratio,
                 name: "Thermocap",
                 color: colors.bitcoin,
                 unit: Unit.ratio,
@@ -1071,7 +1071,7 @@ export function createMarketSection() {
             title: "Seller Exhaustion Constant",
             bottom: [
               line({
-                series: indicators.sellerExhaustionConstant,
+                series: indicators.sellerExhaustion,
                 name: "SEC",
                 color: colors.bitcoin,
                 unit: Unit.ratio,

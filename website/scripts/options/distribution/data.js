@@ -20,8 +20,8 @@ const isAddressable = (key) =>
 
 export function buildCohortData() {
   const utxoCohorts = brk.series.cohorts.utxo;
-  const addressCohorts = brk.series.cohorts.address;
-  const { addresses } = brk.series;
+  const addressCohorts = brk.series.cohorts.addr;
+  const { addrs } = brk.series;
   const {
     TERM_NAMES,
     EPOCH_NAMES,
@@ -44,8 +44,8 @@ export function buildCohortData() {
     color: colors.bitcoin,
     tree: utxoCohorts.all,
     addressCount: {
-      inner: addresses.funded.all,
-      delta: addresses.delta.all,
+      inner: addrs.funded.all,
+      delta: addrs.delta.all,
     },
   };
 
@@ -113,7 +113,7 @@ export function buildCohortData() {
         title: `Addresses ${names.long}`,
         color: colors.at(i, arr.length),
         tree: cohort,
-        addressCount: cohort.addressCount,
+        addressCount: cohort.addrCount,
       };
     },
   );
@@ -135,7 +135,7 @@ export function buildCohortData() {
         title: `Addresses ${names.long}`,
         color: colors.at(i, arr.length),
         tree: cohort,
-        addressCount: cohort.addressCount,
+        addressCount: cohort.addrCount,
       };
     },
   );
@@ -157,7 +157,7 @@ export function buildCohortData() {
         title: `Addresses ${names.long}`,
         color: colors.at(i, arr.length),
         tree: cohort,
-        addressCount: cohort.addressCount,
+        addressCount: cohort.addrCount,
       };
     },
   );
@@ -170,8 +170,8 @@ export function buildCohortData() {
       color: colors.at(i, arr.length),
       tree: utxoCohorts.type[key],
       addressCount: {
-        inner: addresses.funded[key],
-        delta: addresses.delta[key],
+        inner: addrs.funded[key],
+        delta: addrs.delta[key],
       },
     };
   });
@@ -204,11 +204,13 @@ export function buildCohortData() {
     }),
   );
 
-  const profitabilityProfit = entries(PROFIT_NAMES).map(([key, names], i, arr) => ({
-    name: names.short,
-    color: colors.at(i, arr.length),
-    pattern: profit[key],
-  }));
+  const profitabilityProfit = entries(PROFIT_NAMES).map(
+    ([key, names], i, arr) => ({
+      name: names.short,
+      color: colors.at(i, arr.length),
+      pattern: profit[key],
+    }),
+  );
 
   const profitabilityLoss = entries(LOSS_NAMES).map(([key, names], i, arr) => ({
     name: names.short,

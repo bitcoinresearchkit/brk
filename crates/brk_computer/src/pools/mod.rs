@@ -5,7 +5,7 @@ use brk_indexer::Indexer;
 use brk_store::AnyStore;
 use brk_traversable::Traversable;
 use brk_types::{
-    Address, AddressBytes, Height, Indexes, OutputType, PoolSlug, Pools, TxOutIndex, pools,
+    Addr, AddrBytes, Height, Indexes, OutputType, PoolSlug, Pools, TxOutIndex, pools,
 };
 use rayon::prelude::*;
 use vecdb::{
@@ -121,14 +121,14 @@ impl Vecs {
         let first_txout_index = indexer.vecs.transactions.first_txout_index.reader();
         let output_type = indexer.vecs.outputs.output_type.reader();
         let type_index = indexer.vecs.outputs.type_index.reader();
-        let p2pk65 = indexer.vecs.addresses.p2pk65.bytes.reader();
-        let p2pk33 = indexer.vecs.addresses.p2pk33.bytes.reader();
-        let p2pkh = indexer.vecs.addresses.p2pkh.bytes.reader();
-        let p2sh = indexer.vecs.addresses.p2sh.bytes.reader();
-        let p2wpkh = indexer.vecs.addresses.p2wpkh.bytes.reader();
-        let p2wsh = indexer.vecs.addresses.p2wsh.bytes.reader();
-        let p2tr = indexer.vecs.addresses.p2tr.bytes.reader();
-        let p2a = indexer.vecs.addresses.p2a.bytes.reader();
+        let p2pk65 = indexer.vecs.addrs.p2pk65.bytes.reader();
+        let p2pk33 = indexer.vecs.addrs.p2pk33.bytes.reader();
+        let p2pkh = indexer.vecs.addrs.p2pkh.bytes.reader();
+        let p2sh = indexer.vecs.addrs.p2sh.bytes.reader();
+        let p2wpkh = indexer.vecs.addrs.p2wpkh.bytes.reader();
+        let p2wsh = indexer.vecs.addrs.p2wsh.bytes.reader();
+        let p2tr = indexer.vecs.addrs.p2tr.bytes.reader();
+        let p2a = indexer.vecs.addrs.p2a.bytes.reader();
 
         let unknown = self.pools.get_unknown();
 
@@ -165,18 +165,18 @@ impl Vecs {
                         let ot = output_type.get(txout_index.to_usize());
                         let ti = usize::from(type_index.get(txout_index.to_usize()));
                         match ot {
-                            OutputType::P2PK65 => Some(AddressBytes::from(p2pk65.get(ti))),
-                            OutputType::P2PK33 => Some(AddressBytes::from(p2pk33.get(ti))),
-                            OutputType::P2PKH => Some(AddressBytes::from(p2pkh.get(ti))),
-                            OutputType::P2SH => Some(AddressBytes::from(p2sh.get(ti))),
-                            OutputType::P2WPKH => Some(AddressBytes::from(p2wpkh.get(ti))),
-                            OutputType::P2WSH => Some(AddressBytes::from(p2wsh.get(ti))),
-                            OutputType::P2TR => Some(AddressBytes::from(p2tr.get(ti))),
-                            OutputType::P2A => Some(AddressBytes::from(p2a.get(ti))),
+                            OutputType::P2PK65 => Some(AddrBytes::from(p2pk65.get(ti))),
+                            OutputType::P2PK33 => Some(AddrBytes::from(p2pk33.get(ti))),
+                            OutputType::P2PKH => Some(AddrBytes::from(p2pkh.get(ti))),
+                            OutputType::P2SH => Some(AddrBytes::from(p2sh.get(ti))),
+                            OutputType::P2WPKH => Some(AddrBytes::from(p2wpkh.get(ti))),
+                            OutputType::P2WSH => Some(AddrBytes::from(p2wsh.get(ti))),
+                            OutputType::P2TR => Some(AddrBytes::from(p2tr.get(ti))),
+                            OutputType::P2A => Some(AddrBytes::from(p2a.get(ti))),
                             _ => None,
                         }
-                        .map(|bytes| Address::try_from(&bytes).unwrap())
-                        .and_then(|address| self.pools.find_from_address(&address))
+                        .map(|bytes| Addr::try_from(&bytes).unwrap())
+                        .and_then(|addr| self.pools.find_from_addr(&addr))
                     })
                     .or_else(|| self.pools.find_from_coinbase_tag(&coinbase_tag))
                     .unwrap_or(unknown);

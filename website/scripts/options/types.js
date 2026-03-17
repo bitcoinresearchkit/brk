@@ -171,13 +171,13 @@
  * @typedef {LongTermPattern | AgeRangePattern} PatternWithPercentiles
  *
  * Patterns with RelToMarketCap in relative (geAmount.*, ltAmount.*):
- * @typedef {UtxoAmountPattern | AddressAmountPattern} PatternBasicWithMarketCap
+ * @typedef {UtxoAmountPattern | AddrAmountPattern} PatternBasicWithMarketCap
  *
  * Patterns without RelToMarketCap in relative:
  *   - EpochPattern (epoch.*, year.*)
  *   - UtxoAmountPattern (amountRange.*)
  *   - OutputsRealizedSupplyUnrealizedPattern2 (addressable type.*)
- * @typedef {EpochPattern | UtxoAmountPattern | Brk.OutputsRealizedSupplyUnrealizedPattern2} PatternBasicWithoutMarketCap
+ * @typedef {EpochPattern | UtxoAmountPattern | EmptyPattern} PatternBasicWithoutMarketCap
  *
  * Patterns without relative section entirely (edge case output types):
  *   - EmptyPattern (type.empty, type.p2ms, type.unknown)
@@ -196,7 +196,7 @@
  * @property {string} title
  * @property {Color} color
  * @property {PatternAll} tree
- * @property {Brk.DeltaInnerPattern} addressCount
+ * @property {AddressCountDeltaPattern} addressCount
  *
  * Full cohort: adjustedSopr + percentiles + RelToMarketCap (term.short)
  * @typedef {Object} CohortFull
@@ -265,7 +265,7 @@
  * ============================================================================
  *
  * Addressable cohort with address count (for "type" cohorts - uses OutputsRealizedSupplyUnrealizedPattern2)
- * @typedef {{ name: string, title: string, color: Color, tree: Brk.OutputsRealizedSupplyUnrealizedPattern2, addressCount: Brk.DeltaInnerPattern }} CohortAddress
+ * @typedef {{ name: string, title: string, color: Color, tree: EmptyPattern, addressCount: AddressCountDeltaPattern }} CohortAddr
  *
  * ============================================================================
  * Cohort Group Types (by capability)
@@ -328,28 +328,28 @@
  * @property {readonly UtxoCohortObject[]} list
  * @property {CohortAll} all
  *
- * @typedef {Object} AddressCohortObject
+ * @typedef {Object} AddrCohortObject
  * @property {string} name
  * @property {string} title
  * @property {Color} color
- * @property {AddressCohortPattern} tree
- * @property {Brk.DeltaInnerPattern} addressCount
+ * @property {AddrCohortPattern} tree
+ * @property {AddressCountDeltaPattern} addressCount
  *
- * @typedef {UtxoCohortObject | AddressCohortObject | CohortWithoutRelative} CohortObject
+ * @typedef {UtxoCohortObject | AddrCohortObject | CohortWithoutRelative} CohortObject
  *
  *
- * @typedef {Object} AddressCohortGroupObject
+ * @typedef {Object} AddrCohortGroupObject
  * @property {string} name
  * @property {string} title
- * @property {readonly AddressCohortObject[]} list
+ * @property {readonly AddrCohortObject[]} list
  * @property {CohortAll} all
  *
- * @typedef {UtxoCohortGroupObject | AddressCohortGroupObject} CohortGroupObject
+ * @typedef {UtxoCohortGroupObject | AddrCohortGroupObject} CohortGroupObject
  *
- * @typedef {Object} CohortGroupAddress
+ * @typedef {Object} CohortGroupAddr
  * @property {string} name
  * @property {string} title
- * @property {readonly CohortAddress[]} list
+ * @property {readonly CohortAddr[]} list
  * @property {CohortAll} all
  */
 

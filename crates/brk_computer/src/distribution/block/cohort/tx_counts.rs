@@ -1,9 +1,9 @@
-use brk_types::{EmptyAddressData, FundedAddressData, TxIndex};
+use brk_types::{EmptyAddrData, FundedAddrData, TxIndex};
 use smallvec::SmallVec;
 
-use crate::distribution::address::AddressTypeToTypeIndexMap;
+use crate::distribution::addr::AddrTypeToTypeIndexMap;
 
-use super::with_source::WithAddressDataSource;
+use super::with_source::WithAddrDataSource;
 
 /// Update tx_count for addresses based on unique transactions they participated in.
 ///
@@ -14,9 +14,9 @@ use super::with_source::WithAddressDataSource;
 /// Addresses are looked up in funded_cache first, then empty_cache.
 /// NOTE: This should be called AFTER merging parallel-fetched address data into funded_cache.
 pub(crate) fn update_tx_counts(
-    funded_cache: &mut AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>,
-    empty_cache: &mut AddressTypeToTypeIndexMap<WithAddressDataSource<EmptyAddressData>>,
-    mut tx_index_vecs: AddressTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>,
+    funded_cache: &mut AddrTypeToTypeIndexMap<WithAddrDataSource<FundedAddrData>>,
+    empty_cache: &mut AddrTypeToTypeIndexMap<WithAddrDataSource<EmptyAddrData>>,
+    mut tx_index_vecs: AddrTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>,
 ) {
     // First, deduplicate tx_index_vecs for addresses that appear multiple times in a block
     for (_, map) in tx_index_vecs.iter_mut() {
@@ -29,20 +29,20 @@ pub(crate) fn update_tx_counts(
     }
 
     // Update tx_count on address data
-    for (address_type, type_index, tx_index_vec) in tx_index_vecs
+    for (addr_type, type_index, tx_index_vec) in tx_index_vecs
         .into_iter()
         .flat_map(|(t, m)| m.into_iter().map(move |(i, v)| (t, i, v)))
     {
         let tx_count = tx_index_vec.len() as u32;
 
         if let Some(addr_data) = funded_cache
-            .get_mut(address_type)
+            .get_mut(addr_type)
             .unwrap()
             .get_mut(&type_index)
         {
             addr_data.tx_count += tx_count;
         } else if let Some(addr_data) = empty_cache
-            .get_mut(address_type)
+            .get_mut(addr_type)
             .unwrap()
             .get_mut(&type_index)
         {

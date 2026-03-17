@@ -59,9 +59,7 @@ struct FieldInfo<'a> {
 }
 
 /// Returns None for skip, Some((attr, rename, wrap, hidden)) for normal/flatten/hidden.
-fn get_field_attr(
-    field: &syn::Field,
-) -> Option<(FieldAttr, Option<String>, Option<String>, bool)> {
+fn get_field_attr(field: &syn::Field) -> Option<(FieldAttr, Option<String>, Option<String>, bool)> {
     let mut attr_type = FieldAttr::Normal;
     let mut rename = None;
     let mut wrap = None;
@@ -568,12 +566,18 @@ fn generate_iter_body(
 }
 
 fn generate_iterator_impl(infos: &[FieldInfo], struct_hidden: bool) -> proc_macro2::TokenStream {
-    let all_regular: Vec<_> = infos.iter().filter(|i| !i.is_option).map(|i| i.name).collect();
-    let all_option: Vec<_> = infos.iter().filter(|i| i.is_option).map(|i| i.name).collect();
+    let all_regular: Vec<_> = infos
+        .iter()
+        .filter(|i| !i.is_option)
+        .map(|i| i.name)
+        .collect();
+    let all_option: Vec<_> = infos
+        .iter()
+        .filter(|i| i.is_option)
+        .map(|i| i.name)
+        .collect();
 
     let exportable_body = generate_iter_body(&all_regular, &all_option, "iter_any_exportable");
-
-    let has_hidden_fields = infos.iter().any(|i| i.hidden);
 
     let visible_impl = if struct_hidden {
         // Entire struct is hidden — iter_any_visible returns nothing
@@ -585,9 +589,18 @@ fn generate_iterator_impl(infos: &[FieldInfo], struct_hidden: bool) -> proc_macr
     } else {
         // Always generate iter_any_visible that calls iter_any_visible on children
         // (skipping hidden fields if any), so hidden propagates through the tree
-        let visible_regular: Vec<_> = infos.iter().filter(|i| !i.is_option && !i.hidden).map(|i| i.name).collect();
-        let visible_option: Vec<_> = infos.iter().filter(|i| i.is_option && !i.hidden).map(|i| i.name).collect();
-        let visible_body = generate_iter_body(&visible_regular, &visible_option, "iter_any_visible");
+        let visible_regular: Vec<_> = infos
+            .iter()
+            .filter(|i| !i.is_option && !i.hidden)
+            .map(|i| i.name)
+            .collect();
+        let visible_option: Vec<_> = infos
+            .iter()
+            .filter(|i| i.is_option && !i.hidden)
+            .map(|i| i.name)
+            .collect();
+        let visible_body =
+            generate_iter_body(&visible_regular, &visible_option, "iter_any_visible");
         quote! {
             fn iter_any_visible(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
                 #visible_body

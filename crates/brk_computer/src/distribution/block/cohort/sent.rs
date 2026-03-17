@@ -1,16 +1,16 @@
-use brk_cohort::{AmountBucket, ByAddressType};
+use brk_cohort::{AmountBucket, ByAddrType};
 use brk_error::Result;
 use brk_types::{Age, Cents, CheckedSub, Height, Sats, Timestamp, TypeIndex};
 use rustc_hash::FxHashSet;
 use vecdb::VecIndex;
 
 use crate::distribution::{
-    address::{AddressTypeToActivityCounts, HeightToAddressTypeToVec},
-    cohorts::AddressCohorts,
+    addr::{AddrTypeToActivityCounts, HeightToAddrTypeToVec},
+    cohorts::AddrCohorts,
     compute::PriceRangeMax,
 };
 
-use super::super::cache::AddressLookup;
+use super::super::cache::AddrLookup;
 
 /// Process sent outputs for address cohorts.
 ///
@@ -27,20 +27,20 @@ use super::super::cache::AddressLookup;
 /// for accurate peak regret calculation.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn process_sent(
-    sent_data: HeightToAddressTypeToVec<(TypeIndex, Sats)>,
-    cohorts: &mut AddressCohorts,
-    lookup: &mut AddressLookup<'_>,
+    sent_data: HeightToAddrTypeToVec<(TypeIndex, Sats)>,
+    cohorts: &mut AddrCohorts,
+    lookup: &mut AddrLookup<'_>,
     current_price: Cents,
     price_range_max: &PriceRangeMax,
-    address_count: &mut ByAddressType<u64>,
-    empty_address_count: &mut ByAddressType<u64>,
-    activity_counts: &mut AddressTypeToActivityCounts,
-    received_addresses: &ByAddressType<FxHashSet<TypeIndex>>,
+    addr_count: &mut ByAddrType<u64>,
+    empty_addr_count: &mut ByAddrType<u64>,
+    activity_counts: &mut AddrTypeToActivityCounts,
+    received_addrs: &ByAddrType<FxHashSet<TypeIndex>>,
     height_to_price: &[Cents],
     height_to_timestamp: &[Timestamp],
     current_height: Height,
     current_timestamp: Timestamp,
-    seen_senders: &mut ByAddressType<FxHashSet<TypeIndex>>,
+    seen_senders: &mut ByAddrType<FxHashSet<TypeIndex>>,
 ) -> Result<()> {
     seen_senders.values_mut().for_each(|set| set.clear());
 
@@ -54,10 +54,10 @@ pub(crate) fn process_sent(
 
         for (output_type, vec) in by_type.unwrap().into_iter() {
             // Cache mutable refs for this address type
-            let type_address_count = address_count.get_mut(output_type).unwrap();
-            let type_empty_count = empty_address_count.get_mut(output_type).unwrap();
+            let type_addr_count = addr_count.get_mut(output_type).unwrap();
+            let type_empty_count = empty_addr_count.get_mut(output_type).unwrap();
             let type_activity = activity_counts.get_mut_unwrap(output_type);
-            let type_received = received_addresses.get(output_type);
+            let type_received = received_addrs.get(output_type);
             let type_seen = seen_senders.get_mut_unwrap(output_type);
 
             for (type_index, value) in vec {
@@ -99,7 +99,7 @@ pub(crate) fn process_sent(
 
                 // Migrate address to new bucket or mark as empty
                 if will_be_empty {
-                    *type_address_count -= 1;
+                    *type_addr_count -= 1;
                     *type_empty_count += 1;
                     lookup.move_to_empty(output_type, type_index);
                 } else if crossing_boundary {

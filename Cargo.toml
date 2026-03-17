@@ -68,7 +68,7 @@ color-eyre = "0.6.5"
 corepc-client = { path = "/Users/k/Developer/corepc/client", features = ["client-sync"] }
 corepc-jsonrpc = { package = "jsonrpc", path = "/Users/k/Developer/corepc/jsonrpc", features = ["simple_http"], default-features = false }
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
-fjall = "3.1.0"
+fjall = "3.1.1"
 indexmap = { version = "2.13.0", features = ["serde"] }
 jiff = { version = "0.2.23", features = ["perf-inline", "tz-system"], default-features = false }
 owo-colors = "4.3.0"

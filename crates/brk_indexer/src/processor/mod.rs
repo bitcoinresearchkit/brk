@@ -6,9 +6,9 @@ mod types;
 
 pub use types::*;
 
-use brk_cohort::ByAddressType;
+use brk_cohort::ByAddrType;
 use brk_error::Result;
-use brk_types::{AddressHash, Block, Height, OutPoint, TxInIndex, TxIndex, TxOutIndex, TypeIndex};
+use brk_types::{AddrHash, Block, Height, OutPoint, TxInIndex, TxIndex, TxOutIndex, TypeIndex};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{Indexes, Readers, Stores, Vecs};
@@ -40,7 +40,7 @@ impl BlockProcessor<'_> {
         txouts: Vec<ProcessedOutput>,
         txins: Vec<(TxInIndex, InputSource)>,
         same_block_spent_outpoints: &FxHashSet<OutPoint>,
-        already_added: &mut ByAddressType<FxHashMap<AddressHash, TypeIndex>>,
+        already_added: &mut ByAddrType<FxHashMap<AddrHash, TypeIndex>>,
         same_block_info: &mut FxHashMap<OutPoint, SameBlockOutputInfo>,
     ) -> Result<()> {
         let height = self.height;
@@ -52,12 +52,12 @@ impl BlockProcessor<'_> {
 
         let outputs = &mut self.vecs.outputs;
         let inputs = &mut self.vecs.inputs;
-        let addresses = &mut self.vecs.addresses;
+        let addrs = &mut self.vecs.addrs;
         let scripts = &mut self.vecs.scripts;
 
-        let addr_hash_stores = &mut self.stores.address_type_to_address_hash_to_address_index;
-        let addr_tx_index_stores = &mut self.stores.address_type_to_address_index_and_tx_index;
-        let addr_outpoint_stores = &mut self.stores.address_type_to_address_index_and_unspent_outpoint;
+        let addr_hash_stores = &mut self.stores.addr_type_to_addr_hash_to_addr_index;
+        let addr_tx_index_stores = &mut self.stores.addr_type_to_addr_index_and_tx_index;
+        let addr_outpoint_stores = &mut self.stores.addr_type_to_addr_index_and_unspent_outpoint;
         let txid_prefix_store = &mut self.stores.txid_prefix_to_tx_index;
 
         let (finalize_result, metadata_result) = rayon::join(
@@ -66,7 +66,7 @@ impl BlockProcessor<'_> {
                     indexes,
                     first_txout_index,
                     outputs,
-                    addresses,
+                    addrs,
                     scripts,
                     addr_hash_stores,
                     addr_tx_index_stores,

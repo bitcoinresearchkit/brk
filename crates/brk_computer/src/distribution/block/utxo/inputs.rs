@@ -1,21 +1,21 @@
-use brk_cohort::ByAddressType;
+use brk_cohort::ByAddrType;
 use brk_error::Result;
-use brk_types::{FundedAddressData, Height, OutputType, Sats, TxIndex, TypeIndex};
+use brk_types::{FundedAddrData, Height, OutputType, Sats, TxIndex, TypeIndex};
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 
 use crate::distribution::{
-    address::{AddressTypeToTypeIndexMap, AddressesDataVecs, AnyAddressIndexesVecs},
+    addr::{AddrTypeToTypeIndexMap, AddrsDataVecs, AnyAddrIndexesVecs},
     compute::VecsReaders,
     state::Transacted,
 };
 
-use crate::distribution::address::HeightToAddressTypeToVec;
+use crate::distribution::addr::HeightToAddrTypeToVec;
 
 use super::super::{
-    cache::{AddressCache, load_uncached_address_data},
-    cohort::WithAddressDataSource,
+    cache::{AddrCache, load_uncached_addr_data},
+    cohort::WithAddrDataSource,
 };
 
 /// Result of processing inputs for a block.
@@ -23,11 +23,11 @@ pub struct InputsResult {
     /// Map from UTXO creation height -> aggregated sent supply.
     pub height_to_sent: FxHashMap<Height, Transacted>,
     /// Per-height, per-address-type sent data: (type_index, value) for each address.
-    pub sent_data: HeightToAddressTypeToVec<(TypeIndex, Sats)>,
-    /// Address data looked up during processing, keyed by (address_type, type_index).
-    pub address_data: AddressTypeToTypeIndexMap<WithAddressDataSource<FundedAddressData>>,
+    pub sent_data: HeightToAddrTypeToVec<(TypeIndex, Sats)>,
+    /// Address data looked up during processing, keyed by (addr_type, type_index).
+    pub addr_data: AddrTypeToTypeIndexMap<WithAddrDataSource<FundedAddrData>>,
     /// Transaction indexes per address for tx_count tracking.
-    pub tx_index_vecs: AddressTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>,
+    pub tx_index_vecs: AddrTypeToTypeIndexMap<SmallVec<[TxIndex; 4]>>,
 }
 
 /// Process inputs (spent UTXOs) for a block.
@@ -51,11 +51,11 @@ pub(crate) fn process_inputs(
     txin_index_to_output_type: &[OutputType],
     txin_index_to_type_index: &[TypeIndex],
     txin_index_to_prev_height: &[Height],
-    first_address_indexes: &ByAddressType<TypeIndex>,
-    cache: &AddressCache,
+    first_addr_indexes: &ByAddrType<TypeIndex>,
+    cache: &AddrCache,
     vr: &VecsReaders,
-    any_address_indexes: &AnyAddressIndexesVecs,
-    addresses_data: &AddressesDataVecs,
+    any_addr_indexes: &AnyAddrIndexesVecs,
+    addrs_data: &AddrsDataVecs,
 ) -> Result<InputsResult> {
     let map_fn = |local_idx: usize| -> Result<_> {
         let tx_index = txin_index_to_tx_index[local_idx];
@@ -64,21 +64,21 @@ pub(crate) fn process_inputs(
         let value = txin_index_to_value[local_idx];
         let input_type = txin_index_to_output_type[local_idx];
 
-        if input_type.is_not_address() {
+        if input_type.is_not_addr() {
             return Ok((prev_height, value, input_type, None));
         }
 
         let type_index = txin_index_to_type_index[local_idx];
 
         // Look up address data
-        let addr_data_opt = load_uncached_address_data(
+        let addr_data_opt = load_uncached_addr_data(
             input_type,
             type_index,
-            first_address_indexes,
+            first_addr_indexes,
             cache,
             vr,
-            any_address_indexes,
-            addresses_data,
+            any_addr_indexes,
+            addrs_data,
         )?;
 
         Ok((
@@ -108,13 +108,13 @@ pub(crate) fn process_inputs(
         estimated_unique_heights,
         Default::default(),
     );
-    let mut sent_data = HeightToAddressTypeToVec::with_capacity(estimated_unique_heights);
-    let mut address_data =
-        AddressTypeToTypeIndexMap::<WithAddressDataSource<FundedAddressData>>::with_capacity(
+    let mut sent_data = HeightToAddrTypeToVec::with_capacity(estimated_unique_heights);
+    let mut addr_data =
+        AddrTypeToTypeIndexMap::<WithAddrDataSource<FundedAddrData>>::with_capacity(
             estimated_per_type,
         );
     let mut tx_index_vecs =
-        AddressTypeToTypeIndexMap::<SmallVec<[TxIndex; 4]>>::with_capacity(estimated_per_type);
+        AddrTypeToTypeIndexMap::<SmallVec<[TxIndex; 4]>>::with_capacity(estimated_per_type);
 
     for (prev_height, value, output_type, addr_info) in items {
         height_to_sent
@@ -130,8 +130,8 @@ pub(crate) fn process_inputs(
                 .unwrap()
                 .push((type_index, value));
 
-            if let Some(addr_data) = addr_data_opt {
-                address_data.insert_for_type(output_type, type_index, addr_data);
+            if let Some(source) = addr_data_opt {
+                addr_data.insert_for_type(output_type, type_index, source);
             }
 
             tx_index_vecs
@@ -146,7 +146,7 @@ pub(crate) fn process_inputs(
     Ok(InputsResult {
         height_to_sent,
         sent_data,
-        address_data,
+        addr_data,
         tx_index_vecs,
     })
 }
