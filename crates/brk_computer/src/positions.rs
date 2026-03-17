@@ -128,16 +128,16 @@ impl Vecs {
 
                 if *block.height() % 1_000 == 0 {
                     let _lock = exit.lock();
-                    self.block.flush()?;
-                    self.tx.flush()?;
+                    self.block.write()?;
+                    self.tx.write()?;
                 }
 
                 Ok(())
             })?;
 
         let _lock = exit.lock();
-        self.block.flush()?;
-        self.tx.flush()?;
+        self.block.write()?;
+        self.tx.write()?;
 
         Ok(())
     }

@@ -16,7 +16,7 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.spent
-            .compute(&self.db, indexer, starting_indexes, exit)?;
+            .compute(indexer, starting_indexes, exit)?;
         self.count
             .compute(indexer, indexes, blocks, starting_indexes, exit)?;
 

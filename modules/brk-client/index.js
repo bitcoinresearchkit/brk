@@ -4772,7 +4772,7 @@ function createUnspentPattern(client, acc) {
  * @property {SeriesTree_Market_Ath} ath
  * @property {SeriesTree_Market_Lookback} lookback
  * @property {SeriesTree_Market_Returns} returns
- * @property {SeriesTree_Market_Volatility} volatility
+ * @property {_1m1w1y24hPattern<StoredF32>} volatility
  * @property {SeriesTree_Market_Range} range
  * @property {SeriesTree_Market_MovingAverage} movingAverage
  * @property {SeriesTree_Market_Dca} dca
@@ -4832,9 +4832,16 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Market_Returns_Sd24h
+ * @property {SeriesTree_Market_Returns_Sd24h_24h} _24h
  * @property {SeriesTree_Market_Returns_Sd24h_1w} _1w
  * @property {SeriesTree_Market_Returns_Sd24h_1m} _1m
  * @property {SeriesTree_Market_Returns_Sd24h_1y} _1y
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Market_Returns_Sd24h_24h
+ * @property {SeriesPattern1<StoredF32>} sma
+ * @property {SeriesPattern1<StoredF32>} sd
  */
 
 /**
@@ -4853,13 +4860,6 @@ function createUnspentPattern(client, acc) {
  * @typedef {Object} SeriesTree_Market_Returns_Sd24h_1y
  * @property {SeriesPattern1<StoredF32>} sma
  * @property {SeriesPattern1<StoredF32>} sd
- */
-
-/**
- * @typedef {Object} SeriesTree_Market_Volatility
- * @property {SeriesPattern1<StoredF32>} _1w
- * @property {SeriesPattern1<StoredF32>} _1m
- * @property {SeriesPattern1<StoredF32>} _1y
  */
 
 /**
@@ -8087,6 +8087,10 @@ class BrkClient extends BrkClientBase {
           },
           cagr: create_10y2y3y4y5y6y8yPattern(this, 'price_cagr'),
           sd24h: {
+            _24h: {
+              sma: createSeriesPattern1(this, 'price_return_24h_sma_24h'),
+              sd: createSeriesPattern1(this, 'price_return_24h_sd_24h'),
+            },
             _1w: {
               sma: createSeriesPattern1(this, 'price_return_24h_sma_1w'),
               sd: createSeriesPattern1(this, 'price_return_24h_sd_1w'),
@@ -8101,11 +8105,7 @@ class BrkClient extends BrkClientBase {
             },
           },
         },
-        volatility: {
-          _1w: createSeriesPattern1(this, 'price_volatility_1w'),
-          _1m: createSeriesPattern1(this, 'price_volatility_1m'),
-          _1y: createSeriesPattern1(this, 'price_volatility_1y'),
-        },
+        volatility: create_1m1w1y24hPattern(this, 'price_volatility'),
         range: {
           min: create_1m1w1y2wPattern(this, 'price_min'),
           max: create_1m1w1y2wPattern(this, 'price_max'),

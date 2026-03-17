@@ -46,11 +46,7 @@ impl Vecs {
 
         let _24h_price_return_ratio = &self.periods._24h.ratio.height;
 
-        for sd in [
-            &mut self.sd_24h._1w,
-            &mut self.sd_24h._1m,
-            &mut self.sd_24h._1y,
-        ] {
+        for sd in self.sd_24h.as_mut_array() {
             sd.compute_all(blocks, starting_indexes, exit, _24h_price_return_ratio)?;
         }
 

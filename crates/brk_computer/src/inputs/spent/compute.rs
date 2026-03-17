@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{Indexes, Sats, TxIndex, TxOutIndex, Vout};
 use tracing::info;
-use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, VecIndex, WritableVec};
+use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
 use super::Vecs;
 
@@ -11,7 +11,6 @@ const BATCH_SIZE: usize = 2 * 1024 * 1024 * 1024 / size_of::<Entry>();
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
-        db: &Database,
         indexer: &Indexer,
         starting_indexes: &Indexes,
         exit: &Exit,
@@ -105,14 +104,13 @@ impl Vecs {
                 self.value.push(out_value[i]);
             }
 
-            if batch_end < target {
-                info!("TxIns: {:.2}%", batch_end as f64 / target as f64 * 100.0);
-            }
-
             let _lock = exit.lock();
             self.txout_index.write()?;
             self.value.write()?;
-            db.flush()?;
+
+            if batch_end < target {
+                info!("TxIns: {:.2}%", batch_end as f64 / target as f64 * 100.0);
+            }
 
             batch_start = batch_end;
         }

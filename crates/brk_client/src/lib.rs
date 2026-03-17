@@ -4994,7 +4994,7 @@ pub struct SeriesTree_Market {
     pub ath: SeriesTree_Market_Ath,
     pub lookback: SeriesTree_Market_Lookback,
     pub returns: SeriesTree_Market_Returns,
-    pub volatility: SeriesTree_Market_Volatility,
+    pub volatility: _1m1w1y24hPattern<StoredF32>,
     pub range: SeriesTree_Market_Range,
     pub moving_average: SeriesTree_Market_MovingAverage,
     pub dca: SeriesTree_Market_Dca,
@@ -5007,7 +5007,7 @@ impl SeriesTree_Market {
             ath: SeriesTree_Market_Ath::new(client.clone(), format!("{base_path}_ath")),
             lookback: SeriesTree_Market_Lookback::new(client.clone(), format!("{base_path}_lookback")),
             returns: SeriesTree_Market_Returns::new(client.clone(), format!("{base_path}_returns")),
-            volatility: SeriesTree_Market_Volatility::new(client.clone(), format!("{base_path}_volatility")),
+            volatility: _1m1w1y24hPattern::new(client.clone(), "price_volatility".to_string()),
             range: SeriesTree_Market_Range::new(client.clone(), format!("{base_path}_range")),
             moving_average: SeriesTree_Market_MovingAverage::new(client.clone(), format!("{base_path}_moving_average")),
             dca: SeriesTree_Market_Dca::new(client.clone(), format!("{base_path}_dca")),
@@ -5132,6 +5132,7 @@ impl SeriesTree_Market_Returns_Periods {
 
 /// Series tree node.
 pub struct SeriesTree_Market_Returns_Sd24h {
+    pub _24h: SeriesTree_Market_Returns_Sd24h_24h,
     pub _1w: SeriesTree_Market_Returns_Sd24h_1w,
     pub _1m: SeriesTree_Market_Returns_Sd24h_1m,
     pub _1y: SeriesTree_Market_Returns_Sd24h_1y,
@@ -5140,9 +5141,25 @@ pub struct SeriesTree_Market_Returns_Sd24h {
 impl SeriesTree_Market_Returns_Sd24h {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
+            _24h: SeriesTree_Market_Returns_Sd24h_24h::new(client.clone(), format!("{base_path}_24h")),
             _1w: SeriesTree_Market_Returns_Sd24h_1w::new(client.clone(), format!("{base_path}_1w")),
             _1m: SeriesTree_Market_Returns_Sd24h_1m::new(client.clone(), format!("{base_path}_1m")),
             _1y: SeriesTree_Market_Returns_Sd24h_1y::new(client.clone(), format!("{base_path}_1y")),
+        }
+    }
+}
+
+/// Series tree node.
+pub struct SeriesTree_Market_Returns_Sd24h_24h {
+    pub sma: SeriesPattern1<StoredF32>,
+    pub sd: SeriesPattern1<StoredF32>,
+}
+
+impl SeriesTree_Market_Returns_Sd24h_24h {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            sma: SeriesPattern1::new(client.clone(), "price_return_24h_sma_24h".to_string()),
+            sd: SeriesPattern1::new(client.clone(), "price_return_24h_sd_24h".to_string()),
         }
     }
 }
@@ -5188,23 +5205,6 @@ impl SeriesTree_Market_Returns_Sd24h_1y {
         Self {
             sma: SeriesPattern1::new(client.clone(), "price_return_24h_sma_1y".to_string()),
             sd: SeriesPattern1::new(client.clone(), "price_return_24h_sd_1y".to_string()),
-        }
-    }
-}
-
-/// Series tree node.
-pub struct SeriesTree_Market_Volatility {
-    pub _1w: SeriesPattern1<StoredF32>,
-    pub _1m: SeriesPattern1<StoredF32>,
-    pub _1y: SeriesPattern1<StoredF32>,
-}
-
-impl SeriesTree_Market_Volatility {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            _1w: SeriesPattern1::new(client.clone(), "price_volatility_1w".to_string()),
-            _1m: SeriesPattern1::new(client.clone(), "price_volatility_1m".to_string()),
-            _1y: SeriesPattern1::new(client.clone(), "price_volatility_1y".to_string()),
         }
     }
 }

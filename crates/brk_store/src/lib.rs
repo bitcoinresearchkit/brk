@@ -202,7 +202,7 @@ where
     #[inline]
     pub fn clear_caches(&mut self) {
         for cache in &mut self.caches {
-            cache.clear();
+            *cache = FxHashMap::default();
         }
     }
 
@@ -336,9 +336,6 @@ where
 
         Self::ingest(&self.keyspace, puts.iter(), dels.iter())?;
 
-        // Pre-allocate for next batch based on current batch size
-        self.puts.reserve(puts.len());
-
         if !self.caches.is_empty() {
             self.caches.pop();
             self.caches.insert(0, puts);
@@ -349,10 +346,10 @@ where
 
     fn reset(&mut self) -> Result<()> {
         self.meta.reset()?;
-        self.puts.clear();
-        self.dels.clear();
+        self.puts = FxHashMap::default();
+        self.dels = FxHashSet::default();
         for cache in &mut self.caches {
-            cache.clear();
+            *cache = FxHashMap::default();
         }
         self.keyspace.clear()?;
         Ok(())

@@ -30,6 +30,11 @@ pub trait SqrtDays {
     const FACTOR: f32;
 }
 
+pub struct Days1;
+impl SqrtDays for Days1 {
+    const FACTOR: f32 = 1.0; // 1.0_f32.sqrt()
+}
+
 pub struct Days7;
 impl SqrtDays for Days7 {
     const FACTOR: f32 = 2.6457513; // 7.0_f32.sqrt()

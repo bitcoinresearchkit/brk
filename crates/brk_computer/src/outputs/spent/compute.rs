@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{Height, Indexes, TxInIndex, TxOutIndex};
 use tracing::info;
-use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, Stamp, VecIndex, WritableVec};
+use vecdb::{AnyStoredVec, AnyVec, Exit, ExitGuard, ReadableVec, Stamp, VecIndex, WritableVec};
 
 use super::Vecs;
 use crate::inputs;
@@ -10,17 +10,16 @@ use crate::inputs;
 const HEIGHT_BATCH: u32 = 10_000;
 
 impl Vecs {
-    pub(crate) fn compute(
+    pub(crate) fn compute<'a>(
         &mut self,
-        db: &Database,
         indexer: &Indexer,
         inputs: &inputs::Vecs,
         starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
+        exit: &'a Exit,
+    ) -> Result<ExitGuard<'a>> {
         let target_height = indexer.vecs.blocks.blockhash.len();
         if target_height == 0 {
-            return Ok(());
+            return Ok(exit.lock());
         }
         let target_height = Height::from(target_height - 1);
 
@@ -125,17 +124,15 @@ impl Vecs {
                     "TxOuts: {:.2}%",
                     batch_end_height.to_usize() as f64 / target_height.to_usize() as f64 * 100.0
                 );
-                db.flush()?;
             }
 
             batch_start_height = batch_end_height + 1_u32;
         }
 
-        let _lock = exit.lock();
+        let lock = exit.lock();
         self.txin_index
             .stamped_write_with_changes(Stamp::from(target_height))?;
-        db.flush()?;
 
-        Ok(())
+        Ok(lock)
     }
 }

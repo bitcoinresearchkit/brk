@@ -18,8 +18,6 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.spent
-            .compute(&self.db, indexer, inputs, starting_indexes, exit)?;
         self.count.compute(
             indexer,
             indexes,
@@ -29,8 +27,9 @@ impl Vecs {
             starting_indexes,
             exit,
         )?;
-
-        let _lock = exit.lock();
+        let _lock = self
+            .spent
+            .compute(indexer, inputs, starting_indexes, exit)?;
         self.db.compact()?;
         Ok(())
     }

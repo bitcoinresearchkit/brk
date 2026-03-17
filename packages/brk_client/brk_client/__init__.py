@@ -4139,6 +4139,13 @@ class SeriesTree_Market_Returns_Periods:
         self._8y: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'price_return_8y')
         self._10y: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'price_return_10y')
 
+class SeriesTree_Market_Returns_Sd24h_24h:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.sma: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_return_24h_sma_24h')
+        self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_return_24h_sd_24h')
+
 class SeriesTree_Market_Returns_Sd24h_1w:
     """Series tree node."""
     
@@ -4164,6 +4171,7 @@ class SeriesTree_Market_Returns_Sd24h:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self._24h: SeriesTree_Market_Returns_Sd24h_24h = SeriesTree_Market_Returns_Sd24h_24h(client)
         self._1w: SeriesTree_Market_Returns_Sd24h_1w = SeriesTree_Market_Returns_Sd24h_1w(client)
         self._1m: SeriesTree_Market_Returns_Sd24h_1m = SeriesTree_Market_Returns_Sd24h_1m(client)
         self._1y: SeriesTree_Market_Returns_Sd24h_1y = SeriesTree_Market_Returns_Sd24h_1y(client)
@@ -4175,14 +4183,6 @@ class SeriesTree_Market_Returns:
         self.periods: SeriesTree_Market_Returns_Periods = SeriesTree_Market_Returns_Periods(client)
         self.cagr: _10y2y3y4y5y6y8yPattern = _10y2y3y4y5y6y8yPattern(client, 'price_cagr')
         self.sd_24h: SeriesTree_Market_Returns_Sd24h = SeriesTree_Market_Returns_Sd24h(client)
-
-class SeriesTree_Market_Volatility:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._1w: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_volatility_1w')
-        self._1m: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_volatility_1m')
-        self._1y: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_volatility_1y')
 
 class SeriesTree_Market_Range:
     """Series tree node."""
@@ -4436,7 +4436,7 @@ class SeriesTree_Market:
         self.ath: SeriesTree_Market_Ath = SeriesTree_Market_Ath(client)
         self.lookback: SeriesTree_Market_Lookback = SeriesTree_Market_Lookback(client)
         self.returns: SeriesTree_Market_Returns = SeriesTree_Market_Returns(client)
-        self.volatility: SeriesTree_Market_Volatility = SeriesTree_Market_Volatility(client)
+        self.volatility: _1m1w1y24hPattern[StoredF32] = _1m1w1y24hPattern(client, 'price_volatility')
         self.range: SeriesTree_Market_Range = SeriesTree_Market_Range(client)
         self.moving_average: SeriesTree_Market_MovingAverage = SeriesTree_Market_MovingAverage(client)
         self.dca: SeriesTree_Market_Dca = SeriesTree_Market_Dca(client)

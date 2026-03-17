@@ -162,7 +162,7 @@ impl StdDevPerBlockExtended {
 
         {
             let _lock = exit.lock();
-            self.mut_band_height_vecs().try_for_each(|v| v.flush())?;
+            self.mut_band_height_vecs().try_for_each(|v| v.write().map(|_| ()))?;
         }
 
         self.zscore.height.compute_zscore(

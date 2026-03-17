@@ -95,24 +95,6 @@ function createMaSubSection(label, averages) {
 
 /**
  * @param {string} name
- * @param {string} title
- * @param {Unit} unit
- * @param {{ _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} patterns
- */
-function volatilityChart(name, title, unit, patterns) {
-  return {
-    name,
-    title,
-    bottom: [
-      line({ series: patterns._1w, name: "1w", color: colors.time._1w, unit }),
-      line({ series: patterns._1m, name: "1m", color: colors.time._1m, unit }),
-      line({ series: patterns._1y, name: "1y", color: colors.time._1y, unit }),
-    ],
-  };
-}
-
-/**
- * @param {string} name
  * @param {Period[]} periods
  */
 function returnsSubSection(name, periods) {
@@ -231,7 +213,6 @@ export function createMarketSection() {
     range,
     technical,
     lookback,
-    dca,
   } = market;
 
   const shortPeriodsBase = [
@@ -401,8 +382,10 @@ export function createMarketSection() {
   return {
     name: "Market",
     tree: [
+      // Price
       { name: "Price", title: "Bitcoin Price" },
 
+      // Sats/$
       {
         name: "Sats/$",
         title: "Sats per Dollar",
@@ -415,194 +398,7 @@ export function createMarketSection() {
         ],
       },
 
-      {
-        name: "Capitalization",
-        tree: [
-          {
-            name: "Compare",
-            title: "Market vs Realized Capitalization",
-            bottom: [
-              line({
-                series: supply.marketCap.usd,
-                name: "Market Cap",
-                unit: Unit.usd,
-              }),
-              line({
-                series: cohorts.utxo.all.realized.cap.usd,
-                name: "Realized Cap",
-                color: colors.realized,
-                unit: Unit.usd,
-              }),
-            ],
-          },
-          {
-            name: "Market Cap",
-            tree: [
-              {
-                name: "Value",
-                title: "Market Capitalization",
-                bottom: [
-                  line({
-                    series: supply.marketCap.usd,
-                    name: "Market Cap",
-                    unit: Unit.usd,
-                  }),
-                ],
-              },
-              {
-                name: "Absolute",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Market Cap Absolute Change",
-                    bottom: ROLLING_WINDOWS.map((w) =>
-                      baseline({
-                        series: supply.marketCap.delta.absolute[w.key].usd,
-                        name: w.name,
-                        color: w.color,
-                        unit: Unit.usd,
-                      }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `Market Cap Absolute Change ${w.name}`,
-                    bottom: [
-                      baseline({
-                        series: supply.marketCap.delta.absolute[w.key].usd,
-                        name: w.name,
-                        unit: Unit.usd,
-                      }),
-                    ],
-                  })),
-                ],
-              },
-              {
-                name: "Rate",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Market Cap Growth Rate",
-                    bottom: ROLLING_WINDOWS.flatMap((w) =>
-                      percentRatio({
-                        pattern: supply.marketCap.delta.rate[w.key],
-                        name: w.name,
-                        color: w.color,
-                      }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `Market Cap Growth Rate ${w.name}`,
-                    bottom: percentRatioBaseline({
-                      pattern: supply.marketCap.delta.rate[w.key],
-                      name: w.name,
-                    }),
-                  })),
-                ],
-              },
-            ],
-          },
-          {
-            name: "Realized Cap",
-            tree: [
-              {
-                name: "Value",
-                title: "Realized Capitalization",
-                bottom: [
-                  line({
-                    series: cohorts.utxo.all.realized.cap.usd,
-                    name: "Realized Cap",
-                    color: colors.realized,
-                    unit: Unit.usd,
-                  }),
-                ],
-              },
-              {
-                name: "Absolute",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Realized Cap Absolute Change",
-                    bottom: ROLLING_WINDOWS.map((w) =>
-                      baseline({
-                        series: cohorts.utxo.all.realized.cap.delta.absolute[w.key].usd,
-                        name: w.name,
-                        color: w.color,
-                        unit: Unit.usd,
-                      }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `Realized Cap Absolute Change ${w.name}`,
-                    bottom: [
-                      baseline({
-                        series: cohorts.utxo.all.realized.cap.delta.absolute[w.key].usd,
-                        name: w.name,
-                        unit: Unit.usd,
-                      }),
-                    ],
-                  })),
-                ],
-              },
-              {
-                name: "Rate",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Realized Cap Growth Rate",
-                    bottom: ROLLING_WINDOWS.flatMap((w) =>
-                      percentRatio({
-                        pattern: cohorts.utxo.all.realized.cap.delta.rate[w.key],
-                        name: w.name,
-                        color: w.color,
-                      }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `Realized Cap Growth Rate ${w.name}`,
-                    bottom: percentRatioBaseline({
-                      pattern: cohorts.utxo.all.realized.cap.delta.rate[w.key],
-                      name: w.name,
-                    }),
-                  })),
-                ],
-              },
-            ],
-          },
-          {
-            name: "Rate Spread",
-            tree: [
-              {
-                name: "Compare",
-                title: "Capitalization Growth Rate Spread",
-                bottom: ROLLING_WINDOWS.map((w) =>
-                  baseline({
-                    series: supply.marketMinusRealizedCapGrowthRate[w.key],
-                    name: w.name,
-                    color: w.color,
-                    unit: Unit.percentage,
-                  }),
-                ),
-              },
-              ...ROLLING_WINDOWS.map((w) => ({
-                name: w.name,
-                title: `Capitalization Growth Rate Spread ${w.name}`,
-                bottom: [
-                  baseline({
-                    series: supply.marketMinusRealizedCapGrowthRate[w.key],
-                    name: w.name,
-                    unit: Unit.percentage,
-                  }),
-                ],
-              })),
-            ],
-          },
-        ],
-      },
-
+      // All Time High
       {
         name: "All Time High",
         tree: [
@@ -648,6 +444,7 @@ export function createMarketSection() {
         ],
       },
 
+      // Returns
       {
         name: "Returns",
         tree: [
@@ -668,257 +465,7 @@ export function createMarketSection() {
         ],
       },
 
-      {
-        name: "Volatility",
-        tree: [
-          volatilityChart("Index", "Volatility Index", Unit.percentage, {
-            _1w: volatility._1w,
-            _1m: volatility._1m,
-            _1y: volatility._1y,
-          }),
-          {
-            name: "True Range",
-            title: "True Range",
-            bottom: [
-              line({
-                series: range.trueRange,
-                name: "Daily",
-                color: colors.time._24h,
-                unit: Unit.usd,
-              }),
-              line({
-                series: range.trueRangeSum2w,
-                name: "2w Sum",
-                color: colors.time._1w,
-                unit: Unit.usd,
-                defaultActive: false,
-              }),
-            ],
-          },
-          {
-            name: "Choppiness",
-            title: "Choppiness Index",
-            bottom: [
-              ...percentRatio({
-                pattern: range.choppinessIndex2w,
-                name: "2w",
-                color: colors.indicator.main,
-              }),
-              ...priceLines({ unit: Unit.index, numbers: [61.8, 38.2] }),
-            ],
-          },
-        ],
-      },
-
-      {
-        name: "Moving Averages",
-        tree: [
-          {
-            name: "SMA vs EMA",
-            tree: [
-              {
-                name: "All Periods",
-                title: "SMA vs EMA Comparison",
-                top: smaVsEma.flatMap((p) => [
-                  price({
-                    series: p.sma,
-                    name: `${p.id} SMA`,
-                    color: p.color,
-                  }),
-                  price({
-                    series: p.ema,
-                    name: `${p.id} EMA`,
-                    color: p.color,
-                    style: 1,
-                  }),
-                ]),
-              },
-              ...smaVsEma.map((p) => ({
-                name: p.name,
-                title: `${p.name} SMA vs EMA`,
-                top: [
-                  price({ series: p.sma, name: "SMA", color: p.color }),
-                  price({
-                    series: p.ema,
-                    name: "EMA",
-                    color: p.color,
-                    style: 1,
-                  }),
-                ],
-              })),
-            ],
-          },
-          createMaSubSection("SMA", sma),
-          createMaSubSection("EMA", ema),
-        ],
-      },
-
-      {
-        name: "Bands",
-        tree: [
-          {
-            name: "MinMax",
-            tree: [
-              {
-                id: "1w",
-                name: "1 Week",
-                min: range.min._1w,
-                max: range.max._1w,
-              },
-              {
-                id: "2w",
-                name: "2 Week",
-                min: range.min._2w,
-                max: range.max._2w,
-              },
-              {
-                id: "1m",
-                name: "1 Month",
-                min: range.min._1m,
-                max: range.max._1m,
-              },
-              {
-                id: "1y",
-                name: "1 Year",
-                min: range.min._1y,
-                max: range.max._1y,
-              },
-            ].map((p) => ({
-              name: p.id,
-              title: `${p.name} MinMax`,
-              top: [
-                price({
-                  series: p.max,
-                  name: "Max",
-                  key: "price-max",
-                  color: colors.stat.max,
-                }),
-                price({
-                  series: p.min,
-                  name: "Min",
-                  key: "price-min",
-                  color: colors.stat.min,
-                }),
-              ],
-            })),
-          },
-          {
-            name: "Mayer Multiple",
-            title: "Mayer Multiple",
-            top: [
-              price({
-                series: ma.sma._200d,
-                name: "200d SMA",
-                color: colors.indicator.main,
-              }),
-              price({
-                series: ma.sma._200d.x24,
-                name: "200d SMA x2.4",
-                color: colors.indicator.upper,
-              }),
-              price({
-                series: ma.sma._200d.x08,
-                name: "200d SMA x0.8",
-                color: colors.indicator.lower,
-              }),
-            ],
-          },
-        ],
-      },
-
-      {
-        name: "Momentum",
-        tree: [
-          {
-            name: "RSI",
-            tree: [
-              {
-                name: "Compare",
-                title: "RSI Comparison",
-                bottom: [
-                  ...ROLLING_WINDOWS.flatMap((w) =>
-                    indexRatio({ pattern: technical.rsi[w.key].rsi, name: w.name, color: w.color }),
-                  ),
-                  priceLine({ unit: Unit.index, number: 70 }),
-                  priceLine({ unit: Unit.index, number: 30 }),
-                ],
-              },
-              ...ROLLING_WINDOWS.map((w) => {
-                const rsi = technical.rsi[w.key];
-                return {
-                  name: w.name,
-                  title: `RSI (${w.name})`,
-                  bottom: [
-                    ...indexRatio({ pattern: rsi.rsi, name: "RSI", color: colors.indicator.main }),
-                    priceLine({ unit: Unit.index, number: 70 }),
-                    priceLine({ unit: Unit.index, number: 50, defaultActive: false }),
-                    priceLine({ unit: Unit.index, number: 30 }),
-                  ],
-                };
-              }),
-            ],
-          },
-          {
-            name: "StochRSI",
-            tree: [
-              {
-                name: "Compare",
-                title: "Stochastic RSI Comparison",
-                bottom: [
-                  ...ROLLING_WINDOWS.flatMap((w) =>
-                    indexRatio({ pattern: technical.rsi[w.key].stochRsiK, name: `${w.name} K`, color: w.color }),
-                  ),
-                  ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
-                ],
-              },
-              ...ROLLING_WINDOWS.map((w) => {
-                const rsi = technical.rsi[w.key];
-                return {
-                  name: w.name,
-                  title: `Stochastic RSI (${w.name})`,
-                  bottom: [
-                    ...indexRatio({ pattern: rsi.stochRsi, name: "Raw", color: colors.indicator.main, defaultActive: false }),
-                    ...indexRatio({ pattern: rsi.stochRsiK, name: "K", color: colors.indicator.fast }),
-                    ...indexRatio({ pattern: rsi.stochRsiD, name: "D", color: colors.indicator.slow }),
-                    ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
-                  ],
-                };
-              }),
-            ],
-          },
-          {
-            name: "Stochastic",
-            title: "Stochastic Oscillator",
-            bottom: [
-              ...indexRatio({ pattern: technical.stochK, name: "K", color: colors.indicator.fast }),
-              ...indexRatio({ pattern: technical.stochD, name: "D", color: colors.indicator.slow }),
-              ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
-            ],
-          },
-          {
-            name: "MACD",
-            tree: [
-              {
-                name: "Compare",
-                title: "MACD Comparison",
-                bottom: ROLLING_WINDOWS.map((w) =>
-                  line({ series: technical.macd[w.key].line, name: w.name, color: w.color, unit: Unit.usd }),
-                ),
-              },
-              ...ROLLING_WINDOWS.map((w) => ({
-                name: w.name,
-                title: `MACD (${w.name})`,
-                bottom: [
-                  line({ series: technical.macd[w.key].line, name: "MACD", color: colors.indicator.fast, unit: Unit.usd }),
-                  line({ series: technical.macd[w.key].signal, name: "Signal", color: colors.indicator.slow, unit: Unit.usd }),
-                  histogram({ series: technical.macd[w.key].histogram, name: "Histogram", unit: Unit.usd }),
-                ],
-              })),
-            ],
-          },
-        ],
-      },
-
+      // Historical
       {
         name: "Historical",
         tree: [
@@ -939,67 +486,612 @@ export function createMarketSection() {
         ],
       },
 
+      // Capitalization
       {
-        name: "DCA",
-        title: "Dollar Cost Average Sats/Day",
-        bottom: [
-          line({
-            series: dca.satsPerDay,
-            name: "Sats/Day",
-            unit: Unit.sats,
-          }),
+        name: "Capitalization",
+        tree: [
+          {
+            name: "Compare",
+            title: "Market vs Realized Capitalization",
+            bottom: [
+              line({
+                series: supply.marketCap.usd,
+                name: "Market Cap",
+                unit: Unit.usd,
+              }),
+              line({
+                series: cohorts.utxo.all.realized.cap.usd,
+                name: "Realized Cap",
+                color: colors.realized,
+                unit: Unit.usd,
+              }),
+            ],
+          },
+          {
+            name: "Market Cap",
+            tree: [
+              {
+                name: "Value",
+                title: "Market Capitalization",
+                bottom: [
+                  line({
+                    series: supply.marketCap.usd,
+                    name: "Market Cap",
+                    unit: Unit.usd,
+                  }),
+                ],
+              },
+              {
+                name: "Change",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Market Cap Change",
+                    bottom: ROLLING_WINDOWS.map((w) =>
+                      baseline({
+                        series: supply.marketCap.delta.absolute[w.key].usd,
+                        name: w.name,
+                        color: w.color,
+                        unit: Unit.usd,
+                      }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Market Cap Change ${w.name}`,
+                    bottom: [
+                      baseline({
+                        series: supply.marketCap.delta.absolute[w.key].usd,
+                        name: w.name,
+                        unit: Unit.usd,
+                      }),
+                    ],
+                  })),
+                ],
+              },
+              {
+                name: "Growth Rate",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Market Cap Growth Rate",
+                    bottom: ROLLING_WINDOWS.flatMap((w) =>
+                      percentRatio({
+                        pattern: supply.marketCap.delta.rate[w.key],
+                        name: w.name,
+                        color: w.color,
+                      }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Market Cap Growth Rate ${w.name}`,
+                    bottom: percentRatioBaseline({
+                      pattern: supply.marketCap.delta.rate[w.key],
+                      name: w.name,
+                    }),
+                  })),
+                ],
+              },
+            ],
+          },
+          {
+            name: "Realized Cap",
+            tree: [
+              {
+                name: "Value",
+                title: "Realized Capitalization",
+                bottom: [
+                  line({
+                    series: cohorts.utxo.all.realized.cap.usd,
+                    name: "Realized Cap",
+                    color: colors.realized,
+                    unit: Unit.usd,
+                  }),
+                ],
+              },
+              {
+                name: "Change",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Realized Cap Change",
+                    bottom: ROLLING_WINDOWS.map((w) =>
+                      baseline({
+                        series: cohorts.utxo.all.realized.cap.delta.absolute[w.key].usd,
+                        name: w.name,
+                        color: w.color,
+                        unit: Unit.usd,
+                      }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Realized Cap Change ${w.name}`,
+                    bottom: [
+                      baseline({
+                        series: cohorts.utxo.all.realized.cap.delta.absolute[w.key].usd,
+                        name: w.name,
+                        unit: Unit.usd,
+                      }),
+                    ],
+                  })),
+                ],
+              },
+              {
+                name: "Growth Rate",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Realized Cap Growth Rate",
+                    bottom: ROLLING_WINDOWS.flatMap((w) =>
+                      percentRatio({
+                        pattern: cohorts.utxo.all.realized.cap.delta.rate[w.key],
+                        name: w.name,
+                        color: w.color,
+                      }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Realized Cap Growth Rate ${w.name}`,
+                    bottom: percentRatioBaseline({
+                      pattern: cohorts.utxo.all.realized.cap.delta.rate[w.key],
+                      name: w.name,
+                    }),
+                  })),
+                ],
+              },
+            ],
+          },
+          {
+            name: "Growth Rate Spread",
+            tree: [
+              {
+                name: "Compare",
+                title: "Capitalization Growth Rate Spread",
+                bottom: ROLLING_WINDOWS.map((w) =>
+                  baseline({
+                    series: supply.marketMinusRealizedCapGrowthRate[w.key],
+                    name: w.name,
+                    color: w.color,
+                    unit: Unit.percentage,
+                  }),
+                ),
+              },
+              ...ROLLING_WINDOWS.map((w) => ({
+                name: w.name,
+                title: `Capitalization Growth Rate Spread ${w.name}`,
+                bottom: [
+                  baseline({
+                    series: supply.marketMinusRealizedCapGrowthRate[w.key],
+                    name: w.name,
+                    unit: Unit.percentage,
+                  }),
+                ],
+              })),
+            ],
+          },
         ],
       },
 
+      // Technical
+      {
+        name: "Technical",
+        tree: [
+          // Moving Averages
+          {
+            name: "Moving Averages",
+            tree: [
+              {
+                name: "SMA vs EMA",
+                tree: [
+                  {
+                    name: "All Periods",
+                    title: "SMA vs EMA Comparison",
+                    top: smaVsEma.flatMap((p) => [
+                      price({
+                        series: p.sma,
+                        name: `${p.id} SMA`,
+                        color: p.color,
+                      }),
+                      price({
+                        series: p.ema,
+                        name: `${p.id} EMA`,
+                        color: p.color,
+                        style: 1,
+                      }),
+                    ]),
+                  },
+                  ...smaVsEma.map((p) => ({
+                    name: p.name,
+                    title: `${p.name} SMA vs EMA`,
+                    top: [
+                      price({ series: p.sma, name: "SMA", color: p.color }),
+                      price({
+                        series: p.ema,
+                        name: "EMA",
+                        color: p.color,
+                        style: 1,
+                      }),
+                    ],
+                  })),
+                ],
+              },
+              createMaSubSection("SMA", sma),
+              createMaSubSection("EMA", ema),
+            ],
+          },
+
+          // Momentum
+          {
+            name: "Momentum",
+            tree: [
+              {
+                name: "RSI",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "RSI Comparison",
+                    bottom: [
+                      ...ROLLING_WINDOWS.flatMap((w) =>
+                        indexRatio({ pattern: technical.rsi[w.key].rsi, name: w.name, color: w.color }),
+                      ),
+                      priceLine({ unit: Unit.index, number: 70 }),
+                      priceLine({ unit: Unit.index, number: 30 }),
+                    ],
+                  },
+                  ...ROLLING_WINDOWS.map((w) => {
+                    const rsi = technical.rsi[w.key];
+                    return {
+                      name: w.name,
+                      title: `RSI (${w.name})`,
+                      bottom: [
+                        ...indexRatio({ pattern: rsi.rsi, name: "RSI", color: colors.indicator.main }),
+                        priceLine({ unit: Unit.index, number: 70 }),
+                        priceLine({ unit: Unit.index, number: 50, defaultActive: false }),
+                        priceLine({ unit: Unit.index, number: 30 }),
+                      ],
+                    };
+                  }),
+                  {
+                    name: "Stochastic",
+                    tree: ROLLING_WINDOWS.map((w) => {
+                        const rsi = technical.rsi[w.key];
+                        return {
+                          name: w.name,
+                          title: `Stochastic RSI (${w.name})`,
+                          bottom: [
+                            ...indexRatio({ pattern: rsi.stochRsiK, name: "K", color: colors.indicator.fast }),
+                            ...indexRatio({ pattern: rsi.stochRsiD, name: "D", color: colors.indicator.slow }),
+                            ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
+                          ],
+                        };
+                      }),
+                  },
+                ],
+              },
+              {
+                name: "MACD",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "MACD Comparison",
+                    bottom: ROLLING_WINDOWS.map((w) =>
+                      line({ series: technical.macd[w.key].line, name: w.name, color: w.color, unit: Unit.usd }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `MACD (${w.name})`,
+                    bottom: [
+                      line({ series: technical.macd[w.key].line, name: "MACD", color: colors.indicator.fast, unit: Unit.usd }),
+                      line({ series: technical.macd[w.key].signal, name: "Signal", color: colors.indicator.slow, unit: Unit.usd }),
+                      histogram({ series: technical.macd[w.key].histogram, name: "Histogram", unit: Unit.usd }),
+                    ],
+                  })),
+                ],
+              },
+            ],
+          },
+
+          // Volatility
+          {
+            name: "Volatility",
+            tree: [
+              {
+                name: "Index",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Volatility Index",
+                    bottom: ROLLING_WINDOWS.map((w) =>
+                      line({ series: volatility[w.key], name: w.name, color: w.color, unit: Unit.percentage }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Volatility Index (${w.name})`,
+                    bottom: [line({ series: volatility[w.key], name: w.name, color: w.color, unit: Unit.percentage })],
+                  })),
+                ],
+              },
+              {
+                name: "True Range",
+                tree: [
+                  {
+                    name: "Daily",
+                    title: "True Range (Daily)",
+                    bottom: [
+                      line({
+                        series: range.trueRange,
+                        name: "Daily",
+                        color: colors.time._24h,
+                        unit: Unit.usd,
+                      }),
+                    ],
+                  },
+                  {
+                    name: "2 Week Sum",
+                    title: "True Range (2 Week Sum)",
+                    bottom: [
+                      line({
+                        series: range.trueRangeSum2w,
+                        name: "2w Sum",
+                        color: colors.time._1w,
+                        unit: Unit.usd,
+                      }),
+                    ],
+                  },
+                ],
+              },
+              {
+                name: "Choppiness",
+                title: "Choppiness Index",
+                bottom: [
+                  ...percentRatio({
+                    pattern: range.choppinessIndex2w,
+                    name: "2w",
+                    color: colors.indicator.main,
+                  }),
+                  ...priceLines({ unit: Unit.index, numbers: [61.8, 38.2] }),
+                ],
+              },
+            ],
+          },
+
+          // Price Bands
+          {
+            name: "Price Bands",
+            tree: [
+              {
+                name: "Mayer Multiple",
+                title: "Mayer Multiple",
+                top: [
+                  price({
+                    series: ma.sma._200d,
+                    name: "200d SMA",
+                    color: colors.indicator.main,
+                  }),
+                  price({
+                    series: ma.sma._200d.x24,
+                    name: "200d SMA x2.4",
+                    color: colors.indicator.upper,
+                  }),
+                  price({
+                    series: ma.sma._200d.x08,
+                    name: "200d SMA x0.8",
+                    color: colors.indicator.lower,
+                  }),
+                ],
+              },
+              {
+                name: "MinMax",
+                tree: [
+                  {
+                    id: "1w",
+                    name: "1 Week",
+                    min: range.min._1w,
+                    max: range.max._1w,
+                  },
+                  {
+                    id: "2w",
+                    name: "2 Week",
+                    min: range.min._2w,
+                    max: range.max._2w,
+                  },
+                  {
+                    id: "1m",
+                    name: "1 Month",
+                    min: range.min._1m,
+                    max: range.max._1m,
+                  },
+                  {
+                    id: "1y",
+                    name: "1 Year",
+                    min: range.min._1y,
+                    max: range.max._1y,
+                  },
+                ].map((p) => ({
+                  name: p.id,
+                  title: `${p.name} MinMax`,
+                  top: [
+                    price({
+                      series: p.max,
+                      name: "Max",
+                      key: "price-max",
+                      color: colors.stat.max,
+                    }),
+                    price({
+                      series: p.min,
+                      name: "Min",
+                      key: "price-min",
+                      color: colors.stat.min,
+                    }),
+                  ],
+                })),
+              },
+            ],
+          },
+        ],
+      },
+
+      // Indicators
       {
         name: "Indicators",
         tree: [
           {
-            name: "Pi Cycle",
-            title: "Pi Cycle",
-            top: [
-              price({
-                series: ma.sma._111d,
-                name: "111d SMA",
-                color: colors.indicator.upper,
-              }),
-              price({
-                series: ma.sma._350d.x2,
-                name: "350d SMA x2",
-                color: colors.indicator.lower,
-              }),
-            ],
-            bottom: [
-              baseline({
-                series: technical.piCycle.ratio,
-                name: "Pi Cycle",
-                unit: Unit.ratio,
-                base: 1,
-              }),
-            ],
-          },
-          {
-            name: "Puell Multiple",
-            title: "Puell Multiple",
-            bottom: [
-              line({
-                series: indicators.puellMultiple.ratio,
-                name: "Puell",
-                color: colors.usd,
-                unit: Unit.ratio,
-              }),
-            ],
-          },
-          {
-            name: "NVT",
-            title: "NVT Ratio",
-            bottom: [
-              line({
-                series: indicators.nvt.ratio,
+            name: "Valuation",
+            tree: [
+              {
                 name: "NVT",
-                color: colors.bitcoin,
-                unit: Unit.ratio,
-              }),
+                title: "NVT Ratio",
+                bottom: [
+                  line({
+                    series: indicators.nvt.ratio,
+                    name: "NVT",
+                    color: colors.bitcoin,
+                    unit: Unit.ratio,
+                  }),
+                ],
+              },
+              {
+                name: "Thermocap Multiple",
+                title: "Thermocap Multiple",
+                bottom: [
+                  line({
+                    series: indicators.thermoCapMultiple.ratio,
+                    name: "Thermocap",
+                    color: colors.bitcoin,
+                    unit: Unit.ratio,
+                  }),
+                ],
+              },
+            ],
+          },
+          {
+            name: "Cycle",
+            tree: [
+              {
+                name: "Pi Cycle",
+                title: "Pi Cycle",
+                top: [
+                  price({
+                    series: ma.sma._111d,
+                    name: "111d SMA",
+                    color: colors.indicator.upper,
+                  }),
+                  price({
+                    series: ma.sma._350d.x2,
+                    name: "350d SMA x2",
+                    color: colors.indicator.lower,
+                  }),
+                ],
+                bottom: [
+                  baseline({
+                    series: technical.piCycle.ratio,
+                    name: "Pi Cycle",
+                    unit: Unit.ratio,
+                    base: 1,
+                  }),
+                ],
+              },
+              {
+                name: "Stock-to-Flow",
+                title: "Stock-to-Flow",
+                bottom: [
+                  line({
+                    series: indicators.stockToFlow,
+                    name: "S2F",
+                    color: colors.bitcoin,
+                    unit: Unit.ratio,
+                  }),
+                ],
+              },
+              {
+                name: "Puell Multiple",
+                title: "Puell Multiple",
+                bottom: [
+                  line({
+                    series: indicators.puellMultiple.ratio,
+                    name: "Puell",
+                    color: colors.usd,
+                    unit: Unit.ratio,
+                  }),
+                ],
+              },
+              {
+                name: "RHODL Ratio",
+                title: "RHODL Ratio",
+                bottom: [
+                  line({
+                    series: indicators.rhodlRatio.ratio,
+                    name: "RHODL",
+                    color: colors.bitcoin,
+                    unit: Unit.ratio,
+                  }),
+                ],
+              },
+            ],
+          },
+          {
+            name: "Activity",
+            tree: [
+              {
+                name: "Dormancy",
+                title: "Dormancy",
+                bottom: [
+                  line({
+                    series: indicators.dormancy.supplyAdjusted,
+                    name: "Supply Adjusted",
+                    color: colors.bitcoin,
+                    unit: Unit.ratio,
+                  }),
+                  line({
+                    series: indicators.dormancy.flow,
+                    name: "Flow",
+                    color: colors.usd,
+                    unit: Unit.ratio,
+                    defaultActive: false,
+                  }),
+                ],
+              },
+              {
+                name: "Seller Exhaustion",
+                title: "Seller Exhaustion Constant",
+                bottom: [
+                  line({
+                    series: indicators.sellerExhaustion,
+                    name: "SEC",
+                    color: colors.bitcoin,
+                    unit: Unit.ratio,
+                  }),
+                ],
+              },
+              {
+                name: "CDD Supply Adjusted",
+                title: "Coindays Destroyed (Supply Adjusted)",
+                bottom: [
+                  line({
+                    series: indicators.coindaysDestroyedSupplyAdjusted,
+                    name: "CDD SA",
+                    color: colors.bitcoin,
+                    unit: Unit.ratio,
+                  }),
+                ],
+              },
+              {
+                name: "CYD Supply Adjusted",
+                title: "Coinyears Destroyed (Supply Adjusted)",
+                bottom: [
+                  line({
+                    series: indicators.coinyearsDestroyedSupplyAdjusted,
+                    name: "CYD SA",
+                    color: colors.bitcoin,
+                    unit: Unit.ratio,
+                  }),
+                ],
+              },
             ],
           },
           {
@@ -1010,97 +1102,6 @@ export function createMarketSection() {
               name: "Gini",
               color: colors.loss,
             }),
-          },
-          {
-            name: "RHODL Ratio",
-            title: "RHODL Ratio",
-            bottom: [
-              line({
-                series: indicators.rhodlRatio.ratio,
-                name: "RHODL",
-                color: colors.bitcoin,
-                unit: Unit.ratio,
-              }),
-            ],
-          },
-          {
-            name: "Thermocap Multiple",
-            title: "Thermocap Multiple",
-            bottom: [
-              line({
-                series: indicators.thermoCapMultiple.ratio,
-                name: "Thermocap",
-                color: colors.bitcoin,
-                unit: Unit.ratio,
-              }),
-            ],
-          },
-          {
-            name: "Stock-to-Flow",
-            title: "Stock-to-Flow",
-            bottom: [
-              line({
-                series: indicators.stockToFlow,
-                name: "S2F",
-                color: colors.bitcoin,
-                unit: Unit.ratio,
-              }),
-            ],
-          },
-          {
-            name: "Dormancy",
-            title: "Dormancy",
-            bottom: [
-              line({
-                series: indicators.dormancy.supplyAdjusted,
-                name: "Supply Adjusted",
-                color: colors.bitcoin,
-                unit: Unit.ratio,
-              }),
-              line({
-                series: indicators.dormancy.flow,
-                name: "Flow",
-                color: colors.usd,
-                unit: Unit.ratio,
-                defaultActive: false,
-              }),
-            ],
-          },
-          {
-            name: "Seller Exhaustion",
-            title: "Seller Exhaustion Constant",
-            bottom: [
-              line({
-                series: indicators.sellerExhaustion,
-                name: "SEC",
-                color: colors.bitcoin,
-                unit: Unit.ratio,
-              }),
-            ],
-          },
-          {
-            name: "CDD Supply Adjusted",
-            title: "Coindays Destroyed (Supply Adjusted)",
-            bottom: [
-              line({
-                series: indicators.coindaysDestroyedSupplyAdjusted,
-                name: "CDD SA",
-                color: colors.bitcoin,
-                unit: Unit.ratio,
-              }),
-            ],
-          },
-          {
-            name: "CYD Supply Adjusted",
-            title: "Coinyears Destroyed (Supply Adjusted)",
-            bottom: [
-              line({
-                series: indicators.coinyearsDestroyedSupplyAdjusted,
-                name: "CYD SA",
-                color: colors.bitcoin,
-                unit: Unit.ratio,
-              }),
-            ],
           },
         ],
       },
