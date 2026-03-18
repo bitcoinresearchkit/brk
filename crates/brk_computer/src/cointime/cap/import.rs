@@ -3,7 +3,10 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::{FiatPerBlock, RatioPerBlock}};
+use crate::{
+    indexes,
+    internal::{FiatPerBlock, RatioPerBlock},
+};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -16,7 +19,12 @@ impl Vecs {
             investor: FiatPerBlock::forced_import(db, "investor_cap", version, indexes)?,
             vaulted: FiatPerBlock::forced_import(db, "vaulted_cap", version, indexes)?,
             active: FiatPerBlock::forced_import(db, "active_cap", version, indexes)?,
-            cointime: FiatPerBlock::forced_import(db, "cointime_cap", version, indexes)?,
+            cointime: FiatPerBlock::forced_import(
+                db,
+                "cointime_cap",
+                version + Version::ONE,
+                indexes,
+            )?,
             aviv: RatioPerBlock::forced_import(db, "aviv", version, indexes)?,
         })
     }

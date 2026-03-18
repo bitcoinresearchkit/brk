@@ -38,12 +38,11 @@ impl Vecs {
             )?,
             subsidy: AmountPerBlockCumulative::forced_import(db, "subsidy", version, indexes)?,
             fees: AmountPerBlockFull::forced_import(db, "fees", version, indexes, cached_starts)?,
-            unclaimed: AmountPerBlockCumulativeWithSums::forced_import(
+            unclaimed: AmountPerBlockCumulative::forced_import(
                 db,
                 "unclaimed_rewards",
                 version,
                 indexes,
-                cached_starts,
             )?,
             fee_dominance: PercentPerBlock::forced_import(db, "fee_dominance", version, indexes)?,
             fee_dominance_rolling,

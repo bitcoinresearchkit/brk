@@ -11,7 +11,7 @@
  */
 
 import { formatCohortTitle, satsBtcUsd, satsBtcUsdFullTree } from "../shared.js";
-import { ROLLING_WINDOWS, line, baseline, percentRatio, rollingWindowsTree, rollingPercentRatioTree } from "../series.js";
+import { ROLLING_WINDOWS, line, baseline, percentRatio, sumsTree, rollingPercentRatioTree } from "../series.js";
 import { Unit } from "../../utils/units.js";
 import { colors } from "../../utils/colors.js";
 
@@ -613,7 +613,7 @@ function singleBucketFolder({ name, color, pattern }) {
           {
             name: "Change",
             tree: [
-              { ...rollingWindowsTree({ windows: pattern.supply.all.delta.absolute, title: `${name}: Supply Change`, unit: Unit.sats, series: baseline }), name: "Absolute" },
+              { ...sumsTree({ windows: pattern.supply.all.delta.absolute, title: `${name}: Supply Change`, unit: Unit.sats, series: baseline }), name: "Absolute" },
               { ...rollingPercentRatioTree({ windows: pattern.supply.all.delta.rate, title: `${name}: Supply Rate` }), name: "Rate" },
             ],
           },

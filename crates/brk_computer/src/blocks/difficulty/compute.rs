@@ -17,7 +17,7 @@ impl Vecs {
         self.adjustment.bps.height.compute_ratio_change(
             starting_indexes.height,
             &indexer.vecs.blocks.difficulty,
-            1,
+            2016,
             exit,
         )?;
 

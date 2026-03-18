@@ -10,46 +10,44 @@ import {
   dotted,
   distributionBtcSatsUsd,
   statsAtWindow,
-  rollingWindowsTree,
   ROLLING_WINDOWS,
   percentRatio,
-  percentRatioDots,
+  chartsFromCount,
 } from "./series.js";
 import {
-  satsBtcUsd,
   satsBtcUsdFrom,
+  satsBtcUsdFullTree,
   revenueBtcSatsUsd,
 } from "./shared.js";
 import { brk } from "../client.js";
 
 /** Major pools to show in Compare section (by current hashrate dominance) */
 const MAJOR_POOL_IDS = /** @type {const} */ ([
-  "foundryusa", // ~32% - largest pool
-  "antpool", // ~18% - Bitmain-owned
-  "viabtc", // ~14% - independent
-  "f2pool", // ~10% - one of the oldest pools
-  "marapool", // MARA Holdings
-  "braiinspool", // formerly Slush Pool
-  "spiderpool", // growing Asian pool
-  "ocean", // decentralization-focused
+  "foundryusa",
+  "antpool",
+  "viabtc",
+  "f2pool",
+  "marapool",
+  "braiinspool",
+  "spiderpool",
+  "ocean",
 ]);
 
 /**
  * AntPool & friends - pools sharing AntPool's block templates
  * Based on b10c's research: https://b10c.me/blog/015-bitcoin-mining-centralization/
- * Collectively ~35-40% of network hashrate
  */
 const ANTPOOL_AND_FRIENDS_IDS = /** @type {const} */ ([
-  "antpool", // Bitmain-owned, template source
-  "poolin", // shares AntPool templates
-  "btccom", // CloverPool (formerly BTC.com)
-  "braiinspool", // shares AntPool templates
-  "ultimuspool", // shares AntPool templates
-  "binancepool", // shares AntPool templates
-  "secpool", // shares AntPool templates
-  "sigmapoolcom", // SigmaPool
-  "rawpool", // shares AntPool templates
-  "luxor", // shares AntPool templates
+  "antpool",
+  "poolin",
+  "btccom",
+  "braiinspool",
+  "ultimuspool",
+  "binancepool",
+  "secpool",
+  "sigmapoolcom",
+  "rawpool",
+  "luxor",
 ]);
 
 /**
@@ -59,7 +57,6 @@ const ANTPOOL_AND_FRIENDS_IDS = /** @type {const} */ ([
 export function createMiningSection() {
   const { blocks, pools, mining } = brk.series;
 
-  // Pre-compute pool entries with resolved names
   const majorPoolData = entries(pools.major).map(([id, pool]) => ({
     id,
     name: brk.POOL_ID_TO_POOL_NAME[id],
@@ -71,7 +68,6 @@ export function createMiningSection() {
     pool,
   }));
 
-  // Filtered pool groups for comparisons (major pools only have windowed dominance)
   const featuredPools = majorPoolData.filter((p) =>
     includes(MAJOR_POOL_IDS, p.id),
   );
@@ -79,135 +75,126 @@ export function createMiningSection() {
     includes(ANTPOOL_AND_FRIENDS_IDS, p.id),
   );
 
-  // Build individual pool trees
-  const majorPoolsTree = majorPoolData.map(({ name, pool }) => ({
-    name,
+  /** @param {string} title @param {{ _24h: any, _1w: any, _1m: any, _1y: any, percent: any, ratio: any }} dominance */
+  const dominanceTree = (title, dominance) => ({
+    name: "Dominance",
     tree: [
       {
-        name: "Dominance",
-        title: `Dominance: ${name}`,
+        name: "Compare",
+        title,
         bottom: [
-          ...percentRatioDots({ pattern: pool.dominance._24h, name: "24h", color: colors.time._24h, defaultActive: false }),
-          ...percentRatio({ pattern: pool.dominance._1w, name: "1w", color: colors.time._1w, defaultActive: false }),
-          ...percentRatio({ pattern: pool.dominance._1m, name: "1m", color: colors.time._1m }),
-          ...percentRatio({ pattern: pool.dominance._1y, name: "1y", color: colors.time._1y, defaultActive: false }),
-          ...percentRatio({ pattern: pool.dominance, name: "All Time", color: colors.time.all, defaultActive: false }),
+          ...ROLLING_WINDOWS.flatMap((w) =>
+            percentRatio({ pattern: dominance[w.key], name: w.name, color: w.color, defaultActive: w.key !== "_24h" }),
+          ),
+          ...percentRatio({ pattern: dominance, name: "All Time", color: colors.time.all }),
         ],
       },
+      ...ROLLING_WINDOWS.map((w) => ({
+        name: w.name,
+        title: `${title} ${w.title}`,
+        bottom: percentRatio({ pattern: dominance[w.key], name: w.name, color: w.color }),
+      })),
       {
-        name: "Blocks Mined",
-        tree: [
-          {
-            name: "Base",
-            title: `Blocks Mined: ${name}`,
-            bottom: [
-              line({
-                series: pool.blocksMined.base,
-                name: "base",
-                unit: Unit.count,
-              }),
-            ],
-          },
-          rollingWindowsTree({ windows: pool.blocksMined.sum, title: `Blocks Mined: ${name}`, unit: Unit.count }),
-          {
-            name: "Cumulative",
-            title: `Blocks Mined: ${name} (Total)`,
-            bottom: [
-              line({
-                series: pool.blocksMined.cumulative,
-                name: "all-time",
-                unit: Unit.count,
-              }),
-            ],
-          },
-        ],
-      },
-      {
-        name: "Rewards",
-        tree: [
-          {
-            name: "Sum",
-            title: `Rewards: ${name}`,
-            bottom: satsBtcUsdFrom({
-              source: pool.rewards,
-              key: "base",
-              name: "sum",
-            }),
-          },
-          {
-            name: "Rolling",
-            tree: [
-              {
-                name: "Compare",
-                title: `Rewards: ${name} Rolling`,
-                bottom: ROLLING_WINDOWS.flatMap((w) =>
-                  satsBtcUsd({ pattern: pool.rewards.sum[w.key], name: w.name, color: w.color }),
-                ),
-              },
-              ...ROLLING_WINDOWS.map((w) => ({
-                name: w.name,
-                title: `Rewards: ${name} (${w.name})`,
-                bottom: satsBtcUsd({ pattern: pool.rewards.sum[w.key], name: w.name, color: w.color }),
-              })),
-            ],
-          },
-          {
-            name: "Cumulative",
-            title: `Rewards: ${name} (Total)`,
-            bottom: satsBtcUsdFrom({
-              source: pool.rewards,
-              key: "cumulative",
-              name: "all-time",
-            }),
-          },
-        ],
+        name: "All Time",
+        title: `${title} All Time`,
+        bottom: percentRatio({ pattern: dominance, name: "All Time", color: colors.time.all }),
       },
     ],
-  }));
+  });
 
-  const minorPoolsTree = minorPoolData.map(({ name, pool }) => ({
-    name,
+  /**
+   * @param {typeof majorPoolData} poolList
+   */
+  const createPoolTree = (poolList) =>
+    poolList.map(({ name, pool }) => ({
+      name,
+      tree: [
+        dominanceTree(`Dominance: ${name}`, pool.dominance),
+        {
+          name: "Blocks Mined",
+          tree: chartsFromCount({
+            pattern: pool.blocksMined,
+            title: `Blocks Mined: ${name}`,
+            unit: Unit.count,
+          }),
+        },
+        {
+          name: "Rewards",
+          tree: satsBtcUsdFullTree({
+            pattern: pool.rewards,
+            name: "Rewards",
+            title: `Rewards: ${name}`,
+          }),
+        },
+      ],
+    }));
+
+  /**
+   * @param {typeof minorPoolData} poolList
+   */
+  const createMinorPoolTree = (poolList) =>
+    poolList.map(({ name, pool }) => ({
+      name,
+      tree: [
+        {
+          name: "Dominance",
+          title: `Dominance: ${name}`,
+          bottom: percentRatio({ pattern: pool.dominance, name: "All Time", color: colors.time.all }),
+        },
+        {
+          name: "Blocks Mined",
+          tree: chartsFromCount({
+            pattern: pool.blocksMined,
+            title: `Blocks Mined: ${name}`,
+            unit: Unit.count,
+          }),
+        },
+      ],
+    }));
+
+  /**
+   * @param {string} groupTitle
+   * @param {typeof majorPoolData} poolList
+   */
+  const createPoolCompare = (groupTitle, poolList) => ({
+    name: "Compare",
     tree: [
       {
         name: "Dominance",
-        title: `Dominance: ${name}`,
-        bottom: percentRatio({ pattern: pool.dominance, name: "All Time", color: colors.time.all }),
+        tree: ROLLING_WINDOWS.map((w) => ({
+          name: w.name,
+          title: `Dominance: ${groupTitle} ${w.title}`,
+          bottom: poolList.flatMap((p, i) =>
+            percentRatio({
+              pattern: p.pool.dominance[w.key],
+              name: p.name,
+              color: colors.at(i, poolList.length),
+            }),
+          ),
+        })),
       },
       {
         name: "Blocks Mined",
-        tree: [
-          {
-            name: "Base",
-            title: `Blocks Mined: ${name}`,
-            bottom: [
-              line({
-                series: pool.blocksMined.base,
-                name: "base",
-                unit: Unit.count,
-              }),
-            ],
-          },
-          rollingWindowsTree({ windows: pool.blocksMined.sum, title: `Blocks Mined: ${name}`, unit: Unit.count }),
-          {
-            name: "Cumulative",
-            title: `Blocks Mined: ${name} (Total)`,
-            bottom: [
-              line({
-                series: pool.blocksMined.cumulative,
-                name: "all-time",
-                unit: Unit.count,
-              }),
-            ],
-          },
-        ],
+        tree: ROLLING_WINDOWS.map((w) => ({
+          name: w.name,
+          title: `Blocks Mined: ${groupTitle} ${w.title} Sum`,
+          bottom: poolList.map((p, i) =>
+            line({
+              series: p.pool.blocksMined.sum[w.key],
+              name: p.name,
+              color: colors.at(i, poolList.length),
+              unit: Unit.count,
+            }),
+          ),
+        })),
       },
     ],
-  }));
+  });
+
 
   return {
     name: "Mining",
     tree: [
-      // Hashrate
       {
         name: "Hashrate",
         tree: [
@@ -293,63 +280,6 @@ export function createMiningSection() {
         ],
       },
 
-      // Difficulty
-      {
-        name: "Difficulty",
-        tree: [
-          {
-            name: "Current",
-            title: "Mining Difficulty",
-            bottom: [
-              line({
-                series: blocks.difficulty.value,
-                name: "Difficulty",
-                unit: Unit.difficulty,
-              }),
-            ],
-          },
-          {
-            name: "Epoch",
-            title: "Difficulty Epoch",
-            bottom: [
-              line({
-                series: blocks.difficulty.epoch,
-                name: "Epoch",
-                unit: Unit.epoch,
-              }),
-            ],
-          },
-          {
-            name: "Adjustment",
-            title: "Difficulty Adjustment",
-            bottom: [
-              baseline({
-                series: blocks.difficulty.adjustment.percent,
-                name: "Change",
-                unit: Unit.percentage,
-              }),
-            ],
-          },
-          {
-            name: "Countdown",
-            title: "Next Difficulty Adjustment",
-            bottom: [
-              line({
-                series: blocks.difficulty.blocksToRetarget,
-                name: "Remaining",
-                unit: Unit.blocks,
-              }),
-              line({
-                series: blocks.difficulty.daysToRetarget,
-                name: "Remaining",
-                unit: Unit.days,
-              }),
-            ],
-          },
-        ],
-      },
-
-      // Revenue
       {
         name: "Revenue",
         tree: [
@@ -357,7 +287,7 @@ export function createMiningSection() {
             name: "Compare",
             tree: [
               {
-                name: "Sum",
+                name: "Per Block",
                 title: "Revenue Comparison",
                 bottom: revenueBtcSatsUsd({
                   coinbase: mining.rewards.coinbase,
@@ -380,105 +310,23 @@ export function createMiningSection() {
           },
           {
             name: "Coinbase",
-            tree: [
-              {
-                name: "Sum",
-                title: "Coinbase Rewards",
-                bottom: satsBtcUsdFrom({
-                  source: mining.rewards.coinbase,
-                  key: "base",
-                  name: "sum",
-                }),
-              },
-              {
-                name: "Rolling",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Coinbase Rolling Sum",
-                    bottom: [
-                      ...satsBtcUsd({
-                        pattern: mining.rewards.coinbase.sum._24h,
-                        name: "24h",
-                        color: colors.time._24h,
-                      }),
-                      ...satsBtcUsd({
-                        pattern: mining.rewards.coinbase.sum._1w,
-                        name: "7d",
-                        color: colors.time._1w,
-                      }),
-                      ...satsBtcUsd({
-                        pattern: mining.rewards.coinbase.sum._1m,
-                        name: "30d",
-                        color: colors.time._1m,
-                      }),
-                      ...satsBtcUsd({
-                        pattern: mining.rewards.coinbase.sum._1y,
-                        name: "1y",
-                        color: colors.time._1y,
-                      }),
-                    ],
-                  },
-                  {
-                    name: "24h",
-                    title: "Coinbase 24h Rolling Sum",
-                    bottom: satsBtcUsd({
-                      pattern: mining.rewards.coinbase.sum._24h,
-                      name: "24h",
-                      color: colors.time._24h,
-                    }),
-                  },
-                  {
-                    name: "7d",
-                    title: "Coinbase 7d Rolling Sum",
-                    bottom: satsBtcUsd({
-                      pattern: mining.rewards.coinbase.sum._1w,
-                      name: "7d",
-                      color: colors.time._1w,
-                    }),
-                  },
-                  {
-                    name: "30d",
-                    title: "Coinbase 30d Rolling Sum",
-                    bottom: satsBtcUsd({
-                      pattern: mining.rewards.coinbase.sum._1m,
-                      name: "30d",
-                      color: colors.time._1m,
-                    }),
-                  },
-                  {
-                    name: "1y",
-                    title: "Coinbase 1y Rolling Sum",
-                    bottom: satsBtcUsd({
-                      pattern: mining.rewards.coinbase.sum._1y,
-                      name: "1y",
-                      color: colors.time._1y,
-                    }),
-                  },
-                ],
-              },
-              {
-                name: "Cumulative",
-                title: "Coinbase Rewards (Total)",
-                bottom: satsBtcUsdFrom({
-                  source: mining.rewards.coinbase,
-                  key: "cumulative",
-                  name: "all-time",
-                }),
-              },
-            ],
+            tree: satsBtcUsdFullTree({
+              pattern: mining.rewards.coinbase,
+              name: "Coinbase",
+              title: "Coinbase Rewards",
+            }),
           },
           {
             name: "Subsidy",
             tree: [
               {
-                name: "Sum",
+                name: "Per Block",
                 title: "Block Subsidy",
                 bottom: [
                   ...satsBtcUsdFrom({
                     source: mining.rewards.subsidy,
                     key: "base",
-                    name: "sum",
+                    name: "base",
                   }),
                   line({
                     series: mining.rewards.subsidy.sma1y.usd,
@@ -503,129 +351,32 @@ export function createMiningSection() {
           {
             name: "Fees",
             tree: [
+              ...satsBtcUsdFullTree({
+                pattern: mining.rewards.fees,
+                name: "Fees",
+                title: "Transaction Fee Revenue",
+              }),
               {
-                name: "Sum",
-                title: "Transaction Fee Revenue per Block",
-                bottom: satsBtcUsdFrom({
-                  source: mining.rewards.fees,
-                  key: "base",
-                  name: "sum",
-                }),
-              },
-              {
-                name: "Rolling",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Fee Rolling Sum",
-                    bottom: [
-                      ...satsBtcUsd({
-                        pattern: mining.rewards.fees.sum._24h,
-                        name: "24h",
-                        color: colors.time._24h,
-                      }),
-                      ...satsBtcUsd({
-                        pattern: mining.rewards.fees.sum._1w,
-                        name: "7d",
-                        color: colors.time._1w,
-                      }),
-                      ...satsBtcUsd({
-                        pattern: mining.rewards.fees.sum._1m,
-                        name: "30d",
-                        color: colors.time._1m,
-                      }),
-                      ...satsBtcUsd({
-                        pattern: mining.rewards.fees.sum._1y,
-                        name: "1y",
-                        color: colors.time._1y,
-                      }),
-                    ],
-                  },
-                  {
-                    name: "24h",
-                    title: "Fee 24h Rolling Sum",
-                    bottom: satsBtcUsd({
-                      pattern: mining.rewards.fees.sum._24h,
-                      name: "24h",
-                      color: colors.time._24h,
-                    }),
-                  },
-                  {
-                    name: "7d",
-                    title: "Fee 7d Rolling Sum",
-                    bottom: satsBtcUsd({
-                      pattern: mining.rewards.fees.sum._1w,
-                      name: "7d",
-                      color: colors.time._1w,
-                    }),
-                  },
-                  {
-                    name: "30d",
-                    title: "Fee 30d Rolling Sum",
-                    bottom: satsBtcUsd({
-                      pattern: mining.rewards.fees.sum._1m,
-                      name: "30d",
-                      color: colors.time._1m,
-                    }),
-                  },
-                  {
-                    name: "1y",
-                    title: "Fee 1y Rolling Sum",
-                    bottom: satsBtcUsd({
-                      pattern: mining.rewards.fees.sum._1y,
-                      name: "1y",
-                      color: colors.time._1y,
-                    }),
-                  },
-                ],
-              },
-              {
-                name: "Distribution",
+                name: "Distributions",
                 tree: ROLLING_WINDOWS.map((w) => ({
                   name: w.name,
-                  title: `Fee Revenue per Block Distribution (${w.name})`,
+                  title: `Fee Revenue per Block ${w.title} Distribution`,
                   bottom: distributionBtcSatsUsd(statsAtWindow(mining.rewards.fees, w.key)),
                 })),
-              },
-              {
-                name: "Cumulative",
-                title: "Transaction Fee Revenue (Total)",
-                bottom: satsBtcUsdFrom({
-                  source: mining.rewards.fees,
-                  key: "cumulative",
-                  name: "all-time",
-                }),
               },
             ],
           },
           {
             name: "Dominance",
             tree: [
-              {
-                name: "Compare",
-                tree: [
-                  {
-                    name: "Subsidy",
-                    title: "Subsidy Dominance",
-                    bottom: [
-                      ...percentRatio({ pattern: mining.rewards.subsidy.dominance, name: "All-time", color: colors.time.all }),
-                      ...ROLLING_WINDOWS.flatMap((w) =>
-                        percentRatio({ pattern: mining.rewards.subsidy.dominance[w.key], name: w.name, color: w.color }),
-                      ),
-                    ],
-                  },
-                  {
-                    name: "Fees",
-                    title: "Fee Dominance",
-                    bottom: [
-                      ...percentRatio({ pattern: mining.rewards.fees.dominance, name: "All-time", color: colors.time.all }),
-                      ...ROLLING_WINDOWS.flatMap((w) =>
-                        percentRatio({ pattern: mining.rewards.fees.dominance[w.key], name: w.name, color: w.color }),
-                      ),
-                    ],
-                  },
+              ...ROLLING_WINDOWS.map((w) => ({
+                name: w.name,
+                title: `Revenue Dominance ${w.title}`,
+                bottom: [
+                  ...percentRatio({ pattern: mining.rewards.subsidy.dominance[w.key], name: "Subsidy", color: colors.mining.subsidy }),
+                  ...percentRatio({ pattern: mining.rewards.fees.dominance[w.key], name: "Fees", color: colors.mining.fee }),
                 ],
-              },
+              })),
               {
                 name: "All-time",
                 title: "Revenue Dominance (All-time)",
@@ -634,77 +385,28 @@ export function createMiningSection() {
                   ...percentRatio({ pattern: mining.rewards.fees.dominance, name: "Fees", color: colors.mining.fee }),
                 ],
               },
-              ...ROLLING_WINDOWS.map((w) => ({
-                name: w.name,
-                title: `Revenue Dominance (${w.name})`,
-                bottom: [
-                  ...percentRatio({ pattern: mining.rewards.subsidy.dominance[w.key], name: "Subsidy", color: colors.mining.subsidy }),
-                  ...percentRatio({ pattern: mining.rewards.fees.dominance[w.key], name: "Fees", color: colors.mining.fee }),
-                ],
-              })),
             ],
           },
           {
             name: "Fee Multiple",
-            tree: [
-              {
-                name: "Compare",
-                title: "Fee-to-Subsidy Ratio",
-                bottom: ROLLING_WINDOWS.map((w) =>
-                  line({ series: mining.rewards.fees.toSubsidyRatio[w.key].ratio, name: w.name, color: w.color, unit: Unit.ratio }),
-                ),
-              },
-              ...ROLLING_WINDOWS.map((w) => ({
-                name: w.name,
-                title: `Fee-to-Subsidy Ratio (${w.name})`,
-                bottom: [line({ series: mining.rewards.fees.toSubsidyRatio[w.key].ratio, name: w.name, color: w.color, unit: Unit.ratio })],
-              })),
-            ],
+            tree: ROLLING_WINDOWS.map((w) => ({
+              name: w.name,
+              title: `Fee-to-Subsidy Ratio ${w.title}`,
+              bottom: [line({ series: mining.rewards.fees.toSubsidyRatio[w.key].ratio, name: "Ratio", color: colors.mining.fee, unit: Unit.ratio })],
+            })),
           },
           {
             name: "Unclaimed",
-            tree: [
-              {
-                name: "Sum",
-                title: "Unclaimed Rewards",
-                bottom: satsBtcUsdFrom({
-                  source: mining.rewards.unclaimed,
-                  key: "base",
-                  name: "sum",
-                }),
-              },
-              {
-                name: "Rolling",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Unclaimed Rewards Rolling",
-                    bottom: ROLLING_WINDOWS.flatMap((w) =>
-                      satsBtcUsd({ pattern: mining.rewards.unclaimed.sum[w.key], name: w.name, color: w.color }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `Unclaimed Rewards ${w.name}`,
-                    bottom: satsBtcUsd({ pattern: mining.rewards.unclaimed.sum[w.key], name: w.name, color: w.color }),
-                  })),
-                ],
-              },
-              {
-                name: "Cumulative",
-                title: "Unclaimed Rewards (Total)",
-                bottom: satsBtcUsdFrom({
-                  source: mining.rewards.unclaimed,
-                  key: "cumulative",
-                  name: "all-time",
-                }),
-              },
-            ],
+            title: "Unclaimed Rewards (Total)",
+            bottom: satsBtcUsdFrom({
+              source: mining.rewards.unclaimed,
+              key: "cumulative",
+              name: "all-time",
+            }),
           },
         ],
       },
 
-      // Economics
       {
         name: "Economics",
         tree: [
@@ -712,60 +414,20 @@ export function createMiningSection() {
             name: "Hash Price",
             title: "Hash Price",
             bottom: [
-              line({
-                series: mining.hashrate.price.ths,
-                name: "TH/s",
-                color: colors.usd,
-                unit: Unit.usdPerThsPerDay,
-              }),
-              line({
-                series: mining.hashrate.price.phs,
-                name: "PH/s",
-                color: colors.usd,
-                unit: Unit.usdPerPhsPerDay,
-              }),
-              dotted({
-                series: mining.hashrate.price.thsMin,
-                name: "TH/s Min",
-                color: colors.stat.min,
-                unit: Unit.usdPerThsPerDay,
-              }),
-              dotted({
-                series: mining.hashrate.price.phsMin,
-                name: "PH/s Min",
-                color: colors.stat.min,
-                unit: Unit.usdPerPhsPerDay,
-              }),
+              line({ series: mining.hashrate.price.ths, name: "TH/s", color: colors.usd, unit: Unit.usdPerThsPerDay }),
+              line({ series: mining.hashrate.price.phs, name: "PH/s", color: colors.usd, unit: Unit.usdPerPhsPerDay }),
+              dotted({ series: mining.hashrate.price.thsMin, name: "TH/s Min", color: colors.stat.min, unit: Unit.usdPerThsPerDay }),
+              dotted({ series: mining.hashrate.price.phsMin, name: "PH/s Min", color: colors.stat.min, unit: Unit.usdPerPhsPerDay }),
             ],
           },
           {
             name: "Hash Value",
             title: "Hash Value",
             bottom: [
-              line({
-                series: mining.hashrate.value.ths,
-                name: "TH/s",
-                color: colors.bitcoin,
-                unit: Unit.satsPerThsPerDay,
-              }),
-              line({
-                series: mining.hashrate.value.phs,
-                name: "PH/s",
-                color: colors.bitcoin,
-                unit: Unit.satsPerPhsPerDay,
-              }),
-              dotted({
-                series: mining.hashrate.value.thsMin,
-                name: "TH/s Min",
-                color: colors.stat.min,
-                unit: Unit.satsPerThsPerDay,
-              }),
-              dotted({
-                series: mining.hashrate.value.phsMin,
-                name: "PH/s Min",
-                color: colors.stat.min,
-                unit: Unit.satsPerPhsPerDay,
-              }),
+              line({ series: mining.hashrate.value.ths, name: "TH/s", color: colors.bitcoin, unit: Unit.satsPerThsPerDay }),
+              line({ series: mining.hashrate.value.phs, name: "PH/s", color: colors.bitcoin, unit: Unit.satsPerPhsPerDay }),
+              dotted({ series: mining.hashrate.value.thsMin, name: "TH/s Min", color: colors.stat.min, unit: Unit.satsPerThsPerDay }),
+              dotted({ series: mining.hashrate.value.phsMin, name: "PH/s Min", color: colors.stat.min, unit: Unit.satsPerPhsPerDay }),
             ],
           },
           {
@@ -779,7 +441,6 @@ export function createMiningSection() {
         ],
       },
 
-      // Halving
       {
         name: "Halving",
         tree: [
@@ -787,122 +448,64 @@ export function createMiningSection() {
             name: "Countdown",
             title: "Next Halving",
             bottom: [
-              line({
-                series: blocks.halving.blocksToHalving,
-                name: "Remaining",
-                unit: Unit.blocks,
-              }),
-              line({
-                series: blocks.halving.daysToHalving,
-                name: "Remaining",
-                unit: Unit.days,
-              }),
+              line({ series: blocks.halving.blocksToHalving, name: "Remaining", unit: Unit.blocks }),
+              line({ series: blocks.halving.daysToHalving, name: "Remaining", unit: Unit.days }),
             ],
           },
           {
             name: "Epoch",
             title: "Halving Epoch",
-            bottom: [
-              line({
-                series: blocks.halving.epoch,
-                name: "Epoch",
-                unit: Unit.epoch,
-              }),
-            ],
+            bottom: [line({ series: blocks.halving.epoch, name: "Epoch", unit: Unit.epoch })],
           },
         ],
       },
 
-      // Pools
+      {
+        name: "Difficulty",
+        tree: [
+          {
+            name: "Current",
+            title: "Mining Difficulty",
+            bottom: [line({ series: blocks.difficulty.value, name: "Difficulty", unit: Unit.difficulty })],
+          },
+          {
+            name: "Adjustment",
+            title: "Difficulty Adjustment",
+            bottom: [baseline({ series: blocks.difficulty.adjustment.percent, name: "Change", unit: Unit.percentage })],
+          },
+          {
+            name: "Countdown",
+            title: "Next Difficulty Adjustment",
+            bottom: [
+              line({ series: blocks.difficulty.blocksToRetarget, name: "Remaining", unit: Unit.blocks }),
+              line({ series: blocks.difficulty.daysToRetarget, name: "Remaining", unit: Unit.days }),
+            ],
+          },
+          {
+            name: "Epoch",
+            title: "Difficulty Epoch",
+            bottom: [line({ series: blocks.difficulty.epoch, name: "Epoch", unit: Unit.epoch })],
+          },
+        ],
+      },
       {
         name: "Pools",
         tree: [
-          // Compare section (major pools only)
-          {
-            name: "Compare",
-            tree: [
-              {
-                name: "Dominance",
-                title: "Dominance: Major Pools (1m)",
-                bottom: featuredPools.flatMap((p, i) =>
-                  percentRatio({
-                    pattern: p.pool.dominance._1m,
-                    name: p.name,
-                    color: colors.at(i, featuredPools.length),
-                  }),
-                ),
-              },
-              {
-                name: "Blocks Mined",
-                title: "Blocks Mined: Major Pools (1m)",
-                bottom: featuredPools.map((p, i) =>
-                  line({
-                    series: p.pool.blocksMined.sum._1m,
-                    name: p.name,
-                    color: colors.at(i, featuredPools.length),
-                    unit: Unit.count,
-                  }),
-                ),
-              },
-              {
-                name: "Total Rewards",
-                title: "Total Rewards: Major Pools",
-                bottom: featuredPools.flatMap((p, i) =>
-                  satsBtcUsdFrom({
-                    source: p.pool.rewards,
-                    key: "base",
-                    name: p.name,
-                    color: colors.at(i, featuredPools.length),
-                  }),
-                ),
-              },
-            ],
-          },
-          // AntPool & friends - pools sharing block templates
+          createPoolCompare("Major Pools", featuredPools),
           {
             name: "AntPool & Friends",
             tree: [
-              {
-                name: "Dominance",
-                title: "Dominance: AntPool & Friends (1m)",
-                bottom: antpoolFriends.flatMap((p, i) =>
-                  percentRatio({
-                    pattern: p.pool.dominance._1m,
-                    name: p.name,
-                    color: colors.at(i, antpoolFriends.length),
-                  }),
-                ),
-              },
-              {
-                name: "Blocks Mined",
-                title: "Blocks Mined: AntPool & Friends (1m)",
-                bottom: antpoolFriends.map((p, i) =>
-                  line({
-                    series: p.pool.blocksMined.sum._1m,
-                    name: p.name,
-                    color: colors.at(i, antpoolFriends.length),
-                    unit: Unit.count,
-                  }),
-                ),
-              },
-              {
-                name: "Total Rewards",
-                title: "Total Rewards: AntPool & Friends",
-                bottom: antpoolFriends.flatMap((p, i) =>
-                  satsBtcUsdFrom({
-                    source: p.pool.rewards,
-                    key: "base",
-                    name: p.name,
-                    color: colors.at(i, antpoolFriends.length),
-                  }),
-                ),
-              },
+              createPoolCompare("AntPool & Friends", antpoolFriends),
+              ...createPoolTree(antpoolFriends),
             ],
           },
-          // All pools
           {
-            name: "All Pools",
-            tree: [...majorPoolsTree, ...minorPoolsTree],
+            name: "Major",
+            tree: createPoolTree(majorPoolData),
+          },
+          {
+            name: "Minor",
+            tree: createMinorPoolTree(minorPoolData),
           },
         ],
       },

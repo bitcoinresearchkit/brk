@@ -86,7 +86,12 @@ function createMaSubSection(label, averages) {
         name: "Compare",
         title: `Price ${label}s`,
         top: averages.map((a) =>
-          price({ series: a.ratio, name: a.id, color: a.color }),
+          price({
+            series: a.ratio,
+            name: a.id,
+            color: a.color,
+            defaultActive: includes(commonMaIds, a.id),
+          }),
         ),
       },
       ...common.map(toFolder),

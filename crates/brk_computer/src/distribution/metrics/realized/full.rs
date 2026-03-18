@@ -16,7 +16,7 @@ use crate::{
     internal::{
         CentsUnsignedToDollars, PerBlock, PerBlockCumulative,
         PerBlockCumulativeWithSums, FiatPerBlockCumulativeWithSums,
-        LazyPerBlock, PercentPerBlock, PercentRollingWindows, Price,
+        LazyPerBlock, PercentPerBlock, PercentRollingWindows,
         PriceWithRatioExtendedPerBlock, RatioCents64, RatioCentsBp32,
         RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32, RatioDollarsBp32,
         RatioPerBlockPercentiles, RatioPerBlockStdDevBands, RatioSma, RollingWindows,
@@ -70,8 +70,6 @@ pub struct RealizedPeakRegret<M: StorageMode = Rw> {
 #[derive(Traversable)]
 pub struct RealizedInvestor<M: StorageMode = Rw> {
     pub price: PriceWithRatioExtendedPerBlock<M>,
-    pub investor_lower_band: Price<PerBlock<Cents, M>>,
-    pub investor_upper_band: Price<PerBlock<Cents, M>>,
     #[traversable(hidden)]
     pub cap_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
 }
@@ -176,8 +174,6 @@ impl RealizedFull {
         // Investor
         let investor = RealizedInvestor {
             price: cfg.import("investor_price", v0)?,
-            investor_lower_band: cfg.import("investor_lower_band", v0)?,
-            investor_upper_band: cfg.import("investor_upper_band", v0)?,
             cap_raw: cfg.import("investor_cap_raw", v0)?,
         };
 
@@ -485,46 +481,6 @@ impl RealizedFull {
             starting_indexes,
             exit,
         )?;
-
-        self.investor
-            .investor_lower_band
-            .cents
-            .height
-            .compute_transform2(
-                starting_indexes.height,
-                &self.core.minimal.price.cents.height,
-                &self.investor.price.cents.height,
-                |(i, rp, ip, ..)| {
-                    let rp = rp.as_u128();
-                    let ip = ip.as_u128();
-                    if ip == 0 {
-                        (i, Cents::ZERO)
-                    } else {
-                        (i, Cents::from(rp * rp / ip))
-                    }
-                },
-                exit,
-            )?;
-
-        self.investor
-            .investor_upper_band
-            .cents
-            .height
-            .compute_transform2(
-                starting_indexes.height,
-                &self.investor.price.cents.height,
-                &self.core.minimal.price.cents.height,
-                |(i, ip, rp, ..)| {
-                    let ip = ip.as_u128();
-                    let rp = rp.as_u128();
-                    if rp == 0 {
-                        (i, Cents::ZERO)
-                    } else {
-                        (i, Cents::from(ip * ip / rp))
-                    }
-                },
-                exit,
-            )?;
 
         // Sell-side risk ratios
         for (ssrr, rv) in self

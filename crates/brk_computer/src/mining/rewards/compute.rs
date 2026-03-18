@@ -97,24 +97,17 @@ impl Vecs {
         )?;
         self.subsidy.compute(prices, starting_indexes.height, exit)?;
 
-        self.unclaimed.compute(
+        self.unclaimed.base.sats.height.compute_transform(
             starting_indexes.height,
-            prices,
-            exit,
-            |vec| {
-                vec.compute_transform(
-                    starting_indexes.height,
-                    &self.subsidy.base.sats.height,
-                    |(height, subsidy, ..)| {
-                        let halving = Halving::from(height);
-                        let expected = Sats::FIFTY_BTC / 2_usize.pow(halving.to_usize() as u32);
-                        (height, expected.checked_sub(subsidy).unwrap())
-                    },
-                    exit,
-                )?;
-                Ok(())
+            &self.subsidy.base.sats.height,
+            |(height, subsidy, ..)| {
+                let halving = Halving::from(height);
+                let expected = Sats::FIFTY_BTC / 2_usize.pow(halving.to_usize() as u32);
+                (height, expected.checked_sub(subsidy).unwrap())
             },
+            exit,
         )?;
+        self.unclaimed.compute(prices, starting_indexes.height, exit)?;
 
         self.fee_dominance
             .compute_binary::<Sats, Sats, RatioSatsBp16>(

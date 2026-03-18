@@ -13,7 +13,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub coinbase: AmountPerBlockCumulativeWithSums<M>,
     pub subsidy: AmountPerBlockCumulative<M>,
     pub fees: AmountPerBlockFull<M>,
-    pub unclaimed: AmountPerBlockCumulativeWithSums<M>,
+    pub unclaimed: AmountPerBlockCumulative<M>,
     #[traversable(wrap = "fees", rename = "dominance")]
     pub fee_dominance: PercentPerBlock<BasisPoints16, M>,
     #[traversable(wrap = "fees", rename = "dominance")]

@@ -11,7 +11,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco};
 
-use crate::{Low, Open};
+use crate::{Cents, Low, Open};
 
 use super::{Bitcoin, CentsSigned, Close, High, Sats, StoredF32, StoredF64};
 
@@ -51,6 +51,10 @@ impl Dollars {
 
     pub fn halved(self) -> Self {
         Self(self.0 / 2.0)
+    }
+
+    pub fn to_cents(self) -> Cents {
+        Cents::from(self)
     }
 }
 

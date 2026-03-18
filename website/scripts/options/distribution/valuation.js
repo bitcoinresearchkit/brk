@@ -11,7 +11,7 @@
  */
 
 import { Unit } from "../../utils/units.js";
-import { ROLLING_WINDOWS, line, baseline, mapWindows, rollingWindowsTree, rollingPercentRatioTree, percentRatio, percentRatioBaseline } from "../series.js";
+import { ROLLING_WINDOWS, line, baseline, mapWindows, sumsTree, rollingPercentRatioTree, percentRatio, percentRatioBaseline } from "../series.js";
 import { createRatioChart, mapCohortsWithAll, flatMapCohortsWithAll } from "../shared.js";
 
 /**
@@ -59,7 +59,7 @@ export function createValuationSectionFull({ cohort, title }) {
       {
         name: "Change",
         tree: [
-          { ...rollingWindowsTree({ windows: mapWindows(tree.realized.cap.delta.absolute, (c) => c.usd), title: title("Realized Cap Change"), unit: Unit.usd, series: baseline }), name: "Absolute" },
+          { ...sumsTree({ windows: mapWindows(tree.realized.cap.delta.absolute, (c) => c.usd), title: title("Realized Cap Change"), unit: Unit.usd, series: baseline }), name: "Absolute" },
           { ...rollingPercentRatioTree({ windows: tree.realized.cap.delta.rate, title: title("Realized Cap Rate") }), name: "Rate" },
         ],
       },
@@ -93,7 +93,7 @@ export function createValuationSection({ cohort, title }) {
       {
         name: "Change",
         tree: [
-          { ...rollingWindowsTree({ windows: mapWindows(tree.realized.cap.delta.absolute, (c) => c.usd), title: title("Realized Cap Change"), unit: Unit.usd, series: baseline }), name: "Absolute" },
+          { ...sumsTree({ windows: mapWindows(tree.realized.cap.delta.absolute, (c) => c.usd), title: title("Realized Cap Change"), unit: Unit.usd, series: baseline }), name: "Absolute" },
           { ...rollingPercentRatioTree({ windows: tree.realized.cap.delta.rate, title: title("Realized Cap Rate") }), name: "Rate" },
         ],
       },

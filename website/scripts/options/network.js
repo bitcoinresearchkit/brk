@@ -8,21 +8,17 @@ import { priceLine } from "./constants.js";
 import {
   line,
   dots,
-  baseline,
   fromSupplyPattern,
   chartsFromFullPerBlock,
   chartsFromCount,
   chartsFromCountEntries,
   chartsFromAggregatedPerBlock,
-  rollingWindowsTree,
-
+  averagesTree,
+  simpleDeltaTree,
   ROLLING_WINDOWS,
   chartsFromBlockAnd6b,
   multiSeriesTree,
-  simpleDeltaTree,
-  percentRatio,
   percentRatioDots,
-  rollingPercentRatioTree,
 } from "./series.js";
 import { satsBtcUsd, satsBtcUsdFrom, satsBtcUsdFullTree } from "./shared.js";
 
@@ -59,12 +55,7 @@ export function createNetworkSection() {
   // Non-addressable script types
   const nonAddressableTypes = /** @type {const} */ ([
     { key: "p2ms", name: "P2MS", color: st.p2ms, defaultActive: false },
-    {
-      key: "opReturn",
-      name: "OP_RETURN",
-      color: st.opReturn,
-      defaultActive: false,
-    },
+    { key: "opReturn", name: "OP_RETURN", color: st.opReturn, defaultActive: true },
     {
       key: "emptyOutput",
       name: "Empty",
@@ -82,42 +73,13 @@ export function createNetworkSection() {
   // All script types = addressable + non-addressable
   const scriptTypes = [...addressTypes, ...nonAddressableTypes];
 
-  // Address type groups (by era)
-  const taprootAddresses = /** @type {const} */ ([
-    { key: "p2a", name: "P2A", color: st.p2a },
-    { key: "p2tr", name: "P2TR", color: st.p2tr },
-  ]);
-  const segwitAddresses = /** @type {const} */ ([
-    { key: "p2wsh", name: "P2WSH", color: st.p2wsh },
-    { key: "p2wpkh", name: "P2WPKH", color: st.p2wpkh },
-  ]);
-  const legacyAddresses = /** @type {const} */ ([
-    { key: "p2sh", name: "P2SH", color: st.p2sh },
-    { key: "p2pkh", name: "P2PKH", color: st.p2pkh },
-    { key: "p2pk33", name: "P2PK33", color: st.p2pk33 },
-    { key: "p2pk65", name: "P2PK65", color: st.p2pk65 },
-  ]);
 
   // Transacting types (transaction participation)
-  const transactingTypes = /** @type {const} */ ([
-    {
-      key: "sending",
-      name: "Sending",
-      title: "Unique Sending Addresses per Block",
-      compareTitle: "Unique Sending Addresses per Block by Type",
-    },
-    {
-      key: "receiving",
-      name: "Receiving",
-      title: "Unique Receiving Addresses per Block",
-      compareTitle: "Unique Receiving Addresses per Block by Type",
-    },
-    {
-      key: "both",
-      name: "Sending & Receiving",
-      title: "Unique Addresses Sending & Receiving per Block",
-      compareTitle: "Unique Addresses Sending & Receiving per Block by Type",
-    },
+  const activityTypes = /** @type {const} */ ([
+    { key: "sending", name: "Sending" },
+    { key: "receiving", name: "Receiving" },
+    { key: "both", name: "Both" },
+    { key: "reactivated", name: "Reactivated" },
   ]);
 
   const countTypes = /** @type {const} */ ([
@@ -141,311 +103,140 @@ export function createNetworkSection() {
     },
   ]);
 
+  const countMetrics = /** @type {const} */ ([
+    { key: "funded", name: "Funded", color: undefined },
+    { key: "empty", name: "Empty", color: colors.gray },
+    { key: "total", name: "Total", color: colors.default },
+  ]);
+
   /**
-   * Create address series tree for a given type key
    * @param {AddressableType | "all"} key
    * @param {string} titlePrefix
    */
   const createAddressSeriesTree = (key, titlePrefix) => [
     {
       name: "Count",
-      title: `${titlePrefix}Address Count`,
-      bottom: [
-        line({
-          series: addrs.funded[key],
-          name: "Funded",
-          unit: Unit.count,
-        }),
-        line({
-          series: addrs.empty[key],
-          name: "Empty",
-          color: colors.gray,
-          unit: Unit.count,
-          defaultActive: false,
-        }),
-        line({
-          series: addrs.total[key],
-          name: "Total",
-          color: colors.default,
-          unit: Unit.count,
-          defaultActive: false,
-        }),
-      ],
-    },
-    {
-      name: "Trends",
       tree: [
-        rollingWindowsTree({
-          windows: addrs.delta[key].absolute,
-          title: `${titlePrefix}Address Count Change`,
-          unit: Unit.count,
-          series: baseline,
-        }),
         {
-          name: "New",
-          tree: (() => {
-            const p = addrs.new[key];
-            const t = `${titlePrefix}New Address Count`;
-            return [
-              {
-                name: "Sum",
-                title: t,
-                bottom: [
-                  line({ series: p.base, name: "base", unit: Unit.count }),
-                ],
-              },
-              rollingWindowsTree({
-                windows: p.sum,
-                title: t,
-                unit: Unit.count,
-              }),
-              {
-                name: "Cumulative",
-                title: `${t} (Total)`,
-                bottom: [
-                  line({
-                    series: p.cumulative,
-                    name: "all-time",
-                    unit: Unit.count,
-                  }),
-                ],
-              },
-            ];
-          })(),
-        },
-        {
-          name: "Reactivated",
-          tree: [
-            {
-              name: "Base",
-              title: `${titlePrefix}Reactivated Addresses per Block`,
-              bottom: [
-                dots({
-                  series: addrs.activity[key].reactivated.base,
-                  name: "base",
-                  unit: Unit.count,
-                }),
-                line({
-                  series: addrs.activity[key].reactivated._24h,
-                  name: "24h avg",
-                  color: colors.stat.avg,
-                  unit: Unit.count,
-                }),
-              ],
-            },
-            rollingWindowsTree({
-              windows: addrs.activity[key].reactivated,
-              title: `${titlePrefix}Reactivated Addresses`,
-              unit: Unit.count,
-            }),
-          ],
-        },
-        rollingPercentRatioTree({
-          windows: addrs.delta[key].rate,
-          title: `${titlePrefix}Address Growth Rate`,
-        }),
-      ],
-    },
-    {
-      name: "Transacting",
-      tree: transactingTypes.map((t) => ({
-        name: t.name,
-        tree: [
-          {
-            name: "Base",
-            title: `${titlePrefix}${t.title}`,
-            bottom: [
-              dots({
-                series: addrs.activity[key][t.key].base,
-                name: "base",
-                unit: Unit.count,
-              }),
-              line({
-                series: addrs.activity[key][t.key]._24h,
-                name: "24h avg",
-                color: colors.stat.avg,
-                unit: Unit.count,
-              }),
-            ],
-          },
-          rollingWindowsTree({
-            windows: addrs.activity[key][t.key],
-            title: `${titlePrefix}${t.title.replace(" per Block", "")}`,
-            unit: Unit.count,
-          }),
-        ],
-      })),
-    },
-  ];
-
-  /**
-   * Create Compare charts for an address group
-   * @template {AddressableType} K
-   * @param {string} groupName
-   * @param {ReadonlyArray<{key: K, name: string, color: Color}>} types
-   */
-  const createAddressCompare = (groupName, types) => ({
-    name: "Compare",
-    tree: [
-      {
-        name: "Count",
-        tree: countTypes.map((c) => ({
-          name: c.name,
-          title: `${groupName} ${c.title}`,
-          bottom: types.map((t) =>
+          name: "Compare",
+          title: `${titlePrefix}Address Count`,
+          bottom: countMetrics.map((m) =>
             line({
-              series: c.getSeries(t.key),
-              name: t.name,
-              color: t.color,
+              series: addrs[m.key][key],
+              name: m.name,
+              color: m.color,
               unit: Unit.count,
             }),
           ),
+        },
+        ...countMetrics.map((m) => ({
+          name: m.name,
+          title: `${titlePrefix}${m.name} Addresses`,
+          bottom: [
+            line({ series: addrs[m.key][key], name: m.name, unit: Unit.count }),
+          ],
         })),
-      },
-      {
-        name: "New",
-        title: `${groupName} New Address Count`,
-        bottom: types.flatMap((t) => [
-          line({
-            series: addrs.new[t.key].base,
-            name: t.name,
-            color: t.color,
-            unit: Unit.count,
-          }),
-          line({
-            series: addrs.new[t.key].sum._24h,
-            name: t.name,
-            color: t.color,
-            unit: Unit.count,
-          }),
-        ]),
-      },
-      {
-        name: "Reactivated",
-        tree: [
-          {
-            name: "Base",
-            title: `${groupName} Reactivated Addresses per Block`,
-            bottom: types.map((t) =>
+      ],
+    },
+    ...simpleDeltaTree({
+      delta: addrs.delta[key],
+      title: `${titlePrefix}Address Count`,
+      unit: Unit.count,
+    }),
+    {
+      name: "New",
+      tree: chartsFromCount({
+        pattern: addrs.new[key],
+        title: `${titlePrefix}New Addresses`,
+        unit: Unit.count,
+      }),
+    },
+    {
+      name: "Activity",
+      tree: [
+        {
+          name: "Compare",
+          tree: ROLLING_WINDOWS.map((w) => ({
+            name: w.name,
+            title: `${titlePrefix}Active Addresses ${w.title} Average`,
+            bottom: activityTypes.map((t, i) =>
               line({
-                series: addrs.activity[t.key].reactivated.base,
+                series: addrs.activity[key][t.key][w.key],
                 name: t.name,
-                color: t.color,
+                color: colors.at(i, activityTypes.length),
                 unit: Unit.count,
               }),
             ),
-          },
+          })),
+        },
+        ...activityTypes.map((t) =>
+          averagesTree({
+            windows: addrs.activity[key][t.key],
+            title: `${titlePrefix}${t.name} Addresses`,
+            unit: Unit.count,
+            name: t.name,
+          }),
+        ),
+      ],
+    },
+  ];
+
+  /** @type {Record<string, typeof scriptTypes[number]>} */
+  const byKey = Object.fromEntries(scriptTypes.map((t) => [t.key, t]));
+
+  const scriptGroups = [
+    { name: "Legacy", types: [byKey.p2pkh, byKey.p2pk33, byKey.p2pk65] },
+    { name: "Script Hash", types: [byKey.p2sh, byKey.p2ms] },
+    { name: "SegWit", types: [byKey.p2wsh, byKey.p2wpkh] },
+    { name: "Taproot", types: [byKey.p2a, byKey.p2tr] },
+    { name: "Other", types: [byKey.opReturn, byKey.emptyOutput, byKey.unknownOutput] },
+  ];
+
+  /**
+   * @template {keyof typeof scripts.count} K
+   * @param {string} groupName
+   * @param {ReadonlyArray<{key: K, name: string, color: Color}>} types
+   */
+  const createScriptGroup = (groupName, types) => ({
+    name: groupName,
+    tree: [
+      {
+        name: "Compare",
+        tree: [
           ...ROLLING_WINDOWS.map((w) => ({
             name: w.name,
-            title: `${groupName} Reactivated Addresses (${w.name})`,
+            title: `${groupName} Output Count ${w.title} Sum`,
             bottom: types.map((t) =>
               line({
-                series: addrs.activity[t.key].reactivated[w.key],
+                series: /** @type {CountPattern<number>} */ (scripts.count[t.key]).sum[w.key],
                 name: t.name,
                 color: t.color,
                 unit: Unit.count,
               }),
             ),
           })),
+          {
+            name: "Cumulative",
+            title: `${groupName} Output Count (Total)`,
+            bottom: types.map((t) =>
+              line({
+                series: scripts.count[t.key].cumulative,
+                name: t.name,
+                color: t.color,
+                unit: Unit.count,
+              }),
+            ),
+          },
         ],
       },
-      {
-        name: "Growth Rate",
-        tree: ROLLING_WINDOWS.map((w) => ({
-          name: w.name,
-          title: `${groupName} Address Growth Rate (${w.name})`,
-          bottom: types.flatMap((t) =>
-            percentRatio({
-              pattern: addrs.delta[t.key].rate[w.key],
-              name: t.name,
-              color: t.color,
-            }),
-          ),
-        })),
-      },
-      {
-        name: "Transacting",
-        tree: transactingTypes.map((tr) => ({
-          name: tr.name,
-          tree: [
-            {
-              name: "Base",
-              title: `${groupName} ${tr.compareTitle}`,
-              bottom: types.map((t) =>
-                line({
-                  series: addrs.activity[t.key][tr.key].base,
-                  name: t.name,
-                  color: t.color,
-                  unit: Unit.count,
-                }),
-              ),
-            },
-            ...ROLLING_WINDOWS.map((w) => ({
-              name: w.name,
-              title: `${groupName} ${tr.compareTitle} (${w.name})`,
-              bottom: types.map((t) =>
-                line({
-                  series: addrs.activity[t.key][tr.key][w.key],
-                  name: t.name,
-                  color: t.color,
-                  unit: Unit.count,
-                }),
-              ),
-            })),
-          ],
-        })),
-      },
-    ],
-  });
-
-  // Script type groups for Output Counts
-  const legacyScripts = legacyAddresses.slice(1); // p2pkh, p2pk33, p2pk65
-  const scriptHashScripts = [legacyAddresses[0], nonAddressableTypes[0]]; // p2sh, p2ms
-  const segwitScripts = [
-    /** @type {const} */ ({
-      key: "segwit",
-      name: "All SegWit",
-      color: colors.segwit,
-    }),
-    ...segwitAddresses,
-  ];
-  const otherScripts = nonAddressableTypes.slice(1); // opreturn, empty, unknown
-
-  /**
-   * Create Compare charts for a script group
-   * @template {keyof typeof scripts.count} K
-   * @param {string} groupName
-   * @param {ReadonlyArray<{key: K, name: string, color: Color}>} types
-   */
-  const createScriptCompare = (groupName, types) => ({
-    name: "Compare",
-    tree: [
-      {
-        name: "Sum",
-        title: `${groupName} Output Count`,
-        bottom: types.map((t) =>
-          line({
-            series: /** @type {CountPattern<number>} */ (scripts.count[t.key])
-              .sum._24h,
-            name: t.name,
-            color: t.color,
-            unit: Unit.count,
-          }),
-        ),
-      },
-      {
-        name: "Cumulative",
-        title: `${groupName} Output Count (Total)`,
-        bottom: types.map((t) =>
-          line({
-            series: /** @type {CountPattern<number>} */ (scripts.count[t.key])
-              .cumulative,
-            name: t.name,
-            color: t.color,
-            unit: Unit.count,
-          }),
-        ),
-      },
+      ...types.map((t) => ({
+        name: t.name,
+        tree: chartsFromCount({
+          pattern: /** @type {CountPattern<number>} */ (scripts.count[t.key]),
+          title: `${t.name} Output Count`,
+          unit: Unit.count,
+        }),
+      })),
     ],
   });
 
@@ -563,47 +354,19 @@ export function createNetworkSection() {
           },
           {
             name: "Velocity",
-            tree: [
-              {
-                name: "Compare",
-                title: "Transaction Velocity",
-                bottom: [
-                  line({
-                    series: supply.velocity.native,
-                    name: "BTC",
-                    unit: Unit.ratio,
-                  }),
-                  line({
-                    series: supply.velocity.fiat,
-                    name: "USD",
-                    color: colors.usd,
-                    unit: Unit.ratio,
-                  }),
-                ],
-              },
-              {
-                name: "Native",
-                title: "Transaction Velocity (BTC)",
-                bottom: [
-                  line({
-                    series: supply.velocity.native,
-                    name: "BTC",
-                    unit: Unit.ratio,
-                  }),
-                ],
-              },
-              {
-                name: "Fiat",
-                title: "Transaction Velocity (USD)",
-                bottom: [
-                  line({
-                    series: supply.velocity.fiat,
-                    name: "USD",
-                    color: colors.usd,
-                    unit: Unit.ratio,
-                  }),
-                ],
-              },
+            title: "Transaction Velocity",
+            bottom: [
+              line({
+                series: supply.velocity.native,
+                name: "BTC",
+                unit: Unit.ratio,
+              }),
+              line({
+                series: supply.velocity.fiat,
+                name: "USD",
+                color: colors.usd,
+                unit: Unit.ratio,
+              }),
             ],
           },
         ],
@@ -621,7 +384,7 @@ export function createNetworkSection() {
                 tree: [
                   {
                     name: "Compare",
-                    title: "Block Count Rolling",
+                    title: "Block Count",
                     bottom: ROLLING_WINDOWS.map((w) =>
                       line({
                         series: blocks.count.total.sum[w.key],
@@ -633,7 +396,7 @@ export function createNetworkSection() {
                   },
                   ...ROLLING_WINDOWS.map((w) => ({
                     name: w.name,
-                    title: `Block Count ${w.name}`,
+                    title: `Block Count ${w.title} Sum`,
                     bottom: [
                       line({
                         series: blocks.count.total.sum[w.key],
@@ -655,7 +418,11 @@ export function createNetworkSection() {
                 name: "Cumulative",
                 title: "Block Count (Total)",
                 bottom: [
-                  { series: blocks.count.total.cumulative, title: "all-time", unit: Unit.count },
+                  {
+                    series: blocks.count.total.cumulative,
+                    title: "all-time",
+                    unit: Unit.count,
+                  },
                 ],
               },
             ],
@@ -681,10 +448,9 @@ export function createNetworkSection() {
                   priceLine({ unit: Unit.secs, name: "Target", number: 600 }),
                 ],
               },
-              rollingWindowsTree({
+              averagesTree({
                 windows: blocks.interval,
                 title: "Block Interval",
-                name: "Averages",
                 unit: Unit.secs,
               }),
             ],
@@ -778,10 +544,10 @@ export function createNetworkSection() {
         }),
       },
       {
-        name: "Activity Rate",
+        name: "Throughput",
         tree: ROLLING_WINDOWS.map((w) => ({
           name: w.name,
-          title: `Activity Rate (${w.name})`,
+          title: `Throughput ${w.title} Average`,
           bottom: [
             line({
               series: transactions.volume.txPerSec[w.key],
@@ -809,15 +575,12 @@ export function createNetworkSection() {
       {
         name: "Addresses",
         tree: [
-          // Overview - global series for all addresses
-          { name: "Overview", tree: createAddressSeriesTree("all", "") },
-
-          // Top-level Compare - all types
+          ...createAddressSeriesTree("all", ""),
           {
-            name: "Compare",
+            name: "By Type",
             tree: [
               {
-                name: "Count",
+                name: "Compare",
                 tree: countTypes.map((c) => ({
                   name: c.name,
                   title: c.title,
@@ -832,139 +595,7 @@ export function createNetworkSection() {
                   ),
                 })),
               },
-              {
-                name: "New",
-                title: "New Address Count by Type",
-                bottom: addressTypes.flatMap((t) => [
-                  line({
-                    series: addrs.new[t.key].base,
-                    name: t.name,
-                    color: t.color,
-                    unit: Unit.count,
-                    defaultActive: t.defaultActive,
-                  }),
-                  line({
-                    series: addrs.new[t.key].sum._24h,
-                    name: t.name,
-                    color: t.color,
-                    unit: Unit.count,
-                    defaultActive: t.defaultActive,
-                  }),
-                ]),
-              },
-              {
-                name: "Reactivated",
-                tree: [
-                  {
-                    name: "Base",
-                    title: "Reactivated Addresses per Block by Type",
-                    bottom: addressTypes.map((t) =>
-                      line({
-                        series: addrs.activity[t.key].reactivated.base,
-                        name: t.name,
-                        color: t.color,
-                        unit: Unit.count,
-                        defaultActive: t.defaultActive,
-                      }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `Reactivated Addresses by Type (${w.name})`,
-                    bottom: addressTypes.map((t) =>
-                      line({
-                        series: addrs.activity[t.key].reactivated[w.key],
-                        name: t.name,
-                        color: t.color,
-                        unit: Unit.count,
-                        defaultActive: t.defaultActive,
-                      }),
-                    ),
-                  })),
-                ],
-              },
-              {
-                name: "Growth Rate",
-                tree: ROLLING_WINDOWS.map((w) => ({
-                  name: w.name,
-                  title: `Address Growth Rate by Type (${w.name})`,
-                  bottom: addressTypes.flatMap((t) =>
-                    percentRatio({
-                      pattern: addrs.delta[t.key].rate[w.key],
-                      name: t.name,
-                      color: t.color,
-                      defaultActive: t.defaultActive,
-                    }),
-                  ),
-                })),
-              },
-              {
-                name: "Transacting",
-                tree: transactingTypes.map((tr) => ({
-                  name: tr.name,
-                  tree: [
-                    {
-                      name: "Base",
-                      title: tr.compareTitle,
-                      bottom: addressTypes.map((t) =>
-                        line({
-                          series: addrs.activity[t.key][tr.key].base,
-                          name: t.name,
-                          color: t.color,
-                          unit: Unit.count,
-                          defaultActive: t.defaultActive,
-                        }),
-                      ),
-                    },
-                    ...ROLLING_WINDOWS.map((w) => ({
-                      name: w.name,
-                      title: `${tr.compareTitle} (${w.name})`,
-                      bottom: addressTypes.map((t) =>
-                        line({
-                          series: addrs.activity[t.key][tr.key][w.key],
-                          name: t.name,
-                          color: t.color,
-                          unit: Unit.count,
-                          defaultActive: t.defaultActive,
-                        }),
-                      ),
-                    })),
-                  ],
-                })),
-              },
-            ],
-          },
-
-          // Legacy (pre-SegWit)
-          {
-            name: "Legacy",
-            tree: [
-              createAddressCompare("Legacy", legacyAddresses),
-              ...legacyAddresses.map((t) => ({
-                name: t.name,
-                tree: createAddressSeriesTree(t.key, `${t.name} `),
-              })),
-            ],
-          },
-
-          // SegWit
-          {
-            name: "SegWit",
-            tree: [
-              createAddressCompare("SegWit", segwitAddresses),
-              ...segwitAddresses.map((t) => ({
-                name: t.name,
-                tree: createAddressSeriesTree(t.key, `${t.name} `),
-              })),
-            ],
-          },
-
-          // Taproot
-          {
-            name: "Taproot",
-            tree: [
-              createAddressCompare("Taproot", taprootAddresses),
-              ...taprootAddresses.map((t) => ({
+              ...addressTypes.map((t) => ({
                 name: t.name,
                 tree: createAddressSeriesTree(t.key, `${t.name} `),
               })),
@@ -978,191 +609,37 @@ export function createNetworkSection() {
         name: "Scripts",
         tree: [
           {
-            name: "By Type",
+            name: "Compare",
             tree: [
-              // Compare section
-              {
-                name: "Compare",
-                tree: [
-                  {
-                    name: "Sum",
-                    title: "Output Count by Script Type",
-                    bottom: scriptTypes.map((t) =>
-                      line({
-                        series: /** @type {CountPattern<number>} */ (
-                          scripts.count[t.key]
-                        ).sum._24h,
-                        name: t.name,
-                        color: t.color,
-                        unit: Unit.count,
-                        defaultActive: t.defaultActive,
-                      }),
-                    ),
-                  },
-                  {
-                    name: "Cumulative",
-                    title: "Output Count by Script Type (Total)",
-                    bottom: scriptTypes.map((t) =>
-                      line({
-                        series: scripts.count[t.key].cumulative,
-                        name: t.name,
-                        color: t.color,
-                        unit: Unit.count,
-                        defaultActive: t.defaultActive,
-                      }),
-                    ),
-                  },
-                ],
-              },
-              {
-                name: "Legacy",
-                tree: [
-                  createScriptCompare("Legacy", legacyScripts),
-                  ...legacyScripts.map((t) => ({
+              ...ROLLING_WINDOWS.map((w) => ({
+                name: w.name,
+                title: `Output Count by Script Type ${w.title} Sum`,
+                bottom: scriptTypes.map((t) =>
+                  line({
+                    series: /** @type {CountPattern<number>} */ (scripts.count[t.key]).sum[w.key],
                     name: t.name,
-                    tree: chartsFromCount({
-                      pattern: /** @type {CountPattern<number>} */ (
-                        scripts.count[t.key]
-                      ),
-                      title: `${t.name} Output Count`,
-                      unit: Unit.count,
-                    }),
-                  })),
-                ],
-              },
+                    color: t.color,
+                    unit: Unit.count,
+                    defaultActive: t.defaultActive,
+                  }),
+                ),
+              })),
               {
-                name: "Script Hash",
-                tree: [
-                  createScriptCompare("Script Hash", scriptHashScripts),
-                  ...scriptHashScripts.map((t) => ({
+                name: "Cumulative",
+                title: "Output Count by Script Type (Total)",
+                bottom: scriptTypes.map((t) =>
+                  line({
+                    series: scripts.count[t.key].cumulative,
                     name: t.name,
-                    tree: chartsFromCount({
-                      pattern: /** @type {CountPattern<number>} */ (
-                        scripts.count[t.key]
-                      ),
-                      title: `${t.name} Output Count`,
-                      unit: Unit.count,
-                    }),
-                  })),
-                ],
-              },
-              {
-                name: "SegWit",
-                tree: [
-                  createScriptCompare("SegWit", segwitScripts),
-                  ...segwitScripts.map((t) => ({
-                    name: t.name,
-                    tree: chartsFromCount({
-                      pattern: /** @type {CountPattern<number>} */ (
-                        scripts.count[t.key]
-                      ),
-                      title: `${t.name} Output Count`,
-                      unit: Unit.count,
-                    }),
-                  })),
-                ],
-              },
-              {
-                name: "Taproot",
-                tree: [
-                  createScriptCompare("Taproot", taprootAddresses),
-                  ...taprootAddresses.map((t) => ({
-                    name: t.name,
-                    tree: chartsFromCount({
-                      pattern: /** @type {CountPattern<number>} */ (
-                        scripts.count[t.key]
-                      ),
-                      title: `${t.name} Output Count`,
-                      unit: Unit.count,
-                    }),
-                  })),
-                ],
-              },
-              {
-                name: "Other",
-                tree: [
-                  createScriptCompare("Other", otherScripts),
-                  ...otherScripts.map((t) => ({
-                    name: t.name,
-                    tree: chartsFromCount({
-                      pattern: /** @type {CountPattern<number>} */ (
-                        scripts.count[t.key]
-                      ),
-                      title: `${t.name} Output Count`,
-                      unit: Unit.count,
-                    }),
-                  })),
-                ],
+                    color: t.color,
+                    unit: Unit.count,
+                    defaultActive: t.defaultActive,
+                  }),
+                ),
               },
             ],
           },
-          {
-            name: "Adoption",
-            tree: [
-              {
-                name: "Compare",
-                title: "Script Adoption",
-                bottom: [
-                  line({
-                    series: scripts.adoption.segwit.percent,
-                    name: "SegWit",
-                    color: colors.segwit,
-                    unit: Unit.percentage,
-                  }),
-                  line({
-                    series: scripts.adoption.segwit.ratio,
-                    name: "SegWit",
-                    color: colors.segwit,
-                    unit: Unit.ratio,
-                  }),
-                  line({
-                    series: scripts.adoption.taproot.percent,
-                    name: "Taproot",
-                    color: taprootAddresses[1].color,
-                    unit: Unit.percentage,
-                  }),
-                  line({
-                    series: scripts.adoption.taproot.ratio,
-                    name: "Taproot",
-                    color: taprootAddresses[1].color,
-                    unit: Unit.ratio,
-                  }),
-                ],
-              },
-              {
-                name: "SegWit",
-                title: "SegWit Adoption",
-                bottom: [
-                  line({
-                    series: scripts.adoption.segwit.percent,
-                    name: "Adoption",
-                    unit: Unit.percentage,
-                  }),
-                  line({
-                    series: scripts.adoption.segwit.ratio,
-                    name: "Adoption",
-                    unit: Unit.ratio,
-                  }),
-                ],
-              },
-              {
-                name: "Taproot",
-                title: "Taproot Adoption",
-                bottom: [
-                  line({
-                    series: scripts.adoption.taproot.percent,
-                    name: "Adoption",
-                    unit: Unit.percentage,
-                  }),
-                  line({
-                    series: scripts.adoption.taproot.ratio,
-                    name: "Adoption",
-                    unit: Unit.ratio,
-                  }),
-                ],
-              },
-            ],
-          },
+          ...scriptGroups.map((g) => createScriptGroup(g.name, g.types)),
         ],
       },
     ],

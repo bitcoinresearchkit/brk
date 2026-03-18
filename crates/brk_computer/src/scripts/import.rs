@@ -8,7 +8,7 @@ use crate::{
     internal::db_utils::{finalize_db, open_db},
 };
 
-use super::{AdoptionVecs, CountVecs, ValueVecs, Vecs};
+use super::{CountVecs, ValueVecs, Vecs};
 use crate::internal::CachedWindowStarts;
 
 impl Vecs {
@@ -23,14 +23,8 @@ impl Vecs {
 
         let count = CountVecs::forced_import(&db, version, indexes, cached_starts)?;
         let value = ValueVecs::forced_import(&db, version, indexes, cached_starts)?;
-        let adoption = AdoptionVecs::forced_import(&db, version, indexes)?;
 
-        let this = Self {
-            db,
-            count,
-            value,
-            adoption,
-        };
+        let this = Self { db, count, value };
         finalize_db(&this.db, &this)?;
         Ok(this)
     }

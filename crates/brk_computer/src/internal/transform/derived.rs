@@ -1,21 +1,7 @@
 use std::marker::PhantomData;
 
-use brk_types::{BasisPoints32, Cents, StoredF32, StoredF64, StoredU64, Timestamp};
+use brk_types::{BasisPoints32, Cents, StoredF32, StoredF64};
 use vecdb::{BinaryTransform, UnaryTransform};
-
-pub struct PerSec;
-
-impl BinaryTransform<StoredU64, Timestamp, StoredF32> for PerSec {
-    #[inline(always)]
-    fn apply(count: StoredU64, interval: Timestamp) -> StoredF32 {
-        let interval_f64 = f64::from(*interval);
-        if interval_f64 > 0.0 {
-            StoredF32::from(*count as f64 / interval_f64)
-        } else {
-            StoredF32::NAN
-        }
-    }
-}
 
 pub struct DaysToYears;
 

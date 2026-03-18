@@ -349,7 +349,6 @@ impl Computer {
             timed("Computed scripts", || {
                 self.scripts.compute(
                     indexer,
-                    &self.outputs,
                     &self.prices,
                     &starting_indexes,
                     exit,

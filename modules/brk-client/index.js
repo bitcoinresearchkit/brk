@@ -4291,7 +4291,6 @@ function createUnspentPattern(client, acc) {
  * @property {SeriesTree_Scripts_Raw} raw
  * @property {SeriesTree_Scripts_Count} count
  * @property {SeriesTree_Scripts_Value} value
- * @property {SeriesTree_Scripts_Adoption} adoption
  */
 
 /**
@@ -4340,18 +4339,11 @@ function createUnspentPattern(client, acc) {
  * @property {BaseCumulativeSumPattern<StoredU64>} opReturn
  * @property {BaseCumulativeSumPattern<StoredU64>} emptyOutput
  * @property {BaseCumulativeSumPattern<StoredU64>} unknownOutput
- * @property {BaseCumulativeSumPattern<StoredU64>} segwit
  */
 
 /**
  * @typedef {Object} SeriesTree_Scripts_Value
  * @property {BaseCumulativeSumPattern4} opReturn
- */
-
-/**
- * @typedef {Object} SeriesTree_Scripts_Adoption
- * @property {BpsPercentRatioPattern3} taproot
- * @property {BpsPercentRatioPattern3} segwit
  */
 
 /**
@@ -4365,7 +4357,7 @@ function createUnspentPattern(client, acc) {
  * @property {BaseCumulativeSumPattern4} coinbase
  * @property {SeriesTree_Mining_Rewards_Subsidy} subsidy
  * @property {SeriesTree_Mining_Rewards_Fees} fees
- * @property {BaseCumulativeSumPattern4} unclaimed
+ * @property {SeriesTree_Mining_Rewards_Unclaimed} unclaimed
  */
 
 /**
@@ -4399,6 +4391,12 @@ function createUnspentPattern(client, acc) {
  * @property {BpsRatioPattern2} _1w
  * @property {BpsRatioPattern2} _1m
  * @property {BpsRatioPattern2} _1y
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Mining_Rewards_Unclaimed
+ * @property {BtcCentsSatsUsdPattern} base
+ * @property {BtcCentsSatsUsdPattern} cumulative
  */
 
 /**
@@ -4481,10 +4479,6 @@ function createUnspentPattern(client, acc) {
  * @property {BpsCentsPercentilesRatioSatsUsdPattern} active
  * @property {BpsCentsPercentilesRatioSatsUsdPattern} trueMarketMean
  * @property {BpsCentsPercentilesRatioSatsUsdPattern} cointime
- * @property {BpsCentsPercentilesRatioSatsUsdPattern} transfer
- * @property {BpsCentsPercentilesRatioSatsUsdPattern} balanced
- * @property {BpsCentsPercentilesRatioSatsUsdPattern} terminal
- * @property {BpsCentsPercentilesRatioSatsUsdPattern} delta
  */
 
 /**
@@ -7767,14 +7761,9 @@ class BrkClient extends BrkClientBase {
           opReturn: createBaseCumulativeSumPattern(this, 'op_return_count'),
           emptyOutput: createBaseCumulativeSumPattern(this, 'empty_output_count'),
           unknownOutput: createBaseCumulativeSumPattern(this, 'unknown_output_count'),
-          segwit: createBaseCumulativeSumPattern(this, 'segwit_count'),
         },
         value: {
           opReturn: createBaseCumulativeSumPattern4(this, 'op_return_value'),
-        },
-        adoption: {
-          taproot: createBpsPercentRatioPattern3(this, 'taproot_adoption'),
-          segwit: createBpsPercentRatioPattern3(this, 'segwit_adoption'),
         },
       },
       mining: {
@@ -7806,7 +7795,10 @@ class BrkClient extends BrkClientBase {
               _1y: createBpsRatioPattern2(this, 'fee_to_subsidy_ratio_1y'),
             },
           },
-          unclaimed: createBaseCumulativeSumPattern4(this, 'unclaimed_rewards'),
+          unclaimed: {
+            base: createBtcCentsSatsUsdPattern(this, 'unclaimed_rewards'),
+            cumulative: createBtcCentsSatsUsdPattern(this, 'unclaimed_rewards_cumulative'),
+          },
         },
         hashrate: {
           rate: {
@@ -7860,10 +7852,6 @@ class BrkClient extends BrkClientBase {
           active: createBpsCentsPercentilesRatioSatsUsdPattern(this, 'active_price'),
           trueMarketMean: createBpsCentsPercentilesRatioSatsUsdPattern(this, 'true_market_mean'),
           cointime: createBpsCentsPercentilesRatioSatsUsdPattern(this, 'cointime_price'),
-          transfer: createBpsCentsPercentilesRatioSatsUsdPattern(this, 'transfer_price'),
-          balanced: createBpsCentsPercentilesRatioSatsUsdPattern(this, 'balanced_price'),
-          terminal: createBpsCentsPercentilesRatioSatsUsdPattern(this, 'terminal_price'),
-          delta: createBpsCentsPercentilesRatioSatsUsdPattern(this, 'delta_price'),
         },
         adjusted: {
           inflationRate: createBpsPercentRatioPattern(this, 'cointime_adj_inflation_rate'),

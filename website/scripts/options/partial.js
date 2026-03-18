@@ -153,7 +153,9 @@ export function createPartialOptions() {
                       list: utxosUnderAmount,
                       all: cohortAll,
                     }),
-                    ...utxosUnderAmount.map(createCohortFolderBasicWithMarketCap),
+                    ...utxosUnderAmount.map(
+                      createCohortFolderBasicWithMarketCap,
+                    ),
                   ],
                 },
                 // More Than (≥ X sats)
@@ -166,7 +168,9 @@ export function createPartialOptions() {
                       list: utxosOverAmount,
                       all: cohortAll,
                     }),
-                    ...utxosOverAmount.map(createCohortFolderBasicWithMarketCap),
+                    ...utxosOverAmount.map(
+                      createCohortFolderBasicWithMarketCap,
+                    ),
                   ],
                 },
                 // Range
@@ -179,7 +183,9 @@ export function createPartialOptions() {
                       list: utxosAmountRange,
                       all: cohortAll,
                     }),
-                    ...utxosAmountRange.map(createCohortFolderBasicWithoutMarketCap),
+                    ...utxosAmountRange.map(
+                      createCohortFolderBasicWithoutMarketCap,
+                    ),
                   ],
                 },
               ],
@@ -283,14 +289,14 @@ export function createPartialOptions() {
           ],
         },
 
+        // Investing section
+        createInvestingSection(),
+
         // Frameworks section
         {
           name: "Frameworks",
           tree: [createCointimeSection()],
         },
-
-        // Investing section
-        createInvestingSection(),
       ],
     },
 

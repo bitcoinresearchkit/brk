@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{PerBlock, PriceWithRatioExtendedPerBlock},
+    internal::PriceWithRatioExtendedPerBlock,
 };
 
 impl Vecs {
@@ -25,16 +25,6 @@ impl Vecs {
             active: import!("active_price"),
             true_market_mean: import!("true_market_mean"),
             cointime: import!("cointime_price"),
-            transfer: import!("transfer_price"),
-            balanced: import!("balanced_price"),
-            terminal: import!("terminal_price"),
-            delta: import!("delta_price"),
-            cumulative_market_cap: PerBlock::forced_import(
-                db,
-                "cumulative_market_cap",
-                version,
-                indexes,
-            )?,
         })
     }
 }

@@ -52,7 +52,7 @@ impl Vecs {
             adjustment: PercentPerBlock::forced_import(
                 db,
                 "difficulty_adjustment",
-                version,
+                version + Version::ONE,
                 indexes,
             )?,
             epoch: PerBlock::forced_import(db, "difficulty_epoch", version, indexes)?,

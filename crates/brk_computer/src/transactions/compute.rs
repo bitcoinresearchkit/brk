@@ -21,7 +21,10 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let (r1, (r2, r3)) = rayon::join(
-            || self.count.compute(indexer, &blocks.lookback, starting_indexes, exit),
+            || {
+                self.count
+                    .compute(indexer, &blocks.lookback, starting_indexes, exit)
+            },
             || {
                 rayon::join(
                     || self.versions.compute(indexer, starting_indexes, exit),
@@ -33,13 +36,18 @@ impl Vecs {
         r2?;
         r3?;
 
-        self.fees
-            .compute(indexer, indexes, &inputs.spent, &self.size, starting_indexes, exit)?;
+        self.fees.compute(
+            indexer,
+            indexes,
+            &inputs.spent,
+            &self.size,
+            starting_indexes,
+            exit,
+        )?;
 
         self.volume.compute(
             indexer,
             indexes,
-            blocks,
             prices,
             &self.count,
             &self.fees,

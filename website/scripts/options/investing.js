@@ -146,6 +146,59 @@ function createCompareFolder(context, items) {
 }
 
 /**
+ * Create compare folder from long items (includes CAGR chart)
+ * @param {string} context
+ * @param {LongEntryItem[]} items
+ */
+function createLongCompareFolder(context, items) {
+  const topPane = items.map(({ name, color, costBasis }) =>
+    price({ series: costBasis, name, color }),
+  );
+  return {
+    name: "Compare",
+    tree: [
+      {
+        name: "Cost Basis",
+        title: `Cost Basis: ${context}`,
+        top: topPane,
+      },
+      {
+        name: "Returns",
+        title: `Returns: ${context}`,
+        top: topPane,
+        bottom: items.flatMap(({ name, color, returns }) =>
+          percentRatioBaseline({
+            pattern: returns,
+            name,
+            color: [color, color],
+          }),
+        ),
+      },
+      {
+        name: "CAGR",
+        title: `CAGR: ${context}`,
+        top: topPane,
+        bottom: items.flatMap(({ name, color, cagr }) =>
+          percentRatioBaseline({
+            pattern: cagr,
+            name,
+            color: [color, color],
+          }),
+        ),
+      },
+      {
+        name: "Accumulated",
+        title: `Accumulated Value: ${context}`,
+        top: topPane,
+        bottom: items.flatMap(({ name, color, stack }) =>
+          satsBtcUsd({ pattern: stack, name, color }),
+        ),
+      },
+    ],
+  };
+}
+
+/**
  * Create single entry tree structure
  * @param {BaseEntryItem & { titlePrefix?: string }} item
  * @param {object[]} returnsBottom - Bottom pane items for returns chart
@@ -182,14 +235,36 @@ function createShortSingleEntry(item) {
 }
 
 /**
- * Create a single entry from a long item (with CAGR)
+ * Create a single entry from a long item (with CAGR as its own chart)
  * @param {LongEntryItem & { titlePrefix?: string }} item
  */
 function createLongSingleEntry(item) {
-  return createSingleEntryTree(item, [
-    ...percentRatioBaseline({ pattern: item.returns, name: "Current" }),
-    ...percentRatioBaseline({ pattern: item.cagr, name: "CAGR" }),
-  ]);
+  const { name, titlePrefix = name, color, costBasis, returns, cagr, stack } = item;
+  const top = [price({ series: costBasis, name: "Cost Basis", color })];
+  return {
+    name,
+    tree: [
+      { name: "Cost Basis", title: `Cost Basis: ${titlePrefix}`, top },
+      {
+        name: "Returns",
+        title: `Returns: ${titlePrefix}`,
+        top,
+        bottom: percentRatioBaseline({ pattern: returns, name: "Current" }),
+      },
+      {
+        name: "CAGR",
+        title: `CAGR: ${titlePrefix}`,
+        top,
+        bottom: percentRatioBaseline({ pattern: cagr, name: "CAGR" }),
+      },
+      {
+        name: "Accumulated",
+        title: `Accumulated Value: ${titlePrefix}`,
+        top,
+        bottom: satsBtcUsd({ pattern: stack, name: "Value" }),
+      },
+    ],
+  };
 }
 
 /**
@@ -250,13 +325,22 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
         name: "Lump Sum",
         color: colors.bi.p2,
       }),
+    ],
+  });
+
+  /** @param {string} name @param {LongPeriodKey} key */
+  const longCagrChart = (name, key) => ({
+    name: "CAGR",
+    title: `CAGR: ${name} DCA vs Lump Sum`,
+    top: topPane(key),
+    bottom: [
       ...percentRatioBaseline({
         pattern: dca.period.cagr[key],
-        name: "DCA CAGR",
+        name: "DCA",
       }),
       ...percentRatioBaseline({
         pattern: returns.cagr[key],
-        name: "Lump Sum CAGR",
+        name: "Lump Sum",
         color: colors.bi.p2,
       }),
     ],
@@ -302,6 +386,7 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
       tree: [
         costBasisChart(name, key),
         longReturnsChart(name, key),
+        longCagrChart(name, key),
         stackChart(name, key),
       ],
     };
@@ -381,10 +466,6 @@ function createPeriodSection({ dca, lookback, returns }) {
     name: `${suffix} by Period`,
     title: `${suffix} Performance by Investment Period`,
     tree: [
-      createCompareFolder(`All Periods ${suffix}`, [
-        ...shortEntries,
-        ...longEntries,
-      ]),
       {
         name: "Short Term",
         title: "Up to 1 Year",
@@ -397,7 +478,7 @@ function createPeriodSection({ dca, lookback, returns }) {
         name: "Long Term",
         title: "2+ Years",
         tree: [
-          createCompareFolder(`Long Term ${suffix}`, longEntries),
+          createLongCompareFolder(`Long Term ${suffix}`, longEntries),
           ...longEntries.map(createLongEntry),
         ],
       },

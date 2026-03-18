@@ -10,11 +10,4 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub active: PriceWithRatioExtendedPerBlock<M>,
     pub true_market_mean: PriceWithRatioExtendedPerBlock<M>,
     pub cointime: PriceWithRatioExtendedPerBlock<M>,
-    pub transfer: PriceWithRatioExtendedPerBlock<M>,
-    pub balanced: PriceWithRatioExtendedPerBlock<M>,
-    pub terminal: PriceWithRatioExtendedPerBlock<M>,
-    pub delta: PriceWithRatioExtendedPerBlock<M>,
-
-    #[traversable(hidden)]
-    pub cumulative_market_cap: PerBlock<Dollars, M>,
 }

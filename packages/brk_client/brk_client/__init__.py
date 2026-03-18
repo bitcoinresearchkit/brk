@@ -3594,20 +3594,12 @@ class SeriesTree_Scripts_Count:
         self.op_return: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'op_return_count')
         self.empty_output: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'empty_output_count')
         self.unknown_output: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'unknown_output_count')
-        self.segwit: BaseCumulativeSumPattern[StoredU64] = BaseCumulativeSumPattern(client, 'segwit_count')
 
 class SeriesTree_Scripts_Value:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.op_return: BaseCumulativeSumPattern4 = BaseCumulativeSumPattern4(client, 'op_return_value')
-
-class SeriesTree_Scripts_Adoption:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.taproot: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, 'taproot_adoption')
-        self.segwit: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, 'segwit_adoption')
 
 class SeriesTree_Scripts:
     """Series tree node."""
@@ -3616,7 +3608,6 @@ class SeriesTree_Scripts:
         self.raw: SeriesTree_Scripts_Raw = SeriesTree_Scripts_Raw(client)
         self.count: SeriesTree_Scripts_Count = SeriesTree_Scripts_Count(client)
         self.value: SeriesTree_Scripts_Value = SeriesTree_Scripts_Value(client)
-        self.adoption: SeriesTree_Scripts_Adoption = SeriesTree_Scripts_Adoption(client)
 
 class SeriesTree_Mining_Rewards_Subsidy:
     """Series tree node."""
@@ -3654,6 +3645,13 @@ class SeriesTree_Mining_Rewards_Fees:
         self.dominance: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'fee_dominance')
         self.to_subsidy_ratio: SeriesTree_Mining_Rewards_Fees_ToSubsidyRatio = SeriesTree_Mining_Rewards_Fees_ToSubsidyRatio(client)
 
+class SeriesTree_Mining_Rewards_Unclaimed:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.base: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'unclaimed_rewards')
+        self.cumulative: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'unclaimed_rewards_cumulative')
+
 class SeriesTree_Mining_Rewards:
     """Series tree node."""
     
@@ -3661,7 +3659,7 @@ class SeriesTree_Mining_Rewards:
         self.coinbase: BaseCumulativeSumPattern4 = BaseCumulativeSumPattern4(client, 'coinbase')
         self.subsidy: SeriesTree_Mining_Rewards_Subsidy = SeriesTree_Mining_Rewards_Subsidy(client)
         self.fees: SeriesTree_Mining_Rewards_Fees = SeriesTree_Mining_Rewards_Fees(client)
-        self.unclaimed: BaseCumulativeSumPattern4 = BaseCumulativeSumPattern4(client, 'unclaimed_rewards')
+        self.unclaimed: SeriesTree_Mining_Rewards_Unclaimed = SeriesTree_Mining_Rewards_Unclaimed(client)
 
 class SeriesTree_Mining_Hashrate_Rate_Sma:
     """Series tree node."""
@@ -3749,10 +3747,6 @@ class SeriesTree_Cointime_Prices:
         self.active: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, 'active_price')
         self.true_market_mean: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, 'true_market_mean')
         self.cointime: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, 'cointime_price')
-        self.transfer: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, 'transfer_price')
-        self.balanced: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, 'balanced_price')
-        self.terminal: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, 'terminal_price')
-        self.delta: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, 'delta_price')
 
 class SeriesTree_Cointime_Adjusted:
     """Series tree node."""

@@ -35,8 +35,6 @@ export function createPricesSectionFull({ cohort, title }) {
         top: [
           price({ series: tree.realized.price, name: "Realized", color: colors.realized }),
           price({ series: tree.realized.investor.price, name: "Investor", color: colors.investor }),
-          price({ series: tree.realized.investor.investorUpperBand, name: "I²/R", color: colors.stat.max, style: 2, defaultActive: false }),
-          price({ series: tree.realized.investor.investorLowerBand, name: "R²/I", color: colors.stat.min, style: 2, defaultActive: false }),
         ],
       },
       {

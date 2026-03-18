@@ -33,9 +33,6 @@ impl Vecs {
             PerBlockCumulativeWithSums::forced_import(db, "p2wpkh_count", version, indexes, cached_starts)?;
         let p2wsh =
             PerBlockCumulativeWithSums::forced_import(db, "p2wsh_count", version, indexes, cached_starts)?;
-        let segwit =
-            PerBlockCumulativeWithSums::forced_import(db, "segwit_count", version, indexes, cached_starts)?;
-
         Ok(Self {
             p2a,
             p2ms,
@@ -67,7 +64,6 @@ impl Vecs {
                 indexes,
                 cached_starts,
             )?,
-            segwit,
         })
     }
 }

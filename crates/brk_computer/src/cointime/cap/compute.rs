@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::{Cents, Indexes};
+use brk_types::{Dollars, Indexes};
 use vecdb::Exit;
 
 use super::super::{activity, value};
@@ -59,7 +59,8 @@ impl Vecs {
                 let destroyed: f64 = *destroyed;
                 let supply: f64 = supply.into();
                 let stored: f64 = *stored;
-                (i, Cents::from(destroyed * supply / stored))
+                let usd = Dollars::from(destroyed * supply / stored);
+                (i, usd.to_cents())
             },
             exit,
         )?;

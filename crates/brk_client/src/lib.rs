@@ -3831,7 +3831,6 @@ pub struct SeriesTree_Scripts {
     pub raw: SeriesTree_Scripts_Raw,
     pub count: SeriesTree_Scripts_Count,
     pub value: SeriesTree_Scripts_Value,
-    pub adoption: SeriesTree_Scripts_Adoption,
 }
 
 impl SeriesTree_Scripts {
@@ -3840,7 +3839,6 @@ impl SeriesTree_Scripts {
             raw: SeriesTree_Scripts_Raw::new(client.clone(), format!("{base_path}_raw")),
             count: SeriesTree_Scripts_Count::new(client.clone(), format!("{base_path}_count")),
             value: SeriesTree_Scripts_Value::new(client.clone(), format!("{base_path}_value")),
-            adoption: SeriesTree_Scripts_Adoption::new(client.clone(), format!("{base_path}_adoption")),
         }
     }
 }
@@ -3938,7 +3936,6 @@ pub struct SeriesTree_Scripts_Count {
     pub op_return: BaseCumulativeSumPattern<StoredU64>,
     pub empty_output: BaseCumulativeSumPattern<StoredU64>,
     pub unknown_output: BaseCumulativeSumPattern<StoredU64>,
-    pub segwit: BaseCumulativeSumPattern<StoredU64>,
 }
 
 impl SeriesTree_Scripts_Count {
@@ -3956,7 +3953,6 @@ impl SeriesTree_Scripts_Count {
             op_return: BaseCumulativeSumPattern::new(client.clone(), "op_return_count".to_string()),
             empty_output: BaseCumulativeSumPattern::new(client.clone(), "empty_output_count".to_string()),
             unknown_output: BaseCumulativeSumPattern::new(client.clone(), "unknown_output_count".to_string()),
-            segwit: BaseCumulativeSumPattern::new(client.clone(), "segwit_count".to_string()),
         }
     }
 }
@@ -3970,21 +3966,6 @@ impl SeriesTree_Scripts_Value {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             op_return: BaseCumulativeSumPattern4::new(client.clone(), "op_return_value".to_string()),
-        }
-    }
-}
-
-/// Series tree node.
-pub struct SeriesTree_Scripts_Adoption {
-    pub taproot: BpsPercentRatioPattern3,
-    pub segwit: BpsPercentRatioPattern3,
-}
-
-impl SeriesTree_Scripts_Adoption {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            taproot: BpsPercentRatioPattern3::new(client.clone(), "taproot_adoption".to_string()),
-            segwit: BpsPercentRatioPattern3::new(client.clone(), "segwit_adoption".to_string()),
         }
     }
 }
@@ -4009,7 +3990,7 @@ pub struct SeriesTree_Mining_Rewards {
     pub coinbase: BaseCumulativeSumPattern4,
     pub subsidy: SeriesTree_Mining_Rewards_Subsidy,
     pub fees: SeriesTree_Mining_Rewards_Fees,
-    pub unclaimed: BaseCumulativeSumPattern4,
+    pub unclaimed: SeriesTree_Mining_Rewards_Unclaimed,
 }
 
 impl SeriesTree_Mining_Rewards {
@@ -4018,7 +3999,7 @@ impl SeriesTree_Mining_Rewards {
             coinbase: BaseCumulativeSumPattern4::new(client.clone(), "coinbase".to_string()),
             subsidy: SeriesTree_Mining_Rewards_Subsidy::new(client.clone(), format!("{base_path}_subsidy")),
             fees: SeriesTree_Mining_Rewards_Fees::new(client.clone(), format!("{base_path}_fees")),
-            unclaimed: BaseCumulativeSumPattern4::new(client.clone(), "unclaimed_rewards".to_string()),
+            unclaimed: SeriesTree_Mining_Rewards_Unclaimed::new(client.clone(), format!("{base_path}_unclaimed")),
         }
     }
 }
@@ -4094,6 +4075,21 @@ impl SeriesTree_Mining_Rewards_Fees_ToSubsidyRatio {
             _1w: BpsRatioPattern2::new(client.clone(), "fee_to_subsidy_ratio_1w".to_string()),
             _1m: BpsRatioPattern2::new(client.clone(), "fee_to_subsidy_ratio_1m".to_string()),
             _1y: BpsRatioPattern2::new(client.clone(), "fee_to_subsidy_ratio_1y".to_string()),
+        }
+    }
+}
+
+/// Series tree node.
+pub struct SeriesTree_Mining_Rewards_Unclaimed {
+    pub base: BtcCentsSatsUsdPattern,
+    pub cumulative: BtcCentsSatsUsdPattern,
+}
+
+impl SeriesTree_Mining_Rewards_Unclaimed {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            base: BtcCentsSatsUsdPattern::new(client.clone(), "unclaimed_rewards".to_string()),
+            cumulative: BtcCentsSatsUsdPattern::new(client.clone(), "unclaimed_rewards_cumulative".to_string()),
         }
     }
 }
@@ -4279,10 +4275,6 @@ pub struct SeriesTree_Cointime_Prices {
     pub active: BpsCentsPercentilesRatioSatsUsdPattern,
     pub true_market_mean: BpsCentsPercentilesRatioSatsUsdPattern,
     pub cointime: BpsCentsPercentilesRatioSatsUsdPattern,
-    pub transfer: BpsCentsPercentilesRatioSatsUsdPattern,
-    pub balanced: BpsCentsPercentilesRatioSatsUsdPattern,
-    pub terminal: BpsCentsPercentilesRatioSatsUsdPattern,
-    pub delta: BpsCentsPercentilesRatioSatsUsdPattern,
 }
 
 impl SeriesTree_Cointime_Prices {
@@ -4292,10 +4284,6 @@ impl SeriesTree_Cointime_Prices {
             active: BpsCentsPercentilesRatioSatsUsdPattern::new(client.clone(), "active_price".to_string()),
             true_market_mean: BpsCentsPercentilesRatioSatsUsdPattern::new(client.clone(), "true_market_mean".to_string()),
             cointime: BpsCentsPercentilesRatioSatsUsdPattern::new(client.clone(), "cointime_price".to_string()),
-            transfer: BpsCentsPercentilesRatioSatsUsdPattern::new(client.clone(), "transfer_price".to_string()),
-            balanced: BpsCentsPercentilesRatioSatsUsdPattern::new(client.clone(), "balanced_price".to_string()),
-            terminal: BpsCentsPercentilesRatioSatsUsdPattern::new(client.clone(), "terminal_price".to_string()),
-            delta: BpsCentsPercentilesRatioSatsUsdPattern::new(client.clone(), "delta_price".to_string()),
         }
     }
 }

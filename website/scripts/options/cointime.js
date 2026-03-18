@@ -1,7 +1,14 @@
 import { colors } from "../utils/colors.js";
 import { brk } from "../client.js";
 import { Unit } from "../utils/units.js";
-import { dots, line, baseline, price, rollingWindowsTree, percentRatioDots } from "./series.js";
+import {
+  dots,
+  line,
+  price,
+  sumsTree,
+  multiSeriesTree,
+  percentRatioDots,
+} from "./series.js";
 import { satsBtcUsd, priceRatioPercentilesTree } from "./shared.js";
 
 /**
@@ -36,50 +43,59 @@ export function createCointimeSection() {
       pattern: cointimePrices.trueMarketMean,
       name: "True Market Mean",
       color: colors.trueMarketMean,
+      defaultActive: true,
     },
     {
       pattern: cointimePrices.vaulted,
       name: "Vaulted",
       color: colors.vaulted,
+      defaultActive: true,
     },
     {
       pattern: cointimePrices.active,
       name: "Active",
       color: colors.active,
+      defaultActive: true,
     },
     {
       pattern: cointimePrices.cointime,
       name: "Cointime",
       color: colors.cointime,
-    },
-    {
-      pattern: cointimePrices.transfer,
-      name: "Transfer",
-      color: colors.transfer,
-    },
-    {
-      pattern: cointimePrices.balanced,
-      name: "Balanced",
-      color: colors.balanced,
-    },
-    {
-      pattern: cointimePrices.terminal,
-      name: "Terminal",
-      color: colors.terminal,
-    },
-    {
-      pattern: cointimePrices.delta,
-      name: "Delta",
-      color: colors.delta,
+      defaultActive: true,
     },
   ]);
 
   const caps = /** @type {const} */ ([
-    { series: cap.vaulted.usd, name: "Vaulted", color: colors.vaulted },
-    { series: cap.active.usd, name: "Active", color: colors.active },
-    { series: cap.cointime.usd, name: "Cointime", color: colors.cointime },
-    { series: cap.investor.usd, name: "Investor", color: colors.investor },
-    { series: cap.thermo.usd, name: "Thermo", color: colors.thermo },
+    {
+      series: cap.vaulted.usd,
+      name: "Vaulted",
+      color: colors.vaulted,
+      defaultActive: true,
+    },
+    {
+      series: cap.active.usd,
+      name: "Active",
+      color: colors.active,
+      defaultActive: true,
+    },
+    {
+      series: cap.cointime.usd,
+      name: "Cointime",
+      color: colors.cointime,
+      defaultActive: true,
+    },
+    {
+      series: cap.investor.usd,
+      name: "Investor",
+      color: colors.investor,
+      defaultActive: false,
+    },
+    {
+      series: cap.thermo.usd,
+      name: "Thermo",
+      color: colors.thermo,
+      defaultActive: false,
+    },
   ]);
 
   const supplyBreakdown = /** @type {const} */ ([
@@ -167,8 +183,8 @@ export function createCointimeSection() {
                 name: "Investor",
                 color: colors.investor,
               }),
-              ...prices.map(({ pattern, name, color }) =>
-                price({ series: pattern, name, color }),
+              ...prices.map(({ pattern, name, color, defaultActive }) =>
+                price({ series: pattern, name, color, defaultActive }),
               ),
             ],
           },
@@ -180,7 +196,12 @@ export function createCointimeSection() {
               legend: name,
               color,
               priceReferences: [
-                price({ series: all.realized.price, name: "Realized", color: colors.realized, defaultActive: false }),
+                price({
+                  series: all.realized.price,
+                  name: "Realized",
+                  color: colors.realized,
+                  defaultActive: false,
+                }),
               ],
             }),
           })),
@@ -198,8 +219,8 @@ export function createCointimeSection() {
               ...capReferenceLines.map(({ series, name, color }) =>
                 line({ series, name, color, unit: Unit.usd }),
               ),
-              ...caps.map(({ series, name, color }) =>
-                line({ series, name, color, unit: Unit.usd }),
+              ...caps.map(({ series, name, color, defaultActive }) =>
+                line({ series, name, color, defaultActive, unit: Unit.usd }),
               ),
             ],
           },
@@ -263,32 +284,17 @@ export function createCointimeSection() {
         tree: [
           {
             name: "Compare",
-            tree: [
-              {
-                name: "Base",
-                title: "Coinblocks",
-                bottom: coinblocks.map(({ pattern, name, color }) =>
-                  line({
-                    series: pattern.base,
-                    name,
-                    color,
-                    unit: Unit.coinblocks,
-                  }),
-                ),
-              },
-              {
-                name: "Cumulative",
-                title: "Coinblocks (Total)",
-                bottom: coinblocks.map(({ pattern, name, color }) =>
-                  line({
-                    series: pattern.cumulative,
-                    name,
-                    color,
-                    unit: Unit.coinblocks,
-                  }),
-                ),
-              },
-            ],
+            tree: multiSeriesTree({
+              entries: coinblocks.map(({ pattern, name, color }) => ({
+                name,
+                color,
+                base: pattern.base,
+                rolling: pattern.sum,
+                cumulative: pattern.cumulative,
+              })),
+              title: "Coinblocks",
+              unit: Unit.coinblocks,
+            }),
           },
           ...coinblocks.map(({ pattern, name, title, color }) => ({
             name,
@@ -305,7 +311,7 @@ export function createCointimeSection() {
                   }),
                 ],
               },
-              rollingWindowsTree({ windows: pattern.sum, title, unit: Unit.coinblocks }),
+              sumsTree({ windows: pattern.sum, title, unit: Unit.coinblocks }),
               {
                 name: "Cumulative",
                 title: `${title} (Total)`,
@@ -329,43 +335,26 @@ export function createCointimeSection() {
         tree: [
           {
             name: "Compare",
-            tree: [
-              {
-                name: "Base",
-                title: "Cointime Value",
-                bottom: [
-                  ...cointimeValues.map(({ pattern, name, color }) =>
-                    line({ series: pattern.base, name, color, unit: Unit.usd }),
-                  ),
-                  line({
-                    series: vocdd.pattern.base,
-                    name: vocdd.name,
-                    color: vocdd.color,
-                    unit: Unit.usd,
-                  }),
-                ],
-              },
-              {
-                name: "Cumulative",
-                title: "Cointime Value (Total)",
-                bottom: [
-                  ...cointimeValues.map(({ pattern, name, color }) =>
-                    line({
-                      series: pattern.cumulative,
-                      name,
-                      color,
-                      unit: Unit.usd,
-                    }),
-                  ),
-                  line({
-                    series: vocdd.pattern.cumulative,
-                    name: vocdd.name,
-                    color: vocdd.color,
-                    unit: Unit.usd,
-                  }),
-                ],
-              },
-            ],
+            tree: multiSeriesTree({
+              entries: [
+                ...cointimeValues.map(({ pattern, name, color }) => ({
+                  name,
+                  color,
+                  base: pattern.base,
+                  rolling: pattern.sum,
+                  cumulative: pattern.cumulative,
+                })),
+                {
+                  name: vocdd.name,
+                  color: vocdd.color,
+                  base: vocdd.pattern.base,
+                  rolling: vocdd.pattern.sum,
+                  cumulative: vocdd.pattern.cumulative,
+                },
+              ],
+              title: "Cointime Value",
+              unit: Unit.usd,
+            }),
           },
           ...cointimeValues.map(({ pattern, name, title, color }) => ({
             name,
@@ -377,7 +366,7 @@ export function createCointimeSection() {
                   line({ series: pattern.base, name, color, unit: Unit.usd }),
                 ],
               },
-              rollingWindowsTree({ windows: pattern.sum, title, unit: Unit.usd }),
+              sumsTree({ windows: pattern.sum, title, unit: Unit.usd }),
               {
                 name: "Cumulative",
                 title: `${title} (Total)`,
@@ -413,7 +402,11 @@ export function createCointimeSection() {
                   }),
                 ],
               },
-              rollingWindowsTree({ windows: vocdd.pattern.sum, title: vocdd.title, unit: Unit.usd }),
+              sumsTree({
+                windows: vocdd.pattern.sum,
+                title: vocdd.title,
+                unit: Unit.usd,
+              }),
               {
                 name: "Cumulative",
                 title: `${vocdd.title} (Total)`,
@@ -451,24 +444,10 @@ export function createCointimeSection() {
             name: "AVIV",
             title: "AVIV Ratio",
             bottom: [
-              baseline({
-                series: cap.aviv.ratio,
-                name: "Ratio",
-                color: colors.reserveRisk,
-                unit: Unit.ratio,
-                base: 1,
-              }),
-            ],
-          },
-          {
-            name: "HODL Bank",
-            title: "HODL Bank",
-            bottom: [
               line({
-                series: reserveRisk.hodlBank,
-                name: "Value",
-                color: colors.hodlBank,
-                unit: Unit.usd,
+                series: cap.aviv.ratio,
+                name: "aviv",
+                unit: Unit.ratio,
               }),
             ],
           },

@@ -28,8 +28,8 @@ impl Vecs {
         let activity = ActivityVecs::forced_import(&db, version, indexes, cached_starts)?;
         let supply = SupplyVecs::forced_import(&db, v1, indexes)?;
         let value = ValueVecs::forced_import(&db, v1, indexes, cached_starts)?;
-        let cap = CapVecs::forced_import(&db, v1, indexes)?;
-        let prices = PricesVecs::forced_import(&db, version, indexes)?;
+        let cap = CapVecs::forced_import(&db, version + Version::TWO, indexes)?;
+        let prices = PricesVecs::forced_import(&db, version + Version::new(3), indexes)?;
         let adjusted = AdjustedVecs::forced_import(&db, version, indexes)?;
         let reserve_risk = ReserveRiskVecs::forced_import(&db, v1, indexes)?;
 

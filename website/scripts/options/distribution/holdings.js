@@ -10,7 +10,7 @@
  */
 
 import { Unit } from "../../utils/units.js";
-import { ROLLING_WINDOWS, line, baseline, rollingWindowsTree, rollingPercentRatioTree, percentRatio } from "../series.js";
+import { ROLLING_WINDOWS, line, baseline, sumsTree, rollingPercentRatioTree, percentRatio } from "../series.js";
 import {
   satsBtcUsd,
   mapCohorts,
@@ -174,7 +174,7 @@ function singleDeltaTree(delta, unit, title, name) {
   return {
     name,
     tree: [
-      { ...rollingWindowsTree({ windows: delta.absolute, title: title(`${name} Change`), unit, series: baseline }), name: "Absolute" },
+      { ...sumsTree({ windows: delta.absolute, title: title(`${name} Change`), unit, series: baseline }), name: "Absolute" },
       { ...rollingPercentRatioTree({ windows: delta.rate, title: title(`${name} Rate`) }), name: "Rate" },
     ],
   };

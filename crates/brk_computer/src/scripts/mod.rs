@@ -1,4 +1,3 @@
-pub mod adoption;
 pub mod count;
 pub mod value;
 
@@ -8,7 +7,6 @@ mod import;
 use brk_traversable::Traversable;
 use vecdb::{Database, Rw, StorageMode};
 
-pub use adoption::Vecs as AdoptionVecs;
 pub use count::Vecs as CountVecs;
 pub use value::Vecs as ValueVecs;
 
@@ -21,5 +19,4 @@ pub struct Vecs<M: StorageMode = Rw> {
 
     pub count: CountVecs<M>,
     pub value: ValueVecs<M>,
-    pub adoption: AdoptionVecs<M>,
 }
