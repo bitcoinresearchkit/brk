@@ -5602,7 +5602,6 @@ pub struct SeriesTree_Market_Technical_Rsi {
     pub _24h: AverageGainsLossesRsiStochPattern,
     pub _1w: AverageGainsLossesRsiStochPattern,
     pub _1m: AverageGainsLossesRsiStochPattern,
-    pub _1y: AverageGainsLossesRsiStochPattern,
 }
 
 impl SeriesTree_Market_Technical_Rsi {
@@ -5611,7 +5610,6 @@ impl SeriesTree_Market_Technical_Rsi {
             _24h: AverageGainsLossesRsiStochPattern::new(client.clone(), "rsi".to_string(), "24h".to_string()),
             _1w: AverageGainsLossesRsiStochPattern::new(client.clone(), "rsi".to_string(), "1w".to_string()),
             _1m: AverageGainsLossesRsiStochPattern::new(client.clone(), "rsi".to_string(), "1m".to_string()),
-            _1y: AverageGainsLossesRsiStochPattern::new(client.clone(), "rsi".to_string(), "1y".to_string()),
         }
     }
 }
@@ -5621,7 +5619,6 @@ pub struct SeriesTree_Market_Technical_Macd {
     pub _24h: SeriesTree_Market_Technical_Macd_24h,
     pub _1w: SeriesTree_Market_Technical_Macd_1w,
     pub _1m: SeriesTree_Market_Technical_Macd_1m,
-    pub _1y: SeriesTree_Market_Technical_Macd_1y,
 }
 
 impl SeriesTree_Market_Technical_Macd {
@@ -5630,7 +5627,6 @@ impl SeriesTree_Market_Technical_Macd {
             _24h: SeriesTree_Market_Technical_Macd_24h::new(client.clone(), format!("{base_path}_24h")),
             _1w: SeriesTree_Market_Technical_Macd_1w::new(client.clone(), format!("{base_path}_1w")),
             _1m: SeriesTree_Market_Technical_Macd_1m::new(client.clone(), format!("{base_path}_1m")),
-            _1y: SeriesTree_Market_Technical_Macd_1y::new(client.clone(), format!("{base_path}_1y")),
         }
     }
 }
@@ -5694,27 +5690,6 @@ impl SeriesTree_Market_Technical_Macd_1m {
             line: SeriesPattern1::new(client.clone(), "macd_line_1m".to_string()),
             signal: SeriesPattern1::new(client.clone(), "macd_signal_1m".to_string()),
             histogram: SeriesPattern1::new(client.clone(), "macd_histogram_1m".to_string()),
-        }
-    }
-}
-
-/// Series tree node.
-pub struct SeriesTree_Market_Technical_Macd_1y {
-    pub ema_fast: SeriesPattern1<StoredF32>,
-    pub ema_slow: SeriesPattern1<StoredF32>,
-    pub line: SeriesPattern1<StoredF32>,
-    pub signal: SeriesPattern1<StoredF32>,
-    pub histogram: SeriesPattern1<StoredF32>,
-}
-
-impl SeriesTree_Market_Technical_Macd_1y {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            ema_fast: SeriesPattern1::new(client.clone(), "macd_ema_fast_1y".to_string()),
-            ema_slow: SeriesPattern1::new(client.clone(), "macd_ema_slow_1y".to_string()),
-            line: SeriesPattern1::new(client.clone(), "macd_line_1y".to_string()),
-            signal: SeriesPattern1::new(client.clone(), "macd_signal_1y".to_string()),
-            histogram: SeriesPattern1::new(client.clone(), "macd_histogram_1y".to_string()),
         }
     }
 }

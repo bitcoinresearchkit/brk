@@ -5,10 +5,10 @@ use vecdb::Database;
 use super::{MacdChain, RsiChain, Vecs};
 use crate::{
     indexes,
-    internal::{PerBlock, PercentPerBlock, RatioPerBlock, Windows},
+    internal::{PerBlock, PercentPerBlock, RatioPerBlock, WindowsTo1m},
 };
 
-const VERSION: Version = Version::new(2);
+const VERSION: Version = Version::new(4);
 
 impl RsiChain {
     fn forced_import(
@@ -107,8 +107,8 @@ impl Vecs {
         let v = version + VERSION;
 
         let rsi =
-            Windows::try_from_fn(|tf| RsiChain::forced_import(db, tf, v + Version::TWO, indexes))?;
-        let macd = Windows::try_from_fn(|tf| MacdChain::forced_import(db, tf, v, indexes))?;
+            WindowsTo1m::try_from_fn(|tf| RsiChain::forced_import(db, tf, v + Version::TWO, indexes))?;
+        let macd = WindowsTo1m::try_from_fn(|tf| MacdChain::forced_import(db, tf, v, indexes))?;
 
         let stoch_k = PercentPerBlock::forced_import(db, "stoch_k", v, indexes)?;
         let stoch_d = PercentPerBlock::forced_import(db, "stoch_d", v, indexes)?;

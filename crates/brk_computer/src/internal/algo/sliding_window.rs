@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 /// Sqrt-decomposed sorted structure for O(sqrt(n)) insert/remove/kth.
 ///
 /// Maintains `blocks` sorted sub-arrays where each block is sorted and
@@ -15,6 +17,17 @@ impl SortedBlocks {
         Self {
             blocks: Vec::new(),
             total_len: 0,
+            block_size,
+        }
+    }
+
+    /// Build from a pre-sorted slice in O(n) by chunking directly into blocks.
+    fn from_sorted(sorted: &[f64], block_size: usize) -> Self {
+        let total_len = sorted.len();
+        let blocks: Vec<Vec<f64>> = sorted.chunks(block_size).map(|c| c.to_vec()).collect();
+        Self {
+            blocks,
+            total_len,
             block_size,
         }
     }
@@ -122,13 +135,17 @@ impl SlidingWindowSorted {
     }
 
     /// Reconstruct state from historical data (the elements in [range_start..skip]).
+    /// Uses O(n log n) sort + O(n) block construction instead of O(n√n) individual inserts.
     pub fn reconstruct(&mut self, partial_values: &[f64], range_start: usize, skip: usize) {
         self.prev_start = range_start;
-        for idx in range_start..skip {
-            let v = partial_values[idx - range_start];
-            self.running_sum += v;
-            self.sorted.insert(v);
+        let slice = &partial_values[..skip - range_start];
+        if slice.is_empty() {
+            return;
         }
+        let mut sorted_copy: Vec<f64> = slice.to_vec();
+        self.running_sum = sorted_copy.iter().sum();
+        sorted_copy.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+        self.sorted = SortedBlocks::from_sorted(&sorted_copy, self.sorted.block_size);
     }
 
     /// Add a new value and remove all expired values up to `new_start`.

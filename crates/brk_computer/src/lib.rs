@@ -307,48 +307,12 @@ impl Computer {
         })?;
 
         thread::scope(|scope| -> Result<()> {
-            // Positions only needs indexer + starting_indexes — start immediately.
-            let positions = scope.spawn(|| {
-                timed("Computed positions", || {
-                    self.positions
-                        .compute(indexer, &starting_indexes, reader, exit)
-                })
-            });
+            timed("Computed blocks", || {
+                self.blocks
+                    .compute(indexer, &self.indexes, &starting_indexes, exit)
+            })?;
 
-            // Prices and blocks are independent — parallelize.
-            let (prices_result, blocks_result) = rayon::join(
-                || {
-                    timed("Computed prices", || {
-                        self.prices
-                            .compute(indexer, &self.indexes, &starting_indexes, exit)
-                    })
-                },
-                || {
-                    timed("Computed blocks", || {
-                        self.blocks
-                            .compute(indexer, &self.indexes, &starting_indexes, exit)
-                    })
-                },
-            );
-            prices_result?;
-            blocks_result?;
-
-            // Market only needs indexes, prices, blocks — start it early
-            // so it runs in the background alongside the rest of the pipeline.
-            let market = scope.spawn(|| {
-                timed("Computed market", || {
-                    self.market.compute(
-                        &self.indexes,
-                        &self.prices,
-                        &self.blocks,
-                        &starting_indexes,
-                        exit,
-                    )
-                })
-            });
-
-            // inputs and scripts are independent — parallelize
-            let (inputs_result, scripts_result) = rayon::join(
+            let (inputs_result, prices_result) = rayon::join(
                 || {
                     timed("Computed inputs", || {
                         self.inputs.compute(
@@ -361,19 +325,36 @@ impl Computer {
                     })
                 },
                 || {
-                    timed("Computed scripts", || {
-                        self.scripts.compute(
-                            indexer,
-                            &self.outputs,
-                            &self.prices,
-                            &starting_indexes,
-                            exit,
-                        )
+                    timed("Computed prices", || {
+                        self.prices
+                            .compute(indexer, &self.indexes, &starting_indexes, exit)
                     })
                 },
             );
             inputs_result?;
-            scripts_result?;
+            prices_result?;
+
+            let market = scope.spawn(|| {
+                timed("Computed market", || {
+                    self.market.compute(
+                        &self.indexes,
+                        &self.prices,
+                        &self.blocks,
+                        &starting_indexes,
+                        exit,
+                    )
+                })
+            });
+
+            timed("Computed scripts", || {
+                self.scripts.compute(
+                    indexer,
+                    &self.outputs,
+                    &self.prices,
+                    &starting_indexes,
+                    exit,
+                )
+            })?;
 
             timed("Computed outputs", || {
                 self.outputs.compute(
@@ -386,6 +367,13 @@ impl Computer {
                     exit,
                 )
             })?;
+
+            let positions = scope.spawn(|| {
+                timed("Computed positions", || {
+                    self.positions
+                        .compute(indexer, &starting_indexes, reader, exit)
+                })
+            });
 
             timed("Computed transactions", || {
                 self.transactions.compute(

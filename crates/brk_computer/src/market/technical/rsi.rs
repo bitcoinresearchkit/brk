@@ -17,7 +17,6 @@ pub(super) fn compute(
     let ws_rma = blocks.lookback.start_vec(rma_days);
     let ws_sma = blocks.lookback.start_vec(stoch_sma_days);
 
-    // Gains = max(return, 0)
     chain.gains.height.compute_transform(
         starting_indexes.height,
         returns_source,
@@ -25,7 +24,6 @@ pub(super) fn compute(
         exit,
     )?;
 
-    // Losses = max(-return, 0)
     chain.losses.height.compute_transform(
         starting_indexes.height,
         returns_source,
@@ -33,7 +31,6 @@ pub(super) fn compute(
         exit,
     )?;
 
-    // Average gain = RMA of gains
     chain.average_gain.height.compute_rolling_rma(
         starting_indexes.height,
         ws_rma,
@@ -41,7 +38,6 @@ pub(super) fn compute(
         exit,
     )?;
 
-    // Average loss = RMA of losses
     chain.average_loss.height.compute_rolling_rma(
         starting_indexes.height,
         ws_rma,
@@ -49,7 +45,6 @@ pub(super) fn compute(
         exit,
     )?;
 
-    // RSI = avg_gain / (avg_gain + avg_loss), stored as ratio (0–1)
     chain.rsi.bps.height.compute_transform2(
         starting_indexes.height,
         &chain.average_gain.height,
@@ -62,7 +57,6 @@ pub(super) fn compute(
         exit,
     )?;
 
-    // Rolling min/max of RSI over rma_days window
     chain.rsi_min.bps.height.compute_rolling_min_from_starts(
         starting_indexes.height,
         ws_rma,
@@ -77,7 +71,6 @@ pub(super) fn compute(
         exit,
     )?;
 
-    // StochRSI = (rsi - rsi_min) / (rsi_max - rsi_min), stored as ratio (0–1)
     chain.stoch_rsi.bps.height.compute_transform3(
         starting_indexes.height,
         &chain.rsi.bps.height,
@@ -95,7 +88,6 @@ pub(super) fn compute(
         exit,
     )?;
 
-    // StochRSI K = SMA of StochRSI
     chain.stoch_rsi_k.bps.height.compute_rolling_average(
         starting_indexes.height,
         ws_sma,
@@ -103,7 +95,6 @@ pub(super) fn compute(
         exit,
     )?;
 
-    // StochRSI D = SMA of K
     chain.stoch_rsi_d.bps.height.compute_rolling_average(
         starting_indexes.height,
         ws_sma,

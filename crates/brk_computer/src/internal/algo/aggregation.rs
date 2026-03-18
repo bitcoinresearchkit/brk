@@ -1,11 +1,11 @@
+use std::collections::VecDeque;
+
 use brk_error::Result;
-use brk_types::{CheckedSub, StoredU64};
+use brk_types::{CheckedSub, StoredU64, get_percentile};
 use schemars::JsonSchema;
 use vecdb::{
     AnyStoredVec, AnyVec, EagerVec, Exit, PcoVec, ReadableVec, VecIndex, VecValue, WritableVec,
 };
-
-use brk_types::get_percentile;
 
 use crate::internal::ComputedVecValue;
 
@@ -98,11 +98,15 @@ where
             })*
         };
     }
-    truncate_vec!(first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90);
+    truncate_vec!(
+        first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90
+    );
 
     let fi_len = first_indexes.len();
     let first_indexes_batch: Vec<A> = first_indexes.collect_range_at(start, fi_len);
     let count_indexes_batch: Vec<StoredU64> = count_indexes.collect_range_at(start, fi_len);
+
+    let mut values: Vec<T> = Vec::new();
 
     first_indexes_batch
         .into_iter()
@@ -157,9 +161,10 @@ where
                     max_vec.push(max_val.or(min_val).unwrap_or_else(|| T::from(0_usize)));
                 }
             } else if needs_percentiles || needs_minmax {
-                let mut values: Vec<T> = source.collect_range_at(
+                source.collect_range_into_at(
                     effective_first_index.to_usize(),
                     effective_first_index.to_usize() + effective_count,
+                    &mut values,
                 );
 
                 if values.is_empty() {
@@ -224,17 +229,20 @@ where
                         }
                     }
                 } else if needs_minmax {
+                    // Single pass for min + max + optional sum
+                    let (min_val, max_val, sum_val, len) = values.iter().copied().fold(
+                        (values[0], values[0], T::from(0_usize), 0_usize),
+                        |(mn, mx, s, c), v| (mn.min(v), mx.max(v), s + v, c + 1),
+                    );
+
                     if let Some(ref mut min_vec) = min {
-                        min_vec.push(*values.iter().min().unwrap());
+                        min_vec.push(min_val);
                     }
                     if let Some(ref mut max_vec) = max {
-                        max_vec.push(*values.iter().max().unwrap());
+                        max_vec.push(max_val);
                     }
 
                     if needs_aggregates {
-                        let len = values.len();
-                        let sum_val = values.into_iter().fold(T::from(0), |a, b| a + b);
-
                         if let Some(ref mut average_vec) = average {
                             average_vec.push(sum_val / len);
                         }
@@ -302,7 +310,7 @@ where
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn compute_aggregations_nblock_window<I, T, A>(
     max_from: I,
-    source: &impl ReadableVec<A, T>,
+    source: &(impl ReadableVec<A, T> + Sized),
     first_indexes: &impl ReadableVec<I, A>,
     count_indexes: &impl ReadableVec<I, StoredU64>,
     n_blocks: usize,
@@ -318,7 +326,7 @@ pub(crate) fn compute_aggregations_nblock_window<I, T, A>(
 ) -> Result<()>
 where
     I: VecIndex,
-    T: ComputedVecValue + JsonSchema,
+    T: ComputedVecValue + CheckedSub + JsonSchema,
     A: VecIndex + VecValue + CheckedSub<A>,
 {
     let combined_version = source.version() + first_indexes.version() + count_indexes.version();
@@ -341,13 +349,11 @@ where
     let start = index.to_usize();
     let fi_len = first_indexes.len();
 
-    // Only fetch first_indexes from the earliest possible window start
     let batch_start = start.saturating_sub(n_blocks - 1);
     let first_indexes_batch: Vec<A> = first_indexes.collect_range_at(batch_start, fi_len);
-    let count_indexes_batch: Vec<StoredU64> = count_indexes.collect_range_at(start, fi_len);
+    let count_indexes_all: Vec<StoredU64> = count_indexes.collect_range_at(batch_start, fi_len);
 
     let zero = T::from(0_usize);
-    let mut values: Vec<T> = Vec::new();
 
     for vec in [
         &mut *min,
@@ -362,60 +368,116 @@ where
         vec.truncate_if_needed_at(start)?;
     }
 
-    count_indexes_batch
-        .iter()
-        .enumerate()
-        .try_for_each(|(j, ci)| -> Result<()> {
-            let idx = start + j;
+    // Persistent sorted window: O(n) merge-insert for new block, O(n) merge-filter
+    // for expired block. Avoids re-sorting every block. Cursor reads only the new
+    // block (~1 page decompress vs original's ~4). Ring buffer caches per-block
+    // sorted values + sums for O(1) expiry.
+    // Peak memory: 2 × ~15k window elements + n_blocks × ~2500 cached ≈ 360 KB.
+    let mut block_ring: VecDeque<(Vec<T>, T)> = VecDeque::with_capacity(n_blocks + 1);
+    let mut cursor = source.cursor();
+    let mut sorted_window: Vec<T> = Vec::new();
+    let mut merge_buf: Vec<T> = Vec::new();
+    let mut running_sum = T::from(0_usize);
 
-            // Window start: max(0, idx - n_blocks + 1)
-            let window_start = idx.saturating_sub(n_blocks - 1);
+    // Pre-fill initial window blocks [window_start_of_first..start)
+    let window_start_of_first = start.saturating_sub(n_blocks - 1);
+    for block_idx in window_start_of_first..start {
+        let fi = first_indexes_batch[block_idx - batch_start].to_usize();
+        let count = u64::from(count_indexes_all[block_idx - batch_start]) as usize;
+        if cursor.position() < fi {
+            cursor.advance(fi - cursor.position());
+        }
+        let mut bv = Vec::with_capacity(count);
+        cursor.for_each(count, |v: T| bv.push(v));
+        bv.sort_unstable();
+        let block_sum = bv.iter().copied().fold(T::from(0), |a, b| a + b);
+        running_sum += block_sum;
+        sorted_window.extend_from_slice(&bv);
+        block_ring.push_back((bv, block_sum));
+    }
+    // Initial sorted_window was built by extending individually sorted blocks —
+    // stable sort detects these sorted runs and merges in O(n × log(k)) instead of O(n log n).
+    sorted_window.sort();
 
-            // Last tx index (exclusive) of current block
-            let count = u64::from(*ci) as usize;
-            let fi = first_indexes_batch[idx - batch_start];
-            let range_end_usize = fi.to_usize() + count;
+    for j in 0..(fi_len - start) {
+        let idx = start + j;
 
-            // First tx index of the window start block
-            let range_start_usize = first_indexes_batch[window_start - batch_start].to_usize();
+        // Read and sort new block's values
+        let fi = first_indexes_batch[idx - batch_start].to_usize();
+        let count = u64::from(count_indexes_all[idx - batch_start]) as usize;
+        if cursor.position() < fi {
+            cursor.advance(fi - cursor.position());
+        }
+        let mut new_block = Vec::with_capacity(count);
+        cursor.for_each(count, |v: T| new_block.push(v));
+        new_block.sort_unstable();
+        let new_sum = new_block.iter().copied().fold(T::from(0), |a, b| a + b);
+        running_sum += new_sum;
 
-            let effective_count = range_end_usize.saturating_sub(range_start_usize);
-
-            if effective_count == 0 {
-                for vec in [
-                    &mut *min,
-                    &mut *max,
-                    &mut *average,
-                    &mut *median,
-                    &mut *pct10,
-                    &mut *pct25,
-                    &mut *pct75,
-                    &mut *pct90,
-                ] {
-                    vec.push(zero);
-                }
+        // Merge-insert new sorted block into sorted_window: O(n+m)
+        merge_buf.clear();
+        merge_buf.reserve(sorted_window.len() + new_block.len());
+        let (mut si, mut ni) = (0, 0);
+        while si < sorted_window.len() && ni < new_block.len() {
+            if sorted_window[si] <= new_block[ni] {
+                merge_buf.push(sorted_window[si]);
+                si += 1;
             } else {
-                source.collect_range_into_at(range_start_usize, range_end_usize, &mut values);
-
-                // Compute sum before sorting
-                let len = values.len();
-                let sum_val = values.iter().copied().fold(T::from(0), |a, b| a + b);
-                let avg = sum_val / len;
-
-                values.sort_unstable();
-
-                max.push(*values.last().unwrap());
-                pct90.push(get_percentile(&values, 0.90));
-                pct75.push(get_percentile(&values, 0.75));
-                median.push(get_percentile(&values, 0.50));
-                pct25.push(get_percentile(&values, 0.25));
-                pct10.push(get_percentile(&values, 0.10));
-                min.push(*values.first().unwrap());
-                average.push(avg);
+                merge_buf.push(new_block[ni]);
+                ni += 1;
             }
+        }
+        merge_buf.extend_from_slice(&sorted_window[si..]);
+        merge_buf.extend_from_slice(&new_block[ni..]);
+        std::mem::swap(&mut sorted_window, &mut merge_buf);
 
-            Ok(())
-        })?;
+        block_ring.push_back((new_block, new_sum));
+
+        // Expire oldest block: merge-filter its sorted values from sorted_window in O(n)
+        if block_ring.len() > n_blocks {
+            let (expired, expired_sum) = block_ring.pop_front().unwrap();
+            running_sum = running_sum.checked_sub(expired_sum).unwrap();
+
+            merge_buf.clear();
+            merge_buf.reserve(sorted_window.len());
+            let mut ei = 0;
+            for &v in &sorted_window {
+                if ei < expired.len() && v == expired[ei] {
+                    ei += 1;
+                } else {
+                    merge_buf.push(v);
+                }
+            }
+            std::mem::swap(&mut sorted_window, &mut merge_buf);
+        }
+
+        if sorted_window.is_empty() {
+            for vec in [
+                &mut *min,
+                &mut *max,
+                &mut *average,
+                &mut *median,
+                &mut *pct10,
+                &mut *pct25,
+                &mut *pct75,
+                &mut *pct90,
+            ] {
+                vec.push(zero);
+            }
+        } else {
+            let len = sorted_window.len();
+            let avg = running_sum / len;
+
+            max.push(*sorted_window.last().unwrap());
+            pct90.push(get_percentile(&sorted_window, 0.90));
+            pct75.push(get_percentile(&sorted_window, 0.75));
+            median.push(get_percentile(&sorted_window, 0.50));
+            pct25.push(get_percentile(&sorted_window, 0.25));
+            pct10.push(get_percentile(&sorted_window, 0.10));
+            min.push(*sorted_window.first().unwrap());
+            average.push(avg);
+        }
+    }
 
     let _lock = exit.lock();
     for vec in [min, max, average, median, pct10, pct25, pct75, pct90] {

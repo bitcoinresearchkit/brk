@@ -221,18 +221,26 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.tx_index.input_count.compute_count_from_indexes(
-            starting_indexes.tx_index,
-            &indexer.vecs.transactions.first_txin_index,
-            &indexer.vecs.inputs.outpoint,
-            exit,
-        )?;
-        self.tx_index.output_count.compute_count_from_indexes(
-            starting_indexes.tx_index,
-            &indexer.vecs.transactions.first_txout_index,
-            &indexer.vecs.outputs.value,
-            exit,
-        )?;
+        let (r1, r2) = rayon::join(
+            || {
+                self.tx_index.input_count.compute_count_from_indexes(
+                    starting_indexes.tx_index,
+                    &indexer.vecs.transactions.first_txin_index,
+                    &indexer.vecs.inputs.outpoint,
+                    exit,
+                )
+            },
+            || {
+                self.tx_index.output_count.compute_count_from_indexes(
+                    starting_indexes.tx_index,
+                    &indexer.vecs.transactions.first_txout_index,
+                    &indexer.vecs.outputs.value,
+                    exit,
+                )
+            },
+        );
+        r1?;
+        r2?;
         Ok(())
     }
 

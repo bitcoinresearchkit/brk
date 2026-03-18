@@ -15,9 +15,10 @@ import {
   chartsFromSumPerBlock,
   rollingWindowsTree,
   distributionWindowsTree,
-  mapWindows,
+
   ROLLING_WINDOWS,
   chartsFromBlockAnd6b,
+  fromStatsPattern,
   percentRatio,
   percentRatioDots,
   rollingPercentRatioTree,
@@ -471,35 +472,6 @@ export function createNetworkSection() {
             }),
           },
           {
-            name: "Market Cap",
-            tree: [
-              {
-                name: "Base",
-                title: "Market Cap",
-                bottom: [
-                  line({
-                    series: supply.marketCap.usd,
-                    name: "Market Cap",
-                    unit: Unit.usd,
-                  }),
-                ],
-              },
-              rollingWindowsTree({
-                windows: mapWindows(
-                  supply.marketCap.delta.absolute,
-                  (c) => c.usd,
-                ),
-                title: "Market Cap Change",
-                unit: Unit.usd,
-                series: baseline,
-              }),
-              rollingPercentRatioTree({
-                windows: supply.marketCap.delta.rate,
-                title: "Market Cap Growth Rate",
-              }),
-            ],
-          },
-          {
             name: "Hodled or Lost",
             title: "Hodled or Lost Supply",
             bottom: satsBtcUsd({
@@ -507,104 +479,23 @@ export function createNetworkSection() {
               name: "Supply",
             }),
           },
-          rollingWindowsTree({
-            windows: supply.marketMinusRealizedCapGrowthRate,
-            title: "Market - Realized Cap Growth Rate",
-            unit: Unit.ratio,
-          }),
+
           {
             name: "Unspendable",
-            tree: [
-              {
-                name: "Base",
-                title: "Unspendable Supply",
-                bottom: satsBtcUsdFrom({
-                  source: supply.burned,
-                  key: "base",
-                  name: "sum",
-                }),
-              },
-              {
-                name: "Rolling",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Unspendable Supply Rolling",
-                    bottom: ROLLING_WINDOWS.flatMap((w) =>
-                      satsBtcUsd({
-                        pattern: supply.burned.sum[w.key],
-                        name: w.name,
-                        color: w.color,
-                      }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `Unspendable Supply ${w.name}`,
-                    bottom: satsBtcUsd({
-                      pattern: supply.burned.sum[w.key],
-                      name: w.name,
-                      color: w.color,
-                    }),
-                  })),
-                ],
-              },
-              {
-                name: "Cumulative",
-                title: "Unspendable Supply (Total)",
-                bottom: satsBtcUsdFrom({
-                  source: supply.burned,
-                  key: "cumulative",
-                  name: "all-time",
-                }),
-              },
-            ],
+            title: "Unspendable Supply",
+            bottom: satsBtcUsdFrom({
+              source: supply.burned,
+              key: "cumulative",
+              name: "all-time",
+            }),
           },
           {
             name: "OP_RETURN",
-            tree: [
-              {
-                name: "Base",
-                title: "OP_RETURN Burned",
-                bottom: satsBtcUsd({
-                  pattern: scripts.value.opReturn.base,
-                  name: "sum",
-                }),
-              },
-              {
-                name: "Rolling",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "OP_RETURN Burned Rolling",
-                    bottom: ROLLING_WINDOWS.flatMap((w) =>
-                      satsBtcUsd({
-                        pattern: scripts.value.opReturn.sum[w.key],
-                        name: w.name,
-                        color: w.color,
-                      }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `OP_RETURN Burned ${w.name}`,
-                    bottom: satsBtcUsd({
-                      pattern: scripts.value.opReturn.sum[w.key],
-                      name: w.name,
-                      color: w.color,
-                    }),
-                  })),
-                ],
-              },
-              {
-                name: "Cumulative",
-                title: "OP_RETURN Burned (Total)",
-                bottom: satsBtcUsd({
-                  pattern: scripts.value.opReturn.cumulative,
-                  name: "all-time",
-                }),
-              },
-            ],
+            title: "OP_RETURN Burned",
+            bottom: satsBtcUsd({
+              pattern: scripts.value.opReturn.cumulative,
+              name: "all-time",
+            }),
           },
         ],
       },
@@ -622,25 +513,14 @@ export function createNetworkSection() {
             }),
           },
           {
-            name: "Fees",
-            tree: [
-              {
-                name: "Fee Rate",
-                tree: chartsFromBlockAnd6b({
-                  pattern: transactions.fees.feeRate,
-                  title: "Transaction Fee Rate",
-                  unit: Unit.feeRate,
-                }),
-              },
-              {
-                name: "Fee",
-                tree: chartsFromBlockAnd6b({
-                  pattern: transactions.fees.fee,
-                  title: "Transaction Fee",
-                  unit: Unit.sats,
-                }),
-              },
-            ],
+            name: "Fee Rate",
+            title: "Fee Rate Distribution (6 Blocks)",
+            bottom: fromStatsPattern({ pattern: transactions.fees.feeRate._6b, unit: Unit.feeRate }),
+          },
+          {
+            name: "Fee",
+            title: "Fee Distribution (6 Blocks)",
+            bottom: fromStatsPattern({ pattern: transactions.fees.fee._6b, unit: Unit.sats }),
           },
           {
             name: "Volume",

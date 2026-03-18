@@ -20,7 +20,6 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        // count, versions, size are independent — parallelize
         let (r1, (r2, r3)) = rayon::join(
             || self.count.compute(indexer, &blocks.lookback, starting_indexes, exit),
             || {
@@ -34,11 +33,9 @@ impl Vecs {
         r2?;
         r3?;
 
-        // Fees depends on size
         self.fees
-            .compute(indexer, indexes, inputs, &self.size, starting_indexes, exit)?;
+            .compute(indexer, indexes, &inputs.spent, &self.size, starting_indexes, exit)?;
 
-        // Volume depends on fees, counts, and blocks (lookback vecs, interval)
         self.volume.compute(
             indexer,
             indexes,

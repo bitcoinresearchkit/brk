@@ -4,12 +4,13 @@ use vecdb::Exit;
 
 use super::super::activity;
 use super::Vecs;
-use crate::distribution;
+use crate::{distribution, prices};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         starting_indexes: &Indexes,
+        prices: &prices::Vecs,
         distribution: &distribution::Vecs,
         activity: &activity::Vecs,
         exit: &Exit,
@@ -36,6 +37,9 @@ impl Vecs {
             &activity.liveliness.height,
             exit,
         )?;
+
+        self.vaulted.compute(prices, starting_indexes.height, exit)?;
+        self.active.compute(prices, starting_indexes.height, exit)?;
 
         Ok(())
     }

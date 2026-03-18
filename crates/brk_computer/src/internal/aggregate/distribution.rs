@@ -2,8 +2,8 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use schemars::JsonSchema;
 use vecdb::{
-    Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableVec, Ro, Rw, StorageMode, StoredVec,
-    VecIndex, VecValue, Version,
+    CheckedSub, Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableVec, Ro, Rw, StorageMode,
+    StoredVec, VecIndex, VecValue, Version,
 };
 
 use crate::internal::{
@@ -81,13 +81,14 @@ impl<I: VecIndex, T: ComputedVecValue + JsonSchema> Distribution<I, T> {
     pub(crate) fn compute_from_nblocks<A>(
         &mut self,
         max_from: I,
-        source: &impl ReadableVec<A, T>,
+        source: &(impl ReadableVec<A, T> + Sized),
         first_indexes: &impl ReadableVec<I, A>,
         count_indexes: &impl ReadableVec<I, brk_types::StoredU64>,
         n_blocks: usize,
         exit: &Exit,
     ) -> Result<()>
     where
+        T: CheckedSub,
         A: VecIndex + VecValue + brk_types::CheckedSub<A>,
     {
         compute_aggregations_nblock_window(

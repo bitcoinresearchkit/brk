@@ -1,6 +1,7 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{Indexes, Sats, TxIndex, TxOutIndex, Vout};
+use rayon::prelude::*;
 use tracing::info;
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
@@ -68,7 +69,7 @@ impl Vecs {
                 });
 
             // Sort 1: by tx_index (group by transaction for sequential first_txout_index reads)
-            entries.sort_unstable_by_key(|e| e.tx_index);
+            entries.par_sort_unstable_by_key(|e| e.tx_index);
             for entry in &mut entries {
                 if entry.tx_index.is_coinbase() {
                     break;
@@ -78,7 +79,7 @@ impl Vecs {
             }
 
             // Sort 2: by txout_index (sequential value reads)
-            entries.sort_unstable_by_key(|e| e.txout_index);
+            entries.par_sort_unstable_by_key(|e| e.txout_index);
             for entry in &mut entries {
                 if entry.txout_index.is_coinbase() {
                     break;
@@ -105,8 +106,9 @@ impl Vecs {
             }
 
             let _lock = exit.lock();
-            self.txout_index.write()?;
-            self.value.write()?;
+            let (r1, r2) = rayon::join(|| self.txout_index.write(), || self.value.write());
+            r1?;
+            r2?;
 
             if batch_end < target {
                 info!("TxIns: {:.2}%", batch_end as f64 / target as f64 * 100.0);

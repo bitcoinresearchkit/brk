@@ -78,7 +78,7 @@ impl Vecs {
                     let di_usize = di.to_usize();
                     let stack_sats = stack_data[h.to_usize() - start];
                     let avg = if di_usize > first_price_di {
-                        let num_days = days.min(di_usize + 1).min(di_usize + 1 - first_price_di);
+                        let num_days = days.min(di_usize + 1 - first_price_di);
                         Cents::from(DCA_AMOUNT * num_days / Bitcoin::from(stack_sats))
                     } else {
                         Cents::ZERO

@@ -4368,7 +4368,6 @@ class SeriesTree_Market_Technical_Rsi:
         self._24h: AverageGainsLossesRsiStochPattern = AverageGainsLossesRsiStochPattern(client, 'rsi', '24h')
         self._1w: AverageGainsLossesRsiStochPattern = AverageGainsLossesRsiStochPattern(client, 'rsi', '1w')
         self._1m: AverageGainsLossesRsiStochPattern = AverageGainsLossesRsiStochPattern(client, 'rsi', '1m')
-        self._1y: AverageGainsLossesRsiStochPattern = AverageGainsLossesRsiStochPattern(client, 'rsi', '1y')
 
 class SeriesTree_Market_Technical_Macd_24h:
     """Series tree node."""
@@ -4400,16 +4399,6 @@ class SeriesTree_Market_Technical_Macd_1m:
         self.signal: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_signal_1m')
         self.histogram: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_histogram_1m')
 
-class SeriesTree_Market_Technical_Macd_1y:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.ema_fast: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_ema_fast_1y')
-        self.ema_slow: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_ema_slow_1y')
-        self.line: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_line_1y')
-        self.signal: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_signal_1y')
-        self.histogram: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_histogram_1y')
-
 class SeriesTree_Market_Technical_Macd:
     """Series tree node."""
     
@@ -4417,7 +4406,6 @@ class SeriesTree_Market_Technical_Macd:
         self._24h: SeriesTree_Market_Technical_Macd_24h = SeriesTree_Market_Technical_Macd_24h(client)
         self._1w: SeriesTree_Market_Technical_Macd_1w = SeriesTree_Market_Technical_Macd_1w(client)
         self._1m: SeriesTree_Market_Technical_Macd_1m = SeriesTree_Market_Technical_Macd_1m(client)
-        self._1y: SeriesTree_Market_Technical_Macd_1y = SeriesTree_Market_Technical_Macd_1y(client)
 
 class SeriesTree_Market_Technical:
     """Series tree node."""

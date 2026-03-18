@@ -17,6 +17,13 @@ export const ROLLING_WINDOWS = [
   { key: "_1y", name: "1y", color: colors.time._1y },
 ];
 
+/** @type {ReadonlyArray<{key: '_24h' | '_1w' | '_1m', name: string, color: Color}>} */
+export const ROLLING_WINDOWS_TO_1M = [
+  { key: "_24h", name: "24h", color: colors.time._24h },
+  { key: "_1w", name: "1w", color: colors.time._1w },
+  { key: "_1m", name: "1m", color: colors.time._1m },
+];
+
 /**
  * Extract a series from each rolling window via a mapping function
  * @template T
@@ -474,7 +481,7 @@ export function statsAtWindow(pattern, window) {
  */
 export function rollingWindowsTree({ windows, title, unit, series = line }) {
   return {
-    name: "Rolling",
+    name: "Sums",
     tree: [
       {
         name: "Compare",
@@ -515,7 +522,7 @@ export function rollingWindowsTree({ windows, title, unit, series = line }) {
  */
 export function distributionWindowsTree({ pattern, base, title, unit }) {
   return {
-    name: "Distribution",
+    name: "Distributions",
     tree: ROLLING_WINDOWS.map((w) => ({
       name: w.name,
       title: `${title} Distribution (${w.name})`,
@@ -661,7 +668,7 @@ export function percentRatioBaseline({ pattern, name, color, defaultActive }) {
  */
 export function rollingPercentRatioTree({ windows, title, series = percentRatio }) {
   return {
-    name: "Rolling",
+    name: "Sums",
     tree: [
       {
         name: "Compare",
@@ -802,7 +809,7 @@ export function chartsFromFull({
     : title;
   return [
     {
-      name: "Sum",
+      name: "Per Block",
       title,
       bottom: [{ series: pattern.base, title: "base", unit }],
     },

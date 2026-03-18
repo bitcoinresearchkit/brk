@@ -31,7 +31,6 @@ pub(super) fn compute(
         .height
         .compute_rolling_ema(starting_indexes.height, ws_slow, close, exit)?;
 
-    // MACD line = ema_fast - ema_slow
     chain.line.height.compute_subtract(
         starting_indexes.height,
         &chain.ema_fast.height,
@@ -39,7 +38,6 @@ pub(super) fn compute(
         exit,
     )?;
 
-    // Signal = EMA of MACD line
     chain.signal.height.compute_rolling_ema(
         starting_indexes.height,
         ws_signal,
@@ -47,7 +45,6 @@ pub(super) fn compute(
         exit,
     )?;
 
-    // Histogram = line - signal
     chain.histogram.height.compute_subtract(
         starting_indexes.height,
         &chain.line.height,

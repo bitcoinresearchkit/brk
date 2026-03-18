@@ -5040,7 +5040,6 @@ function createUnspentPattern(client, acc) {
  * @property {AverageGainsLossesRsiStochPattern} _24h
  * @property {AverageGainsLossesRsiStochPattern} _1w
  * @property {AverageGainsLossesRsiStochPattern} _1m
- * @property {AverageGainsLossesRsiStochPattern} _1y
  */
 
 /**
@@ -5048,7 +5047,6 @@ function createUnspentPattern(client, acc) {
  * @property {SeriesTree_Market_Technical_Macd_24h} _24h
  * @property {SeriesTree_Market_Technical_Macd_1w} _1w
  * @property {SeriesTree_Market_Technical_Macd_1m} _1m
- * @property {SeriesTree_Market_Technical_Macd_1y} _1y
  */
 
 /**
@@ -5071,15 +5069,6 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Market_Technical_Macd_1m
- * @property {SeriesPattern1<StoredF32>} emaFast
- * @property {SeriesPattern1<StoredF32>} emaSlow
- * @property {SeriesPattern1<StoredF32>} line
- * @property {SeriesPattern1<StoredF32>} signal
- * @property {SeriesPattern1<StoredF32>} histogram
- */
-
-/**
- * @typedef {Object} SeriesTree_Market_Technical_Macd_1y
  * @property {SeriesPattern1<StoredF32>} emaFast
  * @property {SeriesPattern1<StoredF32>} emaSlow
  * @property {SeriesPattern1<StoredF32>} line
@@ -8239,7 +8228,6 @@ class BrkClient extends BrkClientBase {
             _24h: createAverageGainsLossesRsiStochPattern(this, 'rsi', '24h'),
             _1w: createAverageGainsLossesRsiStochPattern(this, 'rsi', '1w'),
             _1m: createAverageGainsLossesRsiStochPattern(this, 'rsi', '1m'),
-            _1y: createAverageGainsLossesRsiStochPattern(this, 'rsi', '1y'),
           },
           stochK: createBpsPercentRatioPattern3(this, 'stoch_k'),
           stochD: createBpsPercentRatioPattern3(this, 'stoch_d'),
@@ -8265,13 +8253,6 @@ class BrkClient extends BrkClientBase {
               line: createSeriesPattern1(this, 'macd_line_1m'),
               signal: createSeriesPattern1(this, 'macd_signal_1m'),
               histogram: createSeriesPattern1(this, 'macd_histogram_1m'),
-            },
-            _1y: {
-              emaFast: createSeriesPattern1(this, 'macd_ema_fast_1y'),
-              emaSlow: createSeriesPattern1(this, 'macd_ema_slow_1y'),
-              line: createSeriesPattern1(this, 'macd_line_1y'),
-              signal: createSeriesPattern1(this, 'macd_signal_1y'),
-              histogram: createSeriesPattern1(this, 'macd_histogram_1y'),
             },
           },
         },

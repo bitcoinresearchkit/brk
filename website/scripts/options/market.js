@@ -13,6 +13,7 @@ import {
   percentRatio,
   percentRatioBaseline,
   ROLLING_WINDOWS,
+  ROLLING_WINDOWS_TO_1M,
 } from "./series.js";
 import { simplePriceRatioTree } from "./shared.js";
 import { periodIdToName } from "./utils.js";
@@ -734,14 +735,14 @@ export function createMarketSection() {
                     name: "Compare",
                     title: "RSI Comparison",
                     bottom: [
-                      ...ROLLING_WINDOWS.flatMap((w) =>
+                      ...ROLLING_WINDOWS_TO_1M.flatMap((w) =>
                         indexRatio({ pattern: technical.rsi[w.key].rsi, name: w.name, color: w.color }),
                       ),
                       priceLine({ unit: Unit.index, number: 70 }),
                       priceLine({ unit: Unit.index, number: 30 }),
                     ],
                   },
-                  ...ROLLING_WINDOWS.map((w) => {
+                  ...ROLLING_WINDOWS_TO_1M.map((w) => {
                     const rsi = technical.rsi[w.key];
                     return {
                       name: w.name,
@@ -756,7 +757,7 @@ export function createMarketSection() {
                   }),
                   {
                     name: "Stochastic",
-                    tree: ROLLING_WINDOWS.map((w) => {
+                    tree: ROLLING_WINDOWS_TO_1M.map((w) => {
                         const rsi = technical.rsi[w.key];
                         return {
                           name: w.name,
@@ -777,11 +778,11 @@ export function createMarketSection() {
                   {
                     name: "Compare",
                     title: "MACD Comparison",
-                    bottom: ROLLING_WINDOWS.map((w) =>
+                    bottom: ROLLING_WINDOWS_TO_1M.map((w) =>
                       line({ series: technical.macd[w.key].line, name: w.name, color: w.color, unit: Unit.usd }),
                     ),
                   },
-                  ...ROLLING_WINDOWS.map((w) => ({
+                  ...ROLLING_WINDOWS_TO_1M.map((w) => ({
                     name: w.name,
                     title: `MACD (${w.name})`,
                     bottom: [

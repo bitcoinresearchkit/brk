@@ -25,7 +25,7 @@ impl Vecs {
         let (r1, r2) = rayon::join(
             || {
                 self.supply
-                    .compute(starting_indexes, distribution, &self.activity, exit)
+                    .compute(starting_indexes, prices, distribution, &self.activity, exit)
             },
             || {
                 rayon::join(

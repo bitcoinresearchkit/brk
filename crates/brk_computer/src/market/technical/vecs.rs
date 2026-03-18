@@ -2,7 +2,7 @@ use brk_traversable::Traversable;
 use brk_types::{BasisPoints16, BasisPoints32, StoredF32};
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{PerBlock, PercentPerBlock, RatioPerBlock, Windows};
+use crate::internal::{PerBlock, PercentPerBlock, RatioPerBlock, WindowsTo1m};
 
 #[derive(Traversable)]
 pub struct RsiChain<M: StorageMode = Rw> {
@@ -29,12 +29,12 @@ pub struct MacdChain<M: StorageMode = Rw> {
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub rsi: Windows<RsiChain<M>>,
+    pub rsi: WindowsTo1m<RsiChain<M>>,
 
     pub stoch_k: PercentPerBlock<BasisPoints16, M>,
     pub stoch_d: PercentPerBlock<BasisPoints16, M>,
 
     pub pi_cycle: RatioPerBlock<BasisPoints32, M>,
 
-    pub macd: Windows<MacdChain<M>>,
+    pub macd: WindowsTo1m<MacdChain<M>>,
 }
