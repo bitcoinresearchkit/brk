@@ -1,5 +1,6 @@
 use brk_traversable::Traversable;
 use brk_types::{Dollars, Height, StoredF32, Version};
+use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{DeltaChange, DeltaRate, LazyDeltaVec, LazyVecFrom1, ReadableCloneableVec, VecValue};
 
@@ -7,7 +8,7 @@ use crate::{
     indexes,
     internal::{
         BpsType, CachedWindowStarts, CentsType, DerivedResolutions, LazyPerBlock, NumericValue,
-        Resolutions, Windows,
+        Percent, Resolutions, Windows,
     },
 };
 
@@ -31,16 +32,14 @@ where
 /// Single-slot lazy delta percent: BPS delta + lazy ratio + lazy percent views.
 ///
 /// Mirrors `PercentPerBlock<B>` but with lazy delta for the BPS source.
-#[derive(Clone, Traversable)]
-pub struct LazyDeltaPercentFromHeight<S, B>
+#[derive(Clone, Deref, DerefMut, Traversable)]
+#[traversable(transparent)]
+pub struct LazyDeltaPercentFromHeight<S, B>(
+    pub Percent<LazyDeltaFromHeight<S, B, DeltaRate>, LazyPerBlock<StoredF32, B>>,
+)
 where
     S: VecValue,
-    B: BpsType,
-{
-    pub bps: LazyDeltaFromHeight<S, B, DeltaRate>,
-    pub ratio: LazyPerBlock<StoredF32, B>,
-    pub percent: LazyPerBlock<StoredF32, B>,
-}
+    B: BpsType;
 
 /// Lazy rolling deltas for all 4 window durations (24h, 1w, 1m, 1y).
 ///
@@ -151,11 +150,11 @@ where
                 )),
             };
 
-            let rate = LazyDeltaPercentFromHeight {
+            let rate = LazyDeltaPercentFromHeight(Percent {
                 bps,
                 ratio,
                 percent,
-            };
+            });
 
             (absolute, rate)
         };
@@ -304,11 +303,11 @@ where
                 )),
             };
 
-            let rate = LazyDeltaPercentFromHeight {
+            let rate = LazyDeltaPercentFromHeight(Percent {
                 bps,
                 ratio,
                 percent,
-            };
+            });
 
             (absolute, rate)
         };

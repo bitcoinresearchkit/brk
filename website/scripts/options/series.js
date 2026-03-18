@@ -758,67 +758,6 @@ export function simpleDeltaTree({ delta, title, unit }) {
 // ============================================================================
 // These split patterns into separate Sum/Distribution/Cumulative charts
 
-/**
- * Create distribution series (avg + percentiles)
- * @param {DistributionStats} pattern
- * @param {Unit} unit
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-function distributionSeries(pattern, unit) {
-  const { stat } = colors;
-  return [
-    dots({ series: pattern.average, name: "avg", color: stat.avg, unit }),
-    dots({
-      series: pattern.median,
-      name: "median",
-      color: stat.median,
-      unit,
-      defaultActive: false,
-    }),
-    dots({
-      series: pattern.max,
-      name: "max",
-      color: stat.max,
-      unit,
-      defaultActive: false,
-    }),
-    dots({
-      series: pattern.min,
-      name: "min",
-      color: stat.min,
-      unit,
-      defaultActive: false,
-    }),
-    dots({
-      series: pattern.pct75,
-      name: "pct75",
-      color: stat.pct75,
-      unit,
-      defaultActive: false,
-    }),
-    dots({
-      series: pattern.pct25,
-      name: "pct25",
-      color: stat.pct25,
-      unit,
-      defaultActive: false,
-    }),
-    dots({
-      series: pattern.pct90,
-      name: "pct90",
-      color: stat.pct90,
-      unit,
-      defaultActive: false,
-    }),
-    dots({
-      series: pattern.pct10,
-      name: "pct10",
-      color: stat.pct10,
-      unit,
-      defaultActive: false,
-    }),
-  ];
-}
 
 /**
  * Create btc/sats/usd series from patterns
@@ -910,7 +849,7 @@ export const chartsFromFullPerBlock = (args) =>
  * @param {string} [args.distributionSuffix]
  * @returns {PartialOptionsTree}
  */
-export function chartsFromSum({
+export function chartsFromAggregated({
   pattern,
   title,
   unit,
@@ -922,17 +861,12 @@ export function chartsFromSum({
     : title;
   return [
     {
-      name: "Sum",
+      name: "Per Block",
       title,
-      bottom: [{ series: pattern.sum, title: "sum", color: stat.sum, unit }],
+      bottom: [{ series: pattern.sum, title: "base", color: stat.sum, unit }],
     },
     rollingWindowsTree({ windows: pattern.rolling.sum, title, unit }),
     distributionWindowsTree({ pattern: pattern.rolling, title: distTitle, unit }),
-    {
-      name: "Distribution",
-      title: `${distTitle} Distribution`,
-      bottom: distributionSeries(pattern, unit),
-    },
     {
       name: "Cumulative",
       title: `${title} (Total)`,
@@ -949,8 +883,8 @@ export function chartsFromSum({
  * @param {Unit} args.unit
  * @returns {PartialOptionsTree}
  */
-export const chartsFromSumPerBlock = (args) =>
-  chartsFromSum({ ...args, distributionSuffix: "per Block" });
+export const chartsFromAggregatedPerBlock = (args) =>
+  chartsFromAggregated({ ...args, distributionSuffix: "per Block" });
 
 /**
  * Create Per Block + Per 6 Blocks stats charts from a _6bBlockTxPattern
@@ -1024,12 +958,34 @@ export function chartsFromCount({ pattern, title, unit, color }) {
  * @returns {PartialOptionsTree}
  */
 export function chartsFromCountEntries({ entries, title, unit }) {
+  return multiSeriesTree({
+    entries: entries.map(([name, data], i, arr) => ({
+      name,
+      color: colors.at(i, arr.length),
+      base: data.base,
+      rolling: data.sum,
+      cumulative: data.cumulative,
+    })),
+    title,
+    unit,
+  });
+}
+
+/**
+ * Per Block + Sums + Cumulative tree for multiple named series shown side-by-side
+ * @param {Object} args
+ * @param {Array<{ name: string, color: Color, base: AnySeriesPattern, rolling: { _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }, cumulative: AnySeriesPattern }>} args.entries
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @returns {PartialOptionsTree}
+ */
+export function multiSeriesTree({ entries, title, unit }) {
   return [
     {
       name: "Per Block",
       title,
-      bottom: entries.map(([name, data], i, arr) =>
-        line({ series: data.base, name, color: colors.at(i, arr.length), unit }),
+      bottom: entries.map((e) =>
+        line({ series: e.base, name: e.name, color: e.color, unit }),
       ),
     },
     {
@@ -1037,16 +993,16 @@ export function chartsFromCountEntries({ entries, title, unit }) {
       tree: ROLLING_WINDOWS.map((w) => ({
         name: w.name,
         title: `${title} (${w.name})`,
-        bottom: entries.map(([name, data], i, arr) =>
-          line({ series: data.sum[w.key], name, color: colors.at(i, arr.length), unit }),
+        bottom: entries.map((e) =>
+          line({ series: e.rolling[w.key], name: e.name, color: e.color, unit }),
         ),
       })),
     },
     {
       name: "Cumulative",
       title: `${title} (Total)`,
-      bottom: entries.map(([name, data], i, arr) =>
-        line({ series: data.cumulative, name, color: colors.at(i, arr.length), unit }),
+      bottom: entries.map((e) =>
+        line({ series: e.cumulative, name: e.name, color: e.color, unit }),
       ),
     },
   ];

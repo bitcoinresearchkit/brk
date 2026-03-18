@@ -16,17 +16,15 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let window_starts = blocks.lookback.window_starts();
-        self.0
-            .compute(starting_indexes.height, &window_starts, exit, |full| {
-                full.compute_with_skip(
-                    starting_indexes.height,
-                    &indexes.tx_index.input_count,
-                    &indexer.vecs.transactions.first_tx_index,
-                    &indexes.height.tx_index_count,
-                    exit,
-                    0,
-                )
-            })?;
+        self.0.compute(
+            starting_indexes.height,
+            &indexes.tx_index.input_count,
+            &indexer.vecs.transactions.first_tx_index,
+            &indexes.height.tx_index_count,
+            &window_starts,
+            exit,
+            0,
+        )?;
 
         Ok(())
     }

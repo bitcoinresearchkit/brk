@@ -50,7 +50,7 @@ impl Vecs {
             .height
             .compute_binary::<_, Timestamp, PerSec>(
                 starting_indexes.height,
-                &inputs_count.full.sum.height,
+                &inputs_count.sum.height,
                 &blocks.interval.base,
                 exit,
             )?;
@@ -58,7 +58,7 @@ impl Vecs {
             .height
             .compute_binary::<_, Timestamp, PerSec>(
                 starting_indexes.height,
-                &outputs_count.total.full.sum.height,
+                &outputs_count.total.sum.height,
                 &blocks.interval.base,
                 exit,
             )?;

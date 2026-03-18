@@ -1796,43 +1796,6 @@ function create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, acc) {
  */
 
 /**
- * @typedef {Object} AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern
- * @property {SeriesPattern1<StoredU64>} average
- * @property {SeriesPattern1<StoredU64>} cumulative
- * @property {SeriesPattern1<StoredU64>} max
- * @property {SeriesPattern1<StoredU64>} median
- * @property {SeriesPattern1<StoredU64>} min
- * @property {SeriesPattern1<StoredU64>} pct10
- * @property {SeriesPattern1<StoredU64>} pct25
- * @property {SeriesPattern1<StoredU64>} pct75
- * @property {SeriesPattern1<StoredU64>} pct90
- * @property {AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern} rolling
- * @property {SeriesPattern1<StoredU64>} sum
- */
-
-/**
- * Create a AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated series name
- * @returns {AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern}
- */
-function createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern(client, acc) {
-  return {
-    average: createSeriesPattern1(client, _m(acc, 'average')),
-    cumulative: createSeriesPattern1(client, _m(acc, 'cumulative')),
-    max: createSeriesPattern1(client, _m(acc, 'max')),
-    median: createSeriesPattern1(client, _m(acc, 'median')),
-    min: createSeriesPattern1(client, _m(acc, 'min')),
-    pct10: createSeriesPattern1(client, _m(acc, 'pct10')),
-    pct25: createSeriesPattern1(client, _m(acc, 'pct25')),
-    pct75: createSeriesPattern1(client, _m(acc, 'pct75')),
-    pct90: createSeriesPattern1(client, _m(acc, 'pct90')),
-    rolling: createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc),
-    sum: createSeriesPattern1(client, _m(acc, 'sum')),
-  };
-}
-
-/**
  * @typedef {Object} AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2
  * @property {_1m1w1y24hPattern<StoredU64>} average
  * @property {SeriesPattern1<StoredU64>} base
@@ -3396,6 +3359,27 @@ function createCentsSatsUsdPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} CumulativeRollingSumPattern
+ * @property {SeriesPattern1<StoredU64>} cumulative
+ * @property {AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern} rolling
+ * @property {SeriesPattern1<StoredU64>} sum
+ */
+
+/**
+ * Create a CumulativeRollingSumPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {CumulativeRollingSumPattern}
+ */
+function createCumulativeRollingSumPattern(client, acc) {
+  return {
+    cumulative: createSeriesPattern1(client, _m(acc, 'cumulative')),
+    rolling: createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc),
+    sum: createSeriesPattern1(client, _m(acc, 'sum')),
+  };
+}
+
+/**
  * @typedef {Object} DeltaHalfTotalPattern
  * @property {AbsoluteRatePattern} delta
  * @property {BtcCentsSatsUsdPattern} half
@@ -4125,7 +4109,7 @@ function createUnspentPattern(client, acc) {
  * @typedef {Object} SeriesTree_Inputs
  * @property {SeriesTree_Inputs_Raw} raw
  * @property {SeriesTree_Inputs_Spent} spent
- * @property {AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern} count
+ * @property {CumulativeRollingSumPattern} count
  */
 
 /**
@@ -4166,7 +4150,7 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Outputs_Count
- * @property {AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern} total
+ * @property {CumulativeRollingSumPattern} total
  * @property {SeriesPattern1<StoredU64>} unspent
  */
 
@@ -7645,7 +7629,7 @@ class BrkClient extends BrkClientBase {
           txoutIndex: createSeriesPattern20(this, 'txout_index'),
           value: createSeriesPattern20(this, 'value'),
         },
-        count: createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern(this, 'input_count'),
+        count: createCumulativeRollingSumPattern(this, 'input_count'),
       },
       outputs: {
         raw: {
@@ -7659,7 +7643,7 @@ class BrkClient extends BrkClientBase {
           txinIndex: createSeriesPattern21(this, 'txin_index'),
         },
         count: {
-          total: createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern(this, 'output_count'),
+          total: createCumulativeRollingSumPattern(this, 'output_count'),
           unspent: createSeriesPattern1(this, 'utxo_count_bis'),
         },
       },

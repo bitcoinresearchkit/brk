@@ -13,11 +13,12 @@ import {
   chartsFromFullPerBlock,
   chartsFromCount,
   chartsFromCountEntries,
-  chartsFromSumPerBlock,
+  chartsFromAggregatedPerBlock,
   rollingWindowsTree,
 
   ROLLING_WINDOWS,
   chartsFromBlockAnd6b,
+  multiSeriesTree,
   simpleDeltaTree,
   percentRatio,
   percentRatioDots,
@@ -737,27 +738,32 @@ export function createNetworkSection() {
           }),
           {
             name: "Flow",
-            title: "UTXO Flow",
-            bottom: [
-              line({
-                series: outputs.count.total.sum,
-                name: "Created",
-                color: colors.entity.output,
-                unit: Unit.count,
-              }),
-              line({
-                series: inputs.count.sum,
-                name: "Spent",
-                color: colors.entity.input,
-                unit: Unit.count,
-              }),
-            ],
+            tree: multiSeriesTree({
+              entries: [
+                {
+                  name: "Created",
+                  color: colors.entity.output,
+                  base: outputs.count.total.sum,
+                  rolling: outputs.count.total.rolling.sum,
+                  cumulative: outputs.count.total.cumulative,
+                },
+                {
+                  name: "Spent",
+                  color: colors.entity.input,
+                  base: inputs.count.sum,
+                  rolling: inputs.count.rolling.sum,
+                  cumulative: inputs.count.cumulative,
+                },
+              ],
+              title: "UTXO Flow",
+              unit: Unit.count,
+            }),
           },
         ],
       },
       {
         name: "Inputs",
-        tree: chartsFromSumPerBlock({
+        tree: chartsFromAggregatedPerBlock({
           pattern: inputs.count,
           title: "Input Count",
           unit: Unit.count,
@@ -765,7 +771,7 @@ export function createNetworkSection() {
       },
       {
         name: "Outputs",
-        tree: chartsFromSumPerBlock({
+        tree: chartsFromAggregatedPerBlock({
           pattern: outputs.count.total,
           title: "Output Count",
           unit: Unit.count,

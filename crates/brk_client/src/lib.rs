@@ -1086,40 +1086,6 @@ pub struct CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern {
-    pub average: SeriesPattern1<StoredU64>,
-    pub cumulative: SeriesPattern1<StoredU64>,
-    pub max: SeriesPattern1<StoredU64>,
-    pub median: SeriesPattern1<StoredU64>,
-    pub min: SeriesPattern1<StoredU64>,
-    pub pct10: SeriesPattern1<StoredU64>,
-    pub pct25: SeriesPattern1<StoredU64>,
-    pub pct75: SeriesPattern1<StoredU64>,
-    pub pct90: SeriesPattern1<StoredU64>,
-    pub rolling: AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
-    pub sum: SeriesPattern1<StoredU64>,
-}
-
-impl AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern {
-    /// Create a new pattern node with accumulated series name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            average: SeriesPattern1::new(client.clone(), _m(&acc, "average")),
-            cumulative: SeriesPattern1::new(client.clone(), _m(&acc, "cumulative")),
-            max: SeriesPattern1::new(client.clone(), _m(&acc, "max")),
-            median: SeriesPattern1::new(client.clone(), _m(&acc, "median")),
-            min: SeriesPattern1::new(client.clone(), _m(&acc, "min")),
-            pct10: SeriesPattern1::new(client.clone(), _m(&acc, "pct10")),
-            pct25: SeriesPattern1::new(client.clone(), _m(&acc, "pct25")),
-            pct75: SeriesPattern1::new(client.clone(), _m(&acc, "pct75")),
-            pct90: SeriesPattern1::new(client.clone(), _m(&acc, "pct90")),
-            rolling: AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), acc.clone()),
-            sum: SeriesPattern1::new(client.clone(), _m(&acc, "sum")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2 {
     pub average: _1m1w1y24hPattern<StoredU64>,
     pub base: SeriesPattern1<StoredU64>,
@@ -2499,6 +2465,24 @@ impl CentsSatsUsdPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct CumulativeRollingSumPattern {
+    pub cumulative: SeriesPattern1<StoredU64>,
+    pub rolling: AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
+    pub sum: SeriesPattern1<StoredU64>,
+}
+
+impl CumulativeRollingSumPattern {
+    /// Create a new pattern node with accumulated series name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            cumulative: SeriesPattern1::new(client.clone(), _m(&acc, "cumulative")),
+            rolling: AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), acc.clone()),
+            sum: SeriesPattern1::new(client.clone(), _m(&acc, "sum")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct DeltaHalfTotalPattern {
     pub delta: AbsoluteRatePattern,
     pub half: BtcCentsSatsUsdPattern,
@@ -3418,7 +3402,7 @@ impl SeriesTree_Transactions_Volume {
 pub struct SeriesTree_Inputs {
     pub raw: SeriesTree_Inputs_Raw,
     pub spent: SeriesTree_Inputs_Spent,
-    pub count: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern,
+    pub count: CumulativeRollingSumPattern,
 }
 
 impl SeriesTree_Inputs {
@@ -3426,7 +3410,7 @@ impl SeriesTree_Inputs {
         Self {
             raw: SeriesTree_Inputs_Raw::new(client.clone(), format!("{base_path}_raw")),
             spent: SeriesTree_Inputs_Spent::new(client.clone(), format!("{base_path}_spent")),
-            count: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern::new(client.clone(), "input_count".to_string()),
+            count: CumulativeRollingSumPattern::new(client.clone(), "input_count".to_string()),
         }
     }
 }
@@ -3520,14 +3504,14 @@ impl SeriesTree_Outputs_Spent {
 
 /// Series tree node.
 pub struct SeriesTree_Outputs_Count {
-    pub total: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern,
+    pub total: CumulativeRollingSumPattern,
     pub unspent: SeriesPattern1<StoredU64>,
 }
 
 impl SeriesTree_Outputs_Count {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            total: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern::new(client.clone(), "output_count".to_string()),
+            total: CumulativeRollingSumPattern::new(client.clone(), "output_count".to_string()),
             unspent: SeriesPattern1::new(client.clone(), "utxo_count_bis".to_string()),
         }
     }

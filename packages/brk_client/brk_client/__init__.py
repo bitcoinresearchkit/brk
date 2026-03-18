@@ -2221,23 +2221,6 @@ class CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern:
     """Pattern struct for repeated tree structure."""
     pass
 
-class AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.average: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'average'))
-        self.cumulative: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'cumulative'))
-        self.max: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'max'))
-        self.median: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'median'))
-        self.min: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'min'))
-        self.pct10: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'pct10'))
-        self.pct25: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'pct25'))
-        self.pct75: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'pct75'))
-        self.pct90: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'pct90'))
-        self.rolling: AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc)
-        self.sum: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'sum'))
-
 class AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2:
     """Pattern struct for repeated tree structure."""
     
@@ -2916,6 +2899,15 @@ class CentsSatsUsdPattern:
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, _m(acc, 'sats'))
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, acc)
 
+class CumulativeRollingSumPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.cumulative: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'cumulative'))
+        self.rolling: AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc)
+        self.sum: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'sum'))
+
 class DeltaHalfTotalPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -3369,7 +3361,7 @@ class SeriesTree_Inputs:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.raw: SeriesTree_Inputs_Raw = SeriesTree_Inputs_Raw(client)
         self.spent: SeriesTree_Inputs_Spent = SeriesTree_Inputs_Spent(client)
-        self.count: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern = AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern(client, 'input_count')
+        self.count: CumulativeRollingSumPattern = CumulativeRollingSumPattern(client, 'input_count')
 
 class SeriesTree_Outputs_Raw:
     """Series tree node."""
@@ -3391,7 +3383,7 @@ class SeriesTree_Outputs_Count:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.total: AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern = AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern(client, 'output_count')
+        self.total: CumulativeRollingSumPattern = CumulativeRollingSumPattern(client, 'output_count')
         self.unspent: SeriesPattern1[StoredU64] = SeriesPattern1(client, 'utxo_count_bis')
 
 class SeriesTree_Outputs:

@@ -19,22 +19,20 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let window_starts = blocks.lookback.window_starts();
-        self.total
-            .compute(starting_indexes.height, &window_starts, exit, |full| {
-                full.compute_with_skip(
-                    starting_indexes.height,
-                    &indexes.tx_index.output_count,
-                    &indexer.vecs.transactions.first_tx_index,
-                    &indexes.height.tx_index_count,
-                    exit,
-                    0,
-                )
-            })?;
+        self.total.compute(
+            starting_indexes.height,
+            &indexes.tx_index.output_count,
+            &indexer.vecs.transactions.first_tx_index,
+            &indexes.height.tx_index_count,
+            &window_starts,
+            exit,
+            0,
+        )?;
 
         self.unspent.height.compute_transform3(
             starting_indexes.height,
-            &self.total.full.cumulative.height,
-            &inputs_count.full.cumulative.height,
+            &self.total.cumulative.height,
+            &inputs_count.cumulative.height,
             &scripts_count.op_return.cumulative.height,
             |(h, output_count, input_count, op_return_count, ..)| {
                 let block_count = u64::from(h + 1_usize);

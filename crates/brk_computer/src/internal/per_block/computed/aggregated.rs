@@ -1,17 +1,15 @@
-//! PerBlockAggregated - PerBlockDistributionFull (distribution + sum + cumulative) + RollingComplete.
-//!
-//! For metrics aggregated per-block from finer-grained sources (e.g., per-tx data),
-//! where we want full per-block stats plus rolling window stats.
-
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Version};
+use brk_types::Height;
 use schemars::JsonSchema;
-use vecdb::{Database, Exit, Rw, StorageMode};
+use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode, VecIndex, VecValue, Version};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, PerBlockDistributionFull, NumericValue, RollingComplete, WindowStarts},
+    internal::{
+        CachedWindowStarts, NumericValue, PerBlock, RollingComplete, WindowStarts,
+        algo::compute_aggregations,
+    },
 };
 
 #[derive(Traversable)]
@@ -19,8 +17,8 @@ pub struct PerBlockAggregated<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
-    #[traversable(flatten)]
-    pub full: PerBlockDistributionFull<T, M>,
+    pub sum: PerBlock<T, M>,
+    pub cumulative: PerBlock<T, M>,
     pub rolling: RollingComplete<T, M>,
 }
 
@@ -35,34 +33,63 @@ where
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let full = PerBlockDistributionFull::forced_import(db, name, version, indexes)?;
+        let sum = PerBlock::forced_import(db, &format!("{name}_sum"), version, indexes)?;
+        let cumulative =
+            PerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
         let rolling = RollingComplete::forced_import(
             db,
             name,
             version,
             indexes,
-            &full.cumulative.height,
+            &cumulative.height,
             cached_starts,
         )?;
 
-        Ok(Self { full, rolling })
+        Ok(Self {
+            sum,
+            cumulative,
+            rolling,
+        })
     }
 
-    /// Compute PerBlockDistributionFull stats via closure, then rolling distribution from the per-block sum.
-    pub(crate) fn compute(
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn compute<A>(
         &mut self,
         max_from: Height,
+        source: &impl ReadableVec<A, T>,
+        first_indexes: &impl ReadableVec<Height, A>,
+        count_indexes: &impl ReadableVec<Height, brk_types::StoredU64>,
         windows: &WindowStarts<'_>,
         exit: &Exit,
-        compute_full: impl FnOnce(&mut PerBlockDistributionFull<T>) -> Result<()>,
+        skip_count: usize,
     ) -> Result<()>
     where
         T: From<f64> + Default + Copy + Ord,
         f64: From<T>,
+        A: VecIndex + VecValue + brk_types::CheckedSub<A>,
     {
-        compute_full(&mut self.full)?;
+        compute_aggregations(
+            max_from,
+            source,
+            first_indexes,
+            count_indexes,
+            exit,
+            skip_count,
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some(&mut self.sum.height),
+            Some(&mut self.cumulative.height),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )?;
         self.rolling
-            .compute(max_from, windows, &self.full.sum.height, exit)?;
+            .compute(max_from, windows, &self.sum.height, exit)?;
         Ok(())
     }
 }
