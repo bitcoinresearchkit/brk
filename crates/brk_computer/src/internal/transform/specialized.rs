@@ -1,132 +1,36 @@
 use brk_types::{
-    Close, Day1, Day3, Epoch, Halving, Height, High, Hour1, Hour4, Hour12, Low,
-    Minute10, Minute30, Month1, Month3, Month6, OHLCCents, OHLCDollars, OHLCSats, Open, StoredU64,
-    Week1, Year1, Year10,
+    Close, Day1, Day3, Epoch, Halving, Height, High, Hour1, Hour4, Hour12, Low, Minute10, Minute30,
+    Month1, Month3, Month6, OHLCCents, OHLCDollars, OHLCSats, Open, StoredU64, Week1, Year1,
+    Year10,
 };
 use vecdb::UnaryTransform;
 
 use super::CentsUnsignedToSats;
 use crate::blocks::{
-    TARGET_BLOCKS_PER_DAY, TARGET_BLOCKS_PER_DAY3, TARGET_BLOCKS_PER_DECADE,
-    TARGET_BLOCKS_PER_HALVING, TARGET_BLOCKS_PER_HOUR1, TARGET_BLOCKS_PER_HOUR4,
-    TARGET_BLOCKS_PER_HOUR12, TARGET_BLOCKS_PER_MINUTE10, TARGET_BLOCKS_PER_MINUTE30,
-    TARGET_BLOCKS_PER_MONTH, TARGET_BLOCKS_PER_QUARTER, TARGET_BLOCKS_PER_SEMESTER,
-    TARGET_BLOCKS_PER_WEEK, TARGET_BLOCKS_PER_YEAR,
+    TARGET_BLOCKS_PER_DAY, TARGET_BLOCKS_PER_MONTH, TARGET_BLOCKS_PER_WEEK, TARGET_BLOCKS_PER_YEAR,
 };
 
-pub struct BlockCountTarget;
-
-impl UnaryTransform<Height, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Height) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_DAY)
-    }
+macro_rules! const_block_target {
+    ($name:ident, $value:expr) => {
+        pub struct $name;
+        const_block_target!(@impl $name, $value, Height, Minute10, Minute30, Hour1, Hour4, Hour12, Day1, Day3, Week1, Month1, Month3, Month6, Year1, Year10, Halving, Epoch);
+    };
+    (@impl $name:ident, $value:expr, $($idx:ty),*) => {
+        $(
+            impl UnaryTransform<$idx, StoredU64> for $name {
+                #[inline(always)]
+                fn apply(_: $idx) -> StoredU64 {
+                    StoredU64::from($value)
+                }
+            }
+        )*
+    };
 }
 
-impl UnaryTransform<Minute10, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Minute10) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_MINUTE10)
-    }
-}
-
-impl UnaryTransform<Minute30, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Minute30) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_MINUTE30)
-    }
-}
-
-impl UnaryTransform<Hour1, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Hour1) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_HOUR1)
-    }
-}
-
-impl UnaryTransform<Hour4, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Hour4) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_HOUR4)
-    }
-}
-
-impl UnaryTransform<Hour12, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Hour12) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_HOUR12)
-    }
-}
-
-impl UnaryTransform<Day1, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Day1) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_DAY)
-    }
-}
-
-impl UnaryTransform<Day3, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Day3) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_DAY3)
-    }
-}
-
-impl UnaryTransform<Week1, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Week1) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_WEEK)
-    }
-}
-
-impl UnaryTransform<Month1, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Month1) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_MONTH)
-    }
-}
-
-impl UnaryTransform<Month3, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Month3) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_QUARTER)
-    }
-}
-
-impl UnaryTransform<Month6, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Month6) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_SEMESTER)
-    }
-}
-
-impl UnaryTransform<Year1, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Year1) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_YEAR)
-    }
-}
-
-impl UnaryTransform<Year10, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Year10) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_DECADE)
-    }
-}
-
-impl UnaryTransform<Halving, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Halving) -> StoredU64 {
-        StoredU64::from(TARGET_BLOCKS_PER_HALVING)
-    }
-}
-
-impl UnaryTransform<Epoch, StoredU64> for BlockCountTarget {
-    #[inline(always)]
-    fn apply(_: Epoch) -> StoredU64 {
-        StoredU64::from(2016u64)
-    }
-}
+const_block_target!(BlockCountTarget24h, TARGET_BLOCKS_PER_DAY);
+const_block_target!(BlockCountTarget1w, TARGET_BLOCKS_PER_WEEK);
+const_block_target!(BlockCountTarget1m, TARGET_BLOCKS_PER_MONTH);
+const_block_target!(BlockCountTarget1y, TARGET_BLOCKS_PER_YEAR);
 
 pub struct OhlcCentsToDollars;
 

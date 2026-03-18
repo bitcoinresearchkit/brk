@@ -1,16 +1,17 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, StoredF32, Version};
+use derive_more::{Deref, DerefMut};
 use vecdb::{
     BinaryTransform, Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, VecValue,
 };
 
 use crate::{
     indexes,
-    internal::{BpsType, algo::ComputeDrawdown},
+    internal::{BpsType, Percent, algo::ComputeDrawdown},
 };
 
-use crate::internal::{PerBlock, LazyPerBlock};
+use crate::internal::{LazyPerBlock, PerBlock};
 
 /// Basis-point storage with both ratio and percentage float views.
 ///
@@ -18,12 +19,11 @@ use crate::internal::{PerBlock, LazyPerBlock};
 /// exposes two lazy StoredF32 views:
 /// - `ratio`: bps / 10000 (e.g., 4523 bps -> 0.4523)
 /// - `percent`: bps / 100 (e.g., 4523 bps -> 45.23%)
-#[derive(Traversable)]
-pub struct PercentPerBlock<B: BpsType, M: StorageMode = Rw> {
-    pub bps: PerBlock<B, M>,
-    pub ratio: LazyPerBlock<StoredF32, B>,
-    pub percent: LazyPerBlock<StoredF32, B>,
-}
+#[derive(Deref, DerefMut, Traversable)]
+#[traversable(transparent)]
+pub struct PercentPerBlock<B: BpsType, M: StorageMode = Rw>(
+    pub Percent<PerBlock<B, M>, LazyPerBlock<StoredF32, B>>,
+);
 
 impl<B: BpsType> PercentPerBlock<B> {
     pub(crate) fn forced_import(
@@ -44,11 +44,11 @@ impl<B: BpsType> PercentPerBlock<B> {
 
         let percent = LazyPerBlock::from_computed::<B::ToPercent>(name, version, bps_clone, &bps);
 
-        Ok(Self {
+        Ok(Self(Percent {
             bps,
             ratio,
             percent,
-        })
+        }))
     }
 
     pub(crate) fn compute_binary<S1T, S2T, F>(

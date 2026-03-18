@@ -12,18 +12,18 @@ import {
   fromSupplyPattern,
   chartsFromFullPerBlock,
   chartsFromCount,
+  chartsFromCountEntries,
   chartsFromSumPerBlock,
   rollingWindowsTree,
-  distributionWindowsTree,
 
   ROLLING_WINDOWS,
   chartsFromBlockAnd6b,
-  fromStatsPattern,
+  simpleDeltaTree,
   percentRatio,
   percentRatioDots,
   rollingPercentRatioTree,
 } from "./series.js";
-import { satsBtcUsd, satsBtcUsdFrom } from "./shared.js";
+import { satsBtcUsd, satsBtcUsdFrom, satsBtcUsdFullTree } from "./shared.js";
 
 /**
  * Create Network section
@@ -513,201 +513,96 @@ export function createNetworkSection() {
             }),
           },
           {
+            name: "Volume",
+            tree: satsBtcUsdFullTree({
+              pattern: transactions.volume.transferVolume,
+              name: "base",
+              title: "Transaction Volume",
+            }),
+          },
+          {
             name: "Fee Rate",
-            title: "Fee Rate Distribution (6 Blocks)",
-            bottom: fromStatsPattern({ pattern: transactions.fees.feeRate._6b, unit: Unit.feeRate }),
+            tree: chartsFromBlockAnd6b({
+              pattern: transactions.fees.feeRate,
+              title: "Transaction Fee Rate",
+              unit: Unit.feeRate,
+            }),
           },
           {
             name: "Fee",
-            title: "Fee Distribution (6 Blocks)",
-            bottom: fromStatsPattern({ pattern: transactions.fees.fee._6b, unit: Unit.sats }),
+            tree: chartsFromBlockAnd6b({
+              pattern: transactions.fees.fee,
+              title: "Transaction Fee",
+              unit: Unit.sats,
+            }),
           },
           {
-            name: "Volume",
-            tree: [
-              {
-                name: "Transferred",
-                title: "Transaction Volume",
-                bottom: [
-                  ...satsBtcUsd({
-                    pattern: transactions.volume.transferVolume.base,
-                    name: "Sent",
-                  }),
-                  ...satsBtcUsd({
-                    pattern: transactions.volume.outputVolume.base,
-                    name: "Received",
-                    color: colors.entity.output,
-                  }),
-                ],
-              },
-              {
-                name: "Sent Rolling",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Sent Volume Rolling",
-                    bottom: ROLLING_WINDOWS.flatMap((w) =>
-                      satsBtcUsd({
-                        pattern: transactions.volume.transferVolume.sum[w.key],
-                        name: w.name,
-                        color: w.color,
-                      }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `Sent Volume ${w.name}`,
-                    bottom: satsBtcUsd({
-                      pattern: transactions.volume.transferVolume.sum[w.key],
-                      name: w.name,
-                      color: w.color,
-                    }),
-                  })),
-                ],
-              },
-              {
-                name: "Sent Cumulative",
-                title: "Sent Volume (Total)",
-                bottom: satsBtcUsd({
-                  pattern: transactions.volume.transferVolume.cumulative,
-                  name: "all-time",
-                }),
-              },
-              {
-                name: "Received Rolling",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Received Volume Rolling",
-                    bottom: ROLLING_WINDOWS.flatMap((w) =>
-                      satsBtcUsd({
-                        pattern: transactions.volume.outputVolume.sum[w.key],
-                        name: w.name,
-                        color: w.color,
-                      }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `Received Volume ${w.name}`,
-                    bottom: satsBtcUsd({
-                      pattern: transactions.volume.outputVolume.sum[w.key],
-                      name: w.name,
-                      color: w.color,
-                    }),
-                  })),
-                ],
-              },
-              {
-                name: "Received Cumulative",
-                title: "Received Volume (Total)",
-                bottom: satsBtcUsd({
-                  pattern: transactions.volume.outputVolume.cumulative,
-                  name: "all-time",
-                }),
-              },
-            ],
+            name: "Weight",
+            tree: chartsFromBlockAnd6b({
+              pattern: transactions.size.weight,
+              title: "Transaction Weight",
+              unit: Unit.wu,
+            }),
           },
           {
-            name: "Size",
-            tree: [
-              {
-                name: "Weight",
-                tree: chartsFromBlockAnd6b({
-                  pattern: transactions.size.weight,
-                  title: "Transaction Weight",
-                  unit: Unit.wu,
-                }),
-              },
-              {
-                name: "vSize",
-                tree: chartsFromBlockAnd6b({
-                  pattern: transactions.size.vsize,
-                  title: "Transaction vSize",
-                  unit: Unit.vb,
-                }),
-              },
-            ],
+            name: "vSize",
+            tree: chartsFromBlockAnd6b({
+              pattern: transactions.size.vsize,
+              title: "Transaction vSize",
+              unit: Unit.vb,
+            }),
           },
           {
             name: "Versions",
-            tree: [
-              {
-                name: "Base",
-                title: "Transaction Versions",
-                bottom: entries(transactions.versions).map(
-                  ([v, data], i, arr) =>
-                    line({
-                      series: data.base,
-                      name: v,
-                      color: colors.at(i, arr.length),
-                      unit: Unit.count,
-                    }),
-                ),
-              },
-              {
-                name: "Rolling",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Transaction Versions Rolling",
-                    bottom: entries(transactions.versions).flatMap(
-                      ([v, data], i, arr) =>
-                        ROLLING_WINDOWS.map((w) =>
-                          line({
-                            series: data.sum[w.key],
-                            name: `${v} ${w.name}`,
-                            color: colors.at(i, arr.length),
-                            unit: Unit.count,
-                          }),
-                        ),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `Transaction Versions (${w.name})`,
-                    bottom: entries(transactions.versions).map(
-                      ([v, data], i, arr) =>
-                        line({
-                          series: data.sum[w.key],
-                          name: v,
-                          color: colors.at(i, arr.length),
-                          unit: Unit.count,
-                        }),
-                    ),
-                  })),
-                ],
-              },
-              {
-                name: "Cumulative",
-                title: "Transaction Versions (Total)",
-                bottom: entries(transactions.versions).map(
-                  ([v, data], i, arr) =>
-                    line({
-                      series: data.cumulative,
-                      name: v,
-                      color: colors.at(i, arr.length),
-                      unit: Unit.count,
-                    }),
-                ),
-              },
-            ],
+            tree: chartsFromCountEntries({
+              entries: entries(transactions.versions),
+              title: "Transaction Versions",
+              unit: Unit.count,
+            }),
           },
           {
             name: "Velocity",
-            title: "Transaction Velocity",
-            bottom: [
-              line({
-                series: supply.velocity.native,
-                name: "BTC",
-                unit: Unit.ratio,
-              }),
-              line({
-                series: supply.velocity.fiat,
-                name: "USD",
-                color: colors.usd,
-                unit: Unit.ratio,
-              }),
+            tree: [
+              {
+                name: "Compare",
+                title: "Transaction Velocity",
+                bottom: [
+                  line({
+                    series: supply.velocity.native,
+                    name: "BTC",
+                    unit: Unit.ratio,
+                  }),
+                  line({
+                    series: supply.velocity.fiat,
+                    name: "USD",
+                    color: colors.usd,
+                    unit: Unit.ratio,
+                  }),
+                ],
+              },
+              {
+                name: "Native",
+                title: "Transaction Velocity (BTC)",
+                bottom: [
+                  line({
+                    series: supply.velocity.native,
+                    name: "BTC",
+                    unit: Unit.ratio,
+                  }),
+                ],
+              },
+              {
+                name: "Fiat",
+                title: "Transaction Velocity (USD)",
+                bottom: [
+                  line({
+                    series: supply.velocity.fiat,
+                    name: "USD",
+                    color: colors.usd,
+                    unit: Unit.ratio,
+                  }),
+                ],
+              },
             ],
           },
         ],
@@ -721,37 +616,45 @@ export function createNetworkSection() {
             name: "Count",
             tree: [
               {
-                name: "Base",
-                title: "Block Count",
-                bottom: [
-                  line({
-                    series: blocks.count.total.base,
-                    name: "base",
-                    unit: Unit.count,
-                  }),
-                  line({
-                    series: blocks.count.target,
-                    name: "Target",
-                    color: colors.gray,
-                    unit: Unit.count,
-                    options: { lineStyle: 4 },
-                  }),
+                name: "Sums",
+                tree: [
+                  {
+                    name: "Compare",
+                    title: "Block Count Rolling",
+                    bottom: ROLLING_WINDOWS.map((w) =>
+                      line({
+                        series: blocks.count.total.sum[w.key],
+                        name: w.name,
+                        color: w.color,
+                        unit: Unit.count,
+                      }),
+                    ),
+                  },
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `Block Count ${w.name}`,
+                    bottom: [
+                      line({
+                        series: blocks.count.total.sum[w.key],
+                        name: "Actual",
+                        unit: Unit.count,
+                      }),
+                      line({
+                        series: blocks.count.target[w.key],
+                        name: "Target",
+                        color: colors.gray,
+                        unit: Unit.count,
+                        options: { lineStyle: 4 },
+                      }),
+                    ],
+                  })),
                 ],
               },
-              rollingWindowsTree({
-                windows: blocks.count.total.sum,
-                title: "Block Count",
-                unit: Unit.count,
-              }),
               {
                 name: "Cumulative",
                 title: "Block Count (Total)",
                 bottom: [
-                  line({
-                    series: blocks.count.total.cumulative,
-                    name: "all-time",
-                    unit: Unit.count,
-                  }),
+                  { series: blocks.count.total.cumulative, title: "all-time", unit: Unit.count },
                 ],
               },
             ],
@@ -760,7 +663,7 @@ export function createNetworkSection() {
             name: "Interval",
             tree: [
               {
-                name: "Base",
+                name: "Per Block",
                 title: "Block Interval",
                 bottom: [
                   dots({
@@ -780,155 +683,34 @@ export function createNetworkSection() {
               rollingWindowsTree({
                 windows: blocks.interval,
                 title: "Block Interval",
+                name: "Averages",
                 unit: Unit.secs,
               }),
             ],
           },
           {
             name: "Size",
-            tree: [
-              {
-                name: "Base",
-                title: "Block Size",
-                bottom: [
-                  line({
-                    series: blocks.size.base,
-                    name: "base",
-                    unit: Unit.bytes,
-                  }),
-                ],
-              },
-              rollingWindowsTree({
-                windows: blocks.size.sum,
-                title: "Block Size",
-                unit: Unit.bytes,
-              }),
-              distributionWindowsTree({
-                pattern: blocks.size,
-                base: blocks.size.base,
-                title: "Block Size",
-                unit: Unit.bytes,
-              }),
-              {
-                name: "Cumulative",
-                title: "Block Size (Total)",
-                bottom: [
-                  line({
-                    series: blocks.size.cumulative,
-                    name: "all-time",
-                    unit: Unit.bytes,
-                  }),
-                ],
-              },
-            ],
-          },
-          {
-            name: "Weight",
-            tree: [
-              {
-                name: "Base",
-                title: "Block Weight",
-                bottom: [
-                  line({
-                    series: blocks.weight.base,
-                    name: "base",
-                    unit: Unit.wu,
-                  }),
-                ],
-              },
-              rollingWindowsTree({
-                windows: blocks.weight.sum,
-                title: "Block Weight",
-                unit: Unit.wu,
-              }),
-              distributionWindowsTree({
-                pattern: blocks.weight,
-                base: blocks.weight.base,
-                title: "Block Weight",
-                unit: Unit.wu,
-              }),
-              {
-                name: "Cumulative",
-                title: "Block Weight (Total)",
-                bottom: [
-                  line({
-                    series: blocks.weight.cumulative,
-                    name: "all-time",
-                    unit: Unit.wu,
-                  }),
-                ],
-              },
-            ],
-          },
-          {
-            name: "vBytes",
-            tree: [
-              {
-                name: "Base",
-                title: "Block vBytes",
-                bottom: [
-                  line({
-                    series: blocks.vbytes.base,
-                    name: "base",
-                    unit: Unit.vb,
-                  }),
-                ],
-              },
-              rollingWindowsTree({
-                windows: blocks.vbytes.sum,
-                title: "Block vBytes",
-                unit: Unit.vb,
-              }),
-              distributionWindowsTree({
-                pattern: blocks.vbytes,
-                base: blocks.vbytes.base,
-                title: "Block vBytes",
-                unit: Unit.vb,
-              }),
-              {
-                name: "Cumulative",
-                title: "Block vBytes (Total)",
-                bottom: [
-                  line({
-                    series: blocks.vbytes.cumulative,
-                    name: "all-time",
-                    unit: Unit.vb,
-                  }),
-                ],
-              },
-            ],
-          },
-          {
-            name: "Fullness",
-            title: "Block Fullness",
-            bottom: percentRatioDots({
-              pattern: blocks.fullness,
-              name: "base",
+            tree: chartsFromFullPerBlock({
+              pattern: blocks.size,
+              title: "Block Size",
+              unit: Unit.bytes,
             }),
           },
           {
-            name: "Difficulty",
-            tree: [
-              {
-                name: "Base",
-                title: "Mining Difficulty",
-                bottom: [
-                  line({
-                    series: blocks.difficulty.value,
-                    name: "Difficulty",
-                    unit: Unit.count,
-                  }),
-                ],
-              },
-              {
-                name: "Adjustment",
-                title: "Difficulty Adjustment",
-                bottom: percentRatioDots({
-                  pattern: blocks.difficulty.adjustment,
-                  name: "Adjustment",
-                }),
-              },
-            ],
+            name: "Weight",
+            tree: chartsFromFullPerBlock({
+              pattern: blocks.weight,
+              title: "Block Weight",
+              unit: Unit.wu,
+            }),
+          },
+          {
+            name: "vBytes",
+            tree: chartsFromFullPerBlock({
+              pattern: blocks.vbytes,
+              title: "Block vBytes",
+              unit: Unit.vb,
+            }),
           },
         ],
       },
@@ -948,18 +730,11 @@ export function createNetworkSection() {
               }),
             ],
           },
-          {
-            name: "30d Change",
-            title: "UTXO Count 30d Change",
-            bottom: [
-              baseline({
-                series:
-                  cohorts.utxo.all.outputs.unspentCount.delta.absolute._1m,
-                name: "30d Change",
-                unit: Unit.count,
-              }),
-            ],
-          },
+          ...simpleDeltaTree({
+            delta: cohorts.utxo.all.outputs.unspentCount.delta,
+            title: "UTXO Count",
+            unit: Unit.count,
+          }),
           {
             name: "Flow",
             title: "UTXO Flow",

@@ -476,12 +476,13 @@ export function statsAtWindow(pattern, window) {
  * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.windows
  * @param {string} args.title
  * @param {Unit} args.unit
+ * @param {string} [args.name]
  * @param {(args: {series: AnySeriesPattern, name: string, color: Color, unit: Unit}) => AnyFetchedSeriesBlueprint} [args.series]
  * @returns {PartialOptionsGroup}
  */
-export function rollingWindowsTree({ windows, title, unit, series = line }) {
+export function rollingWindowsTree({ windows, title, unit, name = "Sums", series = line }) {
   return {
-    name: "Sums",
+    name,
     tree: [
       {
         name: "Compare",
@@ -523,17 +524,26 @@ export function rollingWindowsTree({ windows, title, unit, series = line }) {
 export function distributionWindowsTree({ pattern, base, title, unit }) {
   return {
     name: "Distributions",
-    tree: ROLLING_WINDOWS.map((w) => ({
-      name: w.name,
-      title: `${title} Distribution (${w.name})`,
-      bottom: [
-        ...(base ? [line({ series: base, name: "base", unit })] : []),
-        ...fromStatsPattern({
-          pattern: statsAtWindow(pattern, w.key),
-          unit,
-        }),
-      ],
-    })),
+    tree: [
+      {
+        name: "Compare",
+        title: `${title} Average`,
+        bottom: ROLLING_WINDOWS.map((w) =>
+          line({ series: pattern.average[w.key], name: w.name, color: w.color, unit }),
+        ),
+      },
+      ...ROLLING_WINDOWS.map((w) => ({
+        name: w.name,
+        title: `${title} Distribution (${w.name})`,
+        bottom: [
+          ...(base ? [line({ series: base, name: "base", unit })] : []),
+          ...fromStatsPattern({
+            pattern: statsAtWindow(pattern, w.key),
+            unit,
+          }),
+        ],
+      })),
+    ],
   };
 }
 
@@ -651,10 +661,10 @@ export function percentRatioDots({ pattern, name, color, defaultActive }) {
  * @param {boolean} [args.defaultActive]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function percentRatioBaseline({ pattern, name, color, defaultActive }) {
+export function percentRatioBaseline({ pattern, name, defaultActive }) {
   return [
-    baseline({ series: pattern.percent, name, color, defaultActive, unit: Unit.percentage }),
-    baseline({ series: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
+    baseline({ series: pattern.percent, name, defaultActive, unit: Unit.percentage }),
+    baseline({ series: pattern.ratio, name, defaultActive, unit: Unit.ratio }),
   ];
 }
 
@@ -663,27 +673,84 @@ export function percentRatioBaseline({ pattern, name, color, defaultActive }) {
  * @param {Object} args
  * @param {{ _24h: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1w: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1m: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1y: { percent: AnySeriesPattern, ratio: AnySeriesPattern } }} args.windows
  * @param {string} args.title
- * @param {(args: {pattern: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, name: string, color: Color}) => AnyFetchedSeriesBlueprint[]} [args.series]
+ * @param {string} [args.name]
+ * @param {(args: {pattern: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, name: string, color?: Color}) => AnyFetchedSeriesBlueprint[]} [args.series]
  * @returns {PartialOptionsGroup}
  */
-export function rollingPercentRatioTree({ windows, title, series = percentRatio }) {
+export function rollingPercentRatioTree({ windows, title, name = "Sums", series = percentRatio }) {
   return {
-    name: "Sums",
+    name,
     tree: [
       {
         name: "Compare",
         title: `${title} Rolling`,
         bottom: ROLLING_WINDOWS.flatMap((w) =>
-          series({ pattern: windows[w.key], name: w.name, color: w.color }),
+          percentRatio({ pattern: windows[w.key], name: w.name, color: w.color }),
         ),
       },
       ...ROLLING_WINDOWS.map((w) => ({
         name: w.name,
         title: `${title} ${w.name}`,
-        bottom: series({ pattern: windows[w.key], name: w.name, color: w.color }),
+        bottom: series({ pattern: windows[w.key], name: w.name }),
       })),
     ],
   };
+}
+
+/**
+ * Create Change + Growth Rate tree from a delta pattern (absolute + rate)
+ * @template T
+ * @param {Object} args
+ * @param {{ absolute: { _24h: T, _1w: T, _1m: T, _1y: T }, rate: { _24h: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1w: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1m: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1y: { percent: AnySeriesPattern, ratio: AnySeriesPattern } } }} args.delta
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @param {(v: T) => AnySeriesPattern} args.extract
+ * @returns {PartialOptionsTree}
+ */
+export function deltaTree({ delta, title, unit, extract }) {
+  return [
+    {
+      name: "Change",
+      tree: [
+        {
+          name: "Compare",
+          title: `${title} Change`,
+          bottom: ROLLING_WINDOWS.map((w) =>
+            baseline({
+              series: extract(delta.absolute[w.key]),
+              name: w.name,
+              color: w.color,
+              unit,
+            }),
+          ),
+        },
+        ...ROLLING_WINDOWS.map((w) => ({
+          name: w.name,
+          title: `${title} Change ${w.name}`,
+          bottom: [
+            baseline({
+              series: extract(delta.absolute[w.key]),
+              name: w.name,
+              unit,
+            }),
+          ],
+        })),
+      ],
+    },
+    rollingPercentRatioTree({ windows: delta.rate, title: `${title} Growth Rate`, name: "Growth Rate", series: percentRatioBaseline }),
+  ];
+}
+
+/**
+ * deltaTree where absolute windows are directly AnySeriesPattern (no extract needed)
+ * @param {Object} args
+ * @param {{ absolute: { _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }, rate: { _24h: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1w: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1m: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1y: { percent: AnySeriesPattern, ratio: AnySeriesPattern } } }} args.delta
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @returns {PartialOptionsTree}
+ */
+export function simpleDeltaTree({ delta, title, unit }) {
+  return deltaTree({ delta, title, unit, extract: (v) => v });
 }
 
 // ============================================================================
@@ -896,20 +963,40 @@ export const chartsFromSumPerBlock = (args) =>
 export function chartsFromBlockAnd6b({ pattern, title, unit }) {
   return [
     {
-      name: "Per Block",
-      title: `${title} per Block`,
+      name: "Block",
+      title: `${title} (Block)`,
       bottom: fromStatsPattern({ pattern: pattern.block, unit }),
     },
     {
-      name: "Per 6 Blocks",
-      title: `${title} per 6 Blocks`,
+      name: "Hourly",
+      title: `${title} (Hourly)`,
       bottom: fromStatsPattern({ pattern: pattern._6b, unit }),
     },
   ];
 }
 
 /**
- * Split pattern with rolling sum windows + cumulative into charts
+ * Sums + Cumulative charts (no Per Block)
+ * @param {Object} args
+ * @param {{ sum: { _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }, cumulative: AnySeriesPattern }} args.pattern
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @param {Color} [args.color]
+ * @returns {PartialOptionsTree}
+ */
+export function chartsFromSumsCumulative({ pattern, title, unit, color }) {
+  return [
+    rollingWindowsTree({ windows: pattern.sum, title, unit }),
+    {
+      name: "Cumulative",
+      title: `${title} (Total)`,
+      bottom: [{ series: pattern.cumulative, title: "all-time", color, unit }],
+    },
+  ];
+}
+
+/**
+ * Per Block + Sums + Cumulative charts
  * @param {Object} args
  * @param {CountPattern<any>} args.pattern
  * @param {string} args.title
@@ -920,15 +1007,47 @@ export function chartsFromBlockAnd6b({ pattern, title, unit }) {
 export function chartsFromCount({ pattern, title, unit, color }) {
   return [
     {
-      name: "Base",
+      name: "Per Block",
       title,
       bottom: [{ series: pattern.base, title: "base", color, unit }],
     },
-    rollingWindowsTree({ windows: pattern.sum, title, unit }),
+    ...chartsFromSumsCumulative({ pattern, title, unit, color }),
+  ];
+}
+
+/**
+ * Split multiple named entries (each with base/sum/cumulative) into Per Block/Sums/Cumulative charts
+ * @param {Object} args
+ * @param {Array<[string, CountPattern<any>]>} args.entries
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @returns {PartialOptionsTree}
+ */
+export function chartsFromCountEntries({ entries, title, unit }) {
+  return [
+    {
+      name: "Per Block",
+      title,
+      bottom: entries.map(([name, data], i, arr) =>
+        line({ series: data.base, name, color: colors.at(i, arr.length), unit }),
+      ),
+    },
+    {
+      name: "Sums",
+      tree: ROLLING_WINDOWS.map((w) => ({
+        name: w.name,
+        title: `${title} (${w.name})`,
+        bottom: entries.map(([name, data], i, arr) =>
+          line({ series: data.sum[w.key], name, color: colors.at(i, arr.length), unit }),
+        ),
+      })),
+    },
     {
       name: "Cumulative",
       title: `${title} (Total)`,
-      bottom: [{ series: pattern.cumulative, title: "all-time", color, unit }],
+      bottom: entries.map(([name, data], i, arr) =>
+        line({ series: data.cumulative, name, color: colors.at(i, arr.length), unit }),
+      ),
     },
   ];
 }

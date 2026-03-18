@@ -14,8 +14,6 @@ where
     pub _6b: LazyDistribution<Height, T, S1T>,
 }
 
-/// Lazy analog of `TxDerivedDistribution<T>`: per-block + 6-block rolling,
-/// each derived by transforming the corresponding source distribution.
 #[derive(Clone, Traversable)]
 pub struct LazyTxDerivedDistribution<T, S1T>
 where
@@ -24,13 +22,13 @@ where
 {
     pub block: LazyDistribution<Height, T, S1T>,
     #[traversable(flatten)]
-    pub rolling: LazyBlockRollingDistribution<T, S1T>,
+    pub distribution: LazyBlockRollingDistribution<T, S1T>,
 }
 
 impl<T, S1T> LazyTxDerivedDistribution<T, S1T>
 where
     T: ComputedVecValue + JsonSchema + 'static,
-    S1T: ComputedVecValue + JsonSchema,
+    S1T: ComputedVecValue + PartialOrd + JsonSchema,
 {
     pub(crate) fn from_tx_derived<F: UnaryTransform<S1T, T>>(
         name: &str,
@@ -38,13 +36,16 @@ where
         source: &TxDerivedDistribution<S1T>,
     ) -> Self {
         let block = LazyDistribution::from_distribution::<F>(name, version, &source.block);
-        let rolling = LazyBlockRollingDistribution {
+        let distribution = LazyBlockRollingDistribution {
             _6b: LazyDistribution::from_distribution::<F>(
                 &format!("{name}_6b"),
                 version,
-                &source.rolling._6b,
+                &source.distribution._6b,
             ),
         };
-        Self { block, rolling }
+        Self {
+            block,
+            distribution,
+        }
     }
 }

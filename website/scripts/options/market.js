@@ -7,6 +7,7 @@ import { Unit } from "../utils/units.js";
 import { priceLine, priceLines } from "./constants.js";
 import {
   baseline,
+  deltaTree,
   histogram,
   line,
   price,
@@ -522,58 +523,12 @@ export function createMarketSection() {
                   }),
                 ],
               },
-              {
-                name: "Change",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Market Cap Change",
-                    bottom: ROLLING_WINDOWS.map((w) =>
-                      baseline({
-                        series: supply.marketCap.delta.absolute[w.key].usd,
-                        name: w.name,
-                        color: w.color,
-                        unit: Unit.usd,
-                      }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `Market Cap Change ${w.name}`,
-                    bottom: [
-                      baseline({
-                        series: supply.marketCap.delta.absolute[w.key].usd,
-                        name: w.name,
-                        unit: Unit.usd,
-                      }),
-                    ],
-                  })),
-                ],
-              },
-              {
-                name: "Growth Rate",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Market Cap Growth Rate",
-                    bottom: ROLLING_WINDOWS.flatMap((w) =>
-                      percentRatio({
-                        pattern: supply.marketCap.delta.rate[w.key],
-                        name: w.name,
-                        color: w.color,
-                      }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `Market Cap Growth Rate ${w.name}`,
-                    bottom: percentRatioBaseline({
-                      pattern: supply.marketCap.delta.rate[w.key],
-                      name: w.name,
-                    }),
-                  })),
-                ],
-              },
+              ...deltaTree({
+                delta: supply.marketCap.delta,
+                title: "Market Cap",
+                unit: Unit.usd,
+                extract: (v) => v.usd,
+              }),
             ],
           },
           {
@@ -591,58 +546,12 @@ export function createMarketSection() {
                   }),
                 ],
               },
-              {
-                name: "Change",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Realized Cap Change",
-                    bottom: ROLLING_WINDOWS.map((w) =>
-                      baseline({
-                        series: cohorts.utxo.all.realized.cap.delta.absolute[w.key].usd,
-                        name: w.name,
-                        color: w.color,
-                        unit: Unit.usd,
-                      }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `Realized Cap Change ${w.name}`,
-                    bottom: [
-                      baseline({
-                        series: cohorts.utxo.all.realized.cap.delta.absolute[w.key].usd,
-                        name: w.name,
-                        unit: Unit.usd,
-                      }),
-                    ],
-                  })),
-                ],
-              },
-              {
-                name: "Growth Rate",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Realized Cap Growth Rate",
-                    bottom: ROLLING_WINDOWS.flatMap((w) =>
-                      percentRatio({
-                        pattern: cohorts.utxo.all.realized.cap.delta.rate[w.key],
-                        name: w.name,
-                        color: w.color,
-                      }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
-                    name: w.name,
-                    title: `Realized Cap Growth Rate ${w.name}`,
-                    bottom: percentRatioBaseline({
-                      pattern: cohorts.utxo.all.realized.cap.delta.rate[w.key],
-                      name: w.name,
-                    }),
-                  })),
-                ],
-              },
+              ...deltaTree({
+                delta: cohorts.utxo.all.realized.cap.delta,
+                title: "Realized Cap",
+                unit: Unit.usd,
+                extract: (v) => v.usd,
+              }),
             ],
           },
           {

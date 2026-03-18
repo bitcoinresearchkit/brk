@@ -2,11 +2,11 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{LazyVecFrom1, ReadableBoxedVec, ReadableCloneableVec, UnaryTransform};
+use vecdb::{LazyVecFrom1, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, UnaryTransform};
 
 use crate::{
     indexes,
-    internal::{PerBlock, ComputedVecValue, DerivedResolutions, NumericValue},
+    internal::{ComputedVecValue, DerivedResolutions, NumericValue, PerBlock},
 };
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -38,7 +38,9 @@ where
     {
         Self {
             height: LazyVecFrom1::transformed::<F>(name, version, height_source),
-            resolutions: Box::new(DerivedResolutions::from_computed::<F>(name, version, source)),
+            resolutions: Box::new(DerivedResolutions::from_computed::<F>(
+                name, version, source,
+            )),
         }
     }
 
@@ -84,5 +86,16 @@ where
                 &source.resolutions,
             )),
         }
+    }
+}
+
+impl<T, S1T> ReadOnlyClone for LazyPerBlock<T, S1T>
+where
+    T: ComputedVecValue + PartialOrd + JsonSchema,
+    S1T: ComputedVecValue,
+{
+    type ReadOnly = Self;
+    fn read_only_clone(&self) -> Self {
+        self.clone()
     }
 }

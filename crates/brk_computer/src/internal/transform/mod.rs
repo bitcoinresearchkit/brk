@@ -28,4 +28,4 @@ pub use ratio::{
     RatioCentsSignedDollarsBps32, RatioDiffCentsBps32, RatioDiffDollarsBps32, RatioDiffF32Bps32,
     RatioDollarsBp16, RatioDollarsBp32, RatioDollarsBps32, RatioSatsBp16, RatioU64Bp16,
 };
-pub use specialized::{BlockCountTarget, OhlcCentsToDollars, OhlcCentsToSats};
+pub use specialized::{BlockCountTarget24h, BlockCountTarget1w, BlockCountTarget1m, BlockCountTarget1y, OhlcCentsToDollars, OhlcCentsToSats};

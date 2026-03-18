@@ -35,12 +35,14 @@ pub(super) fn compute(
     gini.bps
         .height
         .validate_computed_version_or_reset(source_version)?;
-    gini.bps.height.truncate_if_needed_at(
-        gini.bps
-            .height
-            .len()
-            .min(starting_indexes.height.to_usize()),
-    )?;
+
+    let min_len = gini
+        .bps
+        .height
+        .len()
+        .min(starting_indexes.height.to_usize());
+
+    gini.bps.height.truncate_if_needed_at(min_len)?;
 
     let total_heights = supply_vecs
         .iter()

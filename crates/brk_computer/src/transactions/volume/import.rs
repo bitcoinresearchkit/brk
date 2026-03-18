@@ -24,13 +24,6 @@ impl Vecs {
                 indexes,
                 cached_starts,
             )?,
-            output_volume: AmountPerBlockCumulativeWithSums::forced_import(
-                db,
-                "output_volume",
-                version,
-                indexes,
-                cached_starts,
-            )?,
             tx_per_sec: PerBlock::forced_import(db, "tx_per_sec", version + v2, indexes)?,
             outputs_per_sec: PerBlock::forced_import(
                 db,

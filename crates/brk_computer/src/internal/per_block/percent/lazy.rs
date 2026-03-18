@@ -1,19 +1,19 @@
 use brk_traversable::Traversable;
 use brk_types::{StoredF32, Version};
+use derive_more::{Deref, DerefMut};
 use vecdb::{ReadableCloneableVec, UnaryTransform};
 
-use crate::internal::{BpsType, LazyPerBlock, PercentPerBlock};
+use crate::internal::{BpsType, LazyPerBlock, Percent, PercentPerBlock};
 
 /// Fully lazy variant of `PercentPerBlock` — no stored vecs.
 ///
 /// BPS values are lazily derived from a source `PercentPerBlock` via a unary transform,
 /// and ratio/percent float views are chained from the lazy BPS.
-#[derive(Clone, Traversable)]
-pub struct LazyPercentPerBlock<B: BpsType> {
-    pub bps: LazyPerBlock<B, B>,
-    pub ratio: LazyPerBlock<StoredF32, B>,
-    pub percent: LazyPerBlock<StoredF32, B>,
-}
+#[derive(Clone, Deref, DerefMut, Traversable)]
+#[traversable(transparent)]
+pub struct LazyPercentPerBlock<B: BpsType>(
+    pub Percent<LazyPerBlock<B, B>, LazyPerBlock<StoredF32, B>>,
+);
 
 impl<B: BpsType> LazyPercentPerBlock<B> {
     /// Create from a stored `PercentPerBlock` source via a BPS-to-BPS unary transform.
@@ -37,10 +37,10 @@ impl<B: BpsType> LazyPercentPerBlock<B> {
 
         let percent = LazyPerBlock::from_lazy::<B::ToPercent, B>(name, version, &bps);
 
-        Self {
+        Self(Percent {
             bps,
             ratio,
             percent,
-        }
+        })
     }
 }

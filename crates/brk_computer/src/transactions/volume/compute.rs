@@ -22,44 +22,21 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        // sent_sum and received_sum are independent — parallelize
-        let (r1, r2) = rayon::join(
-            || {
-                self.transfer_volume.compute(
+        self.transfer_volume.compute(
+            starting_indexes.height,
+            prices,
+            exit,
+            |sats_vec| {
+                Ok(sats_vec.compute_filtered_sum_from_indexes(
                     starting_indexes.height,
-                    prices,
+                    &indexer.vecs.transactions.first_tx_index,
+                    &indexes.height.tx_index_count,
+                    &fees_vecs.input_value,
+                    |sats| !sats.is_max(),
                     exit,
-                    |sats_vec| {
-                        Ok(sats_vec.compute_filtered_sum_from_indexes(
-                            starting_indexes.height,
-                            &indexer.vecs.transactions.first_tx_index,
-                            &indexes.height.tx_index_count,
-                            &fees_vecs.input_value,
-                            |sats| !sats.is_max(),
-                            exit,
-                        )?)
-                    },
-                )
+                )?)
             },
-            || {
-                self.output_volume.compute(
-                    starting_indexes.height,
-                    prices,
-                    exit,
-                    |sats_vec| {
-                        Ok(sats_vec.compute_sum_from_indexes(
-                            starting_indexes.height,
-                            &indexer.vecs.transactions.first_tx_index,
-                            &indexes.height.tx_index_count,
-                            &fees_vecs.output_value,
-                            exit,
-                        )?)
-                    },
-                )
-            },
-        );
-        r1?;
-        r2?;
+        )?;
 
         self.tx_per_sec
             .height
@@ -73,7 +50,7 @@ impl Vecs {
             .height
             .compute_binary::<_, Timestamp, PerSec>(
                 starting_indexes.height,
-                &inputs_count.full.sum,
+                &inputs_count.full.sum.height,
                 &blocks.interval.base,
                 exit,
             )?;
@@ -81,7 +58,7 @@ impl Vecs {
             .height
             .compute_binary::<_, Timestamp, PerSec>(
                 starting_indexes.height,
-                &outputs_count.total.full.sum,
+                &outputs_count.total.full.sum.height,
                 &blocks.interval.base,
                 exit,
             )?;

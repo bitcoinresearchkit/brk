@@ -1,4 +1,4 @@
-//! PerBlockAggregated - DistributionFull (distribution + sum + cumulative) + RollingComplete.
+//! PerBlockAggregated - PerBlockDistributionFull (distribution + sum + cumulative) + RollingComplete.
 //!
 //! For metrics aggregated per-block from finer-grained sources (e.g., per-tx data),
 //! where we want full per-block stats plus rolling window stats.
@@ -11,7 +11,7 @@ use vecdb::{Database, Exit, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, DistributionFull, NumericValue, RollingComplete, WindowStarts},
+    internal::{CachedWindowStarts, PerBlockDistributionFull, NumericValue, RollingComplete, WindowStarts},
 };
 
 #[derive(Traversable)]
@@ -20,7 +20,7 @@ where
     T: NumericValue + JsonSchema,
 {
     #[traversable(flatten)]
-    pub full: DistributionFull<Height, T, M>,
+    pub full: PerBlockDistributionFull<T, M>,
     pub rolling: RollingComplete<T, M>,
 }
 
@@ -35,26 +35,26 @@ where
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let full = DistributionFull::forced_import(db, name, version)?;
+        let full = PerBlockDistributionFull::forced_import(db, name, version, indexes)?;
         let rolling = RollingComplete::forced_import(
             db,
             name,
             version,
             indexes,
-            &full.cumulative,
+            &full.cumulative.height,
             cached_starts,
         )?;
 
         Ok(Self { full, rolling })
     }
 
-    /// Compute DistributionFull stats via closure, then rolling distribution from the per-block sum.
+    /// Compute PerBlockDistributionFull stats via closure, then rolling distribution from the per-block sum.
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
         windows: &WindowStarts<'_>,
         exit: &Exit,
-        compute_full: impl FnOnce(&mut DistributionFull<Height, T>) -> Result<()>,
+        compute_full: impl FnOnce(&mut PerBlockDistributionFull<T>) -> Result<()>,
     ) -> Result<()>
     where
         T: From<f64> + Default + Copy + Ord,
@@ -62,7 +62,7 @@ where
     {
         compute_full(&mut self.full)?;
         self.rolling
-            .compute(max_from, windows, &self.full.sum, exit)?;
+            .compute(max_from, windows, &self.full.sum.height, exit)?;
         Ok(())
     }
 }

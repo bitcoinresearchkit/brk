@@ -6,7 +6,7 @@ use super::Vecs;
 use crate::{
     blocks::SizeVecs,
     indexes,
-    internal::{CachedWindowStarts, LazyPerBlockRolling, PercentPerBlockRollingAverage, VBytesToWeight},
+    internal::{CachedWindowStarts, LazyPerBlockRolling, PercentVec, VBytesToWeight},
 };
 
 impl Vecs {
@@ -25,13 +25,7 @@ impl Vecs {
             indexes,
         );
 
-        let fullness = PercentPerBlockRollingAverage::forced_import(
-            db,
-            "block_fullness",
-            version,
-            indexes,
-            cached_starts,
-        )?;
+        let fullness = PercentVec::forced_import(db, "block_fullness", version)?;
 
         Ok(Self { weight, fullness })
     }

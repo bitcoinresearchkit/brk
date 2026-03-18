@@ -33,8 +33,8 @@ impl Vecs {
 
         self.unspent.height.compute_transform3(
             starting_indexes.height,
-            &self.total.full.cumulative,
-            &inputs_count.full.cumulative,
+            &self.total.full.cumulative.height,
+            &inputs_count.full.cumulative.height,
             &scripts_count.op_return.cumulative.height,
             |(h, output_count, input_count, op_return_count, ..)| {
                 let block_count = u64::from(h + 1_usize);

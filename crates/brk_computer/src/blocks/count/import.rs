@@ -5,7 +5,10 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{BlockCountTarget, CachedWindowStarts, PerBlockCumulativeWithSums, ConstantVecs},
+    internal::{
+        BlockCountTarget24h, BlockCountTarget1w, BlockCountTarget1m, BlockCountTarget1y,
+        CachedWindowStarts, PerBlockCumulativeWithSums, ConstantVecs, Windows,
+    },
 };
 
 impl Vecs {
@@ -16,11 +19,12 @@ impl Vecs {
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         Ok(Self {
-            target: ConstantVecs::new::<BlockCountTarget>(
-                "block_count_target",
-                version,
-                indexes,
-            ),
+            target: Windows {
+                _24h: ConstantVecs::new::<BlockCountTarget24h>("block_count_target_24h", version, indexes),
+                _1w: ConstantVecs::new::<BlockCountTarget1w>("block_count_target_1w", version, indexes),
+                _1m: ConstantVecs::new::<BlockCountTarget1m>("block_count_target_1m", version, indexes),
+                _1y: ConstantVecs::new::<BlockCountTarget1y>("block_count_target_1y", version, indexes),
+            },
             total: PerBlockCumulativeWithSums::forced_import(
                 db,
                 "block_count",

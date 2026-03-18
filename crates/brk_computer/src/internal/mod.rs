@@ -1,4 +1,3 @@
-mod aggregate;
 pub(crate) mod algo;
 mod amount;
 mod containers;
@@ -9,7 +8,6 @@ mod indexes;
 mod traits;
 mod transform;
 
-pub(crate) use aggregate::*;
 pub(crate) use amount::*;
 pub(crate) use containers::*;
 pub(crate) use per_block::*;

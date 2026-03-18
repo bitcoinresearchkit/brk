@@ -67,8 +67,8 @@ pub(crate) fn process_blocks(
     let height_to_first_txout_index = &indexer.vecs.outputs.first_txout_index;
     let height_to_first_txin_index = &indexer.vecs.inputs.first_txin_index;
     let height_to_tx_count = &transactions.count.total.base.height;
-    let height_to_output_count = &outputs.count.total.full.sum;
-    let height_to_input_count = &inputs.count.full.sum;
+    let height_to_output_count = &outputs.count.total.full.sum.height;
+    let height_to_input_count = &inputs.count.full.sum.height;
     let tx_index_to_output_count = &indexes.tx_index.output_count;
     let tx_index_to_input_count = &indexes.tx_index.input_count;
 

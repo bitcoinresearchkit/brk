@@ -32,9 +32,10 @@ where
         db: &Database,
         name: &str,
         version: Version,
+        indexes: &indexes::Vecs,
         tx_index: LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>,
     ) -> Result<Self> {
-        let distribution = TxDerivedDistribution::forced_import(db, name, version)?;
+        let distribution = TxDerivedDistribution::forced_import(db, name, version, indexes)?;
         Ok(Self {
             tx_index,
             distribution,

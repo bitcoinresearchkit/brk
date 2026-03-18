@@ -12,16 +12,12 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.fullness
-            .compute(starting_indexes.height, exit, |vec| {
-                vec.compute_transform(
-                    starting_indexes.height,
-                    &indexer.vecs.blocks.weight,
-                    |(h, weight, ..)| (h, BasisPoints16::from(weight.fullness())),
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.fullness.bps.compute_transform(
+            starting_indexes.height,
+            &indexer.vecs.blocks.weight,
+            |(h, weight, ..)| (h, BasisPoints16::from(weight.fullness())),
+            exit,
+        )?;
 
         Ok(())
     }

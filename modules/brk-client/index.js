@@ -1797,17 +1797,17 @@ function create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, acc) {
 
 /**
  * @typedef {Object} AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern
- * @property {SeriesPattern18<StoredU64>} average
- * @property {SeriesPattern18<StoredU64>} cumulative
- * @property {SeriesPattern18<StoredU64>} max
- * @property {SeriesPattern18<StoredU64>} median
- * @property {SeriesPattern18<StoredU64>} min
- * @property {SeriesPattern18<StoredU64>} pct10
- * @property {SeriesPattern18<StoredU64>} pct25
- * @property {SeriesPattern18<StoredU64>} pct75
- * @property {SeriesPattern18<StoredU64>} pct90
+ * @property {SeriesPattern1<StoredU64>} average
+ * @property {SeriesPattern1<StoredU64>} cumulative
+ * @property {SeriesPattern1<StoredU64>} max
+ * @property {SeriesPattern1<StoredU64>} median
+ * @property {SeriesPattern1<StoredU64>} min
+ * @property {SeriesPattern1<StoredU64>} pct10
+ * @property {SeriesPattern1<StoredU64>} pct25
+ * @property {SeriesPattern1<StoredU64>} pct75
+ * @property {SeriesPattern1<StoredU64>} pct90
  * @property {AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern} rolling
- * @property {SeriesPattern18<StoredU64>} sum
+ * @property {SeriesPattern1<StoredU64>} sum
  */
 
 /**
@@ -1818,17 +1818,17 @@ function create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, acc) {
  */
 function createAverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern(client, acc) {
   return {
-    average: createSeriesPattern18(client, _m(acc, 'average')),
-    cumulative: createSeriesPattern18(client, _m(acc, 'cumulative')),
-    max: createSeriesPattern18(client, _m(acc, 'max')),
-    median: createSeriesPattern18(client, _m(acc, 'median')),
-    min: createSeriesPattern18(client, _m(acc, 'min')),
-    pct10: createSeriesPattern18(client, _m(acc, 'pct10')),
-    pct25: createSeriesPattern18(client, _m(acc, 'pct25')),
-    pct75: createSeriesPattern18(client, _m(acc, 'pct75')),
-    pct90: createSeriesPattern18(client, _m(acc, 'pct90')),
+    average: createSeriesPattern1(client, _m(acc, 'average')),
+    cumulative: createSeriesPattern1(client, _m(acc, 'cumulative')),
+    max: createSeriesPattern1(client, _m(acc, 'max')),
+    median: createSeriesPattern1(client, _m(acc, 'median')),
+    min: createSeriesPattern1(client, _m(acc, 'min')),
+    pct10: createSeriesPattern1(client, _m(acc, 'pct10')),
+    pct25: createSeriesPattern1(client, _m(acc, 'pct25')),
+    pct75: createSeriesPattern1(client, _m(acc, 'pct75')),
+    pct90: createSeriesPattern1(client, _m(acc, 'pct90')),
     rolling: createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc),
-    sum: createSeriesPattern18(client, _m(acc, 'sum')),
+    sum: createSeriesPattern1(client, _m(acc, 'sum')),
   };
 }
 
@@ -1988,6 +1988,37 @@ function createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern2
+ * @property {SeriesPattern18<Weight>} average
+ * @property {SeriesPattern18<Weight>} max
+ * @property {SeriesPattern18<Weight>} median
+ * @property {SeriesPattern18<Weight>} min
+ * @property {SeriesPattern18<Weight>} pct10
+ * @property {SeriesPattern18<Weight>} pct25
+ * @property {SeriesPattern18<Weight>} pct75
+ * @property {SeriesPattern18<Weight>} pct90
+ */
+
+/**
+ * Create a AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern2}
+ */
+function createAverageMaxMedianMinPct10Pct25Pct75Pct90Pattern2(client, acc) {
+  return {
+    average: createSeriesPattern18(client, _m(acc, 'average')),
+    max: createSeriesPattern18(client, _m(acc, 'max')),
+    median: createSeriesPattern18(client, _m(acc, 'median')),
+    min: createSeriesPattern18(client, _m(acc, 'min')),
+    pct10: createSeriesPattern18(client, _m(acc, 'pct10')),
+    pct25: createSeriesPattern18(client, _m(acc, 'pct25')),
+    pct75: createSeriesPattern18(client, _m(acc, 'pct75')),
+    pct90: createSeriesPattern18(client, _m(acc, 'pct90')),
+  };
+}
+
+/**
  * @typedef {Object} BaseCapitulationCumulativeNegativeSumToValuePattern
  * @property {CentsUsdPattern2} base
  * @property {SeriesPattern1<Dollars>} capitulationFlow
@@ -2014,14 +2045,14 @@ function createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc) {
 /**
  * @template T
  * @typedef {Object} AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern
- * @property {SeriesPattern18<T>} average
- * @property {SeriesPattern18<T>} max
- * @property {SeriesPattern18<T>} median
- * @property {SeriesPattern18<T>} min
- * @property {SeriesPattern18<T>} pct10
- * @property {SeriesPattern18<T>} pct25
- * @property {SeriesPattern18<T>} pct75
- * @property {SeriesPattern18<T>} pct90
+ * @property {SeriesPattern1<T>} average
+ * @property {SeriesPattern1<T>} max
+ * @property {SeriesPattern1<T>} median
+ * @property {SeriesPattern1<T>} min
+ * @property {SeriesPattern1<T>} pct10
+ * @property {SeriesPattern1<T>} pct25
+ * @property {SeriesPattern1<T>} pct75
+ * @property {SeriesPattern1<T>} pct90
  */
 
 /**
@@ -2033,14 +2064,14 @@ function createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc) {
  */
 function createAverageMaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc) {
   return {
-    average: createSeriesPattern18(client, _m(acc, 'average')),
-    max: createSeriesPattern18(client, _m(acc, 'max')),
-    median: createSeriesPattern18(client, _m(acc, 'median')),
-    min: createSeriesPattern18(client, _m(acc, 'min')),
-    pct10: createSeriesPattern18(client, _m(acc, 'pct10')),
-    pct25: createSeriesPattern18(client, _m(acc, 'pct25')),
-    pct75: createSeriesPattern18(client, _m(acc, 'pct75')),
-    pct90: createSeriesPattern18(client, _m(acc, 'pct90')),
+    average: createSeriesPattern1(client, _m(acc, 'average')),
+    max: createSeriesPattern1(client, _m(acc, 'max')),
+    median: createSeriesPattern1(client, _m(acc, 'median')),
+    min: createSeriesPattern1(client, _m(acc, 'min')),
+    pct10: createSeriesPattern1(client, _m(acc, 'pct10')),
+    pct25: createSeriesPattern1(client, _m(acc, 'pct25')),
+    pct75: createSeriesPattern1(client, _m(acc, 'pct75')),
+    pct90: createSeriesPattern1(client, _m(acc, 'pct90')),
   };
 }
 
@@ -3959,7 +3990,7 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Blocks_Count
- * @property {SeriesPattern1<StoredU64>} target
+ * @property {_1m1w1y24hPattern<StoredU64>} target
  * @property {BaseCumulativeSumPattern2} total
  */
 
@@ -4012,9 +4043,9 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Blocks_Fullness
- * @property {_1m1w1y24hBasePattern<BasisPoints16>} bps
- * @property {SeriesPattern1<StoredF32>} ratio
- * @property {SeriesPattern1<StoredF32>} percent
+ * @property {SeriesPattern18<BasisPoints16>} bps
+ * @property {SeriesPattern18<StoredF32>} ratio
+ * @property {SeriesPattern18<StoredF32>} percent
  */
 
 /**
@@ -4057,7 +4088,14 @@ function createUnspentPattern(client, acc) {
 /**
  * @typedef {Object} SeriesTree_Transactions_Size
  * @property {_6bBlockTxPattern<VSize>} vsize
- * @property {_6bBlockTxPattern<Weight>} weight
+ * @property {SeriesTree_Transactions_Size_Weight} weight
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Transactions_Size_Weight
+ * @property {SeriesPattern19<Weight>} txIndex
+ * @property {AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern2} block
+ * @property {AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern2} _6b
  */
 
 /**
@@ -4078,7 +4116,6 @@ function createUnspentPattern(client, acc) {
 /**
  * @typedef {Object} SeriesTree_Transactions_Volume
  * @property {BaseCumulativeSumPattern4} transferVolume
- * @property {BaseCumulativeSumPattern4} outputVolume
  * @property {SeriesPattern1<StoredF32>} txPerSec
  * @property {SeriesPattern1<StoredF32>} outputsPerSec
  * @property {SeriesPattern1<StoredF32>} inputsPerSec
@@ -7492,7 +7529,7 @@ class BrkClient extends BrkClientBase {
           pct90: create_1m1w1y24hPattern(this, 'block_weight_pct90'),
         },
         count: {
-          target: createSeriesPattern1(this, 'block_count_target'),
+          target: create_1m1w1y24hPattern(this, 'block_count_target'),
           total: createBaseCumulativeSumPattern2(this, 'block_count'),
         },
         lookback: {
@@ -7543,9 +7580,9 @@ class BrkClient extends BrkClientBase {
         interval: create_1m1w1y24hBasePattern(this, 'block_interval'),
         vbytes: createAverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern2(this, 'block_vbytes'),
         fullness: {
-          bps: create_1m1w1y24hBasePattern(this, 'block_fullness_bps'),
-          ratio: createSeriesPattern1(this, 'block_fullness_ratio'),
-          percent: createSeriesPattern1(this, 'block_fullness'),
+          bps: createSeriesPattern18(this, 'block_fullness_bps'),
+          ratio: createSeriesPattern18(this, 'block_fullness_ratio'),
+          percent: createSeriesPattern18(this, 'block_fullness'),
         },
         halving: {
           epoch: createSeriesPattern1(this, 'halving_epoch'),
@@ -7572,7 +7609,11 @@ class BrkClient extends BrkClientBase {
         },
         size: {
           vsize: create_6bBlockTxPattern(this, 'tx_vsize'),
-          weight: create_6bBlockTxPattern(this, 'tx_weight'),
+          weight: {
+            txIndex: createSeriesPattern19(this, 'tx_weight'),
+            block: createAverageMaxMedianMinPct10Pct25Pct75Pct90Pattern2(this, 'tx_weight'),
+            _6b: createAverageMaxMedianMinPct10Pct25Pct75Pct90Pattern2(this, 'tx_weight_6b'),
+          },
         },
         fees: {
           inputValue: createSeriesPattern19(this, 'input_value'),
@@ -7587,7 +7628,6 @@ class BrkClient extends BrkClientBase {
         },
         volume: {
           transferVolume: createBaseCumulativeSumPattern4(this, 'transfer_volume_bis'),
-          outputVolume: createBaseCumulativeSumPattern4(this, 'output_volume'),
           txPerSec: createSeriesPattern1(this, 'tx_per_sec'),
           outputsPerSec: createSeriesPattern1(this, 'outputs_per_sec'),
           inputsPerSec: createSeriesPattern1(this, 'inputs_per_sec'),
