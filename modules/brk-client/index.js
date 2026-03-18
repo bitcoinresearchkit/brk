@@ -4100,9 +4100,9 @@ function createUnspentPattern(client, acc) {
 /**
  * @typedef {Object} SeriesTree_Transactions_Volume
  * @property {BaseCumulativeSumPattern4} transferVolume
- * @property {SeriesPattern1<StoredF32>} txPerSec
- * @property {SeriesPattern1<StoredF32>} outputsPerSec
- * @property {SeriesPattern1<StoredF32>} inputsPerSec
+ * @property {_1m1w1y24hPattern<StoredF32>} txPerSec
+ * @property {_1m1w1y24hPattern<StoredF32>} outputsPerSec
+ * @property {_1m1w1y24hPattern<StoredF32>} inputsPerSec
  */
 
 /**
@@ -7612,9 +7612,9 @@ class BrkClient extends BrkClientBase {
         },
         volume: {
           transferVolume: createBaseCumulativeSumPattern4(this, 'transfer_volume_bis'),
-          txPerSec: createSeriesPattern1(this, 'tx_per_sec'),
-          outputsPerSec: createSeriesPattern1(this, 'outputs_per_sec'),
-          inputsPerSec: createSeriesPattern1(this, 'inputs_per_sec'),
+          txPerSec: create_1m1w1y24hPattern(this, 'tx_per_sec'),
+          outputsPerSec: create_1m1w1y24hPattern(this, 'outputs_per_sec'),
+          inputsPerSec: create_1m1w1y24hPattern(this, 'inputs_per_sec'),
         },
       },
       inputs: {

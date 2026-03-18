@@ -3382,18 +3382,18 @@ impl SeriesTree_Transactions_Versions {
 /// Series tree node.
 pub struct SeriesTree_Transactions_Volume {
     pub transfer_volume: BaseCumulativeSumPattern4,
-    pub tx_per_sec: SeriesPattern1<StoredF32>,
-    pub outputs_per_sec: SeriesPattern1<StoredF32>,
-    pub inputs_per_sec: SeriesPattern1<StoredF32>,
+    pub tx_per_sec: _1m1w1y24hPattern<StoredF32>,
+    pub outputs_per_sec: _1m1w1y24hPattern<StoredF32>,
+    pub inputs_per_sec: _1m1w1y24hPattern<StoredF32>,
 }
 
 impl SeriesTree_Transactions_Volume {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             transfer_volume: BaseCumulativeSumPattern4::new(client.clone(), "transfer_volume_bis".to_string()),
-            tx_per_sec: SeriesPattern1::new(client.clone(), "tx_per_sec".to_string()),
-            outputs_per_sec: SeriesPattern1::new(client.clone(), "outputs_per_sec".to_string()),
-            inputs_per_sec: SeriesPattern1::new(client.clone(), "inputs_per_sec".to_string()),
+            tx_per_sec: _1m1w1y24hPattern::new(client.clone(), "tx_per_sec".to_string()),
+            outputs_per_sec: _1m1w1y24hPattern::new(client.clone(), "outputs_per_sec".to_string()),
+            inputs_per_sec: _1m1w1y24hPattern::new(client.clone(), "inputs_per_sec".to_string()),
         }
     }
 }

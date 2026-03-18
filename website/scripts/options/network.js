@@ -779,27 +779,30 @@ export function createNetworkSection() {
       },
       {
         name: "Activity Rate",
-        title: "Activity Rate",
-        bottom: [
-          dots({
-            series: transactions.volume.txPerSec,
-            name: "TX/sec",
-            color: colors.entity.tx,
-            unit: Unit.perSec,
-          }),
-          dots({
-            series: transactions.volume.inputsPerSec,
-            name: "Inputs/sec",
-            color: colors.entity.input,
-            unit: Unit.perSec,
-          }),
-          dots({
-            series: transactions.volume.outputsPerSec,
-            name: "Outputs/sec",
-            color: colors.entity.output,
-            unit: Unit.perSec,
-          }),
-        ],
+        tree: ROLLING_WINDOWS.map((w) => ({
+          name: w.name,
+          title: `Activity Rate (${w.name})`,
+          bottom: [
+            line({
+              series: transactions.volume.txPerSec[w.key],
+              name: "TX/sec",
+              color: colors.entity.tx,
+              unit: Unit.perSec,
+            }),
+            line({
+              series: transactions.volume.inputsPerSec[w.key],
+              name: "Inputs/sec",
+              color: colors.entity.input,
+              unit: Unit.perSec,
+            }),
+            line({
+              series: transactions.volume.outputsPerSec[w.key],
+              name: "Outputs/sec",
+              color: colors.entity.output,
+              unit: Unit.perSec,
+            }),
+          ],
+        })),
       },
 
       // Addresses

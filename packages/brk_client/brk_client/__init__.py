@@ -3323,9 +3323,9 @@ class SeriesTree_Transactions_Volume:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.transfer_volume: BaseCumulativeSumPattern4 = BaseCumulativeSumPattern4(client, 'transfer_volume_bis')
-        self.tx_per_sec: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'tx_per_sec')
-        self.outputs_per_sec: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'outputs_per_sec')
-        self.inputs_per_sec: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'inputs_per_sec')
+        self.tx_per_sec: _1m1w1y24hPattern[StoredF32] = _1m1w1y24hPattern(client, 'tx_per_sec')
+        self.outputs_per_sec: _1m1w1y24hPattern[StoredF32] = _1m1w1y24hPattern(client, 'outputs_per_sec')
+        self.inputs_per_sec: _1m1w1y24hPattern[StoredF32] = _1m1w1y24hPattern(client, 'inputs_per_sec')
 
 class SeriesTree_Transactions:
     """Series tree node."""

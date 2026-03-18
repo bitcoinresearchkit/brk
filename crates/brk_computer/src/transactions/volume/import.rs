@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{AmountPerBlockCumulativeWithSums, CachedWindowStarts, PerBlock},
+    internal::{AmountPerBlockCumulativeWithSums, CachedWindowStarts, PerBlock, Windows},
 };
 
 impl Vecs {
@@ -15,7 +15,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let v2 = Version::TWO;
+        let v = version + Version::TWO;
         Ok(Self {
             transfer_volume: AmountPerBlockCumulativeWithSums::forced_import(
                 db,
@@ -24,19 +24,15 @@ impl Vecs {
                 indexes,
                 cached_starts,
             )?,
-            tx_per_sec: PerBlock::forced_import(db, "tx_per_sec", version + v2, indexes)?,
-            outputs_per_sec: PerBlock::forced_import(
-                db,
-                "outputs_per_sec",
-                version + v2,
-                indexes,
-            )?,
-            inputs_per_sec: PerBlock::forced_import(
-                db,
-                "inputs_per_sec",
-                version + v2,
-                indexes,
-            )?,
+            tx_per_sec: Windows::try_from_fn(|suffix| {
+                PerBlock::forced_import(db, &format!("tx_per_sec_{suffix}"), v, indexes)
+            })?,
+            outputs_per_sec: Windows::try_from_fn(|suffix| {
+                PerBlock::forced_import(db, &format!("outputs_per_sec_{suffix}"), v, indexes)
+            })?,
+            inputs_per_sec: Windows::try_from_fn(|suffix| {
+                PerBlock::forced_import(db, &format!("inputs_per_sec_{suffix}"), v, indexes)
+            })?,
         })
     }
 }

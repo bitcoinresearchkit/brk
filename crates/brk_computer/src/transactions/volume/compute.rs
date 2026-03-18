@@ -1,11 +1,18 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Indexes, Timestamp};
+use brk_types::{Indexes, StoredF32};
 use vecdb::Exit;
 
 use super::Vecs;
 use crate::transactions::{count, fees};
-use crate::{blocks, indexes, inputs, internal::PerSec, outputs, prices};
+use crate::{blocks, indexes, inputs, outputs, prices};
+
+const WINDOW_SECS: [f64; 4] = [
+    86400.0,
+    7.0 * 86400.0,
+    30.0 * 86400.0,
+    365.0 * 86400.0,
+];
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -38,30 +45,37 @@ impl Vecs {
             },
         )?;
 
-        self.tx_per_sec
-            .height
-            .compute_binary::<_, Timestamp, PerSec>(
-                starting_indexes.height,
-                &count_vecs.total.base.height,
-                &blocks.interval.base,
-                exit,
-            )?;
-        self.inputs_per_sec
-            .height
-            .compute_binary::<_, Timestamp, PerSec>(
-                starting_indexes.height,
-                &inputs_count.sum.height,
-                &blocks.interval.base,
-                exit,
-            )?;
-        self.outputs_per_sec
-            .height
-            .compute_binary::<_, Timestamp, PerSec>(
-                starting_indexes.height,
-                &outputs_count.total.sum.height,
-                &blocks.interval.base,
-                exit,
-            )?;
+        let h = starting_indexes.height;
+        let tx_sums = count_vecs.total.rolling.sum.0.as_array();
+        let input_sums = inputs_count.rolling.sum.0.as_array();
+        let output_sums = outputs_count.total.rolling.sum.0.as_array();
+
+        for (i, &secs) in WINDOW_SECS.iter().enumerate() {
+            self.tx_per_sec.as_mut_array()[i]
+                .height
+                .compute_transform(
+                    h,
+                    &tx_sums[i].height,
+                    |(h, sum, ..)| (h, StoredF32::from(*sum as f64 / secs)),
+                    exit,
+                )?;
+            self.inputs_per_sec.as_mut_array()[i]
+                .height
+                .compute_transform(
+                    h,
+                    &input_sums[i].height,
+                    |(h, sum, ..)| (h, StoredF32::from(*sum as f64 / secs)),
+                    exit,
+                )?;
+            self.outputs_per_sec.as_mut_array()[i]
+                .height
+                .compute_transform(
+                    h,
+                    &output_sums[i].height,
+                    |(h, sum, ..)| (h, StoredF32::from(*sum as f64 / secs)),
+                    exit,
+                )?;
+        }
 
         Ok(())
     }
