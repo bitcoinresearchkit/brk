@@ -231,31 +231,15 @@ export function satsBtcUsdFullTree({ pattern, name, title, color }) {
       title,
       bottom: satsBtcUsd({ pattern: pattern.base, name, color }),
     },
-    {
-      name: "Sums",
-      tree: [
-        {
-          name: "Compare",
-          title: `${title} Rolling`,
-          bottom: ROLLING_WINDOWS.flatMap((w) =>
-            satsBtcUsd({
-              pattern: pattern.sum[w.key],
-              name: w.name,
-              color: w.color,
-            }),
-          ),
-        },
-        ...ROLLING_WINDOWS.map((w) => ({
-          name: w.name,
-          title: `${title} (${w.name})`,
-          bottom: satsBtcUsd({
-            pattern: pattern.sum[w.key],
-            name: w.name,
-            color: w.color,
-          }),
-        })),
-      ],
-    },
+    ...ROLLING_WINDOWS.map((w) => ({
+      name: w.name,
+      title: `${title} ${w.title} Sum`,
+      bottom: satsBtcUsd({
+        pattern: pattern.sum[w.key],
+        name: w.name,
+        color: w.color,
+      }),
+    })),
     {
       name: "Cumulative",
       title: `${title} (Total)`,

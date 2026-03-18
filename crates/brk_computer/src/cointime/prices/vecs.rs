@@ -1,8 +1,7 @@
 use brk_traversable::Traversable;
-use brk_types::Dollars;
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{PerBlock, PriceWithRatioExtendedPerBlock};
+use crate::internal::PriceWithRatioExtendedPerBlock;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

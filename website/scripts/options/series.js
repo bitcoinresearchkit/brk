@@ -481,7 +481,14 @@ export function statsAtWindow(pattern, window) {
  * @param {(args: {series: AnySeriesPattern, name: string, color: Color, unit: Unit}) => AnyFetchedSeriesBlueprint} [args.series]
  * @returns {PartialOptionsGroup}
  */
-function rollingWindowsTree({ windows, title, windowTitle, unit, name, series = line }) {
+function rollingWindowsTree({
+  windows,
+  title,
+  windowTitle,
+  unit,
+  name,
+  series = line,
+}) {
   return {
     name,
     tree: [
@@ -514,7 +521,25 @@ function rollingWindowsTree({ windows, title, windowTitle, unit, name, series = 
 }
 
 /**
- * Rolling sums tree
+ * Flat array of rolling sum charts (one per window)
+ * @param {Object} args
+ * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.windows
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @returns {PartialChartOption[]}
+ */
+export function sumsArray({ windows, title, unit }) {
+  return ROLLING_WINDOWS.map((w) => ({
+    name: w.name,
+    title: `${title} ${w.title} Sum`,
+    bottom: [
+      line({ series: windows[w.key], name: w.name, color: w.color, unit }),
+    ],
+  }));
+}
+
+/**
+ * Rolling sums tree (Compare + individual windows in a folder)
  * @param {Object} args
  * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.windows
  * @param {string} args.title
@@ -523,7 +548,14 @@ function rollingWindowsTree({ windows, title, windowTitle, unit, name, series = 
  * @returns {PartialOptionsGroup}
  */
 export function sumsTree({ windows, title, unit, series }) {
-  return rollingWindowsTree({ windows, title, windowTitle: (w) => `${title} ${w.title} Sum`, unit, name: "Sums", ...(series ? { series } : {}) });
+  return rollingWindowsTree({
+    windows,
+    title,
+    windowTitle: (w) => `${title} ${w.title} Sum`,
+    unit,
+    name: "Sums",
+    ...(series ? { series } : {}),
+  });
 }
 
 /**
@@ -536,7 +568,13 @@ export function sumsTree({ windows, title, unit, series }) {
  * @returns {PartialOptionsGroup}
  */
 export function averagesTree({ windows, title, unit, name = "Averages" }) {
-  return rollingWindowsTree({ windows, title, windowTitle: (w) => `${title} ${w.title} Average`, unit, name });
+  return rollingWindowsTree({
+    windows,
+    title,
+    windowTitle: (w) => `${title} ${w.title} Average`,
+    unit,
+    name,
+  });
 }
 
 /**
@@ -556,7 +594,12 @@ export function distributionWindowsTree({ pattern, base, title, unit }) {
         name: "Compare",
         title: `${title} Average`,
         bottom: ROLLING_WINDOWS.map((w) =>
-          line({ series: pattern.average[w.key], name: w.name, color: w.color, unit }),
+          line({
+            series: pattern.average[w.key],
+            name: w.name,
+            color: w.color,
+            unit,
+          }),
         ),
       },
       ...ROLLING_WINDOWS.map((w) => ({
@@ -658,8 +701,20 @@ export function fromSupplyPattern({ pattern, title, color }) {
  */
 export function percentRatio({ pattern, name, color, defaultActive }) {
   return [
-    line({ series: pattern.percent, name, color, defaultActive, unit: Unit.percentage }),
-    line({ series: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
+    line({
+      series: pattern.percent,
+      name,
+      color,
+      defaultActive,
+      unit: Unit.percentage,
+    }),
+    line({
+      series: pattern.ratio,
+      name,
+      color,
+      defaultActive,
+      unit: Unit.ratio,
+    }),
   ];
 }
 
@@ -674,8 +729,20 @@ export function percentRatio({ pattern, name, color, defaultActive }) {
  */
 export function percentRatioDots({ pattern, name, color, defaultActive }) {
   return [
-    dots({ series: pattern.percent, name, color, defaultActive, unit: Unit.percentage }),
-    dots({ series: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
+    dots({
+      series: pattern.percent,
+      name,
+      color,
+      defaultActive,
+      unit: Unit.percentage,
+    }),
+    dots({
+      series: pattern.ratio,
+      name,
+      color,
+      defaultActive,
+      unit: Unit.ratio,
+    }),
   ];
 }
 
@@ -690,7 +757,12 @@ export function percentRatioDots({ pattern, name, color, defaultActive }) {
  */
 export function percentRatioBaseline({ pattern, name, defaultActive }) {
   return [
-    baseline({ series: pattern.percent, name, defaultActive, unit: Unit.percentage }),
+    baseline({
+      series: pattern.percent,
+      name,
+      defaultActive,
+      unit: Unit.percentage,
+    }),
     baseline({ series: pattern.ratio, name, defaultActive, unit: Unit.ratio }),
   ];
 }
@@ -704,7 +776,12 @@ export function percentRatioBaseline({ pattern, name, defaultActive }) {
  * @param {(args: {pattern: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, name: string, color?: Color}) => AnyFetchedSeriesBlueprint[]} [args.series]
  * @returns {PartialOptionsGroup}
  */
-export function rollingPercentRatioTree({ windows, title, name = "Sums", series = percentRatio }) {
+export function rollingPercentRatioTree({
+  windows,
+  title,
+  name = "Sums",
+  series = percentRatio,
+}) {
   return {
     name,
     tree: [
@@ -712,7 +789,11 @@ export function rollingPercentRatioTree({ windows, title, name = "Sums", series 
         name: "Compare",
         title: `${title} Rolling`,
         bottom: ROLLING_WINDOWS.flatMap((w) =>
-          percentRatio({ pattern: windows[w.key], name: w.name, color: w.color }),
+          percentRatio({
+            pattern: windows[w.key],
+            name: w.name,
+            color: w.color,
+          }),
         ),
       },
       ...ROLLING_WINDOWS.map((w) => ({
@@ -764,7 +845,12 @@ export function deltaTree({ delta, title, unit, extract }) {
         })),
       ],
     },
-    rollingPercentRatioTree({ windows: delta.rate, title: `${title} Growth Rate`, name: "Growth Rate", series: percentRatioBaseline }),
+    rollingPercentRatioTree({
+      windows: delta.rate,
+      title: `${title} Growth Rate`,
+      name: "Growth Rate",
+      series: percentRatioBaseline,
+    }),
   ];
 }
 
@@ -784,7 +870,6 @@ export function simpleDeltaTree({ delta, title, unit }) {
 // Chart-generating helpers (return PartialOptionsTree for folder structures)
 // ============================================================================
 // These split patterns into separate Sum/Distribution/Cumulative charts
-
 
 /**
  * Create btc/sats/usd series from patterns
@@ -870,7 +955,7 @@ export const chartsFromFullPerBlock = (args) =>
 /**
  * Split pattern with sum + distribution + cumulative into 3 charts (no base)
  * @param {Object} args
- * @param {FullStatsPattern} args.pattern
+ * @param {AggregatedPattern} args.pattern
  * @param {string} args.title
  * @param {Unit} args.unit
  * @param {string} [args.distributionSuffix]
@@ -893,7 +978,11 @@ export function chartsFromAggregated({
       bottom: [{ series: pattern.sum, title: "base", color: stat.sum, unit }],
     },
     sumsTree({ windows: pattern.rolling.sum, title, unit }),
-    distributionWindowsTree({ pattern: pattern.rolling, title: distTitle, unit }),
+    distributionWindowsTree({
+      pattern: pattern.rolling,
+      title: distTitle,
+      unit,
+    }),
     {
       name: "Cumulative",
       title: `${title} (Total)`,
@@ -905,7 +994,7 @@ export function chartsFromAggregated({
 /**
  * Split pattern into 3 charts with "per Block" in distribution title (no base)
  * @param {Object} args
- * @param {FullStatsPattern} args.pattern
+ * @param {AggregatedPattern} args.pattern
  * @param {string} args.title
  * @param {Unit} args.unit
  * @returns {PartialOptionsTree}
@@ -947,7 +1036,7 @@ export function chartsFromBlockAnd6b({ pattern, title, unit }) {
  */
 export function chartsFromSumsCumulative({ pattern, title, unit, color }) {
   return [
-    sumsTree({ windows: pattern.sum, title, unit }),
+    ...sumsArray({ windows: pattern.sum, title, unit }),
     {
       name: "Cumulative",
       title: `${title} (Total)`,

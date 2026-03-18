@@ -165,8 +165,9 @@ impl Vecs {
         let start_days = super::ByDcaClass::<()>::start_days();
         for (stack, day1) in self.class.stack.iter_mut().zip(start_days) {
             let mut last_di: Option<Day1> = None;
-            let mut prev_value = if starting_height > 0 {
-                stack.sats.height.collect_one_at(starting_height - 1).unwrap_or_default()
+            let cls_start = stack.sats.height.len().min(starting_height);
+            let mut prev_value = if cls_start > 0 {
+                stack.sats.height.collect_one_at(cls_start - 1).unwrap_or_default()
             } else {
                 Sats::ZERO
             };

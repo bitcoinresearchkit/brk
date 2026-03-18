@@ -14,7 +14,7 @@ use crate::{
     blocks,
     distribution::state::{WithCapital, CohortState, CostBasisData, RealizedState},
     internal::{
-        CentsUnsignedToDollars, PerBlock, PerBlockCumulative,
+        CentsUnsignedToDollars, PerBlockCumulative,
         PerBlockCumulativeWithSums, FiatPerBlockCumulativeWithSums,
         LazyPerBlock, PercentPerBlock, PercentRollingWindows,
         PriceWithRatioExtendedPerBlock, RatioCents64, RatioCentsBp32,

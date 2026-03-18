@@ -2921,15 +2921,6 @@ class GreedNetPainPattern:
     """Pattern struct for repeated tree structure."""
     pass
 
-class InvestorPricePattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.investor_lower_band: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'lower_band'))
-        self.investor_upper_band: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'upper_band'))
-        self.price: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, _m(acc, 'price'))
-
 class LossNuplProfitPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -3116,6 +3107,13 @@ class NuplPattern:
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated series name."""
         self.nupl: BpsRatioPattern = BpsRatioPattern(client, acc)
+
+class PricePattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.price: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, acc)
 
 class UnspentPattern:
     """Pattern struct for repeated tree structure."""
@@ -4847,7 +4845,7 @@ class SeriesTree_Cohorts_Utxo_All_Realized:
         self.gross_pnl: BaseCumulativeSumPattern3 = BaseCumulativeSumPattern3(client, 'realized_gross_pnl')
         self.sell_side_risk_ratio: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'sell_side_risk_ratio')
         self.peak_regret: BaseCumulativeToPattern = BaseCumulativeToPattern(client, 'realized_peak_regret')
-        self.investor: InvestorPricePattern = InvestorPricePattern(client, 'investor')
+        self.investor: PricePattern = PricePattern(client, 'investor_price')
         self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'realized_profit_to_loss_ratio')
 
 class SeriesTree_Cohorts_Utxo_All_CostBasis:
@@ -5087,7 +5085,7 @@ class SeriesTree_Cohorts_Utxo_Sth_Realized:
         self.gross_pnl: BaseCumulativeSumPattern3 = BaseCumulativeSumPattern3(client, 'sth_realized_gross_pnl')
         self.sell_side_risk_ratio: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'sth_sell_side_risk_ratio')
         self.peak_regret: BaseCumulativeToPattern = BaseCumulativeToPattern(client, 'sth_realized_peak_regret')
-        self.investor: InvestorPricePattern = InvestorPricePattern(client, 'sth_investor')
+        self.investor: PricePattern = PricePattern(client, 'sth_investor_price')
         self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'sth_realized_profit_to_loss_ratio')
 
 class SeriesTree_Cohorts_Utxo_Sth_CostBasis:
@@ -5289,7 +5287,7 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized:
         self.gross_pnl: BaseCumulativeSumPattern3 = BaseCumulativeSumPattern3(client, 'lth_realized_gross_pnl')
         self.sell_side_risk_ratio: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'lth_sell_side_risk_ratio')
         self.peak_regret: BaseCumulativeToPattern = BaseCumulativeToPattern(client, 'lth_realized_peak_regret')
-        self.investor: InvestorPricePattern = InvestorPricePattern(client, 'lth_investor')
+        self.investor: PricePattern = PricePattern(client, 'lth_investor_price')
         self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'lth_realized_profit_to_loss_ratio')
 
 class SeriesTree_Cohorts_Utxo_Lth_CostBasis:

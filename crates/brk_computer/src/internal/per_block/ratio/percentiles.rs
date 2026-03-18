@@ -33,7 +33,11 @@ pub struct RatioPerBlockPercentiles<M: StorageMode = Rw> {
     expanding_pct: ExpandingPercentiles,
 }
 
-const VERSION: Version = Version::new(4);
+const VERSION: Version = Version::new(5);
+
+/// First height included in ratio percentile computation (first halving).
+/// Earlier blocks lack meaningful market data and pollute the distribution.
+const MIN_HEIGHT: usize = 210_000;
 
 impl RatioPerBlockPercentiles {
     pub(crate) fn forced_import(
@@ -100,11 +104,11 @@ impl RatioPerBlockPercentiles {
         let ratio_len = ratio_source.len();
 
         if ratio_len > start {
-            let pct_count = self.expanding_pct.count() as usize;
-            if pct_count != start {
+            let expected_count = start.saturating_sub(MIN_HEIGHT);
+            if self.expanding_pct.count() as usize != expected_count {
                 self.expanding_pct.reset();
-                if start > 0 {
-                    let historical = ratio_source.collect_range_at(0, start);
+                if start > MIN_HEIGHT {
+                    let historical = ratio_source.collect_range_at(MIN_HEIGHT, start);
                     self.expanding_pct.add_bulk(&historical);
                 }
             }
@@ -125,8 +129,10 @@ impl RatioPerBlockPercentiles {
                 vec.truncate_if_needed_at(start)?;
             }
 
-            for &ratio in new_ratios.iter() {
-                self.expanding_pct.add(*ratio);
+            for (i, &ratio) in new_ratios.iter().enumerate() {
+                if start + i >= MIN_HEIGHT {
+                    self.expanding_pct.add(*ratio);
+                }
                 self.expanding_pct.quantiles(&PCTS, &mut out);
                 for (vec, &val) in pct_vecs.iter_mut().zip(out.iter()) {
                     vec.push(BasisPoints32::from(val));

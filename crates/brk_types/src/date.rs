@@ -16,7 +16,6 @@ pub struct Date(u32);
 impl Date {
     pub const INDEX_ZERO: Self = Self(20090101);
     pub const INDEX_ZERO_: Date_ = Date_::constant(2009, 1, 1);
-    pub const MIN_RATIO: Self = Self(20120101);
 
     pub fn new(year: u16, month: u8, day: u8) -> Self {
         Self(year as u32 * 1_00_00 + month as u32 * 1_00 + day as u32)

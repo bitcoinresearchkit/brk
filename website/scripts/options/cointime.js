@@ -5,7 +5,7 @@ import {
   dots,
   line,
   price,
-  sumsTree,
+  sumsArray,
   multiSeriesTree,
   percentRatioDots,
 } from "./series.js";
@@ -311,7 +311,7 @@ export function createCointimeSection() {
                   }),
                 ],
               },
-              sumsTree({ windows: pattern.sum, title, unit: Unit.coinblocks }),
+              ...sumsArray({ windows: pattern.sum, title, unit: Unit.coinblocks }),
               {
                 name: "Cumulative",
                 title: `${title} (Total)`,
@@ -366,7 +366,7 @@ export function createCointimeSection() {
                   line({ series: pattern.base, name, color, unit: Unit.usd }),
                 ],
               },
-              sumsTree({ windows: pattern.sum, title, unit: Unit.usd }),
+              ...sumsArray({ windows: pattern.sum, title, unit: Unit.usd }),
               {
                 name: "Cumulative",
                 title: `${title} (Total)`,
@@ -402,7 +402,7 @@ export function createCointimeSection() {
                   }),
                 ],
               },
-              sumsTree({
+              ...sumsArray({
                 windows: vocdd.pattern.sum,
                 title: vocdd.title,
                 unit: Unit.usd,

@@ -1073,7 +1073,7 @@ impl _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 {
 pub struct CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern {
     pub cap: CentsDeltaToUsdPattern,
     pub gross_pnl: BaseCumulativeSumPattern3,
-    pub investor: InvestorPricePattern,
+    pub investor: PricePattern,
     pub loss: BaseCapitulationCumulativeNegativeSumToValuePattern,
     pub mvrv: SeriesPattern1<StoredF32>,
     pub net_pnl: BaseChangeCumulativeDeltaSumToPattern,
@@ -2508,24 +2508,6 @@ pub struct GreedNetPainPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct InvestorPricePattern {
-    pub investor_lower_band: CentsSatsUsdPattern,
-    pub investor_upper_band: CentsSatsUsdPattern,
-    pub price: BpsCentsPercentilesRatioSatsUsdPattern,
-}
-
-impl InvestorPricePattern {
-    /// Create a new pattern node with accumulated series name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            investor_lower_band: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "lower_band")),
-            investor_upper_band: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "upper_band")),
-            price: BpsCentsPercentilesRatioSatsUsdPattern::new(client.clone(), _m(&acc, "price")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct LossNuplProfitPattern {
     pub loss: BaseCumulativeNegativeSumPattern,
     pub nupl: BpsRatioPattern,
@@ -2892,6 +2874,20 @@ impl NuplPattern {
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             nupl: BpsRatioPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct PricePattern {
+    pub price: BpsCentsPercentilesRatioSatsUsdPattern,
+}
+
+impl PricePattern {
+    /// Create a new pattern node with accumulated series name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            price: BpsCentsPercentilesRatioSatsUsdPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -6313,7 +6309,7 @@ pub struct SeriesTree_Cohorts_Utxo_All_Realized {
     pub gross_pnl: BaseCumulativeSumPattern3,
     pub sell_side_risk_ratio: _1m1w1y24hPattern6,
     pub peak_regret: BaseCumulativeToPattern,
-    pub investor: InvestorPricePattern,
+    pub investor: PricePattern,
     pub profit_to_loss_ratio: _1m1w1y24hPattern<StoredF64>,
 }
 
@@ -6330,7 +6326,7 @@ impl SeriesTree_Cohorts_Utxo_All_Realized {
             gross_pnl: BaseCumulativeSumPattern3::new(client.clone(), "realized_gross_pnl".to_string()),
             sell_side_risk_ratio: _1m1w1y24hPattern6::new(client.clone(), "sell_side_risk_ratio".to_string()),
             peak_regret: BaseCumulativeToPattern::new(client.clone(), "realized_peak_regret".to_string()),
-            investor: InvestorPricePattern::new(client.clone(), "investor".to_string()),
+            investor: PricePattern::new(client.clone(), "investor_price".to_string()),
             profit_to_loss_ratio: _1m1w1y24hPattern::new(client.clone(), "realized_profit_to_loss_ratio".to_string()),
         }
     }
@@ -6812,7 +6808,7 @@ pub struct SeriesTree_Cohorts_Utxo_Sth_Realized {
     pub gross_pnl: BaseCumulativeSumPattern3,
     pub sell_side_risk_ratio: _1m1w1y24hPattern6,
     pub peak_regret: BaseCumulativeToPattern,
-    pub investor: InvestorPricePattern,
+    pub investor: PricePattern,
     pub profit_to_loss_ratio: _1m1w1y24hPattern<StoredF64>,
 }
 
@@ -6829,7 +6825,7 @@ impl SeriesTree_Cohorts_Utxo_Sth_Realized {
             gross_pnl: BaseCumulativeSumPattern3::new(client.clone(), "sth_realized_gross_pnl".to_string()),
             sell_side_risk_ratio: _1m1w1y24hPattern6::new(client.clone(), "sth_sell_side_risk_ratio".to_string()),
             peak_regret: BaseCumulativeToPattern::new(client.clone(), "sth_realized_peak_regret".to_string()),
-            investor: InvestorPricePattern::new(client.clone(), "sth_investor".to_string()),
+            investor: PricePattern::new(client.clone(), "sth_investor_price".to_string()),
             profit_to_loss_ratio: _1m1w1y24hPattern::new(client.clone(), "sth_realized_profit_to_loss_ratio".to_string()),
         }
     }
@@ -7250,7 +7246,7 @@ pub struct SeriesTree_Cohorts_Utxo_Lth_Realized {
     pub gross_pnl: BaseCumulativeSumPattern3,
     pub sell_side_risk_ratio: _1m1w1y24hPattern6,
     pub peak_regret: BaseCumulativeToPattern,
-    pub investor: InvestorPricePattern,
+    pub investor: PricePattern,
     pub profit_to_loss_ratio: _1m1w1y24hPattern<StoredF64>,
 }
 
@@ -7267,7 +7263,7 @@ impl SeriesTree_Cohorts_Utxo_Lth_Realized {
             gross_pnl: BaseCumulativeSumPattern3::new(client.clone(), "lth_realized_gross_pnl".to_string()),
             sell_side_risk_ratio: _1m1w1y24hPattern6::new(client.clone(), "lth_sell_side_risk_ratio".to_string()),
             peak_regret: BaseCumulativeToPattern::new(client.clone(), "lth_realized_peak_regret".to_string()),
-            investor: InvestorPricePattern::new(client.clone(), "lth_investor".to_string()),
+            investor: PricePattern::new(client.clone(), "lth_investor_price".to_string()),
             profit_to_loss_ratio: _1m1w1y24hPattern::new(client.clone(), "lth_realized_profit_to_loss_ratio".to_string()),
         }
     }

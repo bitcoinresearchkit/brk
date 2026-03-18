@@ -2,7 +2,7 @@
  * @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, HistogramData as _HistogramData, SeriesType as LCSeriesType, IPaneApi, LineSeriesPartialOptions as _LineSeriesPartialOptions, HistogramSeriesPartialOptions as _HistogramSeriesPartialOptions, BaselineSeriesPartialOptions as _BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions as _CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData, createChart as CreateLCChart, LineStyle, createSeriesMarkers as CreateSeriesMarkers, SeriesMarker, ISeriesMarkersPluginApi } from './modules/lightweight-charts/5.1.0/dist/typings.js'
  *
  * @import * as Brk from "./modules/brk-client/index.js"
- * @import { BrkClient, Index, Series as BrkSeries, SeriesData } from "./modules/brk-client/index.js"
+ * @import { BrkClient, Index, SeriesData } from "./modules/brk-client/index.js"
  *
  * @import { Options } from './options/full.js'
  *
@@ -61,18 +61,17 @@
  * AnyRatioPattern: full ratio pattern with percentiles, SMAs, and std dev bands
  * @typedef {Brk.BpsCentsPercentilesRatioSatsSmaStdUsdPattern} AnyRatioPattern
  * ValuePattern: patterns with base + cumulative (no rolling)
- * @typedef {Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativeRelPattern} ValuePattern
+ * @typedef {Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativeToPattern} ValuePattern
  * FullValuePattern: base + cumulative + rolling windows (flattened)
  * @typedef {Brk.BaseCumulativeSumPattern4} FullValuePattern
  * RollingWindowSlot: a single rolling window with stats (average, pct10, pct25, median, pct75, pct90, max, min) per unit
  * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} RollingWindowSlot
  * AnyValuePatternType: union of all value pattern types
- * @typedef {Brk.BaseCumulativeSumPattern4 | Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativeRelPattern} AnyValuePatternType
+ * @typedef {Brk.BaseCumulativeSumPattern4 | Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativeToPattern} AnyValuePatternType
  * @typedef {Brk.AnySeriesPattern} AnySeriesPattern
  * @typedef {Brk.CentsSatsUsdPattern} ActivePricePattern
  * @typedef {Brk.AnySeriesEndpoint} AnySeriesEndpoint
  * @typedef {Brk.AnySeriesData} AnySeriesData
- * @typedef {Brk.AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} AddrCountPattern
  * Relative patterns by capability:
  * - BasicRelativePattern: minimal relative (investedCapitalIn*Pct, supplyIn*RelToOwnSupply only)
  * - GlobalRelativePattern: has RelToMarketCap series (netUnrealizedPnlRelToMarketCap, etc)
@@ -103,10 +102,10 @@
  * @typedef {Brk.CoindaysCoinyearsDormancyTransferPattern} FullActivityPattern
  *
  * Profit distribution detail (base + cumulative + distribution flow + rel + sum + value)
- * @typedef {Brk.BaseCumulativeDistributionRelSumValuePattern} ProfitDetailPattern
+ * @typedef {Brk.BaseCumulativeDistributionSumToValuePattern} ProfitDetailPattern
  *
  * Loss detail with capitulation (base + capitulation + cumulative + negative + rel + sum + value)
- * @typedef {Brk.BaseCapitulationCumulativeNegativeRelSumValuePattern} LossDetailPattern
+ * @typedef {Brk.BaseCapitulationCumulativeNegativeSumToValuePattern} LossDetailPattern
  *
  * BPS + ratio pattern (for NUPL and similar)
  * @typedef {Brk.BpsRatioPattern} NuplPattern
@@ -115,7 +114,7 @@
  * @typedef {Brk.SeriesTree_Cohorts_Utxo_Lth_Realized} LthRealizedPattern
  *
  * Net PnL pattern with change (base + change + cumulative + delta + rel + sum)
- * @typedef {Brk.BaseChangeCumulativeDeltaRelSumPattern} NetPnlFullPattern
+ * @typedef {Brk.BaseChangeCumulativeDeltaSumToPattern} NetPnlFullPattern
  *
  * Net PnL basic pattern (base + cumulative + delta + sum)
  * @typedef {Brk.BaseCumulativeDeltaSumPattern} NetPnlBasicPattern
@@ -129,8 +128,8 @@
  * Moving average price ratio pattern (bps + cents + ratio + sats + usd)
  * @typedef {Brk.BpsCentsRatioSatsUsdPattern} MaPriceRatioPattern
  *
- * Address count delta pattern (inner delta with absolute + rate)
- * @typedef {Brk.DeltaInnerPattern} AddressCountDeltaPattern
+ * Address count pattern (base + delta with absolute + rate)
+ * @typedef {Brk.BaseDeltaPattern} AddrCountPattern
  */
 
 /**
@@ -156,15 +155,19 @@
  */
 /**
  * Full stats pattern: cumulative, sum, average, min, max, percentiles + rolling
- * @typedef {Brk.AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern} FullStatsPattern
+ * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<number>} FullStatsPattern
+ */
+/**
+ * Aggregated pattern: cumulative + rolling (with distribution stats) + sum (no base)
+ * @typedef {Brk.CumulativeRollingSumPattern} AggregatedPattern
  */
 /**
  * Sum stats pattern: cumulative, sum, average, min, max, percentiles + rolling (same as FullStatsPattern)
- * @typedef {Brk.AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern} SumStatsPattern
+ * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<number>} SumStatsPattern
  */
 /**
  * Full stats pattern for Bitcoin (non-generic variant) - same as FullStatsPattern
- * @typedef {Brk.AverageCumulativeMaxMedianMinPct10Pct25Pct75Pct90RollingSumPattern} BtcFullStatsPattern
+ * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<number>} BtcFullStatsPattern
  */
 /**
  * Count pattern: height, cumulative, and rolling sum windows

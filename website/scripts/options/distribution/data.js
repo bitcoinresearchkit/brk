@@ -44,7 +44,7 @@ export function buildCohortData() {
     color: colors.bitcoin,
     tree: utxoCohorts.all,
     addressCount: {
-      inner: addrs.funded.all,
+      base: addrs.funded.all,
       delta: addrs.delta.all,
     },
   };
@@ -170,7 +170,7 @@ export function buildCohortData() {
       color: colors.at(i, arr.length),
       tree: utxoCohorts.type[key],
       addressCount: {
-        inner: addrs.funded[key],
+        base: addrs.funded[key],
         delta: addrs.delta[key],
       },
     };
