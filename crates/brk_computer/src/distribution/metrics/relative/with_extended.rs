@@ -48,7 +48,7 @@ impl RelativeWithExtended {
         self.base.compute(
             max_from,
             supply,
-            &unrealized.inner.core.basic,
+            &unrealized.inner.basic,
             market_cap,
             exit,
         )?;
@@ -59,9 +59,9 @@ impl RelativeWithExtended {
             exit,
         )?;
         self.extended_own_market_cap
-            .compute(max_from, &unrealized.inner.core, own_market_cap, exit)?;
+            .compute(max_from, &unrealized.inner, own_market_cap, exit)?;
         self.extended_own_pnl
-            .compute(max_from, &unrealized.inner.core, &unrealized.gross_pnl.usd.height, exit)?;
+            .compute(max_from, &unrealized.inner, &unrealized.gross_pnl.usd.height, exit)?;
         Ok(())
     }
 }

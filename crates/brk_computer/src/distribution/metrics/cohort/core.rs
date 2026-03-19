@@ -92,7 +92,7 @@ impl CoreCohortMetrics {
         )?;
         self.unrealized.compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| &v.unrealized_base().core).collect::<Vec<_>>(),
+            &others.iter().map(|v| v.unrealized_core()).collect::<Vec<_>>(),
             exit,
         )?;
 

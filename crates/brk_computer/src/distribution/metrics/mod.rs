@@ -125,7 +125,7 @@ pub use realized::{
 pub use relative::{RelativeForAll, RelativeToAll, RelativeWithExtended};
 pub use supply::{SupplyBase, SupplyCore};
 pub use unrealized::{
-    UnrealizedBase, UnrealizedBasic, UnrealizedCore, UnrealizedFull, UnrealizedLike,
+    UnrealizedBasic, UnrealizedCore, UnrealizedFull, UnrealizedLike,
     UnrealizedMinimal,
 };
 
@@ -212,12 +212,12 @@ pub trait CohortMetricsBase:
         self.realized_mut().as_core_mut()
     }
 
-    /// Convenience: access unrealized as `&UnrealizedBase` (via `UnrealizedLike::as_base`).
-    fn unrealized_base(&self) -> &UnrealizedBase {
-        self.unrealized().as_base()
+    /// Convenience: access unrealized as `&UnrealizedCore` (via `UnrealizedLike::as_core`).
+    fn unrealized_core(&self) -> &UnrealizedCore {
+        self.unrealized().as_core()
     }
-    fn unrealized_base_mut(&mut self) -> &mut UnrealizedBase {
-        self.unrealized_mut().as_base_mut()
+    fn unrealized_core_mut(&mut self) -> &mut UnrealizedCore {
+        self.unrealized_mut().as_core_mut()
     }
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
@@ -314,11 +314,11 @@ pub trait CohortMetricsBase:
             &others.iter().map(|v| v.realized_core()).collect::<Vec<_>>(),
             exit,
         )?;
-        self.unrealized_base_mut().compute_from_stateful(
+        self.unrealized_core_mut().compute_from_stateful(
             starting_indexes,
             &others
                 .iter()
-                .map(|v| v.unrealized_base())
+                .map(|v| v.unrealized_core())
                 .collect::<Vec<_>>(),
             exit,
         )?;

@@ -11,7 +11,7 @@ use crate::{
     blocks,
     distribution::metrics::{
         ActivityFull, AdjustedSopr, CohortMetricsBase, CostBasis, ImportConfig, OutputsBase,
-        RealizedFull, RelativeForAll, SupplyCore, UnrealizedFull, UnrealizedLike,
+        RealizedFull, RelativeForAll, SupplyCore, UnrealizedFull,
     },
     prices,
 };
@@ -133,6 +133,23 @@ impl AllCohortMetrics {
             &self.realized.core.sopr.value_destroyed.base.height,
             under_1h_value_created,
             under_1h_value_destroyed,
+            exit,
+        )?;
+
+        self.cost_basis.compute_prices(
+            starting_indexes,
+            &self.unrealized.invested_capital.in_profit.cents.height,
+            &self.unrealized.invested_capital.in_loss.cents.height,
+            &self.supply.in_profit.sats.height,
+            &self.supply.in_loss.sats.height,
+            &self.unrealized.investor_cap_in_profit_raw,
+            &self.unrealized.investor_cap_in_loss_raw,
+            exit,
+        )?;
+
+        self.unrealized.compute_sentiment(
+            starting_indexes,
+            &prices.spot.cents.height,
             exit,
         )?;
 

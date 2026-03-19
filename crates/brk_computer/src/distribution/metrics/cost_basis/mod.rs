@@ -1,16 +1,25 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Cents, Version};
-use vecdb::{AnyStoredVec, AnyVec, Rw, StorageMode, WritableVec};
+use brk_types::{BasisPoints16, Cents, Height, Indexes, Sats, Version};
+use brk_types::CentsSquaredSats;
+use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
-use crate::internal::{PerBlock, PercentPerBlock, PercentilesVecs, Price, PERCENTILES_LEN};
+use crate::internal::{FiatPerBlock, PerBlock, PercentPerBlock, PercentilesVecs, Price, PERCENTILES_LEN};
 
 use super::ImportConfig;
 
-/// Cost basis metrics: min/max + percentiles + supply density.
+#[derive(Traversable)]
+pub struct CostBasisSide<M: StorageMode = Rw> {
+    pub per_coin: FiatPerBlock<Cents, M>,
+    pub per_dollar: FiatPerBlock<Cents, M>,
+}
+
+/// Cost basis metrics: min/max + profit/loss splits + percentiles + supply density.
 /// Used by all/sth/lth cohorts only.
 #[derive(Traversable)]
 pub struct CostBasis<M: StorageMode = Rw> {
+    pub in_profit: CostBasisSide<M>,
+    pub in_loss: CostBasisSide<M>,
     pub min: Price<PerBlock<Cents, M>>,
     pub max: Price<PerBlock<Cents, M>>,
     pub percentiles: PercentilesVecs<M>,
@@ -21,6 +30,14 @@ pub struct CostBasis<M: StorageMode = Rw> {
 impl CostBasis {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
+            in_profit: CostBasisSide {
+                per_coin: cfg.import("cost_basis_in_profit_per_coin", Version::ZERO)?,
+                per_dollar: cfg.import("cost_basis_in_profit_per_dollar", Version::ZERO)?,
+            },
+            in_loss: CostBasisSide {
+                per_coin: cfg.import("cost_basis_in_loss_per_coin", Version::ZERO)?,
+                per_dollar: cfg.import("cost_basis_in_loss_per_dollar", Version::ZERO)?,
+            },
             min: cfg.import("cost_basis_min", Version::ZERO)?,
             max: cfg.import("cost_basis_max", Version::ZERO)?,
             percentiles: PercentilesVecs::forced_import(
@@ -84,6 +101,10 @@ impl CostBasis {
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = vec![
+            &mut self.in_profit.per_coin.cents.height,
+            &mut self.in_profit.per_dollar.cents.height,
+            &mut self.in_loss.per_coin.cents.height,
+            &mut self.in_loss.per_dollar.cents.height,
             &mut self.min.cents.height,
             &mut self.max.cents.height,
             &mut self.supply_density.bps.height,
@@ -101,5 +122,63 @@ impl CostBasis {
                 .map(|v| &mut v.cents.height as &mut dyn AnyStoredVec),
         );
         vecs
+    }
+
+    pub(crate) fn compute_prices(
+        &mut self,
+        starting_indexes: &Indexes,
+        invested_cap_in_profit: &impl ReadableVec<Height, Cents>,
+        invested_cap_in_loss: &impl ReadableVec<Height, Cents>,
+        supply_in_profit_sats: &impl ReadableVec<Height, Sats>,
+        supply_in_loss_sats: &impl ReadableVec<Height, Sats>,
+        investor_cap_in_profit_raw: &impl ReadableVec<Height, CentsSquaredSats>,
+        investor_cap_in_loss_raw: &impl ReadableVec<Height, CentsSquaredSats>,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.in_profit.per_coin.cents.height.compute_transform2(
+            starting_indexes.height,
+            invested_cap_in_profit,
+            supply_in_profit_sats,
+            |(h, invested_cents, supply_sats, ..)| {
+                let supply = supply_sats.as_u128();
+                if supply == 0 { return (h, Cents::ZERO); }
+                (h, Cents::new((invested_cents.as_u128() * Sats::ONE_BTC_U128 / supply) as u64))
+            },
+            exit,
+        )?;
+        self.in_loss.per_coin.cents.height.compute_transform2(
+            starting_indexes.height,
+            invested_cap_in_loss,
+            supply_in_loss_sats,
+            |(h, invested_cents, supply_sats, ..)| {
+                let supply = supply_sats.as_u128();
+                if supply == 0 { return (h, Cents::ZERO); }
+                (h, Cents::new((invested_cents.as_u128() * Sats::ONE_BTC_U128 / supply) as u64))
+            },
+            exit,
+        )?;
+        self.in_profit.per_dollar.cents.height.compute_transform2(
+            starting_indexes.height,
+            investor_cap_in_profit_raw,
+            invested_cap_in_profit,
+            |(h, investor_cap, invested_cents, ..)| {
+                let invested_raw = invested_cents.as_u128() * Sats::ONE_BTC_U128;
+                if invested_raw == 0 { return (h, Cents::ZERO); }
+                (h, Cents::new((investor_cap.inner() / invested_raw) as u64))
+            },
+            exit,
+        )?;
+        self.in_loss.per_dollar.cents.height.compute_transform2(
+            starting_indexes.height,
+            investor_cap_in_loss_raw,
+            invested_cap_in_loss,
+            |(h, investor_cap, invested_cents, ..)| {
+                let invested_raw = invested_cents.as_u128() * Sats::ONE_BTC_U128;
+                if invested_raw == 0 { return (h, Cents::ZERO); }
+                (h, Cents::new((investor_cap.inner() / invested_raw) as u64))
+            },
+            exit,
+        )?;
+        Ok(())
     }
 }

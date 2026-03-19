@@ -1,11 +1,9 @@
-mod base;
 mod basic;
 mod core;
 mod full;
 mod minimal;
 
 pub use self::core::UnrealizedCore;
-pub use base::UnrealizedBase;
 pub use basic::UnrealizedBasic;
 pub use full::UnrealizedFull;
 pub use minimal::UnrealizedMinimal;
@@ -17,8 +15,8 @@ use vecdb::{Exit, ReadableVec};
 use crate::{distribution::state::UnrealizedState, prices};
 
 pub trait UnrealizedLike: Send + Sync {
-    fn as_base(&self) -> &UnrealizedBase;
-    fn as_base_mut(&mut self) -> &mut UnrealizedBase;
+    fn as_core(&self) -> &UnrealizedCore;
+    fn as_core_mut(&mut self) -> &mut UnrealizedCore;
     fn min_stateful_len(&self) -> usize;
     fn push_state(&mut self, state: &UnrealizedState);
     fn compute_rest(
@@ -31,11 +29,11 @@ pub trait UnrealizedLike: Send + Sync {
     ) -> Result<()>;
 }
 
-impl UnrealizedLike for UnrealizedBase {
-    fn as_base(&self) -> &UnrealizedBase {
+impl UnrealizedLike for UnrealizedCore {
+    fn as_core(&self) -> &UnrealizedCore {
         self
     }
-    fn as_base_mut(&mut self) -> &mut UnrealizedBase {
+    fn as_core_mut(&mut self) -> &mut UnrealizedCore {
         self
     }
     fn min_stateful_len(&self) -> usize {
@@ -58,10 +56,10 @@ impl UnrealizedLike for UnrealizedBase {
 }
 
 impl UnrealizedLike for UnrealizedFull {
-    fn as_base(&self) -> &UnrealizedBase {
+    fn as_core(&self) -> &UnrealizedCore {
         &self.inner
     }
-    fn as_base_mut(&mut self) -> &mut UnrealizedBase {
+    fn as_core_mut(&mut self) -> &mut UnrealizedCore {
         &mut self.inner
     }
     fn min_stateful_len(&self) -> usize {

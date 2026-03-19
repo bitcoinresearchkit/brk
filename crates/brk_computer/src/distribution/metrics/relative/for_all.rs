@@ -38,12 +38,12 @@ impl RelativeForAll {
         self.base.compute(
             max_from,
             supply,
-            &unrealized.inner.core.basic,
+            &unrealized.inner.basic,
             market_cap,
             exit,
         )?;
         self.extended_own_pnl
-            .compute(max_from, &unrealized.inner.core, &unrealized.gross_pnl.usd.height, exit)?;
+            .compute(max_from, &unrealized.inner, &unrealized.gross_pnl.usd.height, exit)?;
         Ok(())
     }
 }

@@ -7,7 +7,7 @@ use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 use crate::{
     distribution::metrics::{
         ActivityCore, CohortMetricsBase, ImportConfig, OutputsBase, RealizedCore, RelativeToAll,
-        SupplyCore, UnrealizedBase,
+        SupplyCore, UnrealizedCore,
     },
     prices,
 };
@@ -22,7 +22,7 @@ pub struct BasicCohortMetrics<M: StorageMode = Rw> {
     pub outputs: Box<OutputsBase<M>>,
     pub activity: Box<ActivityCore<M>>,
     pub realized: Box<RealizedCore<M>>,
-    pub unrealized: Box<UnrealizedBase<M>>,
+    pub unrealized: Box<UnrealizedCore<M>>,
     #[traversable(flatten)]
     pub relative: Box<RelativeToAll<M>>,
 }
@@ -30,7 +30,7 @@ pub struct BasicCohortMetrics<M: StorageMode = Rw> {
 impl CohortMetricsBase for BasicCohortMetrics {
     type ActivityVecs = ActivityCore;
     type RealizedVecs = RealizedCore;
-    type UnrealizedVecs = UnrealizedBase;
+    type UnrealizedVecs = UnrealizedCore;
 
     impl_cohort_accessors!();
 
@@ -48,7 +48,7 @@ impl CohortMetricsBase for BasicCohortMetrics {
 impl BasicCohortMetrics {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let supply = SupplyCore::forced_import(cfg)?;
-        let unrealized = UnrealizedBase::forced_import(cfg)?;
+        let unrealized = UnrealizedCore::forced_import(cfg)?;
         let realized = RealizedCore::forced_import(cfg)?;
 
         let relative = RelativeToAll::forced_import(cfg)?;
