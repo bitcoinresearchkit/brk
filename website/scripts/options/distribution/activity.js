@@ -369,28 +369,19 @@ function singleRollingValueTree(valueCreated, valueDestroyed, title, prefix = ""
 }
 
 /**
- * Value section for cohorts with full realized (flows + breakdown)
- * @param {ProfitDetailPattern} profit
- * @param {LossDetailPattern} loss
- * @param {CountPattern<number>} valueCreated
- * @param {CountPattern<number>} valueDestroyed
- * @param {AnyFetchedSeriesBlueprint[]} extraValueSeries
- * @param {PartialOptionsTree} rollingTree
- * @param {(name: string) => string} title
+ * Value section: created & destroyed + rolling
+ * @param {Object} args
+ * @param {CountPattern<number>} args.valueCreated
+ * @param {CountPattern<number>} args.valueDestroyed
+ * @param {AnyFetchedSeriesBlueprint[]} [args.extraValueSeries]
+ * @param {PartialOptionsTree} args.rollingTree
+ * @param {(name: string) => string} args.title
  * @returns {PartialOptionsGroup}
  */
-function fullValueSection(profit, loss, valueCreated, valueDestroyed, extraValueSeries, rollingTree, title) {
+function fullValueSection({ valueCreated, valueDestroyed, extraValueSeries = [], rollingTree, title }) {
   return {
     name: "Value",
     tree: [
-      {
-        name: "Flows",
-        title: title("Profit & Capitulation Flows"),
-        bottom: [
-          line({ series: profit.distributionFlow, name: "Distribution Flow", color: colors.profit, unit: Unit.usd }),
-          line({ series: loss.capitulationFlow, name: "Capitulation Flow", color: colors.loss, unit: Unit.usd }),
-        ],
-      },
       {
         name: "Created & Destroyed",
         title: title("Value Created & Destroyed"),
@@ -398,27 +389,6 @@ function fullValueSection(profit, loss, valueCreated, valueDestroyed, extraValue
           line({ series: valueCreated.base, name: "Created", color: colors.usd, unit: Unit.usd }),
           line({ series: valueDestroyed.base, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
           ...extraValueSeries,
-        ],
-      },
-      {
-        name: "Breakdown",
-        tree: [
-          {
-            name: "Profit",
-            title: title("Profit Value Created & Destroyed"),
-            bottom: [
-              line({ series: profit.valueCreated.base, name: "Created", color: colors.profit, unit: Unit.usd }),
-              line({ series: profit.valueDestroyed.base, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
-            ],
-          },
-          {
-            name: "Loss",
-            title: title("Loss Value Created & Destroyed"),
-            bottom: [
-              line({ series: loss.valueCreated.base, name: "Created", color: colors.profit, unit: Unit.usd }),
-              line({ series: loss.valueDestroyed.base, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
-            ],
-          },
         ],
       },
       { name: "Rolling", tree: rollingTree },
@@ -485,14 +455,14 @@ export function createActivitySectionWithAdjusted({ cohort, title }) {
         ],
       },
       { name: "Sell Side Risk", tree: singleSellSideRiskTree(r.sellSideRiskRatio, title) },
-      fullValueSection(
-        r.profit, r.loss,
-        sopr.valueCreated, sopr.valueDestroyed,
-        [
+      fullValueSection({
+        valueCreated: sopr.valueCreated,
+        valueDestroyed: sopr.valueDestroyed,
+        extraValueSeries: [
           line({ series: sopr.adjusted.valueCreated.base, name: "Adjusted Created", color: colors.adjustedCreated, unit: Unit.usd, defaultActive: false }),
           line({ series: sopr.adjusted.valueDestroyed.base, name: "Adjusted Destroyed", color: colors.adjustedDestroyed, unit: Unit.usd, defaultActive: false }),
         ],
-        [
+        rollingTree: [
           {
             name: "Normal",
             tree: singleRollingValueTree(sopr.valueCreated, sopr.valueDestroyed, title),
@@ -503,7 +473,7 @@ export function createActivitySectionWithAdjusted({ cohort, title }) {
           },
         ],
         title,
-      ),
+      }),
     ],
   };
 }
@@ -527,13 +497,12 @@ export function createActivitySection({ cohort, title }) {
         tree: singleRollingSoprTree(sopr.ratio, title),
       },
       { name: "Sell Side Risk", tree: singleSellSideRiskTree(r.sellSideRiskRatio, title) },
-      fullValueSection(
-        r.profit, r.loss,
-        sopr.valueCreated, sopr.valueDestroyed,
-        [],
-        singleRollingValueTree(sopr.valueCreated, sopr.valueDestroyed, title),
+      fullValueSection({
+        valueCreated: sopr.valueCreated,
+        valueDestroyed: sopr.valueDestroyed,
+        rollingTree: singleRollingValueTree(sopr.valueCreated, sopr.valueDestroyed, title),
         title,
-      ),
+      }),
     ],
   };
 }
@@ -802,13 +771,6 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
       {
         name: "Value",
         tree: [
-          {
-            name: "Flows",
-            tree: [
-              { name: "Distribution", title: title("Distribution Flow"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.profit.distributionFlow, name, color, unit: Unit.usd })) },
-              { name: "Capitulation", title: title("Capitulation Flow"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.loss.capitulationFlow, name, color, unit: Unit.usd })) },
-            ],
-          },
           { name: "Created", title: title("Value Created"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sopr.valueCreated.base, name, color, unit: Unit.usd })) },
           { name: "Destroyed", title: title("Value Destroyed"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sopr.valueDestroyed.base, name, color, unit: Unit.usd })) },
           {
@@ -898,13 +860,6 @@ export function createGroupedActivitySection({ list, all, title }) {
       {
         name: "Value",
         tree: [
-          {
-            name: "Flows",
-            tree: [
-              { name: "Distribution", title: title("Distribution Flow"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.profit.distributionFlow, name, color, unit: Unit.usd })) },
-              { name: "Capitulation", title: title("Capitulation Flow"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.loss.capitulationFlow, name, color, unit: Unit.usd })) },
-            ],
-          },
           { name: "Created", title: title("Value Created"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sopr.valueCreated.base, name, color, unit: Unit.usd })) },
           { name: "Destroyed", title: title("Value Destroyed"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.realized.sopr.valueDestroyed.base, name, color, unit: Unit.usd })) },
           {
