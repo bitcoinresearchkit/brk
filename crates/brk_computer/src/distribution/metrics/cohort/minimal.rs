@@ -6,7 +6,7 @@ use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
 
 use crate::{
     distribution::metrics::{
-        ImportConfig, OutputsBase, RealizedMinimal, SupplyBase, UnrealizedMinimal,
+        ActivityMinimal, ImportConfig, OutputsBase, RealizedMinimal, SupplyBase, UnrealizedMinimal,
     },
     prices,
 };
@@ -21,6 +21,7 @@ pub struct MinimalCohortMetrics<M: StorageMode = Rw> {
     pub filter: Filter,
     pub supply: Box<SupplyBase<M>>,
     pub outputs: Box<OutputsBase<M>>,
+    pub activity: Box<ActivityMinimal<M>>,
     pub realized: Box<RealizedMinimal<M>>,
     pub unrealized: Box<UnrealizedMinimal<M>>,
 }
@@ -31,6 +32,7 @@ impl MinimalCohortMetrics {
             filter: cfg.filter.clone(),
             supply: Box::new(SupplyBase::forced_import(cfg)?),
             outputs: Box::new(OutputsBase::forced_import(cfg)?),
+            activity: Box::new(ActivityMinimal::forced_import(cfg)?),
             realized: Box::new(RealizedMinimal::forced_import(cfg)?),
             unrealized: Box::new(UnrealizedMinimal::forced_import(cfg)?),
         })
@@ -40,6 +42,7 @@ impl MinimalCohortMetrics {
         self.supply
             .min_len()
             .min(self.outputs.min_len())
+            .min(self.activity.min_len())
             .min(self.realized.min_stateful_len())
     }
 
@@ -47,6 +50,7 @@ impl MinimalCohortMetrics {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
         vecs.extend(self.supply.collect_vecs_mut());
         vecs.extend(self.outputs.collect_vecs_mut());
+        vecs.extend(self.activity.collect_vecs_mut());
         vecs.extend(self.realized.collect_vecs_mut());
         vecs
     }
@@ -71,6 +75,14 @@ impl MinimalCohortMetrics {
                 .collect::<Vec<_>>(),
             exit,
         )?;
+        self.activity.compute_from_stateful(
+            starting_indexes,
+            &others
+                .iter()
+                .map(|v| v.activity.as_ref())
+                .collect::<Vec<_>>(),
+            exit,
+        )?;
         self.realized.compute_from_stateful(
             starting_indexes,
             &others
@@ -89,8 +101,10 @@ impl MinimalCohortMetrics {
         exit: &Exit,
     ) -> Result<()> {
         self.supply.compute(prices, starting_indexes.height, exit)?;
-        self.realized
+        self.activity
             .compute_rest_part1(prices, starting_indexes, exit)?;
+        self.realized
+            .compute_rest_part1(starting_indexes, exit)?;
         Ok(())
     }
 

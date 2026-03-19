@@ -166,6 +166,7 @@ impl DynCohortVecs for AddrCohortVecs {
                 .push(state.addr_count.into());
             self.metrics.supply.push_state(&state.inner);
             self.metrics.outputs.push_state(&state.inner);
+            self.metrics.activity.push_state(&state.inner);
             self.metrics.realized.push_state(&state.inner);
         }
     }

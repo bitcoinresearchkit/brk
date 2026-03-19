@@ -39,6 +39,7 @@ impl DynCohortVecs for UTXOCohortVecs<MinimalCohortMetrics> {
         if let Some(state) = self.state.as_ref() {
             self.metrics.supply.push_state(state);
             self.metrics.outputs.push_state(state);
+            self.metrics.activity.push_state(state);
             self.metrics.realized.push_state(state);
         }
     }

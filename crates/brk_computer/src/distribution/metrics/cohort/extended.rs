@@ -103,6 +103,7 @@ impl ExtendedCohortMetrics {
             starting_indexes,
             &self.supply.total.btc.height,
             height_to_market_cap,
+            &self.activity.transfer_volume,
             exit,
         )?;
 

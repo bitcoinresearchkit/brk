@@ -9,7 +9,7 @@
  */
 
 import { Unit } from "../../utils/units.js";
-import { line, baseline, dotsBaseline, percentRatio, chartsFromCount, ROLLING_WINDOWS } from "../series.js";
+import { line, baseline, dotsBaseline, percentRatio, chartsFromCount, averagesTree, ROLLING_WINDOWS } from "../series.js";
 import {
   satsBtcUsdFullTree,
   mapCohortsWithAll,
@@ -90,11 +90,7 @@ function fullVolumeTree(activity, color, title) {
   return [
     ...volumeAndCoinsTree(activity, color, title),
     ...sentProfitLossTree(activity.transferVolume, title),
-    {
-      name: "Dormancy",
-      title: title("Dormancy"),
-      bottom: [line({ series: activity.dormancy, name: "Dormancy", color, unit: Unit.days })],
-    },
+    averagesTree({ windows: activity.dormancy, title: title("Dormancy"), unit: Unit.days, name: "Dormancy" }),
   ];
 }
 
@@ -239,10 +235,10 @@ export function createActivitySectionWithActivity({ cohort, title }) {
 export function createActivitySectionMinimal({ cohort, title }) {
   return {
     name: "Activity",
-    tree: chartsFromCount({
-      pattern: cohort.tree.realized.sopr.valueCreated,
+    tree: satsBtcUsdFullTree({
+      pattern: cohort.tree.activity.transferVolume,
+      name: "Volume",
       title: title("Volume"),
-      unit: Unit.usd,
     }),
   };
 }
@@ -259,7 +255,7 @@ export function createGroupedActivitySectionMinimal({ list, all, title }) {
       name: w.name,
       title: title(`Volume (${w.title})`),
       bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-        line({ series: tree.realized.sopr.valueCreated.sum[w.key], name, color, unit: Unit.usd }),
+        line({ series: tree.activity.transferVolume.sum[w.key].sats, name, color, unit: Unit.sats }),
       ),
     })),
   };

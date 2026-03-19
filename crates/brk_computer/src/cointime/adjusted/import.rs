@@ -18,7 +18,7 @@ impl Vecs {
             inflation_rate: PercentPerBlock::forced_import(
                 db,
                 "cointime_adj_inflation_rate",
-                version,
+                version + Version::ONE,
                 indexes,
             )?,
             tx_velocity_native: PerBlock::forced_import(

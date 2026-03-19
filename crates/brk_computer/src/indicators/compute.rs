@@ -128,7 +128,7 @@ impl Vecs {
             .height
             .compute_transform2(
                 starting_indexes.height,
-                &all_activity.dormancy.height,
+                &all_activity.dormancy._24h.height,
                 supply_total_sats,
                 |(i, dormancy, supply_sats, ..)| {
                     let supply = f64::from(Bitcoin::from(supply_sats));
@@ -164,7 +164,7 @@ impl Vecs {
         self.dormancy.flow.height.compute_transform2(
             starting_indexes.height,
             supply_total_sats,
-            &all_activity.dormancy.height,
+            &all_activity.dormancy._24h.height,
             |(i, supply_sats, dormancy, ..)| {
                 let d = f64::from(dormancy);
                 if d == 0.0 {

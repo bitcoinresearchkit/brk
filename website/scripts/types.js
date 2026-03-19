@@ -45,23 +45,21 @@
  * Brk pattern types (using new pattern names)
  * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern} MaxAgePattern
  * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern} AgeRangePattern
- * @typedef {Brk.OutputsRealizedSupplyUnrealizedPattern} UtxoAmountPattern
- * @typedef {Brk.AddrOutputsRealizedSupplyUnrealizedPattern} AddrAmountPattern
+ * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern2} UtxoAmountPattern
+ * @typedef {Brk.ActivityAddrOutputsRealizedSupplyUnrealizedPattern} AddrAmountPattern
  * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern} BasicUtxoPattern
  * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern} EpochPattern
- * @typedef {Brk.OutputsRealizedSupplyUnrealizedPattern2} EmptyPattern
+ * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern3} EmptyPattern
  * @typedef {Brk._0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern} Ratio1ySdPattern
  * @typedef {Brk.Dollars} Dollars
- * CoinbasePattern: base + cumulative + rolling windows (flattened)
- * @typedef {Brk.BaseCumulativeSumPattern4} CoinbasePattern
  * ActivePriceRatioPattern: ratio pattern with price (extended)
  * @typedef {Brk.BpsPriceRatioPattern} ActivePriceRatioPattern
  * PriceRatioPercentilesPattern: price pattern with ratio + percentiles (no SMAs/stdDev)
  * @typedef {Brk.BpsCentsPercentilesRatioSatsUsdPattern} PriceRatioPercentilesPattern
  * AnyRatioPattern: full ratio pattern with percentiles, SMAs, and std dev bands
  * @typedef {Brk.BpsCentsPercentilesRatioSatsSmaStdUsdPattern} AnyRatioPattern
- * FullValuePattern: base + cumulative + rolling windows (flattened)
- * @typedef {Brk.BaseCumulativeSumPattern4} FullValuePattern
+ * FullValuePattern: base + cumulative + rolling windows (sats/btc/cents/usd)
+ * @typedef {Brk.BaseCumulativeSumPattern3} FullValuePattern
  * RollingWindowSlot: a single rolling window with stats (average, pct10, pct25, median, pct75, pct90, max, min) per unit
  * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} RollingWindowSlot
  * @typedef {Brk.AnySeriesPattern} AnySeriesPattern
@@ -91,8 +89,8 @@
  * Transfer volume pattern (base + cumulative + inProfit/inLoss + sum windows)
  * @typedef {Brk.BaseCumulativeInSumPattern} TransferVolumePattern
  *
- * Realized profit/loss pattern (base + cumulative + sum windows)
- * @typedef {Brk.BaseCumulativeSumPattern3} RealizedProfitLossPattern
+ * Realized profit/loss pattern (base + cumulative + sum windows, cents/usd)
+ * @typedef {Brk.BaseCumulativeSumPattern4} RealizedProfitLossPattern
  *
  * Full activity pattern (coindays, coinyears, dormancy, transfer volume)
  * @typedef {Brk.CoindaysCoinyearsDormancyTransferPattern} FullActivityPattern
@@ -113,8 +111,8 @@
  * Mid realized pattern (cap + loss + MVRV + net + price + profit + SOPR)
  * @typedef {Brk.CapLossMvrvNetPriceProfitSoprPattern} MidRealizedPattern
  *
- * Basic realized pattern (cap + loss + MVRV + price + profit + SOPR, no net)
- * @typedef {Brk.CapLossMvrvPriceProfitSoprPattern} BasicRealizedPattern
+ * Basic realized pattern (cap + loss + MVRV + price + profit, no net/sopr)
+ * @typedef {Brk.CapLossMvrvPriceProfitPattern} BasicRealizedPattern
  *
  * Moving average price ratio pattern (bps + cents + ratio + sats + usd)
  * @typedef {Brk.BpsCentsRatioSatsUsdPattern} MaPriceRatioPattern

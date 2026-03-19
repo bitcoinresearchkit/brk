@@ -6,7 +6,7 @@ use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
 
 use crate::{
     distribution::metrics::{
-        ImportConfig, OutputsBase, RealizedMinimal, SupplyCore, UnrealizedBasic,
+        ActivityMinimal, ImportConfig, OutputsBase, RealizedMinimal, SupplyCore, UnrealizedBasic,
     },
     prices,
 };
@@ -20,6 +20,7 @@ pub struct TypeCohortMetrics<M: StorageMode = Rw> {
     pub filter: Filter,
     pub supply: Box<SupplyCore<M>>,
     pub outputs: Box<OutputsBase<M>>,
+    pub activity: Box<ActivityMinimal<M>>,
     pub realized: Box<RealizedMinimal<M>>,
     pub unrealized: Box<UnrealizedBasic<M>>,
 }
@@ -30,6 +31,7 @@ impl TypeCohortMetrics {
             filter: cfg.filter.clone(),
             supply: Box::new(SupplyCore::forced_import(cfg)?),
             outputs: Box::new(OutputsBase::forced_import(cfg)?),
+            activity: Box::new(ActivityMinimal::forced_import(cfg)?),
             realized: Box::new(RealizedMinimal::forced_import(cfg)?),
             unrealized: Box::new(UnrealizedBasic::forced_import(cfg)?),
         })
@@ -39,6 +41,7 @@ impl TypeCohortMetrics {
         self.supply
             .min_len()
             .min(self.outputs.min_len())
+            .min(self.activity.min_len())
             .min(self.realized.min_stateful_len())
             .min(self.unrealized.min_stateful_len())
     }
@@ -47,6 +50,7 @@ impl TypeCohortMetrics {
         let mut vecs: Vec<&mut dyn AnyStoredVec> = Vec::new();
         vecs.extend(self.supply.collect_vecs_mut());
         vecs.extend(self.outputs.collect_vecs_mut());
+        vecs.extend(self.activity.collect_vecs_mut());
         vecs.extend(self.realized.collect_vecs_mut());
         vecs.extend(self.unrealized.collect_vecs_mut());
         vecs
@@ -59,8 +63,10 @@ impl TypeCohortMetrics {
         exit: &Exit,
     ) -> Result<()> {
         self.supply.compute(prices, starting_indexes.height, exit)?;
-        self.realized
+        self.activity
             .compute_rest_part1(prices, starting_indexes, exit)?;
+        self.realized
+            .compute_rest_part1(starting_indexes, exit)?;
         Ok(())
     }
 

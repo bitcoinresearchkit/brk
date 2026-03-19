@@ -132,12 +132,11 @@ impl RealizedCore {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.minimal
-            .compute_rest_part1(prices, starting_indexes, exit)?;
+            .compute_rest_part1(starting_indexes, exit)?;
 
         self.sopr
             .value_destroyed
@@ -164,6 +163,7 @@ impl RealizedCore {
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         height_to_supply: &impl ReadableVec<Height, Bitcoin>,
+        transfer_volume_sum_24h_cents: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
         self.minimal
@@ -177,7 +177,7 @@ impl RealizedCore {
             ._24h
             .compute_binary::<Cents, Cents, RatioCents64>(
                 starting_indexes.height,
-                &self.minimal.transfer_volume.sum._24h.cents.height,
+                transfer_volume_sum_24h_cents,
                 &self.sopr.value_destroyed.sum._24h.height,
                 exit,
             )?;

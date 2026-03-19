@@ -75,6 +75,7 @@ impl BasicCohortMetrics {
             prices,
             starting_indexes,
             &self.supply.total.btc.height,
+            &self.activity.transfer_volume.sum._24h.cents.height,
             exit,
         )?;
 

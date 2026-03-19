@@ -116,6 +116,7 @@ impl AllCohortMetrics {
             starting_indexes,
             &self.supply.total.btc.height,
             height_to_market_cap,
+            &self.activity.transfer_volume,
             exit,
         )?;
 
@@ -128,7 +129,7 @@ impl AllCohortMetrics {
 
         self.asopr.compute_rest_part2(
             starting_indexes,
-            &self.realized.minimal.transfer_volume.base.cents.height,
+            &self.activity.transfer_volume.base.cents.height,
             &self.realized.core.sopr.value_destroyed.base.height,
             under_1h_value_created,
             under_1h_value_destroyed,

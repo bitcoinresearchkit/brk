@@ -1,6 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Indexes, StoredF64, Version};
+use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
@@ -9,9 +10,15 @@ use crate::{
     prices,
 };
 
-#[derive(Traversable)]
+use super::ActivityMinimal;
+
+#[derive(Deref, DerefMut, Traversable)]
 pub struct ActivityCore<M: StorageMode = Rw> {
-    pub transfer_volume: AmountPerBlockCumulativeWithSums<M>,
+    #[deref]
+    #[deref_mut]
+    #[traversable(flatten)]
+    pub minimal: ActivityMinimal<M>,
+
     pub coindays_destroyed: PerBlockCumulativeWithSums<StoredF64, StoredF64, M>,
     #[traversable(wrap = "transfer_volume", rename = "in_profit")]
     pub transfer_volume_in_profit: AmountPerBlockCumulativeWithSums<M>,
@@ -23,7 +30,7 @@ impl ActivityCore {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         let v1 = Version::ONE;
         Ok(Self {
-            transfer_volume: cfg.import("transfer_volume", v1)?,
+            minimal: ActivityMinimal::forced_import(cfg)?,
             coindays_destroyed: cfg.import("coindays_destroyed", v1)?,
             transfer_volume_in_profit: cfg.import("transfer_volume_in_profit", v1)?,
             transfer_volume_in_loss: cfg.import("transfer_volume_in_loss", v1)?,
@@ -31,11 +38,8 @@ impl ActivityCore {
     }
 
     pub(crate) fn min_len(&self) -> usize {
-        self.transfer_volume
-            .base
-            .sats
-            .height
-            .len()
+        self.minimal
+            .min_len()
             .min(self.coindays_destroyed.base.height.len())
             .min(self.transfer_volume_in_profit.base.sats.height.len())
             .min(self.transfer_volume_in_loss.base.sats.height.len())
@@ -46,7 +50,7 @@ impl ActivityCore {
         &mut self,
         state: &CohortState<impl RealizedOps, impl CostBasisOps>,
     ) {
-        self.transfer_volume.base.sats.height.push(state.sent);
+        self.minimal.push_state(state);
         self.coindays_destroyed.base.height.push(
             StoredF64::from(Bitcoin::from(state.satdays_destroyed)),
         );
@@ -63,15 +67,13 @@ impl ActivityCore {
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        vec![
-            &mut self.transfer_volume.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.transfer_volume.base.cents.height,
-            &mut self.coindays_destroyed.base.height,
-            &mut self.transfer_volume_in_profit.base.sats.height,
-            &mut self.transfer_volume_in_profit.base.cents.height,
-            &mut self.transfer_volume_in_loss.base.sats.height,
-            &mut self.transfer_volume_in_loss.base.cents.height,
-        ]
+        let mut vecs = self.minimal.collect_vecs_mut();
+        vecs.push(&mut self.coindays_destroyed.base.height);
+        vecs.push(&mut self.transfer_volume_in_profit.base.sats.height);
+        vecs.push(&mut self.transfer_volume_in_profit.base.cents.height);
+        vecs.push(&mut self.transfer_volume_in_loss.base.sats.height);
+        vecs.push(&mut self.transfer_volume_in_loss.base.cents.height);
+        vecs
     }
 
     pub(crate) fn validate_computed_versions(&mut self, _base_version: Version) -> Result<()> {
@@ -84,14 +86,9 @@ impl ActivityCore {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.transfer_volume.base.sats.height.compute_sum_of_others(
-            starting_indexes.height,
-            &others
-                .iter()
-                .map(|v| &v.transfer_volume.base.sats.height)
-                .collect::<Vec<_>>(),
-            exit,
-        )?;
+        let minimal_refs: Vec<&ActivityMinimal> = others.iter().map(|o| &o.minimal).collect();
+        self.minimal
+            .compute_from_stateful(starting_indexes, &minimal_refs, exit)?;
 
         sum_others!(self, starting_indexes, others, exit; coindays_destroyed.base.height);
         sum_others!(self, starting_indexes, others, exit; transfer_volume_in_profit.base.sats.height);
@@ -106,8 +103,8 @@ impl ActivityCore {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.transfer_volume
-            .compute_rest(starting_indexes.height, prices, exit)?;
+        self.minimal
+            .compute_rest_part1(prices, starting_indexes, exit)?;
         self.coindays_destroyed
             .compute_rest(starting_indexes.height, exit)?;
         Ok(())

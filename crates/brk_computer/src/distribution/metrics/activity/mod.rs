@@ -1,8 +1,10 @@
 mod core;
 mod full;
+mod minimal;
 
 pub use self::core::ActivityCore;
 pub use full::ActivityFull;
+pub use minimal::ActivityMinimal;
 
 use brk_error::Result;
 use brk_types::{Indexes, Version};

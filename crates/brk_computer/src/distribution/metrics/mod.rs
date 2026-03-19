@@ -64,7 +64,7 @@ mod relative;
 mod supply;
 mod unrealized;
 
-pub use activity::{ActivityCore, ActivityFull, ActivityLike};
+pub use activity::{ActivityCore, ActivityFull, ActivityLike, ActivityMinimal};
 pub use cohort::{
     AllCohortMetrics, BasicCohortMetrics, CoreCohortMetrics, ExtendedAdjustedCohortMetrics,
     ExtendedCohortMetrics, MinimalCohortMetrics, TypeCohortMetrics,
@@ -228,7 +228,7 @@ pub trait CohortMetricsBase:
             .compute_sent_profitability(prices, starting_indexes, exit)?;
 
         self.realized_mut()
-            .compute_rest_part1(prices, starting_indexes, exit)?;
+            .compute_rest_part1(starting_indexes, exit)?;
 
         self.unrealized_mut()
             .compute_rest(prices, starting_indexes, exit)?;

@@ -63,7 +63,7 @@ impl CoreCohortMetrics {
         vecs
     }
 
-    /// Aggregate Core-tier fields from CohortMetricsBase sources (e.g. age_range → under_age/over_age).
+    /// Aggregate Core-tier fields from CohortMetricsBase sources (e.g. age_range -> under_age/over_age).
     pub(crate) fn compute_from_base_sources<T: CohortMetricsBase>(
         &mut self,
         starting_indexes: &Indexes,
@@ -114,7 +114,7 @@ impl CoreCohortMetrics {
             .compute_sent_profitability(prices, starting_indexes, exit)?;
 
         self.realized
-            .compute_rest_part1(prices, starting_indexes, exit)?;
+            .compute_rest_part1(starting_indexes, exit)?;
 
         self.unrealized.compute_rest(starting_indexes, exit)?;
 
@@ -132,6 +132,7 @@ impl CoreCohortMetrics {
             prices,
             starting_indexes,
             &self.supply.total.btc.height,
+            &self.activity.transfer_volume.sum._24h.cents.height,
             exit,
         )?;
 

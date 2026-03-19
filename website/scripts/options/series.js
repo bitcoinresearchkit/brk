@@ -888,41 +888,6 @@ export function simpleDeltaTree({ delta, title, unit }) {
 // These split patterns into separate Sum/Distribution/Cumulative charts
 
 /**
- * Create btc/sats/usd series from patterns
- * @param {Object} args
- * @param {{ btc: AnySeriesPattern, sats: AnySeriesPattern, usd: AnySeriesPattern }} args.patterns
- * @param {string} args.name
- * @param {Color} [args.color]
- * @param {boolean} [args.defaultActive]
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-function btcSatsUsdSeries({ patterns, name, color, defaultActive }) {
-  return [
-    {
-      series: patterns.btc,
-      title: name,
-      color,
-      unit: Unit.btc,
-      defaultActive,
-    },
-    {
-      series: patterns.sats,
-      title: name,
-      color,
-      unit: Unit.sats,
-      defaultActive,
-    },
-    {
-      series: patterns.usd,
-      title: name,
-      color,
-      unit: Unit.usd,
-      defaultActive,
-    },
-  ];
-}
-
-/**
  * Split flat per-block pattern into charts (Sum/Rolling/Distribution/Cumulative)
  * Pattern has: .height, .cumulative, .sum (windowed), .average/.pct10/... (windowed, flat)
  * @param {Object} args
@@ -1137,34 +1102,3 @@ export function multiSeriesTree({ entries, title, unit }) {
   ];
 }
 
-/**
- * Split BaseCumulativeRollingPattern into 3 charts (Sum/Distribution/Cumulative)
- * @param {Object} args
- * @param {CoinbasePattern} args.pattern
- * @param {string} args.title
- * @returns {PartialOptionsTree}
- */
-export function chartsFromValueFull({ pattern, title }) {
-  return [
-    {
-      name: "Sum",
-      title,
-      bottom: [
-        ...btcSatsUsdSeries({ patterns: pattern.base, name: "sum" }),
-        ...btcSatsUsdSeries({
-          patterns: pattern.sum._24h,
-          name: "24h sum",
-          defaultActive: false,
-        }),
-      ],
-    },
-    {
-      name: "Cumulative",
-      title: `${title} (Total)`,
-      bottom: btcSatsUsdSeries({
-        patterns: pattern.cumulative,
-        name: "all-time",
-      }),
-    },
-  ];
-}

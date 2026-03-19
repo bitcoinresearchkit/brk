@@ -72,7 +72,6 @@ impl RealizedOps for MinimalRealizedState {
     }
 
     #[inline]
-    #[inline]
     fn value_destroyed(&self) -> Cents {
         if self.value_destroyed_raw == 0 {
             return Cents::ZERO;

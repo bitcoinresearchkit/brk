@@ -5,18 +5,14 @@ use brk_types::{
     Dollars, Height, Indexes, StoredF64, Version,
 };
 use derive_more::{Deref, DerefMut};
-use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, Exit, ReadableVec, Rw, StorageMode,
-    WritableVec,
-};
+use vecdb::{AnyStoredVec, AnyVec, BytesVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
     blocks,
-    distribution::state::{WithCapital, CohortState, CostBasisData, RealizedState},
+    distribution::state::{CohortState, CostBasisData, RealizedState, WithCapital},
     internal::{
-        FiatPerBlockCumulativeWithSums,
-        PercentPerBlock, PercentRollingWindows,
-        PriceWithRatioExtendedPerBlock, RatioCents64, RatioCentsBp32,
+        AmountPerBlockCumulativeWithSums, FiatPerBlockCumulativeWithSums, PercentPerBlock,
+        PercentRollingWindows, PriceWithRatioExtendedPerBlock, RatioCents64, RatioCentsBp32,
         RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32, RatioDollarsBp32,
         RatioPerBlockPercentiles, RatioPerBlockStdDevBands, RatioSma, RollingWindows,
         RollingWindowsFrom1w,
@@ -119,12 +115,9 @@ impl RealizedFull {
 
         // Net PnL
         let net_pnl = RealizedNetPnl {
-            to_rcap: cfg
-                .import("net_realized_pnl_to_rcap", Version::new(2))?,
-            change_1m_to_rcap: cfg
-                .import("net_pnl_change_1m_to_rcap", Version::new(4))?,
-            change_1m_to_mcap: cfg
-                .import("net_pnl_change_1m_to_mcap", Version::new(4))?,
+            to_rcap: cfg.import("net_realized_pnl_to_rcap", Version::new(2))?,
+            change_1m_to_rcap: cfg.import("net_pnl_change_1m_to_rcap", Version::new(4))?,
+            change_1m_to_mcap: cfg.import("net_pnl_change_1m_to_mcap", Version::new(4))?,
         };
 
         // SOPR
@@ -135,8 +128,7 @@ impl RealizedFull {
         // Peak regret
         let peak_regret = RealizedPeakRegret {
             value: cfg.import("realized_peak_regret", Version::new(2))?,
-            to_rcap: cfg
-                .import("realized_peak_regret_to_rcap", Version::new(2))?,
+            to_rcap: cfg.import("realized_peak_regret_to_rcap", Version::new(2))?,
         };
 
         // Investor
@@ -184,7 +176,11 @@ impl RealizedFull {
     }
 
     pub(crate) fn min_stateful_len(&self) -> usize {
-        self.investor.price.cents.height.len()
+        self.investor
+            .price
+            .cents
+            .height
+            .len()
             .min(self.cap_raw.len())
             .min(self.investor.cap_raw.len())
             .min(self.peak_regret.value.base.cents.height.len())
@@ -201,8 +197,7 @@ impl RealizedFull {
             .cents
             .height
             .push(state.realized.investor_price());
-        self.cap_raw
-            .push(state.realized.cap_raw());
+        self.cap_raw.push(state.realized.cap_raw());
         self.investor
             .cap_raw
             .push(state.realized.investor_cap_raw());
@@ -236,15 +231,9 @@ impl RealizedFull {
     }
 
     #[inline(always)]
-    pub(crate) fn push_accum(
-        &mut self,
-        accum: &RealizedFullAccum,
-    ) {
-        self.cap_raw
-            .push(accum.cap_raw);
-        self.investor
-            .cap_raw
-            .push(accum.investor_cap_raw);
+    pub(crate) fn push_accum(&mut self, accum: &RealizedFullAccum) {
+        self.cap_raw.push(accum.cap_raw);
+        self.investor.cap_raw.push(accum.investor_cap_raw);
 
         let investor_price = {
             let cap = accum.cap_raw.as_u128();
@@ -254,11 +243,7 @@ impl RealizedFull {
                 Cents::new((accum.investor_cap_raw / cap) as u64)
             }
         };
-        self.investor
-            .price
-            .cents
-            .height
-            .push(investor_price);
+        self.investor.price.cents.height.push(investor_price);
 
         self.peak_regret
             .value
@@ -270,12 +255,10 @@ impl RealizedFull {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.core
-            .compute_rest_part1(prices, starting_indexes, exit)?;
+        self.core.compute_rest_part1(starting_indexes, exit)?;
 
         self.peak_regret
             .value
@@ -283,6 +266,7 @@ impl RealizedFull {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_rest_part2(
         &mut self,
         blocks: &blocks::Vecs,
@@ -290,22 +274,24 @@ impl RealizedFull {
         starting_indexes: &Indexes,
         height_to_supply: &impl ReadableVec<Height, Bitcoin>,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
+        activity_transfer_volume: &AmountPerBlockCumulativeWithSums,
         exit: &Exit,
     ) -> Result<()> {
         self.core.compute_rest_part2(
             prices,
             starting_indexes,
             height_to_supply,
+            &activity_transfer_volume.sum._24h.cents.height,
             exit,
         )?;
 
-        // SOPR ratios from lazy rolling sums
+        // SOPR ratios from lazy rolling sums (1w, 1m, 1y)
         for ((sopr, vc), vd) in self
             .sopr
             .ratio_extended
             .as_mut_array()
             .into_iter()
-            .zip(self.core.minimal.transfer_volume.sum.0.as_array()[1..].iter())
+            .zip(activity_transfer_volume.sum.0.as_array()[1..].iter())
             .zip(self.core.sopr.value_destroyed.sum.as_array()[1..].iter())
         {
             sopr.compute_binary::<Cents, Cents, RatioCents64>(
@@ -349,8 +335,7 @@ impl RealizedFull {
             &self.core.minimal.loss.base.cents.height,
             exit,
         )?;
-        self.gross_pnl
-            .compute_rest(starting_indexes.height, exit)?;
+        self.gross_pnl.compute_rest(starting_indexes.height, exit)?;
 
         // Net PnL 1m change relative to rcap and mcap
         self.net_pnl
@@ -381,11 +366,9 @@ impl RealizedFull {
             )?;
 
         // Investor price ratio, percentiles and bands
-        self.investor.price.compute_rest(
-            prices,
-            starting_indexes,
-            exit,
-        )?;
+        self.investor
+            .price
+            .compute_rest(prices, starting_indexes, exit)?;
 
         // Sell-side risk ratios
         for (ssrr, rv) in self

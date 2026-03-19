@@ -540,8 +540,7 @@ impl UTXOCohorts<Rw> {
             .age_range
             .under_1h
             .metrics
-            .realized
-            .minimal
+            .activity
             .transfer_volume
             .base
             .cents
