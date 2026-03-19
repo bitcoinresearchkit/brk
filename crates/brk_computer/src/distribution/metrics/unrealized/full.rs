@@ -92,8 +92,8 @@ impl UnrealizedFull {
 
         self.gross_pnl.cents.height.compute_add(
             starting_indexes.height,
-            &self.inner.core.basic.profit.base.cents.height,
-            &self.inner.core.basic.loss.base.cents.height,
+            &self.inner.core.basic.profit.cents.height,
+            &self.inner.core.basic.loss.cents.height,
             exit,
         )?;
 

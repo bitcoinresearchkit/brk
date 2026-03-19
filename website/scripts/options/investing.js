@@ -292,26 +292,8 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
     top: topPane(key),
   });
 
-  /** @param {string} name @param {ShortPeriodKey} key */
-  const shortReturnsChart = (name, key) => ({
-    name: "Returns",
-    title: `Returns: ${name} DCA vs Lump Sum`,
-    top: topPane(key),
-    bottom: [
-      ...percentRatioBaseline({
-        pattern: dca.period.return[key],
-        name: "DCA",
-      }),
-      ...percentRatioBaseline({
-        pattern: dca.period.lumpSumReturn[key],
-        name: "Lump Sum",
-        color: colors.bi.p2,
-      }),
-    ],
-  });
-
-  /** @param {string} name @param {LongPeriodKey} key */
-  const longReturnsChart = (name, key) => ({
+  /** @param {string} name @param {AllPeriodKey} key */
+  const returnsChart = (name, key) => ({
     name: "Returns",
     title: `Returns: ${name} DCA vs Lump Sum`,
     top: topPane(key),
@@ -372,7 +354,7 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
       name,
       tree: [
         costBasisChart(name, key),
-        shortReturnsChart(name, key),
+        returnsChart(name, key),
         stackChart(name, key),
       ],
     };
@@ -385,7 +367,7 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
       name,
       tree: [
         costBasisChart(name, key),
-        longReturnsChart(name, key),
+        returnsChart(name, key),
         longCagrChart(name, key),
         stackChart(name, key),
       ],

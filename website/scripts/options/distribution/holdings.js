@@ -199,7 +199,7 @@ function groupedDeltaTree(list, all, getDelta, unit, title, name) {
         name: "Absolute",
         tree: ROLLING_WINDOWS.map((w) => ({
           name: w.name,
-          title: title(`${name} Change (${w.name})`),
+          title: title(`${name} Change (${w.title})`),
           bottom: mapCohortsWithAll(list, all, (c) =>
             baseline({ series: getDelta(c).absolute[w.key], name: c.name, color: c.color, unit }),
           ),
@@ -209,7 +209,7 @@ function groupedDeltaTree(list, all, getDelta, unit, title, name) {
         name: "Rate",
         tree: ROLLING_WINDOWS.map((w) => ({
           name: w.name,
-          title: title(`${name} Rate (${w.name})`),
+          title: title(`${name} Rate (${w.title})`),
           bottom: flatMapCohortsWithAll(list, all, (c) =>
             percentRatio({ pattern: getDelta(c).rate[w.key], name: c.name, color: c.color }),
           ),

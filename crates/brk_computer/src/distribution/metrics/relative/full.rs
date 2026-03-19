@@ -64,14 +64,14 @@ impl RelativeFull {
         self.unrealized_profit_to_mcap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
-                &unrealized.profit.base.usd.height,
+                &unrealized.profit.usd.height,
                 market_cap,
                 exit,
             )?;
         self.unrealized_loss_to_mcap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp16>(
                 max_from,
-                &unrealized.loss.base.usd.height,
+                &unrealized.loss.usd.height,
                 market_cap,
                 exit,
             )?;

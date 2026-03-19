@@ -71,7 +71,7 @@ import { Unit } from "../utils/units.js";
 
 const lineWidth = /** @type {any} */ (1.5);
 
-const MAX_SIZE = 100_000;
+const MAX_SIZE = 10_000;
 
 /**
  * @param {Object} args

@@ -22,8 +22,8 @@ mod bulk;
 mod data;
 pub mod legacy;
 
-/// Maximum allowed request weight in bytes (650KB)
-const MAX_WEIGHT: usize = 65 * 10_000;
+/// Maximum allowed request weight in bytes (320KB)
+const MAX_WEIGHT: usize = 4 * 8 * 10_000;
 /// Maximum allowed request weight for localhost (50MB)
 const MAX_WEIGHT_LOCALHOST: usize = 50 * 1_000_000;
 /// Cache control header for series data responses

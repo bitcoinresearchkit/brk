@@ -165,7 +165,6 @@ export function createCointimeSection() {
   return {
     name: "Cointime",
     tree: [
-      // Prices - the core pricing models
       {
         name: "Prices",
         tree: [
@@ -208,7 +207,6 @@ export function createCointimeSection() {
         ],
       },
 
-      // Caps - market capitalizations from different models
       {
         name: "Caps",
         tree: [
@@ -242,7 +240,6 @@ export function createCointimeSection() {
         ],
       },
 
-      // Supply - active vs vaulted breakdown
       {
         name: "Supply",
         title: "Active vs Vaulted Supply",
@@ -251,7 +248,6 @@ export function createCointimeSection() {
         ),
       },
 
-      // Liveliness - the foundational cointime ratios
       {
         name: "Activity",
         title: "Liveliness & Vaultedness",
@@ -278,7 +274,6 @@ export function createCointimeSection() {
         ],
       },
 
-      // Coinblocks - created, destroyed, stored
       {
         name: "Coinblocks",
         tree: [
@@ -300,7 +295,7 @@ export function createCointimeSection() {
             name,
             tree: [
               {
-                name: "Base",
+                name: "Per Block",
                 title,
                 bottom: [
                   line({
@@ -329,7 +324,6 @@ export function createCointimeSection() {
         ],
       },
 
-      // Value - cointime value flows
       {
         name: "Value",
         tree: [
@@ -360,7 +354,7 @@ export function createCointimeSection() {
             name,
             tree: [
               {
-                name: "Base",
+                name: "Per Block",
                 title,
                 bottom: [
                   line({ series: pattern.base, name, color, unit: Unit.usd }),
@@ -385,7 +379,7 @@ export function createCointimeSection() {
             name: vocdd.name,
             tree: [
               {
-                name: "Base",
+                name: "Per Block",
                 title: vocdd.title,
                 bottom: [
                   line({
@@ -424,7 +418,6 @@ export function createCointimeSection() {
         ],
       },
 
-      // Indicators - derived decision series
       {
         name: "Indicators",
         tree: [
@@ -446,7 +439,7 @@ export function createCointimeSection() {
             bottom: [
               line({
                 series: cap.aviv.ratio,
-                name: "aviv",
+                name: "AVIV",
                 unit: Unit.ratio,
               }),
             ],
@@ -454,7 +447,6 @@ export function createCointimeSection() {
         ],
       },
 
-      // Cointime-Adjusted - comparing base vs adjusted series
       {
         name: "Cointime-Adjusted",
         tree: [
@@ -476,44 +468,39 @@ export function createCointimeSection() {
             ],
           },
           {
-            name: "Velocity",
-            tree: [
-              {
-                name: "BTC",
-                title: "Cointime-Adjusted BTC Velocity",
-                bottom: [
-                  line({
-                    series: supply.velocity.native,
-                    name: "Base",
-                    color: colors.base,
-                    unit: Unit.ratio,
-                  }),
-                  line({
-                    series: adjusted.txVelocityNative,
-                    name: "Cointime-Adjusted",
-                    color: colors.adjusted,
-                    unit: Unit.ratio,
-                  }),
-                ],
-              },
-              {
-                name: "USD",
-                title: "Cointime-Adjusted USD Velocity",
-                bottom: [
-                  line({
-                    series: supply.velocity.fiat,
-                    name: "Base",
-                    color: colors.thermo,
-                    unit: Unit.ratio,
-                  }),
-                  line({
-                    series: adjusted.txVelocityFiat,
-                    name: "Cointime-Adjusted",
-                    color: colors.vaulted,
-                    unit: Unit.ratio,
-                  }),
-                ],
-              },
+            name: "BTC Velocity",
+            title: "Cointime-Adjusted BTC Velocity",
+            bottom: [
+              line({
+                series: supply.velocity.native,
+                name: "Base",
+                color: colors.base,
+                unit: Unit.ratio,
+              }),
+              line({
+                series: adjusted.txVelocityNative,
+                name: "Cointime-Adjusted",
+                color: colors.adjusted,
+                unit: Unit.ratio,
+              }),
+            ],
+          },
+          {
+            name: "USD Velocity",
+            title: "Cointime-Adjusted USD Velocity",
+            bottom: [
+              line({
+                series: supply.velocity.fiat,
+                name: "Base",
+                color: colors.thermo,
+                unit: Unit.ratio,
+              }),
+              line({
+                series: adjusted.txVelocityFiat,
+                name: "Cointime-Adjusted",
+                color: colors.vaulted,
+                unit: Unit.ratio,
+              }),
             ],
           },
         ],

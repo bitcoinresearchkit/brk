@@ -17,11 +17,11 @@ export const ROLLING_WINDOWS = [
   { key: "_1y", name: "1y", title: "Yearly", color: colors.time._1y },
 ];
 
-/** @type {ReadonlyArray<{key: '_24h' | '_1w' | '_1m', name: string, color: Color}>} */
+/** @type {ReadonlyArray<{key: '_24h' | '_1w' | '_1m', name: string, title: string, color: Color}>} */
 export const ROLLING_WINDOWS_TO_1M = [
-  { key: "_24h", name: "24h", color: colors.time._24h },
-  { key: "_1w", name: "1w", color: colors.time._1w },
-  { key: "_1m", name: "1m", color: colors.time._1m },
+  { key: "_24h", name: "24h", title: "Daily", color: colors.time._24h },
+  { key: "_1w", name: "1w", title: "Weekly", color: colors.time._1w },
+  { key: "_1m", name: "1m", title: "Monthly", color: colors.time._1m },
 ];
 
 /**
@@ -604,7 +604,7 @@ export function distributionWindowsTree({ pattern, base, title, unit }) {
       },
       ...ROLLING_WINDOWS.map((w) => ({
         name: w.name,
-        title: `${title} Distribution (${w.name})`,
+        title: `${title} Distribution (${w.title})`,
         bottom: [
           ...(base ? [line({ series: base, name: "base", unit })] : []),
           ...fromStatsPattern({
@@ -755,15 +755,22 @@ export function percentRatioDots({ pattern, name, color, defaultActive }) {
  * @param {boolean} [args.defaultActive]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-export function percentRatioBaseline({ pattern, name, defaultActive }) {
+export function percentRatioBaseline({ pattern, name, color, defaultActive }) {
   return [
     baseline({
       series: pattern.percent,
       name,
+      color,
       defaultActive,
       unit: Unit.percentage,
     }),
-    baseline({ series: pattern.ratio, name, defaultActive, unit: Unit.ratio }),
+    baseline({
+      series: pattern.ratio,
+      name,
+      color,
+      defaultActive,
+      unit: Unit.ratio,
+    }),
   ];
 }
 
@@ -798,7 +805,7 @@ export function rollingPercentRatioTree({
       },
       ...ROLLING_WINDOWS.map((w) => ({
         name: w.name,
-        title: `${title} ${w.name}`,
+        title: `${title} (${w.title})`,
         bottom: series({ pattern: windows[w.key], name: w.name }),
       })),
     ],
@@ -834,7 +841,7 @@ export function deltaTree({ delta, title, unit, extract }) {
         },
         ...ROLLING_WINDOWS.map((w) => ({
           name: w.name,
-          title: `${title} Change ${w.name}`,
+          title: `${title} Change (${w.title})`,
           bottom: [
             baseline({
               series: extract(delta.absolute[w.key]),

@@ -50,9 +50,9 @@ export function createValuationSectionFull({ cohort, title }) {
             bottom: createSingleRealizedCapSeries(cohort),
           },
           {
-            name: "% of Own Mcap",
-            title: title("Realized Cap (% of Own Mcap)"),
-            bottom: percentRatioBaseline({ pattern: tree.realized.cap.toOwnMcap, name: "Rel. to Own M.Cap", color }),
+            name: "% of Own Market Cap",
+            title: title("Realized Cap (% of Own Market Cap)"),
+            bottom: percentRatioBaseline({ pattern: tree.realized.cap.toOwnMcap, name: "Rel. to Own Market Cap", color }),
           },
         ],
       },
@@ -140,7 +140,7 @@ export function createGroupedValuationSection({ list, all, title }) {
             name: "Absolute",
             tree: ROLLING_WINDOWS.map((w) => ({
               name: w.name,
-              title: title(`Realized Cap Change (${w.name})`),
+              title: title(`Realized Cap Change (${w.title})`),
               bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
                 baseline({ series: tree.realized.cap.delta.absolute[w.key].usd, name, color, unit: Unit.usd }),
               ),
@@ -150,7 +150,7 @@ export function createGroupedValuationSection({ list, all, title }) {
             name: "Rate",
             tree: ROLLING_WINDOWS.map((w) => ({
               name: w.name,
-              title: title(`Realized Cap Rate (${w.name})`),
+              title: title(`Realized Cap Rate (${w.title})`),
               bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
                 percentRatio({ pattern: tree.realized.cap.delta.rate[w.key], name, color }),
               ),
@@ -198,8 +198,8 @@ export function createGroupedValuationSectionWithOwnMarketCap({
             ),
           },
           {
-            name: "% of Own Mcap",
-            title: title("Realized Cap (% of Own Mcap)"),
+            name: "% of Own Market Cap",
+            title: title("Realized Cap (% of Own Market Cap)"),
             bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
               percentRatio({ pattern: tree.realized.cap.toOwnMcap, name, color }),
             ),
@@ -213,7 +213,7 @@ export function createGroupedValuationSectionWithOwnMarketCap({
             name: "Absolute",
             tree: ROLLING_WINDOWS.map((w) => ({
               name: w.name,
-              title: title(`Realized Cap Change (${w.name})`),
+              title: title(`Realized Cap Change (${w.title})`),
               bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
                 baseline({ series: tree.realized.cap.delta.absolute[w.key].usd, name, color, unit: Unit.usd }),
               ),
@@ -223,7 +223,7 @@ export function createGroupedValuationSectionWithOwnMarketCap({
             name: "Rate",
             tree: ROLLING_WINDOWS.map((w) => ({
               name: w.name,
-              title: title(`Realized Cap Rate (${w.name})`),
+              title: title(`Realized Cap Rate (${w.title})`),
               bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
                 percentRatio({ pattern: tree.realized.cap.delta.rate[w.key], name, color }),
               ),

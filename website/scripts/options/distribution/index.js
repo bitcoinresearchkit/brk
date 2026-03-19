@@ -677,7 +677,7 @@ function groupedBucketCharts(list, titlePrefix) {
                 },
                 ...ROLLING_WINDOWS.map((w) => ({
                   name: w.name,
-                  title: `${titlePrefix}: Supply Change ${w.name}`,
+                  title: `${titlePrefix}: Supply Change (${w.title})`,
                   bottom: list.map(({ name, color, pattern }) =>
                     baseline({ series: pattern.supply.all.delta.absolute[w.key], name, color, unit: Unit.sats }),
                   ),
@@ -698,7 +698,7 @@ function groupedBucketCharts(list, titlePrefix) {
                 },
                 ...ROLLING_WINDOWS.map((w) => ({
                   name: w.name,
-                  title: `${titlePrefix}: Supply Rate ${w.name}`,
+                  title: `${titlePrefix}: Supply Rate (${w.title})`,
                   bottom: list.flatMap(({ name, color, pattern }) =>
                     percentRatio({ pattern: pattern.supply.all.delta.rate[w.key], name, color }),
                   ),

@@ -32,7 +32,7 @@ function volumeAndCoinsTree(activity, color, title) {
       name: "Volume",
       tree: [
         {
-          name: "Sum",
+          name: "Per Block",
           title: title("Sent Volume"),
           bottom: [
             line({ series: activity.transferVolume.base.sats, name: "Sum", color, unit: Unit.sats }),
@@ -52,10 +52,10 @@ function volumeAndCoinsTree(activity, color, title) {
       ],
     },
     {
-      name: "Coins Destroyed",
+      name: "Coindays Destroyed",
       tree: [
         {
-          name: "Base",
+          name: "Per Block",
           title: title("Coindays Destroyed"),
           bottom: [
             line({ series: activity.coindaysDestroyed.base, name: "Base", color, unit: Unit.coindays }),
@@ -675,7 +675,7 @@ function groupedRollingSoprCharts(list, all, get24h, get7d, get30d, get1y, title
  * @template {{ color: Color, name: string }} A
  * @param {readonly T[]} list
  * @param {A} all
- * @param {readonly { name: string, getCreated: (item: T | A) => AnySeriesPattern, getDestroyed: (item: T | A) => AnySeriesPattern }[]} windows
+ * @param {readonly { name: string, title: string, getCreated: (item: T | A) => AnySeriesPattern, getDestroyed: (item: T | A) => AnySeriesPattern }[]} windows
  * @param {(name: string) => string} title
  * @param {string} [prefix]
  * @returns {PartialOptionsTree}
@@ -686,7 +686,7 @@ function groupedRollingValueCharts(list, all, windows, title, prefix = "") {
       name: "Created",
       tree: windows.map((w) => ({
         name: w.name,
-        title: title(`${prefix}Value Created (${w.name})`),
+        title: title(`${prefix}Value Created (${w.title})`),
         bottom: mapCohortsWithAll(list, all, (item) =>
           line({ series: w.getCreated(item), name: item.name, color: item.color, unit: Unit.usd }),
         ),
@@ -696,7 +696,7 @@ function groupedRollingValueCharts(list, all, windows, title, prefix = "") {
       name: "Destroyed",
       tree: windows.map((w) => ({
         name: w.name,
-        title: title(`${prefix}Value Destroyed (${w.name})`),
+        title: title(`${prefix}Value Destroyed (${w.title})`),
         bottom: mapCohortsWithAll(list, all, (item) =>
           line({ series: w.getDestroyed(item), name: item.name, color: item.color, unit: Unit.usd }),
         ),
@@ -711,10 +711,10 @@ function groupedRollingValueCharts(list, all, windows, title, prefix = "") {
  */
 function valueWindows(list, all) {
   return [
-    { name: "24h", getCreated: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueCreated.sum._24h, getDestroyed: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueDestroyed.sum._24h },
-    { name: "7d", getCreated: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueCreated.sum._1w, getDestroyed: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueDestroyed.sum._1w },
-    { name: "30d", getCreated: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueCreated.sum._1m, getDestroyed: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueDestroyed.sum._1m },
-    { name: "1y", getCreated: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueCreated.sum._1y, getDestroyed: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueDestroyed.sum._1y },
+    { name: "24h", title: "Daily", getCreated: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueCreated.sum._24h, getDestroyed: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueDestroyed.sum._24h },
+    { name: "7d", title: "Weekly", getCreated: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueCreated.sum._1w, getDestroyed: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueDestroyed.sum._1w },
+    { name: "30d", title: "Monthly", getCreated: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueCreated.sum._1m, getDestroyed: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueDestroyed.sum._1m },
+    { name: "1y", title: "Yearly", getCreated: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueCreated.sum._1y, getDestroyed: (/** @type {typeof list[number] | typeof all} */ c) => c.tree.realized.sopr.valueDestroyed.sum._1y },
   ];
 }
 
@@ -823,10 +823,10 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
                 tree: groupedRollingValueCharts(
                   list, all,
                   [
-                    { name: "24h", getCreated: (c) => c.tree.realized.sopr.adjusted.valueCreated.sum._24h, getDestroyed: (c) => c.tree.realized.sopr.adjusted.valueDestroyed.sum._24h },
-                    { name: "7d", getCreated: (c) => c.tree.realized.sopr.adjusted.valueCreated.sum._1w, getDestroyed: (c) => c.tree.realized.sopr.adjusted.valueDestroyed.sum._1w },
-                    { name: "30d", getCreated: (c) => c.tree.realized.sopr.adjusted.valueCreated.sum._1m, getDestroyed: (c) => c.tree.realized.sopr.adjusted.valueDestroyed.sum._1m },
-                    { name: "1y", getCreated: (c) => c.tree.realized.sopr.adjusted.valueCreated.sum._1y, getDestroyed: (c) => c.tree.realized.sopr.adjusted.valueDestroyed.sum._1y },
+                    { name: "24h", title: "Daily", getCreated: (c) => c.tree.realized.sopr.adjusted.valueCreated.sum._24h, getDestroyed: (c) => c.tree.realized.sopr.adjusted.valueDestroyed.sum._24h },
+                    { name: "7d", title: "Weekly", getCreated: (c) => c.tree.realized.sopr.adjusted.valueCreated.sum._1w, getDestroyed: (c) => c.tree.realized.sopr.adjusted.valueDestroyed.sum._1w },
+                    { name: "30d", title: "Monthly", getCreated: (c) => c.tree.realized.sopr.adjusted.valueCreated.sum._1m, getDestroyed: (c) => c.tree.realized.sopr.adjusted.valueDestroyed.sum._1m },
+                    { name: "1y", title: "Yearly", getCreated: (c) => c.tree.realized.sopr.adjusted.valueCreated.sum._1y, getDestroyed: (c) => c.tree.realized.sopr.adjusted.valueDestroyed.sum._1y },
                   ],
                   title,
                   "Adjusted ",
@@ -837,7 +837,7 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
         ],
       },
       {
-        name: "Coins Destroyed",
+        name: "Coindays Destroyed",
         title: title("Coindays Destroyed"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
           line({ series: tree.activity.coindaysDestroyed.sum._24h, name, color, unit: Unit.coindays }),
@@ -914,7 +914,7 @@ export function createGroupedActivitySection({ list, all, title }) {
         ],
       },
       {
-        name: "Coins Destroyed",
+        name: "Coindays Destroyed",
         title: title("Coindays Destroyed"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
           line({ series: tree.activity.coindaysDestroyed.sum._24h, name, color, unit: Unit.coindays }),
@@ -955,7 +955,7 @@ export function createGroupedActivitySectionWithActivity({ list, all, title }) {
         ],
       },
       {
-        name: "Coins Destroyed",
+        name: "Coindays Destroyed",
         title: title("Coindays Destroyed"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
           line({ series: tree.activity.coindaysDestroyed.sum._24h, name, color, unit: Unit.coindays }),

@@ -65,16 +65,13 @@ impl UnrealizedCore {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.basic
-            .compute_rest(starting_indexes.height, exit)?;
-
         self.net_pnl
             .cents
             .height
             .compute_binary::<Cents, Cents, CentsSubtractToCentsSigned>(
                 starting_indexes.height,
-                &self.basic.profit.base.cents.height,
-                &self.basic.loss.base.cents.height,
+                &self.basic.profit.cents.height,
+                &self.basic.loss.cents.height,
                 exit,
             )?;
 

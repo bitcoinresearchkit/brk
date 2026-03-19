@@ -61,8 +61,6 @@ impl TypeCohortMetrics {
         self.supply.compute(prices, starting_indexes.height, exit)?;
         self.realized
             .compute_rest_part1(starting_indexes, exit)?;
-        self.unrealized
-            .compute_rest(starting_indexes.height, exit)?;
         Ok(())
     }
 

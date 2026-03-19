@@ -59,27 +59,20 @@ export function createPartialOptions() {
   } = buildCohortData();
 
   return [
-    // Charts section
     {
       name: "Charts",
       tree: [
-        // Market section
         createMarketSection(),
 
-        // Network section (on-chain activity)
         createNetworkSection(),
 
-        // Mining section (security & economics)
         createMiningSection(),
 
-        // Cohorts section
         {
           name: "Distribution",
           tree: [
-            // Overview - All UTXOs
             createCohortFolderAll({ ...cohortAll, name: "Overview" }),
 
-            // STH vs LTH - Direct comparison
             createGroupedCohortFolderWithNupl({
               name: "STH vs LTH",
               title: "STH vs LTH",
@@ -87,17 +80,13 @@ export function createPartialOptions() {
               all: cohortAll,
             }),
 
-            // STH - Short term holder cohort
             createCohortFolderFull(termShort),
 
-            // LTH - Long term holder cohort
             createCohortFolderLongTerm(termLong),
 
-            // Ages cohorts
             {
               name: "UTXO Age",
               tree: [
-                // Younger Than (< X old)
                 {
                   name: "Younger Than",
                   tree: [
@@ -110,7 +99,6 @@ export function createPartialOptions() {
                     ...underAge.map(createCohortFolderWithAdjusted),
                   ],
                 },
-                // Older Than (≥ X old)
                 {
                   name: "Older Than",
                   tree: [
@@ -123,7 +111,6 @@ export function createPartialOptions() {
                     ...overAge.map(createCohortFolderWithAdjusted),
                   ],
                 },
-                // Range
                 {
                   name: "Range",
                   tree: [
@@ -139,17 +126,15 @@ export function createPartialOptions() {
               ],
             },
 
-            // Sizes cohorts (UTXO size)
             {
               name: "UTXO Size",
               tree: [
-                // Less Than (< X sats)
                 {
                   name: "Less Than",
                   tree: [
                     createGroupedCohortFolderBasicWithMarketCap({
                       name: "Compare",
-                      title: "Over Amount",
+                      title: "Under Amount",
                       list: utxosUnderAmount,
                       all: cohortAll,
                     }),
@@ -158,13 +143,12 @@ export function createPartialOptions() {
                     ),
                   ],
                 },
-                // More Than (≥ X sats)
                 {
                   name: "More Than",
                   tree: [
                     createGroupedCohortFolderBasicWithMarketCap({
                       name: "Compare",
-                      title: "Under Amount",
+                      title: "Over Amount",
                       list: utxosOverAmount,
                       all: cohortAll,
                     }),
@@ -173,7 +157,6 @@ export function createPartialOptions() {
                     ),
                   ],
                 },
-                // Range
                 {
                   name: "Range",
                   tree: [
@@ -191,37 +174,39 @@ export function createPartialOptions() {
               ],
             },
 
-            // Balances cohorts (Address balance)
+            createUtxoProfitabilitySection({
+              range: profitabilityRange,
+              profit: profitabilityProfit,
+              loss: profitabilityLoss,
+            }),
+
             {
               name: "Address Balance",
               tree: [
-                // Less Than (< X sats)
                 {
                   name: "Less Than",
                   tree: [
                     createGroupedAddressCohortFolder({
                       name: "Compare",
-                      title: "Over Balance",
+                      title: "Under Balance",
                       list: addressesUnderAmount,
                       all: cohortAll,
                     }),
                     ...addressesUnderAmount.map(createAddressCohortFolder),
                   ],
                 },
-                // More Than (≥ X sats)
                 {
                   name: "More Than",
                   tree: [
                     createGroupedAddressCohortFolder({
                       name: "Compare",
-                      title: "Under Balance",
+                      title: "Over Balance",
                       list: addressesOverAmount,
                       all: cohortAll,
                     }),
                     ...addressesOverAmount.map(createAddressCohortFolder),
                   ],
                 },
-                // Range
                 {
                   name: "Range",
                   tree: [
@@ -237,7 +222,6 @@ export function createPartialOptions() {
               ],
             },
 
-            // Script Types - addressable types have addrCount, others don't
             {
               name: "Script Type",
               tree: [
@@ -252,7 +236,6 @@ export function createPartialOptions() {
               ],
             },
 
-            // Epochs
             {
               name: "Epoch",
               tree: [
@@ -266,7 +249,6 @@ export function createPartialOptions() {
               ],
             },
 
-            // Classes
             {
               name: "Class",
               tree: [
@@ -279,20 +261,11 @@ export function createPartialOptions() {
                 ...class_.map(createCohortFolderWithAdjusted),
               ],
             },
-
-            // UTXO Profitability bands
-            createUtxoProfitabilitySection({
-              range: profitabilityRange,
-              profit: profitabilityProfit,
-              loss: profitabilityLoss,
-            }),
           ],
         },
 
-        // Investing section
         createInvestingSection(),
 
-        // Frameworks section
         {
           name: "Frameworks",
           tree: [createCointimeSection()],
@@ -300,14 +273,12 @@ export function createPartialOptions() {
       ],
     },
 
-    // API documentation
     {
       name: "API",
       url: () => "/api",
       title: "API documentation",
     },
 
-    // Project link
     {
       name: "Source",
       url: () => "https://bitcoinresearchkit.org",

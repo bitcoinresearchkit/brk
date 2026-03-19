@@ -576,7 +576,7 @@ export function createMarketSection() {
               },
               ...ROLLING_WINDOWS.map((w) => ({
                 name: w.name,
-                title: `Capitalization Growth Rate Spread ${w.name}`,
+                title: `Capitalization Growth Rate Spread (${w.title})`,
                 bottom: [
                   baseline({
                     series: supply.marketMinusRealizedCapGrowthRate[w.key],
@@ -660,7 +660,7 @@ export function createMarketSection() {
                     const rsi = technical.rsi[w.key];
                     return {
                       name: w.name,
-                      title: `RSI (${w.name})`,
+                      title: `RSI (${w.title})`,
                       bottom: [
                         ...indexRatio({ pattern: rsi.rsi, name: "RSI", color: colors.indicator.main }),
                         priceLine({ unit: Unit.index, number: 70 }),
@@ -675,7 +675,7 @@ export function createMarketSection() {
                         const rsi = technical.rsi[w.key];
                         return {
                           name: w.name,
-                          title: `Stochastic RSI (${w.name})`,
+                          title: `Stochastic RSI (${w.title})`,
                           bottom: [
                             ...indexRatio({ pattern: rsi.stochRsiK, name: "K", color: colors.indicator.fast }),
                             ...indexRatio({ pattern: rsi.stochRsiD, name: "D", color: colors.indicator.slow }),
@@ -698,7 +698,7 @@ export function createMarketSection() {
                   },
                   ...ROLLING_WINDOWS_TO_1M.map((w) => ({
                     name: w.name,
-                    title: `MACD (${w.name})`,
+                    title: `MACD (${w.title})`,
                     bottom: [
                       line({ series: technical.macd[w.key].line, name: "MACD", color: colors.indicator.fast, unit: Unit.usd }),
                       line({ series: technical.macd[w.key].signal, name: "Signal", color: colors.indicator.slow, unit: Unit.usd }),
@@ -726,7 +726,7 @@ export function createMarketSection() {
                   },
                   ...ROLLING_WINDOWS.map((w) => ({
                     name: w.name,
-                    title: `Volatility Index (${w.name})`,
+                    title: `Volatility Index (${w.title})`,
                     bottom: [line({ series: volatility[w.key], name: w.name, color: w.color, unit: Unit.percentage })],
                   })),
                 ],
