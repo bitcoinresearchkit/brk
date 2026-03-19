@@ -10,7 +10,7 @@ use crate::{
     distribution::state::{CohortState, CostBasisOps, RealizedOps},
     internal::{
         FiatPerBlockCumulativeWithSumsAndDeltas, LazyPerBlock, NegCentsUnsignedToDollars,
-        RatioCents64, RollingWindow24hPerBlock,
+        RatioCents64, RollingWindow24hPerBlock, Windows,
     },
     prices,
 };
@@ -18,6 +18,13 @@ use crate::{
 use crate::distribution::metrics::ImportConfig;
 
 use super::RealizedMinimal;
+
+#[derive(Clone, Traversable)]
+pub struct NegRealizedLoss {
+    #[traversable(flatten)]
+    pub base: LazyPerBlock<Dollars, Cents>,
+    pub sum: Windows<LazyPerBlock<Dollars, Cents>>,
+}
 
 #[derive(Traversable)]
 pub struct RealizedSoprCore<M: StorageMode = Rw> {
@@ -32,7 +39,7 @@ pub struct RealizedCore<M: StorageMode = Rw> {
     pub minimal: RealizedMinimal<M>,
 
     #[traversable(wrap = "loss", rename = "negative")]
-    pub neg_loss: LazyPerBlock<Dollars, Cents>,
+    pub neg_loss: NegRealizedLoss,
     pub net_pnl: FiatPerBlockCumulativeWithSumsAndDeltas<CentsSigned, CentsSigned, BasisPointsSigned32, M>,
     pub sopr: RealizedSoprCore<M>,
 }
@@ -43,12 +50,26 @@ impl RealizedCore {
 
         let minimal = RealizedMinimal::forced_import(cfg)?;
 
-        let neg_realized_loss = LazyPerBlock::from_height_source::<NegCentsUnsignedToDollars>(
+        let neg_loss_base = LazyPerBlock::from_height_source::<NegCentsUnsignedToDollars>(
             &cfg.name("neg_realized_loss"),
             cfg.version + Version::ONE,
             minimal.loss.base.cents.height.read_only_boxed_clone(),
             cfg.indexes,
         );
+
+        let neg_loss_sum = minimal.loss.sum.0.map_with_suffix(|suffix, slot| {
+            LazyPerBlock::from_height_source::<NegCentsUnsignedToDollars>(
+                &cfg.name(&format!("neg_realized_loss_sum_{suffix}")),
+                cfg.version + Version::ONE,
+                slot.cents.height.read_only_boxed_clone(),
+                cfg.indexes,
+            )
+        });
+
+        let neg_loss = NegRealizedLoss {
+            base: neg_loss_base,
+            sum: neg_loss_sum,
+        };
 
         let net_pnl = FiatPerBlockCumulativeWithSumsAndDeltas::forced_import(
             cfg.db,
@@ -61,7 +82,7 @@ impl RealizedCore {
 
         Ok(Self {
             minimal,
-            neg_loss: neg_realized_loss,
+            neg_loss,
             net_pnl,
             sopr: RealizedSoprCore {
                 ratio: cfg.import("sopr", v1)?,

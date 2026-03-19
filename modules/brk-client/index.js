@@ -1789,7 +1789,7 @@ function create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, acc) {
  * @property {BaseCapitulationCumulativeNegativeSumToValuePattern} loss
  * @property {SeriesPattern1<StoredF32>} mvrv
  * @property {BaseChangeCumulativeDeltaSumToPattern} netPnl
- * @property {BaseCumulativeToPattern} peakRegret
+ * @property {BaseCumulativeSumToPattern} peakRegret
  * @property {BpsCentsPercentilesRatioSatsSmaStdUsdPattern} price
  * @property {BaseCumulativeDistributionSumToValuePattern} profit
  * @property {_1m1w1y24hPattern<StoredF64>} profitToLossRatio
@@ -1988,7 +1988,7 @@ function createAverageMaxMedianMinPct10Pct25Pct75Pct90Pattern2(client, acc) {
  * @property {CentsUsdPattern2} base
  * @property {SeriesPattern1<Dollars>} capitulationFlow
  * @property {CentsUsdPattern2} cumulative
- * @property {SeriesPattern1<Dollars>} negative
+ * @property {BaseSumPattern} negative
  * @property {_1m1w1y24hPattern4} sum
  * @property {BpsPercentRatioPattern4} toRcap
  * @property {BaseCumulativeSumPattern<Cents>} valueCreated
@@ -2868,7 +2868,7 @@ function createBaseCumulativeDeltaSumPattern(client, acc) {
  * @typedef {Object} BaseCumulativeNegativeSumPattern
  * @property {CentsUsdPattern2} base
  * @property {CentsUsdPattern2} cumulative
- * @property {SeriesPattern1<Dollars>} negative
+ * @property {BaseSumPattern} negative
  * @property {_1m1w1y24hPattern4} sum
  */
 
@@ -2882,8 +2882,31 @@ function createBaseCumulativeNegativeSumPattern(client, acc) {
   return {
     base: createCentsUsdPattern2(client, _m(acc, 'realized_loss')),
     cumulative: createCentsUsdPattern2(client, _m(acc, 'realized_loss_cumulative')),
-    negative: createSeriesPattern1(client, _m(acc, 'neg_realized_loss')),
+    negative: createBaseSumPattern(client, _m(acc, 'neg_realized_loss')),
     sum: create_1m1w1y24hPattern4(client, _m(acc, 'realized_loss_sum')),
+  };
+}
+
+/**
+ * @typedef {Object} BaseCumulativeSumToPattern
+ * @property {CentsUsdPattern2} base
+ * @property {CentsUsdPattern2} cumulative
+ * @property {_1m1w1y24hPattern4} sum
+ * @property {BpsPercentRatioPattern4} toRcap
+ */
+
+/**
+ * Create a BaseCumulativeSumToPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {BaseCumulativeSumToPattern}
+ */
+function createBaseCumulativeSumToPattern(client, acc) {
+  return {
+    base: createCentsUsdPattern2(client, acc),
+    cumulative: createCentsUsdPattern2(client, _m(acc, 'cumulative')),
+    sum: create_1m1w1y24hPattern4(client, _m(acc, 'sum')),
+    toRcap: createBpsPercentRatioPattern4(client, _m(acc, 'to_rcap')),
   };
 }
 
@@ -3099,27 +3122,6 @@ function createBaseCumulativeSumPattern4(client, acc) {
     base: createBtcCentsSatsUsdPattern(client, acc),
     cumulative: createBtcCentsSatsUsdPattern(client, _m(acc, 'cumulative')),
     sum: create_1m1w1y24hPattern5(client, _m(acc, 'sum')),
-  };
-}
-
-/**
- * @typedef {Object} BaseCumulativeToPattern
- * @property {SeriesPattern1<Cents>} base
- * @property {SeriesPattern1<Cents>} cumulative
- * @property {BpsPercentRatioPattern4} toRcap
- */
-
-/**
- * Create a BaseCumulativeToPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated series name
- * @returns {BaseCumulativeToPattern}
- */
-function createBaseCumulativeToPattern(client, acc) {
-  return {
-    base: createSeriesPattern1(client, acc),
-    cumulative: createSeriesPattern1(client, _m(acc, 'cumulative')),
-    toRcap: createBpsPercentRatioPattern4(client, _m(acc, 'to_rcap')),
   };
 }
 
@@ -3614,6 +3616,25 @@ function createAllSthPattern(client, acc) {
   return {
     all: createSeriesPattern1(client, _m(acc, 'realized_cap')),
     sth: createSeriesPattern1(client, _m(acc, 'sth_realized_cap')),
+  };
+}
+
+/**
+ * @typedef {Object} BaseSumPattern
+ * @property {SeriesPattern1<Dollars>} base
+ * @property {_1m1w1y24hPattern<Dollars>} sum
+ */
+
+/**
+ * Create a BaseSumPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {BaseSumPattern}
+ */
+function createBaseSumPattern(client, acc) {
+  return {
+    base: createSeriesPattern1(client, acc),
+    sum: create_1m1w1y24hPattern(client, _m(acc, 'sum')),
   };
 }
 
@@ -5391,7 +5412,7 @@ function createUnspentPattern(client, acc) {
  * @property {BaseChangeCumulativeDeltaSumToPattern} netPnl
  * @property {BaseCumulativeSumPattern3} grossPnl
  * @property {_1m1w1y24hPattern6} sellSideRiskRatio
- * @property {BaseCumulativeToPattern} peakRegret
+ * @property {BaseCumulativeSumToPattern} peakRegret
  * @property {PricePattern} investor
  * @property {_1m1w1y24hPattern<StoredF64>} profitToLossRatio
  */
@@ -5412,7 +5433,7 @@ function createUnspentPattern(client, acc) {
  * @property {CentsUsdPattern2} base
  * @property {CentsUsdPattern2} cumulative
  * @property {_1m1w1y24hPattern4} sum
- * @property {SeriesPattern1<Dollars>} negative
+ * @property {BaseSumPattern} negative
  * @property {BpsPercentRatioPattern4} toRcap
  * @property {BaseCumulativeSumPattern<Cents>} valueCreated
  * @property {BaseCumulativeSumPattern<Cents>} valueDestroyed
@@ -5610,7 +5631,7 @@ function createUnspentPattern(client, acc) {
  * @property {BaseChangeCumulativeDeltaSumToPattern} netPnl
  * @property {BaseCumulativeSumPattern3} grossPnl
  * @property {_1m1w1y24hPattern6} sellSideRiskRatio
- * @property {BaseCumulativeToPattern} peakRegret
+ * @property {BaseCumulativeSumToPattern} peakRegret
  * @property {PricePattern} investor
  * @property {_1m1w1y24hPattern<StoredF64>} profitToLossRatio
  */
@@ -5631,7 +5652,7 @@ function createUnspentPattern(client, acc) {
  * @property {CentsUsdPattern2} base
  * @property {CentsUsdPattern2} cumulative
  * @property {_1m1w1y24hPattern4} sum
- * @property {SeriesPattern1<Dollars>} negative
+ * @property {BaseSumPattern} negative
  * @property {BpsPercentRatioPattern4} toRcap
  * @property {BaseCumulativeSumPattern<Cents>} valueCreated
  * @property {BaseCumulativeSumPattern<Cents>} valueDestroyed
@@ -5805,7 +5826,7 @@ function createUnspentPattern(client, acc) {
  * @property {BaseChangeCumulativeDeltaSumToPattern} netPnl
  * @property {BaseCumulativeSumPattern3} grossPnl
  * @property {_1m1w1y24hPattern6} sellSideRiskRatio
- * @property {BaseCumulativeToPattern} peakRegret
+ * @property {BaseCumulativeSumToPattern} peakRegret
  * @property {PricePattern} investor
  * @property {_1m1w1y24hPattern<StoredF64>} profitToLossRatio
  */
@@ -5826,7 +5847,7 @@ function createUnspentPattern(client, acc) {
  * @property {CentsUsdPattern2} base
  * @property {CentsUsdPattern2} cumulative
  * @property {_1m1w1y24hPattern4} sum
- * @property {SeriesPattern1<Dollars>} negative
+ * @property {BaseSumPattern} negative
  * @property {BpsPercentRatioPattern4} toRcap
  * @property {BaseCumulativeSumPattern<Cents>} valueCreated
  * @property {BaseCumulativeSumPattern<Cents>} valueDestroyed
@@ -8513,7 +8534,7 @@ class BrkClient extends BrkClientBase {
                 base: createCentsUsdPattern2(this, 'realized_loss'),
                 cumulative: createCentsUsdPattern2(this, 'realized_loss_cumulative'),
                 sum: create_1m1w1y24hPattern4(this, 'realized_loss_sum'),
-                negative: createSeriesPattern1(this, 'neg_realized_loss'),
+                negative: createBaseSumPattern(this, 'neg_realized_loss'),
                 toRcap: createBpsPercentRatioPattern4(this, 'realized_loss_to_rcap'),
                 valueCreated: createBaseCumulativeSumPattern(this, 'loss_value_created'),
                 valueDestroyed: createBaseCumulativeSumPattern(this, 'loss_value_destroyed'),
@@ -8612,7 +8633,7 @@ class BrkClient extends BrkClientBase {
               netPnl: createBaseChangeCumulativeDeltaSumToPattern(this, 'net'),
               grossPnl: createBaseCumulativeSumPattern3(this, 'realized_gross_pnl'),
               sellSideRiskRatio: create_1m1w1y24hPattern6(this, 'sell_side_risk_ratio'),
-              peakRegret: createBaseCumulativeToPattern(this, 'realized_peak_regret'),
+              peakRegret: createBaseCumulativeSumToPattern(this, 'realized_peak_regret'),
               investor: createPricePattern(this, 'investor_price'),
               profitToLossRatio: create_1m1w1y24hPattern(this, 'realized_profit_to_loss_ratio'),
             },
@@ -8676,7 +8697,7 @@ class BrkClient extends BrkClientBase {
                 base: createCentsUsdPattern2(this, 'sth_realized_loss'),
                 cumulative: createCentsUsdPattern2(this, 'sth_realized_loss_cumulative'),
                 sum: create_1m1w1y24hPattern4(this, 'sth_realized_loss_sum'),
-                negative: createSeriesPattern1(this, 'sth_neg_realized_loss'),
+                negative: createBaseSumPattern(this, 'sth_neg_realized_loss'),
                 toRcap: createBpsPercentRatioPattern4(this, 'sth_realized_loss_to_rcap'),
                 valueCreated: createBaseCumulativeSumPattern(this, 'sth_loss_value_created'),
                 valueDestroyed: createBaseCumulativeSumPattern(this, 'sth_loss_value_destroyed'),
@@ -8775,7 +8796,7 @@ class BrkClient extends BrkClientBase {
               netPnl: createBaseChangeCumulativeDeltaSumToPattern(this, 'sth_net'),
               grossPnl: createBaseCumulativeSumPattern3(this, 'sth_realized_gross_pnl'),
               sellSideRiskRatio: create_1m1w1y24hPattern6(this, 'sth_sell_side_risk_ratio'),
-              peakRegret: createBaseCumulativeToPattern(this, 'sth_realized_peak_regret'),
+              peakRegret: createBaseCumulativeSumToPattern(this, 'sth_realized_peak_regret'),
               investor: createPricePattern(this, 'sth_investor_price'),
               profitToLossRatio: create_1m1w1y24hPattern(this, 'sth_realized_profit_to_loss_ratio'),
             },
@@ -8824,7 +8845,7 @@ class BrkClient extends BrkClientBase {
                 base: createCentsUsdPattern2(this, 'lth_realized_loss'),
                 cumulative: createCentsUsdPattern2(this, 'lth_realized_loss_cumulative'),
                 sum: create_1m1w1y24hPattern4(this, 'lth_realized_loss_sum'),
-                negative: createSeriesPattern1(this, 'lth_neg_realized_loss'),
+                negative: createBaseSumPattern(this, 'lth_neg_realized_loss'),
                 toRcap: createBpsPercentRatioPattern4(this, 'lth_realized_loss_to_rcap'),
                 valueCreated: createBaseCumulativeSumPattern(this, 'lth_loss_value_created'),
                 valueDestroyed: createBaseCumulativeSumPattern(this, 'lth_loss_value_destroyed'),
@@ -8918,7 +8939,7 @@ class BrkClient extends BrkClientBase {
               netPnl: createBaseChangeCumulativeDeltaSumToPattern(this, 'lth_net'),
               grossPnl: createBaseCumulativeSumPattern3(this, 'lth_realized_gross_pnl'),
               sellSideRiskRatio: create_1m1w1y24hPattern6(this, 'lth_sell_side_risk_ratio'),
-              peakRegret: createBaseCumulativeToPattern(this, 'lth_realized_peak_regret'),
+              peakRegret: createBaseCumulativeSumToPattern(this, 'lth_realized_peak_regret'),
               investor: createPricePattern(this, 'lth_investor_price'),
               profitToLossRatio: create_1m1w1y24hPattern(this, 'lth_realized_profit_to_loss_ratio'),
             },

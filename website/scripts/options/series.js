@@ -193,6 +193,15 @@ export function dotted(args) {
 /**
  * @param {Omit<Parameters<typeof line>[0], 'style'>} args
  */
+export function dashed(args) {
+  const _args = /** @type {Parameters<typeof line>[0]} */ (args);
+  _args.style = 2;
+  return line(_args);
+}
+
+/**
+ * @param {Omit<Parameters<typeof line>[0], 'style'>} args
+ */
 export function sparseDotted(args) {
   const _args = /** @type {Parameters<typeof line>[0]} */ (args);
   _args.style = 4;

@@ -14,7 +14,7 @@ use crate::{
     blocks,
     distribution::state::{WithCapital, CohortState, CostBasisData, RealizedState},
     internal::{
-        CentsUnsignedToDollars, PerBlockCumulative,
+        CentsUnsignedToDollars,
         PerBlockCumulativeWithSums, FiatPerBlockCumulativeWithSums,
         LazyPerBlock, PercentPerBlock, PercentRollingWindows,
         PriceWithRatioExtendedPerBlock, RatioCents64, RatioCentsBp32,
@@ -63,7 +63,7 @@ pub struct RealizedSopr<M: StorageMode = Rw> {
 #[derive(Traversable)]
 pub struct RealizedPeakRegret<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub value: PerBlockCumulative<Cents, M>,
+    pub value: FiatPerBlockCumulativeWithSums<Cents, M>,
     pub to_rcap: PercentPerBlock<BasisPoints32, M>,
 }
 
@@ -227,7 +227,7 @@ impl RealizedFull {
             .min(self.investor.price.cents.height.len())
             .min(self.cap_raw.len())
             .min(self.investor.cap_raw.len())
-            .min(self.peak_regret.value.base.height.len())
+            .min(self.peak_regret.value.base.cents.height.len())
     }
 
     #[inline(always)]
@@ -269,6 +269,7 @@ impl RealizedFull {
         self.peak_regret
             .value
             .base
+            .cents
             .height
             .push(state.realized.peak_regret());
     }
@@ -282,7 +283,7 @@ impl RealizedFull {
         vecs.push(&mut self.investor.price.cents.height);
         vecs.push(&mut self.cap_raw as &mut dyn AnyStoredVec);
         vecs.push(&mut self.investor.cap_raw as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.peak_regret.value.base.height);
+        vecs.push(&mut self.peak_regret.value.base.cents.height);
         vecs
     }
 
@@ -346,6 +347,7 @@ impl RealizedFull {
         self.peak_regret
             .value
             .base
+            .cents
             .height
             .push(accum.peak_regret());
     }
@@ -470,7 +472,7 @@ impl RealizedFull {
             .to_rcap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
-                &self.peak_regret.value.base.height,
+                &self.peak_regret.value.base.cents.height,
                 &self.core.minimal.cap.cents.height,
                 exit,
             )?;

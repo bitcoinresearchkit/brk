@@ -2695,8 +2695,18 @@ class BaseCumulativeNegativeSumPattern:
         """Create pattern node with accumulated series name."""
         self.base: CentsUsdPattern2 = CentsUsdPattern2(client, _m(acc, 'realized_loss'))
         self.cumulative: CentsUsdPattern2 = CentsUsdPattern2(client, _m(acc, 'realized_loss_cumulative'))
-        self.negative: SeriesPattern1[Dollars] = SeriesPattern1(client, _m(acc, 'neg_realized_loss'))
+        self.negative: BaseSumPattern = BaseSumPattern(client, _m(acc, 'neg_realized_loss'))
         self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, _m(acc, 'realized_loss_sum'))
+
+class BaseCumulativeSumToPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.base: CentsUsdPattern2 = CentsUsdPattern2(client, acc)
+        self.cumulative: CentsUsdPattern2 = CentsUsdPattern2(client, _m(acc, 'cumulative'))
+        self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, _m(acc, 'sum'))
+        self.to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, _m(acc, 'to_rcap'))
 
 class BothReactivatedReceivingSendingPattern:
     """Pattern struct for repeated tree structure."""
@@ -2790,15 +2800,6 @@ class BaseCumulativeSumPattern4:
         self.base: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, acc)
         self.cumulative: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'cumulative'))
         self.sum: _1m1w1y24hPattern5 = _1m1w1y24hPattern5(client, _m(acc, 'sum'))
-
-class BaseCumulativeToPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.base: SeriesPattern1[Cents] = SeriesPattern1(client, acc)
-        self.cumulative: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cumulative'))
-        self.to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, _m(acc, 'to_rcap'))
 
 class BaseCumulativeSumPattern3:
     """Pattern struct for repeated tree structure."""
@@ -3010,6 +3011,14 @@ class AllSthPattern:
         """Create pattern node with accumulated series name."""
         self.all: SeriesPattern1[Dollars] = SeriesPattern1(client, _m(acc, 'realized_cap'))
         self.sth: SeriesPattern1[Dollars] = SeriesPattern1(client, _m(acc, 'sth_realized_cap'))
+
+class BaseSumPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.base: SeriesPattern1[Dollars] = SeriesPattern1(client, acc)
+        self.sum: _1m1w1y24hPattern[Dollars] = _1m1w1y24hPattern(client, _m(acc, 'sum'))
 
 class BaseDeltaPattern:
     """Pattern struct for repeated tree structure."""
@@ -4715,7 +4724,7 @@ class SeriesTree_Cohorts_Utxo_All_Realized_Loss:
         self.base: CentsUsdPattern2 = CentsUsdPattern2(client, 'realized_loss')
         self.cumulative: CentsUsdPattern2 = CentsUsdPattern2(client, 'realized_loss_cumulative')
         self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, 'realized_loss_sum')
-        self.negative: SeriesPattern1[Dollars] = SeriesPattern1(client, 'neg_realized_loss')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'neg_realized_loss')
         self.to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, 'realized_loss_to_rcap')
         self.value_created: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'loss_value_created')
         self.value_destroyed: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'loss_value_destroyed')
@@ -4853,7 +4862,7 @@ class SeriesTree_Cohorts_Utxo_All_Realized:
         self.net_pnl: BaseChangeCumulativeDeltaSumToPattern = BaseChangeCumulativeDeltaSumToPattern(client, 'net')
         self.gross_pnl: BaseCumulativeSumPattern3 = BaseCumulativeSumPattern3(client, 'realized_gross_pnl')
         self.sell_side_risk_ratio: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'sell_side_risk_ratio')
-        self.peak_regret: BaseCumulativeToPattern = BaseCumulativeToPattern(client, 'realized_peak_regret')
+        self.peak_regret: BaseCumulativeSumToPattern = BaseCumulativeSumToPattern(client, 'realized_peak_regret')
         self.investor: PricePattern = PricePattern(client, 'investor_price')
         self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'realized_profit_to_loss_ratio')
 
@@ -4953,7 +4962,7 @@ class SeriesTree_Cohorts_Utxo_Sth_Realized_Loss:
         self.base: CentsUsdPattern2 = CentsUsdPattern2(client, 'sth_realized_loss')
         self.cumulative: CentsUsdPattern2 = CentsUsdPattern2(client, 'sth_realized_loss_cumulative')
         self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, 'sth_realized_loss_sum')
-        self.negative: SeriesPattern1[Dollars] = SeriesPattern1(client, 'sth_neg_realized_loss')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'sth_neg_realized_loss')
         self.to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, 'sth_realized_loss_to_rcap')
         self.value_created: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'sth_loss_value_created')
         self.value_destroyed: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'sth_loss_value_destroyed')
@@ -5091,7 +5100,7 @@ class SeriesTree_Cohorts_Utxo_Sth_Realized:
         self.net_pnl: BaseChangeCumulativeDeltaSumToPattern = BaseChangeCumulativeDeltaSumToPattern(client, 'sth_net')
         self.gross_pnl: BaseCumulativeSumPattern3 = BaseCumulativeSumPattern3(client, 'sth_realized_gross_pnl')
         self.sell_side_risk_ratio: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'sth_sell_side_risk_ratio')
-        self.peak_regret: BaseCumulativeToPattern = BaseCumulativeToPattern(client, 'sth_realized_peak_regret')
+        self.peak_regret: BaseCumulativeSumToPattern = BaseCumulativeSumToPattern(client, 'sth_realized_peak_regret')
         self.investor: PricePattern = PricePattern(client, 'sth_investor_price')
         self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'sth_realized_profit_to_loss_ratio')
 
@@ -5164,7 +5173,7 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized_Loss:
         self.base: CentsUsdPattern2 = CentsUsdPattern2(client, 'lth_realized_loss')
         self.cumulative: CentsUsdPattern2 = CentsUsdPattern2(client, 'lth_realized_loss_cumulative')
         self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, 'lth_realized_loss_sum')
-        self.negative: SeriesPattern1[Dollars] = SeriesPattern1(client, 'lth_neg_realized_loss')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'lth_neg_realized_loss')
         self.to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, 'lth_realized_loss_to_rcap')
         self.value_created: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'lth_loss_value_created')
         self.value_destroyed: BaseCumulativeSumPattern[Cents] = BaseCumulativeSumPattern(client, 'lth_loss_value_destroyed')
@@ -5293,7 +5302,7 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized:
         self.net_pnl: BaseChangeCumulativeDeltaSumToPattern = BaseChangeCumulativeDeltaSumToPattern(client, 'lth_net')
         self.gross_pnl: BaseCumulativeSumPattern3 = BaseCumulativeSumPattern3(client, 'lth_realized_gross_pnl')
         self.sell_side_risk_ratio: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'lth_sell_side_risk_ratio')
-        self.peak_regret: BaseCumulativeToPattern = BaseCumulativeToPattern(client, 'lth_realized_peak_regret')
+        self.peak_regret: BaseCumulativeSumToPattern = BaseCumulativeSumToPattern(client, 'lth_realized_peak_regret')
         self.investor: PricePattern = PricePattern(client, 'lth_investor_price')
         self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'lth_realized_profit_to_loss_ratio')
 

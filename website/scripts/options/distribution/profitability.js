@@ -11,7 +11,7 @@
  */
 
 import { Unit } from "../../utils/units.js";
-import { ROLLING_WINDOWS, line, baseline, dots, dotsBaseline, percentRatio, percentRatioBaseline } from "../series.js";
+import { ROLLING_WINDOWS, line, dotted, baseline, dots, dotsBaseline, percentRatio, percentRatioBaseline } from "../series.js";
 import { colors } from "../../utils/colors.js";
 import { priceLine } from "../constants.js";
 import {
@@ -23,31 +23,6 @@ import {
 // ============================================================================
 // Core Series Builders
 // ============================================================================
-
-/**
- * @typedef {Object} PnlSeriesConfig
- * @property {AnySeriesPattern} profit
- * @property {AnySeriesPattern} loss
- * @property {AnySeriesPattern} negLoss
- * @property {AnySeriesPattern} [gross]
- */
-
-/**
- * @param {PnlSeriesConfig} m
- * @param {Unit} unit
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-function pnlLines(m, unit) {
-  const series = [
-    line({ series: m.profit, name: "Profit", color: colors.profit, unit }),
-    line({ series: m.loss, name: "Loss", color: colors.loss, unit }),
-  ];
-  if (m.gross) {
-    series.push(line({ series: m.gross, name: "Total", color: colors.default, unit }));
-  }
-  series.push(line({ series: m.negLoss, name: "Loss (Inverted)", color: colors.loss, unit, defaultActive: false }));
-  return series;
-}
 
 /**
  * @param {AnySeriesPattern} s
@@ -63,25 +38,34 @@ function netBaseline(s, unit) {
 // ============================================================================
 
 /**
- * @param {{ profit: { usd: AnySeriesPattern }, loss: { usd: AnySeriesPattern, negative: AnySeriesPattern }, grossPnl: { usd: AnySeriesPattern } }} u
- * @returns {AnyFetchedSeriesBlueprint[]}
+ * Overview chart: net + profit + loss inverted (active), loss raw (hidden)
+ * @param {{ usd: AnySeriesPattern }} profit
+ * @param {{ usd: AnySeriesPattern, negative: AnySeriesPattern }} loss
+ * @param {AnySeriesPattern} netPnlUsd
+ * @param {(name: string) => string} title
+ * @returns {PartialChartOption}
  */
-function unrealizedUsdSeries(u) {
-  return [
-    ...pnlLines(
-      { profit: u.profit.usd, loss: u.loss.usd, negLoss: u.loss.negative, gross: u.grossPnl.usd },
-      Unit.usd,
-    ),
-    priceLine({ unit: Unit.usd, defaultActive: false }),
-  ];
+function unrealizedOverview(profit, loss, netPnlUsd, title) {
+  return {
+    name: "Overview",
+    title: title("Unrealized P&L"),
+    bottom: [
+      baseline({ series: netPnlUsd, name: "Net P&L", unit: Unit.usd }),
+      dotted({ series: profit.usd, name: "Profit", color: colors.profit, unit: Unit.usd }),
+      dotted({ series: loss.negative, name: "Neg. Loss", color: colors.loss, unit: Unit.usd }),
+      dotted({ series: loss.usd, name: "Loss", color: colors.loss, unit: Unit.usd, defaultActive: false }),
+      priceLine({ unit: Unit.usd }),
+    ],
+  };
 }
 
 /**
+ * Relative P&L chart: profit + loss as % of some denominator
  * @param {{ percent: AnySeriesPattern, ratio: AnySeriesPattern }} profit
  * @param {{ percent: AnySeriesPattern, ratio: AnySeriesPattern }} loss
  * @param {string} name
  * @param {(name: string) => string} title
- * @returns {AnyPartialOption}
+ * @returns {PartialChartOption}
  */
 function relPnlChart(profit, loss, name, title) {
   return {
@@ -95,123 +79,118 @@ function relPnlChart(profit, loss, name, title) {
 }
 
 /**
- * Unrealized P&L tree for All cohort
+ * Unrealized tree for All cohort
  * @param {AllRelativePattern} u
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function unrealizedPnlTreeAll(u, title) {
+function unrealizedTreeAll(u, title) {
   return [
-    { name: "USD", title: title("Unrealized P&L"), bottom: unrealizedUsdSeries(u) },
-    relPnlChart(u.profit.toMcap, u.loss.toMcap, "% of Mcap", title),
-    relPnlChart(u.profit.toOwnGrossPnl, u.loss.toOwnGrossPnl, "% of Own P&L", title),
-  ];
-}
-
-/**
- * Unrealized P&L tree for Full cohorts (STH)
- * @param {FullRelativePattern} u
- * @param {(name: string) => string} title
- * @returns {PartialOptionsTree}
- */
-function unrealizedPnlTreeFull(u, title) {
-  return [
-    { name: "USD", title: title("Unrealized P&L"), bottom: unrealizedUsdSeries(u) },
-    relPnlChart(u.profit.toMcap, u.loss.toMcap, "% of Mcap", title),
-    relPnlChart(u.profit.toOwnMcap, u.loss.toOwnMcap, "% of Own Mcap", title),
-    relPnlChart(u.profit.toOwnGrossPnl, u.loss.toOwnGrossPnl, "% of Own P&L", title),
-  ];
-}
-
-/**
- * Unrealized P&L tree for LTH (loss relToMcap only)
- * @param {FullRelativePattern} u
- * @param {(name: string) => string} title
- * @returns {PartialOptionsTree}
- */
-function unrealizedPnlTreeLongTerm(u, title) {
-  return [
-    { name: "USD", title: title("Unrealized P&L"), bottom: unrealizedUsdSeries(u) },
+    unrealizedOverview(u.profit, u.loss, u.netPnl.usd, title),
+    { name: "Net P&L", title: title("Net Unrealized P&L"), bottom: [netBaseline(u.netPnl.usd, Unit.usd)] },
+    { name: "NUPL", title: title("NUPL"), bottom: nuplSeries(u.nupl) },
+    { name: "Profit", title: title("Unrealized Profit"), bottom: [line({ series: u.profit.usd, name: "Profit", color: colors.profit, unit: Unit.usd })] },
+    { name: "Loss", title: title("Unrealized Loss"), bottom: [line({ series: u.loss.usd, name: "Loss", color: colors.loss, unit: Unit.usd })] },
     {
-      name: "% of Mcap",
-      title: title("Unrealized Loss (% of Mcap)"),
-      bottom: percentRatio({ pattern: u.loss.toMcap, name: "Loss", color: colors.loss }),
-    },
-    relPnlChart(u.profit.toOwnMcap, u.loss.toOwnMcap, "% of Own Mcap", title),
-    relPnlChart(u.profit.toOwnGrossPnl, u.loss.toOwnGrossPnl, "% of Own P&L", title),
-  ];
-}
-
-/**
- * Unrealized P&L tree for mid-tier cohorts (AgeRange/MaxAge)
- * @param {BasicRelativePattern} u
- * @param {(name: string) => string} title
- * @returns {PartialOptionsTree}
- */
-function unrealizedPnlTreeMid(u, title) {
-  return [
-    {
-      name: "USD",
-      title: title("Unrealized P&L"),
-      bottom: [
-        ...pnlLines(
-          { profit: u.profit.usd, loss: u.loss.usd, negLoss: u.loss.negative },
-          Unit.usd,
-        ),
-        priceLine({ unit: Unit.usd, defaultActive: false }),
+      name: "Relative",
+      tree: [
+        {
+          name: "Own P&L",
+          title: title("Unrealized P&L (% of Own P&L)"),
+          bottom: [
+            ...percentRatioBaseline({ pattern: u.netPnl.toOwnGrossPnl, name: "Net" }),
+            ...percentRatio({ pattern: u.profit.toOwnGrossPnl, name: "Profit", color: colors.profit, defaultActive: false }),
+            ...percentRatio({ pattern: u.loss.toOwnGrossPnl, name: "Loss", color: colors.loss, defaultActive: false }),
+          ],
+        },
+        relPnlChart(u.profit.toMcap, u.loss.toMcap, "Market Cap", title),
       ],
     },
   ];
 }
 
-// ============================================================================
-// Net Unrealized P&L Builders
-// ============================================================================
-
 /**
- * @param {AllRelativePattern} u
- * @param {(name: string) => string} title
- * @returns {PartialOptionsTree}
- */
-function netUnrealizedTreeAll(u, title) {
-  return [
-    { name: "USD", title: title("Net Unrealized P&L"), bottom: [netBaseline(u.netPnl.usd, Unit.usd)] },
-    {
-      name: "% of Own P&L",
-      title: title("Net Unrealized P&L (% of Own P&L)"),
-      bottom: percentRatioBaseline({ pattern: u.netPnl.toOwnGrossPnl, name: "Net P&L" }),
-    },
-  ];
-}
-
-/**
+ * Unrealized tree for Full cohorts (STH)
  * @param {FullRelativePattern} u
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function netUnrealizedTreeFull(u, title) {
+function unrealizedTreeFull(u, title) {
   return [
-    { name: "USD", title: title("Net Unrealized P&L"), bottom: [netBaseline(u.netPnl.usd, Unit.usd)] },
+    unrealizedOverview(u.profit, u.loss, u.netPnl.usd, title),
+    { name: "Net P&L", title: title("Net Unrealized P&L"), bottom: [netBaseline(u.netPnl.usd, Unit.usd)] },
+    { name: "NUPL", title: title("NUPL"), bottom: nuplSeries(u.nupl) },
+    { name: "Profit", title: title("Unrealized Profit"), bottom: [line({ series: u.profit.usd, name: "Profit", color: colors.profit, unit: Unit.usd })] },
+    { name: "Loss", title: title("Unrealized Loss"), bottom: [line({ series: u.loss.usd, name: "Loss", color: colors.loss, unit: Unit.usd })] },
     {
-      name: "% of Own Mcap",
-      title: title("Net Unrealized P&L (% of Own Mcap)"),
-      bottom: percentRatioBaseline({ pattern: u.netPnl.toOwnMcap, name: "Net P&L" }),
-    },
-    {
-      name: "% of Own P&L",
-      title: title("Net Unrealized P&L (% of Own P&L)"),
-      bottom: percentRatioBaseline({ pattern: u.netPnl.toOwnGrossPnl, name: "Net P&L" }),
+      name: "Relative",
+      tree: [
+        {
+          name: "Own P&L",
+          title: title("Unrealized P&L (% of Own P&L)"),
+          bottom: [
+            ...percentRatioBaseline({ pattern: u.netPnl.toOwnGrossPnl, name: "Net" }),
+            ...percentRatio({ pattern: u.profit.toOwnGrossPnl, name: "Profit", color: colors.profit, defaultActive: false }),
+            ...percentRatio({ pattern: u.loss.toOwnGrossPnl, name: "Loss", color: colors.loss, defaultActive: false }),
+          ],
+        },
+        relPnlChart(u.profit.toMcap, u.loss.toMcap, "Market Cap", title),
+        relPnlChart(u.profit.toOwnMcap, u.loss.toOwnMcap, "Own Market Cap", title),
+      ],
     },
   ];
 }
 
 /**
- * Net P&L for mid-tier cohorts
- * @param {BasicRelativePattern} u
- * @returns {AnyFetchedSeriesBlueprint[]}
+ * Unrealized tree for LTH (loss relToMcap only, has own mcap + own P&L)
+ * @param {FullRelativePattern} u
+ * @param {(name: string) => string} title
+ * @returns {PartialOptionsTree}
  */
-function netUnrealizedMid(u) {
-  return [netBaseline(u.netPnl.usd, Unit.usd)];
+function unrealizedTreeLongTerm(u, title) {
+  return [
+    unrealizedOverview(u.profit, u.loss, u.netPnl.usd, title),
+    { name: "Net P&L", title: title("Net Unrealized P&L"), bottom: [netBaseline(u.netPnl.usd, Unit.usd)] },
+    { name: "NUPL", title: title("NUPL"), bottom: nuplSeries(u.nupl) },
+    { name: "Profit", title: title("Unrealized Profit"), bottom: [line({ series: u.profit.usd, name: "Profit", color: colors.profit, unit: Unit.usd })] },
+    { name: "Loss", title: title("Unrealized Loss"), bottom: [line({ series: u.loss.usd, name: "Loss", color: colors.loss, unit: Unit.usd })] },
+    {
+      name: "Relative",
+      tree: [
+        {
+          name: "Own P&L",
+          title: title("Unrealized P&L (% of Own P&L)"),
+          bottom: [
+            ...percentRatioBaseline({ pattern: u.netPnl.toOwnGrossPnl, name: "Net" }),
+            ...percentRatio({ pattern: u.profit.toOwnGrossPnl, name: "Profit", color: colors.profit, defaultActive: false }),
+            ...percentRatio({ pattern: u.loss.toOwnGrossPnl, name: "Loss", color: colors.loss, defaultActive: false }),
+          ],
+        },
+        {
+          name: "Market Cap",
+          title: title("Unrealized Loss (% of Market Cap)"),
+          bottom: percentRatio({ pattern: u.loss.toMcap, name: "Loss", color: colors.loss }),
+        },
+        relPnlChart(u.profit.toOwnMcap, u.loss.toOwnMcap, "Own Market Cap", title),
+      ],
+    },
+  ];
+}
+
+/**
+ * Unrealized tree for mid-tier cohorts (AgeRange/MaxAge — profit/loss/net, no relative)
+ * @param {BasicRelativePattern} u
+ * @param {(name: string) => string} title
+ * @returns {PartialOptionsTree}
+ */
+function unrealizedTreeMid(u, title) {
+  return [
+    unrealizedOverview(u.profit, u.loss, u.netPnl.usd, title),
+    { name: "Net P&L", title: title("Net Unrealized P&L"), bottom: [netBaseline(u.netPnl.usd, Unit.usd)] },
+    { name: "NUPL", title: title("NUPL"), bottom: nuplSeries(u.nupl) },
+    { name: "Profit", title: title("Unrealized Profit"), bottom: [line({ series: u.profit.usd, name: "Profit", color: colors.profit, unit: Unit.usd })] },
+    { name: "Loss", title: title("Unrealized Loss"), bottom: [line({ series: u.loss.usd, name: "Loss", color: colors.loss, unit: Unit.usd })] },
+  ];
 }
 
 // ============================================================================
@@ -253,166 +232,67 @@ function nuplSeries(nupl) {
 }
 
 // ============================================================================
-// Realized P&L Builders — Full (All/STH/LTH)
+// Realized P&L Helpers
 // ============================================================================
 
 /**
- * @param {RealizedPattern | LthRealizedPattern} r
- * @param {(name: string) => string} title
+ * Flat metric folder: Compare + windows + Cumulative + Per Block + optional % of Realized Cap
+ * @param {Object} args
+ * @param {{ sum: Record<string, { usd: AnySeriesPattern }>, cumulative: { usd: AnySeriesPattern }, base: { usd: AnySeriesPattern } }} args.pattern
+ * @param {string} args.metricTitle
+ * @param {Color} args.color
+ * @param {(name: string) => string} args.title
+ * @param {{ percent: AnySeriesPattern, ratio: AnySeriesPattern }} [args.toRcap]
  * @returns {PartialOptionsTree}
  */
-function realizedPnlSumTreeFull(r, title) {
+function realizedMetricFolder({ pattern, metricTitle, color, title, toRcap }) {
   return [
     {
-      name: "USD",
-      title: title("Realized P&L"),
-      bottom: [
-        dots({ series: r.profit.base.usd, name: "Profit", color: colors.profit, unit: Unit.usd }),
-        dots({ series: r.loss.negative, name: "Loss (Inverted)", color: colors.loss, unit: Unit.usd, defaultActive: false }),
-        dots({ series: r.loss.base.usd, name: "Loss", color: colors.loss, unit: Unit.usd, defaultActive: false }),
-      ],
+      name: "Compare",
+      title: title(`Realized ${metricTitle}`),
+      bottom: ROLLING_WINDOWS.map((w) =>
+        line({ series: pattern.sum[w.key].usd, name: w.name, color: w.color, unit: Unit.usd }),
+      ),
+    },
+    ...ROLLING_WINDOWS.map((w) => ({
+      name: w.name,
+      title: title(`Realized ${metricTitle} (${w.title})`),
+      bottom: [line({ series: pattern.sum[w.key].usd, name: metricTitle, color, unit: Unit.usd })],
+    })),
+    {
+      name: "Cumulative",
+      title: title(`Realized ${metricTitle} (Total)`),
+      bottom: [line({ series: pattern.cumulative.usd, name: metricTitle, color, unit: Unit.usd })],
     },
     {
-      name: "% of Realized Cap",
-      title: title("Realized P&L (% of Realized Cap)"),
-      bottom: [
-        ...percentRatioBaseline({ pattern: r.profit.toRcap, name: "Profit", color: colors.profit }),
-        ...percentRatioBaseline({ pattern: r.loss.toRcap, name: "Loss", color: colors.loss }),
-      ],
+      name: "Per Block",
+      title: title(`Realized ${metricTitle} per Block`),
+      bottom: [dots({ series: pattern.base.usd, name: metricTitle, color, unit: Unit.usd })],
     },
+    ...(toRcap ? [{
+      name: "% of Realized Cap",
+      title: title(`Realized ${metricTitle} (% of Realized Cap)`),
+      bottom: percentRatioBaseline({ pattern: toRcap, name: metricTitle, color }),
+    }] : []),
   ];
 }
 
 /**
- * @param {RealizedPattern | LthRealizedPattern} r
- * @param {(name: string) => string} title
- * @returns {PartialOptionsTree}
- */
-function realizedNetPnlSumTreeFull(r, title) {
-  return [
-    { name: "USD", title: title("Net Realized P&L"), bottom: [dotsBaseline({ series: r.netPnl.base.usd, name: "Net", unit: Unit.usd })] },
-    {
-      name: "% of Realized Cap",
-      title: title("Net Realized P&L (% of Realized Cap)"),
-      bottom: percentRatioBaseline({ pattern: r.netPnl.toRcap, name: "Net" }),
-    },
-  ];
-}
-
-/**
- * @param {RealizedPattern | LthRealizedPattern} r
- * @param {(name: string) => string} title
- * @returns {PartialOptionsTree}
- */
-function realizedPnlCumulativeTreeFull(r, title) {
-  return [
-    {
-      name: "USD",
-      title: title("Cumulative Realized P&L"),
-      bottom: [
-        line({ series: r.profit.cumulative.usd, name: "Profit", color: colors.profit, unit: Unit.usd }),
-        line({ series: r.loss.cumulative.usd, name: "Loss", color: colors.loss, unit: Unit.usd }),
-        line({ series: r.loss.negative, name: "Loss (Inverted)", color: colors.loss, unit: Unit.usd, defaultActive: false }),
-      ],
-    },
-    {
-      name: "% of Realized Cap",
-      title: title("Cumulative Realized P&L (% of Realized Cap)"),
-      bottom: [
-        ...percentRatioBaseline({ pattern: r.profit.toRcap, name: "Profit", color: colors.profit }),
-        ...percentRatioBaseline({ pattern: r.loss.toRcap, name: "Loss", color: colors.loss }),
-      ],
-    },
-  ];
-}
-
-/**
- * Net realized P&L delta tree (absolute + rate across all rolling windows)
- * @param {NetPnlFullPattern | NetPnlBasicPattern} netPnl
- * @param {(name: string) => string} title
+ * Net P&L folder: Compare + windows + Cumulative + Per Block + optional % of Rcap + Change/
+ * @param {Object} args
+ * @param {NetPnlFullPattern | NetPnlBasicPattern} args.netPnl
+ * @param {(name: string) => string} args.title
+ * @param {{ percent: AnySeriesPattern, ratio: AnySeriesPattern }} [args.toRcap]
+ * @param {PartialOptionsTree} [args.extraChange] - Additional change items (% of Mcap, % of Rcap)
  * @returns {PartialOptionsGroup}
  */
-function realizedNetPnlDeltaTree(netPnl, title) {
+function realizedNetFolder({ netPnl, title, toRcap, extraChange = [] }) {
   return {
-    name: "Change",
-    tree: [
-      {
-        name: "Absolute",
-        tree: [
-          {
-            name: "Compare",
-            title: title("Net Realized P&L Change"),
-            bottom: ROLLING_WINDOWS.map((w) =>
-              baseline({ series: netPnl.delta.absolute[w.key].usd, name: w.name, color: w.color, unit: Unit.usd }),
-            ),
-          },
-          ...ROLLING_WINDOWS.map((w) => ({
-            name: w.name,
-            title: title(`Net Realized P&L Change (${w.title})`),
-            bottom: [baseline({ series: netPnl.delta.absolute[w.key].usd, name: "Change", unit: Unit.usd })],
-          })),
-        ],
-      },
-      {
-        name: "Rate",
-        tree: [
-          {
-            name: "Compare",
-            title: title("Net Realized P&L Rate"),
-            bottom: ROLLING_WINDOWS.flatMap((w) =>
-              percentRatio({ pattern: netPnl.delta.rate[w.key], name: w.name, color: w.color }),
-            ),
-          },
-          ...ROLLING_WINDOWS.map((w) => ({
-            name: w.name,
-            title: title(`Net Realized P&L Rate (${w.title})`),
-            bottom: percentRatioBaseline({ pattern: netPnl.delta.rate[w.key], name: "Rate" }),
-          })),
-        ],
-      },
-    ],
-  };
-}
-
-/**
- * Full realized delta tree (absolute + rate + rel to mcap/rcap)
- * @param {RealizedPattern | LthRealizedPattern} r
- * @param {(name: string) => string} title
- * @returns {PartialOptionsGroup}
- */
-function realizedNetPnlDeltaTreeFull(r, title) {
-  const base = realizedNetPnlDeltaTree(r.netPnl, title);
-  return {
-    ...base,
-    tree: [
-      ...base.tree,
-      {
-        name: "% of Mcap",
-        title: title("Net Realized P&L Change (% of Mcap)"),
-        bottom: percentRatioBaseline({ pattern: r.netPnl.change1m.toMcap, name: "30d Change" }),
-      },
-      {
-        name: "% of Realized Cap",
-        title: title("Net Realized P&L Change (% of Realized Cap)"),
-        bottom: percentRatioBaseline({ pattern: r.netPnl.change1m.toRcap, name: "30d Change" }),
-      },
-    ],
-  };
-}
-
-/**
- * Rolling net realized P&L tree (reusable by full and mid realized)
- * @param {{ sum: { _24h: { usd: AnySeriesPattern }, _1w: { usd: AnySeriesPattern }, _1m: { usd: AnySeriesPattern }, _1y: { usd: AnySeriesPattern } } }} netPnl
- * @param {(name: string) => string} title
- * @returns {PartialOptionsGroup}
- */
-function rollingNetRealizedTree(netPnl, title) {
-  return {
-    name: "Net",
+    name: "Net P&L",
     tree: [
       {
         name: "Compare",
-        title: title("Rolling Net Realized P&L"),
+        title: title("Net Realized P&L"),
         bottom: ROLLING_WINDOWS.map((w) =>
           baseline({ series: netPnl.sum[w.key].usd, name: w.name, color: w.color, unit: Unit.usd }),
         ),
@@ -422,194 +302,99 @@ function rollingNetRealizedTree(netPnl, title) {
         title: title(`Net Realized P&L (${w.title})`),
         bottom: [baseline({ series: netPnl.sum[w.key].usd, name: "Net", unit: Unit.usd })],
       })),
+      {
+        name: "Cumulative",
+        title: title("Net Realized P&L (Total)"),
+        bottom: [baseline({ series: netPnl.cumulative.usd, name: "Net", unit: Unit.usd })],
+      },
+      {
+        name: "Per Block",
+        title: title("Net Realized P&L per Block"),
+        bottom: [dotsBaseline({ series: netPnl.base.usd, name: "Net", unit: Unit.usd })],
+      },
+      ...(toRcap ? [{
+        name: "% of Realized Cap",
+        title: title("Net Realized P&L (% of Realized Cap)"),
+        bottom: percentRatioBaseline({ pattern: toRcap, name: "Net" }),
+      }] : []),
+      {
+        name: "Change",
+        tree: [
+          {
+            name: "Absolute",
+            tree: [
+              {
+                name: "Compare",
+                title: title("Net Realized P&L Change"),
+                bottom: ROLLING_WINDOWS.map((w) =>
+                  baseline({ series: netPnl.delta.absolute[w.key].usd, name: w.name, color: w.color, unit: Unit.usd }),
+                ),
+              },
+              ...ROLLING_WINDOWS.map((w) => ({
+                name: w.name,
+                title: title(`Net Realized P&L Change (${w.title})`),
+                bottom: [baseline({ series: netPnl.delta.absolute[w.key].usd, name: "Change", unit: Unit.usd })],
+              })),
+            ],
+          },
+          {
+            name: "Rate",
+            tree: [
+              {
+                name: "Compare",
+                title: title("Net Realized P&L Rate"),
+                bottom: ROLLING_WINDOWS.flatMap((w) =>
+                  percentRatio({ pattern: netPnl.delta.rate[w.key], name: w.name, color: w.color }),
+                ),
+              },
+              ...ROLLING_WINDOWS.map((w) => ({
+                name: w.name,
+                title: title(`Net Realized P&L Rate (${w.title})`),
+                bottom: percentRatioBaseline({ pattern: netPnl.delta.rate[w.key], name: "Rate" }),
+              })),
+            ],
+          },
+          ...extraChange,
+        ],
+      },
     ],
   };
 }
 
-/**
- * Rolling realized with P/L and ratio (full realized only)
- * @param {RealizedPattern | LthRealizedPattern} r
- * @param {(name: string) => string} title
- * @returns {PartialOptionsTree}
- */
-function singleRollingRealizedTreeFull(r, title) {
-  return [
-    {
-      name: "Profit",
-      tree: [
-        {
-          name: "Compare",
-          title: title("Rolling Realized Profit"),
-          bottom: ROLLING_WINDOWS.map((w) =>
-            line({ series: r.profit.sum[w.key].usd, name: w.name, color: w.color, unit: Unit.usd }),
-          ),
-        },
-        ...ROLLING_WINDOWS.map((w) => ({
-          name: w.name,
-          title: title(`Realized Profit (${w.title})`),
-          bottom: [line({ series: r.profit.sum[w.key].usd, name: "Profit", color: colors.profit, unit: Unit.usd })],
-        })),
-      ],
-    },
-    {
-      name: "Loss",
-      tree: [
-        {
-          name: "Compare",
-          title: title("Rolling Realized Loss"),
-          bottom: ROLLING_WINDOWS.map((w) =>
-            line({ series: r.loss.sum[w.key].usd, name: w.name, color: w.color, unit: Unit.usd }),
-          ),
-        },
-        ...ROLLING_WINDOWS.map((w) => ({
-          name: w.name,
-          title: title(`Realized Loss (${w.title})`),
-          bottom: [line({ series: r.loss.sum[w.key].usd, name: "Loss", color: colors.loss, unit: Unit.usd })],
-        })),
-      ],
-    },
-    rollingNetRealizedTree(r.netPnl, title),
-    {
-      name: "P/L Ratio",
-      tree: [
-        {
-          name: "Compare",
-          title: title("Rolling Realized P/L Ratio"),
-          bottom: ROLLING_WINDOWS.map((w) =>
-            baseline({ series: r.profitToLossRatio[w.key], name: w.name, color: w.color, unit: Unit.ratio, base: 1 }),
-          ),
-        },
-        ...ROLLING_WINDOWS.map((w) => ({
-          name: w.name,
-          title: title(`Realized P/L Ratio (${w.title})`),
-          bottom: [baseline({ series: r.profitToLossRatio[w.key], name: "P/L Ratio", unit: Unit.ratio, base: 1 })],
-        })),
-      ],
-    },
-  ];
-}
 
 /**
- * Rolling realized profit/loss sums (basic — no P/L ratio)
- * @param {RealizedProfitLossPattern} profit
- * @param {RealizedProfitLossPattern} loss
- * @param {(name: string) => string} title
- * @returns {PartialOptionsTree}
+ * Realized overview folder: one chart per window showing net + profit (dotted) + neg. loss (dotted) + loss (hidden) + gross (hidden)
+ * @param {Object} args
+ * @param {{ sum: Record<string, { usd: AnySeriesPattern }> }} args.profit
+ * @param {{ sum: Record<string, { usd: AnySeriesPattern }>, negative: { sum: Record<string, AnySeriesPattern> } }} args.loss
+ * @param {{ sum: Record<string, { usd: AnySeriesPattern }> }} args.netPnl
+ * @param {{ sum: Record<string, { usd: AnySeriesPattern }> }} [args.grossPnl]
+ * @param {{ sum: Record<string, AnySeriesPattern> }} [args.peakRegret]
+ * @param {(name: string) => string} args.title
+ * @returns {PartialOptionsGroup}
  */
-function singleRollingRealizedTreeBasic(profit, loss, title) {
-  return [
-    {
-      name: "Profit",
-      tree: ROLLING_WINDOWS.map((w) => ({
-        name: w.name,
-        title: title(`Realized Profit (${w.title})`),
-        bottom: [line({ series: profit.sum[w.key].usd, name: "Profit", color: colors.profit, unit: Unit.usd })],
-      })),
-    },
-    {
-      name: "Loss",
-      tree: ROLLING_WINDOWS.map((w) => ({
-        name: w.name,
-        title: title(`Realized Loss (${w.title})`),
-        bottom: [line({ series: loss.sum[w.key].usd, name: "Loss", color: colors.loss, unit: Unit.usd })],
-      })),
-    },
-  ];
+function realizedOverviewFolder({ profit, loss, netPnl, grossPnl, peakRegret, title }) {
+  return {
+    name: "Overview",
+    tree: ROLLING_WINDOWS.map((w) => ({
+      name: w.name,
+      title: title(`Realized P&L (${w.title})`),
+      bottom: [
+        baseline({ series: netPnl.sum[w.key].usd, name: "Net P&L", unit: Unit.usd }),
+        dotted({ series: profit.sum[w.key].usd, name: "Profit", color: colors.profit, unit: Unit.usd }),
+        dotted({ series: loss.negative.sum[w.key], name: "Neg. Loss", color: colors.loss, unit: Unit.usd }),
+        dotted({ series: loss.sum[w.key].usd, name: "Loss", color: colors.loss, unit: Unit.usd, defaultActive: false }),
+        ...(grossPnl ? [dotted({ series: grossPnl.sum[w.key].usd, name: "Gross", color: colors.bitcoin, unit: Unit.usd, defaultActive: false })] : []),
+        ...(peakRegret ? [dotted({ series: peakRegret.sum[w.key].usd, name: "Peak Regret", color: colors.default, unit: Unit.usd, defaultActive: false })] : []),
+        priceLine({ unit: Unit.usd }),
+      ],
+    })),
+  };
 }
 
 // ============================================================================
 // Realized Subfolder Builders
 // ============================================================================
-
-/**
- * Value Created/Destroyed tree for a single P&L side (profit or loss)
- * @param {CountPattern<number>} valueCreated
- * @param {CountPattern<number>} valueDestroyed
- * @param {string} label - "Profit" or "Loss"
- * @param {(name: string) => string} title
- * @returns {PartialOptionsGroup}
- */
-function realizedValueTree(valueCreated, valueDestroyed, label, title) {
-  return {
-    name: label,
-    tree: [
-      {
-        name: "Rolling",
-        tree: [
-          {
-            name: "Compare",
-            title: title(`${label} Value Created vs Destroyed`),
-            bottom: ROLLING_WINDOWS.flatMap((w) => [
-              line({ series: valueCreated.sum[w.key], name: `Created (${w.name})`, color: w.color, unit: Unit.usd }),
-              line({ series: valueDestroyed.sum[w.key], name: `Destroyed (${w.name})`, color: w.color, unit: Unit.usd, style: 2 }),
-            ]),
-          },
-          ...ROLLING_WINDOWS.map((w) => ({
-            name: w.name,
-            title: title(`${label} Value (${w.title})`),
-            bottom: [
-              line({ series: valueCreated.sum[w.key], name: "Created", color: colors.profit, unit: Unit.usd }),
-              line({ series: valueDestroyed.sum[w.key], name: "Destroyed", color: colors.loss, unit: Unit.usd }),
-            ],
-          })),
-        ],
-      },
-      {
-        name: "Cumulative",
-        title: title(`Cumulative ${label} Value`),
-        bottom: [
-          line({ series: valueCreated.cumulative, name: "Created", color: colors.profit, unit: Unit.usd }),
-          line({ series: valueDestroyed.cumulative, name: "Destroyed", color: colors.loss, unit: Unit.usd }),
-        ],
-      },
-    ],
-  };
-}
-
-/**
- * Investor price percentiles tree (pct1/2/5/95/98/99)
- * @param {InvestorPercentilesPattern} percentiles
- * @param {(name: string) => string} title
- * @returns {PartialOptionsGroup}
- */
-function investorPricePercentilesTree(percentiles, title) {
-  /** @type {readonly [InvestorPercentileEntry, string, Color][]} */
-  const pcts = [
-    [percentiles.pct99, "p99", colors.stat.max],
-    [percentiles.pct98, "p98", colors.stat.pct90],
-    [percentiles.pct95, "p95", colors.stat.pct75],
-    [percentiles.pct5, "p5", colors.stat.pct25],
-    [percentiles.pct2, "p2", colors.stat.pct10],
-    [percentiles.pct1, "p1", colors.stat.min],
-  ];
-
-  return {
-    name: "Percentiles",
-    tree: [
-      {
-        name: "USD",
-        title: title("Investor Price Percentiles"),
-        bottom: pcts.map(([p, name, color]) =>
-          line({ series: p.price.usd, name, color, unit: Unit.usd }),
-        ),
-      },
-      {
-        name: "Sats",
-        title: title("Investor Price Percentiles (Sats)"),
-        bottom: pcts.map(([p, name, color]) =>
-          line({ series: p.price.sats, name, color, unit: Unit.sats }),
-        ),
-      },
-      {
-        name: "Ratio",
-        title: title("Investor Price Percentile Ratios"),
-        bottom: pcts.map(([p, name, color]) =>
-          baseline({ series: p.ratio, name, color, unit: Unit.ratio }),
-        ),
-      },
-    ],
-  };
-}
 
 /**
  * Full realized subfolder (All/STH/LTH)
@@ -621,82 +406,73 @@ function realizedSubfolderFull(r, title) {
   return {
     name: "Realized",
     tree: [
-      { name: "P&L", tree: realizedPnlSumTreeFull(r, title) },
-      { name: "Net", tree: realizedNetPnlSumTreeFull(r, title) },
-      realizedNetPnlDeltaTreeFull(r, title),
-      {
-        name: "Gross P&L",
-        tree: [
-          { name: "Per Block", title: title("Gross Realized P&L"), bottom: [dots({ series: r.grossPnl.base.usd, name: "Gross P&L", color: colors.bitcoin, unit: Unit.usd })] },
+      realizedOverviewFolder({ profit: r.profit, loss: r.loss, netPnl: r.netPnl, grossPnl: r.grossPnl, peakRegret: r.peakRegret, title }),
+      realizedNetFolder({
+        netPnl: r.netPnl,
+        title,
+        toRcap: r.netPnl.toRcap,
+        extraChange: [
           {
-            name: "Rolling",
-            tree: [
-              {
-                name: "Compare",
-                title: title("Rolling Gross Realized P&L"),
-                bottom: ROLLING_WINDOWS.map((w) =>
-                  line({ series: r.grossPnl.sum[w.key].usd, name: w.name, color: w.color, unit: Unit.usd }),
-                ),
-              },
-              ...ROLLING_WINDOWS.map((w) => ({
-                name: w.name,
-                title: title(`Gross Realized P&L (${w.title})`),
-                bottom: [line({ series: r.grossPnl.sum[w.key].usd, name: "Gross P&L", color: colors.bitcoin, unit: Unit.usd })],
-              })),
-            ],
+            name: "% of Market Cap",
+            title: title("Net Realized P&L Change (% of Market Cap)"),
+            bottom: percentRatioBaseline({ pattern: r.netPnl.change1m.toMcap, name: "30d Change" }),
           },
-          { name: "Cumulative", title: title("Total Realized P&L"), bottom: [line({ series: r.grossPnl.cumulative.usd, name: "Total", unit: Unit.usd, color: colors.bitcoin })] },
+          {
+            name: "% of Realized Cap",
+            title: title("Net Realized P&L Change (% of Realized Cap)"),
+            bottom: percentRatioBaseline({ pattern: r.netPnl.change1m.toRcap, name: "30d Change" }),
+          },
         ],
-      },
-      {
-        name: "Value",
-        tree: [
-          realizedValueTree(r.profit.valueCreated, r.profit.valueDestroyed, "Profit", title),
-          realizedValueTree(r.loss.valueCreated, r.loss.valueDestroyed, "Loss", title),
-        ],
-      },
+      }),
+      { name: "Profit", tree: realizedMetricFolder({ pattern: r.profit, metricTitle: "Profit", color: colors.profit, title, toRcap: r.profit.toRcap }) },
+      { name: "Loss", tree: realizedMetricFolder({ pattern: r.loss, metricTitle: "Loss", color: colors.loss, title, toRcap: r.loss.toRcap }) },
+      { name: "Gross P&L", tree: realizedMetricFolder({ pattern: r.grossPnl, metricTitle: "Gross P&L", color: colors.bitcoin, title }) },
       {
         name: "P/L Ratio",
-        title: title("Realized Profit/Loss Ratio"),
-        bottom: [baseline({ series: r.profitToLossRatio._1y, name: "P/L Ratio", unit: Unit.ratio, base: 1 })],
+        tree: [
+          {
+            name: "Compare",
+            title: title("Realized P/L Ratio"),
+            bottom: ROLLING_WINDOWS.map((w) =>
+              baseline({ series: r.profitToLossRatio[w.key], name: w.name, color: w.color, unit: Unit.ratio, base: 1 }),
+            ),
+          },
+          ...ROLLING_WINDOWS.map((w) => ({
+            name: w.name,
+            title: title(`Realized P/L Ratio (${w.title})`),
+            bottom: [baseline({ series: r.profitToLossRatio[w.key], name: "P/L Ratio", unit: Unit.ratio, base: 1 })],
+          })),
+        ],
       },
       {
         name: "Peak Regret",
-        title: title("Realized Peak Regret"),
-        bottom: [line({ series: r.peakRegret.base, name: "Peak Regret", unit: Unit.usd })],
-      },
-      {
-        name: "Investor Price",
         tree: [
-          investorPricePercentilesTree(r.investor.price.percentiles, title),
-        ],
-      },
-      { name: "Rolling", tree: singleRollingRealizedTreeFull(r, title) },
-      {
-        name: "Cumulative",
-        tree: [
-          { name: "P&L", tree: realizedPnlCumulativeTreeFull(r, title) },
           {
-            name: "Net",
-            tree: [
-              { name: "USD", title: title("Cumulative Net Realized P&L"), bottom: [baseline({ series: r.netPnl.cumulative.usd, name: "Net", unit: Unit.usd })] },
-              {
-                name: "% of Realized Cap",
-                title: title("Cumulative Net P&L (% of Realized Cap)"),
-                bottom: percentRatioBaseline({ pattern: r.netPnl.toRcap, name: "Net" }),
-              },
-            ],
+            name: "Compare",
+            title: title("Peak Regret"),
+            bottom: ROLLING_WINDOWS.map((w) =>
+              line({ series: r.peakRegret.sum[w.key].usd, name: w.name, color: w.color, unit: Unit.usd }),
+            ),
+          },
+          ...ROLLING_WINDOWS.map((w) => ({
+            name: w.name,
+            title: title(`Peak Regret (${w.title})`),
+            bottom: [line({ series: r.peakRegret.sum[w.key].usd, name: "Peak Regret", unit: Unit.usd })],
+          })),
+          {
+            name: "Cumulative",
+            title: title("Peak Regret (Total)"),
+            bottom: [line({ series: r.peakRegret.cumulative.usd, name: "Peak Regret", unit: Unit.usd })],
           },
           {
-            name: "Peak Regret",
-            tree: [
-              { name: "USD", title: title("Cumulative Peak Regret"), bottom: [line({ series: r.peakRegret.cumulative, name: "Peak Regret", unit: Unit.usd })] },
-              {
-                name: "% of Realized Cap",
-                title: title("Cumulative Peak Regret (% of Realized Cap)"),
-                bottom: percentRatioBaseline({ pattern: r.peakRegret.toRcap, name: "Peak Regret" }),
-              },
-            ],
+            name: "Per Block",
+            title: title("Peak Regret per Block"),
+            bottom: [dots({ series: r.peakRegret.base.usd, name: "Peak Regret", unit: Unit.usd })],
+          },
+          {
+            name: "% of Realized Cap",
+            title: title("Peak Regret (% of Realized Cap)"),
+            bottom: percentRatioBaseline({ pattern: r.peakRegret.toRcap, name: "Peak Regret" }),
           },
         ],
       },
@@ -714,46 +490,10 @@ function realizedSubfolderMid(r, title) {
   return {
     name: "Realized",
     tree: [
-      {
-        name: "P&L",
-        title: title("Realized P&L"),
-        bottom: [
-          dots({ series: r.profit.base.usd, name: "Profit", color: colors.profit, unit: Unit.usd }),
-          dots({ series: r.loss.negative, name: "Loss (Inverted)", color: colors.loss, unit: Unit.usd, defaultActive: false }),
-          dots({ series: r.loss.base.usd, name: "Loss", color: colors.loss, unit: Unit.usd, defaultActive: false }),
-        ],
-      },
-      {
-        name: "Net",
-        title: title("Net Realized P&L"),
-        bottom: [dotsBaseline({ series: r.netPnl.base.usd, name: "Net", unit: Unit.usd })],
-      },
-      realizedNetPnlDeltaTree(r.netPnl, title),
-      {
-        name: "Rolling",
-        tree: [
-          ...singleRollingRealizedTreeBasic(r.profit, r.loss, title),
-          rollingNetRealizedTree(r.netPnl, title),
-        ],
-      },
-      {
-        name: "Cumulative",
-        tree: [
-          {
-            name: "P&L",
-            title: title("Cumulative Realized P&L"),
-            bottom: [
-              line({ series: r.profit.cumulative.usd, name: "Profit", color: colors.profit, unit: Unit.usd }),
-              line({ series: r.loss.cumulative.usd, name: "Loss", color: colors.loss, unit: Unit.usd }),
-            ],
-          },
-          {
-            name: "Net",
-            title: title("Cumulative Net Realized P&L"),
-            bottom: [baseline({ series: r.netPnl.cumulative.usd, name: "Net", unit: Unit.usd })],
-          },
-        ],
-      },
+      realizedOverviewFolder({ profit: r.profit, loss: r.loss, netPnl: r.netPnl, title }),
+      realizedNetFolder({ netPnl: r.netPnl, title }),
+      { name: "Profit", tree: realizedMetricFolder({ pattern: r.profit, metricTitle: "Profit", color: colors.profit, title }) },
+      { name: "Loss", tree: realizedMetricFolder({ pattern: r.loss, metricTitle: "Loss", color: colors.loss, title }) },
     ],
   };
 }
@@ -768,23 +508,8 @@ function realizedSubfolderBasic(r, title) {
   return {
     name: "Realized",
     tree: [
-      {
-        name: "P&L",
-        title: title("Realized P&L"),
-        bottom: [
-          dots({ series: r.profit.base.usd, name: "Profit", color: colors.profit, unit: Unit.usd }),
-          dots({ series: r.loss.base.usd, name: "Loss", color: colors.loss, unit: Unit.usd, defaultActive: false }),
-        ],
-      },
-      { name: "Rolling", tree: singleRollingRealizedTreeBasic(r.profit, r.loss, title) },
-      {
-        name: "Cumulative",
-        title: title("Cumulative Realized P&L"),
-        bottom: [
-          line({ series: r.profit.cumulative.usd, name: "Profit", color: colors.profit, unit: Unit.usd }),
-          line({ series: r.loss.cumulative.usd, name: "Loss", color: colors.loss, unit: Unit.usd }),
-        ],
-      },
+      { name: "Profit", tree: realizedMetricFolder({ pattern: r.profit, metricTitle: "Profit", color: colors.profit, title }) },
+      { name: "Loss", tree: realizedMetricFolder({ pattern: r.loss, metricTitle: "Loss", color: colors.loss, title }) },
     ],
   };
 }
@@ -828,20 +553,9 @@ export function createProfitabilitySectionWithProfitLoss({ cohort, title }) {
       {
         name: "Unrealized",
         tree: [
-          {
-            name: "P&L",
-            tree: [
-              {
-                name: "USD",
-                title: title("Unrealized P&L"),
-                bottom: [
-                  ...pnlLines({ profit: u.profit.usd, loss: u.loss.usd, negLoss: u.loss.negative }, Unit.usd),
-                  priceLine({ unit: Unit.usd, defaultActive: false }),
-                ],
-              },
-                      ],
-          },
           { name: "NUPL", title: title("NUPL"), bottom: nuplSeries(u.nupl) },
+          { name: "Profit", title: title("Unrealized Profit"), bottom: [line({ series: u.profit.usd, name: "Profit", color: colors.profit, unit: Unit.usd })] },
+          { name: "Loss", title: title("Unrealized Loss"), bottom: [line({ series: u.loss.usd, name: "Loss", color: colors.loss, unit: Unit.usd })] },
         ],
       },
       realizedSubfolderBasic(cohort.tree.realized, title),
@@ -860,14 +574,7 @@ export function createProfitabilitySectionAll({ cohort, title }) {
   return {
     name: "Profitability",
     tree: [
-      {
-        name: "Unrealized",
-        tree: [
-          { name: "P&L", tree: unrealizedPnlTreeAll(u, title) },
-          { name: "Net P&L", tree: netUnrealizedTreeAll(u, title) },
-          { name: "NUPL", title: title("NUPL"), bottom: nuplSeries(u.nupl) },
-        ],
-      },
+      { name: "Unrealized", tree: unrealizedTreeAll(u, title) },
       realizedSubfolderFull(r, title),
       {
         name: "Invested Capital",
@@ -890,14 +597,7 @@ export function createProfitabilitySectionFull({ cohort, title }) {
   return {
     name: "Profitability",
     tree: [
-      {
-        name: "Unrealized",
-        tree: [
-          { name: "P&L", tree: unrealizedPnlTreeFull(u, title) },
-          { name: "Net P&L", tree: netUnrealizedTreeFull(u, title) },
-          { name: "NUPL", title: title("NUPL"), bottom: nuplSeries(u.nupl) },
-        ],
-      },
+      { name: "Unrealized", tree: unrealizedTreeFull(u, title) },
       realizedSubfolderFull(r, title),
       {
         name: "Invested Capital",
@@ -941,14 +641,7 @@ export function createProfitabilitySectionLongTerm({ cohort, title }) {
   return {
     name: "Profitability",
     tree: [
-      {
-        name: "Unrealized",
-        tree: [
-          { name: "P&L", tree: unrealizedPnlTreeLongTerm(u, title) },
-          { name: "Net P&L", tree: netUnrealizedTreeFull(u, title) },
-          { name: "NUPL", title: title("NUPL"), bottom: nuplSeries(u.nupl) },
-        ],
-      },
+      { name: "Unrealized", tree: unrealizedTreeLongTerm(u, title) },
       realizedSubfolderFull(r, title),
       {
         name: "Invested Capital",
@@ -971,14 +664,7 @@ export function createProfitabilitySectionWithInvestedCapitalPct({ cohort, title
   return {
     name: "Profitability",
     tree: [
-      {
-        name: "Unrealized",
-        tree: [
-          { name: "P&L", tree: unrealizedPnlTreeMid(u, title) },
-          { name: "Net P&L", title: title("Net Unrealized P&L"), bottom: netUnrealizedMid(u) },
-          { name: "NUPL", title: title("NUPL"), bottom: nuplSeries(u.nupl) },
-        ],
-      },
+      { name: "Unrealized", tree: unrealizedTreeMid(u, title) },
       realizedSubfolderMid(r, title),
     ],
   };
@@ -1018,20 +704,9 @@ export function createProfitabilitySectionAddress({ cohort, title }) {
       {
         name: "Unrealized",
         tree: [
-          {
-            name: "P&L",
-            tree: [
-              {
-                name: "USD",
-                title: title("Unrealized P&L"),
-                bottom: [
-                  ...pnlLines({ profit: u.profit.usd, loss: u.loss.usd, negLoss: u.loss.negative }, Unit.usd),
-                  priceLine({ unit: Unit.usd, defaultActive: false }),
-                ],
-              },
-                      ],
-          },
           { name: "NUPL", title: title("NUPL"), bottom: nuplSeries(u.nupl) },
+          { name: "Profit", title: title("Unrealized Profit"), bottom: [line({ series: u.profit.usd, name: "Profit", color: colors.profit, unit: Unit.usd })] },
+          { name: "Loss", title: title("Unrealized Loss"), bottom: [line({ series: u.loss.usd, name: "Loss", color: colors.loss, unit: Unit.usd })] },
         ],
       },
       realizedSubfolderBasic(cohort.tree.realized, title),
@@ -1298,7 +973,7 @@ function groupedRealizedSubfolderFull(list, all, title) {
 }
 
 /**
- * Grouped unrealized P&L (USD only — for all cohorts that at least have nupl)
+ * Grouped NUPL chart
  * @template {{ name: string, color: Color, tree: { unrealized: { nupl: NuplPattern } } }} T
  * @template {{ name: string, color: Color, tree: { unrealized: { nupl: NuplPattern } } }} A
  * @param {readonly T[]} list
@@ -1319,52 +994,14 @@ function groupedNuplCharts(list, all, title) {
 }
 
 /**
- * Grouped unrealized for full cohorts with relToMcap
- * @param {readonly (CohortFull | CohortLongTerm)[]} list
+ * Grouped unrealized: Net → NUPL → Profit → Loss (no relative)
+ * @param {readonly (CohortAgeRange | CohortWithAdjusted)[]} list
  * @param {CohortAll} all
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function groupedPnlChartsWithMarketCap(list, all, title) {
+function groupedUnrealizedMid(list, all, title) {
   return [
-    {
-      name: "Profit",
-      tree: [
-        {
-          name: "USD",
-          title: title("Unrealized Profit"),
-          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({ series: tree.unrealized.profit.usd, name, color, unit: Unit.usd }),
-          ),
-        },
-        {
-          name: "% of Mcap",
-          title: title("Unrealized Profit (% of Mcap)"),
-          bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            percentRatio({ pattern: tree.unrealized.profit.toMcap, name, color }),
-          ),
-        },
-      ],
-    },
-    {
-      name: "Loss",
-      tree: [
-        {
-          name: "USD",
-          title: title("Unrealized Loss"),
-          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({ series: tree.unrealized.loss.usd, name, color, unit: Unit.usd }),
-          ),
-        },
-        {
-          name: "% of Mcap",
-          title: title("Unrealized Loss (% of Mcap)"),
-          bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            percentRatio({ pattern: tree.unrealized.loss.toMcap, name, color }),
-          ),
-        },
-      ],
-    },
     {
       name: "Net P&L",
       title: title("Net Unrealized P&L"),
@@ -1372,18 +1009,7 @@ function groupedPnlChartsWithMarketCap(list, all, title) {
         baseline({ series: tree.unrealized.netPnl.usd, name, color, unit: Unit.usd }),
       ),
     },
-  ];
-}
-
-/**
- * Grouped unrealized for AgeRange/MaxAge (profit/loss without relToMcap)
- * @param {readonly (CohortAgeRange | CohortWithAdjusted)[]} list
- * @param {CohortAll} all
- * @param {(name: string) => string} title
- * @returns {PartialOptionsTree}
- */
-function groupedPnlChartsWithOwnMarketCap(list, all, title) {
-  return [
+    ...groupedNuplCharts(list, all, title),
     {
       name: "Profit",
       title: title("Unrealized Profit"),
@@ -1398,107 +1024,112 @@ function groupedPnlChartsWithOwnMarketCap(list, all, title) {
         line({ series: tree.unrealized.loss.usd, name, color, unit: Unit.usd }),
       ),
     },
+  ];
+}
+
+/**
+ * Grouped unrealized: Net → NUPL → Profit → Loss → Relative(Market Cap)
+ * @param {readonly (CohortFull | CohortLongTerm)[]} list
+ * @param {CohortAll} all
+ * @param {(name: string) => string} title
+ * @returns {PartialOptionsTree}
+ */
+function groupedUnrealizedWithMarketCap(list, all, title) {
+  return [
+    ...groupedUnrealizedMid(list, all, title),
     {
-      name: "Net P&L",
-      title: title("Net Unrealized P&L"),
-      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-        baseline({ series: tree.unrealized.netPnl.usd, name, color, unit: Unit.usd }),
-      ),
+      name: "% of Market Cap",
+      tree: [
+        {
+          name: "Profit",
+          title: title("Unrealized Profit (% of Market Cap)"),
+          bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
+            percentRatio({ pattern: tree.unrealized.profit.toMcap, name, color }),
+          ),
+        },
+        {
+          name: "Loss",
+          title: title("Unrealized Loss (% of Market Cap)"),
+          bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
+            percentRatio({ pattern: tree.unrealized.loss.toMcap, name, color }),
+          ),
+        },
+      ],
     },
   ];
 }
 
 /**
- * Grouped unrealized for LongTerm (profit/loss with relToOwnMcap + relToOwnGross)
+ * Grouped unrealized for LongTerm: Net → NUPL → Profit → Loss → Relative(Own P&L, Market Cap, Own Mcap)
  * @param {readonly CohortLongTerm[]} list
  * @param {CohortAll} all
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
-function groupedPnlChartsLongTerm(list, all, title) {
+function groupedUnrealizedLongTerm(list, all, title) {
   return [
+    ...groupedUnrealizedMid(list, all, title),
     {
-      name: "Profit",
+      name: "Relative",
       tree: [
         {
-          name: "USD",
-          title: title("Unrealized Profit"),
-          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({ series: tree.unrealized.profit.usd, name, color, unit: Unit.usd }),
-          ),
+          name: "Own P&L",
+          tree: [
+            {
+              name: "Net",
+              title: title("Net Unrealized P&L (% of Own P&L)"),
+              bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
+                percentRatioBaseline({ pattern: tree.unrealized.netPnl.toOwnGrossPnl, name, color }),
+              ),
+            },
+            {
+              name: "Profit",
+              title: title("Unrealized Profit (% of Own P&L)"),
+              bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
+                percentRatio({ pattern: tree.unrealized.profit.toOwnGrossPnl, name, color }),
+              ),
+            },
+            {
+              name: "Loss",
+              title: title("Unrealized Loss (% of Own P&L)"),
+              bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
+                percentRatio({ pattern: tree.unrealized.loss.toOwnGrossPnl, name, color }),
+              ),
+            },
+          ],
         },
         {
-          name: "% of Own Mcap",
-          title: title("Unrealized Profit (% of Own Mcap)"),
-          bottom: flatMapCohorts(list, ({ name, color, tree }) =>
-            percentRatio({ pattern: tree.unrealized.profit.toOwnMcap, name, color }),
-          ),
-        },
-        {
-          name: "% of Own P&L",
-          title: title("Unrealized Profit (% of Own P&L)"),
-          bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            percentRatio({ pattern: tree.unrealized.profit.toOwnGrossPnl, name, color }),
-          ),
-        },
-      ],
-    },
-    {
-      name: "Loss",
-      tree: [
-        {
-          name: "USD",
-          title: title("Unrealized Loss"),
-          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({ series: tree.unrealized.loss.usd, name, color, unit: Unit.usd }),
-          ),
-        },
-        {
-          name: "% of Mcap",
-          title: title("Unrealized Loss (% of Mcap)"),
+          name: "Market Cap",
+          title: title("Unrealized Loss (% of Market Cap)"),
           bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
             percentRatio({ pattern: tree.unrealized.loss.toMcap, name, color }),
           ),
         },
         {
-          name: "% of Own Mcap",
-          title: title("Unrealized Loss (% of Own Mcap)"),
-          bottom: flatMapCohorts(list, ({ name, color, tree }) =>
-            percentRatio({ pattern: tree.unrealized.loss.toOwnMcap, name, color }),
-          ),
-        },
-        {
-          name: "% of Own P&L",
-          title: title("Unrealized Loss (% of Own P&L)"),
-          bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            percentRatio({ pattern: tree.unrealized.loss.toOwnGrossPnl, name, color }),
-          ),
-        },
-      ],
-    },
-    {
-      name: "Net P&L",
-      tree: [
-        {
-          name: "USD",
-          title: title("Net Unrealized P&L"),
-          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            baseline({ series: tree.unrealized.netPnl.usd, name, color, unit: Unit.usd }),
-          ),
-        },
-        {
-          name: "% of Own Mcap",
-          title: title("Net Unrealized P&L (% of Own Mcap)"),
-          bottom: flatMapCohorts(list, ({ name, color, tree }) =>
-            percentRatioBaseline({ pattern: tree.unrealized.netPnl.toOwnMcap, name, color }),
-          ),
-        },
-        {
-          name: "% of Own P&L",
-          title: title("Net Unrealized P&L (% of Own P&L)"),
-          bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            percentRatioBaseline({ pattern: tree.unrealized.netPnl.toOwnGrossPnl, name, color }),
-          ),
+          name: "Own Market Cap",
+          tree: [
+            {
+              name: "Net",
+              title: title("Net Unrealized P&L (% of Own Market Cap)"),
+              bottom: flatMapCohorts(list, ({ name, color, tree }) =>
+                percentRatioBaseline({ pattern: tree.unrealized.netPnl.toOwnMcap, name, color }),
+              ),
+            },
+            {
+              name: "Profit",
+              title: title("Unrealized Profit (% of Own Market Cap)"),
+              bottom: flatMapCohorts(list, ({ name, color, tree }) =>
+                percentRatio({ pattern: tree.unrealized.profit.toOwnMcap, name, color }),
+              ),
+            },
+            {
+              name: "Loss",
+              title: title("Unrealized Loss (% of Own Market Cap)"),
+              bottom: flatMapCohorts(list, ({ name, color, tree }) =>
+                percentRatio({ pattern: tree.unrealized.loss.toOwnMcap, name, color }),
+              ),
+            },
+          ],
         },
       ],
     },
@@ -1573,6 +1204,7 @@ export function createGroupedProfitabilitySectionWithProfitLoss({ list, all, tit
       {
         name: "Unrealized",
         tree: [
+          ...groupedNuplCharts(list, all, title),
           {
             name: "Profit",
             title: title("Unrealized Profit"),
@@ -1587,7 +1219,6 @@ export function createGroupedProfitabilitySectionWithProfitLoss({ list, all, tit
               line({ series: tree.unrealized.loss.usd, name, color, unit: Unit.usd }),
             ),
           },
-          ...groupedNuplCharts(list, all, title),
         ],
       },
       groupedRealizedSubfolder(list, all, title),
@@ -1619,13 +1250,7 @@ export function createGroupedProfitabilitySectionWithInvestedCapitalPct({ list, 
   return {
     name: "Profitability",
     tree: [
-      {
-        name: "Unrealized",
-        tree: [
-          ...groupedPnlChartsWithOwnMarketCap(list, all, title),
-          ...groupedNuplCharts(list, all, title),
-        ],
-      },
+      { name: "Unrealized", tree: groupedUnrealizedMid(list, all, title) },
       groupedRealizedSubfolder(list, all, title),
     ],
   };
@@ -1640,13 +1265,7 @@ export function createGroupedProfitabilitySectionWithNupl({ list, all, title }) 
   return {
     name: "Profitability",
     tree: [
-      {
-        name: "Unrealized",
-        tree: [
-          ...groupedPnlChartsWithMarketCap(list, all, title),
-          ...groupedNuplCharts(list, all, title),
-        ],
-      },
+      { name: "Unrealized", tree: groupedUnrealizedWithMarketCap(list, all, title) },
       groupedRealizedSubfolder(list, all, title),
     ],
   };
@@ -1661,13 +1280,7 @@ export function createGroupedProfitabilitySectionLongTerm({ list, all, title }) 
   return {
     name: "Profitability",
     tree: [
-      {
-        name: "Unrealized",
-        tree: [
-          ...groupedPnlChartsLongTerm(list, all, title),
-          ...groupedNuplCharts(list, all, title),
-        ],
-      },
+      { name: "Unrealized", tree: groupedUnrealizedLongTerm(list, all, title) },
       groupedRealizedSubfolderFull(list, all, title),
       groupedSentiment(list, all, title),
     ],
