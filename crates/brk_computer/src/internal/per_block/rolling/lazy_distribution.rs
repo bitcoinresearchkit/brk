@@ -62,7 +62,6 @@ where
         }
 
         Self(DistributionStats {
-            average: map_stat!(average, "average"),
             min: map_stat!(min, "min"),
             max: map_stat!(max, "max"),
             pct10: map_stat!(pct10, "pct10"),

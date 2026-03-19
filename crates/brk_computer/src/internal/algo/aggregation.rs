@@ -26,11 +26,8 @@ pub(crate) fn compute_aggregations<I, T, A>(
     count_indexes: &impl ReadableVec<I, StoredU64>,
     exit: &Exit,
     skip_count: usize,
-    mut first: Option<&mut EagerVec<PcoVec<I, T>>>,
-    mut last: Option<&mut EagerVec<PcoVec<I, T>>>,
     mut min: Option<&mut EagerVec<PcoVec<I, T>>>,
     mut max: Option<&mut EagerVec<PcoVec<I, T>>>,
-    mut average: Option<&mut EagerVec<PcoVec<I, T>>>,
     mut sum: Option<&mut EagerVec<PcoVec<I, T>>>,
     mut cumulative: Option<&mut EagerVec<PcoVec<I, T>>>,
     mut median: Option<&mut EagerVec<PcoVec<I, T>>>,
@@ -57,14 +54,11 @@ where
     }
 
     let index = validate_vec!(
-        first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90
+        min, max, sum, cumulative, median, pct10, pct25, pct75, pct90
     );
 
-    let needs_first = first.is_some();
-    let needs_last = last.is_some();
     let needs_min = min.is_some();
     let needs_max = max.is_some();
-    let needs_average = average.is_some();
     let needs_sum = sum.is_some();
     let needs_cumulative = cumulative.is_some();
     let needs_percentiles = median.is_some()
@@ -74,9 +68,8 @@ where
         || pct90.is_some();
     let needs_minmax = needs_min || needs_max;
     let needs_sum_or_cumulative = needs_sum || needs_cumulative;
-    let needs_aggregates = needs_sum_or_cumulative || needs_average;
 
-    if !needs_first && !needs_last && !needs_minmax && !needs_aggregates && !needs_percentiles {
+    if !needs_minmax && !needs_sum_or_cumulative && !needs_percentiles {
         return Ok(());
     }
 
@@ -99,7 +92,7 @@ where
         };
     }
     truncate_vec!(
-        first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90
+        min, max, sum, cumulative, median, pct10, pct25, pct75, pct90
     );
 
     let fi_len = first_indexes.len();
@@ -119,28 +112,8 @@ where
             let effective_count = count.saturating_sub(skip_count);
             let effective_first_index = first_index + skip_count.min(count);
 
-            if let Some(ref mut first_vec) = first {
-                let f = if effective_count > 0 {
-                    source
-                        .collect_one_at(effective_first_index.to_usize())
-                        .unwrap()
-                } else {
-                    T::from(0_usize)
-                };
-                first_vec.push(f);
-            }
-
-            if let Some(ref mut last_vec) = last {
-                if effective_count == 0 {
-                    last_vec.push(T::from(0_usize));
-                } else {
-                    let last_index = first_index + (count - 1);
-                    last_vec.push(source.collect_one_at(last_index.to_usize()).unwrap());
-                }
-            }
-
             // Fast path: only min/max needed, no sorting or allocation required
-            if needs_minmax && !needs_percentiles && !needs_aggregates {
+            if needs_minmax && !needs_percentiles && !needs_sum_or_cumulative {
                 let efi = effective_first_index.to_usize();
                 let mut min_val: Option<T> = None;
                 let mut max_val: Option<T> = None;
@@ -175,15 +148,13 @@ where
                             })*
                         };
                     }
-                    push_zero!(max, pct90, pct75, median, pct25, pct10, min, average, sum);
+                    push_zero!(max, pct90, pct75, median, pct25, pct10, min, sum);
                     if let Some(ref mut cumulative_vec) = cumulative {
                         cumulative_vec.push(cumulative_val.unwrap());
                     }
                 } else if needs_percentiles {
-                    let aggregate_result = if needs_aggregates {
-                        let len = values.len();
-                        let sum_val = values.iter().copied().fold(T::from(0), |a, b| a + b);
-                        Some((len, sum_val))
+                    let sum_val = if needs_sum_or_cumulative {
+                        Some(values.iter().copied().fold(T::from(0), |a, b| a + b))
                     } else {
                         None
                     };
@@ -212,25 +183,19 @@ where
                         min_vec.push(*values.first().unwrap());
                     }
 
-                    if let Some((len, sum_val)) = aggregate_result {
-                        if let Some(ref mut average_vec) = average {
-                            average_vec.push(sum_val / len);
+                    if let Some(sum_val) = sum_val {
+                        if let Some(ref mut sum_vec) = sum {
+                            sum_vec.push(sum_val);
                         }
-
-                        if needs_sum_or_cumulative {
-                            if let Some(ref mut sum_vec) = sum {
-                                sum_vec.push(sum_val);
-                            }
-                            if let Some(ref mut cumulative_vec) = cumulative {
-                                let t = cumulative_val.unwrap() + sum_val;
-                                cumulative_val.replace(t);
-                                cumulative_vec.push(t);
-                            }
+                        if let Some(ref mut cumulative_vec) = cumulative {
+                            let t = cumulative_val.unwrap() + sum_val;
+                            cumulative_val.replace(t);
+                            cumulative_vec.push(t);
                         }
                     }
                 } else if needs_minmax {
                     // Single pass for min + max + optional sum
-                    let (min_val, max_val, sum_val, len) = values.iter().copied().fold(
+                    let (min_val, max_val, sum_val, _len) = values.iter().copied().fold(
                         (values[0], values[0], T::from(0_usize), 0_usize),
                         |(mn, mx, s, c), v| (mn.min(v), mx.max(v), s + v, c + 1),
                     );
@@ -242,50 +207,33 @@ where
                         max_vec.push(max_val);
                     }
 
-                    if needs_aggregates {
-                        if let Some(ref mut average_vec) = average {
-                            average_vec.push(sum_val / len);
+                    if needs_sum_or_cumulative {
+                        if let Some(ref mut sum_vec) = sum {
+                            sum_vec.push(sum_val);
                         }
-
-                        if needs_sum_or_cumulative {
-                            if let Some(ref mut sum_vec) = sum {
-                                sum_vec.push(sum_val);
-                            }
-                            if let Some(ref mut cumulative_vec) = cumulative {
-                                let t = cumulative_val.unwrap() + sum_val;
-                                cumulative_val.replace(t);
-                                cumulative_vec.push(t);
-                            }
+                        if let Some(ref mut cumulative_vec) = cumulative {
+                            let t = cumulative_val.unwrap() + sum_val;
+                            cumulative_val.replace(t);
+                            cumulative_vec.push(t);
                         }
                     }
                 }
-            } else if needs_aggregates {
+            } else if needs_sum_or_cumulative {
                 let efi = effective_first_index.to_usize();
-                let (sum_val, len) = source.fold_range_at(
+                let sum_val = source.fold_range_at(
                     efi,
                     efi + effective_count,
-                    (T::from(0_usize), 0_usize),
-                    |(acc, cnt), val| (acc + val, cnt + 1),
+                    T::from(0_usize),
+                    |acc, val| acc + val,
                 );
 
-                if let Some(ref mut average_vec) = average {
-                    let avg = if len > 0 {
-                        sum_val / len
-                    } else {
-                        T::from(0_usize)
-                    };
-                    average_vec.push(avg);
+                if let Some(ref mut sum_vec) = sum {
+                    sum_vec.push(sum_val);
                 }
-
-                if needs_sum_or_cumulative {
-                    if let Some(ref mut sum_vec) = sum {
-                        sum_vec.push(sum_val);
-                    }
-                    if let Some(ref mut cumulative_vec) = cumulative {
-                        let t = cumulative_val.unwrap() + sum_val;
-                        cumulative_val.replace(t);
-                        cumulative_vec.push(t);
-                    }
+                if let Some(ref mut cumulative_vec) = cumulative {
+                    let t = cumulative_val.unwrap() + sum_val;
+                    cumulative_val.replace(t);
+                    cumulative_vec.push(t);
                 }
             }
 
@@ -301,7 +249,7 @@ where
     }
 
     write_vec!(
-        first, last, min, max, average, sum, cumulative, median, pct10, pct25, pct75, pct90
+        min, max, sum, cumulative, median, pct10, pct25, pct75, pct90
     );
 
     Ok(())
@@ -317,7 +265,6 @@ pub(crate) fn compute_aggregations_nblock_window<I, T, A>(
     exit: &Exit,
     min: &mut EagerVec<PcoVec<I, T>>,
     max: &mut EagerVec<PcoVec<I, T>>,
-    average: &mut EagerVec<PcoVec<I, T>>,
     median: &mut EagerVec<PcoVec<I, T>>,
     pct10: &mut EagerVec<PcoVec<I, T>>,
     pct25: &mut EagerVec<PcoVec<I, T>>,
@@ -335,7 +282,6 @@ where
     for vec in [
         &mut *min,
         &mut *max,
-        &mut *average,
         &mut *median,
         &mut *pct10,
         &mut *pct25,
@@ -358,7 +304,6 @@ where
     for vec in [
         &mut *min,
         &mut *max,
-        &mut *average,
         &mut *median,
         &mut *pct10,
         &mut *pct25,
@@ -371,13 +316,12 @@ where
     // Persistent sorted window: O(n) merge-insert for new block, O(n) merge-filter
     // for expired block. Avoids re-sorting every block. Cursor reads only the new
     // block (~1 page decompress vs original's ~4). Ring buffer caches per-block
-    // sorted values + sums for O(1) expiry.
+    // sorted values for O(1) expiry.
     // Peak memory: 2 × ~15k window elements + n_blocks × ~2500 cached ≈ 360 KB.
-    let mut block_ring: VecDeque<(Vec<T>, T)> = VecDeque::with_capacity(n_blocks + 1);
+    let mut block_ring: VecDeque<Vec<T>> = VecDeque::with_capacity(n_blocks + 1);
     let mut cursor = source.cursor();
     let mut sorted_window: Vec<T> = Vec::new();
     let mut merge_buf: Vec<T> = Vec::new();
-    let mut running_sum = T::from(0_usize);
 
     // Pre-fill initial window blocks [window_start_of_first..start)
     let window_start_of_first = start.saturating_sub(n_blocks - 1);
@@ -390,10 +334,8 @@ where
         let mut bv = Vec::with_capacity(count);
         cursor.for_each(count, |v: T| bv.push(v));
         bv.sort_unstable();
-        let block_sum = bv.iter().copied().fold(T::from(0), |a, b| a + b);
-        running_sum += block_sum;
         sorted_window.extend_from_slice(&bv);
-        block_ring.push_back((bv, block_sum));
+        block_ring.push_back(bv);
     }
     // Initial sorted_window was built by extending individually sorted blocks —
     // stable sort detects these sorted runs and merges in O(n × log(k)) instead of O(n log n).
@@ -411,8 +353,6 @@ where
         let mut new_block = Vec::with_capacity(count);
         cursor.for_each(count, |v: T| new_block.push(v));
         new_block.sort_unstable();
-        let new_sum = new_block.iter().copied().fold(T::from(0), |a, b| a + b);
-        running_sum += new_sum;
 
         // Merge-insert new sorted block into sorted_window: O(n+m)
         merge_buf.clear();
@@ -431,12 +371,11 @@ where
         merge_buf.extend_from_slice(&new_block[ni..]);
         std::mem::swap(&mut sorted_window, &mut merge_buf);
 
-        block_ring.push_back((new_block, new_sum));
+        block_ring.push_back(new_block);
 
         // Expire oldest block: merge-filter its sorted values from sorted_window in O(n)
         if block_ring.len() > n_blocks {
-            let (expired, expired_sum) = block_ring.pop_front().unwrap();
-            running_sum = running_sum.checked_sub(expired_sum).unwrap();
+            let expired = block_ring.pop_front().unwrap();
 
             merge_buf.clear();
             merge_buf.reserve(sorted_window.len());
@@ -455,7 +394,6 @@ where
             for vec in [
                 &mut *min,
                 &mut *max,
-                &mut *average,
                 &mut *median,
                 &mut *pct10,
                 &mut *pct25,
@@ -465,9 +403,6 @@ where
                 vec.push(zero);
             }
         } else {
-            let len = sorted_window.len();
-            let avg = running_sum / len;
-
             max.push(*sorted_window.last().unwrap());
             pct90.push(get_percentile(&sorted_window, 0.90));
             pct75.push(get_percentile(&sorted_window, 0.75));
@@ -475,12 +410,11 @@ where
             pct25.push(get_percentile(&sorted_window, 0.25));
             pct10.push(get_percentile(&sorted_window, 0.10));
             min.push(*sorted_window.first().unwrap());
-            average.push(avg);
         }
     }
 
     let _lock = exit.lock();
-    for vec in [min, max, average, median, pct10, pct25, pct75, pct90] {
+    for vec in [min, max, median, pct10, pct25, pct75, pct90] {
         vec.write()?;
     }
 

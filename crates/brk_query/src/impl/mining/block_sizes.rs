@@ -15,14 +15,14 @@ impl Query {
 
         let iter = Day1Iter::new(computer, start, current_height.to_usize());
 
-        // Rolling 24h average, sampled at day1 boundaries
+        // Rolling 24h median, sampled at day1 boundaries
         let sizes_vec = &computer
             .blocks
             .size
             .size
             .rolling
             .distribution
-            .average
+            .median
             ._24h
             .day1;
         let weights_vec = &computer
@@ -31,7 +31,7 @@ impl Query {
             .weight
             .rolling
             .distribution
-            .average
+            .median
             ._24h
             .day1;
 

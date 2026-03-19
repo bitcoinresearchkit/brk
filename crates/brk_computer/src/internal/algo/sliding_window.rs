@@ -121,7 +121,6 @@ impl SortedBlocks {
 /// O(n) memmoves with a flat sorted Vec.
 pub(crate) struct SlidingWindowSorted {
     sorted: SortedBlocks,
-    running_sum: f64,
     prev_start: usize,
 }
 
@@ -129,7 +128,6 @@ impl SlidingWindowSorted {
     pub fn with_capacity(cap: usize) -> Self {
         Self {
             sorted: SortedBlocks::new(cap),
-            running_sum: 0.0,
             prev_start: 0,
         }
     }
@@ -143,7 +141,6 @@ impl SlidingWindowSorted {
             return;
         }
         let mut sorted_copy: Vec<f64> = slice.to_vec();
-        self.running_sum = sorted_copy.iter().sum();
         sorted_copy.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
         self.sorted = SortedBlocks::from_sorted(&sorted_copy, self.sorted.block_size);
     }
@@ -156,12 +153,10 @@ impl SlidingWindowSorted {
         partial_values: &[f64],
         range_start: usize,
     ) {
-        self.running_sum += value;
         self.sorted.insert(value);
 
         while self.prev_start < new_start {
             let old = partial_values[self.prev_start - range_start];
-            self.running_sum -= old;
             self.sorted.remove(old);
             self.prev_start += 1;
         }
@@ -170,15 +165,6 @@ impl SlidingWindowSorted {
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.sorted.is_empty()
-    }
-
-    #[inline]
-    pub fn average(&self) -> f64 {
-        if self.sorted.is_empty() {
-            0.0
-        } else {
-            self.running_sum / self.sorted.len() as f64
-        }
     }
 
     #[inline]

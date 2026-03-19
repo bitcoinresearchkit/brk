@@ -60,7 +60,6 @@ impl RollingDistributionAmountPerBlock {
                             max_from,
                             $starts,
                             $source,
-                            &mut self.0.average.$w.$unit.height,
                             &mut self.0.min.$w.$unit.height,
                             &mut self.0.max.$w.$unit.height,
                             &mut self.0.pct10.$w.$unit.height,

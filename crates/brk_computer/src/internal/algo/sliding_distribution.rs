@@ -6,7 +6,7 @@ use vecdb::{
 
 use super::sliding_window::SlidingWindowSorted;
 
-/// Compute all 8 rolling distribution stats (avg, min, max, p10, p25, median, p75, p90)
+/// Compute all 7 rolling distribution stats (min, max, p10, p25, median, p75, p90)
 /// in a single sorted-vec pass per window.
 ///
 /// When computing multiple windows from the same source, pass the same
@@ -18,7 +18,6 @@ pub fn compute_rolling_distribution_from_starts<I, T, A>(
     max_from: I,
     window_starts: &impl ReadableVec<I, I>,
     values: &impl ReadableVec<I, A>,
-    average_out: &mut EagerVec<PcoVec<I, T>>,
     min_out: &mut EagerVec<PcoVec<I, T>>,
     max_out: &mut EagerVec<PcoVec<I, T>>,
     p10_out: &mut EagerVec<PcoVec<I, T>>,
@@ -38,7 +37,6 @@ where
     let version = window_starts.version() + values.version();
 
     for v in [
-        &mut *average_out,
         &mut *min_out,
         &mut *max_out,
         &mut *p10_out,
@@ -51,7 +49,6 @@ where
     }
 
     let skip = [
-        average_out.len(),
         min_out.len(),
         max_out.len(),
         p10_out.len(),
@@ -108,7 +105,6 @@ where
     let starts_batch = window_starts.collect_range_at(skip, end);
 
     for v in [
-        &mut *average_out,
         &mut *min_out,
         &mut *max_out,
         &mut *p10_out,
@@ -128,7 +124,6 @@ where
         if window.is_empty() {
             let zero = T::from(0.0);
             for v in [
-                &mut *average_out,
                 &mut *min_out,
                 &mut *max_out,
                 &mut *p10_out,
@@ -140,7 +135,6 @@ where
                 v.push(zero);
             }
         } else {
-            average_out.push(T::from(window.average()));
             min_out.push(T::from(window.min()));
             max_out.push(T::from(window.max()));
             let [p10, p25, p50, p75, p90] =
@@ -152,10 +146,9 @@ where
             p90_out.push(T::from(p90));
         }
 
-        if average_out.batch_limit_reached() {
+        if min_out.batch_limit_reached() {
             let _lock = exit.lock();
             for v in [
-                &mut *average_out,
                 &mut *min_out,
                 &mut *max_out,
                 &mut *p10_out,
@@ -172,7 +165,6 @@ where
     // Final flush
     let _lock = exit.lock();
     for v in [
-        average_out,
         min_out,
         max_out,
         p10_out,

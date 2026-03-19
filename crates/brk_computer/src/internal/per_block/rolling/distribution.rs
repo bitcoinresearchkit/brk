@@ -53,7 +53,6 @@ where
                     max_from,
                     windows.$w,
                     source,
-                    &mut self.0.average.$w.height,
                     &mut self.0.min.$w.height,
                     &mut self.0.max.$w.height,
                     &mut self.0.pct10.$w.height,
