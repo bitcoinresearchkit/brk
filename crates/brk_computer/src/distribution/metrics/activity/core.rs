@@ -107,15 +107,6 @@ impl ActivityCore {
             .compute_rest_part1(prices, starting_indexes, exit)?;
         self.coindays_destroyed
             .compute_rest(starting_indexes.height, exit)?;
-        Ok(())
-    }
-
-    pub(crate) fn compute_sent_profitability(
-        &mut self,
-        prices: &prices::Vecs,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
         self.transfer_volume_in_profit
             .compute_rest(starting_indexes.height, prices, exit)?;
         self.transfer_volume_in_loss

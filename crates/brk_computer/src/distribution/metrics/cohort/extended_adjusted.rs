@@ -32,7 +32,7 @@ impl CohortMetricsBase for ExtendedAdjustedCohortMetrics {
     type RealizedVecs = RealizedFull;
     type UnrealizedVecs = UnrealizedFull;
 
-    impl_cohort_accessors!();
+    impl_cohort_accessors_inner!();
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.inner.validate_computed_versions(base_version)

@@ -11,7 +11,7 @@ use crate::{
     blocks,
     distribution::metrics::{
         ActivityFull, CohortMetricsBase, CostBasis, ImportConfig, OutputsBase, RealizedFull,
-        RelativeWithExtended, SupplyCore, UnrealizedFull,
+        RelativeWithExtended, SupplyCore, UnrealizedFull, UnrealizedLike,
     },
     prices,
 };
@@ -121,11 +121,6 @@ impl ExtendedCohortMetrics {
             height_to_market_cap,
             all_supply_sats,
             &self.supply.total.usd.height,
-            exit,
-        )?;
-
-        self.activity.compute_rest_part2(
-            starting_indexes,
             exit,
         )?;
 

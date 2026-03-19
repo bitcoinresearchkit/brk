@@ -51,6 +51,52 @@ macro_rules! impl_cohort_accessors {
         fn unrealized_mut(&mut self) -> &mut Self::UnrealizedVecs {
             &mut self.unrealized
         }
+        fn supply_and_unrealized_mut(&mut self) -> (&$crate::distribution::metrics::SupplyCore, &mut Self::UnrealizedVecs) {
+            (&*self.supply, &mut self.unrealized)
+        }
+    };
+}
+
+/// Variant of `impl_cohort_accessors` for wrapper types that deref to an `inner` field.
+/// Uses `self.inner.*` directly to enable split borrows that Rust cannot infer through `Deref`.
+macro_rules! impl_cohort_accessors_inner {
+    () => {
+        fn filter(&self) -> &brk_cohort::Filter {
+            &self.inner.filter
+        }
+        fn supply(&self) -> &$crate::distribution::metrics::SupplyCore {
+            &self.inner.supply
+        }
+        fn supply_mut(&mut self) -> &mut $crate::distribution::metrics::SupplyCore {
+            &mut self.inner.supply
+        }
+        fn outputs(&self) -> &$crate::distribution::metrics::OutputsBase {
+            &self.inner.outputs
+        }
+        fn outputs_mut(&mut self) -> &mut $crate::distribution::metrics::OutputsBase {
+            &mut self.inner.outputs
+        }
+        fn activity(&self) -> &Self::ActivityVecs {
+            &self.inner.activity
+        }
+        fn activity_mut(&mut self) -> &mut Self::ActivityVecs {
+            &mut self.inner.activity
+        }
+        fn realized(&self) -> &Self::RealizedVecs {
+            &self.inner.realized
+        }
+        fn realized_mut(&mut self) -> &mut Self::RealizedVecs {
+            &mut self.inner.realized
+        }
+        fn unrealized(&self) -> &Self::UnrealizedVecs {
+            &self.inner.unrealized
+        }
+        fn unrealized_mut(&mut self) -> &mut Self::UnrealizedVecs {
+            &mut self.inner.unrealized
+        }
+        fn supply_and_unrealized_mut(&mut self) -> (&$crate::distribution::metrics::SupplyCore, &mut Self::UnrealizedVecs) {
+            (&*self.inner.supply, &mut self.inner.unrealized)
+        }
     };
 }
 
@@ -148,6 +194,7 @@ pub trait CohortMetricsBase:
     fn realized_mut(&mut self) -> &mut Self::RealizedVecs;
     fn unrealized(&self) -> &Self::UnrealizedVecs;
     fn unrealized_mut(&mut self) -> &mut Self::UnrealizedVecs;
+    fn supply_and_unrealized_mut(&mut self) -> (&SupplyCore, &mut Self::UnrealizedVecs);
 
     /// Convenience: access activity as `&ActivityCore` (via `ActivityLike::as_core`).
     fn activity_core(&self) -> &ActivityCore {
@@ -224,17 +271,18 @@ pub trait CohortMetricsBase:
             .compute(prices, starting_indexes.height, exit)?;
         self.activity_mut()
             .compute_rest_part1(prices, starting_indexes, exit)?;
-        self.activity_core_mut()
-            .compute_sent_profitability(prices, starting_indexes, exit)?;
 
         self.realized_mut()
             .compute_rest_part1(starting_indexes, exit)?;
 
-        self.unrealized_mut()
-            .compute_rest(prices, starting_indexes, exit)?;
-
-        self.unrealized_mut()
-            .compute_net_sentiment_height(starting_indexes, exit)?;
+        let (supply, unrealized) = self.supply_and_unrealized_mut();
+        unrealized.compute_rest(
+            prices,
+            starting_indexes,
+            &supply.in_profit.sats.height,
+            &supply.in_loss.sats.height,
+            exit,
+        )?;
 
         Ok(())
     }

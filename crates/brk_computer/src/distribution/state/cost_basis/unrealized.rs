@@ -10,16 +10,10 @@ pub struct UnrealizedState {
     pub supply_in_loss: Sats,
     pub unrealized_profit: Cents,
     pub unrealized_loss: Cents,
-    pub invested_capital_in_profit: Cents,
-    pub invested_capital_in_loss: Cents,
     /// Raw Σ(price² × sats) for UTXOs in profit. Used for aggregation.
     pub investor_cap_in_profit_raw: u128,
     /// Raw Σ(price² × sats) for UTXOs in loss. Used for aggregation.
     pub investor_cap_in_loss_raw: u128,
-    /// Raw Σ(price × sats) for UTXOs in profit. Used for aggregation.
-    pub invested_capital_in_profit_raw: u128,
-    /// Raw Σ(price × sats) for UTXOs in loss. Used for aggregation.
-    pub invested_capital_in_loss_raw: u128,
 }
 
 impl UnrealizedState {
@@ -28,12 +22,8 @@ impl UnrealizedState {
         supply_in_loss: Sats::ZERO,
         unrealized_profit: Cents::ZERO,
         unrealized_loss: Cents::ZERO,
-        invested_capital_in_profit: Cents::ZERO,
-        invested_capital_in_loss: Cents::ZERO,
         investor_cap_in_profit_raw: 0,
         investor_cap_in_loss_raw: 0,
-        invested_capital_in_profit_raw: 0,
-        invested_capital_in_loss_raw: 0,
     };
 }
 
@@ -118,12 +108,8 @@ impl Accumulate for WithoutCapital {
 impl Accumulate for WithCapital {
     fn to_output(&self) -> UnrealizedState {
         UnrealizedState {
-            invested_capital_in_profit: div_btc(self.invested_capital_in_profit),
-            invested_capital_in_loss: div_btc(self.invested_capital_in_loss),
             investor_cap_in_profit_raw: self.investor_cap_in_profit,
             investor_cap_in_loss_raw: self.investor_cap_in_loss,
-            invested_capital_in_profit_raw: self.invested_capital_in_profit,
-            invested_capital_in_loss_raw: self.invested_capital_in_loss,
             ..Accumulate::to_output(&self.core)
         }
     }

@@ -11,8 +11,8 @@ pub use full::UnrealizedFull;
 pub use minimal::UnrealizedMinimal;
 
 use brk_error::Result;
-use brk_types::Indexes;
-use vecdb::Exit;
+use brk_types::{Height, Indexes, Sats};
+use vecdb::{Exit, ReadableVec};
 
 use crate::{distribution::state::UnrealizedState, prices};
 
@@ -25,11 +25,8 @@ pub trait UnrealizedLike: Send + Sync {
         &mut self,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()>;
-    fn compute_net_sentiment_height(
-        &mut self,
-        starting_indexes: &Indexes,
+        supply_in_profit_sats: &(impl ReadableVec<Height, Sats> + Sync),
+        supply_in_loss_sats: &(impl ReadableVec<Height, Sats> + Sync),
         exit: &Exit,
     ) -> Result<()>;
 }
@@ -52,16 +49,11 @@ impl UnrealizedLike for UnrealizedBase {
         &mut self,
         _prices: &prices::Vecs,
         starting_indexes: &Indexes,
+        _supply_in_profit_sats: &(impl ReadableVec<Height, Sats> + Sync),
+        _supply_in_loss_sats: &(impl ReadableVec<Height, Sats> + Sync),
         exit: &Exit,
     ) -> Result<()> {
         self.compute_rest(starting_indexes, exit)
-    }
-    fn compute_net_sentiment_height(
-        &mut self,
-        _starting_indexes: &Indexes,
-        _exit: &Exit,
-    ) -> Result<()> {
-        Ok(())
     }
 }
 
@@ -83,15 +75,10 @@ impl UnrealizedLike for UnrealizedFull {
         &mut self,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
+        supply_in_profit_sats: &(impl ReadableVec<Height, Sats> + Sync),
+        supply_in_loss_sats: &(impl ReadableVec<Height, Sats> + Sync),
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_rest_all(prices, starting_indexes, exit)
-    }
-    fn compute_net_sentiment_height(
-        &mut self,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.compute_net_sentiment_height(starting_indexes, exit)
+        self.compute_rest_all(prices, starting_indexes, supply_in_profit_sats, supply_in_loss_sats, exit)
     }
 }

@@ -89,14 +89,8 @@ impl ActivityFull {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.inner.compute_rest_part1(prices, starting_indexes, exit)
-    }
+        self.inner.compute_rest_part1(prices, starting_indexes, exit)?;
 
-    pub(crate) fn compute_rest_part2(
-        &mut self,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
         for ((dormancy, cdd_sum), tv_sum) in self
             .dormancy
             .as_mut_array()
