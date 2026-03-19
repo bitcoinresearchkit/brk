@@ -96,8 +96,8 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
     }
 
     pub(crate) fn reset_single_iteration_values(&mut self) {
+        self.sent = Sats::ZERO;
         if R::TRACK_ACTIVITY {
-            self.sent = Sats::ZERO;
             self.satdays_destroyed = Sats::ZERO;
         }
         self.realized.reset_single_iteration_values();
@@ -196,8 +196,8 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
         pre: &SendPrecomputed,
     ) {
         self.supply -= supply;
+        self.sent += pre.sats;
         if R::TRACK_ACTIVITY {
-            self.sent += pre.sats;
             self.satdays_destroyed += pre.age.satdays_destroyed(pre.sats);
         }
 
@@ -241,8 +241,8 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
         self.supply -= supply;
 
         if supply.value > Sats::ZERO {
+            self.sent += supply.value;
             if R::TRACK_ACTIVITY {
-                self.sent += supply.value;
                 self.satdays_destroyed += age.satdays_destroyed(supply.value);
             }
 

@@ -6,7 +6,7 @@ use brk_types::{
 };
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+    AnyStoredVec, AnyVec, BytesVec, Exit, ReadableVec, Rw, StorageMode,
     WritableVec,
 };
 
@@ -14,9 +14,8 @@ use crate::{
     blocks,
     distribution::state::{WithCapital, CohortState, CostBasisData, RealizedState},
     internal::{
-        CentsUnsignedToDollars,
-        PerBlockCumulativeWithSums, FiatPerBlockCumulativeWithSums,
-        LazyPerBlock, PercentPerBlock, PercentRollingWindows,
+        FiatPerBlockCumulativeWithSums,
+        PercentPerBlock, PercentRollingWindows,
         PriceWithRatioExtendedPerBlock, RatioCents64, RatioCentsBp32,
         RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32, RatioDollarsBp32,
         RatioPerBlockPercentiles, RatioPerBlockStdDevBands, RatioSma, RollingWindows,
@@ -30,19 +29,13 @@ use crate::distribution::metrics::ImportConfig;
 use super::RealizedCore;
 
 #[derive(Traversable)]
-pub struct RealizedProfit<M: StorageMode = Rw> {
+pub struct RealizedProfitFull<M: StorageMode = Rw> {
     pub to_rcap: PercentPerBlock<BasisPoints32, M>,
-    pub value_created: PerBlockCumulativeWithSums<Cents, Cents, M>,
-    pub value_destroyed: PerBlockCumulativeWithSums<Cents, Cents, M>,
-    pub distribution_flow: LazyPerBlock<Dollars, Cents>,
 }
 
 #[derive(Traversable)]
-pub struct RealizedLoss<M: StorageMode = Rw> {
+pub struct RealizedLossFull<M: StorageMode = Rw> {
     pub to_rcap: PercentPerBlock<BasisPoints32, M>,
-    pub value_created: PerBlockCumulativeWithSums<Cents, Cents, M>,
-    pub value_destroyed: PerBlockCumulativeWithSums<Cents, Cents, M>,
-    pub capitulation_flow: LazyPerBlock<Dollars, Cents>,
 }
 
 #[derive(Traversable)]
@@ -81,8 +74,8 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub core: RealizedCore<M>,
 
-    pub profit: RealizedProfit<M>,
-    pub loss: RealizedLoss<M>,
+    pub profit: RealizedProfitFull<M>,
+    pub loss: RealizedLossFull<M>,
     pub gross_pnl: FiatPerBlockCumulativeWithSums<Cents, M>,
     pub sell_side_risk_ratio: PercentRollingWindows<BasisPoints32, M>,
     pub net_pnl: RealizedNetPnl<M>,
@@ -112,36 +105,11 @@ impl RealizedFull {
 
         let core = RealizedCore::forced_import(cfg)?;
 
-        // Profit
-        let profit_value_destroyed: PerBlockCumulativeWithSums<Cents, Cents> =
-            cfg.import("profit_value_destroyed", v1)?;
-        let profit_flow = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
-            &cfg.name("distribution_flow"),
-            cfg.version,
-            profit_value_destroyed.base.height.read_only_boxed_clone(),
-            &profit_value_destroyed.base,
-        );
-        let profit = RealizedProfit {
+        let profit = RealizedProfitFull {
             to_rcap: cfg.import("realized_profit_to_rcap", Version::new(2))?,
-            value_created: cfg.import("profit_value_created", v1)?,
-            value_destroyed: profit_value_destroyed,
-            distribution_flow: profit_flow,
         };
-
-        // Loss
-        let loss_value_destroyed: PerBlockCumulativeWithSums<Cents, Cents> =
-            cfg.import("loss_value_destroyed", v1)?;
-        let capitulation_flow = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
-            &cfg.name("capitulation_flow"),
-            cfg.version,
-            loss_value_destroyed.base.height.read_only_boxed_clone(),
-            &loss_value_destroyed.base,
-        );
-        let loss = RealizedLoss {
+        let loss = RealizedLossFull {
             to_rcap: cfg.import("realized_loss_to_rcap", Version::new(2))?,
-            value_created: cfg.import("loss_value_created", v1)?,
-            value_destroyed: loss_value_destroyed,
-            capitulation_flow,
         };
 
         // Gross PnL
@@ -216,15 +184,7 @@ impl RealizedFull {
     }
 
     pub(crate) fn min_stateful_len(&self) -> usize {
-        self.profit
-            .value_created
-            .base
-            .height
-            .len()
-            .min(self.profit.value_destroyed.base.height.len())
-            .min(self.loss.value_created.base.height.len())
-            .min(self.loss.value_destroyed.base.height.len())
-            .min(self.investor.price.cents.height.len())
+        self.investor.price.cents.height.len()
             .min(self.cap_raw.len())
             .min(self.investor.cap_raw.len())
             .min(self.peak_regret.value.base.cents.height.len())
@@ -236,26 +196,6 @@ impl RealizedFull {
         state: &CohortState<RealizedState, CostBasisData<WithCapital>>,
     ) {
         self.core.push_state(state);
-        self.profit
-            .value_created
-            .base
-            .height
-            .push(state.realized.profit_value_created());
-        self.profit
-            .value_destroyed
-            .base
-            .height
-            .push(state.realized.profit_value_destroyed());
-        self.loss
-            .value_created
-            .base
-            .height
-            .push(state.realized.loss_value_created());
-        self.loss
-            .value_destroyed
-            .base
-            .height
-            .push(state.realized.loss_value_destroyed());
         self.investor
             .price
             .cents
@@ -276,10 +216,6 @@ impl RealizedFull {
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.core.collect_vecs_mut();
-        vecs.push(&mut self.profit.value_created.base.height as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.profit.value_destroyed.base.height);
-        vecs.push(&mut self.loss.value_created.base.height);
-        vecs.push(&mut self.loss.value_destroyed.base.height);
         vecs.push(&mut self.investor.price.cents.height);
         vecs.push(&mut self.cap_raw as &mut dyn AnyStoredVec);
         vecs.push(&mut self.investor.cap_raw as &mut dyn AnyStoredVec);
@@ -304,26 +240,6 @@ impl RealizedFull {
         &mut self,
         accum: &RealizedFullAccum,
     ) {
-        self.profit
-            .value_created
-            .base
-            .height
-            .push(accum.profit_value_created());
-        self.profit
-            .value_destroyed
-            .base
-            .height
-            .push(accum.profit_value_destroyed());
-        self.loss
-            .value_created
-            .base
-            .height
-            .push(accum.loss_value_created());
-        self.loss
-            .value_destroyed
-            .base
-            .height
-            .push(accum.loss_value_destroyed());
         self.cap_raw
             .push(accum.cap_raw);
         self.investor
@@ -354,11 +270,12 @@ impl RealizedFull {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
+        prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.core
-            .compute_rest_part1(starting_indexes, exit)?;
+            .compute_rest_part1(prices, starting_indexes, exit)?;
 
         self.peak_regret
             .value
@@ -388,12 +305,12 @@ impl RealizedFull {
             .ratio_extended
             .as_mut_array()
             .into_iter()
-            .zip(self.core.minimal.sopr.value_created.sum.as_array()[1..].iter())
-            .zip(self.core.minimal.sopr.value_destroyed.sum.as_array()[1..].iter())
+            .zip(self.core.minimal.transfer_volume.sum.0.as_array()[1..].iter())
+            .zip(self.core.sopr.value_destroyed.sum.as_array()[1..].iter())
         {
             sopr.compute_binary::<Cents, Cents, RatioCents64>(
                 starting_indexes.height,
-                &vc.height,
+                &vc.cents.height,
                 &vd.height,
                 exit,
             )?;
@@ -424,20 +341,6 @@ impl RealizedFull {
                 &self.core.minimal.cap.cents.height,
                 exit,
             )?;
-
-        // Profit/loss value created/destroyed cumulatives (rolling sums are lazy)
-        self.profit
-            .value_created
-            .compute_rest(starting_indexes.height, exit)?;
-        self.profit
-            .value_destroyed
-            .compute_rest(starting_indexes.height, exit)?;
-        self.loss
-            .value_created
-            .compute_rest(starting_indexes.height, exit)?;
-        self.loss
-            .value_destroyed
-            .compute_rest(starting_indexes.height, exit)?;
 
         // Gross PnL
         self.gross_pnl.base.cents.height.compute_add(
@@ -554,10 +457,6 @@ impl RealizedFull {
 
 #[derive(Default)]
 pub struct RealizedFullAccum {
-    profit_value_created: CentsSats,
-    profit_value_destroyed: CentsSats,
-    loss_value_created: CentsSats,
-    loss_value_destroyed: CentsSats,
     pub(crate) cap_raw: CentsSats,
     pub(crate) investor_cap_raw: CentsSquaredSats,
     peak_regret: CentsSats,
@@ -565,29 +464,9 @@ pub struct RealizedFullAccum {
 
 impl RealizedFullAccum {
     pub(crate) fn add(&mut self, state: &RealizedState) {
-        self.profit_value_created += CentsSats::new(state.profit_value_created_raw());
-        self.profit_value_destroyed += CentsSats::new(state.profit_value_destroyed_raw());
-        self.loss_value_created += CentsSats::new(state.loss_value_created_raw());
-        self.loss_value_destroyed += CentsSats::new(state.loss_value_destroyed_raw());
         self.cap_raw += state.cap_raw();
         self.investor_cap_raw += state.investor_cap_raw();
         self.peak_regret += CentsSats::new(state.peak_regret_raw());
-    }
-
-    pub(crate) fn profit_value_created(&self) -> Cents {
-        self.profit_value_created.to_cents()
-    }
-
-    pub(crate) fn profit_value_destroyed(&self) -> Cents {
-        self.profit_value_destroyed.to_cents()
-    }
-
-    pub(crate) fn loss_value_created(&self) -> Cents {
-        self.loss_value_created.to_cents()
-    }
-
-    pub(crate) fn loss_value_destroyed(&self) -> Cents {
-        self.loss_value_destroyed.to_cents()
     }
 
     pub(crate) fn peak_regret(&self) -> Cents {

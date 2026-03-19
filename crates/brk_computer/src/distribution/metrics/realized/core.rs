@@ -3,14 +3,14 @@ use brk_traversable::Traversable;
 use brk_types::{BasisPointsSigned32, Bitcoin, Cents, CentsSigned, Dollars, Height, Indexes, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+    AnyStoredVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec,
 };
 
 use crate::{
     distribution::state::{CohortState, CostBasisOps, RealizedOps},
     internal::{
         FiatPerBlockCumulativeWithSumsAndDeltas, LazyPerBlock, NegCentsUnsignedToDollars,
-        RatioCents64, RollingWindow24hPerBlock, Windows,
+        PerBlockCumulativeWithSums, RatioCents64, RollingWindow24hPerBlock, Windows,
     },
     prices,
 };
@@ -28,6 +28,7 @@ pub struct NegRealizedLoss {
 
 #[derive(Traversable)]
 pub struct RealizedSoprCore<M: StorageMode = Rw> {
+    pub value_destroyed: PerBlockCumulativeWithSums<Cents, Cents, M>,
     pub ratio: RollingWindow24hPerBlock<StoredF64, M>,
 }
 
@@ -80,11 +81,20 @@ impl RealizedCore {
             cfg.cached_starts,
         )?;
 
+        let value_destroyed = PerBlockCumulativeWithSums::forced_import(
+            cfg.db,
+            &cfg.name("value_destroyed"),
+            cfg.version + v1,
+            cfg.indexes,
+            cfg.cached_starts,
+        )?;
+
         Ok(Self {
             minimal,
             neg_loss,
             net_pnl,
             sopr: RealizedSoprCore {
+                value_destroyed,
                 ratio: cfg.import("sopr", v1)?,
             },
         })
@@ -97,10 +107,13 @@ impl RealizedCore {
     #[inline(always)]
     pub(crate) fn push_state(&mut self, state: &CohortState<impl RealizedOps, impl CostBasisOps>) {
         self.minimal.push_state(state);
+        self.sopr.value_destroyed.base.height.push(state.realized.value_destroyed());
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        self.minimal.collect_vecs_mut()
+        let mut vecs = self.minimal.collect_vecs_mut();
+        vecs.push(&mut self.sopr.value_destroyed.base.height);
+        vecs
     }
 
     pub(crate) fn compute_from_stateful(
@@ -113,16 +126,22 @@ impl RealizedCore {
         self.minimal
             .compute_from_stateful(starting_indexes, &minimal_refs, exit)?;
 
+        sum_others!(self, starting_indexes, others, exit; sopr.value_destroyed.base.height);
         Ok(())
     }
 
     pub(crate) fn compute_rest_part1(
         &mut self,
+        prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.minimal
-            .compute_rest_part1(starting_indexes, exit)?;
+            .compute_rest_part1(prices, starting_indexes, exit)?;
+
+        self.sopr
+            .value_destroyed
+            .compute_rest(starting_indexes.height, exit)?;
 
         self.net_pnl.base.cents.height.compute_transform2(
             starting_indexes.height,
@@ -158,8 +177,8 @@ impl RealizedCore {
             ._24h
             .compute_binary::<Cents, Cents, RatioCents64>(
                 starting_indexes.height,
-                &self.minimal.sopr.value_created.sum._24h.height,
-                &self.minimal.sopr.value_destroyed.sum._24h.height,
+                &self.minimal.transfer_volume.sum._24h.cents.height,
+                &self.sopr.value_destroyed.sum._24h.height,
                 exit,
             )?;
 

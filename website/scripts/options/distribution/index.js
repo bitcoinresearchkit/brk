@@ -66,10 +66,10 @@ import {
   createActivitySection,
   createActivitySectionWithAdjusted,
   createActivitySectionWithActivity,
-  createActivitySectionMinimal,
   createGroupedActivitySection,
   createGroupedActivitySectionWithAdjusted,
   createGroupedActivitySectionWithActivity,
+  createActivitySectionMinimal,
   createGroupedActivitySectionMinimal,
 } from "./activity.js";
 

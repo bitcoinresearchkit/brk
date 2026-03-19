@@ -60,14 +60,10 @@
  * @typedef {Brk.BpsCentsPercentilesRatioSatsUsdPattern} PriceRatioPercentilesPattern
  * AnyRatioPattern: full ratio pattern with percentiles, SMAs, and std dev bands
  * @typedef {Brk.BpsCentsPercentilesRatioSatsSmaStdUsdPattern} AnyRatioPattern
- * ValuePattern: patterns with base + cumulative (no rolling)
- * @typedef {Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativeToPattern} ValuePattern
  * FullValuePattern: base + cumulative + rolling windows (flattened)
  * @typedef {Brk.BaseCumulativeSumPattern4} FullValuePattern
  * RollingWindowSlot: a single rolling window with stats (average, pct10, pct25, median, pct75, pct90, max, min) per unit
  * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} RollingWindowSlot
- * AnyValuePatternType: union of all value pattern types
- * @typedef {Brk.BaseCumulativeSumPattern4 | Brk.BaseCumulativeSumPattern<number> | Brk.BaseCumulativeToPattern} AnyValuePatternType
  * @typedef {Brk.AnySeriesPattern} AnySeriesPattern
  * @typedef {Brk.CentsSatsUsdPattern} ActivePricePattern
  * @typedef {Brk.AnySeriesEndpoint} AnySeriesEndpoint
@@ -101,11 +97,6 @@
  * Full activity pattern (coindays, coinyears, dormancy, transfer volume)
  * @typedef {Brk.CoindaysCoinyearsDormancyTransferPattern} FullActivityPattern
  *
- * Profit distribution detail (base + cumulative + distribution flow + rel + sum + value)
- * @typedef {Brk.BaseCumulativeDistributionSumToValuePattern} ProfitDetailPattern
- *
- * Loss detail with capitulation (base + capitulation + cumulative + negative + rel + sum + value)
- * @typedef {Brk.BaseCapitulationCumulativeNegativeSumToValuePattern} LossDetailPattern
  *
  * BPS + ratio pattern (for NUPL and similar)
  * @typedef {Brk.BpsRatioPattern} NuplPattern

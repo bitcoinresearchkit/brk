@@ -369,7 +369,7 @@ function realizedNetFolder({ netPnl, title, toRcap, extraChange = [] }) {
  * @param {{ sum: Record<string, { usd: AnySeriesPattern }>, negative: { sum: Record<string, AnySeriesPattern> } }} args.loss
  * @param {{ sum: Record<string, { usd: AnySeriesPattern }> }} args.netPnl
  * @param {{ sum: Record<string, { usd: AnySeriesPattern }> }} [args.grossPnl]
- * @param {{ sum: Record<string, AnySeriesPattern> }} [args.peakRegret]
+ * @param {{ sum: Record<string, { usd: AnySeriesPattern }> }} [args.peakRegret]
  * @param {(name: string) => string} args.title
  * @returns {PartialOptionsGroup}
  */

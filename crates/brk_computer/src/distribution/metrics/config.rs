@@ -8,10 +8,8 @@ use crate::{
     indexes,
     internal::{
         AmountPerBlock, AmountPerBlockCumulative, AmountPerBlockCumulativeWithSums,
-        CachedWindowStarts, CentsType, PerBlock,
-        PerBlockCumulative, PerBlockCumulativeWithSums,
-        FiatPerBlock, FiatPerBlockCumulativeWithSums, NumericValue,
-        PercentPerBlock, PercentRollingWindows, Price,
+        CachedWindowStarts, CentsType, FiatPerBlock, FiatPerBlockCumulativeWithSums, NumericValue,
+        PerBlock, PerBlockCumulativeWithSums, PercentPerBlock, PercentRollingWindows, Price,
         PriceWithRatioExtendedPerBlock, PriceWithRatioPerBlock, RatioPerBlock,
         RollingWindow24hPerBlock, RollingWindows, RollingWindowsFrom1w,
     },
@@ -52,11 +50,6 @@ impl_config_import!(
 
 // Generic types (macro_rules can't parse generic bounds, so written out)
 impl<T: NumericValue + JsonSchema> ConfigImport for PerBlock<T> {
-    fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
-        Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
-    }
-}
-impl<T: NumericValue + JsonSchema> ConfigImport for PerBlockCumulative<T> {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }

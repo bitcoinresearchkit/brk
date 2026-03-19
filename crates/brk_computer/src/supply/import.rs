@@ -37,8 +37,12 @@ impl Vecs {
         let burned = burned::Vecs::forced_import(&db, version, indexes, cached_starts)?;
 
         // Inflation rate
-        let inflation_rate =
-            PercentPerBlock::forced_import(&db, "inflation_rate", version, indexes)?;
+        let inflation_rate = PercentPerBlock::forced_import(
+            &db,
+            "inflation_rate",
+            version + Version::ONE,
+            indexes,
+        )?;
 
         // Velocity
         let velocity = super::velocity::Vecs::forced_import(&db, version, indexes)?;

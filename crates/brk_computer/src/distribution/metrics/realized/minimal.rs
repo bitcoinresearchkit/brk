@@ -11,19 +11,13 @@ use vecdb::{
 use crate::{
     distribution::state::{CohortState, CostBasisOps, RealizedOps},
     internal::{
-        PerBlockCumulativeWithSums, FiatPerBlockCumulativeWithSums,
+        AmountPerBlockCumulativeWithSums, FiatPerBlockCumulativeWithSums,
         FiatPerBlockWithDeltas, Identity, LazyPerBlock, PriceWithRatioPerBlock,
     },
     prices,
 };
 
 use crate::distribution::metrics::ImportConfig;
-
-#[derive(Traversable)]
-pub struct RealizedSoprMinimal<M: StorageMode = Rw> {
-    pub value_created: PerBlockCumulativeWithSums<Cents, Cents, M>,
-    pub value_destroyed: PerBlockCumulativeWithSums<Cents, Cents, M>,
-}
 
 #[derive(Traversable)]
 pub struct RealizedMinimal<M: StorageMode = Rw> {
@@ -33,7 +27,7 @@ pub struct RealizedMinimal<M: StorageMode = Rw> {
     pub price: PriceWithRatioPerBlock<M>,
     pub mvrv: LazyPerBlock<StoredF32>,
 
-    pub sopr: RealizedSoprMinimal<M>,
+    pub transfer_volume: AmountPerBlockCumulativeWithSums<M>,
 }
 
 impl RealizedMinimal {
@@ -56,16 +50,21 @@ impl RealizedMinimal {
             &price.ratio,
         );
 
+        let transfer_volume = AmountPerBlockCumulativeWithSums::forced_import(
+            cfg.db,
+            &cfg.name("transfer_volume"),
+            cfg.version,
+            cfg.indexes,
+            cfg.cached_starts,
+        )?;
+
         Ok(Self {
             cap,
             profit: cfg.import("realized_profit", v1)?,
             loss: cfg.import("realized_loss", v1)?,
             price,
             mvrv,
-            sopr: RealizedSoprMinimal {
-                value_created: cfg.import("value_created", v1)?,
-                value_destroyed: cfg.import("value_destroyed", v1)?,
-            },
+            transfer_volume,
         })
     }
 
@@ -76,8 +75,7 @@ impl RealizedMinimal {
             .len()
             .min(self.profit.base.cents.height.len())
             .min(self.loss.base.cents.height.len())
-            .min(self.sopr.value_created.base.height.len())
-            .min(self.sopr.value_destroyed.base.height.len())
+            .min(self.transfer_volume.base.sats.height.len())
     }
 
     #[inline(always)]
@@ -85,16 +83,7 @@ impl RealizedMinimal {
         self.cap.cents.height.push(state.realized.cap());
         self.profit.base.cents.height.push(state.realized.profit());
         self.loss.base.cents.height.push(state.realized.loss());
-        self.sopr
-            .value_created
-            .base
-            .height
-            .push(state.realized.value_created());
-        self.sopr
-            .value_destroyed
-            .base
-            .height
-            .push(state.realized.value_destroyed());
+        self.transfer_volume.base.sats.height.push(state.sent);
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
@@ -102,8 +91,7 @@ impl RealizedMinimal {
             &mut self.cap.cents.height as &mut dyn AnyStoredVec,
             &mut self.profit.base.cents.height,
             &mut self.loss.base.cents.height,
-            &mut self.sopr.value_created.base.height,
-            &mut self.sopr.value_destroyed.base.height,
+            &mut self.transfer_volume.base.sats.height,
         ]
     }
 
@@ -116,24 +104,20 @@ impl RealizedMinimal {
         sum_others!(self, starting_indexes, others, exit; cap.cents.height);
         sum_others!(self, starting_indexes, others, exit; profit.base.cents.height);
         sum_others!(self, starting_indexes, others, exit; loss.base.cents.height);
-        sum_others!(self, starting_indexes, others, exit; sopr.value_created.base.height);
-        sum_others!(self, starting_indexes, others, exit; sopr.value_destroyed.base.height);
+        sum_others!(self, starting_indexes, others, exit; transfer_volume.base.sats.height);
         Ok(())
     }
 
     pub(crate) fn compute_rest_part1(
         &mut self,
+        prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.profit.compute_rest(starting_indexes.height, exit)?;
         self.loss.compute_rest(starting_indexes.height, exit)?;
-        self.sopr
-            .value_created
-            .compute_rest(starting_indexes.height, exit)?;
-        self.sopr
-            .value_destroyed
-            .compute_rest(starting_indexes.height, exit)?;
+        self.transfer_volume
+            .compute_rest(starting_indexes.height, prices, exit)?;
         Ok(())
     }
 

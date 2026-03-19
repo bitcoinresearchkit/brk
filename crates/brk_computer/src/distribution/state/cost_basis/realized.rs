@@ -8,9 +8,6 @@ pub trait RealizedOps: Default + Clone + Send + Sync + 'static {
     fn cap(&self) -> Cents;
     fn profit(&self) -> Cents;
     fn loss(&self) -> Cents;
-    fn value_created(&self) -> Cents {
-        Cents::ZERO
-    }
     fn value_destroyed(&self) -> Cents {
         Cents::ZERO
     }
@@ -46,7 +43,6 @@ pub struct MinimalRealizedState {
     cap_raw: u128,
     profit_raw: u128,
     loss_raw: u128,
-    value_created_raw: u128,
     value_destroyed_raw: u128,
 }
 
@@ -76,13 +72,6 @@ impl RealizedOps for MinimalRealizedState {
     }
 
     #[inline]
-    fn value_created(&self) -> Cents {
-        if self.value_created_raw == 0 {
-            return Cents::ZERO;
-        }
-        Cents::new((self.value_created_raw / Sats::ONE_BTC_U128) as u64)
-    }
-
     #[inline]
     fn value_destroyed(&self) -> Cents {
         if self.value_destroyed_raw == 0 {
@@ -103,7 +92,6 @@ impl RealizedOps for MinimalRealizedState {
     fn reset_single_iteration_values(&mut self) {
         self.profit_raw = 0;
         self.loss_raw = 0;
-        self.value_created_raw = 0;
         self.value_destroyed_raw = 0;
     }
 
@@ -145,7 +133,6 @@ impl RealizedOps for MinimalRealizedState {
             Ordering::Equal => {}
         }
         self.cap_raw -= prev_ps.as_u128();
-        self.value_created_raw += current_ps.as_u128();
         self.value_destroyed_raw += prev_ps.as_u128();
     }
 }
@@ -175,11 +162,6 @@ impl RealizedOps for CoreRealizedState {
     #[inline]
     fn loss(&self) -> Cents {
         self.minimal.loss()
-    }
-
-    #[inline]
-    fn value_created(&self) -> Cents {
-        self.minimal.value_created()
     }
 
     #[inline]
@@ -263,14 +245,6 @@ pub struct RealizedState {
     core: CoreRealizedState,
     /// Raw investor cap: Σ(price² × sats)
     investor_cap_raw: CentsSquaredSats,
-    /// sell_price × sats for profit cases
-    profit_value_created_raw: u128,
-    /// cost_basis × sats for profit cases
-    profit_value_destroyed_raw: u128,
-    /// sell_price × sats for loss cases
-    loss_value_created_raw: u128,
-    /// cost_basis × sats for loss cases (= capitulation_flow)
-    loss_value_destroyed_raw: u128,
     /// Raw realized peak regret: Σ((peak - sell_price) × sats)
     peak_regret_raw: u128,
 }
@@ -294,21 +268,8 @@ impl RealizedOps for RealizedState {
     }
 
     #[inline]
-    fn value_created(&self) -> Cents {
-        let raw = self.profit_value_created_raw + self.loss_value_created_raw;
-        if raw == 0 {
-            return Cents::ZERO;
-        }
-        Cents::new((raw / Sats::ONE_BTC_U128) as u64)
-    }
-
-    #[inline]
     fn value_destroyed(&self) -> Cents {
-        let raw = self.profit_value_destroyed_raw + self.loss_value_destroyed_raw;
-        if raw == 0 {
-            return Cents::ZERO;
-        }
-        Cents::new((raw / Sats::ONE_BTC_U128) as u64)
+        self.core.value_destroyed()
     }
 
     #[inline]
@@ -334,10 +295,6 @@ impl RealizedOps for RealizedState {
     #[inline]
     fn reset_single_iteration_values(&mut self) {
         self.core.reset_single_iteration_values();
-        self.profit_value_created_raw = 0;
-        self.profit_value_destroyed_raw = 0;
-        self.loss_value_created_raw = 0;
-        self.loss_value_destroyed_raw = 0;
         self.peak_regret_raw = 0;
     }
 
@@ -370,23 +327,8 @@ impl RealizedOps for RealizedState {
         ath_ps: CentsSats,
         prev_investor_cap: CentsSquaredSats,
     ) {
-        // Delegate cap/profit/loss + value_created/destroyed + sent tracking to core
         self.core
             .send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
-
-        // Per-component value flow tracking
-        let current = current_ps.as_u128();
-        let prev = prev_ps.as_u128();
-        match current_ps.cmp(&prev_ps) {
-            Ordering::Greater | Ordering::Equal => {
-                self.profit_value_created_raw += current;
-                self.profit_value_destroyed_raw += prev;
-            }
-            Ordering::Less => {
-                self.loss_value_created_raw += current;
-                self.loss_value_destroyed_raw += prev;
-            }
-        }
 
         self.peak_regret_raw += (ath_ps - current_ps).as_u128();
         self.investor_cap_raw -= prev_investor_cap;
@@ -417,42 +359,6 @@ impl RealizedState {
         self.investor_cap_raw
     }
 
-    /// Get profit value created as CentsUnsigned (sell_price × sats for profit cases).
-    #[inline]
-    pub(crate) fn profit_value_created(&self) -> Cents {
-        if self.profit_value_created_raw == 0 {
-            return Cents::ZERO;
-        }
-        Cents::new((self.profit_value_created_raw / Sats::ONE_BTC_U128) as u64)
-    }
-
-    /// Get profit value destroyed as CentsUnsigned (cost_basis × sats for profit cases).
-    #[inline]
-    pub(crate) fn profit_value_destroyed(&self) -> Cents {
-        if self.profit_value_destroyed_raw == 0 {
-            return Cents::ZERO;
-        }
-        Cents::new((self.profit_value_destroyed_raw / Sats::ONE_BTC_U128) as u64)
-    }
-
-    /// Get loss value created as CentsUnsigned (sell_price × sats for loss cases).
-    #[inline]
-    pub(crate) fn loss_value_created(&self) -> Cents {
-        if self.loss_value_created_raw == 0 {
-            return Cents::ZERO;
-        }
-        Cents::new((self.loss_value_created_raw / Sats::ONE_BTC_U128) as u64)
-    }
-
-    /// Get loss value destroyed as CentsUnsigned (cost_basis × sats for loss cases).
-    #[inline]
-    pub(crate) fn loss_value_destroyed(&self) -> Cents {
-        if self.loss_value_destroyed_raw == 0 {
-            return Cents::ZERO;
-        }
-        Cents::new((self.loss_value_destroyed_raw / Sats::ONE_BTC_U128) as u64)
-    }
-
     /// Get realized peak regret as CentsUnsigned.
     #[inline]
     pub(crate) fn peak_regret(&self) -> Cents {
@@ -460,30 +366,6 @@ impl RealizedState {
             return Cents::ZERO;
         }
         Cents::new((self.peak_regret_raw / Sats::ONE_BTC_U128) as u64)
-    }
-
-    /// Raw profit value created for lossless aggregation.
-    #[inline]
-    pub(crate) fn profit_value_created_raw(&self) -> u128 {
-        self.profit_value_created_raw
-    }
-
-    /// Raw profit value destroyed for lossless aggregation.
-    #[inline]
-    pub(crate) fn profit_value_destroyed_raw(&self) -> u128 {
-        self.profit_value_destroyed_raw
-    }
-
-    /// Raw loss value created for lossless aggregation.
-    #[inline]
-    pub(crate) fn loss_value_created_raw(&self) -> u128 {
-        self.loss_value_created_raw
-    }
-
-    /// Raw loss value destroyed for lossless aggregation.
-    #[inline]
-    pub(crate) fn loss_value_destroyed_raw(&self) -> u128 {
-        self.loss_value_destroyed_raw
     }
 
     /// Raw peak regret for lossless aggregation.

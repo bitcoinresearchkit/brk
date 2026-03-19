@@ -542,9 +542,9 @@ impl UTXOCohorts<Rw> {
             .metrics
             .realized
             .minimal
-            .sopr
-            .value_created
+            .transfer_volume
             .base
+            .cents
             .height
             .read_only_clone();
         let under_1h_value_destroyed = self
@@ -552,7 +552,6 @@ impl UTXOCohorts<Rw> {
             .under_1h
             .metrics
             .realized
-            .minimal
             .sopr
             .value_destroyed
             .base

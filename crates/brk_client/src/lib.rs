@@ -1074,12 +1074,12 @@ pub struct CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern {
     pub cap: CentsDeltaToUsdPattern,
     pub gross_pnl: BaseCumulativeSumPattern3,
     pub investor: PricePattern,
-    pub loss: BaseCapitulationCumulativeNegativeSumToValuePattern,
+    pub loss: BaseCumulativeNegativeSumToPattern,
     pub mvrv: SeriesPattern1<StoredF32>,
     pub net_pnl: BaseChangeCumulativeDeltaSumToPattern,
     pub peak_regret: BaseCumulativeSumToPattern,
     pub price: BpsCentsPercentilesRatioSatsSmaStdUsdPattern,
-    pub profit: BaseCumulativeDistributionSumToValuePattern,
+    pub profit: BaseCumulativeSumToPattern,
     pub profit_to_loss_ratio: _1m1w1y24hPattern<StoredF64>,
     pub sell_side_risk_ratio: _1m1w1y24hPattern6,
     pub sopr: AdjustedRatioValuePattern,
@@ -1255,18 +1255,6 @@ impl AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern2 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct BaseCapitulationCumulativeNegativeSumToValuePattern {
-    pub base: CentsUsdPattern2,
-    pub capitulation_flow: SeriesPattern1<Dollars>,
-    pub cumulative: CentsUsdPattern2,
-    pub negative: BaseSumPattern,
-    pub sum: _1m1w1y24hPattern4,
-    pub to_rcap: BpsPercentRatioPattern4,
-    pub value_created: BaseCumulativeSumPattern<Cents>,
-    pub value_destroyed: BaseCumulativeSumPattern<Cents>,
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct BpsCentsPercentilesRatioSatsSmaStdUsdPattern {
     pub bps: SeriesPattern1<BasisPoints32>,
     pub cents: SeriesPattern1<Cents>,
@@ -1356,17 +1344,6 @@ impl _1m1w1y24hBpsPercentRatioPattern {
             ratio: SeriesPattern1::new(client.clone(), _m(&acc, "ratio")),
         }
     }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct BaseCumulativeDistributionSumToValuePattern {
-    pub base: CentsUsdPattern2,
-    pub cumulative: CentsUsdPattern2,
-    pub distribution_flow: SeriesPattern1<Dollars>,
-    pub sum: _1m1w1y24hPattern4,
-    pub to_rcap: BpsPercentRatioPattern4,
-    pub value_created: BaseCumulativeSumPattern<Cents>,
-    pub value_destroyed: BaseCumulativeSumPattern<Cents>,
 }
 
 /// Pattern struct for repeated tree structure.
@@ -1686,6 +1663,15 @@ impl BaseCumulativeInSumPattern {
             sum: _1m1w1y24hPattern5::new(client.clone(), _m(&acc, "sum")),
         }
     }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct BaseCumulativeNegativeSumToPattern {
+    pub base: CentsUsdPattern2,
+    pub cumulative: CentsUsdPattern2,
+    pub negative: BaseSumPattern,
+    pub sum: _1m1w1y24hPattern4,
+    pub to_rcap: BpsPercentRatioPattern4,
 }
 
 /// Pattern struct for repeated tree structure.
@@ -6332,7 +6318,7 @@ impl SeriesTree_Cohorts_Utxo_All_Activity {
 /// Series tree node.
 pub struct SeriesTree_Cohorts_Utxo_All_Realized {
     pub cap: CentsDeltaToUsdPattern,
-    pub profit: SeriesTree_Cohorts_Utxo_All_Realized_Profit,
+    pub profit: BaseCumulativeSumToPattern,
     pub loss: SeriesTree_Cohorts_Utxo_All_Realized_Loss,
     pub price: SeriesTree_Cohorts_Utxo_All_Realized_Price,
     pub mvrv: SeriesPattern1<StoredF32>,
@@ -6349,7 +6335,7 @@ impl SeriesTree_Cohorts_Utxo_All_Realized {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             cap: CentsDeltaToUsdPattern::new(client.clone(), "realized_cap".to_string()),
-            profit: SeriesTree_Cohorts_Utxo_All_Realized_Profit::new(client.clone(), format!("{base_path}_profit")),
+            profit: BaseCumulativeSumToPattern::new(client.clone(), "realized_profit".to_string()),
             loss: SeriesTree_Cohorts_Utxo_All_Realized_Loss::new(client.clone(), format!("{base_path}_loss")),
             price: SeriesTree_Cohorts_Utxo_All_Realized_Price::new(client.clone(), format!("{base_path}_price")),
             mvrv: SeriesPattern1::new(client.clone(), "mvrv".to_string()),
@@ -6365,40 +6351,12 @@ impl SeriesTree_Cohorts_Utxo_All_Realized {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Cohorts_Utxo_All_Realized_Profit {
-    pub base: CentsUsdPattern2,
-    pub cumulative: CentsUsdPattern2,
-    pub sum: _1m1w1y24hPattern4,
-    pub to_rcap: BpsPercentRatioPattern4,
-    pub value_created: BaseCumulativeSumPattern<Cents>,
-    pub value_destroyed: BaseCumulativeSumPattern<Cents>,
-    pub distribution_flow: SeriesPattern1<Dollars>,
-}
-
-impl SeriesTree_Cohorts_Utxo_All_Realized_Profit {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            base: CentsUsdPattern2::new(client.clone(), "realized_profit".to_string()),
-            cumulative: CentsUsdPattern2::new(client.clone(), "realized_profit_cumulative".to_string()),
-            sum: _1m1w1y24hPattern4::new(client.clone(), "realized_profit_sum".to_string()),
-            to_rcap: BpsPercentRatioPattern4::new(client.clone(), "realized_profit_to_rcap".to_string()),
-            value_created: BaseCumulativeSumPattern::new(client.clone(), "profit_value_created".to_string()),
-            value_destroyed: BaseCumulativeSumPattern::new(client.clone(), "profit_value_destroyed".to_string()),
-            distribution_flow: SeriesPattern1::new(client.clone(), "distribution_flow".to_string()),
-        }
-    }
-}
-
-/// Series tree node.
 pub struct SeriesTree_Cohorts_Utxo_All_Realized_Loss {
     pub base: CentsUsdPattern2,
     pub cumulative: CentsUsdPattern2,
     pub sum: _1m1w1y24hPattern4,
     pub negative: BaseSumPattern,
     pub to_rcap: BpsPercentRatioPattern4,
-    pub value_created: BaseCumulativeSumPattern<Cents>,
-    pub value_destroyed: BaseCumulativeSumPattern<Cents>,
-    pub capitulation_flow: SeriesPattern1<Dollars>,
 }
 
 impl SeriesTree_Cohorts_Utxo_All_Realized_Loss {
@@ -6409,9 +6367,6 @@ impl SeriesTree_Cohorts_Utxo_All_Realized_Loss {
             sum: _1m1w1y24hPattern4::new(client.clone(), "realized_loss_sum".to_string()),
             negative: BaseSumPattern::new(client.clone(), "neg_realized_loss".to_string()),
             to_rcap: BpsPercentRatioPattern4::new(client.clone(), "realized_loss_to_rcap".to_string()),
-            value_created: BaseCumulativeSumPattern::new(client.clone(), "loss_value_created".to_string()),
-            value_destroyed: BaseCumulativeSumPattern::new(client.clone(), "loss_value_destroyed".to_string()),
-            capitulation_flow: SeriesPattern1::new(client.clone(), "capitulation_flow".to_string()),
         }
     }
 }
@@ -6827,7 +6782,7 @@ impl SeriesTree_Cohorts_Utxo_Sth_Activity {
 /// Series tree node.
 pub struct SeriesTree_Cohorts_Utxo_Sth_Realized {
     pub cap: CentsDeltaToUsdPattern,
-    pub profit: SeriesTree_Cohorts_Utxo_Sth_Realized_Profit,
+    pub profit: BaseCumulativeSumToPattern,
     pub loss: SeriesTree_Cohorts_Utxo_Sth_Realized_Loss,
     pub price: SeriesTree_Cohorts_Utxo_Sth_Realized_Price,
     pub mvrv: SeriesPattern1<StoredF32>,
@@ -6844,7 +6799,7 @@ impl SeriesTree_Cohorts_Utxo_Sth_Realized {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             cap: CentsDeltaToUsdPattern::new(client.clone(), "sth_realized_cap".to_string()),
-            profit: SeriesTree_Cohorts_Utxo_Sth_Realized_Profit::new(client.clone(), format!("{base_path}_profit")),
+            profit: BaseCumulativeSumToPattern::new(client.clone(), "sth_realized_profit".to_string()),
             loss: SeriesTree_Cohorts_Utxo_Sth_Realized_Loss::new(client.clone(), format!("{base_path}_loss")),
             price: SeriesTree_Cohorts_Utxo_Sth_Realized_Price::new(client.clone(), format!("{base_path}_price")),
             mvrv: SeriesPattern1::new(client.clone(), "sth_mvrv".to_string()),
@@ -6860,40 +6815,12 @@ impl SeriesTree_Cohorts_Utxo_Sth_Realized {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Cohorts_Utxo_Sth_Realized_Profit {
-    pub base: CentsUsdPattern2,
-    pub cumulative: CentsUsdPattern2,
-    pub sum: _1m1w1y24hPattern4,
-    pub to_rcap: BpsPercentRatioPattern4,
-    pub value_created: BaseCumulativeSumPattern<Cents>,
-    pub value_destroyed: BaseCumulativeSumPattern<Cents>,
-    pub distribution_flow: SeriesPattern1<Dollars>,
-}
-
-impl SeriesTree_Cohorts_Utxo_Sth_Realized_Profit {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            base: CentsUsdPattern2::new(client.clone(), "sth_realized_profit".to_string()),
-            cumulative: CentsUsdPattern2::new(client.clone(), "sth_realized_profit_cumulative".to_string()),
-            sum: _1m1w1y24hPattern4::new(client.clone(), "sth_realized_profit_sum".to_string()),
-            to_rcap: BpsPercentRatioPattern4::new(client.clone(), "sth_realized_profit_to_rcap".to_string()),
-            value_created: BaseCumulativeSumPattern::new(client.clone(), "sth_profit_value_created".to_string()),
-            value_destroyed: BaseCumulativeSumPattern::new(client.clone(), "sth_profit_value_destroyed".to_string()),
-            distribution_flow: SeriesPattern1::new(client.clone(), "sth_distribution_flow".to_string()),
-        }
-    }
-}
-
-/// Series tree node.
 pub struct SeriesTree_Cohorts_Utxo_Sth_Realized_Loss {
     pub base: CentsUsdPattern2,
     pub cumulative: CentsUsdPattern2,
     pub sum: _1m1w1y24hPattern4,
     pub negative: BaseSumPattern,
     pub to_rcap: BpsPercentRatioPattern4,
-    pub value_created: BaseCumulativeSumPattern<Cents>,
-    pub value_destroyed: BaseCumulativeSumPattern<Cents>,
-    pub capitulation_flow: SeriesPattern1<Dollars>,
 }
 
 impl SeriesTree_Cohorts_Utxo_Sth_Realized_Loss {
@@ -6904,9 +6831,6 @@ impl SeriesTree_Cohorts_Utxo_Sth_Realized_Loss {
             sum: _1m1w1y24hPattern4::new(client.clone(), "sth_realized_loss_sum".to_string()),
             negative: BaseSumPattern::new(client.clone(), "sth_neg_realized_loss".to_string()),
             to_rcap: BpsPercentRatioPattern4::new(client.clone(), "sth_realized_loss_to_rcap".to_string()),
-            value_created: BaseCumulativeSumPattern::new(client.clone(), "sth_loss_value_created".to_string()),
-            value_destroyed: BaseCumulativeSumPattern::new(client.clone(), "sth_loss_value_destroyed".to_string()),
-            capitulation_flow: SeriesPattern1::new(client.clone(), "sth_capitulation_flow".to_string()),
         }
     }
 }
@@ -7265,7 +7189,7 @@ impl SeriesTree_Cohorts_Utxo_Lth_Activity {
 /// Series tree node.
 pub struct SeriesTree_Cohorts_Utxo_Lth_Realized {
     pub cap: CentsDeltaToUsdPattern,
-    pub profit: SeriesTree_Cohorts_Utxo_Lth_Realized_Profit,
+    pub profit: BaseCumulativeSumToPattern,
     pub loss: SeriesTree_Cohorts_Utxo_Lth_Realized_Loss,
     pub price: SeriesTree_Cohorts_Utxo_Lth_Realized_Price,
     pub mvrv: SeriesPattern1<StoredF32>,
@@ -7282,7 +7206,7 @@ impl SeriesTree_Cohorts_Utxo_Lth_Realized {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             cap: CentsDeltaToUsdPattern::new(client.clone(), "lth_realized_cap".to_string()),
-            profit: SeriesTree_Cohorts_Utxo_Lth_Realized_Profit::new(client.clone(), format!("{base_path}_profit")),
+            profit: BaseCumulativeSumToPattern::new(client.clone(), "lth_realized_profit".to_string()),
             loss: SeriesTree_Cohorts_Utxo_Lth_Realized_Loss::new(client.clone(), format!("{base_path}_loss")),
             price: SeriesTree_Cohorts_Utxo_Lth_Realized_Price::new(client.clone(), format!("{base_path}_price")),
             mvrv: SeriesPattern1::new(client.clone(), "lth_mvrv".to_string()),
@@ -7298,40 +7222,12 @@ impl SeriesTree_Cohorts_Utxo_Lth_Realized {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Cohorts_Utxo_Lth_Realized_Profit {
-    pub base: CentsUsdPattern2,
-    pub cumulative: CentsUsdPattern2,
-    pub sum: _1m1w1y24hPattern4,
-    pub to_rcap: BpsPercentRatioPattern4,
-    pub value_created: BaseCumulativeSumPattern<Cents>,
-    pub value_destroyed: BaseCumulativeSumPattern<Cents>,
-    pub distribution_flow: SeriesPattern1<Dollars>,
-}
-
-impl SeriesTree_Cohorts_Utxo_Lth_Realized_Profit {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            base: CentsUsdPattern2::new(client.clone(), "lth_realized_profit".to_string()),
-            cumulative: CentsUsdPattern2::new(client.clone(), "lth_realized_profit_cumulative".to_string()),
-            sum: _1m1w1y24hPattern4::new(client.clone(), "lth_realized_profit_sum".to_string()),
-            to_rcap: BpsPercentRatioPattern4::new(client.clone(), "lth_realized_profit_to_rcap".to_string()),
-            value_created: BaseCumulativeSumPattern::new(client.clone(), "lth_profit_value_created".to_string()),
-            value_destroyed: BaseCumulativeSumPattern::new(client.clone(), "lth_profit_value_destroyed".to_string()),
-            distribution_flow: SeriesPattern1::new(client.clone(), "lth_distribution_flow".to_string()),
-        }
-    }
-}
-
-/// Series tree node.
 pub struct SeriesTree_Cohorts_Utxo_Lth_Realized_Loss {
     pub base: CentsUsdPattern2,
     pub cumulative: CentsUsdPattern2,
     pub sum: _1m1w1y24hPattern4,
     pub negative: BaseSumPattern,
     pub to_rcap: BpsPercentRatioPattern4,
-    pub value_created: BaseCumulativeSumPattern<Cents>,
-    pub value_destroyed: BaseCumulativeSumPattern<Cents>,
-    pub capitulation_flow: SeriesPattern1<Dollars>,
 }
 
 impl SeriesTree_Cohorts_Utxo_Lth_Realized_Loss {
@@ -7342,9 +7238,6 @@ impl SeriesTree_Cohorts_Utxo_Lth_Realized_Loss {
             sum: _1m1w1y24hPattern4::new(client.clone(), "lth_realized_loss_sum".to_string()),
             negative: BaseSumPattern::new(client.clone(), "lth_neg_realized_loss".to_string()),
             to_rcap: BpsPercentRatioPattern4::new(client.clone(), "lth_realized_loss_to_rcap".to_string()),
-            value_created: BaseCumulativeSumPattern::new(client.clone(), "lth_loss_value_created".to_string()),
-            value_destroyed: BaseCumulativeSumPattern::new(client.clone(), "lth_loss_value_destroyed".to_string()),
-            capitulation_flow: SeriesPattern1::new(client.clone(), "lth_capitulation_flow".to_string()),
         }
     }
 }
