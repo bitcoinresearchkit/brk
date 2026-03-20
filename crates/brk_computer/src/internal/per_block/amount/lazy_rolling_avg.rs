@@ -1,26 +1,26 @@
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
+use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{DeltaAvg, LazyDeltaVec, LazyVecFrom1, ReadableCloneableVec};
 
 use crate::{
     indexes,
     internal::{
-        CachedWindowStarts, CentsUnsignedToDollars, DerivedResolutions, LazyPerBlock,
-        LazyRollingAvgFromHeight, Resolutions, SatsToBitcoin, Windows,
+        CachedWindowStarts, DerivedResolutions, AvgCentsToUsd, AvgSatsToBtc, LazyPerBlock,
+        LazyRollingAvgFromHeight, Resolutions, Windows,
     },
 };
 
-/// Single window slot: lazy rolling average for Amount (sats + btc + cents + usd).
+/// Single window slot: lazy rolling average for Amount (sats + btc + cents + usd), all as f64.
 #[derive(Clone, Traversable)]
 pub struct LazyRollingAvgAmountFromHeight {
-    pub btc: LazyPerBlock<Bitcoin, Sats>,
+    pub btc: LazyPerBlock<Bitcoin, StoredF32>,
     pub sats: LazyRollingAvgFromHeight<Sats>,
-    pub usd: LazyPerBlock<Dollars, Cents>,
+    pub usd: LazyPerBlock<Dollars, StoredF32>,
     pub cents: LazyRollingAvgFromHeight<Cents>,
 }
 
-/// Lazy rolling averages for all 4 windows, for Amount (sats + btc + cents + usd).
+/// Lazy rolling averages for all 4 windows, for Amount (sats + btc + cents + usd), all as f64.
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct LazyRollingAvgsAmountFromHeight(pub Windows<LazyRollingAvgAmountFromHeight>);
@@ -42,8 +42,8 @@ impl LazyRollingAvgsAmountFromHeight {
             let cached = cached_start.clone();
             let starts_version = cached.version();
 
-            // Sats lazy rolling avg
-            let sats_avg = LazyDeltaVec::<Height, Sats, Sats, DeltaAvg>::new(
+            // Sats lazy rolling avg → f64
+            let sats_avg = LazyDeltaVec::<Height, Sats, StoredF32, DeltaAvg>::new(
                 &format!("{full_name}_sats"),
                 version,
                 cum_sats.clone(),
@@ -64,22 +64,22 @@ impl LazyRollingAvgsAmountFromHeight {
                 resolutions: Box::new(sats_resolutions),
             };
 
-            // Btc lazy from sats
+            // Btc: f64 sats avg / 1e8
             let btc = LazyPerBlock {
-                height: LazyVecFrom1::transformed::<SatsToBitcoin>(
+                height: LazyVecFrom1::transformed::<AvgSatsToBtc>(
                     &full_name,
                     version,
                     sats.height.read_only_boxed_clone(),
                 ),
-                resolutions: Box::new(DerivedResolutions::from_derived_computed::<SatsToBitcoin>(
+                resolutions: Box::new(DerivedResolutions::from_derived_computed::<AvgSatsToBtc>(
                     &full_name,
                     version,
                     &sats.resolutions,
                 )),
             };
 
-            // Cents rolling avg
-            let cents_avg = LazyDeltaVec::<Height, Cents, Cents, DeltaAvg>::new(
+            // Cents lazy rolling avg → f64
+            let cents_avg = LazyDeltaVec::<Height, Cents, StoredF32, DeltaAvg>::new(
                 &format!("{full_name}_cents"),
                 version,
                 cum_cents.clone(),
@@ -97,17 +97,17 @@ impl LazyRollingAvgsAmountFromHeight {
                 resolutions: Box::new(cents_resolutions),
             };
 
-            // Usd lazy from cents
+            // Usd: f64 cents avg / 100
             let usd = LazyPerBlock {
-                height: LazyVecFrom1::transformed::<CentsUnsignedToDollars>(
+                height: LazyVecFrom1::transformed::<AvgCentsToUsd>(
                     &format!("{full_name}_usd"),
                     version,
                     cents.height.read_only_boxed_clone(),
                 ),
-                resolutions: Box::new(DerivedResolutions::from_derived_computed::<
-                    CentsUnsignedToDollars,
-                >(
-                    &format!("{full_name}_usd"), version, &cents.resolutions
+                resolutions: Box::new(DerivedResolutions::from_derived_computed::<AvgCentsToUsd>(
+                    &format!("{full_name}_usd"),
+                    version,
+                    &cents.resolutions,
                 )),
             };
 

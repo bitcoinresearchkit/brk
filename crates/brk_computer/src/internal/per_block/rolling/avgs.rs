@@ -1,5 +1,5 @@
 use brk_traversable::Traversable;
-use brk_types::{Height, Version};
+use brk_types::{Height, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{DeltaAvg, LazyDeltaVec, ReadableCloneableVec};
@@ -15,8 +15,7 @@ use super::LazyRollingAvgFromHeight;
 /// derived from a cumulative vec + cached window starts.
 ///
 /// Nothing is stored on disk — all values are computed on-the-fly via
-/// `LazyDeltaVec<Height, T, T, DeltaAvg>`: `(cum[h] - cum[start-1]) / (h - start + 1)`.
-/// T is converted to f64 internally for division, then back to T.
+/// `LazyDeltaVec<Height, T, f64, DeltaAvg>`: `(cum[h] - cum[start-1]) / (h - start + 1)`.
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct LazyRollingAvgsFromHeight<T>(pub Windows<LazyRollingAvgFromHeight<T>>)
@@ -40,7 +39,7 @@ where
             let full_name = format!("{name}_{suffix}");
             let cached = cached_start.clone();
             let starts_version = cached.version();
-            let avg = LazyDeltaVec::<Height, T, T, DeltaAvg>::new(
+            let avg = LazyDeltaVec::<Height, T, StoredF32, DeltaAvg>::new(
                 &full_name,
                 version,
                 cum_source.clone(),

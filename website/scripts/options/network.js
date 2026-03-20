@@ -377,40 +377,35 @@ export function createNetworkSection() {
             name: "Count",
             tree: [
               {
-                name: "Sums",
-                tree: [
-                  {
-                    name: "Compare",
-                    title: "Block Count",
-                    bottom: ROLLING_WINDOWS.map((w) =>
-                      line({
-                        series: blocks.count.total.sum[w.key],
-                        name: w.name,
-                        color: w.color,
-                        unit: Unit.count,
-                      }),
-                    ),
-                  },
-                  ...ROLLING_WINDOWS.map((w) => ({
+                name: "Compare",
+                title: "Block Count",
+                bottom: ROLLING_WINDOWS.map((w) =>
+                  line({
+                    series: blocks.count.total.sum[w.key],
                     name: w.name,
-                    title: `Block Count ${w.title} Sum`,
-                    bottom: [
-                      line({
-                        series: blocks.count.total.sum[w.key],
-                        name: "Actual",
-                        unit: Unit.count,
-                      }),
-                      line({
-                        series: blocks.count.target[w.key],
-                        name: "Target",
-                        color: colors.gray,
-                        unit: Unit.count,
-                        options: { lineStyle: 4 },
-                      }),
-                    ],
-                  })),
-                ],
+                    color: w.color,
+                    unit: Unit.count,
+                  }),
+                ),
               },
+              ...ROLLING_WINDOWS.map((w) => ({
+                name: w.name,
+                title: `Block Count ${w.title}`,
+                bottom: [
+                  line({
+                    series: blocks.count.total.sum[w.key],
+                    name: "Actual",
+                    unit: Unit.count,
+                  }),
+                  line({
+                    series: blocks.count.target[w.key],
+                    name: "Target",
+                    color: colors.gray,
+                    unit: Unit.count,
+                    options: { lineStyle: 4 },
+                  }),
+                ],
+              })),
               {
                 name: "Cumulative",
                 title: "Block Count (Total)",

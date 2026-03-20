@@ -171,7 +171,7 @@ function singleSellSideRiskTree(sellSideRisk, title) {
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
       title: title(`Sell Side Risk (${w.title})`),
-      bottom: percentRatio({ pattern: sellSideRisk[w.key], name: "Risk" }),
+      bottom: percentRatio({ pattern: sellSideRisk[w.key], name: "Risk", color: w.color }),
     })),
   ];
 }

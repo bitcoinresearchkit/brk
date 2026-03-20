@@ -1,4 +1,4 @@
-use brk_types::{Bitcoin, Cents, CentsSigned, Dollars, Sats, SatsFract};
+use brk_types::{Bitcoin, Cents, CentsSigned, Dollars, Sats, SatsFract, StoredF32};
 use vecdb::{BinaryTransform, UnaryTransform};
 
 pub struct SatsToBitcoin;
@@ -7,6 +7,24 @@ impl UnaryTransform<Sats, Bitcoin> for SatsToBitcoin {
     #[inline(always)]
     fn apply(sats: Sats) -> Bitcoin {
         Bitcoin::from(sats)
+    }
+}
+
+pub struct AvgSatsToBtc;
+
+impl UnaryTransform<StoredF32, Bitcoin> for AvgSatsToBtc {
+    #[inline(always)]
+    fn apply(sats: StoredF32) -> Bitcoin {
+        Bitcoin::from(f64::from(sats) / Sats::ONE_BTC_U128 as f64)
+    }
+}
+
+pub struct AvgCentsToUsd;
+
+impl UnaryTransform<StoredF32, Dollars> for AvgCentsToUsd {
+    #[inline(always)]
+    fn apply(cents: StoredF32) -> Dollars {
+        Dollars::from(f64::from(cents) / 100.0)
     }
 }
 

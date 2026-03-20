@@ -93,55 +93,13 @@ export function price({
 function percentileSeries({ pattern, unit, title = "" }) {
   const { stat } = colors;
   return [
-    dots({
-      series: pattern.max,
-      name: `${title} max`.trim(),
-      color: stat.max,
-      unit,
-      defaultActive: false,
-    }),
-    dots({
-      series: pattern.min,
-      name: `${title} min`.trim(),
-      color: stat.min,
-      unit,
-      defaultActive: false,
-    }),
-    dots({
-      series: pattern.median,
-      name: `${title} median`.trim(),
-      color: stat.median,
-      unit,
-      defaultActive: false,
-    }),
-    dots({
-      series: pattern.pct75,
-      name: `${title} pct75`.trim(),
-      color: stat.pct75,
-      unit,
-      defaultActive: false,
-    }),
-    dots({
-      series: pattern.pct25,
-      name: `${title} pct25`.trim(),
-      color: stat.pct25,
-      unit,
-      defaultActive: false,
-    }),
-    dots({
-      series: pattern.pct90,
-      name: `${title} pct90`.trim(),
-      color: stat.pct90,
-      unit,
-      defaultActive: false,
-    }),
-    dots({
-      series: pattern.pct10,
-      name: `${title} pct10`.trim(),
-      color: stat.pct10,
-      unit,
-      defaultActive: false,
-    }),
+    line({ series: pattern.max, name: `${title} max`.trim(), color: stat.max, unit }),
+    line({ series: pattern.pct90, name: `${title} pct90`.trim(), color: stat.pct90, unit }),
+    line({ series: pattern.pct75, name: `${title} pct75`.trim(), color: stat.pct75, unit }),
+    line({ series: pattern.median, name: `${title} median`.trim(), color: stat.median, unit }),
+    line({ series: pattern.pct25, name: `${title} pct25`.trim(), color: stat.pct25, unit }),
+    line({ series: pattern.pct10, name: `${title} pct10`.trim(), color: stat.pct10, unit }),
+    line({ series: pattern.min, name: `${title} min`.trim(), color: stat.min, unit }),
   ];
 }
 
@@ -518,6 +476,59 @@ export function sumsArray({ windows, title, unit }) {
 }
 
 /**
+ * Generic helper: compare + per-window sum+avg + cumulative.
+ * @template P
+ * @param {Object} args
+ * @param {{ _24h: P, _1w: P, _1m: P, _1y: P }} args.sum
+ * @param {{ _24h: P, _1w: P, _1m: P, _1y: P }} args.average
+ * @param {P} args.cumulative
+ * @param {string} args.title
+ * @param {Color} [args.color]
+ * @param {(args: { pattern: P, name: string, color?: Color, defaultActive?: boolean }) => AnyFetchedSeriesBlueprint[]} args.series
+ * @returns {PartialChartOption[]}
+ */
+export function sumsAndAveragesCumulativeWith({
+  sum,
+  average,
+  cumulative,
+  title,
+  color,
+  series,
+}) {
+  return [
+    {
+      name: "Compare",
+      title: `${title} Averages`,
+      bottom: ROLLING_WINDOWS.flatMap((w) =>
+        series({
+          pattern: average[w.key],
+          name: w.name,
+          color: w.color,
+        }),
+      ),
+    },
+    ...ROLLING_WINDOWS.map((w) => ({
+      name: w.name,
+      title: `${title} ${w.title}`,
+      bottom: [
+        ...series({ pattern: sum[w.key], name: "Sum", color: w.color }),
+        ...series({
+          pattern: average[w.key],
+          name: "Avg",
+          color: w.color,
+          defaultActive: false,
+        }),
+      ],
+    })),
+    {
+      name: "Cumulative",
+      title: `${title} (Total)`,
+      bottom: series({ pattern: cumulative, name: "all-time", color }),
+    },
+  ];
+}
+
+/**
  * Flat array of per-window charts with both sum (active) and average (off by default)
  * @param {Object} args
  * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.sum
@@ -544,7 +555,7 @@ export function sumsAndAveragesArray({ sum, average, title, unit }) {
 }
 
 /**
- * Windowed sum+avg charts + cumulative
+ * Compare + windowed sum+avg + cumulative (single unit)
  * @param {Object} args
  * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.sum
  * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.average
@@ -555,21 +566,16 @@ export function sumsAndAveragesArray({ sum, average, title, unit }) {
  * @returns {PartialChartOption[]}
  */
 export function sumsAndAveragesCumulative({ sum, average, cumulative, title, unit, color }) {
-  return [
-    {
-      name: "Compare",
-      title: `${title} Averages`,
-      bottom: ROLLING_WINDOWS.map((w) =>
-        line({ series: average[w.key], name: w.name, color: w.color, unit }),
-      ),
-    },
-    ...sumsAndAveragesArray({ sum, average, title, unit }),
-    {
-      name: "Cumulative",
-      title: `${title} (Total)`,
-      bottom: [{ series: cumulative, title: "all-time", color, unit }],
-    },
-  ];
+  return sumsAndAveragesCumulativeWith({
+    sum,
+    average,
+    cumulative,
+    title,
+    color,
+    series: ({ pattern, name, color, defaultActive }) => [
+      line({ series: pattern, name, color, unit, defaultActive }),
+    ],
+  });
 }
 
 /**
@@ -601,13 +607,22 @@ export function sumsTree({ windows, title, unit, series }) {
  * @returns {PartialChartOption[]}
  */
 export function averagesArray({ windows, title, unit }) {
-  return ROLLING_WINDOWS.map((w) => ({
-    name: w.name,
-    title: `${title} ${w.title} Average`,
-    bottom: [
-      line({ series: windows[w.key], name: w.name, color: w.color, unit }),
-    ],
-  }));
+  return [
+    {
+      name: "Compare",
+      title: `${title} Averages`,
+      bottom: ROLLING_WINDOWS.map((w) =>
+        line({ series: windows[w.key], name: w.name, color: w.color, unit }),
+      ),
+    },
+    ...ROLLING_WINDOWS.map((w) => ({
+      name: w.name,
+      title: `${title} ${w.title} Average`,
+      bottom: [
+        line({ series: windows[w.key], name: w.name, color: w.color, unit }),
+      ],
+    })),
+  ];
 }
 
 /**
@@ -621,7 +636,7 @@ export function averagesArray({ windows, title, unit }) {
  */
 export function distributionWindowsTree({ pattern, base, title, unit }) {
   return {
-    name: "Distributions",
+    name: "Distribution",
     tree: [
       {
         name: "Compare",

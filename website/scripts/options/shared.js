@@ -1,7 +1,7 @@
 /** Shared helpers for options */
 
 import { Unit } from "../utils/units.js";
-import { line, baseline, price, ROLLING_WINDOWS } from "./series.js";
+import { line, baseline, price, sumsAndAveragesCumulativeWith } from "./series.js";
 import { priceLine, priceLines } from "./constants.js";
 import { colors } from "../utils/colors.js";
 
@@ -224,45 +224,15 @@ export function satsBtcUsdRolling({ pattern, name, color, defaultActive }) {
  * @returns {PartialOptionsTree}
  */
 export function satsBtcUsdFullTree({ pattern, title, color }) {
-  return [
-    {
-      name: "Compare",
-      title: `${title} Average`,
-      bottom: ROLLING_WINDOWS.flatMap((w) =>
-        satsBtcUsd({
-          pattern: pattern.average[w.key],
-          name: w.name,
-          color: w.color,
-        }),
-      ),
-    },
-    ...ROLLING_WINDOWS.map((w) => ({
-      name: w.name,
-      title: `${title} ${w.title}`,
-      bottom: [
-        ...satsBtcUsd({
-          pattern: pattern.sum[w.key],
-          name: "Sum",
-          color: w.color,
-        }),
-        ...satsBtcUsd({
-          pattern: pattern.average[w.key],
-          name: "Avg",
-          color: w.color,
-          defaultActive: false,
-        }),
-      ],
-    })),
-    {
-      name: "Cumulative",
-      title: `${title} (Total)`,
-      bottom: satsBtcUsd({
-        pattern: pattern.cumulative,
-        name: "all-time",
-        color,
-      }),
-    },
-  ];
+  return sumsAndAveragesCumulativeWith({
+    sum: pattern.sum,
+    average: pattern.average,
+    cumulative: pattern.cumulative,
+    title,
+    color,
+    series: ({ pattern, name, color, defaultActive }) =>
+      satsBtcUsd({ pattern, name, color, defaultActive }),
+  });
 }
 
 /**
