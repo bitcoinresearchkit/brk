@@ -490,6 +490,6 @@ impl Vecs {
             .min(Height::from(self.addrs.funded.min_stateful_len()))
             .min(Height::from(self.addrs.empty.min_stateful_len()))
             .min(Height::from(self.addrs.activity.min_stateful_len()))
-            .min(Height::from(self.coinblocks_destroyed.base.height.len()))
+            .min(Height::from(self.coinblocks_destroyed.block.height.len()))
     }
 }

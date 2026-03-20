@@ -12,9 +12,9 @@ impl Query {
         let end_block = current_height;
         let start_block = Height::from(current_height.to_usize().saturating_sub(block_count - 1));
 
-        let coinbase_vec = &computer.mining.rewards.coinbase.base.sats.height;
-        let fee_vec = &computer.mining.rewards.fees.base.sats.height;
-        let tx_count_vec = &computer.transactions.count.total.base.height;
+        let coinbase_vec = &computer.mining.rewards.coinbase.block.sats.height;
+        let fee_vec = &computer.mining.rewards.fees.block.sats.height;
+        let tx_count_vec = &computer.transactions.count.total.block.height;
 
         let start = start_block.to_usize();
         let end = end_block.to_usize() + 1;

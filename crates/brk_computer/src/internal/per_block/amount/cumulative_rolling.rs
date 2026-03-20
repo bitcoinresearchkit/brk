@@ -67,7 +67,7 @@ impl AmountPerBlockCumulativeRolling {
         exit: &Exit,
         compute_sats: impl FnOnce(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
     ) -> Result<()> {
-        compute_sats(&mut self.base.sats.height)?;
+        compute_sats(&mut self.block.sats.height)?;
         self.compute_rest(max_from, prices, exit)
     }
 

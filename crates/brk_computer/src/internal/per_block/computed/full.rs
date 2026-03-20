@@ -18,7 +18,7 @@ pub struct PerBlockFull<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
-    pub base: PerBlock<T, M>,
+    pub block: PerBlock<T, M>,
     pub cumulative: PerBlock<T, M>,
     #[traversable(flatten)]
     pub rolling: RollingComplete<T, M>,
@@ -35,7 +35,7 @@ where
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let base = PerBlock::forced_import(db, name, version, indexes)?;
+        let block = PerBlock::forced_import(db, name, version, indexes)?;
         let cumulative =
             PerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
         let rolling = RollingComplete::forced_import(
@@ -48,7 +48,7 @@ where
         )?;
 
         Ok(Self {
-            base,
+            block,
             cumulative,
             rolling,
         })
@@ -66,12 +66,12 @@ where
         T: From<f64> + Default + Copy + Ord,
         f64: From<T>,
     {
-        compute_base(&mut self.base.height)?;
+        compute_base(&mut self.block.height)?;
         self.cumulative
             .height
-            .compute_cumulative(max_from, &self.base.height, exit)?;
+            .compute_cumulative(max_from, &self.block.height, exit)?;
         self.rolling
-            .compute(max_from, windows, &self.base.height, exit)?;
+            .compute(max_from, windows, &self.block.height, exit)?;
         Ok(())
     }
 }

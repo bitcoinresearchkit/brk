@@ -29,7 +29,7 @@ where
     T: NumericValue + JsonSchema,
     C: NumericValue + JsonSchema,
 {
-    pub base: PerBlock<T, M>,
+    pub block: PerBlock<T, M>,
     pub cumulative: PerBlock<C, M>,
     pub sum: LazyRollingSumsFromHeight<C>,
     pub average: LazyRollingAvgsFromHeight<C>,
@@ -47,7 +47,7 @@ where
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let base = PerBlock::forced_import(db, name, version, indexes)?;
+        let block = PerBlock::forced_import(db, name, version, indexes)?;
         let cumulative =
             PerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
         let sum = LazyRollingSumsFromHeight::new(
@@ -66,7 +66,7 @@ where
         );
 
         Ok(Self {
-            base,
+            block,
             cumulative,
             sum,
             average,
@@ -83,7 +83,7 @@ where
     where
         C: Default,
     {
-        compute_base(&mut self.base.height)?;
+        compute_base(&mut self.block.height)?;
         self.compute_rest(max_from, exit)
     }
 
@@ -94,7 +94,7 @@ where
     {
         self.cumulative
             .height
-            .compute_cumulative(max_from, &self.base.height, exit)?;
+            .compute_cumulative(max_from, &self.block.height, exit)?;
         Ok(())
     }
 }

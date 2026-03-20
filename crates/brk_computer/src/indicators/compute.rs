@@ -21,7 +21,7 @@ impl Vecs {
             .bps
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
                 starting_indexes.height,
-                &mining.rewards.subsidy.base.usd.height,
+                &mining.rewards.subsidy.block.usd.height,
                 &mining.rewards.subsidy_sma_1y.usd.height,
                 exit,
             )?;
@@ -146,7 +146,7 @@ impl Vecs {
         self.stock_to_flow.height.compute_transform2(
             starting_indexes.height,
             supply_total_sats,
-            &mining.rewards.subsidy.base.sats.height,
+            &mining.rewards.subsidy.block.sats.height,
             |(i, supply_sats, subsidy_sats, ..)| {
                 let annual_flow = subsidy_sats.as_u128() as f64 * 52560.0;
                 if annual_flow == 0.0 {

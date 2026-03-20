@@ -132,7 +132,7 @@
  */
 /**
  * Sell side risk rolling windows pattern
- * @typedef {Brk._1m1w1y24hPattern6} SellSideRiskPattern
+ * @typedef {Brk._1m1w1y24hPattern7} SellSideRiskPattern
  */
 /**
  * Stats pattern: average, min, max, percentiles (height-only indexes, NO base)

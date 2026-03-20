@@ -183,7 +183,7 @@ impl RealizedFull {
             .len()
             .min(self.cap_raw.len())
             .min(self.investor.cap_raw.len())
-            .min(self.peak_regret.value.base.cents.height.len())
+            .min(self.peak_regret.value.block.cents.height.len())
     }
 
     #[inline(always)]
@@ -203,7 +203,7 @@ impl RealizedFull {
             .push(state.realized.investor_cap_raw());
         self.peak_regret
             .value
-            .base
+            .block
             .cents
             .height
             .push(state.realized.peak_regret());
@@ -214,7 +214,7 @@ impl RealizedFull {
         vecs.push(&mut self.investor.price.cents.height);
         vecs.push(&mut self.cap_raw as &mut dyn AnyStoredVec);
         vecs.push(&mut self.investor.cap_raw as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.peak_regret.value.base.cents.height);
+        vecs.push(&mut self.peak_regret.value.block.cents.height);
         vecs
     }
 
@@ -247,7 +247,7 @@ impl RealizedFull {
 
         self.peak_regret
             .value
-            .base
+            .block
             .cents
             .height
             .push(accum.peak_regret());
@@ -307,7 +307,7 @@ impl RealizedFull {
             .to_rcap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
-                &self.core.minimal.profit.base.cents.height,
+                &self.core.minimal.profit.block.cents.height,
                 &self.core.minimal.cap.cents.height,
                 exit,
             )?;
@@ -315,7 +315,7 @@ impl RealizedFull {
             .to_rcap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
-                &self.core.minimal.loss.base.cents.height,
+                &self.core.minimal.loss.block.cents.height,
                 &self.core.minimal.cap.cents.height,
                 exit,
             )?;
@@ -323,16 +323,16 @@ impl RealizedFull {
             .to_rcap
             .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
                 starting_indexes.height,
-                &self.core.net_pnl.base.cents.height,
+                &self.core.net_pnl.block.cents.height,
                 &self.core.minimal.cap.cents.height,
                 exit,
             )?;
 
         // Gross PnL
-        self.gross_pnl.base.cents.height.compute_add(
+        self.gross_pnl.block.cents.height.compute_add(
             starting_indexes.height,
-            &self.core.minimal.profit.base.cents.height,
-            &self.core.minimal.loss.base.cents.height,
+            &self.core.minimal.profit.block.cents.height,
+            &self.core.minimal.loss.block.cents.height,
             exit,
         )?;
         self.gross_pnl.compute_rest(starting_indexes.height, exit)?;
@@ -360,7 +360,7 @@ impl RealizedFull {
             .to_rcap
             .compute_binary::<Cents, Cents, RatioCentsBp32>(
                 starting_indexes.height,
-                &self.peak_regret.value.base.cents.height,
+                &self.peak_regret.value.block.cents.height,
                 &self.core.minimal.cap.cents.height,
                 exit,
             )?;

@@ -11,7 +11,7 @@ use crate::{
 
 #[derive(Traversable)]
 pub struct AmountPerBlockCumulative<M: StorageMode = Rw> {
-    pub base: AmountPerBlock<M>,
+    pub block: AmountPerBlock<M>,
     pub cumulative: AmountPerBlock<M>,
 }
 
@@ -27,7 +27,7 @@ impl AmountPerBlockCumulative {
         let v = version + VERSION;
 
         Ok(Self {
-            base: AmountPerBlock::forced_import(db, name, v, indexes)?,
+            block: AmountPerBlock::forced_import(db, name, v, indexes)?,
             cumulative: AmountPerBlock::forced_import(
                 db,
                 &format!("{name}_cumulative"),
@@ -46,11 +46,11 @@ impl AmountPerBlockCumulative {
         self.cumulative
             .sats
             .height
-            .compute_cumulative(max_from, &self.base.sats.height, exit)?;
+            .compute_cumulative(max_from, &self.block.sats.height, exit)?;
 
-        self.base.cents.compute_binary::<Sats, Cents, SatsToCents>(
+        self.block.cents.compute_binary::<Sats, Cents, SatsToCents>(
             max_from,
-            &self.base.sats.height,
+            &self.block.sats.height,
             &prices.spot.cents.height,
             exit,
         )?;
@@ -58,7 +58,7 @@ impl AmountPerBlockCumulative {
         self.cumulative
             .cents
             .height
-            .compute_cumulative(max_from, &self.base.cents.height, exit)?;
+            .compute_cumulative(max_from, &self.block.cents.height, exit)?;
 
         Ok(())
     }
