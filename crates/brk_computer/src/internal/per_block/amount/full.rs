@@ -6,8 +6,9 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        AmountPerBlock, CachedWindowStarts, LazyRollingSumsAmountFromHeight,
-        RollingDistributionAmountPerBlock, SatsToCents, WindowStarts,
+        AmountPerBlock, CachedWindowStarts, LazyRollingAvgsAmountFromHeight,
+        LazyRollingSumsAmountFromHeight, RollingDistributionAmountPerBlock, SatsToCents,
+        WindowStarts,
     },
     prices,
 };
@@ -17,8 +18,9 @@ pub struct AmountPerBlockFull<M: StorageMode = Rw> {
     pub base: AmountPerBlock<M>,
     pub cumulative: AmountPerBlock<M>,
     pub sum: LazyRollingSumsAmountFromHeight,
+    pub average: LazyRollingAvgsAmountFromHeight,
     #[traversable(flatten)]
-    pub rolling: RollingDistributionAmountPerBlock<M>,
+    pub distribution: RollingDistributionAmountPerBlock<M>,
 }
 
 const VERSION: Version = Version::TWO;
@@ -34,12 +36,8 @@ impl AmountPerBlockFull {
         let v = version + VERSION;
 
         let base = AmountPerBlock::forced_import(db, name, v, indexes)?;
-        let cumulative = AmountPerBlock::forced_import(
-            db,
-            &format!("{name}_cumulative"),
-            v,
-            indexes,
-        )?;
+        let cumulative =
+            AmountPerBlock::forced_import(db, &format!("{name}_cumulative"), v, indexes)?;
         let sum = LazyRollingSumsAmountFromHeight::new(
             &format!("{name}_sum"),
             v,
@@ -48,14 +46,22 @@ impl AmountPerBlockFull {
             cached_starts,
             indexes,
         );
-        let rolling =
-            RollingDistributionAmountPerBlock::forced_import(db, name, v, indexes)?;
+        let average = LazyRollingAvgsAmountFromHeight::new(
+            &format!("{name}_average"),
+            v,
+            &cumulative.sats.height,
+            &cumulative.cents.height,
+            cached_starts,
+            indexes,
+        );
+        let rolling = RollingDistributionAmountPerBlock::forced_import(db, name, v, indexes)?;
 
         Ok(Self {
             base,
             cumulative,
             sum,
-            rolling,
+            average,
+            distribution: rolling,
         })
     }
 
@@ -89,7 +95,7 @@ impl AmountPerBlockFull {
             .height
             .compute_cumulative(max_from, &self.base.cents.height, exit)?;
 
-        self.rolling.compute(
+        self.distribution.compute(
             max_from,
             windows,
             &self.base.sats.height,

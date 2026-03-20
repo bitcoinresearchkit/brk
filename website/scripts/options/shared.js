@@ -224,21 +224,35 @@ export function satsBtcUsdRolling({ pattern, name, color, defaultActive }) {
  * @param {Color} [args.color]
  * @returns {PartialOptionsTree}
  */
-export function satsBtcUsdFullTree({ pattern, name, title, color }) {
+export function satsBtcUsdFullTree({ pattern, title, color }) {
   return [
     {
-      name: "Per Block",
-      title,
-      bottom: satsBtcUsd({ pattern: pattern.base, name, color }),
+      name: "Compare",
+      title: `${title} Average`,
+      bottom: ROLLING_WINDOWS.flatMap((w) =>
+        satsBtcUsd({
+          pattern: pattern.average[w.key],
+          name: w.name,
+          color: w.color,
+        }),
+      ),
     },
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
-      title: `${title} ${w.title} Sum`,
-      bottom: satsBtcUsd({
-        pattern: pattern.sum[w.key],
-        name: w.name,
-        color: w.color,
-      }),
+      title: `${title} ${w.title}`,
+      bottom: [
+        ...satsBtcUsd({
+          pattern: pattern.sum[w.key],
+          name: "Sum",
+          color: w.color,
+        }),
+        ...satsBtcUsd({
+          pattern: pattern.average[w.key],
+          name: "Avg",
+          color: w.color,
+          defaultActive: false,
+        }),
+      ],
     })),
     {
       name: "Cumulative",

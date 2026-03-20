@@ -36,7 +36,9 @@ impl Vecs {
             coinbase: AmountPerBlockCumulativeWithSums::forced_import(
                 db, "coinbase", version, indexes, cached_starts,
             )?,
-            subsidy: AmountPerBlockCumulative::forced_import(db, "subsidy", version, indexes)?,
+            subsidy: AmountPerBlockCumulativeWithSums::forced_import(
+                db, "subsidy", version, indexes, cached_starts,
+            )?,
             fees: AmountPerBlockFull::forced_import(db, "fees", version, indexes, cached_starts)?,
             unclaimed: AmountPerBlockCumulative::forced_import(
                 db,

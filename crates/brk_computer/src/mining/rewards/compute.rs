@@ -95,7 +95,7 @@ impl Vecs {
             },
             exit,
         )?;
-        self.subsidy.compute(prices, starting_indexes.height, exit)?;
+        self.subsidy.compute_rest(starting_indexes.height, prices, exit)?;
 
         self.unclaimed.base.sats.height.compute_transform(
             starting_indexes.height,

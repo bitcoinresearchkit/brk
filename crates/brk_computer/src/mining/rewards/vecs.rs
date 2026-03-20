@@ -11,7 +11,7 @@ use crate::internal::{
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     pub coinbase: AmountPerBlockCumulativeWithSums<M>,
-    pub subsidy: AmountPerBlockCumulative<M>,
+    pub subsidy: AmountPerBlockCumulativeWithSums<M>,
     pub fees: AmountPerBlockFull<M>,
     pub unclaimed: AmountPerBlockCumulative<M>,
     #[traversable(wrap = "fees", rename = "dominance")]

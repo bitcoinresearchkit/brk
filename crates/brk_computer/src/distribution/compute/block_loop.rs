@@ -551,8 +551,8 @@ fn push_cohort_states(
         },
     );
 
-    // Phase 2: aggregate age_range realized states → push to overlapping cohorts' RealizedFull
-    utxo_cohorts.push_overlapping_realized_full();
+    // Phase 2: aggregate age_range states → push to overlapping cohorts
+    utxo_cohorts.push_overlapping(height_price);
 
     // Phase 3: reset per-block values
     utxo_cohorts

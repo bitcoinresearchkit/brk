@@ -63,7 +63,7 @@ impl UnrealizedLike for UnrealizedFull {
         &mut self.inner
     }
     fn min_stateful_len(&self) -> usize {
-        self.inner.min_stateful_len()
+        UnrealizedFull::min_stateful_len(self)
     }
     #[inline(always)]
     fn push_state(&mut self, state: &UnrealizedState) {

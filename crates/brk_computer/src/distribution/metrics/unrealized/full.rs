@@ -33,9 +33,7 @@ pub struct UnrealizedFull<M: StorageMode = Rw> {
     pub gross_pnl: FiatPerBlock<Cents, M>,
     pub invested_capital: UnrealizedInvestedCapital<M>,
 
-    #[traversable(hidden)]
     pub investor_cap_in_profit_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
-    #[traversable(hidden)]
     pub investor_cap_in_loss_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
 
     pub sentiment: UnrealizedSentiment<M>,
@@ -48,18 +46,20 @@ impl UnrealizedFull {
 
         let gross_pnl = cfg.import("unrealized_gross_pnl", v0)?;
 
+        let v1 = Version::ONE;
+
         let invested_capital = UnrealizedInvestedCapital {
-            in_profit: cfg.import("invested_capital_in_profit", v0)?,
-            in_loss: cfg.import("invested_capital_in_loss", v0)?,
+            in_profit: cfg.import("invested_capital_in_profit", v1)?,
+            in_loss: cfg.import("invested_capital_in_loss", v1)?,
         };
 
         let investor_cap_in_profit_raw = cfg.import("investor_cap_in_profit_raw", v0)?;
         let investor_cap_in_loss_raw = cfg.import("investor_cap_in_loss_raw", v0)?;
 
         let sentiment = UnrealizedSentiment {
-            pain_index: cfg.import("pain_index", v0)?,
-            greed_index: cfg.import("greed_index", v0)?,
-            net: cfg.import("net_sentiment", Version::ONE)?,
+            pain_index: cfg.import("pain_index", v1)?,
+            greed_index: cfg.import("greed_index", v1)?,
+            net: cfg.import("net_sentiment", Version::new(2))?,
         };
 
         Ok(Self {
@@ -73,9 +73,10 @@ impl UnrealizedFull {
     }
 
     pub(crate) fn min_stateful_len(&self) -> usize {
-        self.inner
-            .min_stateful_len()
-            .min(self.investor_cap_in_profit_raw.len())
+        // Only check per-block pushed vecs (investor_cap_raw).
+        // Core-level vecs (profit/loss) are aggregated from age_range, not stateful.
+        self.investor_cap_in_profit_raw
+            .len()
             .min(self.investor_cap_in_loss_raw.len())
     }
 
@@ -90,14 +91,8 @@ impl UnrealizedFull {
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.inner.collect_vecs_mut();
-        vecs.push(&mut self.gross_pnl.cents.height as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.invested_capital.in_profit.cents.height as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.invested_capital.in_loss.cents.height as &mut dyn AnyStoredVec);
         vecs.push(&mut self.investor_cap_in_profit_raw as &mut dyn AnyStoredVec);
         vecs.push(&mut self.investor_cap_in_loss_raw as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.sentiment.pain_index.cents.height as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.sentiment.greed_index.cents.height as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.sentiment.net.cents.height as &mut dyn AnyStoredVec);
         vecs
     }
 
@@ -120,30 +115,41 @@ impl UnrealizedFull {
         )?;
 
         // invested_capital_in_profit = supply_profit_sats × spot / ONE_BTC - unrealized_profit
-        self.invested_capital.in_profit.cents.height.compute_transform3(
-            starting_indexes.height,
-            supply_in_profit_sats,
-            &prices.spot.cents.height,
-            &self.inner.basic.profit.cents.height,
-            |(h, supply_sats, spot, profit, ..): (_, Sats, Cents, Cents, _)| {
-                let market_value = supply_sats.as_u128() * spot.as_u128() / Sats::ONE_BTC_U128;
-                (h, Cents::new(market_value.saturating_sub(profit.as_u128()) as u64))
-            },
-            exit,
-        )?;
+        self.invested_capital
+            .in_profit
+            .cents
+            .height
+            .compute_transform3(
+                starting_indexes.height,
+                supply_in_profit_sats,
+                &prices.spot.cents.height,
+                &self.inner.basic.profit.cents.height,
+                |(h, supply_sats, spot, profit, ..): (_, Sats, Cents, Cents, _)| {
+                    let market_value = supply_sats.as_u128() * spot.as_u128() / Sats::ONE_BTC_U128;
+                    (
+                        h,
+                        Cents::new(market_value.saturating_sub(profit.as_u128()) as u64),
+                    )
+                },
+                exit,
+            )?;
 
         // invested_capital_in_loss = supply_loss_sats × spot / ONE_BTC + unrealized_loss
-        self.invested_capital.in_loss.cents.height.compute_transform3(
-            starting_indexes.height,
-            supply_in_loss_sats,
-            &prices.spot.cents.height,
-            &self.inner.basic.loss.cents.height,
-            |(h, supply_sats, spot, loss, ..): (_, Sats, Cents, Cents, _)| {
-                let market_value = supply_sats.as_u128() * spot.as_u128() / Sats::ONE_BTC_U128;
-                (h, Cents::new((market_value + loss.as_u128()) as u64))
-            },
-            exit,
-        )?;
+        self.invested_capital
+            .in_loss
+            .cents
+            .height
+            .compute_transform3(
+                starting_indexes.height,
+                supply_in_loss_sats,
+                &prices.spot.cents.height,
+                &self.inner.basic.loss.cents.height,
+                |(h, supply_sats, spot, loss, ..): (_, Sats, Cents, Cents, _)| {
+                    let market_value = supply_sats.as_u128() * spot.as_u128() / Sats::ONE_BTC_U128;
+                    (h, Cents::new((market_value + loss.as_u128()) as u64))
+                },
+                exit,
+            )?;
 
         Ok(())
     }
@@ -171,7 +177,10 @@ impl UnrealizedFull {
                 }
                 let investor_price = investor_cap.inner() / invested_cap_raw;
                 let spot_u128 = spot.as_u128();
-                (h, Cents::new(spot_u128.saturating_sub(investor_price) as u64))
+                (
+                    h,
+                    Cents::new(spot_u128.saturating_sub(investor_price) as u64),
+                )
             },
             exit,
         )?;
@@ -189,7 +198,10 @@ impl UnrealizedFull {
                 }
                 let investor_price = investor_cap.inner() / invested_cap_raw;
                 let spot_u128 = spot.as_u128();
-                (h, Cents::new(investor_price.saturating_sub(spot_u128) as u64))
+                (
+                    h,
+                    Cents::new(investor_price.saturating_sub(spot_u128) as u64),
+                )
             },
             exit,
         )?;

@@ -47,11 +47,10 @@ impl CohortMetricsBase for ExtendedCohortMetrics {
     }
 
     fn min_stateful_len(&self) -> usize {
-        self.supply
-            .min_len()
-            .min(self.outputs.min_len())
-            .min(self.activity.min_len())
-            .min(self.realized.min_stateful_len())
+        // Only check per-block pushed vecs, not aggregated ones (supply, outputs,
+        // activity, realized core, unrealized core are summed from age_range).
+        self.realized
+            .min_stateful_len()
             .min(self.unrealized.min_stateful_len())
             .min(self.cost_basis.min_stateful_len())
     }
@@ -116,6 +115,7 @@ impl ExtendedCohortMetrics {
 
         self.cost_basis.compute_prices(
             starting_indexes,
+            &prices.spot.cents.height,
             &self.unrealized.invested_capital.in_profit.cents.height,
             &self.unrealized.invested_capital.in_loss.cents.height,
             &self.supply.in_profit.sats.height,

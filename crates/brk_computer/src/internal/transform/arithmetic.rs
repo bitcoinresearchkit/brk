@@ -12,6 +12,7 @@ impl<T: VecValue> UnaryTransform<T, T> for Identity<T> {
     }
 }
 
+
 pub struct HalveSats;
 
 impl UnaryTransform<Sats, Sats> for HalveSats {

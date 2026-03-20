@@ -5,7 +5,10 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{AmountPerBlock, CachedWindowStarts, LazyRollingSumsAmountFromHeight, SatsToCents},
+    internal::{
+        AmountPerBlock, CachedWindowStarts, LazyRollingAvgsAmountFromHeight,
+        LazyRollingSumsAmountFromHeight, SatsToCents,
+    },
     prices,
 };
 
@@ -14,6 +17,7 @@ pub struct AmountPerBlockCumulativeWithSums<M: StorageMode = Rw> {
     pub base: AmountPerBlock<M>,
     pub cumulative: AmountPerBlock<M>,
     pub sum: LazyRollingSumsAmountFromHeight,
+    pub average: LazyRollingAvgsAmountFromHeight,
 }
 
 const VERSION: Version = Version::TWO;
@@ -39,11 +43,20 @@ impl AmountPerBlockCumulativeWithSums {
             cached_starts,
             indexes,
         );
+        let average = LazyRollingAvgsAmountFromHeight::new(
+            &format!("{name}_average"),
+            v,
+            &cumulative.sats.height,
+            &cumulative.cents.height,
+            cached_starts,
+            indexes,
+        );
 
         Ok(Self {
             base,
             cumulative,
             sum,
+            average,
         })
     }
 

@@ -17,7 +17,10 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, PerBlock, LazyRollingSumsFromHeight, NumericValue},
+    internal::{
+        CachedWindowStarts, LazyRollingAvgsFromHeight, LazyRollingSumsFromHeight, NumericValue,
+        PerBlock,
+    },
 };
 
 #[derive(Traversable)]
@@ -29,6 +32,7 @@ where
     pub base: PerBlock<T, M>,
     pub cumulative: PerBlock<C, M>,
     pub sum: LazyRollingSumsFromHeight<C>,
+    pub average: LazyRollingAvgsFromHeight<C>,
 }
 
 impl<T, C> PerBlockCumulativeWithSums<T, C>
@@ -53,11 +57,19 @@ where
             cached_starts,
             indexes,
         );
+        let average = LazyRollingAvgsFromHeight::new(
+            &format!("{name}_average"),
+            version,
+            &cumulative.height,
+            cached_starts,
+            indexes,
+        );
 
         Ok(Self {
             base,
             cumulative,
             sum,
+            average,
         })
     }
 

@@ -10,18 +10,19 @@ use vecdb::{Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        CachedWindowStarts, NumericValue, LazyRollingSumsFromHeight, RollingDistribution,
-        WindowStarts,
+        CachedWindowStarts, NumericValue, LazyRollingAvgsFromHeight, LazyRollingSumsFromHeight,
+        RollingDistribution, WindowStarts,
     },
 };
 
-/// Lazy rolling sums + stored rolling distribution (8 stats × 4 windows).
+/// Lazy rolling sums + lazy rolling averages + stored rolling distribution (7 stats × 4 windows).
 #[derive(Traversable)]
 pub struct RollingComplete<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
     pub sum: LazyRollingSumsFromHeight<T>,
+    pub average: LazyRollingAvgsFromHeight<T>,
     #[traversable(flatten)]
     pub distribution: RollingDistribution<T, M>,
 }
@@ -45,9 +46,20 @@ where
             cached_starts,
             indexes,
         );
+        let average = LazyRollingAvgsFromHeight::new(
+            &format!("{name}_average"),
+            version,
+            cumulative,
+            cached_starts,
+            indexes,
+        );
         let distribution = RollingDistribution::forced_import(db, name, version, indexes)?;
 
-        Ok(Self { sum, distribution })
+        Ok(Self {
+            sum,
+            average,
+            distribution,
+        })
     }
 
     /// Compute rolling distribution stats across all 4 windows.

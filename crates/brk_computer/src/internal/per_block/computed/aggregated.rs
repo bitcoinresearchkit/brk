@@ -9,9 +9,7 @@ use vecdb::{
 
 use crate::{
     indexes,
-    internal::{
-        CachedWindowStarts, NumericValue, PerBlock, RollingComplete, WindowStarts,
-    },
+    internal::{CachedWindowStarts, NumericValue, PerBlock, RollingComplete, WindowStarts},
 };
 
 #[derive(Traversable)]
@@ -70,8 +68,7 @@ where
         f64: From<T>,
         A: VecIndex + VecValue + brk_types::CheckedSub<A>,
     {
-        let combined_version =
-            source.version() + first_indexes.version() + count_indexes.version();
+        let combined_version = source.version() + first_indexes.version() + count_indexes.version();
 
         let mut index = max_from;
         index = {
@@ -121,7 +118,7 @@ where
                 );
 
                 self.sum.height.push(sum_val);
-                cumulative_val = cumulative_val + sum_val;
+                cumulative_val += sum_val;
                 self.cumulative.height.push(cumulative_val);
 
                 Ok(())

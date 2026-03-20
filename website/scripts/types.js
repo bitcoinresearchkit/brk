@@ -58,10 +58,10 @@
  * @typedef {Brk.BpsCentsPercentilesRatioSatsUsdPattern} PriceRatioPercentilesPattern
  * AnyRatioPattern: full ratio pattern with percentiles, SMAs, and std dev bands
  * @typedef {Brk.BpsCentsPercentilesRatioSatsSmaStdUsdPattern} AnyRatioPattern
- * FullValuePattern: base + cumulative + rolling windows (sats/btc/cents/usd)
- * @typedef {Brk.BaseCumulativeSumPattern3} FullValuePattern
- * RollingWindowSlot: a single rolling window with stats (average, pct10, pct25, median, pct75, pct90, max, min) per unit
- * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} RollingWindowSlot
+ * FullValuePattern: base + cumulative + sum + average rolling windows (sats/btc/cents/usd)
+ * @typedef {Brk.AverageBaseCumulativeSumPattern3} FullValuePattern
+ * RollingWindowSlot: a single rolling window with stats (pct10, pct25, median, pct75, pct90, max, min) per unit
+ * @typedef {Brk.MaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} RollingWindowSlot
  * @typedef {Brk.AnySeriesPattern} AnySeriesPattern
  * @typedef {Brk.CentsSatsUsdPattern} ActivePricePattern
  * @typedef {Brk.AnySeriesEndpoint} AnySeriesEndpoint
@@ -73,9 +73,9 @@
  * - FullRelativePattern: has BOTH RelToMarketCap AND RelToOwnMarketCap
  * @typedef {Brk.LossNetNuplProfitPattern} BasicRelativePattern
  * @typedef {Brk.LossNetNuplProfitPattern} GlobalRelativePattern
- * @typedef {Brk.GrossInvestedLossNetNuplProfitSentimentPattern2} OwnRelativePattern
- * @typedef {Brk.GrossInvestedLossNetNuplProfitSentimentPattern2} FullRelativePattern
- * @typedef {Brk.GrossInvestedLossNetNuplProfitSentimentPattern2} UnrealizedPattern
+ * @typedef {Brk.GrossInvestedInvestorLossNetNuplProfitSentimentPattern2} OwnRelativePattern
+ * @typedef {Brk.GrossInvestedInvestorLossNetNuplProfitSentimentPattern2} FullRelativePattern
+ * @typedef {Brk.GrossInvestedInvestorLossNetNuplProfitSentimentPattern2} UnrealizedPattern
  *
  * Profitability bucket pattern (supply + realized_cap + nupl)
  * @typedef {Brk.NuplRealizedSupplyPattern} RealizedSupplyPattern
@@ -87,10 +87,10 @@
  * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern4
  *
  * Transfer volume pattern (base + cumulative + inProfit/inLoss + sum windows)
- * @typedef {Brk.BaseCumulativeInSumPattern} TransferVolumePattern
+ * @typedef {Brk.AverageBaseCumulativeInSumPattern} TransferVolumePattern
  *
  * Realized profit/loss pattern (base + cumulative + sum windows, cents/usd)
- * @typedef {Brk.BaseCumulativeSumPattern4} RealizedProfitLossPattern
+ * @typedef {Brk.BaseCumulativeSumPattern} RealizedProfitLossPattern
  *
  * Full activity pattern (coindays, coinyears, dormancy, transfer volume)
  * @typedef {Brk.CoindaysCoinyearsDormancyTransferPattern} FullActivityPattern
@@ -136,11 +136,11 @@
  */
 /**
  * Stats pattern: average, min, max, percentiles (height-only indexes, NO base)
- * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} StatsPattern
+ * @typedef {Brk.MaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} StatsPattern
  */
 /**
  * Base stats pattern: average, min, max, percentiles
- * @typedef {Brk.AverageMaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} BaseStatsPattern
+ * @typedef {Brk.MaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} BaseStatsPattern
  */
 /**
  * Full stats pattern: cumulative, sum, average, min, max, percentiles + rolling
@@ -161,7 +161,7 @@
 /**
  * Count pattern: height, cumulative, and rolling sum windows
  * @template T
- * @typedef {Brk.BaseCumulativeSumPattern<T>} CountPattern
+ * @typedef {Brk.AverageBaseCumulativeSumPattern<T>} CountPattern
  */
 /**
  * Full per-block pattern: height, cumulative, sum, and distribution stats (all flat)
@@ -172,8 +172,8 @@
  * @typedef {FullStatsPattern | BtcFullStatsPattern} AnyStatsPattern
  */
 /**
- * Distribution stats: 8 series fields (average, min, max, median, pct10/25/75/90)
- * @typedef {{ average: AnySeriesPattern, min: AnySeriesPattern, max: AnySeriesPattern, median: AnySeriesPattern, pct10: AnySeriesPattern, pct25: AnySeriesPattern, pct75: AnySeriesPattern, pct90: AnySeriesPattern }} DistributionStats
+ * Distribution stats: min, max, median, pct10/25/75/90
+ * @typedef {{ min: AnySeriesPattern, max: AnySeriesPattern, median: AnySeriesPattern, pct10: AnySeriesPattern, pct25: AnySeriesPattern, pct75: AnySeriesPattern, pct90: AnySeriesPattern }} DistributionStats
  */
 
 /**

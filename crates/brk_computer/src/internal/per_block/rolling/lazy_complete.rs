@@ -6,12 +6,12 @@ use vecdb::{ReadableCloneableVec, UnaryTransform};
 use crate::{
     indexes,
     internal::{
-        CachedWindowStarts, ComputedVecValue, LazyRollingDistribution, LazyRollingSumsFromHeight,
-        NumericValue, RollingComplete,
+        CachedWindowStarts, ComputedVecValue, LazyRollingAvgsFromHeight,
+        LazyRollingDistribution, LazyRollingSumsFromHeight, NumericValue, RollingComplete,
     },
 };
 
-/// Lazy analog of `RollingComplete<T>`: lazy rolling sums + lazy rolling distribution.
+/// Lazy analog of `RollingComplete<T>`: lazy rolling sums + lazy rolling averages + lazy rolling distribution.
 /// Zero stored vecs.
 #[derive(Clone, Traversable)]
 pub struct LazyRollingComplete<T, S1T>
@@ -20,6 +20,7 @@ where
     S1T: ComputedVecValue + JsonSchema,
 {
     pub sum: LazyRollingSumsFromHeight<T>,
+    pub average: LazyRollingAvgsFromHeight<T>,
     #[traversable(flatten)]
     pub distribution: LazyRollingDistribution<T, S1T>,
 }
@@ -44,11 +45,22 @@ where
             cached_starts,
             indexes,
         );
+        let average = LazyRollingAvgsFromHeight::new(
+            &format!("{name}_average"),
+            version,
+            cumulative,
+            cached_starts,
+            indexes,
+        );
         let distribution = LazyRollingDistribution::from_rolling_distribution::<F>(
             name,
             version,
             &source.distribution,
         );
-        Self { sum, distribution }
+        Self {
+            sum,
+            average,
+            distribution,
+        }
     }
 }

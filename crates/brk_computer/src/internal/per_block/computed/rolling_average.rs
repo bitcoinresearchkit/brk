@@ -21,7 +21,7 @@ where
 {
     pub base: M::Stored<EagerVec<PcoVec<Height, T>>>,
     #[traversable(hidden)]
-    pub cumulative: M::Stored<EagerVec<PcoVec<Height, f64>>>,
+    pub cumulative: M::Stored<EagerVec<PcoVec<Height, T>>>,
     #[traversable(flatten)]
     pub average: LazyRollingAvgsFromHeight<T>,
 }
@@ -38,8 +38,8 @@ where
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         let base: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, version)?;
-        let cumulative: EagerVec<PcoVec<Height, f64>> =
-            EagerVec::forced_import(db, &format!("{name}_cumulative"), version)?;
+        let cumulative: EagerVec<PcoVec<Height, T>> =
+            EagerVec::forced_import(db, &format!("{name}_cumulative"), version + Version::ONE)?;
         let average = LazyRollingAvgsFromHeight::new(
             &format!("{name}_average"),
             version + Version::ONE,

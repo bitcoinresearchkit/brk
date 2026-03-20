@@ -6,7 +6,7 @@ use brk_cohort::{
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Indexes, Sats, Version};
+use brk_types::{Cents, CentsSquaredSats, Dollars, Height, Indexes, Sats, Version};
 use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode, WritableVec,
@@ -738,15 +738,9 @@ impl UTXOCohorts<Rw> {
             .min()
             .unwrap_or_default()
             .min(Height::from(self.profitability.min_stateful_len()))
-            .min(Height::from(
-                self.all.metrics.realized.min_stateful_len(),
-            ))
-            .min(Height::from(
-                self.sth.metrics.realized.min_stateful_len(),
-            ))
-            .min(Height::from(
-                self.lth.metrics.realized.min_stateful_len(),
-            ))
+            .min(Height::from(self.all.min_stateful_len()))
+            .min(Height::from(self.sth.min_stateful_len()))
+            .min(Height::from(self.lth.min_stateful_len()))
     }
 
     /// Import state for all separate cohorts at or before given height.
@@ -790,7 +784,7 @@ impl UTXOCohorts<Rw> {
 
     /// Aggregate RealizedFull fields from age_range states and push to all/sth/lth.
     /// Called during the block loop after separate cohorts' push_state but before reset.
-    pub(crate) fn push_overlapping_realized_full(&mut self) {
+    pub(crate) fn push_overlapping(&mut self, height_price: Cents) {
         let Self {
             all,
             sth,
@@ -805,14 +799,26 @@ impl UTXOCohorts<Rw> {
         let mut sth_acc = RealizedFullAccum::default();
         let mut lth_acc = RealizedFullAccum::default();
 
-        for ar in age_range.iter() {
-            if let Some(state) = ar.state.as_ref() {
-                let r = &state.realized;
-                all_acc.add(r);
+        let mut all_icap = (0u128, 0u128);
+        let mut sth_icap = (0u128, 0u128);
+        let mut lth_icap = (0u128, 0u128);
+
+        for ar in age_range.iter_mut() {
+            if let Some(state) = ar.state.as_mut() {
+                all_acc.add(&state.realized);
+
+                let u = state.compute_unrealized_state(height_price);
+                all_icap.0 += u.investor_cap_in_profit_raw;
+                all_icap.1 += u.investor_cap_in_loss_raw;
+
                 if sth_filter.includes(&ar.metrics.filter) {
-                    sth_acc.add(r);
+                    sth_acc.add(&state.realized);
+                    sth_icap.0 += u.investor_cap_in_profit_raw;
+                    sth_icap.1 += u.investor_cap_in_loss_raw;
                 } else {
-                    lth_acc.add(r);
+                    lth_acc.add(&state.realized);
+                    lth_icap.0 += u.investor_cap_in_profit_raw;
+                    lth_icap.1 += u.investor_cap_in_loss_raw;
                 }
             }
         }
@@ -820,6 +826,13 @@ impl UTXOCohorts<Rw> {
         all.metrics.realized.push_accum(&all_acc);
         sth.metrics.realized.push_accum(&sth_acc);
         lth.metrics.realized.push_accum(&lth_acc);
+
+        all.metrics.unrealized.investor_cap_in_profit_raw.push(CentsSquaredSats::new(all_icap.0));
+        all.metrics.unrealized.investor_cap_in_loss_raw.push(CentsSquaredSats::new(all_icap.1));
+        sth.metrics.unrealized.investor_cap_in_profit_raw.push(CentsSquaredSats::new(sth_icap.0));
+        sth.metrics.unrealized.investor_cap_in_loss_raw.push(CentsSquaredSats::new(sth_icap.1));
+        lth.metrics.unrealized.investor_cap_in_profit_raw.push(CentsSquaredSats::new(lth_icap.0));
+        lth.metrics.unrealized.investor_cap_in_loss_raw.push(CentsSquaredSats::new(lth_icap.1));
     }
 }
 

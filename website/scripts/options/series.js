@@ -84,12 +84,13 @@ export function price({
 
 /**
  * Create percentile series (max/min/median/pct75/pct25/pct90/pct10) from any stats pattern
- * @param {DistributionStats} pattern
- * @param {Unit} unit
- * @param {string} title
+ * @param {Object} args
+ * @param {DistributionStats} args.pattern
+ * @param {Unit} args.unit
+ * @param {string} [args.title]
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
-function percentileSeries(pattern, unit, title) {
+function percentileSeries({ pattern, unit, title = "" }) {
   const { stat } = colors;
   return [
     dots({
@@ -418,9 +419,7 @@ export function fromBaseStatsPattern({
   unit,
   title = "",
   baseColor,
-  avgActive = true,
 }) {
-  const { stat } = colors;
   const stats = statsAtWindow(pattern, window);
   return [
     dots({
@@ -429,46 +428,17 @@ export function fromBaseStatsPattern({
       color: baseColor,
       unit,
     }),
-    dots({
-      series: stats.average,
-      name: `${title} avg`.trim(),
-      color: stat.avg,
-      unit,
-      defaultActive: avgActive,
-    }),
-    ...percentileSeries(stats, unit, title),
+    ...percentileSeries({ pattern: stats, unit, title }),
   ];
 }
 
 /**
- * Create series from a flat stats pattern (average + pct percentiles as single series)
- * Use statsAtWindow() to extract from patterns with _1y24h30d7dPattern stats
- * @param {Object} args
- * @param {{ average: AnySeriesPattern, median: AnySeriesPattern, max: AnySeriesPattern, min: AnySeriesPattern, pct75: AnySeriesPattern, pct25: AnySeriesPattern, pct90: AnySeriesPattern, pct10: AnySeriesPattern }} args.pattern
- * @param {Unit} args.unit
- * @param {string} [args.title]
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-export function fromStatsPattern({ pattern, unit, title = "" }) {
-  return [
-    {
-      type: "Dots",
-      series: pattern.average,
-      title: `${title} avg`.trim(),
-      unit,
-    },
-    ...percentileSeries(pattern, unit, title),
-  ];
-}
-
-/**
- * Extract stats at a specific rolling window from patterns with _1y24h30d7dPattern stats
- * @param {Record<string, any>} pattern - Pattern with pct10/pct25/pct75/pct90 and average/median/max/min as _1y24h30d7dPattern
+ * Extract stats at a specific rolling window
+ * @param {Record<string, any>} pattern - Pattern with pct10/pct25/pct75/pct90 and median/max/min as _1y24h30d7dPattern
  * @param {string} window
  */
 export function statsAtWindow(pattern, window) {
   return {
-    average: pattern.average[window],
     median: pattern.median[window],
     max: pattern.max[window],
     min: pattern.min[window],
@@ -601,10 +571,10 @@ export function distributionWindowsTree({ pattern, base, title, unit }) {
     tree: [
       {
         name: "Compare",
-        title: `${title} Average`,
+        title: `${title} Median`,
         bottom: ROLLING_WINDOWS.map((w) =>
           line({
-            series: pattern.average[w.key],
+            series: pattern.median[w.key],
             name: w.name,
             color: w.color,
             unit,
@@ -616,10 +586,7 @@ export function distributionWindowsTree({ pattern, base, title, unit }) {
         title: `${title} Distribution (${w.title})`,
         bottom: [
           ...(base ? [line({ series: base, name: "base", unit })] : []),
-          ...fromStatsPattern({
-            pattern: statsAtWindow(pattern, w.key),
-            unit,
-          }),
+          ...percentileSeries({ pattern: statsAtWindow(pattern, w.key), unit }),
         ],
       })),
     ],
@@ -628,12 +595,11 @@ export function distributionWindowsTree({ pattern, base, title, unit }) {
 
 /**
  * Map a rolling window slot's stats to a specific unit, producing a stats-compatible pattern
- * @param {{ average: Record<string, AnySeriesPattern>, median: Record<string, AnySeriesPattern>, max: Record<string, AnySeriesPattern>, min: Record<string, AnySeriesPattern>, pct75: Record<string, AnySeriesPattern>, pct25: Record<string, AnySeriesPattern>, pct90: Record<string, AnySeriesPattern>, pct10: Record<string, AnySeriesPattern> }} slot - Rolling window slot with multi-currency stats
+ * @param {{ median: Record<string, AnySeriesPattern>, max: Record<string, AnySeriesPattern>, min: Record<string, AnySeriesPattern>, pct75: Record<string, AnySeriesPattern>, pct25: Record<string, AnySeriesPattern>, pct90: Record<string, AnySeriesPattern>, pct10: Record<string, AnySeriesPattern> }} slot - Rolling window slot with multi-currency stats
  * @param {BtcSatsUsdKey} unitKey
  */
 function rollingSlotForUnit(slot, unitKey) {
   return {
-    average: slot.average[unitKey],
     median: slot.median[unitKey],
     max: slot.max[unitKey],
     min: slot.min[unitKey],
@@ -646,19 +612,19 @@ function rollingSlotForUnit(slot, unitKey) {
 
 /**
  * Create distribution series for btc/sats/usd from a rolling window slot
- * @param {{ average: Record<string, AnySeriesPattern>, median: Record<string, AnySeriesPattern>, max: Record<string, AnySeriesPattern>, min: Record<string, AnySeriesPattern>, pct75: Record<string, AnySeriesPattern>, pct25: Record<string, AnySeriesPattern>, pct90: Record<string, AnySeriesPattern>, pct10: Record<string, AnySeriesPattern> }} slot - Rolling window slot with multi-currency stats
+ * @param {{ median: Record<string, AnySeriesPattern>, max: Record<string, AnySeriesPattern>, min: Record<string, AnySeriesPattern>, pct75: Record<string, AnySeriesPattern>, pct25: Record<string, AnySeriesPattern>, pct90: Record<string, AnySeriesPattern>, pct10: Record<string, AnySeriesPattern> }} slot - Rolling window slot with multi-currency stats
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 export const distributionBtcSatsUsd = (slot) => [
-  ...fromStatsPattern({
+  ...percentileSeries({
     pattern: rollingSlotForUnit(slot, "btc"),
     unit: Unit.btc,
   }),
-  ...fromStatsPattern({
+  ...percentileSeries({
     pattern: rollingSlotForUnit(slot, "sats"),
     unit: Unit.sats,
   }),
-  ...fromStatsPattern({
+  ...percentileSeries({
     pattern: rollingSlotForUnit(slot, "usd"),
     unit: Unit.usd,
   }),
@@ -907,11 +873,7 @@ export function chartsFromFull({
     ? `${title} ${distributionSuffix}`
     : title;
   return [
-    {
-      name: "Per Block",
-      title,
-      bottom: [{ series: pattern.base, title: "base", unit }],
-    },
+    averagesTree({ windows: pattern.average, title, unit }),
     sumsTree({ windows: pattern.sum, title, unit }),
     distributionWindowsTree({ pattern, title: distTitle, unit }),
     {
@@ -948,16 +910,11 @@ export function chartsFromAggregated({
   unit,
   distributionSuffix = "",
 }) {
-  const { stat } = colors;
   const distTitle = distributionSuffix
     ? `${title} ${distributionSuffix}`
     : title;
   return [
-    {
-      name: "Per Block",
-      title,
-      bottom: [{ series: pattern.sum, title: "base", color: stat.sum, unit }],
-    },
+    averagesTree({ windows: pattern.rolling.average, title, unit }),
     sumsTree({ windows: pattern.rolling.sum, title, unit }),
     distributionWindowsTree({
       pattern: pattern.rolling,
@@ -996,12 +953,12 @@ export function chartsFromBlockAnd6b({ pattern, title, unit }) {
     {
       name: "Block",
       title: `${title} (Block)`,
-      bottom: fromStatsPattern({ pattern: pattern.block, unit }),
+      bottom: percentileSeries({ pattern: pattern.block, unit }),
     },
     {
       name: "Hourly",
       title: `${title} (Hourly)`,
-      bottom: fromStatsPattern({ pattern: pattern._6b, unit }),
+      bottom: percentileSeries({ pattern: pattern._6b, unit }),
     },
   ];
 }
@@ -1037,11 +994,7 @@ export function chartsFromSumsCumulative({ pattern, title, unit, color }) {
  */
 export function chartsFromCount({ pattern, title, unit, color }) {
   return [
-    {
-      name: "Per Block",
-      title,
-      bottom: [{ series: pattern.base, title: "base", color, unit }],
-    },
+    averagesTree({ windows: pattern.average, title, unit }),
     ...chartsFromSumsCumulative({ pattern, title, unit, color }),
   ];
 }
@@ -1060,6 +1013,7 @@ export function chartsFromCountEntries({ entries, title, unit }) {
       name,
       color: colors.at(i, arr.length),
       base: data.base,
+      average: data.average,
       rolling: data.sum,
       cumulative: data.cumulative,
     })),
@@ -1071,7 +1025,7 @@ export function chartsFromCountEntries({ entries, title, unit }) {
 /**
  * Per Block + Sums + Cumulative tree for multiple named series shown side-by-side
  * @param {Object} args
- * @param {Array<{ name: string, color: Color, base: AnySeriesPattern, rolling: { _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }, cumulative: AnySeriesPattern }>} args.entries
+ * @param {Array<{ name: string, color: Color, base: AnySeriesPattern, average: { _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }, rolling: { _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }, cumulative: AnySeriesPattern }>} args.entries
  * @param {string} args.title
  * @param {Unit} args.unit
  * @returns {PartialOptionsTree}
@@ -1079,10 +1033,17 @@ export function chartsFromCountEntries({ entries, title, unit }) {
 export function multiSeriesTree({ entries, title, unit }) {
   return [
     {
-      name: "Per Block",
-      title,
-      bottom: entries.map((e) =>
-        line({ series: e.base, name: e.name, color: e.color, unit }),
+      name: "Compare",
+      title: `${title} Average`,
+      bottom: ROLLING_WINDOWS.flatMap((w) =>
+        entries.map((e) =>
+          line({
+            series: e.average[w.key],
+            name: `${e.name} ${w.name}`,
+            color: e.color,
+            unit,
+          }),
+        ),
       ),
     },
     ...ROLLING_WINDOWS.map((w) => ({

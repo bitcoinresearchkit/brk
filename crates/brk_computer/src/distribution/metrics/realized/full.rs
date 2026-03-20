@@ -127,7 +127,7 @@ impl RealizedFull {
 
         // Peak regret
         let peak_regret = RealizedPeakRegret {
-            value: cfg.import("realized_peak_regret", Version::new(2))?,
+            value: cfg.import("realized_peak_regret", Version::new(3))?,
             to_rcap: cfg.import("realized_peak_regret_to_rcap", Version::new(2))?,
         };
 

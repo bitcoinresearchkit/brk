@@ -1,17 +1,19 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Cents, Height, Indexes, Sats, Version};
 use brk_types::CentsSquaredSats;
+use brk_types::{BasisPoints16, Cents, Height, Indexes, Sats, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
-use crate::internal::{FiatPerBlock, PerBlock, PercentPerBlock, PercentilesVecs, Price, PERCENTILES_LEN};
+use crate::internal::{
+    PERCENTILES_LEN, PerBlock, PercentPerBlock, PercentilesVecs, Price,
+};
 
 use super::ImportConfig;
 
 #[derive(Traversable)]
 pub struct CostBasisSide<M: StorageMode = Rw> {
-    pub per_coin: FiatPerBlock<Cents, M>,
-    pub per_dollar: FiatPerBlock<Cents, M>,
+    pub per_coin: Price<PerBlock<Cents, M>>,
+    pub per_dollar: Price<PerBlock<Cents, M>>,
 }
 
 /// Cost basis metrics: min/max + profit/loss splits + percentiles + supply density.
@@ -31,12 +33,12 @@ impl CostBasis {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
             in_profit: CostBasisSide {
-                per_coin: cfg.import("cost_basis_in_profit_per_coin", Version::ZERO)?,
-                per_dollar: cfg.import("cost_basis_in_profit_per_dollar", Version::ZERO)?,
+                per_coin: Price::forced_import(cfg.db, &cfg.name("cost_basis_in_profit_per_coin"), cfg.version + Version::ONE, cfg.indexes)?,
+                per_dollar: Price::forced_import(cfg.db, &cfg.name("cost_basis_in_profit_per_dollar"), cfg.version + Version::ONE, cfg.indexes)?,
             },
             in_loss: CostBasisSide {
-                per_coin: cfg.import("cost_basis_in_loss_per_coin", Version::ZERO)?,
-                per_dollar: cfg.import("cost_basis_in_loss_per_dollar", Version::ZERO)?,
+                per_coin: Price::forced_import(cfg.db, &cfg.name("cost_basis_in_loss_per_coin"), cfg.version + Version::ONE, cfg.indexes)?,
+                per_dollar: Price::forced_import(cfg.db, &cfg.name("cost_basis_in_loss_per_dollar"), cfg.version + Version::ONE, cfg.indexes)?,
             },
             min: cfg.import("cost_basis_min", Version::ZERO)?,
             max: cfg.import("cost_basis_max", Version::ZERO)?,
@@ -124,9 +126,11 @@ impl CostBasis {
         vecs
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_prices(
         &mut self,
         starting_indexes: &Indexes,
+        spot: &impl ReadableVec<Height, Cents>,
         invested_cap_in_profit: &impl ReadableVec<Height, Cents>,
         invested_cap_in_loss: &impl ReadableVec<Height, Cents>,
         supply_in_profit_sats: &impl ReadableVec<Height, Sats>,
@@ -135,46 +139,64 @@ impl CostBasis {
         investor_cap_in_loss_raw: &impl ReadableVec<Height, CentsSquaredSats>,
         exit: &Exit,
     ) -> Result<()> {
-        self.in_profit.per_coin.cents.height.compute_transform2(
+        self.in_profit.per_coin.cents.height.compute_transform3(
             starting_indexes.height,
             invested_cap_in_profit,
             supply_in_profit_sats,
-            |(h, invested_cents, supply_sats, ..)| {
+            spot,
+            |(h, invested_cents, supply_sats, spot, ..)| {
                 let supply = supply_sats.as_u128();
-                if supply == 0 { return (h, Cents::ZERO); }
-                (h, Cents::new((invested_cents.as_u128() * Sats::ONE_BTC_U128 / supply) as u64))
+                if supply == 0 {
+                    return (h, spot);
+                }
+                (
+                    h,
+                    Cents::new((invested_cents.as_u128() * Sats::ONE_BTC_U128 / supply) as u64),
+                )
             },
             exit,
         )?;
-        self.in_loss.per_coin.cents.height.compute_transform2(
+        self.in_loss.per_coin.cents.height.compute_transform3(
             starting_indexes.height,
             invested_cap_in_loss,
             supply_in_loss_sats,
-            |(h, invested_cents, supply_sats, ..)| {
+            spot,
+            |(h, invested_cents, supply_sats, spot, ..)| {
                 let supply = supply_sats.as_u128();
-                if supply == 0 { return (h, Cents::ZERO); }
-                (h, Cents::new((invested_cents.as_u128() * Sats::ONE_BTC_U128 / supply) as u64))
+                if supply == 0 {
+                    return (h, spot);
+                }
+                (
+                    h,
+                    Cents::new((invested_cents.as_u128() * Sats::ONE_BTC_U128 / supply) as u64),
+                )
             },
             exit,
         )?;
-        self.in_profit.per_dollar.cents.height.compute_transform2(
+        self.in_profit.per_dollar.cents.height.compute_transform3(
             starting_indexes.height,
             investor_cap_in_profit_raw,
             invested_cap_in_profit,
-            |(h, investor_cap, invested_cents, ..)| {
+            spot,
+            |(h, investor_cap, invested_cents, spot, ..)| {
                 let invested_raw = invested_cents.as_u128() * Sats::ONE_BTC_U128;
-                if invested_raw == 0 { return (h, Cents::ZERO); }
+                if invested_raw == 0 {
+                    return (h, spot);
+                }
                 (h, Cents::new((investor_cap.inner() / invested_raw) as u64))
             },
             exit,
         )?;
-        self.in_loss.per_dollar.cents.height.compute_transform2(
+        self.in_loss.per_dollar.cents.height.compute_transform3(
             starting_indexes.height,
             investor_cap_in_loss_raw,
             invested_cap_in_loss,
-            |(h, investor_cap, invested_cents, ..)| {
+            spot,
+            |(h, investor_cap, invested_cents, spot, ..)| {
                 let invested_raw = invested_cents.as_u128() * Sats::ONE_BTC_U128;
-                if invested_raw == 0 { return (h, Cents::ZERO); }
+                if invested_raw == 0 {
+                    return (h, spot);
+                }
                 (h, Cents::new((investor_cap.inner() / invested_raw) as u64))
             },
             exit,

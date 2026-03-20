@@ -12,7 +12,7 @@ pub struct LazyRollingAvgFromHeight<T>
 where
     T: NumericValue + JsonSchema,
 {
-    pub height: LazyDeltaVec<Height, f64, T, DeltaAvg>,
+    pub height: LazyDeltaVec<Height, T, T, DeltaAvg>,
     #[traversable(flatten)]
     pub resolutions: Box<Resolutions<T>>,
 }

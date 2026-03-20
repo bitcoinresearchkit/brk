@@ -12,10 +12,11 @@ use crate::{
 use super::LazyRollingAvgFromHeight;
 
 /// Lazy rolling averages for all 4 window durations (24h, 1w, 1m, 1y),
-/// derived from an f64 cumulative vec + cached window starts.
+/// derived from a cumulative vec + cached window starts.
 ///
 /// Nothing is stored on disk — all values are computed on-the-fly via
-/// `LazyDeltaVec<Height, f64, T, DeltaAvg>`: `(cum[h] - cum[start-1]) / (h - start + 1)`.
+/// `LazyDeltaVec<Height, T, T, DeltaAvg>`: `(cum[h] - cum[start-1]) / (h - start + 1)`.
+/// T is converted to f64 internally for division, then back to T.
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct LazyRollingAvgsFromHeight<T>(pub Windows<LazyRollingAvgFromHeight<T>>)
@@ -29,7 +30,7 @@ where
     pub fn new(
         name: &str,
         version: Version,
-        cumulative: &(impl ReadableCloneableVec<Height, f64> + 'static),
+        cumulative: &(impl ReadableCloneableVec<Height, T> + 'static),
         cached_starts: &CachedWindowStarts,
         indexes: &indexes::Vecs,
     ) -> Self {
@@ -39,7 +40,7 @@ where
             let full_name = format!("{name}_{suffix}");
             let cached = cached_start.clone();
             let starts_version = cached.version();
-            let avg = LazyDeltaVec::<Height, f64, T, DeltaAvg>::new(
+            let avg = LazyDeltaVec::<Height, T, T, DeltaAvg>::new(
                 &full_name,
                 version,
                 cum_source.clone(),
