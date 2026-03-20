@@ -5,9 +5,9 @@ import {
   dots,
   line,
   price,
-  sumsArray,
   multiSeriesTree,
   percentRatioDots,
+  sumsAndAveragesCumulative,
 } from "./series.js";
 import { satsBtcUsd, priceRatioPercentilesTree } from "./shared.js";
 
@@ -277,50 +277,27 @@ export function createCointimeSection() {
       {
         name: "Coinblocks",
         tree: [
-          {
-            name: "Compare",
-            tree: multiSeriesTree({
-              entries: coinblocks.map(({ pattern, name, color }) => ({
-                name,
-                color,
-                base: pattern.base,
-                average: pattern.average,
-                rolling: pattern.sum,
-                cumulative: pattern.cumulative,
-              })),
-              title: "Coinblocks",
-              unit: Unit.coinblocks,
-            }),
-          },
+          ...multiSeriesTree({
+            entries: coinblocks.map(({ pattern, name, color }) => ({
+              name,
+              color,
+              average: pattern.average,
+              sum: pattern.sum,
+              cumulative: pattern.cumulative,
+            })),
+            title: "Coinblocks",
+            unit: Unit.coinblocks,
+          }),
           ...coinblocks.map(({ pattern, name, title, color }) => ({
             name,
-            tree: [
-              {
-                name: "Per Block",
-                title,
-                bottom: [
-                  line({
-                    series: pattern.base,
-                    name,
-                    color,
-                    unit: Unit.coinblocks,
-                  }),
-                ],
-              },
-              ...sumsArray({ windows: pattern.sum, title, unit: Unit.coinblocks }),
-              {
-                name: "Cumulative",
-                title: `${title} (Total)`,
-                bottom: [
-                  line({
-                    series: pattern.cumulative,
-                    name,
-                    color,
-                    unit: Unit.coinblocks,
-                  }),
-                ],
-              },
-            ],
+            tree: sumsAndAveragesCumulative({
+              sum: pattern.sum,
+              average: pattern.average,
+              cumulative: pattern.cumulative,
+              title,
+              unit: Unit.coinblocks,
+              color,
+            }),
           })),
         ],
       },
@@ -328,95 +305,47 @@ export function createCointimeSection() {
       {
         name: "Value",
         tree: [
-          {
-            name: "Compare",
-            tree: multiSeriesTree({
-              entries: [
-                ...cointimeValues.map(({ pattern, name, color }) => ({
-                  name,
-                  color,
-                  base: pattern.base,
-                  average: pattern.average,
-                  rolling: pattern.sum,
-                  cumulative: pattern.cumulative,
-                })),
-                {
-                  name: vocdd.name,
-                  color: vocdd.color,
-                  base: vocdd.pattern.base,
-                  average: vocdd.pattern.average,
-                  rolling: vocdd.pattern.sum,
-                  cumulative: vocdd.pattern.cumulative,
-                },
-              ],
-              title: "Cointime Value",
-              unit: Unit.usd,
-            }),
-          },
-          ...cointimeValues.map(({ pattern, name, title, color }) => ({
-            name,
-            tree: [
+          ...multiSeriesTree({
+            entries: [
+              ...cointimeValues.map(({ pattern, name, color }) => ({
+                name,
+                color,
+                average: pattern.average,
+                sum: pattern.sum,
+                cumulative: pattern.cumulative,
+              })),
               {
-                name: "Per Block",
-                title,
-                bottom: [
-                  line({ series: pattern.base, name, color, unit: Unit.usd }),
-                ],
-              },
-              ...sumsArray({ windows: pattern.sum, title, unit: Unit.usd }),
-              {
-                name: "Cumulative",
-                title: `${title} (Total)`,
-                bottom: [
-                  line({
-                    series: pattern.cumulative,
-                    name,
-                    color,
-                    unit: Unit.usd,
-                  }),
-                ],
+                name: vocdd.name,
+                color: vocdd.color,
+                average: vocdd.pattern.average,
+                sum: vocdd.pattern.sum,
+                cumulative: vocdd.pattern.cumulative,
               },
             ],
+            title: "Cointime Value",
+            unit: Unit.usd,
+          }),
+          ...cointimeValues.map(({ pattern, name, title, color }) => ({
+            name,
+            tree: sumsAndAveragesCumulative({
+              sum: pattern.sum,
+              average: pattern.average,
+              cumulative: pattern.cumulative,
+              title,
+              unit: Unit.usd,
+              color,
+            }),
           })),
           {
             name: vocdd.name,
-            tree: [
-              {
-                name: "Per Block",
-                title: vocdd.title,
-                bottom: [
-                  line({
-                    series: vocdd.pattern.base,
-                    name: vocdd.name,
-                    color: vocdd.color,
-                    unit: Unit.usd,
-                  }),
-                  line({
-                    series: reserveRisk.vocddMedian1y,
-                    name: "365d Median",
-                    color: colors.time._1y,
-                    unit: Unit.usd,
-                  }),
-                ],
-              },
-              ...sumsArray({
-                windows: vocdd.pattern.sum,
-                title: vocdd.title,
-                unit: Unit.usd,
-              }),
-              {
-                name: "Cumulative",
-                title: `${vocdd.title} (Total)`,
-                bottom: [
-                  line({
-                    series: vocdd.pattern.cumulative,
-                    name: vocdd.name,
-                    color: vocdd.color,
-                    unit: Unit.usd,
-                  }),
-                ],
-              },
-            ],
+            tree: sumsAndAveragesCumulative({
+              sum: vocdd.pattern.sum,
+              average: vocdd.pattern.average,
+              cumulative: vocdd.pattern.cumulative,
+              title: vocdd.title,
+              unit: Unit.usd,
+              color: vocdd.color,
+            }),
           },
         ],
       },

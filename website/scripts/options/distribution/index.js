@@ -10,8 +10,19 @@
  * - activity.js: SOPR, Volume, Lifespan
  */
 
-import { formatCohortTitle, satsBtcUsd, satsBtcUsdFullTree } from "../shared.js";
-import { ROLLING_WINDOWS, line, baseline, percentRatio, sumsTree, rollingPercentRatioTree } from "../series.js";
+import {
+  formatCohortTitle,
+  satsBtcUsd,
+  satsBtcUsdFullTree,
+} from "../shared.js";
+import {
+  ROLLING_WINDOWS,
+  line,
+  baseline,
+  percentRatio,
+  sumsTree,
+  rollingPercentRatioTree,
+} from "../series.js";
 import { Unit } from "../../utils/units.js";
 import { colors } from "../../utils/colors.js";
 
@@ -210,7 +221,6 @@ export function createCohortFolderAgeRangeWithMatured(cohort) {
     name: "Matured",
     tree: satsBtcUsdFullTree({
       pattern: cohort.matured,
-      name: cohort.name,
       title: title("Matured Supply"),
     }),
   });
@@ -452,13 +462,22 @@ export function createGroupedCohortFolderAgeRangeWithMatured({
   list,
   all,
 }) {
-  const folder = createGroupedCohortFolderAgeRange({ name, title: groupTitle, list, all });
+  const folder = createGroupedCohortFolderAgeRange({
+    name,
+    title: groupTitle,
+    list,
+    all,
+  });
   const title = formatCohortTitle(groupTitle);
   folder.tree.push({
     name: "Matured",
     title: title("Matured Supply"),
     bottom: list.flatMap((cohort) =>
-      satsBtcUsd({ pattern: cohort.matured.base, name: cohort.name, color: cohort.color }),
+      satsBtcUsd({
+        pattern: cohort.matured.base,
+        name: cohort.name,
+        color: cohort.color,
+      }),
     ),
   });
   return folder;
@@ -607,14 +626,32 @@ function singleBucketFolder({ name, color, pattern }) {
             title: `${name}: Supply`,
             bottom: [
               ...satsBtcUsd({ pattern: pattern.supply.all, name: "Total" }),
-              ...satsBtcUsd({ pattern: pattern.supply.sth, name: "STH", color: colors.term.short }),
+              ...satsBtcUsd({
+                pattern: pattern.supply.sth,
+                name: "STH",
+                color: colors.term.short,
+              }),
             ],
           },
           {
             name: "Change",
             tree: [
-              { ...sumsTree({ windows: pattern.supply.all.delta.absolute, title: `${name}: Supply Change`, unit: Unit.sats, series: baseline }), name: "Absolute" },
-              { ...rollingPercentRatioTree({ windows: pattern.supply.all.delta.rate, title: `${name}: Supply Rate` }), name: "Rate" },
+              {
+                ...sumsTree({
+                  windows: pattern.supply.all.delta.absolute,
+                  title: `${name}: Supply Change`,
+                  unit: Unit.sats,
+                  series: baseline,
+                }),
+                name: "Absolute",
+              },
+              {
+                ...rollingPercentRatioTree({
+                  windows: pattern.supply.all.delta.rate,
+                  title: `${name}: Supply Rate`,
+                }),
+                name: "Rate",
+              },
             ],
           },
         ],
@@ -623,14 +660,25 @@ function singleBucketFolder({ name, color, pattern }) {
         name: "Realized Cap",
         title: `${name}: Realized Cap`,
         bottom: [
-          line({ series: pattern.realizedCap.all, name: "Total", unit: Unit.usd }),
-          line({ series: pattern.realizedCap.sth, name: "STH", color: colors.term.short, unit: Unit.usd }),
+          line({
+            series: pattern.realizedCap.all,
+            name: "Total",
+            unit: Unit.usd,
+          }),
+          line({
+            series: pattern.realizedCap.sth,
+            name: "STH",
+            color: colors.term.short,
+            unit: Unit.usd,
+          }),
         ],
       },
       {
         name: "NUPL",
         title: `${name}: NUPL`,
-        bottom: [line({ series: pattern.nupl.ratio, name, color, unit: Unit.ratio })],
+        bottom: [
+          line({ series: pattern.nupl.ratio, name, color, unit: Unit.ratio }),
+        ],
       },
     ],
   };
@@ -671,7 +719,12 @@ function groupedBucketCharts(list, titlePrefix) {
                   title: `${titlePrefix}: Supply Change`,
                   bottom: ROLLING_WINDOWS.flatMap((w) =>
                     list.map(({ name, color, pattern }) =>
-                      baseline({ series: pattern.supply.all.delta.absolute[w.key], name: `${name} ${w.name}`, color, unit: Unit.sats }),
+                      baseline({
+                        series: pattern.supply.all.delta.absolute[w.key],
+                        name: `${name} ${w.name}`,
+                        color,
+                        unit: Unit.sats,
+                      }),
                     ),
                   ),
                 },
@@ -679,7 +732,12 @@ function groupedBucketCharts(list, titlePrefix) {
                   name: w.name,
                   title: `${titlePrefix}: Supply Change (${w.title})`,
                   bottom: list.map(({ name, color, pattern }) =>
-                    baseline({ series: pattern.supply.all.delta.absolute[w.key], name, color, unit: Unit.sats }),
+                    baseline({
+                      series: pattern.supply.all.delta.absolute[w.key],
+                      name,
+                      color,
+                      unit: Unit.sats,
+                    }),
                   ),
                 })),
               ],
@@ -692,7 +750,11 @@ function groupedBucketCharts(list, titlePrefix) {
                   title: `${titlePrefix}: Supply Rate`,
                   bottom: ROLLING_WINDOWS.flatMap((w) =>
                     list.flatMap(({ name, color, pattern }) =>
-                      percentRatio({ pattern: pattern.supply.all.delta.rate[w.key], name: `${name} ${w.name}`, color }),
+                      percentRatio({
+                        pattern: pattern.supply.all.delta.rate[w.key],
+                        name: `${name} ${w.name}`,
+                        color,
+                      }),
                     ),
                   ),
                 },
@@ -700,7 +762,11 @@ function groupedBucketCharts(list, titlePrefix) {
                   name: w.name,
                   title: `${titlePrefix}: Supply Rate (${w.title})`,
                   bottom: list.flatMap(({ name, color, pattern }) =>
-                    percentRatio({ pattern: pattern.supply.all.delta.rate[w.key], name, color }),
+                    percentRatio({
+                      pattern: pattern.supply.all.delta.rate[w.key],
+                      name,
+                      color,
+                    }),
                   ),
                 })),
               ],
@@ -716,14 +782,24 @@ function groupedBucketCharts(list, titlePrefix) {
           name: "All",
           title: `${titlePrefix}: Realized Cap`,
           bottom: list.map(({ name, color, pattern }) =>
-            line({ series: pattern.realizedCap.all, name, color, unit: Unit.usd }),
+            line({
+              series: pattern.realizedCap.all,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
           ),
         },
         {
           name: "STH",
           title: `${titlePrefix}: STH Realized Cap`,
           bottom: list.map(({ name, color, pattern }) =>
-            line({ series: pattern.realizedCap.sth, name, color, unit: Unit.usd }),
+            line({
+              series: pattern.realizedCap.sth,
+              name,
+              color,
+              unit: Unit.usd,
+            }),
           ),
         },
       ],
@@ -749,7 +825,10 @@ export function createUtxoProfitabilitySection({ range, profit, loss }) {
       {
         name: "Range",
         tree: [
-          { name: "Compare", tree: groupedBucketCharts(range, "Profitability Range") },
+          {
+            name: "Compare",
+            tree: groupedBucketCharts(range, "Profitability Range"),
+          },
           ...range.map(singleBucketFolder),
         ],
       },

@@ -10,7 +10,7 @@ use crate::{
     distribution::state::{CohortState, CostBasisOps, RealizedOps},
     internal::{
         FiatPerBlockCumulativeWithSumsAndDeltas, LazyPerBlock, NegCentsUnsignedToDollars,
-        PerBlockCumulativeWithSums, RatioCents64, RollingWindow24hPerBlock, Windows,
+        PerBlockCumulativeRolling, RatioCents64, RollingWindow24hPerBlock, Windows,
     },
     prices,
 };
@@ -28,7 +28,7 @@ pub struct NegRealizedLoss {
 
 #[derive(Traversable)]
 pub struct RealizedSoprCore<M: StorageMode = Rw> {
-    pub value_destroyed: PerBlockCumulativeWithSums<Cents, Cents, M>,
+    pub value_destroyed: PerBlockCumulativeRolling<Cents, Cents, M>,
     pub ratio: RollingWindow24hPerBlock<StoredF64, M>,
 }
 
@@ -81,7 +81,7 @@ impl RealizedCore {
             cfg.cached_starts,
         )?;
 
-        let value_destroyed = PerBlockCumulativeWithSums::forced_import(
+        let value_destroyed = PerBlockCumulativeRolling::forced_import(
             cfg.db,
             &cfg.name("value_destroyed"),
             cfg.version + v1,

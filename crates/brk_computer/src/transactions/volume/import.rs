@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{AmountPerBlockCumulativeWithSums, CachedWindowStarts, PerBlock, Windows},
+    internal::{AmountPerBlockCumulativeRolling, CachedWindowStarts, PerBlock, Windows},
 };
 
 impl Vecs {
@@ -17,7 +17,7 @@ impl Vecs {
     ) -> Result<Self> {
         let v = version + Version::TWO;
         Ok(Self {
-            transfer_volume: AmountPerBlockCumulativeWithSums::forced_import(
+            transfer_volume: AmountPerBlockCumulativeRolling::forced_import(
                 db,
                 "transfer_volume_bis",
                 version,

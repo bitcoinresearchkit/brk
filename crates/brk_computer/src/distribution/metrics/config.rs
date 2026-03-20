@@ -7,9 +7,9 @@ use vecdb::{BytesVec, BytesVecValue, Database, ImportableVec};
 use crate::{
     indexes,
     internal::{
-        AmountPerBlock, AmountPerBlockCumulative, AmountPerBlockCumulativeWithSums,
+        AmountPerBlock, AmountPerBlockCumulative, AmountPerBlockCumulativeRolling,
         CachedWindowStarts, CentsType, FiatPerBlock, FiatPerBlockCumulativeWithSums, NumericValue,
-        PerBlock, PerBlockCumulativeWithSums, PercentPerBlock, PercentRollingWindows, Price,
+        PerBlock, PerBlockCumulativeRolling, PercentPerBlock, PercentRollingWindows, Price,
         PriceWithRatioExtendedPerBlock, PriceWithRatioPerBlock, RatioPerBlock,
         RollingWindow24hPerBlock, RollingWindows, RollingWindowsFrom1w,
     },
@@ -54,7 +54,7 @@ impl<T: NumericValue + JsonSchema> ConfigImport for PerBlock<T> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }
 }
-impl<T, C> ConfigImport for PerBlockCumulativeWithSums<T, C>
+impl<T, C> ConfigImport for PerBlockCumulativeRolling<T, C>
 where
     T: NumericValue + JsonSchema + Into<C>,
     C: NumericValue + JsonSchema,
@@ -79,7 +79,7 @@ impl<T: NumericValue + JsonSchema> ConfigImport for RollingWindow24hPerBlock<T> 
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }
 }
-impl ConfigImport for AmountPerBlockCumulativeWithSums {
+impl ConfigImport for AmountPerBlockCumulativeRolling {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(
             cfg.db,

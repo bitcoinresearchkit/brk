@@ -6,7 +6,7 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        AmountPerBlockCumulative, AmountPerBlockCumulativeWithSums, AmountPerBlockFull,
+        AmountPerBlockCumulative, AmountPerBlockCumulativeRolling, AmountPerBlockFull,
         CachedWindowStarts, FiatPerBlock, LazyPercentRollingWindows, OneMinusBp16,
         PercentPerBlock, PercentRollingWindows, RatioRollingWindows,
     },
@@ -33,10 +33,10 @@ impl Vecs {
         );
 
         Ok(Self {
-            coinbase: AmountPerBlockCumulativeWithSums::forced_import(
+            coinbase: AmountPerBlockCumulativeRolling::forced_import(
                 db, "coinbase", version, indexes, cached_starts,
             )?,
-            subsidy: AmountPerBlockCumulativeWithSums::forced_import(
+            subsidy: AmountPerBlockCumulativeRolling::forced_import(
                 db, "subsidy", version, indexes, cached_starts,
             )?,
             fees: AmountPerBlockFull::forced_import(db, "fees", version, indexes, cached_starts)?,

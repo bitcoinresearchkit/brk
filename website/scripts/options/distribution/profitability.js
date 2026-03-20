@@ -11,7 +11,7 @@
  */
 
 import { Unit } from "../../utils/units.js";
-import { ROLLING_WINDOWS, line, dotted, baseline, dots, dotsBaseline, percentRatio, percentRatioBaseline } from "../series.js";
+import { ROLLING_WINDOWS, line, dotted, baseline, percentRatio, percentRatioBaseline } from "../series.js";
 import { colors } from "../../utils/colors.js";
 import { priceLine } from "../constants.js";
 import {
@@ -236,7 +236,7 @@ function nuplSeries(nupl) {
 // ============================================================================
 
 /**
- * Flat metric folder: Compare + windows + Cumulative + Per Block + optional % of Realized Cap
+ * Flat metric folder: Compare + windows + Cumulative + optional % of Realized Cap
  * @param {Object} args
  * @param {{ sum: Record<string, { usd: AnySeriesPattern }>, cumulative: { usd: AnySeriesPattern }, base: { usd: AnySeriesPattern } }} args.pattern
  * @param {string} args.metricTitle
@@ -264,11 +264,6 @@ function realizedMetricFolder({ pattern, metricTitle, color, title, toRcap }) {
       title: title(`Realized ${metricTitle} (Total)`),
       bottom: [line({ series: pattern.cumulative.usd, name: metricTitle, color, unit: Unit.usd })],
     },
-    {
-      name: "Per Block",
-      title: title(`Realized ${metricTitle} per Block`),
-      bottom: [dots({ series: pattern.base.usd, name: metricTitle, color, unit: Unit.usd })],
-    },
     ...(toRcap ? [{
       name: "% of Realized Cap",
       title: title(`Realized ${metricTitle} (% of Realized Cap)`),
@@ -278,7 +273,7 @@ function realizedMetricFolder({ pattern, metricTitle, color, title, toRcap }) {
 }
 
 /**
- * Net P&L folder: Compare + windows + Cumulative + Per Block + optional % of Rcap + Change/
+ * Net P&L folder: Compare + windows + Cumulative + optional % of Rcap + Change/
  * @param {Object} args
  * @param {NetPnlFullPattern | NetPnlBasicPattern} args.netPnl
  * @param {(name: string) => string} args.title
@@ -306,11 +301,6 @@ function realizedNetFolder({ netPnl, title, toRcap, extraChange = [] }) {
         name: "Cumulative",
         title: title("Net Realized P&L (Total)"),
         bottom: [baseline({ series: netPnl.cumulative.usd, name: "Net", unit: Unit.usd })],
-      },
-      {
-        name: "Per Block",
-        title: title("Net Realized P&L per Block"),
-        bottom: [dotsBaseline({ series: netPnl.base.usd, name: "Net", unit: Unit.usd })],
       },
       ...(toRcap ? [{
         name: "% of Realized Cap",
@@ -463,11 +453,6 @@ function realizedSubfolderFull(r, title) {
             name: "Cumulative",
             title: title("Peak Regret (Total)"),
             bottom: [line({ series: r.peakRegret.cumulative.usd, name: "Peak Regret", unit: Unit.usd })],
-          },
-          {
-            name: "Per Block",
-            title: title("Peak Regret per Block"),
-            bottom: [dots({ series: r.peakRegret.base.usd, name: "Peak Regret", unit: Unit.usd })],
           },
           {
             name: "% of Realized Cap",

@@ -6,7 +6,7 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
     distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}},
-    internal::{AmountPerBlockCumulativeWithSums, PerBlockCumulativeWithSums},
+    internal::{AmountPerBlockCumulativeRolling, PerBlockCumulativeRolling},
     prices,
 };
 
@@ -19,11 +19,11 @@ pub struct ActivityCore<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub minimal: ActivityMinimal<M>,
 
-    pub coindays_destroyed: PerBlockCumulativeWithSums<StoredF64, StoredF64, M>,
+    pub coindays_destroyed: PerBlockCumulativeRolling<StoredF64, StoredF64, M>,
     #[traversable(wrap = "transfer_volume", rename = "in_profit")]
-    pub transfer_volume_in_profit: AmountPerBlockCumulativeWithSums<M>,
+    pub transfer_volume_in_profit: AmountPerBlockCumulativeRolling<M>,
     #[traversable(wrap = "transfer_volume", rename = "in_loss")]
-    pub transfer_volume_in_loss: AmountPerBlockCumulativeWithSums<M>,
+    pub transfer_volume_in_loss: AmountPerBlockCumulativeRolling<M>,
 }
 
 impl ActivityCore {
@@ -69,10 +69,10 @@ impl ActivityCore {
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.minimal.collect_vecs_mut();
         vecs.push(&mut self.coindays_destroyed.base.height);
-        vecs.push(&mut self.transfer_volume_in_profit.base.sats.height);
-        vecs.push(&mut self.transfer_volume_in_profit.base.cents.height);
-        vecs.push(&mut self.transfer_volume_in_loss.base.sats.height);
-        vecs.push(&mut self.transfer_volume_in_loss.base.cents.height);
+        vecs.push(&mut self.transfer_volume_in_profit.inner.base.sats.height);
+        vecs.push(&mut self.transfer_volume_in_profit.inner.base.cents.height);
+        vecs.push(&mut self.transfer_volume_in_loss.inner.base.sats.height);
+        vecs.push(&mut self.transfer_volume_in_loss.inner.base.cents.height);
         vecs
     }
 

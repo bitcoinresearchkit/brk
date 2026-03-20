@@ -4,16 +4,14 @@ import { colors } from "../utils/colors.js";
 import { brk } from "../client.js";
 import { Unit } from "../utils/units.js";
 import { entries } from "../utils/array.js";
-import { priceLine } from "./constants.js";
 import {
   line,
-  dots,
   fromSupplyPattern,
   chartsFromFullPerBlock,
   chartsFromCount,
   chartsFromCountEntries,
   chartsFromAggregatedPerBlock,
-  averagesTree,
+  averagesArray,
   simpleDeltaTree,
   ROLLING_WINDOWS,
   chartsFromBlockAnd6b,
@@ -169,14 +167,14 @@ export function createNetworkSection() {
             ),
           })),
         },
-        ...activityTypes.map((t) =>
-          averagesTree({
+        ...activityTypes.map((t) => ({
+          name: t.name,
+          tree: averagesArray({
             windows: addrs.activity[key][t.key],
             title: `${titlePrefix}${t.name} Addresses`,
             unit: Unit.count,
-            name: t.name,
           }),
-        ),
+        })),
       ],
     },
   ];
@@ -308,7 +306,6 @@ export function createNetworkSection() {
             name: "Volume",
             tree: satsBtcUsdFullTree({
               pattern: transactions.volume.transferVolume,
-              name: "base",
               title: "Transaction Volume",
             }),
           },
@@ -429,31 +426,11 @@ export function createNetworkSection() {
           },
           {
             name: "Interval",
-            tree: [
-              {
-                name: "Per Block",
-                title: "Block Interval",
-                bottom: [
-                  dots({
-                    series: blocks.interval.base,
-                    name: "base",
-                    unit: Unit.secs,
-                  }),
-                  line({
-                    series: blocks.interval._24h,
-                    name: "24h avg",
-                    color: colors.stat.avg,
-                    unit: Unit.secs,
-                  }),
-                  priceLine({ unit: Unit.secs, name: "Target", number: 600 }),
-                ],
-              },
-              averagesTree({
-                windows: blocks.interval,
-                title: "Block Interval",
-                unit: Unit.secs,
-              }),
-            ],
+            tree: averagesArray({
+              windows: blocks.interval,
+              title: "Block Interval",
+              unit: Unit.secs,
+            }),
           },
           {
             name: "Size",
@@ -509,17 +486,15 @@ export function createNetworkSection() {
                 {
                   name: "Created",
                   color: colors.entity.output,
-                  base: outputs.count.total.sum,
                   average: outputs.count.total.rolling.average,
-                  rolling: outputs.count.total.rolling.sum,
+                  sum: outputs.count.total.rolling.sum,
                   cumulative: outputs.count.total.cumulative,
                 },
                 {
                   name: "Spent",
                   color: colors.entity.input,
-                  base: inputs.count.sum,
                   average: inputs.count.rolling.average,
-                  rolling: inputs.count.rolling.sum,
+                  sum: inputs.count.rolling.sum,
                   cumulative: inputs.count.cumulative,
                 },
               ],

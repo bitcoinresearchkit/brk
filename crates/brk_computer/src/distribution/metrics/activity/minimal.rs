@@ -5,13 +5,13 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
     distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}},
-    internal::AmountPerBlockCumulativeWithSums,
+    internal::AmountPerBlockCumulativeRolling,
     prices,
 };
 
 #[derive(Traversable)]
 pub struct ActivityMinimal<M: StorageMode = Rw> {
-    pub transfer_volume: AmountPerBlockCumulativeWithSums<M>,
+    pub transfer_volume: AmountPerBlockCumulativeRolling<M>,
 }
 
 impl ActivityMinimal {
@@ -39,9 +39,10 @@ impl ActivityMinimal {
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        let inner = &mut self.transfer_volume.inner;
         vec![
-            &mut self.transfer_volume.base.sats.height as &mut dyn AnyStoredVec,
-            &mut self.transfer_volume.base.cents.height,
+            &mut inner.base.sats.height as &mut dyn AnyStoredVec,
+            &mut inner.base.cents.height,
         ]
     }
 

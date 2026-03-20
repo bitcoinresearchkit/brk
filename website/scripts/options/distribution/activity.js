@@ -9,7 +9,15 @@
  */
 
 import { Unit } from "../../utils/units.js";
-import { line, baseline, dotsBaseline, percentRatio, chartsFromCount, averagesTree, ROLLING_WINDOWS } from "../series.js";
+import {
+  line,
+  baseline,
+  dotsBaseline,
+  percentRatio,
+  chartsFromCount,
+  averagesArray,
+  ROLLING_WINDOWS,
+} from "../series.js";
 import {
   satsBtcUsdFullTree,
   mapCohortsWithAll,
@@ -33,7 +41,6 @@ function volumeAndCoinsTree(activity, color, title) {
       name: "Volume",
       tree: satsBtcUsdFullTree({
         pattern: activity.transferVolume,
-        name: "Volume",
         title: title("Sent Volume"),
         color,
       }),
@@ -62,7 +69,6 @@ function sentProfitLossTree(sent, title) {
       name: "Sent In Profit",
       tree: satsBtcUsdFullTree({
         pattern: sent.inProfit,
-        name: "In Profit",
         title: title("Sent Volume In Profit"),
         color: colors.profit,
       }),
@@ -71,7 +77,6 @@ function sentProfitLossTree(sent, title) {
       name: "Sent In Loss",
       tree: satsBtcUsdFullTree({
         pattern: sent.inLoss,
-        name: "In Loss",
         title: title("Sent Volume In Loss"),
         color: colors.loss,
       }),
@@ -90,7 +95,14 @@ function fullVolumeTree(activity, color, title) {
   return [
     ...volumeAndCoinsTree(activity, color, title),
     ...sentProfitLossTree(activity.transferVolume, title),
-    averagesTree({ windows: activity.dormancy, title: title("Dormancy"), unit: Unit.days, name: "Dormancy" }),
+    {
+      name: "Dormancy",
+      tree: averagesArray({
+        windows: activity.dormancy,
+        title: title("Dormancy"),
+        unit: Unit.days,
+      }),
+    },
   ];
 }
 
@@ -110,13 +122,26 @@ function singleRollingSoprTree(ratio, title, prefix = "") {
       name: "Compare",
       title: title(`${prefix}SOPR`),
       bottom: ROLLING_WINDOWS.map((w) =>
-        baseline({ series: ratio[w.key], name: w.name, color: w.color, unit: Unit.ratio, base: 1 }),
+        baseline({
+          series: ratio[w.key],
+          name: w.name,
+          color: w.color,
+          unit: Unit.ratio,
+          base: 1,
+        }),
       ),
     },
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
       title: title(`${prefix}SOPR (${w.title})`),
-      bottom: [baseline({ series: ratio[w.key], name: "SOPR", unit: Unit.ratio, base: 1 })],
+      bottom: [
+        baseline({
+          series: ratio[w.key],
+          name: "SOPR",
+          unit: Unit.ratio,
+          base: 1,
+        }),
+      ],
     })),
   ];
 }
@@ -136,7 +161,11 @@ function singleSellSideRiskTree(sellSideRisk, title) {
       name: "Compare",
       title: title("Sell Side Risk"),
       bottom: ROLLING_WINDOWS.flatMap((w) =>
-        percentRatio({ pattern: sellSideRisk[w.key], name: w.name, color: w.color }),
+        percentRatio({
+          pattern: sellSideRisk[w.key],
+          name: w.name,
+          color: w.color,
+        }),
       ),
     },
     ...ROLLING_WINDOWS.map((w) => ({
@@ -171,11 +200,18 @@ export function createActivitySectionWithAdjusted({ cohort, title }) {
           ...singleRollingSoprTree(sopr.ratio, title),
           {
             name: "Adjusted",
-            tree: singleRollingSoprTree(sopr.adjusted.ratio, title, "Adjusted "),
+            tree: singleRollingSoprTree(
+              sopr.adjusted.ratio,
+              title,
+              "Adjusted ",
+            ),
           },
         ],
       },
-      { name: "Sell Side Risk", tree: singleSellSideRiskTree(r.sellSideRiskRatio, title) },
+      {
+        name: "Sell Side Risk",
+        tree: singleSellSideRiskTree(r.sellSideRiskRatio, title),
+      },
     ],
   };
 }
@@ -198,7 +234,10 @@ export function createActivitySection({ cohort, title }) {
         name: "SOPR",
         tree: singleRollingSoprTree(sopr.ratio, title),
       },
-      { name: "Sell Side Risk", tree: singleSellSideRiskTree(r.sellSideRiskRatio, title) },
+      {
+        name: "Sell Side Risk",
+        tree: singleSellSideRiskTree(r.sellSideRiskRatio, title),
+      },
     ],
   };
 }
@@ -220,12 +259,18 @@ export function createActivitySectionWithActivity({ cohort, title }) {
       {
         name: "SOPR",
         title: title("SOPR (24h)"),
-        bottom: [dotsBaseline({ series: sopr.ratio._24h, name: "SOPR", unit: Unit.ratio, base: 1 })],
+        bottom: [
+          dotsBaseline({
+            series: sopr.ratio._24h,
+            name: "SOPR",
+            unit: Unit.ratio,
+            base: 1,
+          }),
+        ],
       },
     ],
   };
 }
-
 
 /**
  * Minimal activity section: volume only
@@ -237,7 +282,6 @@ export function createActivitySectionMinimal({ cohort, title }) {
     name: "Activity",
     tree: satsBtcUsdFullTree({
       pattern: cohort.tree.activity.transferVolume,
-      name: "Volume",
       title: title("Volume"),
     }),
   };
@@ -255,7 +299,12 @@ export function createGroupedActivitySectionMinimal({ list, all, title }) {
       name: w.name,
       title: title(`Volume (${w.title})`),
       bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-        line({ series: tree.activity.transferVolume.sum[w.key].sats, name, color, unit: Unit.sats }),
+        line({
+          series: tree.activity.transferVolume.sum[w.key].sats,
+          name,
+          color,
+          unit: Unit.sats,
+        }),
       ),
     })),
   };
@@ -280,7 +329,13 @@ function groupedSoprCharts(list, all, getRatio, title, prefix = "") {
     name: w.name,
     title: title(`${prefix}SOPR (${w.title})`),
     bottom: mapCohortsWithAll(list, all, (c) =>
-      baseline({ series: getRatio(c)[w.key], name: c.name, color: c.color, unit: Unit.ratio, base: 1 }),
+      baseline({
+        series: getRatio(c)[w.key],
+        name: c.name,
+        color: c.color,
+        unit: Unit.ratio,
+        base: 1,
+      }),
     ),
   }));
 }
@@ -300,7 +355,6 @@ function groupedSoprCharts(list, all, getRatio, title, prefix = "") {
  * @returns {PartialOptionsTree}
  */
 
-
 // ============================================================================
 // Grouped Activity Sections
 // ============================================================================
@@ -317,16 +371,32 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
         name: "Volume",
         title: title("Sent Volume"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ series: tree.activity.transferVolume.sum._24h.sats, name, color, unit: Unit.sats }),
+          line({
+            series: tree.activity.transferVolume.sum._24h.sats,
+            name,
+            color,
+            unit: Unit.sats,
+          }),
         ]),
       },
       {
         name: "SOPR",
         tree: [
-          ...groupedSoprCharts(list, all, (c) => c.tree.realized.sopr.ratio, title),
+          ...groupedSoprCharts(
+            list,
+            all,
+            (c) => c.tree.realized.sopr.ratio,
+            title,
+          ),
           {
             name: "Adjusted",
-            tree: groupedSoprCharts(list, all, (c) => c.tree.realized.sopr.adjusted.ratio, title, "Adjusted "),
+            tree: groupedSoprCharts(
+              list,
+              all,
+              (c) => c.tree.realized.sopr.adjusted.ratio,
+              title,
+              "Adjusted ",
+            ),
           },
         ],
       },
@@ -336,7 +406,12 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
           name: w.name,
           title: title(`Sell Side Risk (${w.title})`),
           bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({ series: tree.realized.sellSideRiskRatio[w.key].ratio, name, color, unit: Unit.ratio }),
+            line({
+              series: tree.realized.sellSideRiskRatio[w.key].ratio,
+              name,
+              color,
+              unit: Unit.ratio,
+            }),
           ),
         })),
       },
@@ -344,7 +419,12 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
         name: "Coindays Destroyed",
         title: title("Coindays Destroyed"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ series: tree.activity.coindaysDestroyed.sum._24h, name, color, unit: Unit.coindays }),
+          line({
+            series: tree.activity.coindaysDestroyed.sum._24h,
+            name,
+            color,
+            unit: Unit.coindays,
+          }),
         ]),
       },
     ],
@@ -364,13 +444,23 @@ export function createGroupedActivitySection({ list, all, title }) {
         name: "Volume",
         title: title("Sent Volume"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ series: tree.activity.transferVolume.sum._24h.sats, name, color, unit: Unit.sats }),
+          line({
+            series: tree.activity.transferVolume.sum._24h.sats,
+            name,
+            color,
+            unit: Unit.sats,
+          }),
         ]),
       },
       {
         name: "SOPR",
         tree: [
-          ...groupedSoprCharts(list, all, (c) => c.tree.realized.sopr.ratio, title),
+          ...groupedSoprCharts(
+            list,
+            all,
+            (c) => c.tree.realized.sopr.ratio,
+            title,
+          ),
         ],
       },
       {
@@ -379,7 +469,12 @@ export function createGroupedActivitySection({ list, all, title }) {
           name: w.name,
           title: title(`Sell Side Risk (${w.title})`),
           bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({ series: tree.realized.sellSideRiskRatio[w.key].ratio, name, color, unit: Unit.ratio }),
+            line({
+              series: tree.realized.sellSideRiskRatio[w.key].ratio,
+              name,
+              color,
+              unit: Unit.ratio,
+            }),
           ),
         })),
       },
@@ -387,7 +482,12 @@ export function createGroupedActivitySection({ list, all, title }) {
         name: "Coindays Destroyed",
         title: title("Coindays Destroyed"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ series: tree.activity.coindaysDestroyed.sum._24h, name, color, unit: Unit.coindays }),
+          line({
+            series: tree.activity.coindaysDestroyed.sum._24h,
+            name,
+            color,
+            unit: Unit.coindays,
+          }),
         ]),
       },
     ],
@@ -407,24 +507,39 @@ export function createGroupedActivitySectionWithActivity({ list, all, title }) {
         name: "Volume",
         title: title("Sent Volume"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ series: tree.activity.transferVolume.sum._24h.sats, name, color, unit: Unit.sats }),
+          line({
+            series: tree.activity.transferVolume.sum._24h.sats,
+            name,
+            color,
+            unit: Unit.sats,
+          }),
         ]),
       },
       {
         name: "SOPR",
         title: title("SOPR (24h)"),
         bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-          baseline({ series: tree.realized.sopr.ratio._24h, name, color, unit: Unit.ratio, base: 1 }),
+          baseline({
+            series: tree.realized.sopr.ratio._24h,
+            name,
+            color,
+            unit: Unit.ratio,
+            base: 1,
+          }),
         ),
       },
       {
         name: "Coindays Destroyed",
         title: title("Coindays Destroyed"),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-          line({ series: tree.activity.coindaysDestroyed.sum._24h, name, color, unit: Unit.coindays }),
+          line({
+            series: tree.activity.coindaysDestroyed.sum._24h,
+            name,
+            color,
+            unit: Unit.coindays,
+          }),
         ]),
       },
     ],
   };
 }
-

@@ -219,7 +219,6 @@ export function satsBtcUsdRolling({ pattern, name, color, defaultActive }) {
  * Build a full Sum / Rolling / Cumulative tree from a FullValuePattern
  * @param {Object} args
  * @param {FullValuePattern} args.pattern
- * @param {string} args.name
  * @param {string} args.title
  * @param {Color} [args.color]
  * @returns {PartialOptionsTree}

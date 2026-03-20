@@ -5,14 +5,14 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     distribution::metrics::ImportConfig,
-    internal::{PerBlockCumulativeWithSums, RatioCents64, RollingWindows},
+    internal::{PerBlockCumulativeRolling, RatioCents64, RollingWindows},
 };
 
 #[derive(Traversable)]
 pub struct AdjustedSopr<M: StorageMode = Rw> {
     pub ratio: RollingWindows<StoredF64, M>,
-    pub transfer_volume: PerBlockCumulativeWithSums<Cents, Cents, M>,
-    pub value_destroyed: PerBlockCumulativeWithSums<Cents, Cents, M>,
+    pub transfer_volume: PerBlockCumulativeRolling<Cents, Cents, M>,
+    pub value_destroyed: PerBlockCumulativeRolling<Cents, Cents, M>,
 }
 
 impl AdjustedSopr {

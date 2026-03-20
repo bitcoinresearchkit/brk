@@ -1,28 +1,31 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Sats, Version};
+use brk_types::{Height, Sats, Version};
+use derive_more::{Deref, DerefMut};
 use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
     internal::{
-        AmountPerBlock, CachedWindowStarts, LazyRollingAvgsAmountFromHeight,
-        LazyRollingSumsAmountFromHeight, SatsToCents,
+        AmountPerBlockCumulative, CachedWindowStarts, LazyRollingAvgsAmountFromHeight,
+        LazyRollingSumsAmountFromHeight,
     },
     prices,
 };
 
-#[derive(Traversable)]
-pub struct AmountPerBlockCumulativeWithSums<M: StorageMode = Rw> {
-    pub base: AmountPerBlock<M>,
-    pub cumulative: AmountPerBlock<M>,
+#[derive(Deref, DerefMut, Traversable)]
+pub struct AmountPerBlockCumulativeRolling<M: StorageMode = Rw> {
+    #[deref]
+    #[deref_mut]
+    #[traversable(flatten)]
+    pub inner: AmountPerBlockCumulative<M>,
     pub sum: LazyRollingSumsAmountFromHeight,
     pub average: LazyRollingAvgsAmountFromHeight,
 }
 
 const VERSION: Version = Version::TWO;
 
-impl AmountPerBlockCumulativeWithSums {
+impl AmountPerBlockCumulativeRolling {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -32,29 +35,26 @@ impl AmountPerBlockCumulativeWithSums {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let base = AmountPerBlock::forced_import(db, name, v, indexes)?;
-        let cumulative =
-            AmountPerBlock::forced_import(db, &format!("{name}_cumulative"), v, indexes)?;
+        let inner = AmountPerBlockCumulative::forced_import(db, name, v, indexes)?;
         let sum = LazyRollingSumsAmountFromHeight::new(
             &format!("{name}_sum"),
             v,
-            &cumulative.sats.height,
-            &cumulative.cents.height,
+            &inner.cumulative.sats.height,
+            &inner.cumulative.cents.height,
             cached_starts,
             indexes,
         );
         let average = LazyRollingAvgsAmountFromHeight::new(
             &format!("{name}_average"),
             v,
-            &cumulative.sats.height,
-            &cumulative.cents.height,
+            &inner.cumulative.sats.height,
+            &inner.cumulative.cents.height,
             cached_starts,
             indexes,
         );
 
         Ok(Self {
-            base,
-            cumulative,
+            inner,
             sum,
             average,
         })
@@ -77,26 +77,6 @@ impl AmountPerBlockCumulativeWithSums {
         prices: &prices::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        self.cumulative
-            .sats
-            .height
-            .compute_cumulative(max_from, &self.base.sats.height, exit)?;
-
-        self.base
-            .cents
-            .height
-            .compute_binary::<Sats, Cents, SatsToCents>(
-                max_from,
-                &self.base.sats.height,
-                &prices.spot.cents.height,
-                exit,
-            )?;
-
-        self.cumulative
-            .cents
-            .height
-            .compute_cumulative(max_from, &self.base.cents.height, exit)?;
-
-        Ok(())
+        self.inner.compute(prices, max_from, exit)
     }
 }

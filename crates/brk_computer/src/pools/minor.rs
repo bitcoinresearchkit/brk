@@ -8,7 +8,7 @@ use vecdb::{
 use crate::{
     blocks, indexes,
     internal::{
-        CachedWindowStarts, PerBlockCumulativeWithSums, PercentPerBlock, RatioU64Bp16,
+        CachedWindowStarts, PerBlockCumulativeRolling, PercentPerBlock, RatioU64Bp16,
     },
 };
 
@@ -17,7 +17,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     slug: PoolSlug,
 
-    pub blocks_mined: PerBlockCumulativeWithSums<StoredU32, StoredU64, M>,
+    pub blocks_mined: PerBlockCumulativeRolling<StoredU32, StoredU64, M>,
     pub dominance: PercentPerBlock<BasisPoints16, M>,
 }
 
@@ -31,7 +31,7 @@ impl Vecs {
     ) -> Result<Self> {
         let suffix = |s: &str| format!("{}_{s}", slug);
 
-        let blocks_mined = PerBlockCumulativeWithSums::forced_import(
+        let blocks_mined = PerBlockCumulativeRolling::forced_import(
             db,
             &suffix("blocks_mined"),
             version + Version::ONE,

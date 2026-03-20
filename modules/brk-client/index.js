@@ -2067,13 +2067,13 @@ function createCapLossMvrvNetPriceProfitSoprPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} InInvestedMaxMinPercentilesSupplyPattern
+ * @typedef {Object} InMaxMinPerSupplyPattern
  * @property {PerPattern} inLoss
  * @property {PerPattern} inProfit
- * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} investedCapital
  * @property {CentsSatsUsdPattern} max
  * @property {CentsSatsUsdPattern} min
- * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} percentiles
+ * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} perCoin
+ * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} perDollar
  * @property {BpsPercentRatioPattern3} supplyDensity
  */
 
@@ -4413,6 +4413,8 @@ function createUnspentPattern(client, acc) {
  * @typedef {Object} SeriesTree_Mining_Rewards_Subsidy
  * @property {BtcCentsSatsUsdPattern} base
  * @property {BtcCentsSatsUsdPattern} cumulative
+ * @property {_1m1w1y24hPattern3} sum
+ * @property {_1m1w1y24hPattern3} average
  * @property {_1m1w1y24hBpsPercentRatioPattern} dominance
  * @property {CentsUsdPattern2} sma1y
  */
@@ -5556,8 +5558,8 @@ function createUnspentPattern(client, acc) {
  * @property {PerPattern} inLoss
  * @property {CentsSatsUsdPattern} min
  * @property {CentsSatsUsdPattern} max
- * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} percentiles
- * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} investedCapital
+ * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} perCoin
+ * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} perDollar
  * @property {BpsPercentRatioPattern3} supplyDensity
  */
 
@@ -5764,8 +5766,8 @@ function createUnspentPattern(client, acc) {
  * @property {PerPattern} inLoss
  * @property {CentsSatsUsdPattern} min
  * @property {CentsSatsUsdPattern} max
- * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} percentiles
- * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} investedCapital
+ * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} perCoin
+ * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} perDollar
  * @property {BpsPercentRatioPattern3} supplyDensity
  */
 
@@ -5940,8 +5942,8 @@ function createUnspentPattern(client, acc) {
  * @property {PerPattern} inLoss
  * @property {CentsSatsUsdPattern} min
  * @property {CentsSatsUsdPattern} max
- * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} percentiles
- * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} investedCapital
+ * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} perCoin
+ * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} perDollar
  * @property {BpsPercentRatioPattern3} supplyDensity
  */
 
@@ -7786,6 +7788,8 @@ class BrkClient extends BrkClientBase {
           subsidy: {
             base: createBtcCentsSatsUsdPattern(this, 'subsidy'),
             cumulative: createBtcCentsSatsUsdPattern(this, 'subsidy_cumulative'),
+            sum: create_1m1w1y24hPattern3(this, 'subsidy_sum'),
+            average: create_1m1w1y24hPattern3(this, 'subsidy_average'),
             dominance: create_1m1w1y24hBpsPercentRatioPattern(this, 'subsidy_dominance'),
             sma1y: createCentsUsdPattern2(this, 'subsidy_sma_1y'),
           },
@@ -8611,8 +8615,8 @@ class BrkClient extends BrkClientBase {
               inLoss: createPerPattern(this, 'cost_basis_in_loss_per'),
               min: createCentsSatsUsdPattern(this, 'cost_basis_min'),
               max: createCentsSatsUsdPattern(this, 'cost_basis_max'),
-              percentiles: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'cost_basis'),
-              investedCapital: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'invested_capital'),
+              perCoin: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'cost_basis_per_coin'),
+              perDollar: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'cost_basis_per_dollar'),
               supplyDensity: createBpsPercentRatioPattern3(this, 'supply_density'),
             },
             unrealized: {
@@ -8766,8 +8770,8 @@ class BrkClient extends BrkClientBase {
               inLoss: createPerPattern(this, 'sth_cost_basis_in_loss_per'),
               min: createCentsSatsUsdPattern(this, 'sth_cost_basis_min'),
               max: createCentsSatsUsdPattern(this, 'sth_cost_basis_max'),
-              percentiles: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'sth_cost_basis'),
-              investedCapital: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'sth_invested_capital'),
+              perCoin: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'sth_cost_basis_per_coin'),
+              perDollar: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'sth_cost_basis_per_dollar'),
               supplyDensity: createBpsPercentRatioPattern3(this, 'sth_supply_density'),
             },
             unrealized: {
@@ -8901,8 +8905,8 @@ class BrkClient extends BrkClientBase {
               inLoss: createPerPattern(this, 'lth_cost_basis_in_loss_per'),
               min: createCentsSatsUsdPattern(this, 'lth_cost_basis_min'),
               max: createCentsSatsUsdPattern(this, 'lth_cost_basis_max'),
-              percentiles: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'lth_cost_basis'),
-              investedCapital: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'lth_invested_capital'),
+              perCoin: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'lth_cost_basis_per_coin'),
+              perDollar: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'lth_cost_basis_per_dollar'),
               supplyDensity: createBpsPercentRatioPattern3(this, 'lth_supply_density'),
             },
             unrealized: {

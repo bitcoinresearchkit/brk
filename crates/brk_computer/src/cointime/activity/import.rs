@@ -6,7 +6,7 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        CachedWindowStarts, LazyPerBlock, OneMinusF64, PerBlock, PerBlockCumulativeWithSums,
+        CachedWindowStarts, LazyPerBlock, OneMinusF64, PerBlock, PerBlockCumulativeRolling,
     },
 };
 
@@ -27,10 +27,10 @@ impl Vecs {
         );
 
         Ok(Self {
-            coinblocks_created: PerBlockCumulativeWithSums::forced_import(
+            coinblocks_created: PerBlockCumulativeRolling::forced_import(
                 db, "coinblocks_created", version, indexes, cached_starts,
             )?,
-            coinblocks_stored: PerBlockCumulativeWithSums::forced_import(
+            coinblocks_stored: PerBlockCumulativeRolling::forced_import(
                 db, "coinblocks_stored", version, indexes, cached_starts,
             )?,
             liveliness,

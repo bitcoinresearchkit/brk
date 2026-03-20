@@ -518,6 +518,61 @@ export function sumsArray({ windows, title, unit }) {
 }
 
 /**
+ * Flat array of per-window charts with both sum (active) and average (off by default)
+ * @param {Object} args
+ * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.sum
+ * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.average
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @returns {PartialChartOption[]}
+ */
+export function sumsAndAveragesArray({ sum, average, title, unit }) {
+  return ROLLING_WINDOWS.map((w) => ({
+    name: w.name,
+    title: `${title} ${w.title}`,
+    bottom: [
+      line({ series: sum[w.key], name: "Sum", color: w.color, unit }),
+      line({
+        series: average[w.key],
+        name: "Avg",
+        color: w.color,
+        unit,
+        defaultActive: false,
+      }),
+    ],
+  }));
+}
+
+/**
+ * Windowed sum+avg charts + cumulative
+ * @param {Object} args
+ * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.sum
+ * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.average
+ * @param {AnySeriesPattern} args.cumulative
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @param {Color} [args.color]
+ * @returns {PartialChartOption[]}
+ */
+export function sumsAndAveragesCumulative({ sum, average, cumulative, title, unit, color }) {
+  return [
+    {
+      name: "Compare",
+      title: `${title} Averages`,
+      bottom: ROLLING_WINDOWS.map((w) =>
+        line({ series: average[w.key], name: w.name, color: w.color, unit }),
+      ),
+    },
+    ...sumsAndAveragesArray({ sum, average, title, unit }),
+    {
+      name: "Cumulative",
+      title: `${title} (Total)`,
+      bottom: [{ series: cumulative, title: "all-time", color, unit }],
+    },
+  ];
+}
+
+/**
  * Rolling sums tree (Compare + individual windows in a folder)
  * @param {Object} args
  * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.windows
@@ -538,22 +593,21 @@ export function sumsTree({ windows, title, unit, series }) {
 }
 
 /**
- * Rolling averages tree
+ * Flat array of per-window average charts
  * @param {Object} args
  * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.windows
  * @param {string} args.title
  * @param {Unit} args.unit
- * @param {string} [args.name]
- * @returns {PartialOptionsGroup}
+ * @returns {PartialChartOption[]}
  */
-export function averagesTree({ windows, title, unit, name = "Averages" }) {
-  return rollingWindowsTree({
-    windows,
-    title,
-    windowTitle: (w) => `${title} ${w.title} Average`,
-    unit,
-    name,
-  });
+export function averagesArray({ windows, title, unit }) {
+  return ROLLING_WINDOWS.map((w) => ({
+    name: w.name,
+    title: `${title} ${w.title} Average`,
+    bottom: [
+      line({ series: windows[w.key], name: w.name, color: w.color, unit }),
+    ],
+  }));
 }
 
 /**
@@ -854,7 +908,7 @@ export function simpleDeltaTree({ delta, title, unit }) {
 // These split patterns into separate Sum/Distribution/Cumulative charts
 
 /**
- * Split flat per-block pattern into charts (Sum/Rolling/Distribution/Cumulative)
+ * Split flat per-block pattern into charts (Averages/Sums/Distribution/Cumulative)
  * Pattern has: .height, .cumulative, .sum (windowed), .average/.pct10/... (windowed, flat)
  * @param {Object} args
  * @param {FullPerBlockPattern} args.pattern
@@ -873,14 +927,14 @@ export function chartsFromFull({
     ? `${title} ${distributionSuffix}`
     : title;
   return [
-    averagesTree({ windows: pattern.average, title, unit }),
-    sumsTree({ windows: pattern.sum, title, unit }),
+    ...sumsAndAveragesCumulative({
+      sum: pattern.sum,
+      average: pattern.average,
+      cumulative: pattern.cumulative,
+      title,
+      unit,
+    }),
     distributionWindowsTree({ pattern, title: distTitle, unit }),
-    {
-      name: "Cumulative",
-      title: `${title} (Total)`,
-      bottom: [{ series: pattern.cumulative, title: "all-time", unit }],
-    },
   ];
 }
 
@@ -914,18 +968,18 @@ export function chartsFromAggregated({
     ? `${title} ${distributionSuffix}`
     : title;
   return [
-    averagesTree({ windows: pattern.rolling.average, title, unit }),
-    sumsTree({ windows: pattern.rolling.sum, title, unit }),
+    ...sumsAndAveragesCumulative({
+      sum: pattern.rolling.sum,
+      average: pattern.rolling.average,
+      cumulative: pattern.cumulative,
+      title,
+      unit,
+    }),
     distributionWindowsTree({
       pattern: pattern.rolling,
       title: distTitle,
       unit,
     }),
-    {
-      name: "Cumulative",
-      title: `${title} (Total)`,
-      bottom: [{ series: pattern.cumulative, title: "all-time", unit }],
-    },
   ];
 }
 
@@ -964,27 +1018,7 @@ export function chartsFromBlockAnd6b({ pattern, title, unit }) {
 }
 
 /**
- * Sums + Cumulative charts (no Per Block)
- * @param {Object} args
- * @param {{ sum: { _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }, cumulative: AnySeriesPattern }} args.pattern
- * @param {string} args.title
- * @param {Unit} args.unit
- * @param {Color} [args.color]
- * @returns {PartialOptionsTree}
- */
-export function chartsFromSumsCumulative({ pattern, title, unit, color }) {
-  return [
-    ...sumsArray({ windows: pattern.sum, title, unit }),
-    {
-      name: "Cumulative",
-      title: `${title} (Total)`,
-      bottom: [{ series: pattern.cumulative, title: "all-time", color, unit }],
-    },
-  ];
-}
-
-/**
- * Per Block + Sums + Cumulative charts
+ * Averages + Sums + Cumulative charts
  * @param {Object} args
  * @param {CountPattern<any>} args.pattern
  * @param {string} args.title
@@ -993,14 +1027,26 @@ export function chartsFromSumsCumulative({ pattern, title, unit, color }) {
  * @returns {PartialOptionsTree}
  */
 export function chartsFromCount({ pattern, title, unit, color }) {
-  return [
-    averagesTree({ windows: pattern.average, title, unit }),
-    ...chartsFromSumsCumulative({ pattern, title, unit, color }),
-  ];
+  return sumsAndAveragesCumulative({
+    sum: pattern.sum,
+    average: pattern.average,
+    cumulative: pattern.cumulative,
+    title,
+    unit,
+    color,
+  });
 }
 
 /**
- * Split multiple named entries (each with base/sum/cumulative) into Per Block/Sums/Cumulative charts
+ * Windowed sums + cumulative for multiple named entries (e.g. transaction versions)
+ * @param {Object} args
+ * @param {Array<[string, CountPattern<any>]>} args.entries
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @returns {PartialOptionsTree}
+ */
+/**
+ * Windowed sums + cumulative for multiple named entries (e.g. transaction versions)
  * @param {Object} args
  * @param {Array<[string, CountPattern<any>]>} args.entries
  * @param {string} args.title
@@ -1008,49 +1054,45 @@ export function chartsFromCount({ pattern, title, unit, color }) {
  * @returns {PartialOptionsTree}
  */
 export function chartsFromCountEntries({ entries, title, unit }) {
-  return multiSeriesTree({
-    entries: entries.map(([name, data], i, arr) => ({
-      name,
-      color: colors.at(i, arr.length),
-      base: data.base,
-      average: data.average,
-      rolling: data.sum,
-      cumulative: data.cumulative,
+  const items = entries.map(([name, data], i, arr) => ({
+    name,
+    color: colors.at(i, arr.length),
+    sum: data.sum,
+    cumulative: data.cumulative,
+  }));
+  return [
+    ...ROLLING_WINDOWS.map((w) => ({
+      name: w.name,
+      title: `${title} ${w.title} Sum`,
+      bottom: items.map((e) =>
+        line({ series: e.sum[w.key], name: e.name, color: e.color, unit }),
+      ),
     })),
-    title,
-    unit,
-  });
+    {
+      name: "Cumulative",
+      title: `${title} (Total)`,
+      bottom: items.map((e) =>
+        line({ series: e.cumulative, name: e.name, color: e.color, unit }),
+      ),
+    },
+  ];
 }
 
 /**
- * Per Block + Sums + Cumulative tree for multiple named series shown side-by-side
+ * Windowed averages + sums + cumulative for multiple named series (e.g. UTXO flow)
  * @param {Object} args
- * @param {Array<{ name: string, color: Color, base: AnySeriesPattern, average: { _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }, rolling: { _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }, cumulative: AnySeriesPattern }>} args.entries
+ * @param {Array<{ name: string, color: Color, average: { _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }, sum: { _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }, cumulative: AnySeriesPattern }>} args.entries
  * @param {string} args.title
  * @param {Unit} args.unit
  * @returns {PartialOptionsTree}
  */
 export function multiSeriesTree({ entries, title, unit }) {
   return [
-    {
-      name: "Compare",
-      title: `${title} Average`,
-      bottom: ROLLING_WINDOWS.flatMap((w) =>
-        entries.map((e) =>
-          line({
-            series: e.average[w.key],
-            name: `${e.name} ${w.name}`,
-            color: e.color,
-            unit,
-          }),
-        ),
-      ),
-    },
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
-      title: `${title} ${w.title} Sum`,
+      title: `${title} ${w.title} Averages`,
       bottom: entries.map((e) =>
-        line({ series: e.rolling[w.key], name: e.name, color: e.color, unit }),
+        line({ series: e.average[w.key], name: e.name, color: e.color, unit }),
       ),
     })),
     {

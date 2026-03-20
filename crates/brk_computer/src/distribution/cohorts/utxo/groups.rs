@@ -25,7 +25,7 @@ use crate::{
         state::UTXOCohortState,
     },
     indexes,
-    internal::{AmountPerBlockCumulativeWithSums, CachedWindowStarts},
+    internal::{AmountPerBlockCumulativeRolling, CachedWindowStarts},
     prices,
 };
 
@@ -50,7 +50,7 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     #[traversable(rename = "type")]
     pub type_: SpendableType<UTXOCohortVecs<TypeCohortMetrics<M>>>,
     pub profitability: ProfitabilityMetrics<M>,
-    pub matured: AgeRange<AmountPerBlockCumulativeWithSums<M>>,
+    pub matured: AgeRange<AmountPerBlockCumulativeRolling<M>>,
     #[traversable(skip)]
     pub(super) fenwick: CostBasisFenwick,
     /// Cached partition_point positions for tick_tock boundary searches.
@@ -259,8 +259,8 @@ impl UTXOCohorts<Rw> {
         let prefix = CohortContext::Utxo.prefix();
         let matured = AgeRange::try_new(&|_f: Filter,
                                             name: &'static str|
-         -> Result<AmountPerBlockCumulativeWithSums> {
-            AmountPerBlockCumulativeWithSums::forced_import(
+         -> Result<AmountPerBlockCumulativeRolling> {
+            AmountPerBlockCumulativeRolling::forced_import(
                 db,
                 &format!("{prefix}_{name}_matured_supply"),
                 v,
@@ -713,10 +713,11 @@ impl UTXOCohorts<Rw> {
         }
         vecs.extend(self.profitability.collect_all_vecs_mut());
         for v in self.matured.iter_mut() {
-            vecs.push(&mut v.base.sats.height);
-            vecs.push(&mut v.base.cents.height);
-            vecs.push(&mut v.cumulative.sats.height);
-            vecs.push(&mut v.cumulative.cents.height);
+            let inner = &mut v.inner;
+            vecs.push(&mut inner.base.sats.height);
+            vecs.push(&mut inner.base.cents.height);
+            vecs.push(&mut inner.cumulative.sats.height);
+            vecs.push(&mut inner.cumulative.cents.height);
         }
         vecs.into_par_iter()
     }

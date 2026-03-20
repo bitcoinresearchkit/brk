@@ -23,7 +23,7 @@ use crate::{
         state::BlockState,
     },
     indexes, inputs,
-    internal::{CachedWindowStarts, PerBlockCumulativeWithSums, db_utils::{finalize_db, open_db}},
+    internal::{CachedWindowStarts, PerBlockCumulativeRolling, db_utils::{finalize_db, open_db}},
     outputs, prices, transactions,
 };
 
@@ -70,7 +70,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(wrap = "cohorts", rename = "addr")]
     pub addr_cohorts: AddrCohorts<M>,
     #[traversable(wrap = "cointime/activity")]
-    pub coinblocks_destroyed: PerBlockCumulativeWithSums<StoredF64, StoredF64, M>,
+    pub coinblocks_destroyed: PerBlockCumulativeRolling<StoredF64, StoredF64, M>,
     pub addrs: AddrMetricsVecs<M>,
 
     /// In-memory block state for UTXO processing. Persisted via supply_state.
@@ -173,7 +173,7 @@ impl Vecs {
             utxo_cohorts,
             addr_cohorts,
 
-            coinblocks_destroyed: PerBlockCumulativeWithSums::forced_import(
+            coinblocks_destroyed: PerBlockCumulativeRolling::forced_import(
                 &db,
                 "coinblocks_destroyed",
                 version + Version::TWO,

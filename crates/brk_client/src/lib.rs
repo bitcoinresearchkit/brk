@@ -1330,13 +1330,13 @@ impl CapLossMvrvNetPriceProfitSoprPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct InInvestedMaxMinPercentilesSupplyPattern {
+pub struct InMaxMinPerSupplyPattern {
     pub in_loss: PerPattern,
     pub in_profit: PerPattern,
-    pub invested_capital: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
     pub max: CentsSatsUsdPattern,
     pub min: CentsSatsUsdPattern,
-    pub percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
+    pub per_coin: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
+    pub per_dollar: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
     pub supply_density: BpsPercentRatioPattern3,
 }
 
@@ -4045,6 +4045,8 @@ impl SeriesTree_Mining_Rewards {
 pub struct SeriesTree_Mining_Rewards_Subsidy {
     pub base: BtcCentsSatsUsdPattern,
     pub cumulative: BtcCentsSatsUsdPattern,
+    pub sum: _1m1w1y24hPattern3,
+    pub average: _1m1w1y24hPattern3,
     pub dominance: _1m1w1y24hBpsPercentRatioPattern,
     pub sma_1y: CentsUsdPattern2,
 }
@@ -4054,6 +4056,8 @@ impl SeriesTree_Mining_Rewards_Subsidy {
         Self {
             base: BtcCentsSatsUsdPattern::new(client.clone(), "subsidy".to_string()),
             cumulative: BtcCentsSatsUsdPattern::new(client.clone(), "subsidy_cumulative".to_string()),
+            sum: _1m1w1y24hPattern3::new(client.clone(), "subsidy_sum".to_string()),
+            average: _1m1w1y24hPattern3::new(client.clone(), "subsidy_average".to_string()),
             dominance: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "subsidy_dominance".to_string()),
             sma_1y: CentsUsdPattern2::new(client.clone(), "subsidy_sma_1y".to_string()),
         }
@@ -6644,8 +6648,8 @@ pub struct SeriesTree_Cohorts_Utxo_All_CostBasis {
     pub in_loss: PerPattern,
     pub min: CentsSatsUsdPattern,
     pub max: CentsSatsUsdPattern,
-    pub percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
-    pub invested_capital: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
+    pub per_coin: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
+    pub per_dollar: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
     pub supply_density: BpsPercentRatioPattern3,
 }
 
@@ -6656,8 +6660,8 @@ impl SeriesTree_Cohorts_Utxo_All_CostBasis {
             in_loss: PerPattern::new(client.clone(), "cost_basis_in_loss_per".to_string()),
             min: CentsSatsUsdPattern::new(client.clone(), "cost_basis_min".to_string()),
             max: CentsSatsUsdPattern::new(client.clone(), "cost_basis_max".to_string()),
-            percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), "cost_basis".to_string()),
-            invested_capital: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), "invested_capital".to_string()),
+            per_coin: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), "cost_basis_per_coin".to_string()),
+            per_dollar: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), "cost_basis_per_dollar".to_string()),
             supply_density: BpsPercentRatioPattern3::new(client.clone(), "supply_density".to_string()),
         }
     }
@@ -7114,8 +7118,8 @@ pub struct SeriesTree_Cohorts_Utxo_Sth_CostBasis {
     pub in_loss: PerPattern,
     pub min: CentsSatsUsdPattern,
     pub max: CentsSatsUsdPattern,
-    pub percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
-    pub invested_capital: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
+    pub per_coin: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
+    pub per_dollar: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
     pub supply_density: BpsPercentRatioPattern3,
 }
 
@@ -7126,8 +7130,8 @@ impl SeriesTree_Cohorts_Utxo_Sth_CostBasis {
             in_loss: PerPattern::new(client.clone(), "sth_cost_basis_in_loss_per".to_string()),
             min: CentsSatsUsdPattern::new(client.clone(), "sth_cost_basis_min".to_string()),
             max: CentsSatsUsdPattern::new(client.clone(), "sth_cost_basis_max".to_string()),
-            percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), "sth_cost_basis".to_string()),
-            invested_capital: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), "sth_invested_capital".to_string()),
+            per_coin: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), "sth_cost_basis_per_coin".to_string()),
+            per_dollar: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), "sth_cost_basis_per_dollar".to_string()),
             supply_density: BpsPercentRatioPattern3::new(client.clone(), "sth_supply_density".to_string()),
         }
     }
@@ -7508,8 +7512,8 @@ pub struct SeriesTree_Cohorts_Utxo_Lth_CostBasis {
     pub in_loss: PerPattern,
     pub min: CentsSatsUsdPattern,
     pub max: CentsSatsUsdPattern,
-    pub percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
-    pub invested_capital: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
+    pub per_coin: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
+    pub per_dollar: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern,
     pub supply_density: BpsPercentRatioPattern3,
 }
 
@@ -7520,8 +7524,8 @@ impl SeriesTree_Cohorts_Utxo_Lth_CostBasis {
             in_loss: PerPattern::new(client.clone(), "lth_cost_basis_in_loss_per".to_string()),
             min: CentsSatsUsdPattern::new(client.clone(), "lth_cost_basis_min".to_string()),
             max: CentsSatsUsdPattern::new(client.clone(), "lth_cost_basis_max".to_string()),
-            percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), "lth_cost_basis".to_string()),
-            invested_capital: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), "lth_invested_capital".to_string()),
+            per_coin: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), "lth_cost_basis_per_coin".to_string()),
+            per_dollar: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern::new(client.clone(), "lth_cost_basis_per_dollar".to_string()),
             supply_density: BpsPercentRatioPattern3::new(client.clone(), "lth_supply_density".to_string()),
         }
     }

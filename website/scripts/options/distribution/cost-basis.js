@@ -93,7 +93,7 @@ export function createCostBasisSectionWithPercentiles({ cohort, title }) {
         tree: singleWeightFolder({
           avgPrice: tree.realized.price, avgName: "Average",
           inProfit: cb.inProfit.perCoin, inLoss: cb.inLoss.perCoin,
-          percentiles: cb.percentiles, color, weightLabel: "BTC-weighted", title,
+          percentiles: cb.perCoin, color, weightLabel: "BTC-weighted", title,
           min: cb.min, max: cb.max,
         }),
       },
@@ -102,7 +102,7 @@ export function createCostBasisSectionWithPercentiles({ cohort, title }) {
         tree: singleWeightFolder({
           avgPrice: tree.realized.investor.price, avgName: "Average",
           inProfit: cb.inProfit.perDollar, inLoss: cb.inLoss.perDollar,
-          percentiles: cb.investedCapital, color, weightLabel: "USD-weighted", title,
+          percentiles: cb.perDollar, color, weightLabel: "USD-weighted", title,
         }),
       },
       {
@@ -215,7 +215,7 @@ export function createGroupedCostBasisSectionWithPercentiles({ list, all, title 
           getAvgPrice: (c) => c.tree.realized.price,
           getInProfit: (c) => c.tree.costBasis.inProfit.perCoin,
           getInLoss: (c) => c.tree.costBasis.inLoss.perCoin,
-          getPercentiles: (c) => c.tree.costBasis.percentiles,
+          getPercentiles: (c) => c.tree.costBasis.perCoin,
           avgTitle: "Average", weightLabel: "BTC-weighted",
         }),
       },
@@ -226,7 +226,7 @@ export function createGroupedCostBasisSectionWithPercentiles({ list, all, title 
           getAvgPrice: (c) => c.tree.realized.investor.price,
           getInProfit: (c) => c.tree.costBasis.inProfit.perDollar,
           getInLoss: (c) => c.tree.costBasis.inLoss.perDollar,
-          getPercentiles: (c) => c.tree.costBasis.investedCapital,
+          getPercentiles: (c) => c.tree.costBasis.perDollar,
           avgTitle: "Average", weightLabel: "USD-weighted",
         }),
       },

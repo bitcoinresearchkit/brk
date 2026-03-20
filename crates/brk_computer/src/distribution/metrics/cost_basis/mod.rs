@@ -24,8 +24,8 @@ pub struct CostBasis<M: StorageMode = Rw> {
     pub in_loss: CostBasisSide<M>,
     pub min: Price<PerBlock<Cents, M>>,
     pub max: Price<PerBlock<Cents, M>>,
-    pub percentiles: PercentilesVecs<M>,
-    pub invested_capital: PercentilesVecs<M>,
+    pub per_coin: PercentilesVecs<M>,
+    pub per_dollar: PercentilesVecs<M>,
     pub supply_density: PercentPerBlock<BasisPoints16, M>,
 }
 
@@ -42,15 +42,15 @@ impl CostBasis {
             },
             min: cfg.import("cost_basis_min", Version::ZERO)?,
             max: cfg.import("cost_basis_max", Version::ZERO)?,
-            percentiles: PercentilesVecs::forced_import(
+            per_coin: PercentilesVecs::forced_import(
                 cfg.db,
-                &cfg.name("cost_basis"),
+                &cfg.name("cost_basis_per_coin"),
                 cfg.version,
                 cfg.indexes,
             )?,
-            invested_capital: PercentilesVecs::forced_import(
+            per_dollar: PercentilesVecs::forced_import(
                 cfg.db,
-                &cfg.name("invested_capital"),
+                &cfg.name("cost_basis_per_dollar"),
                 cfg.version,
                 cfg.indexes,
             )?,
@@ -84,8 +84,8 @@ impl CostBasis {
         sat_prices: &[Cents; PERCENTILES_LEN],
         usd_prices: &[Cents; PERCENTILES_LEN],
     ) {
-        self.percentiles.push(sat_prices);
-        self.invested_capital.push(usd_prices);
+        self.per_coin.push(sat_prices);
+        self.per_dollar.push(usd_prices);
     }
 
     #[inline(always)]
@@ -94,9 +94,9 @@ impl CostBasis {
     }
 
     pub(crate) fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
-        self.percentiles
+        self.per_coin
             .validate_computed_version_or_reset(base_version)?;
-        self.invested_capital
+        self.per_dollar
             .validate_computed_version_or_reset(base_version)?;
         Ok(())
     }
@@ -112,13 +112,13 @@ impl CostBasis {
             &mut self.supply_density.bps.height,
         ];
         vecs.extend(
-            self.percentiles
+            self.per_coin
                 .vecs
                 .iter_mut()
                 .map(|v| &mut v.cents.height as &mut dyn AnyStoredVec),
         );
         vecs.extend(
-            self.invested_capital
+            self.per_dollar
                 .vecs
                 .iter_mut()
                 .map(|v| &mut v.cents.height as &mut dyn AnyStoredVec),

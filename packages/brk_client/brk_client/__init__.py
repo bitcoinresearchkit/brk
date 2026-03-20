@@ -2339,7 +2339,7 @@ class CapLossMvrvNetPriceProfitSoprPattern:
         self.profit: BaseCumulativeSumPattern = BaseCumulativeSumPattern(client, _m(acc, 'realized_profit'))
         self.sopr: RatioValuePattern = RatioValuePattern(client, acc)
 
-class InInvestedMaxMinPercentilesSupplyPattern:
+class InMaxMinPerSupplyPattern:
     """Pattern struct for repeated tree structure."""
     pass
 
@@ -3639,6 +3639,8 @@ class SeriesTree_Mining_Rewards_Subsidy:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.base: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'subsidy')
         self.cumulative: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'subsidy_cumulative')
+        self.sum: _1m1w1y24hPattern3 = _1m1w1y24hPattern3(client, 'subsidy_sum')
+        self.average: _1m1w1y24hPattern3 = _1m1w1y24hPattern3(client, 'subsidy_average')
         self.dominance: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'subsidy_dominance')
         self.sma_1y: CentsUsdPattern2 = CentsUsdPattern2(client, 'subsidy_sma_1y')
 
@@ -4866,8 +4868,8 @@ class SeriesTree_Cohorts_Utxo_All_CostBasis:
         self.in_loss: PerPattern = PerPattern(client, 'cost_basis_in_loss_per')
         self.min: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'cost_basis_min')
         self.max: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'cost_basis_max')
-        self.percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'cost_basis')
-        self.invested_capital: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'invested_capital')
+        self.per_coin: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'cost_basis_per_coin')
+        self.per_dollar: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'cost_basis_per_dollar')
         self.supply_density: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, 'supply_density')
 
 class SeriesTree_Cohorts_Utxo_All_Unrealized_Profit:
@@ -5092,8 +5094,8 @@ class SeriesTree_Cohorts_Utxo_Sth_CostBasis:
         self.in_loss: PerPattern = PerPattern(client, 'sth_cost_basis_in_loss_per')
         self.min: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'sth_cost_basis_min')
         self.max: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'sth_cost_basis_max')
-        self.percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'sth_cost_basis')
-        self.invested_capital: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'sth_invested_capital')
+        self.per_coin: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'sth_cost_basis_per_coin')
+        self.per_dollar: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'sth_cost_basis_per_dollar')
         self.supply_density: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, 'sth_supply_density')
 
 class SeriesTree_Cohorts_Utxo_Sth_Unrealized_Sentiment:
@@ -5282,8 +5284,8 @@ class SeriesTree_Cohorts_Utxo_Lth_CostBasis:
         self.in_loss: PerPattern = PerPattern(client, 'lth_cost_basis_in_loss_per')
         self.min: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'lth_cost_basis_min')
         self.max: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'lth_cost_basis_max')
-        self.percentiles: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'lth_cost_basis')
-        self.invested_capital: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'lth_invested_capital')
+        self.per_coin: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'lth_cost_basis_per_coin')
+        self.per_dollar: Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern = Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, 'lth_cost_basis_per_dollar')
         self.supply_density: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, 'lth_supply_density')
 
 class SeriesTree_Cohorts_Utxo_Lth_Unrealized_Sentiment:

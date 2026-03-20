@@ -18,6 +18,7 @@ import {
   satsBtcUsdFrom,
   satsBtcUsdFullTree,
   revenueBtcSatsUsd,
+  revenueRollingBtcSatsUsd,
 } from "./shared.js";
 import { brk } from "../client.js";
 
@@ -122,7 +123,6 @@ export function createMiningSection() {
           name: "Rewards",
           tree: satsBtcUsdFullTree({
             pattern: pool.rewards,
-            name: "Rewards",
             title: `Rewards: ${name}`,
           }),
         },
@@ -283,77 +283,44 @@ export function createMiningSection() {
       {
         name: "Revenue",
         tree: [
+          ...ROLLING_WINDOWS.map((w) => ({
+            name: w.name,
+            title: `Revenue ${w.title} Averages`,
+            bottom: revenueRollingBtcSatsUsd({
+              coinbase: mining.rewards.coinbase.average[w.key],
+              subsidy: mining.rewards.subsidy.average[w.key],
+              fee: mining.rewards.fees.average[w.key],
+            }),
+          })),
           {
-            name: "Compare",
-            tree: [
-              {
-                name: "Per Block",
-                title: "Revenue Comparison",
-                bottom: revenueBtcSatsUsd({
-                  coinbase: mining.rewards.coinbase,
-                  subsidy: mining.rewards.subsidy,
-                  fee: mining.rewards.fees,
-                  key: "base",
-                }),
-              },
-              {
-                name: "Cumulative",
-                title: "Revenue Comparison (Total)",
-                bottom: revenueBtcSatsUsd({
-                  coinbase: mining.rewards.coinbase,
-                  subsidy: mining.rewards.subsidy,
-                  fee: mining.rewards.fees,
-                  key: "cumulative",
-                }),
-              },
-            ],
+            name: "Cumulative",
+            title: "Revenue Comparison (Total)",
+            bottom: revenueBtcSatsUsd({
+              coinbase: mining.rewards.coinbase,
+              subsidy: mining.rewards.subsidy,
+              fee: mining.rewards.fees,
+              key: "cumulative",
+            }),
           },
           {
             name: "Coinbase",
             tree: satsBtcUsdFullTree({
               pattern: mining.rewards.coinbase,
-              name: "Coinbase",
               title: "Coinbase Rewards",
             }),
           },
           {
             name: "Subsidy",
-            tree: [
-              {
-                name: "Per Block",
-                title: "Block Subsidy",
-                bottom: [
-                  ...satsBtcUsdFrom({
-                    source: mining.rewards.subsidy,
-                    key: "base",
-                    name: "base",
-                  }),
-                  line({
-                    series: mining.rewards.subsidy.sma1y.usd,
-                    name: "1y SMA",
-                    color: colors.time._1y,
-                    unit: Unit.usd,
-                    defaultActive: false,
-                  }),
-                ],
-              },
-              {
-                name: "Cumulative",
-                title: "Block Subsidy (Total)",
-                bottom: satsBtcUsdFrom({
-                  source: mining.rewards.subsidy,
-                  key: "cumulative",
-                  name: "all-time",
-                }),
-              },
-            ],
+            tree: satsBtcUsdFullTree({
+              pattern: mining.rewards.subsidy,
+              title: "Block Subsidy",
+            }),
           },
           {
             name: "Fees",
             tree: [
               ...satsBtcUsdFullTree({
                 pattern: mining.rewards.fees,
-                name: "Fees",
                 title: "Transaction Fee Revenue",
               }),
               {

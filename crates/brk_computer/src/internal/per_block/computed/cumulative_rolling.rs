@@ -1,4 +1,4 @@
-//! PerBlockCumulativeWithSums - base PerBlock + cumulative PerBlock + lazy rolling sums.
+//! PerBlockCumulativeRolling - base PerBlock + cumulative PerBlock + lazy rolling sums.
 //!
 //! Rolling sums are derived lazily from the cumulative vec via LazyDeltaVec.
 //! No rolling sum vecs are stored on disk.
@@ -24,7 +24,7 @@ use crate::{
 };
 
 #[derive(Traversable)]
-pub struct PerBlockCumulativeWithSums<T, C, M: StorageMode = Rw>
+pub struct PerBlockCumulativeRolling<T, C, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
     C: NumericValue + JsonSchema,
@@ -35,7 +35,7 @@ where
     pub average: LazyRollingAvgsFromHeight<C>,
 }
 
-impl<T, C> PerBlockCumulativeWithSums<T, C>
+impl<T, C> PerBlockCumulativeRolling<T, C>
 where
     T: NumericValue + JsonSchema + Into<C>,
     C: NumericValue + JsonSchema,

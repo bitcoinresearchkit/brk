@@ -1,6 +1,6 @@
 mod aggregated;
 mod base;
-mod cumulative_sum;
+mod cumulative_rolling;
 mod distribution;
 mod full;
 mod lazy_distribution;
@@ -12,7 +12,7 @@ mod with_deltas;
 
 pub use aggregated::*;
 pub use base::*;
-pub use cumulative_sum::*;
+pub use cumulative_rolling::*;
 pub use distribution::*;
 pub use full::*;
 pub use lazy_distribution::*;

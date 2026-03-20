@@ -11,7 +11,7 @@ use crate::{
     blocks,
     distribution::state::{CohortState, CostBasisData, RealizedState, WithCapital},
     internal::{
-        AmountPerBlockCumulativeWithSums, FiatPerBlockCumulativeWithSums, PercentPerBlock,
+        AmountPerBlockCumulativeRolling, FiatPerBlockCumulativeWithSums, PercentPerBlock,
         PercentRollingWindows, PriceWithRatioExtendedPerBlock, RatioCents64, RatioCentsBp32,
         RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32, RatioDollarsBp32,
         RatioPerBlockPercentiles, RatioPerBlockStdDevBands, RatioSma, RollingWindows,
@@ -274,7 +274,7 @@ impl RealizedFull {
         starting_indexes: &Indexes,
         height_to_supply: &impl ReadableVec<Height, Bitcoin>,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
-        activity_transfer_volume: &AmountPerBlockCumulativeWithSums,
+        activity_transfer_volume: &AmountPerBlockCumulativeRolling,
         exit: &Exit,
     ) -> Result<()> {
         self.core.compute_rest_part2(

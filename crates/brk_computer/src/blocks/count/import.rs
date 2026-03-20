@@ -7,7 +7,7 @@ use crate::{
     indexes,
     internal::{
         BlockCountTarget24h, BlockCountTarget1w, BlockCountTarget1m, BlockCountTarget1y,
-        CachedWindowStarts, PerBlockCumulativeWithSums, ConstantVecs, Windows,
+        CachedWindowStarts, PerBlockCumulativeRolling, ConstantVecs, Windows,
     },
 };
 
@@ -25,7 +25,7 @@ impl Vecs {
                 _1m: ConstantVecs::new::<BlockCountTarget1m>("block_count_target_1m", version, indexes),
                 _1y: ConstantVecs::new::<BlockCountTarget1y>("block_count_target_1y", version, indexes),
             },
-            total: PerBlockCumulativeWithSums::forced_import(
+            total: PerBlockCumulativeRolling::forced_import(
                 db,
                 "block_count",
                 version + Version::ONE,
