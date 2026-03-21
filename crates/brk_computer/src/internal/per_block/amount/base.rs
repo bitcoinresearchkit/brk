@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
-use vecdb::{AnyVec, Database, Exit, ReadableCloneableVec, Rw, StorageMode};
+use vecdb::{Database, Exit, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
@@ -52,10 +52,6 @@ impl AmountPerBlock {
             usd,
             cents,
         })
-    }
-
-    pub(crate) fn min_stateful_len(&self) -> usize {
-        self.sats.height.len()
     }
 
     pub(crate) fn compute(

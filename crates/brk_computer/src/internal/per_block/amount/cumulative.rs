@@ -1,17 +1,17 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Sats, Version};
+use brk_types::{Height, Version};
 use vecdb::{Database, Exit, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{AmountPerBlock, SatsToCents},
+    internal::{AmountBlock, AmountPerBlock},
     prices,
 };
 
 #[derive(Traversable)]
 pub struct AmountPerBlockCumulative<M: StorageMode = Rw> {
-    pub block: AmountPerBlock<M>,
+    pub block: AmountBlock<M>,
     pub cumulative: AmountPerBlock<M>,
 }
 
@@ -27,7 +27,7 @@ impl AmountPerBlockCumulative {
         let v = version + VERSION;
 
         Ok(Self {
-            block: AmountPerBlock::forced_import(db, name, v, indexes)?,
+            block: AmountBlock::forced_import(db, name, v)?,
             cumulative: AmountPerBlock::forced_import(
                 db,
                 &format!("{name}_cumulative"),
@@ -46,19 +46,14 @@ impl AmountPerBlockCumulative {
         self.cumulative
             .sats
             .height
-            .compute_cumulative(max_from, &self.block.sats.height, exit)?;
+            .compute_cumulative(max_from, &self.block.sats, exit)?;
 
-        self.block.cents.compute_binary::<Sats, Cents, SatsToCents>(
-            max_from,
-            &self.block.sats.height,
-            &prices.spot.cents.height,
-            exit,
-        )?;
+        self.block.compute_cents(max_from, prices, exit)?;
 
         self.cumulative
             .cents
             .height
-            .compute_cumulative(max_from, &self.block.cents.height, exit)?;
+            .compute_cumulative(max_from, &self.block.cents, exit)?;
 
         Ok(())
     }

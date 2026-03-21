@@ -34,13 +34,13 @@ impl AdjustedSopr {
         under_1h_value_destroyed: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
-        self.transfer_volume.block.height.compute_subtract(
+        self.transfer_volume.block.compute_subtract(
             starting_indexes.height,
             base_transfer_volume,
             under_1h_transfer_volume,
             exit,
         )?;
-        self.value_destroyed.block.height.compute_subtract(
+        self.value_destroyed.block.compute_subtract(
             starting_indexes.height,
             base_value_destroyed,
             under_1h_value_destroyed,

@@ -54,15 +54,15 @@ impl AmountPerBlockFull {
         exit: &Exit,
         compute_sats: impl FnOnce(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
     ) -> Result<()> {
-        compute_sats(&mut self.inner.block.sats.height)?;
+        compute_sats(&mut self.inner.block.sats)?;
 
         self.inner.compute_rest(max_from, prices, exit)?;
 
         self.distribution.compute(
             max_from,
             windows,
-            &self.inner.block.sats.height,
-            &self.inner.block.cents.height,
+            &self.inner.block.sats,
+            &self.inner.block.cents,
             exit,
         )?;
 

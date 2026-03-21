@@ -14,8 +14,8 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let op_return_height = &scripts.value.op_return.block.sats.height;
-        let unclaimed_height = &mining.rewards.unclaimed.block.sats.height;
+        let op_return_height = &scripts.value.op_return.block.sats;
+        let unclaimed_height = &mining.rewards.unclaimed.block.sats;
 
         self.total.compute(
             starting_indexes.height,

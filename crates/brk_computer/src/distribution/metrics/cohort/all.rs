@@ -128,8 +128,8 @@ impl AllCohortMetrics {
 
         self.asopr.compute_rest_part2(
             starting_indexes,
-            &self.activity.transfer_volume.block.cents.height,
-            &self.realized.core.sopr.value_destroyed.block.height,
+            &self.activity.transfer_volume.block.cents,
+            &self.realized.core.sopr.value_destroyed.block,
             under_1h_value_created,
             under_1h_value_destroyed,
             exit,

@@ -40,9 +40,9 @@ impl ActivityCore {
     pub(crate) fn min_len(&self) -> usize {
         self.minimal
             .min_len()
-            .min(self.coindays_destroyed.block.height.len())
-            .min(self.transfer_volume_in_profit.block.sats.height.len())
-            .min(self.transfer_volume_in_loss.block.sats.height.len())
+            .min(self.coindays_destroyed.block.len())
+            .min(self.transfer_volume_in_profit.block.sats.len())
+            .min(self.transfer_volume_in_loss.block.sats.len())
     }
 
     #[inline(always)]
@@ -51,28 +51,24 @@ impl ActivityCore {
         state: &CohortState<impl RealizedOps, impl CostBasisOps>,
     ) {
         self.minimal.push_state(state);
-        self.coindays_destroyed.block.height.push(
+        self.coindays_destroyed.block.push(
             StoredF64::from(Bitcoin::from(state.satdays_destroyed)),
         );
         self.transfer_volume_in_profit
-            .block
-            .sats
-            .height
+            .block.sats
             .push(state.realized.sent_in_profit());
         self.transfer_volume_in_loss
-            .block
-            .sats
-            .height
+            .block.sats
             .push(state.realized.sent_in_loss());
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.minimal.collect_vecs_mut();
-        vecs.push(&mut self.coindays_destroyed.block.height);
-        vecs.push(&mut self.transfer_volume_in_profit.inner.block.sats.height);
-        vecs.push(&mut self.transfer_volume_in_profit.inner.block.cents.height);
-        vecs.push(&mut self.transfer_volume_in_loss.inner.block.sats.height);
-        vecs.push(&mut self.transfer_volume_in_loss.inner.block.cents.height);
+        vecs.push(&mut self.coindays_destroyed.block);
+        vecs.push(&mut self.transfer_volume_in_profit.inner.block.sats);
+        vecs.push(&mut self.transfer_volume_in_profit.inner.block.cents);
+        vecs.push(&mut self.transfer_volume_in_loss.inner.block.sats);
+        vecs.push(&mut self.transfer_volume_in_loss.inner.block.cents);
         vecs
     }
 
@@ -90,9 +86,9 @@ impl ActivityCore {
         self.minimal
             .compute_from_stateful(starting_indexes, &minimal_refs, exit)?;
 
-        sum_others!(self, starting_indexes, others, exit; coindays_destroyed.block.height);
-        sum_others!(self, starting_indexes, others, exit; transfer_volume_in_profit.block.sats.height);
-        sum_others!(self, starting_indexes, others, exit; transfer_volume_in_loss.block.sats.height);
+        sum_others!(self, starting_indexes, others, exit; coindays_destroyed.block);
+        sum_others!(self, starting_indexes, others, exit; transfer_volume_in_profit.block.sats);
+        sum_others!(self, starting_indexes, others, exit; transfer_volume_in_loss.block.sats);
 
         Ok(())
     }

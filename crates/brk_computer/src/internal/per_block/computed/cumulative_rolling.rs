@@ -1,4 +1,4 @@
-//! PerBlockCumulativeRolling - base PerBlock + cumulative PerBlock + lazy rolling sums.
+//! PerBlockCumulativeRolling - base EagerVec + cumulative PerBlock + lazy rolling sums.
 //!
 //! Rolling sums are derived lazily from the cumulative vec via LazyDeltaVec.
 //! No rolling sum vecs are stored on disk.
@@ -13,7 +13,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
+use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
@@ -29,7 +29,8 @@ where
     T: NumericValue + JsonSchema,
     C: NumericValue + JsonSchema,
 {
-    pub block: PerBlock<T, M>,
+    #[traversable(hidden)]
+    pub block: M::Stored<EagerVec<PcoVec<Height, T>>>,
     pub cumulative: PerBlock<C, M>,
     pub sum: LazyRollingSumsFromHeight<C>,
     pub average: LazyRollingAvgsFromHeight<C>,
@@ -47,7 +48,7 @@ where
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let block = PerBlock::forced_import(db, name, version, indexes)?;
+        let block = EagerVec::forced_import(db, name, version)?;
         let cumulative =
             PerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
         let sum = LazyRollingSumsFromHeight::new(
@@ -83,7 +84,7 @@ where
     where
         C: Default,
     {
-        compute_base(&mut self.block.height)?;
+        compute_base(&mut self.block)?;
         self.compute_rest(max_from, exit)
     }
 
@@ -94,7 +95,7 @@ where
     {
         self.cumulative
             .height
-            .compute_cumulative(max_from, &self.block.height, exit)?;
+            .compute_cumulative(max_from, &self.block, exit)?;
         Ok(())
     }
 }

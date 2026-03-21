@@ -81,10 +81,10 @@ impl Vecs {
         r_coinbase?;
         r_fees?;
 
-        self.subsidy.block.sats.height.compute_transform2(
+        self.subsidy.block.sats.compute_transform2(
             starting_indexes.height,
-            &self.coinbase.block.sats.height,
-            &self.fees.block.sats.height,
+            &self.coinbase.block.sats,
+            &self.fees.block.sats,
             |(height, coinbase, fees, ..)| {
                 (
                     height,
@@ -97,9 +97,9 @@ impl Vecs {
         )?;
         self.subsidy.compute_rest(starting_indexes.height, prices, exit)?;
 
-        self.unclaimed.block.sats.height.compute_transform(
+        self.unclaimed.block.sats.compute_transform(
             starting_indexes.height,
-            &self.subsidy.block.sats.height,
+            &self.subsidy.block.sats,
             |(height, subsidy, ..)| {
                 let halving = Halving::from(height);
                 let expected = Sats::FIFTY_BTC / 2_usize.pow(halving.to_usize() as u32);
@@ -136,7 +136,7 @@ impl Vecs {
         self.subsidy_sma_1y.cents.height.compute_rolling_average(
             starting_indexes.height,
             &lookback._1y,
-            &self.subsidy.block.cents.height,
+            &self.subsidy.block.cents,
             exit,
         )?;
 

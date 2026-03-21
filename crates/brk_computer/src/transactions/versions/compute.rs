@@ -17,9 +17,9 @@ impl Vecs {
             + indexer.vecs.transactions.txid.version();
 
         for vec in [
-            &mut self.v1.block.height,
-            &mut self.v2.block.height,
-            &mut self.v3.block.height,
+            &mut self.v1.block,
+            &mut self.v2.block,
+            &mut self.v3.block,
         ] {
             vec.validate_and_truncate(dep_version, starting_indexes.height)?;
         }
@@ -27,10 +27,9 @@ impl Vecs {
         let skip = self
             .v1
             .block
-            .height
             .len()
-            .min(self.v2.block.height.len())
-            .min(self.v3.block.height.len());
+            .min(self.v2.block.len())
+            .min(self.v3.block.len());
 
         let first_tx_index = &indexer.vecs.transactions.first_tx_index;
         let end = first_tx_index.len();
@@ -39,9 +38,9 @@ impl Vecs {
         }
 
         // Truncate all 3 to skip, then push (no per-element bounds checks).
-        self.v1.block.height.truncate_if_needed_at(skip)?;
-        self.v2.block.height.truncate_if_needed_at(skip)?;
-        self.v3.block.height.truncate_if_needed_at(skip)?;
+        self.v1.block.truncate_if_needed_at(skip)?;
+        self.v2.block.truncate_if_needed_at(skip)?;
+        self.v3.block.truncate_if_needed_at(skip)?;
 
         // Single cursor over tx_version — scanned once for all 3 version counts.
         let mut cursor = indexer.vecs.transactions.tx_version.cursor();
@@ -69,23 +68,23 @@ impl Vecs {
                 }
             }
 
-            self.v1.block.height.push(StoredU64::from(c1 as u64));
-            self.v2.block.height.push(StoredU64::from(c2 as u64));
-            self.v3.block.height.push(StoredU64::from(c3 as u64));
+            self.v1.block.push(StoredU64::from(c1 as u64));
+            self.v2.block.push(StoredU64::from(c2 as u64));
+            self.v3.block.push(StoredU64::from(c3 as u64));
 
-            if self.v1.block.height.batch_limit_reached() {
+            if self.v1.block.batch_limit_reached() {
                 let _lock = exit.lock();
-                self.v1.block.height.write()?;
-                self.v2.block.height.write()?;
-                self.v3.block.height.write()?;
+                self.v1.block.write()?;
+                self.v2.block.write()?;
+                self.v3.block.write()?;
             }
         }
 
         {
             let _lock = exit.lock();
-            self.v1.block.height.write()?;
-            self.v2.block.height.write()?;
-            self.v3.block.height.write()?;
+            self.v1.block.write()?;
+            self.v2.block.write()?;
+            self.v3.block.write()?;
         }
 
         // Derive cumulative + sums from base

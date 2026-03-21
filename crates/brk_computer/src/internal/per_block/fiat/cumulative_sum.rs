@@ -5,12 +5,12 @@ use vecdb::{Database, Exit, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, CentsType, FiatPerBlock, LazyRollingSumsFiatFromHeight},
+    internal::{CachedWindowStarts, CentsType, FiatBlock, FiatPerBlock, LazyRollingSumsFiatFromHeight},
 };
 
 #[derive(Traversable)]
 pub struct FiatPerBlockCumulativeWithSums<C: CentsType, M: StorageMode = Rw> {
-    pub block: FiatPerBlock<C, M>,
+    pub block: FiatBlock<C, M>,
     pub cumulative: FiatPerBlock<C, M>,
     pub sum: LazyRollingSumsFiatFromHeight<C>,
 }
@@ -23,7 +23,7 @@ impl<C: CentsType> FiatPerBlockCumulativeWithSums<C> {
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let block = FiatPerBlock::forced_import(db, name, version, indexes)?;
+        let block = FiatBlock::forced_import(db, name, version)?;
         let cumulative = FiatPerBlock::forced_import(
             db,
             &format!("{name}_cumulative"),
@@ -47,7 +47,7 @@ impl<C: CentsType> FiatPerBlockCumulativeWithSums<C> {
         self.cumulative
             .cents
             .height
-            .compute_cumulative(max_from, &self.block.cents.height, exit)?;
+            .compute_cumulative(max_from, &self.block.cents, exit)?;
         Ok(())
     }
 }

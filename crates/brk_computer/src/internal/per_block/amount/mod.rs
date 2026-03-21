@@ -1,4 +1,5 @@
 mod base;
+mod block;
 mod cumulative;
 mod cumulative_rolling;
 mod full;
@@ -10,6 +11,7 @@ mod rolling_distribution;
 mod with_deltas;
 
 pub use base::*;
+pub use block::*;
 pub use cumulative::*;
 pub use cumulative_rolling::*;
 pub use full::*;

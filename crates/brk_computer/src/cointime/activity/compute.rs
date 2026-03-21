@@ -30,8 +30,8 @@ impl Vecs {
             .compute(starting_indexes.height, exit, |vec| {
                 vec.compute_subtract(
                     starting_indexes.height,
-                    &self.coinblocks_created.block.height,
-                    &distribution.coinblocks_destroyed.block.height,
+                    &self.coinblocks_created.block,
+                    &distribution.coinblocks_destroyed.block,
                     exit,
                 )?;
                 Ok(())

@@ -54,7 +54,7 @@ impl RealizedCore {
         let neg_loss_base = LazyPerBlock::from_height_source::<NegCentsUnsignedToDollars>(
             &cfg.name("neg_realized_loss"),
             cfg.version + Version::ONE,
-            minimal.loss.block.cents.height.read_only_boxed_clone(),
+            minimal.loss.block.cents.read_only_boxed_clone(),
             cfg.indexes,
         );
 
@@ -107,12 +107,12 @@ impl RealizedCore {
     #[inline(always)]
     pub(crate) fn push_state(&mut self, state: &CohortState<impl RealizedOps, impl CostBasisOps>) {
         self.minimal.push_state(state);
-        self.sopr.value_destroyed.block.height.push(state.realized.value_destroyed());
+        self.sopr.value_destroyed.block.push(state.realized.value_destroyed());
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.minimal.collect_vecs_mut();
-        vecs.push(&mut self.sopr.value_destroyed.block.height);
+        vecs.push(&mut self.sopr.value_destroyed.block);
         vecs
     }
 
@@ -126,7 +126,7 @@ impl RealizedCore {
         self.minimal
             .compute_from_stateful(starting_indexes, &minimal_refs, exit)?;
 
-        sum_others!(self, starting_indexes, others, exit; sopr.value_destroyed.block.height);
+        sum_others!(self, starting_indexes, others, exit; sopr.value_destroyed.block);
         Ok(())
     }
 
@@ -142,10 +142,10 @@ impl RealizedCore {
             .value_destroyed
             .compute_rest(starting_indexes.height, exit)?;
 
-        self.net_pnl.block.cents.height.compute_transform2(
+        self.net_pnl.block.cents.compute_transform2(
             starting_indexes.height,
-            &self.minimal.profit.block.cents.height,
-            &self.minimal.loss.block.cents.height,
+            &self.minimal.profit.block.cents,
+            &self.minimal.loss.block.cents,
             |(i, profit, loss, ..)| {
                 (
                     i,

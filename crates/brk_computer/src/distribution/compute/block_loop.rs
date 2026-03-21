@@ -66,7 +66,7 @@ pub(crate) fn process_blocks(
     let height_to_first_tx_index = &indexer.vecs.transactions.first_tx_index;
     let height_to_first_txout_index = &indexer.vecs.outputs.first_txout_index;
     let height_to_first_txin_index = &indexer.vecs.inputs.first_txin_index;
-    let height_to_tx_count = &transactions.count.total.block.height;
+    let height_to_tx_count = &transactions.count.total.block;
     let height_to_output_count = &outputs.count.total.sum.height;
     let height_to_input_count = &inputs.count.sum.height;
     let tx_index_to_output_count = &indexes.tx_index.output_count;
@@ -221,7 +221,7 @@ pub(crate) fn process_blocks(
             .chain(vecs.addrs.empty.par_iter_height_mut())
             .chain(vecs.addrs.activity.par_iter_height_mut())
             .chain(rayon::iter::once(
-                &mut vecs.coinblocks_destroyed.block.height as &mut dyn AnyStoredVec,
+                &mut vecs.coinblocks_destroyed.block as &mut dyn AnyStoredVec,
             ))
             .try_for_each(|v| v.any_truncate_if_needed_at(start))?;
     }
@@ -380,7 +380,7 @@ pub(crate) fn process_blocks(
                     blocks_old as u128 * u64::from(sent.spendable_supply.value) as u128
                 })
                 .sum();
-            vecs.coinblocks_destroyed.block.height.push(
+            vecs.coinblocks_destroyed.block.push(
                 StoredF64::from(total_satblocks as f64 / Sats::ONE_BTC_U128 as f64),
             );
         }

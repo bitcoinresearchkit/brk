@@ -24,9 +24,7 @@ impl ActivityMinimal {
 
     pub(crate) fn min_len(&self) -> usize {
         self.transfer_volume
-            .block
-            .sats
-            .height
+            .block.sats
             .len()
     }
 
@@ -35,14 +33,14 @@ impl ActivityMinimal {
         &mut self,
         state: &CohortState<impl RealizedOps, impl CostBasisOps>,
     ) {
-        self.transfer_volume.block.sats.height.push(state.sent);
+        self.transfer_volume.block.sats.push(state.sent);
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let inner = &mut self.transfer_volume.inner;
         vec![
-            &mut inner.block.sats.height as &mut dyn AnyStoredVec,
-            &mut inner.block.cents.height,
+            &mut inner.block.sats as &mut dyn AnyStoredVec,
+            &mut inner.block.cents,
         ]
     }
 
@@ -52,11 +50,11 @@ impl ActivityMinimal {
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        self.transfer_volume.block.sats.height.compute_sum_of_others(
+        self.transfer_volume.block.sats.compute_sum_of_others(
             starting_indexes.height,
             &others
                 .iter()
-                .map(|v| &v.transfer_volume.block.sats.height)
+                .map(|v| &v.transfer_volume.block.sats)
                 .collect::<Vec<_>>(),
             exit,
         )?;

@@ -9,7 +9,7 @@ use brk_traversable::Traversable;
 use brk_types::{Cents, CentsSquaredSats, Dollars, Height, Indexes, Sats, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode, WritableVec,
+    AnyStoredVec, AnyVec, Database, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode, WritableVec,
 };
 
 use crate::{
@@ -342,7 +342,7 @@ impl UTXOCohorts<Rw> {
     #[inline(always)]
     pub(crate) fn push_maturation(&mut self, matured: &AgeRange<Sats>) {
         for (v, &sats) in self.matured.iter_mut().zip(matured.iter()) {
-            v.block.sats.height.push(sats);
+            v.block.sats.push(sats);
         }
     }
 
@@ -542,9 +542,7 @@ impl UTXOCohorts<Rw> {
             .metrics
             .activity
             .transfer_volume
-            .block
-            .cents
-            .height
+            .block.cents
             .read_only_clone();
         let under_1h_value_destroyed = self
             .age_range
@@ -554,7 +552,6 @@ impl UTXOCohorts<Rw> {
             .sopr
             .value_destroyed
             .block
-            .height
             .read_only_clone();
 
         // "all" cohort computed first (no all_supply_sats needed).
@@ -714,8 +711,8 @@ impl UTXOCohorts<Rw> {
         vecs.extend(self.profitability.collect_all_vecs_mut());
         for v in self.matured.iter_mut() {
             let inner = &mut v.inner;
-            vecs.push(&mut inner.block.sats.height);
-            vecs.push(&mut inner.block.cents.height);
+            vecs.push(&mut inner.block.sats);
+            vecs.push(&mut inner.block.cents);
             vecs.push(&mut inner.cumulative.sats.height);
             vecs.push(&mut inner.cumulative.cents.height);
         }
@@ -734,7 +731,7 @@ impl UTXOCohorts<Rw> {
             .chain(
                 self.matured
                     .iter()
-                    .map(|v| Height::from(v.block.min_stateful_len())),
+                    .map(|v| Height::from(v.block.sats.len())),
             )
             .min()
             .unwrap_or_default()

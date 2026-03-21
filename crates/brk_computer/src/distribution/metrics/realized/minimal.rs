@@ -62,22 +62,22 @@ impl RealizedMinimal {
             .cents
             .height
             .len()
-            .min(self.profit.block.cents.height.len())
-            .min(self.loss.block.cents.height.len())
+            .min(self.profit.block.cents.len())
+            .min(self.loss.block.cents.len())
     }
 
     #[inline(always)]
     pub(crate) fn push_state(&mut self, state: &CohortState<impl RealizedOps, impl CostBasisOps>) {
         self.cap.cents.height.push(state.realized.cap());
-        self.profit.block.cents.height.push(state.realized.profit());
-        self.loss.block.cents.height.push(state.realized.loss());
+        self.profit.block.cents.push(state.realized.profit());
+        self.loss.block.cents.push(state.realized.loss());
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
             &mut self.cap.cents.height as &mut dyn AnyStoredVec,
-            &mut self.profit.block.cents.height,
-            &mut self.loss.block.cents.height,
+            &mut self.profit.block.cents,
+            &mut self.loss.block.cents,
         ]
     }
 
@@ -88,8 +88,8 @@ impl RealizedMinimal {
         exit: &Exit,
     ) -> Result<()> {
         sum_others!(self, starting_indexes, others, exit; cap.cents.height);
-        sum_others!(self, starting_indexes, others, exit; profit.block.cents.height);
-        sum_others!(self, starting_indexes, others, exit; loss.block.cents.height);
+        sum_others!(self, starting_indexes, others, exit; profit.block.cents);
+        sum_others!(self, starting_indexes, others, exit; loss.block.cents);
         Ok(())
     }
 

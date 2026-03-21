@@ -1,4 +1,4 @@
-//! PerBlockFull - base PerBlock + cumulative PerBlock + RollingComplete.
+//! PerBlockFull - base EagerVec + cumulative PerBlock + RollingComplete.
 //!
 //! For metrics with stored per-block data, cumulative sums, and rolling windows.
 
@@ -6,7 +6,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
+use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
@@ -18,7 +18,8 @@ pub struct PerBlockFull<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
-    pub block: PerBlock<T, M>,
+    #[traversable(hidden)]
+    pub block: M::Stored<EagerVec<PcoVec<Height, T>>>,
     pub cumulative: PerBlock<T, M>,
     #[traversable(flatten)]
     pub rolling: RollingComplete<T, M>,
@@ -35,7 +36,7 @@ where
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let block = PerBlock::forced_import(db, name, version, indexes)?;
+        let block = EagerVec::forced_import(db, name, version)?;
         let cumulative =
             PerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
         let rolling = RollingComplete::forced_import(
@@ -66,12 +67,12 @@ where
         T: From<f64> + Default + Copy + Ord,
         f64: From<T>,
     {
-        compute_base(&mut self.block.height)?;
+        compute_base(&mut self.block)?;
         self.cumulative
             .height
-            .compute_cumulative(max_from, &self.block.height, exit)?;
+            .compute_cumulative(max_from, &self.block, exit)?;
         self.rolling
-            .compute(max_from, windows, &self.block.height, exit)?;
+            .compute(max_from, windows, &self.block, exit)?;
         Ok(())
     }
 }
