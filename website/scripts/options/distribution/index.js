@@ -646,7 +646,7 @@ function singleBucketFolder({ name, color, pattern }) {
                   title: `${name}: Supply Change`,
                   unit: Unit.sats,
                 }),
-                name: "Absolute",
+                name: "Change",
               },
               {
                 ...rollingPercentRatioTree({
@@ -715,7 +715,7 @@ function groupedBucketCharts(list, titlePrefix) {
           name: "Change",
           tree: [
             {
-              name: "Absolute",
+              name: "Change",
               tree: [
                 {
                   name: "Compare",

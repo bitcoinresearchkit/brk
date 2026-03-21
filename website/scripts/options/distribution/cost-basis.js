@@ -136,53 +136,36 @@ function groupedWeightFolder({ list, all, getAvgPrice, getInProfit, getInLoss, g
   return [
     {
       name: "Average",
-      tree: [
-        {
-          name: "All",
-          title: title(`${avgTitle} Comparison`),
-          top: mapCohortsWithAll(list, all, (c) =>
-            price({ series: getAvgPrice(c), name: c.name, color: c.color }),
-          ),
-        },
-        {
-          name: "In Profit",
-          title: title(`Cost Basis In Profit (${weightLabel})`),
-          top: mapCohortsWithAll(list, all, (c) =>
-            price({ series: getInProfit(c), name: c.name, color: c.color }),
-          ),
-        },
-        {
-          name: "In Loss",
-          title: title(`Cost Basis In Loss (${weightLabel})`),
-          top: mapCohortsWithAll(list, all, (c) =>
-            price({ series: getInLoss(c), name: c.name, color: c.color }),
-          ),
-        },
-      ],
+      title: title(`${avgTitle} Comparison`),
+      top: mapCohortsWithAll(list, all, (c) =>
+        price({ series: getAvgPrice(c), name: c.name, color: c.color }),
+      ),
     },
     {
-      name: "Distribution",
-      tree: [
-        {
-          name: "Average",
-          title: title(`${avgTitle} Comparison`),
-          top: mapCohortsWithAll(list, all, (c) =>
-            price({ series: getAvgPrice(c), name: c.name, color: c.color }),
-          ),
-        },
-        ...(/** @type {const} */ ([
-          ["pct50", "Median"],
-          ["pct75", "Q3"],
-          ["pct25", "Q1"],
-        ])).map(([pct, label]) => ({
-          name: label,
-          title: title(`Cost Basis ${label} (${weightLabel})`),
-          top: mapCohortsWithAll(list, all, (c) =>
-            price({ series: getPercentiles(c)[pct], name: c.name, color: c.color }),
-          ),
-        })),
-      ],
+      name: "In Profit",
+      title: title(`Cost Basis In Profit (${weightLabel})`),
+      top: mapCohortsWithAll(list, all, (c) =>
+        price({ series: getInProfit(c), name: c.name, color: c.color }),
+      ),
     },
+    {
+      name: "In Loss",
+      title: title(`Cost Basis In Loss (${weightLabel})`),
+      top: mapCohortsWithAll(list, all, (c) =>
+        price({ series: getInLoss(c), name: c.name, color: c.color }),
+      ),
+    },
+    ...(/** @type {const} */ ([
+      ["pct50", "Median"],
+      ["pct75", "Q3"],
+      ["pct25", "Q1"],
+    ])).map(([pct, label]) => ({
+      name: label,
+      title: title(`Cost Basis ${label} (${weightLabel})`),
+      top: mapCohortsWithAll(list, all, (c) =>
+        price({ series: getPercentiles(c)[pct], name: c.name, color: c.color }),
+      ),
+    })),
   ];
 }
 

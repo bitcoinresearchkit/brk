@@ -1,7 +1,7 @@
 /** Shared helpers for options */
 
 import { Unit } from "../utils/units.js";
-import { line, baseline, price, sumsAndAveragesCumulativeWith } from "./series.js";
+import { ROLLING_WINDOWS, line, baseline, price, sumsAndAveragesCumulativeWith } from "./series.js";
 import { priceLine, priceLines } from "./constants.js";
 import { colors } from "../utils/colors.js";
 
@@ -747,5 +747,95 @@ export function createPriceRatioCharts({
       ratio,
       color,
     }),
+  ];
+}
+
+// ============================================================================
+// Grouped Rolling Windows + Cumulative
+// ============================================================================
+
+/**
+ * Generic: rolling window charts + cumulative for grouped cohorts
+ * @template {{ name: string, color: Color }} T
+ * @template {{ name: string, color: Color }} A
+ * @param {Object} args
+ * @param {readonly T[]} args.list
+ * @param {A} args.all
+ * @param {(name: string) => string} args.title
+ * @param {string} args.metricTitle
+ * @param {(c: T | A, windowKey: "_24h" | "_1w" | "_1m" | "_1y") => AnySeriesPattern} args.getWindowSeries
+ * @param {(c: T | A) => AnySeriesPattern} args.getCumulativeSeries
+ * @param {(args: { series: AnySeriesPattern, name: string, color: Color, unit: Unit }) => AnyFetchedSeriesBlueprint} args.seriesFn
+ * @param {Unit} args.unit
+ * @returns {PartialOptionsTree}
+ */
+export function groupedWindowsCumulative({ list, all, title, metricTitle, getWindowSeries, getCumulativeSeries, seriesFn, unit }) {
+  return [
+    ...ROLLING_WINDOWS.map((w) => ({
+      name: w.name,
+      title: title(`${metricTitle} (${w.title})`),
+      bottom: mapCohortsWithAll(list, all, (c) =>
+        seriesFn({ series: getWindowSeries(c, w.key), name: c.name, color: c.color, unit }),
+      ),
+    })),
+    {
+      name: "Cumulative",
+      title: title(`Cumulative ${metricTitle}`),
+      bottom: mapCohortsWithAll(list, all, (c) =>
+        seriesFn({ series: getCumulativeSeries(c), name: c.name, color: c.color, unit }),
+      ),
+    },
+  ];
+}
+
+/**
+ * USD variant: windows access .sum[key].usd, cumulative accesses .cumulative.usd
+ * @template {{ name: string, color: Color }} T
+ * @template {{ name: string, color: Color }} A
+ * @param {Object} args
+ * @param {readonly T[]} args.list
+ * @param {A} args.all
+ * @param {(name: string) => string} args.title
+ * @param {string} args.metricTitle
+ * @param {(c: T | A) => { sum: Record<string, { usd: AnySeriesPattern }>, cumulative: { usd: AnySeriesPattern } }} args.getMetric
+ * @param {(args: { series: AnySeriesPattern, name: string, color: Color, unit: Unit }) => AnyFetchedSeriesBlueprint} [args.seriesFn]
+ * @returns {PartialOptionsTree}
+ */
+export function groupedWindowsCumulativeUsd({ list, all, title, metricTitle, getMetric, seriesFn = line }) {
+  return groupedWindowsCumulative({
+    list, all, title, metricTitle, seriesFn, unit: Unit.usd,
+    getWindowSeries: (c, key) => getMetric(c).sum[key].usd,
+    getCumulativeSeries: (c) => getMetric(c).cumulative.usd,
+  });
+}
+
+/**
+ * Multi-unit variant: windows access .sum[key] as satsBtcUsd pattern, cumulative same
+ * @template {{ name: string, color: Color }} T
+ * @template {{ name: string, color: Color }} A
+ * @param {Object} args
+ * @param {readonly T[]} args.list
+ * @param {A} args.all
+ * @param {(name: string) => string} args.title
+ * @param {string} args.metricTitle
+ * @param {(c: T | A) => { sum: Record<string, AnyValuePattern>, cumulative: AnyValuePattern }} args.getMetric
+ * @returns {PartialOptionsTree}
+ */
+export function groupedWindowsCumulativeSatsBtcUsd({ list, all, title, metricTitle, getMetric }) {
+  return [
+    ...ROLLING_WINDOWS.map((w) => ({
+      name: w.name,
+      title: title(`${metricTitle} (${w.title})`),
+      bottom: flatMapCohortsWithAll(list, all, (c) =>
+        satsBtcUsd({ pattern: getMetric(c).sum[w.key], name: c.name, color: c.color }),
+      ),
+    })),
+    {
+      name: "Cumulative",
+      title: title(`Cumulative ${metricTitle}`),
+      bottom: flatMapCohortsWithAll(list, all, (c) =>
+        satsBtcUsd({ pattern: getMetric(c).cumulative, name: c.name, color: c.color }),
+      ),
+    },
   ];
 }

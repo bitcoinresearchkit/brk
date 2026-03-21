@@ -23,6 +23,8 @@ import {
   satsBtcUsdFullTree,
   mapCohortsWithAll,
   flatMapCohortsWithAll,
+  groupedWindowsCumulative,
+  groupedWindowsCumulativeSatsBtcUsd,
 } from "../shared.js";
 import { colors } from "../../utils/colors.js";
 
@@ -31,30 +33,40 @@ import { colors } from "../../utils/colors.js";
 // ============================================================================
 
 /**
- * Volume folder with optional profitability (in profit + in loss per window)
  * @param {{ transferVolume: TransferVolumePattern }} activity
  * @param {Color} color
  * @param {(name: string) => string} title
- * @param {boolean} [withProfitability]
  * @returns {PartialOptionsGroup}
  */
-function volumeFolder(activity, color, title, withProfitability) {
+function volumeFolderWithProfitability(activity, color, title) {
   const tv = activity.transferVolume;
   return {
     name: "Volume",
     tree: [
-      ...satsBtcUsdFullTree({ pattern: tv, title: title("Sent Volume"), color }),
-      ...(withProfitability ? [{
+      ...satsBtcUsdFullTree({
+        pattern: tv,
+        title: title("Sent Volume"),
+        color,
+      }),
+      {
         name: "Profitability",
         tree: ROLLING_WINDOWS.map((w) => ({
           name: w.name,
           title: title(`Sent Volume Profitability (${w.title})`),
           bottom: [
-            ...satsBtcUsd({ pattern: tv.inProfit.sum[w.key], name: "In Profit", color: colors.profit }),
-            ...satsBtcUsd({ pattern: tv.inLoss.sum[w.key], name: "In Loss", color: colors.loss }),
+            ...satsBtcUsd({
+              pattern: tv.inProfit.sum[w.key],
+              name: "In Profit",
+              color: colors.profit,
+            }),
+            ...satsBtcUsd({
+              pattern: tv.inLoss.sum[w.key],
+              name: "In Loss",
+              color: colors.loss,
+            }),
           ],
         })),
-      }] : []),
+      },
     ],
   };
 }
@@ -68,7 +80,7 @@ function volumeFolder(activity, color, title, withProfitability) {
  */
 function fullVolumeTree(activity, color, title) {
   return [
-    volumeFolder(activity, color, title, true),
+    volumeFolderWithProfitability(activity, color, title),
     {
       name: "Coindays Destroyed",
       tree: chartsFromCount({
@@ -154,7 +166,11 @@ function singleSellSideRiskTree(sellSideRisk, title) {
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
       title: title(`Sell Side Risk (${w.title})`),
-      bottom: percentRatio({ pattern: sellSideRisk[w.key], name: "Risk", color: w.color }),
+      bottom: percentRatio({
+        pattern: sellSideRisk[w.key],
+        name: "Risk",
+        color: w.color,
+      }),
     })),
   ];
 }
@@ -237,7 +253,7 @@ export function createActivitySectionWithActivity({ cohort, title }) {
   return {
     name: "Activity",
     tree: [
-      volumeFolder(tree.activity, color, title, true),
+      volumeFolderWithProfitability(tree.activity, color, title),
       {
         name: "Coindays Destroyed",
         tree: chartsFromCount({
@@ -290,7 +306,11 @@ export function createGroupedActivitySectionMinimal({ list, all, title }) {
       name: w.name,
       title: title(`Volume (${w.title})`),
       bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-        satsBtcUsd({ pattern: tree.activity.transferVolume.sum[w.key], name, color }),
+        satsBtcUsd({
+          pattern: tree.activity.transferVolume.sum[w.key],
+          name,
+          color,
+        }),
       ),
     })),
   };
@@ -356,78 +376,49 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
       {
         name: "Volume",
         tree: [
-          ...ROLLING_WINDOWS.map((w) => ({
-            name: w.name,
-            title: title(`Sent Volume (${w.title})`),
-            bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              satsBtcUsd({ pattern: tree.activity.transferVolume.sum[w.key], name, color }),
-            ),
-          })),
-          {
-            name: "Cumulative",
-            title: title("Cumulative Sent Volume"),
-            bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              satsBtcUsd({ pattern: tree.activity.transferVolume.cumulative, name, color }),
-            ),
-          },
+          ...groupedWindowsCumulativeSatsBtcUsd({
+            list,
+            all,
+            title,
+            metricTitle: "Sent Volume",
+            getMetric: (c) => c.tree.activity.transferVolume,
+          }),
           {
             name: "In Profit",
-            tree: [
-              ...ROLLING_WINDOWS.map((w) => ({
-                name: w.name,
-                title: title(`Sent In Profit (${w.title})`),
-                bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                  satsBtcUsd({ pattern: tree.activity.transferVolume.inProfit.sum[w.key], name, color }),
-                ),
-              })),
-              {
-                name: "Cumulative",
-                title: title("Cumulative Sent In Profit"),
-                bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                  satsBtcUsd({ pattern: tree.activity.transferVolume.inProfit.cumulative, name, color }),
-                ),
-              },
-            ],
+            tree: groupedWindowsCumulativeSatsBtcUsd({
+              list,
+              all,
+              title,
+              metricTitle: "Sent In Profit",
+              getMetric: (c) => c.tree.activity.transferVolume.inProfit,
+            }),
           },
           {
             name: "In Loss",
-            tree: [
-              ...ROLLING_WINDOWS.map((w) => ({
-                name: w.name,
-                title: title(`Sent In Loss (${w.title})`),
-                bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                  satsBtcUsd({ pattern: tree.activity.transferVolume.inLoss.sum[w.key], name, color }),
-                ),
-              })),
-              {
-                name: "Cumulative",
-                title: title("Cumulative Sent In Loss"),
-                bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                  satsBtcUsd({ pattern: tree.activity.transferVolume.inLoss.cumulative, name, color }),
-                ),
-              },
-            ],
+            tree: groupedWindowsCumulativeSatsBtcUsd({
+              list,
+              all,
+              title,
+              metricTitle: "Sent In Loss",
+              getMetric: (c) => c.tree.activity.transferVolume.inLoss,
+            }),
           },
         ],
       },
       {
         name: "Coindays Destroyed",
-        tree: [
-          ...ROLLING_WINDOWS.map((w) => ({
-            name: w.name,
-            title: title(`Coindays Destroyed (${w.title})`),
-            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              line({ series: tree.activity.coindaysDestroyed.sum[w.key], name, color, unit: Unit.coindays }),
-            ),
-          })),
-          {
-            name: "Cumulative",
-            title: title("Cumulative Coindays Destroyed"),
-            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              line({ series: tree.activity.coindaysDestroyed.cumulative, name, color, unit: Unit.coindays }),
-            ),
-          },
-        ],
+        tree: groupedWindowsCumulative({
+          list,
+          all,
+          title,
+          metricTitle: "Coindays Destroyed",
+          getWindowSeries: (c, key) =>
+            c.tree.activity.coindaysDestroyed.sum[key],
+          getCumulativeSeries: (c) =>
+            c.tree.activity.coindaysDestroyed.cumulative,
+          seriesFn: line,
+          unit: Unit.coindays,
+        }),
       },
       {
         name: "Dormancy",
@@ -435,17 +426,33 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
           name: w.name,
           title: title(`Dormancy (${w.title})`),
           bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({ series: tree.activity.dormancy[w.key], name, color, unit: Unit.days }),
+            line({
+              series: tree.activity.dormancy[w.key],
+              name,
+              color,
+              unit: Unit.days,
+            }),
           ),
         })),
       },
       {
         name: "SOPR",
         tree: [
-          ...groupedSoprCharts(list, all, (c) => c.tree.realized.sopr.ratio, title),
+          ...groupedSoprCharts(
+            list,
+            all,
+            (c) => c.tree.realized.sopr.ratio,
+            title,
+          ),
           {
             name: "Adjusted",
-            tree: groupedSoprCharts(list, all, (c) => c.tree.realized.sopr.adjusted.ratio, title, "Adjusted "),
+            tree: groupedSoprCharts(
+              list,
+              all,
+              (c) => c.tree.realized.sopr.adjusted.ratio,
+              title,
+              "Adjusted ",
+            ),
           },
         ],
       },
@@ -455,7 +462,12 @@ export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
           name: w.name,
           title: title(`Sell Side Risk (${w.title})`),
           bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({ series: tree.realized.sellSideRiskRatio[w.key].ratio, name, color, unit: Unit.ratio }),
+            line({
+              series: tree.realized.sellSideRiskRatio[w.key].ratio,
+              name,
+              color,
+              unit: Unit.ratio,
+            }),
           ),
         })),
       },
@@ -475,78 +487,49 @@ export function createGroupedActivitySection({ list, all, title }) {
       {
         name: "Volume",
         tree: [
-          ...ROLLING_WINDOWS.map((w) => ({
-            name: w.name,
-            title: title(`Sent Volume (${w.title})`),
-            bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              satsBtcUsd({ pattern: tree.activity.transferVolume.sum[w.key], name, color }),
-            ),
-          })),
-          {
-            name: "Cumulative",
-            title: title("Cumulative Sent Volume"),
-            bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              satsBtcUsd({ pattern: tree.activity.transferVolume.cumulative, name, color }),
-            ),
-          },
+          ...groupedWindowsCumulativeSatsBtcUsd({
+            list,
+            all,
+            title,
+            metricTitle: "Sent Volume",
+            getMetric: (c) => c.tree.activity.transferVolume,
+          }),
           {
             name: "In Profit",
-            tree: [
-              ...ROLLING_WINDOWS.map((w) => ({
-                name: w.name,
-                title: title(`Sent In Profit (${w.title})`),
-                bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                  satsBtcUsd({ pattern: tree.activity.transferVolume.inProfit.sum[w.key], name, color }),
-                ),
-              })),
-              {
-                name: "Cumulative",
-                title: title("Cumulative Sent In Profit"),
-                bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                  satsBtcUsd({ pattern: tree.activity.transferVolume.inProfit.cumulative, name, color }),
-                ),
-              },
-            ],
+            tree: groupedWindowsCumulativeSatsBtcUsd({
+              list,
+              all,
+              title,
+              metricTitle: "Sent In Profit",
+              getMetric: (c) => c.tree.activity.transferVolume.inProfit,
+            }),
           },
           {
             name: "In Loss",
-            tree: [
-              ...ROLLING_WINDOWS.map((w) => ({
-                name: w.name,
-                title: title(`Sent In Loss (${w.title})`),
-                bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                  satsBtcUsd({ pattern: tree.activity.transferVolume.inLoss.sum[w.key], name, color }),
-                ),
-              })),
-              {
-                name: "Cumulative",
-                title: title("Cumulative Sent In Loss"),
-                bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-                  satsBtcUsd({ pattern: tree.activity.transferVolume.inLoss.cumulative, name, color }),
-                ),
-              },
-            ],
+            tree: groupedWindowsCumulativeSatsBtcUsd({
+              list,
+              all,
+              title,
+              metricTitle: "Sent In Loss",
+              getMetric: (c) => c.tree.activity.transferVolume.inLoss,
+            }),
           },
         ],
       },
       {
         name: "Coindays Destroyed",
-        tree: [
-          ...ROLLING_WINDOWS.map((w) => ({
-            name: w.name,
-            title: title(`Coindays Destroyed (${w.title})`),
-            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              line({ series: tree.activity.coindaysDestroyed.sum[w.key], name, color, unit: Unit.coindays }),
-            ),
-          })),
-          {
-            name: "Cumulative",
-            title: title("Cumulative Coindays Destroyed"),
-            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              line({ series: tree.activity.coindaysDestroyed.cumulative, name, color, unit: Unit.coindays }),
-            ),
-          },
-        ],
+        tree: groupedWindowsCumulative({
+          list,
+          all,
+          title,
+          metricTitle: "Coindays Destroyed",
+          getWindowSeries: (c, key) =>
+            c.tree.activity.coindaysDestroyed.sum[key],
+          getCumulativeSeries: (c) =>
+            c.tree.activity.coindaysDestroyed.cumulative,
+          seriesFn: line,
+          unit: Unit.coindays,
+        }),
       },
       {
         name: "Dormancy",
@@ -554,13 +537,23 @@ export function createGroupedActivitySection({ list, all, title }) {
           name: w.name,
           title: title(`Dormancy (${w.title})`),
           bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({ series: tree.activity.dormancy[w.key], name, color, unit: Unit.days }),
+            line({
+              series: tree.activity.dormancy[w.key],
+              name,
+              color,
+              unit: Unit.days,
+            }),
           ),
         })),
       },
       {
         name: "SOPR",
-        tree: groupedSoprCharts(list, all, (c) => c.tree.realized.sopr.ratio, title),
+        tree: groupedSoprCharts(
+          list,
+          all,
+          (c) => c.tree.realized.sopr.ratio,
+          title,
+        ),
       },
       {
         name: "Sell Side Risk",
@@ -568,7 +561,12 @@ export function createGroupedActivitySection({ list, all, title }) {
           name: w.name,
           title: title(`Sell Side Risk (${w.title})`),
           bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({ series: tree.realized.sellSideRiskRatio[w.key].ratio, name, color, unit: Unit.ratio }),
+            line({
+              series: tree.realized.sellSideRiskRatio[w.key].ratio,
+              name,
+              color,
+              unit: Unit.ratio,
+            }),
           ),
         })),
       },
@@ -591,7 +589,11 @@ export function createGroupedActivitySectionWithActivity({ list, all, title }) {
           name: w.name,
           title: title(`Sent Volume (${w.title})`),
           bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            satsBtcUsd({ pattern: tree.activity.transferVolume.sum[w.key], name, color }),
+            satsBtcUsd({
+              pattern: tree.activity.transferVolume.sum[w.key],
+              name,
+              color,
+            }),
           ),
         })),
       },
@@ -615,14 +617,24 @@ export function createGroupedActivitySectionWithActivity({ list, all, title }) {
             name: w.name,
             title: title(`Coindays Destroyed (${w.title})`),
             bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              line({ series: tree.activity.coindaysDestroyed.sum[w.key], name, color, unit: Unit.coindays }),
+              line({
+                series: tree.activity.coindaysDestroyed.sum[w.key],
+                name,
+                color,
+                unit: Unit.coindays,
+              }),
             ),
           })),
           {
             name: "Cumulative",
             title: title("Cumulative Coindays Destroyed"),
             bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              line({ series: tree.activity.coindaysDestroyed.cumulative, name, color, unit: Unit.coindays }),
+              line({
+                series: tree.activity.coindaysDestroyed.cumulative,
+                name,
+                color,
+                unit: Unit.coindays,
+              }),
             ),
           },
         ],
