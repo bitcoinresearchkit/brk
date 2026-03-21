@@ -2328,16 +2328,7 @@ class _1m1w1y24hBpsPercentRatioPattern:
 
 class CapLossMvrvNetPriceProfitSoprPattern:
     """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, _m(acc, 'realized_cap'))
-        self.loss: BlockCumulativeNegativeSumPattern = BlockCumulativeNegativeSumPattern(client, acc)
-        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'mvrv'))
-        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, _m(acc, 'net_realized_pnl'))
-        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, _m(acc, 'realized_price'))
-        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, _m(acc, 'realized_profit'))
-        self.sopr: RatioValuePattern = RatioValuePattern(client, acc)
+    pass
 
 class InMaxMinPerSupplyPattern:
     """Pattern struct for repeated tree structure."""
@@ -2404,18 +2395,6 @@ class AverageBlockCumulativeInSumPattern:
         self.in_loss: AverageBlockCumulativeSumPattern3 = AverageBlockCumulativeSumPattern3(client, _m(acc, 'in_loss'))
         self.in_profit: AverageBlockCumulativeSumPattern3 = AverageBlockCumulativeSumPattern3(client, _m(acc, 'in_profit'))
         self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, _m(acc, 'sum'))
-
-class BlockChangeCumulativeDeltaSumToPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.block: CentsUsdPattern4 = CentsUsdPattern4(client, _m(acc, 'realized_pnl'))
-        self.change_1m: ToPattern = ToPattern(client, _m(acc, 'pnl_change_1m_to'))
-        self.cumulative: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'realized_pnl_cumulative'))
-        self.delta: AbsoluteRatePattern2 = AbsoluteRatePattern2(client, _m(acc, 'realized_pnl_delta'))
-        self.sum: _1m1w1y24hPattern5 = _1m1w1y24hPattern5(client, _m(acc, 'realized_pnl_sum'))
-        self.to_rcap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'realized_pnl_to_rcap'))
 
 class BpsCentsPercentilesRatioSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
@@ -2502,14 +2481,7 @@ class _1m1w1y24hBlockPattern:
 
 class ActivityOutputsRealizedSupplyUnrealizedPattern:
     """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, acc)
-        self.outputs: UnspentPattern = UnspentPattern(client, _m(acc, 'utxo_count'))
-        self.realized: CapLossMvrvNetPriceProfitSoprPattern = CapLossMvrvNetPriceProfitSoprPattern(client, acc)
-        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, _m(acc, 'supply'))
-        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, acc)
+    pass
 
 class ActivityOutputsRealizedSupplyUnrealizedPattern3:
     """Pattern struct for repeated tree structure."""
@@ -2533,9 +2505,16 @@ class ActivityOutputsRealizedSupplyUnrealizedPattern2:
         self.supply: DeltaHalfTotalPattern = DeltaHalfTotalPattern(client, _m(acc, 'supply'))
         self.unrealized: NuplPattern = NuplPattern(client, _m(acc, 'nupl'))
 
-class BlockCumulativeNegativeSumToPattern:
+class BlockChangeCumulativeDeltaSumPattern:
     """Pattern struct for repeated tree structure."""
-    pass
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.block: CentsUsdPattern4 = CentsUsdPattern4(client, _m(acc, 'realized_pnl'))
+        self.change_1m: ToPattern = ToPattern(client, _m(acc, 'pnl_change_1m_to'))
+        self.cumulative: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'realized_pnl_cumulative'))
+        self.delta: AbsoluteRatePattern2 = AbsoluteRatePattern2(client, _m(acc, 'realized_pnl_delta'))
+        self.sum: _1m1w1y24hPattern5 = _1m1w1y24hPattern5(client, _m(acc, 'realized_pnl_sum'))
 
 class BpsCentsRatioSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
@@ -2725,23 +2704,7 @@ class AverageBlockCumulativeSumPattern3:
 
 class BlockCumulativeNegativeSumPattern:
     """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, _m(acc, 'realized_loss'))
-        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, _m(acc, 'realized_loss_cumulative'))
-        self.negative: BaseSumPattern = BaseSumPattern(client, _m(acc, 'neg_realized_loss'))
-        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, _m(acc, 'realized_loss_sum'))
-
-class BlockCumulativeSumToPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, acc)
-        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, _m(acc, 'cumulative'))
-        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, _m(acc, 'sum'))
-        self.to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, _m(acc, 'to_rcap'))
+    pass
 
 class BlockCumulativeDeltaSumPattern:
     """Pattern struct for repeated tree structure."""
@@ -4779,7 +4742,6 @@ class SeriesTree_Cohorts_Utxo_All_Realized_Loss:
         self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'realized_loss_cumulative')
         self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'realized_loss_sum')
         self.negative: BaseSumPattern = BaseSumPattern(client, 'neg_realized_loss')
-        self.to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, 'realized_loss_to_rcap')
 
 class SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_All:
     """Series tree node."""
@@ -4904,15 +4866,15 @@ class SeriesTree_Cohorts_Utxo_All_Realized:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.cap: CentsDeltaToUsdPattern = CentsDeltaToUsdPattern(client, 'realized_cap')
-        self.profit: BlockCumulativeSumToPattern = BlockCumulativeSumToPattern(client, 'realized_profit')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'realized_profit')
         self.loss: SeriesTree_Cohorts_Utxo_All_Realized_Loss = SeriesTree_Cohorts_Utxo_All_Realized_Loss(client)
         self.price: SeriesTree_Cohorts_Utxo_All_Realized_Price = SeriesTree_Cohorts_Utxo_All_Realized_Price(client)
         self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'mvrv')
-        self.net_pnl: BlockChangeCumulativeDeltaSumToPattern = BlockChangeCumulativeDeltaSumToPattern(client, 'net')
+        self.net_pnl: BlockChangeCumulativeDeltaSumPattern = BlockChangeCumulativeDeltaSumPattern(client, 'net')
         self.sopr: SeriesTree_Cohorts_Utxo_All_Realized_Sopr = SeriesTree_Cohorts_Utxo_All_Realized_Sopr(client)
         self.gross_pnl: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'realized_gross_pnl')
         self.sell_side_risk_ratio: _1m1w1y24hPattern7 = _1m1w1y24hPattern7(client, 'sell_side_risk_ratio')
-        self.peak_regret: BlockCumulativeSumToPattern = BlockCumulativeSumToPattern(client, 'realized_peak_regret')
+        self.peak_regret: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'realized_peak_regret')
         self.investor: PricePattern = PricePattern(client, 'investor_price')
         self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'realized_profit_to_loss_ratio')
 
@@ -5005,7 +4967,6 @@ class SeriesTree_Cohorts_Utxo_Sth_Realized_Loss:
         self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'sth_realized_loss_cumulative')
         self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'sth_realized_loss_sum')
         self.negative: BaseSumPattern = BaseSumPattern(client, 'sth_neg_realized_loss')
-        self.to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, 'sth_realized_loss_to_rcap')
 
 class SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_All:
     """Series tree node."""
@@ -5130,15 +5091,15 @@ class SeriesTree_Cohorts_Utxo_Sth_Realized:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.cap: CentsDeltaToUsdPattern = CentsDeltaToUsdPattern(client, 'sth_realized_cap')
-        self.profit: BlockCumulativeSumToPattern = BlockCumulativeSumToPattern(client, 'sth_realized_profit')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'sth_realized_profit')
         self.loss: SeriesTree_Cohorts_Utxo_Sth_Realized_Loss = SeriesTree_Cohorts_Utxo_Sth_Realized_Loss(client)
         self.price: SeriesTree_Cohorts_Utxo_Sth_Realized_Price = SeriesTree_Cohorts_Utxo_Sth_Realized_Price(client)
         self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'sth_mvrv')
-        self.net_pnl: BlockChangeCumulativeDeltaSumToPattern = BlockChangeCumulativeDeltaSumToPattern(client, 'sth_net')
+        self.net_pnl: BlockChangeCumulativeDeltaSumPattern = BlockChangeCumulativeDeltaSumPattern(client, 'sth_net')
         self.sopr: SeriesTree_Cohorts_Utxo_Sth_Realized_Sopr = SeriesTree_Cohorts_Utxo_Sth_Realized_Sopr(client)
         self.gross_pnl: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'sth_realized_gross_pnl')
         self.sell_side_risk_ratio: _1m1w1y24hPattern7 = _1m1w1y24hPattern7(client, 'sth_sell_side_risk_ratio')
-        self.peak_regret: BlockCumulativeSumToPattern = BlockCumulativeSumToPattern(client, 'sth_realized_peak_regret')
+        self.peak_regret: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'sth_realized_peak_regret')
         self.investor: PricePattern = PricePattern(client, 'sth_investor_price')
         self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'sth_realized_profit_to_loss_ratio')
 
@@ -5204,7 +5165,6 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized_Loss:
         self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'lth_realized_loss_cumulative')
         self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'lth_realized_loss_sum')
         self.negative: BaseSumPattern = BaseSumPattern(client, 'lth_neg_realized_loss')
-        self.to_rcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, 'lth_realized_loss_to_rcap')
 
 class SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_All:
     """Series tree node."""
@@ -5320,15 +5280,15 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.cap: CentsDeltaToUsdPattern = CentsDeltaToUsdPattern(client, 'lth_realized_cap')
-        self.profit: BlockCumulativeSumToPattern = BlockCumulativeSumToPattern(client, 'lth_realized_profit')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'lth_realized_profit')
         self.loss: SeriesTree_Cohorts_Utxo_Lth_Realized_Loss = SeriesTree_Cohorts_Utxo_Lth_Realized_Loss(client)
         self.price: SeriesTree_Cohorts_Utxo_Lth_Realized_Price = SeriesTree_Cohorts_Utxo_Lth_Realized_Price(client)
         self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'lth_mvrv')
-        self.net_pnl: BlockChangeCumulativeDeltaSumToPattern = BlockChangeCumulativeDeltaSumToPattern(client, 'lth_net')
+        self.net_pnl: BlockChangeCumulativeDeltaSumPattern = BlockChangeCumulativeDeltaSumPattern(client, 'lth_net')
         self.sopr: SeriesTree_Cohorts_Utxo_Lth_Realized_Sopr = SeriesTree_Cohorts_Utxo_Lth_Realized_Sopr(client)
         self.gross_pnl: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'lth_realized_gross_pnl')
         self.sell_side_risk_ratio: _1m1w1y24hPattern7 = _1m1w1y24hPattern7(client, 'lth_sell_side_risk_ratio')
-        self.peak_regret: BlockCumulativeSumToPattern = BlockCumulativeSumToPattern(client, 'lth_realized_peak_regret')
+        self.peak_regret: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'lth_realized_peak_regret')
         self.investor: PricePattern = PricePattern(client, 'lth_investor_price')
         self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'lth_realized_profit_to_loss_ratio')
 
@@ -5377,110 +5337,2590 @@ class SeriesTree_Cohorts_Utxo_Lth:
         self.cost_basis: SeriesTree_Cohorts_Utxo_Lth_CostBasis = SeriesTree_Cohorts_Utxo_Lth_CostBasis(client)
         self.unrealized: SeriesTree_Cohorts_Utxo_Lth_Unrealized = SeriesTree_Cohorts_Utxo_Lth_Unrealized(client)
 
+class SeriesTree_Cohorts_Utxo_AgeRange_Under1h_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_1h_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_1h_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_1h_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_1h_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_Under1h_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_1h_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_1h_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_Under1h_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_Under1h_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_1h_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_1h_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_1h_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_1h_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_Under1h:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_1h_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_1h_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_1h_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_Under1h_Realized = SeriesTree_Cohorts_Utxo_AgeRange_Under1h_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_1h_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1hTo1d_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_1h_to_1d_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_1h_to_1d_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_1h_to_1d_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_1h_to_1d_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1hTo1d_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_1h_to_1d_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_1h_to_1d_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_1hTo1d_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_1hTo1d_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_1h_to_1d_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_1h_to_1d_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_1h_to_1d_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_1h_to_1d_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1hTo1d:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_1h_to_1d_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_1h_to_1d_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_1h_to_1d_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_1hTo1d_Realized = SeriesTree_Cohorts_Utxo_AgeRange_1hTo1d_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_1h_to_1d_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1dTo1w_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_1d_to_1w_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_1d_to_1w_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_1d_to_1w_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_1d_to_1w_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1dTo1w_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_1d_to_1w_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_1d_to_1w_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_1dTo1w_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_1dTo1w_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_1d_to_1w_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_1d_to_1w_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_1d_to_1w_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_1d_to_1w_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1dTo1w:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_1d_to_1w_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_1d_to_1w_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_1d_to_1w_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_1dTo1w_Realized = SeriesTree_Cohorts_Utxo_AgeRange_1dTo1w_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_1d_to_1w_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1wTo1m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_1w_to_1m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_1w_to_1m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_1w_to_1m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_1w_to_1m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1wTo1m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_1w_to_1m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_1w_to_1m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_1wTo1m_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_1wTo1m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_1w_to_1m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_1w_to_1m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_1w_to_1m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_1w_to_1m_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1wTo1m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_1w_to_1m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_1w_to_1m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_1w_to_1m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_1wTo1m_Realized = SeriesTree_Cohorts_Utxo_AgeRange_1wTo1m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_1w_to_1m_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1mTo2m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_1m_to_2m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_1m_to_2m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_1m_to_2m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_1m_to_2m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1mTo2m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_1m_to_2m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_1m_to_2m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_1mTo2m_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_1mTo2m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_1m_to_2m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_1m_to_2m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_1m_to_2m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_1m_to_2m_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1mTo2m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_1m_to_2m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_1m_to_2m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_1m_to_2m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_1mTo2m_Realized = SeriesTree_Cohorts_Utxo_AgeRange_1mTo2m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_1m_to_2m_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_2mTo3m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_2m_to_3m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_2m_to_3m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_2m_to_3m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_2m_to_3m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_2mTo3m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_2m_to_3m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_2m_to_3m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_2mTo3m_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_2mTo3m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_2m_to_3m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_2m_to_3m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_2m_to_3m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_2m_to_3m_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_2mTo3m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_2m_to_3m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_2m_to_3m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_2m_to_3m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_2mTo3m_Realized = SeriesTree_Cohorts_Utxo_AgeRange_2mTo3m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_2m_to_3m_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_3mTo4m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_3m_to_4m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_3m_to_4m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_3m_to_4m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_3m_to_4m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_3mTo4m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_3m_to_4m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_3m_to_4m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_3mTo4m_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_3mTo4m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_3m_to_4m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_3m_to_4m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_3m_to_4m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_3m_to_4m_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_3mTo4m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_3m_to_4m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_3m_to_4m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_3m_to_4m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_3mTo4m_Realized = SeriesTree_Cohorts_Utxo_AgeRange_3mTo4m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_3m_to_4m_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_4mTo5m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_4m_to_5m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_4m_to_5m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_4m_to_5m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_4m_to_5m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_4mTo5m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_4m_to_5m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_4m_to_5m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_4mTo5m_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_4mTo5m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_4m_to_5m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_4m_to_5m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_4m_to_5m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_4m_to_5m_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_4mTo5m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_4m_to_5m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_4m_to_5m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_4m_to_5m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_4mTo5m_Realized = SeriesTree_Cohorts_Utxo_AgeRange_4mTo5m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_4m_to_5m_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_5mTo6m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_5m_to_6m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_5m_to_6m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_5m_to_6m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_5m_to_6m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_5mTo6m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_5m_to_6m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_5m_to_6m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_5mTo6m_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_5mTo6m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_5m_to_6m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_5m_to_6m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_5m_to_6m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_5m_to_6m_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_5mTo6m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_5m_to_6m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_5m_to_6m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_5m_to_6m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_5mTo6m_Realized = SeriesTree_Cohorts_Utxo_AgeRange_5mTo6m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_5m_to_6m_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_6mTo1y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_6m_to_1y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_6m_to_1y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_6m_to_1y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_6m_to_1y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_6mTo1y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_6m_to_1y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_6m_to_1y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_6mTo1y_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_6mTo1y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_6m_to_1y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_6m_to_1y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_6m_to_1y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_6m_to_1y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_6mTo1y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_6m_to_1y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_6m_to_1y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_6m_to_1y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_6mTo1y_Realized = SeriesTree_Cohorts_Utxo_AgeRange_6mTo1y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_6m_to_1y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1yTo2y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_1y_to_2y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_1y_to_2y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_1y_to_2y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_1y_to_2y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1yTo2y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_1y_to_2y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_1y_to_2y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_1yTo2y_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_1yTo2y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_1y_to_2y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_1y_to_2y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_1y_to_2y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_1y_to_2y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_1yTo2y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_1y_to_2y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_1y_to_2y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_1y_to_2y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_1yTo2y_Realized = SeriesTree_Cohorts_Utxo_AgeRange_1yTo2y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_1y_to_2y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_2yTo3y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_2y_to_3y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_2y_to_3y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_2y_to_3y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_2y_to_3y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_2yTo3y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_2y_to_3y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_2y_to_3y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_2yTo3y_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_2yTo3y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_2y_to_3y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_2y_to_3y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_2y_to_3y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_2y_to_3y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_2yTo3y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_2y_to_3y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_2y_to_3y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_2y_to_3y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_2yTo3y_Realized = SeriesTree_Cohorts_Utxo_AgeRange_2yTo3y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_2y_to_3y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_3yTo4y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_3y_to_4y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_3y_to_4y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_3y_to_4y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_3y_to_4y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_3yTo4y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_3y_to_4y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_3y_to_4y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_3yTo4y_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_3yTo4y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_3y_to_4y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_3y_to_4y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_3y_to_4y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_3y_to_4y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_3yTo4y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_3y_to_4y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_3y_to_4y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_3y_to_4y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_3yTo4y_Realized = SeriesTree_Cohorts_Utxo_AgeRange_3yTo4y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_3y_to_4y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_4yTo5y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_4y_to_5y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_4y_to_5y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_4y_to_5y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_4y_to_5y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_4yTo5y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_4y_to_5y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_4y_to_5y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_4yTo5y_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_4yTo5y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_4y_to_5y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_4y_to_5y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_4y_to_5y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_4y_to_5y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_4yTo5y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_4y_to_5y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_4y_to_5y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_4y_to_5y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_4yTo5y_Realized = SeriesTree_Cohorts_Utxo_AgeRange_4yTo5y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_4y_to_5y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_5yTo6y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_5y_to_6y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_5y_to_6y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_5y_to_6y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_5y_to_6y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_5yTo6y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_5y_to_6y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_5y_to_6y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_5yTo6y_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_5yTo6y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_5y_to_6y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_5y_to_6y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_5y_to_6y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_5y_to_6y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_5yTo6y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_5y_to_6y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_5y_to_6y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_5y_to_6y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_5yTo6y_Realized = SeriesTree_Cohorts_Utxo_AgeRange_5yTo6y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_5y_to_6y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_6yTo7y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_6y_to_7y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_6y_to_7y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_6y_to_7y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_6y_to_7y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_6yTo7y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_6y_to_7y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_6y_to_7y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_6yTo7y_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_6yTo7y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_6y_to_7y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_6y_to_7y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_6y_to_7y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_6y_to_7y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_6yTo7y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_6y_to_7y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_6y_to_7y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_6y_to_7y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_6yTo7y_Realized = SeriesTree_Cohorts_Utxo_AgeRange_6yTo7y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_6y_to_7y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_7yTo8y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_7y_to_8y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_7y_to_8y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_7y_to_8y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_7y_to_8y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_7yTo8y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_7y_to_8y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_7y_to_8y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_7yTo8y_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_7yTo8y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_7y_to_8y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_7y_to_8y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_7y_to_8y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_7y_to_8y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_7yTo8y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_7y_to_8y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_7y_to_8y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_7y_to_8y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_7yTo8y_Realized = SeriesTree_Cohorts_Utxo_AgeRange_7yTo8y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_7y_to_8y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_8yTo10y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_8y_to_10y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_8y_to_10y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_8y_to_10y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_8y_to_10y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_8yTo10y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_8y_to_10y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_8y_to_10y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_8yTo10y_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_8yTo10y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_8y_to_10y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_8y_to_10y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_8y_to_10y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_8y_to_10y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_8yTo10y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_8y_to_10y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_8y_to_10y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_8y_to_10y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_8yTo10y_Realized = SeriesTree_Cohorts_Utxo_AgeRange_8yTo10y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_8y_to_10y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_10yTo12y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_10y_to_12y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_10y_to_12y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_10y_to_12y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_10y_to_12y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_10yTo12y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_10y_to_12y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_10y_to_12y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_10yTo12y_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_10yTo12y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_10y_to_12y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_10y_to_12y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_10y_to_12y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_10y_to_12y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_10yTo12y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_10y_to_12y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_10y_to_12y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_10y_to_12y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_10yTo12y_Realized = SeriesTree_Cohorts_Utxo_AgeRange_10yTo12y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_10y_to_12y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_12yTo15y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_12y_to_15y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_12y_to_15y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_12y_to_15y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_12y_to_15y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_12yTo15y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_12y_to_15y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_12y_to_15y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_12yTo15y_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_12yTo15y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_12y_to_15y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_12y_to_15y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_12y_to_15y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_12y_to_15y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_12yTo15y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_12y_to_15y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_12y_to_15y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_12y_to_15y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_12yTo15y_Realized = SeriesTree_Cohorts_Utxo_AgeRange_12yTo15y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_12y_to_15y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_Over15y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_15y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_15y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_15y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_15y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_Over15y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_15y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_15y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_AgeRange_Over15y_Realized_Loss = SeriesTree_Cohorts_Utxo_AgeRange_Over15y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_15y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_15y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_15y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_15y_old')
+
+class SeriesTree_Cohorts_Utxo_AgeRange_Over15y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_15y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_15y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_15y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_AgeRange_Over15y_Realized = SeriesTree_Cohorts_Utxo_AgeRange_Over15y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_15y_old')
+
 class SeriesTree_Cohorts_Utxo_AgeRange:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.under_1h: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_1h_old')
-        self._1h_to_1d: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_1h_to_1d_old')
-        self._1d_to_1w: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_1d_to_1w_old')
-        self._1w_to_1m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_1w_to_1m_old')
-        self._1m_to_2m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_1m_to_2m_old')
-        self._2m_to_3m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_2m_to_3m_old')
-        self._3m_to_4m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_3m_to_4m_old')
-        self._4m_to_5m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_4m_to_5m_old')
-        self._5m_to_6m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_5m_to_6m_old')
-        self._6m_to_1y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_6m_to_1y_old')
-        self._1y_to_2y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_1y_to_2y_old')
-        self._2y_to_3y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_2y_to_3y_old')
-        self._3y_to_4y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_3y_to_4y_old')
-        self._4y_to_5y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_4y_to_5y_old')
-        self._5y_to_6y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_5y_to_6y_old')
-        self._6y_to_7y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_6y_to_7y_old')
-        self._7y_to_8y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_7y_to_8y_old')
-        self._8y_to_10y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_8y_to_10y_old')
-        self._10y_to_12y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_10y_to_12y_old')
-        self._12y_to_15y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_12y_to_15y_old')
-        self.over_15y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_15y_old')
+        self.under_1h: SeriesTree_Cohorts_Utxo_AgeRange_Under1h = SeriesTree_Cohorts_Utxo_AgeRange_Under1h(client)
+        self._1h_to_1d: SeriesTree_Cohorts_Utxo_AgeRange_1hTo1d = SeriesTree_Cohorts_Utxo_AgeRange_1hTo1d(client)
+        self._1d_to_1w: SeriesTree_Cohorts_Utxo_AgeRange_1dTo1w = SeriesTree_Cohorts_Utxo_AgeRange_1dTo1w(client)
+        self._1w_to_1m: SeriesTree_Cohorts_Utxo_AgeRange_1wTo1m = SeriesTree_Cohorts_Utxo_AgeRange_1wTo1m(client)
+        self._1m_to_2m: SeriesTree_Cohorts_Utxo_AgeRange_1mTo2m = SeriesTree_Cohorts_Utxo_AgeRange_1mTo2m(client)
+        self._2m_to_3m: SeriesTree_Cohorts_Utxo_AgeRange_2mTo3m = SeriesTree_Cohorts_Utxo_AgeRange_2mTo3m(client)
+        self._3m_to_4m: SeriesTree_Cohorts_Utxo_AgeRange_3mTo4m = SeriesTree_Cohorts_Utxo_AgeRange_3mTo4m(client)
+        self._4m_to_5m: SeriesTree_Cohorts_Utxo_AgeRange_4mTo5m = SeriesTree_Cohorts_Utxo_AgeRange_4mTo5m(client)
+        self._5m_to_6m: SeriesTree_Cohorts_Utxo_AgeRange_5mTo6m = SeriesTree_Cohorts_Utxo_AgeRange_5mTo6m(client)
+        self._6m_to_1y: SeriesTree_Cohorts_Utxo_AgeRange_6mTo1y = SeriesTree_Cohorts_Utxo_AgeRange_6mTo1y(client)
+        self._1y_to_2y: SeriesTree_Cohorts_Utxo_AgeRange_1yTo2y = SeriesTree_Cohorts_Utxo_AgeRange_1yTo2y(client)
+        self._2y_to_3y: SeriesTree_Cohorts_Utxo_AgeRange_2yTo3y = SeriesTree_Cohorts_Utxo_AgeRange_2yTo3y(client)
+        self._3y_to_4y: SeriesTree_Cohorts_Utxo_AgeRange_3yTo4y = SeriesTree_Cohorts_Utxo_AgeRange_3yTo4y(client)
+        self._4y_to_5y: SeriesTree_Cohorts_Utxo_AgeRange_4yTo5y = SeriesTree_Cohorts_Utxo_AgeRange_4yTo5y(client)
+        self._5y_to_6y: SeriesTree_Cohorts_Utxo_AgeRange_5yTo6y = SeriesTree_Cohorts_Utxo_AgeRange_5yTo6y(client)
+        self._6y_to_7y: SeriesTree_Cohorts_Utxo_AgeRange_6yTo7y = SeriesTree_Cohorts_Utxo_AgeRange_6yTo7y(client)
+        self._7y_to_8y: SeriesTree_Cohorts_Utxo_AgeRange_7yTo8y = SeriesTree_Cohorts_Utxo_AgeRange_7yTo8y(client)
+        self._8y_to_10y: SeriesTree_Cohorts_Utxo_AgeRange_8yTo10y = SeriesTree_Cohorts_Utxo_AgeRange_8yTo10y(client)
+        self._10y_to_12y: SeriesTree_Cohorts_Utxo_AgeRange_10yTo12y = SeriesTree_Cohorts_Utxo_AgeRange_10yTo12y(client)
+        self._12y_to_15y: SeriesTree_Cohorts_Utxo_AgeRange_12yTo15y = SeriesTree_Cohorts_Utxo_AgeRange_12yTo15y(client)
+        self.over_15y: SeriesTree_Cohorts_Utxo_AgeRange_Over15y = SeriesTree_Cohorts_Utxo_AgeRange_Over15y(client)
+
+class SeriesTree_Cohorts_Utxo_UnderAge_1w_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_1w_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_1w_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_1w_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_1w_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_1w_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_1w_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_1w_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_1w_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_1w_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_1w_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_1w_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_1w_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_1w_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_1w:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_1w_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_1w_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_1w_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_1w_Realized = SeriesTree_Cohorts_Utxo_UnderAge_1w_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_1w_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_1m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_1m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_1m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_1m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_1m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_1m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_1m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_1m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_1m_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_1m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_1m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_1m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_1m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_1m_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_1m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_1m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_1m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_1m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_1m_Realized = SeriesTree_Cohorts_Utxo_UnderAge_1m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_1m_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_2m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_2m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_2m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_2m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_2m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_2m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_2m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_2m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_2m_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_2m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_2m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_2m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_2m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_2m_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_2m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_2m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_2m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_2m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_2m_Realized = SeriesTree_Cohorts_Utxo_UnderAge_2m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_2m_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_3m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_3m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_3m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_3m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_3m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_3m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_3m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_3m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_3m_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_3m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_3m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_3m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_3m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_3m_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_3m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_3m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_3m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_3m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_3m_Realized = SeriesTree_Cohorts_Utxo_UnderAge_3m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_3m_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_4m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_4m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_4m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_4m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_4m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_4m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_4m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_4m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_4m_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_4m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_4m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_4m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_4m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_4m_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_4m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_4m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_4m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_4m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_4m_Realized = SeriesTree_Cohorts_Utxo_UnderAge_4m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_4m_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_5m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_5m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_5m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_5m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_5m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_5m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_5m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_5m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_5m_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_5m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_5m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_5m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_5m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_5m_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_5m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_5m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_5m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_5m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_5m_Realized = SeriesTree_Cohorts_Utxo_UnderAge_5m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_5m_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_6m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_6m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_6m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_6m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_6m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_6m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_6m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_6m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_6m_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_6m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_6m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_6m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_6m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_6m_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_6m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_6m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_6m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_6m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_6m_Realized = SeriesTree_Cohorts_Utxo_UnderAge_6m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_6m_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_1y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_1y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_1y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_1y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_1y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_1y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_1y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_1y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_1y_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_1y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_1y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_1y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_1y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_1y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_1y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_1y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_1y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_1y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_1y_Realized = SeriesTree_Cohorts_Utxo_UnderAge_1y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_1y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_2y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_2y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_2y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_2y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_2y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_2y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_2y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_2y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_2y_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_2y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_2y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_2y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_2y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_2y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_2y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_2y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_2y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_2y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_2y_Realized = SeriesTree_Cohorts_Utxo_UnderAge_2y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_2y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_3y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_3y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_3y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_3y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_3y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_3y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_3y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_3y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_3y_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_3y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_3y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_3y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_3y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_3y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_3y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_3y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_3y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_3y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_3y_Realized = SeriesTree_Cohorts_Utxo_UnderAge_3y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_3y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_4y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_4y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_4y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_4y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_4y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_4y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_4y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_4y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_4y_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_4y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_4y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_4y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_4y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_4y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_4y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_4y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_4y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_4y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_4y_Realized = SeriesTree_Cohorts_Utxo_UnderAge_4y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_4y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_5y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_5y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_5y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_5y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_5y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_5y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_5y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_5y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_5y_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_5y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_5y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_5y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_5y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_5y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_5y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_5y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_5y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_5y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_5y_Realized = SeriesTree_Cohorts_Utxo_UnderAge_5y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_5y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_6y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_6y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_6y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_6y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_6y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_6y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_6y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_6y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_6y_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_6y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_6y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_6y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_6y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_6y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_6y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_6y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_6y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_6y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_6y_Realized = SeriesTree_Cohorts_Utxo_UnderAge_6y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_6y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_7y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_7y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_7y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_7y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_7y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_7y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_7y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_7y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_7y_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_7y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_7y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_7y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_7y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_7y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_7y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_7y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_7y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_7y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_7y_Realized = SeriesTree_Cohorts_Utxo_UnderAge_7y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_7y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_8y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_8y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_8y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_8y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_8y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_8y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_8y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_8y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_8y_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_8y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_8y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_8y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_8y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_8y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_8y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_8y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_8y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_8y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_8y_Realized = SeriesTree_Cohorts_Utxo_UnderAge_8y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_8y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_10y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_10y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_10y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_10y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_10y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_10y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_10y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_10y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_10y_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_10y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_10y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_10y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_10y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_10y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_10y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_10y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_10y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_10y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_10y_Realized = SeriesTree_Cohorts_Utxo_UnderAge_10y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_10y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_12y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_12y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_12y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_12y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_12y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_12y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_12y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_12y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_12y_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_12y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_12y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_12y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_12y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_12y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_12y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_12y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_12y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_12y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_12y_Realized = SeriesTree_Cohorts_Utxo_UnderAge_12y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_12y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_15y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_under_15y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_under_15y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_under_15y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_under_15y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_15y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_under_15y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_under_15y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_UnderAge_15y_Realized_Loss = SeriesTree_Cohorts_Utxo_UnderAge_15y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_under_15y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_under_15y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_under_15y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_under_15y_old')
+
+class SeriesTree_Cohorts_Utxo_UnderAge_15y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_under_15y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_under_15y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_under_15y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_UnderAge_15y_Realized = SeriesTree_Cohorts_Utxo_UnderAge_15y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_under_15y_old')
 
 class SeriesTree_Cohorts_Utxo_UnderAge:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._1w: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_1w_old')
-        self._1m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_1m_old')
-        self._2m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_2m_old')
-        self._3m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_3m_old')
-        self._4m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_4m_old')
-        self._5m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_5m_old')
-        self._6m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_6m_old')
-        self._1y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_1y_old')
-        self._2y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_2y_old')
-        self._3y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_3y_old')
-        self._4y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_4y_old')
-        self._5y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_5y_old')
-        self._6y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_6y_old')
-        self._7y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_7y_old')
-        self._8y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_8y_old')
-        self._10y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_10y_old')
-        self._12y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_12y_old')
-        self._15y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_15y_old')
+        self._1w: SeriesTree_Cohorts_Utxo_UnderAge_1w = SeriesTree_Cohorts_Utxo_UnderAge_1w(client)
+        self._1m: SeriesTree_Cohorts_Utxo_UnderAge_1m = SeriesTree_Cohorts_Utxo_UnderAge_1m(client)
+        self._2m: SeriesTree_Cohorts_Utxo_UnderAge_2m = SeriesTree_Cohorts_Utxo_UnderAge_2m(client)
+        self._3m: SeriesTree_Cohorts_Utxo_UnderAge_3m = SeriesTree_Cohorts_Utxo_UnderAge_3m(client)
+        self._4m: SeriesTree_Cohorts_Utxo_UnderAge_4m = SeriesTree_Cohorts_Utxo_UnderAge_4m(client)
+        self._5m: SeriesTree_Cohorts_Utxo_UnderAge_5m = SeriesTree_Cohorts_Utxo_UnderAge_5m(client)
+        self._6m: SeriesTree_Cohorts_Utxo_UnderAge_6m = SeriesTree_Cohorts_Utxo_UnderAge_6m(client)
+        self._1y: SeriesTree_Cohorts_Utxo_UnderAge_1y = SeriesTree_Cohorts_Utxo_UnderAge_1y(client)
+        self._2y: SeriesTree_Cohorts_Utxo_UnderAge_2y = SeriesTree_Cohorts_Utxo_UnderAge_2y(client)
+        self._3y: SeriesTree_Cohorts_Utxo_UnderAge_3y = SeriesTree_Cohorts_Utxo_UnderAge_3y(client)
+        self._4y: SeriesTree_Cohorts_Utxo_UnderAge_4y = SeriesTree_Cohorts_Utxo_UnderAge_4y(client)
+        self._5y: SeriesTree_Cohorts_Utxo_UnderAge_5y = SeriesTree_Cohorts_Utxo_UnderAge_5y(client)
+        self._6y: SeriesTree_Cohorts_Utxo_UnderAge_6y = SeriesTree_Cohorts_Utxo_UnderAge_6y(client)
+        self._7y: SeriesTree_Cohorts_Utxo_UnderAge_7y = SeriesTree_Cohorts_Utxo_UnderAge_7y(client)
+        self._8y: SeriesTree_Cohorts_Utxo_UnderAge_8y = SeriesTree_Cohorts_Utxo_UnderAge_8y(client)
+        self._10y: SeriesTree_Cohorts_Utxo_UnderAge_10y = SeriesTree_Cohorts_Utxo_UnderAge_10y(client)
+        self._12y: SeriesTree_Cohorts_Utxo_UnderAge_12y = SeriesTree_Cohorts_Utxo_UnderAge_12y(client)
+        self._15y: SeriesTree_Cohorts_Utxo_UnderAge_15y = SeriesTree_Cohorts_Utxo_UnderAge_15y(client)
+
+class SeriesTree_Cohorts_Utxo_OverAge_1d_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_1d_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_1d_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_1d_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_1d_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_1d_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_1d_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_1d_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_1d_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_1d_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_1d_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_1d_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_1d_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_1d_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_1d:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_1d_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_1d_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_1d_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_1d_Realized = SeriesTree_Cohorts_Utxo_OverAge_1d_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_1d_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_1w_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_1w_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_1w_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_1w_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_1w_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_1w_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_1w_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_1w_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_1w_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_1w_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_1w_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_1w_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_1w_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_1w_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_1w:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_1w_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_1w_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_1w_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_1w_Realized = SeriesTree_Cohorts_Utxo_OverAge_1w_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_1w_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_1m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_1m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_1m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_1m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_1m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_1m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_1m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_1m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_1m_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_1m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_1m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_1m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_1m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_1m_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_1m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_1m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_1m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_1m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_1m_Realized = SeriesTree_Cohorts_Utxo_OverAge_1m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_1m_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_2m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_2m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_2m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_2m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_2m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_2m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_2m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_2m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_2m_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_2m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_2m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_2m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_2m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_2m_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_2m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_2m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_2m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_2m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_2m_Realized = SeriesTree_Cohorts_Utxo_OverAge_2m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_2m_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_3m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_3m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_3m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_3m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_3m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_3m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_3m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_3m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_3m_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_3m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_3m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_3m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_3m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_3m_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_3m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_3m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_3m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_3m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_3m_Realized = SeriesTree_Cohorts_Utxo_OverAge_3m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_3m_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_4m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_4m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_4m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_4m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_4m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_4m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_4m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_4m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_4m_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_4m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_4m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_4m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_4m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_4m_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_4m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_4m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_4m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_4m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_4m_Realized = SeriesTree_Cohorts_Utxo_OverAge_4m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_4m_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_5m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_5m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_5m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_5m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_5m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_5m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_5m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_5m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_5m_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_5m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_5m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_5m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_5m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_5m_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_5m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_5m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_5m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_5m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_5m_Realized = SeriesTree_Cohorts_Utxo_OverAge_5m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_5m_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_6m_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_6m_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_6m_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_6m_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_6m_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_6m_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_6m_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_6m_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_6m_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_6m_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_6m_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_6m_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_6m_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_6m_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_6m:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_6m_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_6m_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_6m_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_6m_Realized = SeriesTree_Cohorts_Utxo_OverAge_6m_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_6m_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_1y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_1y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_1y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_1y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_1y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_1y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_1y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_1y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_1y_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_1y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_1y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_1y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_1y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_1y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_1y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_1y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_1y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_1y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_1y_Realized = SeriesTree_Cohorts_Utxo_OverAge_1y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_1y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_2y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_2y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_2y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_2y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_2y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_2y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_2y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_2y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_2y_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_2y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_2y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_2y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_2y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_2y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_2y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_2y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_2y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_2y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_2y_Realized = SeriesTree_Cohorts_Utxo_OverAge_2y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_2y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_3y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_3y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_3y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_3y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_3y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_3y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_3y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_3y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_3y_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_3y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_3y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_3y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_3y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_3y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_3y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_3y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_3y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_3y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_3y_Realized = SeriesTree_Cohorts_Utxo_OverAge_3y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_3y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_4y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_4y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_4y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_4y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_4y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_4y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_4y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_4y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_4y_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_4y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_4y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_4y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_4y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_4y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_4y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_4y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_4y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_4y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_4y_Realized = SeriesTree_Cohorts_Utxo_OverAge_4y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_4y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_5y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_5y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_5y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_5y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_5y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_5y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_5y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_5y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_5y_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_5y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_5y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_5y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_5y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_5y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_5y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_5y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_5y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_5y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_5y_Realized = SeriesTree_Cohorts_Utxo_OverAge_5y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_5y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_6y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_6y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_6y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_6y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_6y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_6y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_6y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_6y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_6y_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_6y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_6y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_6y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_6y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_6y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_6y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_6y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_6y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_6y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_6y_Realized = SeriesTree_Cohorts_Utxo_OverAge_6y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_6y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_7y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_7y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_7y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_7y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_7y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_7y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_7y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_7y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_7y_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_7y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_7y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_7y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_7y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_7y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_7y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_7y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_7y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_7y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_7y_Realized = SeriesTree_Cohorts_Utxo_OverAge_7y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_7y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_8y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_8y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_8y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_8y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_8y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_8y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_8y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_8y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_8y_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_8y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_8y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_8y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_8y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_8y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_8y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_8y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_8y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_8y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_8y_Realized = SeriesTree_Cohorts_Utxo_OverAge_8y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_8y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_10y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_10y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_10y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_10y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_10y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_10y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_10y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_10y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_10y_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_10y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_10y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_10y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_10y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_10y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_10y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_10y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_10y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_10y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_10y_Realized = SeriesTree_Cohorts_Utxo_OverAge_10y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_10y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_12y_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'utxos_over_12y_old_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'utxos_over_12y_old_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'utxos_over_12y_old_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'utxos_over_12y_old_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_OverAge_12y_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'utxos_over_12y_old_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'utxos_over_12y_old_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_OverAge_12y_Realized_Loss = SeriesTree_Cohorts_Utxo_OverAge_12y_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'utxos_over_12y_old_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'utxos_over_12y_old_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'utxos_over_12y_old_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'utxos_over_12y_old')
+
+class SeriesTree_Cohorts_Utxo_OverAge_12y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'utxos_over_12y_old_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'utxos_over_12y_old_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'utxos_over_12y_old')
+        self.realized: SeriesTree_Cohorts_Utxo_OverAge_12y_Realized = SeriesTree_Cohorts_Utxo_OverAge_12y_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'utxos_over_12y_old')
 
 class SeriesTree_Cohorts_Utxo_OverAge:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._1d: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_1d_old')
-        self._1w: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_1w_old')
-        self._1m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_1m_old')
-        self._2m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_2m_old')
-        self._3m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_3m_old')
-        self._4m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_4m_old')
-        self._5m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_5m_old')
-        self._6m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_6m_old')
-        self._1y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_1y_old')
-        self._2y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_2y_old')
-        self._3y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_3y_old')
-        self._4y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_4y_old')
-        self._5y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_5y_old')
-        self._6y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_6y_old')
-        self._7y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_7y_old')
-        self._8y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_8y_old')
-        self._10y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_10y_old')
-        self._12y: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_12y_old')
+        self._1d: SeriesTree_Cohorts_Utxo_OverAge_1d = SeriesTree_Cohorts_Utxo_OverAge_1d(client)
+        self._1w: SeriesTree_Cohorts_Utxo_OverAge_1w = SeriesTree_Cohorts_Utxo_OverAge_1w(client)
+        self._1m: SeriesTree_Cohorts_Utxo_OverAge_1m = SeriesTree_Cohorts_Utxo_OverAge_1m(client)
+        self._2m: SeriesTree_Cohorts_Utxo_OverAge_2m = SeriesTree_Cohorts_Utxo_OverAge_2m(client)
+        self._3m: SeriesTree_Cohorts_Utxo_OverAge_3m = SeriesTree_Cohorts_Utxo_OverAge_3m(client)
+        self._4m: SeriesTree_Cohorts_Utxo_OverAge_4m = SeriesTree_Cohorts_Utxo_OverAge_4m(client)
+        self._5m: SeriesTree_Cohorts_Utxo_OverAge_5m = SeriesTree_Cohorts_Utxo_OverAge_5m(client)
+        self._6m: SeriesTree_Cohorts_Utxo_OverAge_6m = SeriesTree_Cohorts_Utxo_OverAge_6m(client)
+        self._1y: SeriesTree_Cohorts_Utxo_OverAge_1y = SeriesTree_Cohorts_Utxo_OverAge_1y(client)
+        self._2y: SeriesTree_Cohorts_Utxo_OverAge_2y = SeriesTree_Cohorts_Utxo_OverAge_2y(client)
+        self._3y: SeriesTree_Cohorts_Utxo_OverAge_3y = SeriesTree_Cohorts_Utxo_OverAge_3y(client)
+        self._4y: SeriesTree_Cohorts_Utxo_OverAge_4y = SeriesTree_Cohorts_Utxo_OverAge_4y(client)
+        self._5y: SeriesTree_Cohorts_Utxo_OverAge_5y = SeriesTree_Cohorts_Utxo_OverAge_5y(client)
+        self._6y: SeriesTree_Cohorts_Utxo_OverAge_6y = SeriesTree_Cohorts_Utxo_OverAge_6y(client)
+        self._7y: SeriesTree_Cohorts_Utxo_OverAge_7y = SeriesTree_Cohorts_Utxo_OverAge_7y(client)
+        self._8y: SeriesTree_Cohorts_Utxo_OverAge_8y = SeriesTree_Cohorts_Utxo_OverAge_8y(client)
+        self._10y: SeriesTree_Cohorts_Utxo_OverAge_10y = SeriesTree_Cohorts_Utxo_OverAge_10y(client)
+        self._12y: SeriesTree_Cohorts_Utxo_OverAge_12y = SeriesTree_Cohorts_Utxo_OverAge_12y(client)
+
+class SeriesTree_Cohorts_Utxo_Epoch_0_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'epoch_0_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'epoch_0_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'epoch_0_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'epoch_0_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Epoch_0_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'epoch_0_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'epoch_0_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Epoch_0_Realized_Loss = SeriesTree_Cohorts_Utxo_Epoch_0_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'epoch_0_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'epoch_0_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'epoch_0_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'epoch_0')
+
+class SeriesTree_Cohorts_Utxo_Epoch_0:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'epoch_0_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'epoch_0_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'epoch_0')
+        self.realized: SeriesTree_Cohorts_Utxo_Epoch_0_Realized = SeriesTree_Cohorts_Utxo_Epoch_0_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'epoch_0')
+
+class SeriesTree_Cohorts_Utxo_Epoch_1_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'epoch_1_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'epoch_1_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'epoch_1_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'epoch_1_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Epoch_1_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'epoch_1_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'epoch_1_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Epoch_1_Realized_Loss = SeriesTree_Cohorts_Utxo_Epoch_1_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'epoch_1_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'epoch_1_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'epoch_1_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'epoch_1')
+
+class SeriesTree_Cohorts_Utxo_Epoch_1:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'epoch_1_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'epoch_1_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'epoch_1')
+        self.realized: SeriesTree_Cohorts_Utxo_Epoch_1_Realized = SeriesTree_Cohorts_Utxo_Epoch_1_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'epoch_1')
+
+class SeriesTree_Cohorts_Utxo_Epoch_2_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'epoch_2_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'epoch_2_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'epoch_2_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'epoch_2_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Epoch_2_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'epoch_2_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'epoch_2_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Epoch_2_Realized_Loss = SeriesTree_Cohorts_Utxo_Epoch_2_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'epoch_2_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'epoch_2_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'epoch_2_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'epoch_2')
+
+class SeriesTree_Cohorts_Utxo_Epoch_2:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'epoch_2_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'epoch_2_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'epoch_2')
+        self.realized: SeriesTree_Cohorts_Utxo_Epoch_2_Realized = SeriesTree_Cohorts_Utxo_Epoch_2_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'epoch_2')
+
+class SeriesTree_Cohorts_Utxo_Epoch_3_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'epoch_3_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'epoch_3_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'epoch_3_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'epoch_3_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Epoch_3_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'epoch_3_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'epoch_3_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Epoch_3_Realized_Loss = SeriesTree_Cohorts_Utxo_Epoch_3_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'epoch_3_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'epoch_3_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'epoch_3_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'epoch_3')
+
+class SeriesTree_Cohorts_Utxo_Epoch_3:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'epoch_3_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'epoch_3_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'epoch_3')
+        self.realized: SeriesTree_Cohorts_Utxo_Epoch_3_Realized = SeriesTree_Cohorts_Utxo_Epoch_3_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'epoch_3')
+
+class SeriesTree_Cohorts_Utxo_Epoch_4_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'epoch_4_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'epoch_4_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'epoch_4_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'epoch_4_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Epoch_4_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'epoch_4_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'epoch_4_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Epoch_4_Realized_Loss = SeriesTree_Cohorts_Utxo_Epoch_4_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'epoch_4_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'epoch_4_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'epoch_4_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'epoch_4')
+
+class SeriesTree_Cohorts_Utxo_Epoch_4:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'epoch_4_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'epoch_4_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'epoch_4')
+        self.realized: SeriesTree_Cohorts_Utxo_Epoch_4_Realized = SeriesTree_Cohorts_Utxo_Epoch_4_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'epoch_4')
 
 class SeriesTree_Cohorts_Utxo_Epoch:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._0: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'epoch_0')
-        self._1: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'epoch_1')
-        self._2: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'epoch_2')
-        self._3: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'epoch_3')
-        self._4: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'epoch_4')
+        self._0: SeriesTree_Cohorts_Utxo_Epoch_0 = SeriesTree_Cohorts_Utxo_Epoch_0(client)
+        self._1: SeriesTree_Cohorts_Utxo_Epoch_1 = SeriesTree_Cohorts_Utxo_Epoch_1(client)
+        self._2: SeriesTree_Cohorts_Utxo_Epoch_2 = SeriesTree_Cohorts_Utxo_Epoch_2(client)
+        self._3: SeriesTree_Cohorts_Utxo_Epoch_3 = SeriesTree_Cohorts_Utxo_Epoch_3(client)
+        self._4: SeriesTree_Cohorts_Utxo_Epoch_4 = SeriesTree_Cohorts_Utxo_Epoch_4(client)
+
+class SeriesTree_Cohorts_Utxo_Class_2009_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2009_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2009_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2009_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2009_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2009_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2009_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2009_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2009_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2009_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2009_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2009_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2009_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2009')
+
+class SeriesTree_Cohorts_Utxo_Class_2009:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2009_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2009_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2009')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2009_Realized = SeriesTree_Cohorts_Utxo_Class_2009_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2009')
+
+class SeriesTree_Cohorts_Utxo_Class_2010_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2010_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2010_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2010_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2010_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2010_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2010_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2010_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2010_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2010_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2010_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2010_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2010_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2010')
+
+class SeriesTree_Cohorts_Utxo_Class_2010:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2010_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2010_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2010')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2010_Realized = SeriesTree_Cohorts_Utxo_Class_2010_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2010')
+
+class SeriesTree_Cohorts_Utxo_Class_2011_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2011_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2011_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2011_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2011_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2011_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2011_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2011_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2011_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2011_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2011_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2011_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2011_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2011')
+
+class SeriesTree_Cohorts_Utxo_Class_2011:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2011_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2011_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2011')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2011_Realized = SeriesTree_Cohorts_Utxo_Class_2011_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2011')
+
+class SeriesTree_Cohorts_Utxo_Class_2012_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2012_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2012_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2012_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2012_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2012_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2012_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2012_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2012_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2012_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2012_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2012_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2012_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2012')
+
+class SeriesTree_Cohorts_Utxo_Class_2012:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2012_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2012_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2012')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2012_Realized = SeriesTree_Cohorts_Utxo_Class_2012_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2012')
+
+class SeriesTree_Cohorts_Utxo_Class_2013_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2013_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2013_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2013_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2013_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2013_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2013_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2013_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2013_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2013_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2013_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2013_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2013_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2013')
+
+class SeriesTree_Cohorts_Utxo_Class_2013:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2013_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2013_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2013')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2013_Realized = SeriesTree_Cohorts_Utxo_Class_2013_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2013')
+
+class SeriesTree_Cohorts_Utxo_Class_2014_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2014_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2014_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2014_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2014_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2014_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2014_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2014_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2014_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2014_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2014_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2014_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2014_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2014')
+
+class SeriesTree_Cohorts_Utxo_Class_2014:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2014_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2014_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2014')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2014_Realized = SeriesTree_Cohorts_Utxo_Class_2014_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2014')
+
+class SeriesTree_Cohorts_Utxo_Class_2015_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2015_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2015_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2015_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2015_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2015_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2015_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2015_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2015_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2015_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2015_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2015_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2015_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2015')
+
+class SeriesTree_Cohorts_Utxo_Class_2015:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2015_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2015_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2015')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2015_Realized = SeriesTree_Cohorts_Utxo_Class_2015_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2015')
+
+class SeriesTree_Cohorts_Utxo_Class_2016_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2016_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2016_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2016_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2016_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2016_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2016_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2016_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2016_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2016_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2016_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2016_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2016_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2016')
+
+class SeriesTree_Cohorts_Utxo_Class_2016:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2016_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2016_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2016')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2016_Realized = SeriesTree_Cohorts_Utxo_Class_2016_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2016')
+
+class SeriesTree_Cohorts_Utxo_Class_2017_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2017_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2017_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2017_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2017_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2017_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2017_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2017_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2017_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2017_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2017_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2017_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2017_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2017')
+
+class SeriesTree_Cohorts_Utxo_Class_2017:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2017_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2017_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2017')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2017_Realized = SeriesTree_Cohorts_Utxo_Class_2017_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2017')
+
+class SeriesTree_Cohorts_Utxo_Class_2018_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2018_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2018_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2018_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2018_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2018_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2018_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2018_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2018_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2018_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2018_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2018_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2018_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2018')
+
+class SeriesTree_Cohorts_Utxo_Class_2018:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2018_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2018_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2018')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2018_Realized = SeriesTree_Cohorts_Utxo_Class_2018_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2018')
+
+class SeriesTree_Cohorts_Utxo_Class_2019_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2019_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2019_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2019_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2019_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2019_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2019_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2019_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2019_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2019_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2019_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2019_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2019_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2019')
+
+class SeriesTree_Cohorts_Utxo_Class_2019:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2019_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2019_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2019')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2019_Realized = SeriesTree_Cohorts_Utxo_Class_2019_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2019')
+
+class SeriesTree_Cohorts_Utxo_Class_2020_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2020_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2020_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2020_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2020_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2020_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2020_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2020_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2020_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2020_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2020_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2020_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2020_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2020')
+
+class SeriesTree_Cohorts_Utxo_Class_2020:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2020_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2020_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2020')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2020_Realized = SeriesTree_Cohorts_Utxo_Class_2020_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2020')
+
+class SeriesTree_Cohorts_Utxo_Class_2021_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2021_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2021_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2021_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2021_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2021_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2021_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2021_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2021_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2021_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2021_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2021_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2021_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2021')
+
+class SeriesTree_Cohorts_Utxo_Class_2021:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2021_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2021_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2021')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2021_Realized = SeriesTree_Cohorts_Utxo_Class_2021_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2021')
+
+class SeriesTree_Cohorts_Utxo_Class_2022_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2022_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2022_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2022_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2022_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2022_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2022_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2022_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2022_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2022_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2022_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2022_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2022_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2022')
+
+class SeriesTree_Cohorts_Utxo_Class_2022:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2022_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2022_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2022')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2022_Realized = SeriesTree_Cohorts_Utxo_Class_2022_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2022')
+
+class SeriesTree_Cohorts_Utxo_Class_2023_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2023_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2023_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2023_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2023_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2023_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2023_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2023_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2023_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2023_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2023_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2023_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2023_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2023')
+
+class SeriesTree_Cohorts_Utxo_Class_2023:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2023_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2023_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2023')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2023_Realized = SeriesTree_Cohorts_Utxo_Class_2023_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2023')
+
+class SeriesTree_Cohorts_Utxo_Class_2024_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2024_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2024_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2024_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2024_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2024_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2024_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2024_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2024_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2024_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2024_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2024_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2024_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2024')
+
+class SeriesTree_Cohorts_Utxo_Class_2024:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2024_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2024_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2024')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2024_Realized = SeriesTree_Cohorts_Utxo_Class_2024_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2024')
+
+class SeriesTree_Cohorts_Utxo_Class_2025_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2025_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2025_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2025_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2025_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2025_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2025_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2025_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2025_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2025_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2025_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2025_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2025_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2025')
+
+class SeriesTree_Cohorts_Utxo_Class_2025:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2025_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2025_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2025')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2025_Realized = SeriesTree_Cohorts_Utxo_Class_2025_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2025')
+
+class SeriesTree_Cohorts_Utxo_Class_2026_Realized_Loss:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.block: CentsUsdPattern2 = CentsUsdPattern2(client, 'class_2026_realized_loss')
+        self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, 'class_2026_realized_loss_cumulative')
+        self.sum: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, 'class_2026_realized_loss_sum')
+        self.negative: BaseSumPattern = BaseSumPattern(client, 'class_2026_neg_realized_loss')
+
+class SeriesTree_Cohorts_Utxo_Class_2026_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'class_2026_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'class_2026_realized_profit')
+        self.loss: SeriesTree_Cohorts_Utxo_Class_2026_Realized_Loss = SeriesTree_Cohorts_Utxo_Class_2026_Realized_Loss(client)
+        self.price: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'class_2026_realized_price')
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'class_2026_mvrv')
+        self.net_pnl: BlockCumulativeDeltaSumPattern = BlockCumulativeDeltaSumPattern(client, 'class_2026_net_realized_pnl')
+        self.sopr: RatioValuePattern = RatioValuePattern(client, 'class_2026')
+
+class SeriesTree_Cohorts_Utxo_Class_2026:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, 'class_2026_supply')
+        self.outputs: UnspentPattern = UnspentPattern(client, 'class_2026_utxo_count')
+        self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, 'class_2026')
+        self.realized: SeriesTree_Cohorts_Utxo_Class_2026_Realized = SeriesTree_Cohorts_Utxo_Class_2026_Realized(client)
+        self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, 'class_2026')
 
 class SeriesTree_Cohorts_Utxo_Class:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._2009: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2009')
-        self._2010: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2010')
-        self._2011: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2011')
-        self._2012: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2012')
-        self._2013: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2013')
-        self._2014: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2014')
-        self._2015: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2015')
-        self._2016: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2016')
-        self._2017: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2017')
-        self._2018: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2018')
-        self._2019: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2019')
-        self._2020: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2020')
-        self._2021: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2021')
-        self._2022: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2022')
-        self._2023: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2023')
-        self._2024: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2024')
-        self._2025: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2025')
-        self._2026: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2026')
+        self._2009: SeriesTree_Cohorts_Utxo_Class_2009 = SeriesTree_Cohorts_Utxo_Class_2009(client)
+        self._2010: SeriesTree_Cohorts_Utxo_Class_2010 = SeriesTree_Cohorts_Utxo_Class_2010(client)
+        self._2011: SeriesTree_Cohorts_Utxo_Class_2011 = SeriesTree_Cohorts_Utxo_Class_2011(client)
+        self._2012: SeriesTree_Cohorts_Utxo_Class_2012 = SeriesTree_Cohorts_Utxo_Class_2012(client)
+        self._2013: SeriesTree_Cohorts_Utxo_Class_2013 = SeriesTree_Cohorts_Utxo_Class_2013(client)
+        self._2014: SeriesTree_Cohorts_Utxo_Class_2014 = SeriesTree_Cohorts_Utxo_Class_2014(client)
+        self._2015: SeriesTree_Cohorts_Utxo_Class_2015 = SeriesTree_Cohorts_Utxo_Class_2015(client)
+        self._2016: SeriesTree_Cohorts_Utxo_Class_2016 = SeriesTree_Cohorts_Utxo_Class_2016(client)
+        self._2017: SeriesTree_Cohorts_Utxo_Class_2017 = SeriesTree_Cohorts_Utxo_Class_2017(client)
+        self._2018: SeriesTree_Cohorts_Utxo_Class_2018 = SeriesTree_Cohorts_Utxo_Class_2018(client)
+        self._2019: SeriesTree_Cohorts_Utxo_Class_2019 = SeriesTree_Cohorts_Utxo_Class_2019(client)
+        self._2020: SeriesTree_Cohorts_Utxo_Class_2020 = SeriesTree_Cohorts_Utxo_Class_2020(client)
+        self._2021: SeriesTree_Cohorts_Utxo_Class_2021 = SeriesTree_Cohorts_Utxo_Class_2021(client)
+        self._2022: SeriesTree_Cohorts_Utxo_Class_2022 = SeriesTree_Cohorts_Utxo_Class_2022(client)
+        self._2023: SeriesTree_Cohorts_Utxo_Class_2023 = SeriesTree_Cohorts_Utxo_Class_2023(client)
+        self._2024: SeriesTree_Cohorts_Utxo_Class_2024 = SeriesTree_Cohorts_Utxo_Class_2024(client)
+        self._2025: SeriesTree_Cohorts_Utxo_Class_2025 = SeriesTree_Cohorts_Utxo_Class_2025(client)
+        self._2026: SeriesTree_Cohorts_Utxo_Class_2026 = SeriesTree_Cohorts_Utxo_Class_2026(client)
 
 class SeriesTree_Cohorts_Utxo_OverAmount:
     """Series tree node."""

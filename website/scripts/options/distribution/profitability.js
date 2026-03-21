@@ -41,7 +41,7 @@ import {
  * @returns {AnyFetchedSeriesBlueprint}
  */
 function netBaseline(s, unit) {
-  return baseline({ series: s, name: "Net P&L", unit });
+  return baseline({ series: s, name: "Net", unit });
 }
 
 // ============================================================================
@@ -61,7 +61,7 @@ function unrealizedOverview(profit, loss, netPnlUsd, title) {
     name: "Overview",
     title: title("Unrealized P&L"),
     bottom: [
-      baseline({ series: netPnlUsd, name: "Net P&L", unit: Unit.usd }),
+      baseline({ series: netPnlUsd, name: "Net", unit: Unit.usd }),
       dotted({
         series: profit.usd,
         name: "Profit",
@@ -119,7 +119,7 @@ function unrealizedBase(u, title) {
   return [
     unrealizedOverview(u.profit, u.loss, u.netPnl.usd, title),
     {
-      name: "Net P&L",
+      name: "Net",
       title: title("Net Unrealized P&L"),
       bottom: [netBaseline(u.netPnl.usd, Unit.usd)],
     },
@@ -227,7 +227,7 @@ function unrealizedTreeMid(u, title) {
   return [
     unrealizedOverview(u.profit, u.loss, u.netPnl.usd, title),
     {
-      name: "Net P&L",
+      name: "Net",
       title: title("Net Unrealized P&L"),
       bottom: [netBaseline(u.netPnl.usd, Unit.usd)],
     },
@@ -312,10 +312,9 @@ function nuplSeries(nupl) {
  * @param {string} args.metricTitle
  * @param {Color} args.color
  * @param {(name: string) => string} args.title
- * @param {{ percent: AnySeriesPattern, ratio: AnySeriesPattern }} [args.toRcap]
  * @returns {PartialOptionsTree}
  */
-function realizedMetricFolder({ pattern, metricTitle, color, title, toRcap }) {
+function realizedMetricFolder({ pattern, metricTitle, color, title }) {
   return [
     {
       name: "Compare",
@@ -353,19 +352,6 @@ function realizedMetricFolder({ pattern, metricTitle, color, title, toRcap }) {
         }),
       ],
     },
-    ...(toRcap
-      ? [
-          {
-            name: "% of Realized Cap",
-            title: title(`Realized ${metricTitle} (% of Realized Cap)`),
-            bottom: percentRatioBaseline({
-              pattern: toRcap,
-              name: metricTitle,
-              color,
-            }),
-          },
-        ]
-      : []),
   ];
 }
 
@@ -374,13 +360,12 @@ function realizedMetricFolder({ pattern, metricTitle, color, title, toRcap }) {
  * @param {Object} args
  * @param {NetPnlFullPattern | NetPnlBasicPattern} args.netPnl
  * @param {(name: string) => string} args.title
- * @param {{ percent: AnySeriesPattern, ratio: AnySeriesPattern }} [args.toRcap]
  * @param {PartialOptionsTree} [args.extraChange] - Additional change items (% of Mcap, % of Rcap)
  * @returns {PartialOptionsGroup}
  */
-function realizedNetFolder({ netPnl, title, toRcap, extraChange = [] }) {
+function realizedNetFolder({ netPnl, title, extraChange = [] }) {
   return {
-    name: "Net P&L",
+    name: "Net",
     tree: [
       {
         name: "Compare",
@@ -416,15 +401,6 @@ function realizedNetFolder({ netPnl, title, toRcap, extraChange = [] }) {
           }),
         ],
       },
-      ...(toRcap
-        ? [
-            {
-              name: "% of Realized Cap",
-              title: title("Net Realized P&L (% of Realized Cap)"),
-              bottom: percentRatioBaseline({ pattern: toRcap, name: "Net" }),
-            },
-          ]
-        : []),
       { ...sumsTreeBaseline({ windows: mapWindows(netPnl.delta.absolute, (c) => c.usd), title: title("Net Realized P&L Change"), unit: Unit.usd }), name: "Change" },
       {
         name: "Growth Rate",
@@ -464,7 +440,7 @@ function realizedOverviewFolder({
       bottom: [
         baseline({
           series: netPnl.sum[w.key].usd,
-          name: "Net P&L",
+          name: "Net",
           unit: Unit.usd,
         }),
         dotted({
@@ -491,7 +467,7 @@ function realizedOverviewFolder({
               dotted({
                 series: grossPnl.sum[w.key].usd,
                 name: "Gross",
-                color: colors.bitcoin,
+                color: colors.gross,
                 unit: Unit.usd,
                 defaultActive: false,
               }),
@@ -502,7 +478,7 @@ function realizedOverviewFolder({
               dotted({
                 series: peakRegret.sum[w.key].usd,
                 name: "Peak Regret",
-                color: colors.default,
+                color: colors.regret,
                 unit: Unit.usd,
                 defaultActive: false,
               }),
@@ -539,7 +515,6 @@ function realizedSubfolderFull(r, title) {
       realizedNetFolder({
         netPnl: r.netPnl,
         title,
-        toRcap: r.netPnl.toRcap,
         extraChange: [
           {
             name: "% of Market Cap",
@@ -566,7 +541,6 @@ function realizedSubfolderFull(r, title) {
           metricTitle: "Profit",
           color: colors.profit,
           title,
-          toRcap: r.profit.toRcap,
         }),
       },
       {
@@ -576,15 +550,14 @@ function realizedSubfolderFull(r, title) {
           metricTitle: "Loss",
           color: colors.loss,
           title,
-          toRcap: r.loss.toRcap,
         }),
       },
       {
-        name: "Gross P&L",
+        name: "Gross",
         tree: realizedMetricFolder({
           pattern: r.grossPnl,
           metricTitle: "Gross P&L",
-          color: colors.bitcoin,
+          color: colors.gross,
           title,
         }),
       },
@@ -654,14 +627,6 @@ function realizedSubfolderFull(r, title) {
                 unit: Unit.usd,
               }),
             ],
-          },
-          {
-            name: "% of Realized Cap",
-            title: title("Peak Regret (% of Realized Cap)"),
-            bottom: percentRatioBaseline({
-              pattern: r.peakRegret.toRcap,
-              name: "Peak Regret",
-            }),
           },
         ],
       },
@@ -1102,7 +1067,7 @@ function groupedRealizedSubfolderFull(list, all, title) {
         }),
       },
       {
-        name: "Gross P&L",
+        name: "Gross",
         tree: groupedWindowsCumulativeUsd({
           list,
           all,
@@ -1177,7 +1142,7 @@ function groupedNuplCharts(list, all, title) {
 function groupedUnrealizedMid(list, all, title) {
   return [
     {
-      name: "Net P&L",
+      name: "Net",
       title: title("Net Unrealized P&L"),
       bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
         baseline({

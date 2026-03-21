@@ -173,6 +173,10 @@ export const colors = {
   adjustedCreated: palette.lime,
   adjustedDestroyed: palette.pink,
 
+  // Realized P&L
+  gross: palette.yellow,
+  regret: palette.pink,
+
   // Ratios
   plRatio: palette.yellow,
 

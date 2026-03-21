@@ -25,18 +25,7 @@ use crate::distribution::metrics::ImportConfig;
 use super::RealizedCore;
 
 #[derive(Traversable)]
-pub struct RealizedProfitFull<M: StorageMode = Rw> {
-    pub to_rcap: PercentPerBlock<BasisPoints32, M>,
-}
-
-#[derive(Traversable)]
-pub struct RealizedLossFull<M: StorageMode = Rw> {
-    pub to_rcap: PercentPerBlock<BasisPoints32, M>,
-}
-
-#[derive(Traversable)]
 pub struct RealizedNetPnl<M: StorageMode = Rw> {
-    pub to_rcap: PercentPerBlock<BasisPointsSigned32, M>,
     #[traversable(wrap = "change_1m", rename = "to_rcap")]
     pub change_1m_to_rcap: PercentPerBlock<BasisPointsSigned32, M>,
     #[traversable(wrap = "change_1m", rename = "to_mcap")]
@@ -53,7 +42,6 @@ pub struct RealizedSopr<M: StorageMode = Rw> {
 pub struct RealizedPeakRegret<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub value: FiatPerBlockCumulativeWithSums<Cents, M>,
-    pub to_rcap: PercentPerBlock<BasisPoints32, M>,
 }
 
 #[derive(Traversable)]
@@ -70,8 +58,6 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub core: RealizedCore<M>,
 
-    pub profit: RealizedProfitFull<M>,
-    pub loss: RealizedLossFull<M>,
     pub gross_pnl: FiatPerBlockCumulativeWithSums<Cents, M>,
     pub sell_side_risk_ratio: PercentRollingWindows<BasisPoints32, M>,
     pub net_pnl: RealizedNetPnl<M>,
@@ -101,13 +87,6 @@ impl RealizedFull {
 
         let core = RealizedCore::forced_import(cfg)?;
 
-        let profit = RealizedProfitFull {
-            to_rcap: cfg.import("realized_profit_to_rcap", Version::new(2))?,
-        };
-        let loss = RealizedLossFull {
-            to_rcap: cfg.import("realized_loss_to_rcap", Version::new(2))?,
-        };
-
         // Gross PnL
         let gross_pnl: FiatPerBlockCumulativeWithSums<Cents> =
             cfg.import("realized_gross_pnl", v1)?;
@@ -115,7 +94,6 @@ impl RealizedFull {
 
         // Net PnL
         let net_pnl = RealizedNetPnl {
-            to_rcap: cfg.import("net_realized_pnl_to_rcap", Version::new(2))?,
             change_1m_to_rcap: cfg.import("net_pnl_change_1m_to_rcap", Version::new(4))?,
             change_1m_to_mcap: cfg.import("net_pnl_change_1m_to_mcap", Version::new(4))?,
         };
@@ -128,7 +106,6 @@ impl RealizedFull {
         // Peak regret
         let peak_regret = RealizedPeakRegret {
             value: cfg.import("realized_peak_regret", Version::new(3))?,
-            to_rcap: cfg.import("realized_peak_regret_to_rcap", Version::new(2))?,
         };
 
         // Investor
@@ -143,8 +120,6 @@ impl RealizedFull {
 
         Ok(Self {
             core,
-            profit,
-            loss,
             gross_pnl,
             sell_side_risk_ratio,
             net_pnl,
@@ -298,32 +273,6 @@ impl RealizedFull {
             )?;
         }
 
-        // Profit/loss/net_pnl rel to realized cap
-        self.profit
-            .to_rcap
-            .compute_binary::<Cents, Cents, RatioCentsBp32>(
-                starting_indexes.height,
-                &self.core.minimal.profit.block.cents,
-                &self.core.minimal.cap.cents.height,
-                exit,
-            )?;
-        self.loss
-            .to_rcap
-            .compute_binary::<Cents, Cents, RatioCentsBp32>(
-                starting_indexes.height,
-                &self.core.minimal.loss.block.cents,
-                &self.core.minimal.cap.cents.height,
-                exit,
-            )?;
-        self.net_pnl
-            .to_rcap
-            .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
-                starting_indexes.height,
-                &self.core.net_pnl.block.cents,
-                &self.core.minimal.cap.cents.height,
-                exit,
-            )?;
-
         // Gross PnL
         self.gross_pnl.block.cents.compute_add(
             starting_indexes.height,
@@ -348,16 +297,6 @@ impl RealizedFull {
                 starting_indexes.height,
                 &self.core.net_pnl.delta.absolute._1m.cents.height,
                 height_to_market_cap,
-                exit,
-            )?;
-
-        // Peak regret rel to rcap
-        self.peak_regret
-            .to_rcap
-            .compute_binary::<Cents, Cents, RatioCentsBp32>(
-                starting_indexes.height,
-                &self.peak_regret.value.block.cents,
-                &self.core.minimal.cap.cents.height,
                 exit,
             )?;
 
