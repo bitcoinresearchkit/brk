@@ -162,7 +162,7 @@ export function createNetworkSection() {
           name: "Compare",
           tree: ROLLING_WINDOWS.map((w) => ({
             name: w.name,
-            title: `${titlePrefix}Active Addresses ${w.title} Average`,
+            title: `${w.title} ${titlePrefix}Active Addresses`,
             bottom: activityTypes.map((t, i) =>
               line({
                 series: addrs.activity[key][t.key][w.key],
@@ -213,7 +213,7 @@ export function createNetworkSection() {
         tree: [
           ...ROLLING_WINDOWS.map((w) => ({
             name: w.name,
-            title: `${groupName} Output Count ${w.title} Sum`,
+            title: `${w.title} ${groupName} Output Count`,
             bottom: types.map((t) =>
               line({
                 series: /** @type {CountPattern<number>} */ (
@@ -402,7 +402,7 @@ export function createNetworkSection() {
               },
               ...ROLLING_WINDOWS.map((w) => ({
                 name: w.name,
-                title: `Block Count ${w.title}`,
+                title: `${w.title} Block Count`,
                 bottom: [
                   line({
                     series: blocks.count.total.sum[w.key],
@@ -531,7 +531,7 @@ export function createNetworkSection() {
         name: "Throughput",
         tree: ROLLING_WINDOWS.map((w) => ({
           name: w.name,
-          title: `Throughput ${w.title} Average`,
+          title: `${w.title} Throughput`,
           bottom: [
             line({
               series: transactions.volume.txPerSec[w.key],
@@ -597,7 +597,7 @@ export function createNetworkSection() {
             tree: [
               ...ROLLING_WINDOWS.map((w) => ({
                 name: w.name,
-                title: `Output Count by Script Type ${w.title} Sum`,
+                title: `${w.title} Output Count by Script Type`,
                 bottom: scriptTypes.map((t) =>
                   line({
                     series: /** @type {CountPattern<number>} */ (

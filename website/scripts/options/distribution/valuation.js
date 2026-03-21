@@ -44,7 +44,7 @@ function groupedDeltaAndMvrv(list, all, title) {
       name: "Change",
       tree: ROLLING_WINDOWS.map((w) => ({
         name: w.name,
-        title: title(`Realized Cap Change (${w.title})`),
+        title: title(`${w.title} Realized Cap Change`),
         bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({ series: tree.realized.cap.delta.absolute[w.key].usd, name, color, unit: Unit.usd }),
         ),
@@ -54,7 +54,7 @@ function groupedDeltaAndMvrv(list, all, title) {
       name: "Growth Rate",
       tree: ROLLING_WINDOWS.map((w) => ({
         name: w.name,
-        title: title(`Realized Cap Growth Rate (${w.title})`),
+        title: title(`${w.title} Realized Cap Growth Rate`),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
           percentRatioBaseline({ pattern: tree.realized.cap.delta.rate[w.key], name, color }),
         ),

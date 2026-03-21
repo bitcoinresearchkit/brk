@@ -1,9 +1,7 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{
-    Dollars, Height, Indexes, Sats, StoredU64, Version,
-};
+use brk_types::{Dollars, Height, Indexes, Sats, StoredU64, Version};
 use vecdb::AnyStoredVec;
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
@@ -87,6 +85,7 @@ impl ExtendedCohortMetrics {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_rest_part2(
         &mut self,
         blocks: &blocks::Vecs,
@@ -126,11 +125,8 @@ impl ExtendedCohortMetrics {
             exit,
         )?;
 
-        self.unrealized.compute_sentiment(
-            starting_indexes,
-            &prices.spot.cents.height,
-            exit,
-        )?;
+        self.unrealized
+            .compute_sentiment(starting_indexes, &prices.spot.cents.height, exit)?;
 
         self.relative.compute(
             starting_indexes.height,
@@ -142,9 +138,9 @@ impl ExtendedCohortMetrics {
             exit,
         )?;
 
-        self.outputs.compute_part2(starting_indexes.height, all_utxo_count, exit)?;
+        self.outputs
+            .compute_part2(starting_indexes.height, all_utxo_count, exit)?;
 
         Ok(())
     }
-
 }

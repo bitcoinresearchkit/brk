@@ -1,13 +1,15 @@
 use std::{cmp::Reverse, collections::BinaryHeap, fs, path::Path};
 
-use brk_cohort::{Filtered, PROFITABILITY_RANGE_COUNT, PROFIT_COUNT, TERM_NAMES};
+use brk_cohort::{Filtered, PROFIT_COUNT, PROFITABILITY_RANGE_COUNT, TERM_NAMES};
 use brk_error::Result;
 use brk_types::{BasisPoints16, Cents, CentsCompact, CostBasisDistribution, Date, Dollars, Sats};
 
 use crate::distribution::metrics::{CostBasis, ProfitabilityMetrics};
 
-use super::fenwick::{PercentileResult, ProfitabilityRangeResult};
-use super::groups::UTXOCohorts;
+use super::{
+    fenwick::{PercentileResult, ProfitabilityRangeResult},
+    groups::UTXOCohorts,
+};
 
 use super::COST_BASIS_PRICE_DIGITS;
 
@@ -48,7 +50,7 @@ impl UTXOCohorts {
         push_cost_basis(&lth, lth_d, &mut self.lth.metrics.cost_basis);
 
         let prof = self.fenwick.profitability(spot_price);
-        push_profitability(&prof, &mut self.profitability);
+        push_profitability(&prof, spot_price, &mut self.profitability);
     }
 
     /// K-way merge only for writing daily cost basis distributions to disk.
@@ -92,11 +94,7 @@ impl UTXOCohorts {
 
 /// Push percentiles + density to cost basis vecs.
 #[inline(always)]
-fn push_cost_basis(
-    percentiles: &PercentileResult,
-    density_bps: u16,
-    cost_basis: &mut CostBasis,
-) {
+fn push_cost_basis(percentiles: &PercentileResult, density_bps: u16, cost_basis: &mut CostBasis) {
     cost_basis.push_minmax(percentiles.min_price, percentiles.max_price);
     cost_basis.push_percentiles(&percentiles.sat_prices, &percentiles.usd_prices);
     cost_basis.push_density(BasisPoints16::from(density_bps));
@@ -108,19 +106,41 @@ fn raw_usd_to_dollars(raw: u128) -> Dollars {
     Dollars::from(raw as f64 / 1e10)
 }
 
+/// Number of profit ranges (0..=14 are profit, 15..=24 are loss).
+const PROFIT_RANGE_COUNT: usize = 15;
+
+/// Compute unrealized P&L from raw sats/usd for a given range.
+/// Profit ranges: market_value - cost_basis. Loss ranges: cost_basis - market_value.
+#[inline(always)]
+fn compute_unrealized_pnl(spot_cents: u128, sats: u64, usd: u128, is_profit: bool) -> Dollars {
+    let market_value = spot_cents * sats as u128;
+    let raw = if is_profit {
+        market_value.saturating_sub(usd)
+    } else {
+        usd.saturating_sub(market_value)
+    };
+    raw_usd_to_dollars(raw)
+}
+
 /// Push profitability range + profit/loss aggregate values to vecs.
 fn push_profitability(
     buckets: &[ProfitabilityRangeResult; PROFITABILITY_RANGE_COUNT],
+    spot_price: Cents,
     metrics: &mut ProfitabilityMetrics,
 ) {
+    let spot_cents = spot_price.as_u128();
+
     // Push 25 range buckets
     for (i, bucket) in metrics.range.as_array_mut().into_iter().enumerate() {
         let r = &buckets[i];
+        let is_profit = i < PROFIT_RANGE_COUNT;
         bucket.push(
             Sats::from(r.all_sats),
             Sats::from(r.sth_sats),
             raw_usd_to_dollars(r.all_usd),
             raw_usd_to_dollars(r.sth_usd),
+            compute_unrealized_pnl(spot_cents, r.all_sats, r.all_usd, is_profit),
+            compute_unrealized_pnl(spot_cents, r.sth_sats, r.sth_usd, is_profit),
         );
     }
 
@@ -141,6 +161,8 @@ fn push_profitability(
             Sats::from(cum_sth_sats),
             raw_usd_to_dollars(cum_usd),
             raw_usd_to_dollars(cum_sth_usd),
+            compute_unrealized_pnl(spot_cents, cum_sats, cum_usd, true),
+            compute_unrealized_pnl(spot_cents, cum_sth_sats, cum_sth_usd, true),
         );
     }
 
@@ -163,6 +185,8 @@ fn push_profitability(
             Sats::from(cum_sth_sats),
             raw_usd_to_dollars(cum_usd),
             raw_usd_to_dollars(cum_sth_usd),
+            compute_unrealized_pnl(spot_cents, cum_sats, cum_usd, false),
+            compute_unrealized_pnl(spot_cents, cum_sth_sats, cum_sth_usd, false),
         );
     }
 }

@@ -50,7 +50,7 @@ function volumeTree(tv, color, title) {
         tree: [
           ...ROLLING_WINDOWS.map((w) => ({
             name: w.name,
-            title: title(`Transfer Volume Profitability (${w.title})`),
+            title: title(`${w.title} Transfer Volume Profitability`),
             bottom: [
               ...satsBtcUsd({
                 pattern: tv.inProfit.sum[w.key],
@@ -157,7 +157,7 @@ function singleRollingSoprTree(ratio, title, prefix = "") {
     },
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
-      title: title(`${prefix}SOPR (${w.title})`),
+      title: title(`${w.title} ${prefix}SOPR`.trim()),
       bottom: [
         baseline({
           series: ratio[w.key],
@@ -228,7 +228,7 @@ function singleSellSideRiskTree(sellSideRisk, title) {
     },
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
-      title: title(`Sell Side Risk (${w.title})`),
+      title: title(`${w.title} Sell Side Risk`),
       bottom: percentRatio({
         pattern: sellSideRisk[w.key],
         name: "Risk",
@@ -509,7 +509,7 @@ function groupedVolumeFolderWithAdjusted(list, all, title, getTransferVolume, ge
 function groupedSoprCharts(list, all, getRatio, title, prefix = "") {
   return ROLLING_WINDOWS.map((w) => ({
     name: w.name,
-    title: title(`${prefix}SOPR (${w.title})`),
+    title: title(`${w.title} ${prefix}SOPR`.trim()),
     bottom: mapCohortsWithAll(list, all, (c) =>
       baseline({
         series: getRatio(c)[w.key],
@@ -653,7 +653,7 @@ function groupedActivitySharedItems(list, all, title) {
       name: "Dormancy",
       tree: ROLLING_WINDOWS.map((w) => ({
         name: w.name,
-        title: title(`Dormancy (${w.title})`),
+        title: title(`${w.title} Dormancy`),
         bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             series: tree.activity.dormancy[w.key],
@@ -668,7 +668,7 @@ function groupedActivitySharedItems(list, all, title) {
       name: "Sell Side Risk",
       tree: ROLLING_WINDOWS.map((w) => ({
         name: w.name,
-        title: title(`Sell Side Risk (${w.title})`),
+        title: title(`${w.title} Sell Side Risk`),
         bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({
             series: tree.realized.sellSideRiskRatio[w.key].ratio,
@@ -711,7 +711,7 @@ export function createGroupedActivitySectionWithActivity({ list, all, title }) {
         tree: [
           ...ROLLING_WINDOWS.map((w) => ({
             name: w.name,
-            title: title(`Coindays Destroyed (${w.title})`),
+            title: title(`${w.title} Coindays Destroyed`),
             bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
               line({
                 series: tree.activity.coindaysDestroyed.sum[w.key],

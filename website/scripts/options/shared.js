@@ -775,7 +775,7 @@ export function groupedWindowsCumulative({ list, all, title, metricTitle, getWin
   return [
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
-      title: title(`${metricTitle} (${w.title})`),
+      title: title(`${w.title} ${metricTitle}`),
       bottom: mapCohortsWithAll(list, all, (c) =>
         seriesFn({ series: getWindowSeries(c, w.key), name: c.name, color: c.color, unit }),
       ),
@@ -827,7 +827,7 @@ export function groupedWindowsCumulativeSatsBtcUsd({ list, all, title, metricTit
   return [
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
-      title: title(`${metricTitle} (${w.title})`),
+      title: title(`${w.title} ${metricTitle}`),
       bottom: flatMapCohortsWithAll(list, all, (c) =>
         satsBtcUsd({ pattern: getMetric(c).sum[w.key], name: c.name, color: c.color }),
       ),

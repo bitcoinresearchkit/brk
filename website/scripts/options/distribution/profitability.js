@@ -315,7 +315,7 @@ function realizedMetricFolder({ pattern, metricTitle, color, title }) {
     },
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
-      title: title(`Realized ${metricTitle} (${w.title})`),
+      title: title(`${w.title} Realized ${metricTitle}`),
       bottom: [
         line({
           series: pattern.sum[w.key].usd,
@@ -366,7 +366,7 @@ function realizedNetFolder({ netPnl, title, extraChange = [] }) {
       },
       ...ROLLING_WINDOWS.map((w) => ({
         name: w.name,
-        title: title(`Net Realized P&L (${w.title})`),
+        title: title(`${w.title} Net Realized P&L`),
         bottom: [
           baseline({
             series: netPnl.sum[w.key].usd,
@@ -433,7 +433,7 @@ function realizedOverviewFolder({
     name: "Overview",
     tree: ROLLING_WINDOWS.map((w) => ({
       name: w.name,
-      title: title(`Realized P&L (${w.title})`),
+      title: title(`${w.title} Realized P&L`),
       bottom: [
         baseline({
           series: netPnl.sum[w.key].usd,
@@ -576,7 +576,7 @@ function realizedSubfolderFull(r, title) {
           },
           ...ROLLING_WINDOWS.map((w) => ({
             name: w.name,
-            title: title(`Realized P/L Ratio (${w.title})`),
+            title: title(`${w.title} Realized P/L Ratio`),
             bottom: [
               baseline({
                 series: r.profitToLossRatio[w.key],
@@ -605,7 +605,7 @@ function realizedSubfolderFull(r, title) {
           },
           ...ROLLING_WINDOWS.map((w) => ({
             name: w.name,
-            title: title(`Peak Regret (${w.title})`),
+            title: title(`${w.title} Peak Regret`),
             bottom: [
               line({
                 series: r.peakRegret.sum[w.key].usd,
@@ -937,7 +937,7 @@ function groupedRealizedNetPnlDeltaItems(list, all, title) {
       name: "Change",
       tree: ROLLING_WINDOWS.map((w) => ({
         name: w.name,
-        title: title(`Net Realized P&L Change (${w.title})`),
+        title: title(`${w.title} Net Realized P&L Change`),
         bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           baseline({
             series: tree.realized.netPnl.delta.absolute[w.key].usd,
@@ -952,7 +952,7 @@ function groupedRealizedNetPnlDeltaItems(list, all, title) {
       name: "Growth Rate",
       tree: ROLLING_WINDOWS.map((w) => ({
         name: w.name,
-        title: title(`Net Realized P&L Growth Rate (${w.title})`),
+        title: title(`${w.title} Net Realized P&L Growth Rate`),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
           percentRatioBaseline({
             pattern: tree.realized.netPnl.delta.rate[w.key],
@@ -1005,7 +1005,7 @@ function groupedRealizedSubfolderFull(list, all, title) {
         name: "P/L Ratio",
         tree: ROLLING_WINDOWS.map((w) => ({
           name: w.name,
-          title: title(`Realized P/L Ratio (${w.title})`),
+          title: title(`${w.title} Realized P/L Ratio`),
           bottom: mapCohortsWithAll(list, all, (c) =>
             baseline({
               series: c.tree.realized.profitToLossRatio[w.key],

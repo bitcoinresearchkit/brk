@@ -403,7 +403,7 @@ export function createGroupedCohortFolderAgeRangeWithMatured({
     name: "Matured",
     tree: ROLLING_WINDOWS.map((w) => ({
       name: w.name,
-      title: title(`Matured Supply (${w.title})`),
+      title: title(`${w.title} Matured Supply`),
       bottom: list.flatMap((cohort) =>
         satsBtcUsd({
           pattern: cohort.matured.sum[w.key],
@@ -617,7 +617,7 @@ function groupedBucketCharts(list, groupTitle) {
                 },
                 ...ROLLING_WINDOWS.map((w) => ({
                   name: w.name,
-                  title: title(`Supply Change (${w.title})`),
+                  title: title(`${w.title} Supply Change`),
                   bottom: list.map(({ name, color, pattern }) =>
                     baseline({
                       series: pattern.supply.all.delta.absolute[w.key],
@@ -647,7 +647,7 @@ function groupedBucketCharts(list, groupTitle) {
                 },
                 ...ROLLING_WINDOWS.map((w) => ({
                   name: w.name,
-                  title: title(`Supply Growth Rate (${w.title})`),
+                  title: title(`${w.title} Supply Growth Rate`),
                   bottom: list.flatMap(({ name, color, pattern }) =>
                     percentRatio({
                       pattern: pattern.supply.all.delta.rate[w.key],

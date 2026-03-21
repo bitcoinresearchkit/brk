@@ -97,7 +97,7 @@ export function createMiningSection() {
       },
       ...ROLLING_WINDOWS.map((w) => ({
         name: w.name,
-        title: title(`${w.name} ${metric}`),
+        title: title(`${w.title} ${metric}`),
         bottom: percentRatio({ pattern: dominance[w.key], name: w.name, color: w.color }),
       })),
       {
@@ -177,7 +177,7 @@ export function createMiningSection() {
         name: "Dominance",
         tree: ROLLING_WINDOWS.map((w) => ({
           name: w.name,
-          title: `Dominance: ${groupTitle} ${w.title}`,
+          title: formatCohortTitle(groupTitle)(`${w.title} Dominance`),
           bottom: poolList.flatMap((p, i) =>
             percentRatio({
               pattern: p.pool.dominance[w.key],
@@ -191,7 +191,7 @@ export function createMiningSection() {
         name: "Blocks Mined",
         tree: ROLLING_WINDOWS.map((w) => ({
           name: w.name,
-          title: `Blocks Mined: ${groupTitle} ${w.title} Sum`,
+          title: formatCohortTitle(groupTitle)(`${w.title} Blocks Mined`),
           bottom: poolList.map((p, i) =>
             line({
               series: p.pool.blocksMined.sum[w.key],
@@ -299,7 +299,7 @@ export function createMiningSection() {
         tree: [
           ...ROLLING_WINDOWS.map((w) => ({
             name: w.name,
-            title: `Revenue ${w.title} Averages`,
+            title: `${w.title} Revenue`,
             bottom: revenueRollingBtcSatsUsd({
               coinbase: mining.rewards.coinbase.average[w.key],
               subsidy: mining.rewards.subsidy.average[w.key],
@@ -341,7 +341,7 @@ export function createMiningSection() {
                 name: "Distributions",
                 tree: ROLLING_WINDOWS.map((w) => ({
                   name: w.name,
-                  title: `Fee Revenue per Block ${w.title} Distribution`,
+                  title: `${w.title} Fee Revenue per Block Distribution`,
                   bottom: distributionBtcSatsUsd(statsAtWindow(mining.rewards.fees, w.key)),
                 })),
               },
@@ -352,7 +352,7 @@ export function createMiningSection() {
             tree: [
               ...ROLLING_WINDOWS.map((w) => ({
                 name: w.name,
-                title: `Revenue Dominance ${w.title}`,
+                title: `${w.title} Revenue Dominance`,
                 bottom: [
                   ...percentRatio({ pattern: mining.rewards.subsidy.dominance[w.key], name: "Subsidy", color: colors.mining.subsidy }),
                   ...percentRatio({ pattern: mining.rewards.fees.dominance[w.key], name: "Fees", color: colors.mining.fee }),
@@ -372,7 +372,7 @@ export function createMiningSection() {
             name: "Fee Multiple",
             tree: ROLLING_WINDOWS.map((w) => ({
               name: w.name,
-              title: `Fee-to-Subsidy Ratio ${w.title}`,
+              title: `${w.title} Fee-to-Subsidy Ratio`,
               bottom: [line({ series: mining.rewards.fees.toSubsidyRatio[w.key].ratio, name: "Ratio", color: colors.mining.fee, unit: Unit.ratio })],
             })),
           },

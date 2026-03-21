@@ -20,6 +20,7 @@ pub struct WithSth<All, Sth = All> {
 pub struct ProfitabilityBucket<M: StorageMode = Rw> {
     pub supply: WithSth<AmountPerBlockWithDeltas<M>, AmountPerBlock<M>>,
     pub realized_cap: WithSth<PerBlock<Dollars, M>>,
+    pub unrealized_pnl: WithSth<PerBlock<Dollars, M>>,
     pub nupl: RatioPerBlock<BasisPointsSigned32, M>,
 }
 
@@ -31,6 +32,7 @@ impl<M: StorageMode> ProfitabilityBucket<M> {
             .height
             .len()
             .min(self.realized_cap.all.height.len())
+            .min(self.unrealized_pnl.all.height.len())
     }
 }
 
@@ -72,6 +74,20 @@ impl ProfitabilityBucket {
                     indexes,
                 )?,
             },
+            unrealized_pnl: WithSth {
+                all: PerBlock::forced_import(
+                    db,
+                    &format!("{name}_unrealized_pnl"),
+                    version,
+                    indexes,
+                )?,
+                sth: PerBlock::forced_import(
+                    db,
+                    &format!("{name}_sth_unrealized_pnl"),
+                    version,
+                    indexes,
+                )?,
+            },
             nupl: RatioPerBlock::forced_import_raw(
                 db,
                 &format!("{name}_nupl"),
@@ -88,11 +104,15 @@ impl ProfitabilityBucket {
         sth_supply: Sats,
         realized_cap: Dollars,
         sth_realized_cap: Dollars,
+        unrealized_pnl: Dollars,
+        sth_unrealized_pnl: Dollars,
     ) {
         self.supply.all.sats.height.push(supply);
         self.supply.sth.sats.height.push(sth_supply);
         self.realized_cap.all.height.push(realized_cap);
         self.realized_cap.sth.height.push(sth_realized_cap);
+        self.unrealized_pnl.all.height.push(unrealized_pnl);
+        self.unrealized_pnl.sth.height.push(sth_unrealized_pnl);
     }
 
     pub(crate) fn compute(
@@ -138,6 +158,8 @@ impl ProfitabilityBucket {
             &mut self.supply.sth.cents.height,
             &mut self.realized_cap.all.height,
             &mut self.realized_cap.sth.height,
+            &mut self.unrealized_pnl.all.height,
+            &mut self.unrealized_pnl.sth.height,
             &mut self.nupl.bps.height,
         ]
     }

@@ -588,7 +588,7 @@ export function createMarketSection() {
               },
               ...ROLLING_WINDOWS.map((w) => ({
                 name: w.name,
-                title: `Capitalization Growth Rate Spread (${w.title})`,
+                title: `${w.title} Capitalization Growth Rate Spread`,
                 bottom: [
                   baseline({
                     series: supply.marketMinusRealizedCapGrowthRate[w.key],
@@ -676,7 +676,7 @@ export function createMarketSection() {
                     const rsi = technical.rsi[w.key];
                     return {
                       name: w.name,
-                      title: `RSI (${w.title})`,
+                      title: `${w.title} RSI`,
                       bottom: [
                         ...indexRatio({
                           pattern: rsi.rsi,
@@ -699,7 +699,7 @@ export function createMarketSection() {
                       const rsi = technical.rsi[w.key];
                       return {
                         name: w.name,
-                        title: `Stochastic RSI (${w.title})`,
+                        title: `${w.title} Stochastic RSI`,
                         bottom: [
                           ...indexRatio({
                             pattern: rsi.stochRsiK,
@@ -738,7 +738,7 @@ export function createMarketSection() {
                   },
                   ...ROLLING_WINDOWS_TO_1M.map((w) => ({
                     name: w.name,
-                    title: `MACD (${w.title})`,
+                    title: `${w.title} MACD`,
                     bottom: [
                       line({
                         series: technical.macd[w.key].line,
@@ -785,7 +785,7 @@ export function createMarketSection() {
                   },
                   ...ROLLING_WINDOWS.map((w) => ({
                     name: w.name,
-                    title: `Volatility Index (${w.title})`,
+                    title: `${w.title} Volatility Index`,
                     bottom: [
                       line({
                         series: volatility[w.key],

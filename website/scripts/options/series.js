@@ -519,7 +519,7 @@ export function sumsAndAveragesCumulativeWith({
     },
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
-      title: title(`${w.name} ${metric}`),
+      title: title(`${w.title} ${metric}`),
       bottom: [
         ...series({ pattern: sum[w.key], name: "Sum", color: w.color }),
         ...series({
@@ -551,7 +551,7 @@ export function sumsAndAveragesCumulativeWith({
 export function sumsAndAveragesArray({ sum, average, title = (s) => s, metric, unit }) {
   return ROLLING_WINDOWS.map((w) => ({
     name: w.name,
-    title: title(`${w.name} ${metric}`),
+    title: title(`${w.title} ${metric}`),
     bottom: [
       line({ series: sum[w.key], name: "Sum", color: w.color, unit }),
       line({
@@ -611,7 +611,7 @@ export function sumsTreeBaseline({ windows, title = (s) => s, metric, unit }) {
   return rollingWindowsTreeBaseline({
     windows,
     title: title(metric),
-    windowTitle: (w) => title(`${w.name} ${metric}`),
+    windowTitle: (w) => title(`${w.title} ${metric}`),
     unit,
     name: "Sums",
   });
@@ -637,7 +637,7 @@ export function averagesArray({ windows, title = (s) => s, metric, unit }) {
     },
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
-      title: title(`${w.name} ${metric}`),
+      title: title(`${w.title} ${metric}`),
       bottom: [
         line({ series: windows[w.key], name: w.name, color: w.color, unit }),
       ],
@@ -673,7 +673,7 @@ export function distributionWindowsTree({ pattern, base, title = (s) => s, metri
       },
       ...ROLLING_WINDOWS.map((w) => ({
         name: w.name,
-        title: title(`${w.name} ${metric} Distribution`),
+        title: title(`${w.title} ${metric} Distribution`),
         bottom: [
           ...(base ? [line({ series: base, name: "base", unit })] : []),
           ...percentileSeries({ pattern: statsAtWindow(pattern, w.key), unit }),
@@ -870,7 +870,7 @@ export function rollingPercentRatioTree({
       },
       ...ROLLING_WINDOWS.map((w) => ({
         name: w.name,
-        title: title(`${w.name} ${metric}`),
+        title: title(`${w.title} ${metric}`),
         bottom: percentRatioBaseline({ pattern: windows[w.key], name: w.name }),
       })),
     ],
@@ -907,7 +907,7 @@ export function deltaTree({ delta, title = (s) => s, metric, unit, extract }) {
         },
         ...ROLLING_WINDOWS.map((w) => ({
           name: w.name,
-          title: title(`${w.name} ${metric} Change`),
+          title: title(`${w.title} ${metric} Change`),
           bottom: [
             baseline({
               series: extract(delta.absolute[w.key]),
@@ -1106,7 +1106,7 @@ export function chartsFromCountEntries({ entries, title = (s) => s, metric, unit
   return [
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
-      title: title(`${w.name} ${metric}`),
+      title: title(`${w.title} ${metric}`),
       bottom: items.map((e) =>
         line({ series: e.sum[w.key], name: e.name, color: e.color, unit }),
       ),
@@ -1134,7 +1134,7 @@ export function multiSeriesTree({ entries, title = (s) => s, metric, unit }) {
   return [
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
-      title: title(`${w.name} ${metric}`),
+      title: title(`${w.title} ${metric}`),
       bottom: entries.map((e) =>
         line({ series: e.average[w.key], name: e.name, color: e.color, unit }),
       ),
