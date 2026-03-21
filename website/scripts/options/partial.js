@@ -8,7 +8,6 @@ import {
   createCohortFolderLongTerm,
   createCohortFolderAgeRangeWithMatured,
   createCohortFolderBasicWithMarketCap,
-  createCohortFolderBasicWithoutMarketCap,
   createCohortFolderWithoutRelative,
   createCohortFolderAddress,
   createAddressCohortFolder,
@@ -16,7 +15,6 @@ import {
   createGroupedCohortFolderWithNupl,
   createGroupedCohortFolderAgeRangeWithMatured,
   createGroupedCohortFolderBasicWithMarketCap,
-  createGroupedCohortFolderBasicWithoutMarketCap,
   createGroupedCohortFolderAddress,
   createGroupedAddressCohortFolder,
   createUtxoProfitabilitySection,
@@ -160,14 +158,14 @@ export function createPartialOptions() {
                 {
                   name: "Range",
                   tree: [
-                    createGroupedCohortFolderBasicWithoutMarketCap({
+                    createGroupedCohortFolderBasicWithMarketCap({
                       name: "Compare",
                       title: "Amount Ranges",
                       list: utxosAmountRange,
                       all: cohortAll,
                     }),
                     ...utxosAmountRange.map(
-                      createCohortFolderBasicWithoutMarketCap,
+                      createCohortFolderBasicWithMarketCap,
                     ),
                   ],
                 },

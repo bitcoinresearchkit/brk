@@ -58,18 +58,15 @@ import {
   createGroupedCostBasisSectionWithPercentiles,
 } from "./cost-basis.js";
 import {
+  createProfitabilitySection,
   createProfitabilitySectionAll,
   createProfitabilitySectionFull,
-  createProfitabilitySectionWithNupl,
-  createProfitabilitySectionWithInvestedCapitalPct,
-  createProfitabilitySectionBasicWithInvestedCapitalPct,
-  createProfitabilitySectionAddress,
   createProfitabilitySectionWithProfitLoss,
+  createProfitabilitySectionWithInvestedCapitalPct,
   createProfitabilitySectionLongTerm,
   createGroupedProfitabilitySection,
   createGroupedProfitabilitySectionWithNupl,
   createGroupedProfitabilitySectionWithInvestedCapitalPct,
-  createGroupedProfitabilitySectionBasicWithInvestedCapitalPct,
 } from "./profitability.js";
 import {
   createActivitySection,
@@ -161,7 +158,7 @@ export function createCohortFolderWithNupl(cohort) {
       createValuationSectionFull({ cohort, title }),
       createPricesSectionFull({ cohort, title }),
       createCostBasisSectionWithPercentiles({ cohort, title }),
-      createProfitabilitySectionWithNupl({ cohort, title }),
+      createProfitabilitySection({ cohort, title }),
       createActivitySection({ cohort, title }),
     ],
   };
@@ -237,30 +234,12 @@ export function createCohortFolderBasicWithMarketCap(cohort) {
       ...createHoldingsSection({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
-      createProfitabilitySectionWithNupl({ cohort, title }),
+      createProfitabilitySection({ cohort, title }),
       createActivitySectionMinimal({ cohort, title }),
     ],
   };
 }
 
-/**
- * Basic folder WITHOUT RelToMarketCap
- * @param {CohortBasicWithoutMarketCap} cohort
- * @returns {PartialOptionsGroup}
- */
-export function createCohortFolderBasicWithoutMarketCap(cohort) {
-  const title = formatCohortTitle(cohort.name);
-  return {
-    name: cohort.name || "all",
-    tree: [
-      ...createHoldingsSection({ cohort, title }),
-      createValuationSection({ cohort, title }),
-      createPricesSectionBasic({ cohort, title }),
-      createProfitabilitySectionBasicWithInvestedCapitalPct({ cohort, title }),
-      createActivitySectionMinimal({ cohort, title }),
-    ],
-  };
-}
 
 /**
  * Address folder: like basic but with address count
@@ -275,7 +254,7 @@ export function createCohortFolderAddress(cohort) {
       ...createHoldingsSectionAddress({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
-      createProfitabilitySectionAddress({ cohort, title }),
+      createProfitabilitySectionWithProfitLoss({ cohort, title }),
       createActivitySectionMinimal({ cohort, title }),
     ],
   };
@@ -313,7 +292,7 @@ export function createAddressCohortFolder(cohort) {
       ...createHoldingsSectionAddressAmount({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
-      createProfitabilitySectionWithNupl({ cohort, title }),
+      createProfitabilitySection({ cohort, title }),
       createActivitySectionMinimal({ cohort, title }),
     ],
   };
@@ -458,32 +437,6 @@ export function createGroupedCohortFolderBasicWithMarketCap({
   };
 }
 
-/**
- * @param {CohortGroupBasicWithoutMarketCap} args
- * @returns {PartialOptionsGroup}
- */
-export function createGroupedCohortFolderBasicWithoutMarketCap({
-  name,
-  title: groupTitle,
-  list,
-  all,
-}) {
-  const title = formatCohortTitle(groupTitle);
-  return {
-    name: name || "all",
-    tree: [
-      ...createGroupedHoldingsSection({ list, all, title }),
-      createGroupedValuationSection({ list, all, title }),
-      createGroupedPricesSection({ list, all, title }),
-      createGroupedProfitabilitySectionBasicWithInvestedCapitalPct({
-        list,
-        all,
-        title,
-      }),
-      createGroupedActivitySectionMinimal({ list, all, title }),
-    ],
-  };
-}
 
 /**
  * @param {CohortGroupAddr} args
@@ -502,7 +455,7 @@ export function createGroupedCohortFolderAddress({
       ...createGroupedHoldingsSectionAddress({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
-      createGroupedProfitabilitySectionBasicWithInvestedCapitalPct({
+      createGroupedProfitabilitySection({
         list,
         all,
         title,

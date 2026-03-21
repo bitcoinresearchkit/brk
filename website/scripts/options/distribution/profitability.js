@@ -683,21 +683,11 @@ function realizedSubfolderBasic(r, title) {
  * @returns {PartialOptionsGroup}
  */
 export function createProfitabilitySection({ cohort, title }) {
-  const { tree } = cohort;
   return {
     name: "Profitability",
     tree: [
-      {
-        name: "Unrealized",
-        tree: [
-          {
-            name: "NUPL",
-            title: title("NUPL"),
-            bottom: nuplSeries(tree.unrealized.nupl),
-          },
-        ],
-      },
-      realizedSubfolderBasic(tree.realized, title),
+      { name: "Unrealized", tree: [{ name: "NUPL", title: title("NUPL"), bottom: nuplSeries(cohort.tree.unrealized.nupl) }] },
+      realizedSubfolderBasic(cohort.tree.realized, title),
     ],
   };
 }
@@ -792,30 +782,6 @@ export function createProfitabilitySectionFull({ cohort, title }) {
   };
 }
 
-/**
- * Section with NUPL (basic cohorts with market cap — NuplPattern unrealized)
- * @param {{ cohort: CohortBasicWithMarketCap, title: (name: string) => string }} args
- * @returns {PartialOptionsGroup}
- */
-export function createProfitabilitySectionWithNupl({ cohort, title }) {
-  const { tree } = cohort;
-  return {
-    name: "Profitability",
-    tree: [
-      {
-        name: "Unrealized",
-        tree: [
-          {
-            name: "NUPL",
-            title: title("NUPL"),
-            bottom: nuplSeries(tree.unrealized.nupl),
-          },
-        ],
-      },
-      realizedSubfolderBasic(tree.realized, title),
-    ],
-  };
-}
 
 /**
  * Section for LongTerm cohort
@@ -859,78 +825,7 @@ export function createProfitabilitySectionWithInvestedCapitalPct({
   };
 }
 
-/**
- * Section with invested capital % but no unrealized relative (basic cohorts)
- * @param {{ cohort: CohortBasicWithoutMarketCap, title: (name: string) => string }} args
- * @returns {PartialOptionsGroup}
- */
-export function createProfitabilitySectionBasicWithInvestedCapitalPct({
-  cohort,
-  title,
-}) {
-  const { tree } = cohort;
-  return {
-    name: "Profitability",
-    tree: [
-      {
-        name: "Unrealized",
-        tree: [
-          {
-            name: "NUPL",
-            title: title("NUPL"),
-            bottom: nuplSeries(tree.unrealized.nupl),
-          },
-        ],
-      },
-      realizedSubfolderBasic(tree.realized, title),
-    ],
-  };
-}
 
-/**
- * Section for CohortAddr (has unrealized profit/loss + NUPL, basic realized)
- * @param {{ cohort: CohortAddr, title: (name: string) => string }} args
- * @returns {PartialOptionsGroup}
- */
-export function createProfitabilitySectionAddress({ cohort, title }) {
-  const u = cohort.tree.unrealized;
-  return {
-    name: "Profitability",
-    tree: [
-      {
-        name: "Unrealized",
-        tree: [
-          { name: "NUPL", title: title("NUPL"), bottom: nuplSeries(u.nupl) },
-          {
-            name: "Profit",
-            title: title("Unrealized Profit"),
-            bottom: [
-              line({
-                series: u.profit.usd,
-                name: "Profit",
-                color: colors.profit,
-                unit: Unit.usd,
-              }),
-            ],
-          },
-          {
-            name: "Loss",
-            title: title("Unrealized Loss"),
-            bottom: [
-              line({
-                series: u.loss.usd,
-                name: "Loss",
-                color: colors.loss,
-                unit: Unit.usd,
-              }),
-            ],
-          },
-        ],
-      },
-      realizedSubfolderBasic(cohort.tree.realized, title),
-    ],
-  };
-}
 
 // ============================================================================
 // Grouped Cohort Helpers
@@ -1324,24 +1219,6 @@ export function createGroupedProfitabilitySectionWithProfitLoss({
   };
 }
 
-/**
- * Grouped section with invested capital % (basic cohorts — uses NUPL only)
- * @param {{ list: readonly CohortBasicWithoutMarketCap[], all: CohortAll, title: (name: string) => string }} args
- * @returns {PartialOptionsGroup}
- */
-export function createGroupedProfitabilitySectionBasicWithInvestedCapitalPct({
-  list,
-  all,
-  title,
-}) {
-  return {
-    name: "Profitability",
-    tree: [
-      { name: "Unrealized", tree: groupedNuplCharts(list, all, title) },
-      groupedRealizedSubfolder(list, all, title),
-    ],
-  };
-}
 
 /**
  * Grouped section for ageRange/maxAge cohorts

@@ -87,6 +87,9 @@
  * @typedef {Brk.CoindaysCoinyearsDormancyTransferPattern} FullActivityPattern
  *
  *
+ * BPS + percent + ratio pattern
+ * @typedef {Brk.BpsPercentRatioPattern3} PercentRatioPattern
+ *
  * BPS + ratio pattern (for NUPL and similar)
  * @typedef {Brk.BpsRatioPattern} NuplPattern
  *
