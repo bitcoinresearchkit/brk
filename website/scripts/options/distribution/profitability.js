@@ -61,7 +61,7 @@ function unrealizedOverview(profit, loss, netPnlUsd, title) {
       }),
       dotted({
         series: loss.negative,
-        name: "Neg. Loss",
+        name: "Negated Loss",
         color: colors.loss,
         unit: Unit.usd,
       }),
@@ -233,12 +233,19 @@ function unrealizedTreeLongTerm(u, title) {
     ownPnlChart(u, title),
     {
       name: "% of Market Cap",
-      title: title("Unrealized Loss (% of Market Cap)"),
-      bottom: percentRatio({
-        pattern: u.loss.toMcap,
-        name: "Loss",
-        color: colors.loss,
-      }),
+      title: title("Unrealized P&L (% of Market Cap)"),
+      bottom: [
+        ...percentRatio({
+          pattern: u.profit.toMcap,
+          name: "Profit",
+          color: colors.profit,
+        }),
+        ...percentRatio({
+          pattern: u.loss.toMcap,
+          name: "Loss",
+          color: colors.loss,
+        }),
+      ],
     },
     relPnlChartWithNet(u.netPnl.toOwnMcap, u.profit.toOwnMcap, u.loss.toOwnMcap, "% of Own Market Cap", title),
   ];
@@ -448,7 +455,7 @@ function realizedOverviewFolder({
         }),
         dotted({
           series: loss.negative.sum[w.key],
-          name: "Neg. Loss",
+          name: "Negated Loss",
           color: colors.loss,
           unit: Unit.usd,
         }),
@@ -518,7 +525,7 @@ function realizedSubfolderFull(r, title) {
             title: title("Net Realized P&L Change (% of Market Cap)"),
             bottom: percentRatioBaseline({
               pattern: r.netPnl.change1m.toMcap,
-              name: "30d Change",
+              name: "1m Change",
             }),
           },
           {
@@ -526,7 +533,7 @@ function realizedSubfolderFull(r, title) {
             title: title("Net Realized P&L Change (% of Realized Cap)"),
             bottom: percentRatioBaseline({
               pattern: r.netPnl.change1m.toRcap,
-              name: "30d Change",
+              name: "1m Change",
             }),
           },
         ],
@@ -740,7 +747,7 @@ export function createProfitabilitySectionWithProfitLoss({ cohort, title }) {
             title: title("Unrealized P&L"),
             bottom: [
               line({ series: u.profit.usd, name: "Profit", color: colors.profit, unit: Unit.usd }),
-              line({ series: u.loss.negative, name: "Neg. Loss", color: colors.loss, unit: Unit.usd }),
+              line({ series: u.loss.negative, name: "Negated Loss", color: colors.loss, unit: Unit.usd }),
               line({ series: u.loss.usd, name: "Loss", color: colors.loss, unit: Unit.usd, defaultActive: false }),
               priceLine({ unit: Unit.usd }),
             ],
@@ -997,7 +1004,7 @@ function groupedRealizedSubfolderFull(list, all, title) {
           list,
           all,
           title,
-          metricTitle: "Gross Realized P&L",
+          metricTitle: "Realized Gross P&L",
           getMetric: (c) => c.tree.realized.grossPnl,
         }),
       },

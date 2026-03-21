@@ -266,7 +266,7 @@ export function createCointimeSection() {
           }),
           line({
             series: activity.ratio,
-            name: "L/V Ratio",
+            name: "Liveliness / Vaultedness",
             color: colors.activity,
             unit: Unit.ratio,
             defaultActive: false,

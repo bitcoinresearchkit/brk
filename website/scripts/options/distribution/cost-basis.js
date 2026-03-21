@@ -28,7 +28,7 @@ function percentileSeries(p, n = (x) => x) {
     .map(([key, s], i, arr) =>
       price({
         series: s,
-        name: n(key.replace("pct", "p")),
+        name: n(key.replace("pct", "P")),
         color: colors.at(i, arr.length),
         ...(ACTIVE_PCTS.has(key) ? {} : { defaultActive: false }),
       }),
@@ -70,9 +70,9 @@ function singleWeightFolder({ avgPrice, avgName, inProfit, inLoss, percentiles, 
       title: title(`Cost Basis Distribution (${weightLabel})`),
       top: [
         price({ series: avgPrice, name: avgName, color }),
-        ...(max ? [price({ series: max, name: "p100", color: colors.stat.max, defaultActive: false })] : []),
+        ...(max ? [price({ series: max, name: "P100", color: colors.stat.max, defaultActive: false })] : []),
         ...percentileSeries(percentiles),
-        ...(min ? [price({ series: min, name: "p0", color: colors.stat.min, defaultActive: false })] : []),
+        ...(min ? [price({ series: min, name: "P0", color: colors.stat.min, defaultActive: false })] : []),
       ],
     },
   ];

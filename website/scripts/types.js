@@ -40,6 +40,7 @@
  * @typedef {Brk.BtcCentsSatsUsdPattern} SupplyPattern
  * @typedef {Brk.AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} BlockSizePattern
  * @typedef {keyof Brk.SeriesTree_Cohorts_Utxo_Type} SpendableType
+ * @typedef {Brk.SpendingSpentUnspentPattern} OutputsPattern
  * @typedef {keyof Brk.SeriesTree_Addrs_Raw} AddressableType
  *
  * Brk pattern types (using new pattern names)
@@ -71,8 +72,8 @@
  * @typedef {Brk.LossNetNuplProfitPattern} BasicRelativePattern
  * @typedef {Brk.GrossInvestedInvestorLossNetNuplProfitSentimentPattern2} FullRelativePattern
  *
- * Profitability bucket pattern (supply + realized_cap + nupl)
- * @typedef {Brk.NuplRealizedSupplyPattern} RealizedSupplyPattern
+ * Profitability bucket pattern (supply + realized_cap + unrealized_pnl + nupl)
+ * @typedef {Brk.NuplRealizedSupplyUnrealizedPattern} RealizedSupplyPattern
  *
  * Realized pattern (full: cap + gross + investor + loss + mvrv + net + peak + price + profit + sell + sopr)
  * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern

@@ -101,13 +101,13 @@ function percentileSeries({ pattern, unit, title = "" }) {
     }),
     line({
       series: pattern.pct90,
-      name: `${title} pct90`.trim(),
+      name: `${title} P90`.trim(),
       color: stat.pct90,
       unit,
     }),
     line({
       series: pattern.pct75,
-      name: `${title} pct75`.trim(),
+      name: `${title} P75`.trim(),
       color: stat.pct75,
       unit,
     }),
@@ -119,13 +119,13 @@ function percentileSeries({ pattern, unit, title = "" }) {
     }),
     line({
       series: pattern.pct25,
-      name: `${title} pct25`.trim(),
+      name: `${title} P25`.trim(),
       color: stat.pct25,
       unit,
     }),
     line({
       series: pattern.pct10,
-      name: `${title} pct10`.trim(),
+      name: `${title} P10`.trim(),
       color: stat.pct10,
       unit,
     }),
@@ -533,7 +533,7 @@ export function sumsAndAveragesCumulativeWith({
     {
       name: "Cumulative",
       title: title(`Cumulative ${metric}`),
-      bottom: series({ pattern: cumulative, name: "all-time", color }),
+      bottom: series({ pattern: cumulative, name: "All Time", color }),
     },
   ];
 }

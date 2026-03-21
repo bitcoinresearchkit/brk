@@ -68,6 +68,10 @@ fn generate_tree_class(
     )
     .unwrap();
 
+    if ctx.children.is_empty() {
+        writeln!(output, "        pass").unwrap();
+    }
+
     let syntax = PythonSyntax;
     for child in &ctx.children {
         if child.is_leaf {

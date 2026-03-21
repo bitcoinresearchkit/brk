@@ -18,12 +18,14 @@ import {
   rollingPercentRatioTree,
   percentRatio,
   percentRatioBaseline,
+  chartsFromCount,
 } from "../series.js";
 import {
   satsBtcUsd,
   flatMapCohorts,
   mapCohortsWithAll,
   flatMapCohortsWithAll,
+  groupedWindowsCumulative,
 } from "../shared.js";
 import { colors } from "../../utils/colors.js";
 import { priceLines } from "../constants.js";
@@ -46,18 +48,39 @@ function simpleSupplySeries(supply) {
  * @param {CohortAll} all
  * @param {(name: string) => string} title
  */
-function groupedUtxoCountFolder(list, all, title) {
+function groupedOutputsFolder(list, all, title) {
   return {
-    name: "UTXOs",
+    name: "Outputs",
     tree: [
       {
-        name: "Count",
-        title: title("UTXO Count"),
+        name: "Unspent",
+        tree: [
+          {
+            name: "Count",
+            title: title("UTXO Count"),
+            bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+              line({ series: tree.outputs.unspentCount.base, name, color, unit: Unit.count }),
+            ),
+          },
+          ...groupedDeltaItems(list, all, (c) => c.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
+        ],
+      },
+      {
+        name: "Spent",
+        tree: groupedWindowsCumulative({
+          list, all, title, metricTitle: "Spent UTXO Count",
+          getWindowSeries: (c, key) => c.tree.outputs.spentCount.sum[key],
+          getCumulativeSeries: (c) => c.tree.outputs.spentCount.cumulative,
+          seriesFn: line, unit: Unit.count,
+        }),
+      },
+      {
+        name: "Spending Rate",
+        title: title("Spending Rate"),
         bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-          line({ series: tree.outputs.unspentCount.base, name, color, unit: Unit.count }),
+          line({ series: tree.outputs.spendingRate, name, color, unit: Unit.ratio }),
         ),
       },
-      ...groupedDeltaItems(list, all, (c) => c.tree.outputs.unspentCount.delta, Unit.count, title, "UTXO Count"),
     ],
   };
 }
@@ -211,7 +234,32 @@ function ownSupplyChart(supply, title) {
 }
 
 /**
- * Count folder (UTXO or Address) with value + change
+ * @param {OutputsPattern} outputs
+ * @param {Color} color
+ * @param {(name: string) => string} title
+ * @returns {PartialOptionsGroup}
+ */
+function outputsFolder(outputs, color, title) {
+  return {
+    name: "Outputs",
+    tree: [
+      countFolder(outputs.unspentCount, "Unspent", "UTXO Count", color, title),
+      {
+        name: "Spent",
+        tree: chartsFromCount({ pattern: outputs.spentCount, title, metric: "Spent UTXO Count", unit: Unit.count, color }),
+      },
+      {
+        name: "Spending Rate",
+        title: title("Spending Rate"),
+        bottom: [
+          line({ series: outputs.spendingRate, name: "Rate", color, unit: Unit.ratio }),
+        ],
+      },
+    ],
+  };
+}
+
+/**
  * @param {{ base: AnySeriesPattern, delta: DeltaPattern }} pattern
  * @param {string} name
  * @param {string} chartTitle
@@ -262,7 +310,7 @@ export function createHoldingsSection({ cohort, title }) {
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
       ],
     },
-    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", "UTXO Count", cohort.color, title),
+    outputsFolder(cohort.tree.outputs, cohort.color, title),
   ];
 }
 
@@ -286,7 +334,7 @@ export function createHoldingsSectionAll({ cohort, title }) {
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
       ],
     },
-    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", "UTXO Count", cohort.color, title),
+    outputsFolder(cohort.tree.outputs, cohort.color, title),
     countFolder(cohort.addressCount, "Addresses", "Address Count", cohort.color, title),
   ];
 }
@@ -312,7 +360,7 @@ export function createHoldingsSectionWithRelative({ cohort, title }) {
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
       ],
     },
-    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", "UTXO Count", cohort.color, title),
+    outputsFolder(cohort.tree.outputs, cohort.color, title),
   ];
 }
 
@@ -336,7 +384,7 @@ export function createHoldingsSectionWithOwnSupply({ cohort, title }) {
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
       ],
     },
-    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", "UTXO Count", cohort.color, title),
+    outputsFolder(cohort.tree.outputs, cohort.color, title),
   ];
 }
 
@@ -359,7 +407,7 @@ export function createHoldingsSectionWithProfitLoss({ cohort, title }) {
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
       ],
     },
-    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", "UTXO Count", cohort.color, title),
+    outputsFolder(cohort.tree.outputs, cohort.color, title),
   ];
 }
 
@@ -382,7 +430,7 @@ export function createHoldingsSectionAddress({ cohort, title }) {
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
       ],
     },
-    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", "UTXO Count", cohort.color, title),
+    outputsFolder(cohort.tree.outputs, cohort.color, title),
     countFolder(cohort.addressCount, "Addresses", "Address Count", cohort.color, title),
   ];
 }
@@ -405,7 +453,7 @@ export function createHoldingsSectionAddressAmount({ cohort, title }) {
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
       ],
     },
-    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", "UTXO Count", cohort.color, title),
+    outputsFolder(cohort.tree.outputs, cohort.color, title),
     countFolder(cohort.addressCount, "Addresses", "Address Count", cohort.color, title),
   ];
 }
@@ -457,7 +505,7 @@ export function createGroupedHoldingsSectionAddress({ list, all, title }) {
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },
-    groupedUtxoCountFolder(list, all, title),
+    groupedOutputsFolder(list, all, title),
     {
       name: "Addresses",
       tree: [
@@ -488,7 +536,7 @@ export function createGroupedHoldingsSectionAddressAmount({ list, all, title }) 
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },
-    groupedUtxoCountFolder(list, all, title),
+    groupedOutputsFolder(list, all, title),
     {
       name: "Addresses",
       tree: [
@@ -515,7 +563,7 @@ export function createGroupedHoldingsSection({ list, all, title }) {
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },
-    groupedUtxoCountFolder(list, all, title),
+    groupedOutputsFolder(list, all, title),
   ];
 }
 
@@ -530,7 +578,7 @@ export function createGroupedHoldingsSectionWithProfitLoss({ list, all, title })
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },
-    groupedUtxoCountFolder(list, all, title),
+    groupedOutputsFolder(list, all, title),
   ];
 }
 
@@ -546,7 +594,7 @@ export function createGroupedHoldingsSectionWithOwnSupply({ list, all, title }) 
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },
-    groupedUtxoCountFolder(list, all, title),
+    groupedOutputsFolder(list, all, title),
   ];
 }
 
@@ -568,6 +616,6 @@ export function createGroupedHoldingsSectionWithRelative({ list, all, title }) {
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },
-    groupedUtxoCountFolder(list, all, title),
+    groupedOutputsFolder(list, all, title),
   ];
 }

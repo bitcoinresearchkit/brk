@@ -151,7 +151,7 @@ fn fill_mixed_empty_field_parts(
             && let Some(suffix) = leaf.strip_prefix(&prefix)
             && !suffix.is_empty()
             && suffix.contains(field_name.trim_start_matches('_'))
-            && suffix.len() > field_name.trim_start_matches('_').len()
+            && suffix.len() >= field_name.trim_start_matches('_').len()
         {
             updates.push((field_name.clone(), suffix.to_string()));
         }
@@ -485,19 +485,21 @@ fn determine_pattern_mode(
 ) -> Option<PatternMode> {
     analyses.first()?;
 
-    // If any instance has outlier naming (no common prefix/suffix among children),
-    // the pattern can't be parameterized.
-    if analyses.iter().any(|a| a.has_outlier) {
+    // Filter out outlier instances — they'll be inlined individually at generation
+    // time via the per-instance has_outlier check in prepare_tree_node.
+    // Don't let a single outlier poison the entire pattern.
+    let non_outlier: Vec<&InstanceAnalysis> = analyses.iter().filter(|a| !a.has_outlier).collect();
+    if non_outlier.is_empty() {
         return None;
     }
 
     // Pick the majority mode
-    let suffix_count = analyses.iter().filter(|a| a.is_suffix_mode).count();
-    let is_suffix = suffix_count * 2 >= analyses.len();
+    let suffix_count = non_outlier.iter().filter(|a| a.is_suffix_mode).count();
+    let is_suffix = suffix_count * 2 >= non_outlier.len();
 
     // All instances of the majority mode must agree on field_parts
-    let majority: Vec<_> = analyses
-        .iter()
+    let majority: Vec<&InstanceAnalysis> = non_outlier
+        .into_iter()
         .filter(|a| a.is_suffix_mode == is_suffix)
         .collect();
     let first_majority = majority.first()?;

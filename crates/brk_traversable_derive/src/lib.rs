@@ -309,10 +309,16 @@ fn gen_traversable(input: &DeriveInput) -> proc_macro2::TokenStream {
         &field_traversable_types,
     );
 
+    let to_tree_node_body = if struct_attr.hidden {
+        quote! { brk_traversable::TreeNode::Branch(brk_traversable::IndexMap::new()) }
+    } else {
+        field_traversals
+    };
+
     quote! {
         impl #impl_generics Traversable for #name #ty_generics #where_clause {
             fn to_tree_node(&self) -> brk_traversable::TreeNode {
-                #field_traversals
+                #to_tree_node_body
             }
 
             #iterator_impl

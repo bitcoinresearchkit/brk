@@ -104,11 +104,6 @@
  * @typedef {number} Bitcoin
  */
 /**
- * Position within a .blk file, encoding file index and byte offset
- *
- * @typedef {number} BlkPosition
- */
-/**
  * @typedef {Object} BlockCountParam
  * @property {number} blockCount - Number of recent blocks to include
  */
@@ -1853,6 +1848,29 @@ function createAverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(
  */
 
 /**
+ * Create a AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern pattern node
+ * @template T
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<T>}
+ */
+function createAverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc) {
+  return {
+    average: create_1m1w1y24hPattern(client, _m(acc, 'average')),
+    base: createSeriesPattern18(client, acc),
+    cumulative: createSeriesPattern1(client, _m(acc, 'cumulative')),
+    max: create_1m1w1y24hPattern(client, _m(acc, 'max')),
+    median: create_1m1w1y24hPattern(client, _m(acc, 'median')),
+    min: create_1m1w1y24hPattern(client, _m(acc, 'min')),
+    pct10: create_1m1w1y24hPattern(client, _m(acc, 'pct10')),
+    pct25: create_1m1w1y24hPattern(client, _m(acc, 'pct25')),
+    pct75: create_1m1w1y24hPattern(client, _m(acc, 'pct75')),
+    pct90: create_1m1w1y24hPattern(client, _m(acc, 'pct90')),
+    sum: create_1m1w1y24hPattern(client, _m(acc, 'sum')),
+  };
+}
+
+/**
  * @typedef {Object} AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3
  * @property {SeriesPattern1<StoredU64>} all
  * @property {SeriesPattern1<StoredU64>} p2a
@@ -1930,6 +1948,26 @@ function createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc) {
  * @property {CentsToUsdPattern4} profit
  * @property {GreedNetPainPattern} sentiment
  */
+
+/**
+ * Create a GrossInvestedInvestorLossNetNuplProfitSentimentPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {GrossInvestedInvestorLossNetNuplProfitSentimentPattern2}
+ */
+function createGrossInvestedInvestorLossNetNuplProfitSentimentPattern2(client, acc) {
+  return {
+    grossPnl: createCentsUsdPattern3(client, _m(acc, 'unrealized_gross_pnl')),
+    investedCapital: createInPattern(client, _m(acc, 'invested_capital_in')),
+    investorCapInLossRaw: createSeriesPattern18(client, _m(acc, 'investor_cap_in_loss_raw')),
+    investorCapInProfitRaw: createSeriesPattern18(client, _m(acc, 'investor_cap_in_profit_raw')),
+    loss: createCentsNegativeToUsdPattern2(client, _m(acc, 'unrealized_loss')),
+    netPnl: createCentsToUsdPattern3(client, _m(acc, 'net_unrealized_pnl')),
+    nupl: createBpsRatioPattern(client, _m(acc, 'nupl')),
+    profit: createCentsToUsdPattern4(client, _m(acc, 'unrealized_profit')),
+    sentiment: createGreedNetPainPattern(client, acc),
+  };
+}
 
 /**
  * @typedef {Object} BpsCentsPercentilesRatioSatsSmaStdUsdPattern
@@ -2042,6 +2080,24 @@ function createCapLossMvrvNetPriceProfitSoprPattern(client, acc) {
  */
 
 /**
+ * Create a InMaxMinPerSupplyPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {InMaxMinPerSupplyPattern}
+ */
+function createInMaxMinPerSupplyPattern(client, acc) {
+  return {
+    inLoss: createPerPattern(client, _m(acc, 'cost_basis_in_loss_per')),
+    inProfit: createPerPattern(client, _m(acc, 'cost_basis_in_profit_per')),
+    max: createCentsSatsUsdPattern(client, _m(acc, 'cost_basis_max')),
+    min: createCentsSatsUsdPattern(client, _m(acc, 'cost_basis_min')),
+    perCoin: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, _m(acc, 'cost_basis_per_coin')),
+    perDollar: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(client, _m(acc, 'cost_basis_per_dollar')),
+    supplyDensity: createBpsPercentRatioPattern3(client, _m(acc, 'supply_density')),
+  };
+}
+
+/**
  * @typedef {Object} MaxMedianMinPct10Pct25Pct75Pct90Pattern2
  * @property {SeriesPattern18<Weight>} max
  * @property {SeriesPattern18<Weight>} median
@@ -2137,6 +2193,23 @@ function create_1m1w1y2y4yAllPattern(client, acc) {
  * @property {DeltaTotalPattern} supply
  * @property {NuplPattern} unrealized
  */
+
+/**
+ * Create a ActivityAddrOutputsRealizedSupplyUnrealizedPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {ActivityAddrOutputsRealizedSupplyUnrealizedPattern}
+ */
+function createActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, acc) {
+  return {
+    activity: createTransferPattern(client, _m(acc, 'transfer_volume')),
+    addrCount: createBaseDeltaPattern(client, _m(acc, 'addr_count')),
+    outputs: createSpendingSpentUnspentPattern(client, acc),
+    realized: createCapLossMvrvPriceProfitPattern(client, acc),
+    supply: createDeltaTotalPattern(client, _m(acc, 'supply')),
+    unrealized: createNuplPattern(client, _m(acc, 'nupl')),
+  };
+}
 
 /**
  * @typedef {Object} AverageBlockCumulativeInSumPattern
@@ -2362,6 +2435,22 @@ function create_1m1w1y24hBlockPattern(client, acc) {
  */
 
 /**
+ * Create a ActivityOutputsRealizedSupplyUnrealizedPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {ActivityOutputsRealizedSupplyUnrealizedPattern}
+ */
+function createActivityOutputsRealizedSupplyUnrealizedPattern(client, acc) {
+  return {
+    activity: createCoindaysTransferPattern(client, acc),
+    outputs: createSpendingSpentUnspentPattern(client, acc),
+    realized: createCapLossMvrvNetPriceProfitSoprPattern(client, acc),
+    supply: createDeltaHalfInToTotalPattern(client, _m(acc, 'supply')),
+    unrealized: createLossNetNuplProfitPattern(client, acc),
+  };
+}
+
+/**
  * @typedef {Object} ActivityOutputsRealizedSupplyUnrealizedPattern3
  * @property {TransferPattern} activity
  * @property {SpendingSpentUnspentPattern} outputs
@@ -2371,6 +2460,22 @@ function create_1m1w1y24hBlockPattern(client, acc) {
  */
 
 /**
+ * Create a ActivityOutputsRealizedSupplyUnrealizedPattern3 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {ActivityOutputsRealizedSupplyUnrealizedPattern3}
+ */
+function createActivityOutputsRealizedSupplyUnrealizedPattern3(client, acc) {
+  return {
+    activity: createTransferPattern(client, _m(acc, 'transfer_volume')),
+    outputs: createSpendingSpentUnspentPattern(client, acc),
+    realized: createCapLossMvrvPriceProfitPattern(client, acc),
+    supply: createDeltaHalfInTotalPattern2(client, _m(acc, 'supply')),
+    unrealized: createLossNuplProfitPattern(client, acc),
+  };
+}
+
+/**
  * @typedef {Object} ActivityOutputsRealizedSupplyUnrealizedPattern2
  * @property {TransferPattern} activity
  * @property {SpendingSpentUnspentPattern} outputs
@@ -2378,6 +2483,22 @@ function create_1m1w1y24hBlockPattern(client, acc) {
  * @property {DeltaTotalPattern} supply
  * @property {NuplPattern} unrealized
  */
+
+/**
+ * Create a ActivityOutputsRealizedSupplyUnrealizedPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {ActivityOutputsRealizedSupplyUnrealizedPattern2}
+ */
+function createActivityOutputsRealizedSupplyUnrealizedPattern2(client, acc) {
+  return {
+    activity: createTransferPattern(client, _m(acc, 'transfer_volume')),
+    outputs: createSpendingSpentUnspentPattern(client, acc),
+    realized: createCapLossMvrvPriceProfitPattern(client, acc),
+    supply: createDeltaTotalPattern(client, _m(acc, 'supply')),
+    unrealized: createNuplPattern(client, _m(acc, 'nupl')),
+  };
+}
 
 /**
  * @typedef {Object} BlockChangeCumulativeDeltaSumPattern
@@ -3021,6 +3142,21 @@ function createCentsToUsdPattern3(client, acc) {
  */
 
 /**
+ * Create a CoindaysCoinyearsDormancyTransferPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {CoindaysCoinyearsDormancyTransferPattern}
+ */
+function createCoindaysCoinyearsDormancyTransferPattern(client, acc) {
+  return {
+    coindaysDestroyed: createAverageBlockCumulativeSumPattern(client, _m(acc, 'coindays_destroyed')),
+    coinyearsDestroyed: createSeriesPattern1(client, _m(acc, 'coinyears_destroyed')),
+    dormancy: create_1m1w1y24hPattern(client, _m(acc, 'dormancy')),
+    transferVolume: createAverageBlockCumulativeInSumPattern(client, _m(acc, 'transfer_volume')),
+  };
+}
+
+/**
  * @typedef {Object} LossNetNuplProfitPattern
  * @property {CentsNegativeUsdPattern} loss
  * @property {CentsUsdPattern} netPnl
@@ -3060,9 +3196,9 @@ function createLossNetNuplProfitPattern(client, acc) {
 function createNuplRealizedSupplyUnrealizedPattern(client, acc) {
   return {
     nupl: createBpsRatioPattern(client, _m(acc, 'nupl')),
-    realizedCap: createAllSthPattern(client, acc, ''),
+    realizedCap: createAllSthPattern(client, acc, 'realized_cap'),
     supply: createAllSthPattern2(client, acc),
-    unrealizedPnl: createAllSthPattern(client, acc, ''),
+    unrealizedPnl: createAllSthPattern(client, acc, 'unrealized_pnl'),
   };
 }
 
@@ -3122,6 +3258,20 @@ function createAverageBlockCumulativeSumPattern(client, acc) {
  * @property {_1m1w1y24hPattern<StoredF64>} ratio
  * @property {AverageBlockCumulativeSumPattern<Cents>} valueDestroyed
  */
+
+/**
+ * Create a AdjustedRatioValuePattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {AdjustedRatioValuePattern}
+ */
+function createAdjustedRatioValuePattern(client, acc) {
+  return {
+    adjusted: createRatioTransferValuePattern(client, acc),
+    ratio: create_1m1w1y24hPattern(client, _m(acc, 'sopr')),
+    valueDestroyed: createAverageBlockCumulativeSumPattern(client, _m(acc, 'value_destroyed')),
+  };
+}
 
 /**
  * @typedef {Object} BlockCumulativeSumPattern
@@ -3384,6 +3534,20 @@ function createCumulativeRollingSumPattern(client, acc) {
  */
 
 /**
+ * Create a GreedNetPainPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {GreedNetPainPattern}
+ */
+function createGreedNetPainPattern(client, acc) {
+  return {
+    greedIndex: createCentsUsdPattern3(client, _m(acc, 'greed_index')),
+    net: createCentsUsdPattern(client, _m(acc, 'net_sentiment')),
+    painIndex: createCentsUsdPattern3(client, _m(acc, 'pain_index')),
+  };
+}
+
+/**
  * @typedef {Object} LossNuplProfitPattern
  * @property {CentsNegativeUsdPattern} loss
  * @property {BpsRatioPattern} nupl
@@ -3410,6 +3574,20 @@ function createLossNuplProfitPattern(client, acc) {
  * @property {AverageBlockCumulativeSumPattern<Cents>} transferVolume
  * @property {AverageBlockCumulativeSumPattern<Cents>} valueDestroyed
  */
+
+/**
+ * Create a RatioTransferValuePattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {RatioTransferValuePattern}
+ */
+function createRatioTransferValuePattern(client, acc) {
+  return {
+    ratio: create_1m1w1y24hPattern(client, _m(acc, 'asopr')),
+    transferVolume: createAverageBlockCumulativeSumPattern(client, _m(acc, 'adj_value_created')),
+    valueDestroyed: createAverageBlockCumulativeSumPattern(client, _m(acc, 'adj_value_destroyed')),
+  };
+}
 
 /**
  * @typedef {Object} RsiStochPattern
@@ -3439,6 +3617,20 @@ function createRsiStochPattern(client, acc, disc) {
  * @property {AverageBlockCumulativeSumPattern2} spentCount
  * @property {BaseDeltaPattern} unspentCount
  */
+
+/**
+ * Create a SpendingSpentUnspentPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {SpendingSpentUnspentPattern}
+ */
+function createSpendingSpentUnspentPattern(client, acc) {
+  return {
+    spendingRate: createSeriesPattern1(client, _m(acc, 'spending_rate')),
+    spentCount: createAverageBlockCumulativeSumPattern2(client, _m(acc, 'spent_utxo_count')),
+    unspentCount: createBaseDeltaPattern(client, _m(acc, 'utxo_count')),
+  };
+}
 
 /**
  * @template T
@@ -3967,7 +4159,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Blocks_Difficulty} difficulty
  * @property {SeriesTree_Blocks_Time} time
  * @property {SeriesTree_Blocks_Size} size
- * @property {SeriesTree_Blocks_Weight} weight
+ * @property {AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<Weight>} weight
  * @property {SeriesTree_Blocks_Count} count
  * @property {SeriesTree_Blocks_Lookback} lookback
  * @property {SeriesTree_Blocks_Interval} interval
@@ -4006,21 +4198,6 @@ function createTransferPattern(client, acc) {
  * @property {_1m1w1y24hPattern<StoredU64>} median
  * @property {_1m1w1y24hPattern<StoredU64>} pct75
  * @property {_1m1w1y24hPattern<StoredU64>} pct90
- */
-
-/**
- * @typedef {Object} SeriesTree_Blocks_Weight
- * @property {SeriesPattern18<Weight>} base
- * @property {SeriesPattern1<Weight>} cumulative
- * @property {_1m1w1y24hPattern<Weight>} sum
- * @property {_1m1w1y24hPattern<StoredF32>} average
- * @property {_1m1w1y24hPattern<Weight>} min
- * @property {_1m1w1y24hPattern<Weight>} max
- * @property {_1m1w1y24hPattern<Weight>} pct10
- * @property {_1m1w1y24hPattern<Weight>} pct25
- * @property {_1m1w1y24hPattern<Weight>} median
- * @property {_1m1w1y24hPattern<Weight>} pct75
- * @property {_1m1w1y24hPattern<Weight>} pct90
  */
 
 /**
@@ -4479,8 +4656,6 @@ function createTransferPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Positions
- * @property {SeriesPattern18<BlkPosition>} block
- * @property {SeriesPattern19<BlkPosition>} tx
  */
 
 /**
@@ -5610,26 +5785,11 @@ function createTransferPattern(client, acc) {
 /**
  * @typedef {Object} SeriesTree_Cohorts_Utxo_Sth
  * @property {DeltaHalfInToTotalPattern2} supply
- * @property {SeriesTree_Cohorts_Utxo_Sth_Outputs} outputs
- * @property {SeriesTree_Cohorts_Utxo_Sth_Activity} activity
+ * @property {SpendingSpentUnspentPattern} outputs
+ * @property {CoindaysCoinyearsDormancyTransferPattern} activity
  * @property {SeriesTree_Cohorts_Utxo_Sth_Realized} realized
- * @property {SeriesTree_Cohorts_Utxo_Sth_CostBasis} costBasis
- * @property {SeriesTree_Cohorts_Utxo_Sth_Unrealized} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Sth_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Sth_Activity
- * @property {AverageBlockCumulativeInSumPattern} transferVolume
- * @property {AverageBlockCumulativeSumPattern<StoredF64>} coindaysDestroyed
- * @property {SeriesPattern1<StoredF64>} coinyearsDestroyed
- * @property {_1m1w1y24hPattern<StoredF32>} dormancy
+ * @property {InMaxMinPerSupplyPattern} costBasis
+ * @property {GrossInvestedInvestorLossNetNuplProfitSentimentPattern2} unrealized
  */
 
 /**
@@ -5640,7 +5800,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Cohorts_Utxo_Sth_Realized_Price} price
  * @property {SeriesPattern1<StoredF32>} mvrv
  * @property {BlockChangeCumulativeDeltaSumPattern} netPnl
- * @property {SeriesTree_Cohorts_Utxo_Sth_Realized_Sopr} sopr
+ * @property {AdjustedRatioValuePattern} sopr
  * @property {BlockCumulativeSumPattern} grossPnl
  * @property {_1m1w1y24hPattern7} sellSideRiskRatio
  * @property {BlockCumulativeSumPattern} peakRegret
@@ -5745,73 +5905,13 @@ function createTransferPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Sth_Realized_Sopr
- * @property {AverageBlockCumulativeSumPattern<Cents>} valueDestroyed
- * @property {_1m1w1y24hPattern<StoredF64>} ratio
- * @property {SeriesTree_Cohorts_Utxo_Sth_Realized_Sopr_Adjusted} adjusted
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Sth_Realized_Sopr_Adjusted
- * @property {_1m1w1y24hPattern<StoredF64>} ratio
- * @property {AverageBlockCumulativeSumPattern<Cents>} transferVolume
- * @property {AverageBlockCumulativeSumPattern<Cents>} valueDestroyed
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Sth_CostBasis
- * @property {PerPattern} inProfit
- * @property {PerPattern} inLoss
- * @property {CentsSatsUsdPattern} min
- * @property {CentsSatsUsdPattern} max
- * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} perCoin
- * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} perDollar
- * @property {BpsPercentRatioPattern3} supplyDensity
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Sth_Unrealized
- * @property {BpsRatioPattern} nupl
- * @property {CentsToUsdPattern4} profit
- * @property {CentsNegativeToUsdPattern2} loss
- * @property {CentsToUsdPattern3} netPnl
- * @property {CentsUsdPattern3} grossPnl
- * @property {InPattern} investedCapital
- * @property {SeriesPattern18<CentsSquaredSats>} investorCapInProfitRaw
- * @property {SeriesPattern18<CentsSquaredSats>} investorCapInLossRaw
- * @property {SeriesTree_Cohorts_Utxo_Sth_Unrealized_Sentiment} sentiment
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Sth_Unrealized_Sentiment
- * @property {CentsUsdPattern3} painIndex
- * @property {CentsUsdPattern3} greedIndex
- * @property {CentsUsdPattern} net
- */
-
-/**
  * @typedef {Object} SeriesTree_Cohorts_Utxo_Lth
  * @property {DeltaHalfInToTotalPattern2} supply
- * @property {SeriesTree_Cohorts_Utxo_Lth_Outputs} outputs
- * @property {SeriesTree_Cohorts_Utxo_Lth_Activity} activity
+ * @property {SpendingSpentUnspentPattern} outputs
+ * @property {CoindaysCoinyearsDormancyTransferPattern} activity
  * @property {SeriesTree_Cohorts_Utxo_Lth_Realized} realized
- * @property {SeriesTree_Cohorts_Utxo_Lth_CostBasis} costBasis
- * @property {SeriesTree_Cohorts_Utxo_Lth_Unrealized} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Lth_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Lth_Activity
- * @property {AverageBlockCumulativeInSumPattern} transferVolume
- * @property {AverageBlockCumulativeSumPattern<StoredF64>} coindaysDestroyed
- * @property {SeriesPattern1<StoredF64>} coinyearsDestroyed
- * @property {_1m1w1y24hPattern<StoredF32>} dormancy
+ * @property {InMaxMinPerSupplyPattern} costBasis
+ * @property {GrossInvestedInvestorLossNetNuplProfitSentimentPattern2} unrealized
  */
 
 /**
@@ -5933,2314 +6033,171 @@ function createTransferPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Lth_CostBasis
- * @property {PerPattern} inProfit
- * @property {PerPattern} inLoss
- * @property {CentsSatsUsdPattern} min
- * @property {CentsSatsUsdPattern} max
- * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} perCoin
- * @property {Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern} perDollar
- * @property {BpsPercentRatioPattern3} supplyDensity
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Lth_Unrealized
- * @property {BpsRatioPattern} nupl
- * @property {CentsToUsdPattern4} profit
- * @property {CentsNegativeToUsdPattern2} loss
- * @property {CentsToUsdPattern3} netPnl
- * @property {CentsUsdPattern3} grossPnl
- * @property {InPattern} investedCapital
- * @property {SeriesPattern18<CentsSquaredSats>} investorCapInProfitRaw
- * @property {SeriesPattern18<CentsSquaredSats>} investorCapInLossRaw
- * @property {SeriesTree_Cohorts_Utxo_Lth_Unrealized_Sentiment} sentiment
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Lth_Unrealized_Sentiment
- * @property {CentsUsdPattern3} painIndex
- * @property {CentsUsdPattern3} greedIndex
- * @property {CentsUsdPattern} net
- */
-
-/**
  * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_Under1h} under1h
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_1hTo1d} _1hTo1d
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_1dTo1w} _1dTo1w
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_1wTo1m} _1wTo1m
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_1mTo2m} _1mTo2m
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_2mTo3m} _2mTo3m
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_3mTo4m} _3mTo4m
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_4mTo5m} _4mTo5m
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_5mTo6m} _5mTo6m
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_6mTo1y} _6mTo1y
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_1yTo2y} _1yTo2y
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_2yTo3y} _2yTo3y
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_3yTo4y} _3yTo4y
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_4yTo5y} _4yTo5y
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_5yTo6y} _5yTo6y
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_6yTo7y} _6yTo7y
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_7yTo8y} _7yTo8y
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_8yTo10y} _8yTo10y
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_10yTo12y} _10yTo12y
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_12yTo15y} _12yTo15y
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_Over15y} over15y
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_Under1h
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_Under1h_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_Under1h_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_1hTo1d
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_1hTo1d_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_1hTo1d_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_1dTo1w
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_1dTo1w_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_1dTo1w_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_1wTo1m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_1wTo1m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_1wTo1m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_1mTo2m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_1mTo2m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_1mTo2m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_2mTo3m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_2mTo3m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_2mTo3m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_3mTo4m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_3mTo4m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_3mTo4m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_4mTo5m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_4mTo5m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_4mTo5m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_5mTo6m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_5mTo6m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_5mTo6m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_6mTo1y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_6mTo1y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_6mTo1y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_1yTo2y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_1yTo2y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_1yTo2y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_2yTo3y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_2yTo3y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_2yTo3y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_3yTo4y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_3yTo4y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_3yTo4y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_4yTo5y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_4yTo5y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_4yTo5y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_5yTo6y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_5yTo6y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_5yTo6y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_6yTo7y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_6yTo7y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_6yTo7y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_7yTo8y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_7yTo8y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_7yTo8y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_8yTo10y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_8yTo10y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_8yTo10y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_10yTo12y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_10yTo12y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_10yTo12y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_12yTo15y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_12yTo15y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_12yTo15y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_Over15y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AgeRange_Over15y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AgeRange_Over15y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} under1h
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _1hTo1d
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _1dTo1w
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _1wTo1m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _1mTo2m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2mTo3m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _3mTo4m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _4mTo5m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _5mTo6m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _6mTo1y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _1yTo2y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2yTo3y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _3yTo4y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _4yTo5y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _5yTo6y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _6yTo7y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _7yTo8y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _8yTo10y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _10yTo12y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _12yTo15y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} over15y
  */
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_1w} _1w
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_1m} _1m
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_2m} _2m
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_3m} _3m
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_4m} _4m
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_5m} _5m
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_6m} _6m
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_1y} _1y
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_2y} _2y
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_3y} _3y
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_4y} _4y
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_5y} _5y
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_6y} _6y
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_7y} _7y
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_8y} _8y
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_10y} _10y
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_12y} _12y
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_15y} _15y
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_1w
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_1w_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_1w_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_1m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_1m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_1m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_2m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_2m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_2m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_3m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_3m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_3m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_4m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_4m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_4m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_5m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_5m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_5m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_6m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_6m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_6m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_1y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_1y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_1y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_2y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_2y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_2y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_3y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_3y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_3y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_4y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_4y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_4y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_5y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_5y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_5y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_6y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_6y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_6y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_7y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_7y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_7y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_8y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_8y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_8y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_10y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_10y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_10y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_12y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_12y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_12y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_15y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAge_15y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAge_15y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _1w
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _1m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _3m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _4m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _5m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _6m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _1y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _3y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _4y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _5y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _6y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _7y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _8y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _10y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _12y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _15y
  */
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge
- * @property {SeriesTree_Cohorts_Utxo_OverAge_1d} _1d
- * @property {SeriesTree_Cohorts_Utxo_OverAge_1w} _1w
- * @property {SeriesTree_Cohorts_Utxo_OverAge_1m} _1m
- * @property {SeriesTree_Cohorts_Utxo_OverAge_2m} _2m
- * @property {SeriesTree_Cohorts_Utxo_OverAge_3m} _3m
- * @property {SeriesTree_Cohorts_Utxo_OverAge_4m} _4m
- * @property {SeriesTree_Cohorts_Utxo_OverAge_5m} _5m
- * @property {SeriesTree_Cohorts_Utxo_OverAge_6m} _6m
- * @property {SeriesTree_Cohorts_Utxo_OverAge_1y} _1y
- * @property {SeriesTree_Cohorts_Utxo_OverAge_2y} _2y
- * @property {SeriesTree_Cohorts_Utxo_OverAge_3y} _3y
- * @property {SeriesTree_Cohorts_Utxo_OverAge_4y} _4y
- * @property {SeriesTree_Cohorts_Utxo_OverAge_5y} _5y
- * @property {SeriesTree_Cohorts_Utxo_OverAge_6y} _6y
- * @property {SeriesTree_Cohorts_Utxo_OverAge_7y} _7y
- * @property {SeriesTree_Cohorts_Utxo_OverAge_8y} _8y
- * @property {SeriesTree_Cohorts_Utxo_OverAge_10y} _10y
- * @property {SeriesTree_Cohorts_Utxo_OverAge_12y} _12y
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_1d
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_1d_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_1d_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_1w
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_1w_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_1w_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_1m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_1m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_1m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_2m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_2m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_2m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_3m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_3m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_3m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_4m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_4m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_4m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_5m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_5m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_5m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_6m
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_6m_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_6m_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_1y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_1y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_1y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_2y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_2y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_2y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_3y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_3y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_3y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_4y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_4y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_4y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_5y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_5y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_5y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_6y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_6y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_6y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_7y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_7y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_7y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_8y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_8y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_8y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_10y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_10y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_10y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_12y
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAge_12y_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAge_12y_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _1d
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _1w
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _1m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _3m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _4m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _5m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _6m
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _1y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _3y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _4y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _5y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _6y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _7y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _8y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _10y
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _12y
  */
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Utxo_Epoch
- * @property {SeriesTree_Cohorts_Utxo_Epoch_0} _0
- * @property {SeriesTree_Cohorts_Utxo_Epoch_1} _1
- * @property {SeriesTree_Cohorts_Utxo_Epoch_2} _2
- * @property {SeriesTree_Cohorts_Utxo_Epoch_3} _3
- * @property {SeriesTree_Cohorts_Utxo_Epoch_4} _4
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Epoch_0
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Epoch_0_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Epoch_0_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Epoch_1
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Epoch_1_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Epoch_1_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Epoch_2
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Epoch_2_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Epoch_2_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Epoch_3
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Epoch_3_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Epoch_3_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Epoch_4
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Epoch_4_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Epoch_4_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _0
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _1
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _3
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _4
  */
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Utxo_Class
- * @property {SeriesTree_Cohorts_Utxo_Class_2009} _2009
- * @property {SeriesTree_Cohorts_Utxo_Class_2010} _2010
- * @property {SeriesTree_Cohorts_Utxo_Class_2011} _2011
- * @property {SeriesTree_Cohorts_Utxo_Class_2012} _2012
- * @property {SeriesTree_Cohorts_Utxo_Class_2013} _2013
- * @property {SeriesTree_Cohorts_Utxo_Class_2014} _2014
- * @property {SeriesTree_Cohorts_Utxo_Class_2015} _2015
- * @property {SeriesTree_Cohorts_Utxo_Class_2016} _2016
- * @property {SeriesTree_Cohorts_Utxo_Class_2017} _2017
- * @property {SeriesTree_Cohorts_Utxo_Class_2018} _2018
- * @property {SeriesTree_Cohorts_Utxo_Class_2019} _2019
- * @property {SeriesTree_Cohorts_Utxo_Class_2020} _2020
- * @property {SeriesTree_Cohorts_Utxo_Class_2021} _2021
- * @property {SeriesTree_Cohorts_Utxo_Class_2022} _2022
- * @property {SeriesTree_Cohorts_Utxo_Class_2023} _2023
- * @property {SeriesTree_Cohorts_Utxo_Class_2024} _2024
- * @property {SeriesTree_Cohorts_Utxo_Class_2025} _2025
- * @property {SeriesTree_Cohorts_Utxo_Class_2026} _2026
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2009
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2009_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2009_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2010
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2010_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2010_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2011
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2011_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2011_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2012
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2012_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2012_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2013
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2013_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2013_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2014
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2014_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2014_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2015
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2015_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2015_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2016
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2016_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2016_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2017
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2017_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2017_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2018
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2018_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2018_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2019
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2019_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2019_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2020
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2020_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2020_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2021
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2021_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2021_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2022
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2022_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2022_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2023
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2023_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2023_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2024
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2024_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2024_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2025
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2025_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2025_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2026
- * @property {DeltaHalfInToTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_Class_2026_Outputs} outputs
- * @property {CoindaysTransferPattern} activity
- * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {LossNetNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Class_2026_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2009
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2010
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2011
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2012
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2013
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2014
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2015
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2016
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2017
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2018
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2019
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2020
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2021
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2022
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2023
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2024
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2025
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern} _2026
  */
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_1sat} _1sat
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_10sats} _10sats
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_100sats} _100sats
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_1kSats} _1kSats
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_10kSats} _10kSats
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_100kSats} _100kSats
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_1mSats} _1mSats
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_10mSats} _10mSats
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_1btc} _1btc
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_10btc} _10btc
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_100btc} _100btc
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_1kBtc} _1kBtc
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_10kBtc} _10kBtc
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_1sat
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_1sat_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_1sat_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_10sats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_10sats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_10sats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_100sats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_100sats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_100sats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_1kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_1kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_1kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_10kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_10kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_10kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_100kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_100kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_100kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_1mSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_1mSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_1mSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_10mSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_10mSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_10mSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_1btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_1btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_1btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_10btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_10btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_10btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_100btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_100btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_100btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_1kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_1kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_1kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_10kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_OverAmount_10kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_OverAmount_10kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1sat
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10sats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _100sats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1kSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10kSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _100kSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1mSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10mSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1btc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10btc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _100btc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1kBtc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10kBtc
  */
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_0sats} _0sats
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_1satTo10sats} _1satTo10sats
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_10satsTo100sats} _10satsTo100sats
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_100satsTo1kSats} _100satsTo1kSats
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_1kSatsTo10kSats} _1kSatsTo10kSats
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_10kSatsTo100kSats} _10kSatsTo100kSats
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_100kSatsTo1mSats} _100kSatsTo1mSats
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_1mSatsTo10mSats} _1mSatsTo10mSats
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_10mSatsTo1btc} _10mSatsTo1btc
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_1btcTo10btc} _1btcTo10btc
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_10btcTo100btc} _10btcTo100btc
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_100btcTo1kBtc} _100btcTo1kBtc
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_1kBtcTo10kBtc} _1kBtcTo10kBtc
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_10kBtcTo100kBtc} _10kBtcTo100kBtc
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_Over100kBtc} over100kBtc
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_0sats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_0sats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_0sats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_1satTo10sats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_1satTo10sats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_1satTo10sats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_10satsTo100sats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_10satsTo100sats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_10satsTo100sats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_100satsTo1kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_100satsTo1kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_100satsTo1kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_1kSatsTo10kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_1kSatsTo10kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_1kSatsTo10kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_10kSatsTo100kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_10kSatsTo100kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_10kSatsTo100kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_100kSatsTo1mSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_100kSatsTo1mSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_100kSatsTo1mSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_1mSatsTo10mSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_1mSatsTo10mSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_1mSatsTo10mSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_10mSatsTo1btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_10mSatsTo1btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_10mSatsTo1btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_1btcTo10btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_1btcTo10btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_1btcTo10btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_10btcTo100btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_10btcTo100btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_10btcTo100btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_100btcTo1kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_100btcTo1kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_100btcTo1kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_1kBtcTo10kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_1kBtcTo10kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_1kBtcTo10kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_10kBtcTo100kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_10kBtcTo100kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_10kBtcTo100kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_Over100kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_AmountRange_Over100kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_AmountRange_Over100kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _0sats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1satTo10sats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10satsTo100sats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _100satsTo1kSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1kSatsTo10kSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10kSatsTo100kSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _100kSatsTo1mSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1mSatsTo10mSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10mSatsTo1btc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1btcTo10btc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10btcTo100btc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _100btcTo1kBtc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1kBtcTo10kBtc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10kBtcTo100kBtc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} over100kBtc
  */
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_10sats} _10sats
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_100sats} _100sats
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_1kSats} _1kSats
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_10kSats} _10kSats
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_100kSats} _100kSats
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_1mSats} _1mSats
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_10mSats} _10mSats
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_1btc} _1btc
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_10btc} _10btc
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_100btc} _100btc
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_1kBtc} _1kBtc
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_10kBtc} _10kBtc
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_100kBtc} _100kBtc
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_10sats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_10sats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_10sats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_100sats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_100sats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_100sats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_1kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_1kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_1kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_10kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_10kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_10kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_100kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_100kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_100kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_1mSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_1mSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_1mSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_10mSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_10mSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_10mSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_1btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_1btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_1btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_10btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_10btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_10btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_100btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_100btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_100btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_1kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_1kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_1kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_10kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_10kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_10kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_100kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Utxo_UnderAmount_100kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_UnderAmount_100kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10sats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _100sats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1kSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10kSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _100kSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1mSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10mSats
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1btc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10btc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _100btc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _1kBtc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _10kBtc
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern2} _100kBtc
  */
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Utxo_Type
- * @property {SeriesTree_Cohorts_Utxo_Type_P2pk65} p2pk65
- * @property {SeriesTree_Cohorts_Utxo_Type_P2pk33} p2pk33
- * @property {SeriesTree_Cohorts_Utxo_Type_P2pkh} p2pkh
- * @property {SeriesTree_Cohorts_Utxo_Type_P2ms} p2ms
- * @property {SeriesTree_Cohorts_Utxo_Type_P2sh} p2sh
- * @property {SeriesTree_Cohorts_Utxo_Type_P2wpkh} p2wpkh
- * @property {SeriesTree_Cohorts_Utxo_Type_P2wsh} p2wsh
- * @property {SeriesTree_Cohorts_Utxo_Type_P2tr} p2tr
- * @property {SeriesTree_Cohorts_Utxo_Type_P2a} p2a
- * @property {SeriesTree_Cohorts_Utxo_Type_Unknown} unknown
- * @property {SeriesTree_Cohorts_Utxo_Type_Empty} empty
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2pk65
- * @property {DeltaHalfInTotalPattern2} supply
- * @property {SeriesTree_Cohorts_Utxo_Type_P2pk65_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {LossNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2pk65_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2pk33
- * @property {DeltaHalfInTotalPattern2} supply
- * @property {SeriesTree_Cohorts_Utxo_Type_P2pk33_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {LossNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2pk33_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2pkh
- * @property {DeltaHalfInTotalPattern2} supply
- * @property {SeriesTree_Cohorts_Utxo_Type_P2pkh_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {LossNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2pkh_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2ms
- * @property {DeltaHalfInTotalPattern2} supply
- * @property {SeriesTree_Cohorts_Utxo_Type_P2ms_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {LossNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2ms_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2sh
- * @property {DeltaHalfInTotalPattern2} supply
- * @property {SeriesTree_Cohorts_Utxo_Type_P2sh_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {LossNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2sh_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2wpkh
- * @property {DeltaHalfInTotalPattern2} supply
- * @property {SeriesTree_Cohorts_Utxo_Type_P2wpkh_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {LossNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2wpkh_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2wsh
- * @property {DeltaHalfInTotalPattern2} supply
- * @property {SeriesTree_Cohorts_Utxo_Type_P2wsh_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {LossNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2wsh_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2tr
- * @property {DeltaHalfInTotalPattern2} supply
- * @property {SeriesTree_Cohorts_Utxo_Type_P2tr_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {LossNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2tr_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2a
- * @property {DeltaHalfInTotalPattern2} supply
- * @property {SeriesTree_Cohorts_Utxo_Type_P2a_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {LossNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_P2a_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_Unknown
- * @property {DeltaHalfInTotalPattern2} supply
- * @property {SeriesTree_Cohorts_Utxo_Type_Unknown_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {LossNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_Unknown_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_Empty
- * @property {DeltaHalfInTotalPattern2} supply
- * @property {SeriesTree_Cohorts_Utxo_Type_Empty_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {LossNuplProfitPattern} unrealized
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_Type_Empty_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern3} p2pk65
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern3} p2pk33
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern3} p2pkh
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern3} p2ms
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern3} p2sh
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern3} p2wpkh
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern3} p2wsh
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern3} p2tr
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern3} p2a
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern3} unknown
+ * @property {ActivityOutputsRealizedSupplyUnrealizedPattern3} empty
  */
 
 /**
@@ -8344,752 +6301,55 @@ function createTransferPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount
- * @property {SeriesTree_Cohorts_Addr_OverAmount_1sat} _1sat
- * @property {SeriesTree_Cohorts_Addr_OverAmount_10sats} _10sats
- * @property {SeriesTree_Cohorts_Addr_OverAmount_100sats} _100sats
- * @property {SeriesTree_Cohorts_Addr_OverAmount_1kSats} _1kSats
- * @property {SeriesTree_Cohorts_Addr_OverAmount_10kSats} _10kSats
- * @property {SeriesTree_Cohorts_Addr_OverAmount_100kSats} _100kSats
- * @property {SeriesTree_Cohorts_Addr_OverAmount_1mSats} _1mSats
- * @property {SeriesTree_Cohorts_Addr_OverAmount_10mSats} _10mSats
- * @property {SeriesTree_Cohorts_Addr_OverAmount_1btc} _1btc
- * @property {SeriesTree_Cohorts_Addr_OverAmount_10btc} _10btc
- * @property {SeriesTree_Cohorts_Addr_OverAmount_100btc} _100btc
- * @property {SeriesTree_Cohorts_Addr_OverAmount_1kBtc} _1kBtc
- * @property {SeriesTree_Cohorts_Addr_OverAmount_10kBtc} _10kBtc
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_1sat
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_OverAmount_1sat_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_1sat_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_10sats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_OverAmount_10sats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_10sats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_100sats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_OverAmount_100sats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_100sats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_1kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_OverAmount_1kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_1kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_10kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_OverAmount_10kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_10kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_100kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_OverAmount_100kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_100kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_1mSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_OverAmount_1mSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_1mSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_10mSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_OverAmount_10mSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_10mSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_1btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_OverAmount_1btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_1btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_10btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_OverAmount_10btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_10btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_100btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_OverAmount_100btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_100btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_1kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_OverAmount_1kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_1kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_10kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_OverAmount_10kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_OverAmount_10kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _1sat
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10sats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _100sats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _1kSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10kSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _100kSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _1mSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10mSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _1btc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10btc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _100btc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _1kBtc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10kBtc
  */
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange
- * @property {SeriesTree_Cohorts_Addr_AmountRange_0sats} _0sats
- * @property {SeriesTree_Cohorts_Addr_AmountRange_1satTo10sats} _1satTo10sats
- * @property {SeriesTree_Cohorts_Addr_AmountRange_10satsTo100sats} _10satsTo100sats
- * @property {SeriesTree_Cohorts_Addr_AmountRange_100satsTo1kSats} _100satsTo1kSats
- * @property {SeriesTree_Cohorts_Addr_AmountRange_1kSatsTo10kSats} _1kSatsTo10kSats
- * @property {SeriesTree_Cohorts_Addr_AmountRange_10kSatsTo100kSats} _10kSatsTo100kSats
- * @property {SeriesTree_Cohorts_Addr_AmountRange_100kSatsTo1mSats} _100kSatsTo1mSats
- * @property {SeriesTree_Cohorts_Addr_AmountRange_1mSatsTo10mSats} _1mSatsTo10mSats
- * @property {SeriesTree_Cohorts_Addr_AmountRange_10mSatsTo1btc} _10mSatsTo1btc
- * @property {SeriesTree_Cohorts_Addr_AmountRange_1btcTo10btc} _1btcTo10btc
- * @property {SeriesTree_Cohorts_Addr_AmountRange_10btcTo100btc} _10btcTo100btc
- * @property {SeriesTree_Cohorts_Addr_AmountRange_100btcTo1kBtc} _100btcTo1kBtc
- * @property {SeriesTree_Cohorts_Addr_AmountRange_1kBtcTo10kBtc} _1kBtcTo10kBtc
- * @property {SeriesTree_Cohorts_Addr_AmountRange_10kBtcTo100kBtc} _10kBtcTo100kBtc
- * @property {SeriesTree_Cohorts_Addr_AmountRange_Over100kBtc} over100kBtc
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_0sats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_0sats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_0sats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_1satTo10sats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_1satTo10sats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_1satTo10sats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_10satsTo100sats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_10satsTo100sats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_10satsTo100sats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_100satsTo1kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_100satsTo1kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_100satsTo1kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_1kSatsTo10kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_1kSatsTo10kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_1kSatsTo10kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_10kSatsTo100kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_10kSatsTo100kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_10kSatsTo100kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_100kSatsTo1mSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_100kSatsTo1mSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_100kSatsTo1mSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_1mSatsTo10mSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_1mSatsTo10mSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_1mSatsTo10mSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_10mSatsTo1btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_10mSatsTo1btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_10mSatsTo1btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_1btcTo10btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_1btcTo10btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_1btcTo10btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_10btcTo100btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_10btcTo100btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_10btcTo100btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_100btcTo1kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_100btcTo1kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_100btcTo1kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_1kBtcTo10kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_1kBtcTo10kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_1kBtcTo10kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_10kBtcTo100kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_10kBtcTo100kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_10kBtcTo100kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_Over100kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_AmountRange_Over100kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_AmountRange_Over100kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _0sats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _1satTo10sats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10satsTo100sats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _100satsTo1kSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _1kSatsTo10kSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10kSatsTo100kSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _100kSatsTo1mSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _1mSatsTo10mSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10mSatsTo1btc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _1btcTo10btc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10btcTo100btc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _100btcTo1kBtc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _1kBtcTo10kBtc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10kBtcTo100kBtc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} over100kBtc
  */
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_10sats} _10sats
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_100sats} _100sats
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_1kSats} _1kSats
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_10kSats} _10kSats
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_100kSats} _100kSats
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_1mSats} _1mSats
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_10mSats} _10mSats
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_1btc} _1btc
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_10btc} _10btc
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_100btc} _100btc
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_1kBtc} _1kBtc
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_10kBtc} _10kBtc
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_100kBtc} _100kBtc
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_10sats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_10sats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_10sats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_100sats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_100sats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_100sats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_1kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_1kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_1kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_10kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_10kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_10kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_100kSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_100kSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_100kSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_1mSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_1mSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_1mSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_10mSats
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_10mSats_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_10mSats_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_1btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_1btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_1btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_10btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_10btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_10btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_100btc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_100btc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_100btc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_1kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_1kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_1kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_10kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_10kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_10kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_100kBtc
- * @property {DeltaTotalPattern} supply
- * @property {SeriesTree_Cohorts_Addr_UnderAmount_100kBtc_Outputs} outputs
- * @property {TransferPattern} activity
- * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {NuplPattern} unrealized
- * @property {BaseDeltaPattern} addrCount
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Addr_UnderAmount_100kBtc_Outputs
- * @property {BaseDeltaPattern} unspentCount
- * @property {AverageBlockCumulativeSumPattern2} spentCount
- * @property {SeriesPattern1<StoredF32>} spendingRate
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10sats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _100sats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _1kSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10kSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _100kSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _1mSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10mSats
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _1btc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10btc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _100btc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _1kBtc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _10kBtc
+ * @property {ActivityAddrOutputsRealizedSupplyUnrealizedPattern} _100kBtc
  */
 
 /**
@@ -10314,19 +7574,7 @@ class BrkClient extends BrkClientBase {
           pct75: create_1m1w1y24hPattern(this, 'block_size_pct75'),
           pct90: create_1m1w1y24hPattern(this, 'block_size_pct90'),
         },
-        weight: {
-          base: createSeriesPattern18(this, 'block_weight'),
-          cumulative: createSeriesPattern1(this, 'block_weight_cumulative'),
-          sum: create_1m1w1y24hPattern(this, 'block_weight_sum'),
-          average: create_1m1w1y24hPattern(this, 'block_weight_average'),
-          min: create_1m1w1y24hPattern(this, 'block_weight_min'),
-          max: create_1m1w1y24hPattern(this, 'block_weight_max'),
-          pct10: create_1m1w1y24hPattern(this, 'block_weight_pct10'),
-          pct25: create_1m1w1y24hPattern(this, 'block_weight_pct25'),
-          median: create_1m1w1y24hPattern(this, 'block_weight_median'),
-          pct75: create_1m1w1y24hPattern(this, 'block_weight_pct75'),
-          pct90: create_1m1w1y24hPattern(this, 'block_weight_pct90'),
-        },
+        weight: createAverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'block_weight'),
         count: {
           target: create_1m1w1y24hPattern(this, 'block_count_target'),
           total: createAverageBlockCumulativeSumPattern2(this, 'block_count'),
@@ -10642,8 +7890,6 @@ class BrkClient extends BrkClientBase {
         },
       },
       positions: {
-        block: createSeriesPattern18(this, 'position'),
-        tx: createSeriesPattern19(this, 'position'),
       },
       cointime: {
         activity: {
@@ -11455,17 +8701,8 @@ class BrkClient extends BrkClientBase {
           },
           sth: {
             supply: createDeltaHalfInToTotalPattern2(this, 'sth_supply'),
-            outputs: {
-              unspentCount: createBaseDeltaPattern(this, 'sth_utxo_count'),
-              spentCount: createAverageBlockCumulativeSumPattern2(this, 'sth_spent_utxo_count'),
-              spendingRate: createSeriesPattern1(this, 'sth_spending_rate'),
-            },
-            activity: {
-              transferVolume: createAverageBlockCumulativeInSumPattern(this, 'sth_transfer_volume'),
-              coindaysDestroyed: createAverageBlockCumulativeSumPattern(this, 'sth_coindays_destroyed'),
-              coinyearsDestroyed: createSeriesPattern1(this, 'sth_coinyears_destroyed'),
-              dormancy: create_1m1w1y24hPattern(this, 'sth_dormancy'),
-            },
+            outputs: createSpendingSpentUnspentPattern(this, 'sth'),
+            activity: createCoindaysCoinyearsDormancyTransferPattern(this, 'sth'),
             realized: {
               cap: createCentsDeltaToUsdPattern(this, 'sth_realized_cap'),
               profit: createBlockCumulativeSumPattern(this, 'sth_realized_profit'),
@@ -11551,59 +8788,20 @@ class BrkClient extends BrkClientBase {
               },
               mvrv: createSeriesPattern1(this, 'sth_mvrv'),
               netPnl: createBlockChangeCumulativeDeltaSumPattern(this, 'sth_net'),
-              sopr: {
-                valueDestroyed: createAverageBlockCumulativeSumPattern(this, 'sth_value_destroyed'),
-                ratio: create_1m1w1y24hPattern(this, 'sth_sopr'),
-                adjusted: {
-                  ratio: create_1m1w1y24hPattern(this, 'sth_asopr'),
-                  transferVolume: createAverageBlockCumulativeSumPattern(this, 'sth_adj_value_created'),
-                  valueDestroyed: createAverageBlockCumulativeSumPattern(this, 'sth_adj_value_destroyed'),
-                },
-              },
+              sopr: createAdjustedRatioValuePattern(this, 'sth'),
               grossPnl: createBlockCumulativeSumPattern(this, 'sth_realized_gross_pnl'),
               sellSideRiskRatio: create_1m1w1y24hPattern7(this, 'sth_sell_side_risk_ratio'),
               peakRegret: createBlockCumulativeSumPattern(this, 'sth_realized_peak_regret'),
               investor: createPricePattern(this, 'sth_investor_price'),
               profitToLossRatio: create_1m1w1y24hPattern(this, 'sth_realized_profit_to_loss_ratio'),
             },
-            costBasis: {
-              inProfit: createPerPattern(this, 'sth_cost_basis_in_profit_per'),
-              inLoss: createPerPattern(this, 'sth_cost_basis_in_loss_per'),
-              min: createCentsSatsUsdPattern(this, 'sth_cost_basis_min'),
-              max: createCentsSatsUsdPattern(this, 'sth_cost_basis_max'),
-              perCoin: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'sth_cost_basis_per_coin'),
-              perDollar: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'sth_cost_basis_per_dollar'),
-              supplyDensity: createBpsPercentRatioPattern3(this, 'sth_supply_density'),
-            },
-            unrealized: {
-              nupl: createBpsRatioPattern(this, 'sth_nupl'),
-              profit: createCentsToUsdPattern4(this, 'sth_unrealized_profit'),
-              loss: createCentsNegativeToUsdPattern2(this, 'sth_unrealized_loss'),
-              netPnl: createCentsToUsdPattern3(this, 'sth_net_unrealized_pnl'),
-              grossPnl: createCentsUsdPattern3(this, 'sth_unrealized_gross_pnl'),
-              investedCapital: createInPattern(this, 'sth_invested_capital_in'),
-              investorCapInProfitRaw: createSeriesPattern18(this, 'sth_investor_cap_in_profit_raw'),
-              investorCapInLossRaw: createSeriesPattern18(this, 'sth_investor_cap_in_loss_raw'),
-              sentiment: {
-                painIndex: createCentsUsdPattern3(this, 'sth_pain_index'),
-                greedIndex: createCentsUsdPattern3(this, 'sth_greed_index'),
-                net: createCentsUsdPattern(this, 'sth_net_sentiment'),
-              },
-            },
+            costBasis: createInMaxMinPerSupplyPattern(this, 'sth'),
+            unrealized: createGrossInvestedInvestorLossNetNuplProfitSentimentPattern2(this, 'sth'),
           },
           lth: {
             supply: createDeltaHalfInToTotalPattern2(this, 'lth_supply'),
-            outputs: {
-              unspentCount: createBaseDeltaPattern(this, 'lth_utxo_count'),
-              spentCount: createAverageBlockCumulativeSumPattern2(this, 'lth_spent_utxo_count'),
-              spendingRate: createSeriesPattern1(this, 'lth_spending_rate'),
-            },
-            activity: {
-              transferVolume: createAverageBlockCumulativeInSumPattern(this, 'lth_transfer_volume'),
-              coindaysDestroyed: createAverageBlockCumulativeSumPattern(this, 'lth_coindays_destroyed'),
-              coinyearsDestroyed: createSeriesPattern1(this, 'lth_coinyears_destroyed'),
-              dormancy: create_1m1w1y24hPattern(this, 'lth_dormancy'),
-            },
+            outputs: createSpendingSpentUnspentPattern(this, 'lth'),
+            activity: createCoindaysCoinyearsDormancyTransferPattern(this, 'lth'),
             realized: {
               cap: createCentsDeltaToUsdPattern(this, 'lth_realized_cap'),
               profit: createBlockCumulativeSumPattern(this, 'lth_realized_profit'),
@@ -11699,1500 +8897,158 @@ class BrkClient extends BrkClientBase {
               investor: createPricePattern(this, 'lth_investor_price'),
               profitToLossRatio: create_1m1w1y24hPattern(this, 'lth_realized_profit_to_loss_ratio'),
             },
-            costBasis: {
-              inProfit: createPerPattern(this, 'lth_cost_basis_in_profit_per'),
-              inLoss: createPerPattern(this, 'lth_cost_basis_in_loss_per'),
-              min: createCentsSatsUsdPattern(this, 'lth_cost_basis_min'),
-              max: createCentsSatsUsdPattern(this, 'lth_cost_basis_max'),
-              perCoin: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'lth_cost_basis_per_coin'),
-              perDollar: createPct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern(this, 'lth_cost_basis_per_dollar'),
-              supplyDensity: createBpsPercentRatioPattern3(this, 'lth_supply_density'),
-            },
-            unrealized: {
-              nupl: createBpsRatioPattern(this, 'lth_nupl'),
-              profit: createCentsToUsdPattern4(this, 'lth_unrealized_profit'),
-              loss: createCentsNegativeToUsdPattern2(this, 'lth_unrealized_loss'),
-              netPnl: createCentsToUsdPattern3(this, 'lth_net_unrealized_pnl'),
-              grossPnl: createCentsUsdPattern3(this, 'lth_unrealized_gross_pnl'),
-              investedCapital: createInPattern(this, 'lth_invested_capital_in'),
-              investorCapInProfitRaw: createSeriesPattern18(this, 'lth_investor_cap_in_profit_raw'),
-              investorCapInLossRaw: createSeriesPattern18(this, 'lth_investor_cap_in_loss_raw'),
-              sentiment: {
-                painIndex: createCentsUsdPattern3(this, 'lth_pain_index'),
-                greedIndex: createCentsUsdPattern3(this, 'lth_greed_index'),
-                net: createCentsUsdPattern(this, 'lth_net_sentiment'),
-              },
-            },
+            costBasis: createInMaxMinPerSupplyPattern(this, 'lth'),
+            unrealized: createGrossInvestedInvestorLossNetNuplProfitSentimentPattern2(this, 'lth'),
           },
           ageRange: {
-            under1h: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_1h_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_1h_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_1h_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_1h_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_1h_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_1h_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_1h_old'),
-            },
-            _1hTo1d: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_1h_to_1d_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_1h_to_1d_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_1h_to_1d_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_1h_to_1d_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_1h_to_1d_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_1h_to_1d_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_1h_to_1d_old'),
-            },
-            _1dTo1w: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_1d_to_1w_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_1d_to_1w_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_1d_to_1w_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_1d_to_1w_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_1d_to_1w_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_1d_to_1w_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_1d_to_1w_old'),
-            },
-            _1wTo1m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_1w_to_1m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_1w_to_1m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_1w_to_1m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_1w_to_1m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_1w_to_1m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_1w_to_1m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_1w_to_1m_old'),
-            },
-            _1mTo2m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_1m_to_2m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_1m_to_2m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_1m_to_2m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_1m_to_2m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_1m_to_2m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_1m_to_2m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_1m_to_2m_old'),
-            },
-            _2mTo3m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_2m_to_3m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_2m_to_3m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_2m_to_3m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_2m_to_3m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_2m_to_3m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_2m_to_3m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_2m_to_3m_old'),
-            },
-            _3mTo4m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_3m_to_4m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_3m_to_4m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_3m_to_4m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_3m_to_4m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_3m_to_4m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_3m_to_4m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_3m_to_4m_old'),
-            },
-            _4mTo5m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_4m_to_5m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_4m_to_5m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_4m_to_5m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_4m_to_5m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_4m_to_5m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_4m_to_5m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_4m_to_5m_old'),
-            },
-            _5mTo6m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_5m_to_6m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_5m_to_6m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_5m_to_6m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_5m_to_6m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_5m_to_6m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_5m_to_6m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_5m_to_6m_old'),
-            },
-            _6mTo1y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_6m_to_1y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_6m_to_1y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_6m_to_1y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_6m_to_1y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_6m_to_1y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_6m_to_1y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_6m_to_1y_old'),
-            },
-            _1yTo2y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_1y_to_2y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_1y_to_2y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_1y_to_2y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_1y_to_2y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_1y_to_2y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_1y_to_2y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_1y_to_2y_old'),
-            },
-            _2yTo3y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_2y_to_3y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_2y_to_3y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_2y_to_3y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_2y_to_3y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_2y_to_3y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_2y_to_3y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_2y_to_3y_old'),
-            },
-            _3yTo4y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_3y_to_4y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_3y_to_4y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_3y_to_4y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_3y_to_4y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_3y_to_4y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_3y_to_4y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_3y_to_4y_old'),
-            },
-            _4yTo5y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_4y_to_5y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_4y_to_5y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_4y_to_5y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_4y_to_5y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_4y_to_5y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_4y_to_5y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_4y_to_5y_old'),
-            },
-            _5yTo6y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_5y_to_6y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_5y_to_6y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_5y_to_6y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_5y_to_6y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_5y_to_6y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_5y_to_6y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_5y_to_6y_old'),
-            },
-            _6yTo7y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_6y_to_7y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_6y_to_7y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_6y_to_7y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_6y_to_7y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_6y_to_7y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_6y_to_7y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_6y_to_7y_old'),
-            },
-            _7yTo8y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_7y_to_8y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_7y_to_8y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_7y_to_8y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_7y_to_8y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_7y_to_8y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_7y_to_8y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_7y_to_8y_old'),
-            },
-            _8yTo10y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_8y_to_10y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_8y_to_10y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_8y_to_10y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_8y_to_10y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_8y_to_10y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_8y_to_10y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_8y_to_10y_old'),
-            },
-            _10yTo12y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_10y_to_12y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_10y_to_12y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_10y_to_12y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_10y_to_12y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_10y_to_12y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_10y_to_12y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_10y_to_12y_old'),
-            },
-            _12yTo15y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_12y_to_15y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_12y_to_15y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_12y_to_15y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_12y_to_15y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_12y_to_15y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_12y_to_15y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_12y_to_15y_old'),
-            },
-            over15y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_15y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_15y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_15y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_15y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_15y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_15y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_15y_old'),
-            },
+            under1h: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_1h_old'),
+            _1hTo1d: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_1h_to_1d_old'),
+            _1dTo1w: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_1d_to_1w_old'),
+            _1wTo1m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_1w_to_1m_old'),
+            _1mTo2m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_1m_to_2m_old'),
+            _2mTo3m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_2m_to_3m_old'),
+            _3mTo4m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_3m_to_4m_old'),
+            _4mTo5m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_4m_to_5m_old'),
+            _5mTo6m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_5m_to_6m_old'),
+            _6mTo1y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_6m_to_1y_old'),
+            _1yTo2y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_1y_to_2y_old'),
+            _2yTo3y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_2y_to_3y_old'),
+            _3yTo4y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_3y_to_4y_old'),
+            _4yTo5y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_4y_to_5y_old'),
+            _5yTo6y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_5y_to_6y_old'),
+            _6yTo7y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_6y_to_7y_old'),
+            _7yTo8y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_7y_to_8y_old'),
+            _8yTo10y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_8y_to_10y_old'),
+            _10yTo12y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_10y_to_12y_old'),
+            _12yTo15y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_12y_to_15y_old'),
+            over15y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_15y_old'),
           },
           underAge: {
-            _1w: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_1w_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_1w_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_1w_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_1w_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_1w_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_1w_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_1w_old'),
-            },
-            _1m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_1m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_1m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_1m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_1m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_1m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_1m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_1m_old'),
-            },
-            _2m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_2m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_2m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_2m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_2m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_2m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_2m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_2m_old'),
-            },
-            _3m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_3m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_3m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_3m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_3m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_3m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_3m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_3m_old'),
-            },
-            _4m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_4m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_4m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_4m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_4m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_4m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_4m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_4m_old'),
-            },
-            _5m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_5m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_5m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_5m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_5m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_5m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_5m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_5m_old'),
-            },
-            _6m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_6m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_6m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_6m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_6m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_6m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_6m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_6m_old'),
-            },
-            _1y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_1y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_1y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_1y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_1y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_1y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_1y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_1y_old'),
-            },
-            _2y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_2y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_2y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_2y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_2y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_2y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_2y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_2y_old'),
-            },
-            _3y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_3y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_3y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_3y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_3y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_3y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_3y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_3y_old'),
-            },
-            _4y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_4y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_4y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_4y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_4y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_4y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_4y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_4y_old'),
-            },
-            _5y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_5y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_5y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_5y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_5y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_5y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_5y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_5y_old'),
-            },
-            _6y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_6y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_6y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_6y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_6y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_6y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_6y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_6y_old'),
-            },
-            _7y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_7y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_7y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_7y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_7y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_7y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_7y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_7y_old'),
-            },
-            _8y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_8y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_8y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_8y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_8y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_8y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_8y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_8y_old'),
-            },
-            _10y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_10y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_10y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_10y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_10y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_10y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_10y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_10y_old'),
-            },
-            _12y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_12y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_12y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_12y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_12y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_12y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_12y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_12y_old'),
-            },
-            _15y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_under_15y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_15y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_15y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_15y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_under_15y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_under_15y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_under_15y_old'),
-            },
+            _1w: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_1w_old'),
+            _1m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_1m_old'),
+            _2m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_2m_old'),
+            _3m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_3m_old'),
+            _4m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_4m_old'),
+            _5m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_5m_old'),
+            _6m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_6m_old'),
+            _1y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_1y_old'),
+            _2y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_2y_old'),
+            _3y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_3y_old'),
+            _4y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_4y_old'),
+            _5y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_5y_old'),
+            _6y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_6y_old'),
+            _7y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_7y_old'),
+            _8y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_8y_old'),
+            _10y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_10y_old'),
+            _12y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_12y_old'),
+            _15y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_15y_old'),
           },
           overAge: {
-            _1d: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_1d_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_1d_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_1d_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_1d_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_1d_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_1d_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_1d_old'),
-            },
-            _1w: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_1w_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_1w_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_1w_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_1w_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_1w_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_1w_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_1w_old'),
-            },
-            _1m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_1m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_1m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_1m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_1m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_1m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_1m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_1m_old'),
-            },
-            _2m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_2m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_2m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_2m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_2m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_2m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_2m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_2m_old'),
-            },
-            _3m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_3m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_3m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_3m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_3m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_3m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_3m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_3m_old'),
-            },
-            _4m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_4m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_4m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_4m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_4m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_4m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_4m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_4m_old'),
-            },
-            _5m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_5m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_5m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_5m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_5m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_5m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_5m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_5m_old'),
-            },
-            _6m: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_6m_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_6m_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_6m_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_6m_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_6m_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_6m_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_6m_old'),
-            },
-            _1y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_1y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_1y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_1y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_1y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_1y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_1y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_1y_old'),
-            },
-            _2y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_2y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_2y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_2y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_2y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_2y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_2y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_2y_old'),
-            },
-            _3y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_3y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_3y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_3y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_3y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_3y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_3y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_3y_old'),
-            },
-            _4y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_4y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_4y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_4y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_4y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_4y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_4y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_4y_old'),
-            },
-            _5y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_5y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_5y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_5y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_5y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_5y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_5y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_5y_old'),
-            },
-            _6y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_6y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_6y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_6y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_6y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_6y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_6y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_6y_old'),
-            },
-            _7y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_7y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_7y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_7y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_7y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_7y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_7y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_7y_old'),
-            },
-            _8y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_8y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_8y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_8y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_8y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_8y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_8y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_8y_old'),
-            },
-            _10y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_10y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_10y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_10y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_10y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_10y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_10y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_10y_old'),
-            },
-            _12y: {
-              supply: createDeltaHalfInToTotalPattern(this, 'utxos_over_12y_old_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_12y_old_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_12y_old_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_12y_old_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'utxos_over_12y_old'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'utxos_over_12y_old'),
-              unrealized: createLossNetNuplProfitPattern(this, 'utxos_over_12y_old'),
-            },
+            _1d: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_1d_old'),
+            _1w: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_1w_old'),
+            _1m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_1m_old'),
+            _2m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_2m_old'),
+            _3m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_3m_old'),
+            _4m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_4m_old'),
+            _5m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_5m_old'),
+            _6m: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_6m_old'),
+            _1y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_1y_old'),
+            _2y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_2y_old'),
+            _3y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_3y_old'),
+            _4y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_4y_old'),
+            _5y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_5y_old'),
+            _6y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_6y_old'),
+            _7y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_7y_old'),
+            _8y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_8y_old'),
+            _10y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_10y_old'),
+            _12y: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_over_12y_old'),
           },
           epoch: {
-            _0: {
-              supply: createDeltaHalfInToTotalPattern(this, 'epoch_0_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'epoch_0_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'epoch_0_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'epoch_0_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'epoch_0'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'epoch_0'),
-              unrealized: createLossNetNuplProfitPattern(this, 'epoch_0'),
-            },
-            _1: {
-              supply: createDeltaHalfInToTotalPattern(this, 'epoch_1_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'epoch_1_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'epoch_1_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'epoch_1_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'epoch_1'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'epoch_1'),
-              unrealized: createLossNetNuplProfitPattern(this, 'epoch_1'),
-            },
-            _2: {
-              supply: createDeltaHalfInToTotalPattern(this, 'epoch_2_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'epoch_2_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'epoch_2_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'epoch_2_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'epoch_2'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'epoch_2'),
-              unrealized: createLossNetNuplProfitPattern(this, 'epoch_2'),
-            },
-            _3: {
-              supply: createDeltaHalfInToTotalPattern(this, 'epoch_3_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'epoch_3_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'epoch_3_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'epoch_3_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'epoch_3'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'epoch_3'),
-              unrealized: createLossNetNuplProfitPattern(this, 'epoch_3'),
-            },
-            _4: {
-              supply: createDeltaHalfInToTotalPattern(this, 'epoch_4_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'epoch_4_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'epoch_4_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'epoch_4_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'epoch_4'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'epoch_4'),
-              unrealized: createLossNetNuplProfitPattern(this, 'epoch_4'),
-            },
+            _0: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'epoch_0'),
+            _1: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'epoch_1'),
+            _2: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'epoch_2'),
+            _3: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'epoch_3'),
+            _4: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'epoch_4'),
           },
           class: {
-            _2009: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2009_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2009_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2009_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2009_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2009'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2009'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2009'),
-            },
-            _2010: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2010_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2010_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2010_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2010_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2010'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2010'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2010'),
-            },
-            _2011: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2011_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2011_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2011_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2011_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2011'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2011'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2011'),
-            },
-            _2012: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2012_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2012_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2012_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2012_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2012'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2012'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2012'),
-            },
-            _2013: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2013_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2013_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2013_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2013_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2013'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2013'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2013'),
-            },
-            _2014: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2014_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2014_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2014_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2014_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2014'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2014'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2014'),
-            },
-            _2015: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2015_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2015_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2015_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2015_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2015'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2015'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2015'),
-            },
-            _2016: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2016_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2016_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2016_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2016_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2016'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2016'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2016'),
-            },
-            _2017: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2017_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2017_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2017_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2017_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2017'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2017'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2017'),
-            },
-            _2018: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2018_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2018_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2018_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2018_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2018'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2018'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2018'),
-            },
-            _2019: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2019_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2019_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2019_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2019_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2019'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2019'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2019'),
-            },
-            _2020: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2020_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2020_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2020_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2020_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2020'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2020'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2020'),
-            },
-            _2021: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2021_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2021_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2021_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2021_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2021'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2021'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2021'),
-            },
-            _2022: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2022_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2022_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2022_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2022_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2022'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2022'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2022'),
-            },
-            _2023: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2023_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2023_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2023_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2023_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2023'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2023'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2023'),
-            },
-            _2024: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2024_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2024_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2024_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2024_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2024'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2024'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2024'),
-            },
-            _2025: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2025_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2025_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2025_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2025_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2025'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2025'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2025'),
-            },
-            _2026: {
-              supply: createDeltaHalfInToTotalPattern(this, 'class_2026_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'class_2026_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'class_2026_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'class_2026_spending_rate'),
-              },
-              activity: createCoindaysTransferPattern(this, 'class_2026'),
-              realized: createCapLossMvrvNetPriceProfitSoprPattern(this, 'class_2026'),
-              unrealized: createLossNetNuplProfitPattern(this, 'class_2026'),
-            },
+            _2009: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2009'),
+            _2010: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2010'),
+            _2011: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2011'),
+            _2012: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2012'),
+            _2013: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2013'),
+            _2014: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2014'),
+            _2015: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2015'),
+            _2016: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2016'),
+            _2017: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2017'),
+            _2018: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2018'),
+            _2019: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2019'),
+            _2020: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2020'),
+            _2021: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2021'),
+            _2022: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2022'),
+            _2023: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2023'),
+            _2024: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2024'),
+            _2025: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2025'),
+            _2026: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'class_2026'),
           },
           overAmount: {
-            _1sat: {
-              supply: createDeltaTotalPattern(this, 'utxos_over_1sat_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_1sat_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_1sat_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_1sat_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_over_1sat_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_over_1sat'),
-              unrealized: createNuplPattern(this, 'utxos_over_1sat_nupl'),
-            },
-            _10sats: {
-              supply: createDeltaTotalPattern(this, 'utxos_over_10sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_10sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_10sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_10sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_over_10sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_over_10sats'),
-              unrealized: createNuplPattern(this, 'utxos_over_10sats_nupl'),
-            },
-            _100sats: {
-              supply: createDeltaTotalPattern(this, 'utxos_over_100sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_100sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_100sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_100sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_over_100sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_over_100sats'),
-              unrealized: createNuplPattern(this, 'utxos_over_100sats_nupl'),
-            },
-            _1kSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_over_1k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_1k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_1k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_1k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_over_1k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_over_1k_sats'),
-              unrealized: createNuplPattern(this, 'utxos_over_1k_sats_nupl'),
-            },
-            _10kSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_over_10k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_10k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_10k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_10k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_over_10k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_over_10k_sats'),
-              unrealized: createNuplPattern(this, 'utxos_over_10k_sats_nupl'),
-            },
-            _100kSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_over_100k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_100k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_100k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_100k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_over_100k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_over_100k_sats'),
-              unrealized: createNuplPattern(this, 'utxos_over_100k_sats_nupl'),
-            },
-            _1mSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_over_1m_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_1m_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_1m_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_1m_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_over_1m_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_over_1m_sats'),
-              unrealized: createNuplPattern(this, 'utxos_over_1m_sats_nupl'),
-            },
-            _10mSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_over_10m_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_10m_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_10m_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_10m_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_over_10m_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_over_10m_sats'),
-              unrealized: createNuplPattern(this, 'utxos_over_10m_sats_nupl'),
-            },
-            _1btc: {
-              supply: createDeltaTotalPattern(this, 'utxos_over_1btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_1btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_1btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_1btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_over_1btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_over_1btc'),
-              unrealized: createNuplPattern(this, 'utxos_over_1btc_nupl'),
-            },
-            _10btc: {
-              supply: createDeltaTotalPattern(this, 'utxos_over_10btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_10btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_10btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_10btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_over_10btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_over_10btc'),
-              unrealized: createNuplPattern(this, 'utxos_over_10btc_nupl'),
-            },
-            _100btc: {
-              supply: createDeltaTotalPattern(this, 'utxos_over_100btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_100btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_100btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_100btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_over_100btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_over_100btc'),
-              unrealized: createNuplPattern(this, 'utxos_over_100btc_nupl'),
-            },
-            _1kBtc: {
-              supply: createDeltaTotalPattern(this, 'utxos_over_1k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_1k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_1k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_1k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_over_1k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_over_1k_btc'),
-              unrealized: createNuplPattern(this, 'utxos_over_1k_btc_nupl'),
-            },
-            _10kBtc: {
-              supply: createDeltaTotalPattern(this, 'utxos_over_10k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_10k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_10k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_10k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_over_10k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_over_10k_btc'),
-              unrealized: createNuplPattern(this, 'utxos_over_10k_btc_nupl'),
-            },
+            _1sat: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_1sat'),
+            _10sats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_10sats'),
+            _100sats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_100sats'),
+            _1kSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_1k_sats'),
+            _10kSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_10k_sats'),
+            _100kSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_100k_sats'),
+            _1mSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_1m_sats'),
+            _10mSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_10m_sats'),
+            _1btc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_1btc'),
+            _10btc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_10btc'),
+            _100btc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_100btc'),
+            _1kBtc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_1k_btc'),
+            _10kBtc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_10k_btc'),
           },
           amountRange: {
-            _0sats: {
-              supply: createDeltaTotalPattern(this, 'utxos_0sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_0sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_0sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_0sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_0sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_0sats'),
-              unrealized: createNuplPattern(this, 'utxos_0sats_nupl'),
-            },
-            _1satTo10sats: {
-              supply: createDeltaTotalPattern(this, 'utxos_1sat_to_10sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_1sat_to_10sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_1sat_to_10sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_1sat_to_10sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_1sat_to_10sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_1sat_to_10sats'),
-              unrealized: createNuplPattern(this, 'utxos_1sat_to_10sats_nupl'),
-            },
-            _10satsTo100sats: {
-              supply: createDeltaTotalPattern(this, 'utxos_10sats_to_100sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_10sats_to_100sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_10sats_to_100sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_10sats_to_100sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_10sats_to_100sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_10sats_to_100sats'),
-              unrealized: createNuplPattern(this, 'utxos_10sats_to_100sats_nupl'),
-            },
-            _100satsTo1kSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_100sats_to_1k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_100sats_to_1k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_100sats_to_1k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_100sats_to_1k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_100sats_to_1k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_100sats_to_1k_sats'),
-              unrealized: createNuplPattern(this, 'utxos_100sats_to_1k_sats_nupl'),
-            },
-            _1kSatsTo10kSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_1k_sats_to_10k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_1k_sats_to_10k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_1k_sats_to_10k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_1k_sats_to_10k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_1k_sats_to_10k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_1k_sats_to_10k_sats'),
-              unrealized: createNuplPattern(this, 'utxos_1k_sats_to_10k_sats_nupl'),
-            },
-            _10kSatsTo100kSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_10k_sats_to_100k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_10k_sats_to_100k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_10k_sats_to_100k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_10k_sats_to_100k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_10k_sats_to_100k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_10k_sats_to_100k_sats'),
-              unrealized: createNuplPattern(this, 'utxos_10k_sats_to_100k_sats_nupl'),
-            },
-            _100kSatsTo1mSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_100k_sats_to_1m_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_100k_sats_to_1m_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_100k_sats_to_1m_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_100k_sats_to_1m_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_100k_sats_to_1m_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_100k_sats_to_1m_sats'),
-              unrealized: createNuplPattern(this, 'utxos_100k_sats_to_1m_sats_nupl'),
-            },
-            _1mSatsTo10mSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_1m_sats_to_10m_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_1m_sats_to_10m_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_1m_sats_to_10m_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_1m_sats_to_10m_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_1m_sats_to_10m_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_1m_sats_to_10m_sats'),
-              unrealized: createNuplPattern(this, 'utxos_1m_sats_to_10m_sats_nupl'),
-            },
-            _10mSatsTo1btc: {
-              supply: createDeltaTotalPattern(this, 'utxos_10m_sats_to_1btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_10m_sats_to_1btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_10m_sats_to_1btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_10m_sats_to_1btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_10m_sats_to_1btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_10m_sats_to_1btc'),
-              unrealized: createNuplPattern(this, 'utxos_10m_sats_to_1btc_nupl'),
-            },
-            _1btcTo10btc: {
-              supply: createDeltaTotalPattern(this, 'utxos_1btc_to_10btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_1btc_to_10btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_1btc_to_10btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_1btc_to_10btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_1btc_to_10btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_1btc_to_10btc'),
-              unrealized: createNuplPattern(this, 'utxos_1btc_to_10btc_nupl'),
-            },
-            _10btcTo100btc: {
-              supply: createDeltaTotalPattern(this, 'utxos_10btc_to_100btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_10btc_to_100btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_10btc_to_100btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_10btc_to_100btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_10btc_to_100btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_10btc_to_100btc'),
-              unrealized: createNuplPattern(this, 'utxos_10btc_to_100btc_nupl'),
-            },
-            _100btcTo1kBtc: {
-              supply: createDeltaTotalPattern(this, 'utxos_100btc_to_1k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_100btc_to_1k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_100btc_to_1k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_100btc_to_1k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_100btc_to_1k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_100btc_to_1k_btc'),
-              unrealized: createNuplPattern(this, 'utxos_100btc_to_1k_btc_nupl'),
-            },
-            _1kBtcTo10kBtc: {
-              supply: createDeltaTotalPattern(this, 'utxos_1k_btc_to_10k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_1k_btc_to_10k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_1k_btc_to_10k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_1k_btc_to_10k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_1k_btc_to_10k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_1k_btc_to_10k_btc'),
-              unrealized: createNuplPattern(this, 'utxos_1k_btc_to_10k_btc_nupl'),
-            },
-            _10kBtcTo100kBtc: {
-              supply: createDeltaTotalPattern(this, 'utxos_10k_btc_to_100k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_10k_btc_to_100k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_10k_btc_to_100k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_10k_btc_to_100k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_10k_btc_to_100k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_10k_btc_to_100k_btc'),
-              unrealized: createNuplPattern(this, 'utxos_10k_btc_to_100k_btc_nupl'),
-            },
-            over100kBtc: {
-              supply: createDeltaTotalPattern(this, 'utxos_over_100k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_over_100k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_over_100k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_over_100k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_over_100k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_over_100k_btc'),
-              unrealized: createNuplPattern(this, 'utxos_over_100k_btc_nupl'),
-            },
+            _0sats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_0sats'),
+            _1satTo10sats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_1sat_to_10sats'),
+            _10satsTo100sats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_10sats_to_100sats'),
+            _100satsTo1kSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_100sats_to_1k_sats'),
+            _1kSatsTo10kSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_1k_sats_to_10k_sats'),
+            _10kSatsTo100kSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_10k_sats_to_100k_sats'),
+            _100kSatsTo1mSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_100k_sats_to_1m_sats'),
+            _1mSatsTo10mSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_1m_sats_to_10m_sats'),
+            _10mSatsTo1btc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_10m_sats_to_1btc'),
+            _1btcTo10btc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_1btc_to_10btc'),
+            _10btcTo100btc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_10btc_to_100btc'),
+            _100btcTo1kBtc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_100btc_to_1k_btc'),
+            _1kBtcTo10kBtc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_1k_btc_to_10k_btc'),
+            _10kBtcTo100kBtc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_10k_btc_to_100k_btc'),
+            over100kBtc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_over_100k_btc'),
           },
           underAmount: {
-            _10sats: {
-              supply: createDeltaTotalPattern(this, 'utxos_under_10sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_10sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_10sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_10sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_under_10sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_under_10sats'),
-              unrealized: createNuplPattern(this, 'utxos_under_10sats_nupl'),
-            },
-            _100sats: {
-              supply: createDeltaTotalPattern(this, 'utxos_under_100sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_100sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_100sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_100sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_under_100sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_under_100sats'),
-              unrealized: createNuplPattern(this, 'utxos_under_100sats_nupl'),
-            },
-            _1kSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_under_1k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_1k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_1k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_1k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_under_1k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_under_1k_sats'),
-              unrealized: createNuplPattern(this, 'utxos_under_1k_sats_nupl'),
-            },
-            _10kSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_under_10k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_10k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_10k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_10k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_under_10k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_under_10k_sats'),
-              unrealized: createNuplPattern(this, 'utxos_under_10k_sats_nupl'),
-            },
-            _100kSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_under_100k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_100k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_100k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_100k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_under_100k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_under_100k_sats'),
-              unrealized: createNuplPattern(this, 'utxos_under_100k_sats_nupl'),
-            },
-            _1mSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_under_1m_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_1m_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_1m_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_1m_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_under_1m_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_under_1m_sats'),
-              unrealized: createNuplPattern(this, 'utxos_under_1m_sats_nupl'),
-            },
-            _10mSats: {
-              supply: createDeltaTotalPattern(this, 'utxos_under_10m_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_10m_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_10m_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_10m_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_under_10m_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_under_10m_sats'),
-              unrealized: createNuplPattern(this, 'utxos_under_10m_sats_nupl'),
-            },
-            _1btc: {
-              supply: createDeltaTotalPattern(this, 'utxos_under_1btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_1btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_1btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_1btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_under_1btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_under_1btc'),
-              unrealized: createNuplPattern(this, 'utxos_under_1btc_nupl'),
-            },
-            _10btc: {
-              supply: createDeltaTotalPattern(this, 'utxos_under_10btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_10btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_10btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_10btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_under_10btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_under_10btc'),
-              unrealized: createNuplPattern(this, 'utxos_under_10btc_nupl'),
-            },
-            _100btc: {
-              supply: createDeltaTotalPattern(this, 'utxos_under_100btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_100btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_100btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_100btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_under_100btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_under_100btc'),
-              unrealized: createNuplPattern(this, 'utxos_under_100btc_nupl'),
-            },
-            _1kBtc: {
-              supply: createDeltaTotalPattern(this, 'utxos_under_1k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_1k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_1k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_1k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_under_1k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_under_1k_btc'),
-              unrealized: createNuplPattern(this, 'utxos_under_1k_btc_nupl'),
-            },
-            _10kBtc: {
-              supply: createDeltaTotalPattern(this, 'utxos_under_10k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_10k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_10k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_10k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_under_10k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_under_10k_btc'),
-              unrealized: createNuplPattern(this, 'utxos_under_10k_btc_nupl'),
-            },
-            _100kBtc: {
-              supply: createDeltaTotalPattern(this, 'utxos_under_100k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'utxos_under_100k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'utxos_under_100k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'utxos_under_100k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'utxos_under_100k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'utxos_under_100k_btc'),
-              unrealized: createNuplPattern(this, 'utxos_under_100k_btc_nupl'),
-            },
+            _10sats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_10sats'),
+            _100sats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_100sats'),
+            _1kSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_1k_sats'),
+            _10kSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_10k_sats'),
+            _100kSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_100k_sats'),
+            _1mSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_1m_sats'),
+            _10mSats: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_10m_sats'),
+            _1btc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_1btc'),
+            _10btc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_10btc'),
+            _100btc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_100btc'),
+            _1kBtc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_1k_btc'),
+            _10kBtc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_10k_btc'),
+            _100kBtc: createActivityOutputsRealizedSupplyUnrealizedPattern2(this, 'utxos_under_100k_btc'),
           },
           type: {
-            p2pk65: {
-              supply: createDeltaHalfInTotalPattern2(this, 'p2pk65_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'p2pk65_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'p2pk65_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'p2pk65_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'p2pk65_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'p2pk65'),
-              unrealized: createLossNuplProfitPattern(this, 'p2pk65'),
-            },
-            p2pk33: {
-              supply: createDeltaHalfInTotalPattern2(this, 'p2pk33_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'p2pk33_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'p2pk33_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'p2pk33_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'p2pk33_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'p2pk33'),
-              unrealized: createLossNuplProfitPattern(this, 'p2pk33'),
-            },
-            p2pkh: {
-              supply: createDeltaHalfInTotalPattern2(this, 'p2pkh_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'p2pkh_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'p2pkh_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'p2pkh_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'p2pkh_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'p2pkh'),
-              unrealized: createLossNuplProfitPattern(this, 'p2pkh'),
-            },
-            p2ms: {
-              supply: createDeltaHalfInTotalPattern2(this, 'p2ms_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'p2ms_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'p2ms_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'p2ms_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'p2ms_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'p2ms'),
-              unrealized: createLossNuplProfitPattern(this, 'p2ms'),
-            },
-            p2sh: {
-              supply: createDeltaHalfInTotalPattern2(this, 'p2sh_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'p2sh_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'p2sh_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'p2sh_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'p2sh_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'p2sh'),
-              unrealized: createLossNuplProfitPattern(this, 'p2sh'),
-            },
-            p2wpkh: {
-              supply: createDeltaHalfInTotalPattern2(this, 'p2wpkh_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'p2wpkh_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'p2wpkh_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'p2wpkh_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'p2wpkh_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'p2wpkh'),
-              unrealized: createLossNuplProfitPattern(this, 'p2wpkh'),
-            },
-            p2wsh: {
-              supply: createDeltaHalfInTotalPattern2(this, 'p2wsh_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'p2wsh_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'p2wsh_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'p2wsh_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'p2wsh_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'p2wsh'),
-              unrealized: createLossNuplProfitPattern(this, 'p2wsh'),
-            },
-            p2tr: {
-              supply: createDeltaHalfInTotalPattern2(this, 'p2tr_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'p2tr_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'p2tr_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'p2tr_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'p2tr_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'p2tr'),
-              unrealized: createLossNuplProfitPattern(this, 'p2tr'),
-            },
-            p2a: {
-              supply: createDeltaHalfInTotalPattern2(this, 'p2a_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'p2a_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'p2a_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'p2a_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'p2a_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'p2a'),
-              unrealized: createLossNuplProfitPattern(this, 'p2a'),
-            },
-            unknown: {
-              supply: createDeltaHalfInTotalPattern2(this, 'unknown_outputs_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'unknown_outputs_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'unknown_outputs_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'unknown_outputs_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'unknown_outputs_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'unknown_outputs'),
-              unrealized: createLossNuplProfitPattern(this, 'unknown_outputs'),
-            },
-            empty: {
-              supply: createDeltaHalfInTotalPattern2(this, 'empty_outputs_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'empty_outputs_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'empty_outputs_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'empty_outputs_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'empty_outputs_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'empty_outputs'),
-              unrealized: createLossNuplProfitPattern(this, 'empty_outputs'),
-            },
+            p2pk65: createActivityOutputsRealizedSupplyUnrealizedPattern3(this, 'p2pk65'),
+            p2pk33: createActivityOutputsRealizedSupplyUnrealizedPattern3(this, 'p2pk33'),
+            p2pkh: createActivityOutputsRealizedSupplyUnrealizedPattern3(this, 'p2pkh'),
+            p2ms: createActivityOutputsRealizedSupplyUnrealizedPattern3(this, 'p2ms'),
+            p2sh: createActivityOutputsRealizedSupplyUnrealizedPattern3(this, 'p2sh'),
+            p2wpkh: createActivityOutputsRealizedSupplyUnrealizedPattern3(this, 'p2wpkh'),
+            p2wsh: createActivityOutputsRealizedSupplyUnrealizedPattern3(this, 'p2wsh'),
+            p2tr: createActivityOutputsRealizedSupplyUnrealizedPattern3(this, 'p2tr'),
+            p2a: createActivityOutputsRealizedSupplyUnrealizedPattern3(this, 'p2a'),
+            unknown: createActivityOutputsRealizedSupplyUnrealizedPattern3(this, 'unknown_outputs'),
+            empty: createActivityOutputsRealizedSupplyUnrealizedPattern3(this, 'empty_outputs'),
           },
           profitability: {
             range: {
@@ -13276,502 +9132,51 @@ class BrkClient extends BrkClientBase {
         },
         addr: {
           overAmount: {
-            _1sat: {
-              supply: createDeltaTotalPattern(this, 'addrs_over_1sat_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_over_1sat_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_over_1sat_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_over_1sat_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_over_1sat_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_over_1sat'),
-              unrealized: createNuplPattern(this, 'addrs_over_1sat_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_over_1sat_addr_count'),
-            },
-            _10sats: {
-              supply: createDeltaTotalPattern(this, 'addrs_over_10sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_over_10sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_over_10sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_over_10sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_over_10sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_over_10sats'),
-              unrealized: createNuplPattern(this, 'addrs_over_10sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_over_10sats_addr_count'),
-            },
-            _100sats: {
-              supply: createDeltaTotalPattern(this, 'addrs_over_100sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_over_100sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_over_100sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_over_100sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_over_100sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_over_100sats'),
-              unrealized: createNuplPattern(this, 'addrs_over_100sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_over_100sats_addr_count'),
-            },
-            _1kSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_over_1k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_over_1k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_over_1k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_over_1k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_over_1k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_over_1k_sats'),
-              unrealized: createNuplPattern(this, 'addrs_over_1k_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_over_1k_sats_addr_count'),
-            },
-            _10kSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_over_10k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_over_10k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_over_10k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_over_10k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_over_10k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_over_10k_sats'),
-              unrealized: createNuplPattern(this, 'addrs_over_10k_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_over_10k_sats_addr_count'),
-            },
-            _100kSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_over_100k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_over_100k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_over_100k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_over_100k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_over_100k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_over_100k_sats'),
-              unrealized: createNuplPattern(this, 'addrs_over_100k_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_over_100k_sats_addr_count'),
-            },
-            _1mSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_over_1m_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_over_1m_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_over_1m_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_over_1m_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_over_1m_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_over_1m_sats'),
-              unrealized: createNuplPattern(this, 'addrs_over_1m_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_over_1m_sats_addr_count'),
-            },
-            _10mSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_over_10m_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_over_10m_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_over_10m_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_over_10m_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_over_10m_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_over_10m_sats'),
-              unrealized: createNuplPattern(this, 'addrs_over_10m_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_over_10m_sats_addr_count'),
-            },
-            _1btc: {
-              supply: createDeltaTotalPattern(this, 'addrs_over_1btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_over_1btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_over_1btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_over_1btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_over_1btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_over_1btc'),
-              unrealized: createNuplPattern(this, 'addrs_over_1btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_over_1btc_addr_count'),
-            },
-            _10btc: {
-              supply: createDeltaTotalPattern(this, 'addrs_over_10btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_over_10btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_over_10btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_over_10btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_over_10btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_over_10btc'),
-              unrealized: createNuplPattern(this, 'addrs_over_10btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_over_10btc_addr_count'),
-            },
-            _100btc: {
-              supply: createDeltaTotalPattern(this, 'addrs_over_100btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_over_100btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_over_100btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_over_100btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_over_100btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_over_100btc'),
-              unrealized: createNuplPattern(this, 'addrs_over_100btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_over_100btc_addr_count'),
-            },
-            _1kBtc: {
-              supply: createDeltaTotalPattern(this, 'addrs_over_1k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_over_1k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_over_1k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_over_1k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_over_1k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_over_1k_btc'),
-              unrealized: createNuplPattern(this, 'addrs_over_1k_btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_over_1k_btc_addr_count'),
-            },
-            _10kBtc: {
-              supply: createDeltaTotalPattern(this, 'addrs_over_10k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_over_10k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_over_10k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_over_10k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_over_10k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_over_10k_btc'),
-              unrealized: createNuplPattern(this, 'addrs_over_10k_btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_over_10k_btc_addr_count'),
-            },
+            _1sat: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1sat'),
+            _10sats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10sats'),
+            _100sats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_100sats'),
+            _1kSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1k_sats'),
+            _10kSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10k_sats'),
+            _100kSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_100k_sats'),
+            _1mSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1m_sats'),
+            _10mSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10m_sats'),
+            _1btc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1btc'),
+            _10btc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10btc'),
+            _100btc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_100btc'),
+            _1kBtc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_1k_btc'),
+            _10kBtc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_10k_btc'),
           },
           amountRange: {
-            _0sats: {
-              supply: createDeltaTotalPattern(this, 'addrs_0sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_0sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_0sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_0sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_0sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_0sats'),
-              unrealized: createNuplPattern(this, 'addrs_0sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_0sats_addr_count'),
-            },
-            _1satTo10sats: {
-              supply: createDeltaTotalPattern(this, 'addrs_1sat_to_10sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_1sat_to_10sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_1sat_to_10sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_1sat_to_10sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_1sat_to_10sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_1sat_to_10sats'),
-              unrealized: createNuplPattern(this, 'addrs_1sat_to_10sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_1sat_to_10sats_addr_count'),
-            },
-            _10satsTo100sats: {
-              supply: createDeltaTotalPattern(this, 'addrs_10sats_to_100sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_10sats_to_100sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_10sats_to_100sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_10sats_to_100sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_10sats_to_100sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_10sats_to_100sats'),
-              unrealized: createNuplPattern(this, 'addrs_10sats_to_100sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_10sats_to_100sats_addr_count'),
-            },
-            _100satsTo1kSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_100sats_to_1k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_100sats_to_1k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_100sats_to_1k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_100sats_to_1k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_100sats_to_1k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_100sats_to_1k_sats'),
-              unrealized: createNuplPattern(this, 'addrs_100sats_to_1k_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_100sats_to_1k_sats_addr_count'),
-            },
-            _1kSatsTo10kSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_1k_sats_to_10k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_1k_sats_to_10k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_1k_sats_to_10k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_1k_sats_to_10k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_1k_sats_to_10k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_1k_sats_to_10k_sats'),
-              unrealized: createNuplPattern(this, 'addrs_1k_sats_to_10k_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_1k_sats_to_10k_sats_addr_count'),
-            },
-            _10kSatsTo100kSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_10k_sats_to_100k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_10k_sats_to_100k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_10k_sats_to_100k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_10k_sats_to_100k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_10k_sats_to_100k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_10k_sats_to_100k_sats'),
-              unrealized: createNuplPattern(this, 'addrs_10k_sats_to_100k_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_10k_sats_to_100k_sats_addr_count'),
-            },
-            _100kSatsTo1mSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_100k_sats_to_1m_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_100k_sats_to_1m_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_100k_sats_to_1m_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_100k_sats_to_1m_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_100k_sats_to_1m_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_100k_sats_to_1m_sats'),
-              unrealized: createNuplPattern(this, 'addrs_100k_sats_to_1m_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_100k_sats_to_1m_sats_addr_count'),
-            },
-            _1mSatsTo10mSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_1m_sats_to_10m_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_1m_sats_to_10m_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_1m_sats_to_10m_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_1m_sats_to_10m_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_1m_sats_to_10m_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_1m_sats_to_10m_sats'),
-              unrealized: createNuplPattern(this, 'addrs_1m_sats_to_10m_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_1m_sats_to_10m_sats_addr_count'),
-            },
-            _10mSatsTo1btc: {
-              supply: createDeltaTotalPattern(this, 'addrs_10m_sats_to_1btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_10m_sats_to_1btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_10m_sats_to_1btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_10m_sats_to_1btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_10m_sats_to_1btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_10m_sats_to_1btc'),
-              unrealized: createNuplPattern(this, 'addrs_10m_sats_to_1btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_10m_sats_to_1btc_addr_count'),
-            },
-            _1btcTo10btc: {
-              supply: createDeltaTotalPattern(this, 'addrs_1btc_to_10btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_1btc_to_10btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_1btc_to_10btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_1btc_to_10btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_1btc_to_10btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_1btc_to_10btc'),
-              unrealized: createNuplPattern(this, 'addrs_1btc_to_10btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_1btc_to_10btc_addr_count'),
-            },
-            _10btcTo100btc: {
-              supply: createDeltaTotalPattern(this, 'addrs_10btc_to_100btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_10btc_to_100btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_10btc_to_100btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_10btc_to_100btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_10btc_to_100btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_10btc_to_100btc'),
-              unrealized: createNuplPattern(this, 'addrs_10btc_to_100btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_10btc_to_100btc_addr_count'),
-            },
-            _100btcTo1kBtc: {
-              supply: createDeltaTotalPattern(this, 'addrs_100btc_to_1k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_100btc_to_1k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_100btc_to_1k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_100btc_to_1k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_100btc_to_1k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_100btc_to_1k_btc'),
-              unrealized: createNuplPattern(this, 'addrs_100btc_to_1k_btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_100btc_to_1k_btc_addr_count'),
-            },
-            _1kBtcTo10kBtc: {
-              supply: createDeltaTotalPattern(this, 'addrs_1k_btc_to_10k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_1k_btc_to_10k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_1k_btc_to_10k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_1k_btc_to_10k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_1k_btc_to_10k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_1k_btc_to_10k_btc'),
-              unrealized: createNuplPattern(this, 'addrs_1k_btc_to_10k_btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_1k_btc_to_10k_btc_addr_count'),
-            },
-            _10kBtcTo100kBtc: {
-              supply: createDeltaTotalPattern(this, 'addrs_10k_btc_to_100k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_10k_btc_to_100k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_10k_btc_to_100k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_10k_btc_to_100k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_10k_btc_to_100k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_10k_btc_to_100k_btc'),
-              unrealized: createNuplPattern(this, 'addrs_10k_btc_to_100k_btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_10k_btc_to_100k_btc_addr_count'),
-            },
-            over100kBtc: {
-              supply: createDeltaTotalPattern(this, 'addrs_over_100k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_over_100k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_over_100k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_over_100k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_over_100k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_over_100k_btc'),
-              unrealized: createNuplPattern(this, 'addrs_over_100k_btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_over_100k_btc_addr_count'),
-            },
+            _0sats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_0sats'),
+            _1satTo10sats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1sat_to_10sats'),
+            _10satsTo100sats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10sats_to_100sats'),
+            _100satsTo1kSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_100sats_to_1k_sats'),
+            _1kSatsTo10kSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1k_sats_to_10k_sats'),
+            _10kSatsTo100kSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10k_sats_to_100k_sats'),
+            _100kSatsTo1mSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_100k_sats_to_1m_sats'),
+            _1mSatsTo10mSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1m_sats_to_10m_sats'),
+            _10mSatsTo1btc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10m_sats_to_1btc'),
+            _1btcTo10btc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1btc_to_10btc'),
+            _10btcTo100btc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10btc_to_100btc'),
+            _100btcTo1kBtc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_100btc_to_1k_btc'),
+            _1kBtcTo10kBtc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_1k_btc_to_10k_btc'),
+            _10kBtcTo100kBtc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_10k_btc_to_100k_btc'),
+            over100kBtc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_over_100k_btc'),
           },
           underAmount: {
-            _10sats: {
-              supply: createDeltaTotalPattern(this, 'addrs_under_10sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_under_10sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_under_10sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_under_10sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_under_10sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_under_10sats'),
-              unrealized: createNuplPattern(this, 'addrs_under_10sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_under_10sats_addr_count'),
-            },
-            _100sats: {
-              supply: createDeltaTotalPattern(this, 'addrs_under_100sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_under_100sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_under_100sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_under_100sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_under_100sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_under_100sats'),
-              unrealized: createNuplPattern(this, 'addrs_under_100sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_under_100sats_addr_count'),
-            },
-            _1kSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_under_1k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_under_1k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_under_1k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_under_1k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_under_1k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_under_1k_sats'),
-              unrealized: createNuplPattern(this, 'addrs_under_1k_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_under_1k_sats_addr_count'),
-            },
-            _10kSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_under_10k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_under_10k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_under_10k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_under_10k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_under_10k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_under_10k_sats'),
-              unrealized: createNuplPattern(this, 'addrs_under_10k_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_under_10k_sats_addr_count'),
-            },
-            _100kSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_under_100k_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_under_100k_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_under_100k_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_under_100k_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_under_100k_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_under_100k_sats'),
-              unrealized: createNuplPattern(this, 'addrs_under_100k_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_under_100k_sats_addr_count'),
-            },
-            _1mSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_under_1m_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_under_1m_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_under_1m_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_under_1m_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_under_1m_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_under_1m_sats'),
-              unrealized: createNuplPattern(this, 'addrs_under_1m_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_under_1m_sats_addr_count'),
-            },
-            _10mSats: {
-              supply: createDeltaTotalPattern(this, 'addrs_under_10m_sats_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_under_10m_sats_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_under_10m_sats_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_under_10m_sats_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_under_10m_sats_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_under_10m_sats'),
-              unrealized: createNuplPattern(this, 'addrs_under_10m_sats_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_under_10m_sats_addr_count'),
-            },
-            _1btc: {
-              supply: createDeltaTotalPattern(this, 'addrs_under_1btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_under_1btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_under_1btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_under_1btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_under_1btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_under_1btc'),
-              unrealized: createNuplPattern(this, 'addrs_under_1btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_under_1btc_addr_count'),
-            },
-            _10btc: {
-              supply: createDeltaTotalPattern(this, 'addrs_under_10btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_under_10btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_under_10btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_under_10btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_under_10btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_under_10btc'),
-              unrealized: createNuplPattern(this, 'addrs_under_10btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_under_10btc_addr_count'),
-            },
-            _100btc: {
-              supply: createDeltaTotalPattern(this, 'addrs_under_100btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_under_100btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_under_100btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_under_100btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_under_100btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_under_100btc'),
-              unrealized: createNuplPattern(this, 'addrs_under_100btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_under_100btc_addr_count'),
-            },
-            _1kBtc: {
-              supply: createDeltaTotalPattern(this, 'addrs_under_1k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_under_1k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_under_1k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_under_1k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_under_1k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_under_1k_btc'),
-              unrealized: createNuplPattern(this, 'addrs_under_1k_btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_under_1k_btc_addr_count'),
-            },
-            _10kBtc: {
-              supply: createDeltaTotalPattern(this, 'addrs_under_10k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_under_10k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_under_10k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_under_10k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_under_10k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_under_10k_btc'),
-              unrealized: createNuplPattern(this, 'addrs_under_10k_btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_under_10k_btc_addr_count'),
-            },
-            _100kBtc: {
-              supply: createDeltaTotalPattern(this, 'addrs_under_100k_btc_supply'),
-              outputs: {
-                unspentCount: createBaseDeltaPattern(this, 'addrs_under_100k_btc_utxo_count'),
-                spentCount: createAverageBlockCumulativeSumPattern2(this, 'addrs_under_100k_btc_spent_utxo_count'),
-                spendingRate: createSeriesPattern1(this, 'addrs_under_100k_btc_spending_rate'),
-              },
-              activity: createTransferPattern(this, 'addrs_under_100k_btc_transfer_volume'),
-              realized: createCapLossMvrvPriceProfitPattern(this, 'addrs_under_100k_btc'),
-              unrealized: createNuplPattern(this, 'addrs_under_100k_btc_nupl'),
-              addrCount: createBaseDeltaPattern(this, 'addrs_under_100k_btc_addr_count'),
-            },
+            _10sats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10sats'),
+            _100sats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_100sats'),
+            _1kSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_1k_sats'),
+            _10kSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10k_sats'),
+            _100kSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_100k_sats'),
+            _1mSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_1m_sats'),
+            _10mSats: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10m_sats'),
+            _1btc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_1btc'),
+            _10btc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10btc'),
+            _100btc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_100btc'),
+            _1kBtc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_1k_btc'),
+            _10kBtc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_10k_btc'),
+            _100kBtc: createActivityAddrOutputsRealizedSupplyUnrealizedPattern(this, 'addrs_under_100k_btc'),
           },
         },
       },

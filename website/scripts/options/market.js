@@ -86,7 +86,7 @@ function createMaSubSection(label, averages) {
     tree: simplePriceRatioTree({
       pattern: a.ratio,
       title: `${periodIdToName(a.id, true)} ${label}`,
-      legend: "average",
+      legend: "Average",
       color: a.color,
     }),
   });
@@ -204,14 +204,14 @@ function historicalSubSection(name, periods) {
     tree: [
       {
         name: "Compare",
-        title: `${name} Historical`,
+        title: `${name} Historical Prices`,
         top: periods.map((p) =>
           price({ series: p.lookback, name: p.id, color: p.color }),
         ),
       },
       ...periods.map((p) => ({
         name: periodIdToName(p.id, true),
-        title: `${periodIdToName(p.id, true)} Ago`,
+        title: `Price ${periodIdToName(p.id)} Ago`,
         top: [price({ series: p.lookback, name: "Price" })],
       })),
     ],
@@ -438,23 +438,23 @@ export function createMarketSection() {
             bottom: [
               line({
                 series: ath.daysSince,
-                name: "Since",
+                name: "Days",
                 unit: Unit.days,
               }),
               line({
                 series: ath.yearsSince,
-                name: "Since",
+                name: "Years",
                 unit: Unit.years,
               }),
               line({
                 series: ath.maxDaysBetween,
-                name: "Max",
+                name: "Max Days",
                 color: colors.loss,
                 unit: Unit.days,
               }),
               line({
                 series: ath.maxYearsBetween,
-                name: "Max",
+                name: "Max Years",
                 color: colors.loss,
                 unit: Unit.years,
               }),
@@ -490,7 +490,7 @@ export function createMarketSection() {
         tree: [
           {
             name: "Compare",
-            title: "Historical Comparison",
+            title: "Historical Price Comparison",
             top: [...shortPeriods, ...longPeriods].map((p) =>
               price({
                 series: p.lookback,
@@ -511,7 +511,7 @@ export function createMarketSection() {
         tree: [
           {
             name: "Compare",
-            title: "Market vs Realized Capitalization",
+            title: "Market vs Realized Cap",
             bottom: [
               line({
                 series: supply.marketCap.usd,
@@ -553,7 +553,7 @@ export function createMarketSection() {
             tree: [
               {
                 name: "Value",
-                title: "Realized Capitalization",
+                title: "Realized Cap",
                 bottom: [
                   line({
                     series: cohorts.utxo.all.realized.cap.usd,
@@ -802,11 +802,11 @@ export function createMarketSection() {
                 tree: [
                   {
                     name: "Daily",
-                    title: "True Range (Daily)",
+                    title: "Daily True Range",
                     bottom: [
                       line({
                         series: range.trueRange,
-                        name: "Daily",
+                        name: "True Range",
                         color: colors.time._24h,
                         unit: Unit.usd,
                       }),
@@ -814,7 +814,7 @@ export function createMarketSection() {
                   },
                   {
                     name: "2 Week Sum",
-                    title: "True Range (2 Week Sum)",
+                    title: "2 Week True Range Sum",
                     bottom: [
                       line({
                         series: range.trueRangeSum2w,
@@ -867,7 +867,7 @@ export function createMarketSection() {
                 ],
               },
               {
-                name: "MinMax",
+                name: "Min/Max",
                 tree: [
                   {
                     id: "1w",
@@ -895,7 +895,7 @@ export function createMarketSection() {
                   },
                 ].map((p) => ({
                   name: p.id,
-                  title: `${p.name} MinMax`,
+                  title: `${p.name} Min/Max`,
                   top: [
                     price({
                       series: p.max,

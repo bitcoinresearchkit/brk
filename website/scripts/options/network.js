@@ -7,6 +7,7 @@ import { entries } from "../utils/array.js";
 import {
   line,
   fromSupplyPattern,
+  chartsFromFull,
   chartsFromFullPerBlock,
   chartsFromCount,
   chartsFromCountEntries,
@@ -80,7 +81,7 @@ export function createNetworkSection() {
   const activityTypes = /** @type {const} */ ([
     { key: "sending", name: "Sending" },
     { key: "receiving", name: "Receiving" },
-    { key: "both", name: "Both" },
+    { key: "both", name: "Sending & Receiving" },
     { key: "reactivated", name: "Reactivated" },
   ]);
 
@@ -227,7 +228,7 @@ export function createNetworkSection() {
           })),
           {
             name: "Cumulative",
-            title: `${groupName} Output Count (Total)`,
+            title: `Cumulative ${groupName} Output Count`,
             bottom: types.map((t) =>
               line({
                 series: scripts.count[t.key].cumulative,
@@ -288,7 +289,7 @@ export function createNetworkSection() {
             bottom: satsBtcUsdFrom({
               source: supply.burned,
               key: "cumulative",
-              name: "all-time",
+              name: "All Time",
             }),
           },
           {
@@ -296,7 +297,7 @@ export function createNetworkSection() {
             title: "OP_RETURN Burned",
             bottom: satsBtcUsd({
               pattern: scripts.value.opReturn.cumulative,
-              name: "all-time",
+              name: "All Time",
             }),
           },
         ],
@@ -420,11 +421,11 @@ export function createNetworkSection() {
               })),
               {
                 name: "Cumulative",
-                title: "Block Count (Total)",
+                title: "Cumulative Block Count",
                 bottom: [
                   {
                     series: blocks.count.total.cumulative,
-                    title: "all-time",
+                    title: "All Time",
                     unit: Unit.count,
                   },
                 ],
@@ -441,7 +442,7 @@ export function createNetworkSection() {
           },
           {
             name: "Size",
-            tree: chartsFromFullPerBlock({
+            tree: chartsFromFull({
               pattern: blocks.size,
               metric: "Block Size",
               unit: Unit.bytes,
@@ -449,7 +450,7 @@ export function createNetworkSection() {
           },
           {
             name: "Weight",
-            tree: chartsFromFullPerBlock({
+            tree: chartsFromFull({
               pattern: blocks.weight,
               metric: "Block Weight",
               unit: Unit.wu,
@@ -457,7 +458,7 @@ export function createNetworkSection() {
           },
           {
             name: "vBytes",
-            tree: chartsFromFullPerBlock({
+            tree: chartsFromFull({
               pattern: blocks.vbytes,
               metric: "Block vBytes",
               unit: Unit.vb,
@@ -612,7 +613,7 @@ export function createNetworkSection() {
               })),
               {
                 name: "Cumulative",
-                title: "Output Count by Script Type (Total)",
+                title: "Cumulative Output Count by Script Type",
                 bottom: scriptTypes.map((t) =>
                   line({
                     series: scripts.count[t.key].cumulative,

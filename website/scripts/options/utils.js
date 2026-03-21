@@ -10,15 +10,15 @@ export function periodIdToName(id, compoundAdjective) {
   const s = compoundAdjective || num === 1 ? "" : "s";
   switch (id.slice(-1)) {
     case "h":
-      return `${num} hour${s}`;
+      return `${num} Hour${s}`;
     case "d":
-      return `${num} day${s}`;
+      return `${num} Day${s}`;
     case "w":
-      return `${num} week${s}`;
+      return `${num} Week${s}`;
     case "m":
-      return `${num} month${s}`;
+      return `${num} Month${s}`;
     case "y":
-      return `${num} year${s}`;
+      return `${num} Year${s}`;
     default:
       return id;
   }

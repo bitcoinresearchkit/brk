@@ -231,7 +231,7 @@ function createSingleEntryTree(item, returnsBottom) {
  * @param {BaseEntryItem & { titlePrefix?: string }} item
  */
 function createShortSingleEntry(item) {
-  return createSingleEntryTree(item, percentRatioBaseline({ pattern: item.returns, name: "Current" }));
+  return createSingleEntryTree(item, percentRatioBaseline({ pattern: item.returns, name: "Return" }));
 }
 
 /**
@@ -249,7 +249,7 @@ function createLongSingleEntry(item) {
         name: "Returns",
         title: `Returns: ${titlePrefix}`,
         top,
-        bottom: percentRatioBaseline({ pattern: returns, name: "Current" }),
+        bottom: percentRatioBaseline({ pattern: returns, name: "Return" }),
       },
       {
         name: "CAGR",

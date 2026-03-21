@@ -66,7 +66,7 @@ function volumeTree(tv, color, title) {
           })),
           {
             name: "Cumulative",
-            title: title("Cumulative Transfer Volume"),
+            title: title("Cumulative Transfer Volume Profitability"),
             bottom: [
               ...satsBtcUsd({
                 pattern: tv.inProfit.cumulative,
@@ -231,7 +231,7 @@ function singleSellSideRiskTree(sellSideRisk, title) {
       title: title(`${w.title} Sell Side Risk`),
       bottom: percentRatio({
         pattern: sellSideRisk[w.key],
-        name: "Risk",
+        name: "Sell Side Risk",
         color: w.color,
       }),
     })),
@@ -381,7 +381,7 @@ export function createGroupedActivitySectionMinimal({ list, all, title }) {
   return {
     name: "Activity",
     tree: groupedWindowsCumulativeSatsBtcUsd({
-      list, all, title, metricTitle: "Volume",
+      list, all, title, metricTitle: "Transfer Volume",
       getMetric: (c) => c.tree.activity.transferVolume,
     }),
   };

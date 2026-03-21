@@ -276,12 +276,12 @@ export function simplePriceRatioTree({ pattern, title, legend, color }) {
  */
 function percentileBands(p, extract) {
   return [
-    { name: "pct95", prop: extract(p.pct95), color: colors.ratioPct._95 },
-    { name: "pct5", prop: extract(p.pct5), color: colors.ratioPct._5 },
-    { name: "pct98", prop: extract(p.pct98), color: colors.ratioPct._98 },
-    { name: "pct2", prop: extract(p.pct2), color: colors.ratioPct._2 },
-    { name: "pct99", prop: extract(p.pct99), color: colors.ratioPct._99 },
-    { name: "pct1", prop: extract(p.pct1), color: colors.ratioPct._1 },
+    { name: "P95", prop: extract(p.pct95), color: colors.ratioPct._95 },
+    { name: "P5", prop: extract(p.pct5), color: colors.ratioPct._5 },
+    { name: "P98", prop: extract(p.pct98), color: colors.ratioPct._98 },
+    { name: "P2", prop: extract(p.pct2), color: colors.ratioPct._2 },
+    { name: "P99", prop: extract(p.pct99), color: colors.ratioPct._99 },
+    { name: "P1", prop: extract(p.pct1), color: colors.ratioPct._1 },
   ];
 }
 
@@ -306,6 +306,7 @@ function ratioBands(bands) {
  * @param {string} args.title
  * @param {string} args.legend
  * @param {Color} [args.color]
+ * @param {string} [args.ratioTitle]
  * @param {FetchedPriceSeriesBlueprint[]} [args.priceReferences]
  * @returns {PartialOptionsTree}
  */
@@ -314,6 +315,7 @@ export function priceRatioPercentilesTree({
   title,
   legend,
   color,
+  ratioTitle,
   priceReferences,
 }) {
   const p = pattern.percentiles;
@@ -331,7 +333,7 @@ export function priceRatioPercentilesTree({
     },
     {
       name: "Ratio",
-      title: `${title} Ratio`,
+      title: ratioTitle ?? `${title} Ratio`,
       top: [
         price({ series: pattern, name: legend, color }),
         ...priceBands(pctUsd),
@@ -384,12 +386,12 @@ export function revenueRollingBtcSatsUsd({ coinbase, subsidy, fee }) {
 export function percentileUsdMap(ratio) {
   const p = ratio.percentiles;
   return /** @type {const} */ ([
-    { name: "pct95", prop: p.pct95.price, color: colors.ratioPct._95 },
-    { name: "pct5", prop: p.pct5.price, color: colors.ratioPct._5 },
-    { name: "pct98", prop: p.pct98.price, color: colors.ratioPct._98 },
-    { name: "pct2", prop: p.pct2.price, color: colors.ratioPct._2 },
-    { name: "pct99", prop: p.pct99.price, color: colors.ratioPct._99 },
-    { name: "pct1", prop: p.pct1.price, color: colors.ratioPct._1 },
+    { name: "P95", prop: p.pct95.price, color: colors.ratioPct._95 },
+    { name: "P5", prop: p.pct5.price, color: colors.ratioPct._5 },
+    { name: "P98", prop: p.pct98.price, color: colors.ratioPct._98 },
+    { name: "P2", prop: p.pct2.price, color: colors.ratioPct._2 },
+    { name: "P99", prop: p.pct99.price, color: colors.ratioPct._99 },
+    { name: "P1", prop: p.pct1.price, color: colors.ratioPct._1 },
   ]);
 }
 
@@ -400,12 +402,12 @@ export function percentileUsdMap(ratio) {
 export function percentileMap(ratio) {
   const p = ratio.percentiles;
   return /** @type {const} */ ([
-    { name: "pct95", prop: p.pct95.ratio, color: colors.ratioPct._95 },
-    { name: "pct5", prop: p.pct5.ratio, color: colors.ratioPct._5 },
-    { name: "pct98", prop: p.pct98.ratio, color: colors.ratioPct._98 },
-    { name: "pct2", prop: p.pct2.ratio, color: colors.ratioPct._2 },
-    { name: "pct99", prop: p.pct99.ratio, color: colors.ratioPct._99 },
-    { name: "pct1", prop: p.pct1.ratio, color: colors.ratioPct._1 },
+    { name: "P95", prop: p.pct95.ratio, color: colors.ratioPct._95 },
+    { name: "P5", prop: p.pct5.ratio, color: colors.ratioPct._5 },
+    { name: "P98", prop: p.pct98.ratio, color: colors.ratioPct._98 },
+    { name: "P2", prop: p.pct2.ratio, color: colors.ratioPct._2 },
+    { name: "P99", prop: p.pct99.ratio, color: colors.ratioPct._99 },
+    { name: "P1", prop: p.pct1.ratio, color: colors.ratioPct._1 },
   ]);
 }
 
@@ -417,7 +419,7 @@ export function sdPatterns(ratio) {
   return /** @type {const} */ ([
     {
       nameAddon: "All Time",
-      titleAddon: "",
+      titleAddon: "All Time",
       sd: ratio.stdDev.all,
       smaRatio: ratio.sma.all.ratio,
     },
@@ -498,7 +500,7 @@ export function ratioSmas(ratio) {
     { name: "1y SMA", series: ratio.sma._1y.ratio },
     { name: "2y SMA", series: ratio.sma._2y.ratio },
     { name: "4y SMA", series: ratio.sma._4y.ratio },
-    { name: "All SMA", series: ratio.sma.all.ratio, color: colors.time.all },
+    { name: "All Time SMA", series: ratio.sma.all.ratio, color: colors.time.all },
   ].map((s, i, arr) => ({ color: colors.at(i, arr.length), ...s }));
 }
 
@@ -542,7 +544,7 @@ export function ratioBottomSeries(ratio) {
  */
 export function createRatioChart({ title, pricePattern, ratio, color, name }) {
   return {
-    name: name ?? "ratio",
+    name: name ?? "Ratio",
     title: title(name ?? "Ratio"),
     top: [
       price({ series: pricePattern, name: "Price", color }),
@@ -583,7 +585,7 @@ export function createZScoresFolder({
     { name: "1y", sd: ratio.stdDev._1y },
     { name: "2y", sd: ratio.stdDev._2y },
     { name: "4y", sd: ratio.stdDev._4y },
-    { name: "all", sd: ratio.stdDev.all, color: colors.time.all },
+    { name: "All Time", sd: ratio.stdDev.all, color: colors.time.all },
   ].map((s, i, arr) => ({ color: colors.at(i, arr.length), ...s }));
 
   return {

@@ -1,6 +1,8 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPointsSigned32, Height, Indexes, StoredF32, StoredI64, StoredU32, StoredU64, Version};
+use brk_types::{
+    BasisPointsSigned32, Height, Indexes, StoredF32, StoredI64, StoredU32, StoredU64, Version,
+};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
@@ -8,7 +10,7 @@ use crate::{
         metrics::ImportConfig,
         state::{CohortState, CostBasisOps, RealizedOps},
     },
-    internal::{PerBlock, PerBlockCumulativeRolling, PerBlockWithDeltas, RatioU32U64F32},
+    internal::{PerBlock, PerBlockCumulativeRolling, PerBlockWithDeltas, RatioU64F32},
 };
 
 /// Base output metrics: utxo_count + delta.
@@ -32,12 +34,14 @@ impl OutputsBase {
                 cfg.cached_starts,
             )?,
             spent_count: cfg.import("spent_utxo_count", v1)?,
-            spending_rate: cfg.import("spending_rate", v1)?,
+            spending_rate: cfg.import("spending_rate", Version::TWO)?,
         })
     }
 
     pub(crate) fn min_len(&self) -> usize {
-        self.unspent_count.height.len()
+        self.unspent_count
+            .height
+            .len()
             .min(self.spent_count.block.len())
     }
 
@@ -69,9 +73,9 @@ impl OutputsBase {
         exit: &Exit,
     ) -> Result<()> {
         self.spending_rate
-            .compute_binary::<StoredU32, StoredU64, RatioU32U64F32>(
+            .compute_binary::<StoredU64, StoredU64, RatioU64F32>(
                 max_from,
-                &self.spent_count.block,
+                &self.spent_count.sum.0._1y.height,
                 all_utxo_count,
                 exit,
             )

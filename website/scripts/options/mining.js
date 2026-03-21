@@ -299,7 +299,7 @@ export function createMiningSection() {
         tree: [
           ...ROLLING_WINDOWS.map((w) => ({
             name: w.name,
-            title: `${w.title} Revenue`,
+            title: `${w.title} Mining Revenue`,
             bottom: revenueRollingBtcSatsUsd({
               coinbase: mining.rewards.coinbase.average[w.key],
               subsidy: mining.rewards.subsidy.average[w.key],
@@ -308,7 +308,7 @@ export function createMiningSection() {
           })),
           {
             name: "Cumulative",
-            title: "Revenue Comparison (Total)",
+            title: "Cumulative Mining Revenue",
             bottom: revenueBtcSatsUsd({
               coinbase: mining.rewards.coinbase,
               subsidy: mining.rewards.subsidy,
@@ -338,7 +338,7 @@ export function createMiningSection() {
                 metric: "Transaction Fee Revenue",
               }),
               {
-                name: "Distributions",
+                name: "Distribution",
                 tree: ROLLING_WINDOWS.map((w) => ({
                   name: w.name,
                   title: `${w.title} Fee Revenue per Block Distribution`,
@@ -352,15 +352,15 @@ export function createMiningSection() {
             tree: [
               ...ROLLING_WINDOWS.map((w) => ({
                 name: w.name,
-                title: `${w.title} Revenue Dominance`,
+                title: `${w.title} Mining Revenue Dominance`,
                 bottom: [
                   ...percentRatio({ pattern: mining.rewards.subsidy.dominance[w.key], name: "Subsidy", color: colors.mining.subsidy }),
                   ...percentRatio({ pattern: mining.rewards.fees.dominance[w.key], name: "Fees", color: colors.mining.fee }),
                 ],
               })),
               {
-                name: "All-time",
-                title: "Revenue Dominance (All-time)",
+                name: "All Time",
+                title: "All Time Mining Revenue Dominance",
                 bottom: [
                   ...percentRatio({ pattern: mining.rewards.subsidy.dominance, name: "Subsidy", color: colors.mining.subsidy }),
                   ...percentRatio({ pattern: mining.rewards.fees.dominance, name: "Fees", color: colors.mining.fee }),
@@ -369,7 +369,7 @@ export function createMiningSection() {
             ],
           },
           {
-            name: "Fee Multiple",
+            name: "Fee-to-Subsidy",
             tree: ROLLING_WINDOWS.map((w) => ({
               name: w.name,
               title: `${w.title} Fee-to-Subsidy Ratio`,
@@ -378,11 +378,11 @@ export function createMiningSection() {
           },
           {
             name: "Unclaimed",
-            title: "Unclaimed Rewards (Total)",
+            title: "Unclaimed Rewards",
             bottom: satsBtcUsdFrom({
               source: mining.rewards.unclaimed,
               key: "cumulative",
-              name: "all-time",
+              name: "All Time",
             }),
           },
         ],
@@ -397,8 +397,8 @@ export function createMiningSection() {
             bottom: [
               line({ series: mining.hashrate.price.ths, name: "TH/s", color: colors.usd, unit: Unit.usdPerThsPerDay }),
               line({ series: mining.hashrate.price.phs, name: "PH/s", color: colors.usd, unit: Unit.usdPerPhsPerDay }),
-              dotted({ series: mining.hashrate.price.thsMin, name: "TH/s Min", color: colors.stat.min, unit: Unit.usdPerThsPerDay }),
-              dotted({ series: mining.hashrate.price.phsMin, name: "PH/s Min", color: colors.stat.min, unit: Unit.usdPerPhsPerDay }),
+              dotted({ series: mining.hashrate.price.thsMin, name: "TH/s ATL", color: colors.stat.min, unit: Unit.usdPerThsPerDay }),
+              dotted({ series: mining.hashrate.price.phsMin, name: "PH/s ATL", color: colors.stat.min, unit: Unit.usdPerPhsPerDay }),
             ],
           },
           {
@@ -407,13 +407,13 @@ export function createMiningSection() {
             bottom: [
               line({ series: mining.hashrate.value.ths, name: "TH/s", color: colors.bitcoin, unit: Unit.satsPerThsPerDay }),
               line({ series: mining.hashrate.value.phs, name: "PH/s", color: colors.bitcoin, unit: Unit.satsPerPhsPerDay }),
-              dotted({ series: mining.hashrate.value.thsMin, name: "TH/s Min", color: colors.stat.min, unit: Unit.satsPerThsPerDay }),
-              dotted({ series: mining.hashrate.value.phsMin, name: "PH/s Min", color: colors.stat.min, unit: Unit.satsPerPhsPerDay }),
+              dotted({ series: mining.hashrate.value.thsMin, name: "TH/s ATL", color: colors.stat.min, unit: Unit.satsPerThsPerDay }),
+              dotted({ series: mining.hashrate.value.phsMin, name: "PH/s ATL", color: colors.stat.min, unit: Unit.satsPerPhsPerDay }),
             ],
           },
           {
             name: "Recovery",
-            title: "Recovery",
+            title: "Mining Recovery",
             bottom: [
               ...percentRatio({ pattern: mining.hashrate.price.rebound, name: "Hash Price", color: colors.usd }),
               ...percentRatio({ pattern: mining.hashrate.value.rebound, name: "Hash Value", color: colors.bitcoin }),
@@ -429,8 +429,8 @@ export function createMiningSection() {
             name: "Countdown",
             title: "Next Halving",
             bottom: [
-              line({ series: blocks.halving.blocksToHalving, name: "Remaining", unit: Unit.blocks }),
-              line({ series: blocks.halving.daysToHalving, name: "Remaining", unit: Unit.days }),
+              line({ series: blocks.halving.blocksToHalving, name: "Blocks", unit: Unit.blocks }),
+              line({ series: blocks.halving.daysToHalving, name: "Days", unit: Unit.days }),
             ],
           },
           {
@@ -458,8 +458,8 @@ export function createMiningSection() {
             name: "Countdown",
             title: "Next Difficulty Adjustment",
             bottom: [
-              line({ series: blocks.difficulty.blocksToRetarget, name: "Remaining", unit: Unit.blocks }),
-              line({ series: blocks.difficulty.daysToRetarget, name: "Remaining", unit: Unit.days }),
+              line({ series: blocks.difficulty.blocksToRetarget, name: "Blocks", unit: Unit.blocks }),
+              line({ series: blocks.difficulty.daysToRetarget, name: "Days", unit: Unit.days }),
             ],
           },
           {

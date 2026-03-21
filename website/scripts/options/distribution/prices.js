@@ -40,7 +40,7 @@ export function createPricesSectionFull({ cohort, title }) {
       {
         name: "Realized",
         tree: createPriceRatioCharts({
-          context: cohort.name,
+          context: cohort.title,
           legend: "Realized",
           pricePattern: tree.realized.price,
           ratio: tree.realized.price,
@@ -54,6 +54,7 @@ export function createPricesSectionFull({ cohort, title }) {
         tree: priceRatioPercentilesTree({
           pattern: tree.realized.investor.price,
           title: title("Investor Price"),
+          ratioTitle: title("Investor Price Ratio"),
           legend: "Investor",
           color,
         }),
@@ -82,24 +83,12 @@ export function createPricesSectionBasic({ cohort, title }) {
             top: [price({ series: tree.realized.price, name: "Realized", color })],
           },
           {
-            name: "MVRV",
-            title: title("MVRV"),
-            bottom: [
-              baseline({
-                series: tree.realized.mvrv,
-                name: "MVRV",
-                unit: Unit.ratio,
-                base: 1,
-              }),
-            ],
-          },
-          {
-            name: "Price Ratio",
+            name: "Ratio",
             title: title("Realized Price Ratio"),
             bottom: [
               baseline({
                 series: tree.realized.price.ratio,
-                name: "Price Ratio",
+                name: "Ratio",
                 unit: Unit.ratio,
                 base: 1,
               }),
@@ -136,7 +125,7 @@ function groupedRealizedPriceItems(list, all, title) {
         },
         {
           name: "Ratio",
-          title: title("MVRV"),
+          title: title("Realized Price Ratio"),
           bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
             baseline({ series: tree.realized.mvrv, name, color, unit: Unit.ratio, base: 1 }),
           ),

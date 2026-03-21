@@ -89,7 +89,7 @@ export function createValuationSectionFull({ cohort, title }) {
       },
       { name: "MVRV", title: title("MVRV"), bottom: ratioBottomSeries(tree.realized.price) },
       ...singleDeltaItems(tree, title),
-      { name: "% of Own Market Cap", title: title("Realized Cap (% of Own Market Cap)"), bottom: percentRatioBaseline({ pattern: tree.realized.cap.toOwnMcap, name: "Rel. to Own Market Cap", color }) },
+      { name: "% of Own Market Cap", title: title("Realized Cap (% of Own Market Cap)"), bottom: percentRatioBaseline({ pattern: tree.realized.cap.toOwnMcap, name: "% of Own Market Cap", color }) },
     ],
   };
 }
