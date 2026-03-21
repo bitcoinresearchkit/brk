@@ -232,9 +232,10 @@ impl CohortVecs for AddrCohortVecs {
         &mut self,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
+        all_utxo_count: &impl ReadableVec<Height, StoredU64>,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics
-            .compute_rest_part2(prices, starting_indexes, exit)
+            .compute_rest_part2(prices, starting_indexes, all_utxo_count, exit)
     }
 }

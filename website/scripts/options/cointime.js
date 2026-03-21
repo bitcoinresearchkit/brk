@@ -285,16 +285,16 @@ export function createCointimeSection() {
               sum: pattern.sum,
               cumulative: pattern.cumulative,
             })),
-            title: "Coinblocks",
+            metric: "Coinblocks",
             unit: Unit.coinblocks,
           }),
-          ...coinblocks.map(({ pattern, name, title, color }) => ({
+          ...coinblocks.map(({ pattern, name, title: metric, color }) => ({
             name,
             tree: sumsAndAveragesCumulative({
               sum: pattern.sum,
               average: pattern.average,
               cumulative: pattern.cumulative,
-              title,
+              metric,
               unit: Unit.coinblocks,
               color,
             }),
@@ -322,16 +322,16 @@ export function createCointimeSection() {
                 cumulative: vocdd.pattern.cumulative,
               },
             ],
-            title: "Cointime Value",
+            metric: "Cointime Value",
             unit: Unit.usd,
           }),
-          ...cointimeValues.map(({ pattern, name, title, color }) => ({
+          ...cointimeValues.map(({ pattern, name, title: metric, color }) => ({
             name,
             tree: sumsAndAveragesCumulative({
               sum: pattern.sum,
               average: pattern.average,
               cumulative: pattern.cumulative,
-              title,
+              metric,
               unit: Unit.usd,
               color,
             }),
@@ -342,7 +342,7 @@ export function createCointimeSection() {
               sum: vocdd.pattern.sum,
               average: vocdd.pattern.average,
               cumulative: vocdd.pattern.cumulative,
-              title: vocdd.title,
+              metric: vocdd.title,
               unit: Unit.usd,
               color: vocdd.color,
             }),

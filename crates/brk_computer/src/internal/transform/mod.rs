@@ -26,7 +26,7 @@ pub use derived::{
 pub use ratio::{
     RatioCentsBp32, RatioCentsSignedCentsBps32, RatioCentsSignedDollarsBps32, RatioDiffCentsBps32,
     RatioDiffDollarsBps32, RatioDiffF32Bps32, RatioDollarsBp16, RatioDollarsBp32,
-    RatioDollarsBps32, RatioSatsBp16, RatioU64Bp16,
+    RatioDollarsBps32, RatioSatsBp16, RatioU32U64F32, RatioU64Bp16,
 };
 pub use specialized::{
     BlockCountTarget1m, BlockCountTarget1w, BlockCountTarget1y, BlockCountTarget24h,

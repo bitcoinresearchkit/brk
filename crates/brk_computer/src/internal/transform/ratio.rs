@@ -1,6 +1,6 @@
 use brk_types::{
     BasisPoints16, BasisPoints32, BasisPointsSigned32, Cents, CentsSigned, Dollars, Sats, StoredF32,
-    StoredU64,
+    StoredU32, StoredU64,
 };
 use vecdb::BinaryTransform;
 
@@ -108,6 +108,19 @@ impl BinaryTransform<Dollars, Dollars, BasisPoints32> for RatioDollarsBp32 {
             BasisPoints32::from(ratio)
         } else {
             BasisPoints32::ZERO
+        }
+    }
+}
+
+pub struct RatioU32U64F32;
+
+impl BinaryTransform<StoredU32, StoredU64, StoredF32> for RatioU32U64F32 {
+    #[inline(always)]
+    fn apply(numerator: StoredU32, denominator: StoredU64) -> StoredF32 {
+        if *denominator > 0 {
+            StoredF32::from(*numerator as f64 / *denominator as f64)
+        } else {
+            StoredF32::default()
         }
     }
 }

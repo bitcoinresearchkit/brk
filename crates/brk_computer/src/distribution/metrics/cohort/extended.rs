@@ -2,7 +2,7 @@ use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    Dollars, Height, Indexes, Sats, Version,
+    Dollars, Height, Indexes, Sats, StoredU64, Version,
 };
 use vecdb::AnyStoredVec;
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
@@ -94,6 +94,7 @@ impl ExtendedCohortMetrics {
         starting_indexes: &Indexes,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
+        all_utxo_count: &impl ReadableVec<Height, StoredU64>,
         exit: &Exit,
     ) -> Result<()> {
         self.realized.compute_rest_part2(
@@ -140,6 +141,8 @@ impl ExtendedCohortMetrics {
             &self.supply.total.usd.height,
             exit,
         )?;
+
+        self.outputs.compute_part2(starting_indexes.height, all_utxo_count, exit)?;
 
         Ok(())
     }

@@ -53,7 +53,12 @@ export function createNetworkSection() {
   // Non-addressable script types
   const nonAddressableTypes = /** @type {const} */ ([
     { key: "p2ms", name: "P2MS", color: st.p2ms, defaultActive: false },
-    { key: "opReturn", name: "OP_RETURN", color: st.opReturn, defaultActive: true },
+    {
+      key: "opReturn",
+      name: "OP_RETURN",
+      color: st.opReturn,
+      defaultActive: true,
+    },
     {
       key: "emptyOutput",
       name: "Empty",
@@ -70,7 +75,6 @@ export function createNetworkSection() {
 
   // All script types = addressable + non-addressable
   const scriptTypes = [...addressTypes, ...nonAddressableTypes];
-
 
   // Transacting types (transaction participation)
   const activityTypes = /** @type {const} */ ([
@@ -138,14 +142,16 @@ export function createNetworkSection() {
     },
     ...simpleDeltaTree({
       delta: addrs.delta[key],
-      title: `${titlePrefix}Address Count`,
+      title: (s) => `${titlePrefix}${s}`,
+      metric: "Address Count",
       unit: Unit.count,
     }),
     {
       name: "New",
       tree: chartsFromCount({
         pattern: addrs.new[key],
-        title: `${titlePrefix}New Addresses`,
+        title: (s) => `${titlePrefix}${s}`,
+        metric: "New Addresses",
         unit: Unit.count,
       }),
     },
@@ -171,7 +177,8 @@ export function createNetworkSection() {
           name: t.name,
           tree: averagesArray({
             windows: addrs.activity[key][t.key],
-            title: `${titlePrefix}${t.name} Addresses`,
+            title: (s) => `${titlePrefix}${s}`,
+            metric: `${t.name} Addresses`,
             unit: Unit.count,
           }),
         })),
@@ -187,7 +194,10 @@ export function createNetworkSection() {
     { name: "Script Hash", types: [byKey.p2sh, byKey.p2ms] },
     { name: "SegWit", types: [byKey.p2wsh, byKey.p2wpkh] },
     { name: "Taproot", types: [byKey.p2a, byKey.p2tr] },
-    { name: "Other", types: [byKey.opReturn, byKey.emptyOutput, byKey.unknownOutput] },
+    {
+      name: "Other",
+      types: [byKey.opReturn, byKey.emptyOutput, byKey.unknownOutput],
+    },
   ];
 
   /**
@@ -206,7 +216,9 @@ export function createNetworkSection() {
             title: `${groupName} Output Count ${w.title} Sum`,
             bottom: types.map((t) =>
               line({
-                series: /** @type {CountPattern<number>} */ (scripts.count[t.key]).sum[w.key],
+                series: /** @type {CountPattern<number>} */ (
+                  scripts.count[t.key]
+                ).sum[w.key],
                 name: t.name,
                 color: t.color,
                 unit: Unit.count,
@@ -231,7 +243,7 @@ export function createNetworkSection() {
         name: t.name,
         tree: chartsFromCount({
           pattern: /** @type {CountPattern<number>} */ (scripts.count[t.key]),
-          title: `${t.name} Output Count`,
+          metric: `${t.name} Output Count`,
           unit: Unit.count,
         }),
       })),
@@ -298,7 +310,7 @@ export function createNetworkSection() {
             name: "Count",
             tree: chartsFromFullPerBlock({
               pattern: transactions.count.total,
-              title: "Transaction Count",
+              metric: "Transaction Count",
               unit: Unit.count,
             }),
           },
@@ -306,14 +318,14 @@ export function createNetworkSection() {
             name: "Volume",
             tree: satsBtcUsdFullTree({
               pattern: transactions.volume.transferVolume,
-              title: "Transaction Volume",
+              metric: "Transaction Volume",
             }),
           },
           {
             name: "Fee Rate",
             tree: chartsFromBlockAnd6b({
               pattern: transactions.fees.feeRate,
-              title: "Transaction Fee Rate",
+              metric: "Transaction Fee Rate",
               unit: Unit.feeRate,
             }),
           },
@@ -321,7 +333,7 @@ export function createNetworkSection() {
             name: "Fee",
             tree: chartsFromBlockAnd6b({
               pattern: transactions.fees.fee,
-              title: "Transaction Fee",
+              metric: "Transaction Fee",
               unit: Unit.sats,
             }),
           },
@@ -329,7 +341,7 @@ export function createNetworkSection() {
             name: "Weight",
             tree: chartsFromBlockAnd6b({
               pattern: transactions.size.weight,
-              title: "Transaction Weight",
+              metric: "Transaction Weight",
               unit: Unit.wu,
             }),
           },
@@ -337,7 +349,7 @@ export function createNetworkSection() {
             name: "vSize",
             tree: chartsFromBlockAnd6b({
               pattern: transactions.size.vsize,
-              title: "Transaction vSize",
+              metric: "Transaction vSize",
               unit: Unit.vb,
             }),
           },
@@ -345,7 +357,7 @@ export function createNetworkSection() {
             name: "Versions",
             tree: chartsFromCountEntries({
               entries: entries(transactions.versions),
-              title: "Transaction Versions",
+              metric: "Transaction Versions",
               unit: Unit.count,
             }),
           },
@@ -423,7 +435,7 @@ export function createNetworkSection() {
             name: "Interval",
             tree: averagesArray({
               windows: blocks.interval,
-              title: "Block Interval",
+              metric: "Block Interval",
               unit: Unit.secs,
             }),
           },
@@ -431,7 +443,7 @@ export function createNetworkSection() {
             name: "Size",
             tree: chartsFromFullPerBlock({
               pattern: blocks.size,
-              title: "Block Size",
+              metric: "Block Size",
               unit: Unit.bytes,
             }),
           },
@@ -439,7 +451,7 @@ export function createNetworkSection() {
             name: "Weight",
             tree: chartsFromFullPerBlock({
               pattern: blocks.weight,
-              title: "Block Weight",
+              metric: "Block Weight",
               unit: Unit.wu,
             }),
           },
@@ -447,7 +459,7 @@ export function createNetworkSection() {
             name: "vBytes",
             tree: chartsFromFullPerBlock({
               pattern: blocks.vbytes,
-              title: "Block vBytes",
+              metric: "Block vBytes",
               unit: Unit.vb,
             }),
           },
@@ -471,7 +483,7 @@ export function createNetworkSection() {
           },
           ...simpleDeltaTree({
             delta: cohorts.utxo.all.outputs.unspentCount.delta,
-            title: "UTXO Count",
+            metric: "UTXO Count",
             unit: Unit.count,
           }),
           {
@@ -493,7 +505,7 @@ export function createNetworkSection() {
                   cumulative: inputs.count.cumulative,
                 },
               ],
-              title: "UTXO Flow",
+              metric: "UTXO Flow",
               unit: Unit.count,
             }),
           },
@@ -503,7 +515,7 @@ export function createNetworkSection() {
         name: "Inputs",
         tree: chartsFromAggregatedPerBlock({
           pattern: inputs.count,
-          title: "Input Count",
+          metric: "Input Count",
           unit: Unit.count,
         }),
       },
@@ -511,7 +523,7 @@ export function createNetworkSection() {
         name: "Outputs",
         tree: chartsFromAggregatedPerBlock({
           pattern: outputs.count.total,
-          title: "Output Count",
+          metric: "Output Count",
           unit: Unit.count,
         }),
       },
@@ -588,7 +600,9 @@ export function createNetworkSection() {
                 title: `Output Count by Script Type ${w.title} Sum`,
                 bottom: scriptTypes.map((t) =>
                   line({
-                    series: /** @type {CountPattern<number>} */ (scripts.count[t.key]).sum[w.key],
+                    series: /** @type {CountPattern<number>} */ (
+                      scripts.count[t.key]
+                    ).sum[w.key],
                     name: t.name,
                     color: t.color,
                     unit: Unit.count,

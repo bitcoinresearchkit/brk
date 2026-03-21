@@ -1,4 +1,3 @@
-use core::panic;
 use std::{
     cmp::Ordering,
     f32,
@@ -33,9 +32,7 @@ impl From<f32> for StoredF32 {
 impl From<f64> for StoredF32 {
     #[inline]
     fn from(value: f64) -> Self {
-        if value > f32::MAX as f64 {
-            panic!("f64 is too big")
-        }
+        debug_assert!(value <= f32::MAX as f64);
         Self(value as f32)
     }
 }

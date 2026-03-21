@@ -47,9 +47,7 @@ impl From<u16> for StoredU16 {
 impl From<usize> for StoredU16 {
     #[inline]
     fn from(value: usize) -> Self {
-        if value > u16::MAX as usize {
-            panic!("usize too big (value = {value})")
-        }
+        debug_assert!(value <= u16::MAX as usize);
         Self(value as u16)
     }
 }

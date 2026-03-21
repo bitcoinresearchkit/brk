@@ -41,7 +41,8 @@ function volumeTree(tv, color, title) {
   return [
     ...satsBtcUsdFullTree({
       pattern: tv,
-      title: title("Transfer Volume"),
+      title,
+      metric: "Transfer Volume",
       color,
     }),
     {
@@ -83,7 +84,8 @@ function volumeTree(tv, color, title) {
             name: "In Profit",
             tree: satsBtcUsdFullTree({
               pattern: tv.inProfit,
-              title: title("Transfer Volume In Profit"),
+              title,
+              metric: "Transfer Volume In Profit",
               color: colors.profit,
             }),
           },
@@ -91,7 +93,8 @@ function volumeTree(tv, color, title) {
             name: "In Loss",
             tree: satsBtcUsdFullTree({
               pattern: tv.inLoss,
-              title: title("Transfer Volume In Loss"),
+              title,
+              metric: "Transfer Volume In Loss",
               color: colors.loss,
             }),
           },
@@ -122,7 +125,7 @@ function volumeFolderWithAdjusted(activity, adjustedTransferVolume, color, title
     name: "Volume",
     tree: [
       ...volumeTree(activity.transferVolume, color, title),
-      { name: "Adjusted", tree: chartsFromCount({ pattern: adjustedTransferVolume, title: title("Adjusted Transfer Volume"), unit: Unit.usd }) },
+      { name: "Adjusted", tree: chartsFromCount({ pattern: adjustedTransferVolume, title, metric: "Adjusted Transfer Volume", unit: Unit.usd }) },
     ],
   };
 }
@@ -173,7 +176,7 @@ function singleRollingSoprTree(ratio, title, prefix = "") {
  * @returns {PartialOptionsTree}
  */
 function valueDestroyedTree(valueDestroyed, title) {
-  return chartsFromCount({ pattern: valueDestroyed, title: title("Value Destroyed"), unit: Unit.usd });
+  return chartsFromCount({ pattern: valueDestroyed, title, metric: "Value Destroyed", unit: Unit.usd });
 }
 
 /**
@@ -196,7 +199,7 @@ function valueDestroyedFolderWithAdjusted(valueDestroyed, adjusted, title) {
     name: "Value Destroyed",
     tree: [
       ...valueDestroyedTree(valueDestroyed, title),
-      { name: "Adjusted", tree: chartsFromCount({ pattern: adjusted, title: title("Adjusted Value Destroyed"), unit: Unit.usd }) },
+      { name: "Adjusted", tree: chartsFromCount({ pattern: adjusted, title, metric: "Adjusted Value Destroyed", unit: Unit.usd }) },
     ],
   };
 }
@@ -258,7 +261,8 @@ function singleFullActivityTree(cohort, title, volumeItem, soprFolder, valueDest
       name: "Coindays Destroyed",
       tree: chartsFromCount({
         pattern: tree.activity.coindaysDestroyed,
-        title: title("Coindays Destroyed"),
+        title,
+        metric: "Coindays Destroyed",
         unit: Unit.coindays,
         color,
       }),
@@ -267,7 +271,8 @@ function singleFullActivityTree(cohort, title, volumeItem, soprFolder, valueDest
       name: "Dormancy",
       tree: averagesArray({
         windows: tree.activity.dormancy,
-        title: title("Dormancy"),
+        title,
+        metric: "Dormancy",
         unit: Unit.days,
       }),
     },
@@ -341,7 +346,8 @@ export function createActivitySectionWithActivity({ cohort, title }) {
         name: "Coindays Destroyed",
         tree: chartsFromCount({
           pattern: tree.activity.coindaysDestroyed,
-          title: title("Coindays Destroyed"),
+          title,
+        metric: "Coindays Destroyed",
           unit: Unit.coindays,
           color,
         }),
@@ -360,7 +366,8 @@ export function createActivitySectionMinimal({ cohort, title }) {
     name: "Activity",
     tree: satsBtcUsdFullTree({
       pattern: cohort.tree.activity.transferVolume,
-      title: title("Transfer Volume"),
+      title,
+      metric: "Transfer Volume",
     }),
   };
 }

@@ -28,6 +28,7 @@ impl<R: RealizedOps> AddrCohortState<R> {
         self.addr_count = 0;
         self.inner.supply = SupplyState::default();
         self.inner.sent = Sats::ZERO;
+        self.inner.spent_utxo_count = 0;
         self.inner.satdays_destroyed = Sats::ZERO;
         self.inner.realized = R::default();
     }

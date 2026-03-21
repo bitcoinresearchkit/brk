@@ -19,6 +19,7 @@ import {
   satsBtcUsdFullTree,
   revenueBtcSatsUsd,
   revenueRollingBtcSatsUsd,
+  formatCohortTitle,
 } from "./shared.js";
 import { brk } from "../client.js";
 
@@ -76,13 +77,17 @@ export function createMiningSection() {
     includes(ANTPOOL_AND_FRIENDS_IDS, p.id),
   );
 
-  /** @param {string} title @param {{ _24h: any, _1w: any, _1m: any, _1y: any, percent: any, ratio: any }} dominance */
-  const dominanceTree = (title, dominance) => ({
+  /**
+   * @param {(metric: string) => string} title
+   * @param {string} metric
+   * @param {{ _24h: any, _1w: any, _1m: any, _1y: any, percent: any, ratio: any }} dominance
+   */
+  const dominanceTree = (title, metric, dominance) => ({
     name: "Dominance",
     tree: [
       {
         name: "Compare",
-        title,
+        title: title(metric),
         bottom: [
           ...ROLLING_WINDOWS.flatMap((w) =>
             percentRatio({ pattern: dominance[w.key], name: w.name, color: w.color, defaultActive: w.key !== "_24h" }),
@@ -92,12 +97,12 @@ export function createMiningSection() {
       },
       ...ROLLING_WINDOWS.map((w) => ({
         name: w.name,
-        title: `${title} ${w.title}`,
+        title: title(`${w.name} ${metric}`),
         bottom: percentRatio({ pattern: dominance[w.key], name: w.name, color: w.color }),
       })),
       {
         name: "All Time",
-        title: `${title} All Time`,
+        title: title(`${metric} All Time`),
         bottom: percentRatio({ pattern: dominance, name: "All Time", color: colors.time.all }),
       },
     ],
@@ -107,50 +112,59 @@ export function createMiningSection() {
    * @param {typeof majorPoolData} poolList
    */
   const createPoolTree = (poolList) =>
-    poolList.map(({ name, pool }) => ({
-      name,
-      tree: [
-        dominanceTree(`Dominance: ${name}`, pool.dominance),
-        {
-          name: "Blocks Mined",
-          tree: chartsFromCount({
-            pattern: pool.blocksMined,
-            title: `Blocks Mined: ${name}`,
-            unit: Unit.count,
-          }),
-        },
-        {
-          name: "Rewards",
-          tree: satsBtcUsdFullTree({
-            pattern: pool.rewards,
-            title: `Rewards: ${name}`,
-          }),
-        },
-      ],
-    }));
+    poolList.map(({ name, pool }) => {
+      const title = formatCohortTitle(name);
+      return {
+        name,
+        tree: [
+          dominanceTree(title, "Dominance", pool.dominance),
+          {
+            name: "Blocks Mined",
+            tree: chartsFromCount({
+              pattern: pool.blocksMined,
+              title,
+              metric: "Blocks Mined",
+              unit: Unit.count,
+            }),
+          },
+          {
+            name: "Rewards",
+            tree: satsBtcUsdFullTree({
+              pattern: pool.rewards,
+              title,
+              metric: "Rewards",
+            }),
+          },
+        ],
+      };
+    });
 
   /**
    * @param {typeof minorPoolData} poolList
    */
   const createMinorPoolTree = (poolList) =>
-    poolList.map(({ name, pool }) => ({
-      name,
-      tree: [
-        {
-          name: "Dominance",
-          title: `Dominance: ${name}`,
-          bottom: percentRatio({ pattern: pool.dominance, name: "All Time", color: colors.time.all }),
-        },
-        {
-          name: "Blocks Mined",
-          tree: chartsFromCount({
-            pattern: pool.blocksMined,
-            title: `Blocks Mined: ${name}`,
-            unit: Unit.count,
-          }),
-        },
-      ],
-    }));
+    poolList.map(({ name, pool }) => {
+      const title = formatCohortTitle(name);
+      return {
+        name,
+        tree: [
+          {
+            name: "Dominance",
+            title: title("Dominance"),
+            bottom: percentRatio({ pattern: pool.dominance, name: "All Time", color: colors.time.all }),
+          },
+          {
+            name: "Blocks Mined",
+            tree: chartsFromCount({
+              pattern: pool.blocksMined,
+              title,
+              metric: "Blocks Mined",
+              unit: Unit.count,
+            }),
+          },
+        ],
+      };
+    });
 
   /**
    * @param {string} groupTitle
@@ -306,14 +320,14 @@ export function createMiningSection() {
             name: "Coinbase",
             tree: satsBtcUsdFullTree({
               pattern: mining.rewards.coinbase,
-              title: "Coinbase Rewards",
+              metric: "Coinbase Rewards",
             }),
           },
           {
             name: "Subsidy",
             tree: satsBtcUsdFullTree({
               pattern: mining.rewards.subsidy,
-              title: "Block Subsidy",
+              metric: "Block Subsidy",
             }),
           },
           {
@@ -321,7 +335,7 @@ export function createMiningSection() {
             tree: [
               ...satsBtcUsdFullTree({
                 pattern: mining.rewards.fees,
-                title: "Transaction Fee Revenue",
+                metric: "Transaction Fee Revenue",
               }),
               {
                 name: "Distributions",

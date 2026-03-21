@@ -216,7 +216,8 @@ export function createCohortFolderAgeRangeWithMatured(cohort) {
     name: "Matured",
     tree: satsBtcUsdFullTree({
       pattern: cohort.matured,
-      title: title("Matured Supply"),
+      title,
+      metric: "Matured Supply",
     }),
   });
   return folder;
@@ -498,6 +499,7 @@ export function createGroupedAddressCohortFolder({
  * @returns {PartialOptionsGroup}
  */
 function singleBucketFolder({ name, color, pattern }) {
+  const title = formatCohortTitle(name);
   return {
     name,
     tree: [
@@ -506,7 +508,7 @@ function singleBucketFolder({ name, color, pattern }) {
         tree: [
           {
             name: "Value",
-            title: `${name}: Supply`,
+            title: title("Supply"),
             bottom: [
               ...satsBtcUsd({ pattern: pattern.supply.all, name: "Total" }),
               ...satsBtcUsd({
@@ -522,7 +524,8 @@ function singleBucketFolder({ name, color, pattern }) {
               {
                 ...sumsTreeBaseline({
                   windows: pattern.supply.all.delta.absolute,
-                  title: `${name}: Supply Change`,
+                  title,
+                  metric: "Supply Change",
                   unit: Unit.sats,
                 }),
                 name: "Change",
@@ -530,7 +533,8 @@ function singleBucketFolder({ name, color, pattern }) {
               {
                 ...rollingPercentRatioTree({
                   windows: pattern.supply.all.delta.rate,
-                  title: `${name}: Supply Rate`,
+                  title,
+                  metric: "Supply Growth Rate",
                 }),
                 name: "Growth Rate",
               },
@@ -540,7 +544,7 @@ function singleBucketFolder({ name, color, pattern }) {
       },
       {
         name: "Realized Cap",
-        title: `${name}: Realized Cap`,
+        title: title("Realized Cap"),
         bottom: [
           line({
             series: pattern.realizedCap.all,
@@ -557,7 +561,7 @@ function singleBucketFolder({ name, color, pattern }) {
       },
       {
         name: "NUPL",
-        title: `${name}: NUPL`,
+        title: title("NUPL"),
         bottom: [
           line({ series: pattern.nupl.ratio, name, color, unit: Unit.ratio }),
         ],
@@ -568,24 +572,25 @@ function singleBucketFolder({ name, color, pattern }) {
 
 /**
  * @param {{ name: string, color: Color, pattern: RealizedSupplyPattern }[]} list
- * @param {string} titlePrefix
+ * @param {string} groupTitle
  * @returns {PartialOptionsTree}
  */
-function groupedBucketCharts(list, titlePrefix) {
+function groupedBucketCharts(list, groupTitle) {
+  const title = formatCohortTitle(groupTitle);
   return [
     {
       name: "Supply",
       tree: [
         {
           name: "All",
-          title: `${titlePrefix}: Supply`,
+          title: title("Supply"),
           bottom: list.flatMap(({ name, color, pattern }) =>
             satsBtcUsd({ pattern: pattern.supply.all, name, color }),
           ),
         },
         {
           name: "STH",
-          title: `${titlePrefix}: STH Supply`,
+          title: title("STH Supply"),
           bottom: list.flatMap(({ name, color, pattern }) =>
             satsBtcUsd({ pattern: pattern.supply.sth, name, color }),
           ),
@@ -598,7 +603,7 @@ function groupedBucketCharts(list, titlePrefix) {
               tree: [
                 {
                   name: "Compare",
-                  title: `${titlePrefix}: Supply Change`,
+                  title: title("Supply Change"),
                   bottom: ROLLING_WINDOWS.flatMap((w) =>
                     list.map(({ name, color, pattern }) =>
                       baseline({
@@ -612,7 +617,7 @@ function groupedBucketCharts(list, titlePrefix) {
                 },
                 ...ROLLING_WINDOWS.map((w) => ({
                   name: w.name,
-                  title: `${titlePrefix}: Supply Change (${w.title})`,
+                  title: title(`Supply Change (${w.title})`),
                   bottom: list.map(({ name, color, pattern }) =>
                     baseline({
                       series: pattern.supply.all.delta.absolute[w.key],
@@ -629,7 +634,7 @@ function groupedBucketCharts(list, titlePrefix) {
               tree: [
                 {
                   name: "Compare",
-                  title: `${titlePrefix}: Supply Rate`,
+                  title: title("Supply Growth Rate"),
                   bottom: ROLLING_WINDOWS.flatMap((w) =>
                     list.flatMap(({ name, color, pattern }) =>
                       percentRatio({
@@ -642,7 +647,7 @@ function groupedBucketCharts(list, titlePrefix) {
                 },
                 ...ROLLING_WINDOWS.map((w) => ({
                   name: w.name,
-                  title: `${titlePrefix}: Supply Rate (${w.title})`,
+                  title: title(`Supply Growth Rate (${w.title})`),
                   bottom: list.flatMap(({ name, color, pattern }) =>
                     percentRatio({
                       pattern: pattern.supply.all.delta.rate[w.key],
@@ -662,7 +667,7 @@ function groupedBucketCharts(list, titlePrefix) {
       tree: [
         {
           name: "All",
-          title: `${titlePrefix}: Realized Cap`,
+          title: title("Realized Cap"),
           bottom: list.map(({ name, color, pattern }) =>
             line({
               series: pattern.realizedCap.all,
@@ -674,7 +679,7 @@ function groupedBucketCharts(list, titlePrefix) {
         },
         {
           name: "STH",
-          title: `${titlePrefix}: STH Realized Cap`,
+          title: title("STH Realized Cap"),
           bottom: list.map(({ name, color, pattern }) =>
             line({
               series: pattern.realizedCap.sth,
@@ -688,7 +693,7 @@ function groupedBucketCharts(list, titlePrefix) {
     },
     {
       name: "NUPL",
-      title: `${titlePrefix}: NUPL`,
+      title: title("NUPL"),
       bottom: list.map(({ name, color, pattern }) =>
         line({ series: pattern.nupl.ratio, name, color, unit: Unit.ratio }),
       ),

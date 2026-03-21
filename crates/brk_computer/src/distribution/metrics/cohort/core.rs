@@ -1,7 +1,7 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, Sats, Version};
+use brk_types::{Height, Indexes, Sats, StoredU64, Version};
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
@@ -108,6 +108,8 @@ impl CoreCohortMetrics {
         self.supply
             .compute(prices, starting_indexes.height, exit)?;
 
+        self.outputs.compute_rest(starting_indexes.height, exit)?;
+
         self.activity
             .compute_rest_part1(prices, starting_indexes, exit)?;
 
@@ -124,6 +126,7 @@ impl CoreCohortMetrics {
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
+        all_utxo_count: &impl ReadableVec<Height, StoredU64>,
         exit: &Exit,
     ) -> Result<()> {
         self.realized.compute_rest_part2(
@@ -147,6 +150,8 @@ impl CoreCohortMetrics {
             all_supply_sats,
             exit,
         )?;
+
+        self.outputs.compute_part2(starting_indexes.height, all_utxo_count, exit)?;
 
         Ok(())
     }

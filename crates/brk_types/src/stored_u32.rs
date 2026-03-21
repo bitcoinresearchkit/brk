@@ -63,12 +63,18 @@ impl From<StoredU32> for f32 {
     }
 }
 
+impl From<u64> for StoredU32 {
+    #[inline]
+    fn from(value: u64) -> Self {
+        debug_assert!(value <= u32::MAX as u64);
+        Self(value as u32)
+    }
+}
+
 impl From<usize> for StoredU32 {
     #[inline]
     fn from(value: usize) -> Self {
-        if value > u32::MAX as usize {
-            panic!("usize too big (value = {value})")
-        }
+        debug_assert!(value <= u32::MAX as usize);
         Self(value as u32)
     }
 }
@@ -81,9 +87,7 @@ impl CheckedSub<StoredU32> for StoredU32 {
 
 impl CheckedSub<usize> for StoredU32 {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
-        if rhs > u32::MAX as usize {
-            panic!()
-        }
+        debug_assert!(rhs <= u32::MAX as usize);
         self.0.checked_sub(rhs as u32).map(Self)
     }
 }
@@ -125,9 +129,7 @@ impl Mul<usize> for StoredU32 {
     type Output = Self;
     fn mul(self, rhs: usize) -> Self::Output {
         let res = self.0 as usize * rhs;
-        if res > u32::MAX as usize {
-            panic!()
-        }
+        debug_assert!(res <= u32::MAX as usize);
         Self::from(res)
     }
 }

@@ -1,8 +1,8 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::Indexes;
-use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
+use brk_types::{Height, Indexes, StoredU64};
+use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     distribution::metrics::{
@@ -63,6 +63,7 @@ impl TypeCohortMetrics {
         exit: &Exit,
     ) -> Result<()> {
         self.supply.compute(prices, starting_indexes.height, exit)?;
+        self.outputs.compute_rest(starting_indexes.height, exit)?;
         self.activity
             .compute_rest_part1(prices, starting_indexes, exit)?;
         self.realized
@@ -74,6 +75,7 @@ impl TypeCohortMetrics {
         &mut self,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
+        all_utxo_count: &impl ReadableVec<Height, StoredU64>,
         exit: &Exit,
     ) -> Result<()> {
         self.realized.compute_rest_part2(
@@ -89,6 +91,8 @@ impl TypeCohortMetrics {
             &self.realized.price.cents.height,
             exit,
         )?;
+
+        self.outputs.compute_part2(starting_indexes.height, all_utxo_count, exit)?;
 
         Ok(())
     }

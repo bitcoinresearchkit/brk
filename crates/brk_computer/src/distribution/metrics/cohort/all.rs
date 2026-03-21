@@ -5,7 +5,7 @@ use brk_types::{
     Cents, Dollars, Height, Indexes, Version,
 };
 use vecdb::AnyStoredVec;
-use vecdb::{Exit, ReadableVec, Rw, StorageMode};
+use vecdb::{Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode};
 
 use crate::{
     blocks,
@@ -132,6 +132,13 @@ impl AllCohortMetrics {
             &self.realized.core.sopr.value_destroyed.block,
             under_1h_value_created,
             under_1h_value_destroyed,
+            exit,
+        )?;
+
+        let all_utxo_count = self.outputs.unspent_count.height.read_only_clone();
+        self.outputs.compute_part2(
+            starting_indexes.height,
+            &all_utxo_count,
             exit,
         )?;
 

@@ -53,6 +53,7 @@ pub struct CohortState<R: RealizedOps, C: CostBasisOps> {
     pub supply: SupplyState,
     pub realized: R,
     pub sent: Sats,
+    pub spent_utxo_count: u64,
     pub satdays_destroyed: Sats,
     cost_basis: C,
 }
@@ -63,6 +64,7 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
             supply: SupplyState::default(),
             realized: R::default(),
             sent: Sats::ZERO,
+            spent_utxo_count: 0,
             satdays_destroyed: Sats::ZERO,
             cost_basis: C::create(path, name),
         }
@@ -97,6 +99,7 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
 
     pub(crate) fn reset_single_iteration_values(&mut self) {
         self.sent = Sats::ZERO;
+        self.spent_utxo_count = 0;
         if R::TRACK_ACTIVITY {
             self.satdays_destroyed = Sats::ZERO;
         }
@@ -197,6 +200,7 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
     ) {
         self.supply -= supply;
         self.sent += pre.sats;
+        self.spent_utxo_count += supply.utxo_count;
         if R::TRACK_ACTIVITY {
             self.satdays_destroyed += pre.age.satdays_destroyed(pre.sats);
         }
@@ -220,6 +224,7 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
             self.send_utxo_precomputed(supply, &pre);
         } else if supply.utxo_count > 0 {
             self.supply -= supply;
+            self.spent_utxo_count += supply.utxo_count;
         }
     }
 
@@ -239,6 +244,7 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
         }
 
         self.supply -= supply;
+        self.spent_utxo_count += supply.utxo_count;
 
         if supply.value > Sats::ZERO {
             self.sent += supply.value;

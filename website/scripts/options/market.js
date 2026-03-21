@@ -46,8 +46,20 @@ import { periodIdToName } from "./utils.js";
  */
 function indexRatio({ pattern, name, color, defaultActive }) {
   return [
-    line({ series: pattern.percent, name, color, defaultActive, unit: Unit.index }),
-    line({ series: pattern.ratio, name, color, defaultActive, unit: Unit.ratio }),
+    line({
+      series: pattern.percent,
+      name,
+      color,
+      defaultActive,
+      unit: Unit.index,
+    }),
+    line({
+      series: pattern.ratio,
+      name,
+      color,
+      defaultActive,
+      unit: Unit.ratio,
+    }),
   ];
 }
 
@@ -530,7 +542,7 @@ export function createMarketSection() {
               },
               ...deltaTree({
                 delta: supply.marketCap.delta,
-                title: "Market Cap",
+                metric: "Market Cap",
                 unit: Unit.usd,
                 extract: (v) => v.usd,
               }),
@@ -553,7 +565,7 @@ export function createMarketSection() {
               },
               ...deltaTree({
                 delta: cohorts.utxo.all.realized.cap.delta,
-                title: "Realized Cap",
+                metric: "Realized Cap",
                 unit: Unit.usd,
                 extract: (v) => v.usd,
               }),
@@ -650,7 +662,11 @@ export function createMarketSection() {
                     title: "RSI Comparison",
                     bottom: [
                       ...ROLLING_WINDOWS_TO_1M.flatMap((w) =>
-                        indexRatio({ pattern: technical.rsi[w.key].rsi, name: w.name, color: w.color }),
+                        indexRatio({
+                          pattern: technical.rsi[w.key].rsi,
+                          name: w.name,
+                          color: w.color,
+                        }),
                       ),
                       priceLine({ unit: Unit.index, number: 70 }),
                       priceLine({ unit: Unit.index, number: 30 }),
@@ -662,9 +678,17 @@ export function createMarketSection() {
                       name: w.name,
                       title: `RSI (${w.title})`,
                       bottom: [
-                        ...indexRatio({ pattern: rsi.rsi, name: "RSI", color: colors.indicator.main }),
+                        ...indexRatio({
+                          pattern: rsi.rsi,
+                          name: "RSI",
+                          color: colors.indicator.main,
+                        }),
                         priceLine({ unit: Unit.index, number: 70 }),
-                        priceLine({ unit: Unit.index, number: 50, defaultActive: false }),
+                        priceLine({
+                          unit: Unit.index,
+                          number: 50,
+                          defaultActive: false,
+                        }),
                         priceLine({ unit: Unit.index, number: 30 }),
                       ],
                     };
@@ -672,17 +696,28 @@ export function createMarketSection() {
                   {
                     name: "Stochastic",
                     tree: ROLLING_WINDOWS_TO_1M.map((w) => {
-                        const rsi = technical.rsi[w.key];
-                        return {
-                          name: w.name,
-                          title: `Stochastic RSI (${w.title})`,
-                          bottom: [
-                            ...indexRatio({ pattern: rsi.stochRsiK, name: "K", color: colors.indicator.fast }),
-                            ...indexRatio({ pattern: rsi.stochRsiD, name: "D", color: colors.indicator.slow }),
-                            ...priceLines({ unit: Unit.index, numbers: [80, 20] }),
-                          ],
-                        };
-                      }),
+                      const rsi = technical.rsi[w.key];
+                      return {
+                        name: w.name,
+                        title: `Stochastic RSI (${w.title})`,
+                        bottom: [
+                          ...indexRatio({
+                            pattern: rsi.stochRsiK,
+                            name: "K",
+                            color: colors.indicator.fast,
+                          }),
+                          ...indexRatio({
+                            pattern: rsi.stochRsiD,
+                            name: "D",
+                            color: colors.indicator.slow,
+                          }),
+                          ...priceLines({
+                            unit: Unit.index,
+                            numbers: [80, 20],
+                          }),
+                        ],
+                      };
+                    }),
                   },
                 ],
               },
@@ -693,16 +728,35 @@ export function createMarketSection() {
                     name: "Compare",
                     title: "MACD Comparison",
                     bottom: ROLLING_WINDOWS_TO_1M.map((w) =>
-                      line({ series: technical.macd[w.key].line, name: w.name, color: w.color, unit: Unit.usd }),
+                      line({
+                        series: technical.macd[w.key].line,
+                        name: w.name,
+                        color: w.color,
+                        unit: Unit.usd,
+                      }),
                     ),
                   },
                   ...ROLLING_WINDOWS_TO_1M.map((w) => ({
                     name: w.name,
                     title: `MACD (${w.title})`,
                     bottom: [
-                      line({ series: technical.macd[w.key].line, name: "MACD", color: colors.indicator.fast, unit: Unit.usd }),
-                      line({ series: technical.macd[w.key].signal, name: "Signal", color: colors.indicator.slow, unit: Unit.usd }),
-                      histogram({ series: technical.macd[w.key].histogram, name: "Histogram", unit: Unit.usd }),
+                      line({
+                        series: technical.macd[w.key].line,
+                        name: "MACD",
+                        color: colors.indicator.fast,
+                        unit: Unit.usd,
+                      }),
+                      line({
+                        series: technical.macd[w.key].signal,
+                        name: "Signal",
+                        color: colors.indicator.slow,
+                        unit: Unit.usd,
+                      }),
+                      histogram({
+                        series: technical.macd[w.key].histogram,
+                        name: "Histogram",
+                        unit: Unit.usd,
+                      }),
                     ],
                   })),
                 ],
@@ -721,13 +775,25 @@ export function createMarketSection() {
                     name: "Compare",
                     title: "Volatility Index",
                     bottom: ROLLING_WINDOWS.map((w) =>
-                      line({ series: volatility[w.key], name: w.name, color: w.color, unit: Unit.percentage }),
+                      line({
+                        series: volatility[w.key],
+                        name: w.name,
+                        color: w.color,
+                        unit: Unit.percentage,
+                      }),
                     ),
                   },
                   ...ROLLING_WINDOWS.map((w) => ({
                     name: w.name,
                     title: `Volatility Index (${w.title})`,
-                    bottom: [line({ series: volatility[w.key], name: w.name, color: w.color, unit: Unit.percentage })],
+                    bottom: [
+                      line({
+                        series: volatility[w.key],
+                        name: w.name,
+                        color: w.color,
+                        unit: Unit.percentage,
+                      }),
+                    ],
                   })),
                 ],
               },

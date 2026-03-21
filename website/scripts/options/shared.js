@@ -219,16 +219,18 @@ export function satsBtcUsdRolling({ pattern, name, color, defaultActive }) {
  * Build a full Sum / Rolling / Cumulative tree from a FullValuePattern
  * @param {Object} args
  * @param {FullValuePattern} args.pattern
- * @param {string} args.title
+ * @param {(metric: string) => string} [args.title]
+ * @param {string} args.metric
  * @param {Color} [args.color]
  * @returns {PartialOptionsTree}
  */
-export function satsBtcUsdFullTree({ pattern, title, color }) {
+export function satsBtcUsdFullTree({ pattern, title, metric, color }) {
   return sumsAndAveragesCumulativeWith({
     sum: pattern.sum,
     average: pattern.average,
     cumulative: pattern.cumulative,
     title,
+    metric,
     color,
     series: ({ pattern, name, color, defaultActive }) =>
       satsBtcUsd({ pattern, name, color, defaultActive }),

@@ -5,10 +5,10 @@ use brk_cohort::{
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, Version};
+use brk_types::{Height, Indexes, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Exit, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{distribution::DynCohortVecs, indexes, internal::CachedWindowStarts, prices};
 
@@ -106,11 +106,12 @@ impl AddrCohorts {
         &mut self,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
+        all_utxo_count: &impl ReadableVec<Height, StoredU64>,
         exit: &Exit,
     ) -> Result<()> {
         self.0
             .par_iter_mut()
-            .try_for_each(|v| v.compute_rest_part2(prices, starting_indexes, exit))
+            .try_for_each(|v| v.compute_rest_part2(prices, starting_indexes, all_utxo_count, exit))
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.

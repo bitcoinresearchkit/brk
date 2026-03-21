@@ -40,9 +40,7 @@ impl From<i8> for StoredI8 {
 impl From<usize> for StoredI8 {
     #[inline]
     fn from(value: usize) -> Self {
-        if value > i8::MAX as usize {
-            panic!("usize too big (value = {value})")
-        }
+        debug_assert!(value <= i8::MAX as usize);
         Self(value as i8)
     }
 }
@@ -76,9 +74,7 @@ impl AddAssign for StoredI8 {
 impl From<f64> for StoredI8 {
     #[inline]
     fn from(value: f64) -> Self {
-        if value < i8::MIN as f64 || value > i8::MAX as f64 {
-            panic!()
-        }
+        debug_assert!(value >= i8::MIN as f64 && value <= i8::MAX as f64);
         Self(value as i8)
     }
 }

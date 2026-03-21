@@ -467,8 +467,10 @@ impl Vecs {
             &height_to_market_cap,
             exit,
         )?;
+
+        let all_utxo_count = self.utxo_cohorts.all.metrics.outputs.unspent_count.height.read_only_clone();
         self.addr_cohorts
-            .compute_rest_part2(prices, starting_indexes, exit)?;
+            .compute_rest_part2(prices, starting_indexes, &all_utxo_count, exit)?;
 
         let _lock = exit.lock();
         self.db.compact()?;

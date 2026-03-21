@@ -389,7 +389,8 @@ function realizedNetFolder({ netPnl, title, extraChange = [] }) {
       {
         ...sumsTreeBaseline({
           windows: mapWindows(netPnl.delta.absolute, (c) => c.usd),
-          title: title("Net Realized P&L Change"),
+          title,
+          metric: "Net Realized P&L Change",
           unit: Unit.usd,
         }),
         name: "Change",
@@ -399,7 +400,8 @@ function realizedNetFolder({ netPnl, title, extraChange = [] }) {
         tree: [
           ...rollingPercentRatioTree({
             windows: netPnl.delta.rate,
-            title: title("Net Realized P&L Growth Rate"),
+            title,
+            metric: "Net Realized P&L Growth Rate",
           }).tree,
           ...extraChange,
         ],
