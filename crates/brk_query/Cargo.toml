@@ -24,8 +24,8 @@ brk_types = { workspace = true }
 derive_more = { workspace = true }
 jiff = { workspace = true }
 parking_lot = { workspace = true }
-quickmatch = { path = "../../../quickmatch" }
-# quickmatch = "0.3.1"
+# quickmatch = { path = "../../../quickmatch" }
+quickmatch = "0.3.2"
 tokio = { workspace = true, optional = true }
 serde_json = { workspace = true }
 vecdb = { workspace = true }

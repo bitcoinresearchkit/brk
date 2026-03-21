@@ -12,7 +12,7 @@ include = ["src/**/*", "website/**/*", "Cargo.toml", "README.md"]
 axum = { workspace = true }
 include_dir = "0.7"
 # importmap = { path = "../../../importmap", features = ["embedded"] }
-importmap = { version = "0.4.1", features = ["embedded"] }
+importmap = { version = "0.4.2", features = ["embedded"] }
 serde = { workspace = true }
 tracing = { workspace = true }
 

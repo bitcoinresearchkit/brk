@@ -1838,9 +1838,9 @@ dependencies = [
 
 [[package]]
 name = "importmap"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "136c4b5b2e42ffb57d7b99c2104350ae3ee5a2c555fe48ca04534ded7e599060"
+checksum = "f974cdb4432df70303e206c84db28ca445902a54762640e0a45820144903d505"
 dependencies = [
  "include_dir",
  "rapidhash",
@@ -2461,6 +2461,8 @@ dependencies = [
 [[package]]
 name = "quickmatch"
 version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28628ced26de8cc0e8ce04e4c2e718bc8d84e9b99616a2a6abd2096e9a55f728"
 dependencies = [
  "rustc-hash",
 ]
@@ -2536,7 +2538,9 @@ dependencies = [
 
 [[package]]
 name = "rawdb"
-version = "0.6.8"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f1a1534553d4e626de325e000d3250490fb4020d8f177747615f345016c8f0a"
 dependencies = [
  "libc",
  "log",
@@ -3428,7 +3432,9 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.6.8"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a45f0491e73f467ff4dcb360d4341ad6281719362f29b040c2b769d18e161ab1"
 dependencies = [
  "itoa",
  "libc",
@@ -3449,7 +3455,9 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.6.8"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aac60cdf47669f66acd6debfd66705464fb7c2519eed7b3692495d037f6d6399"
 dependencies = [
  "quote",
  "syn",
