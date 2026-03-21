@@ -67,24 +67,15 @@
  * @typedef {Brk.AnySeriesEndpoint} AnySeriesEndpoint
  * @typedef {Brk.AnySeriesData} AnySeriesData
  * Relative patterns by capability:
- * - BasicRelativePattern: minimal relative (investedCapitalIn*Pct, supplyIn*RelToOwnSupply only)
- * - GlobalRelativePattern: has RelToMarketCap series (netUnrealizedPnlRelToMarketCap, etc)
- * - OwnRelativePattern: has RelToOwnMarketCap series (netUnrealizedPnlRelToOwnMarketCap, etc)
- * - FullRelativePattern: has BOTH RelToMarketCap AND RelToOwnMarketCap
+ * Unrealized patterns by capability level
  * @typedef {Brk.LossNetNuplProfitPattern} BasicRelativePattern
- * @typedef {Brk.LossNetNuplProfitPattern} GlobalRelativePattern
- * @typedef {Brk.GrossInvestedInvestorLossNetNuplProfitSentimentPattern2} OwnRelativePattern
  * @typedef {Brk.GrossInvestedInvestorLossNetNuplProfitSentimentPattern2} FullRelativePattern
- * @typedef {Brk.GrossInvestedInvestorLossNetNuplProfitSentimentPattern2} UnrealizedPattern
  *
  * Profitability bucket pattern (supply + realized_cap + nupl)
  * @typedef {Brk.NuplRealizedSupplyPattern} RealizedSupplyPattern
  *
- * Realized patterns
+ * Realized pattern (full: cap + gross + investor + loss + mvrv + net + peak + price + profit + sell + sopr)
  * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern
- * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern2
- * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern3
- * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern4
  *
  * Transfer volume pattern (block + cumulative + inProfit/inLoss + sum windows)
  * @typedef {Brk.AverageBlockCumulativeInSumPattern} TransferVolumePattern
@@ -103,7 +94,7 @@
  * @typedef {Brk.SeriesTree_Cohorts_Utxo_Lth_Realized} LthRealizedPattern
  *
  * Net PnL pattern with change (base + change + cumulative + delta + rel + sum)
- * @typedef {Brk.BlockChangeCumulativeDeltaSumToPattern} NetPnlFullPattern
+ * @typedef {Brk.BlockChangeCumulativeDeltaSumPattern} NetPnlFullPattern
  *
  * Net PnL basic pattern (base + cumulative + delta + sum)
  * @typedef {Brk.BlockCumulativeDeltaSumPattern} NetPnlBasicPattern
@@ -135,12 +126,8 @@
  * @typedef {Brk._1m1w1y24hPattern7} SellSideRiskPattern
  */
 /**
- * Stats pattern: average, min, max, percentiles (height-only indexes, NO base)
+ * Stats pattern: min, max, median, percentiles
  * @typedef {Brk.MaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} StatsPattern
- */
-/**
- * Base stats pattern: average, min, max, percentiles
- * @typedef {Brk.MaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} BaseStatsPattern
  */
 /**
  * Full stats pattern: cumulative, sum, average, min, max, percentiles + rolling
@@ -149,14 +136,6 @@
 /**
  * Aggregated pattern: cumulative + rolling (with distribution stats) + sum (no base)
  * @typedef {Brk.CumulativeRollingSumPattern} AggregatedPattern
- */
-/**
- * Sum stats pattern: cumulative, sum, average, min, max, percentiles + rolling (same as FullStatsPattern)
- * @typedef {Brk.AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} SumStatsPattern
- */
-/**
- * Full stats pattern for Bitcoin (non-generic variant) - same as FullStatsPattern
- * @typedef {Brk.AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} BtcFullStatsPattern
  */
 /**
  * Count pattern: height, cumulative, and rolling sum windows
@@ -170,8 +149,8 @@
  * @typedef {Omit<Brk.AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern, 'block'>} FullPerBlockPattern
  */
 /**
- * Any stats pattern union - patterns with sum/cumulative + percentiles
- * @typedef {FullStatsPattern | BtcFullStatsPattern} AnyStatsPattern
+ * Any stats pattern union
+ * @typedef {FullStatsPattern} AnyStatsPattern
  */
 /**
  * Distribution stats: min, max, median, pct10/25/75/90
@@ -190,8 +169,7 @@
  * @typedef {Brk.SeriesTree_Market_MovingAverage} MarketMovingAverage
  * @typedef {Brk.SeriesTree_Market_Dca} MarketDca
  * @typedef {Brk._10y2y3y4y5y6y8yPattern} PeriodCagrPattern
- * Full stats pattern union (both generic and non-generic variants)
- * @typedef {FullStatsPattern | BtcFullStatsPattern} AnyFullStatsPattern
+ * @typedef {FullStatsPattern} AnyFullStatsPattern
  *
  * DCA period keys - derived from pattern types
  * @typedef {keyof Brk._10y2y3y4y5y6y8yPattern} LongPeriodKey
@@ -204,18 +182,14 @@
  * @typedef {UtxoCohortPattern | AddrCohortPattern} CohortPattern
  *
  * Relative pattern capability types
- * @typedef {GlobalRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithMarketCap
- * @typedef {OwnRelativePattern | FullRelativePattern} RelativeWithOwnMarketCap
- * @typedef {OwnRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithOwnPnl
- * @typedef {GlobalRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithNupl
- * @typedef {BasicRelativePattern | GlobalRelativePattern | OwnRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithInvestedCapitalPct
+ * @typedef {BasicRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithMarketCap
+ * @typedef {FullRelativePattern | AllRelativePattern} RelativeWithOwnMarketCap
+ * @typedef {FullRelativePattern | AllRelativePattern} RelativeWithOwnPnl
+ * @typedef {BasicRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithNupl
+ * @typedef {BasicRelativePattern | FullRelativePattern | AllRelativePattern} RelativeWithInvestedCapitalPct
  *
  * Realized pattern capability types
- * RealizedWithExtras: patterns with realizedCapRelToOwnMarketCap + realizedProfitToLossRatio
- * @typedef {RealizedPattern2 | RealizedPattern3} RealizedWithExtras
- *
- * Any realized pattern (all have sellSideRiskRatio, valueCreated, valueDestroyed, etc.)
- * @typedef {RealizedPattern | RealizedPattern2 | RealizedPattern3 | RealizedPattern4} AnyRealizedPattern
+ * @typedef {RealizedPattern} AnyRealizedPattern
  *
  * Capability-based pattern groupings (patterns that have specific properties)
  * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} PatternWithRealizedPrice

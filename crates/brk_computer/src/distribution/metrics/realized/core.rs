@@ -52,7 +52,7 @@ impl RealizedCore {
         let minimal = RealizedMinimal::forced_import(cfg)?;
 
         let neg_loss_base = LazyPerBlock::from_height_source::<NegCentsUnsignedToDollars>(
-            &cfg.name("neg_realized_loss"),
+            &cfg.name("realized_loss_neg"),
             cfg.version + Version::ONE,
             minimal.loss.block.cents.read_only_boxed_clone(),
             cfg.indexes,
@@ -60,7 +60,7 @@ impl RealizedCore {
 
         let neg_loss_sum = minimal.loss.sum.0.map_with_suffix(|suffix, slot| {
             LazyPerBlock::from_height_source::<NegCentsUnsignedToDollars>(
-                &cfg.name(&format!("neg_realized_loss_sum_{suffix}")),
+                &cfg.name(&format!("realized_loss_neg_sum_{suffix}")),
                 cfg.version + Version::ONE,
                 slot.cents.height.read_only_boxed_clone(),
                 cfg.indexes,

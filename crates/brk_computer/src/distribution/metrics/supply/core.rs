@@ -6,7 +6,9 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{distribution::state::UnrealizedState, prices};
 
-use crate::internal::AmountPerBlock;
+use crate::internal::{
+    AmountPerBlock, HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyAmountPerBlock,
+};
 
 use crate::distribution::metrics::ImportConfig;
 
@@ -20,6 +22,7 @@ pub struct SupplyCore<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub base: SupplyBase<M>,
 
+    pub half: LazyAmountPerBlock,
     pub in_profit: AmountPerBlock<M>,
     pub in_loss: AmountPerBlock<M>,
 }
@@ -29,8 +32,16 @@ impl SupplyCore {
         let v0 = Version::ZERO;
         let base = SupplyBase::forced_import(cfg)?;
 
+        let half = LazyAmountPerBlock::from_block_source::<
+            HalveSats,
+            HalveSatsToBitcoin,
+            HalveCents,
+            HalveDollars,
+        >(&cfg.name("supply_half"), &base.total, cfg.version);
+
         Ok(Self {
             base,
+            half,
             in_profit: cfg.import("supply_in_profit", v0)?,
             in_loss: cfg.import("supply_in_loss", v0)?,
         })

@@ -16,6 +16,7 @@ import {
   baseline,
   sumsTreeBaseline,
   rollingPercentRatioTree,
+  percentRatio,
   percentRatioBaseline,
 } from "../series.js";
 import {
@@ -29,7 +30,7 @@ import { priceLines } from "../constants.js";
 
 /**
  * Simple supply series (total + half only, no profit/loss)
- * @param {{ total: AnyValuePattern, half: AnyValuePattern }} supply
+ * @param {{ total: AnyValuePattern }} supply
  * @returns {AnyFetchedSeriesBlueprint[]}
  */
 function simpleSupplySeries(supply) {
@@ -39,68 +40,6 @@ function simpleSupplySeries(supply) {
   });
 }
 
-/**
- * % of Own Supply series (profit/loss relative to own supply)
- * @param {{ inProfit: { toOwn: { percent: AnySeriesPattern, ratio: AnySeriesPattern } }, inLoss: { toOwn: { percent: AnySeriesPattern, ratio: AnySeriesPattern } } }} supply
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-function ownSupplyPctSeries(supply) {
-  return [
-    line({
-      series: supply.inProfit.toOwn.percent,
-      name: "In Profit",
-      color: colors.profit,
-      unit: Unit.percentage,
-    }),
-    line({
-      series: supply.inLoss.toOwn.percent,
-      name: "In Loss",
-      color: colors.loss,
-      unit: Unit.percentage,
-    }),
-    line({
-      series: supply.inProfit.toOwn.ratio,
-      name: "In Profit",
-      color: colors.profit,
-      unit: Unit.ratio,
-    }),
-    line({
-      series: supply.inLoss.toOwn.ratio,
-      name: "In Loss",
-      color: colors.loss,
-      unit: Unit.ratio,
-    }),
-    ...priceLines({ numbers: [100, 50, 0], unit: Unit.percentage }),
-  ];
-}
-
-/**
- * % of Circulating Supply series (total, profit, loss)
- * @param {{ toCirculating: { percent: AnySeriesPattern }, inProfit: { toCirculating: { percent: AnySeriesPattern } }, inLoss: { toCirculating: { percent: AnySeriesPattern } } }} supply
- * @returns {AnyFetchedSeriesBlueprint[]}
- */
-function circulatingSupplyPctSeries(supply) {
-  return [
-    line({
-      series: supply.toCirculating.percent,
-      name: "Total",
-      color: colors.default,
-      unit: Unit.percentage,
-    }),
-    line({
-      series: supply.inProfit.toCirculating.percent,
-      name: "In Profit",
-      color: colors.profit,
-      unit: Unit.percentage,
-    }),
-    line({
-      series: supply.inLoss.toCirculating.percent,
-      name: "In Loss",
-      color: colors.loss,
-      unit: Unit.percentage,
-    }),
-  ];
-}
 
 /**
  * @param {readonly (UtxoCohortObject | CohortWithoutRelative)[]} list
@@ -244,7 +183,11 @@ function circulatingChart(supply, title) {
   return {
     name: "% of Circulating",
     title: title("Supply (% of Circulating)"),
-    bottom: circulatingSupplyPctSeries(supply),
+    bottom: [
+      line({ series: supply.toCirculating.percent, name: "Total", color: colors.default, unit: Unit.percentage }),
+      line({ series: supply.inProfit.toCirculating.percent, name: "In Profit", color: colors.profit, unit: Unit.percentage }),
+      line({ series: supply.inLoss.toCirculating.percent, name: "In Loss", color: colors.loss, unit: Unit.percentage }),
+    ],
   };
 }
 
@@ -257,7 +200,11 @@ function ownSupplyChart(supply, title) {
   return {
     name: "% of Own Supply",
     title: title("Supply (% of Own)"),
-    bottom: ownSupplyPctSeries(supply),
+    bottom: [
+      ...percentRatio({ pattern: supply.inProfit.toOwn, name: "In Profit", color: colors.profit }),
+      ...percentRatio({ pattern: supply.inLoss.toOwn, name: "In Loss", color: colors.loss }),
+      ...priceLines({ numbers: [100, 50, 0], unit: Unit.percentage }),
+    ],
   };
 }
 
@@ -461,6 +408,35 @@ export function createHoldingsSectionAddressAmount({ cohort, title }) {
 }
 
 // ============================================================================
+// Grouped Cohort Supply Helpers
+// ============================================================================
+
+/**
+ * @template {{ name: string, color: Color, tree: { supply: { total: AnyValuePattern } } }} T
+ * @param {readonly T[]} list
+ * @param {CohortAll} all
+ * @param {(name: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function groupedSupplyTotal(list, all, title) {
+  return { name: "Total", title: title("Supply"), bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => satsBtcUsd({ pattern: tree.supply.total, name, color })) };
+}
+
+/**
+ * @template {{ name: string, color: Color, tree: { supply: { inProfit: AnyValuePattern, inLoss: AnyValuePattern } } }} T
+ * @param {readonly T[]} list
+ * @param {CohortAll} all
+ * @param {(name: string) => string} title
+ * @returns {PartialOptionsTree}
+ */
+function groupedSupplyProfitLoss(list, all, title) {
+  return [
+    { name: "In Profit", title: title("Supply In Profit"), bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => satsBtcUsd({ pattern: tree.supply.inProfit, name, color })) },
+    { name: "In Loss", title: title("Supply In Loss"), bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => satsBtcUsd({ pattern: tree.supply.inLoss, name, color })) },
+  ];
+}
+
+// ============================================================================
 // Grouped Cohort Holdings Sections
 // ============================================================================
 
@@ -473,27 +449,8 @@ export function createGroupedHoldingsSectionAddress({ list, all, title }) {
     {
       name: "Supply",
       tree: [
-        {
-          name: "Total",
-          title: title("Supply"),
-          bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            satsBtcUsd({ pattern: tree.supply.total, name, color }),
-          ),
-        },
-        {
-          name: "In Profit",
-          title: title("Supply In Profit"),
-          bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            satsBtcUsd({ pattern: tree.supply.inProfit, name, color }),
-          ),
-        },
-        {
-          name: "In Loss",
-          title: title("Supply In Loss"),
-          bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            satsBtcUsd({ pattern: tree.supply.inLoss, name, color }),
-          ),
-        },
+        groupedSupplyTotal(list, all, title),
+        ...groupedSupplyProfitLoss(list, all, title),
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },
@@ -524,7 +481,7 @@ export function createGroupedHoldingsSectionAddressAmount({ list, all, title }) 
     {
       name: "Supply",
       tree: [
-        { name: "Total", title: title("Supply"), bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => satsBtcUsd({ pattern: tree.supply.total, name, color })) },
+        groupedSupplyTotal(list, all, title),
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },
@@ -551,7 +508,7 @@ export function createGroupedHoldingsSection({ list, all, title }) {
     {
       name: "Supply",
       tree: [
-        { name: "Total", title: title("Supply"), bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => satsBtcUsd({ pattern: tree.supply.total, name, color })) },
+        groupedSupplyTotal(list, all, title),
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },
@@ -565,9 +522,8 @@ export function createGroupedHoldingsSectionWithProfitLoss({ list, all, title })
     {
       name: "Supply",
       tree: [
-        { name: "Total", title: title("Supply"), bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => satsBtcUsd({ pattern: tree.supply.total, name, color })) },
-        { name: "In Profit", title: title("Supply In Profit"), bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => satsBtcUsd({ pattern: tree.supply.inProfit, name, color })) },
-        { name: "In Loss", title: title("Supply In Loss"), bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => satsBtcUsd({ pattern: tree.supply.inLoss, name, color })) },
+        groupedSupplyTotal(list, all, title),
+        ...groupedSupplyProfitLoss(list, all, title),
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },
@@ -581,9 +537,8 @@ export function createGroupedHoldingsSectionWithOwnSupply({ list, all, title }) 
     {
       name: "Supply",
       tree: [
-        { name: "Total", title: title("Supply"), bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => satsBtcUsd({ pattern: tree.supply.total, name, color })) },
-        { name: "In Profit", title: title("Supply In Profit"), bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => satsBtcUsd({ pattern: tree.supply.inProfit, name, color })) },
-        { name: "In Loss", title: title("Supply In Loss"), bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => satsBtcUsd({ pattern: tree.supply.inLoss, name, color })) },
+        groupedSupplyTotal(list, all, title),
+        ...groupedSupplyProfitLoss(list, all, title),
         { name: "% of Circulating", title: title("Supply (% of Circulating)"), bottom: mapCohorts(list, ({ name, color, tree }) => line({ series: tree.supply.toCirculating.percent, name, color, unit: Unit.percentage })) },
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
@@ -603,9 +558,8 @@ export function createGroupedHoldingsSectionWithRelative({ list, all, title }) {
     {
       name: "Supply",
       tree: [
-        { name: "Total", title: title("Supply"), bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => satsBtcUsd({ pattern: tree.supply.total, name, color })) },
-        { name: "In Profit", title: title("Supply In Profit"), bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => satsBtcUsd({ pattern: tree.supply.inProfit, name, color })) },
-        { name: "In Loss", title: title("Supply In Loss"), bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => satsBtcUsd({ pattern: tree.supply.inLoss, name, color })) },
+        groupedSupplyTotal(list, all, title),
+        ...groupedSupplyProfitLoss(list, all, title),
         { name: "% of Circulating", title: title("Supply (% of Circulating)"), bottom: mapCohorts(list, ({ name, color, tree }) => line({ series: tree.supply.toCirculating.percent, name, color, unit: Unit.percentage })) },
         { name: "% of Own Supply", title: title("Supply (% of Own)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.supply.inProfit.toOwn.percent, name, color, unit: Unit.percentage })) },
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),

@@ -1063,10 +1063,9 @@ mod tests {
     }
 
     #[test]
-    fn test_mixed_empty_fills_loss_from_shortest_leaf() {
-        // Integration test: "loss" child returns same base as parent (because
-        // its children like neg_realized_loss break the prefix). The mixed-empty
-        // fix should fill it from shortest leaf "utxos_realized_loss".
+    fn test_loss_with_neg_suffix_has_correct_field_parts() {
+        // Integration test: "loss" child has suffix-named children (realized_loss,
+        // realized_loss_neg) so it returns a proper base that differs from parent.
         use brk_types::{SeriesLeaf, SeriesLeafWithSchema, TreeNode};
 
         fn leaf(name: &str) -> TreeNode {
@@ -1084,7 +1083,7 @@ mod tests {
                     TreeNode::Branch(
                         [
                             ("base".into(), leaf("utxos_realized_loss")),
-                            ("negative".into(), leaf("utxos_neg_realized_loss")),
+                            ("negative".into(), leaf("utxos_realized_loss_neg")),
                         ]
                         .into_iter()
                         .collect(),
@@ -1115,9 +1114,7 @@ mod tests {
         assert!(!result.has_outlier);
         assert_eq!(result.field_parts.get("cap"), Some(&"realized_cap".to_string()));
         assert_eq!(result.field_parts.get("mvrv"), Some(&"mvrv".to_string()));
-        // loss stays empty after first pass (child returned same base as parent).
-        // The second pass (fill_mixed_empty_field_parts) fills it for templated
-        // children, but that requires pattern_lookup which this test doesn't set up.
-        assert_eq!(result.field_parts.get("loss"), Some(&"".to_string()));
+        // loss branch returns base "utxos_realized_loss" which yields field_part "realized_loss"
+        assert_eq!(result.field_parts.get("loss"), Some(&"realized_loss".to_string()));
     }
 }

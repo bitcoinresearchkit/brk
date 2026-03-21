@@ -36,7 +36,6 @@ import {
   createHoldingsSectionWithRelative,
   createHoldingsSectionWithOwnSupply,
   createGroupedHoldingsSection,
-  createGroupedHoldingsSectionWithProfitLoss,
   createGroupedHoldingsSectionAddress,
   createGroupedHoldingsSectionAddressAmount,
   createGroupedHoldingsSectionWithRelative,
@@ -68,18 +67,15 @@ import {
   createProfitabilitySectionWithProfitLoss,
   createProfitabilitySectionLongTerm,
   createGroupedProfitabilitySection,
-  createGroupedProfitabilitySectionWithProfitLoss,
   createGroupedProfitabilitySectionWithNupl,
   createGroupedProfitabilitySectionWithInvestedCapitalPct,
   createGroupedProfitabilitySectionBasicWithInvestedCapitalPct,
-  createGroupedProfitabilitySectionLongTerm,
 } from "./profitability.js";
 import {
   createActivitySection,
   createActivitySectionWithAdjusted,
   createActivitySectionWithActivity,
   createGroupedActivitySection,
-  createGroupedActivitySectionWithAdjusted,
   createGroupedActivitySectionWithActivity,
   createActivitySectionMinimal,
   createGroupedActivitySectionMinimal,
@@ -328,30 +324,6 @@ export function createAddressCohortFolder(cohort) {
 // ============================================================================
 
 /**
- * @param {CohortGroupFull} args
- * @returns {PartialOptionsGroup}
- */
-export function createGroupedCohortFolderFull({
-  name,
-  title: groupTitle,
-  list,
-  all,
-}) {
-  const title = formatCohortTitle(groupTitle);
-  return {
-    name: name || "all",
-    tree: [
-      ...createGroupedHoldingsSectionWithRelative({ list, all, title }),
-      createGroupedValuationSectionWithOwnMarketCap({ list, all, title }),
-      createGroupedPricesSectionFull({ list, all, title }),
-      createGroupedCostBasisSectionWithPercentiles({ list, all, title }),
-      createGroupedProfitabilitySectionWithNupl({ list, all, title }),
-      createGroupedActivitySectionWithAdjusted({ list, all, title }),
-    ],
-  };
-}
-
-/**
  * @param {CohortGroupWithAdjusted} args
  * @returns {PartialOptionsGroup}
  */
@@ -397,30 +369,6 @@ export function createGroupedCohortFolderWithNupl({
       createGroupedPricesSectionFull({ list, all, title }),
       createGroupedCostBasisSectionWithPercentiles({ list, all, title }),
       createGroupedProfitabilitySectionWithNupl({ list, all, title }),
-      createGroupedActivitySection({ list, all, title }),
-    ],
-  };
-}
-
-/**
- * @param {CohortGroupLongTerm} args
- * @returns {PartialOptionsGroup}
- */
-export function createGroupedCohortFolderLongTerm({
-  name,
-  title: groupTitle,
-  list,
-  all,
-}) {
-  const title = formatCohortTitle(groupTitle);
-  return {
-    name: name || "all",
-    tree: [
-      ...createGroupedHoldingsSectionWithRelative({ list, all, title }),
-      createGroupedValuationSectionWithOwnMarketCap({ list, all, title }),
-      createGroupedPricesSectionFull({ list, all, title }),
-      createGroupedCostBasisSectionWithPercentiles({ list, all, title }),
-      createGroupedProfitabilitySectionLongTerm({ list, all, title }),
       createGroupedActivitySection({ list, all, title }),
     ],
   };
@@ -559,29 +507,6 @@ export function createGroupedCohortFolderAddress({
         all,
         title,
       }),
-      createGroupedActivitySectionMinimal({ list, all, title }),
-    ],
-  };
-}
-
-/**
- * @param {CohortGroupWithoutRelative} args
- * @returns {PartialOptionsGroup}
- */
-export function createGroupedCohortFolderWithoutRelative({
-  name,
-  title: groupTitle,
-  list,
-  all,
-}) {
-  const title = formatCohortTitle(groupTitle);
-  return {
-    name: name || "all",
-    tree: [
-      ...createGroupedHoldingsSectionWithProfitLoss({ list, all, title }),
-      createGroupedValuationSection({ list, all, title }),
-      createGroupedPricesSection({ list, all, title }),
-      createGroupedProfitabilitySectionWithProfitLoss({ list, all, title }),
       createGroupedActivitySectionMinimal({ list, all, title }),
     ],
   };

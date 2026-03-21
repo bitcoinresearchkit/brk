@@ -71,35 +71,6 @@ function volumeFolderWithProfitability(activity, color, title) {
   };
 }
 
-/**
- * Full activity items: volume (with profitability), coindays, dormancy
- * @param {FullActivityPattern} activity
- * @param {Color} color
- * @param {(name: string) => string} title
- * @returns {PartialOptionsTree}
- */
-function fullVolumeTree(activity, color, title) {
-  return [
-    volumeFolderWithProfitability(activity, color, title),
-    {
-      name: "Coindays Destroyed",
-      tree: chartsFromCount({
-        pattern: activity.coindaysDestroyed,
-        title: title("Coindays Destroyed"),
-        unit: Unit.coindays,
-        color,
-      }),
-    },
-    {
-      name: "Dormancy",
-      tree: averagesArray({
-        windows: activity.dormancy,
-        title: title("Dormancy"),
-        unit: Unit.days,
-      }),
-    },
-  ];
-}
 
 // ============================================================================
 // Shared SOPR Helpers
@@ -180,64 +151,46 @@ function singleSellSideRiskTree(sellSideRisk, title) {
 // ============================================================================
 
 /**
- * Full activity with adjusted SOPR (All/STH)
- * @param {{ cohort: CohortAll | CohortFull, title: (name: string) => string }} args
- * @returns {PartialOptionsGroup}
+ * Single activity tree items shared between WithAdjusted and basic
+ * @param {CohortAll | CohortFull | CohortLongTerm} cohort
+ * @param {(name: string) => string} title
+ * @param {PartialOptionsGroup} soprFolder
+ * @returns {PartialOptionsTree}
  */
-export function createActivitySectionWithAdjusted({ cohort, title }) {
+function singleFullActivityTree(cohort, title, soprFolder) {
   const { tree, color } = cohort;
-  const r = tree.realized;
-  const sopr = r.sopr;
+  return [
+    volumeFolderWithProfitability(tree.activity, color, title),
+    soprFolder,
+    { name: "Coindays Destroyed", tree: chartsFromCount({ pattern: tree.activity.coindaysDestroyed, title: title("Coindays Destroyed"), unit: Unit.coindays, color }) },
+    { name: "Dormancy", tree: averagesArray({ windows: tree.activity.dormancy, title: title("Dormancy"), unit: Unit.days }) },
+    { name: "Sell Side Risk", tree: singleSellSideRiskTree(tree.realized.sellSideRiskRatio, title) },
+  ];
+}
 
+/** @param {{ cohort: CohortAll | CohortFull, title: (name: string) => string }} args */
+export function createActivitySectionWithAdjusted({ cohort, title }) {
+  const sopr = cohort.tree.realized.sopr;
   return {
     name: "Activity",
-    tree: [
-      ...fullVolumeTree(tree.activity, color, title),
-      {
-        name: "SOPR",
-        tree: [
-          ...singleRollingSoprTree(sopr.ratio, title),
-          {
-            name: "Adjusted",
-            tree: singleRollingSoprTree(
-              sopr.adjusted.ratio,
-              title,
-              "Adjusted ",
-            ),
-          },
-        ],
-      },
-      {
-        name: "Sell Side Risk",
-        tree: singleSellSideRiskTree(r.sellSideRiskRatio, title),
-      },
-    ],
+    tree: singleFullActivityTree(cohort, title, {
+      name: "SOPR",
+      tree: [
+        ...singleRollingSoprTree(sopr.ratio, title),
+        { name: "Adjusted", tree: singleRollingSoprTree(sopr.adjusted.ratio, title, "Adjusted ") },
+      ],
+    }),
   };
 }
 
-/**
- * Activity section for cohorts with rolling SOPR + sell side risk (LTH, also CohortFull | CohortLongTerm)
- * @param {{ cohort: CohortFull | CohortLongTerm, title: (name: string) => string }} args
- * @returns {PartialOptionsGroup}
- */
+/** @param {{ cohort: CohortFull | CohortLongTerm, title: (name: string) => string }} args */
 export function createActivitySection({ cohort, title }) {
-  const { tree, color } = cohort;
-  const r = tree.realized;
-  const sopr = r.sopr;
-
   return {
     name: "Activity",
-    tree: [
-      ...fullVolumeTree(tree.activity, color, title),
-      {
-        name: "SOPR",
-        tree: singleRollingSoprTree(sopr.ratio, title),
-      },
-      {
-        name: "Sell Side Risk",
-        tree: singleSellSideRiskTree(r.sellSideRiskRatio, title),
-      },
-    ],
+    tree: singleFullActivityTree(cohort, title, {
+      name: "SOPR",
+      tree: singleRollingSoprTree(cohort.tree.realized.sopr.ratio, title),
+    }),
   };
 }
 
@@ -316,6 +269,27 @@ export function createGroupedActivitySectionMinimal({ list, all, title }) {
   };
 }
 
+/**
+ * Grouped volume folder with In Profit/Loss subfolders
+ * @template {{ name: string, color: Color }} T
+ * @template {{ name: string, color: Color }} A
+ * @param {readonly T[]} list
+ * @param {A} all
+ * @param {(name: string) => string} title
+ * @param {(c: T | A) => { sum: Record<string, AnyValuePattern>, cumulative: AnyValuePattern, inProfit: { sum: Record<string, AnyValuePattern>, cumulative: AnyValuePattern }, inLoss: { sum: Record<string, AnyValuePattern>, cumulative: AnyValuePattern } }} getTransferVolume
+ * @returns {PartialOptionsGroup}
+ */
+function groupedVolumeFolder(list, all, title, getTransferVolume) {
+  return {
+    name: "Volume",
+    tree: [
+      ...groupedWindowsCumulativeSatsBtcUsd({ list, all, title, metricTitle: "Sent Volume", getMetric: (c) => getTransferVolume(c) }),
+      { name: "In Profit", tree: groupedWindowsCumulativeSatsBtcUsd({ list, all, title, metricTitle: "Sent In Profit", getMetric: (c) => getTransferVolume(c).inProfit }) },
+      { name: "In Loss", tree: groupedWindowsCumulativeSatsBtcUsd({ list, all, title, metricTitle: "Sent In Loss", getMetric: (c) => getTransferVolume(c).inLoss }) },
+    ],
+  };
+}
+
 // ============================================================================
 // Grouped SOPR Helpers
 // ============================================================================
@@ -366,213 +340,87 @@ function groupedSoprCharts(list, all, getRatio, title, prefix = "") {
 // ============================================================================
 
 /**
- * @param {{ list: readonly CohortFull[], all: CohortAll, title: (name: string) => string }} args
- * @returns {PartialOptionsGroup}
+ * Grouped activity tree items shared between WithAdjusted and basic
+ * @param {readonly (CohortFull | CohortLongTerm)[]} list
+ * @param {CohortAll} all
+ * @param {(name: string) => string} title
+ * @param {PartialOptionsGroup} soprFolder
+ * @returns {PartialOptionsTree}
  */
+function groupedFullActivityTree(list, all, title, soprFolder) {
+  return [
+    groupedVolumeFolder(list, all, title, (c) => c.tree.activity.transferVolume),
+    soprFolder,
+    ...groupedActivitySharedItems(list, all, title),
+  ];
+}
+
+/** @param {{ list: readonly CohortFull[], all: CohortAll, title: (name: string) => string }} args */
 export function createGroupedActivitySectionWithAdjusted({ list, all, title }) {
   return {
     name: "Activity",
-    tree: [
-      {
-        name: "Volume",
-        tree: [
-          ...groupedWindowsCumulativeSatsBtcUsd({
-            list,
-            all,
-            title,
-            metricTitle: "Sent Volume",
-            getMetric: (c) => c.tree.activity.transferVolume,
-          }),
-          {
-            name: "In Profit",
-            tree: groupedWindowsCumulativeSatsBtcUsd({
-              list,
-              all,
-              title,
-              metricTitle: "Sent In Profit",
-              getMetric: (c) => c.tree.activity.transferVolume.inProfit,
-            }),
-          },
-          {
-            name: "In Loss",
-            tree: groupedWindowsCumulativeSatsBtcUsd({
-              list,
-              all,
-              title,
-              metricTitle: "Sent In Loss",
-              getMetric: (c) => c.tree.activity.transferVolume.inLoss,
-            }),
-          },
-        ],
-      },
-      {
-        name: "Coindays Destroyed",
-        tree: groupedWindowsCumulative({
-          list,
-          all,
-          title,
-          metricTitle: "Coindays Destroyed",
-          getWindowSeries: (c, key) =>
-            c.tree.activity.coindaysDestroyed.sum[key],
-          getCumulativeSeries: (c) =>
-            c.tree.activity.coindaysDestroyed.cumulative,
-          seriesFn: line,
-          unit: Unit.coindays,
-        }),
-      },
-      {
-        name: "Dormancy",
-        tree: ROLLING_WINDOWS.map((w) => ({
-          name: w.name,
-          title: title(`Dormancy (${w.title})`),
-          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({
-              series: tree.activity.dormancy[w.key],
-              name,
-              color,
-              unit: Unit.days,
-            }),
-          ),
-        })),
-      },
-      {
-        name: "SOPR",
-        tree: [
-          ...groupedSoprCharts(
-            list,
-            all,
-            (c) => c.tree.realized.sopr.ratio,
-            title,
-          ),
-          {
-            name: "Adjusted",
-            tree: groupedSoprCharts(
-              list,
-              all,
-              (c) => c.tree.realized.sopr.adjusted.ratio,
-              title,
-              "Adjusted ",
-            ),
-          },
-        ],
-      },
-      {
-        name: "Sell Side Risk",
-        tree: ROLLING_WINDOWS.map((w) => ({
-          name: w.name,
-          title: title(`Sell Side Risk (${w.title})`),
-          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({
-              series: tree.realized.sellSideRiskRatio[w.key].ratio,
-              name,
-              color,
-              unit: Unit.ratio,
-            }),
-          ),
-        })),
-      },
-    ],
+    tree: groupedFullActivityTree(list, all, title, {
+      name: "SOPR",
+      tree: [
+        ...groupedSoprCharts(list, all, (c) => c.tree.realized.sopr.ratio, title),
+        { name: "Adjusted", tree: groupedSoprCharts(list, all, (c) => c.tree.realized.sopr.adjusted.ratio, title, "Adjusted ") },
+      ],
+    }),
+  };
+}
+
+/** @param {{ list: readonly (CohortFull | CohortLongTerm)[], all: CohortAll, title: (name: string) => string }} args */
+export function createGroupedActivitySection({ list, all, title }) {
+  return {
+    name: "Activity",
+    tree: groupedFullActivityTree(list, all, title, {
+      name: "SOPR",
+      tree: groupedSoprCharts(list, all, (c) => c.tree.realized.sopr.ratio, title),
+    }),
   };
 }
 
 /**
- * Grouped activity for cohorts with rolling SOPR + sell side risk (LTH-like)
- * @param {{ list: readonly (CohortFull | CohortLongTerm)[], all: CohortAll, title: (name: string) => string }} args
- * @returns {PartialOptionsGroup}
+ * Shared grouped activity items: coindays, dormancy, sell side risk
+ * @param {readonly (CohortFull | CohortLongTerm)[]} list
+ * @param {CohortAll} all
+ * @param {(name: string) => string} title
+ * @returns {PartialOptionsTree}
  */
-export function createGroupedActivitySection({ list, all, title }) {
-  return {
-    name: "Activity",
-    tree: [
-      {
-        name: "Volume",
-        tree: [
-          ...groupedWindowsCumulativeSatsBtcUsd({
-            list,
-            all,
-            title,
-            metricTitle: "Sent Volume",
-            getMetric: (c) => c.tree.activity.transferVolume,
-          }),
-          {
-            name: "In Profit",
-            tree: groupedWindowsCumulativeSatsBtcUsd({
-              list,
-              all,
-              title,
-              metricTitle: "Sent In Profit",
-              getMetric: (c) => c.tree.activity.transferVolume.inProfit,
-            }),
-          },
-          {
-            name: "In Loss",
-            tree: groupedWindowsCumulativeSatsBtcUsd({
-              list,
-              all,
-              title,
-              metricTitle: "Sent In Loss",
-              getMetric: (c) => c.tree.activity.transferVolume.inLoss,
-            }),
-          },
-        ],
-      },
-      {
-        name: "Coindays Destroyed",
-        tree: groupedWindowsCumulative({
-          list,
-          all,
-          title,
-          metricTitle: "Coindays Destroyed",
-          getWindowSeries: (c, key) =>
-            c.tree.activity.coindaysDestroyed.sum[key],
-          getCumulativeSeries: (c) =>
-            c.tree.activity.coindaysDestroyed.cumulative,
-          seriesFn: line,
-          unit: Unit.coindays,
-        }),
-      },
-      {
-        name: "Dormancy",
-        tree: ROLLING_WINDOWS.map((w) => ({
-          name: w.name,
-          title: title(`Dormancy (${w.title})`),
-          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({
-              series: tree.activity.dormancy[w.key],
-              name,
-              color,
-              unit: Unit.days,
-            }),
-          ),
-        })),
-      },
-      {
-        name: "SOPR",
-        tree: groupedSoprCharts(
-          list,
-          all,
-          (c) => c.tree.realized.sopr.ratio,
-          title,
+function groupedActivitySharedItems(list, all, title) {
+  return [
+    {
+      name: "Coindays Destroyed",
+      tree: groupedWindowsCumulative({
+        list, all, title, metricTitle: "Coindays Destroyed",
+        getWindowSeries: (c, key) => c.tree.activity.coindaysDestroyed.sum[key],
+        getCumulativeSeries: (c) => c.tree.activity.coindaysDestroyed.cumulative,
+        seriesFn: line, unit: Unit.coindays,
+      }),
+    },
+    {
+      name: "Dormancy",
+      tree: ROLLING_WINDOWS.map((w) => ({
+        name: w.name,
+        title: title(`Dormancy (${w.title})`),
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+          line({ series: tree.activity.dormancy[w.key], name, color, unit: Unit.days }),
         ),
-      },
-      {
-        name: "Sell Side Risk",
-        tree: ROLLING_WINDOWS.map((w) => ({
-          name: w.name,
-          title: title(`Sell Side Risk (${w.title})`),
-          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-            line({
-              series: tree.realized.sellSideRiskRatio[w.key].ratio,
-              name,
-              color,
-              unit: Unit.ratio,
-            }),
-          ),
-        })),
-      },
-    ],
-  };
+      })),
+    },
+    {
+      name: "Sell Side Risk",
+      tree: ROLLING_WINDOWS.map((w) => ({
+        name: w.name,
+        title: title(`Sell Side Risk (${w.title})`),
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+          line({ series: tree.realized.sellSideRiskRatio[w.key].ratio, name, color, unit: Unit.ratio }),
+        ),
+      })),
+    },
+  ];
 }
+
 
 /**
  * Grouped activity for cohorts with activity but basic realized (AgeRange/MaxAge)

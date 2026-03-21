@@ -6,8 +6,7 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 use crate::{distribution::state::{CohortState, CostBasisOps, RealizedOps}, prices};
 
 use crate::internal::{
-    AmountPerBlock, HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin,
-    LazyAmountPerBlock, LazyRollingDeltasFromHeight,
+    AmountPerBlock, LazyRollingDeltasFromHeight,
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -16,20 +15,12 @@ use crate::distribution::metrics::ImportConfig;
 #[derive(Traversable)]
 pub struct SupplyBase<M: StorageMode = Rw> {
     pub total: AmountPerBlock<M>,
-    pub half: LazyAmountPerBlock,
     pub delta: LazyRollingDeltasFromHeight<Sats, SatsSigned, BasisPointsSigned32>,
 }
 
 impl SupplyBase {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let supply = cfg.import("supply", Version::ZERO)?;
-
-        let supply_half = LazyAmountPerBlock::from_block_source::<
-            HalveSats,
-            HalveSatsToBitcoin,
-            HalveCents,
-            HalveDollars,
-        >(&cfg.name("supply_half"), &supply, cfg.version);
+        let supply: AmountPerBlock = cfg.import("supply", Version::ZERO)?;
 
         let delta = LazyRollingDeltasFromHeight::new(
             &cfg.name("supply_delta"),
@@ -41,7 +32,6 @@ impl SupplyBase {
 
         Ok(Self {
             total: supply,
-            half: supply_half,
             delta,
         })
     }

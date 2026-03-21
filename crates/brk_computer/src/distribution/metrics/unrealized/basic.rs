@@ -30,7 +30,7 @@ impl UnrealizedBasic {
         let loss: FiatPerBlock<Cents> = cfg.import("unrealized_loss", v1)?;
 
         let neg_loss = LazyPerBlock::from_computed::<NegCentsUnsignedToDollars>(
-            &cfg.name("neg_unrealized_loss"),
+            &cfg.name("unrealized_loss_neg"),
             cfg.version,
             loss.cents.height.read_only_boxed_clone(),
             &loss.cents,
