@@ -1,19 +1,11 @@
 /**
  * Capitalization section builders
- *
- * Structure:
- * - Total: Realized Cap (USD)
- * - Profitability: Invested Capital (Total + In Profit + In Loss) [full only]
- * - MVRV: Market Value to Realized Value ratio
- * - % of Own Market Cap [full only]
- * - Change: Rolling window absolute changes
- * - Growth Rate: Rolling window rate of change
  */
 
 import { Unit } from "../../utils/units.js";
 import { colors } from "../../utils/colors.js";
 import { ROLLING_WINDOWS, line, baseline, mapWindows, sumsTreeBaseline, rollingPercentRatioTree, percentRatio, percentRatioBaseline } from "../series.js";
-import { createRatioChart, mapCohortsWithAll, flatMapCohortsWithAll } from "../shared.js";
+import { ratioBottomSeries, mapCohortsWithAll, flatMapCohortsWithAll } from "../shared.js";
 
 // ============================================================================
 // Shared building blocks
@@ -42,6 +34,13 @@ function singleDeltaItems(tree, title) {
 function groupedDeltaAndMvrv(list, all, title) {
   return [
     {
+      name: "MVRV",
+      title: title("MVRV"),
+      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+        baseline({ series: tree.realized.mvrv, name, color, unit: Unit.ratio, base: 1 }),
+      ),
+    },
+    {
       name: "Change",
       tree: ROLLING_WINDOWS.map((w) => ({
         name: w.name,
@@ -60,13 +59,6 @@ function groupedDeltaAndMvrv(list, all, title) {
           percentRatioBaseline({ pattern: tree.realized.cap.delta.rate[w.key], name, color }),
         ),
       })),
-    },
-    {
-      name: "MVRV",
-      title: title("MVRV"),
-      bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-        baseline({ series: tree.realized.mvrv, name, color, unit: Unit.ratio, base: 1 }),
-      ),
     },
   ];
 }
@@ -95,7 +87,7 @@ export function createValuationSectionFull({ cohort, title }) {
           line({ series: tree.unrealized.investedCapital.inLoss.usd, name: "In Loss", color: colors.loss, unit: Unit.usd }),
         ],
       },
-      { name: "MVRV", title: title("MVRV"), bottom: [baseline({ series: tree.realized.mvrv, name: "MVRV", unit: Unit.ratio, base: 1 })] },
+      { name: "MVRV", title: title("MVRV"), bottom: ratioBottomSeries(tree.realized.price) },
       { name: "% of Own Market Cap", title: title("Realized Cap (% of Own Market Cap)"), bottom: percentRatioBaseline({ pattern: tree.realized.cap.toOwnMcap, name: "Rel. to Own Market Cap", color }) },
       ...singleDeltaItems(tree, title),
     ],
@@ -172,6 +164,7 @@ export function createGroupedValuationSectionWithOwnMarketCap({ list, all, title
           line({ series: tree.unrealized.investedCapital.inLoss.usd, name, color, unit: Unit.usd }),
         ),
       },
+      ...groupedDeltaAndMvrv(list, all, title),
       {
         name: "% of Own Market Cap",
         title: title("Realized Cap (% of Own Market Cap)"),
@@ -179,7 +172,6 @@ export function createGroupedValuationSectionWithOwnMarketCap({ list, all, title
           percentRatio({ pattern: tree.realized.cap.toOwnMcap, name, color }),
         ),
       },
-      ...groupedDeltaAndMvrv(list, all, title),
     ],
   };
 }

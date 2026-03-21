@@ -912,7 +912,7 @@ function groupedRealizedSubfolderFull(list, all, title) {
         ],
       },
       {
-        name: "Gross",
+        name: "Gross P&L",
         tree: [
           ...ROLLING_WINDOWS.map((w) => ({
             name: w.name,

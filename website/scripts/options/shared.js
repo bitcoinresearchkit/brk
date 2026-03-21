@@ -501,13 +501,41 @@ export function ratioSmas(ratio) {
 }
 
 /**
- * Create ratio chart from ActivePriceRatioPattern
+ * Ratio bottom series: baseline + SMAs + percentiles
+ * @param {AnyRatioPattern} ratio
+ * @returns {AnyFetchedSeriesBlueprint[]}
+ */
+export function ratioBottomSeries(ratio) {
+  return [
+    baseline({
+      series: ratio.ratio,
+      name: "Ratio",
+      unit: Unit.ratio,
+      base: 1,
+    }),
+    ...ratioSmas(ratio).map(({ name, series, color }) =>
+      line({ series, name, color, unit: Unit.ratio, defaultActive: false }),
+    ),
+    ...percentileMap(ratio).map(({ name, prop, color }) =>
+      line({
+        series: prop,
+        name,
+        color,
+        defaultActive: false,
+        unit: Unit.ratio,
+        options: { lineStyle: 1 },
+      }),
+    ),
+  ];
+}
+
+/**
  * @param {Object} args
  * @param {(name: string) => string} args.title
- * @param {AnyPricePattern} args.pricePattern - The price pattern to show in top pane
- * @param {AnyRatioPattern} args.ratio - The ratio pattern
+ * @param {AnyPricePattern} args.pricePattern
+ * @param {AnyRatioPattern} args.ratio
  * @param {Color} args.color
- * @param {string} [args.name] - Optional name override (default: "ratio")
+ * @param {string} [args.name]
  * @returns {PartialChartOption}
  */
 export function createRatioChart({ title, pricePattern, ratio, color, name }) {
@@ -526,27 +554,7 @@ export function createRatioChart({ title, pricePattern, ratio, color, name }) {
         }),
       ),
     ],
-    bottom: [
-      baseline({
-        series: ratio.ratio,
-        name: "Ratio",
-        unit: Unit.ratio,
-        base: 1,
-      }),
-      ...ratioSmas(ratio).map(({ name, series, color }) =>
-        line({ series, name, color, unit: Unit.ratio, defaultActive: false }),
-      ),
-      ...percentileMap(ratio).map(({ name, prop, color }) =>
-        line({
-          series: prop,
-          name,
-          color,
-          defaultActive: false,
-          unit: Unit.ratio,
-          options: { lineStyle: 1 },
-        }),
-      ),
-    ],
+    bottom: ratioBottomSeries(ratio),
   };
 }
 
