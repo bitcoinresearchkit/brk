@@ -133,13 +133,6 @@ impl Vecs {
                 exit,
             )?;
 
-        self.subsidy_sma_1y.cents.height.compute_rolling_average(
-            starting_indexes.height,
-            &lookback._1y,
-            &self.subsidy.block.cents,
-            exit,
-        )?;
-
         self.fee_to_subsidy_ratio
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32, _, _>(
                 starting_indexes.height,

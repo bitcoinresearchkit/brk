@@ -3,22 +3,20 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::{AmountPerBlockCumulativeRolling, CachedWindowStarts}};
+use crate::{indexes, internal::AmountPerBlockCumulative};
 
 impl Vecs {
     pub(crate) fn forced_import(
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
         Ok(Self {
-            total: AmountPerBlockCumulativeRolling::forced_import(
+            total: AmountPerBlockCumulative::forced_import(
                 db,
                 "unspendable_supply",
                 version,
                 indexes,
-                cached_starts,
             )?,
         })
     }

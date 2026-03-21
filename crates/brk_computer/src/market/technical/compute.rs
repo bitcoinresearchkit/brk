@@ -1,9 +1,9 @@
 use brk_error::Result;
-use brk_types::{BasisPoints16, Dollars, Indexes};
+use brk_types::{Dollars, Indexes};
 use vecdb::Exit;
 
 use super::{
-    super::{moving_average, range, returns},
+    super::{moving_average, returns},
     Vecs, macd, rsi,
 };
 use crate::{blocks, internal::{RatioDollarsBp32, WindowsTo1m}, prices};
@@ -13,37 +13,12 @@ impl Vecs {
     pub(crate) fn compute(
         &mut self,
         returns: &returns::Vecs,
-        range: &range::Vecs,
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
         moving_average: &moving_average::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.stoch_k.bps.height.compute_transform3(
-            starting_indexes.height,
-            &prices.spot.usd.height,
-            &range.min._2w.usd.height,
-            &range.max._2w.usd.height,
-            |(h, close, low, high, ..)| {
-                let range = *high - *low;
-                let stoch = if range == 0.0 {
-                    BasisPoints16::ZERO
-                } else {
-                    BasisPoints16::from((*close - *low) / range)
-                };
-                (h, stoch)
-            },
-            exit,
-        )?;
-
-        self.stoch_d.bps.height.compute_rolling_average(
-            starting_indexes.height,
-            &blocks.lookback._3d,
-            &self.stoch_k.bps.height,
-            exit,
-        )?;
-
         let daily_returns = &returns.periods._24h.ratio.height;
         for (rsi_chain, &m) in self.rsi.as_mut_array().into_iter().zip(&WindowsTo1m::<()>::DAYS) {
             rsi::compute(

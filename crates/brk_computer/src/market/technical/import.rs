@@ -110,15 +110,10 @@ impl Vecs {
             WindowsTo1m::try_from_fn(|tf| RsiChain::forced_import(db, tf, v + Version::TWO, indexes))?;
         let macd = WindowsTo1m::try_from_fn(|tf| MacdChain::forced_import(db, tf, v, indexes))?;
 
-        let stoch_k = PercentPerBlock::forced_import(db, "stoch_k", v, indexes)?;
-        let stoch_d = PercentPerBlock::forced_import(db, "stoch_d", v, indexes)?;
-
         let pi_cycle = RatioPerBlock::forced_import_raw(db, "pi_cycle", v, indexes)?;
 
         Ok(Self {
             rsi,
-            stoch_k,
-            stoch_d,
             pi_cycle,
             macd,
         })

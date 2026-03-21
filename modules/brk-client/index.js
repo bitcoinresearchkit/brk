@@ -1853,42 +1853,6 @@ function createAverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(
  */
 
 /**
- * @typedef {Object} AverageGainsLossesRsiStochPattern
- * @property {SeriesPattern1<StoredF32>} averageGain
- * @property {SeriesPattern1<StoredF32>} averageLoss
- * @property {SeriesPattern1<StoredF32>} gains
- * @property {SeriesPattern1<StoredF32>} losses
- * @property {BpsPercentRatioPattern3} rsi
- * @property {BpsPercentRatioPattern3} rsiMax
- * @property {BpsPercentRatioPattern3} rsiMin
- * @property {BpsPercentRatioPattern3} stochRsi
- * @property {BpsPercentRatioPattern3} stochRsiD
- * @property {BpsPercentRatioPattern3} stochRsiK
- */
-
-/**
- * Create a AverageGainsLossesRsiStochPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated series name
- * @param {string} disc - Discriminator suffix
- * @returns {AverageGainsLossesRsiStochPattern}
- */
-function createAverageGainsLossesRsiStochPattern(client, acc, disc) {
-  return {
-    averageGain: createSeriesPattern1(client, _m(_m(acc, 'average_gain'), disc)),
-    averageLoss: createSeriesPattern1(client, _m(_m(acc, 'average_loss'), disc)),
-    gains: createSeriesPattern1(client, _m(_m(acc, 'gains'), disc)),
-    losses: createSeriesPattern1(client, _m(_m(acc, 'losses'), disc)),
-    rsi: createBpsPercentRatioPattern3(client, _m(acc, disc)),
-    rsiMax: createBpsPercentRatioPattern3(client, _m(_m(acc, 'max'), disc)),
-    rsiMin: createBpsPercentRatioPattern3(client, _m(_m(acc, 'min'), disc)),
-    stochRsi: createBpsPercentRatioPattern3(client, _m(_m(acc, 'stoch'), disc)),
-    stochRsiD: createBpsPercentRatioPattern3(client, _m(_m(acc, 'stoch_d'), disc)),
-    stochRsiK: createBpsPercentRatioPattern3(client, _m(_m(acc, 'stoch_k'), disc)),
-  };
-}
-
-/**
  * @typedef {Object} AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3
  * @property {SeriesPattern1<StoredU64>} all
  * @property {SeriesPattern1<StoredU64>} p2a
@@ -3437,7 +3401,7 @@ function createCentsSatsUsdPattern(client, acc) {
  * @typedef {Object} CumulativeRollingSumPattern
  * @property {SeriesPattern1<StoredU64>} cumulative
  * @property {AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern} rolling
- * @property {SeriesPattern1<StoredU64>} sum
+ * @property {SeriesPattern18<StoredU64>} sum
  */
 
 /**
@@ -3450,7 +3414,7 @@ function createCumulativeRollingSumPattern(client, acc) {
   return {
     cumulative: createSeriesPattern1(client, _m(acc, 'cumulative')),
     rolling: createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc),
-    sum: createSeriesPattern1(client, _m(acc, 'sum')),
+    sum: createSeriesPattern18(client, _m(acc, 'sum')),
   };
 }
 
@@ -3509,6 +3473,28 @@ function createNuplRealizedSupplyPattern(client, acc) {
  * @property {AverageBlockCumulativeSumPattern<Cents>} transferVolume
  * @property {AverageBlockCumulativeSumPattern<Cents>} valueDestroyed
  */
+
+/**
+ * @typedef {Object} RsiStochPattern
+ * @property {BpsPercentRatioPattern3} rsi
+ * @property {BpsPercentRatioPattern3} stochRsiD
+ * @property {BpsPercentRatioPattern3} stochRsiK
+ */
+
+/**
+ * Create a RsiStochPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @param {string} disc - Discriminator suffix
+ * @returns {RsiStochPattern}
+ */
+function createRsiStochPattern(client, acc, disc) {
+  return {
+    rsi: createBpsPercentRatioPattern3(client, _m(acc, disc)),
+    stochRsiD: createBpsPercentRatioPattern3(client, _m(_m(acc, 'stoch_d'), disc)),
+    stochRsiK: createBpsPercentRatioPattern3(client, _m(_m(acc, 'stoch_k'), disc)),
+  };
+}
 
 /**
  * @template T
@@ -3611,7 +3597,7 @@ function createAllSthPattern(client, acc) {
 
 /**
  * @typedef {Object} BaseSumPattern
- * @property {SeriesPattern1<Dollars>} base
+ * @property {SeriesPattern18<Dollars>} base
  * @property {_1m1w1y24hPattern<Dollars>} sum
  */
 
@@ -3623,7 +3609,7 @@ function createAllSthPattern(client, acc) {
  */
 function createBaseSumPattern(client, acc) {
   return {
-    base: createSeriesPattern1(client, acc),
+    base: createSeriesPattern18(client, acc),
     sum: create_1m1w1y24hPattern(client, _m(acc, 'sum')),
   };
 }
@@ -3644,6 +3630,25 @@ function createBaseDeltaPattern(client, acc) {
   return {
     base: createSeriesPattern1(client, acc),
     delta: createAbsoluteRatePattern(client, _m(acc, 'delta')),
+  };
+}
+
+/**
+ * @typedef {Object} BlockCumulativePattern
+ * @property {BtcCentsSatsUsdPattern2} block
+ * @property {BtcCentsSatsUsdPattern3} cumulative
+ */
+
+/**
+ * Create a BlockCumulativePattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {BlockCumulativePattern}
+ */
+function createBlockCumulativePattern(client, acc) {
+  return {
+    block: createBtcCentsSatsUsdPattern2(client, acc),
+    cumulative: createBtcCentsSatsUsdPattern3(client, _m(acc, 'cumulative')),
   };
 }
 
@@ -4470,7 +4475,7 @@ function createUnspentPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Scripts_Value
- * @property {AverageBlockCumulativeSumPattern3} opReturn
+ * @property {BlockCumulativePattern} opReturn
  */
 
 /**
@@ -4484,7 +4489,7 @@ function createUnspentPattern(client, acc) {
  * @property {AverageBlockCumulativeSumPattern3} coinbase
  * @property {SeriesTree_Mining_Rewards_Subsidy} subsidy
  * @property {SeriesTree_Mining_Rewards_Fees} fees
- * @property {SeriesTree_Mining_Rewards_Unclaimed} unclaimed
+ * @property {BlockCumulativePattern} unclaimed
  */
 
 /**
@@ -4494,7 +4499,6 @@ function createUnspentPattern(client, acc) {
  * @property {_1m1w1y24hPattern4} sum
  * @property {_1m1w1y24hPattern3} average
  * @property {_1m1w1y24hBpsPercentRatioPattern} dominance
- * @property {CentsUsdPattern3} sma1y
  */
 
 /**
@@ -4520,12 +4524,6 @@ function createUnspentPattern(client, acc) {
  * @property {BpsRatioPattern2} _1w
  * @property {BpsRatioPattern2} _1m
  * @property {BpsRatioPattern2} _1y
- */
-
-/**
- * @typedef {Object} SeriesTree_Mining_Rewards_Unclaimed
- * @property {BtcCentsSatsUsdPattern2} block
- * @property {BtcCentsSatsUsdPattern3} cumulative
  */
 
 /**
@@ -5173,17 +5171,15 @@ function createUnspentPattern(client, acc) {
 /**
  * @typedef {Object} SeriesTree_Market_Technical
  * @property {SeriesTree_Market_Technical_Rsi} rsi
- * @property {BpsPercentRatioPattern3} stochK
- * @property {BpsPercentRatioPattern3} stochD
  * @property {BpsRatioPattern2} piCycle
  * @property {SeriesTree_Market_Technical_Macd} macd
  */
 
 /**
  * @typedef {Object} SeriesTree_Market_Technical_Rsi
- * @property {AverageGainsLossesRsiStochPattern} _24h
- * @property {AverageGainsLossesRsiStochPattern} _1w
- * @property {AverageGainsLossesRsiStochPattern} _1m
+ * @property {RsiStochPattern} _24h
+ * @property {RsiStochPattern} _1w
+ * @property {RsiStochPattern} _1m
  */
 
 /**
@@ -5430,7 +5426,7 @@ function createUnspentPattern(client, acc) {
  * @typedef {Object} SeriesTree_Supply
  * @property {SeriesPattern18<SupplyState>} state
  * @property {BtcCentsSatsUsdPattern3} circulating
- * @property {AverageBlockCumulativeSumPattern3} burned
+ * @property {BlockCumulativePattern} burned
  * @property {BpsPercentRatioPattern} inflationRate
  * @property {SeriesTree_Supply_Velocity} velocity
  * @property {CentsDeltaUsdPattern} marketCap
@@ -7836,7 +7832,7 @@ class BrkClient extends BrkClientBase {
           unknownOutput: createAverageBlockCumulativeSumPattern(this, 'unknown_output_count'),
         },
         value: {
-          opReturn: createAverageBlockCumulativeSumPattern3(this, 'op_return_value'),
+          opReturn: createBlockCumulativePattern(this, 'op_return_value'),
         },
       },
       mining: {
@@ -7848,7 +7844,6 @@ class BrkClient extends BrkClientBase {
             sum: create_1m1w1y24hPattern4(this, 'subsidy_sum'),
             average: create_1m1w1y24hPattern3(this, 'subsidy_average'),
             dominance: create_1m1w1y24hBpsPercentRatioPattern(this, 'subsidy_dominance'),
-            sma1y: createCentsUsdPattern3(this, 'subsidy_sma_1y'),
           },
           fees: {
             block: createBtcCentsSatsUsdPattern2(this, 'fees'),
@@ -7870,10 +7865,7 @@ class BrkClient extends BrkClientBase {
               _1y: createBpsRatioPattern2(this, 'fee_to_subsidy_ratio_1y'),
             },
           },
-          unclaimed: {
-            block: createBtcCentsSatsUsdPattern2(this, 'unclaimed_rewards'),
-            cumulative: createBtcCentsSatsUsdPattern3(this, 'unclaimed_rewards_cumulative'),
-          },
+          unclaimed: createBlockCumulativePattern(this, 'unclaimed_rewards'),
         },
         hashrate: {
           rate: {
@@ -8312,12 +8304,10 @@ class BrkClient extends BrkClientBase {
         },
         technical: {
           rsi: {
-            _24h: createAverageGainsLossesRsiStochPattern(this, 'rsi', '24h'),
-            _1w: createAverageGainsLossesRsiStochPattern(this, 'rsi', '1w'),
-            _1m: createAverageGainsLossesRsiStochPattern(this, 'rsi', '1m'),
+            _24h: createRsiStochPattern(this, 'rsi', '24h'),
+            _1w: createRsiStochPattern(this, 'rsi', '1w'),
+            _1m: createRsiStochPattern(this, 'rsi', '1m'),
           },
-          stochK: createBpsPercentRatioPattern3(this, 'stoch_k'),
-          stochD: createBpsPercentRatioPattern3(this, 'stoch_d'),
           piCycle: createBpsRatioPattern2(this, 'pi_cycle'),
           macd: {
             _24h: {
@@ -8534,7 +8524,7 @@ class BrkClient extends BrkClientBase {
       supply: {
         state: createSeriesPattern18(this, 'supply_state'),
         circulating: createBtcCentsSatsUsdPattern3(this, 'circulating_supply'),
-        burned: createAverageBlockCumulativeSumPattern3(this, 'unspendable_supply'),
+        burned: createBlockCumulativePattern(this, 'unspendable_supply'),
         inflationRate: createBpsPercentRatioPattern(this, 'inflation_rate'),
         velocity: {
           native: createSeriesPattern1(this, 'velocity'),

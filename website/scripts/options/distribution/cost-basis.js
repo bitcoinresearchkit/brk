@@ -136,7 +136,7 @@ function groupedWeightFolder({ list, all, getAvgPrice, getInProfit, getInLoss, g
   return [
     {
       name: "Average",
-      title: title(`${avgTitle} Comparison`),
+      title: title(`Cost Basis ${avgTitle} (${weightLabel})`),
       top: mapCohortsWithAll(list, all, (c) =>
         price({ series: getAvgPrice(c), name: c.name, color: c.color }),
       ),

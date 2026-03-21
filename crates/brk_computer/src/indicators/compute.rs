@@ -22,7 +22,7 @@ impl Vecs {
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
                 starting_indexes.height,
                 &mining.rewards.subsidy.block.usd,
-                &mining.rewards.subsidy_sma_1y.usd.height,
+                &mining.rewards.subsidy.average._1y.usd.height,
                 exit,
             )?;
 

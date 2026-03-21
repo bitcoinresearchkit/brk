@@ -1135,38 +1135,6 @@ pub struct AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<T> {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct AverageGainsLossesRsiStochPattern {
-    pub average_gain: SeriesPattern1<StoredF32>,
-    pub average_loss: SeriesPattern1<StoredF32>,
-    pub gains: SeriesPattern1<StoredF32>,
-    pub losses: SeriesPattern1<StoredF32>,
-    pub rsi: BpsPercentRatioPattern3,
-    pub rsi_max: BpsPercentRatioPattern3,
-    pub rsi_min: BpsPercentRatioPattern3,
-    pub stoch_rsi: BpsPercentRatioPattern3,
-    pub stoch_rsi_d: BpsPercentRatioPattern3,
-    pub stoch_rsi_k: BpsPercentRatioPattern3,
-}
-
-impl AverageGainsLossesRsiStochPattern {
-    /// Create a new pattern node with accumulated series name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String, disc: String) -> Self {
-        Self {
-            average_gain: SeriesPattern1::new(client.clone(), _m(&acc, &format!("average_gain_{disc}", disc=disc))),
-            average_loss: SeriesPattern1::new(client.clone(), _m(&acc, &format!("average_loss_{disc}", disc=disc))),
-            gains: SeriesPattern1::new(client.clone(), _m(&acc, &format!("gains_{disc}", disc=disc))),
-            losses: SeriesPattern1::new(client.clone(), _m(&acc, &format!("losses_{disc}", disc=disc))),
-            rsi: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, &disc)),
-            rsi_max: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, &format!("max_{disc}", disc=disc))),
-            rsi_min: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, &format!("min_{disc}", disc=disc))),
-            stoch_rsi: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, &format!("stoch_{disc}", disc=disc))),
-            stoch_rsi_d: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, &format!("stoch_d_{disc}", disc=disc))),
-            stoch_rsi_k: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, &format!("stoch_k_{disc}", disc=disc))),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 {
     pub all: SeriesPattern1<StoredU64>,
     pub p2a: SeriesPattern1<StoredU64>,
@@ -2528,7 +2496,7 @@ impl CentsSatsUsdPattern {
 pub struct CumulativeRollingSumPattern {
     pub cumulative: SeriesPattern1<StoredU64>,
     pub rolling: AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
-    pub sum: SeriesPattern1<StoredU64>,
+    pub sum: SeriesPattern18<StoredU64>,
 }
 
 impl CumulativeRollingSumPattern {
@@ -2537,7 +2505,7 @@ impl CumulativeRollingSumPattern {
         Self {
             cumulative: SeriesPattern1::new(client.clone(), _m(&acc, "cumulative")),
             rolling: AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), acc.clone()),
-            sum: SeriesPattern1::new(client.clone(), _m(&acc, "sum")),
+            sum: SeriesPattern18::new(client.clone(), _m(&acc, "sum")),
         }
     }
 }
@@ -2590,6 +2558,24 @@ pub struct RatioTransferValuePattern {
     pub ratio: _1m1w1y24hPattern<StoredF64>,
     pub transfer_volume: AverageBlockCumulativeSumPattern<Cents>,
     pub value_destroyed: AverageBlockCumulativeSumPattern<Cents>,
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct RsiStochPattern {
+    pub rsi: BpsPercentRatioPattern3,
+    pub stoch_rsi_d: BpsPercentRatioPattern3,
+    pub stoch_rsi_k: BpsPercentRatioPattern3,
+}
+
+impl RsiStochPattern {
+    /// Create a new pattern node with accumulated series name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String, disc: String) -> Self {
+        Self {
+            rsi: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, &disc)),
+            stoch_rsi_d: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, &format!("stoch_d_{disc}", disc=disc))),
+            stoch_rsi_k: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, &format!("stoch_k_{disc}", disc=disc))),
+        }
+    }
 }
 
 /// Pattern struct for repeated tree structure.
@@ -2676,7 +2662,7 @@ impl AllSthPattern {
 
 /// Pattern struct for repeated tree structure.
 pub struct BaseSumPattern {
-    pub base: SeriesPattern1<Dollars>,
+    pub base: SeriesPattern18<Dollars>,
     pub sum: _1m1w1y24hPattern<Dollars>,
 }
 
@@ -2684,7 +2670,7 @@ impl BaseSumPattern {
     /// Create a new pattern node with accumulated series name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            base: SeriesPattern1::new(client.clone(), acc.clone()),
+            base: SeriesPattern18::new(client.clone(), acc.clone()),
             sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "sum")),
         }
     }
@@ -2702,6 +2688,22 @@ impl BaseDeltaPattern {
         Self {
             base: SeriesPattern1::new(client.clone(), acc.clone()),
             delta: AbsoluteRatePattern::new(client.clone(), _m(&acc, "delta")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct BlockCumulativePattern {
+    pub block: BtcCentsSatsUsdPattern2,
+    pub cumulative: BtcCentsSatsUsdPattern3,
+}
+
+impl BlockCumulativePattern {
+    /// Create a new pattern node with accumulated series name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            block: BtcCentsSatsUsdPattern2::new(client.clone(), acc.clone()),
+            cumulative: BtcCentsSatsUsdPattern3::new(client.clone(), _m(&acc, "cumulative")),
         }
     }
 }
@@ -4076,13 +4078,13 @@ impl SeriesTree_Scripts_Count {
 
 /// Series tree node.
 pub struct SeriesTree_Scripts_Value {
-    pub op_return: AverageBlockCumulativeSumPattern3,
+    pub op_return: BlockCumulativePattern,
 }
 
 impl SeriesTree_Scripts_Value {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            op_return: AverageBlockCumulativeSumPattern3::new(client.clone(), "op_return_value".to_string()),
+            op_return: BlockCumulativePattern::new(client.clone(), "op_return_value".to_string()),
         }
     }
 }
@@ -4107,7 +4109,7 @@ pub struct SeriesTree_Mining_Rewards {
     pub coinbase: AverageBlockCumulativeSumPattern3,
     pub subsidy: SeriesTree_Mining_Rewards_Subsidy,
     pub fees: SeriesTree_Mining_Rewards_Fees,
-    pub unclaimed: SeriesTree_Mining_Rewards_Unclaimed,
+    pub unclaimed: BlockCumulativePattern,
 }
 
 impl SeriesTree_Mining_Rewards {
@@ -4116,7 +4118,7 @@ impl SeriesTree_Mining_Rewards {
             coinbase: AverageBlockCumulativeSumPattern3::new(client.clone(), "coinbase".to_string()),
             subsidy: SeriesTree_Mining_Rewards_Subsidy::new(client.clone(), format!("{base_path}_subsidy")),
             fees: SeriesTree_Mining_Rewards_Fees::new(client.clone(), format!("{base_path}_fees")),
-            unclaimed: SeriesTree_Mining_Rewards_Unclaimed::new(client.clone(), format!("{base_path}_unclaimed")),
+            unclaimed: BlockCumulativePattern::new(client.clone(), "unclaimed_rewards".to_string()),
         }
     }
 }
@@ -4128,7 +4130,6 @@ pub struct SeriesTree_Mining_Rewards_Subsidy {
     pub sum: _1m1w1y24hPattern4,
     pub average: _1m1w1y24hPattern3,
     pub dominance: _1m1w1y24hBpsPercentRatioPattern,
-    pub sma_1y: CentsUsdPattern3,
 }
 
 impl SeriesTree_Mining_Rewards_Subsidy {
@@ -4139,7 +4140,6 @@ impl SeriesTree_Mining_Rewards_Subsidy {
             sum: _1m1w1y24hPattern4::new(client.clone(), "subsidy_sum".to_string()),
             average: _1m1w1y24hPattern3::new(client.clone(), "subsidy_average".to_string()),
             dominance: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "subsidy_dominance".to_string()),
-            sma_1y: CentsUsdPattern3::new(client.clone(), "subsidy_sma_1y".to_string()),
         }
     }
 }
@@ -4196,21 +4196,6 @@ impl SeriesTree_Mining_Rewards_Fees_ToSubsidyRatio {
             _1w: BpsRatioPattern2::new(client.clone(), "fee_to_subsidy_ratio_1w".to_string()),
             _1m: BpsRatioPattern2::new(client.clone(), "fee_to_subsidy_ratio_1m".to_string()),
             _1y: BpsRatioPattern2::new(client.clone(), "fee_to_subsidy_ratio_1y".to_string()),
-        }
-    }
-}
-
-/// Series tree node.
-pub struct SeriesTree_Mining_Rewards_Unclaimed {
-    pub block: BtcCentsSatsUsdPattern2,
-    pub cumulative: BtcCentsSatsUsdPattern3,
-}
-
-impl SeriesTree_Mining_Rewards_Unclaimed {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            block: BtcCentsSatsUsdPattern2::new(client.clone(), "unclaimed_rewards".to_string()),
-            cumulative: BtcCentsSatsUsdPattern3::new(client.clone(), "unclaimed_rewards_cumulative".to_string()),
         }
     }
 }
@@ -5715,8 +5700,6 @@ impl SeriesTree_Market_Dca_Class_Return {
 /// Series tree node.
 pub struct SeriesTree_Market_Technical {
     pub rsi: SeriesTree_Market_Technical_Rsi,
-    pub stoch_k: BpsPercentRatioPattern3,
-    pub stoch_d: BpsPercentRatioPattern3,
     pub pi_cycle: BpsRatioPattern2,
     pub macd: SeriesTree_Market_Technical_Macd,
 }
@@ -5725,8 +5708,6 @@ impl SeriesTree_Market_Technical {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             rsi: SeriesTree_Market_Technical_Rsi::new(client.clone(), format!("{base_path}_rsi")),
-            stoch_k: BpsPercentRatioPattern3::new(client.clone(), "stoch_k".to_string()),
-            stoch_d: BpsPercentRatioPattern3::new(client.clone(), "stoch_d".to_string()),
             pi_cycle: BpsRatioPattern2::new(client.clone(), "pi_cycle".to_string()),
             macd: SeriesTree_Market_Technical_Macd::new(client.clone(), format!("{base_path}_macd")),
         }
@@ -5735,17 +5716,17 @@ impl SeriesTree_Market_Technical {
 
 /// Series tree node.
 pub struct SeriesTree_Market_Technical_Rsi {
-    pub _24h: AverageGainsLossesRsiStochPattern,
-    pub _1w: AverageGainsLossesRsiStochPattern,
-    pub _1m: AverageGainsLossesRsiStochPattern,
+    pub _24h: RsiStochPattern,
+    pub _1w: RsiStochPattern,
+    pub _1m: RsiStochPattern,
 }
 
 impl SeriesTree_Market_Technical_Rsi {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            _24h: AverageGainsLossesRsiStochPattern::new(client.clone(), "rsi".to_string(), "24h".to_string()),
-            _1w: AverageGainsLossesRsiStochPattern::new(client.clone(), "rsi".to_string(), "1w".to_string()),
-            _1m: AverageGainsLossesRsiStochPattern::new(client.clone(), "rsi".to_string(), "1m".to_string()),
+            _24h: RsiStochPattern::new(client.clone(), "rsi".to_string(), "24h".to_string()),
+            _1w: RsiStochPattern::new(client.clone(), "rsi".to_string(), "1w".to_string()),
+            _1m: RsiStochPattern::new(client.clone(), "rsi".to_string(), "1m".to_string()),
         }
     }
 }
@@ -6267,7 +6248,7 @@ impl SeriesTree_Prices_Spot {
 pub struct SeriesTree_Supply {
     pub state: SeriesPattern18<SupplyState>,
     pub circulating: BtcCentsSatsUsdPattern3,
-    pub burned: AverageBlockCumulativeSumPattern3,
+    pub burned: BlockCumulativePattern,
     pub inflation_rate: BpsPercentRatioPattern,
     pub velocity: SeriesTree_Supply_Velocity,
     pub market_cap: CentsDeltaUsdPattern,
@@ -6280,7 +6261,7 @@ impl SeriesTree_Supply {
         Self {
             state: SeriesPattern18::new(client.clone(), "supply_state".to_string()),
             circulating: BtcCentsSatsUsdPattern3::new(client.clone(), "circulating_supply".to_string()),
-            burned: AverageBlockCumulativeSumPattern3::new(client.clone(), "unspendable_supply".to_string()),
+            burned: BlockCumulativePattern::new(client.clone(), "unspendable_supply".to_string()),
             inflation_rate: BpsPercentRatioPattern::new(client.clone(), "inflation_rate".to_string()),
             velocity: SeriesTree_Supply_Velocity::new(client.clone(), format!("{base_path}_velocity")),
             market_cap: CentsDeltaUsdPattern::new(client.clone(), "market_cap".to_string()),

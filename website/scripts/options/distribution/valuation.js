@@ -20,7 +20,7 @@ import { ratioBottomSeries, mapCohortsWithAll, flatMapCohortsWithAll } from "../
 function singleDeltaItems(tree, title) {
   return [
     { ...sumsTreeBaseline({ windows: mapWindows(tree.realized.cap.delta.absolute, (c) => c.usd), title: title("Realized Cap Change"), unit: Unit.usd }), name: "Change" },
-    { ...rollingPercentRatioTree({ windows: tree.realized.cap.delta.rate, title: title("Realized Cap Rate") }), name: "Growth Rate" },
+    { ...rollingPercentRatioTree({ windows: tree.realized.cap.delta.rate, title: title("Realized Cap Growth Rate") }), name: "Growth Rate" },
   ];
 }
 
@@ -54,7 +54,7 @@ function groupedDeltaAndMvrv(list, all, title) {
       name: "Growth Rate",
       tree: ROLLING_WINDOWS.map((w) => ({
         name: w.name,
-        title: title(`Realized Cap Rate (${w.title})`),
+        title: title(`Realized Cap Growth Rate (${w.title})`),
         bottom: flatMapCohortsWithAll(list, all, ({ name, color, tree }) =>
           percentRatioBaseline({ pattern: tree.realized.cap.delta.rate[w.key], name, color }),
         ),

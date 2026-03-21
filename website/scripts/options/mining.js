@@ -5,13 +5,13 @@ import { entries, includes } from "../utils/array.js";
 import { colors } from "../utils/colors.js";
 import {
   line,
-  baseline,
   dots,
   dotted,
   distributionBtcSatsUsd,
   statsAtWindow,
   ROLLING_WINDOWS,
   percentRatio,
+  percentRatioBaseline,
   chartsFromCount,
 } from "./series.js";
 import {
@@ -438,7 +438,7 @@ export function createMiningSection() {
           {
             name: "Adjustment",
             title: "Difficulty Adjustment",
-            bottom: [baseline({ series: blocks.difficulty.adjustment.percent, name: "Change", unit: Unit.percentage })],
+            bottom: percentRatioBaseline({ pattern: blocks.difficulty.adjustment, name: "Change" }),
           },
           {
             name: "Countdown",

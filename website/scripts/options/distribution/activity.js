@@ -41,7 +41,7 @@ function volumeTree(tv, color, title) {
   return [
     ...satsBtcUsdFullTree({
       pattern: tv,
-      title: title("Sent Volume"),
+      title: title("Transfer Volume"),
       color,
     }),
     {
@@ -49,7 +49,7 @@ function volumeTree(tv, color, title) {
         tree: [
           ...ROLLING_WINDOWS.map((w) => ({
             name: w.name,
-            title: title(`Sent Volume Profitability (${w.title})`),
+            title: title(`Transfer Volume Profitability (${w.title})`),
             bottom: [
               ...satsBtcUsd({
                 pattern: tv.inProfit.sum[w.key],
@@ -65,7 +65,7 @@ function volumeTree(tv, color, title) {
           })),
           {
             name: "Cumulative",
-            title: title("Cumulative Sent Volume Profitability"),
+            title: title("Cumulative Transfer Volume"),
             bottom: [
               ...satsBtcUsd({
                 pattern: tv.inProfit.cumulative,
@@ -83,7 +83,7 @@ function volumeTree(tv, color, title) {
             name: "In Profit",
             tree: satsBtcUsdFullTree({
               pattern: tv.inProfit,
-              title: title("Sent In Profit"),
+              title: title("Transfer Volume In Profit"),
               color: colors.profit,
             }),
           },
@@ -91,7 +91,7 @@ function volumeTree(tv, color, title) {
             name: "In Loss",
             tree: satsBtcUsdFullTree({
               pattern: tv.inLoss,
-              title: title("Sent In Loss"),
+              title: title("Transfer Volume In Loss"),
               color: colors.loss,
             }),
           },
@@ -360,7 +360,7 @@ export function createActivitySectionMinimal({ cohort, title }) {
     name: "Activity",
     tree: satsBtcUsdFullTree({
       pattern: cohort.tree.activity.transferVolume,
-      title: title("Volume"),
+      title: title("Transfer Volume"),
     }),
   };
 }
@@ -399,7 +399,7 @@ function groupedProfitabilityArray(list, all, title, getInProfit, getInLoss) {
         list,
         all,
         title,
-        metricTitle: "Sent In Profit",
+        metricTitle: "Transfer Volume In Profit",
         getMetric: (c) => getInProfit(c),
       }),
     },
@@ -409,7 +409,7 @@ function groupedProfitabilityArray(list, all, title, getInProfit, getInLoss) {
         list,
         all,
         title,
-        metricTitle: "Sent In Loss",
+        metricTitle: "Transfer Volume In Loss",
         getMetric: (c) => getInLoss(c),
       }),
     },
@@ -431,7 +431,7 @@ function groupedVolumeTree(list, all, title, getTransferVolume) {
       list,
       all,
       title,
-      metricTitle: "Sent Volume",
+      metricTitle: "Transfer Volume",
       getMetric: (c) => getTransferVolume(c),
     }),
     ...groupedProfitabilityArray(

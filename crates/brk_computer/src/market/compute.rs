@@ -58,10 +58,9 @@ impl Vecs {
         r3?;
         r4?;
 
-        // Phase 3: Depends on returns, range, moving_average
+        // Phase 3: Depends on returns, moving_average
         self.technical.compute(
             &self.returns,
-            &self.range,
             prices,
             blocks,
             &self.moving_average,

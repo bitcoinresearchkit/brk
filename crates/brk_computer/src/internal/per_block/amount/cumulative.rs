@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Version};
-use vecdb::{Database, Exit, Rw, StorageMode};
+use brk_types::{Height, Sats, Version};
+use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
@@ -56,5 +56,16 @@ impl AmountPerBlockCumulative {
             .compute_cumulative(max_from, &self.block.cents, exit)?;
 
         Ok(())
+    }
+
+    pub(crate) fn compute_with(
+        &mut self,
+        max_from: Height,
+        prices: &prices::Vecs,
+        exit: &Exit,
+        compute_sats: impl FnOnce(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
+    ) -> Result<()> {
+        compute_sats(&mut self.block.sats)?;
+        self.compute(prices, max_from, exit)
     }
 }

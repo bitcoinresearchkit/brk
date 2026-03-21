@@ -34,7 +34,7 @@ impl Vecs {
         let circulating =
             LazyAmountPerBlock::identity("circulating_supply", &supply_metrics.total, version);
 
-        let burned = burned::Vecs::forced_import(&db, version, indexes, cached_starts)?;
+        let burned = burned::Vecs::forced_import(&db, version, indexes)?;
 
         // Inflation rate
         let inflation_rate = PercentPerBlock::forced_import(

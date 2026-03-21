@@ -65,6 +65,7 @@ import {
   createProfitabilitySectionWithInvestedCapitalPct,
   createProfitabilitySectionLongTerm,
   createGroupedProfitabilitySection,
+  createGroupedProfitabilitySectionWithProfitLoss,
   createGroupedProfitabilitySectionWithNupl,
   createGroupedProfitabilitySectionWithInvestedCapitalPct,
 } from "./profitability.js";
@@ -91,7 +92,7 @@ export { buildCohortData } from "./data.js";
  * @returns {PartialOptionsGroup}
  */
 export function createCohortFolderAll(cohort) {
-  const title = formatCohortTitle(cohort.name);
+  const title = formatCohortTitle(cohort.title);
   return {
     name: cohort.name || "all",
     tree: [
@@ -111,7 +112,7 @@ export function createCohortFolderAll(cohort) {
  * @returns {PartialOptionsGroup}
  */
 export function createCohortFolderFull(cohort) {
-  const title = formatCohortTitle(cohort.name);
+  const title = formatCohortTitle(cohort.title);
   return {
     name: cohort.name || "all",
     tree: [
@@ -131,7 +132,7 @@ export function createCohortFolderFull(cohort) {
  * @returns {PartialOptionsGroup}
  */
 export function createCohortFolderWithAdjusted(cohort) {
-  const title = formatCohortTitle(cohort.name);
+  const title = formatCohortTitle(cohort.title);
   return {
     name: cohort.name || "all",
     tree: [
@@ -150,7 +151,7 @@ export function createCohortFolderWithAdjusted(cohort) {
  * @returns {PartialOptionsGroup}
  */
 export function createCohortFolderWithNupl(cohort) {
-  const title = formatCohortTitle(cohort.name);
+  const title = formatCohortTitle(cohort.title);
   return {
     name: cohort.name || "all",
     tree: [
@@ -170,7 +171,7 @@ export function createCohortFolderWithNupl(cohort) {
  * @returns {PartialOptionsGroup}
  */
 export function createCohortFolderLongTerm(cohort) {
-  const title = formatCohortTitle(cohort.name);
+  const title = formatCohortTitle(cohort.title);
   return {
     name: cohort.name || "all",
     tree: [
@@ -190,7 +191,7 @@ export function createCohortFolderLongTerm(cohort) {
  * @returns {PartialOptionsGroup}
  */
 export function createCohortFolderAgeRange(cohort) {
-  const title = formatCohortTitle(cohort.name);
+  const title = formatCohortTitle(cohort.title);
   return {
     name: cohort.name || "all",
     tree: [
@@ -210,7 +211,7 @@ export function createCohortFolderAgeRange(cohort) {
  */
 export function createCohortFolderAgeRangeWithMatured(cohort) {
   const folder = createCohortFolderAgeRange(cohort);
-  const title = formatCohortTitle(cohort.name);
+  const title = formatCohortTitle(cohort.title);
   folder.tree.push({
     name: "Matured",
     tree: satsBtcUsdFullTree({
@@ -227,7 +228,7 @@ export function createCohortFolderAgeRangeWithMatured(cohort) {
  * @returns {PartialOptionsGroup}
  */
 export function createCohortFolderBasicWithMarketCap(cohort) {
-  const title = formatCohortTitle(cohort.name);
+  const title = formatCohortTitle(cohort.title);
   return {
     name: cohort.name || "all",
     tree: [
@@ -247,7 +248,7 @@ export function createCohortFolderBasicWithMarketCap(cohort) {
  * @returns {PartialOptionsGroup}
  */
 export function createCohortFolderAddress(cohort) {
-  const title = formatCohortTitle(cohort.name);
+  const title = formatCohortTitle(cohort.title);
   return {
     name: cohort.name || "all",
     tree: [
@@ -266,7 +267,7 @@ export function createCohortFolderAddress(cohort) {
  * @returns {PartialOptionsGroup}
  */
 export function createCohortFolderWithoutRelative(cohort) {
-  const title = formatCohortTitle(cohort.name);
+  const title = formatCohortTitle(cohort.title);
   return {
     name: cohort.name || "all",
     tree: [
@@ -285,7 +286,7 @@ export function createCohortFolderWithoutRelative(cohort) {
  * @returns {PartialOptionsGroup}
  */
 export function createAddressCohortFolder(cohort) {
-  const title = formatCohortTitle(cohort.name);
+  const title = formatCohortTitle(cohort.title);
   return {
     name: cohort.name || "all",
     tree: [
@@ -455,7 +456,7 @@ export function createGroupedCohortFolderAddress({
       ...createGroupedHoldingsSectionAddress({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
-      createGroupedProfitabilitySection({
+      createGroupedProfitabilitySectionWithProfitLoss({
         list,
         all,
         title,

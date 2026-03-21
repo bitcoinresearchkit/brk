@@ -15,40 +15,31 @@ function walkSeries(node, map, path) {
     for (const [key, value] of Object.entries(node)) {
       const kn = key.toLowerCase();
       if (
-        key === "lookback" ||
-        key === "cumulativeMarketCap" ||
         key === "sd24h" ||
-        key === "spot" ||
-        key === "ohlc" ||
-        key === "state" ||
         key === "emaSlow" ||
         key === "emaFast" ||
-        key.endsWith("Raw") ||
-        key.endsWith("Cents") ||
-        key.endsWith("State") ||
-        key.endsWith("Start") ||
         kn === "cents" ||
         kn === "bps" ||
-        kn === "mvrv" ||
         kn === "constants" ||
-        kn === "blockhash" ||
-        kn === "date" ||
+        kn === "ohlc" ||
         kn === "split" ||
-        kn === "outpoint" ||
-        kn === "positions" ||
-        kn === "heighttopool" ||
-        kn === "txid" ||
+        kn === "spot" ||
         kn.startsWith("timestamp") ||
-        kn.startsWith("satdays") ||
-        kn.startsWith("satblocks") ||
+        kn.startsWith("coinyears") ||
         kn.endsWith("index") ||
         kn.endsWith("indexes")
       )
         continue;
-      walkSeries(/** @type {TreeNode | null | undefined} */ (value), map, [
-        ...path,
-        key,
-      ]);
+      const newPath = [...path, key];
+      const joined = newPath.join(".");
+      if (
+        joined.endsWith(".count.total.average") ||
+        joined.endsWith(".versions.v1.average") ||
+        joined.endsWith(".versions.v2.average") ||
+        joined.endsWith(".versions.v3.average")
+      )
+        continue;
+      walkSeries(/** @type {TreeNode | null | undefined} */ (value), map, newPath);
     }
   }
 }

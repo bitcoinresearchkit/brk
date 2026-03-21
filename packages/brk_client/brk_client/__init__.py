@@ -2246,22 +2246,6 @@ class AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(Generic[T]
     """Pattern struct for repeated tree structure."""
     pass
 
-class AverageGainsLossesRsiStochPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str, disc: str):
-        """Create pattern node with accumulated series name."""
-        self.average_gain: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, f'average_gain_{disc}'))
-        self.average_loss: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, f'average_loss_{disc}'))
-        self.gains: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, f'gains_{disc}'))
-        self.losses: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, f'losses_{disc}'))
-        self.rsi: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, _m(acc, disc))
-        self.rsi_max: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, _m(acc, f'max_{disc}'))
-        self.rsi_min: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, _m(acc, f'min_{disc}'))
-        self.stoch_rsi: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, _m(acc, f'stoch_{disc}'))
-        self.stoch_rsi_d: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, _m(acc, f'stoch_d_{disc}'))
-        self.stoch_rsi_k: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, _m(acc, f'stoch_k_{disc}'))
-
 class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3:
     """Pattern struct for repeated tree structure."""
     
@@ -2942,7 +2926,7 @@ class CumulativeRollingSumPattern:
         """Create pattern node with accumulated series name."""
         self.cumulative: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'cumulative'))
         self.rolling: AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc)
-        self.sum: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'sum'))
+        self.sum: SeriesPattern18[StoredU64] = SeriesPattern18(client, _m(acc, 'sum'))
 
 class GreedNetPainPattern:
     """Pattern struct for repeated tree structure."""
@@ -2969,6 +2953,15 @@ class NuplRealizedSupplyPattern:
 class RatioTransferValuePattern:
     """Pattern struct for repeated tree structure."""
     pass
+
+class RsiStochPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str, disc: str):
+        """Create pattern node with accumulated series name."""
+        self.rsi: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, _m(acc, disc))
+        self.stoch_rsi_d: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, _m(acc, f'stoch_d_{disc}'))
+        self.stoch_rsi_k: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, _m(acc, f'stoch_k_{disc}'))
 
 class _6bBlockTxPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
@@ -3016,7 +3009,7 @@ class BaseSumPattern:
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated series name."""
-        self.base: SeriesPattern1[Dollars] = SeriesPattern1(client, acc)
+        self.base: SeriesPattern18[Dollars] = SeriesPattern18(client, acc)
         self.sum: _1m1w1y24hPattern[Dollars] = _1m1w1y24hPattern(client, _m(acc, 'sum'))
 
 class BaseDeltaPattern:
@@ -3026,6 +3019,14 @@ class BaseDeltaPattern:
         """Create pattern node with accumulated series name."""
         self.base: SeriesPattern1[StoredU64] = SeriesPattern1(client, acc)
         self.delta: AbsoluteRatePattern = AbsoluteRatePattern(client, _m(acc, 'delta'))
+
+class BlockCumulativePattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.block: BtcCentsSatsUsdPattern2 = BtcCentsSatsUsdPattern2(client, acc)
+        self.cumulative: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, _m(acc, 'cumulative'))
 
 class BlocksDominancePattern:
     """Pattern struct for repeated tree structure."""
@@ -3663,7 +3664,7 @@ class SeriesTree_Scripts_Value:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.op_return: AverageBlockCumulativeSumPattern3 = AverageBlockCumulativeSumPattern3(client, 'op_return_value')
+        self.op_return: BlockCumulativePattern = BlockCumulativePattern(client, 'op_return_value')
 
 class SeriesTree_Scripts:
     """Series tree node."""
@@ -3682,7 +3683,6 @@ class SeriesTree_Mining_Rewards_Subsidy:
         self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, 'subsidy_sum')
         self.average: _1m1w1y24hPattern3 = _1m1w1y24hPattern3(client, 'subsidy_average')
         self.dominance: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'subsidy_dominance')
-        self.sma_1y: CentsUsdPattern3 = CentsUsdPattern3(client, 'subsidy_sma_1y')
 
 class SeriesTree_Mining_Rewards_Fees_ToSubsidyRatio:
     """Series tree node."""
@@ -3711,13 +3711,6 @@ class SeriesTree_Mining_Rewards_Fees:
         self.dominance: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'fee_dominance')
         self.to_subsidy_ratio: SeriesTree_Mining_Rewards_Fees_ToSubsidyRatio = SeriesTree_Mining_Rewards_Fees_ToSubsidyRatio(client)
 
-class SeriesTree_Mining_Rewards_Unclaimed:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.block: BtcCentsSatsUsdPattern2 = BtcCentsSatsUsdPattern2(client, 'unclaimed_rewards')
-        self.cumulative: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'unclaimed_rewards_cumulative')
-
 class SeriesTree_Mining_Rewards:
     """Series tree node."""
     
@@ -3725,7 +3718,7 @@ class SeriesTree_Mining_Rewards:
         self.coinbase: AverageBlockCumulativeSumPattern3 = AverageBlockCumulativeSumPattern3(client, 'coinbase')
         self.subsidy: SeriesTree_Mining_Rewards_Subsidy = SeriesTree_Mining_Rewards_Subsidy(client)
         self.fees: SeriesTree_Mining_Rewards_Fees = SeriesTree_Mining_Rewards_Fees(client)
-        self.unclaimed: SeriesTree_Mining_Rewards_Unclaimed = SeriesTree_Mining_Rewards_Unclaimed(client)
+        self.unclaimed: BlockCumulativePattern = BlockCumulativePattern(client, 'unclaimed_rewards')
 
 class SeriesTree_Mining_Hashrate_Rate_Sma:
     """Series tree node."""
@@ -4438,9 +4431,9 @@ class SeriesTree_Market_Technical_Rsi:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._24h: AverageGainsLossesRsiStochPattern = AverageGainsLossesRsiStochPattern(client, 'rsi', '24h')
-        self._1w: AverageGainsLossesRsiStochPattern = AverageGainsLossesRsiStochPattern(client, 'rsi', '1w')
-        self._1m: AverageGainsLossesRsiStochPattern = AverageGainsLossesRsiStochPattern(client, 'rsi', '1m')
+        self._24h: RsiStochPattern = RsiStochPattern(client, 'rsi', '24h')
+        self._1w: RsiStochPattern = RsiStochPattern(client, 'rsi', '1w')
+        self._1m: RsiStochPattern = RsiStochPattern(client, 'rsi', '1m')
 
 class SeriesTree_Market_Technical_Macd_24h:
     """Series tree node."""
@@ -4485,8 +4478,6 @@ class SeriesTree_Market_Technical:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.rsi: SeriesTree_Market_Technical_Rsi = SeriesTree_Market_Technical_Rsi(client)
-        self.stoch_k: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, 'stoch_k')
-        self.stoch_d: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, 'stoch_d')
         self.pi_cycle: BpsRatioPattern2 = BpsRatioPattern2(client, 'pi_cycle')
         self.macd: SeriesTree_Market_Technical_Macd = SeriesTree_Market_Technical_Macd(client)
 
@@ -4729,7 +4720,7 @@ class SeriesTree_Supply:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.state: SeriesPattern18[SupplyState] = SeriesPattern18(client, 'supply_state')
         self.circulating: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'circulating_supply')
-        self.burned: AverageBlockCumulativeSumPattern3 = AverageBlockCumulativeSumPattern3(client, 'unspendable_supply')
+        self.burned: BlockCumulativePattern = BlockCumulativePattern(client, 'unspendable_supply')
         self.inflation_rate: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'inflation_rate')
         self.velocity: SeriesTree_Supply_Velocity = SeriesTree_Supply_Velocity(client)
         self.market_cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, 'market_cap')

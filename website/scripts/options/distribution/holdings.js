@@ -82,7 +82,7 @@ function singleDeltaItems(delta, unit, title, name) {
     {
       ...rollingPercentRatioTree({
         windows: delta.rate,
-        title: title(`${name} Rate`),
+        title: title(`${name} Growth Rate`),
       }),
       name: "Growth Rate",
     },
@@ -121,7 +121,7 @@ function groupedDeltaItems(list, all, getDelta, unit, title, name) {
         name: "Growth Rate",
         tree: ROLLING_WINDOWS.map((w) => ({
           name: w.name,
-          title: title(`${name} Rate (${w.title})`),
+          title: title(`${name} Growth Rate (${w.title})`),
           bottom: flatMapCohortsWithAll(list, all, (c) =>
             percentRatioBaseline({
               pattern: getDelta(c).rate[w.key],
@@ -212,17 +212,18 @@ function ownSupplyChart(supply, title) {
  * Count folder (UTXO or Address) with value + change
  * @param {{ base: AnySeriesPattern, delta: DeltaPattern }} pattern
  * @param {string} name
+ * @param {string} chartTitle
  * @param {Color} color
  * @param {(name: string) => string} title
  * @returns {PartialOptionsGroup}
  */
-function countFolder(pattern, name, color, title) {
+function countFolder(pattern, name, chartTitle, color, title) {
   return {
     name,
     tree: [
       {
         name: "Count",
-        title: title(name),
+        title: title(chartTitle),
         bottom: [
           line({
             series: pattern.base,
@@ -259,7 +260,7 @@ export function createHoldingsSection({ cohort, title }) {
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Change"),
       ],
     },
-    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", cohort.color, title),
+    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", "UTXO Count", cohort.color, title),
   ];
 }
 
@@ -283,8 +284,8 @@ export function createHoldingsSectionAll({ cohort, title }) {
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Change"),
       ],
     },
-    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", cohort.color, title),
-    countFolder(cohort.addressCount, "Addresses", cohort.color, title),
+    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", "UTXO Count", cohort.color, title),
+    countFolder(cohort.addressCount, "Addresses", "Address Count", cohort.color, title),
   ];
 }
 
@@ -309,7 +310,7 @@ export function createHoldingsSectionWithRelative({ cohort, title }) {
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Change"),
       ],
     },
-    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", cohort.color, title),
+    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", "UTXO Count", cohort.color, title),
   ];
 }
 
@@ -333,7 +334,7 @@ export function createHoldingsSectionWithOwnSupply({ cohort, title }) {
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Change"),
       ],
     },
-    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", cohort.color, title),
+    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", "UTXO Count", cohort.color, title),
   ];
 }
 
@@ -356,7 +357,7 @@ export function createHoldingsSectionWithProfitLoss({ cohort, title }) {
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Change"),
       ],
     },
-    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", cohort.color, title),
+    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", "UTXO Count", cohort.color, title),
   ];
 }
 
@@ -379,8 +380,8 @@ export function createHoldingsSectionAddress({ cohort, title }) {
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Change"),
       ],
     },
-    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", cohort.color, title),
-    countFolder(cohort.addressCount, "Addresses", cohort.color, title),
+    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", "UTXO Count", cohort.color, title),
+    countFolder(cohort.addressCount, "Addresses", "Address Count", cohort.color, title),
   ];
 }
 
@@ -402,8 +403,8 @@ export function createHoldingsSectionAddressAmount({ cohort, title }) {
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Change"),
       ],
     },
-    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", cohort.color, title),
-    countFolder(cohort.addressCount, "Addresses", cohort.color, title),
+    countFolder(cohort.tree.outputs.unspentCount, "UTXOs", "UTXO Count", cohort.color, title),
+    countFolder(cohort.addressCount, "Addresses", "Address Count", cohort.color, title),
   ];
 }
 

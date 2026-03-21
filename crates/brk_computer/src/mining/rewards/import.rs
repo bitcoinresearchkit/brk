@@ -7,7 +7,7 @@ use crate::{
     indexes,
     internal::{
         AmountPerBlockCumulative, AmountPerBlockCumulativeRolling, AmountPerBlockFull,
-        CachedWindowStarts, FiatPerBlock, LazyPercentRollingWindows, OneMinusBp16,
+        CachedWindowStarts, LazyPercentRollingWindows, OneMinusBp16,
         PercentPerBlock, PercentRollingWindows, RatioRollingWindows,
     },
 };
@@ -55,7 +55,6 @@ impl Vecs {
                 indexes,
             )?,
             subsidy_dominance_rolling,
-            subsidy_sma_1y: FiatPerBlock::forced_import(db, "subsidy_sma_1y", version, indexes)?,
             fee_to_subsidy_ratio: RatioRollingWindows::forced_import(
                 db,
                 "fee_to_subsidy_ratio",

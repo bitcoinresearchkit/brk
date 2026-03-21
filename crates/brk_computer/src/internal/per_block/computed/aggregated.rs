@@ -3,8 +3,8 @@ use brk_traversable::Traversable;
 use brk_types::Height;
 use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, VecIndex, VecValue,
-    Version, WritableVec,
+    AnyStoredVec, AnyVec, Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableVec, Rw,
+    StorageMode, VecIndex, VecValue, Version, WritableVec,
 };
 
 use crate::{
@@ -17,7 +17,7 @@ pub struct PerBlockAggregated<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
-    pub sum: PerBlock<T, M>,
+    pub sum: M::Stored<EagerVec<PcoVec<Height, T>>>,
     pub cumulative: PerBlock<T, M>,
     pub rolling: RollingComplete<T, M>,
 }
@@ -33,7 +33,7 @@ where
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let sum = PerBlock::forced_import(db, &format!("{name}_sum"), version, indexes)?;
+        let sum = EagerVec::forced_import(db, &format!("{name}_sum"), version)?;
         let cumulative =
             PerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
         let rolling = RollingComplete::forced_import(
@@ -73,9 +73,8 @@ where
         let mut index = max_from;
         index = {
             self.sum
-                .height
                 .validate_computed_version_or_reset(combined_version)?;
-            index.min(Height::from(self.sum.height.len()))
+            index.min(Height::from(self.sum.len()))
         };
         index = {
             self.cumulative
@@ -86,7 +85,7 @@ where
 
         let start = index.to_usize();
 
-        self.sum.height.truncate_if_needed_at(start)?;
+        self.sum.truncate_if_needed_at(start)?;
         self.cumulative.height.truncate_if_needed_at(start)?;
 
         let mut cumulative_val = index.decremented().map_or(T::from(0_usize), |idx| {
@@ -117,7 +116,7 @@ where
                     |acc, val| acc + val,
                 );
 
-                self.sum.height.push(sum_val);
+                self.sum.push(sum_val);
                 cumulative_val += sum_val;
                 self.cumulative.height.push(cumulative_val);
 
@@ -125,12 +124,11 @@ where
             })?;
 
         let _lock = exit.lock();
-        self.sum.height.write()?;
+        self.sum.write()?;
         self.cumulative.height.write()?;
         drop(_lock);
 
-        self.rolling
-            .compute(max_from, windows, &self.sum.height, exit)?;
+        self.rolling.compute(max_from, windows, &self.sum, exit)?;
         Ok(())
     }
 }

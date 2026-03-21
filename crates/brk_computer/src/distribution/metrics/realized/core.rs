@@ -3,7 +3,8 @@ use brk_traversable::Traversable;
 use brk_types::{BasisPointsSigned32, Bitcoin, Cents, CentsSigned, Dollars, Height, Indexes, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec,
+    AnyStoredVec, Exit, LazyVecFrom1, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+    WritableVec,
 };
 
 use crate::{
@@ -22,7 +23,7 @@ use super::RealizedMinimal;
 #[derive(Clone, Traversable)]
 pub struct NegRealizedLoss {
     #[traversable(flatten)]
-    pub base: LazyPerBlock<Dollars, Cents>,
+    pub base: LazyVecFrom1<Height, Dollars, Height, Cents>,
     pub sum: Windows<LazyPerBlock<Dollars, Cents>>,
 }
 
@@ -51,11 +52,10 @@ impl RealizedCore {
 
         let minimal = RealizedMinimal::forced_import(cfg)?;
 
-        let neg_loss_base = LazyPerBlock::from_height_source::<NegCentsUnsignedToDollars>(
+        let neg_loss_base = LazyVecFrom1::transformed::<NegCentsUnsignedToDollars>(
             &cfg.name("realized_loss_neg"),
             cfg.version + Version::ONE,
             minimal.loss.block.cents.read_only_boxed_clone(),
-            cfg.indexes,
         );
 
         let neg_loss_sum = minimal.loss.sum.0.map_with_suffix(|suffix, slot| {
