@@ -6,7 +6,7 @@ use vecdb::{DeltaAvg, LazyDeltaVec, LazyVecFrom1, ReadableCloneableVec};
 use crate::{
     indexes,
     internal::{
-        CachedWindowStarts, DerivedResolutions, AvgCentsToUsd, AvgSatsToBtc, LazyPerBlock,
+        AvgCentsToUsd, AvgSatsToBtc, CachedWindowStarts, DerivedResolutions, LazyPerBlock,
         LazyRollingAvgFromHeight, Resolutions, Windows,
     },
 };

@@ -57,8 +57,8 @@ function percentileSeries(p, n = (x) => x) {
 function singleWeightFolder({ avgPrice, avgName, inProfit, inLoss, percentiles, color, weightLabel, title, min, max }) {
   return [
     {
-      name: "Profitability",
-      title: title(`Cost Basis Profitability (${weightLabel})`),
+      name: "Average",
+      title: title(`Cost Basis Average (${weightLabel})`),
       top: [
         price({ series: inProfit, name: "In Profit", color: colors.profit }),
         price({ series: avgPrice, name: avgName, color }),
@@ -91,7 +91,7 @@ export function createCostBasisSectionWithPercentiles({ cohort, title }) {
       {
         name: "Per Coin",
         tree: singleWeightFolder({
-          avgPrice: tree.realized.price, avgName: "Average",
+          avgPrice: tree.realized.price, avgName: "All",
           inProfit: cb.inProfit.perCoin, inLoss: cb.inLoss.perCoin,
           percentiles: cb.perCoin, color, weightLabel: "BTC-weighted", title,
           min: cb.min, max: cb.max,
@@ -100,31 +100,10 @@ export function createCostBasisSectionWithPercentiles({ cohort, title }) {
       {
         name: "Per Dollar",
         tree: singleWeightFolder({
-          avgPrice: tree.realized.investor.price, avgName: "Average",
+          avgPrice: tree.realized.investor.price, avgName: "All",
           inProfit: cb.inProfit.perDollar, inLoss: cb.inLoss.perDollar,
           percentiles: cb.perDollar, color, weightLabel: "USD-weighted", title,
         }),
-      },
-      {
-        name: "Profitability",
-        tree: [
-          {
-            name: "In Profit",
-            title: title("Cost Basis In Profit"),
-            top: [
-              price({ series: cb.inProfit.perCoin, name: "Per Coin", color: colors.realized }),
-              price({ series: cb.inProfit.perDollar, name: "Per Dollar", color: colors.investor }),
-            ],
-          },
-          {
-            name: "In Loss",
-            title: title("Cost Basis In Loss"),
-            top: [
-              price({ series: cb.inLoss.perCoin, name: "Per Coin", color: colors.realized }),
-              price({ series: cb.inLoss.perDollar, name: "Per Dollar", color: colors.investor }),
-            ],
-          },
-        ],
       },
       {
         name: "Supply Density",
@@ -156,7 +135,7 @@ export function createCostBasisSectionWithPercentiles({ cohort, title }) {
 function groupedWeightFolder({ list, all, getAvgPrice, getInProfit, getInLoss, getPercentiles, avgTitle, weightLabel, title }) {
   return [
     {
-      name: "Profitability",
+      name: "Average",
       tree: [
         {
           name: "In Profit",
@@ -229,27 +208,6 @@ export function createGroupedCostBasisSectionWithPercentiles({ list, all, title 
           getPercentiles: (c) => c.tree.costBasis.perDollar,
           avgTitle: "Average", weightLabel: "USD-weighted",
         }),
-      },
-      {
-        name: "Profitability",
-        tree: [
-          {
-            name: "In Profit",
-            title: title("Cost Basis In Profit"),
-            top: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-              price({ series: tree.costBasis.inProfit.perCoin, name: `${name} (coin)`, color }),
-              price({ series: tree.costBasis.inProfit.perDollar, name: `${name} (dollar)`, color }),
-            ]),
-          },
-          {
-            name: "In Loss",
-            title: title("Cost Basis In Loss"),
-            top: flatMapCohortsWithAll(list, all, ({ name, color, tree }) => [
-              price({ series: tree.costBasis.inLoss.perCoin, name: `${name} (coin)`, color }),
-              price({ series: tree.costBasis.inLoss.perDollar, name: `${name} (dollar)`, color }),
-            ]),
-          },
-        ],
       },
       {
         name: "Supply Density",

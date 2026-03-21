@@ -408,24 +408,16 @@ export function statsAtWindow(pattern, window) {
 }
 
 /**
- * Create a Rolling folder tree from a _1m1w1y24hPattern (4 rolling windows)
+ * Rolling folder tree with line series
  * @param {Object} args
  * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.windows
- * @param {string} args.title - Compare chart title
- * @param {(w: typeof ROLLING_WINDOWS[number]) => string} args.windowTitle - Individual window chart title
+ * @param {string} args.title
+ * @param {(w: typeof ROLLING_WINDOWS[number]) => string} args.windowTitle
  * @param {Unit} args.unit
  * @param {string} args.name
- * @param {(args: {series: AnySeriesPattern, name: string, color: Color, unit: Unit}) => AnyFetchedSeriesBlueprint} [args.series]
  * @returns {PartialOptionsGroup}
  */
-function rollingWindowsTree({
-  windows,
-  title,
-  windowTitle,
-  unit,
-  name,
-  series = line,
-}) {
+function rollingWindowsTreeLine({ windows, title, windowTitle, unit, name }) {
   return {
     name,
     tree: [
@@ -433,25 +425,43 @@ function rollingWindowsTree({
         name: "Compare",
         title,
         bottom: ROLLING_WINDOWS.map((w) =>
-          series({
-            series: windows[w.key],
-            name: w.name,
-            color: w.color,
-            unit,
-          }),
+          line({ series: windows[w.key], name: w.name, color: w.color, unit }),
         ),
       },
       ...ROLLING_WINDOWS.map((w) => ({
         name: w.name,
         title: windowTitle(w),
-        bottom: [
-          series({
-            series: windows[w.key],
-            name: w.name,
-            color: w.color,
-            unit,
-          }),
-        ],
+        bottom: [line({ series: windows[w.key], name: w.name, unit })],
+      })),
+    ],
+  };
+}
+
+/**
+ * Rolling folder tree with baseline series
+ * @param {Object} args
+ * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.windows
+ * @param {string} args.title
+ * @param {(w: typeof ROLLING_WINDOWS[number]) => string} args.windowTitle
+ * @param {Unit} args.unit
+ * @param {string} args.name
+ * @returns {PartialOptionsGroup}
+ */
+function rollingWindowsTreeBaseline({ windows, title, windowTitle, unit, name }) {
+  return {
+    name,
+    tree: [
+      {
+        name: "Compare",
+        title,
+        bottom: ROLLING_WINDOWS.map((w) =>
+          baseline({ series: windows[w.key], name: w.name, color: w.color, unit }),
+        ),
+      },
+      ...ROLLING_WINDOWS.map((w) => ({
+        name: w.name,
+        title: windowTitle(w),
+        bottom: [baseline({ series: windows[w.key], name: w.name, unit })],
       })),
     ],
   };
@@ -584,17 +594,32 @@ export function sumsAndAveragesCumulative({ sum, average, cumulative, title, uni
  * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.windows
  * @param {string} args.title
  * @param {Unit} args.unit
- * @param {(args: {series: AnySeriesPattern, name: string, color: Color, unit: Unit}) => AnyFetchedSeriesBlueprint} [args.series]
  * @returns {PartialOptionsGroup}
  */
-export function sumsTree({ windows, title, unit, series }) {
-  return rollingWindowsTree({
+export function sumsTree({ windows, title, unit }) {
+  return rollingWindowsTreeLine({
     windows,
     title,
     windowTitle: (w) => `${title} ${w.title} Sum`,
     unit,
     name: "Sums",
-    ...(series ? { series } : {}),
+  });
+}
+
+/**
+ * @param {Object} args
+ * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.windows
+ * @param {string} args.title
+ * @param {Unit} args.unit
+ * @returns {PartialOptionsGroup}
+ */
+export function sumsTreeBaseline({ windows, title, unit }) {
+  return rollingWindowsTreeBaseline({
+    windows,
+    title,
+    windowTitle: (w) => `${title} ${w.title} Sum`,
+    unit,
+    name: "Sums",
   });
 }
 
@@ -819,20 +844,14 @@ export function percentRatioBaseline({ pattern, name, color, defaultActive }) {
 }
 
 /**
- * Create a Rolling folder tree where each window is a BpsPercentRatioPattern (percent + ratio)
+ * Rolling folder tree with percentRatio series (colored in compare, plain in individual)
  * @param {Object} args
  * @param {{ _24h: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1w: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1m: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, _1y: { percent: AnySeriesPattern, ratio: AnySeriesPattern } }} args.windows
  * @param {string} args.title
  * @param {string} [args.name]
- * @param {(args: {pattern: { percent: AnySeriesPattern, ratio: AnySeriesPattern }, name: string, color?: Color}) => AnyFetchedSeriesBlueprint[]} [args.series]
  * @returns {PartialOptionsGroup}
  */
-export function rollingPercentRatioTree({
-  windows,
-  title,
-  name = "Sums",
-  series = percentRatio,
-}) {
+export function rollingPercentRatioTree({ windows, title, name = "Sums" }) {
   return {
     name,
     tree: [
@@ -840,17 +859,13 @@ export function rollingPercentRatioTree({
         name: "Compare",
         title: `${title} Rolling`,
         bottom: ROLLING_WINDOWS.flatMap((w) =>
-          percentRatio({
-            pattern: windows[w.key],
-            name: w.name,
-            color: w.color,
-          }),
+          percentRatio({ pattern: windows[w.key], name: w.name, color: w.color }),
         ),
       },
       ...ROLLING_WINDOWS.map((w) => ({
         name: w.name,
         title: `${title} (${w.title})`,
-        bottom: series({ pattern: windows[w.key], name: w.name }),
+        bottom: percentRatioBaseline({ pattern: windows[w.key], name: w.name }),
       })),
     ],
   };
@@ -900,7 +915,6 @@ export function deltaTree({ delta, title, unit, extract }) {
       windows: delta.rate,
       title: `${title} Growth Rate`,
       name: "Growth Rate",
-      series: percentRatioBaseline,
     }),
   ];
 }

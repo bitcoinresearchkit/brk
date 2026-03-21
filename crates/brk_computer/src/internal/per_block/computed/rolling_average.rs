@@ -19,7 +19,6 @@ pub struct PerBlockRollingAverage<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
-    #[traversable(hidden)]
     pub block: M::Stored<EagerVec<PcoVec<Height, T>>>,
     #[traversable(hidden)]
     pub cumulative: M::Stored<EagerVec<PcoVec<Height, T>>>,

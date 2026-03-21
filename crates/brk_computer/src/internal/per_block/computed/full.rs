@@ -10,7 +10,7 @@ use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, PerBlock, NumericValue, RollingComplete, WindowStarts},
+    internal::{CachedWindowStarts, NumericValue, PerBlock, RollingComplete, WindowStarts},
 };
 
 #[derive(Traversable)]
@@ -18,7 +18,6 @@ pub struct PerBlockFull<T, M: StorageMode = Rw>
 where
     T: NumericValue + JsonSchema,
 {
-    #[traversable(hidden)]
     pub block: M::Stored<EagerVec<PcoVec<Height, T>>>,
     pub cumulative: PerBlock<T, M>,
     #[traversable(flatten)]
@@ -71,8 +70,7 @@ where
         self.cumulative
             .height
             .compute_cumulative(max_from, &self.block, exit)?;
-        self.rolling
-            .compute(max_from, windows, &self.block, exit)?;
+        self.rolling.compute(max_from, windows, &self.block, exit)?;
         Ok(())
     }
 }

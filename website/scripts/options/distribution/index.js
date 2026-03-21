@@ -20,7 +20,7 @@ import {
   line,
   baseline,
   percentRatio,
-  sumsTree,
+  sumsTreeBaseline,
   rollingPercentRatioTree,
 } from "../series.js";
 import { Unit } from "../../utils/units.js";
@@ -101,7 +101,7 @@ export function createCohortFolderAll(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSectionAll({ cohort, title }),
+      ...createHoldingsSectionAll({ cohort, title }),
       createValuationSectionFull({ cohort, title }),
       createPricesSectionFull({ cohort, title }),
       createCostBasisSectionWithPercentiles({ cohort, title }),
@@ -121,7 +121,7 @@ export function createCohortFolderFull(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSectionWithRelative({ cohort, title }),
+      ...createHoldingsSectionWithRelative({ cohort, title }),
       createValuationSectionFull({ cohort, title }),
       createPricesSectionFull({ cohort, title }),
       createCostBasisSectionWithPercentiles({ cohort, title }),
@@ -141,7 +141,7 @@ export function createCohortFolderWithAdjusted(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSectionWithOwnSupply({ cohort, title }),
+      ...createHoldingsSectionWithOwnSupply({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
       createProfitabilitySectionWithInvestedCapitalPct({ cohort, title }),
@@ -160,7 +160,7 @@ export function createCohortFolderWithNupl(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSectionWithRelative({ cohort, title }),
+      ...createHoldingsSectionWithRelative({ cohort, title }),
       createValuationSectionFull({ cohort, title }),
       createPricesSectionFull({ cohort, title }),
       createCostBasisSectionWithPercentiles({ cohort, title }),
@@ -180,7 +180,7 @@ export function createCohortFolderLongTerm(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSectionWithRelative({ cohort, title }),
+      ...createHoldingsSectionWithRelative({ cohort, title }),
       createValuationSectionFull({ cohort, title }),
       createPricesSectionFull({ cohort, title }),
       createCostBasisSectionWithPercentiles({ cohort, title }),
@@ -200,7 +200,7 @@ export function createCohortFolderAgeRange(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSectionWithOwnSupply({ cohort, title }),
+      ...createHoldingsSectionWithOwnSupply({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
       createProfitabilitySectionWithInvestedCapitalPct({ cohort, title }),
@@ -237,7 +237,7 @@ export function createCohortFolderBasicWithMarketCap(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSection({ cohort, title }),
+      ...createHoldingsSection({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
       createProfitabilitySectionWithNupl({ cohort, title }),
@@ -256,7 +256,7 @@ export function createCohortFolderBasicWithoutMarketCap(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSection({ cohort, title }),
+      ...createHoldingsSection({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
       createProfitabilitySectionBasicWithInvestedCapitalPct({ cohort, title }),
@@ -275,7 +275,7 @@ export function createCohortFolderAddress(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSectionAddress({ cohort, title }),
+      ...createHoldingsSectionAddress({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
       createProfitabilitySectionAddress({ cohort, title }),
@@ -294,7 +294,7 @@ export function createCohortFolderWithoutRelative(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSectionWithProfitLoss({ cohort, title }),
+      ...createHoldingsSectionWithProfitLoss({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
       createProfitabilitySectionWithProfitLoss({ cohort, title }),
@@ -313,7 +313,7 @@ export function createAddressCohortFolder(cohort) {
   return {
     name: cohort.name || "all",
     tree: [
-      createHoldingsSectionAddressAmount({ cohort, title }),
+      ...createHoldingsSectionAddressAmount({ cohort, title }),
       createValuationSection({ cohort, title }),
       createPricesSectionBasic({ cohort, title }),
       createProfitabilitySectionWithNupl({ cohort, title }),
@@ -340,7 +340,7 @@ export function createGroupedCohortFolderFull({
   return {
     name: name || "all",
     tree: [
-      createGroupedHoldingsSectionWithRelative({ list, all, title }),
+      ...createGroupedHoldingsSectionWithRelative({ list, all, title }),
       createGroupedValuationSectionWithOwnMarketCap({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
       createGroupedCostBasisSectionWithPercentiles({ list, all, title }),
@@ -364,7 +364,7 @@ export function createGroupedCohortFolderWithAdjusted({
   return {
     name: name || "all",
     tree: [
-      createGroupedHoldingsSectionWithOwnSupply({ list, all, title }),
+      ...createGroupedHoldingsSectionWithOwnSupply({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
       createGroupedProfitabilitySectionWithInvestedCapitalPct({
@@ -391,7 +391,7 @@ export function createGroupedCohortFolderWithNupl({
   return {
     name: name || "all",
     tree: [
-      createGroupedHoldingsSectionWithRelative({ list, all, title }),
+      ...createGroupedHoldingsSectionWithRelative({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
       createGroupedCostBasisSectionWithPercentiles({ list, all, title }),
@@ -415,7 +415,7 @@ export function createGroupedCohortFolderLongTerm({
   return {
     name: name || "all",
     tree: [
-      createGroupedHoldingsSectionWithRelative({ list, all, title }),
+      ...createGroupedHoldingsSectionWithRelative({ list, all, title }),
       createGroupedValuationSectionWithOwnMarketCap({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
       createGroupedCostBasisSectionWithPercentiles({ list, all, title }),
@@ -439,7 +439,7 @@ export function createGroupedCohortFolderAgeRange({
   return {
     name: name || "all",
     tree: [
-      createGroupedHoldingsSectionWithOwnSupply({ list, all, title }),
+      ...createGroupedHoldingsSectionWithOwnSupply({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
       createGroupedProfitabilitySectionWithInvestedCapitalPct({
@@ -471,14 +471,17 @@ export function createGroupedCohortFolderAgeRangeWithMatured({
   const title = formatCohortTitle(groupTitle);
   folder.tree.push({
     name: "Matured",
-    title: title("Matured Supply"),
-    bottom: list.flatMap((cohort) =>
-      satsBtcUsd({
-        pattern: cohort.matured.base,
-        name: cohort.name,
-        color: cohort.color,
-      }),
-    ),
+    tree: ROLLING_WINDOWS.map((w) => ({
+      name: w.name,
+      title: title(`Matured Supply (${w.title})`),
+      bottom: list.flatMap((cohort) =>
+        satsBtcUsd({
+          pattern: cohort.matured.sum[w.key],
+          name: cohort.name,
+          color: cohort.color,
+        }),
+      ),
+    })),
   });
   return folder;
 }
@@ -497,7 +500,7 @@ export function createGroupedCohortFolderBasicWithMarketCap({
   return {
     name: name || "all",
     tree: [
-      createGroupedHoldingsSection({ list, all, title }),
+      ...createGroupedHoldingsSection({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
       createGroupedProfitabilitySection({ list, all, title }),
@@ -520,7 +523,7 @@ export function createGroupedCohortFolderBasicWithoutMarketCap({
   return {
     name: name || "all",
     tree: [
-      createGroupedHoldingsSection({ list, all, title }),
+      ...createGroupedHoldingsSection({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
       createGroupedProfitabilitySectionBasicWithInvestedCapitalPct({
@@ -547,7 +550,7 @@ export function createGroupedCohortFolderAddress({
   return {
     name: name || "all",
     tree: [
-      createGroupedHoldingsSectionAddress({ list, all, title }),
+      ...createGroupedHoldingsSectionAddress({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
       createGroupedProfitabilitySectionBasicWithInvestedCapitalPct({
@@ -574,7 +577,7 @@ export function createGroupedCohortFolderWithoutRelative({
   return {
     name: name || "all",
     tree: [
-      createGroupedHoldingsSectionWithProfitLoss({ list, all, title }),
+      ...createGroupedHoldingsSectionWithProfitLoss({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
       createGroupedProfitabilitySectionWithProfitLoss({ list, all, title }),
@@ -597,7 +600,7 @@ export function createGroupedAddressCohortFolder({
   return {
     name: name || "all",
     tree: [
-      createGroupedHoldingsSectionAddressAmount({ list, all, title }),
+      ...createGroupedHoldingsSectionAddressAmount({ list, all, title }),
       createGroupedValuationSection({ list, all, title }),
       createGroupedPricesSection({ list, all, title }),
       createGroupedProfitabilitySection({ list, all, title }),
@@ -637,11 +640,10 @@ function singleBucketFolder({ name, color, pattern }) {
             name: "Change",
             tree: [
               {
-                ...sumsTree({
+                ...sumsTreeBaseline({
                   windows: pattern.supply.all.delta.absolute,
                   title: `${name}: Supply Change`,
                   unit: Unit.sats,
-                  series: baseline,
                 }),
                 name: "Absolute",
               },
@@ -650,7 +652,7 @@ function singleBucketFolder({ name, color, pattern }) {
                   windows: pattern.supply.all.delta.rate,
                   title: `${name}: Supply Rate`,
                 }),
-                name: "Rate",
+                name: "Growth Rate",
               },
             ],
           },
@@ -743,7 +745,7 @@ function groupedBucketCharts(list, titlePrefix) {
               ],
             },
             {
-              name: "Rate",
+              name: "Growth Rate",
               tree: [
                 {
                   name: "Compare",

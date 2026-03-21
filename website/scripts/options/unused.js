@@ -1,15 +1,4 @@
 import { localhost } from "../utils/env.js";
-import { INDEX_LABEL } from "../utils/serde.js";
-
-/**
- * Check if a series pattern has at least one chartable index
- * @param {AnySeriesPattern} node
- * @returns {boolean}
- */
-function hasChartableIndex(node) {
-  const indexes = node.indexes();
-  return indexes.some((idx) => idx in INDEX_LABEL);
-}
 
 /**
  * Walk a series tree and collect all chartable series patterns
@@ -20,7 +9,7 @@ function hasChartableIndex(node) {
 function walkSeries(node, map, path) {
   if (node && "by" in node) {
     const seriesNode = /** @type {AnySeriesPattern} */ (node);
-    if (!hasChartableIndex(seriesNode)) return;
+    if (!seriesNode.by.day1) return;
     map.set(seriesNode, path);
   } else if (node && typeof node === "object") {
     for (const [key, value] of Object.entries(node)) {

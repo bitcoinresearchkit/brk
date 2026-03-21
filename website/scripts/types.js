@@ -38,7 +38,7 @@
  * @typedef {Brk.SeriesTree_Cohorts_Utxo_All_Unrealized} AllRelativePattern
  * @typedef {keyof Brk.BtcCentsSatsUsdPattern} BtcSatsUsdKey
  * @typedef {Brk.BtcCentsSatsUsdPattern} SupplyPattern
- * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<number>} BlockSizePattern
+ * @typedef {Brk.AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} BlockSizePattern
  * @typedef {keyof Brk.SeriesTree_Cohorts_Utxo_Type} SpendableType
  * @typedef {keyof Brk.SeriesTree_Addrs_Raw} AddressableType
  *
@@ -58,8 +58,8 @@
  * @typedef {Brk.BpsCentsPercentilesRatioSatsUsdPattern} PriceRatioPercentilesPattern
  * AnyRatioPattern: full ratio pattern with percentiles, SMAs, and std dev bands
  * @typedef {Brk.BpsCentsPercentilesRatioSatsSmaStdUsdPattern} AnyRatioPattern
- * FullValuePattern: base + cumulative + sum + average rolling windows (sats/btc/cents/usd)
- * @typedef {Brk.AverageBaseCumulativeSumPattern3} FullValuePattern
+ * FullValuePattern: block + cumulative + sum + average rolling windows (sats/btc/cents/usd)
+ * @typedef {Brk.AverageBlockCumulativeSumPattern3} FullValuePattern
  * RollingWindowSlot: a single rolling window with stats (pct10, pct25, median, pct75, pct90, max, min) per unit
  * @typedef {Brk.MaxMedianMinPct10Pct25Pct75Pct90Pattern<number>} RollingWindowSlot
  * @typedef {Brk.AnySeriesPattern} AnySeriesPattern
@@ -86,11 +86,11 @@
  * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern3
  * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern4
  *
- * Transfer volume pattern (base + cumulative + inProfit/inLoss + sum windows)
- * @typedef {Brk.AverageBaseCumulativeInSumPattern} TransferVolumePattern
+ * Transfer volume pattern (block + cumulative + inProfit/inLoss + sum windows)
+ * @typedef {Brk.AverageBlockCumulativeInSumPattern} TransferVolumePattern
  *
- * Realized profit/loss pattern (base + cumulative + sum windows, cents/usd)
- * @typedef {Brk.BaseCumulativeSumPattern} RealizedProfitLossPattern
+ * Realized profit/loss pattern (block + cumulative + sum windows, cents/usd)
+ * @typedef {Brk.BlockCumulativeSumPattern} RealizedProfitLossPattern
  *
  * Full activity pattern (coindays, coinyears, dormancy, transfer volume)
  * @typedef {Brk.CoindaysCoinyearsDormancyTransferPattern} FullActivityPattern
@@ -103,10 +103,10 @@
  * @typedef {Brk.SeriesTree_Cohorts_Utxo_Lth_Realized} LthRealizedPattern
  *
  * Net PnL pattern with change (base + change + cumulative + delta + rel + sum)
- * @typedef {Brk.BaseChangeCumulativeDeltaSumToPattern} NetPnlFullPattern
+ * @typedef {Brk.BlockChangeCumulativeDeltaSumToPattern} NetPnlFullPattern
  *
  * Net PnL basic pattern (base + cumulative + delta + sum)
- * @typedef {Brk.BaseCumulativeDeltaSumPattern} NetPnlBasicPattern
+ * @typedef {Brk.BlockCumulativeDeltaSumPattern} NetPnlBasicPattern
  *
  * Mid realized pattern (cap + loss + MVRV + net + price + profit + SOPR)
  * @typedef {Brk.CapLossMvrvNetPriceProfitSoprPattern} MidRealizedPattern
@@ -144,7 +144,7 @@
  */
 /**
  * Full stats pattern: cumulative, sum, average, min, max, percentiles + rolling
- * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<number>} FullStatsPattern
+ * @typedef {Brk.AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} FullStatsPattern
  */
 /**
  * Aggregated pattern: cumulative + rolling (with distribution stats) + sum (no base)
@@ -152,20 +152,22 @@
  */
 /**
  * Sum stats pattern: cumulative, sum, average, min, max, percentiles + rolling (same as FullStatsPattern)
- * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<number>} SumStatsPattern
+ * @typedef {Brk.AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} SumStatsPattern
  */
 /**
  * Full stats pattern for Bitcoin (non-generic variant) - same as FullStatsPattern
- * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<number>} BtcFullStatsPattern
+ * @typedef {Brk.AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} BtcFullStatsPattern
  */
 /**
  * Count pattern: height, cumulative, and rolling sum windows
  * @template T
- * @typedef {Brk.AverageBaseCumulativeSumPattern<T>} CountPattern
+ * @typedef {Brk.AverageBlockCumulativeSumPattern<T>} CountPattern
  */
 /**
  * Full per-block pattern: height, cumulative, sum, and distribution stats (all flat)
- * @typedef {Brk.AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<number>} FullPerBlockPattern
+ * FullPerBlockPattern: cumulative + sum + average + distribution stats (used by chartsFromFull)
+ * Note: some callers also have .block but the function doesn't use it
+ * @typedef {Omit<Brk.AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern, 'block'>} FullPerBlockPattern
  */
 /**
  * Any stats pattern union - patterns with sum/cumulative + percentiles

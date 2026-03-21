@@ -152,10 +152,10 @@ export function satsBtcUsdBaseline({ pattern, name, color, defaultActive }) {
 }
 
 /**
- * Create sats/btc/usd series from any value pattern using base or cumulative key
+ * Create sats/btc/usd series from a value pattern's cumulative
  * @param {Object} args
- * @param {{ base: AnyValuePattern, cumulative: AnyValuePattern }} args.source
- * @param {'base' | 'cumulative'} args.key
+ * @param {{ cumulative: AnyValuePattern }} args.source
+ * @param {'cumulative'} args.key
  * @param {string} args.name
  * @param {Color} [args.color]
  * @param {boolean} [args.defaultActive]
@@ -173,10 +173,10 @@ export function satsBtcUsdFrom({ source, key, name, color, defaultActive }) {
 /**
  * Create coinbase/subsidy/fee series from separate sources
  * @param {Object} args
- * @param {{ base: AnyValuePattern, cumulative: AnyValuePattern }} args.coinbase
- * @param {{ base: AnyValuePattern, cumulative: AnyValuePattern }} args.subsidy
- * @param {{ base: AnyValuePattern, cumulative: AnyValuePattern }} args.fee
- * @param {'base' | 'cumulative'} args.key
+ * @param {{ cumulative: AnyValuePattern }} args.coinbase
+ * @param {{ cumulative: AnyValuePattern }} args.subsidy
+ * @param {{ cumulative: AnyValuePattern }} args.fee
+ * @param {'cumulative'} args.key
  * @returns {FetchedLineSeriesBlueprint[]}
  */
 export function revenueBtcSatsUsd({ coinbase, subsidy, fee, key }) {

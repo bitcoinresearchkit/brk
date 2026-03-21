@@ -29,7 +29,6 @@ where
     T: NumericValue + JsonSchema,
     C: NumericValue + JsonSchema,
 {
-    #[traversable(hidden)]
     pub block: M::Stored<EagerVec<PcoVec<Height, T>>>,
     pub cumulative: PerBlock<C, M>,
     pub sum: LazyRollingSumsFromHeight<C>,
