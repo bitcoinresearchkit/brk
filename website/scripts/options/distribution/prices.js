@@ -116,31 +116,65 @@ export function createPricesSectionBasic({ cohort, title }) {
  * @param {{ list: readonly CohortObject[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
+/**
+ * @param {readonly CohortObject[]} list
+ * @param {CohortAll} all
+ * @param {(name: string) => string} title
+ * @returns {PartialOptionsTree}
+ */
+function groupedRealizedPriceItems(list, all, title) {
+  return [
+    {
+      name: "Realized",
+      tree: [
+        {
+          name: "Price",
+          title: title("Realized Price"),
+          top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+            price({ series: tree.realized.price, name, color }),
+          ),
+        },
+        {
+          name: "Ratio",
+          title: title("MVRV"),
+          bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+            baseline({ series: tree.realized.mvrv, name, color, unit: Unit.ratio, base: 1 }),
+          ),
+        },
+      ],
+    },
+  ];
+}
+
+/** @param {{ list: readonly CohortObject[], all: CohortAll, title: (name: string) => string }} args */
 export function createGroupedPricesSection({ list, all, title }) {
   return {
     name: "Prices",
+    tree: groupedRealizedPriceItems(list, all, title),
+  };
+}
+
+/** @param {{ list: readonly (CohortAll | CohortFull | CohortLongTerm)[], all: CohortAll, title: (name: string) => string }} args */
+export function createGroupedPricesSectionFull({ list, all, title }) {
+  return {
+    name: "Prices",
     tree: [
+      ...groupedRealizedPriceItems(list, all, title),
       {
-        name: "Realized",
+        name: "Investor",
         tree: [
           {
             name: "Price",
-            title: title("Realized Price"),
+            title: title("Investor Price"),
             top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              price({ series: tree.realized.price, name, color }),
+              price({ series: tree.realized.investor.price, name, color }),
             ),
           },
           {
             name: "Ratio",
-            title: title("MVRV"),
+            title: title("Investor Price Ratio"),
             bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              baseline({
-                series: tree.realized.mvrv,
-                name,
-                color,
-                unit: Unit.ratio,
-                base: 1,
-              }),
+              baseline({ series: tree.realized.investor.price.ratio, name, color, unit: Unit.ratio, base: 1 }),
             ),
           },
         ],

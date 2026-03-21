@@ -95,7 +95,7 @@ export function createValuationSectionFull({ cohort, title }) {
           line({ series: tree.unrealized.investedCapital.inLoss.usd, name: "In Loss", color: colors.loss, unit: Unit.usd }),
         ],
       },
-      createRatioChart({ title, pricePattern: tree.realized.price, ratio: tree.realized.price, color, name: "MVRV" }),
+      { name: "MVRV", title: title("MVRV"), bottom: [baseline({ series: tree.realized.mvrv, name: "MVRV", unit: Unit.ratio, base: 1 })] },
       { name: "% of Own Market Cap", title: title("Realized Cap (% of Own Market Cap)"), bottom: percentRatioBaseline({ pattern: tree.realized.cap.toOwnMcap, name: "Rel. to Own Market Cap", color }) },
       ...singleDeltaItems(tree, title),
     ],
@@ -156,6 +156,20 @@ export function createGroupedValuationSectionWithOwnMarketCap({ list, all, title
         title: title("Realized Cap"),
         bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
           line({ series: tree.realized.cap.usd, name, color, unit: Unit.usd }),
+        ),
+      },
+      {
+        name: "In Profit",
+        title: title("Invested Capital In Profit"),
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+          line({ series: tree.unrealized.investedCapital.inProfit.usd, name, color, unit: Unit.usd }),
+        ),
+      },
+      {
+        name: "In Loss",
+        title: title("Invested Capital In Loss"),
+        bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
+          line({ series: tree.unrealized.investedCapital.inLoss.usd, name, color, unit: Unit.usd }),
         ),
       },
       {

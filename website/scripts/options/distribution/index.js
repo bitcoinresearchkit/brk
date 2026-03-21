@@ -52,6 +52,7 @@ import {
   createPricesSectionFull,
   createPricesSectionBasic,
   createGroupedPricesSection,
+  createGroupedPricesSectionFull,
 } from "./prices.js";
 import {
   createCostBasisSectionWithPercentiles,
@@ -342,7 +343,7 @@ export function createGroupedCohortFolderFull({
     tree: [
       ...createGroupedHoldingsSectionWithRelative({ list, all, title }),
       createGroupedValuationSectionWithOwnMarketCap({ list, all, title }),
-      createGroupedPricesSection({ list, all, title }),
+      createGroupedPricesSectionFull({ list, all, title }),
       createGroupedCostBasisSectionWithPercentiles({ list, all, title }),
       createGroupedProfitabilitySectionWithNupl({ list, all, title }),
       createGroupedActivitySectionWithAdjusted({ list, all, title }),
@@ -392,8 +393,8 @@ export function createGroupedCohortFolderWithNupl({
     name: name || "all",
     tree: [
       ...createGroupedHoldingsSectionWithRelative({ list, all, title }),
-      createGroupedValuationSection({ list, all, title }),
-      createGroupedPricesSection({ list, all, title }),
+      createGroupedValuationSectionWithOwnMarketCap({ list, all, title }),
+      createGroupedPricesSectionFull({ list, all, title }),
       createGroupedCostBasisSectionWithPercentiles({ list, all, title }),
       createGroupedProfitabilitySectionWithNupl({ list, all, title }),
       createGroupedActivitySection({ list, all, title }),
@@ -417,7 +418,7 @@ export function createGroupedCohortFolderLongTerm({
     tree: [
       ...createGroupedHoldingsSectionWithRelative({ list, all, title }),
       createGroupedValuationSectionWithOwnMarketCap({ list, all, title }),
-      createGroupedPricesSection({ list, all, title }),
+      createGroupedPricesSectionFull({ list, all, title }),
       createGroupedCostBasisSectionWithPercentiles({ list, all, title }),
       createGroupedProfitabilitySectionLongTerm({ list, all, title }),
       createGroupedActivitySection({ list, all, title }),
