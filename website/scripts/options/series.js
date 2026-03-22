@@ -95,7 +95,7 @@ function percentileSeries({ pattern, unit, title = "" }) {
   return [
     line({
       series: pattern.max,
-      name: `${title} max`.trim(),
+      name: `${title} Max`.trim(),
       color: stat.max,
       unit,
     }),
@@ -113,7 +113,7 @@ function percentileSeries({ pattern, unit, title = "" }) {
     }),
     line({
       series: pattern.median,
-      name: `${title} median`.trim(),
+      name: `${title} Median`.trim(),
       color: stat.median,
       unit,
     }),
@@ -131,7 +131,7 @@ function percentileSeries({ pattern, unit, title = "" }) {
     }),
     line({
       series: pattern.min,
-      name: `${title} min`.trim(),
+      name: `${title} Min`.trim(),
       color: stat.min,
       unit,
     }),

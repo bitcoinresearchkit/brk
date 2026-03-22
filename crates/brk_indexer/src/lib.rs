@@ -124,7 +124,6 @@ impl Indexer {
                     (starting_indexes, Some(hash))
                 }
                 None => {
-                    // Data inconsistency detected - reset and start fresh
                     info!("Data inconsistency detected, resetting indexer...");
                     self.vecs.reset()?;
                     self.stores.reset()?;
@@ -199,16 +198,12 @@ impl Indexer {
                 readers: &readers,
             };
 
-            // 1. Process block metadata
             processor.process_block_metadata()?;
 
-            // 2. Compute TXIDs (parallel)
             let txs = processor.compute_txids()?;
 
-            // 2.5 Push block size/weight reusing per-tx sizes from compute_txids
             processor.push_block_size_and_weight(&txs)?;
 
-            // 3. Process inputs and outputs (parallel)
             let (txins_result, txouts_result) = rayon::join(
                 || processor.process_inputs(&txs, &mut buffers.txid_prefix_map),
                 || processor.process_outputs(),
@@ -220,16 +215,13 @@ impl Indexer {
             let input_count = txins.len();
             let output_count = txouts.len();
 
-            // 4. Collect same-block spent outpoints
             BlockProcessor::collect_same_block_spent_outpoints(
                 &txins,
                 &mut buffers.same_block_spent,
             );
 
-            // 5. Check TXID collisions (BIP-30)
             processor.check_txid_collisions(&txs)?;
 
-            // 6. Finalize outputs/inputs || store tx metadata (parallel)
             processor.finalize_and_store_metadata(
                 txs,
                 txouts,
@@ -239,7 +231,6 @@ impl Indexer {
                 &mut buffers.same_block_output_info,
             )?;
 
-            // 7. Update indexes
             processor.update_indexes(tx_count, input_count, output_count);
 
             if is_export_height(height) {
