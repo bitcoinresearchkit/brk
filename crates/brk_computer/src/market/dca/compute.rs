@@ -60,6 +60,11 @@ impl Vecs {
             )?;
         }
 
+        // DCA by period - stack cents (sats × price)
+        for stack in self.period.stack.iter_mut() {
+            stack.compute(prices, starting_indexes.height, exit)?;
+        }
+
         // DCA by period - average price (derived from stack)
         let starting_height = starting_indexes.height.to_usize();
         for (average_price, stack, days) in
@@ -146,6 +151,11 @@ impl Vecs {
             )?;
         }
 
+        // Lump sum by period - stack cents (sats × price)
+        for stack in self.period.lump_sum_stack.iter_mut() {
+            stack.compute(prices, starting_indexes.height, exit)?;
+        }
+
         // Lump sum by period - returns (compute from lookback price)
         for (returns, (lookback_price, _)) in self
             .period
@@ -211,6 +221,11 @@ impl Vecs {
                 },
                 exit,
             )?;
+        }
+
+        // DCA by year class - stack cents (sats × price)
+        for stack in self.class.stack.iter_mut() {
+            stack.compute(prices, starting_indexes.height, exit)?;
         }
 
         // DCA by year class - average price (derived from stack)

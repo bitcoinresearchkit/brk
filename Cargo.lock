@@ -307,7 +307,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aedd23ae0fd321affb4bbbc36126c6f49a32818dc6b979395d24da8c9d4e80ee"
 dependencies = [
  "bitcoincore-rpc-json",
- "jsonrpc 0.18.0",
+ "jsonrpc",
  "log",
  "serde",
  "serde_json",
@@ -359,6 +359,42 @@ dependencies = [
  "brk_store",
  "brk_traversable",
  "brk_types",
+]
+
+[[package]]
+name = "brk-corepc-client"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c15bc86010adb0c3118d88a531a7d2633b726fe97a6c2888ce200946d198e7b"
+dependencies = [
+ "bitcoin",
+ "brk-corepc-jsonrpc",
+ "brk-corepc-types",
+ "log",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "brk-corepc-jsonrpc"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cbb72c73b4c3aafd6ab3d0a0ad07b2961543929452d7c5d8f11b88e7a1ca7725"
+dependencies = [
+ "base64 0.22.1",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "brk-corepc-types"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca4662e4e22838c09a6f80d1677f6177295eddbb524515be9156a8f8412c4147"
+dependencies = [
+ "bitcoin",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -484,7 +520,7 @@ version = "0.1.9"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
- "corepc-client",
+ "brk-corepc-client",
  "fjall",
  "jiff",
  "pco",
@@ -623,11 +659,11 @@ version = "0.1.9"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
+ "brk-corepc-client",
+ "brk-corepc-jsonrpc",
  "brk_error",
  "brk_logger",
  "brk_types",
- "corepc-client",
- "jsonrpc 0.19.0",
  "parking_lot",
  "serde",
  "serde_json",
@@ -995,27 +1031,6 @@ dependencies = [
  "core-graphics",
  "foreign-types",
  "libc",
-]
-
-[[package]]
-name = "corepc-client"
-version = "0.11.0"
-dependencies = [
- "bitcoin",
- "corepc-types",
- "jsonrpc 0.19.0",
- "log",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "corepc-types"
-version = "0.11.0"
-dependencies = [
- "bitcoin",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -1967,15 +1982,6 @@ checksum = "3662a38d341d77efecb73caf01420cfa5aa63c0253fd7bc05289ef9f6616e1bf"
 dependencies = [
  "base64 0.13.1",
  "minreq",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "jsonrpc"
-version = "0.19.0"
-dependencies = [
- "base64 0.22.1",
  "serde",
  "serde_json",
 ]
