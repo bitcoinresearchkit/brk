@@ -108,14 +108,6 @@ All errors return structured JSON with a consistent format:
             ..Default::default()
         },
         Tag {
-            name: "Metrics".to_string(),
-            description: Some(
-                "Deprecated — use Series".to_string(),
-            ),
-            extensions: [("x-deprecated".to_string(), serde_json::Value::Bool(true))].into(),
-            ..Default::default()
-        },
-        Tag {
             name: "Blocks".to_string(),
             description: Some(
                 "Retrieve block data by hash or height. Access block headers, transaction lists, \
@@ -163,6 +155,14 @@ All errors return structured JSON with a consistent format:
                 *[Mempool.space](https://mempool.space/docs/api/rest) compatible (WIP).*"
                     .to_string(),
             ),
+            ..Default::default()
+        },
+        Tag {
+            name: "Metrics".to_string(),
+            description: Some(
+                "Deprecated — use Series".to_string(),
+            ),
+            extensions: [("deprecated".to_string(), serde_json::Value::Bool(true))].into(),
             ..Default::default()
         },
     ];

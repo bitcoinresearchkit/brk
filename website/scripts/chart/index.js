@@ -403,7 +403,7 @@ export function createChart({ parent, brk, fitContent }) {
       if (!pane) return;
       if (this.isAllHidden(paneIndex)) {
         const chartHeight = ichart.chartElement().clientHeight;
-        pane.setStretchFactor(chartHeight > 0 ? 32 / (chartHeight - 32) : 0);
+        pane.setStretchFactor(chartHeight > 0 ? 48 / (chartHeight - 48) : 0);
       } else {
         pane.setStretchFactor(1);
       }
@@ -1445,7 +1445,7 @@ export function createChart({ parent, brk, fitContent }) {
 
   const lastTd = ichart
     .chartElement()
-    .querySelector("table > tr:last-child > td:nth-child(2)");
+    .querySelector("table > tr:last-child > td:last-child");
 
   const chart = {
     get panes() {
@@ -1474,9 +1474,6 @@ export function createChart({ parent, brk, fitContent }) {
         groups,
         id: "index",
       });
-      const sep = document.createElement("span");
-      sep.textContent = "|";
-      indexField.append(sep);
       if (lastTd) lastTd.append(indexField);
     },
 

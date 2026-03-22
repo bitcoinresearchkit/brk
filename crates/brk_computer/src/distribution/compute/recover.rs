@@ -128,6 +128,9 @@ pub(crate) fn reset_state(
     utxo_cohorts.reset_separate_cost_basis_data()?;
     addr_cohorts.reset_separate_cost_basis_data()?;
 
+    // Reset in-memory caches (fenwick, tick_tock positions)
+    utxo_cohorts.reset_caches();
+
     Ok(RecoveredState {
         starting_height: Height::ZERO,
     })

@@ -22,7 +22,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let db = open_db(parent_path, DB_NAME, 1_000_000)?;
+        let db = open_db(parent_path, DB_NAME, 250_000)?;
         let version = parent_version;
         let v1 = version + Version::ONE;
         let activity = ActivityVecs::forced_import(&db, version, indexes, cached_starts)?;

@@ -93,7 +93,7 @@ impl Vecs {
         parent_version: Version,
         indexer: &Indexer,
     ) -> Result<Self> {
-        let db = open_db(parent, DB_NAME, 10_000_000)?;
+        let db = open_db(parent, DB_NAME, 1_000_000)?;
 
         let version = parent_version;
 

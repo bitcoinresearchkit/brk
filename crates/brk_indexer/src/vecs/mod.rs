@@ -49,7 +49,7 @@ impl Vecs {
         tracing::debug!("Opening vecs database...");
         let db = Database::open(&parent.join("vecs"))?;
         tracing::debug!("Setting min len...");
-        db.set_min_len(PAGE_SIZE * 50_000_000)?;
+        db.set_min_len(PAGE_SIZE * 60_000_000)?;
 
         let (blocks, transactions, inputs, outputs, addrs, scripts) = parallel_import! {
             blocks = BlocksVecs::forced_import(&db, version),

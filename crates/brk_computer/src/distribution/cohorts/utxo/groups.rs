@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use brk_cohort::{
-    AgeRange, AmountRange, Class, ByEpoch, OverAmount, UnderAmount, UnderAge,
-    OverAge, SpendableType, CohortContext, Filter, Filtered, Term,
+    AgeRange, AmountRange, ByEpoch, Class, CohortContext, Filter, Filtered, OverAge, OverAmount,
+    SpendableType, Term, UnderAge, UnderAmount,
 };
 use brk_error::Result;
 use brk_traversable::Traversable;
@@ -17,8 +17,8 @@ use crate::{
     distribution::{
         DynCohortVecs,
         metrics::{
-            AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase,
-            CoreCohortMetrics, ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig,
+            AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase, CoreCohortMetrics,
+            ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig,
             MinimalCohortMetrics, ProfitabilityMetrics, RealizedFullAccum, SupplyCore,
             TypeCohortMetrics,
         },
@@ -52,11 +52,16 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     pub profitability: ProfitabilityMetrics<M>,
     pub matured: AgeRange<AmountPerBlockCumulativeRolling<M>>,
     #[traversable(skip)]
+    pub(super) caches: UTXOCohortsTransientState,
+}
+
+/// In-memory state that does NOT survive rollback.
+#[derive(Clone, Default)]
+pub(crate) struct UTXOCohortsTransientState {
     pub(super) fenwick: CostBasisFenwick,
     /// Cached partition_point positions for tick_tock boundary searches.
     /// Avoids O(log n) binary search per boundary per block; scans forward
     /// from last known position (typically O(1) per boundary).
-    #[traversable(skip)]
     pub(super) tick_tock_cached_positions: [usize; 20],
 }
 
@@ -258,7 +263,7 @@ impl UTXOCohorts<Rw> {
 
         let prefix = CohortContext::Utxo.prefix();
         let matured = AgeRange::try_new(&|_f: Filter,
-                                            name: &'static str|
+                                          name: &'static str|
          -> Result<AmountPerBlockCumulativeRolling> {
             AmountPerBlockCumulativeRolling::forced_import(
                 db,
@@ -284,24 +289,30 @@ impl UTXOCohorts<Rw> {
             over_amount,
             profitability,
             matured,
-            fenwick: CostBasisFenwick::new(),
-            tick_tock_cached_positions: [0; 20],
+            caches: UTXOCohortsTransientState::default(),
         })
+    }
+
+    /// Reset in-memory caches that become stale after rollback.
+    pub(crate) fn reset_caches(&mut self) {
+        self.caches = UTXOCohortsTransientState::default();
     }
 
     /// Initialize the Fenwick tree from all age-range BTreeMaps.
     /// Call after state import when all pending maps have been drained.
     pub(crate) fn init_fenwick_if_needed(&mut self) {
-        if self.fenwick.is_initialized() {
+        if self.caches.fenwick.is_initialized() {
             return;
         }
         let Self {
             sth,
-            fenwick,
+            caches,
             age_range,
             ..
         } = self;
-        fenwick.compute_is_sth(&sth.metrics.filter, age_range.iter().map(|v| v.filter()));
+        caches
+            .fenwick
+            .compute_is_sth(&sth.metrics.filter, age_range.iter().map(|v| v.filter()));
 
         let maps: Vec<_> = age_range
             .iter()
@@ -312,27 +323,27 @@ impl UTXOCohorts<Rw> {
                 if map.is_empty() {
                     return None;
                 }
-                Some((map, fenwick.is_sth_at(i)))
+                Some((map, caches.fenwick.is_sth_at(i)))
             })
             .collect();
-        fenwick.bulk_init(maps.into_iter());
+        caches.fenwick.bulk_init(maps.into_iter());
     }
 
     /// Apply pending deltas from all age-range cohorts to the Fenwick tree.
     /// Call after receive/send, before push_cohort_states.
     pub(crate) fn update_fenwick_from_pending(&mut self) {
-        if !self.fenwick.is_initialized() {
+        if !self.caches.fenwick.is_initialized() {
             return;
         }
-        // Destructure to get separate borrows on fenwick and age_range
+        // Destructure to get separate borrows on caches and age_range
         let Self {
-            fenwick, age_range, ..
+            caches, age_range, ..
         } = self;
         for (i, sub) in age_range.iter().enumerate() {
             if let Some(state) = sub.state.as_ref() {
-                let is_sth = fenwick.is_sth_at(i);
+                let is_sth = caches.fenwick.is_sth_at(i);
                 state.for_each_cost_basis_pending(|&price, delta| {
-                    fenwick.apply_delta(price, delta, is_sth);
+                    caches.fenwick.apply_delta(price, delta, is_sth);
                 });
             }
         }
@@ -455,8 +466,7 @@ impl UTXOCohorts<Rw> {
                     .try_for_each(|vecs| {
                         let sources =
                             filter_minimal_sources_from(amr.iter(), Some(&vecs.metrics.filter));
-                        vecs.metrics
-                            .compute_from_sources(si, &sources, exit)
+                        vecs.metrics.compute_from_sources(si, &sources, exit)
                     })
             }),
         ];
@@ -483,8 +493,16 @@ impl UTXOCohorts<Rw> {
             all.push(&mut self.all);
             all.push(&mut self.sth);
             all.push(&mut self.lth);
-            all.extend(self.under_age.iter_mut().map(|x| x as &mut dyn DynCohortVecs));
-            all.extend(self.over_age.iter_mut().map(|x| x as &mut dyn DynCohortVecs));
+            all.extend(
+                self.under_age
+                    .iter_mut()
+                    .map(|x| x as &mut dyn DynCohortVecs),
+            );
+            all.extend(
+                self.over_age
+                    .iter_mut()
+                    .map(|x| x as &mut dyn DynCohortVecs),
+            );
             all.extend(
                 self.over_amount
                     .iter_mut()
@@ -542,7 +560,8 @@ impl UTXOCohorts<Rw> {
             .metrics
             .activity
             .transfer_volume
-            .block.cents
+            .block
+            .cents
             .read_only_clone();
         let under_1h_value_destroyed = self
             .age_range
@@ -567,7 +586,13 @@ impl UTXOCohorts<Rw> {
 
         // Clone all_supply_sats and all_utxo_count for non-all cohorts.
         let all_supply_sats = self.all.metrics.supply.total.sats.height.read_only_clone();
-        let all_utxo_count = self.all.metrics.outputs.unspent_count.height.read_only_clone();
+        let all_utxo_count = self
+            .all
+            .metrics
+            .outputs
+            .unspent_count
+            .height
+            .read_only_clone();
 
         // Destructure to allow parallel mutable access to independent fields.
         let Self {
@@ -636,9 +661,10 @@ impl UTXOCohorts<Rw> {
                 })
             }),
             Box::new(|| {
-                over_amount
-                    .par_iter_mut()
-                    .try_for_each(|v| v.metrics.compute_rest_part2(prices, starting_indexes, au, exit))
+                over_amount.par_iter_mut().try_for_each(|v| {
+                    v.metrics
+                        .compute_rest_part2(prices, starting_indexes, au, exit)
+                })
             }),
             Box::new(|| {
                 epoch.par_iter_mut().try_for_each(|v| {
@@ -653,19 +679,22 @@ impl UTXOCohorts<Rw> {
                 })
             }),
             Box::new(|| {
-                amount_range
-                    .par_iter_mut()
-                    .try_for_each(|v| v.metrics.compute_rest_part2(prices, starting_indexes, au, exit))
+                amount_range.par_iter_mut().try_for_each(|v| {
+                    v.metrics
+                        .compute_rest_part2(prices, starting_indexes, au, exit)
+                })
             }),
             Box::new(|| {
-                under_amount
-                    .par_iter_mut()
-                    .try_for_each(|v| v.metrics.compute_rest_part2(prices, starting_indexes, au, exit))
+                under_amount.par_iter_mut().try_for_each(|v| {
+                    v.metrics
+                        .compute_rest_part2(prices, starting_indexes, au, exit)
+                })
             }),
             Box::new(|| {
-                type_
-                    .par_iter_mut()
-                    .try_for_each(|v| v.metrics.compute_rest_part2(prices, starting_indexes, au, exit))
+                type_.par_iter_mut().try_for_each(|v| {
+                    v.metrics
+                        .compute_rest_part2(prices, starting_indexes, au, exit)
+                })
             }),
         ];
 
@@ -829,12 +858,30 @@ impl UTXOCohorts<Rw> {
         sth.metrics.realized.push_accum(&sth_acc);
         lth.metrics.realized.push_accum(&lth_acc);
 
-        all.metrics.unrealized.investor_cap_in_profit_raw.push(CentsSquaredSats::new(all_icap.0));
-        all.metrics.unrealized.investor_cap_in_loss_raw.push(CentsSquaredSats::new(all_icap.1));
-        sth.metrics.unrealized.investor_cap_in_profit_raw.push(CentsSquaredSats::new(sth_icap.0));
-        sth.metrics.unrealized.investor_cap_in_loss_raw.push(CentsSquaredSats::new(sth_icap.1));
-        lth.metrics.unrealized.investor_cap_in_profit_raw.push(CentsSquaredSats::new(lth_icap.0));
-        lth.metrics.unrealized.investor_cap_in_loss_raw.push(CentsSquaredSats::new(lth_icap.1));
+        all.metrics
+            .unrealized
+            .investor_cap_in_profit_raw
+            .push(CentsSquaredSats::new(all_icap.0));
+        all.metrics
+            .unrealized
+            .investor_cap_in_loss_raw
+            .push(CentsSquaredSats::new(all_icap.1));
+        sth.metrics
+            .unrealized
+            .investor_cap_in_profit_raw
+            .push(CentsSquaredSats::new(sth_icap.0));
+        sth.metrics
+            .unrealized
+            .investor_cap_in_loss_raw
+            .push(CentsSquaredSats::new(sth_icap.1));
+        lth.metrics
+            .unrealized
+            .investor_cap_in_profit_raw
+            .push(CentsSquaredSats::new(lth_icap.0));
+        lth.metrics
+            .unrealized
+            .investor_cap_in_loss_raw
+            .push(CentsSquaredSats::new(lth_icap.1));
     }
 }
 

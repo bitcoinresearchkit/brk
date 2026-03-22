@@ -14,8 +14,34 @@
   font-display: block;
 }
 
+@font-face {
+  font-family: Instrument;
+  src: url("/assets/fonts/InstrumentSerif-Regular.woff2") format("woff2");
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: Instrument;
+  src: url("/assets/fonts/InstrumentSerif-Italic.woff2") format("woff2");
+  font-style: italic;
+  font-display: block;
+}
+
+@font-face {
+  font-family: Satoshi;
+  src: url("/assets/fonts/Satoshi-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: block;
+}
+
 html {
   font-family:
     "Lilex", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
+}
+
+h1 {
+  font-family:
+    Instrument, Charter, "Bitstream Charter", "Sitka Text", Cambria, serif;
 }

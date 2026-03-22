@@ -249,7 +249,6 @@ pub struct CostBasisData<S: Accumulate> {
     pending: FxHashMap<CentsCompact, PendingDelta>,
     cache: Option<CachedUnrealizedState<S>>,
     rounding_digits: Option<i32>,
-    generation: u64,
     investor_cap_raw: CentsSquaredSats,
     pending_investor_cap: PendingInvestorCapDelta,
 }
@@ -297,7 +296,6 @@ impl<S: Accumulate> CostBasisData<S> {
         if self.pending.is_empty() {
             return;
         }
-        self.generation = self.generation.wrapping_add(1);
         let map = &mut self.map.as_mut().unwrap().map;
         for (cents, PendingDelta { inc, dec }) in self.pending.drain() {
             match map.entry(cents) {
@@ -353,7 +351,6 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
             pending: FxHashMap::default(),
             cache: None,
             rounding_digits: None,
-            generation: 0,
             investor_cap_raw: CentsSquaredSats::ZERO,
             pending_investor_cap: PendingInvestorCapDelta::default(),
         }

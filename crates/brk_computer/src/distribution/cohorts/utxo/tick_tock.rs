@@ -42,7 +42,7 @@ impl UTXOCohorts<Rw> {
         // Cohort 0 covers [0, 1) hours
         // Cohort 20 covers [15*365*24, infinity) hours
         let mut age_cohorts: Vec<_> = self.age_range.iter_mut().map(|v| &mut v.state).collect();
-        let cached = &mut self.tick_tock_cached_positions;
+        let cached = &mut self.caches.tick_tock_cached_positions;
 
         // For each boundary (in hours), find blocks that just crossed it
         for (boundary_idx, &boundary_hours) in AGE_BOUNDARIES.iter().enumerate() {

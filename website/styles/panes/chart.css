@@ -44,14 +44,14 @@
     white-space: nowrap;
     overflow-x: auto;
     padding-bottom: 1rem;
-    margin-bottom: -1rem;
+    margin-bottom: -0.75rem;
     padding-left: var(--main-padding);
     margin-left: var(--negative-main-padding);
     padding-right: var(--main-padding);
     margin-right: var(--negative-main-padding);
 
     h1 {
-      font-size: 1.375rem;
+      font-size: 2rem;
       letter-spacing: 0.075rem;
       text-wrap: nowrap;
     }

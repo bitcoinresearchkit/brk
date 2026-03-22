@@ -24,7 +24,7 @@ impl UTXOCohorts {
         date_opt: Option<Date>,
         states_path: &Path,
     ) -> Result<()> {
-        if self.fenwick.is_initialized() {
+        if self.caches.fenwick.is_initialized() {
             self.push_fenwick_results(spot_price);
         }
 
@@ -38,18 +38,18 @@ impl UTXOCohorts {
 
     /// Push all Fenwick-derived per-block results: percentiles, density, profitability.
     fn push_fenwick_results(&mut self, spot_price: Cents) {
-        let (all_d, sth_d, lth_d) = self.fenwick.density(spot_price);
+        let (all_d, sth_d, lth_d) = self.caches.fenwick.density(spot_price);
 
-        let all = self.fenwick.percentiles_all();
+        let all = self.caches.fenwick.percentiles_all();
         push_cost_basis(&all, all_d, &mut self.all.metrics.cost_basis);
 
-        let sth = self.fenwick.percentiles_sth();
+        let sth = self.caches.fenwick.percentiles_sth();
         push_cost_basis(&sth, sth_d, &mut self.sth.metrics.cost_basis);
 
-        let lth = self.fenwick.percentiles_lth();
+        let lth = self.caches.fenwick.percentiles_lth();
         push_cost_basis(&lth, lth_d, &mut self.lth.metrics.cost_basis);
 
-        let prof = self.fenwick.profitability(spot_price);
+        let prof = self.caches.fenwick.profitability(spot_price);
         push_profitability(&prof, &mut self.profitability);
     }
 

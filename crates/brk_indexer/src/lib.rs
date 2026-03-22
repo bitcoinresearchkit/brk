@@ -110,6 +110,12 @@ impl Indexer {
         debug!("Starting indexing...");
 
         let last_blockhash = self.vecs.blocks.blockhash.collect_last();
+        // Rollback sim
+        // let last_blockhash = self
+        //     .vecs
+        //     .blocks
+        //     .blockhash
+        //     .collect_one_at(self.vecs.blocks.blockhash.len() - 2);
         debug!("Last block hash found.");
 
         let (starting_indexes, prev_hash) = if let Some(hash) = last_blockhash {

@@ -26,7 +26,7 @@ impl Vecs {
         cointime: &cointime::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let db = open_db(parent, super::DB_NAME, 10_000_000)?;
+        let db = open_db(parent, super::DB_NAME, 1_000_000)?;
 
         let version = parent_version + VERSION;
         let supply_metrics = &distribution.utxo_cohorts.all.metrics.supply;

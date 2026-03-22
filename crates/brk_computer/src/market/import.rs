@@ -19,7 +19,7 @@ impl Vecs {
         parent_version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let db = open_db(parent_path, super::DB_NAME, 1_000_000)?;
+        let db = open_db(parent_path, super::DB_NAME, 250_000)?;
         let version = parent_version;
 
         let ath = AthVecs::forced_import(&db, version, indexes)?;

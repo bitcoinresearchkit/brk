@@ -308,6 +308,12 @@ export function createSelect({
       arrow.textContent = "↓";
       field.append(arrow);
     }
+
+    field.addEventListener("click", (e) => {
+      if (e.target !== select) {
+        select.showPicker();
+      }
+    });
   }
 
   return field;

@@ -41,7 +41,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let db = open_db(parent_path, DB_NAME, 1_000_000)?;
+        let db = open_db(parent_path, DB_NAME, 100_000)?;
         let pools = pools();
 
         let version = parent_version + Version::new(3) + Version::new(pools.len() as u32);

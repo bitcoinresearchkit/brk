@@ -21,7 +21,7 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let db = open_db(parent_path, super::DB_NAME, 50_000_000)?;
+        let db = open_db(parent_path, super::DB_NAME, 1_000_000)?;
         let version = parent_version;
 
         let lookback = LookbackVecs::forced_import(&db, version)?;

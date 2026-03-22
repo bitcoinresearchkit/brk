@@ -38,7 +38,7 @@ impl Vecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> brk_error::Result<Self> {
-        let db = open_db(parent, DB_NAME, 1_000_000)?;
+        let db = open_db(parent, DB_NAME, 100_000)?;
         let this = Self::forced_import_inner(&db, version, indexes)?;
         finalize_db(&this.db, &this)?;
         Ok(this)

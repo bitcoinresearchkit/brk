@@ -95,7 +95,6 @@ button {
 }
 
 h1 {
-  text-transform: uppercase;
   font-size: var(--font-size-xl);
   line-height: var(--line-height-xl);
   font-weight: 300;
@@ -242,7 +241,6 @@ summary {
   &::-webkit-details-marker {
     display: none;
   }
-
 }
 
 :is(a, button, summary) {

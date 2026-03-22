@@ -3,7 +3,10 @@ use brk_types::{Cents, CentsCompact, Sats};
 
 use crate::{
     distribution::state::PendingDelta,
-    internal::{PERCENTILES, PERCENTILES_LEN, algo::{FenwickNode, FenwickTree}},
+    internal::{
+        PERCENTILES, PERCENTILES_LEN,
+        algo::{FenwickNode, FenwickTree},
+    },
 };
 
 use super::COST_BASIS_PRICE_DIGITS;
@@ -70,7 +73,6 @@ pub(super) struct CostBasisFenwick {
 // to a flat bucket index across two tiers.
 // ---------------------------------------------------------------------------
 
-/// Map rounded dollars to a flat bucket index.
 /// Prices >= $1M are clamped to the last bucket.
 #[inline]
 fn dollars_to_bucket(dollars: u64) -> usize {
@@ -83,7 +85,6 @@ fn dollars_to_bucket(dollars: u64) -> usize {
     }
 }
 
-/// Convert a bucket index back to a price in Cents.
 #[inline]
 fn bucket_to_cents(bucket: usize) -> Cents {
     let dollars: u64 = if bucket < TIER1_START {
@@ -96,24 +97,18 @@ fn bucket_to_cents(bucket: usize) -> Cents {
     Cents::from(dollars * 100)
 }
 
-/// Map a CentsCompact price to a bucket index.
 #[inline]
 fn price_to_bucket(price: CentsCompact) -> usize {
     cents_to_bucket(price.into())
 }
 
-/// Map a Cents price to a bucket index.
 #[inline]
 fn cents_to_bucket(price: Cents) -> usize {
     dollars_to_bucket(u64::from(price.round_to_dollar(COST_BASIS_PRICE_DIGITS)) / 100)
 }
 
-// ---------------------------------------------------------------------------
-// CostBasisFenwick implementation
-// ---------------------------------------------------------------------------
-
-impl CostBasisFenwick {
-    pub(super) fn new() -> Self {
+impl Default for CostBasisFenwick {
+    fn default() -> Self {
         Self {
             tree: FenwickTree::new(TREE_SIZE),
             totals: CostBasisNode::default(),
@@ -121,7 +116,9 @@ impl CostBasisFenwick {
             initialized: false,
         }
     }
+}
 
+impl CostBasisFenwick {
     pub(super) fn is_initialized(&self) -> bool {
         self.initialized
     }
@@ -153,7 +150,8 @@ impl CostBasisFenwick {
             return;
         }
         let bucket = price_to_bucket(price);
-        let delta = CostBasisNode::new(net_sats, price.as_u128() as i128 * net_sats as i128, is_sth);
+        let delta =
+            CostBasisNode::new(net_sats, price.as_u128() as i128 * net_sats as i128, is_sth);
         self.tree.add(bucket, &delta);
         self.totals.add_assign(&delta);
     }
@@ -236,8 +234,7 @@ impl CostBasisFenwick {
         sat_targets[PERCENTILES_LEN + 1] = total_sats - 1; // max
 
         let mut sat_buckets = [0usize; PERCENTILES_LEN + 2];
-        self.tree
-            .kth(&sat_targets, &sat_field, &mut sat_buckets);
+        self.tree.kth(&sat_targets, &sat_field, &mut sat_buckets);
 
         result.min_price = bucket_to_cents(sat_buckets[0]);
         (0..PERCENTILES_LEN).for_each(|i| {
@@ -253,8 +250,7 @@ impl CostBasisFenwick {
             }
 
             let mut usd_buckets = [0usize; PERCENTILES_LEN];
-            self.tree
-                .kth(&usd_targets, &usd_field, &mut usd_buckets);
+            self.tree.kth(&usd_targets, &usd_field, &mut usd_buckets);
 
             (0..PERCENTILES_LEN).for_each(|i| {
                 result.usd_prices[i] = bucket_to_cents(usd_buckets[i]);

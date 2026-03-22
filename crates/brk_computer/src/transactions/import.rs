@@ -19,7 +19,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let db = open_db(parent_path, super::DB_NAME, 50_000_000)?;
+        let db = open_db(parent_path, super::DB_NAME, 10_000_000)?;
         let version = parent_version;
 
         let count = CountVecs::forced_import(&db, version, indexer, indexes, cached_starts)?;

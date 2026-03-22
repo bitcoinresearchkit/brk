@@ -17,7 +17,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let db = open_db(parent_path, super::DB_NAME, 10_000_000)?;
+        let db = open_db(parent_path, super::DB_NAME, 20_000_000)?;
         let version = parent_version;
 
         let spent = SpentVecs::forced_import(&db, version)?;

@@ -63,7 +63,8 @@ impl Query {
 
     /// Current computed height (series)
     pub fn computed_height(&self) -> Height {
-        Height::from(self.computer().distribution.supply_state.len())
+        let len = self.computer().distribution.supply_state.len();
+        Height::from(len.saturating_sub(1))
     }
 
     /// Minimum of indexed and computed heights
