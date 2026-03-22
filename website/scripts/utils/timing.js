@@ -22,7 +22,7 @@ export function idle(callback) {
 
 /**
  *
- * @template {(...args: any[]) => any} F
+ * @template {(...args: never[]) => unknown} F
  * @param {F} callback
  * @param {number} [wait]
  */
@@ -51,7 +51,7 @@ export function throttle(callback, wait = 1000) {
 }
 
 /**
- * @template {(...args: any[]) => any} F
+ * @template {(...args: never[]) => unknown} F
  * @param {F} callback
  * @param {number} [wait]
  * @returns {((...args: Parameters<F>) => void) & { cancel: () => void }}

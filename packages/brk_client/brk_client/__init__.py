@@ -3850,8 +3850,8 @@ class SeriesTree_Cointime_Adjusted:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.inflation_rate: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'cointime_adj_inflation_rate')
-        self.tx_velocity_native: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'cointime_adj_tx_velocity')
-        self.tx_velocity_fiat: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'cointime_adj_tx_velocity_fiat')
+        self.tx_velocity_native: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'cointime_adj_tx_velocity_btc')
+        self.tx_velocity_fiat: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'cointime_adj_tx_velocity_usd')
 
 class SeriesTree_Cointime_ReserveRisk:
     """Series tree node."""
@@ -4749,8 +4749,8 @@ class SeriesTree_Supply_Velocity:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.native: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'velocity')
-        self.fiat: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'velocity_fiat')
+        self.native: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'velocity_btc')
+        self.fiat: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'velocity_usd')
 
 class SeriesTree_Supply:
     """Series tree node."""

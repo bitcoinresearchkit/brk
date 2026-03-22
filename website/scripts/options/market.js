@@ -122,7 +122,7 @@ function returnsSubSection(name, periods) {
     tree: [
       {
         name: "Compare",
-        title: `${name} Returns`,
+        title: `${name} Price Returns`,
         bottom: periods.flatMap((p) =>
           percentRatioBaseline({
             pattern: p.returns,
@@ -133,8 +133,8 @@ function returnsSubSection(name, periods) {
       },
       ...periods.map((p) => ({
         name: periodIdToName(p.id, true),
-        title: `${periodIdToName(p.id, true)} Returns`,
-        bottom: percentRatioBaseline({ pattern: p.returns, name: "Total" }),
+        title: `${periodIdToName(p.id, true)} Price Returns`,
+        bottom: percentRatioBaseline({ pattern: p.returns, name: "Return" }),
       })),
     ],
   };
@@ -153,7 +153,7 @@ function returnsSubSectionWithCagr(name, periods) {
         tree: [
           {
             name: "Compare",
-            title: `${name} Total Returns`,
+            title: `${name} Total Price Returns`,
             bottom: periods.flatMap((p) =>
               percentRatioBaseline({
                 pattern: p.returns,
@@ -164,8 +164,8 @@ function returnsSubSectionWithCagr(name, periods) {
           },
           ...periods.map((p) => ({
             name: periodIdToName(p.id, true),
-            title: `${periodIdToName(p.id, true)} Total Returns`,
-            bottom: percentRatioBaseline({ pattern: p.returns, name: "Total" }),
+            title: `${periodIdToName(p.id, true)} Total Price Returns`,
+            bottom: percentRatioBaseline({ pattern: p.returns, name: "Return" }),
           })),
         ],
       },
@@ -174,7 +174,7 @@ function returnsSubSectionWithCagr(name, periods) {
         tree: [
           {
             name: "Compare",
-            title: `${name} CAGR`,
+            title: `${name} Price CAGR`,
             bottom: periods.flatMap((p) =>
               percentRatioBaseline({
                 pattern: p.cagr,
@@ -185,7 +185,7 @@ function returnsSubSectionWithCagr(name, periods) {
           },
           ...periods.map((p) => ({
             name: periodIdToName(p.id, true),
-            title: `${periodIdToName(p.id, true)} CAGR`,
+            title: `${periodIdToName(p.id, true)} Price CAGR`,
             bottom: percentRatioBaseline({ pattern: p.cagr, name: "CAGR" }),
           })),
         ],
@@ -469,7 +469,7 @@ export function createMarketSection() {
         tree: [
           {
             name: "Compare",
-            title: "Returns Comparison",
+            title: "Price Returns",
             bottom: [...shortPeriods, ...longPeriods].flatMap((p) =>
               percentRatioBaseline({
                 pattern: p.returns,
@@ -490,7 +490,7 @@ export function createMarketSection() {
         tree: [
           {
             name: "Compare",
-            title: "Historical Price Comparison",
+            title: "Historical Prices",
             top: [...shortPeriods, ...longPeriods].map((p) =>
               price({
                 series: p.lookback,
@@ -592,7 +592,7 @@ export function createMarketSection() {
                 bottom: [
                   baseline({
                     series: supply.marketMinusRealizedCapGrowthRate[w.key],
-                    name: w.name,
+                    name: "Spread",
                     unit: Unit.percentage,
                   }),
                 ],
@@ -615,7 +615,7 @@ export function createMarketSection() {
                 tree: [
                   {
                     name: "All Periods",
-                    title: "SMA vs EMA Comparison",
+                    title: "SMA vs EMA",
                     top: smaVsEma.flatMap((p) => [
                       price({
                         series: p.sma,
@@ -659,7 +659,7 @@ export function createMarketSection() {
                 tree: [
                   {
                     name: "Compare",
-                    title: "RSI Comparison",
+                    title: "RSI",
                     bottom: [
                       ...ROLLING_WINDOWS_TO_1M.flatMap((w) =>
                         indexRatio({
@@ -726,7 +726,7 @@ export function createMarketSection() {
                 tree: [
                   {
                     name: "Compare",
-                    title: "MACD Comparison",
+                    title: "MACD",
                     bottom: ROLLING_WINDOWS_TO_1M.map((w) =>
                       line({
                         series: technical.macd[w.key].line,
@@ -789,7 +789,7 @@ export function createMarketSection() {
                     bottom: [
                       line({
                         series: volatility[w.key],
-                        name: w.name,
+                        name: "Volatility",
                         color: w.color,
                         unit: Unit.percentage,
                       }),

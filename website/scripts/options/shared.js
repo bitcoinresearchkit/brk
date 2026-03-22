@@ -203,7 +203,7 @@ export function revenueBtcSatsUsd({ coinbase, subsidy, fee, key }) {
 }
 
 /**
- * Create sats/btc/usd series from a rolling window (24h/7d/30d/1y sum)
+ * Create sats/btc/usd series from a rolling window (24h/1w/1m/1y sum)
  * @param {Object} args
  * @param {AnyValuePattern} args.pattern - A BtcSatsUsdPattern (e.g., source.rolling._24h.sum)
  * @param {string} args.name
@@ -540,14 +540,15 @@ export function ratioBottomSeries(ratio) {
  * @param {AnyRatioPattern} args.ratio
  * @param {Color} args.color
  * @param {string} [args.name]
+ * @param {string} [args.legend]
  * @returns {PartialChartOption}
  */
-export function createRatioChart({ title, pricePattern, ratio, color, name }) {
+export function createRatioChart({ title, pricePattern, ratio, color, name, legend }) {
   return {
     name: name ?? "Ratio",
     title: title(name ?? "Ratio"),
     top: [
-      price({ series: pricePattern, name: "Price", color }),
+      price({ series: pricePattern, name: legend ?? "Price", color }),
       ...percentileUsdMap(ratio).map(({ name, prop, color }) =>
         price({
           series: prop,
@@ -742,6 +743,7 @@ export function createPriceRatioCharts({
       pricePattern,
       ratio,
       color,
+      legend,
     }),
     createZScoresFolder({
       formatTitle: (name) =>

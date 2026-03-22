@@ -7926,8 +7926,8 @@ class BrkClient extends BrkClientBase {
         },
         adjusted: {
           inflationRate: createBpsPercentRatioPattern(this, 'cointime_adj_inflation_rate'),
-          txVelocityNative: createSeriesPattern1(this, 'cointime_adj_tx_velocity'),
-          txVelocityFiat: createSeriesPattern1(this, 'cointime_adj_tx_velocity_fiat'),
+          txVelocityNative: createSeriesPattern1(this, 'cointime_adj_tx_velocity_btc'),
+          txVelocityFiat: createSeriesPattern1(this, 'cointime_adj_tx_velocity_usd'),
         },
         reserveRisk: {
           value: createSeriesPattern1(this, 'reserve_risk'),
@@ -8531,8 +8531,8 @@ class BrkClient extends BrkClientBase {
         burned: createBlockCumulativePattern(this, 'unspendable_supply'),
         inflationRate: createBpsPercentRatioPattern(this, 'inflation_rate'),
         velocity: {
-          native: createSeriesPattern1(this, 'velocity'),
-          fiat: createSeriesPattern1(this, 'velocity_fiat'),
+          native: createSeriesPattern1(this, 'velocity_btc'),
+          fiat: createSeriesPattern1(this, 'velocity_usd'),
         },
         marketCap: createCentsDeltaUsdPattern(this, 'market_cap'),
         marketMinusRealizedCapGrowthRate: create_1m1w1y24hPattern(this, 'market_minus_realized_cap_growth_rate'),

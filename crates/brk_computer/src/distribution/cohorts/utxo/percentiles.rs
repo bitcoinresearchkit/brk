@@ -1,6 +1,6 @@
 use std::{cmp::Reverse, collections::BinaryHeap, fs, path::Path};
 
-use brk_cohort::{Filtered, PROFIT_COUNT, PROFITABILITY_RANGE_COUNT, TERM_NAMES};
+use brk_cohort::{Filtered, PROFITABILITY_RANGE_COUNT, TERM_NAMES};
 use brk_error::Result;
 use brk_types::{BasisPoints16, Cents, CentsCompact, CostBasisDistribution, Date, Dollars, Sats};
 
@@ -50,7 +50,7 @@ impl UTXOCohorts {
         push_cost_basis(&lth, lth_d, &mut self.lth.metrics.cost_basis);
 
         let prof = self.fenwick.profitability(spot_price);
-        push_profitability(&prof, spot_price, &mut self.profitability);
+        push_profitability(&prof, &mut self.profitability);
     }
 
     /// K-way merge only for writing daily cost basis distributions to disk.
@@ -100,93 +100,22 @@ fn push_cost_basis(percentiles: &PercentileResult, density_bps: u16, cost_basis:
     cost_basis.push_density(BasisPoints16::from(density_bps));
 }
 
-/// Convert raw (cents × sats) accumulator to Dollars (÷ 100 for cents→dollars, ÷ 1e8 for sats).
 #[inline(always)]
 fn raw_usd_to_dollars(raw: u128) -> Dollars {
     Dollars::from(raw as f64 / 1e10)
 }
 
-/// Number of profit ranges (0..=14 are profit, 15..=24 are loss).
-const PROFIT_RANGE_COUNT: usize = 15;
-
-/// Compute unrealized P&L from raw sats/usd for a given range.
-/// Profit ranges: market_value - cost_basis. Loss ranges: cost_basis - market_value.
-#[inline(always)]
-fn compute_unrealized_pnl(spot_cents: u128, sats: u64, usd: u128, is_profit: bool) -> Dollars {
-    let market_value = spot_cents * sats as u128;
-    let raw = if is_profit {
-        market_value.saturating_sub(usd)
-    } else {
-        usd.saturating_sub(market_value)
-    };
-    raw_usd_to_dollars(raw)
-}
-
-/// Push profitability range + profit/loss aggregate values to vecs.
 fn push_profitability(
     buckets: &[ProfitabilityRangeResult; PROFITABILITY_RANGE_COUNT],
-    spot_price: Cents,
     metrics: &mut ProfitabilityMetrics,
 ) {
-    let spot_cents = spot_price.as_u128();
-
-    // Push 25 range buckets
     for (i, bucket) in metrics.range.as_array_mut().into_iter().enumerate() {
         let r = &buckets[i];
-        let is_profit = i < PROFIT_RANGE_COUNT;
         bucket.push(
             Sats::from(r.all_sats),
             Sats::from(r.sth_sats),
             raw_usd_to_dollars(r.all_usd),
             raw_usd_to_dollars(r.sth_usd),
-            compute_unrealized_pnl(spot_cents, r.all_sats, r.all_usd, is_profit),
-            compute_unrealized_pnl(spot_cents, r.sth_sats, r.sth_usd, is_profit),
-        );
-    }
-
-    // Profit: forward cumulative sum over ranges[0..15], pushed in reverse.
-    // profit[0] (breakeven) = sum(0..=13), ..., profit[13] (_500pct) = ranges[0]
-    let profit_arr = metrics.profit.as_array_mut();
-    let mut cum_sats = 0u64;
-    let mut cum_sth_sats = 0u64;
-    let mut cum_usd = 0u128;
-    let mut cum_sth_usd = 0u128;
-    for i in 0..PROFIT_COUNT {
-        cum_sats += buckets[i].all_sats;
-        cum_sth_sats += buckets[i].sth_sats;
-        cum_usd += buckets[i].all_usd;
-        cum_sth_usd += buckets[i].sth_usd;
-        profit_arr[PROFIT_COUNT - 1 - i].push(
-            Sats::from(cum_sats),
-            Sats::from(cum_sth_sats),
-            raw_usd_to_dollars(cum_usd),
-            raw_usd_to_dollars(cum_sth_usd),
-            compute_unrealized_pnl(spot_cents, cum_sats, cum_usd, true),
-            compute_unrealized_pnl(spot_cents, cum_sth_sats, cum_sth_usd, true),
-        );
-    }
-
-    // Loss: backward cumulative sum over ranges[15..25], pushed in reverse.
-    // loss[0] (breakeven) = sum(15..=24), ..., loss[8] (_80pct) = ranges[24]
-    let loss_arr = metrics.loss.as_array_mut();
-    let loss_count = loss_arr.len();
-    cum_sats = 0;
-    cum_sth_sats = 0;
-    cum_usd = 0;
-    cum_sth_usd = 0;
-    for i in 0..loss_count {
-        let r = &buckets[PROFITABILITY_RANGE_COUNT - 1 - i];
-        cum_sats += r.all_sats;
-        cum_sth_sats += r.sth_sats;
-        cum_usd += r.all_usd;
-        cum_sth_usd += r.sth_usd;
-        loss_arr[loss_count - 1 - i].push(
-            Sats::from(cum_sats),
-            Sats::from(cum_sth_sats),
-            raw_usd_to_dollars(cum_usd),
-            raw_usd_to_dollars(cum_sth_usd),
-            compute_unrealized_pnl(spot_cents, cum_sats, cum_usd, false),
-            compute_unrealized_pnl(spot_cents, cum_sth_sats, cum_sth_usd, false),
         );
     }
 }

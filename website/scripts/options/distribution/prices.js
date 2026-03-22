@@ -31,7 +31,7 @@ export function createPricesSectionFull({ cohort, title }) {
     tree: [
       {
         name: "Compare",
-        title: title("Prices"),
+        title: title("Realized Prices"),
         top: [
           price({ series: tree.realized.price, name: "Realized", color: colors.realized }),
           price({ series: tree.realized.investor.price, name: "Investor", color: colors.investor }),

@@ -399,6 +399,7 @@ function realizedNetFolder({ netPnl, title, extraChange = [] }) {
           title,
           metric: "Net Realized P&L Change",
           unit: Unit.usd,
+          legend: "Change",
         }),
         name: "Change",
       },

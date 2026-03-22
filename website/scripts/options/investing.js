@@ -135,7 +135,7 @@ function createCompareFolder(context, items) {
       },
       {
         name: "Accumulated",
-        title: `Accumulated Value: ${context}`,
+        title: `Accumulated Value ($100/day): ${context}`,
         top: topPane,
         bottom: items.flatMap(({ name, color, stack }) =>
           satsBtcUsd({ pattern: stack, name, color }),
@@ -188,7 +188,7 @@ function createLongCompareFolder(context, items) {
       },
       {
         name: "Accumulated",
-        title: `Accumulated Value: ${context}`,
+        title: `Accumulated Value ($100/day): ${context}`,
         top: topPane,
         bottom: items.flatMap(({ name, color, stack }) =>
           satsBtcUsd({ pattern: stack, name, color }),
@@ -218,7 +218,7 @@ function createSingleEntryTree(item, returnsBottom) {
       },
       {
         name: "Accumulated",
-        title: `Accumulated Value: ${titlePrefix}`,
+        title: `Accumulated Value ($100/day): ${titlePrefix}`,
         top,
         bottom: satsBtcUsd({ pattern: stack, name: "Value" }),
       },
@@ -259,7 +259,7 @@ function createLongSingleEntry(item) {
       },
       {
         name: "Accumulated",
-        title: `Accumulated Value: ${titlePrefix}`,
+        title: `Accumulated Value ($100/day): ${titlePrefix}`,
         top,
         bottom: satsBtcUsd({ pattern: stack, name: "Value" }),
       },

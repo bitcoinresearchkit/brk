@@ -19,7 +19,7 @@ import { ratioBottomSeries, mapCohortsWithAll, flatMapCohortsWithAll } from "../
  */
 function singleDeltaItems(tree, title) {
   return [
-    { ...sumsTreeBaseline({ windows: mapWindows(tree.realized.cap.delta.absolute, (c) => c.usd), title, metric: "Realized Cap Change", unit: Unit.usd }), name: "Change" },
+    { ...sumsTreeBaseline({ windows: mapWindows(tree.realized.cap.delta.absolute, (c) => c.usd), title, metric: "Realized Cap Change", unit: Unit.usd, legend: "Change" }), name: "Change" },
     { ...rollingPercentRatioTree({ windows: tree.realized.cap.delta.rate, title, metric: "Realized Cap Growth Rate" }), name: "Growth Rate" },
   ];
 }

@@ -160,6 +160,15 @@
  * Distribution stats: min, max, median, pct10/25/75/90
  * @typedef {{ min: AnySeriesPattern, max: AnySeriesPattern, median: AnySeriesPattern, pct10: AnySeriesPattern, pct25: AnySeriesPattern, pct75: AnySeriesPattern, pct90: AnySeriesPattern }} DistributionStats
  */
+/**
+ * Windowed distribution stats: each stat property is a rolling window record
+ * @template T
+ * @typedef {{ median: Record<string, T>, max: Record<string, T>, min: Record<string, T>, pct75: Record<string, T>, pct25: Record<string, T>, pct90: Record<string, T>, pct10: Record<string, T> }} WindowedStats
+ */
+/**
+ * Dominance pattern: percent/ratio at top level + per rolling window
+ * @typedef {Brk._1m1w1y24hBpsPercentRatioPattern} DominancePattern
+ */
 
 /**
  *

@@ -2460,9 +2460,9 @@ dependencies = [
 
 [[package]]
 name = "quickmatch"
-version = "0.3.2"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28628ced26de8cc0e8ce04e4c2e718bc8d84e9b99616a2a6abd2096e9a55f728"
+checksum = "848244615004bddb7273545dfe909ead495ed734f9faf130c43a7daccca2bf99"
 dependencies = [
  "rustc-hash",
 ]

@@ -253,32 +253,37 @@ impl<T> ProfitabilityRange<T> {
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.iter_mut_with_is_profit().map(|(_, v)| v)
+    }
+
+    /// Iterate mutably, yielding `(is_profit, &mut T)` for each range.
+    pub fn iter_mut_with_is_profit(&mut self) -> impl Iterator<Item = (bool, &mut T)> {
         [
-            &mut self.over_1000pct_in_profit,
-            &mut self._500pct_to_1000pct_in_profit,
-            &mut self._300pct_to_500pct_in_profit,
-            &mut self._200pct_to_300pct_in_profit,
-            &mut self._100pct_to_200pct_in_profit,
-            &mut self._90pct_to_100pct_in_profit,
-            &mut self._80pct_to_90pct_in_profit,
-            &mut self._70pct_to_80pct_in_profit,
-            &mut self._60pct_to_70pct_in_profit,
-            &mut self._50pct_to_60pct_in_profit,
-            &mut self._40pct_to_50pct_in_profit,
-            &mut self._30pct_to_40pct_in_profit,
-            &mut self._20pct_to_30pct_in_profit,
-            &mut self._10pct_to_20pct_in_profit,
-            &mut self._0pct_to_10pct_in_profit,
-            &mut self._0pct_to_10pct_in_loss,
-            &mut self._10pct_to_20pct_in_loss,
-            &mut self._20pct_to_30pct_in_loss,
-            &mut self._30pct_to_40pct_in_loss,
-            &mut self._40pct_to_50pct_in_loss,
-            &mut self._50pct_to_60pct_in_loss,
-            &mut self._60pct_to_70pct_in_loss,
-            &mut self._70pct_to_80pct_in_loss,
-            &mut self._80pct_to_90pct_in_loss,
-            &mut self._90pct_to_100pct_in_loss,
+            (true, &mut self.over_1000pct_in_profit),
+            (true, &mut self._500pct_to_1000pct_in_profit),
+            (true, &mut self._300pct_to_500pct_in_profit),
+            (true, &mut self._200pct_to_300pct_in_profit),
+            (true, &mut self._100pct_to_200pct_in_profit),
+            (true, &mut self._90pct_to_100pct_in_profit),
+            (true, &mut self._80pct_to_90pct_in_profit),
+            (true, &mut self._70pct_to_80pct_in_profit),
+            (true, &mut self._60pct_to_70pct_in_profit),
+            (true, &mut self._50pct_to_60pct_in_profit),
+            (true, &mut self._40pct_to_50pct_in_profit),
+            (true, &mut self._30pct_to_40pct_in_profit),
+            (true, &mut self._20pct_to_30pct_in_profit),
+            (true, &mut self._10pct_to_20pct_in_profit),
+            (true, &mut self._0pct_to_10pct_in_profit),
+            (false, &mut self._0pct_to_10pct_in_loss),
+            (false, &mut self._10pct_to_20pct_in_loss),
+            (false, &mut self._20pct_to_30pct_in_loss),
+            (false, &mut self._30pct_to_40pct_in_loss),
+            (false, &mut self._40pct_to_50pct_in_loss),
+            (false, &mut self._50pct_to_60pct_in_loss),
+            (false, &mut self._60pct_to_70pct_in_loss),
+            (false, &mut self._70pct_to_80pct_in_loss),
+            (false, &mut self._80pct_to_90pct_in_loss),
+            (false, &mut self._90pct_to_100pct_in_loss),
         ]
         .into_iter()
     }

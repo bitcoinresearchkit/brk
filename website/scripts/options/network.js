@@ -19,7 +19,7 @@ import {
   multiSeriesTree,
   percentRatioDots,
 } from "./series.js";
-import { satsBtcUsd, satsBtcUsdFrom, satsBtcUsdFullTree } from "./shared.js";
+import { satsBtcUsd, satsBtcUsdFrom, satsBtcUsdFullTree, formatCohortTitle } from "./shared.js";
 
 /**
  * Create Network section
@@ -114,15 +114,17 @@ export function createNetworkSection() {
 
   /**
    * @param {AddressableType | "all"} key
-   * @param {string} titlePrefix
+   * @param {string} [typeName]
    */
-  const createAddressSeriesTree = (key, titlePrefix) => [
+  const createAddressSeriesTree = (key, typeName) => {
+    const title = formatCohortTitle(typeName);
+    return [
     {
       name: "Count",
       tree: [
         {
           name: "Compare",
-          title: `${titlePrefix}Address Count`,
+          title: title("Address Count"),
           bottom: countMetrics.map((m) =>
             line({
               series: addrs[m.key][key],
@@ -134,7 +136,7 @@ export function createNetworkSection() {
         },
         ...countMetrics.map((m) => ({
           name: m.name,
-          title: `${titlePrefix}${m.name} Addresses`,
+          title: title(`${m.name} Addresses`),
           bottom: [
             line({ series: addrs[m.key][key], name: m.name, unit: Unit.count }),
           ],
@@ -143,7 +145,7 @@ export function createNetworkSection() {
     },
     ...simpleDeltaTree({
       delta: addrs.delta[key],
-      title: (s) => `${titlePrefix}${s}`,
+      title,
       metric: "Address Count",
       unit: Unit.count,
     }),
@@ -151,7 +153,7 @@ export function createNetworkSection() {
       name: "New",
       tree: chartsFromCount({
         pattern: addrs.new[key],
-        title: (s) => `${titlePrefix}${s}`,
+        title,
         metric: "New Addresses",
         unit: Unit.count,
       }),
@@ -163,7 +165,7 @@ export function createNetworkSection() {
           name: "Compare",
           tree: ROLLING_WINDOWS.map((w) => ({
             name: w.name,
-            title: `${w.title} ${titlePrefix}Active Addresses`,
+            title: title(`${w.title} Active Addresses`),
             bottom: activityTypes.map((t, i) =>
               line({
                 series: addrs.activity[key][t.key][w.key],
@@ -178,7 +180,7 @@ export function createNetworkSection() {
           name: t.name,
           tree: averagesArray({
             windows: addrs.activity[key][t.key],
-            title: (s) => `${titlePrefix}${s}`,
+            title,
             metric: `${t.name} Addresses`,
             unit: Unit.count,
           }),
@@ -186,6 +188,7 @@ export function createNetworkSection() {
       ],
     },
   ];
+  };
 
   /** @type {Record<string, typeof scriptTypes[number]>} */
   const byKey = Object.fromEntries(scriptTypes.map((t) => [t.key, t]));
@@ -560,7 +563,7 @@ export function createNetworkSection() {
       {
         name: "Addresses",
         tree: [
-          ...createAddressSeriesTree("all", ""),
+          ...createAddressSeriesTree("all"),
           {
             name: "By Type",
             tree: [
@@ -582,7 +585,7 @@ export function createNetworkSection() {
               },
               ...addressTypes.map((t) => ({
                 name: t.name,
-                tree: createAddressSeriesTree(t.key, `${t.name} `),
+                tree: createAddressSeriesTree(t.key, t.name),
               })),
             ],
           },

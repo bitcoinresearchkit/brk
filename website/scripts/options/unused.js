@@ -100,9 +100,10 @@ export function logUnused(seriesTree, partialOptions) {
 
   if (!all.size) return;
 
-  /** @type {Record<string, any>} */
+  /** @type {Record<string, unknown>} */
   const tree = {};
   for (const path of all.values()) {
+    /** @type {Record<string, unknown>} */
     let current = tree;
     for (let i = 0; i < path.length; i++) {
       const part = path[i];
@@ -110,7 +111,7 @@ export function logUnused(seriesTree, partialOptions) {
         current[part] = null;
       } else {
         current[part] = current[part] || {};
-        current = current[part];
+        current = /** @type {Record<string, unknown>} */ (current[part]);
       }
     }
   }

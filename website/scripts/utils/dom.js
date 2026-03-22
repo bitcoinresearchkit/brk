@@ -183,8 +183,8 @@ export function createRadios({
   choices,
   initialValue,
   onChange,
-  toKey = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
-  toLabel = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
+  toKey = /** @type {(choice: T) => string} */ ((c) => String(c)),
+  toLabel = /** @type {(choice: T) => string} */ ((c) => String(c)),
   toTitle,
 }) {
   const field = window.document.createElement("div");
@@ -247,8 +247,8 @@ export function createSelect({
   initialValue,
   onChange,
   sorted,
-  toKey = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
-  toLabel = /** @type {(choice: T) => string} */ ((/** @type {any} */ c) => c),
+  toKey = /** @type {(choice: T) => string} */ ((c) => String(c)),
+  toLabel = /** @type {(choice: T) => string} */ ((c) => String(c)),
 }) {
   const choices = sorted
     ? unsortedChoices.toSorted((a, b) => toLabel(a).localeCompare(toLabel(b)))

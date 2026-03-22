@@ -12,8 +12,8 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            native: PerBlock::forced_import(db, "velocity", version, indexes)?,
-            fiat: PerBlock::forced_import(db, "velocity_fiat", version, indexes)?,
+            native: PerBlock::forced_import(db, "velocity_btc", version, indexes)?,
+            fiat: PerBlock::forced_import(db, "velocity_usd", version, indexes)?,
         })
     }
 }

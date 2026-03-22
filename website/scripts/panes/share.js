@@ -22,11 +22,8 @@ export function setQr(url) {
     "";
 
   imgQrcode.src =
-    leanQr.generate(/** @type {any} */ (url))?.toDataURL({
-      // @ts-ignore
-      padX: 0,
-      padY: 0,
-    }) || "";
+    // @ts-ignore — lean-qr types don't resolve for file path import
+    leanQr.generate(url)?.toDataURL({ padX: 0, padY: 0 }) || "";
 
   shareDiv.hidden = false;
 }

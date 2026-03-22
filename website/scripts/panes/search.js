@@ -3,7 +3,7 @@ import {
   searchLabelElement,
   searchResultsElement,
 } from "../utils/elements.js";
-import { QuickMatch } from "../modules/quickmatch-js/0.3.1/src/index.js";
+import { QuickMatch } from "../modules/quickmatch-js/0.4.0/src/index.js";
 
 /**
  * @param {Options} options
@@ -24,11 +24,7 @@ export function initSearch(options) {
     searchResultsElement.scrollTo({ top: 0 });
     searchResultsElement.innerHTML = "";
 
-    if (needle.length < 3) {
-      const li = window.document.createElement("li");
-      li.textContent = 'e.g. "BTC"';
-      li.style.color = "var(--off-color)";
-      searchResultsElement.appendChild(li);
+    if (!needle.length) {
       return;
     }
 

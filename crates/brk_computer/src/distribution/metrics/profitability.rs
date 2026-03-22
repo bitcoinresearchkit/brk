@@ -1,7 +1,7 @@
 use brk_cohort::{Loss, Profit, ProfitabilityRange};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPointsSigned32, Cents, Dollars, Indexes, Sats, Version};
+use brk_types::{BasisPointsSigned32, Bitcoin, Cents, Dollars, Indexes, Sats, Version};
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
@@ -32,7 +32,6 @@ impl<M: StorageMode> ProfitabilityBucket<M> {
             .height
             .len()
             .min(self.realized_cap.all.height.len())
-            .min(self.unrealized_pnl.all.height.len())
     }
 }
 
@@ -104,21 +103,18 @@ impl ProfitabilityBucket {
         sth_supply: Sats,
         realized_cap: Dollars,
         sth_realized_cap: Dollars,
-        unrealized_pnl: Dollars,
-        sth_unrealized_pnl: Dollars,
     ) {
         self.supply.all.sats.height.push(supply);
         self.supply.sth.sats.height.push(sth_supply);
         self.realized_cap.all.height.push(realized_cap);
         self.realized_cap.sth.height.push(sth_realized_cap);
-        self.unrealized_pnl.all.height.push(unrealized_pnl);
-        self.unrealized_pnl.sth.height.push(sth_unrealized_pnl);
     }
 
     pub(crate) fn compute(
         &mut self,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
+        is_profit: bool,
         exit: &Exit,
     ) -> Result<()> {
         let max_from = starting_indexes.height;
@@ -126,8 +122,33 @@ impl ProfitabilityBucket {
         self.supply.all.compute(prices, max_from, exit)?;
         self.supply.sth.compute(prices, max_from, exit)?;
 
-        // NUPL = (spot - realized_price) / spot
-        // where realized_price = realized_cap_cents × ONE_BTC / supply_sats
+        self.unrealized_pnl.all.height.compute_transform3(
+            max_from,
+            &prices.spot.cents.height,
+            &self.realized_cap.all.height,
+            &self.supply.all.sats.height,
+            |(i, spot, cap, supply, ..)| {
+                let mv = f64::from(Dollars::from(spot)) * f64::from(Bitcoin::from(supply));
+                let rc = f64::from(cap);
+                let pnl = if is_profit { mv - rc } else { rc - mv }.max(0.0);
+                (i, Dollars::from(pnl))
+            },
+            exit,
+        )?;
+        self.unrealized_pnl.sth.height.compute_transform3(
+            max_from,
+            &prices.spot.cents.height,
+            &self.realized_cap.sth.height,
+            &self.supply.sth.sats.height,
+            |(i, spot, cap, supply, ..)| {
+                let mv = f64::from(Dollars::from(spot)) * f64::from(Bitcoin::from(supply));
+                let rc = f64::from(cap);
+                let pnl = if is_profit { mv - rc } else { rc - mv }.max(0.0);
+                (i, Dollars::from(pnl))
+            },
+            exit,
+        )?;
+
         self.nupl.bps.height.compute_transform3(
             max_from,
             &prices.spot.cents.height,
@@ -148,6 +169,40 @@ impl ProfitabilityBucket {
         )?;
 
         Ok(())
+    }
+
+    pub(crate) fn compute_from_ranges(
+        &mut self,
+        prices: &prices::Vecs,
+        starting_indexes: &Indexes,
+        is_profit: bool,
+        sources: &[&ProfitabilityBucket],
+        exit: &Exit,
+    ) -> Result<()> {
+        let max_from = starting_indexes.height;
+
+        self.supply.all.sats.height.compute_sum_of_others(
+            max_from,
+            &sources.iter().map(|s| &s.supply.all.sats.height).collect::<Vec<_>>(),
+            exit,
+        )?;
+        self.supply.sth.sats.height.compute_sum_of_others(
+            max_from,
+            &sources.iter().map(|s| &s.supply.sth.sats.height).collect::<Vec<_>>(),
+            exit,
+        )?;
+        self.realized_cap.all.height.compute_sum_of_others(
+            max_from,
+            &sources.iter().map(|s| &s.realized_cap.all.height).collect::<Vec<_>>(),
+            exit,
+        )?;
+        self.realized_cap.sth.height.compute_sum_of_others(
+            max_from,
+            &sources.iter().map(|s| &s.realized_cap.sth.height).collect::<Vec<_>>(),
+            exit,
+        )?;
+
+        self.compute(prices, starting_indexes, is_profit, exit)
     }
 
     pub(crate) fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
@@ -189,7 +244,7 @@ impl<M: StorageMode> ProfitabilityMetrics<M> {
     }
 
     pub(crate) fn min_stateful_len(&self) -> usize {
-        self.iter().map(|b| b.min_len()).min().unwrap_or(0)
+        self.range.iter().map(|b| b.min_len()).min().unwrap_or(0)
     }
 }
 
@@ -204,12 +259,14 @@ impl ProfitabilityMetrics {
             ProfitabilityBucket::forced_import(db, name, version, indexes, cached_starts)
         })?;
 
+        let aggregate_version = version + Version::ONE;
+
         let profit = Profit::try_new(|name| {
-            ProfitabilityBucket::forced_import(db, name, version, indexes, cached_starts)
+            ProfitabilityBucket::forced_import(db, name, aggregate_version, indexes, cached_starts)
         })?;
 
         let loss = Loss::try_new(|name| {
-            ProfitabilityBucket::forced_import(db, name, version, indexes, cached_starts)
+            ProfitabilityBucket::forced_import(db, name, aggregate_version, indexes, cached_starts)
         })?;
 
         Ok(Self {
@@ -225,8 +282,20 @@ impl ProfitabilityMetrics {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.iter_mut()
-            .try_for_each(|b| b.compute(prices, starting_indexes, exit))
+        for (is_profit, bucket) in self.range.iter_mut_with_is_profit() {
+            bucket.compute(prices, starting_indexes, is_profit, exit)?;
+        }
+
+        let range_arr = self.range.as_array();
+
+        for (threshold, sources) in self.profit.iter_mut_with_growing_prefix(&range_arr) {
+            threshold.compute_from_ranges(prices, starting_indexes, true, sources, exit)?;
+        }
+        for (threshold, sources) in self.loss.iter_mut_with_growing_suffix(&range_arr) {
+            threshold.compute_from_ranges(prices, starting_indexes, false, sources, exit)?;
+        }
+
+        Ok(())
     }
 
     pub(crate) fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

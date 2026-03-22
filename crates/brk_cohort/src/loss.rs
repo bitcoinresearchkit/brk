@@ -141,4 +141,18 @@ impl<T> Loss<T> {
             &mut self._80pct,
         ]
     }
+
+    /// Iterate from narrowest (_80pct) to broadest (all), yielding each threshold
+    /// with a growing suffix slice of `ranges` (1 range, 2 ranges, ..., LOSS_COUNT).
+    pub fn iter_mut_with_growing_suffix<'a, R>(
+        &'a mut self,
+        ranges: &'a [R],
+    ) -> impl Iterator<Item = (&'a mut T, &'a [R])> {
+        let len = ranges.len();
+        self.as_array_mut()
+            .into_iter()
+            .rev()
+            .enumerate()
+            .map(move |(n, threshold)| (threshold, &ranges[len - 1 - n..]))
+    }
 }

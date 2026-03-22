@@ -5,8 +5,7 @@ const API = "/api";
 // Match hashed filenames: name.abc12345.js/mjs/css
 const HASHED_RE = /\.[0-9a-f]{8}\.(js|mjs|css)$/;
 
-/** @type {ServiceWorkerGlobalScope} */
-const sw = /** @type {any} */ (self);
+const sw = /** @type {ServiceWorkerGlobalScope} */ (/** @type {unknown} */ (self));
 
 const offline = () =>
   new Response("Offline", {

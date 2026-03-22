@@ -80,7 +80,7 @@ export function createMiningSection() {
   /**
    * @param {(metric: string) => string} title
    * @param {string} metric
-   * @param {{ _24h: any, _1w: any, _1m: any, _1y: any, percent: any, ratio: any }} dominance
+   * @param {DominancePattern} dominance
    */
   const dominanceTree = (title, metric, dominance) => ({
     name: "Dominance",
@@ -98,12 +98,12 @@ export function createMiningSection() {
       ...ROLLING_WINDOWS.map((w) => ({
         name: w.name,
         title: title(`${w.title} ${metric}`),
-        bottom: percentRatio({ pattern: dominance[w.key], name: w.name, color: w.color }),
+        bottom: percentRatio({ pattern: dominance[w.key], name: "Dominance", color: w.color }),
       })),
       {
         name: "All Time",
-        title: title(`${metric} All Time`),
-        bottom: percentRatio({ pattern: dominance, name: "All Time", color: colors.time.all }),
+        title: title(`All Time ${metric}`),
+        bottom: percentRatio({ pattern: dominance, name: "Dominance", color: colors.time.all }),
       },
     ],
   });
@@ -251,7 +251,7 @@ export function createMiningSection() {
               }),
               dotted({
                 series: blocks.difficulty.hashrate,
-                name: "Difficulty",
+                name: "From Difficulty",
                 color: colors.default,
                 unit: Unit.hashRate,
               }),
@@ -395,25 +395,25 @@ export function createMiningSection() {
             name: "Hash Price",
             title: "Hash Price",
             bottom: [
-              line({ series: mining.hashrate.price.ths, name: "TH/s", color: colors.usd, unit: Unit.usdPerThsPerDay }),
-              line({ series: mining.hashrate.price.phs, name: "PH/s", color: colors.usd, unit: Unit.usdPerPhsPerDay }),
-              dotted({ series: mining.hashrate.price.thsMin, name: "TH/s ATL", color: colors.stat.min, unit: Unit.usdPerThsPerDay }),
-              dotted({ series: mining.hashrate.price.phsMin, name: "PH/s ATL", color: colors.stat.min, unit: Unit.usdPerPhsPerDay }),
+              line({ series: mining.hashrate.price.ths, name: "per TH/s", color: colors.usd, unit: Unit.usdPerThsPerDay }),
+              line({ series: mining.hashrate.price.phs, name: "per PH/s", color: colors.usd, unit: Unit.usdPerPhsPerDay }),
+              dotted({ series: mining.hashrate.price.thsMin, name: "per TH/s ATL", color: colors.stat.min, unit: Unit.usdPerThsPerDay }),
+              dotted({ series: mining.hashrate.price.phsMin, name: "per PH/s ATL", color: colors.stat.min, unit: Unit.usdPerPhsPerDay }),
             ],
           },
           {
             name: "Hash Value",
             title: "Hash Value",
             bottom: [
-              line({ series: mining.hashrate.value.ths, name: "TH/s", color: colors.bitcoin, unit: Unit.satsPerThsPerDay }),
-              line({ series: mining.hashrate.value.phs, name: "PH/s", color: colors.bitcoin, unit: Unit.satsPerPhsPerDay }),
-              dotted({ series: mining.hashrate.value.thsMin, name: "TH/s ATL", color: colors.stat.min, unit: Unit.satsPerThsPerDay }),
-              dotted({ series: mining.hashrate.value.phsMin, name: "PH/s ATL", color: colors.stat.min, unit: Unit.satsPerPhsPerDay }),
+              line({ series: mining.hashrate.value.ths, name: "per TH/s", color: colors.bitcoin, unit: Unit.satsPerThsPerDay }),
+              line({ series: mining.hashrate.value.phs, name: "per PH/s", color: colors.bitcoin, unit: Unit.satsPerPhsPerDay }),
+              dotted({ series: mining.hashrate.value.thsMin, name: "per TH/s ATL", color: colors.stat.min, unit: Unit.satsPerThsPerDay }),
+              dotted({ series: mining.hashrate.value.phsMin, name: "per PH/s ATL", color: colors.stat.min, unit: Unit.satsPerPhsPerDay }),
             ],
           },
           {
             name: "Recovery",
-            title: "Mining Recovery",
+            title: "Hash Price & Value Recovery",
             bottom: [
               ...percentRatio({ pattern: mining.hashrate.price.rebound, name: "Hash Price", color: colors.usd }),
               ...percentRatio({ pattern: mining.hashrate.value.rebound, name: "Hash Value", color: colors.bitcoin }),

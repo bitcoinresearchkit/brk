@@ -23,13 +23,13 @@ impl Vecs {
             )?,
             tx_velocity_native: PerBlock::forced_import(
                 db,
-                "cointime_adj_tx_velocity",
+                "cointime_adj_tx_velocity_btc",
                 version,
                 indexes,
             )?,
             tx_velocity_fiat: PerBlock::forced_import(
                 db,
-                "cointime_adj_tx_velocity_fiat",
+                "cointime_adj_tx_velocity_usd",
                 version,
                 indexes,
             )?,

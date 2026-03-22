@@ -525,6 +525,7 @@ function singleBucketFolder({ name, color, pattern }, parentName) {
               title,
               metric: "Supply Change",
               unit: Unit.sats,
+              legend: "Change",
             }),
             name: "Change",
           },
@@ -610,63 +611,32 @@ function groupedBucketCharts(list, groupTitle) {
         },
         {
           name: "Change",
-          tree: [
-            {
-              name: "Compare",
-              title: title("Supply Change"),
-              bottom: ROLLING_WINDOWS.flatMap((w) =>
-                list.map(({ name, color, pattern }) =>
-                  baseline({
-                    series: pattern.supply.all.delta.absolute[w.key],
-                    name: `${name} ${w.name}`,
-                    color,
-                    unit: Unit.sats,
-                  }),
-                ),
-              ),
-            },
-            ...ROLLING_WINDOWS.map((w) => ({
-              name: w.name,
-              title: title(`${w.title} Supply Change`),
-              bottom: list.map(({ name, color, pattern }) =>
-                baseline({
-                  series: pattern.supply.all.delta.absolute[w.key],
-                  name,
-                  color,
-                  unit: Unit.sats,
-                }),
-              ),
-            })),
-          ],
+          tree: ROLLING_WINDOWS.map((w) => ({
+            name: w.name,
+            title: title(`${w.title} Supply Change`),
+            bottom: list.map(({ name, color, pattern }) =>
+              baseline({
+                series: pattern.supply.all.delta.absolute[w.key],
+                name,
+                color,
+                unit: Unit.sats,
+              }),
+            ),
+          })),
         },
         {
           name: "Growth Rate",
-          tree: [
-            {
-              name: "Compare",
-              title: title("Supply Growth Rate"),
-              bottom: ROLLING_WINDOWS.flatMap((w) =>
-                list.flatMap(({ name, color, pattern }) =>
-                  percentRatio({
-                    pattern: pattern.supply.all.delta.rate[w.key],
-                    name: `${name} ${w.name}`,
-                    color,
-                  }),
-                ),
-              ),
-            },
-            ...ROLLING_WINDOWS.map((w) => ({
-              name: w.name,
-              title: title(`${w.title} Supply Growth Rate`),
-              bottom: list.flatMap(({ name, color, pattern }) =>
-                percentRatio({
-                  pattern: pattern.supply.all.delta.rate[w.key],
-                  name,
-                  color,
-                }),
-              ),
-            })),
-          ],
+          tree: ROLLING_WINDOWS.map((w) => ({
+            name: w.name,
+            title: title(`${w.title} Supply Growth Rate`),
+            bottom: list.flatMap(({ name, color, pattern }) =>
+              percentRatio({
+                pattern: pattern.supply.all.delta.rate[w.key],
+                name,
+                color,
+              }),
+            ),
+          })),
         },
       ],
     },

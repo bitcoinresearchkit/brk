@@ -181,4 +181,17 @@ impl<T> Profit<T> {
             &mut self._500pct,
         ]
     }
+
+    /// Iterate from narrowest (_500pct) to broadest (all), yielding each threshold
+    /// with a growing prefix slice of `ranges` (1 range, 2 ranges, ..., PROFIT_COUNT).
+    pub fn iter_mut_with_growing_prefix<'a, R>(
+        &'a mut self,
+        ranges: &'a [R],
+    ) -> impl Iterator<Item = (&'a mut T, &'a [R])> {
+        self.as_array_mut()
+            .into_iter()
+            .rev()
+            .enumerate()
+            .map(move |(n, threshold)| (threshold, &ranges[..n + 1]))
+    }
 }

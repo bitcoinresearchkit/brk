@@ -4470,8 +4470,8 @@ impl SeriesTree_Cointime_Adjusted {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             inflation_rate: BpsPercentRatioPattern::new(client.clone(), "cointime_adj_inflation_rate".to_string()),
-            tx_velocity_native: SeriesPattern1::new(client.clone(), "cointime_adj_tx_velocity".to_string()),
-            tx_velocity_fiat: SeriesPattern1::new(client.clone(), "cointime_adj_tx_velocity_fiat".to_string()),
+            tx_velocity_native: SeriesPattern1::new(client.clone(), "cointime_adj_tx_velocity_btc".to_string()),
+            tx_velocity_fiat: SeriesPattern1::new(client.clone(), "cointime_adj_tx_velocity_usd".to_string()),
         }
     }
 }
@@ -6345,8 +6345,8 @@ pub struct SeriesTree_Supply_Velocity {
 impl SeriesTree_Supply_Velocity {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            native: SeriesPattern1::new(client.clone(), "velocity".to_string()),
-            fiat: SeriesPattern1::new(client.clone(), "velocity_fiat".to_string()),
+            native: SeriesPattern1::new(client.clone(), "velocity_btc".to_string()),
+            fiat: SeriesPattern1::new(client.clone(), "velocity_usd".to_string()),
         }
     }
 }

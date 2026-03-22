@@ -100,6 +100,7 @@ function singleDeltaItems(delta, unit, title, name) {
         title,
         metric: `${name} Change`,
         unit,
+        legend: "Change",
       }),
       name: "Change",
     },

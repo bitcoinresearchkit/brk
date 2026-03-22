@@ -398,8 +398,8 @@ export function histogram({
 /**
  * Create series from an AverageHeightMaxMedianMinP10P25P75P90Pattern (height + rolling stats)
  * @param {Object} args
- * @param {{ height: AnySeriesPattern } & Record<string, any>} args.pattern - Pattern with .height and rolling stats (p10/p25/p75/p90 as _1y24h30d7dPattern)
- * @param {string} args.window - Rolling window key (e.g., '_24h', '_7d', '_30d', '_1y')
+ * @param {{ height: AnySeriesPattern } & WindowedStats<AnySeriesPattern>} args.pattern - Pattern with .height and rolling stats
+ * @param {string} args.window - Rolling window key (e.g., '_24h', '_1w', '_1m', '_1y')
  * @param {Unit} args.unit
  * @param {string} [args.title]
  * @param {Color} [args.baseColor]
@@ -417,7 +417,7 @@ export function fromBaseStatsPattern({
   return [
     dots({
       series: pattern.height,
-      name: title || "base",
+      name: title || "Base",
       color: baseColor,
       unit,
     }),
@@ -427,8 +427,10 @@ export function fromBaseStatsPattern({
 
 /**
  * Extract stats at a specific rolling window
- * @param {Record<string, any>} pattern - Pattern with pct10/pct25/pct75/pct90 and median/max/min as _1y24h30d7dPattern
+ * @template T
+ * @param {WindowedStats<T>} pattern - Pattern with pct10/pct25/pct75/pct90 and median/max/min at each rolling window
  * @param {string} window
+ * @returns {{ median: T, max: T, min: T, pct75: T, pct25: T, pct90: T, pct10: T }}
  */
 export function statsAtWindow(pattern, window) {
   return {
@@ -450,6 +452,7 @@ export function statsAtWindow(pattern, window) {
  * @param {(w: typeof ROLLING_WINDOWS[number]) => string} args.windowTitle
  * @param {Unit} args.unit
  * @param {string} args.name
+ * @param {string} args.legend
  * @returns {PartialOptionsGroup}
  */
 function rollingWindowsTreeBaseline({
@@ -458,6 +461,7 @@ function rollingWindowsTreeBaseline({
   windowTitle,
   unit,
   name,
+  legend,
 }) {
   return {
     name,
@@ -477,7 +481,7 @@ function rollingWindowsTreeBaseline({
       ...ROLLING_WINDOWS.map((w) => ({
         name: w.name,
         title: windowTitle(w),
-        bottom: [baseline({ series: windows[w.key], name: w.name, unit })],
+        bottom: [baseline({ series: windows[w.key], name: legend, unit })],
       })),
     ],
   };
@@ -605,15 +609,17 @@ export function sumsAndAveragesCumulative({
  * @param {(metric: string) => string} [args.title]
  * @param {string} args.metric
  * @param {Unit} args.unit
+ * @param {string} [args.legend]
  * @returns {PartialOptionsGroup}
  */
-export function sumsTreeBaseline({ windows, title = (s) => s, metric, unit }) {
+export function sumsTreeBaseline({ windows, title = (s) => s, metric, unit, legend = "Sum" }) {
   return rollingWindowsTreeBaseline({
     windows,
     title: title(metric),
     windowTitle: (w) => title(`${w.title} ${metric}`),
     unit,
     name: "Sums",
+    legend,
   });
 }
 
@@ -639,16 +645,16 @@ export function averagesArray({ windows, title = (s) => s, metric, unit }) {
       name: w.name,
       title: title(`${w.title} ${metric}`),
       bottom: [
-        line({ series: windows[w.key], name: w.name, color: w.color, unit }),
+        line({ series: windows[w.key], name: "Average", color: w.color, unit }),
       ],
     })),
   ];
 }
 
 /**
- * Create a Distribution folder tree with stats at each rolling window (24h/7d/30d/1y)
+ * Create a Distribution folder tree with stats at each rolling window (24h/1w/1m/1y)
  * @param {Object} args
- * @param {Record<string, any>} args.pattern - Pattern with pct10/pct25/... and average/median/... as _1y24h30d7dPattern
+ * @param {WindowedStats<AnySeriesPattern>} args.pattern - Pattern with pct10/pct25/... and average/median/... at each rolling window
  * @param {AnySeriesPattern} [args.base] - Optional base series to show as dots on each chart
  * @param {(metric: string) => string} [args.title]
  * @param {string} args.metric
@@ -675,7 +681,7 @@ export function distributionWindowsTree({ pattern, base, title = (s) => s, metri
         name: w.name,
         title: title(`${w.title} ${metric} Distribution`),
         bottom: [
-          ...(base ? [line({ series: base, name: "base", unit })] : []),
+          ...(base ? [line({ series: base, name: "Base", unit })] : []),
           ...percentileSeries({ pattern: statsAtWindow(pattern, w.key), unit }),
         ],
       })),
@@ -871,7 +877,7 @@ export function rollingPercentRatioTree({
       ...ROLLING_WINDOWS.map((w) => ({
         name: w.name,
         title: title(`${w.title} ${metric}`),
-        bottom: percentRatioBaseline({ pattern: windows[w.key], name: w.name }),
+        bottom: percentRatioBaseline({ pattern: windows[w.key], name: "Rate" }),
       })),
     ],
   };
@@ -911,7 +917,7 @@ export function deltaTree({ delta, title = (s) => s, metric, unit, extract }) {
           bottom: [
             baseline({
               series: extract(delta.absolute[w.key]),
-              name: w.name,
+              name: "Change",
               unit,
             }),
           ],
@@ -1068,7 +1074,7 @@ export function chartsFromBlockAnd6b({ pattern, title = (s) => s, metric, unit }
 /**
  * Averages + Sums + Cumulative charts
  * @param {Object} args
- * @param {CountPattern<any>} args.pattern
+ * @param {CountPattern<number>} args.pattern
  * @param {(metric: string) => string} [args.title]
  * @param {string} args.metric
  * @param {Unit} args.unit
@@ -1090,7 +1096,7 @@ export function chartsFromCount({ pattern, title = (s) => s, metric, unit, color
 /**
  * Windowed sums + cumulative for multiple named entries (e.g. transaction versions)
  * @param {Object} args
- * @param {Array<[string, CountPattern<any>]>} args.entries
+ * @param {Array<[string, CountPattern<number>]>} args.entries
  * @param {(metric: string) => string} [args.title]
  * @param {string} args.metric
  * @param {Unit} args.unit

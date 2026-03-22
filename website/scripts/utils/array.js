@@ -1,6 +1,6 @@
 /**
  * Typed Object.entries that preserves key types
- * @template {Record<string, any>} T
+ * @template {Record<string, unknown>} T
  * @param {T} obj
  * @returns {[keyof T & string, T[keyof T & string]][]}
  */

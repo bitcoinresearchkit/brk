@@ -115,7 +115,7 @@ function volumeFolder(activity, color, title) {
 
 /**
  * @param {{ transferVolume: TransferVolumePattern }} activity
- * @param {CountPattern<any>} adjustedTransferVolume
+ * @param {CountPattern<number>} adjustedTransferVolume
  * @param {Color} color
  * @param {(name: string) => string} title
  * @returns {PartialOptionsGroup}
@@ -171,7 +171,7 @@ function singleRollingSoprTree(ratio, title, prefix = "") {
 }
 
 /**
- * @param {CountPattern<any>} valueDestroyed
+ * @param {CountPattern<number>} valueDestroyed
  * @param {(name: string) => string} title
  * @returns {PartialOptionsTree}
  */
@@ -180,7 +180,7 @@ function valueDestroyedTree(valueDestroyed, title) {
 }
 
 /**
- * @param {CountPattern<any>} valueDestroyed
+ * @param {CountPattern<number>} valueDestroyed
  * @param {(name: string) => string} title
  * @returns {PartialOptionsGroup}
  */
@@ -189,8 +189,8 @@ function valueDestroyedFolder(valueDestroyed, title) {
 }
 
 /**
- * @param {CountPattern<any>} valueDestroyed
- * @param {CountPattern<any>} adjusted
+ * @param {CountPattern<number>} valueDestroyed
+ * @param {CountPattern<number>} adjusted
  * @param {(name: string) => string} title
  * @returns {PartialOptionsGroup}
  */
@@ -471,7 +471,7 @@ function groupedVolumeFolder(list, all, title, getTransferVolume) {
  * @param {A} all
  * @param {(name: string) => string} title
  * @param {(c: T | A) => { sum: Record<string, AnyValuePattern>, cumulative: AnyValuePattern, inProfit: { sum: Record<string, AnyValuePattern>, cumulative: AnyValuePattern }, inLoss: { sum: Record<string, AnyValuePattern>, cumulative: AnyValuePattern } }} getTransferVolume
- * @param {(c: T | A) => CountPattern<any>} getAdjustedTransferVolume
+ * @param {(c: T | A) => CountPattern<number>} getAdjustedTransferVolume
  * @returns {PartialOptionsGroup}
  */
 function groupedVolumeFolderWithAdjusted(list, all, title, getTransferVolume, getAdjustedTransferVolume) {
@@ -528,7 +528,7 @@ function groupedSoprCharts(list, all, getRatio, title, prefix = "") {
  * @param {readonly T[]} list
  * @param {A} all
  * @param {(name: string) => string} title
- * @param {(c: T | A) => CountPattern<any>} getValueDestroyed
+ * @param {(c: T | A) => CountPattern<number>} getValueDestroyed
  * @returns {PartialOptionsTree}
  */
 function groupedValueDestroyedTree(list, all, title, getValueDestroyed) {
@@ -546,7 +546,7 @@ function groupedValueDestroyedTree(list, all, title, getValueDestroyed) {
  * @param {readonly T[]} list
  * @param {A} all
  * @param {(name: string) => string} title
- * @param {(c: T | A) => CountPattern<any>} getValueDestroyed
+ * @param {(c: T | A) => CountPattern<number>} getValueDestroyed
  * @returns {PartialOptionsGroup}
  */
 function groupedValueDestroyedFolder(list, all, title, getValueDestroyed) {
@@ -559,8 +559,8 @@ function groupedValueDestroyedFolder(list, all, title, getValueDestroyed) {
  * @param {readonly T[]} list
  * @param {A} all
  * @param {(name: string) => string} title
- * @param {(c: T | A) => CountPattern<any>} getValueDestroyed
- * @param {(c: T | A) => CountPattern<any>} getAdjustedValueDestroyed
+ * @param {(c: T | A) => CountPattern<number>} getValueDestroyed
+ * @param {(c: T | A) => CountPattern<number>} getAdjustedValueDestroyed
  * @returns {PartialOptionsGroup}
  */
 function groupedValueDestroyedFolderWithAdjusted(list, all, title, getValueDestroyed, getAdjustedValueDestroyed) {

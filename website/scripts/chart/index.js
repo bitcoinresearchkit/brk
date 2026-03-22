@@ -52,7 +52,8 @@ import { Unit } from "../utils/units.js";
  */
 
 /**
- * @typedef {Series<any>} AnySeries
+ * @typedef {SingleValueData | CandlestickData | LineData | BaselineData | HistogramData | WhitespaceData} AnyChartData
+ * @typedef {Series<AnyChartData>} AnySeries
  */
 
 /**
@@ -69,7 +70,7 @@ import { Unit } from "../utils/units.js";
  * @property {function(number): void} removeFrom
  */
 
-const lineWidth = /** @type {any} */ (1.5);
+const lineWidth = /** @type {1} */ (/** @type {unknown} */ (1.5));
 
 const MAX_SIZE = 10_000;
 
@@ -140,7 +141,7 @@ export function createChart({ parent, brk, fitContent }) {
       if (cached) {
         this.data = cached;
       }
-      endpoint.slice(-MAX_SIZE).fetch((/** @type {any} */ result) => {
+      endpoint.slice(-MAX_SIZE).fetch((/** @type {AnySeriesData} */ result) => {
         if (currentGen !== generation) return;
         cache.set(endpoint.path, result);
         this.data = result;
@@ -150,7 +151,7 @@ export function createChart({ parent, brk, fitContent }) {
   };
 
   // Memory cache for instant index switching
-  /** @type {Map<string, SeriesData<any>>} */
+  /** @type {Map<string, AnySeriesData>} */
   const cache = new Map();
 
   // Range state: localStorage stores all ranges per-index, URL stores current range only
@@ -432,9 +433,9 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {boolean} [args.defaultActive]
      * @param {(order: number) => void} args.setOrder
      * @param {(active: boolean, highlighted: boolean) => void} args.applyOptions
-     * @param {() => readonly any[]} args.getData
-     * @param {(data: any[]) => void} args.setData
-     * @param {(data: any) => void} args.update
+     * @param {() => readonly AnyChartData[]} args.getData
+     * @param {(data: AnyChartData[]) => void} args.setData
+     * @param {(data: AnyChartData) => void} args.update
      * @param {() => void} args.onRemove
      */
     create({
@@ -791,8 +792,7 @@ export function createChart({ parent, brk, fitContent }) {
       const upColor = customColors?.[0] ?? colors.bi.p1[0];
       const downColor = customColors?.[1] ?? colors.bi.p1[1];
 
-      /** @type {CandlestickISeries} */
-      const candlestickISeries = /** @type {any} */ (
+      const candlestickISeries = /** @type {CandlestickISeries} */ (
         ichart.addSeries(
           /** @type {SeriesDefinition<'Candlestick'>} */ (CandlestickSeries),
           { visible: false, borderVisible: false, ...options },
@@ -800,8 +800,7 @@ export function createChart({ parent, brk, fitContent }) {
         )
       );
 
-      /** @type {LineISeries} */
-      const lineISeries = /** @type {any} */ (
+      const lineISeries = /** @type {LineISeries} */ (
         ichart.addSeries(
           /** @type {SeriesDefinition<'Line'>} */ (LineSeries),
           { visible: false, lineWidth, priceLineVisible: true },
@@ -851,9 +850,10 @@ export function createChart({ parent, brk, fitContent }) {
           });
         },
         setData: (data) => {
-          candlestickISeries.setData(data);
+          const cdata = /** @type {CandlestickData[]} */ (data);
+          candlestickISeries.setData(cdata);
           lineISeries.setData(
-            data.map((d) => ({ time: d.time, value: d.close })),
+            cdata.map((d) => ({ time: d.time, value: d.close })),
           );
           requestAnimationFrame(() => {
             if (generation !== series.generation) return;
@@ -862,8 +862,9 @@ export function createChart({ parent, brk, fitContent }) {
           });
         },
         update: (data) => {
-          candlestickISeries.update(data);
-          lineISeries.update({ time: data.time, value: data.close });
+          const cd = /** @type {CandlestickData} */ (data);
+          candlestickISeries.update(cd);
+          lineISeries.update({ time: cd.time, value: cd.close });
         },
         getData: () => candlestickISeries.data(),
         onRemove: () => {
@@ -903,8 +904,7 @@ export function createChart({ parent, brk, fitContent }) {
       const positiveColor = isDualColor ? color[0] : color;
       const negativeColor = isDualColor ? color[1] : color;
 
-      /** @type {HistogramISeries} */
-      const iseries = /** @type {any} */ (
+      const iseries = /** @type {HistogramISeries} */ (
         ichart.addSeries(
           /** @type {SeriesDefinition<'Histogram'>} */ (HistogramSeries),
           { priceLineVisible: false, ...options },
@@ -972,8 +972,7 @@ export function createChart({ parent, brk, fitContent }) {
       defaultActive,
       options,
     }) {
-      /** @type {LineISeries} */
-      const iseries = /** @type {any} */ (
+      const iseries = /** @type {LineISeries} */ (
         ichart.addSeries(
           /** @type {SeriesDefinition<'Line'>} */ (LineSeries),
           { lineWidth, priceLineVisible: false, ...options },
@@ -1029,8 +1028,7 @@ export function createChart({ parent, brk, fitContent }) {
       defaultActive,
       options,
     }) {
-      /** @type {LineISeries} */
-      const iseries = /** @type {any} */ (
+      const iseries = /** @type {LineISeries} */ (
         ichart.addSeries(
           /** @type {SeriesDefinition<'Line'>} */ (LineSeries),
           {
@@ -1110,8 +1108,7 @@ export function createChart({ parent, brk, fitContent }) {
       bottomColor = colors.bi.p1[1],
       options,
     }) {
-      /** @type {BaselineISeries} */
-      const iseries = /** @type {any} */ (
+      const iseries = /** @type {BaselineISeries} */ (
         ichart.addSeries(
           /** @type {SeriesDefinition<'Baseline'>} */ (BaselineSeries),
           {
@@ -1182,8 +1179,7 @@ export function createChart({ parent, brk, fitContent }) {
       bottomColor = colors.bi.p1[1],
       options,
     }) {
-      /** @type {BaselineISeries} */
-      const iseries = /** @type {any} */ (
+      const iseries = /** @type {BaselineISeries} */ (
         ichart.addSeries(
           /** @type {SeriesDefinition<'Baseline'>} */ (BaselineSeries),
           {
