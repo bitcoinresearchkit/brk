@@ -5655,7 +5655,7 @@ class SeriesTree:
 class BrkClient(BrkClientBase):
     """Main BRK client with series tree and API methods."""
 
-    VERSION = "v0.1.9"
+    VERSION = "v0.2.1"
 
     INDEXES = [
       "minute10",
