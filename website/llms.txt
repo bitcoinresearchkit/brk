@@ -1,94 +1,32 @@
 # Bitcoin Research Kit (BRK)
 
-> Open-source Bitcoin on-chain analytics API. Thousands of metrics, block explorer, address index — all computed from a Bitcoin Core node, including the price.
+> Free, open-source Bitcoin on-chain analytics API at https://bitview.space. 49,000+ time-series (price, hashrate, supply, MVRV, HODL waves, and more), block explorer, address index, mempool stats, mining data. No auth required. JSON and CSV output.
 
-Base URL: https://bitview.space
+## API Documentation
 
-## API
+- [Full API reference (plain text)](https://bitview.space/llms-full.txt): Every endpoint, parameter, and response shape
+- [OpenAPI spec (compact, LLM-optimized)](https://bitview.space/api.json): Machine-readable, minimal spec for tool use
+- [OpenAPI spec (full)](https://bitview.space/openapi.json): Complete OpenAPI 3.1 specification
+- [Interactive docs](https://bitview.space/api): Scalar API explorer
 
-Free, no auth required. JSON and CSV output. Mempool.space compatible for block/tx/address endpoints.
+## Quick Start
 
-- [Interactive docs](https://bitview.space/api)
-- [OpenAPI spec (compact, LLM-optimized)](https://bitview.space/api.json)
-- [OpenAPI spec (full)](https://bitview.space/openapi.json)
-
-## Discover
-
-Search for metrics by keyword:
-
-    GET /api/metrics/search?q={query}
-
-Get metric info (available indexes, value type):
-
-    GET /api/metric/{metric}
-
-Browse all available metrics:
-
-    GET /api/metrics/list
-
-List available indexes (date, height, etc.):
-
-    GET /api/metrics/indexes
-
-Browse the full metric catalog as a tree:
-
-    GET /api/metrics
-
-## Query
-
-Get a metric by name and index:
-
-    GET /api/metric/{metric}/{index}
-    GET /api/metric/{metric}/{index}?start=2025-01-01&end=2025-06-01
-    GET /api/metric/{metric}/{index}?start=-30
-
-Get just the data array (no wrapper):
-
-    GET /api/metric/{metric}/{index}/data
-
-Get the latest value:
-
-    GET /api/metric/{metric}/{index}/latest
-
-Get the data length or version:
-
-    GET /api/metric/{metric}/{index}/len
-    GET /api/metric/{metric}/{index}/version
-
-Example — last 30 days of Bitcoin closing price:
-
-    GET /api/metric/price/day?start=-30
-
-Fetch multiple metrics at once:
-
-    GET /api/metrics/bulk?index={index}&metrics={metric1},{metric2}
-
-Range parameters `start` and `end` accept integers, dates (YYYY-MM-DD), or ISO 8601 timestamps. See the [OpenAPI spec](https://bitview.space/api.json) for full details.
-
-## Block Explorer
-
-    GET /api/block-height/{height}
-    GET /api/block/{hash}
-    GET /api/tx/{txid}
-    GET /api/address/{address}
-
-## Mempool
-
-    GET /api/mempool/price
-    GET /api/mempool/info
-    GET /api/v1/fees/recommended
+- [Search series](https://bitview.space/api/series/search?q=price): `GET /api/series/search?q={query}`
+- [Get series data](https://bitview.space/api/series/price/day?start=-30): `GET /api/series/{name}/{index}?start=-30`
+- [Latest value](https://bitview.space/api/series/price/day/latest): `GET /api/series/{name}/{index}/latest`
+- [Bulk query](https://bitview.space/api/series/bulk?index=day&series=price,market_cap&start=-7): `GET /api/series/bulk?index={index}&series={s1},{s2}`
+- [Block by height](https://bitview.space/api/block-height/0): `GET /api/block-height/{height}`
+- [Transaction](https://bitview.space/api/tx/4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b): `GET /api/tx/{txid}`
+- [Address](https://bitview.space/api/address/1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa): `GET /api/address/{address}`
+- [Fee estimates](https://bitview.space/api/v1/fees/recommended): `GET /api/v1/fees/recommended`
+- [Live price](https://bitview.space/api/mempool/price): `GET /api/mempool/price`
 
 ## Client Libraries
 
-- JavaScript: https://www.npmjs.com/package/brk-client
-- Python: https://pypi.org/project/brk-client/
-- Rust: https://crates.io/crates/brk_client
-
-## Metric Categories
-
-Market, supply, mining, network activity, UTXO age bands, cointime economics, holder cohorts, cost basis distributions, and more. Use the discovery endpoints above to explore.
+- [JavaScript](https://www.npmjs.com/package/brk-client): npm install brk-client
+- [Python](https://pypi.org/project/brk-client/): pip install brk-client
+- [Rust](https://crates.io/crates/brk_client): cargo add brk_client
 
 ## Source
 
-- GitHub: https://github.com/bitcoinresearchkit/brk
-- License: MIT
+- [GitHub](https://github.com/bitcoinresearchkit/brk): MIT licensed
