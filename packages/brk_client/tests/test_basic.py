@@ -12,9 +12,9 @@ def test_client_creation():
 
 def test_tree_exists():
     client = BrkClient("http://localhost:3110")
-    assert hasattr(client, "metrics")
-    assert hasattr(client.metrics, "price")
-    assert hasattr(client.metrics, "blocks")
+    assert hasattr(client, "series")
+    assert hasattr(client.series, "prices")
+    assert hasattr(client.series, "blocks")
 
 
 def test_fetch_block():
@@ -22,38 +22,38 @@ def test_fetch_block():
     print(client.get_block_by_height(800000))
 
 
-def test_fetch_json_metric():
+def test_fetch_json_series():
     client = BrkClient("http://localhost:3110")
-    a = client.get_metric("price_close", "day1")
+    a = client.get_series("price_close", "day1")
     print(a)
 
 
-def test_fetch_csv_metric():
+def test_fetch_csv_series():
     client = BrkClient("http://localhost:3110")
-    a = client.get_metric("price_close", "day1", -10, None, None, "csv")
+    a = client.get_series("price_close", "day1", -10, None, None, "csv")
     print(a)
 
 
-def test_fetch_typed_metric():
+def test_fetch_typed_series():
     client = BrkClient("http://localhost:3110")
     # Using new idiomatic API: tail(10).fetch() or [-10:].fetch()
-    a = client.metrics.constants._0.by.day1().tail(10).fetch()
+    a = client.series.constants._0.by.day1().tail(10).fetch()
     print(a)
-    b = client.metrics.outputs.count.unspent.by.height().tail(10).fetch()
+    b = client.series.outputs.count.unspent.by.height().tail(10).fetch()
     print(b)
-    c = client.metrics.prices.split.close.usd.by.day1().tail(10).fetch()
+    c = client.series.prices.split.close.usd.by.day1().tail(10).fetch()
     print(c)
     d = (
-        client.metrics.market.dca.period.lump_sum_stack._10y.usd.by.day1()
+        client.series.market.dca.period.lump_sum_stack._10y.usd.by.day1()
         .tail(10)
         .fetch()
     )
     print(d)
     e = (
-        client.metrics.market.dca.class_.cost_basis.from_2017.usd.by.day1()
+        client.series.market.dca.class_.cost_basis.from_2017.usd.by.day1()
         .tail(10)
         .fetch()
     )
     print(e)
-    f = client.metrics.prices.ohlc.usd.by.day1().tail(10).fetch()
+    f = client.series.prices.ohlc.usd.by.day1().tail(10).fetch()
     print(f)

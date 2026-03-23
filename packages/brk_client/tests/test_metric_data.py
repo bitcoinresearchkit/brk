@@ -1,11 +1,11 @@
-# Tests for MetricData and DateMetricData helper methods including polars/pandas conversion
+# Tests for SeriesData and DateSeriesData helper methods including polars/pandas conversion
 # Run: uv run pytest tests/test_metric_data.py -v
 
 from datetime import date, datetime, timezone, timedelta
 
 import pytest
 
-from brk_client import MetricData, DateMetricData
+from brk_client import SeriesData, DateSeriesData
 
 
 # ============ Fixtures ============
@@ -13,10 +13,11 @@ from brk_client import MetricData, DateMetricData
 
 @pytest.fixture
 def day1_metric():
-    """DateMetricData with day1 (date-based, daily)."""
-    return DateMetricData(
+    """DateSeriesData with day1 (date-based, daily)."""
+    return DateSeriesData(
         version=1,
         index="day1",
+        type="n",
         total=100,
         start=0,
         end=5,
@@ -27,10 +28,11 @@ def day1_metric():
 
 @pytest.fixture
 def height_metric():
-    """MetricData with height (non-date-based)."""
-    return MetricData(
+    """SeriesData with height (non-date-based)."""
+    return SeriesData(
         version=1,
         index="height",
+        type="n",
         total=1000,
         start=800000,
         end=800005,
@@ -41,10 +43,11 @@ def height_metric():
 
 @pytest.fixture
 def month1_metric():
-    """DateMetricData with month1."""
-    return DateMetricData(
+    """DateSeriesData with month1."""
+    return DateSeriesData(
         version=1,
         index="month1",
+        type="n",
         total=200,
         start=0,
         end=3,
@@ -55,10 +58,11 @@ def month1_metric():
 
 @pytest.fixture
 def hour1_metric():
-    """DateMetricData with hour1 (sub-daily)."""
-    return DateMetricData(
+    """DateSeriesData with hour1 (sub-daily)."""
+    return DateSeriesData(
         version=1,
         index="hour1",
+        type="n",
         total=200000,
         start=0,
         end=3,
@@ -69,10 +73,11 @@ def hour1_metric():
 
 @pytest.fixture
 def week1_metric():
-    """DateMetricData with week1."""
-    return DateMetricData(
+    """DateSeriesData with week1."""
+    return DateSeriesData(
         version=1,
         index="week1",
+        type="n",
         total=800,
         start=0,
         end=3,
@@ -83,10 +88,11 @@ def week1_metric():
 
 @pytest.fixture
 def year1_metric():
-    """DateMetricData with year1."""
-    return DateMetricData(
+    """DateSeriesData with year1."""
+    return DateSeriesData(
         version=1,
         index="year1",
+        type="n",
         total=20,
         start=0,
         end=3,
@@ -97,10 +103,11 @@ def year1_metric():
 
 @pytest.fixture
 def day3_metric():
-    """DateMetricData with day3."""
-    return DateMetricData(
+    """DateSeriesData with day3."""
+    return DateSeriesData(
         version=1,
         index="day3",
+        type="n",
         total=2000,
         start=0,
         end=3,
@@ -111,10 +118,11 @@ def day3_metric():
 
 @pytest.fixture
 def empty_metric():
-    """MetricData with empty data."""
-    return MetricData(
+    """SeriesData with empty data."""
+    return SeriesData(
         version=1,
         index="day1",
+        type="n",
         total=100,
         start=5,
         end=5,
@@ -149,10 +157,10 @@ class TestIsDateBased:
         assert height_metric.is_date_based is False
 
 
-# ============ MetricData (int-indexed) ============
+# ============ SeriesData (int-indexed) ============
 
 
-class TestMetricData:
+class TestSeriesData:
     def test_keys(self, height_metric):
         assert height_metric.keys() == [800000, 800001, 800002, 800003, 800004]
 
@@ -192,13 +200,13 @@ class TestMetricData:
         assert empty_metric.indexes() == []
 
 
-# ============ DateMetricData inheritance ============
+# ============ DateSeriesData inheritance ============
 
 
-class TestDateMetricDataInheritance:
+class TestDateSeriesDataInheritance:
     def test_isinstance(self, day1_metric):
-        assert isinstance(day1_metric, DateMetricData)
-        assert isinstance(day1_metric, MetricData)
+        assert isinstance(day1_metric, DateSeriesData)
+        assert isinstance(day1_metric, SeriesData)
 
     def test_int_keys_inherited(self, day1_metric):
         assert day1_metric.keys() == [0, 1, 2, 3, 4]
@@ -363,10 +371,10 @@ class TestDateToIndex:
             assert _date_to_index("hour1", d) == i
 
 
-# ============ DateMetricData date methods ============
+# ============ DateSeriesData date methods ============
 
 
-class TestDateMetricDataMethods:
+class TestDateSeriesDataMethods:
     def test_date_items(self, day1_metric):
         items = day1_metric.date_items()
         assert items[0] == (date(2009, 1, 3), 100)
