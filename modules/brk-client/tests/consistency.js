@@ -82,7 +82,7 @@ async function testConsistency() {
         if (!byIndex.has(idxName)) {
           byIndex.set(idxName, []);
         }
-        byIndex.get(idxName).push({ path: fullPath, total });
+        /** @type {Array<{path: string, total: number}>} */ (byIndex.get(idxName)).push({ path: fullPath, total });
       } catch (e) {
         console.log(
           `FAIL: ${fullPath} -> ${e instanceof Error ? e.message : e}`,
@@ -110,7 +110,7 @@ async function testConsistency() {
     const grouped = new Map();
     for (const { path, total } of entries) {
       if (!grouped.has(total)) grouped.set(total, []);
-      grouped.get(total).push(path);
+      /** @type {string[]} */ (grouped.get(total)).push(path);
     }
 
     for (const [total, paths] of [...grouped].sort((a, b) => b[0] - a[0])) {
@@ -123,7 +123,7 @@ async function testConsistency() {
 
   if (failed) {
     console.log("\nFAILED: length mismatches detected");
-    process.exit(1);
+    throw new Error("length mismatches detected");
   } else {
     console.log("\nPASSED: all indexes consistent");
   }
