@@ -8,12 +8,13 @@ use brk_types::{
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    AggFold, LazyAggVec, ReadOnlyClone, ReadableBoxedVec, ReadableVec, VecIndex, VecValue,
+    AggFold, LazyAggVec, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, ReadableVec,
+    VecIndex, VecValue,
 };
 
 use crate::{
     indexes,
-    internal::{ComputedVecValue, NumericValue, PerResolution},
+    internal::{ComputedVecValue, NumericValue, PerResolution, cache_wrap},
 };
 
 /// Aggregation strategy for epoch-based indices (Halving, Epoch).
@@ -107,6 +108,9 @@ where
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Self {
+        let cached = cache_wrap(height_source);
+        let height_source = cached.read_only_boxed_clone();
+
         let cm = &indexes.cached_mappings;
 
         macro_rules! res {

@@ -57,7 +57,7 @@ impl Server {
             query: query.clone(),
             data_path,
             website,
-            cache: Arc::new(Cache::new(5_000)),
+            cache: Arc::new(Cache::new(1_000)),
             started_at: jiff::Timestamp::now(),
             started_instant: Instant::now(),
         })

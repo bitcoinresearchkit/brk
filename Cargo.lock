@@ -504,6 +504,7 @@ dependencies = [
  "brk_types",
  "color-eyre",
  "derive_more",
+ "parking_lot",
  "rayon",
  "rustc-hash",
  "schemars",
@@ -2544,7 +2545,9 @@ dependencies = [
 
 [[package]]
 name = "rawdb"
-version = "0.7.1"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "912a9c6f76a5f141057139d510b969b082ff74f39a72a1c27178d8e1eeec95dc"
 dependencies = [
  "libc",
  "log",
@@ -3436,7 +3439,9 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.7.1"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6f89be182f86511ee28832cc04039d818564b88c63b14093fcf1871c732c0dd"
 dependencies = [
  "itoa",
  "libc",
@@ -3457,7 +3462,9 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.7.1"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42915a5ca404d941e3e6d024f794403c481e5aeb96b1867d12d1f1e972d1433f"
 dependencies = [
  "quote",
  "syn",

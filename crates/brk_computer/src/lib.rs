@@ -299,6 +299,8 @@ impl Computer {
         reader: &Reader,
         exit: &Exit,
     ) -> Result<()> {
+        internal::cache_clear_all();
+
         let compute_start = Instant::now();
 
         let mut starting_indexes = timed("Computed indexes", || {
