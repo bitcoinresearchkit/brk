@@ -44,3 +44,7 @@ tower-layer = { workspace = true }
 brk_bindgen = { workspace = true }
 brk_mempool = { workspace = true }
 color-eyre = { workspace = true }
+
+[[example]]
+name = "bindgen"
+required-features = ["bindgen"]
