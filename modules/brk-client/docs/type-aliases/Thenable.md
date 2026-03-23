@@ -4,11 +4,11 @@
 
 [brk-client](../globals.md) / Thenable
 
-# Type Alias: Thenable()\<T\>
+# Type Alias: Thenable\<T\>
 
-> **Thenable**\<`T`\> = (`onfulfilled?`, `onrejected?`) => `Promise`\<[`MetricData`](../interfaces/MetricData.md)\<`T`\>\>
+> **Thenable**\<`T`\> = (`onfulfilled?`, `onrejected?`) => `Promise`\<[`SeriesData`](SeriesData.md)\<`T`\>\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1024](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L1024)
+Defined in: [Developer/brk/modules/brk-client/index.js:1172](https://github.com/bitcoinresearchkit/brk/blob/c4c0004c4a75c182b98b9e69b3c38d3fa6f96f0e/modules/brk-client/index.js#L1172)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1024](https://github.com/
 
 ### onfulfilled?
 
-(`value`) => [`MetricData`](../interfaces/MetricData.md)\<`T`\>
+(`value`) => `any`
 
 ### onrejected?
 
@@ -28,4 +28,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1024](https://github.com/
 
 ## Returns
 
-`Promise`\<[`MetricData`](../interfaces/MetricData.md)\<`T`\>\>
+`Promise`\<[`SeriesData`](SeriesData.md)\<`T`\>\>

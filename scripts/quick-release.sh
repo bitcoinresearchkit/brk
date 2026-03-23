@@ -55,7 +55,7 @@ echo ""
 
 echo "--- Rust ---"
 cd "$ROOT_DIR"
-cargo build --workspace --release
+# cargo build --workspace --release
 echo ""
 
 echo "--- JavaScript ---"

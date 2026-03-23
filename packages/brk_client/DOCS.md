@@ -2,23 +2,25 @@
 
 * [brk\_client](#brk_client)
   * [BrkError](#brk_client.BrkError)
-  * [MetricData](#brk_client.MetricData)
   * [BrkClient](#brk_client.BrkClient)
     * [VERSION](#brk_client.BrkClient.VERSION)
     * [INDEXES](#brk_client.BrkClient.INDEXES)
     * [POOL\_ID\_TO\_POOL\_NAME](#brk_client.BrkClient.POOL_ID_TO_POOL_NAME)
     * [TERM\_NAMES](#brk_client.BrkClient.TERM_NAMES)
     * [EPOCH\_NAMES](#brk_client.BrkClient.EPOCH_NAMES)
-    * [YEAR\_NAMES](#brk_client.BrkClient.YEAR_NAMES)
+    * [CLASS\_NAMES](#brk_client.BrkClient.CLASS_NAMES)
     * [SPENDABLE\_TYPE\_NAMES](#brk_client.BrkClient.SPENDABLE_TYPE_NAMES)
     * [AGE\_RANGE\_NAMES](#brk_client.BrkClient.AGE_RANGE_NAMES)
-    * [MAX\_AGE\_NAMES](#brk_client.BrkClient.MAX_AGE_NAMES)
-    * [MIN\_AGE\_NAMES](#brk_client.BrkClient.MIN_AGE_NAMES)
+    * [UNDER\_AGE\_NAMES](#brk_client.BrkClient.UNDER_AGE_NAMES)
+    * [OVER\_AGE\_NAMES](#brk_client.BrkClient.OVER_AGE_NAMES)
     * [AMOUNT\_RANGE\_NAMES](#brk_client.BrkClient.AMOUNT_RANGE_NAMES)
-    * [GE\_AMOUNT\_NAMES](#brk_client.BrkClient.GE_AMOUNT_NAMES)
-    * [LT\_AMOUNT\_NAMES](#brk_client.BrkClient.LT_AMOUNT_NAMES)
+    * [OVER\_AMOUNT\_NAMES](#brk_client.BrkClient.OVER_AMOUNT_NAMES)
+    * [UNDER\_AMOUNT\_NAMES](#brk_client.BrkClient.UNDER_AMOUNT_NAMES)
+    * [PROFITABILITY\_RANGE\_NAMES](#brk_client.BrkClient.PROFITABILITY_RANGE_NAMES)
+    * [PROFIT\_NAMES](#brk_client.BrkClient.PROFIT_NAMES)
+    * [LOSS\_NAMES](#brk_client.BrkClient.LOSS_NAMES)
     * [\_\_init\_\_](#brk_client.BrkClient.__init__)
-    * [metric](#brk_client.BrkClient.metric)
+    * [series\_endpoint](#brk_client.BrkClient.series_endpoint)
     * [index\_to\_date](#brk_client.BrkClient.index_to_date)
     * [date\_to\_index](#brk_client.BrkClient.date_to_index)
     * [get\_api](#brk_client.BrkClient.get_api)
@@ -39,17 +41,21 @@
     * [get\_mempool](#brk_client.BrkClient.get_mempool)
     * [get\_live\_price](#brk_client.BrkClient.get_live_price)
     * [get\_mempool\_txids](#brk_client.BrkClient.get_mempool_txids)
-    * [get\_metric\_info](#brk_client.BrkClient.get_metric_info)
-    * [get\_metric](#brk_client.BrkClient.get_metric)
-    * [get\_metrics\_tree](#brk_client.BrkClient.get_metrics_tree)
-    * [get\_metrics](#brk_client.BrkClient.get_metrics)
+    * [get\_series\_tree](#brk_client.BrkClient.get_series_tree)
+    * [get\_series\_bulk](#brk_client.BrkClient.get_series_bulk)
     * [get\_cost\_basis\_cohorts](#brk_client.BrkClient.get_cost_basis_cohorts)
     * [get\_cost\_basis\_dates](#brk_client.BrkClient.get_cost_basis_dates)
     * [get\_cost\_basis](#brk_client.BrkClient.get_cost_basis)
-    * [get\_metrics\_count](#brk_client.BrkClient.get_metrics_count)
+    * [get\_series\_count](#brk_client.BrkClient.get_series_count)
     * [get\_indexes](#brk_client.BrkClient.get_indexes)
-    * [list\_metrics](#brk_client.BrkClient.list_metrics)
-    * [search\_metrics](#brk_client.BrkClient.search_metrics)
+    * [list\_series](#brk_client.BrkClient.list_series)
+    * [search\_series](#brk_client.BrkClient.search_series)
+    * [get\_series\_info](#brk_client.BrkClient.get_series_info)
+    * [get\_series](#brk_client.BrkClient.get_series)
+    * [get\_series\_data](#brk_client.BrkClient.get_series_data)
+    * [get\_series\_latest](#brk_client.BrkClient.get_series_latest)
+    * [get\_series\_len](#brk_client.BrkClient.get_series_len)
+    * [get\_series\_version](#brk_client.BrkClient.get_series_version)
     * [get\_disk\_usage](#brk_client.BrkClient.get_disk_usage)
     * [get\_sync\_status](#brk_client.BrkClient.get_sync_status)
     * [get\_tx](#brk_client.BrkClient.get_tx)
@@ -92,17 +98,6 @@ class BrkError(Exception)
 
 Custom error class for BRK client errors.
 
-<a id="brk_client.MetricData"></a>
-
-## MetricData Objects
-
-```python
-@dataclass
-class MetricData(Generic[T])
-```
-
-Metric data with range information.
-
 <a id="brk_client.BrkClient"></a>
 
 ## BrkClient Objects
@@ -111,7 +106,7 @@ Metric data with range information.
 class BrkClient(BrkClientBase)
 ```
 
-Main BRK client with metrics tree and API methods.
+Main BRK client with series tree and API methods.
 
 <a id="brk_client.BrkClient.VERSION"></a>
 
@@ -133,9 +128,9 @@ Main BRK client with metrics tree and API methods.
 
 #### EPOCH\_NAMES
 
-<a id="brk_client.BrkClient.YEAR_NAMES"></a>
+<a id="brk_client.BrkClient.CLASS_NAMES"></a>
 
-#### YEAR\_NAMES
+#### CLASS\_NAMES
 
 <a id="brk_client.BrkClient.SPENDABLE_TYPE_NAMES"></a>
 
@@ -145,25 +140,37 @@ Main BRK client with metrics tree and API methods.
 
 #### AGE\_RANGE\_NAMES
 
-<a id="brk_client.BrkClient.MAX_AGE_NAMES"></a>
+<a id="brk_client.BrkClient.UNDER_AGE_NAMES"></a>
 
-#### MAX\_AGE\_NAMES
+#### UNDER\_AGE\_NAMES
 
-<a id="brk_client.BrkClient.MIN_AGE_NAMES"></a>
+<a id="brk_client.BrkClient.OVER_AGE_NAMES"></a>
 
-#### MIN\_AGE\_NAMES
+#### OVER\_AGE\_NAMES
 
 <a id="brk_client.BrkClient.AMOUNT_RANGE_NAMES"></a>
 
 #### AMOUNT\_RANGE\_NAMES
 
-<a id="brk_client.BrkClient.GE_AMOUNT_NAMES"></a>
+<a id="brk_client.BrkClient.OVER_AMOUNT_NAMES"></a>
 
-#### GE\_AMOUNT\_NAMES
+#### OVER\_AMOUNT\_NAMES
 
-<a id="brk_client.BrkClient.LT_AMOUNT_NAMES"></a>
+<a id="brk_client.BrkClient.UNDER_AMOUNT_NAMES"></a>
 
-#### LT\_AMOUNT\_NAMES
+#### UNDER\_AMOUNT\_NAMES
+
+<a id="brk_client.BrkClient.PROFITABILITY_RANGE_NAMES"></a>
+
+#### PROFITABILITY\_RANGE\_NAMES
+
+<a id="brk_client.BrkClient.PROFIT_NAMES"></a>
+
+#### PROFIT\_NAMES
+
+<a id="brk_client.BrkClient.LOSS_NAMES"></a>
+
+#### LOSS\_NAMES
 
 <a id="brk_client.BrkClient.__init__"></a>
 
@@ -173,18 +180,18 @@ Main BRK client with metrics tree and API methods.
 def __init__(base_url: str = 'http://localhost:3000', timeout: float = 30.0)
 ```
 
-<a id="brk_client.BrkClient.metric"></a>
+<a id="brk_client.BrkClient.series_endpoint"></a>
 
-#### metric
+#### series\_endpoint
 
 ```python
-def metric(metric: str, index: Index) -> MetricEndpointBuilder[Any]
+def series_endpoint(series: str, index: Index) -> SeriesEndpoint[Any]
 ```
 
-Create a dynamic metric endpoint builder for any metric/index combination.
+Create a dynamic series endpoint builder for any series/index combination.
 
-Use this for programmatic access when the metric name is determined at runtime.
-For type-safe access, use the `metrics` tree instead.
+Use this for programmatic access when the series name is determined at runtime.
+For type-safe access, use the `series` tree instead.
 
 <a id="brk_client.BrkClient.index_to_date"></a>
 
@@ -225,7 +232,7 @@ Endpoint: `GET /api.json`
 #### get\_address
 
 ```python
-def get_address(address: Address) -> AddressStats
+def get_address(address: Addr) -> AddrStats
 ```
 
 Address information.
@@ -241,14 +248,13 @@ Endpoint: `GET /api/address/{address}`
 #### get\_address\_txs
 
 ```python
-def get_address_txs(address: Address,
-                    after_txid: Optional[str] = None,
-                    limit: Optional[float] = None) -> List[Txid]
+def get_address_txs(address: Addr,
+                    after_txid: Optional[Txid] = None) -> List[Transaction]
 ```
 
-Address transaction IDs.
+Address transactions.
 
-Get transaction IDs for an address, newest first. Use after_txid for pagination.
+Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. Use ?after_txid=<txid> for pagination.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
 
@@ -259,14 +265,14 @@ Endpoint: `GET /api/address/{address}/txs`
 #### get\_address\_confirmed\_txs
 
 ```python
-def get_address_confirmed_txs(address: Address,
-                              after_txid: Optional[str] = None,
-                              limit: Optional[float] = None) -> List[Txid]
+def get_address_confirmed_txs(address: Addr,
+                              after_txid: Optional[Txid] = None
+                              ) -> List[Transaction]
 ```
 
 Address confirmed transactions.
 
-Get confirmed transaction IDs for an address, 25 per page. Use ?after_txid=<txid> for pagination.
+Get confirmed transactions for an address, 25 per page. Use ?after_txid=<txid> for pagination.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
 
@@ -277,7 +283,7 @@ Endpoint: `GET /api/address/{address}/txs/chain`
 #### get\_address\_mempool\_txs
 
 ```python
-def get_address_mempool_txs(address: Address) -> List[Txid]
+def get_address_mempool_txs(address: Addr) -> List[Txid]
 ```
 
 Address mempool transactions.
@@ -293,7 +299,7 @@ Endpoint: `GET /api/address/{address}/txs/mempool`
 #### get\_address\_utxos
 
 ```python
-def get_address_utxos(address: Address) -> List[Utxo]
+def get_address_utxos(address: Addr) -> List[Utxo]
 ```
 
 Address UTXOs.
@@ -494,72 +500,39 @@ Get all transaction IDs currently in the mempool.
 
 Endpoint: `GET /api/mempool/txids`
 
-<a id="brk_client.BrkClient.get_metric_info"></a>
+<a id="brk_client.BrkClient.get_series_tree"></a>
 
-#### get\_metric\_info
+#### get\_series\_tree
 
 ```python
-def get_metric_info(metric: Metric) -> List[Index]
+def get_series_tree() -> TreeNode
 ```
 
-Get supported indexes for a metric.
+Series catalog.
 
-Returns the list of indexes supported by the specified metric. For example, `realized_price` might be available on dateindex, weekindex, and monthindex.
+Returns the complete hierarchical catalog of available series organized as a tree structure. Series are grouped by categories and subcategories.
 
-Endpoint: `GET /api/metric/{metric}`
+Endpoint: `GET /api/series`
 
-<a id="brk_client.BrkClient.get_metric"></a>
+<a id="brk_client.BrkClient.get_series_bulk"></a>
 
-#### get\_metric
-
-```python
-def get_metric(metric: Metric,
-               index: Index,
-               start: Optional[float] = None,
-               end: Optional[float] = None,
-               limit: Optional[str] = None,
-               format: Optional[Format] = None) -> Union[AnyMetricData, str]
-```
-
-Get metric data.
-
-Fetch data for a specific metric at the given index. Use query parameters to filter by date range and format (json/csv).
-
-Endpoint: `GET /api/metric/{metric}/{index}`
-
-<a id="brk_client.BrkClient.get_metrics_tree"></a>
-
-#### get\_metrics\_tree
+#### get\_series\_bulk
 
 ```python
-def get_metrics_tree() -> TreeNode
-```
-
-Metrics catalog.
-
-Returns the complete hierarchical catalog of available metrics organized as a tree structure. Metrics are grouped by categories and subcategories.
-
-Endpoint: `GET /api/metrics`
-
-<a id="brk_client.BrkClient.get_metrics"></a>
-
-#### get\_metrics
-
-```python
-def get_metrics(
-        metrics: Metrics,
+def get_series_bulk(
+        series: SeriesList,
         index: Index,
-        start: Optional[float] = None,
-        end: Optional[float] = None,
-        limit: Optional[str] = None,
-        format: Optional[Format] = None) -> Union[List[AnyMetricData], str]
+        start: Optional[RangeIndex] = None,
+        end: Optional[RangeIndex] = None,
+        limit: Optional[Limit] = None,
+        format: Optional[Format] = None) -> Union[List[AnySeriesData], str]
 ```
 
-Bulk metric data.
+Bulk series data.
 
-Fetch multiple metrics in a single request. Supports filtering by index and date range. Returns an array of MetricData objects. For a single metric, use `get_metric` instead.
+Fetch multiple series in a single request. Supports filtering by index and date range. Returns an array of SeriesData objects. For a single series, use `get_series` instead.
 
-Endpoint: `GET /api/metrics/bulk`
+Endpoint: `GET /api/series/bulk`
 
 <a id="brk_client.BrkClient.get_cost_basis_cohorts"></a>
 
@@ -573,7 +546,7 @@ Available cost basis cohorts.
 
 List available cohorts for cost basis distribution.
 
-Endpoint: `GET /api/metrics/cost-basis`
+Endpoint: `GET /api/series/cost-basis`
 
 <a id="brk_client.BrkClient.get_cost_basis_dates"></a>
 
@@ -587,7 +560,7 @@ Available cost basis dates.
 
 List available dates for a cohort's cost basis distribution.
 
-Endpoint: `GET /api/metrics/cost-basis/{cohort}/dates`
+Endpoint: `GET /api/series/cost-basis/{cohort}/dates`
 
 <a id="brk_client.BrkClient.get_cost_basis"></a>
 
@@ -608,21 +581,21 @@ Query params:
 - `bucket`: raw (default), lin200, lin500, lin1000, log10, log50, log100
 - `value`: supply (default, in BTC), realized (USD), unrealized (USD)
 
-Endpoint: `GET /api/metrics/cost-basis/{cohort}/{date}`
+Endpoint: `GET /api/series/cost-basis/{cohort}/{date}`
 
-<a id="brk_client.BrkClient.get_metrics_count"></a>
+<a id="brk_client.BrkClient.get_series_count"></a>
 
-#### get\_metrics\_count
+#### get\_series\_count
 
 ```python
-def get_metrics_count() -> List[MetricCount]
+def get_series_count() -> List[SeriesCount]
 ```
 
-Metric count.
+Series count.
 
-Returns the number of metrics available per index type.
+Returns the number of series available per index type.
 
-Endpoint: `GET /api/metrics/count`
+Endpoint: `GET /api/series/count`
 
 <a id="brk_client.BrkClient.get_indexes"></a>
 
@@ -634,38 +607,132 @@ def get_indexes() -> List[IndexInfo]
 
 List available indexes.
 
-Returns all available indexes with their accepted query aliases. Use any alias when querying metrics.
+Returns all available indexes with their accepted query aliases. Use any alias when querying series.
 
-Endpoint: `GET /api/metrics/indexes`
+Endpoint: `GET /api/series/indexes`
 
-<a id="brk_client.BrkClient.list_metrics"></a>
+<a id="brk_client.BrkClient.list_series"></a>
 
-#### list\_metrics
-
-```python
-def list_metrics(page: Optional[float] = None) -> PaginatedMetrics
-```
-
-Metrics list.
-
-Paginated flat list of all available metric names. Use `page` query param for pagination.
-
-Endpoint: `GET /api/metrics/list`
-
-<a id="brk_client.BrkClient.search_metrics"></a>
-
-#### search\_metrics
+#### list\_series
 
 ```python
-def search_metrics(metric: Metric,
-                   limit: Optional[Limit] = None) -> List[Metric]
+def list_series(page: Optional[float] = None,
+                per_page: Optional[float] = None) -> PaginatedSeries
 ```
 
-Search metrics.
+Series list.
 
-Fuzzy search for metrics by name. Supports partial matches and typos.
+Paginated flat list of all available series names. Use `page` query param for pagination.
 
-Endpoint: `GET /api/metrics/search/{metric}`
+Endpoint: `GET /api/series/list`
+
+<a id="brk_client.BrkClient.search_series"></a>
+
+#### search\_series
+
+```python
+def search_series(q: SeriesName, limit: Optional[Limit] = None) -> List[str]
+```
+
+Search series.
+
+Fuzzy search for series by name. Supports partial matches and typos.
+
+Endpoint: `GET /api/series/search`
+
+<a id="brk_client.BrkClient.get_series_info"></a>
+
+#### get\_series\_info
+
+```python
+def get_series_info(series: SeriesName) -> SeriesInfo
+```
+
+Get series info.
+
+Returns the supported indexes and value type for the specified series.
+
+Endpoint: `GET /api/series/{series}`
+
+<a id="brk_client.BrkClient.get_series"></a>
+
+#### get\_series
+
+```python
+def get_series(series: SeriesName,
+               index: Index,
+               start: Optional[RangeIndex] = None,
+               end: Optional[RangeIndex] = None,
+               limit: Optional[Limit] = None,
+               format: Optional[Format] = None) -> Union[AnySeriesData, str]
+```
+
+Get series data.
+
+Fetch data for a specific series at the given index. Use query parameters to filter by date range and format (json/csv).
+
+Endpoint: `GET /api/series/{series}/{index}`
+
+<a id="brk_client.BrkClient.get_series_data"></a>
+
+#### get\_series\_data
+
+```python
+def get_series_data(series: SeriesName,
+                    index: Index,
+                    start: Optional[RangeIndex] = None,
+                    end: Optional[RangeIndex] = None,
+                    limit: Optional[Limit] = None,
+                    format: Optional[Format] = None) -> Union[List[bool], str]
+```
+
+Get raw series data.
+
+Returns just the data array without the SeriesData wrapper. Supports the same range and format parameters as the standard endpoint.
+
+Endpoint: `GET /api/series/{series}/{index}/data`
+
+<a id="brk_client.BrkClient.get_series_latest"></a>
+
+#### get\_series\_latest
+
+```python
+def get_series_latest(series: SeriesName, index: Index) -> Any
+```
+
+Get latest series value.
+
+Returns the single most recent value for a series, unwrapped (not inside a SeriesData object).
+
+Endpoint: `GET /api/series/{series}/{index}/latest`
+
+<a id="brk_client.BrkClient.get_series_len"></a>
+
+#### get\_series\_len
+
+```python
+def get_series_len(series: SeriesName, index: Index) -> float
+```
+
+Get series data length.
+
+Returns the total number of data points for a series at the given index.
+
+Endpoint: `GET /api/series/{series}/{index}/len`
+
+<a id="brk_client.BrkClient.get_series_version"></a>
+
+#### get\_series\_version
+
+```python
+def get_series_version(series: SeriesName, index: Index) -> Version
+```
+
+Get series version.
+
+Returns the current version of a series. Changes when the series data is updated.
+
+Endpoint: `GET /api/series/{series}/{index}/version`
 
 <a id="brk_client.BrkClient.get_disk_usage"></a>
 
@@ -1037,7 +1104,7 @@ Endpoint: `GET /api/v1/mining/reward-stats/{block_count}`
 #### validate\_address
 
 ```python
-def validate_address(address: str) -> AddressValidation
+def validate_address(address: str) -> AddrValidation
 ```
 
 Validate address.

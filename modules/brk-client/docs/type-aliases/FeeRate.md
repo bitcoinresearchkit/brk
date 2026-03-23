@@ -6,8 +6,8 @@
 
 # Type Alias: FeeRate
 
-> **FeeRate**\<\> = `number`
+> **FeeRate** = `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:310](https://github.com/bitcoinresearchkit/brk/blob/4a06caec672337d1974d77b021e6d10711049dbe/modules/brk-client/index.js#L310)
+Defined in: [Developer/brk/modules/brk-client/index.js:363](https://github.com/bitcoinresearchkit/brk/blob/c4c0004c4a75c182b98b9e69b3c38d3fa6f96f0e/modules/brk-client/index.js#L363)
 
 ## Type Parameters
