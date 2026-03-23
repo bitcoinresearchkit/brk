@@ -3,7 +3,7 @@
 use std::{
     fs,
     thread::{self, sleep},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use brk_alloc::Mimalloc;
@@ -99,6 +99,8 @@ pub fn main() -> anyhow::Result<()> {
 
         info!("{} blocks found.", u32::from(last_height) + 1);
 
+        let total_start = Instant::now();
+
         let starting_indexes = if cfg!(debug_assertions) {
             indexer.checked_index(&blocks, &client, &exit)?
         } else {
@@ -109,6 +111,7 @@ pub fn main() -> anyhow::Result<()> {
 
         computer.compute(&indexer, starting_indexes, &reader, &exit)?;
 
+        info!("Total time: {:?}", total_start.elapsed());
         info!("Waiting for new blocks...");
 
         while last_height == client.get_last_height()? {

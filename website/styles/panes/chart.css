@@ -43,8 +43,8 @@
     display: flex;
     white-space: nowrap;
     overflow-x: auto;
-    padding-bottom: 1rem;
-    margin-bottom: -0.75rem;
+    padding-bottom: 0.25rem;
+    margin-bottom: -0.25rem;
     padding-left: var(--main-padding);
     margin-left: var(--negative-main-padding);
     padding-right: var(--main-padding);

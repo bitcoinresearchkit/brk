@@ -14,7 +14,8 @@ pub enum ContentEncoding {
 
 impl ContentEncoding {
     /// Negotiate the best encoding from the Accept-Encoding header.
-    /// Priority: br > zstd > gzip > identity.
+    /// Priority: zstd > br > gzip > identity.
+    /// zstd is preferred over brotli: ~3-5x faster compression at comparable ratios.
     pub fn negotiate(headers: &HeaderMap) -> Self {
         let accept = match headers.get(header::ACCEPT_ENCODING) {
             Some(v) => v,
@@ -29,8 +30,8 @@ impl ContentEncoding {
         for part in s.split(',') {
             let name = part.split(';').next().unwrap_or("").trim();
             match name {
-                "br" => return Self::Brotli,
-                "zstd" => best = Self::Zstd,
+                "zstd" => return Self::Zstd,
+                "br" => best = Self::Brotli,
                 "gzip" if matches!(best, Self::Identity) => best = Self::Gzip,
                 _ => {}
             }

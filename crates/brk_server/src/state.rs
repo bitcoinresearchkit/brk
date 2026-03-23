@@ -12,7 +12,6 @@ use axum::{
     http::{HeaderMap, HeaderValue, Response, Uri, header},
 };
 use brk_query::AsyncQuery;
-use brk_rpc::Client;
 use jiff::Timestamp;
 use quick_cache::sync::{Cache, GuardResult};
 use serde::Serialize;
@@ -29,7 +28,6 @@ pub struct AppState {
     pub data_path: PathBuf,
     pub website: Website,
     pub cache: Arc<Cache<String, Bytes>>,
-    pub client: Client,
     pub started_at: Timestamp,
     pub started_instant: Instant,
 }

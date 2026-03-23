@@ -8,7 +8,7 @@ use brk_types::{
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    AggFold, Cursor, LazyAggVec, ReadOnlyClone, ReadableBoxedVec, ReadableVec, VecIndex, VecValue,
+    AggFold, LazyAggVec, ReadOnlyClone, ReadableBoxedVec, ReadableVec, VecIndex, VecValue,
 };
 
 use crate::{
@@ -37,19 +37,18 @@ where
         from: usize,
         to: usize,
         init: B,
-        mut f: F,
+        f: F,
     ) -> Result<B, E> {
         let mapping_len = mapping.len();
         let source_len = source.len();
-        let mut cursor = Cursor::new(source);
-        let mut acc = init;
-        for i in from..to.min(mapping_len) {
-            let target = S1I::max_from(I::from(i), source_len);
-            if let Some(v) = cursor.get(target) {
-                acc = f(acc, v)?;
-            }
-        }
-        Ok(acc)
+
+        let indices: Vec<usize> = (from..to.min(mapping_len))
+            .map(|i| S1I::max_from(I::from(i), source_len))
+            .collect();
+
+        let values = source.read_sorted_at(&indices);
+
+        values.into_iter().try_fold(init, f)
     }
 
     #[inline]

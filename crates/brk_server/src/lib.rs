@@ -54,7 +54,6 @@ impl Server {
     pub fn new(query: &AsyncQuery, data_path: PathBuf, website: Website) -> Self {
         website.log();
         Self(AppState {
-            client: query.client().clone(),
             query: query.clone(),
             data_path,
             website,

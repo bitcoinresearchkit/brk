@@ -894,7 +894,7 @@ mod tests {
             is_suffix_mode: true, has_outlier: true,
         };
         let mode = determine_pattern_mode(&[normal, outlier], &fields);
-        assert!(mode.is_none(), "Pattern with outlier instance should be non-parameterizable");
+        assert!(mode.is_some(), "Outlier should be filtered out, leaving a valid pattern from non-outlier instances");
     }
 
     #[test]

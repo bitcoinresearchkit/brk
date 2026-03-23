@@ -243,7 +243,7 @@
 
     button.capture {
       position: absolute;
-      top: -0.75rem;
+      bottom: 0.325rem;
       right: -0.75rem;
       z-index: 50;
       font-size: var(--font-size-xs);

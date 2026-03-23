@@ -22,17 +22,23 @@ impl ServerRoutes for ApiRouter<AppState> {
             get_with(
                 async |State(state): State<AppState>| -> axum::Json<Health> {
                     let uptime = state.started_instant.elapsed();
-                    let tip_height = state.client.get_last_height();
-                    let sync = state.sync(|q| {
-                        let tip_height = tip_height.unwrap_or(q.indexed_height());
-                        q.sync_status(tip_height)
-                    });
+                    let started_at = state.started_at.to_string();
+                    let sync = state
+                        .run(move |q| {
+                            let tip_height = q
+                                .client()
+                                .get_last_height()
+                                .unwrap_or(q.indexed_height());
+                            Ok(q.sync_status(tip_height))
+                        })
+                        .await
+                        .expect("health sync task panicked");
                     axum::Json(Health {
                         status: Cow::Borrowed("healthy"),
                         service: Cow::Borrowed("brk"),
                         version: Cow::Borrowed(VERSION),
                         timestamp: jiff::Timestamp::now().to_string(),
-                        started_at: state.started_at.to_string(),
+                        started_at,
                         uptime_seconds: uptime.as_secs(),
                         sync,
                     })
@@ -70,11 +76,10 @@ impl ServerRoutes for ApiRouter<AppState> {
             "/api/server/sync",
             get_with(
                 async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
-                    let tip_height = state.client.get_last_height();
-
                     state
                         .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
-                            Ok(q.sync_status(tip_height?))
+                            let tip_height = q.client().get_last_height()?;
+                            Ok(q.sync_status(tip_height))
                         })
                         .await
                 },
