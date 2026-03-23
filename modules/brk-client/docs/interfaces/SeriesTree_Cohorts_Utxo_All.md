@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Utxo\_All
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5571](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L5571)
+Defined in: [Developer/brk/modules/brk-client/index.js:5571](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L5571)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5571](https://github.com/
 
 > **activity**: [`SeriesTree_Cohorts_Utxo_All_Activity`](SeriesTree_Cohorts_Utxo_All_Activity.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5574](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L5574)
+Defined in: [Developer/brk/modules/brk-client/index.js:5574](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L5574)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5574](https://github.com/
 
 > **costBasis**: [`SeriesTree_Cohorts_Utxo_All_CostBasis`](SeriesTree_Cohorts_Utxo_All_CostBasis.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5576](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L5576)
+Defined in: [Developer/brk/modules/brk-client/index.js:5576](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L5576)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5576](https://github.com/
 
 > **outputs**: [`SeriesTree_Cohorts_Utxo_All_Outputs`](SeriesTree_Cohorts_Utxo_All_Outputs.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5573](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L5573)
+Defined in: [Developer/brk/modules/brk-client/index.js:5573](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L5573)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5573](https://github.com/
 
 > **realized**: [`SeriesTree_Cohorts_Utxo_All_Realized`](SeriesTree_Cohorts_Utxo_All_Realized.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5575](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L5575)
+Defined in: [Developer/brk/modules/brk-client/index.js:5575](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L5575)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5575](https://github.com/
 
 > **supply**: [`SeriesTree_Cohorts_Utxo_All_Supply`](SeriesTree_Cohorts_Utxo_All_Supply.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5572](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L5572)
+Defined in: [Developer/brk/modules/brk-client/index.js:5572](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L5572)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5572](https://github.com/
 
 > **unrealized**: [`SeriesTree_Cohorts_Utxo_All_Unrealized`](SeriesTree_Cohorts_Utxo_All_Unrealized.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5577](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L5577)
+Defined in: [Developer/brk/modules/brk-client/index.js:5577](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L5577)

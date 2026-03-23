@@ -6,7 +6,7 @@
 
 # Interface: PaginatedSeries
 
-Defined in: [Developer/brk/modules/brk-client/index.js:558](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L558)
+Defined in: [Developer/brk/modules/brk-client/index.js:558](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L558)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:558](https://github.com/b
 
 > **currentPage**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:559](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L559)
+Defined in: [Developer/brk/modules/brk-client/index.js:559](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L559)
 
 Current page number (0-indexed)
 
@@ -24,7 +24,7 @@ Current page number (0-indexed)
 
 > **hasMore**: `boolean`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:563](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L563)
+Defined in: [Developer/brk/modules/brk-client/index.js:563](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L563)
 
 Whether more pages are available after the current one
 
@@ -34,7 +34,7 @@ Whether more pages are available after the current one
 
 > **maxPage**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:560](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L560)
+Defined in: [Developer/brk/modules/brk-client/index.js:560](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L560)
 
 Maximum valid page index (0-indexed)
 
@@ -44,7 +44,7 @@ Maximum valid page index (0-indexed)
 
 > **perPage**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:562](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L562)
+Defined in: [Developer/brk/modules/brk-client/index.js:562](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L562)
 
 Results per page
 
@@ -54,7 +54,7 @@ Results per page
 
 > **series**: `string`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:564](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L564)
+Defined in: [Developer/brk/modules/brk-client/index.js:564](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L564)
 
 List of series names
 
@@ -64,6 +64,6 @@ List of series names
 
 > **totalCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:561](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L561)
+Defined in: [Developer/brk/modules/brk-client/index.js:561](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L561)
 
 Total number of series

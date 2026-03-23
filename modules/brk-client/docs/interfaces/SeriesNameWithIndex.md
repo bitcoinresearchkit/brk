@@ -6,7 +6,7 @@
 
 # Interface: SeriesNameWithIndex
 
-Defined in: [Developer/brk/modules/brk-client/index.js:738](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L738)
+Defined in: [Developer/brk/modules/brk-client/index.js:738](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L738)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:738](https://github.com/b
 
 > **index**: [`Index`](../type-aliases/Index.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:740](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L740)
+Defined in: [Developer/brk/modules/brk-client/index.js:740](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L740)
 
 Aggregation index
 
@@ -24,6 +24,6 @@ Aggregation index
 
 > **series**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:739](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L739)
+Defined in: [Developer/brk/modules/brk-client/index.js:739](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L739)
 
 Series name

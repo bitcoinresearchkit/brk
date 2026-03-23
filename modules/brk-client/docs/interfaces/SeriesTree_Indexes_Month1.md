@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Indexes\_Month1
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4944](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L4944)
+Defined in: [Developer/brk/modules/brk-client/index.js:4944](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L4944)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4944](https://github.com/
 
 > **date**: [`SeriesPattern11`](../type-aliases/SeriesPattern11.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4946](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L4946)
+Defined in: [Developer/brk/modules/brk-client/index.js:4946](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L4946)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4946](https://github.com/
 
 > **firstHeight**: [`SeriesPattern11`](../type-aliases/SeriesPattern11.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4947](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L4947)
+Defined in: [Developer/brk/modules/brk-client/index.js:4947](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L4947)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4947](https://github.com/
 
 > **identity**: [`SeriesPattern11`](../type-aliases/SeriesPattern11.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4945](https://github.com/bitcoinresearchkit/brk/blob/ec6420254a230ae65df0ed8b66cad1cffcf46447/modules/brk-client/index.js#L4945)
+Defined in: [Developer/brk/modules/brk-client/index.js:4945](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L4945)
