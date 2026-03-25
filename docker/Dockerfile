@@ -11,7 +11,7 @@ RUN cargo build --release --locked
 
 FROM debian:bookworm-slim
 
-RUN apt-get update && apt-get install -y ca-certificates curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates procps && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m -s /bin/bash brk
 

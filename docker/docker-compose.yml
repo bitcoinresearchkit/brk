@@ -32,11 +32,10 @@ services:
       # - --rpccookiefile
       # - /bitcoin/.cookie
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:3110/health"]
+      test: ["CMD", "pgrep", "-x", "brk"]
       interval: 30s
-      timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 10s
 
 volumes:
   brk-data:
