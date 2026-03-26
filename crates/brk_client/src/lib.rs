@@ -5160,7 +5160,7 @@ pub struct SeriesTree_Indicators {
     pub dormancy: SeriesTree_Indicators_Dormancy,
     pub stock_to_flow: SeriesPattern1<StoredF32>,
     pub seller_exhaustion: SeriesPattern1<StoredF32>,
-    pub thermometer: SeriesTree_Indicators_Thermometer,
+    pub realized_envelope: SeriesTree_Indicators_RealizedEnvelope,
 }
 
 impl SeriesTree_Indicators {
@@ -5176,7 +5176,7 @@ impl SeriesTree_Indicators {
             dormancy: SeriesTree_Indicators_Dormancy::new(client.clone(), format!("{base_path}_dormancy")),
             stock_to_flow: SeriesPattern1::new(client.clone(), "stock_to_flow".to_string()),
             seller_exhaustion: SeriesPattern1::new(client.clone(), "seller_exhaustion".to_string()),
-            thermometer: SeriesTree_Indicators_Thermometer::new(client.clone(), format!("{base_path}_thermometer")),
+            realized_envelope: SeriesTree_Indicators_RealizedEnvelope::new(client.clone(), format!("{base_path}_realized_envelope")),
         }
     }
 }
@@ -5197,7 +5197,7 @@ impl SeriesTree_Indicators_Dormancy {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indicators_Thermometer {
+pub struct SeriesTree_Indicators_RealizedEnvelope {
     pub pct0_5: CentsSatsUsdPattern,
     pub pct1: CentsSatsUsdPattern,
     pub pct2: CentsSatsUsdPattern,
@@ -5206,23 +5206,23 @@ pub struct SeriesTree_Indicators_Thermometer {
     pub pct98: CentsSatsUsdPattern,
     pub pct99: CentsSatsUsdPattern,
     pub pct99_5: CentsSatsUsdPattern,
-    pub zone: SeriesPattern1<StoredI8>,
+    pub index: SeriesPattern1<StoredI8>,
     pub score: SeriesPattern1<StoredI8>,
 }
 
-impl SeriesTree_Indicators_Thermometer {
+impl SeriesTree_Indicators_RealizedEnvelope {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            pct0_5: CentsSatsUsdPattern::new(client.clone(), "thermometer_pct0_5".to_string()),
-            pct1: CentsSatsUsdPattern::new(client.clone(), "thermometer_pct01".to_string()),
-            pct2: CentsSatsUsdPattern::new(client.clone(), "thermometer_pct02".to_string()),
-            pct5: CentsSatsUsdPattern::new(client.clone(), "thermometer_pct05".to_string()),
-            pct95: CentsSatsUsdPattern::new(client.clone(), "thermometer_pct95".to_string()),
-            pct98: CentsSatsUsdPattern::new(client.clone(), "thermometer_pct98".to_string()),
-            pct99: CentsSatsUsdPattern::new(client.clone(), "thermometer_pct99".to_string()),
-            pct99_5: CentsSatsUsdPattern::new(client.clone(), "thermometer_pct99_5".to_string()),
-            zone: SeriesPattern1::new(client.clone(), "thermometer_zone".to_string()),
-            score: SeriesPattern1::new(client.clone(), "thermometer_score".to_string()),
+            pct0_5: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct0_5".to_string()),
+            pct1: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct01".to_string()),
+            pct2: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct02".to_string()),
+            pct5: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct05".to_string()),
+            pct95: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct95".to_string()),
+            pct98: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct98".to_string()),
+            pct99: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct99".to_string()),
+            pct99_5: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct99_5".to_string()),
+            index: SeriesPattern1::new(client.clone(), "realized_envelope_index".to_string()),
+            score: SeriesPattern1::new(client.clone(), "realized_envelope_score".to_string()),
         }
     }
 }

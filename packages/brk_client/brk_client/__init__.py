@@ -4189,20 +4189,20 @@ class SeriesTree_Indicators_Dormancy:
         self.supply_adjusted: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'dormancy_supply_adjusted')
         self.flow: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'dormancy_flow')
 
-class SeriesTree_Indicators_Thermometer:
+class SeriesTree_Indicators_RealizedEnvelope:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.pct0_5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct0_5')
-        self.pct1: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct01')
-        self.pct2: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct02')
-        self.pct5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct05')
-        self.pct95: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct95')
-        self.pct98: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct98')
-        self.pct99: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct99')
-        self.pct99_5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct99_5')
-        self.zone: SeriesPattern1[StoredI8] = SeriesPattern1(client, 'thermometer_zone')
-        self.score: SeriesPattern1[StoredI8] = SeriesPattern1(client, 'thermometer_score')
+        self.pct0_5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct0_5')
+        self.pct1: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct01')
+        self.pct2: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct02')
+        self.pct5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct05')
+        self.pct95: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct95')
+        self.pct98: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct98')
+        self.pct99: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct99')
+        self.pct99_5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct99_5')
+        self.index: SeriesPattern1[StoredI8] = SeriesPattern1(client, 'realized_envelope_index')
+        self.score: SeriesPattern1[StoredI8] = SeriesPattern1(client, 'realized_envelope_score')
 
 class SeriesTree_Indicators:
     """Series tree node."""
@@ -4218,7 +4218,7 @@ class SeriesTree_Indicators:
         self.dormancy: SeriesTree_Indicators_Dormancy = SeriesTree_Indicators_Dormancy(client)
         self.stock_to_flow: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'stock_to_flow')
         self.seller_exhaustion: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'seller_exhaustion')
-        self.thermometer: SeriesTree_Indicators_Thermometer = SeriesTree_Indicators_Thermometer(client)
+        self.realized_envelope: SeriesTree_Indicators_RealizedEnvelope = SeriesTree_Indicators_RealizedEnvelope(client)
 
 class SeriesTree_Investing_Period_CostBasis:
     """Series tree node."""

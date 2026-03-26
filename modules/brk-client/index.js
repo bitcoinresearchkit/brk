@@ -5014,7 +5014,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Indicators_Dormancy} dormancy
  * @property {SeriesPattern1<StoredF32>} stockToFlow
  * @property {SeriesPattern1<StoredF32>} sellerExhaustion
- * @property {SeriesTree_Indicators_Thermometer} thermometer
+ * @property {SeriesTree_Indicators_RealizedEnvelope} realizedEnvelope
  */
 
 /**
@@ -5024,7 +5024,7 @@ function createTransferPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} SeriesTree_Indicators_Thermometer
+ * @typedef {Object} SeriesTree_Indicators_RealizedEnvelope
  * @property {CentsSatsUsdPattern} pct05
  * @property {CentsSatsUsdPattern} pct1
  * @property {CentsSatsUsdPattern} pct2
@@ -5033,7 +5033,7 @@ function createTransferPattern(client, acc) {
  * @property {CentsSatsUsdPattern} pct98
  * @property {CentsSatsUsdPattern} pct99
  * @property {CentsSatsUsdPattern} pct995
- * @property {SeriesPattern1<StoredI8>} zone
+ * @property {SeriesPattern1<StoredI8>} index
  * @property {SeriesPattern1<StoredI8>} score
  */
 
@@ -8142,17 +8142,17 @@ class BrkClient extends BrkClientBase {
         },
         stockToFlow: createSeriesPattern1(this, 'stock_to_flow'),
         sellerExhaustion: createSeriesPattern1(this, 'seller_exhaustion'),
-        thermometer: {
-          pct05: createCentsSatsUsdPattern(this, 'thermometer_pct0_5'),
-          pct1: createCentsSatsUsdPattern(this, 'thermometer_pct01'),
-          pct2: createCentsSatsUsdPattern(this, 'thermometer_pct02'),
-          pct5: createCentsSatsUsdPattern(this, 'thermometer_pct05'),
-          pct95: createCentsSatsUsdPattern(this, 'thermometer_pct95'),
-          pct98: createCentsSatsUsdPattern(this, 'thermometer_pct98'),
-          pct99: createCentsSatsUsdPattern(this, 'thermometer_pct99'),
-          pct995: createCentsSatsUsdPattern(this, 'thermometer_pct99_5'),
-          zone: createSeriesPattern1(this, 'thermometer_zone'),
-          score: createSeriesPattern1(this, 'thermometer_score'),
+        realizedEnvelope: {
+          pct05: createCentsSatsUsdPattern(this, 'realized_envelope_pct0_5'),
+          pct1: createCentsSatsUsdPattern(this, 'realized_envelope_pct01'),
+          pct2: createCentsSatsUsdPattern(this, 'realized_envelope_pct02'),
+          pct5: createCentsSatsUsdPattern(this, 'realized_envelope_pct05'),
+          pct95: createCentsSatsUsdPattern(this, 'realized_envelope_pct95'),
+          pct98: createCentsSatsUsdPattern(this, 'realized_envelope_pct98'),
+          pct99: createCentsSatsUsdPattern(this, 'realized_envelope_pct99'),
+          pct995: createCentsSatsUsdPattern(this, 'realized_envelope_pct99_5'),
+          index: createSeriesPattern1(this, 'realized_envelope_index'),
+          score: createSeriesPattern1(this, 'realized_envelope_score'),
         },
       },
       investing: {

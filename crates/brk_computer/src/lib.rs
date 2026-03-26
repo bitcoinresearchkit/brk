@@ -512,7 +512,7 @@ impl Computer {
             Ok(())
         })?;
 
-        self.indicators.thermometer.compute(
+        self.indicators.realized_envelope.compute(
             &self.distribution,
             &self.cointime,
             &self.prices,

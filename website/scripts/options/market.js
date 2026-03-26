@@ -925,6 +925,39 @@ export function createMarketSection() {
         name: "Indicators",
         tree: [
           {
+            name: "Envelope",
+            title: "Realized Envelope",
+            top: priceBands(percentileBands(indicators.realizedEnvelope), {
+              defaultActive: true,
+            }),
+            bottom: [
+              histogram({
+                series: indicators.realizedEnvelope.index,
+                name: "Index",
+                unit: Unit.count,
+                colorFn: (v) =>
+                  /** @type {const} */ ([
+                    colors.ratioPct._0_5,
+                    colors.ratioPct._1,
+                    colors.ratioPct._2,
+                    colors.ratioPct._5,
+                    colors.transparent,
+                    colors.ratioPct._95,
+                    colors.ratioPct._98,
+                    colors.ratioPct._99,
+                    colors.ratioPct._99_5,
+                  ])[v + 4],
+              }),
+              baseline({
+                series: indicators.realizedEnvelope.score,
+                name: "Score",
+                unit: Unit.count,
+                color: [colors.ratioPct._99, colors.ratioPct._1],
+                defaultActive: false,
+              }),
+            ],
+          },
+          {
             name: "Valuation",
             tree: [
               {
@@ -1086,39 +1119,6 @@ export function createMarketSection() {
               name: "Gini",
               color: colors.loss,
             }),
-          },
-          {
-            name: "Thermometer",
-            title: "Thermometer",
-            top: priceBands(percentileBands(indicators.thermometer), {
-              defaultActive: true,
-            }),
-            bottom: [
-              histogram({
-                series: indicators.thermometer.zone,
-                name: "Zone",
-                unit: Unit.count,
-                colorFn: (v) =>
-                  /** @type {const} */ ([
-                    colors.ratioPct._0_5,
-                    colors.ratioPct._1,
-                    colors.ratioPct._2,
-                    colors.ratioPct._5,
-                    colors.transparent,
-                    colors.ratioPct._95,
-                    colors.ratioPct._98,
-                    colors.ratioPct._99,
-                    colors.ratioPct._99_5,
-                  ])[v + 4],
-              }),
-              baseline({
-                series: indicators.thermometer.score,
-                name: "Score",
-                unit: Unit.count,
-                color: [colors.ratioPct._99, colors.ratioPct._1],
-                defaultActive: false,
-              }),
-            ],
           },
         ],
       },

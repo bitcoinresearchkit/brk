@@ -12,7 +12,7 @@ use crate::{
 };
 
 #[derive(Traversable)]
-pub struct Thermometer<M: StorageMode = Rw> {
+pub struct RealizedEnvelope<M: StorageMode = Rw> {
     pub pct0_5: Price<PerBlock<Cents, M>>,
     pub pct1: Price<PerBlock<Cents, M>>,
     pub pct2: Price<PerBlock<Cents, M>>,
@@ -21,13 +21,13 @@ pub struct Thermometer<M: StorageMode = Rw> {
     pub pct98: Price<PerBlock<Cents, M>>,
     pub pct99: Price<PerBlock<Cents, M>>,
     pub pct99_5: Price<PerBlock<Cents, M>>,
-    pub zone: PerBlock<StoredI8, M>,
+    pub index: PerBlock<StoredI8, M>,
     pub score: PerBlock<StoredI8, M>,
 }
 
-const VERSION: Version = Version::new(2);
+const VERSION: Version = Version::new(3);
 
-impl Thermometer {
+impl RealizedEnvelope {
     pub(crate) fn forced_import(
         db: &Database,
         version: Version,
@@ -35,16 +35,16 @@ impl Thermometer {
     ) -> Result<Self> {
         let v = version + VERSION;
         Ok(Self {
-            pct0_5: Price::forced_import(db, "thermometer_pct0_5", v, indexes)?,
-            pct1: Price::forced_import(db, "thermometer_pct01", v, indexes)?,
-            pct2: Price::forced_import(db, "thermometer_pct02", v, indexes)?,
-            pct5: Price::forced_import(db, "thermometer_pct05", v, indexes)?,
-            pct95: Price::forced_import(db, "thermometer_pct95", v, indexes)?,
-            pct98: Price::forced_import(db, "thermometer_pct98", v, indexes)?,
-            pct99: Price::forced_import(db, "thermometer_pct99", v, indexes)?,
-            pct99_5: Price::forced_import(db, "thermometer_pct99_5", v, indexes)?,
-            zone: PerBlock::forced_import(db, "thermometer_zone", v, indexes)?,
-            score: PerBlock::forced_import(db, "thermometer_score", v, indexes)?,
+            pct0_5: Price::forced_import(db, "realized_envelope_pct0_5", v, indexes)?,
+            pct1: Price::forced_import(db, "realized_envelope_pct01", v, indexes)?,
+            pct2: Price::forced_import(db, "realized_envelope_pct02", v, indexes)?,
+            pct5: Price::forced_import(db, "realized_envelope_pct05", v, indexes)?,
+            pct95: Price::forced_import(db, "realized_envelope_pct95", v, indexes)?,
+            pct98: Price::forced_import(db, "realized_envelope_pct98", v, indexes)?,
+            pct99: Price::forced_import(db, "realized_envelope_pct99", v, indexes)?,
+            pct99_5: Price::forced_import(db, "realized_envelope_pct99_5", v, indexes)?,
+            index: PerBlock::forced_import(db, "realized_envelope_index", v, indexes)?,
+            score: PerBlock::forced_import(db, "realized_envelope_score", v, indexes)?,
         })
     }
 
@@ -96,7 +96,7 @@ impl Thermometer {
         let spot = &prices.spot.cents.height;
 
         // Zone: spot vs own envelope bands (-4 to +4)
-        self.compute_zone(spot, starting_indexes, exit)?;
+        self.compute_index(spot, starting_indexes, exit)?;
 
         // Temperature: per-model band crossings (-40 to +40)
         self.compute_score(&models, spot, starting_indexes, exit)?;
@@ -104,7 +104,7 @@ impl Thermometer {
         Ok(())
     }
 
-    fn compute_zone(
+    fn compute_index(
         &mut self,
         spot: &EagerVec<PcoVec<Height, Cents>>,
         starting_indexes: &Indexes,
@@ -123,10 +123,10 @@ impl Thermometer {
 
         let dep_version: Version = bands.iter().map(|b| b.version()).sum::<Version>() + spot.version();
 
-        self.zone.height.validate_computed_version_or_reset(dep_version)?;
-        self.zone.height.truncate_if_needed(starting_indexes.height)?;
+        self.index.height.validate_computed_version_or_reset(dep_version)?;
+        self.index.height.truncate_if_needed(starting_indexes.height)?;
 
-        self.zone.height.repeat_until_complete(exit, |vec| {
+        self.index.height.repeat_until_complete(exit, |vec| {
             let skip = vec.len();
             let source_end = bands.iter().map(|b| b.len()).min().unwrap().min(spot.len());
             let end = vec.batch_end(source_end);
