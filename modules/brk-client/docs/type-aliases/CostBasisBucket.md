@@ -8,6 +8,6 @@
 
 > **CostBasisBucket** = `"raw"` \| `"lin200"` \| `"lin500"` \| `"lin1000"` \| `"log10"` \| `"log50"` \| `"log100"` \| `"log200"`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:236](https://github.com/bitcoinresearchkit/brk/blob/14d7adfdd525d3ec62b22ccc6dc641552e0d5ef0/modules/brk-client/index.js#L236)
+Defined in: [Developer/brk/modules/brk-client/index.js:236](https://github.com/bitcoinresearchkit/brk/blob/19d4a193ffb7d8bbcaf9d0ccaccf8e90edff9e28/modules/brk-client/index.js#L236)
 
 ## Type Parameters
