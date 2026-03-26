@@ -4,7 +4,6 @@ pub mod halving;
 pub mod interval;
 pub mod lookback;
 pub mod size;
-pub mod time;
 pub mod weight;
 
 mod compute;
@@ -19,7 +18,6 @@ pub use halving::Vecs as HalvingVecs;
 pub use interval::Vecs as IntervalVecs;
 pub use lookback::Vecs as LookbackVecs;
 pub use size::Vecs as SizeVecs;
-pub use time::Vecs as TimeVecs;
 pub use weight::Vecs as WeightVecs;
 
 pub const DB_NAME: &str = "blocks";
@@ -37,7 +35,7 @@ pub(crate) const ONE_TERA_HASH: f64 = 1_000_000_000_000.0;
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
-    pub(crate) db: Database,
+    pub db: Database,
 
     pub count: CountVecs<M>,
     pub lookback: LookbackVecs<M>,
@@ -46,7 +44,6 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub size: SizeVecs<M>,
     #[traversable(flatten)]
     pub weight: WeightVecs<M>,
-    pub time: TimeVecs<M>,
     pub difficulty: DifficultyVecs<M>,
     pub halving: HalvingVecs<M>,
 }

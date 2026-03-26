@@ -16,6 +16,8 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.db.sync_bg_tasks()?;
+
         // Puell Multiple: daily_subsidy_usd / sma_365d_subsidy_usd
         self.puell_multiple
             .bps
@@ -199,8 +201,11 @@ impl Vecs {
                 exit,
             )?;
 
-        let _lock = exit.lock();
-        self.db.compact()?;
+        let exit = exit.clone();
+        self.db.run_bg(move |db| {
+            let _lock = exit.lock();
+            db.compact()
+        });
         Ok(())
     }
 }

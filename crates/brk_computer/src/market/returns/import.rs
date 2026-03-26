@@ -7,7 +7,7 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{StdDevPerBlock, PercentPerBlock, Windows},
-    market::dca::ByDcaCagr,
+    investing::ByDcaCagr,
 };
 
 impl Vecs {

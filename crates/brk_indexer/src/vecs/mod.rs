@@ -30,7 +30,7 @@ use crate::Indexes;
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
-    db: Database,
+    pub db: Database,
     pub blocks: BlocksVecs<M>,
     #[traversable(wrap = "transactions", rename = "raw")]
     pub transactions: TransactionsVecs<M>,
@@ -121,8 +121,7 @@ impl Vecs {
     }
 
     pub fn flush(&mut self, height: Height) -> Result<()> {
-        self.par_iter_mut_any_stored_vec()
-            .try_for_each(|vec| vec.stamped_write(Stamp::from(height)))?;
+        self.stamped_write(height)?;
         self.db.flush()?;
         Ok(())
     }
@@ -135,6 +134,12 @@ impl Vecs {
             })
             .min()
             .unwrap()
+    }
+
+    pub fn stamped_write(&mut self, height: Height) -> Result<()> {
+        self.par_iter_mut_any_stored_vec()
+            .try_for_each(|vec| vec.stamped_write(Stamp::from(height)))?;
+        Ok(())
     }
 
     pub fn compact(&self) -> Result<()> {
@@ -168,7 +173,4 @@ impl Vecs {
             .chain(self.scripts.par_iter_mut_any())
     }
 
-    pub fn db(&self) -> &Database {
-        &self.db
-    }
 }

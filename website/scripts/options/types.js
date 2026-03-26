@@ -20,12 +20,14 @@
  * @typedef {Object} LineSeriesBlueprintSpecific
  * @property {"Line"} [type]
  * @property {Color} [color]
+ * @property {(value: number) => Color} [colorFn]
  * @property {LineSeriesPartialOptions} [options]
  * @typedef {BaseSeriesBlueprint & LineSeriesBlueprintSpecific} LineSeriesBlueprint
  *
  * @typedef {Object} HistogramSeriesBlueprintSpecific
  * @property {"Histogram"} type
  * @property {Color | [Color, Color]} [color] - Single color or [positive, negative] colors (defaults to green/red)
+ * @property {(value: number) => Color} [colorFn]
  * @property {HistogramSeriesPartialOptions} [options]
  * @typedef {BaseSeriesBlueprint & HistogramSeriesBlueprintSpecific} HistogramSeriesBlueprint
  *

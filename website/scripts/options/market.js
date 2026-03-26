@@ -16,7 +16,7 @@ import {
   ROLLING_WINDOWS,
   ROLLING_WINDOWS_TO_1M,
 } from "./series.js";
-import { simplePriceRatioTree } from "./shared.js";
+import { simplePriceRatioTree, percentileBands, priceBands } from "./shared.js";
 import { periodIdToName } from "./utils.js";
 
 /**
@@ -165,7 +165,10 @@ function returnsSubSectionWithCagr(name, periods) {
           ...periods.map((p) => ({
             name: periodIdToName(p.id, true),
             title: `${periodIdToName(p.id, true)} Total Price Returns`,
-            bottom: percentRatioBaseline({ pattern: p.returns, name: "Return" }),
+            bottom: percentRatioBaseline({
+              pattern: p.returns,
+              name: "Return",
+            }),
           })),
         ],
       },
@@ -1083,6 +1086,46 @@ export function createMarketSection() {
               name: "Gini",
               color: colors.loss,
             }),
+          },
+          {
+            name: "Thermometer",
+            tree: [
+              {
+                name: "Bands",
+                title: "Thermometer",
+                top: priceBands(percentileBands(indicators.thermometer), { defaultActive: true }),
+              },
+              {
+                name: "Score",
+                title: "Thermometer",
+                top: priceBands(percentileBands(indicators.thermometer)),
+                bottom: [
+                  histogram({
+                    series: indicators.thermometer.zone,
+                    name: "Zone",
+                    unit: Unit.count,
+                    colorFn: (v) => /** @type {const} */ ([
+                      colors.ratioPct._0_5,
+                      colors.ratioPct._1,
+                      colors.ratioPct._2,
+                      colors.ratioPct._5,
+                      colors.transparent,
+                      colors.ratioPct._95,
+                      colors.ratioPct._98,
+                      colors.ratioPct._99,
+                      colors.ratioPct._99_5,
+                    ])[v + 4],
+                  }),
+                  baseline({
+                    series: indicators.thermometer.score,
+                    name: "Score",
+                    unit: Unit.count,
+                    color: [colors.ratioPct._99, colors.ratioPct._1],
+                    defaultActive: false,
+                  }),
+                ],
+              },
+            ],
           },
         ],
       },

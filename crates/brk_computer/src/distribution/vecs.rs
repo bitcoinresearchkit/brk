@@ -227,6 +227,8 @@ impl Vecs {
         starting_indexes: &mut Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.db.sync_bg_tasks()?;
+
         // 1. Find minimum height we have data for across stateful vecs
         let current_height = Height::from(self.supply_state.len());
         let min_stateful = self.min_stateful_len();
@@ -300,7 +302,7 @@ impl Vecs {
             .cents
             .height
             .len()
-            .min(blocks.time.timestamp_monotonic.len());
+            .min(indexes.timestamp.monotonic.len());
         let cache_current_len = self.caches.prices.len();
         if cache_target_len < cache_current_len {
             self.caches.prices.truncate(cache_target_len);
@@ -312,9 +314,9 @@ impl Vecs {
                 .cents
                 .height
                 .collect_range_at(cache_current_len, cache_target_len);
-            let new_timestamps = blocks
-                .time
-                .timestamp_monotonic
+            let new_timestamps = indexes
+                .timestamp
+                .monotonic
                 .collect_range_at(cache_current_len, cache_target_len);
             self.caches.prices.extend(new_prices);
             self.caches.timestamps.extend(new_timestamps);
@@ -499,8 +501,11 @@ impl Vecs {
         self.addr_cohorts
             .compute_rest_part2(prices, starting_indexes, &all_utxo_count, exit)?;
 
-        let _lock = exit.lock();
-        self.db.compact()?;
+        let exit = exit.clone();
+        self.db.run_bg(move |db| {
+            let _lock = exit.lock();
+            db.compact()
+        });
         Ok(())
     }
 

@@ -3,7 +3,7 @@ use brk_types::{BasisPointsSigned32, Dollars, Indexes};
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{blocks, internal::RatioDiffDollarsBps32, market::lookback, prices};
+use crate::{blocks, internal::RatioDiffDollarsBps32, investing::ByDcaPeriod, market::lookback, prices};
 
 impl Vecs {
     pub(crate) fn compute(
@@ -29,7 +29,7 @@ impl Vecs {
         }
 
         // CAGR computed from returns at height level (2y+ periods only)
-        let price_return_dca = self.periods.as_dca_period();
+        let price_return_dca = ByDcaPeriod::from_lookback(&self.periods);
         for (cagr, returns, days) in self.cagr.zip_mut_with_period(&price_return_dca) {
             let years = days as f64 / 365.0;
             cagr.bps.height.compute_transform(

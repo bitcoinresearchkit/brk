@@ -15,13 +15,18 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.db.sync_bg_tasks()?;
+
         self.spent
             .compute(indexer, starting_indexes, exit)?;
         self.count
             .compute(indexer, indexes, blocks, starting_indexes, exit)?;
 
-        let _lock = exit.lock();
-        self.db.compact()?;
+        let exit = exit.clone();
+        self.db.run_bg(move |db| {
+            let _lock = exit.lock();
+            db.compact()
+        });
         Ok(())
     }
 }

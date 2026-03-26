@@ -373,7 +373,7 @@ impl Query {
         // Slow path: rebuild from computer's precomputed monotonic timestamps
         let mut map = HEIGHT_BY_MONOTONIC_TIMESTAMP.write();
         if map.len() <= current_height {
-            *map = RangeMap::from(self.computer().blocks.time.timestamp_monotonic.collect());
+            *map = RangeMap::from(self.computer().indexes.timestamp.monotonic.collect());
         }
         map.ceil(ts).map(usize::from).unwrap_or(current_height)
     }

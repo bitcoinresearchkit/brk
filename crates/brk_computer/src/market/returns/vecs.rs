@@ -4,7 +4,8 @@ use vecdb::{Rw, StorageMode};
 
 use crate::{
     internal::{PercentPerBlock, StdDevPerBlock, Windows},
-    market::{dca::ByDcaCagr, lookback::ByLookbackPeriod},
+    investing::ByDcaCagr,
+    market::lookback::ByLookbackPeriod,
 };
 
 #[derive(Traversable)]

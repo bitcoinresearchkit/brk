@@ -20,6 +20,8 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.db.sync_bg_tasks()?;
+
         let (r1, (r2, r3)) = rayon::join(
             || {
                 self.count
@@ -57,8 +59,11 @@ impl Vecs {
             exit,
         )?;
 
-        let _lock = exit.lock();
-        self.db.compact()?;
+        let exit = exit.clone();
+        self.db.run_bg(move |db| {
+            let _lock = exit.lock();
+            db.compact()
+        });
         Ok(())
     }
 }

@@ -2306,6 +2306,20 @@ class BpsCentsPercentilesRatioSatsSmaStdUsdPattern:
     """Pattern struct for repeated tree structure."""
     pass
 
+class Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.pct0_5: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct0_5')
+        self.pct1: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct1')
+        self.pct2: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct2')
+        self.pct5: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct5')
+        self.pct95: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct95')
+        self.pct98: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct98')
+        self.pct99: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct99')
+        self.pct99_5: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct99_5')
+
 class _10y2y3y4y5y6y8yPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2427,7 +2441,7 @@ class BpsCentsPercentilesRatioSatsUsdPattern:
         """Create pattern node with accumulated series name."""
         self.bps: SeriesPattern1[BasisPoints32] = SeriesPattern1(client, _m(acc, 'ratio_bps'))
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
-        self.percentiles: Pct1Pct2Pct5Pct95Pct98Pct99Pattern = Pct1Pct2Pct5Pct95Pct98Pct99Pattern(client, acc)
+        self.percentiles: Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern = Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern(client, acc)
         self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'ratio'))
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, _m(acc, 'sats'))
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, acc)
@@ -2479,18 +2493,6 @@ class DeltaHalfInToTotalPattern2:
         self.in_profit: BtcCentsSatsToUsdPattern3 = BtcCentsSatsToUsdPattern3(client, _m(acc, 'in_profit'))
         self.to_circulating: BpsPercentRatioPattern3 = BpsPercentRatioPattern3(client, _m(acc, 'to_circulating'))
         self.total: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, acc)
-
-class Pct1Pct2Pct5Pct95Pct98Pct99Pattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.pct1: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct1')
-        self.pct2: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct2')
-        self.pct5: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct5')
-        self.pct95: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct95')
-        self.pct98: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct98')
-        self.pct99: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct99')
 
 class _1m1w1y24hBlockPattern:
     """Pattern struct for repeated tree structure."""
@@ -3251,9 +3253,7 @@ class SeriesTree_Blocks_Time:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.timestamp: SeriesPattern1[Timestamp] = SeriesPattern1(client, 'timestamp')
-        self.date: SeriesPattern18[Date] = SeriesPattern18(client, 'date')
-        self.timestamp_monotonic: SeriesPattern18[Timestamp] = SeriesPattern18(client, 'timestamp_monotonic')
+        self.timestamp: SeriesPattern18[Timestamp] = SeriesPattern18(client, 'timestamp')
 
 class SeriesTree_Blocks_Size:
     """Series tree node."""
@@ -4149,6 +4149,13 @@ class SeriesTree_Indexes_TxoutIndex:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.identity: SeriesPattern21[TxOutIndex] = SeriesPattern21(client, 'txout_index')
 
+class SeriesTree_Indexes_Timestamp:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.monotonic: SeriesPattern18[Timestamp] = SeriesPattern18(client, 'timestamp_monotonic')
+        self.resolutions: SeriesPattern2[Timestamp] = SeriesPattern2(client, 'timestamp')
+
 class SeriesTree_Indexes:
     """Series tree node."""
     
@@ -4173,6 +4180,7 @@ class SeriesTree_Indexes:
         self.tx_index: SeriesTree_Indexes_TxIndex = SeriesTree_Indexes_TxIndex(client)
         self.txin_index: SeriesTree_Indexes_TxinIndex = SeriesTree_Indexes_TxinIndex(client)
         self.txout_index: SeriesTree_Indexes_TxoutIndex = SeriesTree_Indexes_TxoutIndex(client)
+        self.timestamp: SeriesTree_Indexes_Timestamp = SeriesTree_Indexes_Timestamp(client)
 
 class SeriesTree_Indicators_Dormancy:
     """Series tree node."""
@@ -4180,6 +4188,21 @@ class SeriesTree_Indicators_Dormancy:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.supply_adjusted: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'dormancy_supply_adjusted')
         self.flow: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'dormancy_flow')
+
+class SeriesTree_Indicators_Thermometer:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.pct0_5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct0_5')
+        self.pct1: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct01')
+        self.pct2: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct02')
+        self.pct5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct05')
+        self.pct95: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct95')
+        self.pct98: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct98')
+        self.pct99: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct99')
+        self.pct99_5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'thermometer_pct99_5')
+        self.zone: SeriesPattern1[StoredI8] = SeriesPattern1(client, 'thermometer_zone')
+        self.score: SeriesPattern1[StoredI8] = SeriesPattern1(client, 'thermometer_score')
 
 class SeriesTree_Indicators:
     """Series tree node."""
@@ -4195,6 +4218,102 @@ class SeriesTree_Indicators:
         self.dormancy: SeriesTree_Indicators_Dormancy = SeriesTree_Indicators_Dormancy(client)
         self.stock_to_flow: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'stock_to_flow')
         self.seller_exhaustion: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'seller_exhaustion')
+        self.thermometer: SeriesTree_Indicators_Thermometer = SeriesTree_Indicators_Thermometer(client)
+
+class SeriesTree_Investing_Period_CostBasis:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self._1w: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_1w')
+        self._1m: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_1m')
+        self._3m: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_3m')
+        self._6m: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_6m')
+        self._1y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_1y')
+        self._2y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_2y')
+        self._3y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_3y')
+        self._4y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_4y')
+        self._5y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_5y')
+        self._6y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_6y')
+        self._8y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_8y')
+        self._10y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_10y')
+
+class SeriesTree_Investing_Period:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'dca_stack')
+        self.cost_basis: SeriesTree_Investing_Period_CostBasis = SeriesTree_Investing_Period_CostBasis(client)
+        self.return_: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_return')
+        self.cagr: _10y2y3y4y5y6y8yPattern = _10y2y3y4y5y6y8yPattern(client, 'dca_cagr')
+        self.lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'lump_sum_stack')
+        self.lump_sum_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_return')
+
+class SeriesTree_Investing_Class_Stack:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.from_2015: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2015')
+        self.from_2016: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2016')
+        self.from_2017: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2017')
+        self.from_2018: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2018')
+        self.from_2019: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2019')
+        self.from_2020: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2020')
+        self.from_2021: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2021')
+        self.from_2022: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2022')
+        self.from_2023: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2023')
+        self.from_2024: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2024')
+        self.from_2025: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2025')
+        self.from_2026: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2026')
+
+class SeriesTree_Investing_Class_CostBasis:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.from_2015: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2015')
+        self.from_2016: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2016')
+        self.from_2017: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2017')
+        self.from_2018: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2018')
+        self.from_2019: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2019')
+        self.from_2020: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2020')
+        self.from_2021: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2021')
+        self.from_2022: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2022')
+        self.from_2023: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2023')
+        self.from_2024: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2024')
+        self.from_2025: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2025')
+        self.from_2026: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2026')
+
+class SeriesTree_Investing_Class_Return:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.from_2015: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2015')
+        self.from_2016: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2016')
+        self.from_2017: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2017')
+        self.from_2018: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2018')
+        self.from_2019: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2019')
+        self.from_2020: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2020')
+        self.from_2021: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2021')
+        self.from_2022: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2022')
+        self.from_2023: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2023')
+        self.from_2024: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2024')
+        self.from_2025: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2025')
+        self.from_2026: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2026')
+
+class SeriesTree_Investing_Class:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.stack: SeriesTree_Investing_Class_Stack = SeriesTree_Investing_Class_Stack(client)
+        self.cost_basis: SeriesTree_Investing_Class_CostBasis = SeriesTree_Investing_Class_CostBasis(client)
+        self.return_: SeriesTree_Investing_Class_Return = SeriesTree_Investing_Class_Return(client)
+
+class SeriesTree_Investing:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.sats_per_day: SeriesPattern18[Sats] = SeriesPattern18(client, 'dca_sats_per_day')
+        self.period: SeriesTree_Investing_Period = SeriesTree_Investing_Period(client)
+        self.class_: SeriesTree_Investing_Class = SeriesTree_Investing_Class(client)
 
 class SeriesTree_Market_Ath:
     """Series tree node."""
@@ -4370,101 +4489,6 @@ class SeriesTree_Market_MovingAverage:
         self.sma: SeriesTree_Market_MovingAverage_Sma = SeriesTree_Market_MovingAverage_Sma(client)
         self.ema: SeriesTree_Market_MovingAverage_Ema = SeriesTree_Market_MovingAverage_Ema(client)
 
-class SeriesTree_Market_Dca_Period_CostBasis:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self._1w: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_1w')
-        self._1m: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_1m')
-        self._3m: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_3m')
-        self._6m: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_6m')
-        self._1y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_1y')
-        self._2y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_2y')
-        self._3y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_3y')
-        self._4y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_4y')
-        self._5y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_5y')
-        self._6y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_6y')
-        self._8y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_8y')
-        self._10y: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_10y')
-
-class SeriesTree_Market_Dca_Period:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'dca_stack')
-        self.cost_basis: SeriesTree_Market_Dca_Period_CostBasis = SeriesTree_Market_Dca_Period_CostBasis(client)
-        self.return_: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_return')
-        self.cagr: _10y2y3y4y5y6y8yPattern = _10y2y3y4y5y6y8yPattern(client, 'dca_cagr')
-        self.lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'lump_sum_stack')
-        self.lump_sum_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_return')
-
-class SeriesTree_Market_Dca_Class_Stack:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.from_2015: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2015')
-        self.from_2016: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2016')
-        self.from_2017: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2017')
-        self.from_2018: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2018')
-        self.from_2019: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2019')
-        self.from_2020: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2020')
-        self.from_2021: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2021')
-        self.from_2022: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2022')
-        self.from_2023: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2023')
-        self.from_2024: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2024')
-        self.from_2025: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2025')
-        self.from_2026: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2026')
-
-class SeriesTree_Market_Dca_Class_CostBasis:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.from_2015: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2015')
-        self.from_2016: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2016')
-        self.from_2017: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2017')
-        self.from_2018: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2018')
-        self.from_2019: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2019')
-        self.from_2020: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2020')
-        self.from_2021: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2021')
-        self.from_2022: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2022')
-        self.from_2023: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2023')
-        self.from_2024: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2024')
-        self.from_2025: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2025')
-        self.from_2026: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2026')
-
-class SeriesTree_Market_Dca_Class_Return:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.from_2015: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2015')
-        self.from_2016: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2016')
-        self.from_2017: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2017')
-        self.from_2018: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2018')
-        self.from_2019: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2019')
-        self.from_2020: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2020')
-        self.from_2021: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2021')
-        self.from_2022: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2022')
-        self.from_2023: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2023')
-        self.from_2024: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2024')
-        self.from_2025: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2025')
-        self.from_2026: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2026')
-
-class SeriesTree_Market_Dca_Class:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.stack: SeriesTree_Market_Dca_Class_Stack = SeriesTree_Market_Dca_Class_Stack(client)
-        self.cost_basis: SeriesTree_Market_Dca_Class_CostBasis = SeriesTree_Market_Dca_Class_CostBasis(client)
-        self.return_: SeriesTree_Market_Dca_Class_Return = SeriesTree_Market_Dca_Class_Return(client)
-
-class SeriesTree_Market_Dca:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.sats_per_day: SeriesPattern18[Sats] = SeriesPattern18(client, 'dca_sats_per_day')
-        self.period: SeriesTree_Market_Dca_Period = SeriesTree_Market_Dca_Period(client)
-        self.class_: SeriesTree_Market_Dca_Class = SeriesTree_Market_Dca_Class(client)
-
 class SeriesTree_Market_Technical_Rsi:
     """Series tree node."""
     
@@ -4529,7 +4553,6 @@ class SeriesTree_Market:
         self.volatility: _1m1w1y24hPattern[StoredF32] = _1m1w1y24hPattern(client, 'price_volatility')
         self.range: SeriesTree_Market_Range = SeriesTree_Market_Range(client)
         self.moving_average: SeriesTree_Market_MovingAverage = SeriesTree_Market_MovingAverage(client)
-        self.dca: SeriesTree_Market_Dca = SeriesTree_Market_Dca(client)
         self.technical: SeriesTree_Market_Technical = SeriesTree_Market_Technical(client)
 
 class SeriesTree_Pools_Major:
@@ -4890,7 +4913,7 @@ class SeriesTree_Cohorts_Utxo_All_Realized_Price:
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, 'realized_price_sats')
         self.bps: SeriesPattern1[BasisPoints32] = SeriesPattern1(client, 'realized_price_ratio_bps')
         self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'realized_price_ratio')
-        self.percentiles: Pct1Pct2Pct5Pct95Pct98Pct99Pattern = Pct1Pct2Pct5Pct95Pct98Pct99Pattern(client, 'realized_price')
+        self.percentiles: Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern = Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern(client, 'realized_price')
         self.sma: _1m1w1y2y4yAllPattern = _1m1w1y2y4yAllPattern(client, 'realized_price_ratio_sma')
         self.std_dev: SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev = SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev(client)
 
@@ -5097,7 +5120,7 @@ class SeriesTree_Cohorts_Utxo_Sth_Realized_Price:
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, 'sth_realized_price_sats')
         self.bps: SeriesPattern1[BasisPoints32] = SeriesPattern1(client, 'sth_realized_price_ratio_bps')
         self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'sth_realized_price_ratio')
-        self.percentiles: Pct1Pct2Pct5Pct95Pct98Pct99Pattern = Pct1Pct2Pct5Pct95Pct98Pct99Pattern(client, 'sth_realized_price')
+        self.percentiles: Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern = Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern(client, 'sth_realized_price')
         self.sma: _1m1w1y2y4yAllPattern = _1m1w1y2y4yAllPattern(client, 'sth_realized_price_ratio_sma')
         self.std_dev: SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev = SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev(client)
 
@@ -5227,7 +5250,7 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized_Price:
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, 'lth_realized_price_sats')
         self.bps: SeriesPattern1[BasisPoints32] = SeriesPattern1(client, 'lth_realized_price_ratio_bps')
         self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'lth_realized_price_ratio')
-        self.percentiles: Pct1Pct2Pct5Pct95Pct98Pct99Pattern = Pct1Pct2Pct5Pct95Pct98Pct99Pattern(client, 'lth_realized_price')
+        self.percentiles: Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern = Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern(client, 'lth_realized_price')
         self.sma: _1m1w1y2y4yAllPattern = _1m1w1y2y4yAllPattern(client, 'lth_realized_price_ratio_sma')
         self.std_dev: SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev = SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev(client)
 
@@ -5646,6 +5669,7 @@ class SeriesTree:
         self.constants: SeriesTree_Constants = SeriesTree_Constants(client)
         self.indexes: SeriesTree_Indexes = SeriesTree_Indexes(client)
         self.indicators: SeriesTree_Indicators = SeriesTree_Indicators(client)
+        self.investing: SeriesTree_Investing = SeriesTree_Investing(client)
         self.market: SeriesTree_Market = SeriesTree_Market(client)
         self.pools: SeriesTree_Pools = SeriesTree_Pools(client)
         self.prices: SeriesTree_Prices = SeriesTree_Prices(client)

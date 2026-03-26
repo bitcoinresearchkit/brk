@@ -124,9 +124,11 @@ function seq(keys) {
 }
 
 export const colors = {
+  transparent: createColor(() => "transparent"),
   default: createColor(() => getLightDarkValue("--color")),
   gray: createColor(() => getColor("gray")),
   border: createColor(() => getLightDarkValue("--border-color")),
+  offBorder: createColor(() => getLightDarkValue("--off-border-color")),
 
   // Directional
   profit: palette.green,
@@ -214,12 +216,14 @@ export const colors = {
 
   // Ratio percentile bands (extreme values)
   ratioPct: {
-    _99: palette.rose,
-    _98: palette.pink,
-    _95: palette.fuchsia,
-    _5: palette.teal,
+    _99_5: palette.red,
+    _99: palette.orange,
+    _98: palette.amber,
+    _95: palette.yellow,
+    _5: palette.cyan,
     _2: palette.sky,
-    _1: palette.indigo,
+    _1: palette.blue,
+    _0_5: palette.indigo,
   },
 
   // Standard deviation bands (warm = positive, cool = negative)

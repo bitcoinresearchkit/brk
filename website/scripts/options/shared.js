@@ -1,7 +1,13 @@
 /** Shared helpers for options */
 
 import { Unit } from "../utils/units.js";
-import { ROLLING_WINDOWS, line, baseline, price, sumsAndAveragesCumulativeWith } from "./series.js";
+import {
+  ROLLING_WINDOWS,
+  line,
+  baseline,
+  price,
+  sumsAndAveragesCumulativeWith,
+} from "./series.js";
 import { priceLine, priceLines } from "./constants.js";
 import { colors } from "../utils/colors.js";
 
@@ -270,11 +276,19 @@ export function simplePriceRatioTree({ pattern, title, legend, color }) {
 }
 
 /**
- * @template T
- * @param {InvestorPercentilesPattern} p
- * @param {(entry: InvestorPercentileEntry) => T} extract
+ * @param {{ pct95: AnyPricePattern, pct5: AnyPricePattern, pct98: AnyPricePattern, pct2: AnyPricePattern, pct99: AnyPricePattern, pct1: AnyPricePattern, pct995: AnyPricePattern, pct05: AnyPricePattern }} p
  */
-function percentileBands(p, extract) {
+export function percentileBands(p) {
+  return percentileBandsWith(p, (e) => e);
+}
+
+/**
+ * @template E
+ * @template T
+ * @param {{ pct95: E, pct5: E, pct98: E, pct2: E, pct99: E, pct1: E, pct995: E, pct05: E }} p
+ * @param {(entry: E) => T} extract
+ */
+export function percentileBandsWith(p, extract) {
   return [
     { name: "P95", prop: extract(p.pct95), color: colors.ratioPct._95 },
     { name: "P5", prop: extract(p.pct5), color: colors.ratioPct._5 },
@@ -282,20 +296,38 @@ function percentileBands(p, extract) {
     { name: "P2", prop: extract(p.pct2), color: colors.ratioPct._2 },
     { name: "P99", prop: extract(p.pct99), color: colors.ratioPct._99 },
     { name: "P1", prop: extract(p.pct1), color: colors.ratioPct._1 },
+    { name: "P99.5", prop: extract(p.pct995), color: colors.ratioPct._99_5 },
+    { name: "P0.5", prop: extract(p.pct05), color: colors.ratioPct._0_5 },
   ];
 }
 
-/** @param {{ name: string, prop: AnyPricePattern, color: Color }[]} bands */
-function priceBands(bands) {
+/**
+ * @param {{ name: string, prop: AnyPricePattern, color: Color }[]} bands
+ * @param {{ defaultActive?: boolean }} [opts]
+ */
+export function priceBands(bands, opts) {
   return bands.map(({ name, prop, color }) =>
-    price({ series: prop, name, color, defaultActive: false, options: { lineStyle: 1 } }),
+    price({
+      series: prop,
+      name,
+      color,
+      defaultActive: opts?.defaultActive ?? false,
+      options: { lineStyle: 1 },
+    }),
   );
 }
 
 /** @param {{ name: string, prop: AnySeriesPattern, color: Color }[]} bands */
 function ratioBands(bands) {
   return bands.map(({ name, prop, color }) =>
-    line({ series: prop, name, color, defaultActive: false, unit: Unit.ratio, options: { lineStyle: 1 } }),
+    line({
+      series: prop,
+      name,
+      color,
+      defaultActive: false,
+      unit: Unit.ratio,
+      options: { lineStyle: 1 },
+    }),
   );
 }
 
@@ -319,8 +351,8 @@ export function priceRatioPercentilesTree({
   priceReferences,
 }) {
   const p = pattern.percentiles;
-  const pctUsd = percentileBands(p, (e) => e.price);
-  const pctRatio = percentileBands(p, (e) => e.ratio);
+  const pctUsd = percentileBandsWith(p, (e) => e.price);
+  const pctRatio = percentileBandsWith(p, (e) => e.ratio);
   return [
     {
       name: "Price",
@@ -500,7 +532,11 @@ export function ratioSmas(ratio) {
     { name: "1y SMA", series: ratio.sma._1y.ratio },
     { name: "2y SMA", series: ratio.sma._2y.ratio },
     { name: "4y SMA", series: ratio.sma._4y.ratio },
-    { name: "All Time SMA", series: ratio.sma.all.ratio, color: colors.time.all },
+    {
+      name: "All Time SMA",
+      series: ratio.sma.all.ratio,
+      color: colors.time.all,
+    },
   ].map((s, i, arr) => ({ color: colors.at(i, arr.length), ...s }));
 }
 
@@ -543,7 +579,14 @@ export function ratioBottomSeries(ratio) {
  * @param {string} [args.legend]
  * @returns {PartialChartOption}
  */
-export function createRatioChart({ title, pricePattern, ratio, color, name, legend }) {
+export function createRatioChart({
+  title,
+  pricePattern,
+  ratio,
+  color,
+  name,
+  legend,
+}) {
   return {
     name: name ?? "Ratio",
     title: title(name ?? "Ratio"),
@@ -727,7 +770,7 @@ export function createPriceRatioCharts({
   priceReferences,
 }) {
   const titleFn = formatCohortTitle(context);
-  const pctUsd = percentileBands(ratio.percentiles, (e) => e.price);
+  const pctUsd = percentileBandsWith(ratio.percentiles, (e) => e.price);
   return [
     {
       name: "Price",
@@ -775,20 +818,39 @@ export function createPriceRatioCharts({
  * @param {Unit} args.unit
  * @returns {PartialOptionsTree}
  */
-export function groupedWindowsCumulative({ list, all, title, metricTitle, getWindowSeries, getCumulativeSeries, seriesFn, unit }) {
+export function groupedWindowsCumulative({
+  list,
+  all,
+  title,
+  metricTitle,
+  getWindowSeries,
+  getCumulativeSeries,
+  seriesFn,
+  unit,
+}) {
   return [
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
       title: title(`${w.title} ${metricTitle}`),
       bottom: mapCohortsWithAll(list, all, (c) =>
-        seriesFn({ series: getWindowSeries(c, w.key), name: c.name, color: c.color, unit }),
+        seriesFn({
+          series: getWindowSeries(c, w.key),
+          name: c.name,
+          color: c.color,
+          unit,
+        }),
       ),
     })),
     {
       name: "Cumulative",
       title: title(`Cumulative ${metricTitle}`),
       bottom: mapCohortsWithAll(list, all, (c) =>
-        seriesFn({ series: getCumulativeSeries(c), name: c.name, color: c.color, unit }),
+        seriesFn({
+          series: getCumulativeSeries(c),
+          name: c.name,
+          color: c.color,
+          unit,
+        }),
       ),
     },
   ];
@@ -807,9 +869,21 @@ export function groupedWindowsCumulative({ list, all, title, metricTitle, getWin
  * @param {(args: { series: AnySeriesPattern, name: string, color: Color, unit: Unit }) => AnyFetchedSeriesBlueprint} [args.seriesFn]
  * @returns {PartialOptionsTree}
  */
-export function groupedWindowsCumulativeUsd({ list, all, title, metricTitle, getMetric, seriesFn = line }) {
+export function groupedWindowsCumulativeUsd({
+  list,
+  all,
+  title,
+  metricTitle,
+  getMetric,
+  seriesFn = line,
+}) {
   return groupedWindowsCumulative({
-    list, all, title, metricTitle, seriesFn, unit: Unit.usd,
+    list,
+    all,
+    title,
+    metricTitle,
+    seriesFn,
+    unit: Unit.usd,
     getWindowSeries: (c, key) => getMetric(c).sum[key].usd,
     getCumulativeSeries: (c) => getMetric(c).cumulative.usd,
   });
@@ -827,20 +901,34 @@ export function groupedWindowsCumulativeUsd({ list, all, title, metricTitle, get
  * @param {(c: T | A) => { sum: Record<string, AnyValuePattern>, cumulative: AnyValuePattern }} args.getMetric
  * @returns {PartialOptionsTree}
  */
-export function groupedWindowsCumulativeSatsBtcUsd({ list, all, title, metricTitle, getMetric }) {
+export function groupedWindowsCumulativeSatsBtcUsd({
+  list,
+  all,
+  title,
+  metricTitle,
+  getMetric,
+}) {
   return [
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
       title: title(`${w.title} ${metricTitle}`),
       bottom: flatMapCohortsWithAll(list, all, (c) =>
-        satsBtcUsd({ pattern: getMetric(c).sum[w.key], name: c.name, color: c.color }),
+        satsBtcUsd({
+          pattern: getMetric(c).sum[w.key],
+          name: c.name,
+          color: c.color,
+        }),
       ),
     })),
     {
       name: "Cumulative",
       title: title(`Cumulative ${metricTitle}`),
       bottom: flatMapCohortsWithAll(list, all, (c) =>
-        satsBtcUsd({ pattern: getMetric(c).cumulative, name: c.name, color: c.color }),
+        satsBtcUsd({
+          pattern: getMetric(c).cumulative,
+          name: c.name,
+          color: c.color,
+        }),
       ),
     },
   ];

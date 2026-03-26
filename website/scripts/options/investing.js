@@ -69,19 +69,19 @@ const ALL_YEARS = /** @type {const} */ ([...YEARS_2020S, ...YEARS_2010S]);
 
 /**
  * Build DCA class entry from year
- * @param {MarketDca} dca
+ * @param {Investing} investing
  * @param {DcaYear} year
  * @param {number} i
  * @returns {BaseEntryItem}
  */
-function buildYearEntry(dca, year, i) {
+function buildYearEntry(investing, year, i) {
   const key = /** @type {DcaYearKey} */ (`from${year}`);
   return {
     name: `${year}`,
     color: colors.at(i, ALL_YEARS.length),
-    costBasis: dca.class.costBasis[key],
-    returns: dca.class.return[key],
-    stack: dca.class.stack[key],
+    costBasis: investing.class.costBasis[key],
+    returns: investing.class.return[key],
+    stack: investing.class.stack[key],
   };
 }
 
@@ -90,16 +90,16 @@ function buildYearEntry(dca, year, i) {
  * @returns {PartialOptionsGroup}
  */
 export function createInvestingSection() {
-  const { market } = brk.series;
-  const { dca, lookback, returns } = market;
+  const { market, investing } = brk.series;
+  const { lookback, returns } = market;
 
   return {
     name: "Investing",
     tree: [
-      createDcaVsLumpSumSection({ dca, lookback, returns }),
-      createDcaByPeriodSection({ dca, returns }),
-      createLumpSumByPeriodSection({ dca, lookback, returns }),
-      createDcaByStartYearSection({ dca }),
+      createDcaVsLumpSumSection({ investing, lookback, returns }),
+      createDcaByPeriodSection({ investing, returns }),
+      createLumpSumByPeriodSection({ investing, lookback, returns }),
+      createDcaByStartYearSection({ investing }),
     ],
   };
 }
@@ -270,15 +270,15 @@ function createLongSingleEntry(item) {
 /**
  * Create DCA vs Lump Sum section
  * @param {Object} args
- * @param {Market["dca"]} args.dca
+ * @param {Investing} args.investing
  * @param {Market["lookback"]} args.lookback
  * @param {Market["returns"]} args.returns
  */
-export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
+export function createDcaVsLumpSumSection({ investing, lookback, returns }) {
   /** @param {AllPeriodKey} key */
   const topPane = (key) => [
     price({
-      series: dca.period.costBasis[key],
+      series: investing.period.costBasis[key],
       name: "DCA",
       color: colors.profit,
     }),
@@ -299,11 +299,11 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
     top: topPane(key),
     bottom: [
       ...percentRatioBaseline({
-        pattern: dca.period.return[key],
+        pattern: investing.period.return[key],
         name: "DCA",
       }),
       ...percentRatioBaseline({
-        pattern: dca.period.lumpSumReturn[key],
+        pattern: investing.period.lumpSumReturn[key],
         name: "Lump Sum",
         color: colors.bi.p2,
       }),
@@ -317,7 +317,7 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
     top: topPane(key),
     bottom: [
       ...percentRatioBaseline({
-        pattern: dca.period.cagr[key],
+        pattern: investing.period.cagr[key],
         name: "DCA",
       }),
       ...percentRatioBaseline({
@@ -335,12 +335,12 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
     top: topPane(key),
     bottom: [
       ...satsBtcUsd({
-        pattern: dca.period.stack[key],
+        pattern: investing.period.stack[key],
         name: "DCA",
         color: colors.profit,
       }),
       ...satsBtcUsd({
-        pattern: dca.period.lumpSumStack[key],
+        pattern: investing.period.lumpSumStack[key],
         name: "Lump Sum",
         color: colors.bitcoin,
       }),
@@ -395,11 +395,11 @@ export function createDcaVsLumpSumSection({ dca, lookback, returns }) {
 /**
  * Create period-based section (DCA or Lump Sum)
  * @param {Object} args
- * @param {Market["dca"]} args.dca
+ * @param {Investing} args.investing
  * @param {Market["lookback"]} [args.lookback]
  * @param {Market["returns"]} args.returns
  */
-function createPeriodSection({ dca, lookback, returns }) {
+function createPeriodSection({ investing, lookback, returns }) {
   const isLumpSum = !!lookback;
   const suffix = isLumpSum ? "Lump Sum" : "DCA";
 
@@ -409,20 +409,20 @@ function createPeriodSection({ dca, lookback, returns }) {
   const buildBaseEntry = (key, i) => ({
     name: periodName(key),
     color: colors.at(i, allPeriods.length),
-    costBasis: isLumpSum ? lookback[key] : dca.period.costBasis[key],
+    costBasis: isLumpSum ? lookback[key] : investing.period.costBasis[key],
     returns: isLumpSum
-      ? dca.period.lumpSumReturn[key]
-      : dca.period.return[key],
+      ? investing.period.lumpSumReturn[key]
+      : investing.period.return[key],
     stack: isLumpSum
-      ? dca.period.lumpSumStack[key]
-      : dca.period.stack[key],
+      ? investing.period.lumpSumStack[key]
+      : investing.period.stack[key],
   });
 
   /** @param {LongPeriodKey} key @param {number} i @returns {LongEntryItem} */
   const buildLongEntry = (key, i) =>
     withCagr(
       buildBaseEntry(key, i),
-      isLumpSum ? returns.cagr[key] : dca.period.cagr[key],
+      isLumpSum ? returns.cagr[key] : investing.period.cagr[key],
     );
 
   /** @param {BaseEntryItem} entry */
@@ -471,30 +471,30 @@ function createPeriodSection({ dca, lookback, returns }) {
 /**
  * Create DCA by Period section
  * @param {Object} args
- * @param {Market["dca"]} args.dca
+ * @param {Investing} args.investing
  * @param {Market["returns"]} args.returns
  */
-export function createDcaByPeriodSection({ dca, returns }) {
-  return createPeriodSection({ dca, returns });
+export function createDcaByPeriodSection({ investing, returns }) {
+  return createPeriodSection({ investing, returns });
 }
 
 /**
  * Create Lump Sum by Period section
  * @param {Object} args
- * @param {Market["dca"]} args.dca
+ * @param {Investing} args.investing
  * @param {Market["lookback"]} args.lookback
  * @param {Market["returns"]} args.returns
  */
-export function createLumpSumByPeriodSection({ dca, lookback, returns }) {
-  return createPeriodSection({ dca, lookback, returns });
+export function createLumpSumByPeriodSection({ investing, lookback, returns }) {
+  return createPeriodSection({ investing, lookback, returns });
 }
 
 /**
  * Create DCA by Start Year section
  * @param {Object} args
- * @param {Market["dca"]} args.dca
+ * @param {Investing} args.investing
  */
-export function createDcaByStartYearSection({ dca }) {
+export function createDcaByStartYearSection({ investing }) {
   /** @param {string} name @param {string} title @param {BaseEntryItem[]} entries */
   const createDecadeGroup = (name, title, entries) => ({
     name,
@@ -511,10 +511,10 @@ export function createDcaByStartYearSection({ dca }) {
   });
 
   const entries2020s = YEARS_2020S.map((year, i) =>
-    buildYearEntry(dca, year, i),
+    buildYearEntry(investing, year, i),
   );
   const entries2010s = YEARS_2010S.map((year, i) =>
-    buildYearEntry(dca, year, YEARS_2020S.length + i),
+    buildYearEntry(investing, year, YEARS_2020S.length + i),
   );
 
   return {

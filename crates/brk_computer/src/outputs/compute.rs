@@ -18,6 +18,8 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.db.sync_bg_tasks()?;
+
         self.count.compute(
             indexer,
             indexes,
@@ -27,10 +29,13 @@ impl Vecs {
             starting_indexes,
             exit,
         )?;
-        let _lock = self
+        let lock = self
             .spent
             .compute(indexer, inputs, starting_indexes, exit)?;
-        self.db.compact()?;
+        self.db.run_bg(move |db| {
+            let _lock = lock;
+            db.compact()
+        });
         Ok(())
     }
 }

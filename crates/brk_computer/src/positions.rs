@@ -45,9 +45,14 @@ impl Vecs {
         reader: &Reader,
         exit: &Exit,
     ) -> Result<()> {
+        self.db.sync_bg_tasks()?;
+
         self.compute_(indexer, starting_indexes, reader, exit)?;
-        let _lock = exit.lock();
-        self.db.compact()?;
+        let exit = exit.clone();
+        self.db.run_bg(move |db| {
+            let _lock = exit.lock();
+            db.compact()
+        });
         Ok(())
     }
 

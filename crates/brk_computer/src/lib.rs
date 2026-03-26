@@ -18,6 +18,7 @@ mod indicators;
 pub mod indexes;
 mod inputs;
 mod internal;
+mod investing;
 mod market;
 mod mining;
 mod outputs;
@@ -39,6 +40,7 @@ pub struct Computer<M: StorageMode = Rw> {
     pub constants: Box<constants::Vecs>,
     pub indexes: Box<indexes::Vecs<M>>,
     pub indicators: Box<indicators::Vecs<M>>,
+    pub investing: Box<investing::Vecs<M>>,
     pub market: Box<market::Vecs<M>>,
     pub pools: Box<pools::Vecs<M>>,
     pub prices: Box<prices::Vecs<M>>,
@@ -180,8 +182,8 @@ impl Computer {
 
         // Market, indicators, and distribution are independent; import in parallel.
         // Supply depends on distribution so it runs after.
-        let (distribution, market, indicators) =
-            timed("Imported distribution/market/indicators", || {
+        let (distribution, market, indicators, investing) =
+            timed("Imported distribution/market/indicators/investing", || {
                 thread::scope(|s| -> Result<_> {
                     let market_handle = big_thread().spawn_scoped(s, || -> Result<_> {
                         Ok(Box::new(market::Vecs::forced_import(
@@ -199,6 +201,14 @@ impl Computer {
                         )?))
                     })?;
 
+                    let investing_handle = big_thread().spawn_scoped(s, || -> Result<_> {
+                        Ok(Box::new(investing::Vecs::forced_import(
+                            &computed_path,
+                            VERSION,
+                            &indexes,
+                        )?))
+                    })?;
+
                     let distribution = Box::new(distribution::Vecs::forced_import(
                         &computed_path,
                         VERSION,
@@ -208,7 +218,8 @@ impl Computer {
 
                     let market = market_handle.join().unwrap()?;
                     let indicators = indicators_handle.join().unwrap()?;
-                    Ok((distribution, market, indicators))
+                    let investing = investing_handle.join().unwrap()?;
+                    Ok((distribution, market, indicators, investing))
                 })
             })?;
 
@@ -232,6 +243,7 @@ impl Computer {
             scripts,
             constants,
             indicators,
+            investing,
             market,
             distribution,
             supply,
@@ -260,6 +272,7 @@ impl Computer {
             cointime::DB_NAME,
             indicators::DB_NAME,
             indexes::DB_NAME,
+            investing::DB_NAME,
             market::DB_NAME,
             pools::DB_NAME,
             prices::DB_NAME,
@@ -305,7 +318,7 @@ impl Computer {
 
         let mut starting_indexes = timed("Computed indexes", || {
             self.indexes
-                .compute(indexer, &mut self.blocks, starting_indexes, exit)
+                .compute(indexer, starting_indexes, exit)
         })?;
 
         thread::scope(|scope| -> Result<()> {
@@ -339,8 +352,8 @@ impl Computer {
             let market = scope.spawn(|| {
                 timed("Computed market", || {
                     self.market.compute(
-                        &self.indexes,
                         &self.prices,
+                        &self.indexes,
                         &self.blocks,
                         &starting_indexes,
                         exit,
@@ -422,6 +435,19 @@ impl Computer {
                 })
             });
 
+            let investing = scope.spawn(|| {
+                timed("Computed investing", || {
+                    self.investing.compute(
+                        &self.indexes,
+                        &self.prices,
+                        &self.blocks,
+                        &self.market.lookback,
+                        &starting_indexes_clone,
+                        exit,
+                    )
+                })
+            });
+
             timed("Computed distribution", || {
                 self.distribution.compute(
                     indexer,
@@ -437,6 +463,7 @@ impl Computer {
             })?;
 
             pools.join().unwrap()?;
+            investing.join().unwrap()?;
             Ok(())
         })?;
 
@@ -485,6 +512,14 @@ impl Computer {
             Ok(())
         })?;
 
+        self.indicators.thermometer.compute(
+            &self.distribution,
+            &self.cointime,
+            &self.prices,
+            &starting_indexes,
+            exit,
+        )?;
+
         info!("Total compute time: {:?}", compute_start.elapsed());
         Ok(())
     }
@@ -517,7 +552,7 @@ macro_rules! impl_iter_named {
 }
 
 impl_iter_named!(blocks, mining, transactions, scripts, positions, cointime,
-    constants, indicators, indexes, market, pools, prices, distribution, supply, inputs, outputs);
+    constants, indicators, indexes, investing, market, pools, prices, distribution, supply, inputs, outputs);
 
 fn timed<T>(label: &str, f: impl FnOnce() -> T) -> T {
     let start = Instant::now();

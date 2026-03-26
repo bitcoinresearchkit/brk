@@ -45,8 +45,7 @@ impl Query {
 
         // Get timestamps using difficulty_to_timestamp for epoch start
         let epoch_start_timestamp = computer
-            .blocks
-            .time
+            .indexes
             .timestamp
             .epoch
             .collect_one(current_epoch)

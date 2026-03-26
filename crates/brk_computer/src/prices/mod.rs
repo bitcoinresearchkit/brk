@@ -25,7 +25,7 @@ pub const DB_NAME: &str = "prices";
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
-    pub(crate) db: Database,
+    pub db: Database,
 
     pub split: SplitByUnit<M>,
     pub ohlc: OhlcByUnit<M>,
@@ -183,7 +183,4 @@ impl Vecs {
         })
     }
 
-    pub(crate) fn db(&self) -> &Database {
-        &self.db
-    }
 }

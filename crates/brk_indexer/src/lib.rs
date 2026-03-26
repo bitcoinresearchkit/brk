@@ -6,6 +6,7 @@ use brk_error::Result;
 use brk_iterator::Blocks;
 use brk_rpc::Client;
 use brk_types::Height;
+use fjall::PersistMode;
 use tracing::{debug, info};
 use vecdb::{Exit, ReadOnlyClone, ReadableVec, Ro, Rw, StorageMode};
 mod constants;
@@ -107,6 +108,8 @@ impl Indexer {
         exit: &Exit,
         check_collisions: bool,
     ) -> Result<Indexes> {
+        self.vecs.db.sync_bg_tasks()?;
+
         debug!("Starting indexing...");
 
         let last_blockhash = self.vecs.blocks.blockhash.collect_last();
@@ -248,11 +251,32 @@ impl Indexer {
 
         drop(readers);
 
-        if !is_export_height(indexes.height) {
-            export(stores, vecs, indexes.height)?;
-        }
+        let lock = exit.lock();
+        let tasks = self.stores.take_all_pending_ingests(indexes.height)?;
+        self.vecs.stamped_write(indexes.height)?;
+        let fjall_db = self.stores.db.clone();
 
-        self.vecs.compact()?;
+        self.vecs.db.run_bg(move |db| {
+            let _lock = lock;
+
+            if !tasks.is_empty() {
+                let i = Instant::now();
+                for task in tasks {
+                    task().map_err(vecdb::RawDBError::other)?;
+                }
+                info!("Stores committed in {:?}", i.elapsed());
+
+                let i = Instant::now();
+                fjall_db
+                    .persist(PersistMode::SyncData)
+                    .map_err(vecdb::RawDBError::other)?;
+                info!("Stores persisted in {:?}", i.elapsed());
+            }
+
+            db.flush()?;
+            db.compact()?;
+            Ok(())
+        });
 
         Ok(starting_indexes)
     }

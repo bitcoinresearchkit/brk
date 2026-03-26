@@ -206,6 +206,34 @@ where
         }
     }
 
+    /// Takes buffered puts/dels and returns a closure that ingests them into the keyspace.
+    /// The store is left with empty buffers, ready for the next batch.
+    #[allow(clippy::type_complexity)]
+    pub fn take_pending_ingest(
+        &mut self,
+        height: Height,
+    ) -> Result<Option<Box<dyn FnOnce() -> Result<()> + Send>>>
+    where
+        K: Send + 'static,
+        V: Send + 'static,
+        for<'a> ByteView: From<&'a K> + From<&'a V>,
+    {
+        self.export_meta_if_needed(height)?;
+
+        let puts = mem::take(&mut self.puts);
+        let dels = mem::take(&mut self.dels);
+
+        if puts.is_empty() && dels.is_empty() {
+            return Ok(None);
+        }
+
+        let keyspace = self.keyspace.clone();
+
+        Ok(Some(Box::new(move || {
+            Self::ingest(&keyspace, puts.iter(), dels.iter())
+        })))
+    }
+
     #[inline]
     pub fn iter(&self) -> impl Iterator<Item = (K, V)> {
         self.keyspace

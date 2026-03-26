@@ -22,18 +22,20 @@ pub struct RatioBand<M: StorageMode = Rw> {
 
 #[derive(Traversable)]
 pub struct RatioPerBlockPercentiles<M: StorageMode = Rw> {
+    pub pct99_5: RatioBand<M>,
     pub pct99: RatioBand<M>,
     pub pct98: RatioBand<M>,
     pub pct95: RatioBand<M>,
     pub pct5: RatioBand<M>,
     pub pct2: RatioBand<M>,
     pub pct1: RatioBand<M>,
+    pub pct0_5: RatioBand<M>,
 
     #[traversable(skip)]
     expanding_pct: ExpandingPercentiles,
 }
 
-const VERSION: Version = Version::new(5);
+const VERSION: Version = Version::new(6);
 
 /// First height included in ratio percentile computation (first halving).
 /// Earlier blocks lack meaningful market data and pollute the distribution.
@@ -70,12 +72,14 @@ impl RatioPerBlockPercentiles {
         }
 
         Ok(Self {
+            pct99_5: import_band!("pct99_5"),
             pct99: import_band!("pct99"),
             pct98: import_band!("pct98"),
             pct95: import_band!("pct95"),
             pct5: import_band!("pct5"),
             pct2: import_band!("pct2"),
             pct1: import_band!("pct1"),
+            pct0_5: import_band!("pct0_5"),
             expanding_pct: ExpandingPercentiles::default(),
         })
     }
@@ -114,16 +118,18 @@ impl RatioPerBlockPercentiles {
             }
 
             let new_ratios = ratio_source.collect_range_at(start, ratio_len);
-            let mut pct_vecs: [&mut EagerVec<PcoVec<Height, BasisPoints32>>; 6] = [
+            let mut pct_vecs: [&mut EagerVec<PcoVec<Height, BasisPoints32>>; 8] = [
+                &mut self.pct0_5.ratio.bps.height,
                 &mut self.pct1.ratio.bps.height,
                 &mut self.pct2.ratio.bps.height,
                 &mut self.pct5.ratio.bps.height,
                 &mut self.pct95.ratio.bps.height,
                 &mut self.pct98.ratio.bps.height,
                 &mut self.pct99.ratio.bps.height,
+                &mut self.pct99_5.ratio.bps.height,
             ];
-            const PCTS: [f64; 6] = [0.01, 0.02, 0.05, 0.95, 0.98, 0.99];
-            let mut out = [0u32; 6];
+            const PCTS: [f64; 8] = [0.005, 0.01, 0.02, 0.05, 0.95, 0.98, 0.99, 0.995];
+            let mut out = [0u32; 8];
 
             for vec in pct_vecs.iter_mut() {
                 vec.truncate_if_needed_at(start)?;
@@ -160,12 +166,14 @@ impl RatioPerBlockPercentiles {
             };
         }
 
+        compute_band!(pct99_5);
         compute_band!(pct99);
         compute_band!(pct98);
         compute_band!(pct95);
         compute_band!(pct5);
         compute_band!(pct2);
         compute_band!(pct1);
+        compute_band!(pct0_5);
 
         Ok(())
     }
@@ -174,12 +182,14 @@ impl RatioPerBlockPercentiles {
         &mut self,
     ) -> impl Iterator<Item = &mut EagerVec<PcoVec<Height, BasisPoints32>>> {
         [
+            &mut self.pct0_5.ratio.bps.height,
             &mut self.pct1.ratio.bps.height,
             &mut self.pct2.ratio.bps.height,
             &mut self.pct5.ratio.bps.height,
             &mut self.pct95.ratio.bps.height,
             &mut self.pct98.ratio.bps.height,
             &mut self.pct99.ratio.bps.height,
+            &mut self.pct99_5.ratio.bps.height,
         ]
         .into_iter()
     }

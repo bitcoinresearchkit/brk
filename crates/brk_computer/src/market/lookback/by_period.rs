@@ -1,7 +1,5 @@
 use brk_traversable::Traversable;
 
-use crate::market::dca::ByDcaPeriod;
-
 /// Lookback period days (includes 24h, unlike DCA)
 pub const LOOKBACK_PERIOD_DAYS: ByLookbackPeriod<u32> = ByLookbackPeriod {
     _24h: 1,
@@ -116,23 +114,5 @@ impl<T> ByLookbackPeriod<T> {
             (&mut self._10y, d._10y),
         ]
         .into_iter()
-    }
-
-    /// Get the DCA-matching subset (excludes 24h)
-    pub(crate) fn as_dca_period(&self) -> ByDcaPeriod<&T> {
-        ByDcaPeriod {
-            _1w: &self._1w,
-            _1m: &self._1m,
-            _3m: &self._3m,
-            _6m: &self._6m,
-            _1y: &self._1y,
-            _2y: &self._2y,
-            _3y: &self._3y,
-            _4y: &self._4y,
-            _5y: &self._5y,
-            _6y: &self._6y,
-            _8y: &self._8y,
-            _10y: &self._10y,
-        }
     }
 }

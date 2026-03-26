@@ -6,8 +6,8 @@ use brk_cohort::ByAddrType;
 use brk_error::Result;
 use brk_store::{AnyStore, Kind, Mode, Store};
 use brk_types::{
-    AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, BlockHashPrefix, Height, OutPoint,
-    OutputType, StoredString, TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version, Vout,
+    AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, BlockHashPrefix, Height, OutPoint, OutputType,
+    StoredString, TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version, Vout,
 };
 use fjall::{Database, PersistMode};
 use rayon::prelude::*;
@@ -24,8 +24,7 @@ pub struct Stores {
 
     pub addr_type_to_addr_hash_to_addr_index: ByAddrType<Store<AddrHash, TypeIndex>>,
     pub addr_type_to_addr_index_and_tx_index: ByAddrType<Store<AddrIndexTxIndex, Unit>>,
-    pub addr_type_to_addr_index_and_unspent_outpoint:
-        ByAddrType<Store<AddrIndexOutPoint, Unit>>,
+    pub addr_type_to_addr_index_and_unspent_outpoint: ByAddrType<Store<AddrIndexOutPoint, Unit>>,
     pub blockhash_prefix_to_height: Store<BlockHashPrefix, Height>,
     pub height_to_coinbase_tag: Store<Height, StoredString>,
     pub txid_prefix_to_tx_index: Store<TxidPrefix, TxIndex>,
@@ -192,6 +191,39 @@ impl Stores {
         info!("Stores persisted in {:?}", i.elapsed());
 
         Ok(())
+    }
+
+    /// Takes all pending puts/dels from every store and returns closures
+    /// that can ingest them on a background thread.
+    #[allow(clippy::type_complexity)]
+    pub fn take_all_pending_ingests(
+        &mut self,
+        height: Height,
+    ) -> Result<Vec<Box<dyn FnOnce() -> Result<()> + Send>>> {
+        let h = height;
+        let mut tasks = Vec::new();
+
+        macro_rules! take {
+            ($store:expr) => {
+                tasks.extend($store.take_pending_ingest(h)?);
+            };
+        }
+
+        take!(self.blockhash_prefix_to_height);
+        take!(self.height_to_coinbase_tag);
+        take!(self.txid_prefix_to_tx_index);
+
+        for store in self.addr_type_to_addr_hash_to_addr_index.values_mut() {
+            take!(store);
+        }
+        for store in self.addr_type_to_addr_index_and_tx_index.values_mut() {
+            take!(store);
+        }
+        for store in self.addr_type_to_addr_index_and_unspent_outpoint.values_mut() {
+            take!(store);
+        }
+
+        Ok(tasks)
     }
 
     pub fn rollback_if_needed(
@@ -368,11 +400,7 @@ impl Stores {
                 let addr_type = output_type;
                 let addr_index = type_index;
 
-                addr_index_tx_index_to_remove.insert((
-                    addr_type,
-                    addr_index,
-                    spending_tx_index,
-                ));
+                addr_index_tx_index_to_remove.insert((addr_type, addr_index, spending_tx_index));
 
                 self.addr_type_to_addr_index_and_unspent_outpoint
                     .get_mut_unwrap(addr_type)

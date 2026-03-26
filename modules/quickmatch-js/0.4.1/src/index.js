@@ -238,6 +238,7 @@ export class QuickMatch {
    */
   _rank(indices, minScore, qwords, sep, limit) {
     const { items, _scores: scores } = this;
+    /** @type {[number[], number[], number[]]} */
     const buckets = [[], [], []]; // ps=0, ps=1, ps=2
 
     for (let i = 0; i < indices.length; i++) {

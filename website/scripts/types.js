@@ -180,7 +180,7 @@
  * Tree branch types
  * @typedef {Brk.SeriesTree_Market} Market
  * @typedef {Brk.SeriesTree_Market_MovingAverage} MarketMovingAverage
- * @typedef {Brk.SeriesTree_Market_Dca} MarketDca
+ * @typedef {Brk.SeriesTree_Investing} Investing
  * @typedef {Brk._10y2y3y4y5y6y8yPattern} PeriodCagrPattern
  * @typedef {FullStatsPattern} AnyFullStatsPattern
  *
@@ -243,7 +243,7 @@
  * @typedef {Brk.AbsoluteRatePattern2} FiatDeltaPattern
  *
  * Investor price percentiles (pct1/2/5/95/98/99)
- * @typedef {Brk.Pct1Pct2Pct5Pct95Pct98Pct99Pattern} InvestorPercentilesPattern
+ * @typedef {Brk.Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern} InvestorPercentilesPattern
  * @typedef {Brk.BpsPriceRatioPattern} InvestorPercentileEntry
  *
  * Generic tree node type for walking

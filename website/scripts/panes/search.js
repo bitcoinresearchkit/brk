@@ -3,7 +3,7 @@ import {
   searchLabelElement,
   searchResultsElement,
 } from "../utils/elements.js";
-import { QuickMatch } from "../modules/quickmatch-js/0.4.0/src/index.js";
+import { QuickMatch } from "../modules/quickmatch-js/0.4.1/src/index.js";
 
 /**
  * @param {Options} options

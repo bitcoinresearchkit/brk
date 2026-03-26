@@ -18,6 +18,8 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.db.sync_bg_tasks()?;
+
         // Block rewards (coinbase, subsidy, fee_dominance, etc.)
         self.rewards.compute(
             indexer,
@@ -39,8 +41,11 @@ impl Vecs {
             exit,
         )?;
 
-        let _lock = exit.lock();
-        self.db.compact()?;
+        let exit = exit.clone();
+        self.db.run_bg(move |db| {
+            let _lock = exit.lock();
+            db.compact()
+        });
         Ok(())
     }
 }

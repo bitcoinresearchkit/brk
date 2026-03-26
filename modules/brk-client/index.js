@@ -1973,13 +1973,44 @@ function createGrossInvestedInvestorLossNetNuplProfitSentimentPattern2(client, a
  * @typedef {Object} BpsCentsPercentilesRatioSatsSmaStdUsdPattern
  * @property {SeriesPattern1<BasisPoints32>} bps
  * @property {SeriesPattern1<Cents>} cents
- * @property {Pct1Pct2Pct5Pct95Pct98Pct99Pattern} percentiles
+ * @property {Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern} percentiles
  * @property {SeriesPattern1<StoredF32>} ratio
  * @property {SeriesPattern1<SatsFract>} sats
  * @property {_1m1w1y2y4yAllPattern} sma
  * @property {_1y2y4yAllPattern} stdDev
  * @property {SeriesPattern1<Dollars>} usd
  */
+
+/**
+ * @typedef {Object} Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern
+ * @property {BpsPriceRatioPattern} pct05
+ * @property {BpsPriceRatioPattern} pct1
+ * @property {BpsPriceRatioPattern} pct2
+ * @property {BpsPriceRatioPattern} pct5
+ * @property {BpsPriceRatioPattern} pct95
+ * @property {BpsPriceRatioPattern} pct98
+ * @property {BpsPriceRatioPattern} pct99
+ * @property {BpsPriceRatioPattern} pct995
+ */
+
+/**
+ * Create a Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern}
+ */
+function createPct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern(client, acc) {
+  return {
+    pct05: createBpsPriceRatioPattern(client, acc, 'pct0_5'),
+    pct1: createBpsPriceRatioPattern(client, acc, 'pct1'),
+    pct2: createBpsPriceRatioPattern(client, acc, 'pct2'),
+    pct5: createBpsPriceRatioPattern(client, acc, 'pct5'),
+    pct95: createBpsPriceRatioPattern(client, acc, 'pct95'),
+    pct98: createBpsPriceRatioPattern(client, acc, 'pct98'),
+    pct99: createBpsPriceRatioPattern(client, acc, 'pct99'),
+    pct995: createBpsPriceRatioPattern(client, acc, 'pct99_5'),
+  };
+}
 
 /**
  * @typedef {Object} _10y2y3y4y5y6y8yPattern
@@ -2242,7 +2273,7 @@ function createAverageBlockCumulativeInSumPattern(client, acc) {
  * @typedef {Object} BpsCentsPercentilesRatioSatsUsdPattern
  * @property {SeriesPattern1<BasisPoints32>} bps
  * @property {SeriesPattern1<Cents>} cents
- * @property {Pct1Pct2Pct5Pct95Pct98Pct99Pattern} percentiles
+ * @property {Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern} percentiles
  * @property {SeriesPattern1<StoredF32>} ratio
  * @property {SeriesPattern1<SatsFract>} sats
  * @property {SeriesPattern1<Dollars>} usd
@@ -2258,7 +2289,7 @@ function createBpsCentsPercentilesRatioSatsUsdPattern(client, acc) {
   return {
     bps: createSeriesPattern1(client, _m(acc, 'ratio_bps')),
     cents: createSeriesPattern1(client, _m(acc, 'cents')),
-    percentiles: createPct1Pct2Pct5Pct95Pct98Pct99Pattern(client, acc),
+    percentiles: createPct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern(client, acc),
     ratio: createSeriesPattern1(client, _m(acc, 'ratio')),
     sats: createSeriesPattern1(client, _m(acc, 'sats')),
     usd: createSeriesPattern1(client, acc),
@@ -2370,33 +2401,6 @@ function createDeltaHalfInToTotalPattern2(client, acc) {
     inProfit: createBtcCentsSatsToUsdPattern3(client, _m(acc, 'in_profit')),
     toCirculating: createBpsPercentRatioPattern3(client, _m(acc, 'to_circulating')),
     total: createBtcCentsSatsUsdPattern3(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} Pct1Pct2Pct5Pct95Pct98Pct99Pattern
- * @property {BpsPriceRatioPattern} pct1
- * @property {BpsPriceRatioPattern} pct2
- * @property {BpsPriceRatioPattern} pct5
- * @property {BpsPriceRatioPattern} pct95
- * @property {BpsPriceRatioPattern} pct98
- * @property {BpsPriceRatioPattern} pct99
- */
-
-/**
- * Create a Pct1Pct2Pct5Pct95Pct98Pct99Pattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated series name
- * @returns {Pct1Pct2Pct5Pct95Pct98Pct99Pattern}
- */
-function createPct1Pct2Pct5Pct95Pct98Pct99Pattern(client, acc) {
-  return {
-    pct1: createBpsPriceRatioPattern(client, acc, 'pct1'),
-    pct2: createBpsPriceRatioPattern(client, acc, 'pct2'),
-    pct5: createBpsPriceRatioPattern(client, acc, 'pct5'),
-    pct95: createBpsPriceRatioPattern(client, acc, 'pct95'),
-    pct98: createBpsPriceRatioPattern(client, acc, 'pct98'),
-    pct99: createBpsPriceRatioPattern(client, acc, 'pct99'),
   };
 }
 
@@ -4146,6 +4150,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Constants} constants
  * @property {SeriesTree_Indexes} indexes
  * @property {SeriesTree_Indicators} indicators
+ * @property {SeriesTree_Investing} investing
  * @property {SeriesTree_Market} market
  * @property {SeriesTree_Pools} pools
  * @property {SeriesTree_Prices} prices
@@ -4180,9 +4185,7 @@ function createTransferPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Blocks_Time
- * @property {SeriesPattern1<Timestamp>} timestamp
- * @property {SeriesPattern18<Date>} date
- * @property {SeriesPattern18<Timestamp>} timestampMonotonic
+ * @property {SeriesPattern18<Timestamp>} timestamp
  */
 
 /**
@@ -4769,6 +4772,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Indexes_TxIndex} txIndex
  * @property {SeriesTree_Indexes_TxinIndex} txinIndex
  * @property {SeriesTree_Indexes_TxoutIndex} txoutIndex
+ * @property {SeriesTree_Indexes_Timestamp} timestamp
  */
 
 /**
@@ -4993,6 +4997,12 @@ function createTransferPattern(client, acc) {
  */
 
 /**
+ * @typedef {Object} SeriesTree_Indexes_Timestamp
+ * @property {SeriesPattern18<Timestamp>} monotonic
+ * @property {SeriesPattern2<Timestamp>} resolutions
+ */
+
+/**
  * @typedef {Object} SeriesTree_Indicators
  * @property {BpsRatioPattern2} puellMultiple
  * @property {BpsRatioPattern2} nvt
@@ -5004,12 +5014,115 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Indicators_Dormancy} dormancy
  * @property {SeriesPattern1<StoredF32>} stockToFlow
  * @property {SeriesPattern1<StoredF32>} sellerExhaustion
+ * @property {SeriesTree_Indicators_Thermometer} thermometer
  */
 
 /**
  * @typedef {Object} SeriesTree_Indicators_Dormancy
  * @property {SeriesPattern1<StoredF32>} supplyAdjusted
  * @property {SeriesPattern1<StoredF32>} flow
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Indicators_Thermometer
+ * @property {CentsSatsUsdPattern} pct05
+ * @property {CentsSatsUsdPattern} pct1
+ * @property {CentsSatsUsdPattern} pct2
+ * @property {CentsSatsUsdPattern} pct5
+ * @property {CentsSatsUsdPattern} pct95
+ * @property {CentsSatsUsdPattern} pct98
+ * @property {CentsSatsUsdPattern} pct99
+ * @property {CentsSatsUsdPattern} pct995
+ * @property {SeriesPattern1<StoredI8>} zone
+ * @property {SeriesPattern1<StoredI8>} score
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Investing
+ * @property {SeriesPattern18<Sats>} satsPerDay
+ * @property {SeriesTree_Investing_Period} period
+ * @property {SeriesTree_Investing_Class} class
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Investing_Period
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} stack
+ * @property {SeriesTree_Investing_Period_CostBasis} costBasis
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} return
+ * @property {_10y2y3y4y5y6y8yPattern} cagr
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} lumpSumStack
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} lumpSumReturn
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Investing_Period_CostBasis
+ * @property {CentsSatsUsdPattern} _1w
+ * @property {CentsSatsUsdPattern} _1m
+ * @property {CentsSatsUsdPattern} _3m
+ * @property {CentsSatsUsdPattern} _6m
+ * @property {CentsSatsUsdPattern} _1y
+ * @property {CentsSatsUsdPattern} _2y
+ * @property {CentsSatsUsdPattern} _3y
+ * @property {CentsSatsUsdPattern} _4y
+ * @property {CentsSatsUsdPattern} _5y
+ * @property {CentsSatsUsdPattern} _6y
+ * @property {CentsSatsUsdPattern} _8y
+ * @property {CentsSatsUsdPattern} _10y
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Investing_Class
+ * @property {SeriesTree_Investing_Class_Stack} stack
+ * @property {SeriesTree_Investing_Class_CostBasis} costBasis
+ * @property {SeriesTree_Investing_Class_Return} return
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Investing_Class_Stack
+ * @property {BtcCentsSatsUsdPattern3} from2015
+ * @property {BtcCentsSatsUsdPattern3} from2016
+ * @property {BtcCentsSatsUsdPattern3} from2017
+ * @property {BtcCentsSatsUsdPattern3} from2018
+ * @property {BtcCentsSatsUsdPattern3} from2019
+ * @property {BtcCentsSatsUsdPattern3} from2020
+ * @property {BtcCentsSatsUsdPattern3} from2021
+ * @property {BtcCentsSatsUsdPattern3} from2022
+ * @property {BtcCentsSatsUsdPattern3} from2023
+ * @property {BtcCentsSatsUsdPattern3} from2024
+ * @property {BtcCentsSatsUsdPattern3} from2025
+ * @property {BtcCentsSatsUsdPattern3} from2026
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Investing_Class_CostBasis
+ * @property {CentsSatsUsdPattern} from2015
+ * @property {CentsSatsUsdPattern} from2016
+ * @property {CentsSatsUsdPattern} from2017
+ * @property {CentsSatsUsdPattern} from2018
+ * @property {CentsSatsUsdPattern} from2019
+ * @property {CentsSatsUsdPattern} from2020
+ * @property {CentsSatsUsdPattern} from2021
+ * @property {CentsSatsUsdPattern} from2022
+ * @property {CentsSatsUsdPattern} from2023
+ * @property {CentsSatsUsdPattern} from2024
+ * @property {CentsSatsUsdPattern} from2025
+ * @property {CentsSatsUsdPattern} from2026
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Investing_Class_Return
+ * @property {BpsPercentRatioPattern} from2015
+ * @property {BpsPercentRatioPattern} from2016
+ * @property {BpsPercentRatioPattern} from2017
+ * @property {BpsPercentRatioPattern} from2018
+ * @property {BpsPercentRatioPattern} from2019
+ * @property {BpsPercentRatioPattern} from2020
+ * @property {BpsPercentRatioPattern} from2021
+ * @property {BpsPercentRatioPattern} from2022
+ * @property {BpsPercentRatioPattern} from2023
+ * @property {BpsPercentRatioPattern} from2024
+ * @property {BpsPercentRatioPattern} from2025
+ * @property {BpsPercentRatioPattern} from2026
  */
 
 /**
@@ -5020,7 +5133,6 @@ function createTransferPattern(client, acc) {
  * @property {_1m1w1y24hPattern<StoredF32>} volatility
  * @property {SeriesTree_Market_Range} range
  * @property {SeriesTree_Market_MovingAverage} movingAverage
- * @property {SeriesTree_Market_Dca} dca
  * @property {SeriesTree_Market_Technical} technical
  */
 
@@ -5181,94 +5293,6 @@ function createTransferPattern(client, acc) {
  * @property {BpsCentsRatioSatsUsdPattern} _2y
  * @property {BpsCentsRatioSatsUsdPattern} _200w
  * @property {BpsCentsRatioSatsUsdPattern} _4y
- */
-
-/**
- * @typedef {Object} SeriesTree_Market_Dca
- * @property {SeriesPattern18<Sats>} satsPerDay
- * @property {SeriesTree_Market_Dca_Period} period
- * @property {SeriesTree_Market_Dca_Class} class
- */
-
-/**
- * @typedef {Object} SeriesTree_Market_Dca_Period
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} stack
- * @property {SeriesTree_Market_Dca_Period_CostBasis} costBasis
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} return
- * @property {_10y2y3y4y5y6y8yPattern} cagr
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} lumpSumStack
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} lumpSumReturn
- */
-
-/**
- * @typedef {Object} SeriesTree_Market_Dca_Period_CostBasis
- * @property {CentsSatsUsdPattern} _1w
- * @property {CentsSatsUsdPattern} _1m
- * @property {CentsSatsUsdPattern} _3m
- * @property {CentsSatsUsdPattern} _6m
- * @property {CentsSatsUsdPattern} _1y
- * @property {CentsSatsUsdPattern} _2y
- * @property {CentsSatsUsdPattern} _3y
- * @property {CentsSatsUsdPattern} _4y
- * @property {CentsSatsUsdPattern} _5y
- * @property {CentsSatsUsdPattern} _6y
- * @property {CentsSatsUsdPattern} _8y
- * @property {CentsSatsUsdPattern} _10y
- */
-
-/**
- * @typedef {Object} SeriesTree_Market_Dca_Class
- * @property {SeriesTree_Market_Dca_Class_Stack} stack
- * @property {SeriesTree_Market_Dca_Class_CostBasis} costBasis
- * @property {SeriesTree_Market_Dca_Class_Return} return
- */
-
-/**
- * @typedef {Object} SeriesTree_Market_Dca_Class_Stack
- * @property {BtcCentsSatsUsdPattern3} from2015
- * @property {BtcCentsSatsUsdPattern3} from2016
- * @property {BtcCentsSatsUsdPattern3} from2017
- * @property {BtcCentsSatsUsdPattern3} from2018
- * @property {BtcCentsSatsUsdPattern3} from2019
- * @property {BtcCentsSatsUsdPattern3} from2020
- * @property {BtcCentsSatsUsdPattern3} from2021
- * @property {BtcCentsSatsUsdPattern3} from2022
- * @property {BtcCentsSatsUsdPattern3} from2023
- * @property {BtcCentsSatsUsdPattern3} from2024
- * @property {BtcCentsSatsUsdPattern3} from2025
- * @property {BtcCentsSatsUsdPattern3} from2026
- */
-
-/**
- * @typedef {Object} SeriesTree_Market_Dca_Class_CostBasis
- * @property {CentsSatsUsdPattern} from2015
- * @property {CentsSatsUsdPattern} from2016
- * @property {CentsSatsUsdPattern} from2017
- * @property {CentsSatsUsdPattern} from2018
- * @property {CentsSatsUsdPattern} from2019
- * @property {CentsSatsUsdPattern} from2020
- * @property {CentsSatsUsdPattern} from2021
- * @property {CentsSatsUsdPattern} from2022
- * @property {CentsSatsUsdPattern} from2023
- * @property {CentsSatsUsdPattern} from2024
- * @property {CentsSatsUsdPattern} from2025
- * @property {CentsSatsUsdPattern} from2026
- */
-
-/**
- * @typedef {Object} SeriesTree_Market_Dca_Class_Return
- * @property {BpsPercentRatioPattern} from2015
- * @property {BpsPercentRatioPattern} from2016
- * @property {BpsPercentRatioPattern} from2017
- * @property {BpsPercentRatioPattern} from2018
- * @property {BpsPercentRatioPattern} from2019
- * @property {BpsPercentRatioPattern} from2020
- * @property {BpsPercentRatioPattern} from2021
- * @property {BpsPercentRatioPattern} from2022
- * @property {BpsPercentRatioPattern} from2023
- * @property {BpsPercentRatioPattern} from2024
- * @property {BpsPercentRatioPattern} from2025
- * @property {BpsPercentRatioPattern} from2026
  */
 
 /**
@@ -5624,7 +5648,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesPattern1<SatsFract>} sats
  * @property {SeriesPattern1<BasisPoints32>} bps
  * @property {SeriesPattern1<StoredF32>} ratio
- * @property {Pct1Pct2Pct5Pct95Pct98Pct99Pattern} percentiles
+ * @property {Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern} percentiles
  * @property {_1m1w1y2y4yAllPattern} sma
  * @property {SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev} stdDev
  */
@@ -5815,7 +5839,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesPattern1<SatsFract>} sats
  * @property {SeriesPattern1<BasisPoints32>} bps
  * @property {SeriesPattern1<StoredF32>} ratio
- * @property {Pct1Pct2Pct5Pct95Pct98Pct99Pattern} percentiles
+ * @property {Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern} percentiles
  * @property {_1m1w1y2y4yAllPattern} sma
  * @property {SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev} stdDev
  */
@@ -5937,7 +5961,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesPattern1<SatsFract>} sats
  * @property {SeriesPattern1<BasisPoints32>} bps
  * @property {SeriesPattern1<StoredF32>} ratio
- * @property {Pct1Pct2Pct5Pct95Pct98Pct99Pattern} percentiles
+ * @property {Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern} percentiles
  * @property {_1m1w1y2y4yAllPattern} sma
  * @property {SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev} stdDev
  */
@@ -7557,9 +7581,7 @@ class BrkClient extends BrkClientBase {
           daysToRetarget: createSeriesPattern1(this, 'days_to_retarget'),
         },
         time: {
-          timestamp: createSeriesPattern1(this, 'timestamp'),
-          date: createSeriesPattern18(this, 'date'),
-          timestampMonotonic: createSeriesPattern18(this, 'timestamp_monotonic'),
+          timestamp: createSeriesPattern18(this, 'timestamp'),
         },
         size: {
           base: createSeriesPattern18(this, 'total_size'),
@@ -8101,6 +8123,10 @@ class BrkClient extends BrkClientBase {
         txoutIndex: {
           identity: createSeriesPattern21(this, 'txout_index'),
         },
+        timestamp: {
+          monotonic: createSeriesPattern18(this, 'timestamp_monotonic'),
+          resolutions: createSeriesPattern2(this, 'timestamp'),
+        },
       },
       indicators: {
         puellMultiple: createBpsRatioPattern2(this, 'puell_multiple'),
@@ -8116,6 +8142,86 @@ class BrkClient extends BrkClientBase {
         },
         stockToFlow: createSeriesPattern1(this, 'stock_to_flow'),
         sellerExhaustion: createSeriesPattern1(this, 'seller_exhaustion'),
+        thermometer: {
+          pct05: createCentsSatsUsdPattern(this, 'thermometer_pct0_5'),
+          pct1: createCentsSatsUsdPattern(this, 'thermometer_pct01'),
+          pct2: createCentsSatsUsdPattern(this, 'thermometer_pct02'),
+          pct5: createCentsSatsUsdPattern(this, 'thermometer_pct05'),
+          pct95: createCentsSatsUsdPattern(this, 'thermometer_pct95'),
+          pct98: createCentsSatsUsdPattern(this, 'thermometer_pct98'),
+          pct99: createCentsSatsUsdPattern(this, 'thermometer_pct99'),
+          pct995: createCentsSatsUsdPattern(this, 'thermometer_pct99_5'),
+          zone: createSeriesPattern1(this, 'thermometer_zone'),
+          score: createSeriesPattern1(this, 'thermometer_score'),
+        },
+      },
+      investing: {
+        satsPerDay: createSeriesPattern18(this, 'dca_sats_per_day'),
+        period: {
+          stack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'dca_stack'),
+          costBasis: {
+            _1w: createCentsSatsUsdPattern(this, 'dca_cost_basis_1w'),
+            _1m: createCentsSatsUsdPattern(this, 'dca_cost_basis_1m'),
+            _3m: createCentsSatsUsdPattern(this, 'dca_cost_basis_3m'),
+            _6m: createCentsSatsUsdPattern(this, 'dca_cost_basis_6m'),
+            _1y: createCentsSatsUsdPattern(this, 'dca_cost_basis_1y'),
+            _2y: createCentsSatsUsdPattern(this, 'dca_cost_basis_2y'),
+            _3y: createCentsSatsUsdPattern(this, 'dca_cost_basis_3y'),
+            _4y: createCentsSatsUsdPattern(this, 'dca_cost_basis_4y'),
+            _5y: createCentsSatsUsdPattern(this, 'dca_cost_basis_5y'),
+            _6y: createCentsSatsUsdPattern(this, 'dca_cost_basis_6y'),
+            _8y: createCentsSatsUsdPattern(this, 'dca_cost_basis_8y'),
+            _10y: createCentsSatsUsdPattern(this, 'dca_cost_basis_10y'),
+          },
+          return: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_return'),
+          cagr: create_10y2y3y4y5y6y8yPattern(this, 'dca_cagr'),
+          lumpSumStack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'lump_sum_stack'),
+          lumpSumReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_return'),
+        },
+        class: {
+          stack: {
+            from2015: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2015'),
+            from2016: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2016'),
+            from2017: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2017'),
+            from2018: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2018'),
+            from2019: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2019'),
+            from2020: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2020'),
+            from2021: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2021'),
+            from2022: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2022'),
+            from2023: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2023'),
+            from2024: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2024'),
+            from2025: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2025'),
+            from2026: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2026'),
+          },
+          costBasis: {
+            from2015: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2015'),
+            from2016: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2016'),
+            from2017: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2017'),
+            from2018: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2018'),
+            from2019: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2019'),
+            from2020: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2020'),
+            from2021: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2021'),
+            from2022: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2022'),
+            from2023: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2023'),
+            from2024: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2024'),
+            from2025: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2025'),
+            from2026: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2026'),
+          },
+          return: {
+            from2015: createBpsPercentRatioPattern(this, 'dca_return_from_2015'),
+            from2016: createBpsPercentRatioPattern(this, 'dca_return_from_2016'),
+            from2017: createBpsPercentRatioPattern(this, 'dca_return_from_2017'),
+            from2018: createBpsPercentRatioPattern(this, 'dca_return_from_2018'),
+            from2019: createBpsPercentRatioPattern(this, 'dca_return_from_2019'),
+            from2020: createBpsPercentRatioPattern(this, 'dca_return_from_2020'),
+            from2021: createBpsPercentRatioPattern(this, 'dca_return_from_2021'),
+            from2022: createBpsPercentRatioPattern(this, 'dca_return_from_2022'),
+            from2023: createBpsPercentRatioPattern(this, 'dca_return_from_2023'),
+            from2024: createBpsPercentRatioPattern(this, 'dca_return_from_2024'),
+            from2025: createBpsPercentRatioPattern(this, 'dca_return_from_2025'),
+            from2026: createBpsPercentRatioPattern(this, 'dca_return_from_2026'),
+          },
+        },
       },
       market: {
         ath: {
@@ -8236,74 +8342,6 @@ class BrkClient extends BrkClientBase {
             _2y: createBpsCentsRatioSatsUsdPattern(this, 'price_ema_2y'),
             _200w: createBpsCentsRatioSatsUsdPattern(this, 'price_ema_200w'),
             _4y: createBpsCentsRatioSatsUsdPattern(this, 'price_ema_4y'),
-          },
-        },
-        dca: {
-          satsPerDay: createSeriesPattern18(this, 'dca_sats_per_day'),
-          period: {
-            stack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'dca_stack'),
-            costBasis: {
-              _1w: createCentsSatsUsdPattern(this, 'dca_cost_basis_1w'),
-              _1m: createCentsSatsUsdPattern(this, 'dca_cost_basis_1m'),
-              _3m: createCentsSatsUsdPattern(this, 'dca_cost_basis_3m'),
-              _6m: createCentsSatsUsdPattern(this, 'dca_cost_basis_6m'),
-              _1y: createCentsSatsUsdPattern(this, 'dca_cost_basis_1y'),
-              _2y: createCentsSatsUsdPattern(this, 'dca_cost_basis_2y'),
-              _3y: createCentsSatsUsdPattern(this, 'dca_cost_basis_3y'),
-              _4y: createCentsSatsUsdPattern(this, 'dca_cost_basis_4y'),
-              _5y: createCentsSatsUsdPattern(this, 'dca_cost_basis_5y'),
-              _6y: createCentsSatsUsdPattern(this, 'dca_cost_basis_6y'),
-              _8y: createCentsSatsUsdPattern(this, 'dca_cost_basis_8y'),
-              _10y: createCentsSatsUsdPattern(this, 'dca_cost_basis_10y'),
-            },
-            return: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_return'),
-            cagr: create_10y2y3y4y5y6y8yPattern(this, 'dca_cagr'),
-            lumpSumStack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'lump_sum_stack'),
-            lumpSumReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_return'),
-          },
-          class: {
-            stack: {
-              from2015: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2015'),
-              from2016: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2016'),
-              from2017: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2017'),
-              from2018: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2018'),
-              from2019: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2019'),
-              from2020: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2020'),
-              from2021: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2021'),
-              from2022: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2022'),
-              from2023: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2023'),
-              from2024: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2024'),
-              from2025: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2025'),
-              from2026: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2026'),
-            },
-            costBasis: {
-              from2015: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2015'),
-              from2016: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2016'),
-              from2017: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2017'),
-              from2018: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2018'),
-              from2019: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2019'),
-              from2020: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2020'),
-              from2021: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2021'),
-              from2022: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2022'),
-              from2023: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2023'),
-              from2024: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2024'),
-              from2025: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2025'),
-              from2026: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2026'),
-            },
-            return: {
-              from2015: createBpsPercentRatioPattern(this, 'dca_return_from_2015'),
-              from2016: createBpsPercentRatioPattern(this, 'dca_return_from_2016'),
-              from2017: createBpsPercentRatioPattern(this, 'dca_return_from_2017'),
-              from2018: createBpsPercentRatioPattern(this, 'dca_return_from_2018'),
-              from2019: createBpsPercentRatioPattern(this, 'dca_return_from_2019'),
-              from2020: createBpsPercentRatioPattern(this, 'dca_return_from_2020'),
-              from2021: createBpsPercentRatioPattern(this, 'dca_return_from_2021'),
-              from2022: createBpsPercentRatioPattern(this, 'dca_return_from_2022'),
-              from2023: createBpsPercentRatioPattern(this, 'dca_return_from_2023'),
-              from2024: createBpsPercentRatioPattern(this, 'dca_return_from_2024'),
-              from2025: createBpsPercentRatioPattern(this, 'dca_return_from_2025'),
-              from2026: createBpsPercentRatioPattern(this, 'dca_return_from_2026'),
-            },
           },
         },
         technical: {
@@ -8569,7 +8607,7 @@ class BrkClient extends BrkClientBase {
                 sats: createSeriesPattern1(this, 'realized_price_sats'),
                 bps: createSeriesPattern1(this, 'realized_price_ratio_bps'),
                 ratio: createSeriesPattern1(this, 'realized_price_ratio'),
-                percentiles: createPct1Pct2Pct5Pct95Pct98Pct99Pattern(this, 'realized_price'),
+                percentiles: createPct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern(this, 'realized_price'),
                 sma: create_1m1w1y2y4yAllPattern(this, 'realized_price_ratio_sma'),
                 stdDev: {
                   all: {
@@ -8713,7 +8751,7 @@ class BrkClient extends BrkClientBase {
                 sats: createSeriesPattern1(this, 'sth_realized_price_sats'),
                 bps: createSeriesPattern1(this, 'sth_realized_price_ratio_bps'),
                 ratio: createSeriesPattern1(this, 'sth_realized_price_ratio'),
-                percentiles: createPct1Pct2Pct5Pct95Pct98Pct99Pattern(this, 'sth_realized_price'),
+                percentiles: createPct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern(this, 'sth_realized_price'),
                 sma: create_1m1w1y2y4yAllPattern(this, 'sth_realized_price_ratio_sma'),
                 stdDev: {
                   all: {
@@ -8812,7 +8850,7 @@ class BrkClient extends BrkClientBase {
                 sats: createSeriesPattern1(this, 'lth_realized_price_sats'),
                 bps: createSeriesPattern1(this, 'lth_realized_price_ratio_bps'),
                 ratio: createSeriesPattern1(this, 'lth_realized_price_ratio'),
-                percentiles: createPct1Pct2Pct5Pct95Pct98Pct99Pattern(this, 'lth_realized_price'),
+                percentiles: createPct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern(this, 'lth_realized_price'),
                 sma: create_1m1w1y2y4yAllPattern(this, 'lth_realized_price_ratio_sma'),
                 stdDev: {
                   all: {

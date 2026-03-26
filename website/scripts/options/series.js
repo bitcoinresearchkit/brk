@@ -147,6 +147,7 @@ function percentileSeries({ pattern, unit, title = "" }) {
  * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
  * @param {LineStyle} [args.style]
  * @param {Color} [args.color]
+ * @param {(value: number) => Color} [args.colorFn]
  * @param {boolean} [args.defaultActive]
  * @param {LineSeriesPartialOptions} [args.options]
  * @returns {FetchedLineSeriesBlueprint}
@@ -157,6 +158,7 @@ export function line({
   key,
   style,
   color,
+  colorFn,
   defaultActive,
   unit,
   options,
@@ -166,6 +168,7 @@ export function line({
     title: name,
     key,
     color,
+    colorFn,
     unit,
     defaultActive,
     options: {
@@ -370,6 +373,7 @@ export function dotsBaseline({
  * @param {Unit} args.unit
  * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
  * @param {Color | [Color, Color]} [args.color]
+ * @param {(value: number) => Color} [args.colorFn]
  * @param {boolean} [args.defaultActive]
  * @param {HistogramSeriesPartialOptions} [args.options]
  * @returns {FetchedHistogramSeriesBlueprint}
@@ -379,6 +383,7 @@ export function histogram({
   name,
   key,
   color,
+  colorFn,
   defaultActive,
   unit,
   options,
@@ -389,6 +394,7 @@ export function histogram({
     title: name,
     key,
     color,
+    colorFn,
     unit,
     defaultActive,
     options,

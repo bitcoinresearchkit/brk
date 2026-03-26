@@ -22,7 +22,7 @@ pub fn iter_difficulty_epochs(
         .unwrap_or_default();
 
     let epoch_to_height = &computer.indexes.epoch.first_height;
-    let epoch_to_timestamp = &computer.blocks.time.timestamp.epoch;
+    let epoch_to_timestamp = &computer.indexes.timestamp.epoch;
     let epoch_to_difficulty = &computer.blocks.difficulty.value.epoch;
 
     let mut results = Vec::with_capacity(end_epoch.to_usize() - start_epoch.to_usize() + 1);

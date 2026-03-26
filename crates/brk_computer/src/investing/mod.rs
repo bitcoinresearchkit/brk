@@ -7,3 +7,5 @@ mod vecs;
 pub use by_class::*;
 pub use by_period::*;
 pub use vecs::Vecs;
+
+pub const DB_NAME: &str = "investing";

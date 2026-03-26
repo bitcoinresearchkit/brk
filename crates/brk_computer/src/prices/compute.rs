@@ -18,6 +18,8 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.db.sync_bg_tasks()?;
+
         self.compute_prices(indexer, starting_indexes, exit)?;
         self.split.open.cents.compute_first(
             starting_indexes,
@@ -47,8 +49,11 @@ impl Vecs {
             exit,
         )?;
 
-        let _lock = exit.lock();
-        self.db().compact()?;
+        let exit = exit.clone();
+        self.db.run_bg(move |db| {
+            let _lock = exit.lock();
+            db.compact()
+        });
         Ok(())
     }
 

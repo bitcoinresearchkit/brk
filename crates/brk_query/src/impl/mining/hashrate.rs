@@ -56,7 +56,7 @@ impl Query {
         let step = (total_days / 200).max(1); // Max ~200 data points
 
         let hashrate_vec = &computer.mining.hashrate.rate.base.day1;
-        let timestamp_vec = &computer.blocks.time.timestamp.day1;
+        let timestamp_vec = &computer.indexes.timestamp.day1;
 
         let mut hashrates = Vec::with_capacity(total_days / step + 1);
         let mut di = start_day1.to_usize();

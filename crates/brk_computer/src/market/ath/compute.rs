@@ -3,13 +3,13 @@ use brk_types::{Indexes, StoredF32, Timestamp};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{blocks, prices};
+use crate::{indexes, prices};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         prices: &prices::Vecs,
-        blocks: &blocks::Vecs,
+        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -24,7 +24,7 @@ impl Vecs {
             starting_indexes.height,
             &self.high.cents.height,
             &prices.spot.cents.height,
-            &blocks.time.timestamp_monotonic,
+            &indexes.timestamp.monotonic,
             |(i, ath, price, ts, slf)| {
                 if ath_ts.is_none() {
                     let idx = i.to_usize();

@@ -46,7 +46,7 @@ impl<'a> Day1Iter<'a> {
             .to_usize()
             .saturating_sub(self.start_di.to_usize())
             + 1;
-        let timestamps = &self.computer.blocks.time.timestamp.day1;
+        let timestamps = &self.computer.indexes.timestamp.day1;
         let heights = &self.computer.indexes.day1.first_height;
 
         let mut entries = Vec::with_capacity(total / self.step + 1);

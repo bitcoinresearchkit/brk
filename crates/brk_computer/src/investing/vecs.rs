@@ -1,6 +1,6 @@
 use brk_traversable::Traversable;
 use brk_types::{BasisPointsSigned32, Cents, Height, Sats};
-use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
+use vecdb::{Database, EagerVec, PcoVec, Rw, StorageMode};
 
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod};
 use crate::internal::{AmountPerBlock, PerBlock, PercentPerBlock, Price};
@@ -24,6 +24,8 @@ pub struct ClassVecs<M: StorageMode = Rw> {
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
+    #[traversable(skip)]
+    pub(crate) db: Database,
     pub sats_per_day: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
     pub period: PeriodVecs<M>,
     pub class: ClassVecs<M>,

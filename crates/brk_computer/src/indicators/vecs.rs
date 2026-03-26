@@ -2,6 +2,7 @@ use brk_traversable::Traversable;
 use brk_types::{BasisPoints16, BasisPoints32, StoredF32};
 use vecdb::{Database, Rw, StorageMode};
 
+use super::thermometer::Thermometer;
 use crate::internal::{PerBlock, PercentPerBlock, RatioPerBlock};
 
 #[derive(Traversable)]
@@ -24,4 +25,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub dormancy: DormancyVecs<M>,
     pub stock_to_flow: PerBlock<StoredF32, M>,
     pub seller_exhaustion: PerBlock<StoredF32, M>,
+    pub thermometer: Thermometer<M>,
 }

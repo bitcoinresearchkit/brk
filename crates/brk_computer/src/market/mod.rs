@@ -1,6 +1,5 @@
 pub mod ath;
 mod compute;
-pub mod dca;
 mod import;
 pub mod technical;
 pub mod lookback;
@@ -13,7 +12,6 @@ use brk_traversable::Traversable;
 use vecdb::{Database, Rw, StorageMode};
 
 pub use ath::Vecs as AthVecs;
-pub use dca::Vecs as DcaVecs;
 pub use technical::Vecs as TechnicalVecs;
 pub use lookback::Vecs as LookbackVecs;
 pub use moving_average::Vecs as MovingAverageVecs;
@@ -32,6 +30,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub volatility: VolatilityVecs,
     pub range: RangeVecs<M>,
     pub moving_average: MovingAverageVecs<M>,
-    pub dca: DcaVecs<M>,
     pub technical: TechnicalVecs<M>,
 }

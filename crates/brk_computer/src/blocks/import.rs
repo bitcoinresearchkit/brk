@@ -10,7 +10,7 @@ use crate::{
 };
 
 use super::{
-    CountVecs, DifficultyVecs, HalvingVecs, IntervalVecs, LookbackVecs, SizeVecs, TimeVecs, Vecs,
+    CountVecs, DifficultyVecs, HalvingVecs, IntervalVecs, LookbackVecs, SizeVecs, Vecs,
     WeightVecs,
 };
 
@@ -30,7 +30,6 @@ impl Vecs {
         let interval = IntervalVecs::forced_import(&db, version, indexes, cached_starts)?;
         let size = SizeVecs::forced_import(&db, version, indexes, cached_starts)?;
         let weight = WeightVecs::forced_import(&db, version, indexes, cached_starts, &size)?;
-        let time = TimeVecs::forced_import(&db, version, indexes)?;
         let difficulty = DifficultyVecs::forced_import(&db, version, indexer, indexes)?;
         let halving = HalvingVecs::forced_import(&db, version, indexes)?;
 
@@ -41,7 +40,6 @@ impl Vecs {
             interval,
             size,
             weight,
-            time,
             difficulty,
             halving,
         };

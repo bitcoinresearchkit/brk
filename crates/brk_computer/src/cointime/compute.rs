@@ -17,6 +17,8 @@ impl Vecs {
         distribution: &distribution::Vecs,
         exit: &Exit,
     ) -> Result<()> {
+        self.db.sync_bg_tasks()?;
+
         // Activity computes first (liveliness, vaultedness, etc.)
         self.activity
             .compute(starting_indexes, distribution, exit)?;
@@ -80,8 +82,11 @@ impl Vecs {
         r3?;
         r4?;
 
-        let _lock = exit.lock();
-        self.db.compact()?;
+        let exit = exit.clone();
+        self.db.run_bg(move |db| {
+            let _lock = exit.lock();
+            db.compact()
+        });
         Ok(())
     }
 }

@@ -9,7 +9,7 @@ import {
 import { createLegend } from "./legend.js";
 import { capture } from "./capture.js";
 import { colors } from "../utils/colors.js";
-import { createRadios, createSelect } from "../utils/dom.js";
+import { createRadios, createSelect, getElementById } from "../utils/dom.js";
 import { createPersistedValue } from "../utils/persisted.js";
 import { onChange as onThemeChange } from "../utils/theme.js";
 import { throttle, debounce } from "../utils/timing.js";
@@ -74,6 +74,71 @@ const lineWidth = /** @type {1} */ (/** @type {unknown} */ (1.5));
 
 const MAX_SIZE = 10_000;
 
+/** @typedef {{ label: string, index: IndexLabel, from: number }} RangePreset */
+
+/** @returns {RangePreset[]} */
+function getRangePresets() {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const now = new Date();
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth();
+  const d = now.getUTCDate();
+  /** @param {number} n */
+  const monthsAgo = (n) => Math.floor(Date.UTC(y, m - n, d) / 1000);
+
+  /** @type {RangePreset[]} */
+  const presets = [
+    {
+      label: "1w",
+      index: /** @type {IndexLabel} */ ("30mn"),
+      from: nowSec - 7 * 86_400,
+    },
+    {
+      label: "1m",
+      index: /** @type {IndexLabel} */ ("1h"),
+      from: monthsAgo(1),
+    },
+    {
+      label: "3m",
+      index: /** @type {IndexLabel} */ ("4h"),
+      from: monthsAgo(3),
+    },
+    {
+      label: "6m",
+      index: /** @type {IndexLabel} */ ("12h"),
+      from: monthsAgo(6),
+    },
+    {
+      label: "1y",
+      index: /** @type {IndexLabel} */ ("1d"),
+      from: monthsAgo(12),
+    },
+    {
+      label: "4y",
+      index: /** @type {IndexLabel} */ ("3d"),
+      from: monthsAgo(48),
+    },
+  ];
+
+  // Insert ytd at the right position
+  const ytdFrom = Math.floor(Date.UTC(y, 0, 1) / 1000);
+  const ri = presets.findIndex((e) => e.from <= ytdFrom);
+  const insertAt = ri === -1 ? presets.length : ri;
+  presets.splice(insertAt, 0, {
+    label: "ytd",
+    index: presets[ri === -1 ? presets.length - 1 : ri].index,
+    from: ytdFrom,
+  });
+
+  presets.push({
+    label: "all",
+    index: /** @type {IndexLabel} */ ("1w"),
+    from: -Infinity,
+  });
+
+  return presets;
+}
+
 /**
  * @param {Object} args
  * @param {HTMLElement} args.parent
@@ -89,8 +154,8 @@ export function createChart({ parent, brk, fitContent }) {
   /** @param {ChartableIndex} idx */
   const getTimeEndpoint = (idx) =>
     idx === "height"
-      ? brk.series.blocks.time.timestampMonotonic.by[idx]
-      : brk.series.blocks.time.timestamp.by[idx];
+      ? brk.series.indexes.timestamp.monotonic.by[idx]
+      : brk.series.indexes.timestamp.resolutions.by[idx];
 
   const index = {
     /** @type {Set<(index: ChartableIndex) => void>} */
@@ -204,10 +269,6 @@ export function createChart({ parent, brk, fitContent }) {
           enableResize: false,
         },
       },
-      grid: {
-        vertLines: { visible: false },
-        horzLines: { visible: false },
-      },
       rightPriceScale: {
         borderVisible: false,
       },
@@ -290,6 +351,8 @@ export function createChart({ parent, brk, fitContent }) {
     const defaultColor = colors.default();
     const offColor = colors.gray();
     const borderColor = colors.border();
+    const offBorderColor = colors.offBorder();
+    console.log(borderColor);
     ichart.applyOptions({
       layout: {
         textColor: offColor,
@@ -305,6 +368,14 @@ export function createChart({ parent, brk, fitContent }) {
         vertLine: {
           color: offColor,
           labelBackgroundColor: defaultColor,
+        },
+      },
+      grid: {
+        horzLines: {
+          color: offBorderColor,
+        },
+        vertLines: {
+          color: offBorderColor,
         },
       },
     });
@@ -402,8 +473,9 @@ export function createChart({ parent, brk, fitContent }) {
       const pane = ichart.panes().at(paneIndex);
       if (!pane) return;
       if (this.isAllHidden(paneIndex)) {
+        const collapsedHeight = paneIndex === 0 ? 32 : 64;
         const chartHeight = ichart.chartElement().clientHeight;
-        pane.setStretchFactor(chartHeight > 0 ? 48 / (chartHeight - 48) : 0);
+        pane.setStretchFactor(chartHeight > 0 ? collapsedHeight / (chartHeight - collapsedHeight) : 0);
       } else {
         pane.setStretchFactor(1);
       }
@@ -885,6 +957,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {Unit} args.unit
      * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
      * @param {Color | [Color, Color]} [args.color] - Single color or [positive, negative] colors
+     * @param {(value: number) => Color} [args.colorFn]
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
      * @param {HistogramSeriesPartialOptions} [args.options]
@@ -894,6 +967,7 @@ export function createChart({ parent, brk, fitContent }) {
       name,
       key,
       color = colors.bi.p1,
+      colorFn,
       order,
       unit,
       paneIndex = 0,
@@ -930,7 +1004,17 @@ export function createChart({ parent, brk, fitContent }) {
           });
         },
         setData: (data) => {
-          if (isDualColor) {
+          if (colorFn) {
+            iseries.setData(
+              data.map((d) => ({
+                ...d,
+                color:
+                  "value" in d
+                    ? (colorFn(d.value) ?? (() => "transparent"))()
+                    : "transparent",
+              })),
+            );
+          } else if (isDualColor) {
             iseries.setData(
               data.map((d) => ({
                 ...d,
@@ -957,6 +1041,7 @@ export function createChart({ parent, brk, fitContent }) {
      * @param {Unit} args.unit
      * @param {string} [args.key] - Optional key for persistence (derived from name if not provided)
      * @param {Color} args.color
+     * @param {(value: number) => Color} [args.colorFn]
      * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
      * @param {LineSeriesPartialOptions} [args.options]
@@ -967,6 +1052,7 @@ export function createChart({ parent, brk, fitContent }) {
       key,
       order,
       color,
+      colorFn,
       unit,
       paneIndex = 0,
       defaultActive,
@@ -999,7 +1085,18 @@ export function createChart({ parent, brk, fitContent }) {
             color: color.highlight(highlighted),
           });
         },
-        setData: (data) => iseries.setData(data),
+        setData: (data) => {
+          if (colorFn) {
+            iseries.setData(
+              data.map((d) => ({
+                ...d,
+                color: "value" in d ? (colorFn(d.value) ?? color)() : color(),
+              })),
+            );
+          } else {
+            iseries.setData(data);
+          }
+        },
         update: (data) => iseries.update(data),
         getData: () => iseries.data(),
         onRemove: () => ichart.removeSeries(iseries),
@@ -1373,7 +1470,11 @@ export function createChart({ parent, brk, fitContent }) {
             break;
           case "Histogram":
             pane.series.push(
-              serieses.addHistogram({ ...common, color: blueprint.color }),
+              serieses.addHistogram({
+                ...common,
+                color: blueprint.color,
+                colorFn: blueprint.colorFn,
+              }),
             );
             break;
           case "Candlestick":
@@ -1414,6 +1515,7 @@ export function createChart({ parent, brk, fitContent }) {
               serieses.addLine({
                 ...common,
                 color: blueprint.color ?? defaultColor,
+                colorFn: blueprint.colorFn,
               }),
             );
         }
@@ -1443,9 +1545,35 @@ export function createChart({ parent, brk, fitContent }) {
   /** @type {HTMLElement | null} */
   let indexField = null;
 
-  const lastTd = ichart
-    .chartElement()
-    .querySelector("table > tr:last-child > td:last-child");
+  /** @param {RangePreset} preset */
+  function applyPreset(preset) {
+    preferredIndex = preset.index;
+    /** @type {HTMLSelectElement} */ (getElementById("index")).value =
+      preset.index;
+    index.name.set(preset.index);
+
+    const targetGen = generation;
+    const waitAndApply = () => {
+      if (generation !== targetGen) return;
+      if (!initialLoadComplete) {
+        requestAnimationFrame(waitAndApply);
+        return;
+      }
+      const data = blueprints.panes[0].series[0]?.getData();
+      if (!data?.length) return;
+      const from = isFinite(preset.from)
+        ? (data.findIndex(
+            (d) => /** @type {number} */ (d.time) >= preset.from,
+          ) ?? 0)
+        : 0;
+      const padding = Math.round((data.length - from) * 0.025);
+      ichart.timeScale().setVisibleLogicalRange({
+        from: from - padding,
+        to: data.length + padding,
+      });
+    };
+    requestAnimationFrame(waitAndApply);
+  }
 
   const chart = {
     get panes() {
@@ -1464,7 +1592,13 @@ export function createChart({ parent, brk, fitContent }) {
         index.name.set(currentValue);
       }
 
-      indexField = createSelect({
+      indexField = window.document.createElement("div");
+      indexField.classList.add("index-bar");
+
+      const scroller = window.document.createElement("div");
+      indexField.append(scroller);
+
+      const selectField = createSelect({
         initialValue: currentValue,
         onChange: (v) => {
           preferredIndex = v;
@@ -1474,7 +1608,20 @@ export function createChart({ parent, brk, fitContent }) {
         groups,
         id: "index",
       });
-      if (lastTd) lastTd.append(indexField);
+      scroller.append(selectField);
+
+      const sep = window.document.createElement("span");
+      sep.textContent = "|";
+      scroller.append(sep);
+
+      for (const preset of getRangePresets()) {
+        const btn = window.document.createElement("button");
+        btn.textContent = preset.label;
+        btn.addEventListener("click", () => applyPreset(preset));
+        scroller.append(btn);
+      }
+
+      chartEl.append(indexField);
     },
 
     /**

@@ -86,6 +86,8 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.db.sync_bg_tasks()?;
+
         self.compute_pool(indexer, indexes, starting_indexes, exit)?;
 
         self.major.par_iter_mut().try_for_each(|(_, vecs)| {
@@ -103,8 +105,11 @@ impl Vecs {
             vecs.compute(starting_indexes, &self.pool, blocks, exit)
         })?;
 
-        let _lock = exit.lock();
-        self.db.compact()?;
+        let exit = exit.clone();
+        self.db.run_bg(move |db| {
+            let _lock = exit.lock();
+            db.compact()
+        });
         Ok(())
     }
 

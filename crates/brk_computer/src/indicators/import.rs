@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_types::Version;
 
-use super::Vecs;
+use super::{Vecs, thermometer::Thermometer};
 use crate::{
     indexes,
     internal::{PerBlock, PercentPerBlock, RatioPerBlock, db_utils::{finalize_db, open_db}},
@@ -38,6 +38,8 @@ impl Vecs {
         let seller_exhaustion =
             PerBlock::forced_import(&db, "seller_exhaustion", v, indexes)?;
 
+        let thermometer = Thermometer::forced_import(&db, v, indexes)?;
+
         let this = Self {
             db,
             puell_multiple,
@@ -50,6 +52,7 @@ impl Vecs {
             dormancy,
             stock_to_flow,
             seller_exhaustion,
+            thermometer,
         };
         finalize_db(&this.db, &this)?;
         Ok(this)

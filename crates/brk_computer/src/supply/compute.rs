@@ -21,6 +21,8 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.db.sync_bg_tasks()?;
+
         // 1. Compute burned/unspendable supply
         self.burned.compute(
             scripts,
@@ -76,8 +78,11 @@ impl Vecs {
             )?;
         }
 
-        let _lock = exit.lock();
-        self.db.compact()?;
+        let exit = exit.clone();
+        self.db.run_bg(move |db| {
+            let _lock = exit.lock();
+            db.compact()
+        });
 
         Ok(())
     }
