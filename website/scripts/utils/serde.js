@@ -26,7 +26,7 @@ export const INDEX_LABEL = /** @type {const} */ ({
   day1: "1d", day3: "3d", week1: "1w",
   month1: "1m", month3: "3m", month6: "6m",
   year1: "1y", year10: "10y",
-  halving: "halv", epoch: "diff",
+  halving: "halv", epoch: "epch",
 });
 
 /** @typedef {typeof INDEX_LABEL} IndexLabelMap */

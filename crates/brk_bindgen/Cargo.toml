@@ -12,6 +12,6 @@ brk_cohort = { workspace = true }
 brk_query = { workspace = true }
 brk_types = { workspace = true }
 indexmap = { workspace = true }
-oas3 = "0.20"
+oas3 = "0.21"
 serde = { workspace = true }
 serde_json = { workspace = true }

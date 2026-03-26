@@ -114,7 +114,6 @@ export function init() {
 
 /** @type {{ label: string, items: IndexLabel[] }[]} */
 const ALL_GROUPS = [
-  { label: "Height", items: ["blk", "halv", "diff"] },
   {
     label: "Time",
     items: [
@@ -125,6 +124,7 @@ const ALL_GROUPS = [
       "1y", "10y",
     ],
   },
+  { label: "Block", items: ["blk", "epch", "halv"] },
 ];
 
 const ALL_CHOICES = /** @satisfies {IndexLabel[]} */ (

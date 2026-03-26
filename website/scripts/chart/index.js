@@ -6,7 +6,7 @@ import {
   BaselineSeries,
   // } from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.development.mjs";
 } from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.production.mjs";
-import { createLegend } from "./legend.js";
+import { createLegend, createSeriesLegend } from "./legend.js";
 import { capture } from "./capture.js";
 import { colors } from "../utils/colors.js";
 import { createRadios, createSelect, getElementById } from "../utils/dom.js";
@@ -78,63 +78,34 @@ const MAX_SIZE = 10_000;
 
 /** @returns {RangePreset[]} */
 function getRangePresets() {
-  const nowSec = Math.floor(Date.now() / 1000);
   const now = new Date();
   const y = now.getUTCFullYear();
   const m = now.getUTCMonth();
   const d = now.getUTCDate();
-  /** @param {number} n */
-  const monthsAgo = (n) => Math.floor(Date.UTC(y, m - n, d) / 1000);
+  /** @param {number} months @param {number} [days] */
+  const ago = (months, days = 0) => Math.floor(Date.UTC(y, m - months, d - days) / 1000);
 
   /** @type {RangePreset[]} */
   const presets = [
-    {
-      label: "1w",
-      index: /** @type {IndexLabel} */ ("30mn"),
-      from: nowSec - 7 * 86_400,
-    },
-    {
-      label: "1m",
-      index: /** @type {IndexLabel} */ ("1h"),
-      from: monthsAgo(1),
-    },
-    {
-      label: "3m",
-      index: /** @type {IndexLabel} */ ("4h"),
-      from: monthsAgo(3),
-    },
-    {
-      label: "6m",
-      index: /** @type {IndexLabel} */ ("12h"),
-      from: monthsAgo(6),
-    },
-    {
-      label: "1y",
-      index: /** @type {IndexLabel} */ ("1d"),
-      from: monthsAgo(12),
-    },
-    {
-      label: "4y",
-      index: /** @type {IndexLabel} */ ("3d"),
-      from: monthsAgo(48),
-    },
+    { label: "1w", index: /** @type {IndexLabel} */ ("30mn"), from: ago(0, 7) },
+    { label: "1m", index: /** @type {IndexLabel} */ ("1h"),   from: ago(1) },
+    { label: "3m", index: /** @type {IndexLabel} */ ("4h"),   from: ago(3) },
+    { label: "6m", index: /** @type {IndexLabel} */ ("12h"),  from: ago(6) },
+    { label: "1y", index: /** @type {IndexLabel} */ ("1d"),   from: ago(12) },
+    { label: "4y", index: /** @type {IndexLabel} */ ("3d"),   from: ago(48) },
+    { label: "8y", index: /** @type {IndexLabel} */ ("1w"),   from: ago(96) },
   ];
 
-  // Insert ytd at the right position
   const ytdFrom = Math.floor(Date.UTC(y, 0, 1) / 1000);
   const ri = presets.findIndex((e) => e.from <= ytdFrom);
   const insertAt = ri === -1 ? presets.length : ri;
   presets.splice(insertAt, 0, {
     label: "ytd",
-    index: presets[ri === -1 ? presets.length - 1 : ri].index,
+    index: presets[Math.min(insertAt, presets.length - 1)].index,
     from: ytdFrom,
   });
 
-  presets.push({
-    label: "all",
-    index: /** @type {IndexLabel} */ ("1w"),
-    from: -Infinity,
-  });
+  presets.push({ label: "all", index: /** @type {IndexLabel} */ ("1w"), from: -Infinity });
 
   return presets;
 }
@@ -248,7 +219,7 @@ export function createChart({ parent, brk, fitContent }) {
     range.set(value);
   };
 
-  const legends = [createLegend(), createLegend()];
+  const legends = [createSeriesLegend(), createSeriesLegend()];
 
   const root = document.createElement("div");
   root.classList.add("chart");
@@ -352,7 +323,6 @@ export function createChart({ parent, brk, fitContent }) {
     const offColor = colors.gray();
     const borderColor = colors.border();
     const offBorderColor = colors.offBorder();
-    console.log(borderColor);
     ichart.applyOptions({
       layout: {
         textColor: offColor,
@@ -1540,7 +1510,7 @@ export function createChart({ parent, brk, fitContent }) {
   // Rebuild when index changes
   index.onChange.add(() => blueprints.rebuild());
 
-  // Index selector — injected into the last tr of the chart table
+  // Index selector + range presets
   let preferredIndex = index.name.value;
   /** @type {HTMLElement | null} */
   let indexField = null;
@@ -1561,11 +1531,10 @@ export function createChart({ parent, brk, fitContent }) {
       }
       const data = blueprints.panes[0].series[0]?.getData();
       if (!data?.length) return;
-      const from = isFinite(preset.from)
-        ? (data.findIndex(
-            (d) => /** @type {number} */ (d.time) >= preset.from,
-          ) ?? 0)
-        : 0;
+      const fi = data.findIndex(
+        (d) => /** @type {number} */ (d.time) >= preset.from,
+      );
+      const from = fi === -1 ? 0 : fi;
       const padding = Math.round((data.length - from) * 0.025);
       ichart.timeScale().setVisibleLogicalRange({
         from: from - padding,
@@ -1592,33 +1561,28 @@ export function createChart({ parent, brk, fitContent }) {
         index.name.set(currentValue);
       }
 
-      indexField = window.document.createElement("div");
-      indexField.classList.add("index-bar");
+      const legend = createLegend();
+      indexField = legend.element;
 
-      const scroller = window.document.createElement("div");
-      indexField.append(scroller);
-
-      const selectField = createSelect({
-        initialValue: currentValue,
-        onChange: (v) => {
-          preferredIndex = v;
-          index.name.set(v);
-        },
-        choices,
-        groups,
-        id: "index",
-      });
-      scroller.append(selectField);
-
-      const sep = window.document.createElement("span");
-      sep.textContent = "|";
-      scroller.append(sep);
+      legend.setPrefix(
+        createSelect({
+          initialValue: currentValue,
+          onChange: (v) => {
+            preferredIndex = v;
+            index.name.set(v);
+          },
+          choices,
+          groups,
+          id: "index",
+        }),
+      );
 
       for (const preset of getRangePresets()) {
         const btn = window.document.createElement("button");
         btn.textContent = preset.label;
+        btn.title = `${preset.label} at ${preset.index} interval`;
         btn.addEventListener("click", () => applyPreset(preset));
-        scroller.append(btn);
+        legend.scroller.append(btn);
       }
 
       chartEl.append(indexField);

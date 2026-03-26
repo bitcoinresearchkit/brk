@@ -1,20 +1,52 @@
 import { createLabeledInput, createSpanName } from "../utils/dom.js";
 import { stringToId } from "../utils/format.js";
 
+/** @param {HTMLElement} el */
+function captureScroll(el) {
+  el.addEventListener("wheel", (e) => e.stopPropagation(), { passive: true });
+  el.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: true });
+  el.addEventListener("touchmove", (e) => e.stopPropagation(), { passive: true });
+}
+
+/**
+ * Creates a `<legend>` with a scrollable `<div>`.
+ * Call `setPrefix(el)` to insert a prefix element followed by a `|` separator.
+ * Append further content to `scroller`.
+ */
 export function createLegend() {
-  const element = window.document.createElement("legend");
-  const scroller = window.document.createElement("div");
-  const items = window.document.createElement("div");
-
-  scroller.append(items);
+  const element = /** @type {HTMLLegendElement} */ (
+    window.document.createElement("legend")
+  );
+  const scroller = /** @type {HTMLDivElement} */ (
+    window.document.createElement("div")
+  );
   element.append(scroller);
+  captureScroll(scroller);
 
-  /** @param {HTMLElement} el */
-  function captureScroll(el) {
-    el.addEventListener("wheel", (e) => e.stopPropagation(), { passive: true });
-    el.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: true });
-    el.addEventListener("touchmove", (e) => e.stopPropagation(), { passive: true });
-  }
+  const separator = window.document.createElement("span");
+  separator.textContent = "|";
+  captureScroll(separator);
+
+  return {
+    element,
+    scroller,
+    /** @param {HTMLElement} el */
+    setPrefix(el) {
+      const prev = separator.previousSibling;
+      if (prev) {
+        prev.replaceWith(el);
+      } else {
+        scroller.prepend(el, separator);
+      }
+      captureScroll(el);
+    },
+  };
+}
+
+export function createSeriesLegend() {
+  const legend = createLegend();
+  const items = window.document.createElement("div");
+  legend.scroller.append(items);
   captureScroll(items);
 
   /** @type {AnySeries | null} */
@@ -37,24 +69,10 @@ export function createLegend() {
 
   /** @type {HTMLElement[]} */
   const legends = [];
-  /** @type {HTMLElement | null} */
-  let prefix = null;
-  const separator = window.document.createElement("span");
-  separator.textContent = "|";
-  captureScroll(separator);
 
   return {
-    element,
-    /**
-     * @param {HTMLElement} el
-     */
-    setPrefix(el) {
-      if (prefix) prefix.replaceWith(el);
-      else scroller.insertBefore(el, items);
-      prefix = el;
-      captureScroll(el);
-      el.after(separator);
-    },
+    element: legend.element,
+    setPrefix: legend.setPrefix,
     /**
      * @param {Object} args
      * @param {AnySeries} args.series
