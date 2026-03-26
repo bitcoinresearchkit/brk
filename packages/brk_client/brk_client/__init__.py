@@ -4220,7 +4220,7 @@ class SeriesTree_Indicators:
         self.seller_exhaustion: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'seller_exhaustion')
         self.realized_envelope: SeriesTree_Indicators_RealizedEnvelope = SeriesTree_Indicators_RealizedEnvelope(client)
 
-class SeriesTree_Investing_Period_CostBasis:
+class SeriesTree_Investing_Period_DcaCostBasis:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -4241,14 +4241,14 @@ class SeriesTree_Investing_Period:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'dca_stack')
-        self.cost_basis: SeriesTree_Investing_Period_CostBasis = SeriesTree_Investing_Period_CostBasis(client)
-        self.return_: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_return')
-        self.cagr: _10y2y3y4y5y6y8yPattern = _10y2y3y4y5y6y8yPattern(client, 'dca_cagr')
+        self.dca_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'dca_stack')
+        self.dca_cost_basis: SeriesTree_Investing_Period_DcaCostBasis = SeriesTree_Investing_Period_DcaCostBasis(client)
+        self.dca_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_return')
+        self.dca_cagr: _10y2y3y4y5y6y8yPattern = _10y2y3y4y5y6y8yPattern(client, 'dca_cagr')
         self.lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'lump_sum_stack')
         self.lump_sum_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'lump_sum_return')
 
-class SeriesTree_Investing_Class_Stack:
+class SeriesTree_Investing_Class_DcaStack:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -4265,7 +4265,7 @@ class SeriesTree_Investing_Class_Stack:
         self.from_2025: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2025')
         self.from_2026: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'dca_stack_from_2026')
 
-class SeriesTree_Investing_Class_CostBasis:
+class SeriesTree_Investing_Class_DcaCostBasis:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -4282,7 +4282,7 @@ class SeriesTree_Investing_Class_CostBasis:
         self.from_2025: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2025')
         self.from_2026: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2026')
 
-class SeriesTree_Investing_Class_Return:
+class SeriesTree_Investing_Class_DcaReturn:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
@@ -4303,9 +4303,9 @@ class SeriesTree_Investing_Class:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.stack: SeriesTree_Investing_Class_Stack = SeriesTree_Investing_Class_Stack(client)
-        self.cost_basis: SeriesTree_Investing_Class_CostBasis = SeriesTree_Investing_Class_CostBasis(client)
-        self.return_: SeriesTree_Investing_Class_Return = SeriesTree_Investing_Class_Return(client)
+        self.dca_stack: SeriesTree_Investing_Class_DcaStack = SeriesTree_Investing_Class_DcaStack(client)
+        self.dca_cost_basis: SeriesTree_Investing_Class_DcaCostBasis = SeriesTree_Investing_Class_DcaCostBasis(client)
+        self.dca_return: SeriesTree_Investing_Class_DcaReturn = SeriesTree_Investing_Class_DcaReturn(client)
 
 class SeriesTree_Investing:
     """Series tree node."""

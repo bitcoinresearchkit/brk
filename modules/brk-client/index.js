@@ -5046,16 +5046,16 @@ function createTransferPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Investing_Period
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} stack
- * @property {SeriesTree_Investing_Period_CostBasis} costBasis
- * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} return
- * @property {_10y2y3y4y5y6y8yPattern} cagr
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} dcaStack
+ * @property {SeriesTree_Investing_Period_DcaCostBasis} dcaCostBasis
+ * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} dcaReturn
+ * @property {_10y2y3y4y5y6y8yPattern} dcaCagr
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern3} lumpSumStack
  * @property {_10y1m1w1y2y3m3y4y5y6m6y8yPattern2} lumpSumReturn
  */
 
 /**
- * @typedef {Object} SeriesTree_Investing_Period_CostBasis
+ * @typedef {Object} SeriesTree_Investing_Period_DcaCostBasis
  * @property {CentsSatsUsdPattern} _1w
  * @property {CentsSatsUsdPattern} _1m
  * @property {CentsSatsUsdPattern} _3m
@@ -5072,13 +5072,13 @@ function createTransferPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Investing_Class
- * @property {SeriesTree_Investing_Class_Stack} stack
- * @property {SeriesTree_Investing_Class_CostBasis} costBasis
- * @property {SeriesTree_Investing_Class_Return} return
+ * @property {SeriesTree_Investing_Class_DcaStack} dcaStack
+ * @property {SeriesTree_Investing_Class_DcaCostBasis} dcaCostBasis
+ * @property {SeriesTree_Investing_Class_DcaReturn} dcaReturn
  */
 
 /**
- * @typedef {Object} SeriesTree_Investing_Class_Stack
+ * @typedef {Object} SeriesTree_Investing_Class_DcaStack
  * @property {BtcCentsSatsUsdPattern3} from2015
  * @property {BtcCentsSatsUsdPattern3} from2016
  * @property {BtcCentsSatsUsdPattern3} from2017
@@ -5094,7 +5094,7 @@ function createTransferPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} SeriesTree_Investing_Class_CostBasis
+ * @typedef {Object} SeriesTree_Investing_Class_DcaCostBasis
  * @property {CentsSatsUsdPattern} from2015
  * @property {CentsSatsUsdPattern} from2016
  * @property {CentsSatsUsdPattern} from2017
@@ -5110,7 +5110,7 @@ function createTransferPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} SeriesTree_Investing_Class_Return
+ * @typedef {Object} SeriesTree_Investing_Class_DcaReturn
  * @property {BpsPercentRatioPattern} from2015
  * @property {BpsPercentRatioPattern} from2016
  * @property {BpsPercentRatioPattern} from2017
@@ -8158,8 +8158,8 @@ class BrkClient extends BrkClientBase {
       investing: {
         satsPerDay: createSeriesPattern18(this, 'dca_sats_per_day'),
         period: {
-          stack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'dca_stack'),
-          costBasis: {
+          dcaStack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'dca_stack'),
+          dcaCostBasis: {
             _1w: createCentsSatsUsdPattern(this, 'dca_cost_basis_1w'),
             _1m: createCentsSatsUsdPattern(this, 'dca_cost_basis_1m'),
             _3m: createCentsSatsUsdPattern(this, 'dca_cost_basis_3m'),
@@ -8173,13 +8173,13 @@ class BrkClient extends BrkClientBase {
             _8y: createCentsSatsUsdPattern(this, 'dca_cost_basis_8y'),
             _10y: createCentsSatsUsdPattern(this, 'dca_cost_basis_10y'),
           },
-          return: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_return'),
-          cagr: create_10y2y3y4y5y6y8yPattern(this, 'dca_cagr'),
+          dcaReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'dca_return'),
+          dcaCagr: create_10y2y3y4y5y6y8yPattern(this, 'dca_cagr'),
           lumpSumStack: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(this, 'lump_sum_stack'),
           lumpSumReturn: create_10y1m1w1y2y3m3y4y5y6m6y8yPattern2(this, 'lump_sum_return'),
         },
         class: {
-          stack: {
+          dcaStack: {
             from2015: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2015'),
             from2016: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2016'),
             from2017: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2017'),
@@ -8193,7 +8193,7 @@ class BrkClient extends BrkClientBase {
             from2025: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2025'),
             from2026: createBtcCentsSatsUsdPattern3(this, 'dca_stack_from_2026'),
           },
-          costBasis: {
+          dcaCostBasis: {
             from2015: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2015'),
             from2016: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2016'),
             from2017: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2017'),
@@ -8207,7 +8207,7 @@ class BrkClient extends BrkClientBase {
             from2025: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2025'),
             from2026: createCentsSatsUsdPattern(this, 'dca_cost_basis_from_2026'),
           },
-          return: {
+          dcaReturn: {
             from2015: createBpsPercentRatioPattern(this, 'dca_return_from_2015'),
             from2016: createBpsPercentRatioPattern(this, 'dca_return_from_2016'),
             from2017: createBpsPercentRatioPattern(this, 'dca_return_from_2017'),

@@ -44,13 +44,13 @@ def test_fetch_typed_series():
     c = client.series.prices.split.close.usd.by.day1().tail(10).fetch()
     print(c)
     d = (
-        client.series.market.dca.period.lump_sum_stack._10y.usd.by.day1()
+        client.series.investing.period.lump_sum_stack._10y.usd.by.day1()
         .tail(10)
         .fetch()
     )
     print(d)
     e = (
-        client.series.market.dca.class_.cost_basis.from_2017.usd.by.day1()
+        client.series.investing.class_.dca_cost_basis.from_2017.usd.by.day1()
         .tail(10)
         .fetch()
     )

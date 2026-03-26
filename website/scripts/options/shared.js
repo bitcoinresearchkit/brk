@@ -411,10 +411,6 @@ export function revenueRollingBtcSatsUsd({ coinbase, subsidy, fee }) {
   ];
 }
 
-/**
- * Build percentile USD mappings from a ratio pattern
- * @param {AnyRatioPattern} ratio
- */
 /** @param {AnyRatioPattern} ratio */
 export function percentileUsdMap(ratio) {
   return percentileBandsWith(ratio.percentiles, (e) => e.price);

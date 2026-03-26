@@ -4,13 +4,13 @@ use brk_error::Result;
 use brk_types::Version;
 use vecdb::ImportableVec;
 
-use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod, Vecs};
 use super::vecs::{ClassVecs, PeriodVecs};
+use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod, Vecs};
 use crate::{
     indexes,
     internal::{
-        db_utils::{finalize_db, open_db},
         AmountPerBlock, PercentPerBlock, Price,
+        db_utils::{finalize_db, open_db},
     },
 };
 
@@ -66,17 +66,17 @@ impl Vecs {
         let this = Self {
             sats_per_day: ImportableVec::forced_import(&db, "dca_sats_per_day", version)?,
             period: PeriodVecs {
-                stack,
-                cost_basis,
-                r#return,
-                cagr,
+                dca_stack: stack,
+                dca_cost_basis: cost_basis,
+                dca_return: r#return,
+                dca_cagr: cagr,
                 lump_sum_stack,
                 lump_sum_return,
             },
             class: ClassVecs {
-                stack: class_stack,
-                cost_basis: class_cost_basis,
-                r#return: class_return,
+                dca_stack: class_stack,
+                dca_cost_basis: class_cost_basis,
+                dca_return: class_return,
             },
             db,
         };

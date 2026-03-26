@@ -5246,10 +5246,10 @@ impl SeriesTree_Investing {
 
 /// Series tree node.
 pub struct SeriesTree_Investing_Period {
-    pub stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3,
-    pub cost_basis: SeriesTree_Investing_Period_CostBasis,
-    pub return_: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2,
-    pub cagr: _10y2y3y4y5y6y8yPattern,
+    pub dca_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3,
+    pub dca_cost_basis: SeriesTree_Investing_Period_DcaCostBasis,
+    pub dca_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2,
+    pub dca_cagr: _10y2y3y4y5y6y8yPattern,
     pub lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3,
     pub lump_sum_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2,
 }
@@ -5257,10 +5257,10 @@ pub struct SeriesTree_Investing_Period {
 impl SeriesTree_Investing_Period {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3::new(client.clone(), "dca_stack".to_string()),
-            cost_basis: SeriesTree_Investing_Period_CostBasis::new(client.clone(), format!("{base_path}_cost_basis")),
-            return_: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "dca_return".to_string()),
-            cagr: _10y2y3y4y5y6y8yPattern::new(client.clone(), "dca_cagr".to_string()),
+            dca_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3::new(client.clone(), "dca_stack".to_string()),
+            dca_cost_basis: SeriesTree_Investing_Period_DcaCostBasis::new(client.clone(), format!("{base_path}_dca_cost_basis")),
+            dca_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "dca_return".to_string()),
+            dca_cagr: _10y2y3y4y5y6y8yPattern::new(client.clone(), "dca_cagr".to_string()),
             lump_sum_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3::new(client.clone(), "lump_sum_stack".to_string()),
             lump_sum_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2::new(client.clone(), "lump_sum_return".to_string()),
         }
@@ -5268,7 +5268,7 @@ impl SeriesTree_Investing_Period {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Investing_Period_CostBasis {
+pub struct SeriesTree_Investing_Period_DcaCostBasis {
     pub _1w: CentsSatsUsdPattern,
     pub _1m: CentsSatsUsdPattern,
     pub _3m: CentsSatsUsdPattern,
@@ -5283,7 +5283,7 @@ pub struct SeriesTree_Investing_Period_CostBasis {
     pub _10y: CentsSatsUsdPattern,
 }
 
-impl SeriesTree_Investing_Period_CostBasis {
+impl SeriesTree_Investing_Period_DcaCostBasis {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             _1w: CentsSatsUsdPattern::new(client.clone(), "dca_cost_basis_1w".to_string()),
@@ -5304,23 +5304,23 @@ impl SeriesTree_Investing_Period_CostBasis {
 
 /// Series tree node.
 pub struct SeriesTree_Investing_Class {
-    pub stack: SeriesTree_Investing_Class_Stack,
-    pub cost_basis: SeriesTree_Investing_Class_CostBasis,
-    pub return_: SeriesTree_Investing_Class_Return,
+    pub dca_stack: SeriesTree_Investing_Class_DcaStack,
+    pub dca_cost_basis: SeriesTree_Investing_Class_DcaCostBasis,
+    pub dca_return: SeriesTree_Investing_Class_DcaReturn,
 }
 
 impl SeriesTree_Investing_Class {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            stack: SeriesTree_Investing_Class_Stack::new(client.clone(), format!("{base_path}_stack")),
-            cost_basis: SeriesTree_Investing_Class_CostBasis::new(client.clone(), format!("{base_path}_cost_basis")),
-            return_: SeriesTree_Investing_Class_Return::new(client.clone(), format!("{base_path}_return")),
+            dca_stack: SeriesTree_Investing_Class_DcaStack::new(client.clone(), format!("{base_path}_dca_stack")),
+            dca_cost_basis: SeriesTree_Investing_Class_DcaCostBasis::new(client.clone(), format!("{base_path}_dca_cost_basis")),
+            dca_return: SeriesTree_Investing_Class_DcaReturn::new(client.clone(), format!("{base_path}_dca_return")),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Investing_Class_Stack {
+pub struct SeriesTree_Investing_Class_DcaStack {
     pub from_2015: BtcCentsSatsUsdPattern3,
     pub from_2016: BtcCentsSatsUsdPattern3,
     pub from_2017: BtcCentsSatsUsdPattern3,
@@ -5335,7 +5335,7 @@ pub struct SeriesTree_Investing_Class_Stack {
     pub from_2026: BtcCentsSatsUsdPattern3,
 }
 
-impl SeriesTree_Investing_Class_Stack {
+impl SeriesTree_Investing_Class_DcaStack {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             from_2015: BtcCentsSatsUsdPattern3::new(client.clone(), "dca_stack_from_2015".to_string()),
@@ -5355,7 +5355,7 @@ impl SeriesTree_Investing_Class_Stack {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Investing_Class_CostBasis {
+pub struct SeriesTree_Investing_Class_DcaCostBasis {
     pub from_2015: CentsSatsUsdPattern,
     pub from_2016: CentsSatsUsdPattern,
     pub from_2017: CentsSatsUsdPattern,
@@ -5370,7 +5370,7 @@ pub struct SeriesTree_Investing_Class_CostBasis {
     pub from_2026: CentsSatsUsdPattern,
 }
 
-impl SeriesTree_Investing_Class_CostBasis {
+impl SeriesTree_Investing_Class_DcaCostBasis {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             from_2015: CentsSatsUsdPattern::new(client.clone(), "dca_cost_basis_from_2015".to_string()),
@@ -5390,7 +5390,7 @@ impl SeriesTree_Investing_Class_CostBasis {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Investing_Class_Return {
+pub struct SeriesTree_Investing_Class_DcaReturn {
     pub from_2015: BpsPercentRatioPattern,
     pub from_2016: BpsPercentRatioPattern,
     pub from_2017: BpsPercentRatioPattern,
@@ -5405,7 +5405,7 @@ pub struct SeriesTree_Investing_Class_Return {
     pub from_2026: BpsPercentRatioPattern,
 }
 
-impl SeriesTree_Investing_Class_Return {
+impl SeriesTree_Investing_Class_DcaReturn {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             from_2015: BpsPercentRatioPattern::new(client.clone(), "dca_return_from_2015".to_string()),

@@ -79,9 +79,9 @@ function buildYearEntry(investing, year, i) {
   return {
     name: `${year}`,
     color: colors.at(i, ALL_YEARS.length),
-    costBasis: investing.class.costBasis[key],
-    returns: investing.class.return[key],
-    stack: investing.class.stack[key],
+    costBasis: investing.class.dcaCostBasis[key],
+    returns: investing.class.dcaReturn[key],
+    stack: investing.class.dcaStack[key],
   };
 }
 
@@ -231,7 +231,10 @@ function createSingleEntryTree(item, returnsBottom) {
  * @param {BaseEntryItem & { titlePrefix?: string }} item
  */
 function createShortSingleEntry(item) {
-  return createSingleEntryTree(item, percentRatioBaseline({ pattern: item.returns, name: "Return" }));
+  return createSingleEntryTree(
+    item,
+    percentRatioBaseline({ pattern: item.returns, name: "Return" }),
+  );
 }
 
 /**
@@ -239,7 +242,15 @@ function createShortSingleEntry(item) {
  * @param {LongEntryItem & { titlePrefix?: string }} item
  */
 function createLongSingleEntry(item) {
-  const { name, titlePrefix = name, color, costBasis, returns, cagr, stack } = item;
+  const {
+    name,
+    titlePrefix = name,
+    color,
+    costBasis,
+    returns,
+    cagr,
+    stack,
+  } = item;
   const top = [price({ series: costBasis, name: "Cost Basis", color })];
   return {
     name,
@@ -278,7 +289,7 @@ export function createDcaVsLumpSumSection({ investing, lookback, returns }) {
   /** @param {AllPeriodKey} key */
   const topPane = (key) => [
     price({
-      series: investing.period.costBasis[key],
+      series: investing.period.dcaCostBasis[key],
       name: "DCA",
       color: colors.profit,
     }),
@@ -299,7 +310,7 @@ export function createDcaVsLumpSumSection({ investing, lookback, returns }) {
     top: topPane(key),
     bottom: [
       ...percentRatioBaseline({
-        pattern: investing.period.return[key],
+        pattern: investing.period.dcaReturn[key],
         name: "DCA",
       }),
       ...percentRatioBaseline({
@@ -317,7 +328,7 @@ export function createDcaVsLumpSumSection({ investing, lookback, returns }) {
     top: topPane(key),
     bottom: [
       ...percentRatioBaseline({
-        pattern: investing.period.cagr[key],
+        pattern: investing.period.dcaCagr[key],
         name: "DCA",
       }),
       ...percentRatioBaseline({
@@ -335,7 +346,7 @@ export function createDcaVsLumpSumSection({ investing, lookback, returns }) {
     top: topPane(key),
     bottom: [
       ...satsBtcUsd({
-        pattern: investing.period.stack[key],
+        pattern: investing.period.dcaStack[key],
         name: "DCA",
         color: colors.profit,
       }),
@@ -409,20 +420,20 @@ function createPeriodSection({ investing, lookback, returns }) {
   const buildBaseEntry = (key, i) => ({
     name: periodName(key),
     color: colors.at(i, allPeriods.length),
-    costBasis: isLumpSum ? lookback[key] : investing.period.costBasis[key],
+    costBasis: isLumpSum ? lookback[key] : investing.period.dcaCostBasis[key],
     returns: isLumpSum
       ? investing.period.lumpSumReturn[key]
-      : investing.period.return[key],
+      : investing.period.dcaReturn[key],
     stack: isLumpSum
       ? investing.period.lumpSumStack[key]
-      : investing.period.stack[key],
+      : investing.period.dcaStack[key],
   });
 
   /** @param {LongPeriodKey} key @param {number} i @returns {LongEntryItem} */
   const buildLongEntry = (key, i) =>
     withCagr(
       buildBaseEntry(key, i),
-      isLumpSum ? returns.cagr[key] : investing.period.cagr[key],
+      isLumpSum ? returns.cagr[key] : investing.period.dcaCagr[key],
     );
 
   /** @param {BaseEntryItem} entry */
