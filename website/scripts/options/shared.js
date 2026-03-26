@@ -415,32 +415,14 @@ export function revenueRollingBtcSatsUsd({ coinbase, subsidy, fee }) {
  * Build percentile USD mappings from a ratio pattern
  * @param {AnyRatioPattern} ratio
  */
+/** @param {AnyRatioPattern} ratio */
 export function percentileUsdMap(ratio) {
-  const p = ratio.percentiles;
-  return /** @type {const} */ ([
-    { name: "P95", prop: p.pct95.price, color: colors.ratioPct._95 },
-    { name: "P5", prop: p.pct5.price, color: colors.ratioPct._5 },
-    { name: "P98", prop: p.pct98.price, color: colors.ratioPct._98 },
-    { name: "P2", prop: p.pct2.price, color: colors.ratioPct._2 },
-    { name: "P99", prop: p.pct99.price, color: colors.ratioPct._99 },
-    { name: "P1", prop: p.pct1.price, color: colors.ratioPct._1 },
-  ]);
+  return percentileBandsWith(ratio.percentiles, (e) => e.price);
 }
 
-/**
- * Build percentile ratio mappings from a ratio pattern
- * @param {AnyRatioPattern} ratio
- */
+/** @param {AnyRatioPattern} ratio */
 export function percentileMap(ratio) {
-  const p = ratio.percentiles;
-  return /** @type {const} */ ([
-    { name: "P95", prop: p.pct95.ratio, color: colors.ratioPct._95 },
-    { name: "P5", prop: p.pct5.ratio, color: colors.ratioPct._5 },
-    { name: "P98", prop: p.pct98.ratio, color: colors.ratioPct._98 },
-    { name: "P2", prop: p.pct2.ratio, color: colors.ratioPct._2 },
-    { name: "P99", prop: p.pct99.ratio, color: colors.ratioPct._99 },
-    { name: "P1", prop: p.pct1.ratio, color: colors.ratioPct._1 },
-  ]);
+  return percentileBandsWith(ratio.percentiles, (e) => e.ratio);
 }
 
 /**
