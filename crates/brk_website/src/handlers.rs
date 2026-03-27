@@ -73,3 +73,139 @@ fn sanitize(path: &str) -> String {
         .collect::<Vec<_>>()
         .join("/")
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{future::Future, sync::OnceLock};
+
+    use axum::{
+        body::{Body, to_bytes},
+        http::{HeaderMap, StatusCode, header},
+        response::IntoResponse,
+    };
+
+    use super::{sanitize, serve};
+    use crate::Website;
+
+    fn block_on<F: Future>(future: F) -> F::Output {
+        static RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
+
+        RUNTIME
+            .get_or_init(|| {
+                tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build()
+                    .unwrap()
+            })
+            .block_on(future)
+    }
+
+    fn body_bytes(response: axum::http::Response<Body>) -> Vec<u8> {
+        block_on(async {
+            to_bytes(response.into_body(), 2 * 1024 * 1024)
+                .await
+                .unwrap()
+                .to_vec()
+        })
+    }
+
+    #[test]
+    fn sanitize_removes_empty_and_traversal_segments() {
+        assert_eq!(sanitize("../styles/reset.css"), "styles/reset.css");
+        assert_eq!(sanitize("./styles//reset.css"), "styles/reset.css");
+        assert_eq!(sanitize(""), "");
+    }
+
+    #[test]
+    fn serves_index_html_for_root_and_spa_routes() {
+        let request_headers = HeaderMap::new();
+
+        let root = serve(&Website::Default, "", &request_headers).unwrap();
+        assert_eq!(root.status(), StatusCode::OK);
+        assert_eq!(
+            root.headers()
+                .get(header::CONTENT_TYPE)
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            "text/html",
+        );
+        assert_eq!(
+            root.headers()
+                .get(header::CACHE_CONTROL)
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            "public, max-age=1, must-revalidate",
+        );
+
+        if cfg!(debug_assertions) {
+            assert!(root.headers().get(header::ETAG).is_none());
+        } else {
+            assert!(root.headers().get(header::ETAG).is_some());
+        }
+
+        let root_body = body_bytes(root);
+        let spa_body =
+            body_bytes(serve(&Website::Default, "charts/price", &request_headers).unwrap());
+
+        assert_eq!(root_body, spa_body);
+        assert!(
+            String::from_utf8(root_body)
+                .unwrap()
+                .contains("<!doctype html>")
+        );
+    }
+
+    #[test]
+    fn serves_static_assets_with_expected_headers() {
+        let response = serve(&Website::Default, "styles/reset.css", &HeaderMap::new()).unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            response
+                .headers()
+                .get(header::CONTENT_TYPE)
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            "text/css",
+        );
+
+        let expected_cache_control = if cfg!(debug_assertions) {
+            "public, max-age=1, must-revalidate"
+        } else {
+            "public, max-age=31536000, immutable"
+        };
+
+        assert_eq!(
+            response
+                .headers()
+                .get(header::CACHE_CONTROL)
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            expected_cache_control,
+        );
+        assert!(!body_bytes(response).is_empty());
+    }
+
+    #[test]
+    fn traversal_like_paths_resolve_to_sanitized_assets() {
+        let direct =
+            body_bytes(serve(&Website::Default, "styles/reset.css", &HeaderMap::new()).unwrap());
+        let sanitized =
+            body_bytes(serve(&Website::Default, "../styles/reset.css", &HeaderMap::new()).unwrap());
+
+        assert_eq!(sanitized, direct);
+    }
+
+    #[test]
+    fn missing_files_with_extensions_return_not_found() {
+        let response = serve(&Website::Default, "styles/missing.css", &HeaderMap::new())
+            .unwrap_err()
+            .into_response();
+
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    }
+}

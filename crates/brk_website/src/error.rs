@@ -8,6 +8,7 @@ use axum::{
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Website error type that maps to HTTP status codes.
+#[derive(Debug)]
 pub struct Error(StatusCode, String);
 
 impl Error {
