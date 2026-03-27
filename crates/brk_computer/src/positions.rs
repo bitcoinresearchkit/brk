@@ -51,7 +51,7 @@ impl Vecs {
         let exit = exit.clone();
         self.db.run_bg(move |db| {
             let _lock = exit.lock();
-            db.compact()
+            db.compact_deferred_default()
         });
         Ok(())
     }

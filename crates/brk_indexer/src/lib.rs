@@ -1,6 +1,11 @@
 #![doc = include_str!("../README.md")]
 
-use std::{fs, path::Path, thread, time::Instant};
+use std::{
+    fs,
+    path::Path,
+    thread::{self, sleep},
+    time::{Duration, Instant},
+};
 
 use brk_error::Result;
 use brk_iterator::Blocks;
@@ -8,7 +13,7 @@ use brk_rpc::Client;
 use brk_types::Height;
 use fjall::PersistMode;
 use tracing::{debug, info};
-use vecdb::{Exit, ReadOnlyClone, ReadableVec, Ro, Rw, StorageMode};
+use vecdb::{Exit, RawDBError, ReadOnlyClone, ReadableVec, Ro, Rw, StorageMode};
 mod constants;
 mod indexes;
 mod processor;
@@ -259,6 +264,8 @@ impl Indexer {
         self.vecs.db.run_bg(move |db| {
             let _lock = lock;
 
+            sleep(Duration::from_secs(5));
+
             if !tasks.is_empty() {
                 let i = Instant::now();
                 for task in tasks {
@@ -269,11 +276,10 @@ impl Indexer {
                 let i = Instant::now();
                 fjall_db
                     .persist(PersistMode::SyncData)
-                    .map_err(vecdb::RawDBError::other)?;
+                    .map_err(RawDBError::other)?;
                 info!("Stores persisted in {:?}", i.elapsed());
             }
 
-            db.flush()?;
             db.compact()?;
             Ok(())
         });

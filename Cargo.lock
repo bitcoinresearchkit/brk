@@ -836,9 +836,9 @@ checksum = "1c53ba0f290bfc610084c05582d9c5d421662128fc69f4bf236707af6fd321b9"
 
 [[package]]
 name = "cc"
-version = "1.2.57"
+version = "1.2.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a0dd1ca384932ff3641c8718a02769f1698e7563dc6974ffd03346116310423"
+checksum = "e1e928d4b69e3077709075a938a05ffbedfa53a84c8f766efbf8220bb1ff60e1"
 dependencies = [
  "find-msvc-tools",
  "jobserver",
@@ -2180,9 +2180,9 @@ dependencies = [
 
 [[package]]
 name = "mio"
-version = "1.1.1"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a69bcab0ad47271a0234d9422b131806bf3968021e5dc9328caf2d4cd58557fc"
+checksum = "50b7e5b27aa02a74bac8c3f23f448f8d87ff11f92d3aac1a6ed369ee08cc56c1"
 dependencies = [
  "libc",
  "wasi",
@@ -2545,9 +2545,9 @@ dependencies = [
 
 [[package]]
 name = "rawdb"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ebc4ac8e255d001f609b3d3002c7209e1668b9ab0aedf9a6a263e2e7e2c3cdb"
+checksum = "fddb06a11fcc5f7f44d9b5bee4ab61b5a1135232b2fd239253428abd192ba504"
 dependencies = [
  "libc",
  "log",
@@ -2963,9 +2963,9 @@ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
 name = "simd-adler32"
-version = "0.3.8"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e320a6c5ad31d271ad523dcf3ad13e2767ad8b1cb8f047f75a8aeaf8da139da2"
+checksum = "703d5c7ef118737c72f1af64ad2f6f8c5e1921f818cdcb97b8fe6fc69bf66214"
 
 [[package]]
 name = "slab"
@@ -3439,9 +3439,9 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68e0237a44ee8ea6692e815154cc477a8c1936b27dca79bb1b9e093fa55e04a2"
+checksum = "a33f1cbef9bf38048ee1b51328366f0a734e06bcc0b9739d68fef9ecce43d0b8"
 dependencies = [
  "itoa",
  "libc",
@@ -3462,9 +3462,9 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fef159303d1f54cbb08b8249da70a9e1573145074949a91e9072addde209d65"
+checksum = "33d31f03d1c7269d65195fb4d54c1d510b124807871bd11af7d10a08700d7590"
 dependencies = [
  "quote",
  "syn",
