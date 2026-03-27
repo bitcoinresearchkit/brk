@@ -4,7 +4,6 @@ import {
   HistogramSeries,
   LineSeries,
   BaselineSeries,
-  // } from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.development.mjs";
 } from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.production.mjs";
 import { createLegend, createSeriesLegend } from "./legend.js";
 import { capture } from "./capture.js";
@@ -83,17 +82,18 @@ function getRangePresets() {
   const m = now.getUTCMonth();
   const d = now.getUTCDate();
   /** @param {number} months @param {number} [days] */
-  const ago = (months, days = 0) => Math.floor(Date.UTC(y, m - months, d - days) / 1000);
+  const ago = (months, days = 0) =>
+    Math.floor(Date.UTC(y, m - months, d - days) / 1000);
 
   /** @type {RangePreset[]} */
   const presets = [
     { label: "1w", index: /** @type {IndexLabel} */ ("30mn"), from: ago(0, 7) },
-    { label: "1m", index: /** @type {IndexLabel} */ ("1h"),   from: ago(1) },
-    { label: "3m", index: /** @type {IndexLabel} */ ("4h"),   from: ago(3) },
-    { label: "6m", index: /** @type {IndexLabel} */ ("12h"),  from: ago(6) },
-    { label: "1y", index: /** @type {IndexLabel} */ ("1d"),   from: ago(12) },
-    { label: "4y", index: /** @type {IndexLabel} */ ("3d"),   from: ago(48) },
-    { label: "8y", index: /** @type {IndexLabel} */ ("1w"),   from: ago(96) },
+    { label: "1m", index: /** @type {IndexLabel} */ ("1h"), from: ago(1) },
+    { label: "3m", index: /** @type {IndexLabel} */ ("4h"), from: ago(3) },
+    { label: "6m", index: /** @type {IndexLabel} */ ("12h"), from: ago(6) },
+    { label: "1y", index: /** @type {IndexLabel} */ ("1d"), from: ago(12) },
+    { label: "4y", index: /** @type {IndexLabel} */ ("3d"), from: ago(48) },
+    { label: "8y", index: /** @type {IndexLabel} */ ("1w"), from: ago(96) },
   ];
 
   const ytdFrom = Math.floor(Date.UTC(y, 0, 1) / 1000);
@@ -105,7 +105,11 @@ function getRangePresets() {
     from: ytdFrom,
   });
 
-  presets.push({ label: "all", index: /** @type {IndexLabel} */ ("1w"), from: -Infinity });
+  presets.push({
+    label: "all",
+    index: /** @type {IndexLabel} */ ("1w"),
+    from: -Infinity,
+  });
 
   return presets;
 }
@@ -445,7 +449,11 @@ export function createChart({ parent, brk, fitContent }) {
       if (this.isAllHidden(paneIndex)) {
         const collapsedHeight = paneIndex === 0 ? 32 : 64;
         const chartHeight = ichart.chartElement().clientHeight;
-        pane.setStretchFactor(chartHeight > 0 ? collapsedHeight / (chartHeight - collapsedHeight) : 0);
+        pane.setStretchFactor(
+          chartHeight > 0
+            ? collapsedHeight / (chartHeight - collapsedHeight)
+            : 0,
+        );
       } else {
         pane.setStretchFactor(1);
       }

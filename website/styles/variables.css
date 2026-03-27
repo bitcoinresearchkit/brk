@@ -45,6 +45,9 @@
   --line-height-xl: calc(1.75 / 1.25);
 
   --main-padding: 2rem;
+  /*@media (max-width: 767px) {
+    --main-padding: 1.5rem;
+  }*/
   --negative-main-padding: calc(-1 * var(--main-padding));
   --font-weight-base: 400;
   --default-main-width: 25rem;

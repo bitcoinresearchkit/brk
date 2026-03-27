@@ -248,5 +248,4 @@
  *
  * Generic tree node type for walking
  * @typedef {AnySeriesPattern | Record<string, unknown>} TreeNode
- *
  */

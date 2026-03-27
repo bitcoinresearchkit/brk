@@ -55,11 +55,7 @@ aside {
   flex: 1;
 
   @media (max-width: 767px) {
-    padding-bottom: calc(var(--main-padding) + 1.5rem);
-
-    html[data-display="standalone"] & {
-      padding-bottom: calc(var(--main-padding) + 2rem);
-    }
+    padding-bottom: calc(var(--main-padding) + 0.5rem);
   }
 
   @media (min-width: 768px) {
@@ -95,14 +91,21 @@ button {
 }
 
 h1 {
-  font-size: var(--font-size-xl);
+  font-size: 2rem;
   line-height: var(--line-height-xl);
-  font-weight: 300;
 }
 
 h3 {
-  font-size: var(--font-size-lg);
+  font-size: 1.5rem;
   line-height: var(--line-height-lg);
+}
+
+h1,
+h2,
+h3 {
+  font-family: instrument;
+  letter-spacing: 0.05rem;
+  font-weight: 400;
 }
 
 html {
@@ -115,6 +118,8 @@ html {
 
 input {
   width: 100%;
+  padding: 0;
+  letter-spacing: inherit;
 
   &::placeholder {
     color: var(--off-color);
@@ -194,6 +199,7 @@ select {
   flex-shrink: 0;
   width: 100%;
   text-transform: uppercase;
+  color: var(--color);
 }
 
 :is(input, select):focus-visible {

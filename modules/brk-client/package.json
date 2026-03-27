@@ -40,5 +40,5 @@
     "url": "git+https://github.com/bitcoinresearchkit/brk.git"
   },
   "type": "module",
-  "version": "0.2.2"
+  "version": "0.2.3"
 }

@@ -29,7 +29,7 @@ main {
     background-image: linear-gradient(
       to bottom,
       transparent,
-      var(--background-color) 90%,
+      var(--background-color) 85%,
       var(--background-color)
     );
   }
@@ -94,12 +94,6 @@ main {
         transparent,
         var(--background-color)
       );
-    }
-
-    @media (max-width: 767px) {
-      html[data-display="standalone"] & {
-        margin-bottom: calc(var(--main-padding) + 0.5rem);
-      }
     }
 
     > fieldset {
