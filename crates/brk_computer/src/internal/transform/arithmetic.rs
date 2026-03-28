@@ -1,6 +1,9 @@
 use std::marker::PhantomData;
 
-use brk_types::{BasisPoints16, Bitcoin, Cents, Dollars, Sats, StoredF32, StoredF64, StoredI8, StoredU16, StoredU32, StoredU64, VSize, Weight};
+use brk_types::{
+    BasisPoints16, Bitcoin, Cents, Dollars, Sats, StoredF32, StoredF64, StoredI8, StoredU16,
+    StoredU32, StoredU64, VSize, Weight,
+};
 use vecdb::{BinaryTransform, UnaryTransform, VecValue};
 
 pub struct Identity<T>(PhantomData<T>);
@@ -11,7 +14,6 @@ impl<T: VecValue> UnaryTransform<T, T> for Identity<T> {
         v
     }
 }
-
 
 pub struct HalveSats;
 

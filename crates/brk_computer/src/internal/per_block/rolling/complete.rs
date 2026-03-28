@@ -10,7 +10,7 @@ use vecdb::{Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        CachedWindowStarts, NumericValue, LazyRollingAvgsFromHeight, LazyRollingSumsFromHeight,
+        CachedWindowStarts, LazyRollingAvgsFromHeight, LazyRollingSumsFromHeight, NumericValue,
         RollingDistribution, WindowStarts,
     },
 };

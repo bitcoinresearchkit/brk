@@ -10,8 +10,7 @@ use crate::{
 };
 
 use super::{
-    CountVecs, DifficultyVecs, HalvingVecs, IntervalVecs, LookbackVecs, SizeVecs, Vecs,
-    WeightVecs,
+    CountVecs, DifficultyVecs, HalvingVecs, IntervalVecs, LookbackVecs, SizeVecs, Vecs, WeightVecs,
 };
 
 impl Vecs {

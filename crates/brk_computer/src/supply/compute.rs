@@ -24,13 +24,8 @@ impl Vecs {
         self.db.sync_bg_tasks()?;
 
         // 1. Compute burned/unspendable supply
-        self.burned.compute(
-            scripts,
-            mining,
-            prices,
-            starting_indexes,
-            exit,
-        )?;
+        self.burned
+            .compute(scripts, mining, prices, starting_indexes, exit)?;
 
         // 2. Compute inflation rate: (supply[h] / supply[1y_ago]) - 1
         // Skip when lookback supply <= first block (50 BTC = 5B sats),

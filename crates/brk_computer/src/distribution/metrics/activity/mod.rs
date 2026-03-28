@@ -19,10 +19,7 @@ pub trait ActivityLike: Send + Sync {
     fn as_core(&self) -> &ActivityCore;
     fn as_core_mut(&mut self) -> &mut ActivityCore;
     fn min_len(&self) -> usize;
-    fn push_state<R: RealizedOps>(
-        &mut self,
-        state: &CohortState<R, impl CostBasisOps>,
-    );
+    fn push_state<R: RealizedOps>(&mut self, state: &CohortState<R, impl CostBasisOps>);
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()>;
     fn compute_from_stateful(
         &mut self,
@@ -39,37 +36,69 @@ pub trait ActivityLike: Send + Sync {
 }
 
 impl ActivityLike for ActivityCore {
-    fn as_core(&self) -> &ActivityCore { self }
-    fn as_core_mut(&mut self) -> &mut ActivityCore { self }
-    fn min_len(&self) -> usize { self.min_len() }
+    fn as_core(&self) -> &ActivityCore {
+        self
+    }
+    fn as_core_mut(&mut self) -> &mut ActivityCore {
+        self
+    }
+    fn min_len(&self) -> usize {
+        self.min_len()
+    }
     fn push_state<R: RealizedOps>(&mut self, state: &CohortState<R, impl CostBasisOps>) {
         self.push_state(state);
     }
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.validate_computed_versions(base_version)
     }
-    fn compute_from_stateful(&mut self, starting_indexes: &Indexes, others: &[&ActivityCore], exit: &Exit) -> Result<()> {
+    fn compute_from_stateful(
+        &mut self,
+        starting_indexes: &Indexes,
+        others: &[&ActivityCore],
+        exit: &Exit,
+    ) -> Result<()> {
         self.compute_from_stateful(starting_indexes, others, exit)
     }
-    fn compute_rest_part1(&mut self, prices: &prices::Vecs, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
+    fn compute_rest_part1(
+        &mut self,
+        prices: &prices::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
         self.compute_rest_part1(prices, starting_indexes, exit)
     }
 }
 
 impl ActivityLike for ActivityFull {
-    fn as_core(&self) -> &ActivityCore { &self.inner }
-    fn as_core_mut(&mut self) -> &mut ActivityCore { &mut self.inner }
-    fn min_len(&self) -> usize { self.full_min_len() }
+    fn as_core(&self) -> &ActivityCore {
+        &self.inner
+    }
+    fn as_core_mut(&mut self) -> &mut ActivityCore {
+        &mut self.inner
+    }
+    fn min_len(&self) -> usize {
+        self.full_min_len()
+    }
     fn push_state<R: RealizedOps>(&mut self, state: &CohortState<R, impl CostBasisOps>) {
         self.full_push_state(state);
     }
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
         self.inner.validate_computed_versions(base_version)
     }
-    fn compute_from_stateful(&mut self, starting_indexes: &Indexes, others: &[&ActivityCore], exit: &Exit) -> Result<()> {
+    fn compute_from_stateful(
+        &mut self,
+        starting_indexes: &Indexes,
+        others: &[&ActivityCore],
+        exit: &Exit,
+    ) -> Result<()> {
         self.compute_from_stateful(starting_indexes, others, exit)
     }
-    fn compute_rest_part1(&mut self, prices: &prices::Vecs, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
+    fn compute_rest_part1(
+        &mut self,
+        prices: &prices::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
         self.compute_rest_part1(prices, starting_indexes, exit)
     }
 }

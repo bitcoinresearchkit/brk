@@ -22,7 +22,10 @@ impl Vecs {
             || {
                 rayon::join(
                     || self.ath.compute(prices, indexes, starting_indexes, exit),
-                    || self.lookback.compute(blocks, prices, starting_indexes, exit),
+                    || {
+                        self.lookback
+                            .compute(blocks, prices, starting_indexes, exit)
+                    },
                 )
             },
             || {

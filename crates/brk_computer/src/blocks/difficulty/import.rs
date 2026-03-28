@@ -27,12 +27,8 @@ impl Vecs {
             indexes,
         );
 
-        let blocks_to_retarget = PerBlock::forced_import(
-            db,
-            "blocks_to_retarget",
-            version + v2,
-            indexes,
-        )?;
+        let blocks_to_retarget =
+            PerBlock::forced_import(db, "blocks_to_retarget", version + v2, indexes)?;
 
         let days_to_retarget = LazyPerBlock::from_computed::<BlocksToDaysF32>(
             "days_to_retarget",

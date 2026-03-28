@@ -146,5 +146,4 @@ mod tests {
         assert_eq!(ep.count(), 0);
         assert_eq!(quantile(&ep, 0.5), 0);
     }
-
 }

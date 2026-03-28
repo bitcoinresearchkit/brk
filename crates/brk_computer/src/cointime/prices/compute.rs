@@ -22,11 +22,8 @@ impl Vecs {
         let circulating_supply = &all_metrics.supply.total.btc.height;
         let realized_price = &all_metrics.realized.price.cents.height;
 
-        self.vaulted.compute_all(
-            prices,
-            starting_indexes,
-            exit,
-            |v| {
+        self.vaulted
+            .compute_all(prices, starting_indexes, exit, |v| {
                 Ok(v.compute_transform2(
                     starting_indexes.height,
                     realized_price,
@@ -36,14 +33,10 @@ impl Vecs {
                     },
                     exit,
                 )?)
-            },
-        )?;
+            })?;
 
-        self.active.compute_all(
-            prices,
-            starting_indexes,
-            exit,
-            |v| {
+        self.active
+            .compute_all(prices, starting_indexes, exit, |v| {
                 Ok(v.compute_transform2(
                     starting_indexes.height,
                     realized_price,
@@ -53,14 +46,10 @@ impl Vecs {
                     },
                     exit,
                 )?)
-            },
-        )?;
+            })?;
 
-        self.true_market_mean.compute_all(
-            prices,
-            starting_indexes,
-            exit,
-            |v| {
+        self.true_market_mean
+            .compute_all(prices, starting_indexes, exit, |v| {
                 Ok(v.compute_transform2(
                     starting_indexes.height,
                     &cap.investor.cents.height,
@@ -70,14 +59,10 @@ impl Vecs {
                     },
                     exit,
                 )?)
-            },
-        )?;
+            })?;
 
-        self.cointime.compute_all(
-            prices,
-            starting_indexes,
-            exit,
-            |v| {
+        self.cointime
+            .compute_all(prices, starting_indexes, exit, |v| {
                 Ok(v.compute_transform2(
                     starting_indexes.height,
                     &cap.cointime.cents.height,
@@ -87,8 +72,7 @@ impl Vecs {
                     },
                     exit,
                 )?)
-            },
-        )?;
+            })?;
 
         Ok(())
     }

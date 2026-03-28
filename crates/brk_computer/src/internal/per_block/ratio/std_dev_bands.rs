@@ -28,14 +28,7 @@ impl RatioPerBlockStdDevBands {
 
         macro_rules! import_sd {
             ($period:expr, $days:expr) => {
-                StdDevPerBlockExtended::forced_import(
-                    db,
-                    name,
-                    $period,
-                    $days,
-                    v,
-                    indexes,
-                )?
+                StdDevPerBlockExtended::forced_import(db, name, $period, $days, v, indexes)?
             };
         }
 

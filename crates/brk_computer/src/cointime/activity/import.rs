@@ -28,10 +28,18 @@ impl Vecs {
 
         Ok(Self {
             coinblocks_created: PerBlockCumulativeRolling::forced_import(
-                db, "coinblocks_created", version, indexes, cached_starts,
+                db,
+                "coinblocks_created",
+                version,
+                indexes,
+                cached_starts,
             )?,
             coinblocks_stored: PerBlockCumulativeRolling::forced_import(
-                db, "coinblocks_stored", version, indexes, cached_starts,
+                db,
+                "coinblocks_stored",
+                version,
+                indexes,
+                cached_starts,
             )?,
             liveliness,
             vaultedness,

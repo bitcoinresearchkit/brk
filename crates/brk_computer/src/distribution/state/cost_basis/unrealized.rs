@@ -58,10 +58,18 @@ pub trait Accumulate: Default + Clone + Send + Sync + 'static {
     fn core(&self) -> &WithoutCapital;
     fn core_mut(&mut self) -> &mut WithoutCapital;
 
-    fn supply_in_profit(&self) -> Sats { self.core().supply_in_profit }
-    fn supply_in_loss(&self) -> Sats { self.core().supply_in_loss }
-    fn unrealized_profit(&mut self) -> &mut u128 { &mut self.core_mut().unrealized_profit }
-    fn unrealized_loss(&mut self) -> &mut u128 { &mut self.core_mut().unrealized_loss }
+    fn supply_in_profit(&self) -> Sats {
+        self.core().supply_in_profit
+    }
+    fn supply_in_loss(&self) -> Sats {
+        self.core().supply_in_loss
+    }
+    fn unrealized_profit(&mut self) -> &mut u128 {
+        &mut self.core_mut().unrealized_profit
+    }
+    fn unrealized_loss(&mut self) -> &mut u128 {
+        &mut self.core_mut().unrealized_loss
+    }
 
     fn accumulate_profit(&mut self, price_u128: u128, sats: Sats);
     fn accumulate_loss(&mut self, price_u128: u128, sats: Sats);
@@ -80,8 +88,12 @@ impl Accumulate for WithoutCapital {
         }
     }
 
-    fn core(&self) -> &WithoutCapital { self }
-    fn core_mut(&mut self) -> &mut WithoutCapital { self }
+    fn core(&self) -> &WithoutCapital {
+        self
+    }
+    fn core_mut(&mut self) -> &mut WithoutCapital {
+        self
+    }
 
     #[inline(always)]
     fn accumulate_profit(&mut self, _price_u128: u128, sats: Sats) {
@@ -110,8 +122,12 @@ impl Accumulate for WithCapital {
         }
     }
 
-    fn core(&self) -> &WithoutCapital { &self.core }
-    fn core_mut(&mut self) -> &mut WithoutCapital { &mut self.core }
+    fn core(&self) -> &WithoutCapital {
+        &self.core
+    }
+    fn core_mut(&mut self) -> &mut WithoutCapital {
+        &mut self.core
+    }
 
     #[inline(always)]
     fn accumulate_profit(&mut self, price_u128: u128, sats: Sats) {

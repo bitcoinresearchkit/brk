@@ -14,23 +14,23 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.total.compute_with(
-            starting_indexes.height,
-            prices,
-            exit,
-            |sats| {
+        self.total
+            .compute_with(starting_indexes.height, prices, exit, |sats| {
                 Ok(sats.compute_transform2(
                     starting_indexes.height,
                     &scripts.value.op_return.block.sats,
                     &mining.rewards.unclaimed.block.sats,
                     |(h, op_return, unclaimed, ..)| {
-                        let genesis = if h.to_usize() == 0 { Sats::FIFTY_BTC } else { Sats::ZERO };
+                        let genesis = if h.to_usize() == 0 {
+                            Sats::FIFTY_BTC
+                        } else {
+                            Sats::ZERO
+                        };
                         (h, genesis + op_return + unclaimed)
                     },
                     exit,
                 )?)
-            },
-        )?;
+            })?;
 
         Ok(())
     }

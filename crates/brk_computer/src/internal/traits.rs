@@ -1,6 +1,8 @@
 use std::ops::{Add, AddAssign, Div};
 
-use brk_types::{BasisPoints16, BasisPoints32, BasisPointsSigned16, BasisPointsSigned32, StoredF32};
+use brk_types::{
+    BasisPoints16, BasisPoints32, BasisPointsSigned16, BasisPointsSigned32, StoredF32,
+};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, PcoVecValue, UnaryTransform};

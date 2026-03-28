@@ -5,7 +5,7 @@ use vecdb::{Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{BpsType, PerBlock, LazyPerBlock},
+    internal::{BpsType, LazyPerBlock, PerBlock},
 };
 
 #[derive(Traversable)]

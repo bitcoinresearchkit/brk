@@ -1,4 +1,4 @@
-use brk_types::{CostBasisSnapshot, Cents, Height, Timestamp};
+use brk_types::{Cents, CostBasisSnapshot, Height, Timestamp};
 use vecdb::Rw;
 
 use crate::distribution::state::Transacted;
@@ -34,10 +34,16 @@ impl UTXOCohorts<Rw> {
             .unwrap()
             .receive_utxo_snapshot(&supply_state, &snapshot);
         if let Some(v) = self.epoch.mut_vec_from_height(height) {
-            v.state.as_mut().unwrap().receive_utxo_snapshot(&supply_state, &snapshot);
+            v.state
+                .as_mut()
+                .unwrap()
+                .receive_utxo_snapshot(&supply_state, &snapshot);
         }
         if let Some(v) = self.class.mut_vec_from_timestamp(timestamp) {
-            v.state.as_mut().unwrap().receive_utxo_snapshot(&supply_state, &snapshot);
+            v.state
+                .as_mut()
+                .unwrap()
+                .receive_utxo_snapshot(&supply_state, &snapshot);
         }
 
         // Update output type cohorts (skip types with no outputs this block)

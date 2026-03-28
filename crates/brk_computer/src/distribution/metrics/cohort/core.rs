@@ -92,7 +92,10 @@ impl CoreCohortMetrics {
         )?;
         self.unrealized.compute_from_stateful(
             starting_indexes,
-            &others.iter().map(|v| v.unrealized_core()).collect::<Vec<_>>(),
+            &others
+                .iter()
+                .map(|v| v.unrealized_core())
+                .collect::<Vec<_>>(),
             exit,
         )?;
 
@@ -105,16 +108,14 @@ impl CoreCohortMetrics {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.supply
-            .compute(prices, starting_indexes.height, exit)?;
+        self.supply.compute(prices, starting_indexes.height, exit)?;
 
         self.outputs.compute_rest(starting_indexes.height, exit)?;
 
         self.activity
             .compute_rest_part1(prices, starting_indexes, exit)?;
 
-        self.realized
-            .compute_rest_part1(starting_indexes, exit)?;
+        self.realized.compute_rest_part1(starting_indexes, exit)?;
 
         self.unrealized.compute_rest(starting_indexes, exit)?;
 
@@ -144,14 +145,11 @@ impl CoreCohortMetrics {
             exit,
         )?;
 
-        self.relative.compute(
-            starting_indexes.height,
-            &self.supply,
-            all_supply_sats,
-            exit,
-        )?;
+        self.relative
+            .compute(starting_indexes.height, &self.supply, all_supply_sats, exit)?;
 
-        self.outputs.compute_part2(starting_indexes.height, all_utxo_count, exit)?;
+        self.outputs
+            .compute_part2(starting_indexes.height, all_utxo_count, exit)?;
 
         Ok(())
     }

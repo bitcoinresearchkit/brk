@@ -38,6 +38,11 @@ impl Vecs {
             &returns.sd_24h._1y.sd,
         );
 
-        Ok(Windows { _24h, _1w, _1m, _1y })
+        Ok(Windows {
+            _24h,
+            _1w,
+            _1m,
+            _1y,
+        })
     }
 }

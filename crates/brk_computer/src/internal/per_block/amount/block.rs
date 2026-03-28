@@ -1,7 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
-use vecdb::{Database, EagerVec, Exit, ImportableVec, LazyVecFrom1, PcoVec, ReadableCloneableVec, Rw, StorageMode};
+use vecdb::{
+    Database, EagerVec, Exit, ImportableVec, LazyVecFrom1, PcoVec, ReadableCloneableVec, Rw,
+    StorageMode,
+};
 
 use crate::{
     internal::{CentsUnsignedToDollars, SatsToBitcoin, SatsToCents},
@@ -21,11 +24,8 @@ impl AmountBlock {
     pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         let sats: EagerVec<PcoVec<Height, Sats>> =
             EagerVec::forced_import(db, &format!("{name}_sats"), version)?;
-        let btc = LazyVecFrom1::transformed::<SatsToBitcoin>(
-            name,
-            version,
-            sats.read_only_boxed_clone(),
-        );
+        let btc =
+            LazyVecFrom1::transformed::<SatsToBitcoin>(name, version, sats.read_only_boxed_clone());
         let cents: EagerVec<PcoVec<Height, Cents>> =
             EagerVec::forced_import(db, &format!("{name}_cents"), version)?;
         let usd = LazyVecFrom1::transformed::<CentsUnsignedToDollars>(
@@ -33,7 +33,12 @@ impl AmountBlock {
             version,
             cents.read_only_boxed_clone(),
         );
-        Ok(Self { btc, sats, usd, cents })
+        Ok(Self {
+            btc,
+            sats,
+            usd,
+            cents,
+        })
     }
 
     pub(crate) fn compute_cents(

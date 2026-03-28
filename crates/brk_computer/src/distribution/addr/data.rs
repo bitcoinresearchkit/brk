@@ -1,8 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{
-    EmptyAddrData, EmptyAddrIndex, FundedAddrData, FundedAddrIndex, Height,
-};
+use brk_types::{EmptyAddrData, EmptyAddrIndex, FundedAddrData, FundedAddrIndex, Height};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, BytesVec, Rw, Stamp, StorageMode, WritableVec};
 

@@ -6,7 +6,11 @@ use super::{
     super::{moving_average, returns},
     Vecs, macd, rsi,
 };
-use crate::{blocks, internal::{RatioDollarsBp32, WindowsTo1m}, prices};
+use crate::{
+    blocks,
+    internal::{RatioDollarsBp32, WindowsTo1m},
+    prices,
+};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -20,7 +24,12 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let daily_returns = &returns.periods._24h.ratio.height;
-        for (rsi_chain, &m) in self.rsi.as_mut_array().into_iter().zip(&WindowsTo1m::<()>::DAYS) {
+        for (rsi_chain, &m) in self
+            .rsi
+            .as_mut_array()
+            .into_iter()
+            .zip(&WindowsTo1m::<()>::DAYS)
+        {
             rsi::compute(
                 rsi_chain,
                 blocks,
@@ -32,7 +41,12 @@ impl Vecs {
             )?;
         }
 
-        for (macd_chain, &m) in self.macd.as_mut_array().into_iter().zip(&WindowsTo1m::<()>::DAYS) {
+        for (macd_chain, &m) in self
+            .macd
+            .as_mut_array()
+            .into_iter()
+            .zip(&WindowsTo1m::<()>::DAYS)
+        {
             macd::compute(
                 macd_chain,
                 blocks,

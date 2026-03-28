@@ -1,6 +1,6 @@
 use brk_types::{
-    BasisPoints16, BasisPoints32, BasisPointsSigned32, Cents, CentsSigned, Dollars, Sats, StoredF32,
-    StoredU64,
+    BasisPoints16, BasisPoints32, BasisPointsSigned32, Cents, CentsSigned, Dollars, Sats,
+    StoredF32, StoredU64,
 };
 use vecdb::BinaryTransform;
 

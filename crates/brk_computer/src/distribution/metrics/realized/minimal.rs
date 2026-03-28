@@ -1,18 +1,16 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    BasisPoints32, BasisPointsSigned32, Bitcoin, Cents, CentsSigned, Height, Indexes, Sats, StoredF32,
-    Version,
+    BasisPoints32, BasisPointsSigned32, Bitcoin, Cents, CentsSigned, Height, Indexes, Sats,
+    StoredF32, Version,
 };
-use vecdb::{
-    AnyStoredVec, AnyVec, Exit, ReadableVec, Rw, StorageMode, WritableVec,
-};
+use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
     distribution::state::{CohortState, CostBasisOps, RealizedOps},
     internal::{
-        FiatPerBlockCumulativeWithSums,
-        FiatPerBlockWithDeltas, Identity, LazyPerBlock, PriceWithRatioPerBlock,
+        FiatPerBlockCumulativeWithSums, FiatPerBlockWithDeltas, Identity, LazyPerBlock,
+        PriceWithRatioPerBlock,
     },
     prices,
 };
@@ -111,23 +109,24 @@ impl RealizedMinimal {
         exit: &Exit,
     ) -> Result<()> {
         let cap = &self.cap.cents.height;
-        self.price.compute_all(prices, starting_indexes, exit, |v| {
-            Ok(v.compute_transform2(
-                starting_indexes.height,
-                cap,
-                height_to_supply,
-                |(i, cap_cents, supply, ..)| {
-                    let cap = cap_cents.as_u128();
-                    let supply_sats = Sats::from(supply).as_u128();
-                    if supply_sats == 0 {
-                        (i, Cents::ZERO)
-                    } else {
-                        (i, Cents::from(cap * Sats::ONE_BTC_U128 / supply_sats))
-                    }
-                },
-                exit,
-            )?)
-        })?;
+        self.price
+            .compute_all(prices, starting_indexes, exit, |v| {
+                Ok(v.compute_transform2(
+                    starting_indexes.height,
+                    cap,
+                    height_to_supply,
+                    |(i, cap_cents, supply, ..)| {
+                        let cap = cap_cents.as_u128();
+                        let supply_sats = Sats::from(supply).as_u128();
+                        if supply_sats == 0 {
+                            (i, Cents::ZERO)
+                        } else {
+                            (i, Cents::from(cap * Sats::ONE_BTC_U128 / supply_sats))
+                        }
+                    },
+                    exit,
+                )?)
+            })?;
 
         Ok(())
     }

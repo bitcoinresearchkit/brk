@@ -36,8 +36,14 @@ impl Vecs {
         self.compute_fee_and_fee_rate(size_vecs, starting_indexes, exit)?;
 
         let (r3, r4) = rayon::join(
-            || self.fee.derive_from_with_skip(indexer, indexes, starting_indexes, exit, 1),
-            || self.fee_rate.derive_from_with_skip(indexer, indexes, starting_indexes, exit, 1),
+            || {
+                self.fee
+                    .derive_from_with_skip(indexer, indexes, starting_indexes, exit, 1)
+            },
+            || {
+                self.fee_rate
+                    .derive_from_with_skip(indexer, indexes, starting_indexes, exit, 1)
+            },
         );
         r3?;
         r4?;
@@ -78,8 +84,12 @@ impl Vecs {
             return Ok(());
         }
 
-        self.fee.tx_index.truncate_if_needed(starting_indexes.tx_index)?;
-        self.fee_rate.tx_index.truncate_if_needed(starting_indexes.tx_index)?;
+        self.fee
+            .tx_index
+            .truncate_if_needed(starting_indexes.tx_index)?;
+        self.fee_rate
+            .tx_index
+            .truncate_if_needed(starting_indexes.tx_index)?;
 
         loop {
             let skip = self.fee.tx_index.len();

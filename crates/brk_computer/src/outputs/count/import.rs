@@ -23,12 +23,7 @@ impl Vecs {
                 indexes,
                 cached_starts,
             )?,
-            unspent: PerBlock::forced_import(
-                db,
-                "utxo_count_bis",
-                version,
-                indexes,
-            )?,
+            unspent: PerBlock::forced_import(db, "utxo_count_bis", version, indexes)?,
         })
     }
 }

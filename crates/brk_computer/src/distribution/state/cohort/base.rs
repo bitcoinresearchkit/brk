@@ -1,9 +1,15 @@
 use std::path::Path;
 
 use brk_error::Result;
-use brk_types::{Age, Cents, CentsCompact, CentsSats, CentsSquaredSats, CostBasisSnapshot, Height, Sats, SupplyState};
+use brk_types::{
+    Age, Cents, CentsCompact, CentsSats, CentsSquaredSats, CostBasisSnapshot, Height, Sats,
+    SupplyState,
+};
 
-use super::super::{cost_basis::{Accumulate, CostBasisData, CostBasisOps, RealizedOps, UnrealizedState}, pending::PendingDelta};
+use super::super::{
+    cost_basis::{Accumulate, CostBasisData, CostBasisOps, RealizedOps, UnrealizedState},
+    pending::PendingDelta,
+};
 
 pub struct SendPrecomputed {
     pub sats: Sats,
@@ -193,11 +199,7 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
         }
     }
 
-    pub(crate) fn send_utxo_precomputed(
-        &mut self,
-        supply: &SupplyState,
-        pre: &SendPrecomputed,
-    ) {
+    pub(crate) fn send_utxo_precomputed(&mut self, supply: &SupplyState, pre: &SendPrecomputed) {
         self.supply -= supply;
         self.sent += pre.sats;
         self.spent_utxo_count += supply.utxo_count;
@@ -205,8 +207,13 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
             self.satdays_destroyed += pre.age.satdays_destroyed(pre.sats);
         }
 
-        self.realized
-            .send(pre.sats, pre.current_ps, pre.prev_ps, pre.ath_ps, pre.prev_investor_cap);
+        self.realized.send(
+            pre.sats,
+            pre.current_ps,
+            pre.prev_ps,
+            pre.ath_ps,
+            pre.prev_investor_cap,
+        );
 
         self.cost_basis
             .decrement(pre.prev_price, pre.sats, pre.prev_ps, pre.prev_investor_cap);

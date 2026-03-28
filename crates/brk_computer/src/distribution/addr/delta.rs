@@ -45,9 +45,6 @@ impl DeltaVecs {
             )
         });
 
-        Self {
-            all,
-            by_addr_type,
-        }
+        Self { all, by_addr_type }
     }
 }

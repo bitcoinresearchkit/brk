@@ -161,9 +161,7 @@ impl DynCohortVecs for AddrCohortVecs {
         }
 
         if let Some(state) = self.state.as_ref() {
-            self.addr_count
-                .height
-                .push(state.addr_count.into());
+            self.addr_count.height.push(state.addr_count.into());
             self.metrics.supply.push_state(&state.inner);
             self.metrics.outputs.push_state(&state.inner);
             self.metrics.activity.push_state(&state.inner);

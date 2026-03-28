@@ -1,9 +1,8 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    Cents, Close, Day1, Day3, Epoch, Halving, High, Hour1, Hour4, Hour12, Indexes,
-    Low, Minute10, Minute30, Month1, Month3, Month6, OHLCCents, Open, Version, Week1, Year1,
-    Year10,
+    Cents, Close, Day1, Day3, Epoch, Halving, High, Hour1, Hour4, Hour12, Indexes, Low, Minute10,
+    Minute30, Month1, Month3, Month6, OHLCCents, Open, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
@@ -15,7 +14,7 @@ use vecdb::{
 
 use crate::{
     indexes,
-    internal::{Resolutions, EagerIndexes, PerResolution},
+    internal::{EagerIndexes, PerResolution, Resolutions},
 };
 
 #[derive(Deref, DerefMut, Traversable)]

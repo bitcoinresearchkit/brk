@@ -23,8 +23,7 @@ impl RelativeExtendedOwnMarketCap {
         let v2 = Version::new(2);
 
         Ok(Self {
-            unrealized_profit_to_own_mcap: cfg
-                .import("unrealized_profit_to_own_mcap", v2)?,
+            unrealized_profit_to_own_mcap: cfg.import("unrealized_profit_to_own_mcap", v2)?,
             unrealized_loss_to_own_mcap: cfg
                 .import("unrealized_loss_to_own_mcap", Version::new(3))?,
             net_unrealized_pnl_to_own_mcap: cfg

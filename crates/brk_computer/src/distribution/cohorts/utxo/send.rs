@@ -64,10 +64,16 @@ impl UTXOCohorts<Rw> {
                     .unwrap()
                     .send_utxo_precomputed(&sent.spendable_supply, &pre);
                 if let Some(v) = self.epoch.mut_vec_from_height(receive_height) {
-                    v.state.as_mut().unwrap().send_utxo_precomputed(&sent.spendable_supply, &pre);
+                    v.state
+                        .as_mut()
+                        .unwrap()
+                        .send_utxo_precomputed(&sent.spendable_supply, &pre);
                 }
                 if let Some(v) = self.class.mut_vec_from_timestamp(block_state.timestamp) {
-                    v.state.as_mut().unwrap().send_utxo_precomputed(&sent.spendable_supply, &pre);
+                    v.state
+                        .as_mut()
+                        .unwrap()
+                        .send_utxo_precomputed(&sent.spendable_supply, &pre);
                 }
             } else if sent.spendable_supply.utxo_count > 0 {
                 // Zero-value UTXOs: just subtract supply

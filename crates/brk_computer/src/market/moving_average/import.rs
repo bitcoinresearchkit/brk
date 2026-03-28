@@ -3,8 +3,8 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::{
-    vecs::{EmaVecs, SmaVecs},
     Vecs,
+    vecs::{EmaVecs, SmaVecs},
 };
 use crate::{
     indexes,

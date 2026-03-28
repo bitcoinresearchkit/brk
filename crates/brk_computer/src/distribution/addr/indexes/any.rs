@@ -5,8 +5,8 @@ use brk_error::{Error, Result};
 use brk_traversable::Traversable;
 use brk_types::{
     AnyAddrIndex, Height, OutputType, P2AAddrIndex, P2PK33AddrIndex, P2PK65AddrIndex,
-    P2PKHAddrIndex, P2SHAddrIndex, P2TRAddrIndex, P2WPKHAddrIndex, P2WSHAddrIndex,
-    TypeIndex, Version,
+    P2PKHAddrIndex, P2SHAddrIndex, P2TRAddrIndex, P2WPKHAddrIndex, P2WSHAddrIndex, TypeIndex,
+    Version,
 };
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;

@@ -14,11 +14,8 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.op_return.compute_with(
-            starting_indexes.height,
-            prices,
-            exit,
-            |height_vec| {
+        self.op_return
+            .compute_with(starting_indexes.height, prices, exit, |height_vec| {
                 // Validate computed versions against dependencies
                 let dep_version = indexer.vecs.outputs.first_txout_index.version()
                     + indexer.vecs.outputs.output_type.version()
@@ -71,16 +68,16 @@ impl Vecs {
                     let out_end = next_first_txout_index.to_usize();
 
                     // Pre-collect both vecs into reusable buffers
-                    indexer
-                        .vecs
-                        .outputs
-                        .output_type
-                        .collect_range_into_at(out_start, out_end, &mut output_types_buf);
-                    indexer
-                        .vecs
-                        .outputs
-                        .value
-                        .collect_range_into_at(out_start, out_end, &mut values_buf);
+                    indexer.vecs.outputs.output_type.collect_range_into_at(
+                        out_start,
+                        out_end,
+                        &mut output_types_buf,
+                    );
+                    indexer.vecs.outputs.value.collect_range_into_at(
+                        out_start,
+                        out_end,
+                        &mut values_buf,
+                    );
 
                     let mut op_return_value = Sats::ZERO;
                     for (ot, val) in output_types_buf.iter().zip(values_buf.iter()) {
@@ -95,8 +92,7 @@ impl Vecs {
                 height_vec.write()?;
 
                 Ok(())
-            },
-        )?;
+            })?;
 
         Ok(())
     }

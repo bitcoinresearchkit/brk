@@ -17,8 +17,7 @@ impl Query {
         match time_period {
             // Per-block, exact rewards
             TimePeriod::Day | TimePeriod::ThreeDays => {
-                let rewards: Vec<Sats> =
-                    coinbase_vec.collect_range_at(start, current_height + 1);
+                let rewards: Vec<Sats> = coinbase_vec.collect_range_at(start, current_height + 1);
                 let timestamps: Vec<brk_types::Timestamp> =
                     timestamp_vec.collect_range_at(start, current_height + 1);
 
@@ -45,8 +44,7 @@ impl Query {
                     .collect_one(Height::from(current_height))
                     .unwrap_or_default();
 
-                let total_days =
-                    end_di.to_usize().saturating_sub(start_di.to_usize()) + 1;
+                let total_days = end_di.to_usize().saturating_sub(start_di.to_usize()) + 1;
                 let step = (total_days / 200).max(1);
 
                 let mut entries = Vec::with_capacity(total_days / step + 1);
@@ -63,12 +61,9 @@ impl Query {
 
                         let block_count = next_h.to_usize() - first_h.to_usize();
                         if block_count > 0 {
-                            let sum = coinbase_vec.fold_range(
-                                first_h,
-                                next_h,
-                                Sats::ZERO,
-                                |acc, v| acc + v,
-                            );
+                            let sum =
+                                coinbase_vec
+                                    .fold_range(first_h, next_h, Sats::ZERO, |acc, v| acc + v);
                             let avg = *sum / block_count as u64;
 
                             if let Some(ts) = timestamp_vec.collect_one(first_h) {

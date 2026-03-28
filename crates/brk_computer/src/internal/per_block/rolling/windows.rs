@@ -15,7 +15,9 @@ use vecdb::CachedVec;
 
 use crate::{
     indexes,
-    internal::{PerBlock, ComputedVecValue, NumericValue, RollingWindow24h, Windows, WindowsFrom1w},
+    internal::{
+        ComputedVecValue, NumericValue, PerBlock, RollingWindow24h, Windows, WindowsFrom1w,
+    },
 };
 
 /// Cached window starts for lazy rolling computations.
@@ -52,9 +54,7 @@ where
 /// Single 24h rolling window backed by PerBlock (1 stored vec).
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct RollingWindow24hPerBlock<T, M: StorageMode = Rw>(
-    pub RollingWindow24h<PerBlock<T, M>>,
-)
+pub struct RollingWindow24hPerBlock<T, M: StorageMode = Rw>(pub RollingWindow24h<PerBlock<T, M>>)
 where
     T: ComputedVecValue + PartialOrd + JsonSchema;
 
@@ -69,12 +69,7 @@ where
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self(RollingWindow24h {
-            _24h: PerBlock::forced_import(
-                db,
-                &format!("{name}_24h"),
-                version,
-                indexes,
-            )?,
+            _24h: PerBlock::forced_import(db, &format!("{name}_24h"), version, indexes)?,
         }))
     }
 }

@@ -38,7 +38,8 @@ impl Vecs {
             exit,
         )?;
 
-        self.vaulted.compute(prices, starting_indexes.height, exit)?;
+        self.vaulted
+            .compute(prices, starting_indexes.height, exit)?;
         self.active.compute(prices, starting_indexes.height, exit)?;
 
         Ok(())

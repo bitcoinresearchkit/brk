@@ -90,9 +90,7 @@ pub(crate) fn process_inputs(
     };
 
     let items: Vec<_> = if input_count < 128 {
-        (0..input_count)
-            .map(map_fn)
-            .collect::<Result<Vec<_>>>()?
+        (0..input_count).map(map_fn).collect::<Result<Vec<_>>>()?
     } else {
         (0..input_count)
             .into_par_iter()
@@ -109,10 +107,9 @@ pub(crate) fn process_inputs(
         Default::default(),
     );
     let mut sent_data = HeightToAddrTypeToVec::with_capacity(estimated_unique_heights);
-    let mut addr_data =
-        AddrTypeToTypeIndexMap::<WithAddrDataSource<FundedAddrData>>::with_capacity(
-            estimated_per_type,
-        );
+    let mut addr_data = AddrTypeToTypeIndexMap::<WithAddrDataSource<FundedAddrData>>::with_capacity(
+        estimated_per_type,
+    );
     let mut tx_index_vecs =
         AddrTypeToTypeIndexMap::<SmallVec<[TxIndex; 4]>>::with_capacity(estimated_per_type);
 

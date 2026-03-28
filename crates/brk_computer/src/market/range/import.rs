@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_types::Version;
 use vecdb::Database;
 
-use super::{vecs::PriceMinMaxVecs, Vecs};
+use super::{Vecs, vecs::PriceMinMaxVecs};
 use crate::{
     indexes,
     internal::{PerBlock, PercentPerBlock, Price},
@@ -29,12 +29,7 @@ impl Vecs {
                 _1m: Price::forced_import(db, "price_max_1m", version + v1, indexes)?,
                 _1y: Price::forced_import(db, "price_max_1y", version + v1, indexes)?,
             },
-            true_range: PerBlock::forced_import(
-                db,
-                "price_true_range",
-                version + v1,
-                indexes,
-            )?,
+            true_range: PerBlock::forced_import(db, "price_true_range", version + v1, indexes)?,
             true_range_sum_2w: PerBlock::forced_import(
                 db,
                 "price_true_range_sum_2w",

@@ -12,7 +12,7 @@ use super::{OutPoint, TxIndex, TypeIndex};
 #[repr(C)]
 pub struct AddrIndexOutPoint {
     addr_index_tx_index: AddrIndexTxIndex, // u64
-    vout: Vout,                               // u16
+    vout: Vout,                            // u16
 }
 
 impl AddrIndexOutPoint {

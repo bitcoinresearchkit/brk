@@ -6,7 +6,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::distribution::metrics::{ImportConfig, SupplyCore, UnrealizedFull};
 
-use super::{RelativeFull, RelativeExtendedOwnMarketCap, RelativeExtendedOwnPnl, RelativeToAll};
+use super::{RelativeExtendedOwnMarketCap, RelativeExtendedOwnPnl, RelativeFull, RelativeToAll};
 
 /// Full extended relative metrics (base + rel_to_all + own_market_cap + own_pnl).
 /// Used by: sth, lth cohorts.
@@ -45,23 +45,18 @@ impl RelativeWithExtended {
         own_market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
-        self.base.compute(
-            max_from,
-            supply,
-            &unrealized.inner.basic,
-            market_cap,
-            exit,
-        )?;
-        self.rel_to_all.compute(
-            max_from,
-            supply,
-            all_supply_sats,
-            exit,
-        )?;
+        self.base
+            .compute(max_from, supply, &unrealized.inner.basic, market_cap, exit)?;
+        self.rel_to_all
+            .compute(max_from, supply, all_supply_sats, exit)?;
         self.extended_own_market_cap
             .compute(max_from, &unrealized.inner, own_market_cap, exit)?;
-        self.extended_own_pnl
-            .compute(max_from, &unrealized.inner, &unrealized.gross_pnl.usd.height, exit)?;
+        self.extended_own_pnl.compute(
+            max_from,
+            &unrealized.inner,
+            &unrealized.gross_pnl.usd.height,
+            exit,
+        )?;
         Ok(())
     }
 }

@@ -3,10 +3,7 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{
-    indexes,
-    internal::PriceWithRatioExtendedPerBlock,
-};
+use crate::{indexes, internal::PriceWithRatioExtendedPerBlock};
 
 impl Vecs {
     pub(crate) fn forced_import(

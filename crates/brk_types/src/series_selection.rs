@@ -2,7 +2,7 @@ use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{DataRangeFormat, Index, SeriesName, SeriesList};
+use crate::{DataRangeFormat, Index, SeriesList, SeriesName};
 
 /// Selection of series to query
 #[derive(Debug, Deref, Deserialize, JsonSchema)]

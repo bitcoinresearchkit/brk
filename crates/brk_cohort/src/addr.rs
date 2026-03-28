@@ -75,7 +75,8 @@ impl<T> AddrGroups<T> {
     }
 
     pub fn iter_overlapping_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        self.under_amount.iter_mut().chain(self.over_amount.iter_mut())
+        self.under_amount
+            .iter_mut()
+            .chain(self.over_amount.iter_mut())
     }
 }
-

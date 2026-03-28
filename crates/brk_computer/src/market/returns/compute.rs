@@ -3,7 +3,9 @@ use brk_types::{BasisPointsSigned32, Dollars, Indexes};
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{blocks, internal::RatioDiffDollarsBps32, investing::ByDcaPeriod, market::lookback, prices};
+use crate::{
+    blocks, internal::RatioDiffDollarsBps32, investing::ByDcaPeriod, market::lookback, prices,
+};
 
 impl Vecs {
     pub(crate) fn compute(

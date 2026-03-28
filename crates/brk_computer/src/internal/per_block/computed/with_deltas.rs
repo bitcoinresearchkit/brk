@@ -7,9 +7,7 @@ use vecdb::{Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{
-        BpsType, CachedWindowStarts, PerBlock, LazyRollingDeltasFromHeight, NumericValue,
-    },
+    internal::{BpsType, CachedWindowStarts, LazyRollingDeltasFromHeight, NumericValue, PerBlock},
 };
 
 #[derive(Deref, DerefMut, Traversable)]

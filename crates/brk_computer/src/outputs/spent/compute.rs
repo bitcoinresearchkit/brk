@@ -46,7 +46,12 @@ impl Vecs {
             let mut hi = starting_indexes.height.to_usize() + 1;
             while lo < hi {
                 let mid = lo + (hi - lo) / 2;
-                if first_txout_index_vec.collect_one_at(mid).unwrap().to_usize() <= min_txout_index {
+                if first_txout_index_vec
+                    .collect_one_at(mid)
+                    .unwrap()
+                    .to_usize()
+                    <= min_txout_index
+                {
                     lo = mid + 1;
                 } else {
                     hi = mid;

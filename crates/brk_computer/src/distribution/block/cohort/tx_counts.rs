@@ -41,10 +41,7 @@ pub(crate) fn update_tx_counts(
             .get_mut(&type_index)
         {
             addr_data.tx_count += tx_count;
-        } else if let Some(addr_data) = empty_cache
-            .get_mut(addr_type)
-            .unwrap()
-            .get_mut(&type_index)
+        } else if let Some(addr_data) = empty_cache.get_mut(addr_type).unwrap().get_mut(&type_index)
         {
             addr_data.tx_count += tx_count;
         }

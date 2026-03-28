@@ -38,8 +38,8 @@ mod error;
 mod extended;
 mod state;
 
-use api::*;
 pub use api::ApiRoutes;
+use api::*;
 pub use brk_types::Port;
 pub use brk_website::Website;
 pub use cache::{CacheParams, CacheStrategy};

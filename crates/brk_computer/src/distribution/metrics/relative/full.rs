@@ -28,13 +28,10 @@ impl RelativeFull {
         let v2 = Version::new(2);
 
         Ok(Self {
-            supply_in_profit_to_own: cfg
-                .import("supply_in_profit_to_own", v1)?,
+            supply_in_profit_to_own: cfg.import("supply_in_profit_to_own", v1)?,
             supply_in_loss_to_own: cfg.import("supply_in_loss_to_own", v1)?,
-            unrealized_profit_to_mcap: cfg
-                .import("unrealized_profit_to_mcap", v2)?,
-            unrealized_loss_to_mcap: cfg
-                .import("unrealized_loss_to_mcap", v2)?,
+            unrealized_profit_to_mcap: cfg.import("unrealized_profit_to_mcap", v2)?,
+            unrealized_loss_to_mcap: cfg.import("unrealized_loss_to_mcap", v2)?,
         })
     }
 

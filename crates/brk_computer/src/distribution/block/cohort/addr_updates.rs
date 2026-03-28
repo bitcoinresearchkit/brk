@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_types::{
-    AnyAddrIndex, EmptyAddrData, EmptyAddrIndex, FundedAddrData, FundedAddrIndex,
-    OutputType, TypeIndex,
+    AnyAddrIndex, EmptyAddrData, EmptyAddrIndex, FundedAddrData, FundedAddrIndex, OutputType,
+    TypeIndex,
 };
 use vecdb::AnyVec;
 

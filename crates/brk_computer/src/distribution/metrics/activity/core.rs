@@ -5,7 +5,10 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
-    distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}},
+    distribution::{
+        metrics::ImportConfig,
+        state::{CohortState, CostBasisOps, RealizedOps},
+    },
     internal::{AmountPerBlockCumulativeRolling, PerBlockCumulativeRolling},
     prices,
 };
@@ -46,19 +49,18 @@ impl ActivityCore {
     }
 
     #[inline(always)]
-    pub(crate) fn push_state(
-        &mut self,
-        state: &CohortState<impl RealizedOps, impl CostBasisOps>,
-    ) {
+    pub(crate) fn push_state(&mut self, state: &CohortState<impl RealizedOps, impl CostBasisOps>) {
         self.minimal.push_state(state);
-        self.coindays_destroyed.block.push(
-            StoredF64::from(Bitcoin::from(state.satdays_destroyed)),
-        );
+        self.coindays_destroyed
+            .block
+            .push(StoredF64::from(Bitcoin::from(state.satdays_destroyed)));
         self.transfer_volume_in_profit
-            .block.sats
+            .block
+            .sats
             .push(state.realized.sent_in_profit());
         self.transfer_volume_in_loss
-            .block.sats
+            .block
+            .sats
             .push(state.realized.sent_in_loss());
     }
 

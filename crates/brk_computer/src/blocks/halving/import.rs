@@ -16,9 +16,8 @@ impl Vecs {
     ) -> Result<Self> {
         let v2 = Version::TWO;
 
-        let blocks_to_halving = PerBlock::forced_import(
-            db, "blocks_to_halving", version + v2, indexes,
-        )?;
+        let blocks_to_halving =
+            PerBlock::forced_import(db, "blocks_to_halving", version + v2, indexes)?;
 
         let days_to_halving = LazyPerBlock::from_computed::<BlocksToDaysF32>(
             "days_to_halving",

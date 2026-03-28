@@ -91,10 +91,8 @@ impl Vecs {
         // Validate computed versions against dependencies
         let dep_version = indexer.vecs.transactions.first_tx_index.version()
             + indexer.vecs.transactions.height.version();
-        self.block
-            .validate_computed_version_or_reset(dep_version)?;
-        self.tx
-            .validate_computed_version_or_reset(dep_version)?;
+        self.block.validate_computed_version_or_reset(dep_version)?;
+        self.tx.validate_computed_version_or_reset(dep_version)?;
 
         let min_tx_index = TxIndex::from(self.tx.len()).min(starting_indexes.tx_index);
 

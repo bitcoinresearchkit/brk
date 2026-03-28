@@ -15,24 +15,69 @@ impl Vecs {
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let p2a =
-            PerBlockCumulativeRolling::forced_import(db, "p2a_count", version, indexes, cached_starts)?;
-        let p2ms =
-            PerBlockCumulativeRolling::forced_import(db, "p2ms_count", version, indexes, cached_starts)?;
-        let p2pk33 =
-            PerBlockCumulativeRolling::forced_import(db, "p2pk33_count", version, indexes, cached_starts)?;
-        let p2pk65 =
-            PerBlockCumulativeRolling::forced_import(db, "p2pk65_count", version, indexes, cached_starts)?;
-        let p2pkh =
-            PerBlockCumulativeRolling::forced_import(db, "p2pkh_count", version, indexes, cached_starts)?;
-        let p2sh =
-            PerBlockCumulativeRolling::forced_import(db, "p2sh_count", version, indexes, cached_starts)?;
-        let p2tr =
-            PerBlockCumulativeRolling::forced_import(db, "p2tr_count", version, indexes, cached_starts)?;
-        let p2wpkh =
-            PerBlockCumulativeRolling::forced_import(db, "p2wpkh_count", version, indexes, cached_starts)?;
-        let p2wsh =
-            PerBlockCumulativeRolling::forced_import(db, "p2wsh_count", version, indexes, cached_starts)?;
+        let p2a = PerBlockCumulativeRolling::forced_import(
+            db,
+            "p2a_count",
+            version,
+            indexes,
+            cached_starts,
+        )?;
+        let p2ms = PerBlockCumulativeRolling::forced_import(
+            db,
+            "p2ms_count",
+            version,
+            indexes,
+            cached_starts,
+        )?;
+        let p2pk33 = PerBlockCumulativeRolling::forced_import(
+            db,
+            "p2pk33_count",
+            version,
+            indexes,
+            cached_starts,
+        )?;
+        let p2pk65 = PerBlockCumulativeRolling::forced_import(
+            db,
+            "p2pk65_count",
+            version,
+            indexes,
+            cached_starts,
+        )?;
+        let p2pkh = PerBlockCumulativeRolling::forced_import(
+            db,
+            "p2pkh_count",
+            version,
+            indexes,
+            cached_starts,
+        )?;
+        let p2sh = PerBlockCumulativeRolling::forced_import(
+            db,
+            "p2sh_count",
+            version,
+            indexes,
+            cached_starts,
+        )?;
+        let p2tr = PerBlockCumulativeRolling::forced_import(
+            db,
+            "p2tr_count",
+            version,
+            indexes,
+            cached_starts,
+        )?;
+        let p2wpkh = PerBlockCumulativeRolling::forced_import(
+            db,
+            "p2wpkh_count",
+            version,
+            indexes,
+            cached_starts,
+        )?;
+        let p2wsh = PerBlockCumulativeRolling::forced_import(
+            db,
+            "p2wsh_count",
+            version,
+            indexes,
+            cached_starts,
+        )?;
         Ok(Self {
             p2a,
             p2ms,

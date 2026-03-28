@@ -63,8 +63,7 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
         let pct75 = &mut pct75.height;
         let pct90 = &mut pct90.height;
 
-        let combined_version =
-            source.version() + first_indexes.version() + count_indexes.version();
+        let combined_version = source.version() + first_indexes.version() + count_indexes.version();
 
         let mut index = max_from;
         for vec in [
@@ -182,8 +181,7 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
         let pct75 = &mut pct75.height;
         let pct90 = &mut pct90.height;
 
-        let combined_version =
-            source.version() + first_indexes.version() + count_indexes.version();
+        let combined_version = source.version() + first_indexes.version() + count_indexes.version();
 
         let mut index = max_from;
         for vec in [

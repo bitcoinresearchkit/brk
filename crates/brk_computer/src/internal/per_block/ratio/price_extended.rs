@@ -4,7 +4,7 @@ use brk_types::{BasisPoints32, Cents, Dollars, Height, Indexes, SatsFract, Store
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode};
 
-use crate::internal::{PerBlock, LazyPerBlock, Price};
+use crate::internal::{LazyPerBlock, PerBlock, Price};
 use crate::{indexes, prices};
 
 use super::{RatioPerBlock, RatioPerBlockPercentiles};
@@ -105,7 +105,8 @@ impl PriceWithRatioExtendedPerBlock {
         exit: &Exit,
     ) -> Result<()> {
         let close_price = &prices.spot.cents.height;
-        self.base.compute_ratio(starting_indexes, close_price, exit)?;
+        self.base
+            .compute_ratio(starting_indexes, close_price, exit)?;
         self.percentiles.compute(
             starting_indexes,
             exit,

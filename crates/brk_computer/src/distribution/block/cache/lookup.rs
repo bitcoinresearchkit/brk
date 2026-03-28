@@ -26,10 +26,7 @@ impl<'a> AddrLookup<'a> {
         &mut self,
         output_type: OutputType,
         type_index: TypeIndex,
-    ) -> (
-        &mut WithAddrDataSource<FundedAddrData>,
-        TrackingStatus,
-    ) {
+    ) -> (&mut WithAddrDataSource<FundedAddrData>, TrackingStatus) {
         use std::collections::hash_map::Entry;
 
         let map = self.funded.get_mut(output_type).unwrap();

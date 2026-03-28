@@ -4,7 +4,7 @@ use brk_computer::Computer;
 use brk_indexer::Indexer;
 use brk_traversable::{Traversable, TreeNode};
 use brk_types::{
-    Index, IndexInfo, Limit, PaginatedSeries, Pagination, PaginationIndex, SeriesName, SeriesCount,
+    Index, IndexInfo, Limit, PaginatedSeries, Pagination, PaginationIndex, SeriesCount, SeriesName,
 };
 use derive_more::{Deref, DerefMut};
 use quickmatch::{QuickMatch, QuickMatchConfig};

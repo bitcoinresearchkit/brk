@@ -7,8 +7,7 @@ use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode, UnaryTransform};
 use crate::{
     indexes,
     internal::{
-        CentsSignedToDollars, CentsUnsignedToDollars, PerBlock, LazyPerBlock,
-        NumericValue,
+        CentsSignedToDollars, CentsUnsignedToDollars, LazyPerBlock, NumericValue, PerBlock,
     },
 };
 
@@ -40,8 +39,7 @@ impl<C: CentsType> FiatPerBlock<C> {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let cents =
-            PerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
+        let cents = PerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
         let usd = LazyPerBlock::from_computed::<C::ToDollars>(
             name,
             version,

@@ -4,9 +4,7 @@ use brk_types::CentsSquaredSats;
 use brk_types::{BasisPoints16, Cents, Height, Indexes, Sats, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
-use crate::internal::{
-    PERCENTILES_LEN, PerBlock, PercentPerBlock, PercentilesVecs, Price,
-};
+use crate::internal::{PERCENTILES_LEN, PerBlock, PercentPerBlock, PercentilesVecs, Price};
 
 use super::ImportConfig;
 
@@ -33,12 +31,32 @@ impl CostBasis {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
             in_profit: CostBasisSide {
-                per_coin: Price::forced_import(cfg.db, &cfg.name("cost_basis_in_profit_per_coin"), cfg.version + Version::ONE, cfg.indexes)?,
-                per_dollar: Price::forced_import(cfg.db, &cfg.name("cost_basis_in_profit_per_dollar"), cfg.version + Version::ONE, cfg.indexes)?,
+                per_coin: Price::forced_import(
+                    cfg.db,
+                    &cfg.name("cost_basis_in_profit_per_coin"),
+                    cfg.version + Version::ONE,
+                    cfg.indexes,
+                )?,
+                per_dollar: Price::forced_import(
+                    cfg.db,
+                    &cfg.name("cost_basis_in_profit_per_dollar"),
+                    cfg.version + Version::ONE,
+                    cfg.indexes,
+                )?,
             },
             in_loss: CostBasisSide {
-                per_coin: Price::forced_import(cfg.db, &cfg.name("cost_basis_in_loss_per_coin"), cfg.version + Version::ONE, cfg.indexes)?,
-                per_dollar: Price::forced_import(cfg.db, &cfg.name("cost_basis_in_loss_per_dollar"), cfg.version + Version::ONE, cfg.indexes)?,
+                per_coin: Price::forced_import(
+                    cfg.db,
+                    &cfg.name("cost_basis_in_loss_per_coin"),
+                    cfg.version + Version::ONE,
+                    cfg.indexes,
+                )?,
+                per_dollar: Price::forced_import(
+                    cfg.db,
+                    &cfg.name("cost_basis_in_loss_per_dollar"),
+                    cfg.version + Version::ONE,
+                    cfg.indexes,
+                )?,
             },
             min: cfg.import("cost_basis_min", Version::ZERO)?,
             max: cfg.import("cost_basis_max", Version::ZERO)?,

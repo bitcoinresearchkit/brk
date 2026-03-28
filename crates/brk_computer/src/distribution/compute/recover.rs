@@ -185,10 +185,7 @@ fn rollback_states(
     heights.insert(chain_height);
 
     let Ok(stamps) = addr_indexes_rollbacks else {
-        warn!(
-            "addr_indexes rollback failed: {:?}",
-            addr_indexes_rollbacks
-        );
+        warn!("addr_indexes rollback failed: {:?}", addr_indexes_rollbacks);
         return Height::ZERO;
     };
     for (i, s) in stamps.iter().enumerate() {

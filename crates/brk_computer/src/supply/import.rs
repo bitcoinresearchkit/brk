@@ -6,8 +6,8 @@ use brk_types::Version;
 use crate::{
     cointime, distribution, indexes,
     internal::{
-        CachedWindowStarts, LazyAmountPerBlock, LazyFiatPerBlock,
-        LazyRollingDeltasFiatFromHeight, PercentPerBlock, RollingWindows,
+        CachedWindowStarts, LazyAmountPerBlock, LazyFiatPerBlock, LazyRollingDeltasFiatFromHeight,
+        PercentPerBlock, RollingWindows,
         db_utils::{finalize_db, open_db},
     },
     supply::burned,
@@ -37,12 +37,8 @@ impl Vecs {
         let burned = burned::Vecs::forced_import(&db, version, indexes)?;
 
         // Inflation rate
-        let inflation_rate = PercentPerBlock::forced_import(
-            &db,
-            "inflation_rate",
-            version + Version::ONE,
-            indexes,
-        )?;
+        let inflation_rate =
+            PercentPerBlock::forced_import(&db, "inflation_rate", version + Version::ONE, indexes)?;
 
         // Velocity
         let velocity = super::velocity::Vecs::forced_import(&db, version, indexes)?;
@@ -67,8 +63,11 @@ impl Vecs {
             indexes,
         )?;
 
-        let hodled_or_lost =
-            LazyAmountPerBlock::identity("hodled_or_lost_supply", &cointime.supply.vaulted, version);
+        let hodled_or_lost = LazyAmountPerBlock::identity(
+            "hodled_or_lost_supply",
+            &cointime.supply.vaulted,
+            version,
+        );
 
         let this = Self {
             db,

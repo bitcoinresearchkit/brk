@@ -548,10 +548,7 @@ mod tests {
     fn merge_no_conflict_same_series_different_indexes() {
         // Same key, same series name, different indexes → merges indexes → collapses to Leaf
         let tree = branch(vec![
-            (
-                "a",
-                branch(vec![("sum", leaf("s_sum", Index::Height))]),
-            ),
+            ("a", branch(vec![("sum", leaf("s_sum", Index::Height))])),
             ("b", branch(vec![("sum", leaf("s_sum", Index::Day1))])),
         ]);
         let result = tree.merge_branches();
@@ -727,19 +724,10 @@ mod tests {
         // - rest (flatten): DerivedComputedBlockSum → branches with "sum" children
         let tree = branch(vec![
             // height wrapped as "raw"
-            (
-                "height",
-                branch(vec![("raw", leaf("s", Index::Height))]),
-            ),
+            ("height", branch(vec![("raw", leaf("s", Index::Height))])),
             // rest (flattened) produces branches
-            (
-                "day1",
-                branch(vec![("sum", leaf("s_sum", Index::Day1))]),
-            ),
-            (
-                "week1",
-                branch(vec![("sum", leaf("s_sum", Index::Week1))]),
-            ),
+            ("day1", branch(vec![("sum", leaf("s_sum", Index::Day1))])),
+            ("week1", branch(vec![("sum", leaf("s_sum", Index::Week1))])),
         ]);
 
         let merged = tree.merge_branches().unwrap();
@@ -778,15 +766,9 @@ mod tests {
         // - rest (flatten): DerivedComputedBlockLast → branches with "last" children
         let tree = branch(vec![
             // height wrapped as "raw"
-            (
-                "height",
-                branch(vec![("raw", leaf("s", Index::Height))]),
-            ),
+            ("height", branch(vec![("raw", leaf("s", Index::Height))])),
             // rest (flattened) produces branches with "last" key
-            (
-                "day1",
-                branch(vec![("last", leaf("s_last", Index::Day1))]),
-            ),
+            ("day1", branch(vec![("last", leaf("s_last", Index::Day1))])),
             (
                 "week1",
                 branch(vec![("last", leaf("s_last", Index::Week1))]),
@@ -833,17 +815,11 @@ mod tests {
         //   }
         let tree = branch(vec![
             // height wrapped as "raw" (raw values at height granularity)
-            (
-                "height",
-                branch(vec![("raw", leaf("s", Index::Height))]),
-            ),
+            ("height", branch(vec![("raw", leaf("s", Index::Height))])),
             // height_cumulative wrapped as cumulative
             (
                 "height_cumulative",
-                branch(vec![(
-                    "cumulative",
-                    leaf("s_cumulative", Index::Height),
-                )]),
+                branch(vec![("cumulative", leaf("s_cumulative", Index::Height))]),
             ),
             // day1 Full
             (
@@ -971,10 +947,7 @@ mod tests {
         // sats wrapped, rest flattened with bitcoin/dollars as plain leaves
         let tree = branch(vec![
             // sats with wrap="sats" produces Branch { sats: Leaf }
-            (
-                "sats",
-                branch(vec![("sats", leaf("s", Index::Height))]),
-            ),
+            ("sats", branch(vec![("sats", leaf("s", Index::Height))])),
             // rest with flatten: LazyDerivedBlockValue fields lifted
             (
                 "rest",
@@ -1018,17 +991,11 @@ mod tests {
         // Tree AFTER derive applies inner merges, flatten lifts rest's children:
         let tree = branch(vec![
             // height with wrap="raw"
-            (
-                "height",
-                branch(vec![("raw", leaf("s", Index::Height))]),
-            ),
+            ("height", branch(vec![("raw", leaf("s", Index::Height))])),
             // height_cumulative with wrap="cumulative"
             (
                 "height_cumulative",
-                branch(vec![(
-                    "cumulative",
-                    leaf("s_cumulative", Index::Height),
-                )]),
+                branch(vec![("cumulative", leaf("s_cumulative", Index::Height))]),
             ),
             // From rest (flatten) - inner struct already merged to { sum, cumulative }
             // Each leaf has merged indexes from all time periods
@@ -1135,18 +1102,9 @@ mod tests {
         // week1: { last: Leaf }, month1: { last: Leaf }, etc.
         // After merge: all "last" keys merge, same series name → collapses to Leaf
         let tree = branch(vec![
-            (
-                "week1",
-                branch(vec![("last", leaf("s", Index::Week1))]),
-            ),
-            (
-                "month1",
-                branch(vec![("last", leaf("s", Index::Month1))]),
-            ),
-            (
-                "year1",
-                branch(vec![("last", leaf("s", Index::Year1))]),
-            ),
+            ("week1", branch(vec![("last", leaf("s", Index::Week1))])),
+            ("month1", branch(vec![("last", leaf("s", Index::Month1))])),
+            ("year1", branch(vec![("last", leaf("s", Index::Year1))])),
         ]);
 
         let merged = tree.merge_branches().unwrap();
@@ -1214,10 +1172,7 @@ mod tests {
         // Simulating the pre-merge structure
         let tree = branch(vec![
             // From sats_day1 with wrap="sats"
-            (
-                "sats_day1",
-                branch(vec![("sats", leaf("s", Index::Day1))]),
-            ),
+            ("sats_day1", branch(vec![("sats", leaf("s", Index::Day1))])),
             // From rest (flatten): ValueDerivedDateLast
             (
                 "rest",

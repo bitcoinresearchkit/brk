@@ -1,8 +1,8 @@
 use bitcoin::{Transaction, TxOut};
 use brk_cohort::ByAddrType;
 use brk_types::{
-    AddrBytes, AddrHash, OutPoint, OutputType, TxIndex, TxOutIndex, Txid, TxidPrefix,
-    TypeIndex, Vin, Vout,
+    AddrBytes, AddrHash, OutPoint, OutputType, TxIndex, TxOutIndex, Txid, TxidPrefix, TypeIndex,
+    Vin, Vout,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 

@@ -51,7 +51,12 @@ macro_rules! impl_cohort_accessors {
         fn unrealized_mut(&mut self) -> &mut Self::UnrealizedVecs {
             &mut self.unrealized
         }
-        fn supply_and_unrealized_mut(&mut self) -> (&$crate::distribution::metrics::SupplyCore, &mut Self::UnrealizedVecs) {
+        fn supply_and_unrealized_mut(
+            &mut self,
+        ) -> (
+            &$crate::distribution::metrics::SupplyCore,
+            &mut Self::UnrealizedVecs,
+        ) {
             (&*self.supply, &mut self.unrealized)
         }
     };
@@ -94,7 +99,12 @@ macro_rules! impl_cohort_accessors_inner {
         fn unrealized_mut(&mut self) -> &mut Self::UnrealizedVecs {
             &mut self.inner.unrealized
         }
-        fn supply_and_unrealized_mut(&mut self) -> (&$crate::distribution::metrics::SupplyCore, &mut Self::UnrealizedVecs) {
+        fn supply_and_unrealized_mut(
+            &mut self,
+        ) -> (
+            &$crate::distribution::metrics::SupplyCore,
+            &mut Self::UnrealizedVecs,
+        ) {
             (&*self.inner.supply, &mut self.inner.unrealized)
         }
     };
@@ -125,8 +135,7 @@ pub use realized::{
 pub use relative::{RelativeForAll, RelativeToAll, RelativeWithExtended};
 pub use supply::{SupplyBase, SupplyCore};
 pub use unrealized::{
-    UnrealizedBasic, UnrealizedCore, UnrealizedFull, UnrealizedLike,
-    UnrealizedMinimal,
+    UnrealizedBasic, UnrealizedCore, UnrealizedFull, UnrealizedLike, UnrealizedMinimal,
 };
 
 use brk_cohort::Filter;
@@ -250,10 +259,7 @@ pub trait CohortMetricsBase:
             .min(self.unrealized().min_stateful_len())
     }
 
-    fn push_state(
-        &mut self,
-        state: &CohortState<RealizedState, CostBasisData<WithCapital>>,
-    ) {
+    fn push_state(&mut self, state: &CohortState<RealizedState, CostBasisData<WithCapital>>) {
         self.supply_mut().push_state(state);
         self.outputs_mut().push_state(state);
         self.activity_mut().push_state(state);

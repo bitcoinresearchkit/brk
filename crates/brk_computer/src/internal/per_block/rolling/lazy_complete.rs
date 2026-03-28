@@ -6,8 +6,8 @@ use vecdb::{ReadableCloneableVec, UnaryTransform};
 use crate::{
     indexes,
     internal::{
-        CachedWindowStarts, ComputedVecValue, LazyRollingAvgsFromHeight,
-        LazyRollingDistribution, LazyRollingSumsFromHeight, NumericValue, RollingComplete,
+        CachedWindowStarts, ComputedVecValue, LazyRollingAvgsFromHeight, LazyRollingDistribution,
+        LazyRollingSumsFromHeight, NumericValue, RollingComplete,
     },
 };
 

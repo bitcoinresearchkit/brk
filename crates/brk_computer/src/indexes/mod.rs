@@ -35,7 +35,6 @@ use vecdb::{CachedVec, Database, Exit, ReadableVec, Rw, StorageMode};
 use crate::internal::db_utils::{finalize_db, open_db};
 
 pub use addr::Vecs as AddrVecs;
-pub use timestamp::Timestamps;
 pub use cached_mappings::CachedMappings;
 pub use day1::Vecs as Day1Vecs;
 pub use day3::Vecs as Day3Vecs;
@@ -50,6 +49,7 @@ pub use minute30::Vecs as Minute30Vecs;
 pub use month1::Vecs as Month1Vecs;
 pub use month3::Vecs as Month3Vecs;
 pub use month6::Vecs as Month6Vecs;
+pub use timestamp::Timestamps;
 pub use tx_index::Vecs as TxIndexVecs;
 pub use txin_index::Vecs as TxInIndexVecs;
 pub use txout_index::Vecs as TxOutIndexVecs;
@@ -190,20 +190,10 @@ impl Vecs {
 
         self.compute_timestamp_mappings(&starting_indexes, exit)?;
 
-        let starting_day1 = self.compute_calendar_mappings(
-            indexer,
-            &starting_indexes,
-            prev_height,
-            exit,
-        )?;
+        let starting_day1 =
+            self.compute_calendar_mappings(indexer, &starting_indexes, prev_height, exit)?;
 
-        self.compute_period_vecs(
-            indexer,
-            &starting_indexes,
-            prev_height,
-            starting_day1,
-            exit,
-        )?;
+        self.compute_period_vecs(indexer, &starting_indexes, prev_height, starting_day1, exit)?;
 
         self.timestamp.compute_per_resolution(
             indexer,

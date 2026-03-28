@@ -7,8 +7,8 @@ use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use super::{
     EmptyOutputIndex, OpReturnIndex, P2AAddrIndex, P2MSOutputIndex, P2PK33AddrIndex,
-    P2PK65AddrIndex, P2PKHAddrIndex, P2SHAddrIndex, P2TRAddrIndex, P2WPKHAddrIndex,
-    P2WSHAddrIndex, UnknownOutputIndex,
+    P2PK65AddrIndex, P2PKHAddrIndex, P2SHAddrIndex, P2TRAddrIndex, P2WPKHAddrIndex, P2WSHAddrIndex,
+    UnknownOutputIndex,
 };
 
 #[derive(

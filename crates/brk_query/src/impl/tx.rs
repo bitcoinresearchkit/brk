@@ -359,7 +359,12 @@ impl Query {
         let indexer = self.indexer();
 
         // Look up spending tx_index directly
-        let spending_tx_index = indexer.vecs.inputs.tx_index.collect_one(txin_index).unwrap();
+        let spending_tx_index = indexer
+            .vecs
+            .inputs
+            .tx_index
+            .collect_one(txin_index)
+            .unwrap();
 
         // Calculate vin
         let spending_first_txin_index = indexer
@@ -371,7 +376,11 @@ impl Query {
         let vin = Vin::from(usize::from(txin_index) - usize::from(spending_first_txin_index));
 
         // Get spending tx details
-        let spending_txid = indexer.vecs.transactions.txid.read_once(spending_tx_index)?;
+        let spending_txid = indexer
+            .vecs
+            .transactions
+            .txid
+            .read_once(spending_tx_index)?;
         let spending_height = indexer
             .vecs
             .transactions

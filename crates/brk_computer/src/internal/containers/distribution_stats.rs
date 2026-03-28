@@ -12,9 +12,8 @@ pub struct DistributionStats<A> {
 }
 
 impl<A> DistributionStats<A> {
-    pub const SUFFIXES: [&'static str; 7] = [
-        "min", "max", "pct10", "pct25", "median", "pct75", "pct90",
-    ];
+    pub const SUFFIXES: [&'static str; 7] =
+        ["min", "max", "pct10", "pct25", "median", "pct75", "pct90"];
 
     pub fn try_from_fn<E>(
         mut f: impl FnMut(&str) -> std::result::Result<A, E>,

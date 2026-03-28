@@ -144,42 +144,50 @@ pub(crate) fn process_blocks(
     let first_p2a_vec = indexer
         .vecs
         .addrs
-        .p2a.first_index
+        .p2a
+        .first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2pk33_vec = indexer
         .vecs
         .addrs
-        .p2pk33.first_index
+        .p2pk33
+        .first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2pk65_vec = indexer
         .vecs
         .addrs
-        .p2pk65.first_index
+        .p2pk65
+        .first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2pkh_vec = indexer
         .vecs
         .addrs
-        .p2pkh.first_index
+        .p2pkh
+        .first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2sh_vec = indexer
         .vecs
         .addrs
-        .p2sh.first_index
+        .p2sh
+        .first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2tr_vec = indexer
         .vecs
         .addrs
-        .p2tr.first_index
+        .p2tr
+        .first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2wpkh_vec = indexer
         .vecs
         .addrs
-        .p2wpkh.first_index
+        .p2wpkh
+        .first_index
         .collect_range_at(start_usize, end_usize);
     let first_p2wsh_vec = indexer
         .vecs
         .addrs
-        .p2wsh.first_index
+        .p2wsh
+        .first_index
         .collect_range_at(start_usize, end_usize);
 
     // Track running totals - recover from previous height if resuming
@@ -187,10 +195,8 @@ pub(crate) fn process_blocks(
     let (mut addr_counts, mut empty_addr_counts) = if starting_height > Height::ZERO {
         let addr_counts =
             AddrTypeToAddrCount::from((&vecs.addrs.funded.by_addr_type, starting_height));
-        let empty_addr_counts = AddrTypeToAddrCount::from((
-            &vecs.addrs.empty.by_addr_type,
-            starting_height,
-        ));
+        let empty_addr_counts =
+            AddrTypeToAddrCount::from((&vecs.addrs.empty.by_addr_type, starting_height));
         (addr_counts, empty_addr_counts)
     } else {
         (
@@ -274,12 +280,18 @@ pub(crate) fn process_blocks(
         // processing closures so outputs and inputs collection overlap each other
         // and tick-tock, instead of running sequentially before the join.
         let (matured, oi_result) = rayon::join(
-            || vecs.utxo_cohorts.tick_tock_next_block(chain_state, timestamp),
+            || {
+                vecs.utxo_cohorts
+                    .tick_tock_next_block(chain_state, timestamp)
+            },
             || -> Result<_> {
                 let (outputs_result, inputs_result) = rayon::join(
                     || {
-                        let txout_index_to_tx_index = txout_to_tx_index_buf
-                            .build(first_tx_index, tx_count, tx_index_to_output_count);
+                        let txout_index_to_tx_index = txout_to_tx_index_buf.build(
+                            first_tx_index,
+                            tx_count,
+                            tx_index_to_output_count,
+                        );
                         let txout_data_vec =
                             txout_iters.collect_block_outputs(first_txout_index, output_count);
                         process_outputs(
@@ -294,14 +306,21 @@ pub(crate) fn process_blocks(
                     },
                     || -> Result<_> {
                         if input_count > 1 {
-                            let txin_index_to_tx_index = txin_to_tx_index_buf
-                                .build(first_tx_index, tx_count, tx_index_to_input_count);
-                            let (input_values, input_prev_heights, input_output_types, input_type_indexes) =
-                                txin_iters.collect_block_inputs(
-                                    first_txin_index + 1,
-                                    input_count - 1,
-                                    height,
-                                );
+                            let txin_index_to_tx_index = txin_to_tx_index_buf.build(
+                                first_tx_index,
+                                tx_count,
+                                tx_index_to_input_count,
+                            );
+                            let (
+                                input_values,
+                                input_prev_heights,
+                                input_output_types,
+                                input_type_indexes,
+                            ) = txin_iters.collect_block_inputs(
+                                first_txin_index + 1,
+                                input_count - 1,
+                                height,
+                            );
                             process_inputs(
                                 input_count - 1,
                                 &txin_index_to_tx_index[1..],
@@ -380,9 +399,9 @@ pub(crate) fn process_blocks(
                     blocks_old as u128 * u64::from(sent.spendable_supply.value) as u128
                 })
                 .sum();
-            vecs.coinblocks_destroyed.block.push(
-                StoredF64::from(total_satblocks as f64 / Sats::ONE_BTC_U128 as f64),
-            );
+            vecs.coinblocks_destroyed.block.push(StoredF64::from(
+                total_satblocks as f64 / Sats::ONE_BTC_U128 as f64,
+            ));
         }
 
         // Record maturation (sats crossing age boundaries)
@@ -451,9 +470,11 @@ pub(crate) fn process_blocks(
         vecs.utxo_cohorts.update_fenwick_from_pending();
 
         // Push to height-indexed vectors
-        vecs.addrs.funded
+        vecs.addrs
+            .funded
             .push_height(addr_counts.sum(), &addr_counts);
-        vecs.addrs.empty
+        vecs.addrs
+            .empty
             .push_height(empty_addr_counts.sum(), &empty_addr_counts);
         vecs.addrs.activity.push_height(&activity_counts);
 
@@ -467,11 +488,8 @@ pub(crate) fn process_blocks(
             block_price,
         );
 
-        vecs.utxo_cohorts.push_aggregate_percentiles(
-            block_price,
-            date_opt,
-            &vecs.states_path,
-        )?;
+        vecs.utxo_cohorts
+            .push_aggregate_percentiles(block_price, date_opt, &vecs.states_path)?;
 
         // Periodic checkpoint flush
         if height != last_height
@@ -534,20 +552,16 @@ fn push_cohort_states(
     // Phase 1: push + unrealized (no reset yet — states still needed for aggregation)
     rayon::join(
         || {
-            utxo_cohorts
-                .par_iter_separate_mut()
-                .for_each(|v| {
-                    v.push_state(height);
-                    v.push_unrealized_state(height_price);
-                })
+            utxo_cohorts.par_iter_separate_mut().for_each(|v| {
+                v.push_state(height);
+                v.push_unrealized_state(height_price);
+            })
         },
         || {
-            addr_cohorts
-                .par_iter_separate_mut()
-                .for_each(|v| {
-                    v.push_state(height);
-                    v.push_unrealized_state(height_price);
-                })
+            addr_cohorts.par_iter_separate_mut().for_each(|v| {
+                v.push_state(height);
+                v.push_unrealized_state(height_price);
+            })
         },
     );
 

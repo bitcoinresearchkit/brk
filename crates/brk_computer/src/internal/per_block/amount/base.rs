@@ -5,9 +5,7 @@ use vecdb::{Database, Exit, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{
-        CentsUnsignedToDollars, PerBlock, LazyPerBlock, SatsToBitcoin, SatsToCents,
-    },
+    internal::{CentsUnsignedToDollars, LazyPerBlock, PerBlock, SatsToBitcoin, SatsToCents},
     prices,
 };
 
@@ -26,8 +24,7 @@ impl AmountPerBlock {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let sats =
-            PerBlock::forced_import(db, &format!("{name}_sats"), version, indexes)?;
+        let sats = PerBlock::forced_import(db, &format!("{name}_sats"), version, indexes)?;
 
         let btc = LazyPerBlock::from_computed::<SatsToBitcoin>(
             name,
@@ -36,8 +33,7 @@ impl AmountPerBlock {
             &sats,
         );
 
-        let cents =
-            PerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
+        let cents = PerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
 
         let usd = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
             &format!("{name}_usd"),
@@ -68,6 +64,4 @@ impl AmountPerBlock {
         )?;
         Ok(())
     }
-
 }
-

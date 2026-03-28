@@ -46,7 +46,11 @@ impl Binance {
         previous_timestamp: Option<Timestamp>,
     ) -> Result<OHLCCents> {
         // Try live API data first
-        if self._1mn.as_ref().and_then(|m| m.last_key_value()).is_none_or(|(k, _)| k <= &timestamp)
+        if self
+            ._1mn
+            .as_ref()
+            .and_then(|m| m.last_key_value())
+            .is_none_or(|(k, _)| k <= &timestamp)
         {
             self._1mn.replace(self.fetch_1mn()?);
         }
@@ -87,7 +91,12 @@ impl Binance {
     }
 
     pub fn get_from_1d(&mut self, date: &Date) -> Result<OHLCCents> {
-        if self._1d.as_ref().and_then(|m| m.last_key_value()).is_none_or(|(k, _)| k <= date) {
+        if self
+            ._1d
+            .as_ref()
+            .and_then(|m| m.last_key_value())
+            .is_none_or(|(k, _)| k <= date)
+        {
             self._1d.replace(self.fetch_1d()?);
         }
 
@@ -214,7 +223,9 @@ impl Binance {
     }
 
     pub fn ping(&self) -> Result<()> {
-        self.agent.get("https://api.binance.com/api/v3/ping").call()?;
+        self.agent
+            .get("https://api.binance.com/api/v3/ping")
+            .call()?;
         Ok(())
     }
 }

@@ -30,7 +30,8 @@ impl Query {
         let current_hashrate = *computer
             .mining
             .hashrate
-            .rate.base
+            .rate
+            .base
             .day1
             .collect_one_flat(current_day1)
             .unwrap_or_default() as u128;

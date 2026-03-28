@@ -15,8 +15,8 @@ use crate::{
     Error,
     api::{
         addrs::AddrRoutes, blocks::BlockRoutes, mempool::MempoolRoutes,
-        metrics_legacy::ApiMetricsLegacyRoutes, mining::MiningRoutes,
-        series::ApiSeriesRoutes, server::ServerRoutes, transactions::TxRoutes,
+        metrics_legacy::ApiMetricsLegacyRoutes, mining::MiningRoutes, series::ApiSeriesRoutes,
+        server::ServerRoutes, transactions::TxRoutes,
     },
     extended::{ResponseExtended, TransformResponseExtended},
 };
@@ -27,9 +27,9 @@ mod addrs;
 mod blocks;
 mod mempool;
 mod metrics_legacy;
-mod series;
 mod mining;
 mod openapi;
+mod series;
 mod server;
 mod transactions;
 

@@ -178,7 +178,8 @@ impl RealizedFull {
             .push(state.realized.investor_cap_raw());
         self.peak_regret
             .value
-            .block.cents
+            .block
+            .cents
             .push(state.realized.peak_regret());
     }
 
@@ -218,10 +219,7 @@ impl RealizedFull {
         };
         self.investor.price.cents.height.push(investor_price);
 
-        self.peak_regret
-            .value
-            .block.cents
-            .push(accum.peak_regret());
+        self.peak_regret.value.block.cents.push(accum.peak_regret());
     }
 
     pub(crate) fn compute_rest_part1(

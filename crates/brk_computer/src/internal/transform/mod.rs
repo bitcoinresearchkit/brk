@@ -15,8 +15,8 @@ pub use bps::{
     Bps32ToFloat, Bps32ToPercent,
 };
 pub use currency::{
-    CentsSignedToDollars, CentsSubtractToCentsSigned, CentsTimesTenths, CentsUnsignedToDollars,
-    CentsUnsignedToSats, DollarsToSatsFract, AvgCentsToUsd, AvgSatsToBtc,
+    AvgCentsToUsd, AvgSatsToBtc, CentsSignedToDollars, CentsSubtractToCentsSigned,
+    CentsTimesTenths, CentsUnsignedToDollars, CentsUnsignedToSats, DollarsToSatsFract,
     NegCentsUnsignedToDollars, SatsToBitcoin, SatsToCents,
 };
 pub use derived::{

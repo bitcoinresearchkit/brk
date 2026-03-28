@@ -4,7 +4,10 @@ use brk_types::{Indexes, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
-    distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}},
+    distribution::{
+        metrics::ImportConfig,
+        state::{CohortState, CostBasisOps, RealizedOps},
+    },
     internal::AmountPerBlockCumulativeRolling,
     prices,
 };
@@ -23,16 +26,11 @@ impl ActivityMinimal {
     }
 
     pub(crate) fn min_len(&self) -> usize {
-        self.transfer_volume
-            .block.sats
-            .len()
+        self.transfer_volume.block.sats.len()
     }
 
     #[inline(always)]
-    pub(crate) fn push_state(
-        &mut self,
-        state: &CohortState<impl RealizedOps, impl CostBasisOps>,
-    ) {
+    pub(crate) fn push_state(&mut self, state: &CohortState<impl RealizedOps, impl CostBasisOps>) {
         self.transfer_volume.block.sats.push(state.sent);
     }
 

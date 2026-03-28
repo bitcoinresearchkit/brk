@@ -6,13 +6,13 @@ use serde::{Deserialize, Serialize};
 use vecdb::PrintableIndex;
 
 use super::{
-    Date, Day1, Day3, EmptyAddrIndex, EmptyOutputIndex, Epoch, FundedAddrIndex, Halving,
-    Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3, Month6, OpReturnIndex,
-    P2AAddrIndex, P2MSOutputIndex, P2PK33AddrIndex, P2PK65AddrIndex, P2PKHAddrIndex,
-    P2SHAddrIndex, P2TRAddrIndex, P2WPKHAddrIndex, P2WSHAddrIndex, Timestamp,
-    TxInIndex, TxIndex, TxOutIndex, UnknownOutputIndex, Week1, Year1, Year10,
-    hour1::HOUR1_INTERVAL, hour4::HOUR4_INTERVAL, hour12::HOUR12_INTERVAL,
-    minute10::MINUTE10_INTERVAL, minute30::MINUTE30_INTERVAL, timestamp::INDEX_EPOCH,
+    Date, Day1, Day3, EmptyAddrIndex, EmptyOutputIndex, Epoch, FundedAddrIndex, Halving, Height,
+    Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3, Month6, OpReturnIndex, P2AAddrIndex,
+    P2MSOutputIndex, P2PK33AddrIndex, P2PK65AddrIndex, P2PKHAddrIndex, P2SHAddrIndex,
+    P2TRAddrIndex, P2WPKHAddrIndex, P2WSHAddrIndex, Timestamp, TxInIndex, TxIndex, TxOutIndex,
+    UnknownOutputIndex, Week1, Year1, Year10, hour1::HOUR1_INTERVAL, hour4::HOUR4_INTERVAL,
+    hour12::HOUR12_INTERVAL, minute10::MINUTE10_INTERVAL, minute30::MINUTE30_INTERVAL,
+    timestamp::INDEX_EPOCH,
 };
 
 /// Aggregation dimension for querying series. Includes time-based (date, week, month, year),

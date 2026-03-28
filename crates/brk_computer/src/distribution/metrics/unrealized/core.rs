@@ -5,10 +5,7 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
 
 use crate::{
-    distribution::{
-        metrics::ImportConfig,
-        state::UnrealizedState,
-    },
+    distribution::{metrics::ImportConfig, state::UnrealizedState},
     internal::{CentsSubtractToCentsSigned, FiatPerBlock},
 };
 
@@ -60,11 +57,7 @@ impl UnrealizedCore {
         Ok(())
     }
 
-    pub(crate) fn compute_rest(
-        &mut self,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
+    pub(crate) fn compute_rest(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
         self.net_pnl
             .cents
             .height

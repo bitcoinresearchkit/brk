@@ -8,8 +8,8 @@ use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 use super::{
     Day1, EmptyOutputIndex, Height, Month1, OpReturnIndex, P2AAddrIndex, P2MSOutputIndex,
     P2PK33AddrIndex, P2PK65AddrIndex, P2PKHAddrIndex, P2SHAddrIndex, P2TRAddrIndex,
-    P2WPKHAddrIndex, P2WSHAddrIndex, StoredU32, TxInIndex, TxIndex, TxOutIndex,
-    UnknownOutputIndex, Year1,
+    P2WPKHAddrIndex, P2WSHAddrIndex, StoredU32, TxInIndex, TxIndex, TxOutIndex, UnknownOutputIndex,
+    Year1,
 };
 
 /// Fixed-size 64-bit unsigned integer optimized for on-disk storage

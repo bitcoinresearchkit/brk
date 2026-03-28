@@ -6,7 +6,7 @@ use super::super::lookback::ByLookbackPeriod;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{StdDevPerBlock, PercentPerBlock, Windows},
+    internal::{PercentPerBlock, StdDevPerBlock, Windows},
     investing::ByDcaCagr,
 };
 
@@ -39,6 +39,10 @@ impl Vecs {
             )
         })?;
 
-        Ok(Self { periods, cagr, sd_24h })
+        Ok(Self {
+            periods,
+            cagr,
+            sd_24h,
+        })
     }
 }

@@ -104,8 +104,7 @@ impl MinimalCohortMetrics {
         self.outputs.compute_rest(starting_indexes.height, exit)?;
         self.activity
             .compute_rest_part1(prices, starting_indexes, exit)?;
-        self.realized
-            .compute_rest_part1(starting_indexes, exit)?;
+        self.realized.compute_rest_part1(starting_indexes, exit)?;
         Ok(())
     }
 
@@ -130,7 +129,8 @@ impl MinimalCohortMetrics {
             exit,
         )?;
 
-        self.outputs.compute_part2(starting_indexes.height, all_utxo_count, exit)?;
+        self.outputs
+            .compute_part2(starting_indexes.height, all_utxo_count, exit)?;
 
         Ok(())
     }

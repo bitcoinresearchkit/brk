@@ -1,9 +1,7 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{
-    Cents, Dollars, Height, Indexes, Version,
-};
+use brk_types::{Cents, Dollars, Height, Indexes, Version};
 use vecdb::AnyStoredVec;
 use vecdb::{Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode};
 
@@ -136,11 +134,8 @@ impl AllCohortMetrics {
         )?;
 
         let all_utxo_count = self.outputs.unspent_count.height.read_only_clone();
-        self.outputs.compute_part2(
-            starting_indexes.height,
-            &all_utxo_count,
-            exit,
-        )?;
+        self.outputs
+            .compute_part2(starting_indexes.height, &all_utxo_count, exit)?;
 
         self.cost_basis.compute_prices(
             starting_indexes,
@@ -154,11 +149,8 @@ impl AllCohortMetrics {
             exit,
         )?;
 
-        self.unrealized.compute_sentiment(
-            starting_indexes,
-            &prices.spot.cents.height,
-            exit,
-        )?;
+        self.unrealized
+            .compute_sentiment(starting_indexes, &prices.spot.cents.height, exit)?;
 
         self.relative.compute(
             starting_indexes.height,

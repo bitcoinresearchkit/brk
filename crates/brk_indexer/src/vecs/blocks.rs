@@ -47,8 +47,7 @@ impl BlocksVecs {
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.timestamp
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.total
-            .truncate_if_needed_with_stamp(height, stamp)?;
+        self.total.truncate_if_needed_with_stamp(height, stamp)?;
         self.weight.truncate_if_needed_with_stamp(height, stamp)?;
         Ok(())
     }

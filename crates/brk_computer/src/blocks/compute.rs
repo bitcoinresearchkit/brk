@@ -38,8 +38,7 @@ impl Vecs {
             let r1 = s.spawn(|| count.compute(indexer, starting_indexes, exit));
             let r2 = s.spawn(|| interval.compute(indexer, starting_indexes, exit));
             let r3 = s.spawn(|| weight.compute(indexer, starting_indexes, exit));
-            let r4 =
-                s.spawn(|| difficulty.compute(indexer, indexes, starting_indexes, exit));
+            let r4 = s.spawn(|| difficulty.compute(indexer, indexes, starting_indexes, exit));
             let r5 = s.spawn(|| halving.compute(indexes, starting_indexes, exit));
             size.compute(indexer, &*lookback, starting_indexes, exit)?;
             r1.join().unwrap()?;

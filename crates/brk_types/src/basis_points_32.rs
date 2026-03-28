@@ -3,7 +3,7 @@ use std::ops::{Add, AddAssign, Div};
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{unlikely, CheckedSub, Formattable, Pco};
+use vecdb::{CheckedSub, Formattable, Pco, unlikely};
 
 use super::StoredF32;
 

@@ -44,10 +44,7 @@ impl NewAddrCountVecs {
             )
         })?;
 
-        Ok(Self {
-            all,
-            by_addr_type,
-        })
+        Ok(Self { all, by_addr_type })
     }
 
     pub(crate) fn compute(

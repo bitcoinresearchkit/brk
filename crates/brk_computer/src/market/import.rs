@@ -9,8 +9,8 @@ use crate::{
 };
 
 use super::{
-    AthVecs, TechnicalVecs, LookbackVecs, MovingAverageVecs, RangeVecs, ReturnsVecs,
-    Vecs, VolatilityVecs,
+    AthVecs, LookbackVecs, MovingAverageVecs, RangeVecs, ReturnsVecs, TechnicalVecs, Vecs,
+    VolatilityVecs,
 };
 
 impl Vecs {

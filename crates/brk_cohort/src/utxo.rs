@@ -2,8 +2,8 @@ use brk_traversable::Traversable;
 use rayon::prelude::*;
 
 use crate::{
-    AgeRange, AmountRange, ByEpoch, OverAmount, UnderAmount, UnderAge, OverAge,
-    Class, SpendableType, ByTerm, Filter,
+    AgeRange, AmountRange, ByEpoch, ByTerm, Class, Filter, OverAge, OverAmount, SpendableType,
+    UnderAge, UnderAmount,
 };
 
 #[derive(Default, Clone, Traversable)]

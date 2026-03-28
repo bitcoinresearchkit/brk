@@ -7,7 +7,10 @@ use vecdb::{AnyStoredVec, Exit, ReadableCloneableVec, Rw, StorageMode};
 use crate::internal::{Identity, LazyPerBlock, PerBlock, Windows};
 
 use crate::{
-    distribution::{metrics::ImportConfig, state::{CohortState, CostBasisOps, RealizedOps}},
+    distribution::{
+        metrics::ImportConfig,
+        state::{CohortState, CostBasisOps, RealizedOps},
+    },
     prices,
 };
 
@@ -33,7 +36,12 @@ impl ActivityFull {
         let coinyears_destroyed = LazyPerBlock::from_height_source::<Identity<StoredF64>>(
             &cfg.name("coinyears_destroyed"),
             cfg.version + v1,
-            inner.coindays_destroyed.sum._1y.height.read_only_boxed_clone(),
+            inner
+                .coindays_destroyed
+                .sum
+                ._1y
+                .height
+                .read_only_boxed_clone(),
             cfg.indexes,
         );
 
@@ -89,7 +97,8 @@ impl ActivityFull {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.inner.compute_rest_part1(prices, starting_indexes, exit)?;
+        self.inner
+            .compute_rest_part1(prices, starting_indexes, exit)?;
 
         for ((dormancy, cdd_sum), tv_sum) in self
             .dormancy

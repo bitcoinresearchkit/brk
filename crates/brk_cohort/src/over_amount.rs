@@ -43,19 +43,31 @@ pub const OVER_AMOUNT_NAMES: OverAmount<CohortName> = OverAmount {
 pub const OVER_AMOUNT_FILTERS: OverAmount<Filter> = OverAmount {
     _1sat: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._1sat)),
     _10sats: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._10sats)),
-    _100sats: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._100sats)),
-    _1k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._1k_sats)),
-    _10k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._10k_sats)),
+    _100sats: Filter::Amount(AmountFilter::GreaterOrEqual(
+        OVER_AMOUNT_THRESHOLDS._100sats,
+    )),
+    _1k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(
+        OVER_AMOUNT_THRESHOLDS._1k_sats,
+    )),
+    _10k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(
+        OVER_AMOUNT_THRESHOLDS._10k_sats,
+    )),
     _100k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(
         OVER_AMOUNT_THRESHOLDS._100k_sats,
     )),
-    _1m_sats: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._1m_sats)),
-    _10m_sats: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._10m_sats)),
+    _1m_sats: Filter::Amount(AmountFilter::GreaterOrEqual(
+        OVER_AMOUNT_THRESHOLDS._1m_sats,
+    )),
+    _10m_sats: Filter::Amount(AmountFilter::GreaterOrEqual(
+        OVER_AMOUNT_THRESHOLDS._10m_sats,
+    )),
     _1btc: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._1btc)),
     _10btc: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._10btc)),
     _100btc: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._100btc)),
     _1k_btc: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._1k_btc)),
-    _10k_btc: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._10k_btc)),
+    _10k_btc: Filter::Amount(AmountFilter::GreaterOrEqual(
+        OVER_AMOUNT_THRESHOLDS._10k_btc,
+    )),
 };
 
 #[derive(Default, Clone, Traversable, Serialize)]

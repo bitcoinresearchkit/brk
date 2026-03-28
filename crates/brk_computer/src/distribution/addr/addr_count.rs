@@ -12,9 +12,7 @@ use vecdb::{
 use crate::{indexes, internal::PerBlock};
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct AddrCountVecs<M: StorageMode = Rw>(
-    #[traversable(flatten)] pub PerBlock<StoredU64, M>,
-);
+pub struct AddrCountVecs<M: StorageMode = Rw>(#[traversable(flatten)] pub PerBlock<StoredU64, M>);
 
 impl AddrCountVecs {
     pub(crate) fn forced_import(
@@ -23,9 +21,7 @@ impl AddrCountVecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        Ok(Self(PerBlock::forced_import(
-            db, name, version, indexes,
-        )?))
+        Ok(Self(PerBlock::forced_import(db, name, version, indexes)?))
     }
 }
 
@@ -57,42 +53,17 @@ impl From<(&AddrTypeToAddrCountVecs, Height)> for AddrTypeToAddrCount {
                     .collect_one(prev_height)
                     .unwrap()
                     .into(),
-                p2pkh: groups
-                    .p2pkh
-                    .height
-                    .collect_one(prev_height)
-                    .unwrap()
-                    .into(),
-                p2sh: groups
-                    .p2sh
-                    .height
-                    .collect_one(prev_height)
-                    .unwrap()
-                    .into(),
+                p2pkh: groups.p2pkh.height.collect_one(prev_height).unwrap().into(),
+                p2sh: groups.p2sh.height.collect_one(prev_height).unwrap().into(),
                 p2wpkh: groups
                     .p2wpkh
                     .height
                     .collect_one(prev_height)
                     .unwrap()
                     .into(),
-                p2wsh: groups
-                    .p2wsh
-                    .height
-                    .collect_one(prev_height)
-                    .unwrap()
-                    .into(),
-                p2tr: groups
-                    .p2tr
-                    .height
-                    .collect_one(prev_height)
-                    .unwrap()
-                    .into(),
-                p2a: groups
-                    .p2a
-                    .height
-                    .collect_one(prev_height)
-                    .unwrap()
-                    .into(),
+                p2wsh: groups.p2wsh.height.collect_one(prev_height).unwrap().into(),
+                p2tr: groups.p2tr.height.collect_one(prev_height).unwrap().into(),
+                p2a: groups.p2a.height.collect_one(prev_height).unwrap().into(),
             })
         } else {
             Default::default()
@@ -177,7 +148,10 @@ impl AddrCountsVecs {
     }
 
     pub(crate) fn min_stateful_len(&self) -> usize {
-        self.all.height.len().min(self.by_addr_type.min_stateful_len())
+        self.all
+            .height
+            .len()
+            .min(self.by_addr_type.min_stateful_len())
     }
 
     pub(crate) fn par_iter_height_mut(
@@ -199,11 +173,7 @@ impl AddrCountsVecs {
         self.by_addr_type.push_height(addr_counts);
     }
 
-    pub(crate) fn compute_rest(
-        &mut self,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
+    pub(crate) fn compute_rest(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
         let sources = self.by_addr_type.by_height();
         self.all
             .height

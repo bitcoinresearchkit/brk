@@ -726,7 +726,12 @@ pub fn generate_structural_patterns(
         writeln!(output, " */").unwrap();
 
         if pattern.is_templated() {
-            writeln!(output, "function create{}(client, acc, disc) {{", pattern.name).unwrap();
+            writeln!(
+                output,
+                "function create{}(client, acc, disc) {{",
+                pattern.name
+            )
+            .unwrap();
         } else {
             writeln!(output, "function create{}(client, acc) {{", pattern.name).unwrap();
         }

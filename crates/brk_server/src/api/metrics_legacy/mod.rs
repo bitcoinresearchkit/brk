@@ -10,8 +10,8 @@ use axum::{
 use brk_traversable::TreeNode;
 use brk_types::{
     CostBasisCohortParam, CostBasisFormatted, CostBasisParams, CostBasisQuery, DataRangeFormat,
-    Date, DetailedSeriesCount, Index, IndexInfo, PaginatedSeries, Pagination, SearchQuery, SeriesName,
-    SeriesData, SeriesInfo, SeriesList, SeriesSelection, SeriesSelectionLegacy,
+    Date, DetailedSeriesCount, Index, IndexInfo, PaginatedSeries, Pagination, SearchQuery,
+    SeriesData, SeriesInfo, SeriesList, SeriesName, SeriesSelection, SeriesSelectionLegacy,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

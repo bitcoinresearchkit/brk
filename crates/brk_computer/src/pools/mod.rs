@@ -4,9 +4,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_store::AnyStore;
 use brk_traversable::Traversable;
-use brk_types::{
-    Addr, AddrBytes, Height, Indexes, OutputType, PoolSlug, Pools, TxOutIndex, pools,
-};
+use brk_types::{Addr, AddrBytes, Height, Indexes, OutputType, PoolSlug, Pools, TxOutIndex, pools};
 use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, AnyVec, BytesVec, Database, Exit, ImportableVec, ReadableVec, Rw, StorageMode,
@@ -18,7 +16,10 @@ pub mod minor;
 
 use crate::{
     blocks, indexes,
-    internal::{CachedWindowStarts, db_utils::{finalize_db, open_db}},
+    internal::{
+        CachedWindowStarts,
+        db_utils::{finalize_db, open_db},
+    },
     mining, prices,
 };
 
@@ -91,19 +92,12 @@ impl Vecs {
         self.compute_pool(indexer, indexes, starting_indexes, exit)?;
 
         self.major.par_iter_mut().try_for_each(|(_, vecs)| {
-            vecs.compute(
-                starting_indexes,
-                &self.pool,
-                blocks,
-                prices,
-                mining,
-                exit,
-            )
+            vecs.compute(starting_indexes, &self.pool, blocks, prices, mining, exit)
         })?;
 
-        self.minor.par_iter_mut().try_for_each(|(_, vecs)| {
-            vecs.compute(starting_indexes, &self.pool, blocks, exit)
-        })?;
+        self.minor
+            .par_iter_mut()
+            .try_for_each(|(_, vecs)| vecs.compute(starting_indexes, &self.pool, blocks, exit))?;
 
         let exit = exit.clone();
         self.db.run_bg(move |db| {
@@ -137,10 +131,7 @@ impl Vecs {
 
         let unknown = self.pools.get_unknown();
 
-        let min = starting_indexes
-            .height
-            .to_usize()
-            .min(self.pool.len());
+        let min = starting_indexes.height.to_usize().min(self.pool.len());
 
         // Cursors avoid per-height PcoVec page decompression.
         // Heights are sequential, tx_index values derived from them are monotonically

@@ -16,7 +16,6 @@ pub struct RelativeExtendedOwnPnl<M: StorageMode = Rw> {
     pub unrealized_loss_to_own_gross_pnl: PercentPerBlock<BasisPoints16, M>,
     #[traversable(wrap = "unrealized/net_pnl", rename = "to_own_gross_pnl")]
     pub net_unrealized_pnl_to_own_gross_pnl: PercentPerBlock<BasisPointsSigned32, M>,
-
 }
 
 impl RelativeExtendedOwnPnl {
@@ -26,8 +25,7 @@ impl RelativeExtendedOwnPnl {
         Ok(Self {
             unrealized_profit_to_own_gross_pnl: cfg
                 .import("unrealized_profit_to_own_gross_pnl", v1)?,
-            unrealized_loss_to_own_gross_pnl: cfg
-                .import("unrealized_loss_to_own_gross_pnl", v1)?,
+            unrealized_loss_to_own_gross_pnl: cfg.import("unrealized_loss_to_own_gross_pnl", v1)?,
             net_unrealized_pnl_to_own_gross_pnl: cfg
                 .import("net_unrealized_pnl_to_own_gross_pnl", Version::new(3))?,
         })

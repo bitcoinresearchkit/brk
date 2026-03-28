@@ -3,11 +3,12 @@ use brk_traversable::Traversable;
 use brk_types::{BasisPointsSigned32, Height, Indexes, Sats, SatsSigned, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
-use crate::{distribution::state::{CohortState, CostBasisOps, RealizedOps}, prices};
-
-use crate::internal::{
-    AmountPerBlock, LazyRollingDeltasFromHeight,
+use crate::{
+    distribution::state::{CohortState, CostBasisOps, RealizedOps},
+    prices,
 };
+
+use crate::internal::{AmountPerBlock, LazyRollingDeltasFromHeight};
 
 use crate::distribution::metrics::ImportConfig;
 

@@ -4,9 +4,7 @@ use brk_types::{Cents, Height, Indexes, StoredI8, Version};
 use vecdb::{AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
-    cointime,
-    distribution,
-    indexes,
+    cointime, distribution, indexes,
     internal::{PerBlock, Price, RatioPerBlockPercentiles},
     prices,
 };
@@ -82,16 +80,48 @@ impl RealizedEnvelope {
         }
 
         // Lower percentiles: max across all models (tightest lower bound)
-        self.pct0_5.cents.height.compute_max_of_others(starting_indexes.height, &sources!(pct0_5), exit)?;
-        self.pct1.cents.height.compute_max_of_others(starting_indexes.height, &sources!(pct1), exit)?;
-        self.pct2.cents.height.compute_max_of_others(starting_indexes.height, &sources!(pct2), exit)?;
-        self.pct5.cents.height.compute_max_of_others(starting_indexes.height, &sources!(pct5), exit)?;
+        self.pct0_5.cents.height.compute_max_of_others(
+            starting_indexes.height,
+            &sources!(pct0_5),
+            exit,
+        )?;
+        self.pct1.cents.height.compute_max_of_others(
+            starting_indexes.height,
+            &sources!(pct1),
+            exit,
+        )?;
+        self.pct2.cents.height.compute_max_of_others(
+            starting_indexes.height,
+            &sources!(pct2),
+            exit,
+        )?;
+        self.pct5.cents.height.compute_max_of_others(
+            starting_indexes.height,
+            &sources!(pct5),
+            exit,
+        )?;
 
         // Upper percentiles: min across all models (tightest upper bound)
-        self.pct95.cents.height.compute_min_of_others(starting_indexes.height, &sources!(pct95), exit)?;
-        self.pct98.cents.height.compute_min_of_others(starting_indexes.height, &sources!(pct98), exit)?;
-        self.pct99.cents.height.compute_min_of_others(starting_indexes.height, &sources!(pct99), exit)?;
-        self.pct99_5.cents.height.compute_min_of_others(starting_indexes.height, &sources!(pct99_5), exit)?;
+        self.pct95.cents.height.compute_min_of_others(
+            starting_indexes.height,
+            &sources!(pct95),
+            exit,
+        )?;
+        self.pct98.cents.height.compute_min_of_others(
+            starting_indexes.height,
+            &sources!(pct98),
+            exit,
+        )?;
+        self.pct99.cents.height.compute_min_of_others(
+            starting_indexes.height,
+            &sources!(pct99),
+            exit,
+        )?;
+        self.pct99_5.cents.height.compute_min_of_others(
+            starting_indexes.height,
+            &sources!(pct99_5),
+            exit,
+        )?;
 
         let spot = &prices.spot.cents.height;
 
@@ -121,10 +151,15 @@ impl RealizedEnvelope {
             &self.pct99_5.cents.height,
         ];
 
-        let dep_version: Version = bands.iter().map(|b| b.version()).sum::<Version>() + spot.version();
+        let dep_version: Version =
+            bands.iter().map(|b| b.version()).sum::<Version>() + spot.version();
 
-        self.index.height.validate_computed_version_or_reset(dep_version)?;
-        self.index.height.truncate_if_needed(starting_indexes.height)?;
+        self.index
+            .height
+            .validate_computed_version_or_reset(dep_version)?;
+        self.index
+            .height
+            .truncate_if_needed(starting_indexes.height)?;
 
         self.index.height.repeat_until_complete(exit, |vec| {
             let skip = vec.len();
@@ -142,14 +177,30 @@ impl RealizedEnvelope {
                 let price = spot_batch[j];
                 let mut score: i8 = 0;
 
-                if price < b[3][j] { score -= 1; }
-                if price < b[2][j] { score -= 1; }
-                if price < b[1][j] { score -= 1; }
-                if price < b[0][j] { score -= 1; }
-                if price > b[4][j] { score += 1; }
-                if price > b[5][j] { score += 1; }
-                if price > b[6][j] { score += 1; }
-                if price > b[7][j] { score += 1; }
+                if price < b[3][j] {
+                    score -= 1;
+                }
+                if price < b[2][j] {
+                    score -= 1;
+                }
+                if price < b[1][j] {
+                    score -= 1;
+                }
+                if price < b[0][j] {
+                    score -= 1;
+                }
+                if price > b[4][j] {
+                    score += 1;
+                }
+                if price > b[5][j] {
+                    score += 1;
+                }
+                if price > b[6][j] {
+                    score += 1;
+                }
+                if price > b[7][j] {
+                    score += 1;
+                }
 
                 vec.push(StoredI8::new(score));
             }
@@ -182,8 +233,12 @@ impl RealizedEnvelope {
             .sum::<Version>()
             + spot.version();
 
-        self.score.height.validate_computed_version_or_reset(dep_version)?;
-        self.score.height.truncate_if_needed(starting_indexes.height)?;
+        self.score
+            .height
+            .validate_computed_version_or_reset(dep_version)?;
+        self.score
+            .height
+            .truncate_if_needed(starting_indexes.height)?;
 
         self.score.height.repeat_until_complete(exit, |vec| {
             let skip = vec.len();
@@ -233,14 +288,30 @@ impl RealizedEnvelope {
                 let mut total: i8 = 0;
 
                 for model in &bands {
-                    if price < model[3][j] { total -= 1; }
-                    if price < model[2][j] { total -= 1; }
-                    if price < model[1][j] { total -= 1; }
-                    if price < model[0][j] { total -= 1; }
-                    if price > model[4][j] { total += 1; }
-                    if price > model[5][j] { total += 1; }
-                    if price > model[6][j] { total += 1; }
-                    if price > model[7][j] { total += 1; }
+                    if price < model[3][j] {
+                        total -= 1;
+                    }
+                    if price < model[2][j] {
+                        total -= 1;
+                    }
+                    if price < model[1][j] {
+                        total -= 1;
+                    }
+                    if price < model[0][j] {
+                        total -= 1;
+                    }
+                    if price > model[4][j] {
+                        total += 1;
+                    }
+                    if price > model[5][j] {
+                        total += 1;
+                    }
+                    if price > model[6][j] {
+                        total += 1;
+                    }
+                    if price > model[7][j] {
+                        total += 1;
+                    }
                 }
 
                 vec.push(StoredI8::new(total));

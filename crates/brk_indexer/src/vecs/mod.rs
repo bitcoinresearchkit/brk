@@ -172,5 +172,4 @@ impl Vecs {
             .chain(self.addrs.par_iter_mut_any())
             .chain(self.scripts.par_iter_mut_any())
     }
-
 }

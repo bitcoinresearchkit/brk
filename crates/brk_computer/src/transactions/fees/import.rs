@@ -9,7 +9,11 @@ use crate::{indexes, internal::PerTxDistribution};
 const VERSION: Version = Version::new(2);
 
 impl Vecs {
-    pub(crate) fn forced_import(db: &Database, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
+    pub(crate) fn forced_import(
+        db: &Database,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
         let v = version + VERSION;
         Ok(Self {
             input_value: EagerVec::forced_import(db, "input_value", version)?,

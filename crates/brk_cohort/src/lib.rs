@@ -1,8 +1,8 @@
 #![doc = include_str!("../README.md")]
 
 mod addr;
-mod amount_filter;
 mod age_range;
+mod amount_filter;
 mod amount_range;
 mod by_addr_type;
 mod by_any_addr;
@@ -30,8 +30,8 @@ mod utxo;
 pub use brk_types::{Age, Term};
 
 pub use addr::*;
-pub use amount_filter::*;
 pub use age_range::*;
+pub use amount_filter::*;
 pub use amount_range::*;
 pub use by_addr_type::*;
 pub use by_any_addr::*;

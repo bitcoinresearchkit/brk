@@ -8,7 +8,9 @@ use std::fmt::Write;
 
 use brk_types::SeriesLeafWithSchema;
 
-use crate::{ClientMetadata, LanguageSyntax, PatternBaseResult, PatternField, PatternMode, StructuralPattern};
+use crate::{
+    ClientMetadata, LanguageSyntax, PatternBaseResult, PatternField, PatternMode, StructuralPattern,
+};
 
 /// Create a path suffix from a name.
 fn path_suffix(name: &str) -> String {
@@ -33,9 +35,7 @@ fn compute_parameterized_value<S: LanguageSyntax>(
     if let Some(child_pattern) = metadata.find_pattern(&field.rust_type)
         && child_pattern.is_templated()
     {
-        let disc_template = pattern
-            .get_field_part(&field.name)
-            .unwrap_or(&field.name);
+        let disc_template = pattern.get_field_part(&field.name).unwrap_or(&field.name);
         let disc_arg = syntax.disc_arg_expr(disc_template);
         let acc_arg = syntax.owned_expr("acc");
         return syntax.constructor(&field.rust_type, &format!("{acc_arg}, {disc_arg}"));

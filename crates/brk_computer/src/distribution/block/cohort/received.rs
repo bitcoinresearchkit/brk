@@ -26,7 +26,11 @@ pub(crate) fn process_received(
     empty_addr_count: &mut ByAddrType<u64>,
     activity_counts: &mut AddrTypeToActivityCounts,
 ) {
-    let max_type_len = received_data.iter().map(|(_, v)| v.len()).max().unwrap_or(0);
+    let max_type_len = received_data
+        .iter()
+        .map(|(_, v)| v.len())
+        .max()
+        .unwrap_or(0);
     let mut aggregated: FxHashMap<TypeIndex, AggregatedReceive> =
         FxHashMap::with_capacity_and_hasher(max_type_len, Default::default());
 

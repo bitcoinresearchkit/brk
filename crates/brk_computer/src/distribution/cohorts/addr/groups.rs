@@ -1,8 +1,6 @@
 use std::path::Path;
 
-use brk_cohort::{
-    AddrGroups, AmountRange, OverAmount, UnderAmount, Filter, Filtered,
-};
+use brk_cohort::{AddrGroups, AmountRange, Filter, Filtered, OverAmount, UnderAmount};
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Height, Indexes, StoredU64, Version};

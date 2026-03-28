@@ -37,8 +37,7 @@ impl AmountPerBlockFull {
 
         let inner =
             AmountPerBlockCumulativeRolling::forced_import(db, name, v, indexes, cached_starts)?;
-        let distribution =
-            RollingDistributionAmountPerBlock::forced_import(db, name, v, indexes)?;
+        let distribution = RollingDistributionAmountPerBlock::forced_import(db, name, v, indexes)?;
 
         Ok(Self {
             inner,

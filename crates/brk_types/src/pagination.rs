@@ -29,9 +29,7 @@ impl Pagination {
     }
 
     pub fn start(&self, len: usize) -> usize {
-        self.page()
-            .saturating_mul(self.per_page())
-            .min(len)
+        self.page().saturating_mul(self.per_page()).min(len)
     }
 
     pub fn end(&self, len: usize) -> usize {

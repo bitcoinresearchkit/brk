@@ -1,10 +1,10 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    AddrBytes, AddrHash, Height, OutputType, P2AAddrIndex, P2ABytes, P2PK33AddrIndex,
-    P2PK33Bytes, P2PK65AddrIndex, P2PK65Bytes, P2PKHAddrIndex, P2PKHBytes, P2SHAddrIndex,
-    P2SHBytes, P2TRAddrIndex, P2TRBytes, P2WPKHAddrIndex, P2WPKHBytes, P2WSHAddrIndex,
-    P2WSHBytes, TypeIndex, Version,
+    AddrBytes, AddrHash, Height, OutputType, P2AAddrIndex, P2ABytes, P2PK33AddrIndex, P2PK33Bytes,
+    P2PK65AddrIndex, P2PK65Bytes, P2PKHAddrIndex, P2PKHBytes, P2SHAddrIndex, P2SHBytes,
+    P2TRAddrIndex, P2TRBytes, P2WPKHAddrIndex, P2WPKHBytes, P2WSHAddrIndex, P2WSHBytes, TypeIndex,
+    Version,
 };
 use rayon::prelude::*;
 use schemars::JsonSchema;
@@ -18,7 +18,11 @@ use crate::parallel_import;
 use crate::readers::AddrReaders;
 
 #[derive(Traversable)]
-pub struct AddrTypeVecs<I: VecIndex + PcoVecValue + Formattable + Serialize + JsonSchema, B: BytesVecValue + Formattable + Serialize + JsonSchema, M: StorageMode = Rw> {
+pub struct AddrTypeVecs<
+    I: VecIndex + PcoVecValue + Formattable + Serialize + JsonSchema,
+    B: BytesVecValue + Formattable + Serialize + JsonSchema,
+    M: StorageMode = Rw,
+> {
     pub first_index: M::Stored<PcoVec<Height, I>>,
     pub bytes: M::Stored<BytesVec<I, B>>,
 }
@@ -73,14 +77,38 @@ impl AddrsVecs {
             p2a_bytes = BytesVec::forced_import(db, "p2a_bytes", version),
         };
         Ok(Self {
-            p2pk65: AddrTypeVecs { first_index: first_p2pk65_addr_index, bytes: p2pk65_bytes },
-            p2pk33: AddrTypeVecs { first_index: first_p2pk33_addr_index, bytes: p2pk33_bytes },
-            p2pkh: AddrTypeVecs { first_index: first_p2pkh_addr_index, bytes: p2pkh_bytes },
-            p2sh: AddrTypeVecs { first_index: first_p2sh_addr_index, bytes: p2sh_bytes },
-            p2wpkh: AddrTypeVecs { first_index: first_p2wpkh_addr_index, bytes: p2wpkh_bytes },
-            p2wsh: AddrTypeVecs { first_index: first_p2wsh_addr_index, bytes: p2wsh_bytes },
-            p2tr: AddrTypeVecs { first_index: first_p2tr_addr_index, bytes: p2tr_bytes },
-            p2a: AddrTypeVecs { first_index: first_p2a_addr_index, bytes: p2a_bytes },
+            p2pk65: AddrTypeVecs {
+                first_index: first_p2pk65_addr_index,
+                bytes: p2pk65_bytes,
+            },
+            p2pk33: AddrTypeVecs {
+                first_index: first_p2pk33_addr_index,
+                bytes: p2pk33_bytes,
+            },
+            p2pkh: AddrTypeVecs {
+                first_index: first_p2pkh_addr_index,
+                bytes: p2pkh_bytes,
+            },
+            p2sh: AddrTypeVecs {
+                first_index: first_p2sh_addr_index,
+                bytes: p2sh_bytes,
+            },
+            p2wpkh: AddrTypeVecs {
+                first_index: first_p2wpkh_addr_index,
+                bytes: p2wpkh_bytes,
+            },
+            p2wsh: AddrTypeVecs {
+                first_index: first_p2wsh_addr_index,
+                bytes: p2wsh_bytes,
+            },
+            p2tr: AddrTypeVecs {
+                first_index: first_p2tr_addr_index,
+                bytes: p2tr_bytes,
+            },
+            p2a: AddrTypeVecs {
+                first_index: first_p2a_addr_index,
+                bytes: p2a_bytes,
+            },
         })
     }
 
@@ -98,37 +126,53 @@ impl AddrsVecs {
         p2a_addr_index: P2AAddrIndex,
         stamp: Stamp,
     ) -> Result<()> {
-        self.p2pk65.first_index
+        self.p2pk65
+            .first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.p2pk33.first_index
+        self.p2pk33
+            .first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.p2pkh.first_index
+        self.p2pkh
+            .first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.p2sh.first_index
+        self.p2sh
+            .first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.p2wpkh.first_index
+        self.p2wpkh
+            .first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.p2wsh.first_index
+        self.p2wsh
+            .first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.p2tr.first_index
+        self.p2tr
+            .first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.p2a.first_index
+        self.p2a
+            .first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.p2pk65.bytes
+        self.p2pk65
+            .bytes
             .truncate_if_needed_with_stamp(p2pk65_addr_index, stamp)?;
-        self.p2pk33.bytes
+        self.p2pk33
+            .bytes
             .truncate_if_needed_with_stamp(p2pk33_addr_index, stamp)?;
-        self.p2pkh.bytes
+        self.p2pkh
+            .bytes
             .truncate_if_needed_with_stamp(p2pkh_addr_index, stamp)?;
-        self.p2sh.bytes
+        self.p2sh
+            .bytes
             .truncate_if_needed_with_stamp(p2sh_addr_index, stamp)?;
-        self.p2wpkh.bytes
+        self.p2wpkh
+            .bytes
             .truncate_if_needed_with_stamp(p2wpkh_addr_index, stamp)?;
-        self.p2wsh.bytes
+        self.p2wsh
+            .bytes
             .truncate_if_needed_with_stamp(p2wsh_addr_index, stamp)?;
-        self.p2tr.bytes
+        self.p2tr
+            .bytes
             .truncate_if_needed_with_stamp(p2tr_addr_index, stamp)?;
-        self.p2a.bytes
+        self.p2a
+            .bytes
             .truncate_if_needed_with_stamp(p2a_addr_index, stamp)?;
         Ok(())
     }
@@ -165,35 +209,43 @@ impl AddrsVecs {
     ) -> Option<AddrBytes> {
         match addr_type {
             OutputType::P2PK65 => self
-                .p2pk65.bytes
+                .p2pk65
+                .bytes
                 .get_pushed_or_read(type_index.into(), &readers.p2pk65)
                 .map(AddrBytes::from),
             OutputType::P2PK33 => self
-                .p2pk33.bytes
+                .p2pk33
+                .bytes
                 .get_pushed_or_read(type_index.into(), &readers.p2pk33)
                 .map(AddrBytes::from),
             OutputType::P2PKH => self
-                .p2pkh.bytes
+                .p2pkh
+                .bytes
                 .get_pushed_or_read(type_index.into(), &readers.p2pkh)
                 .map(AddrBytes::from),
             OutputType::P2SH => self
-                .p2sh.bytes
+                .p2sh
+                .bytes
                 .get_pushed_or_read(type_index.into(), &readers.p2sh)
                 .map(AddrBytes::from),
             OutputType::P2WPKH => self
-                .p2wpkh.bytes
+                .p2wpkh
+                .bytes
                 .get_pushed_or_read(type_index.into(), &readers.p2wpkh)
                 .map(AddrBytes::from),
             OutputType::P2WSH => self
-                .p2wsh.bytes
+                .p2wsh
+                .bytes
                 .get_pushed_or_read(type_index.into(), &readers.p2wsh)
                 .map(AddrBytes::from),
             OutputType::P2TR => self
-                .p2tr.bytes
+                .p2tr
+                .bytes
                 .get_pushed_or_read(type_index.into(), &readers.p2tr)
                 .map(AddrBytes::from),
             OutputType::P2A => self
-                .p2a.bytes
+                .p2a
+                .bytes
                 .get_pushed_or_read(type_index.into(), &readers.p2a)
                 .map(AddrBytes::from),
             _ => unreachable!("get_bytes_by_type called with non-address type"),
@@ -237,8 +289,7 @@ impl AddrsVecs {
                             as Box<dyn Iterator<Item = AddrHash> + '_>)
                     }
                     None => {
-                        Ok(Box::new(std::iter::empty())
-                            as Box<dyn Iterator<Item = AddrHash> + '_>)
+                        Ok(Box::new(std::iter::empty()) as Box<dyn Iterator<Item = AddrHash> + '_>)
                     }
                 }
             }};

@@ -83,31 +83,131 @@ pub fn compute_profitability_boundaries(spot: Cents) -> [Cents; PROFITABILITY_BO
 
 /// Profitability range names (25 ranges, from most profitable to most in loss)
 pub const PROFITABILITY_RANGE_NAMES: ProfitabilityRange<CohortName> = ProfitabilityRange {
-    over_1000pct_in_profit: CohortName::new("utxos_over_1000pct_in_profit", "+>1000%", "Over 1000% in Profit"),
-    _500pct_to_1000pct_in_profit: CohortName::new("utxos_500pct_to_1000pct_in_profit", "+500-1000%", "500-1000% in Profit"),
-    _300pct_to_500pct_in_profit: CohortName::new("utxos_300pct_to_500pct_in_profit", "+300-500%", "300-500% in Profit"),
-    _200pct_to_300pct_in_profit: CohortName::new("utxos_200pct_to_300pct_in_profit", "+200-300%", "200-300% in Profit"),
-    _100pct_to_200pct_in_profit: CohortName::new("utxos_100pct_to_200pct_in_profit", "+100-200%", "100-200% in Profit"),
-    _90pct_to_100pct_in_profit: CohortName::new("utxos_90pct_to_100pct_in_profit", "+90-100%", "90-100% in Profit"),
-    _80pct_to_90pct_in_profit: CohortName::new("utxos_80pct_to_90pct_in_profit", "+80-90%", "80-90% in Profit"),
-    _70pct_to_80pct_in_profit: CohortName::new("utxos_70pct_to_80pct_in_profit", "+70-80%", "70-80% in Profit"),
-    _60pct_to_70pct_in_profit: CohortName::new("utxos_60pct_to_70pct_in_profit", "+60-70%", "60-70% in Profit"),
-    _50pct_to_60pct_in_profit: CohortName::new("utxos_50pct_to_60pct_in_profit", "+50-60%", "50-60% in Profit"),
-    _40pct_to_50pct_in_profit: CohortName::new("utxos_40pct_to_50pct_in_profit", "+40-50%", "40-50% in Profit"),
-    _30pct_to_40pct_in_profit: CohortName::new("utxos_30pct_to_40pct_in_profit", "+30-40%", "30-40% in Profit"),
-    _20pct_to_30pct_in_profit: CohortName::new("utxos_20pct_to_30pct_in_profit", "+20-30%", "20-30% in Profit"),
-    _10pct_to_20pct_in_profit: CohortName::new("utxos_10pct_to_20pct_in_profit", "+10-20%", "10-20% in Profit"),
-    _0pct_to_10pct_in_profit: CohortName::new("utxos_0pct_to_10pct_in_profit", "+0-10%", "0-10% in Profit"),
-    _0pct_to_10pct_in_loss: CohortName::new("utxos_0pct_to_10pct_in_loss", "-0-10%", "0-10% in Loss"),
-    _10pct_to_20pct_in_loss: CohortName::new("utxos_10pct_to_20pct_in_loss", "-10-20%", "10-20% in Loss"),
-    _20pct_to_30pct_in_loss: CohortName::new("utxos_20pct_to_30pct_in_loss", "-20-30%", "20-30% in Loss"),
-    _30pct_to_40pct_in_loss: CohortName::new("utxos_30pct_to_40pct_in_loss", "-30-40%", "30-40% in Loss"),
-    _40pct_to_50pct_in_loss: CohortName::new("utxos_40pct_to_50pct_in_loss", "-40-50%", "40-50% in Loss"),
-    _50pct_to_60pct_in_loss: CohortName::new("utxos_50pct_to_60pct_in_loss", "-50-60%", "50-60% in Loss"),
-    _60pct_to_70pct_in_loss: CohortName::new("utxos_60pct_to_70pct_in_loss", "-60-70%", "60-70% in Loss"),
-    _70pct_to_80pct_in_loss: CohortName::new("utxos_70pct_to_80pct_in_loss", "-70-80%", "70-80% in Loss"),
-    _80pct_to_90pct_in_loss: CohortName::new("utxos_80pct_to_90pct_in_loss", "-80-90%", "80-90% in Loss"),
-    _90pct_to_100pct_in_loss: CohortName::new("utxos_90pct_to_100pct_in_loss", "-90-100%", "90-100% in Loss"),
+    over_1000pct_in_profit: CohortName::new(
+        "utxos_over_1000pct_in_profit",
+        "+>1000%",
+        "Over 1000% in Profit",
+    ),
+    _500pct_to_1000pct_in_profit: CohortName::new(
+        "utxos_500pct_to_1000pct_in_profit",
+        "+500-1000%",
+        "500-1000% in Profit",
+    ),
+    _300pct_to_500pct_in_profit: CohortName::new(
+        "utxos_300pct_to_500pct_in_profit",
+        "+300-500%",
+        "300-500% in Profit",
+    ),
+    _200pct_to_300pct_in_profit: CohortName::new(
+        "utxos_200pct_to_300pct_in_profit",
+        "+200-300%",
+        "200-300% in Profit",
+    ),
+    _100pct_to_200pct_in_profit: CohortName::new(
+        "utxos_100pct_to_200pct_in_profit",
+        "+100-200%",
+        "100-200% in Profit",
+    ),
+    _90pct_to_100pct_in_profit: CohortName::new(
+        "utxos_90pct_to_100pct_in_profit",
+        "+90-100%",
+        "90-100% in Profit",
+    ),
+    _80pct_to_90pct_in_profit: CohortName::new(
+        "utxos_80pct_to_90pct_in_profit",
+        "+80-90%",
+        "80-90% in Profit",
+    ),
+    _70pct_to_80pct_in_profit: CohortName::new(
+        "utxos_70pct_to_80pct_in_profit",
+        "+70-80%",
+        "70-80% in Profit",
+    ),
+    _60pct_to_70pct_in_profit: CohortName::new(
+        "utxos_60pct_to_70pct_in_profit",
+        "+60-70%",
+        "60-70% in Profit",
+    ),
+    _50pct_to_60pct_in_profit: CohortName::new(
+        "utxos_50pct_to_60pct_in_profit",
+        "+50-60%",
+        "50-60% in Profit",
+    ),
+    _40pct_to_50pct_in_profit: CohortName::new(
+        "utxos_40pct_to_50pct_in_profit",
+        "+40-50%",
+        "40-50% in Profit",
+    ),
+    _30pct_to_40pct_in_profit: CohortName::new(
+        "utxos_30pct_to_40pct_in_profit",
+        "+30-40%",
+        "30-40% in Profit",
+    ),
+    _20pct_to_30pct_in_profit: CohortName::new(
+        "utxos_20pct_to_30pct_in_profit",
+        "+20-30%",
+        "20-30% in Profit",
+    ),
+    _10pct_to_20pct_in_profit: CohortName::new(
+        "utxos_10pct_to_20pct_in_profit",
+        "+10-20%",
+        "10-20% in Profit",
+    ),
+    _0pct_to_10pct_in_profit: CohortName::new(
+        "utxos_0pct_to_10pct_in_profit",
+        "+0-10%",
+        "0-10% in Profit",
+    ),
+    _0pct_to_10pct_in_loss: CohortName::new(
+        "utxos_0pct_to_10pct_in_loss",
+        "-0-10%",
+        "0-10% in Loss",
+    ),
+    _10pct_to_20pct_in_loss: CohortName::new(
+        "utxos_10pct_to_20pct_in_loss",
+        "-10-20%",
+        "10-20% in Loss",
+    ),
+    _20pct_to_30pct_in_loss: CohortName::new(
+        "utxos_20pct_to_30pct_in_loss",
+        "-20-30%",
+        "20-30% in Loss",
+    ),
+    _30pct_to_40pct_in_loss: CohortName::new(
+        "utxos_30pct_to_40pct_in_loss",
+        "-30-40%",
+        "30-40% in Loss",
+    ),
+    _40pct_to_50pct_in_loss: CohortName::new(
+        "utxos_40pct_to_50pct_in_loss",
+        "-40-50%",
+        "40-50% in Loss",
+    ),
+    _50pct_to_60pct_in_loss: CohortName::new(
+        "utxos_50pct_to_60pct_in_loss",
+        "-50-60%",
+        "50-60% in Loss",
+    ),
+    _60pct_to_70pct_in_loss: CohortName::new(
+        "utxos_60pct_to_70pct_in_loss",
+        "-60-70%",
+        "60-70% in Loss",
+    ),
+    _70pct_to_80pct_in_loss: CohortName::new(
+        "utxos_70pct_to_80pct_in_loss",
+        "-70-80%",
+        "70-80% in Loss",
+    ),
+    _80pct_to_90pct_in_loss: CohortName::new(
+        "utxos_80pct_to_90pct_in_loss",
+        "-80-90%",
+        "80-90% in Loss",
+    ),
+    _90pct_to_100pct_in_loss: CohortName::new(
+        "utxos_90pct_to_100pct_in_loss",
+        "-90-100%",
+        "90-100% in Loss",
+    ),
 };
 
 impl ProfitabilityRange<CohortName> {

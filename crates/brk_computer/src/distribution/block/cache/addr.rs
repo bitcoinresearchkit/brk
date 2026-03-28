@@ -103,9 +103,7 @@ pub(crate) fn load_uncached_addr_data(
     // Check if this is a new address (type_index >= first for this height)
     let first = *first_addr_indexes.get(addr_type).unwrap();
     if first <= type_index {
-        return Ok(Some(WithAddrDataSource::New(
-            FundedAddrData::default(),
-        )));
+        return Ok(Some(WithAddrDataSource::New(FundedAddrData::default())));
     }
 
     // Skip if already in cache

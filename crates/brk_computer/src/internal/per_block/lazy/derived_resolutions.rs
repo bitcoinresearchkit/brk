@@ -1,7 +1,7 @@
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30,
-    Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3,
+    Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
@@ -9,9 +9,7 @@ use vecdb::{ReadableBoxedVec, ReadableCloneableVec, UnaryTransform, VecValue};
 
 use crate::{
     indexes,
-    internal::{
-        PerBlock, Resolutions, ComputedVecValue, NumericValue, PerResolution,
-    },
+    internal::{ComputedVecValue, NumericValue, PerBlock, PerResolution, Resolutions},
 };
 
 use super::{LazyTransformLast, MapOption};

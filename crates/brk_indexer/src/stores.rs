@@ -219,7 +219,10 @@ impl Stores {
         for store in self.addr_type_to_addr_index_and_tx_index.values_mut() {
             take!(store);
         }
-        for store in self.addr_type_to_addr_index_and_unspent_outpoint.values_mut() {
+        for store in self
+            .addr_type_to_addr_index_and_unspent_outpoint
+            .values_mut()
+        {
             take!(store);
         }
 

@@ -3,7 +3,10 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::{CachedWindowStarts, PerBlockRollingAverage}};
+use crate::{
+    indexes,
+    internal::{CachedWindowStarts, PerBlockRollingAverage},
+};
 
 impl Vecs {
     pub(crate) fn forced_import(

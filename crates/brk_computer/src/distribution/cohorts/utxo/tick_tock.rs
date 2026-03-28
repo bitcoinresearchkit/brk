@@ -67,9 +67,7 @@ impl UTXOCohorts<Rw> {
                 idx
             } else {
                 let mut idx = cached[boundary_idx];
-                while idx < chain_state.len()
-                    && *chain_state[idx].timestamp <= lower_timestamp
-                {
+                while idx < chain_state.len() && *chain_state[idx].timestamp <= lower_timestamp {
                     idx += 1;
                 }
                 cached[boundary_idx] = idx;
@@ -84,8 +82,7 @@ impl UTXOCohorts<Rw> {
 
             // Move supply from younger cohort to older cohort
             for block_state in &chain_state[start_idx..end_idx] {
-                let snapshot =
-                    CostBasisSnapshot::from_utxo(block_state.price, &block_state.supply);
+                let snapshot = CostBasisSnapshot::from_utxo(block_state.price, &block_state.supply);
                 if let Some(state) = age_cohorts[boundary_idx].as_mut() {
                     state.decrement_snapshot(&snapshot);
                 }

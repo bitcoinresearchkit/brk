@@ -13,9 +13,7 @@ use crate::{
 /// with a lazy ratio float view.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct RatioRollingWindows<B: BpsType, M: StorageMode = Rw>(
-    pub Windows<RatioPerBlock<B, M>>,
-);
+pub struct RatioRollingWindows<B: BpsType, M: StorageMode = Rw>(pub Windows<RatioPerBlock<B, M>>);
 
 impl<B: BpsType> RatioRollingWindows<B> {
     pub(crate) fn forced_import(
@@ -50,7 +48,9 @@ impl<B: BpsType> RatioRollingWindows<B> {
             .zip(sources1)
             .zip(sources2)
         {
-            target.bps.compute_binary::<S1T, S2T, F>(max_from, s1, s2, exit)?;
+            target
+                .bps
+                .compute_binary::<S1T, S2T, F>(max_from, s1, s2, exit)?;
         }
         Ok(())
     }

@@ -29,7 +29,12 @@ impl<T> PerTxDistribution<T>
 where
     T: NumericValue + JsonSchema,
 {
-    pub(crate) fn forced_import(db: &Database, name: &str, version: Version, indexes: &indexes::Vecs) -> Result<Self> {
+    pub(crate) fn forced_import(
+        db: &Database,
+        name: &str,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
         let tx_index = EagerVec::forced_import(db, name, version)?;
         let distribution = TxDerivedDistribution::forced_import(db, name, version, indexes)?;
         Ok(Self {

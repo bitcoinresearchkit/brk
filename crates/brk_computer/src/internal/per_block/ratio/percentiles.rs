@@ -148,7 +148,8 @@ impl RatioPerBlockPercentiles {
 
         {
             let _lock = exit.lock();
-            self.mut_pct_vecs().try_for_each(|v| v.write().map(|_| ()))?;
+            self.mut_pct_vecs()
+                .try_for_each(|v| v.write().map(|_| ()))?;
         }
 
         // Cents bands

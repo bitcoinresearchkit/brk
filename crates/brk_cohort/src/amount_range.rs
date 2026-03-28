@@ -84,7 +84,11 @@ pub const AMOUNT_RANGE_NAMES: AmountRange<CohortName> = AmountRange {
     _10sats_to_100sats: CohortName::new("10sats_to_100sats", "10-100 sats", "10-100 Sats"),
     _100sats_to_1k_sats: CohortName::new("100sats_to_1k_sats", "100-1k sats", "100-1K Sats"),
     _1k_sats_to_10k_sats: CohortName::new("1k_sats_to_10k_sats", "1k-10k sats", "1K-10K Sats"),
-    _10k_sats_to_100k_sats: CohortName::new("10k_sats_to_100k_sats", "10k-100k sats", "10K-100K Sats"),
+    _10k_sats_to_100k_sats: CohortName::new(
+        "10k_sats_to_100k_sats",
+        "10k-100k sats",
+        "10K-100K Sats",
+    ),
     _100k_sats_to_1m_sats: CohortName::new("100k_sats_to_1m_sats", "100k-1M sats", "100K-1M Sats"),
     _1m_sats_to_10m_sats: CohortName::new("1m_sats_to_10m_sats", "1M-10M sats", "1M-10M Sats"),
     _10m_sats_to_1btc: CohortName::new("10m_sats_to_1btc", "0.1-1 BTC", "0.1-1 BTC"),

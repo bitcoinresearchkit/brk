@@ -116,11 +116,10 @@ impl<'a> TxInReaders<'a> {
         current_height: Height,
     ) -> (&[Sats], &[Height], &[OutputType], &[TypeIndex]) {
         let end = first_txin_index + input_count;
-        self.txins.spent.value.collect_range_into_at(
-            first_txin_index,
-            end,
-            &mut self.values_buf,
-        );
+        self.txins
+            .spent
+            .value
+            .collect_range_into_at(first_txin_index, end, &mut self.values_buf);
         self.indexer.vecs.inputs.outpoint.collect_range_into_at(
             first_txin_index,
             end,
@@ -138,8 +137,8 @@ impl<'a> TxInReaders<'a> {
         );
 
         self.prev_heights_buf.clear();
-        self.prev_heights_buf.extend(
-            self.outpoints_buf.iter().map(|outpoint| {
+        self.prev_heights_buf
+            .extend(self.outpoints_buf.iter().map(|outpoint| {
                 if outpoint.is_coinbase() {
                     current_height
                 } else {
@@ -147,8 +146,7 @@ impl<'a> TxInReaders<'a> {
                         .get(outpoint.tx_index())
                         .unwrap_or(current_height)
                 }
-            }),
-        );
+            }));
 
         (
             &self.values_buf,
@@ -166,10 +164,7 @@ pub struct VecsReaders {
 }
 
 impl VecsReaders {
-    pub(crate) fn new(
-        any_addr_indexes: &AnyAddrIndexesVecs,
-        addrs_data: &AddrsDataVecs,
-    ) -> Self {
+    pub(crate) fn new(any_addr_indexes: &AnyAddrIndexesVecs, addrs_data: &AddrsDataVecs) -> Self {
         Self {
             addr_type_index_to_any_addr_index: ByAddrType {
                 p2a: any_addr_indexes.p2a.create_reader(),

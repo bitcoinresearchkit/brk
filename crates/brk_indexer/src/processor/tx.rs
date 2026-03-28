@@ -104,7 +104,8 @@ pub(super) fn store_tx_metadata(
         md.txid.checked_push(ct.tx_index, ct.txid)?;
         md.raw_locktime
             .checked_push(ct.tx_index, ct.tx.lock_time.into())?;
-        md.base_size.checked_push(ct.tx_index, ct.base_size.into())?;
+        md.base_size
+            .checked_push(ct.tx_index, ct.base_size.into())?;
         md.total_size
             .checked_push(ct.tx_index, ct.total_size.into())?;
         md.is_explicitly_rbf

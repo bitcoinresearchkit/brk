@@ -1,15 +1,11 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{BasisPoints16, Height, Indexes, PoolSlug, StoredU32, StoredU64};
-use vecdb::{
-    Database, Exit, ReadableVec, Rw, StorageMode, Version,
-};
+use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode, Version};
 
 use crate::{
     blocks, indexes,
-    internal::{
-        CachedWindowStarts, PerBlockCumulativeRolling, PercentPerBlock, RatioU64Bp16,
-    },
+    internal::{CachedWindowStarts, PerBlockCumulativeRolling, PercentPerBlock, RatioU64Bp16},
 };
 
 #[derive(Traversable)]
@@ -39,8 +35,7 @@ impl Vecs {
             cached_starts,
         )?;
 
-        let dominance =
-            PercentPerBlock::forced_import(db, &suffix("dominance"), version, indexes)?;
+        let dominance = PercentPerBlock::forced_import(db, &suffix("dominance"), version, indexes)?;
 
         Ok(Self {
             slug,

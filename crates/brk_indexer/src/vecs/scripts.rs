@@ -14,7 +14,10 @@ use vecdb::{
 use crate::parallel_import;
 
 #[derive(Traversable)]
-pub struct ScriptTypeVecs<I: VecIndex + PcoVecValue + Formattable + Serialize + JsonSchema, M: StorageMode = Rw> {
+pub struct ScriptTypeVecs<
+    I: VecIndex + PcoVecValue + Formattable + Serialize + JsonSchema,
+    M: StorageMode = Rw,
+> {
     pub first_index: M::Stored<PcoVec<Height, I>>,
     pub to_tx_index: M::Stored<PcoVec<I, TxIndex>>,
 }
@@ -49,10 +52,22 @@ impl ScriptsVecs {
             unknown_output_index_to_tx_index = PcoVec::forced_import(db, "tx_index", version),
         };
         Ok(Self {
-            empty: ScriptTypeVecs { first_index: first_empty_output_index, to_tx_index: empty_output_index_to_tx_index },
-            op_return: ScriptTypeVecs { first_index: first_op_return_index, to_tx_index: op_return_index_to_tx_index },
-            p2ms: ScriptTypeVecs { first_index: first_p2ms_output_index, to_tx_index: p2ms_output_index_to_tx_index },
-            unknown: ScriptTypeVecs { first_index: first_unknown_output_index, to_tx_index: unknown_output_index_to_tx_index },
+            empty: ScriptTypeVecs {
+                first_index: first_empty_output_index,
+                to_tx_index: empty_output_index_to_tx_index,
+            },
+            op_return: ScriptTypeVecs {
+                first_index: first_op_return_index,
+                to_tx_index: op_return_index_to_tx_index,
+            },
+            p2ms: ScriptTypeVecs {
+                first_index: first_p2ms_output_index,
+                to_tx_index: p2ms_output_index_to_tx_index,
+            },
+            unknown: ScriptTypeVecs {
+                first_index: first_unknown_output_index,
+                to_tx_index: unknown_output_index_to_tx_index,
+            },
         })
     }
 
@@ -65,21 +80,29 @@ impl ScriptsVecs {
         unknown_output_index: UnknownOutputIndex,
         stamp: Stamp,
     ) -> Result<()> {
-        self.empty.first_index
+        self.empty
+            .first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.op_return.first_index
+        self.op_return
+            .first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.p2ms.first_index
+        self.p2ms
+            .first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.unknown.first_index
+        self.unknown
+            .first_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.empty.to_tx_index
+        self.empty
+            .to_tx_index
             .truncate_if_needed_with_stamp(empty_output_index, stamp)?;
-        self.op_return.to_tx_index
+        self.op_return
+            .to_tx_index
             .truncate_if_needed_with_stamp(op_return_index, stamp)?;
-        self.p2ms.to_tx_index
+        self.p2ms
+            .to_tx_index
             .truncate_if_needed_with_stamp(p2ms_output_index, stamp)?;
-        self.unknown.to_tx_index
+        self.unknown
+            .to_tx_index
             .truncate_if_needed_with_stamp(unknown_output_index, stamp)?;
         Ok(())
     }

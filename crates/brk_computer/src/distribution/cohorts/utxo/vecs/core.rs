@@ -3,7 +3,10 @@ use brk_error::Result;
 use brk_types::{Cents, Height, Indexes, Version};
 use vecdb::{Exit, ReadableVec};
 
-use crate::{distribution::{cohorts::traits::DynCohortVecs, metrics::CoreCohortMetrics}, prices};
+use crate::{
+    distribution::{cohorts::traits::DynCohortVecs, metrics::CoreCohortMetrics},
+    prices,
+};
 
 use super::UTXOCohortVecs;
 
@@ -45,12 +48,8 @@ impl DynCohortVecs for UTXOCohortVecs<CoreCohortMetrics> {
         if let Some(state) = self.state.as_mut() {
             state.apply_pending();
             let unrealized_state = state.compute_unrealized_state(height_price);
-            self.metrics
-                .unrealized
-                .push_state(&unrealized_state);
-            self.metrics
-                .supply
-                .push_profitability(&unrealized_state);
+            self.metrics.unrealized.push_state(&unrealized_state);
+            self.metrics.supply.push_profitability(&unrealized_state);
         }
     }
 

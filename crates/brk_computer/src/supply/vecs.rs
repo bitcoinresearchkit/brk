@@ -4,8 +4,8 @@ use vecdb::{Database, Rw, StorageMode};
 
 use super::{burned, velocity};
 use crate::internal::{
-    LazyFiatPerBlock, LazyAmountPerBlock, LazyRollingDeltasFiatFromHeight,
-    PercentPerBlock, RollingWindows,
+    LazyAmountPerBlock, LazyFiatPerBlock, LazyRollingDeltasFiatFromHeight, PercentPerBlock,
+    RollingWindows,
 };
 
 #[derive(Traversable)]

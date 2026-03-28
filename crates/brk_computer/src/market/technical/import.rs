@@ -19,12 +19,7 @@ impl RsiChain {
     ) -> Result<Self> {
         macro_rules! import {
             ($name:expr) => {
-                PerBlock::forced_import(
-                    db,
-                    &format!("rsi_{}_{}", $name, tf),
-                    version,
-                    indexes,
-                )?
+                PerBlock::forced_import(db, &format!("rsi_{}_{}", $name, tf), version, indexes)?
             };
         }
 
@@ -66,17 +61,11 @@ impl MacdChain {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let line =
-            PerBlock::forced_import(db, &format!("macd_line_{tf}"), version, indexes)?;
-        let signal =
-            PerBlock::forced_import(db, &format!("macd_signal_{tf}"), version, indexes)?;
+        let line = PerBlock::forced_import(db, &format!("macd_line_{tf}"), version, indexes)?;
+        let signal = PerBlock::forced_import(db, &format!("macd_signal_{tf}"), version, indexes)?;
 
-        let histogram = PerBlock::forced_import(
-            db,
-            &format!("macd_histogram_{tf}"),
-            version,
-            indexes,
-        )?;
+        let histogram =
+            PerBlock::forced_import(db, &format!("macd_histogram_{tf}"), version, indexes)?;
 
         Ok(Self {
             ema_fast: PerBlock::forced_import(
@@ -106,8 +95,9 @@ impl Vecs {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let rsi =
-            WindowsTo1m::try_from_fn(|tf| RsiChain::forced_import(db, tf, v + Version::TWO, indexes))?;
+        let rsi = WindowsTo1m::try_from_fn(|tf| {
+            RsiChain::forced_import(db, tf, v + Version::TWO, indexes)
+        })?;
         let macd = WindowsTo1m::try_from_fn(|tf| MacdChain::forced_import(db, tf, v, indexes))?;
 
         let pi_cycle = RatioPerBlock::forced_import_raw(db, "pi_cycle", v, indexes)?;

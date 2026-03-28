@@ -4,7 +4,11 @@ use brk_types::{CheckedSub, Dollars, Halving, Indexes, Sats};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{blocks, indexes, internal::{RatioDollarsBp32, RatioSatsBp16}, prices, transactions};
+use crate::{
+    blocks, indexes,
+    internal::{RatioDollarsBp32, RatioSatsBp16},
+    prices, transactions,
+};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -22,13 +26,9 @@ impl Vecs {
         let window_starts = lookback.window_starts();
         let (r_coinbase, r_fees) = rayon::join(
             || {
-                self.coinbase.compute(
-                    starting_indexes.height,
-                    prices,
-                    exit,
-                    |vec| {
-                        let mut txout_cursor =
-                            indexer.vecs.transactions.first_txout_index.cursor();
+                self.coinbase
+                    .compute(starting_indexes.height, prices, exit, |vec| {
+                        let mut txout_cursor = indexer.vecs.transactions.first_txout_index.cursor();
                         let mut count_cursor = indexes.tx_index.output_count.cursor();
 
                         vec.compute_transform(
@@ -38,12 +38,10 @@ impl Vecs {
                                 let ti = tx_index.to_usize();
 
                                 txout_cursor.advance(ti - txout_cursor.position());
-                                let first_txout_index =
-                                    txout_cursor.next().unwrap().to_usize();
+                                let first_txout_index = txout_cursor.next().unwrap().to_usize();
 
                                 count_cursor.advance(ti - count_cursor.position());
-                                let output_count: usize =
-                                    count_cursor.next().unwrap().into();
+                                let output_count: usize = count_cursor.next().unwrap().into();
 
                                 let sats = indexer.vecs.outputs.value.fold_range_at(
                                     first_txout_index,
@@ -56,8 +54,7 @@ impl Vecs {
                             exit,
                         )?;
                         Ok(())
-                    },
-                )
+                    })
             },
             || {
                 self.fees.compute(
@@ -95,7 +92,8 @@ impl Vecs {
             },
             exit,
         )?;
-        self.subsidy.compute_rest(starting_indexes.height, prices, exit)?;
+        self.subsidy
+            .compute_rest(starting_indexes.height, prices, exit)?;
 
         self.unclaimed.block.sats.compute_transform(
             starting_indexes.height,
@@ -107,7 +105,8 @@ impl Vecs {
             },
             exit,
         )?;
-        self.unclaimed.compute(prices, starting_indexes.height, exit)?;
+        self.unclaimed
+            .compute(prices, starting_indexes.height, exit)?;
 
         self.fee_dominance
             .compute_binary::<Sats, Sats, RatioSatsBp16>(

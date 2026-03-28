@@ -21,8 +21,7 @@ pub struct RelativeToAll<M: StorageMode = Rw> {
 impl RelativeToAll {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
         Ok(Self {
-            supply_to_circulating: cfg
-                .import("supply_to_circulating", Version::ONE)?,
+            supply_to_circulating: cfg.import("supply_to_circulating", Version::ONE)?,
             supply_in_profit_to_circulating: cfg
                 .import("supply_in_profit_to_circulating", Version::ONE)?,
             supply_in_loss_to_circulating: cfg

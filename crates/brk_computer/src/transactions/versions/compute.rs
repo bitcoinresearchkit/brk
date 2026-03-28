@@ -16,11 +16,7 @@ impl Vecs {
             + indexer.vecs.transactions.first_tx_index.version()
             + indexer.vecs.transactions.txid.version();
 
-        for vec in [
-            &mut self.v1.block,
-            &mut self.v2.block,
-            &mut self.v3.block,
-        ] {
+        for vec in [&mut self.v1.block, &mut self.v2.block, &mut self.v3.block] {
             vec.validate_and_truncate(dep_version, starting_indexes.height)?;
         }
 

@@ -148,11 +148,7 @@ impl ActivityCountVecs {
         self.both.block.push(counts.both.into());
     }
 
-    pub(crate) fn compute_rest(
-        &mut self,
-        max_from: Height,
-        exit: &Exit,
-    ) -> Result<()> {
+    pub(crate) fn compute_rest(&mut self, max_from: Height, exit: &Exit) -> Result<()> {
         self.reactivated.compute_rest(max_from, exit)?;
         self.sending.compute_rest(max_from, exit)?;
         self.receiving.compute_rest(max_from, exit)?;
@@ -180,8 +176,8 @@ impl AddrTypeToActivityCountVecs {
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        Ok(Self::from(
-            ByAddrType::<ActivityCountVecs>::new_with_name(|type_name| {
+        Ok(Self::from(ByAddrType::<ActivityCountVecs>::new_with_name(
+            |type_name| {
                 ActivityCountVecs::forced_import(
                     db,
                     &format!("{type_name}_{name}"),
@@ -189,8 +185,8 @@ impl AddrTypeToActivityCountVecs {
                     indexes,
                     cached_starts,
                 )
-            })?,
-        ))
+            },
+        )?))
     }
 
     pub(crate) fn min_stateful_len(&self) -> usize {
@@ -221,11 +217,7 @@ impl AddrTypeToActivityCountVecs {
         Ok(())
     }
 
-    pub(crate) fn compute_rest(
-        &mut self,
-        max_from: Height,
-        exit: &Exit,
-    ) -> Result<()> {
+    pub(crate) fn compute_rest(&mut self, max_from: Height, exit: &Exit) -> Result<()> {
         for type_vecs in self.0.values_mut() {
             type_vecs.compute_rest(max_from, exit)?;
         }
@@ -259,7 +251,11 @@ impl AddrActivityVecs {
         Ok(Self {
             all: ActivityCountVecs::forced_import(db, name, version, indexes, cached_starts)?,
             by_addr_type: AddrTypeToActivityCountVecs::forced_import(
-                db, name, version, indexes, cached_starts,
+                db,
+                name,
+                version,
+                indexes,
+                cached_starts,
             )?,
         })
     }
@@ -284,11 +280,7 @@ impl AddrActivityVecs {
         Ok(())
     }
 
-    pub(crate) fn compute_rest(
-        &mut self,
-        max_from: Height,
-        exit: &Exit,
-    ) -> Result<()> {
+    pub(crate) fn compute_rest(&mut self, max_from: Height, exit: &Exit) -> Result<()> {
         self.all.compute_rest(max_from, exit)?;
         self.by_addr_type.compute_rest(max_from, exit)?;
         Ok(())

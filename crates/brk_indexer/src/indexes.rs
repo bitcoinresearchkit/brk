@@ -30,40 +30,52 @@ impl IndexesExt for Indexes {
             .first_txout_index
             .checked_push(height, self.txout_index)?;
         vecs.scripts
-            .empty.first_index
+            .empty
+            .first_index
             .checked_push(height, self.empty_output_index)?;
         vecs.scripts
-            .p2ms.first_index
+            .p2ms
+            .first_index
             .checked_push(height, self.p2ms_output_index)?;
         vecs.scripts
-            .op_return.first_index
+            .op_return
+            .first_index
             .checked_push(height, self.op_return_index)?;
         vecs.addrs
-            .p2a.first_index
+            .p2a
+            .first_index
             .checked_push(height, self.p2a_addr_index)?;
         vecs.scripts
-            .unknown.first_index
+            .unknown
+            .first_index
             .checked_push(height, self.unknown_output_index)?;
         vecs.addrs
-            .p2pk33.first_index
+            .p2pk33
+            .first_index
             .checked_push(height, self.p2pk33_addr_index)?;
         vecs.addrs
-            .p2pk65.first_index
+            .p2pk65
+            .first_index
             .checked_push(height, self.p2pk65_addr_index)?;
         vecs.addrs
-            .p2pkh.first_index
+            .p2pkh
+            .first_index
             .checked_push(height, self.p2pkh_addr_index)?;
         vecs.addrs
-            .p2sh.first_index
+            .p2sh
+            .first_index
             .checked_push(height, self.p2sh_addr_index)?;
         vecs.addrs
-            .p2tr.first_index
+            .p2tr
+            .first_index
             .checked_push(height, self.p2tr_addr_index)?;
         vecs.addrs
-            .p2wpkh.first_index
+            .p2wpkh
+            .first_index
             .checked_push(height, self.p2wpkh_addr_index)?;
         vecs.addrs
-            .p2wsh.first_index
+            .p2wsh
+            .first_index
             .checked_push(height, self.p2wsh_addr_index)?;
 
         Ok(())

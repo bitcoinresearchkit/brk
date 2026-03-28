@@ -1,22 +1,22 @@
 pub mod ath;
 mod compute;
 mod import;
-pub mod technical;
 pub mod lookback;
 pub mod moving_average;
 pub mod range;
 pub mod returns;
+pub mod technical;
 pub mod volatility;
 
 use brk_traversable::Traversable;
 use vecdb::{Database, Rw, StorageMode};
 
 pub use ath::Vecs as AthVecs;
-pub use technical::Vecs as TechnicalVecs;
 pub use lookback::Vecs as LookbackVecs;
 pub use moving_average::Vecs as MovingAverageVecs;
 pub use range::Vecs as RangeVecs;
 pub use returns::Vecs as ReturnsVecs;
+pub use technical::Vecs as TechnicalVecs;
 pub use volatility::Vecs as VolatilityVecs;
 
 pub const DB_NAME: &str = "market";

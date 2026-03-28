@@ -16,10 +16,26 @@ pub const PROFIT_NAMES: Profit<CohortName> = Profit {
     _70pct: CohortName::new("utxos_over_70pct_in_profit", ">=70%", "Over 70% in Profit"),
     _80pct: CohortName::new("utxos_over_80pct_in_profit", ">=80%", "Over 80% in Profit"),
     _90pct: CohortName::new("utxos_over_90pct_in_profit", ">=90%", "Over 90% in Profit"),
-    _100pct: CohortName::new("utxos_over_100pct_in_profit", ">=100%", "Over 100% in Profit"),
-    _200pct: CohortName::new("utxos_over_200pct_in_profit", ">=200%", "Over 200% in Profit"),
-    _300pct: CohortName::new("utxos_over_300pct_in_profit", ">=300%", "Over 300% in Profit"),
-    _500pct: CohortName::new("utxos_over_500pct_in_profit", ">=500%", "Over 500% in Profit"),
+    _100pct: CohortName::new(
+        "utxos_over_100pct_in_profit",
+        ">=100%",
+        "Over 100% in Profit",
+    ),
+    _200pct: CohortName::new(
+        "utxos_over_200pct_in_profit",
+        ">=200%",
+        "Over 200% in Profit",
+    ),
+    _300pct: CohortName::new(
+        "utxos_over_300pct_in_profit",
+        ">=300%",
+        "Over 300% in Profit",
+    ),
+    _500pct: CohortName::new(
+        "utxos_over_500pct_in_profit",
+        ">=500%",
+        "Over 500% in Profit",
+    ),
 };
 
 /// Number of profit thresholds.

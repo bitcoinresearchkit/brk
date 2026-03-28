@@ -13,27 +13,26 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let mut prev_timestamp = None;
-        self.0
-            .compute(starting_indexes.height, exit, |vec| {
-                vec.compute_transform(
-                    starting_indexes.height,
-                    &indexer.vecs.blocks.timestamp,
-                    |(h, timestamp, ..)| {
-                        let interval = if let Some(prev_h) = h.decremented() {
-                            let prev = prev_timestamp.unwrap_or_else(|| {
-                                indexer.vecs.blocks.timestamp.collect_one(prev_h).unwrap()
-                            });
-                            timestamp.checked_sub(prev).unwrap_or(Timestamp::ZERO)
-                        } else {
-                            Timestamp::ZERO
-                        };
-                        prev_timestamp = Some(timestamp);
-                        (h, interval)
-                    },
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        self.0.compute(starting_indexes.height, exit, |vec| {
+            vec.compute_transform(
+                starting_indexes.height,
+                &indexer.vecs.blocks.timestamp,
+                |(h, timestamp, ..)| {
+                    let interval = if let Some(prev_h) = h.decremented() {
+                        let prev = prev_timestamp.unwrap_or_else(|| {
+                            indexer.vecs.blocks.timestamp.collect_one(prev_h).unwrap()
+                        });
+                        timestamp.checked_sub(prev).unwrap_or(Timestamp::ZERO)
+                    } else {
+                        Timestamp::ZERO
+                    };
+                    prev_timestamp = Some(timestamp);
+                    (h, interval)
+                },
+                exit,
+            )?;
+            Ok(())
+        })?;
 
         Ok(())
     }

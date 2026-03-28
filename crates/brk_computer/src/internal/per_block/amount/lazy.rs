@@ -5,7 +5,9 @@ use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::UnaryTransform;
 
-use crate::internal::{AmountPerBlock, Identity, LazyAmount, LazyAmountDerivedResolutions, SatsToBitcoin};
+use crate::internal::{
+    AmountPerBlock, Identity, LazyAmount, LazyAmountDerivedResolutions, SatsToBitcoin,
+};
 
 /// Lazy value wrapper with height + all derived last transforms from AmountPerBlock.
 #[derive(Clone, Deref, DerefMut, Traversable)]

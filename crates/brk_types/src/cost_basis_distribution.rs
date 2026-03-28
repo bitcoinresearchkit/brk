@@ -44,7 +44,8 @@ impl CostBasisDistribution {
         if data.len() < rest_start {
             return Err(brk_error::Error::Deserialization(format!(
                 "CostBasisDistribution: data too short ({} bytes, need >= {})",
-                data.len(), rest_start
+                data.len(),
+                rest_start
             )));
         }
 

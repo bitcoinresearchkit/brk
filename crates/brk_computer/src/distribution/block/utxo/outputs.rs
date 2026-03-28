@@ -5,9 +5,7 @@ use rayon::prelude::*;
 use smallvec::SmallVec;
 
 use crate::distribution::{
-    addr::{
-        AddrTypeToTypeIndexMap, AddrTypeToVec, AddrsDataVecs, AnyAddrIndexesVecs,
-    },
+    addr::{AddrTypeToTypeIndexMap, AddrTypeToVec, AddrsDataVecs, AnyAddrIndexesVecs},
     compute::{TxOutData, VecsReaders},
     state::Transacted,
 };
@@ -79,9 +77,7 @@ pub(crate) fn process_outputs(
     };
 
     let items: Vec<_> = if output_count < 128 {
-        (0..output_count)
-            .map(map_fn)
-            .collect::<Result<Vec<_>>>()?
+        (0..output_count).map(map_fn).collect::<Result<Vec<_>>>()?
     } else {
         (0..output_count)
             .into_par_iter()
@@ -93,10 +89,9 @@ pub(crate) fn process_outputs(
     let estimated_per_type = (output_count / 8).max(8);
     let mut transacted = Transacted::default();
     let mut received_data = AddrTypeToVec::with_capacity(estimated_per_type);
-    let mut addr_data =
-        AddrTypeToTypeIndexMap::<WithAddrDataSource<FundedAddrData>>::with_capacity(
-            estimated_per_type,
-        );
+    let mut addr_data = AddrTypeToTypeIndexMap::<WithAddrDataSource<FundedAddrData>>::with_capacity(
+        estimated_per_type,
+    );
     let mut tx_index_vecs =
         AddrTypeToTypeIndexMap::<SmallVec<[TxIndex; 4]>>::with_capacity(estimated_per_type);
 

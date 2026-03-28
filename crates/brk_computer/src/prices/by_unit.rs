@@ -2,9 +2,7 @@ use brk_traversable::Traversable;
 use brk_types::{Cents, Dollars, OHLCCents, OHLCDollars, OHLCSats, Sats};
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{
-    PerBlock, Resolutions, EagerIndexes, LazyEagerIndexes, LazyPerBlock,
-};
+use crate::internal::{EagerIndexes, LazyEagerIndexes, LazyPerBlock, PerBlock, Resolutions};
 
 use super::ohlcs::{LazyOhlcVecs, OhlcVecs};
 

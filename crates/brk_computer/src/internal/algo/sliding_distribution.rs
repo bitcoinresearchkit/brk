@@ -137,8 +137,7 @@ where
         } else {
             min_out.push(T::from(window.min()));
             max_out.push(T::from(window.max()));
-            let [p10, p25, p50, p75, p90] =
-                window.percentiles(&[0.10, 0.25, 0.50, 0.75, 0.90]);
+            let [p10, p25, p50, p75, p90] = window.percentiles(&[0.10, 0.25, 0.50, 0.75, 0.90]);
             p10_out.push(T::from(p10));
             p25_out.push(T::from(p25));
             median_out.push(T::from(p50));
@@ -165,13 +164,7 @@ where
     // Final flush
     let _lock = exit.lock();
     for v in [
-        min_out,
-        max_out,
-        p10_out,
-        p25_out,
-        median_out,
-        p75_out,
-        p90_out,
+        min_out, max_out, p10_out, p25_out, median_out, p75_out, p90_out,
     ] {
         v.write()?;
     }

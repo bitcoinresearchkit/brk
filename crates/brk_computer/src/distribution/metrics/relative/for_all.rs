@@ -6,7 +6,7 @@ use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::distribution::metrics::{ImportConfig, SupplyCore, UnrealizedFull};
 
-use super::{RelativeFull, RelativeExtendedOwnPnl};
+use super::{RelativeExtendedOwnPnl, RelativeFull};
 
 /// Relative metrics for the "all" cohort (base + own_pnl, NO rel_to_all).
 #[derive(Deref, DerefMut, Traversable)]
@@ -35,15 +35,14 @@ impl RelativeForAll {
         market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
-        self.base.compute(
+        self.base
+            .compute(max_from, supply, &unrealized.inner.basic, market_cap, exit)?;
+        self.extended_own_pnl.compute(
             max_from,
-            supply,
-            &unrealized.inner.basic,
-            market_cap,
+            &unrealized.inner,
+            &unrealized.gross_pnl.usd.height,
             exit,
         )?;
-        self.extended_own_pnl
-            .compute(max_from, &unrealized.inner, &unrealized.gross_pnl.usd.height, exit)?;
         Ok(())
     }
 }

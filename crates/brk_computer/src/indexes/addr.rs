@@ -1,11 +1,10 @@
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
-    Addr, AddrBytes, EmptyOutputIndex, OpReturnIndex, P2AAddrIndex, P2ABytes,
-    P2MSOutputIndex, P2PK33AddrIndex, P2PK33Bytes, P2PK65AddrIndex, P2PK65Bytes,
-    P2PKHAddrIndex, P2PKHBytes, P2SHAddrIndex, P2SHBytes, P2TRAddrIndex, P2TRBytes,
-    P2WPKHAddrIndex, P2WPKHBytes, P2WSHAddrIndex, P2WSHBytes, TxIndex, UnknownOutputIndex,
-    Version,
+    Addr, AddrBytes, EmptyOutputIndex, OpReturnIndex, P2AAddrIndex, P2ABytes, P2MSOutputIndex,
+    P2PK33AddrIndex, P2PK33Bytes, P2PK65AddrIndex, P2PK65Bytes, P2PKHAddrIndex, P2PKHBytes,
+    P2SHAddrIndex, P2SHBytes, P2TRAddrIndex, P2TRBytes, P2WPKHAddrIndex, P2WPKHBytes,
+    P2WSHAddrIndex, P2WSHBytes, TxIndex, UnknownOutputIndex, Version,
 };
 use vecdb::{LazyVecFrom1, ReadableCloneableVec};
 
@@ -27,15 +26,13 @@ pub struct Vecs {
 
 #[derive(Clone, Traversable)]
 pub struct P2PK33Vecs {
-    pub identity:
-        LazyVecFrom1<P2PK33AddrIndex, P2PK33AddrIndex, P2PK33AddrIndex, P2PK33Bytes>,
+    pub identity: LazyVecFrom1<P2PK33AddrIndex, P2PK33AddrIndex, P2PK33AddrIndex, P2PK33Bytes>,
     pub addr: LazyVecFrom1<P2PK33AddrIndex, Addr, P2PK33AddrIndex, P2PK33Bytes>,
 }
 
 #[derive(Clone, Traversable)]
 pub struct P2PK65Vecs {
-    pub identity:
-        LazyVecFrom1<P2PK65AddrIndex, P2PK65AddrIndex, P2PK65AddrIndex, P2PK65Bytes>,
+    pub identity: LazyVecFrom1<P2PK65AddrIndex, P2PK65AddrIndex, P2PK65AddrIndex, P2PK65Bytes>,
     pub addr: LazyVecFrom1<P2PK65AddrIndex, Addr, P2PK65AddrIndex, P2PK65Bytes>,
 }
 
@@ -59,8 +56,7 @@ pub struct P2TRVecs {
 
 #[derive(Clone, Traversable)]
 pub struct P2WPKHVecs {
-    pub identity:
-        LazyVecFrom1<P2WPKHAddrIndex, P2WPKHAddrIndex, P2WPKHAddrIndex, P2WPKHBytes>,
+    pub identity: LazyVecFrom1<P2WPKHAddrIndex, P2WPKHAddrIndex, P2WPKHAddrIndex, P2WPKHBytes>,
     pub addr: LazyVecFrom1<P2WPKHAddrIndex, Addr, P2WPKHAddrIndex, P2WPKHBytes>,
 }
 
@@ -215,7 +211,12 @@ impl Vecs {
                 identity: LazyVecFrom1::init(
                     "p2ms_output_index",
                     version,
-                    indexer.vecs.scripts.p2ms.to_tx_index.read_only_boxed_clone(),
+                    indexer
+                        .vecs
+                        .scripts
+                        .p2ms
+                        .to_tx_index
+                        .read_only_boxed_clone(),
                     |index, _| index,
                 ),
             },
@@ -226,7 +227,8 @@ impl Vecs {
                     indexer
                         .vecs
                         .scripts
-                        .empty.to_tx_index
+                        .empty
+                        .to_tx_index
                         .read_only_boxed_clone(),
                     |index, _| index,
                 ),
@@ -238,7 +240,8 @@ impl Vecs {
                     indexer
                         .vecs
                         .scripts
-                        .unknown.to_tx_index
+                        .unknown
+                        .to_tx_index
                         .read_only_boxed_clone(),
                     |index, _| index,
                 ),
@@ -250,7 +253,8 @@ impl Vecs {
                     indexer
                         .vecs
                         .scripts
-                        .op_return.to_tx_index
+                        .op_return
+                        .to_tx_index
                         .read_only_boxed_clone(),
                     |index, _| index,
                 ),

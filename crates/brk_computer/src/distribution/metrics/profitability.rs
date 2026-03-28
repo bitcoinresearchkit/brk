@@ -6,7 +6,9 @@ use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
     indexes,
-    internal::{AmountPerBlock, AmountPerBlockWithDeltas, CachedWindowStarts, PerBlock, RatioPerBlock},
+    internal::{
+        AmountPerBlock, AmountPerBlockWithDeltas, CachedWindowStarts, PerBlock, RatioPerBlock,
+    },
     prices,
 };
 
@@ -183,22 +185,34 @@ impl ProfitabilityBucket {
 
         self.supply.all.sats.height.compute_sum_of_others(
             max_from,
-            &sources.iter().map(|s| &s.supply.all.sats.height).collect::<Vec<_>>(),
+            &sources
+                .iter()
+                .map(|s| &s.supply.all.sats.height)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.supply.sth.sats.height.compute_sum_of_others(
             max_from,
-            &sources.iter().map(|s| &s.supply.sth.sats.height).collect::<Vec<_>>(),
+            &sources
+                .iter()
+                .map(|s| &s.supply.sth.sats.height)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.realized_cap.all.height.compute_sum_of_others(
             max_from,
-            &sources.iter().map(|s| &s.realized_cap.all.height).collect::<Vec<_>>(),
+            &sources
+                .iter()
+                .map(|s| &s.realized_cap.all.height)
+                .collect::<Vec<_>>(),
             exit,
         )?;
         self.realized_cap.sth.height.compute_sum_of_others(
             max_from,
-            &sources.iter().map(|s| &s.realized_cap.sth.height).collect::<Vec<_>>(),
+            &sources
+                .iter()
+                .map(|s| &s.realized_cap.sth.height)
+                .collect::<Vec<_>>(),
             exit,
         )?;
 

@@ -125,8 +125,8 @@ pub fn prepare_tree_node<'a>(
                 p.is_suffix_mode() == base_result.is_suffix_mode
                     && p.field_parts_match(&base_result.field_parts)
             });
-            let is_parameterizable = matching_pattern
-                .is_none_or(|p| metadata.is_parameterizable(&p.name));
+            let is_parameterizable =
+                matching_pattern.is_none_or(|p| metadata.is_parameterizable(&p.name));
 
             // should_inline determines if we generate an inline struct type
             let should_inline = !is_leaf

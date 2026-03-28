@@ -1,6 +1,8 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPointsSigned32, Bitcoin, Cents, CentsSigned, Dollars, Height, Indexes, StoredF64, Version};
+use brk_types::{
+    BasisPointsSigned32, Bitcoin, Cents, CentsSigned, Dollars, Height, Indexes, StoredF64, Version,
+};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
     AnyStoredVec, Exit, LazyVecFrom1, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
@@ -42,7 +44,8 @@ pub struct RealizedCore<M: StorageMode = Rw> {
 
     #[traversable(wrap = "loss", rename = "negative")]
     pub neg_loss: NegRealizedLoss,
-    pub net_pnl: FiatPerBlockCumulativeWithSumsAndDeltas<CentsSigned, CentsSigned, BasisPointsSigned32, M>,
+    pub net_pnl:
+        FiatPerBlockCumulativeWithSumsAndDeltas<CentsSigned, CentsSigned, BasisPointsSigned32, M>,
     pub sopr: RealizedSoprCore<M>,
 }
 
@@ -107,7 +110,10 @@ impl RealizedCore {
     #[inline(always)]
     pub(crate) fn push_state(&mut self, state: &CohortState<impl RealizedOps, impl CostBasisOps>) {
         self.minimal.push_state(state);
-        self.sopr.value_destroyed.block.push(state.realized.value_destroyed());
+        self.sopr
+            .value_destroyed
+            .block
+            .push(state.realized.value_destroyed());
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
@@ -135,8 +141,7 @@ impl RealizedCore {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        self.minimal
-            .compute_rest_part1(starting_indexes, exit)?;
+        self.minimal.compute_rest_part1(starting_indexes, exit)?;
 
         self.sopr
             .value_destroyed
@@ -169,8 +174,7 @@ impl RealizedCore {
         self.minimal
             .compute_rest_part2(prices, starting_indexes, height_to_supply, exit)?;
 
-        self.net_pnl
-            .compute_rest(starting_indexes.height, exit)?;
+        self.net_pnl.compute_rest(starting_indexes.height, exit)?;
 
         self.sopr
             .ratio

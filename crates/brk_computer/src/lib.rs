@@ -14,8 +14,8 @@ mod blocks;
 mod cointime;
 mod constants;
 mod distribution;
-mod indicators;
 pub mod indexes;
+mod indicators;
 mod inputs;
 mod internal;
 mod investing;
@@ -104,8 +104,9 @@ impl Computer {
 
         let cached_starts = &blocks.lookback.cached_window_starts;
 
-        let (inputs, outputs, mining, transactions, scripts, pools, cointime) =
-            timed("Imported inputs/outputs/mining/tx/scripts/pools/cointime", || {
+        let (inputs, outputs, mining, transactions, scripts, pools, cointime) = timed(
+            "Imported inputs/outputs/mining/tx/scripts/pools/cointime",
+            || {
                 thread::scope(|s| -> Result<_> {
                     let inputs_handle = big_thread().spawn_scoped(s, || -> Result<_> {
                         Ok(Box::new(inputs::Vecs::forced_import(
@@ -176,9 +177,18 @@ impl Computer {
                     let scripts = scripts_handle.join().unwrap()?;
                     let pools = pools_handle.join().unwrap()?;
 
-                    Ok((inputs, outputs, mining, transactions, scripts, pools, cointime))
+                    Ok((
+                        inputs,
+                        outputs,
+                        mining,
+                        transactions,
+                        scripts,
+                        pools,
+                        cointime,
+                    ))
                 })
-            })?;
+            },
+        )?;
 
         // Market, indicators, and distribution are independent; import in parallel.
         // Supply depends on distribution so it runs after.
@@ -317,8 +327,7 @@ impl Computer {
         let compute_start = Instant::now();
 
         let mut starting_indexes = timed("Computed indexes", || {
-            self.indexes
-                .compute(indexer, starting_indexes, exit)
+            self.indexes.compute(indexer, starting_indexes, exit)
         })?;
 
         thread::scope(|scope| -> Result<()> {
@@ -362,12 +371,8 @@ impl Computer {
             });
 
             timed("Computed scripts", || {
-                self.scripts.compute(
-                    indexer,
-                    &self.prices,
-                    &starting_indexes,
-                    exit,
-                )
+                self.scripts
+                    .compute(indexer, &self.prices, &starting_indexes, exit)
             })?;
 
             timed("Computed outputs", || {
@@ -551,8 +556,25 @@ macro_rules! impl_iter_named {
     };
 }
 
-impl_iter_named!(blocks, mining, transactions, scripts, positions, cointime,
-    constants, indicators, indexes, investing, market, pools, prices, distribution, supply, inputs, outputs);
+impl_iter_named!(
+    blocks,
+    mining,
+    transactions,
+    scripts,
+    positions,
+    cointime,
+    constants,
+    indicators,
+    indexes,
+    investing,
+    market,
+    pools,
+    prices,
+    distribution,
+    supply,
+    inputs,
+    outputs
+);
 
 fn timed<T>(label: &str, f: impl FnOnce() -> T) -> T {
     let start = Instant::now();

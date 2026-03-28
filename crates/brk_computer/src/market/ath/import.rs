@@ -30,8 +30,7 @@ impl Vecs {
             &max_days_between,
         );
 
-        let days_since =
-            PerBlock::forced_import(db, "days_since_price_ath", v, indexes)?;
+        let days_since = PerBlock::forced_import(db, "days_since_price_ath", v, indexes)?;
 
         let years_since = LazyPerBlock::from_computed::<DaysToYears>(
             "years_since_price_ath",

@@ -77,6 +77,12 @@ impl UnrealizedLike for UnrealizedFull {
         supply_in_loss_sats: &(impl ReadableVec<Height, Sats> + Sync),
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_rest_all(prices, starting_indexes, supply_in_profit_sats, supply_in_loss_sats, exit)
+        self.compute_rest_all(
+            prices,
+            starting_indexes,
+            supply_in_profit_sats,
+            supply_in_loss_sats,
+            exit,
+        )
     }
 }

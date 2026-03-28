@@ -39,8 +39,13 @@ where
         indexes: &indexes::Vecs,
         cached_starts: &CachedWindowStarts,
     ) -> Result<Self> {
-        let inner =
-            FiatPerBlockCumulativeWithSums::forced_import(db, name, version, indexes, cached_starts)?;
+        let inner = FiatPerBlockCumulativeWithSums::forced_import(
+            db,
+            name,
+            version,
+            indexes,
+            cached_starts,
+        )?;
 
         let delta = LazyRollingDeltasFiatFromHeight::new(
             &format!("{name}_delta"),

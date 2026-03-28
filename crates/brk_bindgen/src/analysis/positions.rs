@@ -108,7 +108,13 @@ fn fill_mixed_empty_field_parts(
     // Recurse first (bottom-up)
     for (field_name, child_node) in children {
         let child_path = build_child_path(path, field_name);
-        fill_mixed_empty_field_parts(child_node, &child_path, pattern_lookup, patterns, node_bases);
+        fill_mixed_empty_field_parts(
+            child_node,
+            &child_path,
+            pattern_lookup,
+            patterns,
+            node_bases,
+        );
     }
 
     // Check if this node has mixed empty/non-empty field_parts
@@ -351,16 +357,18 @@ fn try_embedded_disc(
 }
 
 /// Strategy 2: suffix discriminator (e.g., all field_parts differ by `_4y` suffix)
-fn try_suffix_disc(
-    majority: &[&InstanceAnalysis],
-    fields: &[PatternField],
-) -> Option<PatternMode> {
+fn try_suffix_disc(majority: &[&InstanceAnalysis], fields: &[PatternField]) -> Option<PatternMode> {
     let first = &majority[0];
 
     // Use a non-empty field to detect the suffix
     let ref_field = fields
         .iter()
-        .find(|f| first.field_parts.get(&f.name).is_some_and(|v| !v.is_empty()))
+        .find(|f| {
+            first
+                .field_parts
+                .get(&f.name)
+                .is_some_and(|v| !v.is_empty())
+        })
         .map(|f| &f.name)?;
     let ref_first = first.field_parts.get(ref_field)?;
 
@@ -763,19 +771,51 @@ mod tests {
     fn test_embedded_disc_percentile_bands() {
         use std::collections::BTreeSet;
         let fields = vec![
-            PatternField { name: "bps".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
-            PatternField { name: "price".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
-            PatternField { name: "ratio".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
+            PatternField {
+                name: "bps".into(),
+                rust_type: "T".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
+            PatternField {
+                name: "price".into(),
+                rust_type: "T".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
+            PatternField {
+                name: "ratio".into(),
+                rust_type: "T".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
         ];
         let pct99 = InstanceAnalysis {
             base: "realized_price".into(),
-            field_parts: [("bps".into(), "ratio_pct99_bps".into()), ("price".into(), "pct99".into()), ("ratio".into(), "ratio_pct99".into())].into_iter().collect(),
-            is_suffix_mode: true, has_outlier: false,
+            field_parts: [
+                ("bps".into(), "ratio_pct99_bps".into()),
+                ("price".into(), "pct99".into()),
+                ("ratio".into(), "ratio_pct99".into()),
+            ]
+            .into_iter()
+            .collect(),
+            is_suffix_mode: true,
+            has_outlier: false,
         };
         let pct1 = InstanceAnalysis {
             base: "realized_price".into(),
-            field_parts: [("bps".into(), "ratio_pct1_bps".into()), ("price".into(), "pct1".into()), ("ratio".into(), "ratio_pct1".into())].into_iter().collect(),
-            is_suffix_mode: true, has_outlier: false,
+            field_parts: [
+                ("bps".into(), "ratio_pct1_bps".into()),
+                ("price".into(), "pct1".into()),
+                ("ratio".into(), "ratio_pct1".into()),
+            ]
+            .into_iter()
+            .collect(),
+            is_suffix_mode: true,
+            has_outlier: false,
         };
         let mode = determine_pattern_mode(&[pct99, pct1], &fields);
         assert!(mode.is_some());
@@ -793,19 +833,51 @@ mod tests {
     fn test_suffix_disc_period_windows() {
         use std::collections::BTreeSet;
         let fields = vec![
-            PatternField { name: "p1sd".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
-            PatternField { name: "sd".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
-            PatternField { name: "zscore".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
+            PatternField {
+                name: "p1sd".into(),
+                rust_type: "T".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
+            PatternField {
+                name: "sd".into(),
+                rust_type: "T".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
+            PatternField {
+                name: "zscore".into(),
+                rust_type: "T".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
         ];
         let all_time = InstanceAnalysis {
             base: "realized_price".into(),
-            field_parts: [("p1sd".into(), "p1sd".into()), ("sd".into(), "ratio_sd".into()), ("zscore".into(), "ratio_zscore".into())].into_iter().collect(),
-            is_suffix_mode: true, has_outlier: false,
+            field_parts: [
+                ("p1sd".into(), "p1sd".into()),
+                ("sd".into(), "ratio_sd".into()),
+                ("zscore".into(), "ratio_zscore".into()),
+            ]
+            .into_iter()
+            .collect(),
+            is_suffix_mode: true,
+            has_outlier: false,
         };
         let four_year = InstanceAnalysis {
             base: "realized_price".into(),
-            field_parts: [("p1sd".into(), "p1sd_4y".into()), ("sd".into(), "ratio_sd_4y".into()), ("zscore".into(), "ratio_zscore_4y".into())].into_iter().collect(),
-            is_suffix_mode: true, has_outlier: false,
+            field_parts: [
+                ("p1sd".into(), "p1sd_4y".into()),
+                ("sd".into(), "ratio_sd_4y".into()),
+                ("zscore".into(), "ratio_zscore_4y".into()),
+            ]
+            .into_iter()
+            .collect(),
+            is_suffix_mode: true,
+            has_outlier: false,
         };
         let mode = determine_pattern_mode(&[all_time, four_year], &fields);
         assert!(mode.is_some());
@@ -823,18 +895,39 @@ mod tests {
     fn test_suffix_disc_with_empty_fields() {
         use std::collections::BTreeSet;
         let fields = vec![
-            PatternField { name: "band".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
-            PatternField { name: "sd".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
+            PatternField {
+                name: "band".into(),
+                rust_type: "T".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
+            PatternField {
+                name: "sd".into(),
+                rust_type: "T".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
         ];
         let all_time = InstanceAnalysis {
             base: "price".into(),
-            field_parts: [("band".into(), "".into()), ("sd".into(), "ratio_sd".into())].into_iter().collect(),
-            is_suffix_mode: true, has_outlier: false,
+            field_parts: [("band".into(), "".into()), ("sd".into(), "ratio_sd".into())]
+                .into_iter()
+                .collect(),
+            is_suffix_mode: true,
+            has_outlier: false,
         };
         let four_year = InstanceAnalysis {
             base: "price".into(),
-            field_parts: [("band".into(), "".into()), ("sd".into(), "ratio_sd_4y".into())].into_iter().collect(),
-            is_suffix_mode: true, has_outlier: false,
+            field_parts: [
+                ("band".into(), "".into()),
+                ("sd".into(), "ratio_sd_4y".into()),
+            ]
+            .into_iter()
+            .collect(),
+            is_suffix_mode: true,
+            has_outlier: false,
         };
         let mode = determine_pattern_mode(&[all_time, four_year], &fields);
         assert!(mode.is_some());
@@ -851,18 +944,39 @@ mod tests {
     fn test_suffix_disc_empty_to_nonempty() {
         use std::collections::BTreeSet;
         let fields = vec![
-            PatternField { name: "all".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
-            PatternField { name: "sth".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
+            PatternField {
+                name: "all".into(),
+                rust_type: "T".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
+            PatternField {
+                name: "sth".into(),
+                rust_type: "T".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
         ];
         let regular = InstanceAnalysis {
             base: "supply".into(),
-            field_parts: [("all".into(), "".into()), ("sth".into(), "sth_".into())].into_iter().collect(),
-            is_suffix_mode: true, has_outlier: false,
+            field_parts: [("all".into(), "".into()), ("sth".into(), "sth_".into())]
+                .into_iter()
+                .collect(),
+            is_suffix_mode: true,
+            has_outlier: false,
         };
         let profitability = InstanceAnalysis {
             base: "utxos_in_profit".into(),
-            field_parts: [("all".into(), "supply".into()), ("sth".into(), "sth_supply".into())].into_iter().collect(),
-            is_suffix_mode: true, has_outlier: false,
+            field_parts: [
+                ("all".into(), "supply".into()),
+                ("sth".into(), "sth_supply".into()),
+            ]
+            .into_iter()
+            .collect(),
+            is_suffix_mode: true,
+            has_outlier: false,
         };
         let mode = determine_pattern_mode(&[regular, profitability], &fields);
         assert!(mode.is_some());
@@ -879,43 +993,91 @@ mod tests {
     fn test_outlier_rejects_pattern() {
         use std::collections::BTreeSet;
         let fields = vec![
-            PatternField { name: "ratio".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
-            PatternField { name: "value".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
+            PatternField {
+                name: "ratio".into(),
+                rust_type: "T".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
+            PatternField {
+                name: "value".into(),
+                rust_type: "T".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
         ];
         // SOPR case: one instance has outlier naming (no common prefix)
         let normal = InstanceAnalysis {
             base: "series".into(),
-            field_parts: [("ratio".into(), "ratio".into()), ("value".into(), "value".into())].into_iter().collect(),
-            is_suffix_mode: true, has_outlier: false,
+            field_parts: [
+                ("ratio".into(), "ratio".into()),
+                ("value".into(), "value".into()),
+            ]
+            .into_iter()
+            .collect(),
+            is_suffix_mode: true,
+            has_outlier: false,
         };
         let outlier = InstanceAnalysis {
             base: "".into(),
-            field_parts: [("ratio".into(), "asopr".into()), ("value".into(), "adj_value".into())].into_iter().collect(),
-            is_suffix_mode: true, has_outlier: true,
+            field_parts: [
+                ("ratio".into(), "asopr".into()),
+                ("value".into(), "adj_value".into()),
+            ]
+            .into_iter()
+            .collect(),
+            is_suffix_mode: true,
+            has_outlier: true,
         };
         let mode = determine_pattern_mode(&[normal, outlier], &fields);
-        assert!(mode.is_some(), "Outlier should be filtered out, leaving a valid pattern from non-outlier instances");
+        assert!(
+            mode.is_some(),
+            "Outlier should be filtered out, leaving a valid pattern from non-outlier instances"
+        );
     }
 
     #[test]
     fn test_unanimity_rejects_disagreeing_instances() {
         use std::collections::BTreeSet;
         let fields = vec![
-            PatternField { name: "a".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
-            PatternField { name: "b".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
+            PatternField {
+                name: "a".into(),
+                rust_type: "T".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
+            PatternField {
+                name: "b".into(),
+                rust_type: "T".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
         ];
         let inst1 = InstanceAnalysis {
             base: "x".into(),
-            field_parts: [("a".into(), "foo".into()), ("b".into(), "bar".into())].into_iter().collect(),
-            is_suffix_mode: true, has_outlier: false,
+            field_parts: [("a".into(), "foo".into()), ("b".into(), "bar".into())]
+                .into_iter()
+                .collect(),
+            is_suffix_mode: true,
+            has_outlier: false,
         };
         let inst2 = InstanceAnalysis {
             base: "y".into(),
-            field_parts: [("a".into(), "baz".into()), ("b".into(), "qux".into())].into_iter().collect(),
-            is_suffix_mode: true, has_outlier: false,
+            field_parts: [("a".into(), "baz".into()), ("b".into(), "qux".into())]
+                .into_iter()
+                .collect(),
+            is_suffix_mode: true,
+            has_outlier: false,
         };
         let mode = determine_pattern_mode(&[inst1, inst2], &fields);
-        assert!(mode.is_none(), "Should be non-parameterizable when no pattern detected");
+        assert!(
+            mode.is_none(),
+            "Should be non-parameterizable when no pattern detected"
+        );
     }
 
     #[test]
@@ -925,20 +1087,43 @@ mod tests {
         // Should keep identity (empty parts) so both children receive acc unchanged.
         use std::collections::BTreeSet;
         let fields = vec![
-            PatternField { name: "absolute".into(), rust_type: "TypeA".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
-            PatternField { name: "rate".into(), rust_type: "TypeB".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
+            PatternField {
+                name: "absolute".into(),
+                rust_type: "TypeA".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
+            PatternField {
+                name: "rate".into(),
+                rust_type: "TypeB".into(),
+                json_type: "n".into(),
+                indexes: BTreeSet::new(),
+                type_param: None,
+            },
         ];
         let inst = InstanceAnalysis {
             base: "supply_delta".into(),
-            field_parts: [("absolute".into(), "".into()), ("rate".into(), "".into())].into_iter().collect(),
-            is_suffix_mode: true, has_outlier: false,
+            field_parts: [("absolute".into(), "".into()), ("rate".into(), "".into())]
+                .into_iter()
+                .collect(),
+            is_suffix_mode: true,
+            has_outlier: false,
         };
         let mode = determine_pattern_mode(&[inst], &fields);
         assert!(mode.is_some());
         match mode.unwrap() {
             PatternMode::Suffix { relatives } => {
-                assert_eq!(relatives.get("absolute"), Some(&"".to_string()), "absolute should be identity");
-                assert_eq!(relatives.get("rate"), Some(&"".to_string()), "rate should be identity");
+                assert_eq!(
+                    relatives.get("absolute"),
+                    Some(&"".to_string()),
+                    "absolute should be identity"
+                );
+                assert_eq!(
+                    relatives.get("rate"),
+                    Some(&"".to_string()),
+                    "rate should be identity"
+                );
             }
             other => panic!("Expected Suffix with identity, got {:?}", other),
         }
@@ -975,16 +1160,26 @@ mod tests {
         // Parent patterns containing non-parameterizable children should also
         // be detected via metadata.is_parameterizable (recursive check).
         use std::collections::BTreeSet;
-        let fields = vec![
-            PatternField { name: "a".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
-        ];
+        let fields = vec![PatternField {
+            name: "a".into(),
+            rust_type: "T".into(),
+            json_type: "n".into(),
+            indexes: BTreeSet::new(),
+            type_param: None,
+        }];
         let inst = InstanceAnalysis {
             base: "".into(),
-            field_parts: [("a".into(), "standalone_name".into())].into_iter().collect(),
-            is_suffix_mode: true, has_outlier: true,
+            field_parts: [("a".into(), "standalone_name".into())]
+                .into_iter()
+                .collect(),
+            is_suffix_mode: true,
+            has_outlier: true,
         };
         let mode = determine_pattern_mode(&[inst], &fields);
-        assert!(mode.is_none(), "Pattern with outlier should be non-parameterizable");
+        assert!(
+            mode.is_none(),
+            "Pattern with outlier should be non-parameterizable"
+        );
     }
 
     #[test]
@@ -998,9 +1193,27 @@ mod tests {
         let pattern = StructuralPattern {
             name: "TestPattern".into(),
             fields: vec![
-                PatternField { name: "_0sd".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
-                PatternField { name: "p1sd".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
-                PatternField { name: "sd".into(), rust_type: "T".into(), json_type: "n".into(), indexes: BTreeSet::new(), type_param: None },
+                PatternField {
+                    name: "_0sd".into(),
+                    rust_type: "T".into(),
+                    json_type: "n".into(),
+                    indexes: BTreeSet::new(),
+                    type_param: None,
+                },
+                PatternField {
+                    name: "p1sd".into(),
+                    rust_type: "T".into(),
+                    json_type: "n".into(),
+                    indexes: BTreeSet::new(),
+                    type_param: None,
+                },
+                PatternField {
+                    name: "sd".into(),
+                    rust_type: "T".into(),
+                    json_type: "n".into(),
+                    indexes: BTreeSet::new(),
+                    type_param: None,
+                },
             ],
             mode: Some(PatternMode::Templated {
                 templates: [
@@ -1059,9 +1272,15 @@ mod tests {
         assert_eq!(analysis.field_parts.get("loss"), Some(&"".to_string()));
         assert_eq!(analysis.field_parts.get("supply"), Some(&"".to_string()));
         // others should be non-empty
-        assert_eq!(analysis.field_parts.get("cap"), Some(&"realized_cap".to_string()));
+        assert_eq!(
+            analysis.field_parts.get("cap"),
+            Some(&"realized_cap".to_string())
+        );
         assert_eq!(analysis.field_parts.get("mvrv"), Some(&"mvrv".to_string()));
-        assert_eq!(analysis.field_parts.get("price"), Some(&"realized_price".to_string()));
+        assert_eq!(
+            analysis.field_parts.get("price"),
+            Some(&"realized_price".to_string())
+        );
     }
 
     #[test]
@@ -1111,12 +1330,20 @@ mod tests {
             &mut path_to_pattern,
         );
 
-        let result = node_bases.get("test").expect("should have node_bases entry");
+        let result = node_bases
+            .get("test")
+            .expect("should have node_bases entry");
         assert_eq!(result.base, "utxos");
         assert!(!result.has_outlier);
-        assert_eq!(result.field_parts.get("cap"), Some(&"realized_cap".to_string()));
+        assert_eq!(
+            result.field_parts.get("cap"),
+            Some(&"realized_cap".to_string())
+        );
         assert_eq!(result.field_parts.get("mvrv"), Some(&"mvrv".to_string()));
         // loss branch returns base "utxos_realized_loss" which yields field_part "realized_loss"
-        assert_eq!(result.field_parts.get("loss"), Some(&"realized_loss".to_string()));
+        assert_eq!(
+            result.field_parts.get("loss"),
+            Some(&"realized_loss".to_string())
+        );
     }
 }

@@ -684,7 +684,6 @@ pub fn generate_structural_patterns(
     writeln!(output, "# Reusable structural pattern classes\n").unwrap();
 
     for pattern in patterns {
-
         // Generate class
         if pattern.is_generic {
             writeln!(output, "class {}(Generic[T]):", pattern.name).unwrap();

@@ -35,7 +35,12 @@ impl OutputsVecs {
         })
     }
 
-    pub fn truncate(&mut self, height: Height, txout_index: TxOutIndex, stamp: Stamp) -> Result<()> {
+    pub fn truncate(
+        &mut self,
+        height: Height,
+        txout_index: TxOutIndex,
+        stamp: Stamp,
+    ) -> Result<()> {
         self.first_txout_index
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.value

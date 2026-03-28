@@ -56,11 +56,7 @@ pub fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     )
     .unwrap();
     writeln!(output, "        \"\"\"").unwrap();
-    writeln!(
-        output,
-        "        return SeriesEndpoint(self, series, index)"
-    )
-    .unwrap();
+    writeln!(output, "        return SeriesEndpoint(self, series, index)").unwrap();
     writeln!(output).unwrap();
 
     // Generate helper methods

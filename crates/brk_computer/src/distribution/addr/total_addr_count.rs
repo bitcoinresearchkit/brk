@@ -24,20 +24,11 @@ impl TotalAddrCountVecs {
     ) -> Result<Self> {
         let all = PerBlock::forced_import(db, "total_addr_count", version, indexes)?;
 
-        let by_addr_type: ByAddrType<PerBlock<StoredU64>> =
-            ByAddrType::new_with_name(|name| {
-                PerBlock::forced_import(
-                    db,
-                    &format!("{name}_total_addr_count"),
-                    version,
-                    indexes,
-                )
-            })?;
+        let by_addr_type: ByAddrType<PerBlock<StoredU64>> = ByAddrType::new_with_name(|name| {
+            PerBlock::forced_import(db, &format!("{name}_total_addr_count"), version, indexes)
+        })?;
 
-        Ok(Self {
-            all,
-            by_addr_type,
-        })
+        Ok(Self { all, by_addr_type })
     }
 
     /// Eagerly compute total = addr_count + empty_addr_count.

@@ -1,8 +1,8 @@
 mod avg;
 mod avgs;
+mod complete;
 mod delta;
 mod distribution;
-mod complete;
 mod lazy_complete;
 mod lazy_distribution;
 mod sum;
@@ -11,9 +11,9 @@ mod windows;
 
 pub use avg::*;
 pub use avgs::*;
+pub use complete::*;
 pub use delta::*;
 pub use distribution::*;
-pub use complete::*;
 pub use lazy_complete::*;
 pub use lazy_distribution::*;
 pub use sum::*;

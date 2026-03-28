@@ -17,8 +17,7 @@ impl Vecs {
     ) -> Result<()> {
         self.db.sync_bg_tasks()?;
 
-        self.spent
-            .compute(indexer, starting_indexes, exit)?;
+        self.spent.compute(indexer, starting_indexes, exit)?;
         self.count
             .compute(indexer, indexes, blocks, starting_indexes, exit)?;
 

@@ -26,8 +26,7 @@ impl StdDevPerBlock {
         let version = parent_version + Version::TWO;
         let p = period_suffix(period);
 
-        let sma =
-            PerBlock::forced_import(db, &format!("{name}_sma{p}"), version, indexes)?;
+        let sma = PerBlock::forced_import(db, &format!("{name}_sma{p}"), version, indexes)?;
         let sd = PerBlock::forced_import(db, &format!("{name}_sd{p}"), version, indexes)?;
 
         Ok(Self { days, sma, sd })
@@ -41,9 +40,13 @@ impl StdDevPerBlock {
         source: &impl ReadableVec<Height, StoredF32>,
     ) -> Result<()> {
         if self.days == usize::MAX {
-            self.sma
-                .height
-                .compute_sma_(starting_indexes.height, source, usize::MAX, exit, None)?;
+            self.sma.height.compute_sma_(
+                starting_indexes.height,
+                source,
+                usize::MAX,
+                exit,
+                None,
+            )?;
             self.sd.height.compute_expanding_sd(
                 starting_indexes.height,
                 source,

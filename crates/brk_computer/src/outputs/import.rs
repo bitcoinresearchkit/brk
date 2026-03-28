@@ -5,7 +5,10 @@ use brk_types::Version;
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, db_utils::{finalize_db, open_db}},
+    internal::{
+        CachedWindowStarts,
+        db_utils::{finalize_db, open_db},
+    },
 };
 
 use super::{CountVecs, SpentVecs, Vecs};

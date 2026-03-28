@@ -3,7 +3,7 @@ use brk_types::{Height, Version};
 use schemars::JsonSchema;
 use vecdb::{LazyVecFrom1, ReadableCloneableVec, UnaryTransform, VecIndex};
 
-use crate::internal::{ComputedVecValue, PerBlockDistribution, DistributionStats};
+use crate::internal::{ComputedVecValue, DistributionStats, PerBlockDistribution};
 
 /// Lazy analog of `Distribution<T>`: 7 `LazyVecFrom1` fields,
 /// each derived by transforming the corresponding field of a source `PerBlockDistribution<S1T>`.

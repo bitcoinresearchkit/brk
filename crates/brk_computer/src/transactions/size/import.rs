@@ -4,7 +4,10 @@ use brk_types::{TxIndex, VSize, Version, Weight};
 use vecdb::{Database, LazyVecFrom2, ReadableCloneableVec};
 
 use super::Vecs;
-use crate::{indexes, internal::{LazyPerTxDistribution, LazyPerTxDistributionTransformed, VSizeToWeight}};
+use crate::{
+    indexes,
+    internal::{LazyPerTxDistribution, LazyPerTxDistributionTransformed, VSizeToWeight},
+};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -23,8 +26,13 @@ impl Vecs {
             },
         );
 
-        let vsize =
-            LazyPerTxDistribution::forced_import(db, "tx_vsize", version, indexes, tx_index_to_vsize)?;
+        let vsize = LazyPerTxDistribution::forced_import(
+            db,
+            "tx_vsize",
+            version,
+            indexes,
+            tx_index_to_vsize,
+        )?;
 
         let tx_index_to_weight = LazyVecFrom2::init(
             "tx_weight",

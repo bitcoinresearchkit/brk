@@ -11,7 +11,7 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, PerBlock, NumericValue, RollingComplete, WindowStarts},
+    internal::{CachedWindowStarts, NumericValue, PerBlock, RollingComplete, WindowStarts},
 };
 
 #[derive(Traversable)]

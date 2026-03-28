@@ -57,7 +57,6 @@ impl Vecs {
         })
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
         starting_indexes: &Indexes,
@@ -67,8 +66,7 @@ impl Vecs {
         mining: &mining::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        self.base
-            .compute(starting_indexes, pool, blocks, exit)?;
+        self.base.compute(starting_indexes, pool, blocks, exit)?;
 
         for (dom, (mined, total)) in self.dominance_rolling.as_mut_array().into_iter().zip(
             self.base
@@ -86,11 +84,8 @@ impl Vecs {
             )?;
         }
 
-        self.rewards.compute(
-            starting_indexes.height,
-            prices,
-            exit,
-            |vec| {
+        self.rewards
+            .compute(starting_indexes.height, prices, exit, |vec| {
                 Ok(vec.compute_transform2(
                     starting_indexes.height,
                     &self.base.blocks_mined.block,
@@ -98,8 +93,7 @@ impl Vecs {
                     |(h, mask, val, ..)| (h, MaskSats::apply(mask, val)),
                     exit,
                 )?)
-            },
-        )?;
+            })?;
 
         Ok(())
     }

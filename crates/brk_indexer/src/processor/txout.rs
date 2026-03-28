@@ -2,8 +2,8 @@ use brk_cohort::ByAddrType;
 use brk_error::{Error, Result};
 use brk_store::Store;
 use brk_types::{
-    AddrBytes, AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, OutPoint, OutputType,
-    Sats, TxIndex, TxOutIndex, TypeIndex, Unit, Vout,
+    AddrBytes, AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, OutPoint, OutputType, Sats, TxIndex,
+    TxOutIndex, TypeIndex, Unit, Vout,
 };
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -119,9 +119,7 @@ pub(super) fn finalize_outputs(
     already_added_addr_hash: &mut ByAddrType<FxHashMap<AddrHash, TypeIndex>>,
     same_block_output_info: &mut FxHashMap<OutPoint, SameBlockOutputInfo>,
 ) -> Result<()> {
-    already_added_addr_hash
-        .values_mut()
-        .for_each(|m| m.clear());
+    already_added_addr_hash.values_mut().for_each(|m| m.clear());
     same_block_output_info.clear();
 
     for ProcessedOutput {
@@ -168,25 +166,29 @@ pub(super) fn finalize_outputs(
             match output_type {
                 OutputType::P2MS => {
                     scripts
-                        .p2ms.to_tx_index
+                        .p2ms
+                        .to_tx_index
                         .checked_push(indexes.p2ms_output_index, tx_index)?;
                     indexes.p2ms_output_index.copy_then_increment()
                 }
                 OutputType::OpReturn => {
                     scripts
-                        .op_return.to_tx_index
+                        .op_return
+                        .to_tx_index
                         .checked_push(indexes.op_return_index, tx_index)?;
                     indexes.op_return_index.copy_then_increment()
                 }
                 OutputType::Empty => {
                     scripts
-                        .empty.to_tx_index
+                        .empty
+                        .to_tx_index
                         .checked_push(indexes.empty_output_index, tx_index)?;
                     indexes.empty_output_index.copy_then_increment()
                 }
                 OutputType::Unknown => {
                     scripts
-                        .unknown.to_tx_index
+                        .unknown
+                        .to_tx_index
                         .checked_push(indexes.unknown_output_index, tx_index)?;
                     indexes.unknown_output_index.copy_then_increment()
                 }

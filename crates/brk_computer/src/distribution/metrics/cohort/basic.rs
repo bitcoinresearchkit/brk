@@ -87,16 +87,12 @@ impl BasicCohortMetrics {
             exit,
         )?;
 
-        self.relative.compute(
-            starting_indexes.height,
-            &self.supply,
-            all_supply_sats,
-            exit,
-        )?;
+        self.relative
+            .compute(starting_indexes.height, &self.supply, all_supply_sats, exit)?;
 
-        self.outputs.compute_part2(starting_indexes.height, all_utxo_count, exit)?;
+        self.outputs
+            .compute_part2(starting_indexes.height, all_utxo_count, exit)?;
 
         Ok(())
     }
-
 }

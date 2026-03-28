@@ -29,11 +29,8 @@ impl<B: BpsType> LazyPercentPerBlock<B> {
             &source.bps,
         );
 
-        let ratio = LazyPerBlock::from_lazy::<B::ToRatio, B>(
-            &format!("{name}_ratio"),
-            version,
-            &bps,
-        );
+        let ratio =
+            LazyPerBlock::from_lazy::<B::ToRatio, B>(&format!("{name}_ratio"), version, &bps);
 
         let percent = LazyPerBlock::from_lazy::<B::ToPercent, B>(name, version, &bps);
 
