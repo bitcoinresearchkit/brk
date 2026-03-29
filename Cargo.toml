@@ -75,7 +75,7 @@ owo-colors = "4.3.0"
 parking_lot = "0.12.5"
 pco = "1.0.1"
 rayon = "1.11.0"
-rustc-hash = "2.1.1"
+rustc-hash = "2.1.2"
 schemars = { version = "1.2.1", features = ["indexmap2"] }
 serde = "1.0.228"
 serde_bytes = "0.11.19"
