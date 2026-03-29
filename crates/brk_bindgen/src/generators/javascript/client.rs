@@ -22,6 +22,20 @@ pub fn generate_base_client(output: &mut String) {
 const _isBrowser = typeof window !== 'undefined' && 'caches' in window;
 const _runIdle = (/** @type {{VoidFunction}} */ fn) => (globalThis.requestIdleCallback ?? setTimeout)(fn);
 const _defaultCacheName = '__BRK_CLIENT__';
+/** @param {{*}} v */
+const _addCamelGetters = (v) => {{
+  if (Array.isArray(v)) {{ v.forEach(_addCamelGetters); return v; }}
+  if (v && typeof v === 'object' && v.constructor === Object) {{
+    for (const k in v) {{
+      if (k.includes('_')) {{
+        const c = k.replace(/_([a-z])/g, (_, l) => l.toUpperCase());
+        if (!(c in v)) Object.defineProperty(v, c, {{ get() {{ return this[k]; }} }});
+      }}
+      _addCamelGetters(v[k]);
+    }}
+  }}
+  return v;
+}};
 
 /**
  * @param {{string|boolean|undefined}} cache
@@ -418,7 +432,7 @@ class BrkClientBase {{
     const cachePromise = cache?.match(url).then(async (res) => {{
       cachedRes = res ?? null;
       if (!res) return null;
-      const json = await res.json();
+      const json = _addCamelGetters(await res.json());
       if (!resolved && onUpdate) {{
         resolved = true;
         onUpdate(json);
@@ -428,7 +442,7 @@ class BrkClientBase {{
 
     const networkPromise = this.get(path).then(async (res) => {{
       const cloned = res.clone();
-      const json = await res.json();
+      const json = _addCamelGetters(await res.json());
       // Skip update if ETag matches and cache already delivered
       if (cachedRes?.headers.get('ETag') === res.headers.get('ETag')) {{
         if (!resolved && onUpdate) {{

@@ -53,6 +53,7 @@
  * @typedef {Brk.ActivityOutputsRealizedSupplyUnrealizedPattern3} EmptyPattern
  * @typedef {Brk._0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern} Ratio1ySdPattern
  * @typedef {Brk.Dollars} Dollars
+ * @typedef {Brk.BlockInfo} BlockInfo
  * ActivePriceRatioPattern: ratio pattern with price (extended)
  * @typedef {Brk.BpsPriceRatioPattern} ActivePriceRatioPattern
  * PriceRatioPercentilesPattern: price pattern with ratio + percentiles (no SMAs/stdDev)

@@ -1,5 +1,7 @@
 use brk_error::{Error, Result};
-use brk_types::{BlockHash, BlockHashPrefix, BlockInfo, Height, TxIndex};
+use brk_types::{
+    BlockExtras, BlockHash, BlockHashPrefix, BlockInfo, BlockPool, Height, TxIndex, pools,
+};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 use crate::Query;

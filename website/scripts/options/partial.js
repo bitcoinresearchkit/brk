@@ -58,6 +58,11 @@ export function createPartialOptions() {
 
   return [
     {
+      name: "Explorer",
+      kind: "explorer",
+      title: "Explorer",
+    },
+    {
       name: "Charts",
       tree: [
         createMarketSection(),

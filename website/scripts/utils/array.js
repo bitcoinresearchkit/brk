@@ -23,3 +23,12 @@ export const fromEntries = (pairs) => /** @type {Record<K, V>} */ (Object.fromEn
  * @returns {value is T}
  */
 export const includes = (arr, value) => arr.includes(/** @type {T} */ (value));
+
+/**
+ * @template T
+ * @param {readonly T[]} arr
+ * @returns {T}
+ */
+export function randomFromArray(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}

@@ -3,7 +3,7 @@
 
   #chain {
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     gap: calc(var(--cube) * 0.66);
     padding: 2rem;
 
