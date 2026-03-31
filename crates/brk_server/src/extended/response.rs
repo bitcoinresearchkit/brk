@@ -54,3 +54,73 @@ impl ResponseExtended for Response<Body> {
         Self::new_json_cached(value, &params)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use axum::{
+        body::to_bytes,
+        http::{
+            HeaderMap, StatusCode,
+            header::{CACHE_CONTROL, CONTENT_TYPE, ETAG, IF_NONE_MATCH},
+        },
+    };
+    use serde_json::json;
+
+    use super::ResponseExtended;
+    use crate::{VERSION, cache::CacheParams};
+
+    #[tokio::test]
+    async fn new_json_cached_sets_headers_and_body() {
+        let params = CacheParams::version();
+        let response = axum::http::Response::<axum::body::Body>::new_json_cached(
+            json!({ "ok": true }),
+            &params,
+        );
+
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            response.headers().get(CONTENT_TYPE).unwrap(),
+            "application/json"
+        );
+        assert_eq!(
+            response.headers().get(CACHE_CONTROL).unwrap(),
+            "public, max-age=1, must-revalidate",
+        );
+        assert_eq!(
+            response.headers().get(ETAG).unwrap(),
+            format!("\"{VERSION}\"").as_str(),
+        );
+
+        let body = to_bytes(response.into_body(), 1024).await.unwrap();
+        assert_eq!(
+            serde_json::from_slice::<serde_json::Value>(&body).unwrap(),
+            json!({ "ok": true })
+        );
+    }
+
+    #[tokio::test]
+    async fn static_json_returns_not_modified_for_matching_unquoted_etag() {
+        let mut headers = HeaderMap::new();
+        headers.insert(IF_NONE_MATCH, VERSION.parse().unwrap());
+
+        let response =
+            axum::http::Response::<axum::body::Body>::static_json(&headers, json!({ "ok": true }));
+
+        assert_eq!(response.status(), StatusCode::NOT_MODIFIED);
+        let body = to_bytes(response.into_body(), 1024).await.unwrap();
+        assert!(body.is_empty());
+    }
+
+    #[tokio::test]
+    async fn static_json_returns_not_modified_for_matching_quoted_etag() {
+        let mut headers = HeaderMap::new();
+        headers.insert(IF_NONE_MATCH, format!("\"{VERSION}\"").parse().unwrap());
+
+        let response =
+            axum::http::Response::<axum::body::Body>::static_json(&headers, json!({ "ok": true }));
+
+        assert_eq!(response.status(), StatusCode::NOT_MODIFIED);
+        let body = to_bytes(response.into_body(), 1024).await.unwrap();
+        assert!(body.is_empty());
+    }
+}
