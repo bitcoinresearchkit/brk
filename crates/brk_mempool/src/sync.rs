@@ -106,6 +106,10 @@ impl MempoolInner {
         self.txs.read()
     }
 
+    pub fn get_entries(&self) -> RwLockReadGuard<'_, EntryPool> {
+        self.entries.read()
+    }
+
     pub fn get_addrs(&self) -> RwLockReadGuard<'_, AddrTracker> {
         self.addrs.read()
     }

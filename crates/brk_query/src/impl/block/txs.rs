@@ -23,7 +23,7 @@ impl Query {
 
     // === Helper methods ===
 
-    fn block_txids_by_height(&self, height: Height) -> Result<Vec<Txid>> {
+    pub(crate) fn block_txids_by_height(&self, height: Height) -> Result<Vec<Txid>> {
         let indexer = self.indexer();
 
         let max_height = self.indexed_height();

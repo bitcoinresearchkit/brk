@@ -13,6 +13,7 @@ use serde::de::DeserializeOwned;
 pub use brk_cohort::*;
 pub use brk_types::*;
 
+
 /// Error type for BRK client operations.
 #[derive(Debug)]
 pub struct BrkError {
@@ -3124,7 +3125,6 @@ pub struct SeriesTree {
     pub addrs: SeriesTree_Addrs,
     pub scripts: SeriesTree_Scripts,
     pub mining: SeriesTree_Mining,
-    pub positions: SeriesTree_Positions,
     pub cointime: SeriesTree_Cointime,
     pub constants: SeriesTree_Constants,
     pub indexes: SeriesTree_Indexes,
@@ -3147,7 +3147,6 @@ impl SeriesTree {
             addrs: SeriesTree_Addrs::new(client.clone(), format!("{base_path}_addrs")),
             scripts: SeriesTree_Scripts::new(client.clone(), format!("{base_path}_scripts")),
             mining: SeriesTree_Mining::new(client.clone(), format!("{base_path}_mining")),
-            positions: SeriesTree_Positions::new(client.clone(), format!("{base_path}_positions")),
             cointime: SeriesTree_Cointime::new(client.clone(), format!("{base_path}_cointime")),
             constants: SeriesTree_Constants::new(client.clone(), format!("{base_path}_constants")),
             indexes: SeriesTree_Indexes::new(client.clone(), format!("{base_path}_indexes")),
@@ -3165,10 +3164,14 @@ impl SeriesTree {
 /// Series tree node.
 pub struct SeriesTree_Blocks {
     pub blockhash: SeriesPattern18<BlockHash>,
+    pub coinbase_tag: SeriesPattern18<CoinbaseTag>,
     pub difficulty: SeriesTree_Blocks_Difficulty,
     pub time: SeriesTree_Blocks_Time,
     pub size: SeriesTree_Blocks_Size,
     pub weight: AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<Weight>,
+    pub segwit_txs: SeriesPattern18<StoredU32>,
+    pub segwit_size: SeriesPattern18<StoredU64>,
+    pub segwit_weight: SeriesPattern18<Weight>,
     pub count: SeriesTree_Blocks_Count,
     pub lookback: SeriesTree_Blocks_Lookback,
     pub interval: SeriesTree_Blocks_Interval,
@@ -3181,10 +3184,14 @@ impl SeriesTree_Blocks {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             blockhash: SeriesPattern18::new(client.clone(), "blockhash".to_string()),
+            coinbase_tag: SeriesPattern18::new(client.clone(), "coinbase_tag".to_string()),
             difficulty: SeriesTree_Blocks_Difficulty::new(client.clone(), format!("{base_path}_difficulty")),
             time: SeriesTree_Blocks_Time::new(client.clone(), format!("{base_path}_time")),
             size: SeriesTree_Blocks_Size::new(client.clone(), format!("{base_path}_size")),
             weight: AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), "block_weight".to_string()),
+            segwit_txs: SeriesPattern18::new(client.clone(), "segwit_txs".to_string()),
+            segwit_size: SeriesPattern18::new(client.clone(), "segwit_size".to_string()),
+            segwit_weight: SeriesPattern18::new(client.clone(), "segwit_weight".to_string()),
             count: SeriesTree_Blocks_Count::new(client.clone(), format!("{base_path}_count")),
             lookback: SeriesTree_Blocks_Lookback::new(client.clone(), format!("{base_path}_lookback")),
             interval: SeriesTree_Blocks_Interval::new(client.clone(), format!("{base_path}_interval")),
@@ -3538,6 +3545,7 @@ pub struct SeriesTree_Transactions_Fees {
     pub output_value: SeriesPattern19<Sats>,
     pub fee: _6bBlockTxPattern<Sats>,
     pub fee_rate: _6bBlockTxPattern<FeeRate>,
+    pub effective_fee_rate: _6bBlockTxPattern<FeeRate>,
 }
 
 impl SeriesTree_Transactions_Fees {
@@ -3547,6 +3555,7 @@ impl SeriesTree_Transactions_Fees {
             output_value: SeriesPattern19::new(client.clone(), "output_value".to_string()),
             fee: _6bBlockTxPattern::new(client.clone(), "fee".to_string()),
             fee_rate: _6bBlockTxPattern::new(client.clone(), "fee_rate".to_string()),
+            effective_fee_rate: _6bBlockTxPattern::new(client.clone(), "effective_fee_rate".to_string()),
         }
     }
 }
@@ -4179,6 +4188,7 @@ pub struct SeriesTree_Mining_Rewards {
     pub coinbase: AverageBlockCumulativeSumPattern3,
     pub subsidy: SeriesTree_Mining_Rewards_Subsidy,
     pub fees: SeriesTree_Mining_Rewards_Fees,
+    pub output_volume: SeriesPattern18<Sats>,
     pub unclaimed: BlockCumulativePattern,
 }
 
@@ -4188,6 +4198,7 @@ impl SeriesTree_Mining_Rewards {
             coinbase: AverageBlockCumulativeSumPattern3::new(client.clone(), "coinbase".to_string()),
             subsidy: SeriesTree_Mining_Rewards_Subsidy::new(client.clone(), format!("{base_path}_subsidy")),
             fees: SeriesTree_Mining_Rewards_Fees::new(client.clone(), format!("{base_path}_fees")),
+            output_volume: SeriesPattern18::new(client.clone(), "output_volume".to_string()),
             unclaimed: BlockCumulativePattern::new(client.clone(), "unclaimed_rewards".to_string()),
         }
     }
@@ -4321,17 +4332,6 @@ impl SeriesTree_Mining_Hashrate_Rate_Sma {
             _1m: SeriesPattern1::new(client.clone(), "hash_rate_sma_1m".to_string()),
             _2m: SeriesPattern1::new(client.clone(), "hash_rate_sma_2m".to_string()),
             _1y: SeriesPattern1::new(client.clone(), "hash_rate_sma_1y".to_string()),
-        }
-    }
-}
-
-/// Series tree node.
-pub struct SeriesTree_Positions {
-}
-
-impl SeriesTree_Positions {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
         }
     }
 }
@@ -8320,14 +8320,14 @@ impl BrkClient {
         self.base.get_json(&format!("/api/address/{address}/utxo"))
     }
 
-    /// Block by height
+    /// Block hash by height
     ///
-    /// Retrieve block information by block height. Returns block metadata including hash, timestamp, difficulty, size, weight, and transaction count.
+    /// Retrieve the block hash at a given height. Returns the hash as plain text.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*
     ///
     /// Endpoint: `GET /api/block-height/{height}`
-    pub fn get_block_by_height(&self, height: Height) -> Result<BlockInfo> {
+    pub fn get_block_by_height(&self, height: Height) -> Result<BlockHash> {
         self.base.get_json(&format!("/api/block-height/{height}"))
     }
 
@@ -8340,6 +8340,17 @@ impl BrkClient {
     /// Endpoint: `GET /api/block/{hash}`
     pub fn get_block(&self, hash: BlockHash) -> Result<BlockInfo> {
         self.base.get_json(&format!("/api/block/{hash}"))
+    }
+
+    /// Block header
+    ///
+    /// Returns the hex-encoded block header.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}/header`
+    pub fn get_block_header(&self, hash: BlockHash) -> Result<Hex> {
+        self.base.get_json(&format!("/api/block/{hash}/header"))
     }
 
     /// Raw block
@@ -8408,6 +8419,28 @@ impl BrkClient {
         self.base.get_json(&format!("/api/blocks"))
     }
 
+    /// Block tip hash
+    ///
+    /// Returns the hash of the last block.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
+    ///
+    /// Endpoint: `GET /api/blocks/tip/hash`
+    pub fn get_block_tip_hash(&self) -> Result<BlockHash> {
+        self.base.get_json(&format!("/api/blocks/tip/hash"))
+    }
+
+    /// Block tip height
+    ///
+    /// Returns the height of the last block.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
+    ///
+    /// Endpoint: `GET /api/blocks/tip/height`
+    pub fn get_block_tip_height(&self) -> Result<Height> {
+        self.base.get_json(&format!("/api/blocks/tip/height"))
+    }
+
     /// Blocks from height
     ///
     /// Retrieve up to 10 blocks going backwards from the given height. For example, height=100 returns blocks 100, 99, 98, ..., 91. Height=0 returns only block 0.
@@ -8425,9 +8458,9 @@ impl BrkClient {
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
     ///
-    /// Endpoint: `GET /api/mempool/info`
+    /// Endpoint: `GET /api/mempool`
     pub fn get_mempool(&self) -> Result<MempoolInfo> {
-        self.base.get_json(&format!("/api/mempool/info"))
+        self.base.get_json(&format!("/api/mempool"))
     }
 
     /// Live BTC/USD price
@@ -8437,6 +8470,17 @@ impl BrkClient {
     /// Endpoint: `GET /api/mempool/price`
     pub fn get_live_price(&self) -> Result<Dollars> {
         self.base.get_json(&format!("/api/mempool/price"))
+    }
+
+    /// Recent mempool transactions
+    ///
+    /// Get the last 10 transactions to enter the mempool.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*
+    ///
+    /// Endpoint: `GET /api/mempool/recent`
+    pub fn get_mempool_recent(&self) -> Result<Vec<MempoolRecentTx>> {
+        self.base.get_json(&format!("/api/mempool/recent"))
     }
 
     /// Mempool transaction IDs
@@ -8679,6 +8723,17 @@ impl BrkClient {
         self.base.get_json(&format!("/api/tx/{txid}/hex"))
     }
 
+    /// Transaction merkle proof
+    ///
+    /// Get the merkle inclusion proof for a transaction.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkle-proof)*
+    ///
+    /// Endpoint: `GET /api/tx/{txid}/merkle-proof`
+    pub fn get_tx_merkle_proof(&self, txid: Txid) -> Result<MerkleProof> {
+        self.base.get_json(&format!("/api/tx/{txid}/merkle-proof"))
+    }
+
     /// Output spend status
     ///
     /// Get the spending status of a transaction output. Returns whether the output has been spent and, if so, the spending transaction details.
@@ -8701,6 +8756,17 @@ impl BrkClient {
         self.base.get_json(&format!("/api/tx/{txid}/outspends"))
     }
 
+    /// Transaction raw
+    ///
+    /// Returns a transaction as binary data.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-raw)*
+    ///
+    /// Endpoint: `GET /api/tx/{txid}/raw`
+    pub fn get_tx_raw(&self, txid: Txid) -> Result<Vec<f64>> {
+        self.base.get_json(&format!("/api/tx/{txid}/raw"))
+    }
+
     /// Transaction status
     ///
     /// Retrieve the confirmation status of a transaction. Returns whether the transaction is confirmed and, if so, the block height, hash, and timestamp.
@@ -8710,6 +8776,50 @@ impl BrkClient {
     /// Endpoint: `GET /api/tx/{txid}/status`
     pub fn get_tx_status(&self, txid: Txid) -> Result<TxStatus> {
         self.base.get_json(&format!("/api/tx/{txid}/status"))
+    }
+
+    /// Block (v1)
+    ///
+    /// Returns block details with extras by hash.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*
+    ///
+    /// Endpoint: `GET /api/v1/block/{hash}`
+    pub fn get_block_v1(&self, hash: BlockHash) -> Result<BlockInfoV1> {
+        self.base.get_json(&format!("/api/v1/block/{hash}"))
+    }
+
+    /// Recent blocks with extras
+    ///
+    /// Retrieve the last 10 blocks with extended data including pool identification and fee statistics.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
+    ///
+    /// Endpoint: `GET /api/v1/blocks`
+    pub fn get_blocks_v1(&self) -> Result<Vec<BlockInfoV1>> {
+        self.base.get_json(&format!("/api/v1/blocks"))
+    }
+
+    /// Blocks from height with extras
+    ///
+    /// Retrieve up to 10 blocks with extended data going backwards from the given height.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
+    ///
+    /// Endpoint: `GET /api/v1/blocks/{height}`
+    pub fn get_blocks_v1_from_height(&self, height: Height) -> Result<Vec<BlockInfoV1>> {
+        self.base.get_json(&format!("/api/v1/blocks/{height}"))
+    }
+
+    /// CPFP info
+    ///
+    /// Returns ancestors and descendants for a CPFP transaction.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*
+    ///
+    /// Endpoint: `GET /api/v1/cpfp/{txid}`
+    pub fn get_cpfp(&self, txid: Txid) -> Result<CpfpInfo> {
+        self.base.get_json(&format!("/api/v1/cpfp/{txid}"))
     }
 
     /// Difficulty adjustment
@@ -8734,6 +8844,17 @@ impl BrkClient {
         self.base.get_json(&format!("/api/v1/fees/mempool-blocks"))
     }
 
+    /// Precise recommended fees
+    ///
+    /// Get recommended fee rates with up to 3 decimal places, including sub-sat feerates.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
+    ///
+    /// Endpoint: `GET /api/v1/fees/precise`
+    pub fn get_precise_fees(&self) -> Result<RecommendedFees> {
+        self.base.get_json(&format!("/api/v1/fees/precise"))
+    }
+
     /// Recommended fees
     ///
     /// Get recommended fee rates for different confirmation targets based on current mempool state.
@@ -8743,6 +8864,21 @@ impl BrkClient {
     /// Endpoint: `GET /api/v1/fees/recommended`
     pub fn get_recommended_fees(&self) -> Result<RecommendedFees> {
         self.base.get_json(&format!("/api/v1/fees/recommended"))
+    }
+
+    /// Historical price
+    ///
+    /// Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
+    ///
+    /// Endpoint: `GET /api/v1/historical-price`
+    pub fn get_historical_price(&self, timestamp: Option<Timestamp>) -> Result<HistoricalPrice> {
+        let mut query = Vec::new();
+        if let Some(v) = timestamp { query.push(format!("timestamp={}", v)); }
+        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
+        let path = format!("/api/v1/historical-price{}", query_str);
+        self.base.get_json(&path)
     }
 
     /// Block fee rates (WIP)
@@ -8833,6 +8969,28 @@ impl BrkClient {
         self.base.get_json(&format!("/api/v1/mining/hashrate"))
     }
 
+    /// All pools hashrate (all time)
+    ///
+    /// Get hashrate data for all mining pools.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/hashrate/pools`
+    pub fn get_pools_hashrate(&self) -> Result<Vec<PoolHashrateEntry>> {
+        self.base.get_json(&format!("/api/v1/mining/hashrate/pools"))
+    }
+
+    /// All pools hashrate
+    ///
+    /// Get hashrate data for all mining pools for a time period. Valid periods: 1m, 3m, 6m, 1y, 2y, 3y
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/hashrate/pools/{time_period}`
+    pub fn get_pools_hashrate_by_period(&self, time_period: TimePeriod) -> Result<Vec<PoolHashrateEntry>> {
+        self.base.get_json(&format!("/api/v1/mining/hashrate/pools/{time_period}"))
+    }
+
     /// Network hashrate
     ///
     /// Get network hashrate and difficulty data for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
@@ -8853,6 +9011,39 @@ impl BrkClient {
     /// Endpoint: `GET /api/v1/mining/pool/{slug}`
     pub fn get_pool(&self, slug: PoolSlug) -> Result<PoolDetail> {
         self.base.get_json(&format!("/api/v1/mining/pool/{slug}"))
+    }
+
+    /// Mining pool blocks
+    ///
+    /// Get the 10 most recent blocks mined by a specific pool.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/pool/{slug}/blocks`
+    pub fn get_pool_blocks(&self, slug: PoolSlug) -> Result<Vec<BlockInfoV1>> {
+        self.base.get_json(&format!("/api/v1/mining/pool/{slug}/blocks"))
+    }
+
+    /// Mining pool blocks from height
+    ///
+    /// Get 10 blocks mined by a specific pool before (and including) the given height.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/pool/{slug}/blocks/{height}`
+    pub fn get_pool_blocks_from(&self, slug: PoolSlug, height: Height) -> Result<Vec<BlockInfoV1>> {
+        self.base.get_json(&format!("/api/v1/mining/pool/{slug}/blocks/{height}"))
+    }
+
+    /// Mining pool hashrate
+    ///
+    /// Get hashrate history for a specific mining pool.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrate)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/pool/{slug}/hashrate`
+    pub fn get_pool_hashrate(&self, slug: PoolSlug) -> Result<Vec<PoolHashrateEntry>> {
+        self.base.get_json(&format!("/api/v1/mining/pool/{slug}/hashrate"))
     }
 
     /// List all mining pools
@@ -8886,6 +9077,21 @@ impl BrkClient {
     /// Endpoint: `GET /api/v1/mining/reward-stats/{block_count}`
     pub fn get_reward_stats(&self, block_count: i64) -> Result<RewardStats> {
         self.base.get_json(&format!("/api/v1/mining/reward-stats/{block_count}"))
+    }
+
+    /// Transaction first-seen times
+    ///
+    /// Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*
+    ///
+    /// Endpoint: `GET /api/v1/transaction-times`
+    pub fn get_transaction_times(&self, txId: Txid[]) -> Result<Vec<f64>> {
+        let mut query = Vec::new();
+        query.push(format!("txId[]={}", txId));
+        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
+        let path = format!("/api/v1/transaction-times{}", query_str);
+        self.base.get_json(&path)
     }
 
     /// Validate address

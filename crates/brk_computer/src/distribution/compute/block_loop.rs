@@ -7,7 +7,7 @@ use brk_types::{
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use tracing::{debug, info};
-use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
+use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec, unlikely};
 
 use crate::{
     distribution::{
@@ -243,7 +243,11 @@ pub(crate) fn process_blocks(
     for height in starting_height.to_usize()..=last_height.to_usize() {
         let height = Height::from(height);
 
-        info!("Processing chain at {}...", height);
+        if unlikely(height.is_multiple_of(100)) {
+            info!("Processing chain at {}...", height);
+        } else {
+            debug!("Processing chain at {}...", height);
+        }
 
         // Get block metadata from pre-collected vecs
         let offset = height.to_usize() - start_usize;

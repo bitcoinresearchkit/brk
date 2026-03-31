@@ -8,7 +8,6 @@ use std::{
 use brk_alloc::Mimalloc;
 use brk_computer::Computer;
 use brk_indexer::Indexer;
-use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use vecdb::Exit;
@@ -31,8 +30,6 @@ pub fn main() -> color_eyre::Result<()> {
 
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
 
-    let blocks = Blocks::new(&client, &reader);
-
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
     let exit = Exit::new();
@@ -42,7 +39,7 @@ pub fn main() -> color_eyre::Result<()> {
     let chain_height = client.get_last_height()?;
     let indexed_height = indexer.vecs.starting_height();
     if u32::from(chain_height).saturating_sub(u32::from(indexed_height)) > 1000 {
-        indexer.checked_index(&blocks, &client, &exit)?;
+        indexer.checked_index(&reader, &client, &exit)?;
         drop(indexer);
         Mimalloc::collect();
         indexer = Indexer::forced_import(&outputs_dir)?;
@@ -52,11 +49,11 @@ pub fn main() -> color_eyre::Result<()> {
 
     loop {
         let i = Instant::now();
-        let starting_indexes = indexer.checked_index(&blocks, &client, &exit)?;
+        let starting_indexes = indexer.checked_index(&reader, &client, &exit)?;
 
         Mimalloc::collect();
 
-        computer.compute(&indexer, starting_indexes, &reader, &exit)?;
+        computer.compute(&indexer, starting_indexes, &exit)?;
         dbg!(i.elapsed());
         sleep(Duration::from_secs(10));
     }

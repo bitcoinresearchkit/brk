@@ -82,18 +82,19 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         } else {
             writeln!(output, "    const params = new URLSearchParams();").unwrap();
             for param in &endpoint.query_params {
+                let ident = sanitize_ident(&param.name);
                 if param.required {
                     writeln!(
                         output,
                         "    params.set('{}', String({}));",
-                        param.name, param.name
+                        param.name, ident
                     )
                     .unwrap();
                 } else {
                     writeln!(
                         output,
                         "    if ({} !== undefined) params.set('{}', String({}));",
-                        param.name, param.name, param.name
+                        ident, param.name, ident
                     )
                     .unwrap();
                 }
@@ -127,12 +128,17 @@ fn endpoint_to_method_name(endpoint: &Endpoint) -> String {
 fn build_method_params(endpoint: &Endpoint) -> String {
     let mut params = Vec::new();
     for param in &endpoint.path_params {
-        params.push(param.name.clone());
+        params.push(sanitize_ident(&param.name));
     }
     for param in &endpoint.query_params {
-        params.push(param.name.clone());
+        params.push(sanitize_ident(&param.name));
     }
     params.join(", ")
+}
+
+/// Strip characters invalid in JS identifiers (e.g. `[]` from `txId[]`).
+fn sanitize_ident(name: &str) -> String {
+    name.replace(['[', ']'], "")
 }
 
 fn build_path_template(path: &str, path_params: &[Parameter]) -> String {

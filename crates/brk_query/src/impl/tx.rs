@@ -3,8 +3,8 @@ use std::io::Cursor;
 use bitcoin::{consensus::Decodable, hex::DisplayHex};
 use brk_error::{Error, Result};
 use brk_types::{
-    OutputType, Sats, Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxOutspend, TxStatus, Txid,
-    TxidParam, TxidPrefix, Vin, Vout, Weight,
+    Height, MerkleProof, OutputType, Sats, Transaction, TxIn, TxInIndex, TxIndex, TxOut,
+    TxOutspend, TxStatus, Txid, TxidParam, TxidPrefix, Vin, Vout, Weight,
 };
 use vecdb::{ReadableVec, VecIndex};
 
@@ -70,6 +70,20 @@ impl Query {
             block_hash: Some(block_hash),
             block_time: Some(block_time),
         })
+    }
+
+    pub fn transaction_raw(&self, TxidParam { txid }: TxidParam) -> Result<Vec<u8>> {
+        let prefix = TxidPrefix::from(&txid);
+        let indexer = self.indexer();
+        let Ok(Some(tx_index)) = indexer
+            .stores
+            .txid_prefix_to_tx_index
+            .get(&prefix)
+            .map(|opt| opt.map(|cow| cow.into_owned()))
+        else {
+            return Err(Error::UnknownTxid);
+        };
+        self.transaction_raw_by_index(tx_index)
     }
 
     pub fn transaction_hex(&self, TxidParam { txid }: TxidParam) -> Result<String> {
@@ -192,7 +206,6 @@ impl Query {
     pub fn transaction_by_index(&self, tx_index: TxIndex) -> Result<Transaction> {
         let indexer = self.indexer();
         let reader = self.reader();
-        let computer = self.computer();
 
         // Get tx metadata using collect_one for PcoVec, read_once for BytesVec
         let txid = indexer.vecs.transactions.txid.read_once(tx_index)?;
@@ -226,7 +239,12 @@ impl Query {
             .first_txin_index
             .collect_one(tx_index)
             .unwrap();
-        let position = computer.positions.tx.collect_one(tx_index).unwrap();
+        let position = indexer
+            .vecs
+            .transactions
+            .position
+            .collect_one(tx_index)
+            .unwrap();
 
         // Get block info for status
         let block_hash = indexer.vecs.blocks.blockhash.read_once(height)?;
@@ -337,22 +355,15 @@ impl Query {
         Ok(transaction)
     }
 
-    fn transaction_hex_by_index(&self, tx_index: TxIndex) -> Result<String> {
+    fn transaction_raw_by_index(&self, tx_index: TxIndex) -> Result<Vec<u8>> {
         let indexer = self.indexer();
-        let reader = self.reader();
-        let computer = self.computer();
+        let total_size = indexer.vecs.transactions.total_size.collect_one(tx_index).unwrap();
+        let position = indexer.vecs.transactions.position.collect_one(tx_index).unwrap();
+        self.reader().read_raw_bytes(position, *total_size as usize)
+    }
 
-        let total_size = indexer
-            .vecs
-            .transactions
-            .total_size
-            .collect_one(tx_index)
-            .unwrap();
-        let position = computer.positions.tx.collect_one(tx_index).unwrap();
-
-        let buffer = reader.read_raw_bytes(position, *total_size as usize)?;
-
-        Ok(buffer.to_lower_hex_string())
+    fn transaction_hex_by_index(&self, tx_index: TxIndex) -> Result<String> {
+        Ok(self.transaction_raw_by_index(tx_index)?.to_lower_hex_string())
     }
 
     fn outspend_details(&self, txin_index: TxInIndex) -> Result<TxOutspend> {
@@ -407,4 +418,93 @@ impl Query {
             }),
         })
     }
+
+    fn resolve_tx(&self, txid: &Txid) -> Result<(TxIndex, Height)> {
+        let indexer = self.indexer();
+        let prefix = TxidPrefix::from(txid);
+        let tx_index: TxIndex = indexer
+            .stores
+            .txid_prefix_to_tx_index
+            .get(&prefix)?
+            .map(|cow| cow.into_owned())
+            .ok_or(Error::UnknownTxid)?;
+        let height: Height = indexer
+            .vecs
+            .transactions
+            .height
+            .collect_one(tx_index)
+            .unwrap();
+        Ok((tx_index, height))
+    }
+
+    pub fn broadcast_transaction(&self, hex: &str) -> Result<Txid> {
+        self.client().send_raw_transaction(hex)
+    }
+
+    pub fn merkleblock_proof(&self, txid_param: TxidParam) -> Result<String> {
+        let (_, height) = self.resolve_tx(&txid_param.txid)?;
+        let header = self.read_block_header(height)?;
+        let txids = self.block_txids_by_height(height)?;
+
+        let target: bitcoin::Txid = (&txid_param.txid).into();
+        let btxids: Vec<bitcoin::Txid> = txids.iter().map(bitcoin::Txid::from).collect();
+        let mb = bitcoin::MerkleBlock::from_header_txids_with_predicate(&header, &btxids, |t| {
+            *t == target
+        });
+        Ok(bitcoin::consensus::encode::serialize_hex(&mb))
+    }
+
+    pub fn merkle_proof(&self, txid_param: TxidParam) -> Result<MerkleProof> {
+        let (tx_index, height) = self.resolve_tx(&txid_param.txid)?;
+        let first_tx = self
+            .indexer()
+            .vecs
+            .transactions
+            .first_tx_index
+            .collect_one(height)
+            .ok_or(Error::NotFound("Block not found".into()))?;
+        let pos = tx_index.to_usize() - first_tx.to_usize();
+        let txids = self.block_txids_by_height(height)?;
+
+        Ok(MerkleProof {
+            block_height: height,
+            merkle: merkle_path(&txids, pos),
+            pos,
+        })
+    }
+}
+
+fn merkle_path(txids: &[Txid], pos: usize) -> Vec<String> {
+    use bitcoin::hashes::{Hash, sha256d};
+
+    // Txid bytes are in internal order (same layout as bitcoin::Txid)
+    let mut hashes: Vec<[u8; 32]> = txids
+        .iter()
+        .map(|t| bitcoin::Txid::from(t).to_byte_array())
+        .collect();
+
+    let mut proof = Vec::new();
+    let mut idx = pos;
+
+    while hashes.len() > 1 {
+        let sibling = if idx ^ 1 < hashes.len() { idx ^ 1 } else { idx };
+        // Display order: reverse bytes for hex output
+        let mut display = hashes[sibling];
+        display.reverse();
+        proof.push(bitcoin::hex::DisplayHex::to_lower_hex_string(&display));
+
+        hashes = hashes
+            .chunks(2)
+            .map(|pair| {
+                let right = pair.last().unwrap();
+                let mut combined = [0u8; 64];
+                combined[..32].copy_from_slice(&pair[0]);
+                combined[32..].copy_from_slice(right);
+                sha256d::Hash::hash(&combined).to_byte_array()
+            })
+            .collect();
+        idx /= 2;
+    }
+
+    proof
 }

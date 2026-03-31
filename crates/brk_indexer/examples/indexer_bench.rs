@@ -9,7 +9,6 @@ use brk_alloc::Mimalloc;
 use brk_bencher::Bencher;
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use tracing::{debug, info};
@@ -33,8 +32,6 @@ fn main() -> Result<()> {
 
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
 
-    let blocks = Blocks::new(&client, &reader);
-
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
     let mut bencher =
@@ -50,7 +47,7 @@ fn main() -> Result<()> {
     });
 
     let i = Instant::now();
-    indexer.index(&blocks, &client, &exit)?;
+    indexer.index(&reader, &client, &exit)?;
     info!("Done in {:?}", i.elapsed());
 
     // We want to benchmark the drop too

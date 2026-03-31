@@ -8,12 +8,14 @@ use std::{
 };
 
 use brk_error::Result;
-use brk_iterator::Blocks;
+use brk_reader::Reader;
 use brk_rpc::Client;
 use brk_types::Height;
 use fjall::PersistMode;
 use tracing::{debug, info};
-use vecdb::{Exit, RawDBError, ReadOnlyClone, ReadableVec, Ro, Rw, StorageMode};
+use vecdb::{
+    Exit, RawDBError, ReadOnlyClone, ReadableVec, Ro, Rw, StorageMode, WritableVec, unlikely,
+};
 mod constants;
 mod indexes;
 mod processor;
@@ -93,22 +95,22 @@ impl Indexer {
         }
     }
 
-    pub fn index(&mut self, blocks: &Blocks, client: &Client, exit: &Exit) -> Result<Indexes> {
-        self.index_(blocks, client, exit, false)
+    pub fn index(&mut self, reader: &Reader, client: &Client, exit: &Exit) -> Result<Indexes> {
+        self.index_(reader, client, exit, false)
     }
 
     pub fn checked_index(
         &mut self,
-        blocks: &Blocks,
+        reader: &Reader,
         client: &Client,
         exit: &Exit,
     ) -> Result<Indexes> {
-        self.index_(blocks, client, exit, true)
+        self.index_(reader, client, exit, true)
     }
 
     fn index_(
         &mut self,
-        blocks: &Blocks,
+        reader: &Reader,
         client: &Client,
         exit: &Exit,
         check_collisions: bool,
@@ -172,13 +174,13 @@ impl Indexer {
                 let stores_res = s.spawn(|| -> Result<()> {
                     let i = Instant::now();
                     stores.commit(height)?;
-                    info!("Stores exported in {:?}", i.elapsed());
+                    debug!("Stores exported in {:?}", i.elapsed());
                     Ok(())
                 });
                 let vecs_res = s.spawn(|| -> Result<()> {
                     let i = Instant::now();
                     vecs.flush(height)?;
-                    info!("Vecs exported in {:?}", i.elapsed());
+                    debug!("Vecs exported in {:?}", i.elapsed());
                     Ok(())
                 });
                 stores_res.join().unwrap()?;
@@ -195,12 +197,21 @@ impl Indexer {
         let vecs = &mut self.vecs;
         let stores = &mut self.stores;
 
-        for block in blocks.after(prev_hash)? {
+        for block in reader.after(prev_hash)?.iter() {
             let height = block.height();
 
-            info!("Indexing block {height}...");
+            if unlikely(height.is_multiple_of(100)) {
+                info!("Indexing block {height}...");
+            } else {
+                debug!("Indexing block {height}...");
+            }
 
             indexes.height = height;
+
+            vecs.blocks.position.push(block.metadata().position());
+            block.tx_metadata().iter().for_each(|m| {
+                vecs.transactions.position.push(m.position());
+            });
 
             let mut processor = BlockProcessor {
                 block: &block,
@@ -271,13 +282,13 @@ impl Indexer {
                 for task in tasks {
                     task().map_err(vecdb::RawDBError::other)?;
                 }
-                info!("Stores committed in {:?}", i.elapsed());
+                debug!("Stores committed in {:?}", i.elapsed());
 
                 let i = Instant::now();
                 fjall_db
                     .persist(PersistMode::SyncData)
                     .map_err(RawDBError::other)?;
-                info!("Stores persisted in {:?}", i.elapsed());
+                debug!("Stores persisted in {:?}", i.elapsed());
             }
 
             db.compact()?;

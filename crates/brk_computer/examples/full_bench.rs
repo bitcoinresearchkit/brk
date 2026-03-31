@@ -9,7 +9,6 @@ use brk_alloc::Mimalloc;
 use brk_bencher::Bencher;
 use brk_computer::Computer;
 use brk_indexer::Indexer;
-use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use tracing::{debug, info};
@@ -45,15 +44,13 @@ pub fn main() -> color_eyre::Result<()> {
 
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
 
-    let blocks = Blocks::new(&client, &reader);
-
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
     // Pre-run indexer if too far behind, then drop and reimport to reduce memory
     let chain_height = client.get_last_height()?;
     let indexed_height = indexer.vecs.starting_height();
     if chain_height.saturating_sub(*indexed_height) > 1000 {
-        indexer.index(&blocks, &client, &exit)?;
+        indexer.index(&reader, &client, &exit)?;
         drop(indexer);
         Mimalloc::collect();
         indexer = Indexer::forced_import(&outputs_dir)?;
@@ -63,13 +60,13 @@ pub fn main() -> color_eyre::Result<()> {
 
     loop {
         let i = Instant::now();
-        let starting_indexes = indexer.index(&blocks, &client, &exit)?;
+        let starting_indexes = indexer.index(&reader, &client, &exit)?;
         info!("Done in {:?}", i.elapsed());
 
         Mimalloc::collect();
 
         let i = Instant::now();
-        computer.compute(&indexer, starting_indexes, &reader, &exit)?;
+        computer.compute(&indexer, starting_indexes, &exit)?;
         info!("Done in {:?}", i.elapsed());
 
         sleep(Duration::from_secs(60));

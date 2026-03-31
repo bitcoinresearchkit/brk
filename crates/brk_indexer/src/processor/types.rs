@@ -48,6 +48,18 @@ pub struct ComputedTx<'a> {
     pub total_size: u32,
 }
 
+impl ComputedTx<'_> {
+    #[inline]
+    pub fn is_segwit(&self) -> bool {
+        self.base_size != self.total_size
+    }
+
+    #[inline]
+    pub fn weight(&self) -> usize {
+        self.base_size as usize * 3 + self.total_size as usize
+    }
+}
+
 /// Reusable buffers cleared and refilled each block to avoid allocation churn.
 #[derive(Default)]
 pub struct BlockBuffers {

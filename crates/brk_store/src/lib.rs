@@ -137,13 +137,6 @@ where
                         FilterPolicyEntry::Bloom(BloomConstructionPolicy::BitsPerKey(7.0)),
                     ]));
             }
-            Kind::Sequential => {
-                options = options
-                    .filter_block_partitioning_policy(PartitioningPolicy::all(true))
-                    .index_block_partitioning_policy(PartitioningPolicy::all(true))
-                    .filter_block_pinning_policy(PinningPolicy::all(false))
-                    .index_block_pinning_policy(PinningPolicy::all(false));
-            }
             Kind::Vec => {
                 options = options
                     .max_memtable_size(8 * 1024 * 1024)

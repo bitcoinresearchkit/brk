@@ -1,3 +1,4 @@
+use aide::OperationOutput;
 use axum::{
     http::{StatusCode, header},
     response::{IntoResponse, Response},
@@ -155,6 +156,10 @@ impl From<BrkError> for Error {
             message: e.to_string(),
         }
     }
+}
+
+impl OperationOutput for Error {
+    type Inner = ();
 }
 
 impl IntoResponse for Error {

@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::Database;
+use vecdb::{Database, EagerVec, ImportableVec};
 
 use super::Vecs;
 use crate::{
@@ -44,6 +44,7 @@ impl Vecs {
                 cached_starts,
             )?,
             fees: AmountPerBlockFull::forced_import(db, "fees", version, indexes, cached_starts)?,
+            output_volume: EagerVec::forced_import(db, "output_volume", version)?,
             unclaimed: AmountPerBlockCumulative::forced_import(
                 db,
                 "unclaimed_rewards",

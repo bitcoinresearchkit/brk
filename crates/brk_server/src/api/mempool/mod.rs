@@ -1,13 +1,14 @@
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
-    extract::State,
+    extract::{Query, State},
     http::{HeaderMap, Uri},
-    response::Redirect,
-    routing::get,
 };
-use brk_types::{Dollars, MempoolBlock, MempoolInfo, RecommendedFees, Txid};
+use brk_types::{
+    Dollars, HistoricalPrice, MempoolBlock, MempoolInfo, MempoolRecentTx, OptionalTimestampParam,
+    RecommendedFees, Txid,
+};
 
-use crate::extended::TransformResponseExtended;
+use crate::{CacheStrategy, extended::TransformResponseExtended};
 
 use super::AppState;
 
@@ -18,9 +19,8 @@ pub trait MempoolRoutes {
 impl MempoolRoutes for ApiRouter<AppState> {
     fn add_mempool_routes(self) -> Self {
         self
-            .route("/api/mempool", get(Redirect::temporary("/api#tag/mempool")))
             .api_route(
-                "/api/mempool/info",
+                "/api/mempool",
                 get_with(
                     async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
                         state.cached_json(&headers, state.mempool_cache(), &uri, |q| q.mempool_info()).await
@@ -47,6 +47,22 @@ impl MempoolRoutes for ApiRouter<AppState> {
                             .summary("Mempool transaction IDs")
                             .description("Get all transaction IDs currently in the mempool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-transaction-ids)*")
                             .ok_response::<Vec<Txid>>()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/mempool/recent",
+                get_with(
+                    async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                        state.cached_json(&headers, state.mempool_cache(), &uri, |q| q.mempool_recent()).await
+                    },
+                    |op| {
+                        op.id("get_mempool_recent")
+                            .mempool_tag()
+                            .summary("Recent mempool transactions")
+                            .description("Get the last 10 transactions to enter the mempool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*")
+                            .ok_response::<Vec<MempoolRecentTx>>()
                             .server_error()
                     },
                 ),
@@ -88,6 +104,22 @@ impl MempoolRoutes for ApiRouter<AppState> {
                 ),
             )
             .api_route(
+                "/api/v1/fees/precise",
+                get_with(
+                    async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                        state.cached_json(&headers, state.mempool_cache(), &uri, |q| q.recommended_fees()).await
+                    },
+                    |op| {
+                        op.id("get_precise_fees")
+                            .mempool_tag()
+                            .summary("Precise recommended fees")
+                            .description("Get recommended fee rates with up to 3 decimal places, including sub-sat feerates.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*")
+                            .ok_response::<RecommendedFees>()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
                 "/api/v1/fees/mempool-blocks",
                 get_with(
                     async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
@@ -99,6 +131,23 @@ impl MempoolRoutes for ApiRouter<AppState> {
                             .summary("Projected mempool blocks")
                             .description("Get projected blocks from the mempool for fee estimation. Each block contains statistics about transactions that would be included if a block were mined now.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*")
                             .ok_response::<Vec<MempoolBlock>>()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/v1/historical-price",
+                get_with(
+                    async |uri: Uri, headers: HeaderMap, Query(params): Query<OptionalTimestampParam>, State(state): State<AppState>| {
+                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.historical_price(params.timestamp)).await
+                    },
+                    |op| {
+                        op.id("get_historical_price")
+                            .mempool_tag()
+                            .summary("Historical price")
+                            .description("Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*")
+                            .ok_response::<HistoricalPrice>()
+                            .not_modified()
                             .server_error()
                     },
                 ),

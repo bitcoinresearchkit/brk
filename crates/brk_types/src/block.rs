@@ -1,11 +1,9 @@
-use std::borrow::Cow;
-
 use bitcoin::hashes::{Hash, HashEngine};
 use derive_more::Deref;
 
 use crate::BlkMetadata;
 
-use super::{BlockHash, Height};
+use super::{BlockHash, CoinbaseTag, Height};
 
 /// Raw block bytes and per-tx offsets for fast txid hashing.
 /// Present when block was parsed from blk*.dat files, absent for RPC blocks.
@@ -110,15 +108,15 @@ impl Block {
         bitcoin::Txid::from_engine(engine)
     }
 
-    pub fn coinbase_tag(&self) -> Cow<'_, str> {
-        String::from_utf8_lossy(
-            self.txdata
-                .first()
-                .and_then(|tx| tx.input.first())
-                .unwrap()
-                .script_sig
-                .as_bytes(),
-        )
+    pub fn coinbase_tag(&self) -> CoinbaseTag {
+        let bytes = self
+            .txdata
+            .first()
+            .and_then(|tx| tx.input.first())
+            .unwrap()
+            .script_sig
+            .as_bytes();
+        CoinbaseTag::from(bytes)
     }
 }
 

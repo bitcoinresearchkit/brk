@@ -13,7 +13,7 @@
 
 Open-source, self-hostable on-chain analytics for Bitcoin. Block explorer, address index, and thousands of metrics, everything computed from your node, even the price.
 
-Similar to [Glassnode](https://glassnode.com) + [mempool.space](https://mempool.space) + [electrs](https://github.com/romanz/electrs) + [UTXO Oracle](https://utxo.live/oracle/) in a single package.
+Similar to [Glassnode](https://glassnode.com) + [mempool.space](https://mempool.space) + [UTXO Oracle](https://utxo.live/oracle/) in a single package.
 
 [Bitview](https://bitview.space) is a free hosted instance of BRK.
 

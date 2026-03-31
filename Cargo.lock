@@ -444,7 +444,6 @@ dependencies = [
  "brk_computer",
  "brk_error",
  "brk_indexer",
- "brk_iterator",
  "brk_logger",
  "brk_mempool",
  "brk_query",
@@ -494,12 +493,10 @@ dependencies = [
  "brk_cohort",
  "brk_error",
  "brk_indexer",
- "brk_iterator",
  "brk_logger",
  "brk_oracle",
  "brk_reader",
  "brk_rpc",
- "brk_store",
  "brk_traversable",
  "brk_types",
  "color-eyre",
@@ -553,7 +550,6 @@ dependencies = [
  "brk_bencher",
  "brk_cohort",
  "brk_error",
- "brk_iterator",
  "brk_logger",
  "brk_reader",
  "brk_rpc",
@@ -2545,9 +2541,7 @@ dependencies = [
 
 [[package]]
 name = "rawdb"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fddb06a11fcc5f7f44d9b5bee4ab61b5a1135232b2fd239253428abd192ba504"
+version = "0.9.1"
 dependencies = [
  "libc",
  "log",
@@ -3439,9 +3433,7 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a33f1cbef9bf38048ee1b51328366f0a734e06bcc0b9739d68fef9ecce43d0b8"
+version = "0.9.1"
 dependencies = [
  "itoa",
  "libc",
@@ -3462,9 +3454,7 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33d31f03d1c7269d65195fb4d54c1d510b124807871bd11af7d10a08700d7590"
+version = "0.9.1"
 dependencies = [
  "quote",
  "syn",
@@ -3788,9 +3778,9 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 
 [[package]]
 name = "winnow"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a90e88e4667264a994d34e6d1ab2d26d398dcdca8b7f52bec8668957517fc7d8"
+checksum = "09dac053f1cd375980747450bfc7250c264eaae0583872e845c0c7cd578872b5"
 
 [[package]]
 name = "wio"

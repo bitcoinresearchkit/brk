@@ -49,6 +49,11 @@ BasisPointsSigned16 = int
 BasisPointsSigned32 = int
 # Bitcoin amount as floating point (1 BTC = 100,000,000 satoshis)
 Bitcoin = float
+PoolSlug = Literal["unknown", "blockfills", "ultimuspool", "terrapool", "luxor", "onethash", "btccom", "bitfarms", "huobipool", "wayicn", "canoepool", "btctop", "bitcoincom", "pool175btc", "gbminers", "axbt", "asicminer", "bitminter", "bitcoinrussia", "btcserv", "simplecoinus", "btcguild", "eligius", "ozcoin", "eclipsemc", "maxbtc", "triplemining", "coinlab", "pool50btc", "ghashio", "stminingcorp", "bitparking", "mmpool", "polmine", "kncminer", "bitalo", "f2pool", "hhtt", "megabigpower", "mtred", "nmcbit", "yourbtcnet", "givemecoins", "braiinspool", "antpool", "multicoinco", "bcpoolio", "cointerra", "kanopool", "solock", "ckpool", "nicehash", "bitclub", "bitcoinaffiliatenetwork", "btcc", "bwpool", "exxbw", "bitsolo", "bitfury", "twentyoneinc", "digitalbtc", "eightbaochi", "mybtccoinpool", "tbdice", "hashpool", "nexious", "bravomining", "hotpool", "okexpool", "bcmonster", "onehash", "bixin", "tatmaspool", "viabtc", "connectbtc", "batpool", "waterhole", "dcexploration", "dcex", "btpool", "fiftyeightcoin", "bitcoinindia", "shawnp0wers", "phashio", "rigpool", "haozhuzhu", "sevenpool", "miningkings", "hashbx", "dpool", "rawpool", "haominer", "helix", "bitcoinukraine", "poolin", "secretsuperstar", "tigerpoolnet", "sigmapoolcom", "okpooltop", "hummerpool", "tangpool", "bytepool", "spiderpool", "novablock", "miningcity", "binancepool", "minerium", "lubiancom", "okkong", "aaopool", "emcdpool", "foundryusa", "sbicrypto", "arkpool", "purebtccom", "marapool", "kucoinpool", "entrustcharitypool", "okminer", "titan", "pegapool", "btcnuggets", "cloudhashing", "digitalxmintsy", "telco214", "btcpoolparty", "multipool", "transactioncoinmining", "btcdig", "trickysbtcpool", "btcmp", "eobot", "unomp", "patels", "gogreenlight", "bitcoinindiapool", "ekanembtc", "canoe", "tiger", "onem1x", "zulupool", "secpool", "ocean", "whitepool", "wiz", "wk057", "futurebitapollosolo", "carbonnegative", "portlandhodl", "phoenix", "neopool", "maxipool", "bitfufupool", "gdpool", "miningdutch", "publicpool", "miningsquared", "innopolistech", "btclab", "parasite", "redrockpool", "est3lar"]
+# Fee rate in sats/vB
+FeeRate = float
+# Transaction or block weight in weight units (WU)
+Weight = int
 # Block height
 Height = int
 # UNIX timestamp in seconds
@@ -56,8 +61,6 @@ Timestamp = int
 # Block hash
 BlockHash = str
 TxIndex = int
-# Transaction or block weight in weight units (WU)
-Weight = int
 # Unsigned cents (u64) - for values that should never be negative.
 # Used for invested capital, realized cap, etc.
 Cents = int
@@ -77,6 +80,14 @@ Dollars = float
 Close = Dollars
 # Cohort identifier for cost basis distribution.
 Cohort = str
+# Coinbase scriptSig tag for pool identification.
+# 
+# Stored as a fixed 101-byte record (1 byte length + 100 bytes data).
+# Uses `[u8; 101]` internally so that `size_of::<CoinbaseTag>()` matches
+# the serialized `Bytes::Array` size (vecdb requires this for alignment).
+# 
+# Bitcoin consensus limits coinbase scriptSig to 2-100 bytes.
+CoinbaseTag = str
 # Bucket type for cost basis aggregation.
 # Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
 # log10/log50/log100/log200 (logarithmic with 10/50/100/200 buckets per decade).
@@ -97,8 +108,8 @@ Day3 = int
 EmptyAddrIndex = TypeIndex
 EmptyOutputIndex = TypeIndex
 Epoch = int
-# Fee rate in sats/vB
-FeeRate = float
+# Exchange rates (USD base, on-chain only — no fiat pairs available)
+ExchangeRates = dict
 FundedAddrIndex = TypeIndex
 Halving = int
 # Hex-encoded string
@@ -147,7 +158,6 @@ P2WPKHAddrIndex = TypeIndex
 P2WPKHBytes = U8x20
 P2WSHAddrIndex = TypeIndex
 P2WSHBytes = U8x32
-PoolSlug = Literal["unknown", "blockfills", "ultimuspool", "terrapool", "luxor", "onethash", "btccom", "bitfarms", "huobipool", "wayicn", "canoepool", "btctop", "bitcoincom", "pool175btc", "gbminers", "axbt", "asicminer", "bitminter", "bitcoinrussia", "btcserv", "simplecoinus", "btcguild", "eligius", "ozcoin", "eclipsemc", "maxbtc", "triplemining", "coinlab", "pool50btc", "ghashio", "stminingcorp", "bitparking", "mmpool", "polmine", "kncminer", "bitalo", "f2pool", "hhtt", "megabigpower", "mtred", "nmcbit", "yourbtcnet", "givemecoins", "braiinspool", "antpool", "multicoinco", "bcpoolio", "cointerra", "kanopool", "solock", "ckpool", "nicehash", "bitclub", "bitcoinaffiliatenetwork", "btcc", "bwpool", "exxbw", "bitsolo", "bitfury", "twentyoneinc", "digitalbtc", "eightbaochi", "mybtccoinpool", "tbdice", "hashpool", "nexious", "bravomining", "hotpool", "okexpool", "bcmonster", "onehash", "bixin", "tatmaspool", "viabtc", "connectbtc", "batpool", "waterhole", "dcexploration", "dcex", "btpool", "fiftyeightcoin", "bitcoinindia", "shawnp0wers", "phashio", "rigpool", "haozhuzhu", "sevenpool", "miningkings", "hashbx", "dpool", "rawpool", "haominer", "helix", "bitcoinukraine", "poolin", "secretsuperstar", "tigerpoolnet", "sigmapoolcom", "okpooltop", "hummerpool", "tangpool", "bytepool", "spiderpool", "novablock", "miningcity", "binancepool", "minerium", "lubiancom", "okkong", "aaopool", "emcdpool", "foundryusa", "sbicrypto", "arkpool", "purebtccom", "marapool", "kucoinpool", "entrustcharitypool", "okminer", "titan", "pegapool", "btcnuggets", "cloudhashing", "digitalxmintsy", "telco214", "btcpoolparty", "multipool", "transactioncoinmining", "btcdig", "trickysbtcpool", "btcmp", "eobot", "unomp", "patels", "gogreenlight", "bitcoinindiapool", "ekanembtc", "canoe", "tiger", "onem1x", "zulupool", "secpool", "ocean", "whitepool", "wiz", "wk057", "futurebitapollosolo", "carbonnegative", "portlandhodl", "phoenix", "neopool", "maxipool", "bitfufupool", "gdpool", "miningdutch", "publicpool", "miningsquared", "innopolistech", "btclab", "parasite", "redrockpool", "est3lar"]
 # Transaction locktime
 RawLockTime = int
 # Fractional satoshis (f64) - for representing USD prices in sats
@@ -296,6 +306,78 @@ class BlockCountParam(TypedDict):
     """
     block_count: int
 
+class BlockPool(TypedDict):
+    """
+    Mining pool identification for a block
+
+    Attributes:
+        id: Unique pool identifier
+        name: Pool name
+        slug: URL-friendly pool identifier
+    """
+    id: int
+    name: str
+    slug: PoolSlug
+
+class BlockExtras(TypedDict):
+    """
+    Extended block data matching mempool.space /api/v1/blocks extras
+
+    Attributes:
+        totalFees: Total fees in satoshis
+        medianFee: Median fee rate in sat/vB
+        feeRange: Fee rate range: [min, 10%, 25%, 50%, 75%, 90%, max]
+        reward: Total block reward (subsidy + fees) in satoshis
+        pool: Mining pool that mined this block
+        avgFee: Average fee per transaction in satoshis
+        avgFeeRate: Average fee rate in sat/vB
+        coinbaseRaw: Raw coinbase transaction scriptsig as hex
+        coinbaseAddress: Primary coinbase output address
+        coinbaseAddresses: All coinbase output addresses
+        coinbaseSignature: Coinbase output script in ASM format
+        coinbaseSignatureAscii: Coinbase scriptsig decoded as ASCII
+        avgTxSize: Average transaction size in bytes
+        totalInputs: Total number of inputs (excluding coinbase)
+        totalOutputs: Total number of outputs
+        totalOutputAmt: Total output amount in satoshis
+        medianFeeAmt: Median fee amount in satoshis
+        feePercentiles: Fee amount percentiles in satoshis: [min, 10%, 25%, 50%, 75%, 90%, max]
+        segwitTotalTxs: Number of segwit transactions
+        segwitTotalSize: Total size of segwit transactions in bytes
+        segwitTotalWeight: Total weight of segwit transactions
+        header: Raw 80-byte block header as hex
+        utxoSetChange: UTXO set change (outputs created minus inputs spent)
+        utxoSetSize: Total UTXO set size at this height
+        totalInputAmt: Total input amount in satoshis
+        virtualSize: Virtual size in vbytes
+    """
+    totalFees: Sats
+    medianFee: FeeRate
+    feeRange: List[FeeRate]
+    reward: Sats
+    pool: BlockPool
+    avgFee: Sats
+    avgFeeRate: FeeRate
+    coinbaseRaw: str
+    coinbaseAddress: Optional[str]
+    coinbaseAddresses: List[str]
+    coinbaseSignature: str
+    coinbaseSignatureAscii: str
+    avgTxSize: float
+    totalInputs: int
+    totalOutputs: int
+    totalOutputAmt: Sats
+    medianFeeAmt: Sats
+    feePercentiles: List[Sats]
+    segwitTotalTxs: int
+    segwitTotalSize: int
+    segwitTotalWeight: Weight
+    header: str
+    utxoSetChange: int
+    utxoSetSize: int
+    totalInputAmt: Sats
+    virtualSize: float
+
 class BlockFeesEntry(TypedDict):
     """
     A single block fees data point.
@@ -327,24 +409,75 @@ class BlockHashTxIndex(TypedDict):
 
 class BlockInfo(TypedDict):
     """
-    Block information returned by the API
+    Block information matching mempool.space /api/block/{hash}
 
     Attributes:
         id: Block hash
         height: Block height
+        version: Block version, used for soft fork signaling
+        previousblockhash: Previous block hash
+        merkle_root: Merkle root of the transaction tree
+        time: Block timestamp as claimed by the miner (Unix time)
+        bits: Compact target (bits)
+        nonce: Nonce used to produce a valid block hash
+        timestamp: Block timestamp (Unix time)
         tx_count: Number of transactions in the block
         size: Block size in bytes
         weight: Block weight in weight units
-        timestamp: Block timestamp (Unix time)
-        difficulty: Block difficulty as a floating point number
+        mediantime: Median time of the last 11 blocks
+        difficulty: Block difficulty
     """
     id: BlockHash
     height: Height
+    version: int
+    previousblockhash: BlockHash
+    merkle_root: str
+    time: int
+    bits: int
+    nonce: int
+    timestamp: Timestamp
     tx_count: int
     size: int
     weight: Weight
-    timestamp: Timestamp
+    mediantime: Timestamp
     difficulty: float
+
+class BlockInfoV1(TypedDict):
+    """
+    Block information with extras, matching mempool.space /api/v1/blocks
+
+    Attributes:
+        id: Block hash
+        height: Block height
+        version: Block version, used for soft fork signaling
+        previousblockhash: Previous block hash
+        merkle_root: Merkle root of the transaction tree
+        time: Block timestamp as claimed by the miner (Unix time)
+        bits: Compact target (bits)
+        nonce: Nonce used to produce a valid block hash
+        timestamp: Block timestamp (Unix time)
+        tx_count: Number of transactions in the block
+        size: Block size in bytes
+        weight: Block weight in weight units
+        mediantime: Median time of the last 11 blocks
+        difficulty: Block difficulty
+        extras: Extended block data
+    """
+    id: BlockHash
+    height: Height
+    version: int
+    previousblockhash: BlockHash
+    merkle_root: str
+    time: int
+    bits: int
+    nonce: int
+    timestamp: Timestamp
+    tx_count: int
+    size: int
+    weight: Weight
+    mediantime: Timestamp
+    difficulty: float
+    extras: BlockExtras
 
 class BlockRewardsEntry(TypedDict):
     """
@@ -426,6 +559,22 @@ class CostBasisQuery(TypedDict):
     """
     bucket: CostBasisBucket
     value: CostBasisValue
+
+class CpfpEntry(TypedDict):
+    """
+    A transaction in a CPFP relationship
+    """
+    txid: Txid
+    weight: Weight
+    fee: Sats
+
+class CpfpInfo(TypedDict):
+    """
+    CPFP (Child Pays For Parent) information for a transaction
+    """
+    ancestors: List[CpfpEntry]
+    descendants: List[CpfpEntry]
+    effectiveFeePerVsize: FeeRate
 
 class DataRangeFormat(TypedDict):
     """
@@ -647,6 +796,20 @@ class Health(TypedDict):
 class HeightParam(TypedDict):
     height: Height
 
+class HistoricalPriceEntry(TypedDict):
+    """
+    A single price data point
+    """
+    time: int
+    USD: Dollars
+
+class HistoricalPrice(TypedDict):
+    """
+    Historical price response
+    """
+    prices: List[HistoricalPriceEntry]
+    exchangeRates: ExchangeRates
+
 class IndexInfo(TypedDict):
     """
     Information about an available index and its query aliases
@@ -692,16 +855,35 @@ class MempoolBlock(TypedDict):
 
 class MempoolInfo(TypedDict):
     """
-    Mempool statistics
+    Mempool statistics with incrementally maintained fee histogram.
 
     Attributes:
         count: Number of transactions in the mempool
         vsize: Total virtual size of all transactions in the mempool (vbytes)
         total_fee: Total fees of all transactions in the mempool (satoshis)
+        fee_histogram: Fee histogram: `[[fee_rate, vsize], ...]` sorted by descending fee rate
     """
     count: int
     vsize: VSize
     total_fee: Sats
+    fee_histogram: dict[str, VSize]
+
+class MempoolRecentTx(TypedDict):
+    """
+    Simplified mempool transaction for the recent transactions endpoint
+    """
+    txid: Txid
+    fee: Sats
+    vsize: VSize
+    value: Sats
+
+class MerkleProof(TypedDict):
+    """
+    Merkle inclusion proof for a transaction
+    """
+    block_height: Height
+    merkle: List[str]
+    pos: int
 
 class OHLCCents(TypedDict):
     """
@@ -729,6 +911,9 @@ class OHLCSats(TypedDict):
     high: High
     low: Low
     close: Close
+
+class OptionalTimestampParam(TypedDict):
+    timestamp: Union[Timestamp, None]
 
 class PaginatedSeries(TypedDict):
     """
@@ -822,6 +1007,21 @@ class PoolDetail(TypedDict):
     estimatedHashrate: int
     reportedHashrate: Optional[int]
 
+class PoolHashrateEntry(TypedDict):
+    """
+    A single pool hashrate data point.
+
+    Attributes:
+        timestamp: Unix timestamp.
+        avgHashrate: Average hashrate (H/s).
+        share: Pool's share of total network hashrate.
+        poolName: Pool name.
+    """
+    timestamp: Timestamp
+    avgHashrate: int
+    share: float
+    poolName: str
+
 class PoolInfo(TypedDict):
     """
     Basic pool information for listing all pools
@@ -834,6 +1034,10 @@ class PoolInfo(TypedDict):
     name: str
     slug: PoolSlug
     unique_id: int
+
+class PoolSlugAndHeightParam(TypedDict):
+    slug: PoolSlug
+    height: Height
 
 class PoolSlugParam(TypedDict):
     slug: PoolSlug
@@ -1109,6 +1313,9 @@ class TxidVout(TypedDict):
     """
     txid: Txid
     vout: Vout
+
+class TxidsParam(TypedDict):
+    txId: List[Txid]
 
 class Utxo(TypedDict):
     """
@@ -3357,10 +3564,14 @@ class SeriesTree_Blocks:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.blockhash: SeriesPattern18[BlockHash] = SeriesPattern18(client, 'blockhash')
+        self.coinbase_tag: SeriesPattern18[CoinbaseTag] = SeriesPattern18(client, 'coinbase_tag')
         self.difficulty: SeriesTree_Blocks_Difficulty = SeriesTree_Blocks_Difficulty(client)
         self.time: SeriesTree_Blocks_Time = SeriesTree_Blocks_Time(client)
         self.size: SeriesTree_Blocks_Size = SeriesTree_Blocks_Size(client)
         self.weight: AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern[Weight] = AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'block_weight')
+        self.segwit_txs: SeriesPattern18[StoredU32] = SeriesPattern18(client, 'segwit_txs')
+        self.segwit_size: SeriesPattern18[StoredU64] = SeriesPattern18(client, 'segwit_size')
+        self.segwit_weight: SeriesPattern18[Weight] = SeriesPattern18(client, 'segwit_weight')
         self.count: SeriesTree_Blocks_Count = SeriesTree_Blocks_Count(client)
         self.lookback: SeriesTree_Blocks_Lookback = SeriesTree_Blocks_Lookback(client)
         self.interval: SeriesTree_Blocks_Interval = SeriesTree_Blocks_Interval(client)
@@ -3413,6 +3624,7 @@ class SeriesTree_Transactions_Fees:
         self.output_value: SeriesPattern19[Sats] = SeriesPattern19(client, 'output_value')
         self.fee: _6bBlockTxPattern[Sats] = _6bBlockTxPattern(client, 'fee')
         self.fee_rate: _6bBlockTxPattern[FeeRate] = _6bBlockTxPattern(client, 'fee_rate')
+        self.effective_fee_rate: _6bBlockTxPattern[FeeRate] = _6bBlockTxPattern(client, 'effective_fee_rate')
 
 class SeriesTree_Transactions_Versions:
     """Series tree node."""
@@ -3757,6 +3969,7 @@ class SeriesTree_Mining_Rewards:
         self.coinbase: AverageBlockCumulativeSumPattern3 = AverageBlockCumulativeSumPattern3(client, 'coinbase')
         self.subsidy: SeriesTree_Mining_Rewards_Subsidy = SeriesTree_Mining_Rewards_Subsidy(client)
         self.fees: SeriesTree_Mining_Rewards_Fees = SeriesTree_Mining_Rewards_Fees(client)
+        self.output_volume: SeriesPattern18[Sats] = SeriesPattern18(client, 'output_volume')
         self.unclaimed: BlockCumulativePattern = BlockCumulativePattern(client, 'unclaimed_rewards')
 
 class SeriesTree_Mining_Hashrate_Rate_Sma:
@@ -3791,12 +4004,6 @@ class SeriesTree_Mining:
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.rewards: SeriesTree_Mining_Rewards = SeriesTree_Mining_Rewards(client)
         self.hashrate: SeriesTree_Mining_Hashrate = SeriesTree_Mining_Hashrate(client)
-
-class SeriesTree_Positions:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        pass
 
 class SeriesTree_Cointime_Activity:
     """Series tree node."""
@@ -5664,7 +5871,6 @@ class SeriesTree:
         self.addrs: SeriesTree_Addrs = SeriesTree_Addrs(client)
         self.scripts: SeriesTree_Scripts = SeriesTree_Scripts(client)
         self.mining: SeriesTree_Mining = SeriesTree_Mining(client)
-        self.positions: SeriesTree_Positions = SeriesTree_Positions(client)
         self.cointime: SeriesTree_Cointime = SeriesTree_Cointime(client)
         self.constants: SeriesTree_Constants = SeriesTree_Constants(client)
         self.indexes: SeriesTree_Indexes = SeriesTree_Indexes(client)
@@ -6917,10 +7123,10 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/address/{address}/utxo`"""
         return self.get_json(f'/api/address/{address}/utxo')
 
-    def get_block_by_height(self, height: Height) -> BlockInfo:
-        """Block by height.
+    def get_block_by_height(self, height: Height) -> BlockHash:
+        """Block hash by height.
 
-        Retrieve block information by block height. Returns block metadata including hash, timestamp, difficulty, size, weight, and transaction count.
+        Retrieve the block hash at a given height. Returns the hash as plain text.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*
 
@@ -6936,6 +7142,16 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/block/{hash}`"""
         return self.get_json(f'/api/block/{hash}')
+
+    def get_block_header(self, hash: BlockHash) -> Hex:
+        """Block header.
+
+        Returns the hex-encoded block header.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
+
+        Endpoint: `GET /api/block/{hash}/header`"""
+        return self.get_json(f'/api/block/{hash}/header')
 
     def get_block_raw(self, hash: BlockHash) -> List[float]:
         """Raw block.
@@ -6997,6 +7213,26 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/blocks`"""
         return self.get_json('/api/blocks')
 
+    def get_block_tip_hash(self) -> BlockHash:
+        """Block tip hash.
+
+        Returns the hash of the last block.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
+
+        Endpoint: `GET /api/blocks/tip/hash`"""
+        return self.get_json('/api/blocks/tip/hash')
+
+    def get_block_tip_height(self) -> Height:
+        """Block tip height.
+
+        Returns the height of the last block.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
+
+        Endpoint: `GET /api/blocks/tip/height`"""
+        return self.get_json('/api/blocks/tip/height')
+
     def get_blocks_from_height(self, height: Height) -> List[BlockInfo]:
         """Blocks from height.
 
@@ -7014,8 +7250,8 @@ class BrkClient(BrkClientBase):
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
 
-        Endpoint: `GET /api/mempool/info`"""
-        return self.get_json('/api/mempool/info')
+        Endpoint: `GET /api/mempool`"""
+        return self.get_json('/api/mempool')
 
     def get_live_price(self) -> Dollars:
         """Live BTC/USD price.
@@ -7024,6 +7260,16 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/mempool/price`"""
         return self.get_json('/api/mempool/price')
+
+    def get_mempool_recent(self) -> List[MempoolRecentTx]:
+        """Recent mempool transactions.
+
+        Get the last 10 transactions to enter the mempool.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*
+
+        Endpoint: `GET /api/mempool/recent`"""
+        return self.get_json('/api/mempool/recent')
 
     def get_mempool_txids(self) -> List[Txid]:
         """Mempool transaction IDs.
@@ -7239,6 +7485,16 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/tx/{txid}/hex`"""
         return self.get_json(f'/api/tx/{txid}/hex')
 
+    def get_tx_merkle_proof(self, txid: Txid) -> MerkleProof:
+        """Transaction merkle proof.
+
+        Get the merkle inclusion proof for a transaction.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkle-proof)*
+
+        Endpoint: `GET /api/tx/{txid}/merkle-proof`"""
+        return self.get_json(f'/api/tx/{txid}/merkle-proof')
+
     def get_tx_outspend(self, txid: Txid, vout: Vout) -> TxOutspend:
         """Output spend status.
 
@@ -7259,6 +7515,16 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/tx/{txid}/outspends`"""
         return self.get_json(f'/api/tx/{txid}/outspends')
 
+    def get_tx_raw(self, txid: Txid) -> List[float]:
+        """Transaction raw.
+
+        Returns a transaction as binary data.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-raw)*
+
+        Endpoint: `GET /api/tx/{txid}/raw`"""
+        return self.get_json(f'/api/tx/{txid}/raw')
+
     def get_tx_status(self, txid: Txid) -> TxStatus:
         """Transaction status.
 
@@ -7268,6 +7534,46 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/tx/{txid}/status`"""
         return self.get_json(f'/api/tx/{txid}/status')
+
+    def get_block_v1(self, hash: BlockHash) -> BlockInfoV1:
+        """Block (v1).
+
+        Returns block details with extras by hash.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*
+
+        Endpoint: `GET /api/v1/block/{hash}`"""
+        return self.get_json(f'/api/v1/block/{hash}')
+
+    def get_blocks_v1(self) -> List[BlockInfoV1]:
+        """Recent blocks with extras.
+
+        Retrieve the last 10 blocks with extended data including pool identification and fee statistics.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
+
+        Endpoint: `GET /api/v1/blocks`"""
+        return self.get_json('/api/v1/blocks')
+
+    def get_blocks_v1_from_height(self, height: Height) -> List[BlockInfoV1]:
+        """Blocks from height with extras.
+
+        Retrieve up to 10 blocks with extended data going backwards from the given height.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
+
+        Endpoint: `GET /api/v1/blocks/{height}`"""
+        return self.get_json(f'/api/v1/blocks/{height}')
+
+    def get_cpfp(self, txid: Txid) -> CpfpInfo:
+        """CPFP info.
+
+        Returns ancestors and descendants for a CPFP transaction.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*
+
+        Endpoint: `GET /api/v1/cpfp/{txid}`"""
+        return self.get_json(f'/api/v1/cpfp/{txid}')
 
     def get_difficulty_adjustment(self) -> DifficultyAdjustment:
         """Difficulty adjustment.
@@ -7289,6 +7595,16 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/v1/fees/mempool-blocks`"""
         return self.get_json('/api/v1/fees/mempool-blocks')
 
+    def get_precise_fees(self) -> RecommendedFees:
+        """Precise recommended fees.
+
+        Get recommended fee rates with up to 3 decimal places, including sub-sat feerates.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
+
+        Endpoint: `GET /api/v1/fees/precise`"""
+        return self.get_json('/api/v1/fees/precise')
+
     def get_recommended_fees(self) -> RecommendedFees:
         """Recommended fees.
 
@@ -7298,6 +7614,20 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/v1/fees/recommended`"""
         return self.get_json('/api/v1/fees/recommended')
+
+    def get_historical_price(self, timestamp: Optional[Timestamp] = None) -> HistoricalPrice:
+        """Historical price.
+
+        Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
+
+        Endpoint: `GET /api/v1/historical-price`"""
+        params = []
+        if timestamp is not None: params.append(f'timestamp={timestamp}')
+        query = '&'.join(params)
+        path = f'/api/v1/historical-price{"?" + query if query else ""}'
+        return self.get_json(path)
 
     def get_block_fee_rates(self, time_period: TimePeriod) -> Any:
         """Block fee rates (WIP).
@@ -7379,6 +7709,26 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/v1/mining/hashrate`"""
         return self.get_json('/api/v1/mining/hashrate')
 
+    def get_pools_hashrate(self) -> List[PoolHashrateEntry]:
+        """All pools hashrate (all time).
+
+        Get hashrate data for all mining pools.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
+
+        Endpoint: `GET /api/v1/mining/hashrate/pools`"""
+        return self.get_json('/api/v1/mining/hashrate/pools')
+
+    def get_pools_hashrate_by_period(self, time_period: TimePeriod) -> List[PoolHashrateEntry]:
+        """All pools hashrate.
+
+        Get hashrate data for all mining pools for a time period. Valid periods: 1m, 3m, 6m, 1y, 2y, 3y
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
+
+        Endpoint: `GET /api/v1/mining/hashrate/pools/{time_period}`"""
+        return self.get_json(f'/api/v1/mining/hashrate/pools/{time_period}')
+
     def get_hashrate_by_period(self, time_period: TimePeriod) -> HashrateSummary:
         """Network hashrate.
 
@@ -7398,6 +7748,36 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/v1/mining/pool/{slug}`"""
         return self.get_json(f'/api/v1/mining/pool/{slug}')
+
+    def get_pool_blocks(self, slug: PoolSlug) -> List[BlockInfoV1]:
+        """Mining pool blocks.
+
+        Get the 10 most recent blocks mined by a specific pool.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+
+        Endpoint: `GET /api/v1/mining/pool/{slug}/blocks`"""
+        return self.get_json(f'/api/v1/mining/pool/{slug}/blocks')
+
+    def get_pool_blocks_from(self, slug: PoolSlug, height: Height) -> List[BlockInfoV1]:
+        """Mining pool blocks from height.
+
+        Get 10 blocks mined by a specific pool before (and including) the given height.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+
+        Endpoint: `GET /api/v1/mining/pool/{slug}/blocks/{height}`"""
+        return self.get_json(f'/api/v1/mining/pool/{slug}/blocks/{height}')
+
+    def get_pool_hashrate(self, slug: PoolSlug) -> List[PoolHashrateEntry]:
+        """Mining pool hashrate.
+
+        Get hashrate history for a specific mining pool.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrate)*
+
+        Endpoint: `GET /api/v1/mining/pool/{slug}/hashrate`"""
+        return self.get_json(f'/api/v1/mining/pool/{slug}/hashrate')
 
     def get_pools(self) -> List[PoolInfo]:
         """List all mining pools.
@@ -7428,6 +7808,20 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/v1/mining/reward-stats/{block_count}`"""
         return self.get_json(f'/api/v1/mining/reward-stats/{block_count}')
+
+    def get_transaction_times(self, txId: List[Txid]) -> List[float]:
+        """Transaction first-seen times.
+
+        Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*
+
+        Endpoint: `GET /api/v1/transaction-times`"""
+        params = []
+        params.append(f'txId[]={txId}')
+        query = '&'.join(params)
+        path = f'/api/v1/transaction-times{"?" + query if query else ""}'
+        return self.get_json(path)
 
     def validate_address(self, address: str) -> AddrValidation:
         """Validate address.

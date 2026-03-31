@@ -1,0 +1,109 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+use crate::{BlockPool, FeeRate, Sats, Weight};
+
+/// Extended block data matching mempool.space /api/v1/blocks extras
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct BlockExtras {
+    /// Total fees in satoshis
+    #[serde(rename = "totalFees")]
+    pub total_fees: Sats,
+
+    /// Median fee rate in sat/vB
+    #[serde(rename = "medianFee")]
+    pub median_fee: FeeRate,
+
+    /// Fee rate range: [min, 10%, 25%, 50%, 75%, 90%, max]
+    #[serde(rename = "feeRange")]
+    pub fee_range: [FeeRate; 7],
+
+    /// Total block reward (subsidy + fees) in satoshis
+    pub reward: Sats,
+
+    /// Mining pool that mined this block
+    pub pool: BlockPool,
+
+    /// Average fee per transaction in satoshis
+    #[serde(rename = "avgFee")]
+    pub avg_fee: Sats,
+
+    /// Average fee rate in sat/vB
+    #[serde(rename = "avgFeeRate")]
+    pub avg_fee_rate: FeeRate,
+
+    /// Raw coinbase transaction scriptsig as hex
+    #[serde(rename = "coinbaseRaw")]
+    pub coinbase_raw: String,
+
+    /// Primary coinbase output address
+    #[serde(rename = "coinbaseAddress")]
+    pub coinbase_address: Option<String>,
+
+    /// All coinbase output addresses
+    #[serde(rename = "coinbaseAddresses")]
+    pub coinbase_addresses: Vec<String>,
+
+    /// Coinbase output script in ASM format
+    #[serde(rename = "coinbaseSignature")]
+    pub coinbase_signature: String,
+
+    /// Coinbase scriptsig decoded as ASCII
+    #[serde(rename = "coinbaseSignatureAscii")]
+    pub coinbase_signature_ascii: String,
+
+    /// Average transaction size in bytes
+    #[serde(rename = "avgTxSize")]
+    pub avg_tx_size: f64,
+
+    /// Total number of inputs (excluding coinbase)
+    #[serde(rename = "totalInputs")]
+    pub total_inputs: u64,
+
+    /// Total number of outputs
+    #[serde(rename = "totalOutputs")]
+    pub total_outputs: u64,
+
+    /// Total output amount in satoshis
+    #[serde(rename = "totalOutputAmt")]
+    pub total_output_amt: Sats,
+
+    /// Median fee amount in satoshis
+    #[serde(rename = "medianFeeAmt")]
+    pub median_fee_amt: Sats,
+
+    /// Fee amount percentiles in satoshis: [min, 10%, 25%, 50%, 75%, 90%, max]
+    #[serde(rename = "feePercentiles")]
+    pub fee_percentiles: [Sats; 7],
+
+    /// Number of segwit transactions
+    #[serde(rename = "segwitTotalTxs")]
+    pub segwit_total_txs: u32,
+
+    /// Total size of segwit transactions in bytes
+    #[serde(rename = "segwitTotalSize")]
+    pub segwit_total_size: u64,
+
+    /// Total weight of segwit transactions
+    #[serde(rename = "segwitTotalWeight")]
+    pub segwit_total_weight: Weight,
+
+    /// Raw 80-byte block header as hex
+    pub header: String,
+
+    /// UTXO set change (outputs created minus inputs spent)
+    #[serde(rename = "utxoSetChange")]
+    pub utxo_set_change: i64,
+
+    /// Total UTXO set size at this height
+    #[serde(rename = "utxoSetSize")]
+    pub utxo_set_size: u64,
+
+    /// Total input amount in satoshis
+    #[serde(rename = "totalInputAmt")]
+    pub total_input_amt: Sats,
+
+    /// Virtual size in vbytes
+    #[serde(rename = "virtualSize")]
+    pub virtual_size: f64,
+}

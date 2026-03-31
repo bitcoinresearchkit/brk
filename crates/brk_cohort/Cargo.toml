@@ -14,3 +14,6 @@ brk_traversable = { workspace = true }
 vecdb = { workspace = true }
 rayon = { workspace = true }
 serde = { workspace = true }
+
+[package.metadata.cargo-machete]
+ignored = ["vecdb"]

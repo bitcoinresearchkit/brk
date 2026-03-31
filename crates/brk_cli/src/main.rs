@@ -10,7 +10,6 @@ use brk_alloc::Mimalloc;
 use brk_computer::Computer;
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_iterator::Blocks;
 use brk_mempool::Mempool;
 use brk_query::AsyncQuery;
 use brk_reader::Reader;
@@ -37,8 +36,6 @@ pub fn main() -> anyhow::Result<()> {
 
     let reader = Reader::new(config.blocksdir(), &client);
 
-    let blocks = Blocks::new(&client, &reader);
-
     let mut indexer = Indexer::forced_import(&config.brkdir())?;
 
     #[cfg(not(debug_assertions))]
@@ -52,7 +49,7 @@ pub fn main() -> anyhow::Result<()> {
             info!("Indexing {blocks_behind} blocks before starting server...");
             info!("---");
             sleep(Duration::from_secs(10));
-            indexer.index(&blocks, &client, &exit)?;
+            indexer.index(&reader, &client, &exit)?;
             drop(indexer);
             Mimalloc::collect();
             indexer = Indexer::forced_import(&config.brkdir())?;
@@ -102,14 +99,14 @@ pub fn main() -> anyhow::Result<()> {
         let total_start = Instant::now();
 
         let starting_indexes = if cfg!(debug_assertions) {
-            indexer.checked_index(&blocks, &client, &exit)?
+            indexer.checked_index(&reader, &client, &exit)?
         } else {
-            indexer.index(&blocks, &client, &exit)?
+            indexer.index(&reader, &client, &exit)?
         };
 
         Mimalloc::collect();
 
-        computer.compute(&indexer, starting_indexes, &reader, &exit)?;
+        computer.compute(&indexer, starting_indexes, &exit)?;
 
         info!("Total time: {:?}", total_start.elapsed());
         info!("Waiting for new blocks...");

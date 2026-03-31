@@ -1,8 +1,8 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    Height, RawLockTime, StoredBool, StoredU32, TxInIndex, TxIndex, TxOutIndex, TxVersion, Txid,
-    Version,
+    BlkPosition, Height, RawLockTime, StoredBool, StoredU32, TxInIndex, TxIndex, TxOutIndex,
+    TxVersion, Txid, Version,
 };
 use rayon::prelude::*;
 use vecdb::{
@@ -23,6 +23,8 @@ pub struct TransactionsVecs<M: StorageMode = Rw> {
     pub is_explicitly_rbf: M::Stored<PcoVec<TxIndex, StoredBool>>,
     pub first_txin_index: M::Stored<PcoVec<TxIndex, TxInIndex>>,
     pub first_txout_index: M::Stored<BytesVec<TxIndex, TxOutIndex>>,
+    #[traversable(hidden)]
+    pub position: M::Stored<PcoVec<TxIndex, BlkPosition>>,
 }
 
 pub struct TxMetadataVecs<'a> {
@@ -70,6 +72,7 @@ impl TransactionsVecs {
             is_explicitly_rbf,
             first_txin_index,
             first_txout_index,
+            position,
         ) = parallel_import! {
             first_tx_index = PcoVec::forced_import(db, "first_tx_index", version),
             height = PcoVec::forced_import(db, "height", version),
@@ -81,6 +84,7 @@ impl TransactionsVecs {
             is_explicitly_rbf = PcoVec::forced_import(db, "is_explicitly_rbf", version),
             first_txin_index = PcoVec::forced_import(db, "first_txin_index", version),
             first_txout_index = BytesVec::forced_import(db, "first_txout_index", version),
+            position = PcoVec::forced_import(db, "tx_position", version),
         };
         Ok(Self {
             first_tx_index,
@@ -93,6 +97,7 @@ impl TransactionsVecs {
             is_explicitly_rbf,
             first_txin_index,
             first_txout_index,
+            position,
         })
     }
 
@@ -115,6 +120,8 @@ impl TransactionsVecs {
             .truncate_if_needed_with_stamp(tx_index, stamp)?;
         self.first_txout_index
             .truncate_if_needed_with_stamp(tx_index, stamp)?;
+        self.position
+            .truncate_if_needed_with_stamp(tx_index, stamp)?;
         Ok(())
     }
 
@@ -130,6 +137,7 @@ impl TransactionsVecs {
             &mut self.is_explicitly_rbf,
             &mut self.first_txin_index,
             &mut self.first_txout_index,
+            &mut self.position,
         ]
         .into_par_iter()
     }

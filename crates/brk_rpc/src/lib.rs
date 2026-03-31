@@ -232,6 +232,10 @@ impl Client {
             .get_raw_transaction_hex(txid.into(), block_hash.map(|h| h.into()))
     }
 
+    pub fn send_raw_transaction(&self, hex: &str) -> Result<Txid> {
+        self.0.send_raw_transaction(hex).map(Txid::from)
+    }
+
     /// Checks if a block is in the main chain (has positive confirmations)
     pub fn is_in_main_chain(&self, hash: &BlockHash) -> Result<bool> {
         let block_info = self.get_block_info(hash)?;

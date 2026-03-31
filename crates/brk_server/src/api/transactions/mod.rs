@@ -1,11 +1,16 @@
-use aide::axum::{ApiRouter, routing::get_with};
+use aide::axum::{
+    ApiRouter,
+    routing::{get_with, post_with},
+};
 use axum::{
     extract::{Path, State},
     http::{HeaderMap, Uri},
-    response::Redirect,
-    routing::get,
 };
-use brk_types::{Hex, Transaction, TxOutspend, TxStatus, TxidParam, TxidVout};
+use axum::extract::Query;
+use brk_types::{
+    CpfpInfo, Hex, MerkleProof, Transaction, TxOutspend, TxStatus, Txid, TxidParam, TxidVout,
+    TxidsParam,
+};
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};
 
@@ -18,8 +23,6 @@ pub trait TxRoutes {
 impl TxRoutes for ApiRouter<AppState> {
     fn add_tx_routes(self) -> Self {
         self
-            .route("/api/tx", get(Redirect::temporary("/api/transactions")))
-            .route("/api/transactions", get(Redirect::temporary("/api#tag/transactions")))
             .api_route(
             "/api/tx/{txid}",
             get_with(
@@ -143,6 +146,93 @@ impl TxRoutes for ApiRouter<AppState> {
                     .not_modified()
                     .bad_request()
                     .not_found()
+                    .server_error(),
+            ),
+        )
+        .api_route(
+            "/api/tx",
+            post_with(
+                async |State(state): State<AppState>, body: String| {
+                    let hex = body.trim().to_string();
+                    state.sync(|q| q.broadcast_transaction(&hex))
+                        .map(|txid| txid.to_string())
+                        .map_err(crate::Error::from)
+                },
+                |op| {
+                    op.id("post_tx")
+                        .transactions_tag()
+                        .summary("Broadcast transaction")
+                        .description("Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*")
+                        .ok_response::<Txid>()
+                        .bad_request()
+                        .server_error()
+                },
+            ),
+        )
+        .api_route(
+            "/api/tx/{txid}/raw",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, Path(txid): Path<TxidParam>, State(state): State<AppState>| {
+                    state.cached_bytes(&headers, CacheStrategy::Height, &uri, move |q| q.transaction_raw(txid)).await
+                },
+                |op| op
+                    .id("get_tx_raw")
+                    .transactions_tag()
+                    .summary("Transaction raw")
+                    .description("Returns a transaction as binary data.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-raw)*")
+                    .ok_response::<Vec<u8>>()
+                    .not_modified()
+                    .bad_request()
+                    .not_found()
+                    .server_error(),
+            ),
+        )
+        .api_route(
+            "/api/tx/{txid}/merkle-proof",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, Path(txid): Path<TxidParam>, State(state): State<AppState>| {
+                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.merkle_proof(txid)).await
+                },
+                |op| op
+                    .id("get_tx_merkle_proof")
+                    .transactions_tag()
+                    .summary("Transaction merkle proof")
+                    .description("Get the merkle inclusion proof for a transaction.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkle-proof)*")
+                    .ok_response::<MerkleProof>()
+                    .not_modified()
+                    .bad_request()
+                    .not_found()
+                    .server_error(),
+            ),
+        )
+        .api_route(
+            "/api/v1/cpfp/{txid}",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, Path(txid): Path<TxidParam>, State(state): State<AppState>| {
+                    state.cached_json(&headers, CacheStrategy::MempoolHash(0), &uri, move |q| q.cpfp(txid)).await
+                },
+                |op| op
+                    .id("get_cpfp")
+                    .transactions_tag()
+                    .summary("CPFP info")
+                    .description("Returns ancestors and descendants for a CPFP transaction.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*")
+                    .ok_response::<CpfpInfo>()
+                    .not_found()
+                    .server_error(),
+            ),
+        )
+        .api_route(
+            "/api/v1/transaction-times",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, Query(params): Query<TxidsParam>, State(state): State<AppState>| {
+                    state.cached_json(&headers, CacheStrategy::MempoolHash(0), &uri, move |q| q.transaction_times(&params.txids)).await
+                },
+                |op| op
+                    .id("get_transaction_times")
+                    .transactions_tag()
+                    .summary("Transaction first-seen times")
+                    .description("Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*")
+                    .ok_response::<Vec<u64>>()
                     .server_error(),
             ),
         )

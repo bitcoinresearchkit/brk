@@ -5,8 +5,8 @@ use axum::{
 };
 use brk_query::BLOCK_TXS_PAGE_SIZE;
 use brk_types::{
-    BlockHashParam, BlockHashStartIndex, BlockHashTxIndex, BlockInfo, BlockStatus, BlockTimestamp,
-    HeightParam, TimestampParam, Transaction, Txid,
+    BlockHash, BlockHashParam, BlockHashStartIndex, BlockHashTxIndex, BlockInfo, BlockInfoV1,
+    BlockStatus, BlockTimestamp, Height, HeightParam, Hex, TimestampParam, Transaction, Txid,
 };
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};
@@ -62,22 +62,62 @@ impl BlockRoutes for ApiRouter<AppState> {
                 ),
             )
             .api_route(
+                "/api/v1/blocks",
+                get_with(
+                    async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                        state
+                            .cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.blocks_v1(None))
+                            .await
+                    },
+                    |op| {
+                        op.id("get_blocks_v1")
+                            .blocks_tag()
+                            .summary("Recent blocks with extras")
+                            .description("Retrieve the last 10 blocks with extended data including pool identification and fee statistics.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*")
+                            .ok_response::<Vec<BlockInfoV1>>()
+                            .not_modified()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/v1/blocks/{height}",
+                get_with(
+                    async |uri: Uri,
+                           headers: HeaderMap,
+                           Path(path): Path<HeightParam>,
+                           State(state): State<AppState>| {
+                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.blocks_v1(Some(path.height))).await
+                    },
+                    |op| {
+                        op.id("get_blocks_v1_from_height")
+                            .blocks_tag()
+                            .summary("Blocks from height with extras")
+                            .description("Retrieve up to 10 blocks with extended data going backwards from the given height.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*")
+                            .ok_response::<Vec<BlockInfoV1>>()
+                            .not_modified()
+                            .bad_request()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
                 "/api/block-height/{height}",
                 get_with(
                     async |uri: Uri,
                            headers: HeaderMap,
                            Path(path): Path<HeightParam>,
                            State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.block_by_height(path.height)).await
+                        state.cached_text(&headers, CacheStrategy::Height, &uri, move |q| q.block_hash_by_height(path.height).map(|h| h.to_string())).await
                     },
                     |op| {
                         op.id("get_block_by_height")
                             .blocks_tag()
-                            .summary("Block by height")
+                            .summary("Block hash by height")
                             .description(
-                                "Retrieve block information by block height. Returns block metadata including hash, timestamp, difficulty, size, weight, and transaction count.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*",
+                                "Retrieve the block hash at a given height. Returns the hash as plain text.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*",
                             )
-                            .ok_response::<BlockInfo>()
+                            .ok_response::<BlockHash>()
                             .not_modified()
                             .bad_request()
                             .not_found()
@@ -225,6 +265,79 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .ok_response::<Vec<u8>>()
                             .not_modified()
                             .bad_request()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/blocks/tip/height",
+                get_with(
+                    async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                        state.cached_text(&headers, CacheStrategy::Height, &uri, |q| Ok(q.height().to_string())).await
+                    },
+                    |op| {
+                        op.id("get_block_tip_height")
+                            .blocks_tag()
+                            .summary("Block tip height")
+                            .description("Returns the height of the last block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*")
+                            .ok_response::<Height>()
+                            .not_modified()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/blocks/tip/hash",
+                get_with(
+                    async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                        state.cached_text(&headers, CacheStrategy::Height, &uri, |q| q.block_hash_by_height(q.height()).map(|h| h.to_string())).await
+                    },
+                    |op| {
+                        op.id("get_block_tip_hash")
+                            .blocks_tag()
+                            .summary("Block tip hash")
+                            .description("Returns the hash of the last block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*")
+                            .ok_response::<BlockHash>()
+                            .not_modified()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/block/{hash}/header",
+                get_with(
+                    async |uri: Uri, headers: HeaderMap, Path(path): Path<BlockHashParam>, State(state): State<AppState>| {
+                        state.cached_text(&headers, CacheStrategy::Height, &uri, move |q| q.block_header_hex(&path.hash)).await
+                    },
+                    |op| {
+                        op.id("get_block_header")
+                            .blocks_tag()
+                            .summary("Block header")
+                            .description("Returns the hex-encoded block header.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*")
+                            .ok_response::<Hex>()
+                            .not_modified()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/v1/block/{hash}",
+                get_with(
+                    async |uri: Uri, headers: HeaderMap, Path(path): Path<BlockHashParam>, State(state): State<AppState>| {
+                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                            let height = q.height_by_hash(&path.hash)?;
+                            q.block_by_height_v1(height)
+                        }).await
+                    },
+                    |op| {
+                        op.id("get_block_v1")
+                            .blocks_tag()
+                            .summary("Block (v1)")
+                            .description("Returns block details with extras by hash.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*")
+                            .ok_response::<BlockInfoV1>()
+                            .not_modified()
                             .not_found()
                             .server_error()
                     },

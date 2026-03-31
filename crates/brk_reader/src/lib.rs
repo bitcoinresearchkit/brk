@@ -14,7 +14,7 @@ use bitcoin::{block::Header, consensus::Decodable};
 use blk_index_to_blk_path::*;
 use brk_error::{Error, Result};
 use brk_rpc::Client;
-use brk_types::{BlkMetadata, BlkPosition, BlockHash, Height, ReadBlock};
+use brk_types::{BlkPosition, BlockHash, Height, ReadBlock};
 pub use crossbeam::channel::Receiver;
 use crossbeam::channel::bounded;
 use derive_more::Deref;
@@ -24,27 +24,16 @@ use tracing::{error, warn};
 
 mod blk_index_to_blk_path;
 mod decode;
+mod scan;
 mod xor_bytes;
 mod xor_index;
 
 use decode::*;
+use scan::*;
 pub use xor_bytes::*;
 pub use xor_index::*;
 
-const MAGIC_BYTES: [u8; 4] = [249, 190, 180, 217];
 const BOUND_CAP: usize = 50;
-
-fn find_magic(bytes: &[u8], xor_i: &mut XORIndex, xor_bytes: XORBytes) -> Option<usize> {
-    let mut window = [0u8; 4];
-    for (i, &b) in bytes.iter().enumerate() {
-        window.rotate_left(1);
-        window[3] = xor_i.byte(b, xor_bytes);
-        if window == MAGIC_BYTES {
-            return Some(i + 1);
-        }
-    }
-    None
-}
 
 ///
 /// Bitcoin BLK file reader
@@ -117,10 +106,46 @@ impl ReaderInner {
         Ok(buffer)
     }
 
+    /// Returns a receiver streaming `ReadBlock`s from `hash + 1` to the chain tip.
+    /// If `hash` is `None`, starts from genesis.
+    pub fn after(&self, hash: Option<BlockHash>) -> Result<Receiver<ReadBlock>> {
+        let start = if let Some(hash) = hash.as_ref() {
+            let info = self.client.get_block_header_info(hash)?;
+            Height::from(info.height + 1)
+        } else {
+            Height::ZERO
+        };
+        let end = self.client.get_last_height()?;
+
+        if end < start {
+            return Ok(bounded(0).1);
+        }
+
+        if *end - *start < 10 {
+            let mut blocks: Vec<_> = self.read_rev(Some(start), Some(end)).iter().collect();
+            blocks.reverse();
+
+            let (send, recv) = bounded(blocks.len());
+            for block in blocks {
+                let _ = send.send(block);
+            }
+            return Ok(recv);
+        }
+
+        Ok(self.read(Some(start), Some(end)))
+    }
+
     /// Returns a crossbeam channel receiver that streams `ReadBlock`s in chain order.
     ///
     /// Both `start` and `end` are inclusive. `None` means unbounded.
     pub fn read(&self, start: Option<Height>, end: Option<Height>) -> Receiver<ReadBlock> {
+        if let (Some(s), Some(e)) = (start, end)
+            && s > e
+        {
+            let (_, recv) = bounded(0);
+            return recv;
+        }
+
         let client = self.client.clone();
 
         let (send_bytes, recv_bytes) = bounded(BOUND_CAP / 2);
@@ -151,53 +176,25 @@ impl ReaderInner {
         thread::spawn(move || {
             let _ = blk_index_to_blk_path.range(first_blk_index..).try_for_each(
                 move |(blk_index, blk_path)| {
-                    let mut xor_i = XORIndex::default();
-
-                    let blk_index = *blk_index;
-
-                    let Ok(mut blk_bytes_) = fs::read(blk_path) else {
+                    let Ok(mut bytes) = fs::read(blk_path) else {
                         error!("Failed to read blk file: {}", blk_path.display());
                         return ControlFlow::Break(());
                     };
-                    let blk_bytes = blk_bytes_.as_mut_slice();
-                    let mut i = 0;
-
-                    loop {
-                        let Some(offset) = find_magic(&blk_bytes[i..], &mut xor_i, xor_bytes)
-                        else {
-                            break;
-                        };
-                        i += offset;
-
-                        if i + 4 > blk_bytes.len() {
-                            warn!("Truncated blk file {blk_index}: not enough bytes for block length at offset {i}");
-                            break;
-                        }
-                        let len = u32::from_le_bytes(
-                            xor_i
-                                .bytes(&mut blk_bytes[i..(i + 4)], xor_bytes)
-                                .try_into()
-                                .unwrap(),
-                        ) as usize;
-                        i += 4;
-
-                        if i + len > blk_bytes.len() {
-                            warn!("Truncated blk file {blk_index}: block at offset {} claims {len} bytes but only {} remain", i - 4, blk_bytes.len() - i);
-                            break;
-                        }
-                        let position = BlkPosition::new(blk_index, i as u32);
-                        let metadata = BlkMetadata::new(position, len as u32);
-
-                        let block_bytes = (blk_bytes[i..(i + len)]).to_vec();
-
-                        if send_bytes.send((metadata, block_bytes, xor_i)).is_err() {
-                            return ControlFlow::Break(());
-                        }
-
-                        i += len;
-                        xor_i.add_assign(len);
+                    let result = scan_bytes(
+                        &mut bytes,
+                        *blk_index,
+                        0,
+                        xor_bytes,
+                        |metadata, block_bytes, xor_i| {
+                            if send_bytes.send((metadata, block_bytes, xor_i)).is_err() {
+                                return ControlFlow::Break(());
+                            }
+                            ControlFlow::Continue(())
+                        },
+                    );
+                    if result.interrupted {
+                        return ControlFlow::Break(());
                     }
-
                     ControlFlow::Continue(())
                 },
             );
@@ -288,6 +285,83 @@ impl ReaderInner {
         recv_ordered
     }
 
+    /// Streams `ReadBlock`s in reverse order (newest first) by scanning
+    /// `.blk` files from the tail. Efficient for reading recent blocks.
+    /// Both `start` and `end` are inclusive. `None` means unbounded.
+    pub fn read_rev(&self, start: Option<Height>, end: Option<Height>) -> Receiver<ReadBlock> {
+        const CHUNK: usize = 5 * 1024 * 1024;
+
+        if let (Some(s), Some(e)) = (start, end)
+            && s > e
+        {
+            return bounded(0).1;
+        }
+
+        let client = self.client.clone();
+        let xor_bytes = self.xor_bytes;
+        let paths = BlkIndexToBlkPath::scan(&self.blocks_dir);
+        *self.blk_index_to_blk_path.write() = paths.clone();
+        let (send, recv) = bounded(BOUND_CAP);
+
+        thread::spawn(move || {
+            let mut head = Vec::new();
+
+            for (&blk_index, path) in paths.iter().rev() {
+                let file_len = fs::metadata(path).map(|m| m.len() as usize).unwrap_or(0);
+                if file_len == 0 {
+                    continue;
+                }
+                let Ok(mut file) = File::open(path) else {
+                    return;
+                };
+                let mut read_end = file_len;
+
+                while read_end > 0 {
+                    let read_start = read_end.saturating_sub(CHUNK);
+                    let chunk_len = read_end - read_start;
+                    read_end = read_start;
+
+                    let _ = file.seek(SeekFrom::Start(read_start as u64));
+                    let mut buf = vec![0u8; chunk_len + head.len()];
+                    if file.read_exact(&mut buf[..chunk_len]).is_err() {
+                        return;
+                    }
+                    buf[chunk_len..].copy_from_slice(&head);
+                    head.clear();
+
+                    let mut blocks = Vec::new();
+                    let result = scan_bytes(
+                        &mut buf,
+                        blk_index,
+                        read_start,
+                        xor_bytes,
+                        |metadata, bytes, xor_i| {
+                            if let Ok(Some(block)) = decode_block(
+                                bytes, metadata, &client, xor_i, xor_bytes, start, end, 0, 0,
+                            ) {
+                                blocks.push(block);
+                            }
+                            ControlFlow::Continue(())
+                        },
+                    );
+
+                    for block in blocks.into_iter().rev() {
+                        let done = start.is_some_and(|s| block.height() <= s);
+                        if send.send(block).is_err() || done {
+                            return;
+                        }
+                    }
+
+                    if read_start > 0 {
+                        head = buf[..result.first_magic.unwrap_or(buf.len())].to_vec();
+                    }
+                }
+            }
+        });
+
+        recv
+    }
+
     fn find_start_blk_index(
         &self,
         target_start: Option<Height>,
@@ -297,18 +371,6 @@ impl ReaderInner {
         let Some(target_start) = target_start else {
             return Ok(0);
         };
-
-        // If start is a very recent block we only look back X blk file before the last
-        if let Ok(height) = self.client.get_last_height()
-            && (*height).saturating_sub(*target_start) <= 3
-        {
-            return Ok(blk_index_to_blk_path
-                .keys()
-                .rev()
-                .nth(2)
-                .copied()
-                .unwrap_or_default());
-        }
 
         let blk_indices: Vec<u16> = blk_index_to_blk_path.keys().copied().collect();
 

@@ -50,7 +50,10 @@ export function init() {
     } else {
       startPolling();
     }
-  }).observe(explorerElement, { attributes: true, attributeFilter: ["hidden"] });
+  }).observe(explorerElement, {
+    attributes: true,
+    attributeFilter: ["hidden"],
+  });
 
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden && !explorerElement.hidden) {
@@ -65,12 +68,12 @@ async function loadLatest() {
   if (loading) return;
   loading = true;
   try {
-    const blocks = await brk.getBlocks();
+    const blocks = await brk.getBlocksV1();
 
     // First load: insert all blocks before sentinel
     if (newestHeight === -1) {
       for (const block of blocks) {
-        sentinel.before(createBlockCube(block));
+        sentinel.after(createBlockCube(block));
       }
       newestHeight = blocks[0].height;
       oldestHeight = blocks[blocks.length - 1].height;
@@ -78,7 +81,8 @@ async function loadLatest() {
       // Subsequent polls: prepend only new blocks
       const newBlocks = blocks.filter((b) => b.height > newestHeight);
       if (newBlocks.length) {
-        chain.prepend(...newBlocks.map((b) => createBlockCube(b)));
+        // sentinel.after(createBlockCube(block));
+        sentinel.after(...newBlocks.map((b) => createBlockCube(b)));
         newestHeight = newBlocks[0].height;
       }
     }
@@ -92,9 +96,9 @@ async function loadOlder() {
   if (loading || oldestHeight <= 0) return;
   loading = true;
   try {
-    const blocks = await brk.getBlocksFromHeight(oldestHeight - 1);
+    const blocks = await brk.getBlocksV1FromHeight(oldestHeight - 1);
     for (const block of blocks) {
-      sentinel.before(createBlockCube(block));
+      sentinel.after(createBlockCube(block));
     }
     if (blocks.length) {
       oldestHeight = blocks[blocks.length - 1].height;
@@ -105,7 +109,7 @@ async function loadOlder() {
   loading = false;
 }
 
-/** @param {BlockInfo} block */
+/** @param {BlockInfoV1} block */
 function createBlockCube(block) {
   const { cubeElement, leftFaceElement, rightFaceElement, topFaceElement } =
     createCube();
@@ -128,20 +132,23 @@ function createBlockCube(block) {
   const feesElement = window.document.createElement("div");
   feesElement.classList.add("fees");
   leftFaceElement.append(feesElement);
+  const extras = block.extras;
+  const medianFee = extras ? extras.medianFee : 0;
+  const feeRange = extras ? extras.feeRange : [0, 0, 0, 0, 0, 0, 0];
   const averageFeeElement = window.document.createElement("p");
   feesElement.append(averageFeeElement);
-  averageFeeElement.innerHTML = `~1.41`;
+  averageFeeElement.innerHTML = `~${Number(medianFee).toFixed(2)}`;
   const feeRangeElement = window.document.createElement("p");
   feesElement.append(feeRangeElement);
   const minFeeElement = window.document.createElement("span");
-  minFeeElement.innerHTML = `0.11`;
+  minFeeElement.innerHTML = `${Number(feeRange[0]).toFixed(2)}`;
   feeRangeElement.append(minFeeElement);
   const dashElement = window.document.createElement("span");
   dashElement.style.opacity = "0.5";
   dashElement.innerHTML = `-`;
   feeRangeElement.append(dashElement);
   const maxFeeElement = window.document.createElement("span");
-  maxFeeElement.innerHTML = `12.1`;
+  maxFeeElement.innerHTML = `${Number(feeRange[6]).toFixed(1)}`;
   feeRangeElement.append(maxFeeElement);
   const feeUnitElement = window.document.createElement("p");
   feesElement.append(feeUnitElement);
@@ -149,7 +156,7 @@ function createBlockCube(block) {
   feeUnitElement.innerHTML = `sat/vB`;
 
   const spanMiner = window.document.createElement("span");
-  spanMiner.innerHTML = "TODO";
+  spanMiner.innerHTML = extras ? extras.pool.name : "Unknown";
   topFaceElement.append(spanMiner);
 
   return cubeElement;
