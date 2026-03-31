@@ -9086,7 +9086,7 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*
     ///
     /// Endpoint: `GET /api/v1/transaction-times`
-    pub fn get_transaction_times(&self, txId: Txid[]) -> Result<Vec<f64>> {
+    pub fn get_transaction_times(&self, txId: &[Txid]) -> Result<Vec<f64>> {
         let mut query = Vec::new();
         query.push(format!("txId[]={}", txId));
         let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };

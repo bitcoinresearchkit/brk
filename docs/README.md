@@ -75,8 +75,9 @@ Build custom applications in Rust. Use the full stack or individual components (
 
 ## Donations
 
-<a href="https://x.com/_Checkmatey_"><img src="https://pbs.twimg.com/profile_images/1657255419172253698/ncG0Gt8e_400x400.jpg" width="40" alt="Checkmate" title="Checkmate" style="border-radius:50%" /></a>
-<a href="https://x.com/JohanMBergman"><img src="https://pbs.twimg.com/profile_images/1958587470120988673/7rlY5csu_400x400.jpg" width="40" alt="Johan" title="Johan" style="border-radius:50%" /></a>
+<a href="https://x.com/_Checkmatey_"><img src="https://pbs.twimg.com/profile_images/1657255419172253698/ncG0Gt8e_400x400.jpg" width="40" alt="_Checkmatey_" title="_Checkmatey_" style="border-radius:50%" /></a>
+<a href="https://x.com/JohanMBergman"><img src="https://pbs.twimg.com/profile_images/1958587470120988673/7rlY5csu_400x400.jpg" width="40" alt="Johan Bergman" title="Johan Bergman" style="border-radius:50%" /></a>
+<a href="https://x.com/alonshvartsman"><img src="https://pbs.twimg.com/profile_images/2005689891028406272/8Qgmnurs_400x400.jpg" width="40" alt="Alon Shvartsman" title="Alon Shvartsman" style="border-radius:50%" /></a>
 <a href="https://x.com/clearmined1"><img src="https://pbs.twimg.com/profile_images/1657777901830541313/6OAaR8XF_400x400.png" width="40" alt="ClearMined" title="ClearMined" style="border-radius:50%" /></a>
 
 <img src="./qr.png" alt="Bitcoin donate QR code" width="120" />
