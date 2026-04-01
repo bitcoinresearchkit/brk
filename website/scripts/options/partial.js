@@ -57,11 +57,15 @@ export function createPartialOptions() {
   } = buildCohortData();
 
   return [
-    {
-      name: "Explorer",
-      kind: "explorer",
-      title: "Explorer",
-    },
+    ...(location.hostname === "localhost" || location.hostname === "127.0.0.1"
+      ? [
+          {
+            name: "Explorer",
+            kind: "explorer",
+            title: "Explorer",
+          },
+        ]
+      : []),
     {
       name: "Charts",
       tree: [

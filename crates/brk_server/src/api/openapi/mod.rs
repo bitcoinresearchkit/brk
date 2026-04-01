@@ -22,22 +22,22 @@ pub fn create_openapi() -> OpenApi {
     let info = Info {
         title: "Bitcoin Research Kit".to_string(),
         description: Some(
-            r#"API for querying Bitcoin blockchain data and on-chain series.
+            r#"API for querying Bitcoin blockchain data, mempool state, and on-chain series.
 
 ### Features
 
-- **Series**: Thousands of time-series across multiple indexes (date, block height, etc.)
-- **[Mempool.space](https://mempool.space/docs/api/rest) compatible** (WIP): Most non-series endpoints follow the mempool.space API format
+- **[Mempool.space](https://mempool.space/docs/api/rest) compatible**: Blocks, transactions, addresses, mining, fees, and mempool endpoints match the mempool.space REST API
+- **Series**: Thousands of on-chain time-series across multiple indexes (date, block height, etc.)
 - **Multiple formats**: JSON and CSV output
 - **LLM-optimized**: [`/llms.txt`](/llms.txt) for discovery, [`/api.json`](/api.json) compact OpenAPI spec for tool use (full spec at [`/openapi.json`](/openapi.json))
 
 ### Quick start
 
 ```bash
-curl -s https://bitview.space/api/block-height/0
+curl -s https://bitview.space/api/blocks/tip/height
+curl -s https://bitview.space/api/v1/fees/recommended
+curl -s https://bitview.space/api/mempool
 curl -s https://bitview.space/api/series/search?q=price
-curl -s https://bitview.space/api/series/price/day
-curl -s https://bitview.space/api/series/price/day/latest
 ```
 
 ### Errors
@@ -50,7 +50,7 @@ All errors return structured JSON with a consistent format:
     "type": "not_found",
     "code": "series_not_found",
     "message": "'foo' not found, did you mean 'bar'?",
-    "doc_url": "https://bitcoinresearchkit.org/api"
+    "doc_url": "/api"
   }
 }
 ```
@@ -108,21 +108,10 @@ All errors return structured JSON with a consistent format:
             ..Default::default()
         },
         Tag {
-            name: "Blocks".to_string(),
+            name: "General".to_string(),
             description: Some(
-                "Retrieve block data by hash or height. Access block headers, transaction lists, \
-                and raw block bytes.\n\n\
-                *[Mempool.space](https://mempool.space/docs/api/rest) compatible (WIP).*"
-                    .to_string(),
-            ),
-            ..Default::default()
-        },
-        Tag {
-            name: "Transactions".to_string(),
-            description: Some(
-                "Retrieve transaction data by txid. Access full transaction details, confirmation \
-                status, raw hex, and output spend information.\n\n\
-                *[Mempool.space](https://mempool.space/docs/api/rest) compatible (WIP).*"
+                "General Bitcoin network information including difficulty adjustments and price data.\n\n\
+                *[Mempool.space](https://mempool.space/docs/api/rest) compatible.*"
                     .to_string(),
             ),
             ..Default::default()
@@ -132,17 +121,17 @@ All errors return structured JSON with a consistent format:
             description: Some(
                 "Query Bitcoin address data including balances, transaction history, and UTXOs. \
                 Supports all address types: P2PKH, P2SH, P2WPKH, P2WSH, and P2TR.\n\n\
-                *[Mempool.space](https://mempool.space/docs/api/rest) compatible (WIP).*"
+                *[Mempool.space](https://mempool.space/docs/api/rest) compatible.*"
                     .to_string(),
             ),
             ..Default::default()
         },
         Tag {
-            name: "Mempool".to_string(),
+            name: "Blocks".to_string(),
             description: Some(
-                "Monitor unconfirmed transactions and fee estimates. Get mempool statistics, \
-                transaction IDs, and recommended fee rates for different confirmation targets.\n\n\
-                *[Mempool.space](https://mempool.space/docs/api/rest) compatible (WIP).*"
+                "Retrieve block data by hash or height. Access block headers, transaction lists, \
+                and raw block bytes.\n\n\
+                *[Mempool.space](https://mempool.space/docs/api/rest) compatible.*"
                     .to_string(),
             ),
             ..Default::default()
@@ -152,16 +141,43 @@ All errors return structured JSON with a consistent format:
             description: Some(
                 "Mining statistics including pool distribution, hashrate, difficulty adjustments, \
                 block rewards, and fee rates across configurable time periods.\n\n\
-                *[Mempool.space](https://mempool.space/docs/api/rest) compatible (WIP).*"
+                *[Mempool.space](https://mempool.space/docs/api/rest) compatible.*"
+                    .to_string(),
+            ),
+            ..Default::default()
+        },
+        Tag {
+            name: "Fees".to_string(),
+            description: Some(
+                "Fee estimation and projected mempool blocks.\n\n\
+                *[Mempool.space](https://mempool.space/docs/api/rest) compatible.*"
+                    .to_string(),
+            ),
+            ..Default::default()
+        },
+        Tag {
+            name: "Mempool".to_string(),
+            description: Some(
+                "Monitor unconfirmed transactions. Get mempool statistics, \
+                transaction IDs, fee histogram, and recent transactions.\n\n\
+                *[Mempool.space](https://mempool.space/docs/api/rest) compatible.*"
+                    .to_string(),
+            ),
+            ..Default::default()
+        },
+        Tag {
+            name: "Transactions".to_string(),
+            description: Some(
+                "Retrieve transaction data by txid. Access full transaction details, confirmation \
+                status, raw hex, merkle proofs, and output spend information.\n\n\
+                *[Mempool.space](https://mempool.space/docs/api/rest) compatible.*"
                     .to_string(),
             ),
             ..Default::default()
         },
         Tag {
             name: "Metrics".to_string(),
-            description: Some(
-                "Deprecated — use Series".to_string(),
-            ),
+            description: Some("Deprecated — use Series".to_string()),
             extensions: [("deprecated".to_string(), serde_json::Value::Bool(true))].into(),
             ..Default::default()
         },
