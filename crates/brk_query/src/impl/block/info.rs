@@ -463,7 +463,7 @@ impl Query {
         let coinbase_signature_ascii = tx
             .input
             .first()
-            .map(|input| String::from_utf8_lossy(input.script_sig.as_bytes()).to_string())
+            .map(|input| input.script_sig.as_bytes().iter().map(|&b| b as char).collect::<String>())
             .unwrap_or_default();
 
         let coinbase_addresses: Vec<String> = tx

@@ -33,11 +33,11 @@ impl Bytes for CoinbaseTag {
 }
 
 impl CoinbaseTag {
-    /// Returns the tag as a UTF-8 string (lossy).
+    /// Returns the tag as a string, decoding each byte as its latin-1/Unicode codepoint.
     #[inline]
-    pub fn as_str(&self) -> std::borrow::Cow<'_, str> {
+    pub fn as_str(&self) -> String {
         let len = (self.0[0] as usize).min(100);
-        String::from_utf8_lossy(&self.0[1..1 + len])
+        self.0[1..1 + len].iter().map(|&b| b as char).collect()
     }
 }
 
@@ -73,7 +73,21 @@ impl Formattable for CoinbaseTag {
 
     fn fmt_json(&self, buf: &mut Vec<u8>) {
         buf.push(b'"');
-        buf.extend_from_slice(self.as_str().as_bytes());
+        for &b in self.as_str().as_bytes() {
+            match b {
+                b'"' => buf.extend_from_slice(b"\\\""),
+                b'\\' => buf.extend_from_slice(b"\\\\"),
+                b'\n' => buf.extend_from_slice(b"\\n"),
+                b'\r' => buf.extend_from_slice(b"\\r"),
+                b'\t' => buf.extend_from_slice(b"\\t"),
+                0x00..=0x1f => {
+                    buf.extend_from_slice(b"\\u00");
+                    buf.push(b"0123456789abcdef"[(b >> 4) as usize]);
+                    buf.push(b"0123456789abcdef"[(b & 0xf) as usize]);
+                }
+                _ => buf.push(b),
+            }
+        }
         buf.push(b'"');
     }
 }
