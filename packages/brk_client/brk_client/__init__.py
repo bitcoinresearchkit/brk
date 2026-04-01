@@ -7059,7 +7059,7 @@ class BrkClient(BrkClientBase):
         """Convert a date/datetime to an index value for date-based indexes."""
         return _date_to_index(index, d)
 
-    def get_api(self) -> Any:
+    def get_api(self) -> str:
         """Compact OpenAPI specification.
 
         Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. Full spec available at `/openapi.json`.
@@ -7125,7 +7125,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/address/{address}/utxo`"""
         return self.get_json(f'/api/address/{address}/utxo')
 
-    def get_block_by_height(self, height: Height) -> Any:
+    def get_block_by_height(self, height: Height) -> str:
         """Block hash by height.
 
         Retrieve the block hash at a given height. Returns the hash as plain text.
@@ -7145,7 +7145,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/block/{hash}`"""
         return self.get_json(f'/api/block/{hash}')
 
-    def get_block_header(self, hash: BlockHash) -> Any:
+    def get_block_header(self, hash: BlockHash) -> str:
         """Block header.
 
         Returns the hex-encoded block header.
@@ -7175,7 +7175,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/block/{hash}/status`"""
         return self.get_json(f'/api/block/{hash}/status')
 
-    def get_block_txid(self, hash: BlockHash, index: TxIndex) -> Any:
+    def get_block_txid(self, hash: BlockHash, index: TxIndex) -> str:
         """Transaction ID at index.
 
         Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.
@@ -7225,7 +7225,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/blocks`"""
         return self.get_json('/api/blocks')
 
-    def get_block_tip_hash(self) -> Any:
+    def get_block_tip_hash(self) -> str:
         """Block tip hash.
 
         Returns the hash of the last block.
@@ -7235,7 +7235,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/blocks/tip/hash`"""
         return self.get_text('/api/blocks/tip/hash')
 
-    def get_block_tip_height(self) -> Any:
+    def get_block_tip_height(self) -> str:
         """Block tip height.
 
         Returns the height of the last block.
@@ -7437,7 +7437,7 @@ class BrkClient(BrkClientBase):
             return self.get_text(path)
         return self.get_json(path)
 
-    def get_series_latest(self, series: SeriesName, index: Index) -> Any:
+    def get_series_latest(self, series: SeriesName, index: Index) -> str:
         """Get latest series value.
 
         Returns the single most recent value for a series, unwrapped (not inside a SeriesData object).
@@ -7487,7 +7487,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/tx/{txid}`"""
         return self.get_json(f'/api/tx/{txid}')
 
-    def get_tx_hex(self, txid: Txid) -> Any:
+    def get_tx_hex(self, txid: Txid) -> str:
         """Transaction hex.
 
         Retrieve the raw transaction as a hex-encoded string. Returns the serialized transaction in hexadecimal format.
@@ -7507,7 +7507,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/tx/{txid}/merkle-proof`"""
         return self.get_json(f'/api/tx/{txid}/merkle-proof')
 
-    def get_tx_merkleblock_proof(self, txid: Txid) -> Any:
+    def get_tx_merkleblock_proof(self, txid: Txid) -> str:
         """Transaction merkleblock proof.
 
         Get the merkleblock proof for a transaction (BIP37 format, hex encoded).
@@ -7651,7 +7651,7 @@ class BrkClient(BrkClientBase):
         path = f'/api/v1/historical-price{"?" + query if query else ""}'
         return self.get_json(path)
 
-    def get_block_fee_rates(self, time_period: TimePeriod) -> Any:
+    def get_block_fee_rates(self, time_period: TimePeriod) -> str:
         """Block fee rates (WIP).
 
         **Work in progress.** Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
@@ -7869,7 +7869,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /health`"""
         return self.get_json('/health')
 
-    def get_openapi(self) -> Any:
+    def get_openapi(self) -> str:
         """OpenAPI specification.
 
         Full OpenAPI 3.1 specification for this API.
