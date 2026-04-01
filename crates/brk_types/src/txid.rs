@@ -63,6 +63,14 @@ impl fmt::Display for Txid {
     }
 }
 
+impl FromStr for Txid {
+    type Err = bitcoin::hashes::hex::HexToArrayError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        bitcoin::Txid::from_str(s).map(Self::from)
+    }
+}
+
 impl Serialize for Txid {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

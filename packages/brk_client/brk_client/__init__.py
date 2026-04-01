@@ -1078,6 +1078,13 @@ class PoolsSummary(TypedDict):
     blockCount: int
     lastEstimatedHashrate: int
 
+class Prices(TypedDict):
+    """
+    Current price response matching mempool.space /api/v1/prices format
+    """
+    time: Timestamp
+    USD: Dollars
+
 class RecommendedFees(TypedDict):
     """
     Recommended fee rates in sat/vB
@@ -1313,9 +1320,6 @@ class TxidVout(TypedDict):
     """
     txid: Txid
     vout: Vout
-
-class TxidsParam(TypedDict):
-    txId: List[Txid]
 
 class Utxo(TypedDict):
     """
@@ -7495,6 +7499,16 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/tx/{txid}/merkle-proof`"""
         return self.get_json(f'/api/tx/{txid}/merkle-proof')
 
+    def get_tx_merkleblock_proof(self, txid: Txid) -> str:
+        """Transaction merkleblock proof.
+
+        Get the merkleblock proof for a transaction (BIP37 format, hex encoded).
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkleblock-proof)*
+
+        Endpoint: `GET /api/tx/{txid}/merkleblock-proof`"""
+        return self.get_json(f'/api/tx/{txid}/merkleblock-proof')
+
     def get_tx_outspend(self, txid: Txid, vout: Vout) -> TxOutspend:
         """Output spend status.
 
@@ -7809,7 +7823,17 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/v1/mining/reward-stats/{block_count}`"""
         return self.get_json(f'/api/v1/mining/reward-stats/{block_count}')
 
-    def get_transaction_times(self, txId: List[Txid]) -> List[float]:
+    def get_prices(self) -> Prices:
+        """Current BTC price.
+
+        Returns bitcoin latest price (on-chain derived, USD only).
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*
+
+        Endpoint: `GET /api/v1/prices`"""
+        return self.get_json('/api/v1/prices')
+
+    def get_transaction_times(self) -> List[float]:
         """Transaction first-seen times.
 
         Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.
@@ -7817,11 +7841,7 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*
 
         Endpoint: `GET /api/v1/transaction-times`"""
-        params = []
-        params.append(f'txId[]={txId}')
-        query = '&'.join(params)
-        path = f'/api/v1/transaction-times{"?" + query if query else ""}'
-        return self.get_json(path)
+        return self.get_json('/api/v1/transaction-times')
 
     def validate_address(self, address: str) -> AddrValidation:
         """Validate address.

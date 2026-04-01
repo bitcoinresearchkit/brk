@@ -1,7 +1,15 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::Dollars;
+use crate::{Dollars, Timestamp};
+
+/// Current price response matching mempool.space /api/v1/prices format
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+pub struct Prices {
+    pub time: Timestamp,
+    #[serde(rename = "USD")]
+    pub usd: Dollars,
+}
 
 /// Historical price response
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]

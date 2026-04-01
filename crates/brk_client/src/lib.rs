@@ -8734,6 +8734,17 @@ impl BrkClient {
         self.base.get_json(&format!("/api/tx/{txid}/merkle-proof"))
     }
 
+    /// Transaction merkleblock proof
+    ///
+    /// Get the merkleblock proof for a transaction (BIP37 format, hex encoded).
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkleblock-proof)*
+    ///
+    /// Endpoint: `GET /api/tx/{txid}/merkleblock-proof`
+    pub fn get_tx_merkleblock_proof(&self, txid: Txid) -> Result<String> {
+        self.base.get_json(&format!("/api/tx/{txid}/merkleblock-proof"))
+    }
+
     /// Output spend status
     ///
     /// Get the spending status of a transaction output. Returns whether the output has been spent and, if so, the spending transaction details.
@@ -9079,6 +9090,17 @@ impl BrkClient {
         self.base.get_json(&format!("/api/v1/mining/reward-stats/{block_count}"))
     }
 
+    /// Current BTC price
+    ///
+    /// Returns bitcoin latest price (on-chain derived, USD only).
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*
+    ///
+    /// Endpoint: `GET /api/v1/prices`
+    pub fn get_prices(&self) -> Result<Prices> {
+        self.base.get_json(&format!("/api/v1/prices"))
+    }
+
     /// Transaction first-seen times
     ///
     /// Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.
@@ -9086,12 +9108,8 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*
     ///
     /// Endpoint: `GET /api/v1/transaction-times`
-    pub fn get_transaction_times(&self, txId: &[Txid]) -> Result<Vec<f64>> {
-        let mut query = Vec::new();
-        query.push(format!("txId[]={}", txId));
-        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
-        let path = format!("/api/v1/transaction-times{}", query_str);
-        self.base.get_json(&path)
+    pub fn get_transaction_times(&self) -> Result<Vec<f64>> {
+        self.base.get_json(&format!("/api/v1/transaction-times"))
     }
 
     /// Validate address

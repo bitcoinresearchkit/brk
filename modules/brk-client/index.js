@@ -790,6 +790,13 @@
  * @property {number} lastEstimatedHashrate - Estimated network hashrate (hashes per second)
  */
 /**
+ * Current price response matching mempool.space /api/v1/prices format
+ *
+ * @typedef {Object} Prices
+ * @property {Timestamp} time
+ * @property {Dollars} uSD
+ */
+/**
  * A range boundary: integer index, date, or timestamp.
  *
  * @typedef {(number|Date|Timestamp)} RangeIndex
@@ -1062,10 +1069,6 @@
  * @typedef {Object} TxidVout
  * @property {Txid} txid - Transaction ID
  * @property {Vout} vout - Output index
- */
-/**
- * @typedef {Object} TxidsParam
- * @property {Txid[]} txId[]
  */
 /**
  * Index within its type (e.g., 0 for first P2WPKH address)
@@ -10099,6 +10102,22 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
+   * Transaction merkleblock proof
+   *
+   * Get the merkleblock proof for a transaction (BIP37 format, hex encoded).
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkleblock-proof)*
+   *
+   * Endpoint: `GET /api/tx/{txid}/merkleblock-proof`
+   *
+   * @param {Txid} txid
+   * @returns {Promise<string>}
+   */
+  async getTxMerkleblockProof(txid) {
+    return this.getJson(`/api/tx/${txid}/merkleblock-proof`);
+  }
+
+  /**
    * Output spend status
    *
    * Get the spending status of a transaction output. Returns whether the output has been spent and, if so, the spending transaction details.
@@ -10583,6 +10602,20 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
+   * Current BTC price
+   *
+   * Returns bitcoin latest price (on-chain derived, USD only).
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*
+   *
+   * Endpoint: `GET /api/v1/prices`
+   * @returns {Promise<Prices>}
+   */
+  async getPrices() {
+    return this.getJson(`/api/v1/prices`);
+  }
+
+  /**
    * Transaction first-seen times
    *
    * Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.
@@ -10590,16 +10623,10 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*
    *
    * Endpoint: `GET /api/v1/transaction-times`
-   *
-   * @param {Txid[]} [txId[]]
    * @returns {Promise<number[]>}
    */
-  async getTransactionTimes(txId) {
-    const params = new URLSearchParams();
-    params.set('txId[]', String(txId));
-    const query = params.toString();
-    const path = `/api/v1/transaction-times${query ? '?' + query : ''}`;
-    return this.getJson(path);
+  async getTransactionTimes() {
+    return this.getJson(`/api/v1/transaction-times`);
   }
 
   /**

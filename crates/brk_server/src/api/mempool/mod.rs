@@ -5,7 +5,7 @@ use axum::{
 };
 use brk_types::{
     Dollars, HistoricalPrice, MempoolBlock, MempoolInfo, MempoolRecentTx, OptionalTimestampParam,
-    RecommendedFees, Txid,
+    Prices, RecommendedFees, Timestamp, Txid,
 };
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};
@@ -63,6 +63,27 @@ impl MempoolRoutes for ApiRouter<AppState> {
                             .summary("Recent mempool transactions")
                             .description("Get the last 10 transactions to enter the mempool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*")
                             .ok_response::<Vec<MempoolRecentTx>>()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/v1/prices",
+                get_with(
+                    async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                        state.cached_json(&headers, state.mempool_cache(), &uri, |q| {
+                            Ok(Prices {
+                                time: Timestamp::now(),
+                                usd: q.live_price()?,
+                            })
+                        }).await
+                    },
+                    |op| {
+                        op.id("get_prices")
+                            .mempool_tag()
+                            .summary("Current BTC price")
+                            .description("Returns bitcoin latest price (on-chain derived, USD only).\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*")
+                            .ok_response::<Prices>()
                             .server_error()
                     },
                 ),

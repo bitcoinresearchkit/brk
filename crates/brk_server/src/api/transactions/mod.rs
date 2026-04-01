@@ -6,7 +6,6 @@ use axum::{
     extract::{Path, State},
     http::{HeaderMap, Uri},
 };
-use axum::extract::Query;
 use brk_types::{
     CpfpInfo, Hex, MerkleProof, Transaction, TxOutspend, TxStatus, Txid, TxidParam, TxidVout,
     TxidsParam,
@@ -170,6 +169,24 @@ impl TxRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
+            "/api/tx/{txid}/merkleblock-proof",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, Path(txid): Path<TxidParam>, State(state): State<AppState>| {
+                    state.cached_text(&headers, CacheStrategy::Height, &uri, move |q| q.merkleblock_proof(txid)).await
+                },
+                |op| op
+                    .id("get_tx_merkleblock_proof")
+                    .transactions_tag()
+                    .summary("Transaction merkleblock proof")
+                    .description("Get the merkleblock proof for a transaction (BIP37 format, hex encoded).\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkleblock-proof)*")
+                    .ok_response::<String>()
+                    .not_modified()
+                    .bad_request()
+                    .not_found()
+                    .server_error(),
+            ),
+        )
+        .api_route(
             "/api/tx/{txid}/raw",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(txid): Path<TxidParam>, State(state): State<AppState>| {
@@ -224,7 +241,8 @@ impl TxRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/transaction-times",
             get_with(
-                async |uri: Uri, headers: HeaderMap, Query(params): Query<TxidsParam>, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                    let params = TxidsParam::from_query(uri.query().unwrap_or(""));
                     state.cached_json(&headers, CacheStrategy::MempoolHash(0), &uri, move |q| q.transaction_times(&params.txids)).await
                 },
                 |op| op

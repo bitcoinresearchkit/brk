@@ -58,10 +58,10 @@ impl BlockProcessor<'_> {
         let mut sw_size = 0usize;
         let mut sw_weight = 0usize;
 
-        for tx in txs {
+        for (i, tx) in txs.iter().enumerate() {
             total_size += tx.total_size as usize;
             weight += tx.weight();
-            if tx.is_segwit() {
+            if i > 0 && tx.is_segwit() {
                 sw_txs += 1;
                 sw_size += tx.total_size as usize;
                 sw_weight += tx.weight();

@@ -144,7 +144,15 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             writeln!(output, "        let mut query = Vec::new();").unwrap();
             for param in &endpoint.query_params {
                 let ident = sanitize_ident(&param.name);
-                if param.required {
+                let is_array = param.param_type.ends_with("[]");
+                if is_array {
+                    writeln!(
+                        output,
+                        "        for v in {} {{ query.push(format!(\"{}={{}}\", v)); }}",
+                        ident, param.name
+                    )
+                    .unwrap();
+                } else if param.required {
                     writeln!(
                         output,
                         "        query.push(format!(\"{}={{}}\", {}));",
