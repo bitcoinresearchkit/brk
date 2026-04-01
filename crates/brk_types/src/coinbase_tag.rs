@@ -39,13 +39,6 @@ impl CoinbaseTag {
         let len = (self.0[0] as usize).min(100);
         String::from_utf8_lossy(&self.0[1..1 + len])
     }
-
-    /// Returns the tag bytes (without length prefix).
-    #[inline]
-    pub fn tag_bytes(&self) -> &[u8] {
-        let len = (self.0[0] as usize).min(100);
-        &self.0[1..1 + len]
-    }
 }
 
 impl From<&[u8]> for CoinbaseTag {
@@ -75,12 +68,12 @@ impl<'de> Deserialize<'de> for CoinbaseTag {
 
 impl Formattable for CoinbaseTag {
     fn write_to(&self, buf: &mut Vec<u8>) {
-        buf.extend_from_slice(self.tag_bytes());
+        buf.extend_from_slice(self.as_str().as_bytes());
     }
 
     fn fmt_json(&self, buf: &mut Vec<u8>) {
         buf.push(b'"');
-        buf.extend_from_slice(self.tag_bytes());
+        buf.extend_from_slice(self.as_str().as_bytes());
         buf.push(b'"');
     }
 }
