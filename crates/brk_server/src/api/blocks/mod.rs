@@ -5,8 +5,8 @@ use axum::{
 };
 use brk_query::BLOCK_TXS_PAGE_SIZE;
 use brk_types::{
-    BlockHash, BlockHashParam, BlockHashStartIndex, BlockHashTxIndex, BlockInfo, BlockInfoV1,
-    BlockStatus, BlockTimestamp, Height, HeightParam, Hex, TimestampParam, Transaction, Txid,
+    BlockHashParam, BlockHashStartIndex, BlockHashTxIndex, BlockInfo, BlockInfoV1, BlockStatus,
+    BlockTimestamp, HeightParam, TimestampParam, Transaction, TxIndex, Txid,
 };
 
 use crate::{CacheStrategy, extended::TransformResponseExtended};
@@ -35,7 +35,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .description(
                                 "Retrieve block information by block hash. Returns block metadata including height, timestamp, difficulty, size, weight, and transaction count.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block)*",
                             )
-                            .ok_response::<BlockInfo>()
+                            .json_response::<BlockInfo>()
                             .not_modified()
                             .bad_request()
                             .not_found()
@@ -57,7 +57,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .blocks_tag()
                             .summary("Block (v1)")
                             .description("Returns block details with extras by hash.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*")
-                            .ok_response::<BlockInfoV1>()
+                            .json_response::<BlockInfoV1>()
                             .not_modified()
                             .not_found()
                             .server_error()
@@ -75,7 +75,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .blocks_tag()
                             .summary("Block header")
                             .description("Returns the hex-encoded block header.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*")
-                            .ok_response::<Hex>()
+                            .text_response()
                             .not_modified()
                             .not_found()
                             .server_error()
@@ -98,7 +98,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .description(
                                 "Retrieve the block hash at a given height. Returns the hash as plain text.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*",
                             )
-                            .ok_response::<BlockHash>()
+                            .text_response()
                             .not_modified()
                             .bad_request()
                             .not_found()
@@ -120,7 +120,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .blocks_tag()
                             .summary("Block by timestamp")
                             .description("Find the block closest to a given UNIX timestamp.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*")
-                            .ok_response::<BlockTimestamp>()
+                            .json_response::<BlockTimestamp>()
                             .not_modified()
                             .bad_request()
                             .not_found()
@@ -144,7 +144,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .description(
                                 "Returns the raw block data in binary format.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*",
                             )
-                            .ok_response::<Vec<u8>>()
+                            .json_response::<Vec<u8>>()
                             .not_modified()
                             .bad_request()
                             .not_found()
@@ -168,7 +168,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .description(
                                 "Retrieve the status of a block. Returns whether the block is in the best chain and, if so, its height and the hash of the next block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-status)*",
                             )
-                            .ok_response::<BlockStatus>()
+                            .json_response::<BlockStatus>()
                             .not_modified()
                             .bad_request()
                             .not_found()
@@ -187,7 +187,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .blocks_tag()
                             .summary("Block tip height")
                             .description("Returns the height of the last block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*")
-                            .ok_response::<Height>()
+                            .text_response()
                             .not_modified()
                             .server_error()
                     },
@@ -204,7 +204,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .blocks_tag()
                             .summary("Block tip hash")
                             .description("Returns the hash of the last block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*")
-                            .ok_response::<BlockHash>()
+                            .text_response()
                             .not_modified()
                             .server_error()
                     },
@@ -226,7 +226,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .description(
                                 "Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-id)*",
                             )
-                            .ok_response::<Txid>()
+                            .text_response()
                             .not_modified()
                             .bad_request()
                             .not_found()
@@ -250,7 +250,32 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .description(
                                 "Retrieve all transaction IDs in a block. Returns an array of txids in block order.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-ids)*",
                             )
-                            .ok_response::<Vec<Txid>>()
+                            .json_response::<Vec<Txid>>()
+                            .not_modified()
+                            .bad_request()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/block/{hash}/txs",
+                get_with(
+                    async |uri: Uri,
+                           headers: HeaderMap,
+                           Path(path): Path<BlockHashParam>,
+                           State(state): State<AppState>| {
+                        state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| q.block_txs(&path.hash, TxIndex::default())).await
+                    },
+                    |op| {
+                        op.id("get_block_txs")
+                            .blocks_tag()
+                            .summary("Block transactions")
+                            .description(&format!(
+                                "Retrieve transactions in a block by block hash. Returns up to {} transactions starting from index 0.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*",
+                                BLOCK_TXS_PAGE_SIZE
+                            ))
+                            .json_response::<Vec<Transaction>>()
                             .not_modified()
                             .bad_request()
                             .not_found()
@@ -268,14 +293,14 @@ impl BlockRoutes for ApiRouter<AppState> {
                         state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| q.block_txs(&path.hash, path.start_index)).await
                     },
                     |op| {
-                        op.id("get_block_txs")
+                        op.id("get_block_txs_from_index")
                             .blocks_tag()
                             .summary("Block transactions (paginated)")
                             .description(&format!(
                                 "Retrieve transactions in a block by block hash, starting from the specified index. Returns up to {} transactions at a time.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*",
                                 BLOCK_TXS_PAGE_SIZE
                             ))
-                            .ok_response::<Vec<Transaction>>()
+                            .json_response::<Vec<Transaction>>()
                             .not_modified()
                             .bad_request()
                             .not_found()
@@ -296,7 +321,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .blocks_tag()
                             .summary("Recent blocks")
                             .description("Retrieve the last 10 blocks. Returns block metadata for each block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*")
-                            .ok_response::<Vec<BlockInfo>>()
+                            .json_response::<Vec<BlockInfo>>()
                             .not_modified()
                             .server_error()
                     },
@@ -318,7 +343,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .description(
                                 "Retrieve up to 10 blocks going backwards from the given height. For example, height=100 returns blocks 100, 99, 98, ..., 91. Height=0 returns only block 0.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*",
                             )
-                            .ok_response::<Vec<BlockInfo>>()
+                            .json_response::<Vec<BlockInfo>>()
                             .not_modified()
                             .bad_request()
                             .server_error()
@@ -338,7 +363,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .blocks_tag()
                             .summary("Recent blocks with extras")
                             .description("Retrieve the last 10 blocks with extended data including pool identification and fee statistics.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*")
-                            .ok_response::<Vec<BlockInfoV1>>()
+                            .json_response::<Vec<BlockInfoV1>>()
                             .not_modified()
                             .server_error()
                     },
@@ -358,7 +383,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .blocks_tag()
                             .summary("Blocks from height with extras")
                             .description("Retrieve up to 10 blocks with extended data going backwards from the given height.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*")
-                            .ok_response::<Vec<BlockInfoV1>>()
+                            .json_response::<Vec<BlockInfoV1>>()
                             .not_modified()
                             .bad_request()
                             .server_error()

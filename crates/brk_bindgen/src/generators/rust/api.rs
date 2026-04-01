@@ -93,7 +93,7 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             .response_type
             .as_deref()
             .map(js_type_to_rust)
-            .unwrap_or_else(|| "serde_json::Value".to_string());
+            .unwrap_or_else(|| "String".to_string());
 
         let return_type = if endpoint.supports_csv {
             format!("FormatResponse<{}>", base_return_type)
@@ -132,12 +132,17 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         .unwrap();
 
         let (path, index_arg) = build_path_template(endpoint);
+        let fetch_method = if endpoint.returns_json() {
+            "get_json"
+        } else {
+            "get_text"
+        };
 
         if endpoint.query_params.is_empty() {
             writeln!(
                 output,
-                "        self.base.get_json(&format!(\"{}\"{}))",
-                path, index_arg
+                "        self.base.{}(&format!(\"{}\"{}))",
+                fetch_method, path, index_arg
             )
             .unwrap();
         } else {
@@ -186,12 +191,14 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
                 writeln!(output, "        }} else {{").unwrap();
                 writeln!(
                     output,
-                    "            self.base.get_json(&path).map(FormatResponse::Json)"
+                    "            self.base.{}(&path).map(FormatResponse::Json)",
+                    fetch_method
                 )
                 .unwrap();
                 writeln!(output, "        }}").unwrap();
             } else {
-                writeln!(output, "        self.base.get_json(&path)").unwrap();
+                writeln!(output, "        self.base.{}(&path)", fetch_method)
+                    .unwrap();
             }
         }
 

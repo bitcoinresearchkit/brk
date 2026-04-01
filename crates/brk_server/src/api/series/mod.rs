@@ -59,7 +59,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                         "Returns the complete hierarchical catalog of available series organized as a tree structure. \
                         Series are grouped by categories and subcategories."
                     )
-                    .ok_response::<TreeNode>()
+                    .json_response::<TreeNode>()
                     .not_modified(),
             ),
         )
@@ -78,7 +78,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     .series_tag()
                     .summary("Series count")
                     .description("Returns the number of series available per index type.")
-                    .ok_response::<Vec<SeriesCount>>()
+                    .json_response::<Vec<SeriesCount>>()
                     .not_modified(),
             ),
         )
@@ -99,7 +99,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     .description(
                         "Returns all available indexes with their accepted query aliases. Use any alias when querying series."
                     )
-                    .ok_response::<Vec<IndexInfo>>()
+                    .json_response::<Vec<IndexInfo>>()
                     .not_modified(),
             ),
         )
@@ -119,7 +119,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     .series_tag()
                     .summary("Series list")
                     .description("Paginated flat list of all available series names. Use `page` query param for pagination.")
-                    .ok_response::<PaginatedSeries>()
+                    .json_response::<PaginatedSeries>()
                     .not_modified(),
             ),
         )
@@ -139,7 +139,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     .series_tag()
                     .summary("Search series")
                     .description("Fuzzy search for series by name. Supports partial matches and typos.")
-                    .ok_response::<Vec<&str>>()
+                    .json_response::<Vec<&str>>()
                     .not_modified()
                     .server_error(),
             ),
@@ -164,7 +164,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     .description(
                         "Returns the supported indexes and value type for the specified series."
                     )
-                    .ok_response::<SeriesInfo>()
+                    .json_response::<SeriesInfo>()
                     .not_modified()
                     .not_found()
                     .server_error(),
@@ -198,7 +198,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                         "Fetch data for a specific series at the given index. \
                         Use query parameters to filter by date range and format (json/csv)."
                     )
-                    .ok_response::<SeriesData>()
+                    .json_response::<SeriesData>()
                     .csv_response()
                     .not_modified()
                     .not_found(),
@@ -232,7 +232,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                         "Returns just the data array without the SeriesData wrapper. \
                         Supports the same range and format parameters as the standard endpoint."
                     )
-                    .ok_response::<Vec<serde_json::Value>>()
+                    .json_response::<Vec<serde_json::Value>>()
                     .csv_response()
                     .not_modified()
                     .not_found(),
@@ -258,7 +258,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     .description(
                         "Returns the single most recent value for a series, unwrapped (not inside a SeriesData object)."
                     )
-                    .ok_response::<serde_json::Value>()
+                    .json_response::<serde_json::Value>()
                     .not_found(),
             ),
         )
@@ -280,7 +280,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     .series_tag()
                     .summary("Get series data length")
                     .description("Returns the total number of data points for a series at the given index.")
-                    .ok_response::<usize>()
+                    .json_response::<usize>()
                     .not_found(),
             ),
         )
@@ -302,7 +302,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     .series_tag()
                     .summary("Get series version")
                     .description("Returns the current version of a series. Changes when the series data is updated.")
-                    .ok_response::<brk_types::Version>()
+                    .json_response::<brk_types::Version>()
                     .not_found(),
             ),
         )
@@ -320,7 +320,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                         "Fetch multiple series in a single request. Supports filtering by index and date range. \
                         Returns an array of SeriesData objects. For a single series, use `get_series` instead."
                     )
-                    .ok_response::<Vec<SeriesData>>()
+                    .json_response::<Vec<SeriesData>>()
                     .csv_response()
                     .not_modified(),
             ),
@@ -339,7 +339,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                         .series_tag()
                         .summary("Available cost basis cohorts")
                         .description("List available cohorts for cost basis distribution.")
-                        .ok_response::<Vec<String>>()
+                        .json_response::<Vec<String>>()
                         .server_error()
                 },
             ),
@@ -362,7 +362,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                         .series_tag()
                         .summary("Available cost basis dates")
                         .description("List available dates for a cohort's cost basis distribution.")
-                        .ok_response::<Vec<Date>>()
+                        .json_response::<Vec<Date>>()
                         .not_found()
                         .server_error()
                 },
@@ -397,7 +397,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                             - `bucket`: raw (default), lin200, lin500, lin1000, log10, log50, log100\n\
                             - `value`: supply (default, in BTC), realized (USD), unrealized (USD)",
                         )
-                        .ok_response::<CostBasisFormatted>()
+                        .json_response::<CostBasisFormatted>()
                         .not_found()
                         .server_error()
                 },

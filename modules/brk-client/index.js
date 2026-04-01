@@ -522,11 +522,6 @@
  * @property {Height} height
  */
 /**
- * Hex-encoded string
- *
- * @typedef {string} Hex
- */
-/**
  * Highest price value for a time period
  *
  * @typedef {Dollars} High
@@ -9521,7 +9516,7 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/block-height/{height}`
    *
    * @param {Height} height
-   * @returns {Promise<BlockHash>}
+   * @returns {Promise<*>}
    */
   async getBlockByHeight(height) {
     return this.getJson(`/api/block-height/${height}`);
@@ -9553,7 +9548,7 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/block/{hash}/header`
    *
    * @param {BlockHash} hash
-   * @returns {Promise<Hex>}
+   * @returns {Promise<*>}
    */
   async getBlockHeader(hash) {
     return this.getJson(`/api/block/${hash}/header`);
@@ -9602,7 +9597,7 @@ class BrkClient extends BrkClientBase {
    *
    * @param {BlockHash} hash - Bitcoin block hash
    * @param {TxIndex} index - Transaction index within the block (0-based)
-   * @returns {Promise<Txid>}
+   * @returns {Promise<*>}
    */
   async getBlockTxid(hash, index) {
     return this.getJson(`/api/block/${hash}/txid/${index}`);
@@ -9625,6 +9620,22 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
+   * Block transactions
+   *
+   * Retrieve transactions in a block by block hash. Returns up to 25 transactions starting from index 0.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
+   *
+   * Endpoint: `GET /api/block/{hash}/txs`
+   *
+   * @param {BlockHash} hash
+   * @returns {Promise<Transaction[]>}
+   */
+  async getBlockTxs(hash) {
+    return this.getJson(`/api/block/${hash}/txs`);
+  }
+
+  /**
    * Block transactions (paginated)
    *
    * Retrieve transactions in a block by block hash, starting from the specified index. Returns up to 25 transactions at a time.
@@ -9637,7 +9648,7 @@ class BrkClient extends BrkClientBase {
    * @param {TxIndex} start_index - Starting transaction index within the block (0-based)
    * @returns {Promise<Transaction[]>}
    */
-  async getBlockTxs(hash, start_index) {
+  async getBlockTxsFromIndex(hash, start_index) {
     return this.getJson(`/api/block/${hash}/txs/${start_index}`);
   }
 
@@ -9663,7 +9674,7 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
    *
    * Endpoint: `GET /api/blocks/tip/hash`
-   * @returns {Promise<BlockHash>}
+   * @returns {Promise<*>}
    */
   async getBlockTipHash() {
     return this.getJson(`/api/blocks/tip/hash`);
@@ -9677,7 +9688,7 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
    *
    * Endpoint: `GET /api/blocks/tip/height`
-   * @returns {Promise<Height>}
+   * @returns {Promise<*>}
    */
   async getBlockTipHeight() {
     return this.getJson(`/api/blocks/tip/height`);
@@ -10079,7 +10090,7 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx/{txid}/hex`
    *
    * @param {Txid} txid
-   * @returns {Promise<Hex>}
+   * @returns {Promise<*>}
    */
   async getTxHex(txid) {
     return this.getJson(`/api/tx/${txid}/hex`);
@@ -10111,7 +10122,7 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx/{txid}/merkleblock-proof`
    *
    * @param {Txid} txid
-   * @returns {Promise<string>}
+   * @returns {Promise<*>}
    */
   async getTxMerkleblockProof(txid) {
     return this.getJson(`/api/tx/${txid}/merkleblock-proof`);

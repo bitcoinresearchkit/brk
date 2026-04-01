@@ -7,7 +7,7 @@ use axum::{
     http::{HeaderMap, Uri},
 };
 use brk_types::{
-    CpfpInfo, Hex, MerkleProof, Transaction, TxOutspend, TxStatus, Txid, TxidParam, TxidVout,
+    CpfpInfo, MerkleProof, Transaction, TxOutspend, TxStatus, Txid, TxidParam, TxidVout,
     TxidsParam,
 };
 
@@ -33,7 +33,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .transactions_tag()
                     .summary("CPFP info")
                     .description("Returns ancestors and descendants for a CPFP transaction.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*")
-                    .ok_response::<CpfpInfo>()
+                    .json_response::<CpfpInfo>()
                     .not_found()
                     .server_error(),
             ),
@@ -56,7 +56,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .description(
                         "Retrieve complete transaction data by transaction ID (txid). Returns inputs, outputs, fee, size, and confirmation status.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction)*",
                     )
-                    .ok_response::<Transaction>()
+                    .json_response::<Transaction>()
                     .not_modified()
                     .bad_request()
                     .not_found()
@@ -81,7 +81,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .description(
                         "Retrieve the raw transaction as a hex-encoded string. Returns the serialized transaction in hexadecimal format.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-hex)*",
                     )
-                    .ok_response::<Hex>()
+                    .text_response()
                     .not_modified()
                     .bad_request()
                     .not_found()
@@ -99,7 +99,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .transactions_tag()
                     .summary("Transaction merkleblock proof")
                     .description("Get the merkleblock proof for a transaction (BIP37 format, hex encoded).\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkleblock-proof)*")
-                    .ok_response::<String>()
+                    .text_response()
                     .not_modified()
                     .bad_request()
                     .not_found()
@@ -117,7 +117,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .transactions_tag()
                     .summary("Transaction merkle proof")
                     .description("Get the merkle inclusion proof for a transaction.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkle-proof)*")
-                    .ok_response::<MerkleProof>()
+                    .json_response::<MerkleProof>()
                     .not_modified()
                     .bad_request()
                     .not_found()
@@ -143,7 +143,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .description(
                         "Get the spending status of a transaction output. Returns whether the output has been spent and, if so, the spending transaction details.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-outspend)*",
                     )
-                    .ok_response::<TxOutspend>()
+                    .json_response::<TxOutspend>()
                     .not_modified()
                     .bad_request()
                     .not_found()
@@ -168,7 +168,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .description(
                         "Get the spending status of all outputs in a transaction. Returns an array with the spend status for each output.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-outspends)*",
                     )
-                    .ok_response::<Vec<TxOutspend>>()
+                    .json_response::<Vec<TxOutspend>>()
                     .not_modified()
                     .bad_request()
                     .not_found()
@@ -186,7 +186,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .transactions_tag()
                     .summary("Transaction raw")
                     .description("Returns a transaction as binary data.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-raw)*")
-                    .ok_response::<Vec<u8>>()
+                    .json_response::<Vec<u8>>()
                     .not_modified()
                     .bad_request()
                     .not_found()
@@ -211,7 +211,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .description(
                         "Retrieve the confirmation status of a transaction. Returns whether the transaction is confirmed and, if so, the block height, hash, and timestamp.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-status)*",
                     )
-                    .ok_response::<TxStatus>()
+                    .json_response::<TxStatus>()
                     .not_modified()
                     .bad_request()
                     .not_found()
@@ -230,7 +230,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .transactions_tag()
                     .summary("Transaction first-seen times")
                     .description("Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*")
-                    .ok_response::<Vec<u64>>()
+                    .json_response::<Vec<u64>>()
                     .server_error(),
             ),
         )
@@ -248,7 +248,7 @@ impl TxRoutes for ApiRouter<AppState> {
                         .transactions_tag()
                         .summary("Broadcast transaction")
                         .description("Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*")
-                        .ok_response::<Txid>()
+                        .json_response::<Txid>()
                         .bad_request()
                         .server_error()
                 },

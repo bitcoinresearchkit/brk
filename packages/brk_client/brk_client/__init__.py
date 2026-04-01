@@ -112,8 +112,6 @@ Epoch = int
 ExchangeRates = dict
 FundedAddrIndex = TypeIndex
 Halving = int
-# Hex-encoded string
-Hex = str
 # Highest price value for a time period
 High = Dollars
 Hour1 = int
@@ -7067,7 +7065,7 @@ class BrkClient(BrkClientBase):
         Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. Full spec available at `/openapi.json`.
 
         Endpoint: `GET /api.json`"""
-        return self.get_json('/api.json')
+        return self.get_text('/api.json')
 
     def get_address(self, address: Addr) -> AddrStats:
         """Address information.
@@ -7127,7 +7125,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/address/{address}/utxo`"""
         return self.get_json(f'/api/address/{address}/utxo')
 
-    def get_block_by_height(self, height: Height) -> BlockHash:
+    def get_block_by_height(self, height: Height) -> Any:
         """Block hash by height.
 
         Retrieve the block hash at a given height. Returns the hash as plain text.
@@ -7135,7 +7133,7 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*
 
         Endpoint: `GET /api/block-height/{height}`"""
-        return self.get_json(f'/api/block-height/{height}')
+        return self.get_text(f'/api/block-height/{height}')
 
     def get_block(self, hash: BlockHash) -> BlockInfo:
         """Block information.
@@ -7147,7 +7145,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/block/{hash}`"""
         return self.get_json(f'/api/block/{hash}')
 
-    def get_block_header(self, hash: BlockHash) -> Hex:
+    def get_block_header(self, hash: BlockHash) -> Any:
         """Block header.
 
         Returns the hex-encoded block header.
@@ -7155,7 +7153,7 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
 
         Endpoint: `GET /api/block/{hash}/header`"""
-        return self.get_json(f'/api/block/{hash}/header')
+        return self.get_text(f'/api/block/{hash}/header')
 
     def get_block_raw(self, hash: BlockHash) -> List[float]:
         """Raw block.
@@ -7177,7 +7175,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/block/{hash}/status`"""
         return self.get_json(f'/api/block/{hash}/status')
 
-    def get_block_txid(self, hash: BlockHash, index: TxIndex) -> Txid:
+    def get_block_txid(self, hash: BlockHash, index: TxIndex) -> Any:
         """Transaction ID at index.
 
         Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.
@@ -7185,7 +7183,7 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-id)*
 
         Endpoint: `GET /api/block/{hash}/txid/{index}`"""
-        return self.get_json(f'/api/block/{hash}/txid/{index}')
+        return self.get_text(f'/api/block/{hash}/txid/{index}')
 
     def get_block_txids(self, hash: BlockHash) -> List[Txid]:
         """Block transaction IDs.
@@ -7197,7 +7195,17 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/block/{hash}/txids`"""
         return self.get_json(f'/api/block/{hash}/txids')
 
-    def get_block_txs(self, hash: BlockHash, start_index: TxIndex) -> List[Transaction]:
+    def get_block_txs(self, hash: BlockHash) -> List[Transaction]:
+        """Block transactions.
+
+        Retrieve transactions in a block by block hash. Returns up to 25 transactions starting from index 0.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
+
+        Endpoint: `GET /api/block/{hash}/txs`"""
+        return self.get_json(f'/api/block/{hash}/txs')
+
+    def get_block_txs_from_index(self, hash: BlockHash, start_index: TxIndex) -> List[Transaction]:
         """Block transactions (paginated).
 
         Retrieve transactions in a block by block hash, starting from the specified index. Returns up to 25 transactions at a time.
@@ -7217,7 +7225,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/blocks`"""
         return self.get_json('/api/blocks')
 
-    def get_block_tip_hash(self) -> BlockHash:
+    def get_block_tip_hash(self) -> Any:
         """Block tip hash.
 
         Returns the hash of the last block.
@@ -7225,9 +7233,9 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
 
         Endpoint: `GET /api/blocks/tip/hash`"""
-        return self.get_json('/api/blocks/tip/hash')
+        return self.get_text('/api/blocks/tip/hash')
 
-    def get_block_tip_height(self) -> Height:
+    def get_block_tip_height(self) -> Any:
         """Block tip height.
 
         Returns the height of the last block.
@@ -7235,7 +7243,7 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
 
         Endpoint: `GET /api/blocks/tip/height`"""
-        return self.get_json('/api/blocks/tip/height')
+        return self.get_text('/api/blocks/tip/height')
 
     def get_blocks_from_height(self, height: Height) -> List[BlockInfo]:
         """Blocks from height.
@@ -7435,7 +7443,7 @@ class BrkClient(BrkClientBase):
         Returns the single most recent value for a series, unwrapped (not inside a SeriesData object).
 
         Endpoint: `GET /api/series/{series}/{index}/latest`"""
-        return self.get_json(f'/api/series/{series}/{index}/latest')
+        return self.get_text(f'/api/series/{series}/{index}/latest')
 
     def get_series_len(self, series: SeriesName, index: Index) -> float:
         """Get series data length.
@@ -7479,7 +7487,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/tx/{txid}`"""
         return self.get_json(f'/api/tx/{txid}')
 
-    def get_tx_hex(self, txid: Txid) -> Hex:
+    def get_tx_hex(self, txid: Txid) -> Any:
         """Transaction hex.
 
         Retrieve the raw transaction as a hex-encoded string. Returns the serialized transaction in hexadecimal format.
@@ -7487,7 +7495,7 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-hex)*
 
         Endpoint: `GET /api/tx/{txid}/hex`"""
-        return self.get_json(f'/api/tx/{txid}/hex')
+        return self.get_text(f'/api/tx/{txid}/hex')
 
     def get_tx_merkle_proof(self, txid: Txid) -> MerkleProof:
         """Transaction merkle proof.
@@ -7499,7 +7507,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/tx/{txid}/merkle-proof`"""
         return self.get_json(f'/api/tx/{txid}/merkle-proof')
 
-    def get_tx_merkleblock_proof(self, txid: Txid) -> str:
+    def get_tx_merkleblock_proof(self, txid: Txid) -> Any:
         """Transaction merkleblock proof.
 
         Get the merkleblock proof for a transaction (BIP37 format, hex encoded).
@@ -7507,7 +7515,7 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkleblock-proof)*
 
         Endpoint: `GET /api/tx/{txid}/merkleblock-proof`"""
-        return self.get_json(f'/api/tx/{txid}/merkleblock-proof')
+        return self.get_text(f'/api/tx/{txid}/merkleblock-proof')
 
     def get_tx_outspend(self, txid: Txid, vout: Vout) -> TxOutspend:
         """Output spend status.
@@ -7651,7 +7659,7 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
 
         Endpoint: `GET /api/v1/mining/blocks/fee-rates/{time_period}`"""
-        return self.get_json(f'/api/v1/mining/blocks/fee-rates/{time_period}')
+        return self.get_text(f'/api/v1/mining/blocks/fee-rates/{time_period}')
 
     def get_block_fees(self, time_period: TimePeriod) -> List[BlockFeesEntry]:
         """Block fees.
@@ -7867,7 +7875,7 @@ class BrkClient(BrkClientBase):
         Full OpenAPI 3.1 specification for this API.
 
         Endpoint: `GET /openapi.json`"""
-        return self.get_json('/openapi.json')
+        return self.get_text('/openapi.json')
 
     def get_version(self) -> str:
         """API version.

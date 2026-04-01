@@ -32,7 +32,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
                         .general_tag()
                         .summary("Difficulty adjustment")
                         .description("Get current difficulty adjustment progress and estimates.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*")
-                        .ok_response::<DifficultyAdjustment>()
+                        .json_response::<DifficultyAdjustment>()
                         .not_modified()
                         .server_error()
                 },
@@ -56,7 +56,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
                         .general_tag()
                         .summary("Current BTC price")
                         .description("Returns bitcoin latest price (on-chain derived, USD only).\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*")
-                        .ok_response::<Prices>()
+                        .json_response::<Prices>()
                         .server_error()
                 },
             ),
@@ -79,7 +79,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
                         .general_tag()
                         .summary("Historical price")
                         .description("Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*")
-                        .ok_response::<HistoricalPrice>()
+                        .json_response::<HistoricalPrice>()
                         .not_modified()
                         .server_error()
                 },

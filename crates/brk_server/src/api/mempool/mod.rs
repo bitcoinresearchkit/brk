@@ -28,7 +28,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                         .mempool_tag()
                         .summary("Mempool statistics")
                         .description("Get current mempool statistics including transaction count, total vsize, total fees, and fee histogram.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*")
-                        .ok_response::<MempoolInfo>()
+                        .json_response::<MempoolInfo>()
                         .server_error()
                 },
             ),
@@ -46,7 +46,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                         .mempool_tag()
                         .summary("Mempool transaction IDs")
                         .description("Get all transaction IDs currently in the mempool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-transaction-ids)*")
-                        .ok_response::<Vec<Txid>>()
+                        .json_response::<Vec<Txid>>()
                         .server_error()
                 },
             ),
@@ -64,7 +64,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                         .mempool_tag()
                         .summary("Recent mempool transactions")
                         .description("Get the last 10 transactions to enter the mempool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*")
-                        .ok_response::<Vec<MempoolRecentTx>>()
+                        .json_response::<Vec<MempoolRecentTx>>()
                         .server_error()
                 },
             ),
@@ -86,7 +86,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                             on-chain round-dollar output patterns in the last 12 blocks \
                             plus mempool.",
                         )
-                        .ok_response::<Dollars>()
+                        .json_response::<Dollars>()
                         .server_error()
                 },
             ),

@@ -21,14 +21,16 @@ pub trait TransformResponseExtended<'t> {
     fn deprecated(self) -> Self;
 
     /// 200
-    fn ok_response<R>(self) -> Self
+    fn json_response<R>(self) -> Self
     where
         R: JsonSchema;
     /// 200
-    fn ok_response_with<R, F>(self, f: F) -> Self
+    fn json_response_with<R, F>(self, f: F) -> Self
     where
         R: JsonSchema,
         F: FnOnce(TransformResponse<'_, R>) -> TransformResponse<'_, R>;
+    /// 200 with text/plain content type
+    fn text_response(self) -> Self;
     /// 200 with text/csv content type (adds CSV as alternative response format)
     fn csv_response(self) -> Self;
     /// 400
@@ -82,11 +84,11 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
         self.tag("Metrics")
     }
 
-    fn ok_response<R>(self) -> Self
+    fn json_response<R>(self) -> Self
     where
         R: JsonSchema,
     {
-        self.ok_response_with(|r: TransformResponse<'_, R>| r)
+        self.json_response_with(|r: TransformResponse<'_, R>| r)
     }
 
     fn deprecated(mut self) -> Self {
@@ -94,12 +96,16 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
         self
     }
 
-    fn ok_response_with<R, F>(self, f: F) -> Self
+    fn json_response_with<R, F>(self, f: F) -> Self
     where
         R: JsonSchema,
         F: FnOnce(TransformResponse<'_, R>) -> TransformResponse<'_, R>,
     {
         self.response_with::<200, Json<R>, _>(|res| f(res.description("Successful response")))
+    }
+
+    fn text_response(self) -> Self {
+        self.response_with::<200, String, _>(|res| res.description("Successful response"))
     }
 
     fn csv_response(mut self) -> Self {

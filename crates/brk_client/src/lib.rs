@@ -8253,8 +8253,8 @@ impl BrkClient {
     /// Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. Full spec available at `/openapi.json`.
     ///
     /// Endpoint: `GET /api.json`
-    pub fn get_api(&self) -> Result<serde_json::Value> {
-        self.base.get_json(&format!("/api.json"))
+    pub fn get_api(&self) -> Result<String> {
+        self.base.get_text(&format!("/api.json"))
     }
 
     /// Address information
@@ -8327,8 +8327,8 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*
     ///
     /// Endpoint: `GET /api/block-height/{height}`
-    pub fn get_block_by_height(&self, height: Height) -> Result<BlockHash> {
-        self.base.get_json(&format!("/api/block-height/{height}"))
+    pub fn get_block_by_height(&self, height: Height) -> Result<String> {
+        self.base.get_text(&format!("/api/block-height/{height}"))
     }
 
     /// Block information
@@ -8349,8 +8349,8 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
     ///
     /// Endpoint: `GET /api/block/{hash}/header`
-    pub fn get_block_header(&self, hash: BlockHash) -> Result<Hex> {
-        self.base.get_json(&format!("/api/block/{hash}/header"))
+    pub fn get_block_header(&self, hash: BlockHash) -> Result<String> {
+        self.base.get_text(&format!("/api/block/{hash}/header"))
     }
 
     /// Raw block
@@ -8382,8 +8382,8 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-id)*
     ///
     /// Endpoint: `GET /api/block/{hash}/txid/{index}`
-    pub fn get_block_txid(&self, hash: BlockHash, index: TxIndex) -> Result<Txid> {
-        self.base.get_json(&format!("/api/block/{hash}/txid/{index}"))
+    pub fn get_block_txid(&self, hash: BlockHash, index: TxIndex) -> Result<String> {
+        self.base.get_text(&format!("/api/block/{hash}/txid/{index}"))
     }
 
     /// Block transaction IDs
@@ -8397,6 +8397,17 @@ impl BrkClient {
         self.base.get_json(&format!("/api/block/{hash}/txids"))
     }
 
+    /// Block transactions
+    ///
+    /// Retrieve transactions in a block by block hash. Returns up to 25 transactions starting from index 0.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}/txs`
+    pub fn get_block_txs(&self, hash: BlockHash) -> Result<Vec<Transaction>> {
+        self.base.get_json(&format!("/api/block/{hash}/txs"))
+    }
+
     /// Block transactions (paginated)
     ///
     /// Retrieve transactions in a block by block hash, starting from the specified index. Returns up to 25 transactions at a time.
@@ -8404,7 +8415,7 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
     ///
     /// Endpoint: `GET /api/block/{hash}/txs/{start_index}`
-    pub fn get_block_txs(&self, hash: BlockHash, start_index: TxIndex) -> Result<Vec<Transaction>> {
+    pub fn get_block_txs_from_index(&self, hash: BlockHash, start_index: TxIndex) -> Result<Vec<Transaction>> {
         self.base.get_json(&format!("/api/block/{hash}/txs/{start_index}"))
     }
 
@@ -8426,8 +8437,8 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
     ///
     /// Endpoint: `GET /api/blocks/tip/hash`
-    pub fn get_block_tip_hash(&self) -> Result<BlockHash> {
-        self.base.get_json(&format!("/api/blocks/tip/hash"))
+    pub fn get_block_tip_hash(&self) -> Result<String> {
+        self.base.get_text(&format!("/api/blocks/tip/hash"))
     }
 
     /// Block tip height
@@ -8437,8 +8448,8 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
     ///
     /// Endpoint: `GET /api/blocks/tip/height`
-    pub fn get_block_tip_height(&self) -> Result<Height> {
-        self.base.get_json(&format!("/api/blocks/tip/height"))
+    pub fn get_block_tip_height(&self) -> Result<String> {
+        self.base.get_text(&format!("/api/blocks/tip/height"))
     }
 
     /// Blocks from height
@@ -8661,8 +8672,8 @@ impl BrkClient {
     /// Returns the single most recent value for a series, unwrapped (not inside a SeriesData object).
     ///
     /// Endpoint: `GET /api/series/{series}/{index}/latest`
-    pub fn get_series_latest(&self, series: SeriesName, index: Index) -> Result<serde_json::Value> {
-        self.base.get_json(&format!("/api/series/{series}/{}/latest", index.name()))
+    pub fn get_series_latest(&self, series: SeriesName, index: Index) -> Result<String> {
+        self.base.get_text(&format!("/api/series/{series}/{}/latest", index.name()))
     }
 
     /// Get series data length
@@ -8719,8 +8730,8 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-hex)*
     ///
     /// Endpoint: `GET /api/tx/{txid}/hex`
-    pub fn get_tx_hex(&self, txid: Txid) -> Result<Hex> {
-        self.base.get_json(&format!("/api/tx/{txid}/hex"))
+    pub fn get_tx_hex(&self, txid: Txid) -> Result<String> {
+        self.base.get_text(&format!("/api/tx/{txid}/hex"))
     }
 
     /// Transaction merkle proof
@@ -8742,7 +8753,7 @@ impl BrkClient {
     ///
     /// Endpoint: `GET /api/tx/{txid}/merkleblock-proof`
     pub fn get_tx_merkleblock_proof(&self, txid: Txid) -> Result<String> {
-        self.base.get_json(&format!("/api/tx/{txid}/merkleblock-proof"))
+        self.base.get_text(&format!("/api/tx/{txid}/merkleblock-proof"))
     }
 
     /// Output spend status
@@ -8899,8 +8910,8 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
     ///
     /// Endpoint: `GET /api/v1/mining/blocks/fee-rates/{time_period}`
-    pub fn get_block_fee_rates(&self, time_period: TimePeriod) -> Result<serde_json::Value> {
-        self.base.get_json(&format!("/api/v1/mining/blocks/fee-rates/{time_period}"))
+    pub fn get_block_fee_rates(&self, time_period: TimePeriod) -> Result<String> {
+        self.base.get_text(&format!("/api/v1/mining/blocks/fee-rates/{time_period}"))
     }
 
     /// Block fees
@@ -9137,8 +9148,8 @@ impl BrkClient {
     /// Full OpenAPI 3.1 specification for this API.
     ///
     /// Endpoint: `GET /openapi.json`
-    pub fn get_openapi(&self) -> Result<serde_json::Value> {
-        self.base.get_json(&format!("/openapi.json"))
+    pub fn get_openapi(&self) -> Result<String> {
+        self.base.get_text(&format!("/openapi.json"))
     }
 
     /// API version

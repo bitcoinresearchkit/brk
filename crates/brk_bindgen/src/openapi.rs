@@ -43,6 +43,11 @@ impl Endpoint {
         self.method == "GET" && !self.deprecated
     }
 
+    /// Returns true if this endpoint returns JSON (has a response_type extracted from application/json).
+    pub fn returns_json(&self) -> bool {
+        self.response_type.is_some()
+    }
+
     /// Returns the operation ID or generates one from the path.
     /// The returned string uses the raw case from the spec (typically camelCase).
     pub fn operation_name(&self) -> String {

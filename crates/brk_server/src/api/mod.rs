@@ -85,7 +85,7 @@ impl ApiRoutes for ApiRouter<AppState> {
                                  Removes redundant fields while preserving essential API information. \
                                  Full spec available at `/openapi.json`.",
                             )
-                            .ok_response::<serde_json::Value>()
+                            .json_response::<serde_json::Value>()
                     },
                 ),
             )
