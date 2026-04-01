@@ -7,3 +7,8 @@ use crate::Timestamp;
 pub struct TimestampParam {
     pub timestamp: Timestamp,
 }
+
+#[derive(Deserialize, JsonSchema)]
+pub struct OptionalTimestampParam {
+    pub timestamp: Option<Timestamp>,
+}

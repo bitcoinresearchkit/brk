@@ -17,7 +17,7 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         lookback: &blocks::LookbackVecs,
-        transactions_fees: &transactions::FeesVecs,
+        transactions: &transactions::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
@@ -67,7 +67,7 @@ impl Vecs {
                             starting_indexes.height,
                             &indexer.vecs.transactions.first_tx_index,
                             &indexes.height.tx_index_count,
-                            &transactions_fees.fee.tx_index,
+                            &transactions.fees.fee.tx_index,
                             exit,
                         )?;
                         Ok(())
@@ -94,6 +94,13 @@ impl Vecs {
         )?;
         self.subsidy
             .compute_rest(starting_indexes.height, prices, exit)?;
+
+        self.output_volume.compute_subtract(
+            starting_indexes.height,
+            &transactions.volume.transfer_volume.block.sats,
+            &self.fees.block.sats,
+            exit,
+        )?;
 
         self.unclaimed.block.sats.compute_transform(
             starting_indexes.height,

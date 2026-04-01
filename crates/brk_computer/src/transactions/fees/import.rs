@@ -20,6 +20,12 @@ impl Vecs {
             output_value: EagerVec::forced_import(db, "output_value", version)?,
             fee: PerTxDistribution::forced_import(db, "fee", v, indexes)?,
             fee_rate: PerTxDistribution::forced_import(db, "fee_rate", v, indexes)?,
+            effective_fee_rate: PerTxDistribution::forced_import(
+                db,
+                "effective_fee_rate",
+                v,
+                indexes,
+            )?,
         })
     }
 }

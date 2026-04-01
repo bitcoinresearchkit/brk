@@ -1,9 +1,9 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{BlockHash, Height, Timestamp, Weight};
+use crate::{BlockHash, BlockHeader, Height, Timestamp, Weight};
 
-/// Block information returned by the API
+/// Block information matching mempool.space /api/block/{hash}
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct BlockInfo {
     /// Block hash
@@ -11,6 +11,13 @@ pub struct BlockInfo {
 
     /// Block height
     pub height: Height,
+
+    /// Block header fields
+    #[serde(flatten)]
+    pub header: BlockHeader,
+
+    /// Block timestamp (Unix time)
+    pub timestamp: Timestamp,
 
     /// Number of transactions in the block
     pub tx_count: u32,
@@ -21,9 +28,10 @@ pub struct BlockInfo {
     /// Block weight in weight units
     pub weight: Weight,
 
-    /// Block timestamp (Unix time)
-    pub timestamp: Timestamp,
+    /// Median time of the last 11 blocks
+    #[serde(rename = "mediantime")]
+    pub median_time: Timestamp,
 
-    /// Block difficulty as a floating point number
+    /// Block difficulty
     pub difficulty: f64,
 }

@@ -10,4 +10,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub output_value: M::Stored<EagerVec<PcoVec<TxIndex, Sats>>>,
     pub fee: PerTxDistribution<Sats, M>,
     pub fee_rate: PerTxDistribution<FeeRate, M>,
+    pub effective_fee_rate: PerTxDistribution<FeeRate, M>,
 }

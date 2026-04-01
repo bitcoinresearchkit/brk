@@ -14,9 +14,9 @@ use axum::{
 use crate::{
     Error,
     api::{
-        addrs::AddrRoutes, blocks::BlockRoutes, mempool::MempoolRoutes,
-        metrics_legacy::ApiMetricsLegacyRoutes, mining::MiningRoutes, series::ApiSeriesRoutes,
-        server::ServerRoutes, transactions::TxRoutes,
+        addrs::AddrRoutes, blocks::BlockRoutes, fees::FeesRoutes, general::GeneralRoutes,
+        mempool::MempoolRoutes, metrics_legacy::ApiMetricsLegacyRoutes, mining::MiningRoutes,
+        series::ApiSeriesRoutes, server::ServerRoutes, transactions::TxRoutes,
     },
     extended::{ResponseExtended, TransformResponseExtended},
 };
@@ -25,6 +25,8 @@ use super::AppState;
 
 mod addrs;
 mod blocks;
+mod fees;
+mod general;
 mod mempool;
 mod metrics_legacy;
 mod mining;
@@ -44,11 +46,13 @@ impl ApiRoutes for ApiRouter<AppState> {
         self.add_server_routes()
             .add_series_routes()
             .add_metrics_legacy_routes()
-            .add_block_routes()
-            .add_tx_routes()
+            .add_general_routes()
             .add_addr_routes()
-            .add_mempool_routes()
+            .add_block_routes()
             .add_mining_routes()
+            .add_fees_routes()
+            .add_mempool_routes()
+            .add_tx_routes()
             .route("/api/server", get(Redirect::temporary("/api#tag/server")))
             .api_route(
                 "/openapi.json",
@@ -81,7 +85,7 @@ impl ApiRoutes for ApiRouter<AppState> {
                                  Removes redundant fields while preserving essential API information. \
                                  Full spec available at `/openapi.json`.",
                             )
-                            .ok_response::<serde_json::Value>()
+                            .json_response::<serde_json::Value>()
                     },
                 ),
             )

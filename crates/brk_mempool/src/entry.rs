@@ -1,4 +1,4 @@
-use brk_types::{FeeRate, MempoolEntryInfo, Sats, Txid, TxidPrefix, VSize};
+use brk_types::{FeeRate, MempoolEntryInfo, Sats, Timestamp, Txid, TxidPrefix, VSize};
 use smallvec::SmallVec;
 
 /// A mempool transaction entry.
@@ -16,6 +16,8 @@ pub struct Entry {
     pub ancestor_vsize: VSize,
     /// Parent txid prefixes (most txs have 0-2 parents)
     pub depends: SmallVec<[TxidPrefix; 2]>,
+    /// When this tx was first seen in the mempool
+    pub first_seen: Timestamp,
 }
 
 impl Entry {
@@ -27,6 +29,7 @@ impl Entry {
             ancestor_fee: info.ancestor_fee,
             ancestor_vsize: VSize::from(info.ancestor_size),
             depends: info.depends.iter().map(TxidPrefix::from).collect(),
+            first_seen: Timestamp::now(),
         }
     }
 

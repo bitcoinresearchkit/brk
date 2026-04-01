@@ -7,11 +7,11 @@ use brk_error::Result;
 use brk_store::{AnyStore, Kind, Mode, Store};
 use brk_types::{
     AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, BlockHashPrefix, Height, OutPoint, OutputType,
-    StoredString, TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version, Vout,
+    TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version, Vout,
 };
 use fjall::{Database, PersistMode};
 use rayon::prelude::*;
-use tracing::info;
+use tracing::{debug, info};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 use crate::{Indexes, constants::DUPLICATE_TXID_PREFIXES};
@@ -26,7 +26,6 @@ pub struct Stores {
     pub addr_type_to_addr_index_and_tx_index: ByAddrType<Store<AddrIndexTxIndex, Unit>>,
     pub addr_type_to_addr_index_and_unspent_outpoint: ByAddrType<Store<AddrIndexOutPoint, Unit>>,
     pub blockhash_prefix_to_height: Store<BlockHashPrefix, Height>,
-    pub height_to_coinbase_tag: Store<Height, StoredString>,
     pub txid_prefix_to_tx_index: Store<TxidPrefix, TxIndex>,
 }
 
@@ -88,14 +87,6 @@ impl Stores {
         Ok(Self {
             db: database.clone(),
 
-            height_to_coinbase_tag: Store::import(
-                database_ref,
-                path,
-                "height_to_coinbase_tag",
-                version,
-                Mode::PushOnly,
-                Kind::Sequential,
-            )?,
             addr_type_to_addr_hash_to_addr_index: ByAddrType::new_with_index(
                 create_addr_hash_to_addr_index_store,
             )?,
@@ -135,7 +126,6 @@ impl Stores {
     fn iter_any(&self) -> impl Iterator<Item = &dyn AnyStore> {
         [
             &self.blockhash_prefix_to_height as &dyn AnyStore,
-            &self.height_to_coinbase_tag,
             &self.txid_prefix_to_tx_index,
         ]
         .into_iter()
@@ -159,7 +149,6 @@ impl Stores {
     fn par_iter_any_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStore> {
         [
             &mut self.blockhash_prefix_to_height as &mut dyn AnyStore,
-            &mut self.height_to_coinbase_tag,
             &mut self.txid_prefix_to_tx_index,
         ]
         .into_par_iter()
@@ -184,11 +173,11 @@ impl Stores {
         let i = Instant::now();
         self.par_iter_any_mut()
             .try_for_each(|store| store.commit(height))?;
-        info!("Stores committed in {:?}", i.elapsed());
+        debug!("Stores committed in {:?}", i.elapsed());
 
         let i = Instant::now();
         self.db.persist(PersistMode::SyncData)?;
-        info!("Stores persisted in {:?}", i.elapsed());
+        debug!("Stores persisted in {:?}", i.elapsed());
 
         Ok(())
     }
@@ -210,7 +199,6 @@ impl Stores {
         }
 
         take!(self.blockhash_prefix_to_height);
-        take!(self.height_to_coinbase_tag);
         take!(self.txid_prefix_to_tx_index);
 
         for store in self.addr_type_to_addr_hash_to_addr_index.values_mut() {
@@ -257,7 +245,6 @@ impl Stores {
     fn is_empty(&self) -> Result<bool> {
         Ok(self.blockhash_prefix_to_height.is_empty()?
             && self.txid_prefix_to_tx_index.is_empty()?
-            && self.height_to_coinbase_tag.is_empty()?
             && self
                 .addr_type_to_addr_hash_to_addr_index
                 .values()
@@ -285,12 +272,6 @@ impl Stores {
                     .remove(BlockHashPrefix::from(blockhash));
             },
         );
-
-        (starting_indexes.height.to_usize()..vecs.blocks.blockhash.len())
-            .map(Height::from)
-            .for_each(|h| {
-                self.height_to_coinbase_tag.remove(h);
-            });
 
         for addr_type in OutputType::ADDR_TYPES {
             for hash in vecs.iter_addr_hashes_from(addr_type, starting_indexes.height)? {

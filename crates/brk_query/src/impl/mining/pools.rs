@@ -1,7 +1,7 @@
 use brk_error::{Error, Result};
 use brk_types::{
-    Height, PoolBlockCounts, PoolBlockShares, PoolDetail, PoolDetailInfo, PoolInfo, PoolSlug,
-    PoolStats, PoolsSummary, TimePeriod, pools,
+    BlockInfoV1, Height, PoolBlockCounts, PoolBlockShares, PoolDetail, PoolDetailInfo,
+    PoolHashrateEntry, PoolInfo, PoolSlug, PoolStats, PoolsSummary, TimePeriod, pools,
 };
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
@@ -176,5 +176,133 @@ impl Query {
             estimated_hashrate: 0, // TODO: Calculate from share and network hashrate
             reported_hashrate: None,
         })
+    }
+
+    pub fn pool_blocks(
+        &self,
+        slug: PoolSlug,
+        start_height: Option<Height>,
+    ) -> Result<Vec<BlockInfoV1>> {
+        let computer = self.computer();
+        let max_height = self.height().to_usize();
+        let start = start_height.map(|h| h.to_usize()).unwrap_or(max_height);
+
+        // BytesVec reader gives O(1) mmap reads — efficient for backward scan
+        let reader = computer.pools.pool.reader();
+        let end = start.min(reader.len().saturating_sub(1));
+
+        let mut heights = Vec::with_capacity(10);
+        for h in (0..=end).rev() {
+            if reader.get(h) == slug {
+                heights.push(h);
+                if heights.len() >= 10 {
+                    break;
+                }
+            }
+        }
+
+        let mut blocks = Vec::with_capacity(heights.len());
+        for h in heights {
+            if let Ok(mut v) = self.blocks_v1_range(h, h + 1) {
+                blocks.append(&mut v);
+            }
+        }
+        Ok(blocks)
+    }
+
+    pub fn pool_hashrate(&self, slug: PoolSlug) -> Result<Vec<PoolHashrateEntry>> {
+        let pools_list = pools();
+        let pool = pools_list.get(slug);
+        let entries = self.compute_pool_hashrate_entries(slug, 0)?;
+        Ok(entries
+            .into_iter()
+            .map(|(ts, hr, share)| PoolHashrateEntry {
+                timestamp: ts,
+                avg_hashrate: hr,
+                share,
+                pool_name: pool.name.to_string(),
+            })
+            .collect())
+    }
+
+    pub fn pools_hashrate(
+        &self,
+        time_period: Option<TimePeriod>,
+    ) -> Result<Vec<PoolHashrateEntry>> {
+        let current_height = self.height().to_usize();
+        let start = match time_period {
+            Some(tp) => current_height.saturating_sub(tp.block_count()),
+            None => 0,
+        };
+        let pools_list = pools();
+        let mut entries = Vec::new();
+
+        for pool in pools_list.iter() {
+            if let Ok(pool_entries) = self.compute_pool_hashrate_entries(pool.slug, start) {
+                for (ts, hr, share) in pool_entries {
+                    if share > 0.0 {
+                        entries.push(PoolHashrateEntry {
+                            timestamp: ts,
+                            avg_hashrate: hr,
+                            share,
+                            pool_name: pool.name.to_string(),
+                        });
+                    }
+                }
+            }
+        }
+
+        Ok(entries)
+    }
+
+    /// Compute (timestamp, hashrate, share) tuples for a pool from `start_height`.
+    fn compute_pool_hashrate_entries(
+        &self,
+        slug: PoolSlug,
+        start_height: usize,
+    ) -> Result<Vec<(brk_types::Timestamp, u128, f64)>> {
+        let computer = self.computer();
+        let indexer = self.indexer();
+        let end = self.height().to_usize() + 1;
+        let start = start_height;
+
+        let dominance_bps = computer
+            .pools
+            .major
+            .get(&slug)
+            .map(|v| &v.base.dominance.bps.height)
+            .or_else(|| {
+                computer
+                    .pools
+                    .minor
+                    .get(&slug)
+                    .map(|v| &v.dominance.bps.height)
+            })
+            .ok_or_else(|| Error::NotFound("Pool not found".into()))?;
+
+        let total = end - start;
+        let step = (total / 200).max(1);
+
+        // Batch read everything for the range
+        let timestamps = indexer.vecs.blocks.timestamp.collect_range_at(start, end);
+        let bps_values = dominance_bps.collect_range_at(start, end);
+        let day1_values = computer.indexes.height.day1.collect_range_at(start, end);
+        let hashrate_vec = &computer.mining.hashrate.rate.base.day1;
+
+        // Pre-read all needed hashrates by collecting unique day1 values
+        let max_day = day1_values.iter().map(|d| d.to_usize()).max().unwrap_or(0);
+        let min_day = day1_values.iter().map(|d| d.to_usize()).min().unwrap_or(0);
+        let hashrates = hashrate_vec.collect_range_dyn(min_day, max_day + 1);
+
+        Ok((0..total)
+            .step_by(step)
+            .filter_map(|i| {
+                let bps = *bps_values[i];
+                let share = bps as f64 / 10000.0;
+                let day_idx = day1_values[i].to_usize() - min_day;
+                let network_hr = f64::from(*hashrates.get(day_idx)?.as_ref()?);
+                Some((timestamps[i], (network_hr * share) as u128, share))
+            })
+            .collect())
     }
 }

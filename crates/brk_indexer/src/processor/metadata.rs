@@ -28,14 +28,14 @@ impl BlockProcessor<'_> {
             .blockhash_prefix_to_height
             .insert(blockhash_prefix, height);
 
-        self.stores
-            .height_to_coinbase_tag
-            .insert(height, self.block.coinbase_tag().into());
-
         self.vecs
             .blocks
             .blockhash
             .checked_push(height, blockhash.clone())?;
+        self.vecs
+            .blocks
+            .coinbase_tag
+            .checked_push(height, self.block.coinbase_tag())?;
         self.vecs
             .blocks
             .difficulty
@@ -53,21 +53,28 @@ impl BlockProcessor<'_> {
     pub fn push_block_size_and_weight(&mut self, txs: &[ComputedTx]) -> Result<()> {
         let overhead = bitcoin::block::Header::SIZE + bitcoin::VarInt::from(txs.len()).size();
         let mut total_size = overhead;
-        let mut weight_wu = overhead * 4;
-        for ct in txs {
-            let base = ct.base_size as usize;
-            let total = ct.total_size as usize;
-            total_size += total;
-            weight_wu += base * 3 + total;
+        let mut weight = overhead * 4;
+        let mut sw_txs = 0u32;
+        let mut sw_size = 0usize;
+        let mut sw_weight = 0usize;
+
+        for (i, tx) in txs.iter().enumerate() {
+            total_size += tx.total_size as usize;
+            weight += tx.weight();
+            if i > 0 && tx.is_segwit() {
+                sw_txs += 1;
+                sw_size += tx.total_size as usize;
+                sw_weight += tx.weight();
+            }
         }
-        self.vecs
-            .blocks
-            .total
-            .checked_push(self.height, total_size.into())?;
-        self.vecs
-            .blocks
-            .weight
-            .checked_push(self.height, weight_wu.into())?;
+
+        let h = self.height;
+        let blocks = &mut self.vecs.blocks;
+        blocks.total.checked_push(h, total_size.into())?;
+        blocks.weight.checked_push(h, weight.into())?;
+        blocks.segwit_txs.checked_push(h, sw_txs.into())?;
+        blocks.segwit_size.checked_push(h, sw_size.into())?;
+        blocks.segwit_weight.checked_push(h, sw_weight.into())?;
         Ok(())
     }
 }

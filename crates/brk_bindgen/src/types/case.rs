@@ -74,6 +74,9 @@ pub fn escape_python_keyword(name: &str) -> String {
         "try", "while", "with", "yield",
     ];
 
+    // Strip characters invalid in identifiers (e.g. `[]` from `txId[]`)
+    let name = name.replace(['[', ']'], "");
+
     // Prefix with underscore if starts with digit
     let name = if name.starts_with(|c: char| c.is_ascii_digit()) {
         format!("_{}", name)

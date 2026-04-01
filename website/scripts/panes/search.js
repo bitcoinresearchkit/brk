@@ -8,7 +8,7 @@ import { QuickMatch } from "../modules/quickmatch-js/0.4.1/src/index.js";
 /**
  * @param {Options} options
  */
-export function initSearch(options) {
+export function init(options) {
   console.log("search: init");
 
   const haystack = options.list.map((option) => option.title.toLowerCase());
@@ -65,9 +65,11 @@ export function initSearch(options) {
 
 document.addEventListener("keydown", (e) => {
   const el = document.activeElement;
+
   const isTextInput =
     el?.tagName === "INPUT" &&
     /** @type {HTMLInputElement} */ (el).type === "text";
+
   if (e.key === "/" && !isTextInput) {
     e.preventDefault();
     searchLabelElement.click();

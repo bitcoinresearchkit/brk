@@ -7,7 +7,6 @@ use std::{
 
 use brk_alloc::Mimalloc;
 use brk_indexer::Indexer;
-use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use tracing::{debug, info};
@@ -33,9 +32,6 @@ fn main() -> color_eyre::Result<()> {
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
     debug!("Reader created.");
 
-    let blocks = Blocks::new(&client, &reader);
-    debug!("Blocks created.");
-
     let mut indexer = Indexer::forced_import(&outputs_dir)?;
     debug!("Indexer imported.");
 
@@ -44,7 +40,7 @@ fn main() -> color_eyre::Result<()> {
 
     loop {
         let i = Instant::now();
-        indexer.checked_index(&blocks, &client, &exit)?;
+        indexer.checked_index(&reader, &client, &exit)?;
         info!("Done in {:?}", i.elapsed());
 
         Mimalloc::collect();

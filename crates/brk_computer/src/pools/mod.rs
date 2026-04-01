@@ -2,7 +2,6 @@ use std::{collections::BTreeMap, path::Path};
 
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_store::AnyStore;
 use brk_traversable::Traversable;
 use brk_types::{Addr, AddrBytes, Height, Indexes, OutputType, PoolSlug, Pools, TxOutIndex, pools};
 use rayon::prelude::*;
@@ -114,8 +113,18 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        let dep_version = indexer.vecs.blocks.coinbase_tag.version();
+        let pool_vec_version = self.pool.header().vec_version();
+        let pool_computed = self.pool.header().computed_version();
+        let expected = pool_vec_version + dep_version;
+        if expected != pool_computed {
+            tracing::warn!(
+                "Pool version mismatch: vec_version={pool_vec_version:?} + dep={dep_version:?} = {expected:?}, stored computed={pool_computed:?}, len={}",
+                self.pool.len()
+            );
+        }
         self.pool
-            .validate_computed_version_or_reset(indexer.stores.height_to_coinbase_tag.version())?;
+            .validate_computed_version_or_reset(dep_version)?;
 
         let first_txout_index = indexer.vecs.transactions.first_txout_index.reader();
         let output_type = indexer.vecs.outputs.output_type.reader();
@@ -142,12 +151,12 @@ impl Vecs {
 
         self.pool.truncate_if_needed_at(min)?;
 
-        indexer
-            .stores
-            .height_to_coinbase_tag
-            .iter()
-            .skip(min)
-            .try_for_each(|(_, coinbase_tag)| -> Result<()> {
+        let len = indexer.vecs.blocks.coinbase_tag.len();
+
+        indexer.vecs.blocks.coinbase_tag.try_for_each_range_at(
+            min,
+            len,
+            |coinbase_tag| -> Result<()> {
                 let tx_index = first_tx_index_cursor.next().unwrap();
                 let out_start = first_txout_index.get(tx_index.to_usize());
 
@@ -174,12 +183,13 @@ impl Vecs {
                         .map(|bytes| Addr::try_from(&bytes).unwrap())
                         .and_then(|addr| self.pools.find_from_addr(&addr))
                     })
-                    .or_else(|| self.pools.find_from_coinbase_tag(&coinbase_tag))
+                    .or_else(|| self.pools.find_from_coinbase_tag(&coinbase_tag.as_str()))
                     .unwrap_or(unknown);
 
                 self.pool.push(pool.slug);
                 Ok(())
-            })?;
+            },
+        )?;
 
         let _lock = exit.lock();
         self.pool.write()?;

@@ -21,7 +21,7 @@ fn main() -> Result<()> {
 
         if let Some(block) = reader.read(Some(height), Some(height)).iter().next() {
             println!(
-                "height={} hash={} txs={} coinbase=\"{}\" ({:?})",
+                "height={} hash={} txs={} coinbase=\"{:?}\" ({:?})",
                 block.height(),
                 block.hash(),
                 block.txdata.len(),

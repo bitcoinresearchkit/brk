@@ -294,6 +294,14 @@ impl ClientInner {
         })?;
         Ok(r)
     }
+
+    pub fn send_raw_transaction(&self, hex: &str) -> Result<bitcoin::Txid> {
+        let hex = hex.to_string();
+        Ok(self.call_with_retry(|c| {
+            let args = [serde_json::Value::String(hex.clone())];
+            c.call("sendrawtransaction", &args)
+        })?)
+    }
 }
 
 // Local deserialization structs for raw RPC responses

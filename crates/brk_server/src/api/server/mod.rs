@@ -48,7 +48,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                         .server_tag()
                         .summary("Health check")
                         .description("Returns the health status of the API server, including uptime information.")
-                        .ok_response::<Health>()
+                        .json_response::<Health>()
                 },
             ),
         )
@@ -67,7 +67,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                         .server_tag()
                         .summary("API version")
                         .description("Returns the current version of the API server")
-                        .ok_response::<String>()
+                        .json_response::<String>()
                         .not_modified()
                 },
             ),
@@ -91,7 +91,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                             "Returns the sync status of the indexer, including indexed height, \
                             tip height, blocks behind, and last indexed timestamp.",
                         )
-                        .ok_response::<SyncStatus>()
+                        .json_response::<SyncStatus>()
                         .not_modified()
                 },
             ),
@@ -116,7 +116,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                         .description(
                             "Returns the disk space used by BRK and Bitcoin data.",
                         )
-                        .ok_response::<DiskUsage>()
+                        .json_response::<DiskUsage>()
                         .not_modified()
                 },
             ),

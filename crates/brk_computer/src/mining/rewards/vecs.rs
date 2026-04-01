@@ -1,6 +1,6 @@
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, BasisPoints32};
-use vecdb::{Rw, StorageMode};
+use brk_types::{BasisPoints16, BasisPoints32, Height, Sats};
+use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use crate::internal::{
     AmountPerBlockCumulative, AmountPerBlockCumulativeRolling, AmountPerBlockFull,
@@ -12,6 +12,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub coinbase: AmountPerBlockCumulativeRolling<M>,
     pub subsidy: AmountPerBlockCumulativeRolling<M>,
     pub fees: AmountPerBlockFull<M>,
+    pub output_volume: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
     pub unclaimed: AmountPerBlockCumulative<M>,
     #[traversable(wrap = "fees", rename = "dominance")]
     pub fee_dominance: PercentPerBlock<BasisPoints16, M>,

@@ -7,7 +7,8 @@ import {
   init as initChart,
   setOption as setChartOption,
 } from "./panes/chart.js";
-import { initSearch } from "./panes/search.js";
+import { init as initExplorer } from "./panes/explorer.js";
+import { init as initSearch } from "./panes/search.js";
 import { replaceHistory } from "./utils/url.js";
 import { idle } from "./utils/timing.js";
 import { removeStored, writeToStorage } from "./utils/storage.js";
@@ -16,6 +17,7 @@ import {
   asideLabelElement,
   bodyElement,
   chartElement,
+  explorerElement,
   frameSelectorsElement,
   mainElement,
   navElement,
@@ -145,12 +147,23 @@ function initSelected() {
 
     let previousElement = /** @type {HTMLElement | undefined} */ (undefined);
     let firstTimeLoadingChart = true;
+    let firstTimeLoadingExplorer = true;
 
     options.selected.onChange((option) => {
       /** @type {HTMLElement | undefined} */
       let element;
 
       switch (option.kind) {
+        case "explorer": {
+          element = explorerElement;
+
+          if (firstTimeLoadingExplorer) {
+            initExplorer();
+          }
+          firstTimeLoadingExplorer = false;
+
+          break;
+        }
         case "chart": {
           element = chartElement;
 
@@ -224,7 +237,6 @@ function initDesktopResizeBar() {
    * @param {number | null} width
    */
   function setBarWidth(width) {
-    // TODO: Check if should be a signal ??
     try {
       if (typeof width === "number") {
         mainElement.style.width = `${width}px`;

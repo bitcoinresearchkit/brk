@@ -240,4 +240,8 @@ impl ClientInner {
     ) -> Result<String> {
         Ok(self.call_with_retry(|c| c.get_raw_transaction_hex(txid, block_hash))?)
     }
+
+    pub fn send_raw_transaction(&self, hex: &str) -> Result<bitcoin::Txid> {
+        Ok(self.call_once(|c| c.send_raw_transaction(hex))?)
+    }
 }

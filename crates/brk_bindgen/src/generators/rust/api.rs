@@ -93,7 +93,7 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             .response_type
             .as_deref()
             .map(js_type_to_rust)
-            .unwrap_or_else(|| "serde_json::Value".to_string());
+            .unwrap_or_else(|| "String".to_string());
 
         let return_type = if endpoint.supports_csv {
             format!("FormatResponse<{}>", base_return_type)
@@ -132,29 +132,43 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         .unwrap();
 
         let (path, index_arg) = build_path_template(endpoint);
+        let fetch_method = if endpoint.returns_json() {
+            "get_json"
+        } else {
+            "get_text"
+        };
 
         if endpoint.query_params.is_empty() {
             writeln!(
                 output,
-                "        self.base.get_json(&format!(\"{}\"{}))",
-                path, index_arg
+                "        self.base.{}(&format!(\"{}\"{}))",
+                fetch_method, path, index_arg
             )
             .unwrap();
         } else {
             writeln!(output, "        let mut query = Vec::new();").unwrap();
             for param in &endpoint.query_params {
-                if param.required {
+                let ident = sanitize_ident(&param.name);
+                let is_array = param.param_type.ends_with("[]");
+                if is_array {
+                    writeln!(
+                        output,
+                        "        for v in {} {{ query.push(format!(\"{}={{}}\", v)); }}",
+                        ident, param.name
+                    )
+                    .unwrap();
+                } else if param.required {
                     writeln!(
                         output,
                         "        query.push(format!(\"{}={{}}\", {}));",
-                        param.name, param.name
+                        param.name, ident
                     )
                     .unwrap();
                 } else {
                     writeln!(
                         output,
                         "        if let Some(v) = {} {{ query.push(format!(\"{}={{}}\", v)); }}",
-                        param.name, param.name
+                        ident, param.name
                     )
                     .unwrap();
                 }
@@ -177,12 +191,14 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
                 writeln!(output, "        }} else {{").unwrap();
                 writeln!(
                     output,
-                    "            self.base.get_json(&path).map(FormatResponse::Json)"
+                    "            self.base.{}(&path).map(FormatResponse::Json)",
+                    fetch_method
                 )
                 .unwrap();
                 writeln!(output, "        }}").unwrap();
             } else {
-                writeln!(output, "        self.base.get_json(&path)").unwrap();
+                writeln!(output, "        self.base.{}(&path)", fetch_method)
+                    .unwrap();
             }
         }
 
@@ -198,26 +214,35 @@ fn build_method_params(endpoint: &Endpoint) -> String {
     let mut params = Vec::new();
     for param in &endpoint.path_params {
         let rust_type = param_type_to_rust(&param.param_type);
-        params.push(format!(", {}: {}", param.name, rust_type));
+        params.push(format!(", {}: {}", sanitize_ident(&param.name), rust_type));
     }
     for param in &endpoint.query_params {
         let rust_type = param_type_to_rust(&param.param_type);
+        let name = sanitize_ident(&param.name);
         if param.required {
-            params.push(format!(", {}: {}", param.name, rust_type));
+            params.push(format!(", {}: {}", name, rust_type));
         } else {
-            params.push(format!(", {}: Option<{}>", param.name, rust_type));
+            params.push(format!(", {}: Option<{}>", name, rust_type));
         }
     }
     params.join("")
 }
 
+/// Strip characters invalid in Rust identifiers (e.g. `[]` from `txId[]`).
+fn sanitize_ident(name: &str) -> String {
+    name.replace(['[', ']'], "")
+}
+
 /// Convert parameter type to Rust type for function signatures.
 fn param_type_to_rust(param_type: &str) -> String {
+    if let Some(inner) = param_type.strip_suffix("[]") {
+        return format!("&[{}]", param_type_to_rust(inner));
+    }
     match param_type {
         "string" | "*" => "&str".to_string(),
         "integer" | "number" => "i64".to_string(),
         "boolean" => "bool".to_string(),
-        other => other.to_string(), // Domain types like Index, SeriesName, Format
+        other => other.to_string(),
     }
 }
 

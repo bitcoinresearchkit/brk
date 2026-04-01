@@ -108,6 +108,37 @@
  * @property {number} blockCount - Number of recent blocks to include
  */
 /**
+ * Extended block data matching mempool.space /api/v1/blocks extras
+ *
+ * @typedef {Object} BlockExtras
+ * @property {Sats} totalFees - Total fees in satoshis
+ * @property {FeeRate} medianFee - Median fee rate in sat/vB
+ * @property {FeeRate[]} feeRange - Fee rate range: [min, 10%, 25%, 50%, 75%, 90%, max]
+ * @property {Sats} reward - Total block reward (subsidy + fees) in satoshis
+ * @property {BlockPool} pool - Mining pool that mined this block
+ * @property {Sats} avgFee - Average fee per transaction in satoshis
+ * @property {FeeRate} avgFeeRate - Average fee rate in sat/vB
+ * @property {string} coinbaseRaw - Raw coinbase transaction scriptsig as hex
+ * @property {?string=} coinbaseAddress - Primary coinbase output address
+ * @property {string[]} coinbaseAddresses - All coinbase output addresses
+ * @property {string} coinbaseSignature - Coinbase output script in ASM format
+ * @property {string} coinbaseSignatureAscii - Coinbase scriptsig decoded as ASCII
+ * @property {number} avgTxSize - Average transaction size in bytes
+ * @property {number} totalInputs - Total number of inputs (excluding coinbase)
+ * @property {number} totalOutputs - Total number of outputs
+ * @property {Sats} totalOutputAmt - Total output amount in satoshis
+ * @property {Sats} medianFeeAmt - Median fee amount in satoshis
+ * @property {Sats[]} feePercentiles - Fee amount percentiles in satoshis: [min, 10%, 25%, 50%, 75%, 90%, max]
+ * @property {number} segwitTotalTxs - Number of segwit transactions
+ * @property {number} segwitTotalSize - Total size of segwit transactions in bytes
+ * @property {Weight} segwitTotalWeight - Total weight of segwit transactions
+ * @property {string} header - Raw 80-byte block header as hex
+ * @property {number} utxoSetChange - UTXO set change (outputs created minus inputs spent)
+ * @property {number} utxoSetSize - Total UTXO set size at this height
+ * @property {Sats} totalInputAmt - Total input amount in satoshis
+ * @property {number} virtualSize - Virtual size in vbytes
+ */
+/**
  * A single block fees data point.
  *
  * @typedef {Object} BlockFeesEntry
@@ -135,16 +166,51 @@
  * @property {TxIndex} index - Transaction index within the block (0-based)
  */
 /**
- * Block information returned by the API
+ * Block information matching mempool.space /api/block/{hash}
  *
  * @typedef {Object} BlockInfo
  * @property {BlockHash} id - Block hash
  * @property {Height} height - Block height
+ * @property {number} version - Block version, used for soft fork signaling
+ * @property {BlockHash} previousblockhash - Previous block hash
+ * @property {string} merkleRoot - Merkle root of the transaction tree
+ * @property {number} time - Block timestamp as claimed by the miner (Unix time)
+ * @property {number} bits - Compact target (bits)
+ * @property {number} nonce - Nonce used to produce a valid block hash
+ * @property {Timestamp} timestamp - Block timestamp (Unix time)
  * @property {number} txCount - Number of transactions in the block
  * @property {number} size - Block size in bytes
  * @property {Weight} weight - Block weight in weight units
+ * @property {Timestamp} mediantime - Median time of the last 11 blocks
+ * @property {number} difficulty - Block difficulty
+ */
+/**
+ * Block information with extras, matching mempool.space /api/v1/blocks
+ *
+ * @typedef {Object} BlockInfoV1
+ * @property {BlockHash} id - Block hash
+ * @property {Height} height - Block height
+ * @property {number} version - Block version, used for soft fork signaling
+ * @property {BlockHash} previousblockhash - Previous block hash
+ * @property {string} merkleRoot - Merkle root of the transaction tree
+ * @property {number} time - Block timestamp as claimed by the miner (Unix time)
+ * @property {number} bits - Compact target (bits)
+ * @property {number} nonce - Nonce used to produce a valid block hash
  * @property {Timestamp} timestamp - Block timestamp (Unix time)
- * @property {number} difficulty - Block difficulty as a floating point number
+ * @property {number} txCount - Number of transactions in the block
+ * @property {number} size - Block size in bytes
+ * @property {Weight} weight - Block weight in weight units
+ * @property {Timestamp} mediantime - Median time of the last 11 blocks
+ * @property {number} difficulty - Block difficulty
+ * @property {BlockExtras} extras - Extended block data
+ */
+/**
+ * Mining pool identification for a block
+ *
+ * @typedef {Object} BlockPool
+ * @property {number} id - Unique pool identifier
+ * @property {string} name - Pool name
+ * @property {PoolSlug} slug - URL-friendly pool identifier
  */
 /**
  * A single block rewards data point.
@@ -229,6 +295,17 @@
  * @typedef {string} Cohort
  */
 /**
+ * Coinbase scriptSig tag for pool identification.
+ *
+ * Stored as a fixed 101-byte record (1 byte length + 100 bytes data).
+ * Uses `[u8; 101]` internally so that `size_of::<CoinbaseTag>()` matches
+ * the serialized `Bytes::Array` size (vecdb requires this for alignment).
+ *
+ * Bitcoin consensus limits coinbase scriptSig to 2-100 bytes.
+ *
+ * @typedef {string} CoinbaseTag
+ */
+/**
  * Bucket type for cost basis aggregation.
  * Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
  * log10/log50/log100/log200 (logarithmic with 10/50/100/200 buckets per decade).
@@ -260,6 +337,22 @@
  * Options: supply (BTC), realized (USD, price × supply), unrealized (USD, spot × supply).
  *
  * @typedef {("supply"|"realized"|"unrealized")} CostBasisValue
+ */
+/**
+ * A transaction in a CPFP relationship
+ *
+ * @typedef {Object} CpfpEntry
+ * @property {Txid} txid
+ * @property {Weight} weight
+ * @property {Sats} fee
+ */
+/**
+ * CPFP (Child Pays For Parent) information for a transaction
+ *
+ * @typedef {Object} CpfpInfo
+ * @property {CpfpEntry[]} ancestors
+ * @property {CpfpEntry[]} descendants
+ * @property {FeeRate} effectiveFeePerVsize
  */
 /**
  * Data range with output format for API query parameters
@@ -358,6 +451,11 @@
  * @property {string} docUrl - Link to API documentation
  */
 /**
+ * Exchange rates (USD base, on-chain only — no fiat pairs available)
+ *
+ * @typedef {Object} ExchangeRates
+ */
+/**
  * Fee rate in sats/vB
  *
  * @typedef {number} FeeRate
@@ -424,14 +522,23 @@
  * @property {Height} height
  */
 /**
- * Hex-encoded string
- *
- * @typedef {string} Hex
- */
-/**
  * Highest price value for a time period
  *
  * @typedef {Dollars} High
+ */
+/**
+ * Historical price response
+ *
+ * @typedef {Object} HistoricalPrice
+ * @property {HistoricalPriceEntry[]} prices
+ * @property {ExchangeRates} exchangeRates
+ */
+/**
+ * A single price data point
+ *
+ * @typedef {Object} HistoricalPriceEntry
+ * @property {number} time
+ * @property {Dollars} uSD
  */
 /** @typedef {number} Hour1 */
 /** @typedef {number} Hour12 */
@@ -484,12 +591,30 @@
  * @property {FeeRate[]} feeRange - Fee rate range: [min, 10%, 25%, 50%, 75%, 90%, max]
  */
 /**
- * Mempool statistics
+ * Mempool statistics with incrementally maintained fee histogram.
  *
  * @typedef {Object} MempoolInfo
  * @property {number} count - Number of transactions in the mempool
  * @property {VSize} vsize - Total virtual size of all transactions in the mempool (vbytes)
  * @property {Sats} totalFee - Total fees of all transactions in the mempool (satoshis)
+ * @property {{ [key: string]: VSize }} feeHistogram - Fee histogram: `[[fee_rate, vsize], ...]` sorted by descending fee rate
+ */
+/**
+ * Simplified mempool transaction for the recent transactions endpoint
+ *
+ * @typedef {Object} MempoolRecentTx
+ * @property {Txid} txid
+ * @property {Sats} fee
+ * @property {VSize} vsize
+ * @property {Sats} value
+ */
+/**
+ * Merkle inclusion proof for a transaction
+ *
+ * @typedef {Object} MerkleProof
+ * @property {Height} blockHeight
+ * @property {string[]} merkle
+ * @property {number} pos
  */
 /** @typedef {number} Minute10 */
 /** @typedef {number} Minute30 */
@@ -528,6 +653,10 @@
  * Opening price value for a time period
  *
  * @typedef {Dollars} Open
+ */
+/**
+ * @typedef {Object} OptionalTimestampParam
+ * @property {(Timestamp|null)=} timestamp
  */
 /** @typedef {number} OutPoint */
 /**
@@ -608,6 +737,15 @@
  * @property {PoolSlug} slug - URL-friendly pool identifier
  */
 /**
+ * A single pool hashrate data point.
+ *
+ * @typedef {Object} PoolHashrateEntry
+ * @property {Timestamp} timestamp - Unix timestamp.
+ * @property {number} avgHashrate - Average hashrate (H/s).
+ * @property {number} share - Pool's share of total network hashrate.
+ * @property {string} poolName - Pool name.
+ */
+/**
  * Basic pool information for listing all pools
  *
  * @typedef {Object} PoolInfo
@@ -616,6 +754,11 @@
  * @property {number} uniqueId - Unique numeric pool identifier
  */
 /** @typedef {("unknown"|"blockfills"|"ultimuspool"|"terrapool"|"luxor"|"onethash"|"btccom"|"bitfarms"|"huobipool"|"wayicn"|"canoepool"|"btctop"|"bitcoincom"|"pool175btc"|"gbminers"|"axbt"|"asicminer"|"bitminter"|"bitcoinrussia"|"btcserv"|"simplecoinus"|"btcguild"|"eligius"|"ozcoin"|"eclipsemc"|"maxbtc"|"triplemining"|"coinlab"|"pool50btc"|"ghashio"|"stminingcorp"|"bitparking"|"mmpool"|"polmine"|"kncminer"|"bitalo"|"f2pool"|"hhtt"|"megabigpower"|"mtred"|"nmcbit"|"yourbtcnet"|"givemecoins"|"braiinspool"|"antpool"|"multicoinco"|"bcpoolio"|"cointerra"|"kanopool"|"solock"|"ckpool"|"nicehash"|"bitclub"|"bitcoinaffiliatenetwork"|"btcc"|"bwpool"|"exxbw"|"bitsolo"|"bitfury"|"twentyoneinc"|"digitalbtc"|"eightbaochi"|"mybtccoinpool"|"tbdice"|"hashpool"|"nexious"|"bravomining"|"hotpool"|"okexpool"|"bcmonster"|"onehash"|"bixin"|"tatmaspool"|"viabtc"|"connectbtc"|"batpool"|"waterhole"|"dcexploration"|"dcex"|"btpool"|"fiftyeightcoin"|"bitcoinindia"|"shawnp0wers"|"phashio"|"rigpool"|"haozhuzhu"|"sevenpool"|"miningkings"|"hashbx"|"dpool"|"rawpool"|"haominer"|"helix"|"bitcoinukraine"|"poolin"|"secretsuperstar"|"tigerpoolnet"|"sigmapoolcom"|"okpooltop"|"hummerpool"|"tangpool"|"bytepool"|"spiderpool"|"novablock"|"miningcity"|"binancepool"|"minerium"|"lubiancom"|"okkong"|"aaopool"|"emcdpool"|"foundryusa"|"sbicrypto"|"arkpool"|"purebtccom"|"marapool"|"kucoinpool"|"entrustcharitypool"|"okminer"|"titan"|"pegapool"|"btcnuggets"|"cloudhashing"|"digitalxmintsy"|"telco214"|"btcpoolparty"|"multipool"|"transactioncoinmining"|"btcdig"|"trickysbtcpool"|"btcmp"|"eobot"|"unomp"|"patels"|"gogreenlight"|"bitcoinindiapool"|"ekanembtc"|"canoe"|"tiger"|"onem1x"|"zulupool"|"secpool"|"ocean"|"whitepool"|"wiz"|"wk057"|"futurebitapollosolo"|"carbonnegative"|"portlandhodl"|"phoenix"|"neopool"|"maxipool"|"bitfufupool"|"gdpool"|"miningdutch"|"publicpool"|"miningsquared"|"innopolistech"|"btclab"|"parasite"|"redrockpool"|"est3lar")} PoolSlug */
+/**
+ * @typedef {Object} PoolSlugAndHeightParam
+ * @property {PoolSlug} slug
+ * @property {Height} height
+ */
 /**
  * @typedef {Object} PoolSlugParam
  * @property {PoolSlug} slug
@@ -640,6 +783,13 @@
  * @property {PoolStats[]} pools - List of pools sorted by block count descending
  * @property {number} blockCount - Total blocks in the time period
  * @property {number} lastEstimatedHashrate - Estimated network hashrate (hashes per second)
+ */
+/**
+ * Current price response matching mempool.space /api/v1/prices format
+ *
+ * @typedef {Object} Prices
+ * @property {Timestamp} time
+ * @property {Dollars} uSD
  */
 /**
  * A range boundary: integer index, date, or timestamp.
@@ -982,6 +1132,20 @@
 const _isBrowser = typeof window !== 'undefined' && 'caches' in window;
 const _runIdle = (/** @type {VoidFunction} */ fn) => (globalThis.requestIdleCallback ?? setTimeout)(fn);
 const _defaultCacheName = '__BRK_CLIENT__';
+/** @param {*} v */
+const _addCamelGetters = (v) => {
+  if (Array.isArray(v)) { v.forEach(_addCamelGetters); return v; }
+  if (v && typeof v === 'object' && v.constructor === Object) {
+    for (const k in v) {
+      if (k.includes('_')) {
+        const c = k.replace(/_([a-z])/g, (_, l) => l.toUpperCase());
+        if (!(c in v)) Object.defineProperty(v, c, { get() { return this[k]; } });
+      }
+      _addCamelGetters(v[k]);
+    }
+  }
+  return v;
+};
 
 /**
  * @param {string|boolean|undefined} cache
@@ -1378,7 +1542,7 @@ class BrkClientBase {
     const cachePromise = cache?.match(url).then(async (res) => {
       cachedRes = res ?? null;
       if (!res) return null;
-      const json = await res.json();
+      const json = _addCamelGetters(await res.json());
       if (!resolved && onUpdate) {
         resolved = true;
         onUpdate(json);
@@ -1388,7 +1552,7 @@ class BrkClientBase {
 
     const networkPromise = this.get(path).then(async (res) => {
       const cloned = res.clone();
-      const json = await res.json();
+      const json = _addCamelGetters(await res.json());
       // Skip update if ETag matches and cache already delivered
       if (cachedRes?.headers.get('ETag') === res.headers.get('ETag')) {
         if (!resolved && onUpdate) {
@@ -4145,7 +4309,6 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Addrs} addrs
  * @property {SeriesTree_Scripts} scripts
  * @property {SeriesTree_Mining} mining
- * @property {SeriesTree_Positions} positions
  * @property {SeriesTree_Cointime} cointime
  * @property {SeriesTree_Constants} constants
  * @property {SeriesTree_Indexes} indexes
@@ -4161,10 +4324,14 @@ function createTransferPattern(client, acc) {
 /**
  * @typedef {Object} SeriesTree_Blocks
  * @property {SeriesPattern18<BlockHash>} blockhash
+ * @property {SeriesPattern18<CoinbaseTag>} coinbaseTag
  * @property {SeriesTree_Blocks_Difficulty} difficulty
  * @property {SeriesTree_Blocks_Time} time
  * @property {SeriesTree_Blocks_Size} size
  * @property {AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern<Weight>} weight
+ * @property {SeriesPattern18<StoredU32>} segwitTxs
+ * @property {SeriesPattern18<StoredU64>} segwitSize
+ * @property {SeriesPattern18<Weight>} segwitWeight
  * @property {SeriesTree_Blocks_Count} count
  * @property {SeriesTree_Blocks_Lookback} lookback
  * @property {SeriesTree_Blocks_Interval} interval
@@ -4328,6 +4495,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesPattern19<Sats>} outputValue
  * @property {_6bBlockTxPattern<Sats>} fee
  * @property {_6bBlockTxPattern<FeeRate>} feeRate
+ * @property {_6bBlockTxPattern<FeeRate>} effectiveFeeRate
  */
 
 /**
@@ -4597,6 +4765,7 @@ function createTransferPattern(client, acc) {
  * @property {AverageBlockCumulativeSumPattern3} coinbase
  * @property {SeriesTree_Mining_Rewards_Subsidy} subsidy
  * @property {SeriesTree_Mining_Rewards_Fees} fees
+ * @property {SeriesPattern18<Sats>} outputVolume
  * @property {BlockCumulativePattern} unclaimed
  */
 
@@ -4655,10 +4824,6 @@ function createTransferPattern(client, acc) {
  * @property {SeriesPattern1<StoredF64>} _1m
  * @property {SeriesPattern1<StoredF64>} _2m
  * @property {SeriesPattern1<StoredF64>} _1y
- */
-
-/**
- * @typedef {Object} SeriesTree_Positions
  */
 
 /**
@@ -7572,6 +7737,7 @@ class BrkClient extends BrkClientBase {
     return {
       blocks: {
         blockhash: createSeriesPattern18(this, 'blockhash'),
+        coinbaseTag: createSeriesPattern18(this, 'coinbase_tag'),
         difficulty: {
           value: createSeriesPattern1(this, 'difficulty'),
           hashrate: createSeriesPattern1(this, 'difficulty_hashrate'),
@@ -7597,6 +7763,9 @@ class BrkClient extends BrkClientBase {
           pct90: create_1m1w1y24hPattern(this, 'block_size_pct90'),
         },
         weight: createAverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'block_weight'),
+        segwitTxs: createSeriesPattern18(this, 'segwit_txs'),
+        segwitSize: createSeriesPattern18(this, 'segwit_size'),
+        segwitWeight: createSeriesPattern18(this, 'segwit_weight'),
         count: {
           target: create_1m1w1y24hPattern(this, 'block_count_target'),
           total: createAverageBlockCumulativeSumPattern2(this, 'block_count'),
@@ -7695,6 +7864,7 @@ class BrkClient extends BrkClientBase {
           outputValue: createSeriesPattern19(this, 'output_value'),
           fee: create_6bBlockTxPattern(this, 'fee'),
           feeRate: create_6bBlockTxPattern(this, 'fee_rate'),
+          effectiveFeeRate: create_6bBlockTxPattern(this, 'effective_fee_rate'),
         },
         versions: {
           v1: createAverageBlockCumulativeSumPattern(this, 'tx_v1'),
@@ -7893,6 +8063,7 @@ class BrkClient extends BrkClientBase {
               _1y: createBpsRatioPattern2(this, 'fee_to_subsidy_ratio_1y'),
             },
           },
+          outputVolume: createSeriesPattern18(this, 'output_volume'),
           unclaimed: createBlockCumulativePattern(this, 'unclaimed_rewards'),
         },
         hashrate: {
@@ -7910,8 +8081,6 @@ class BrkClient extends BrkClientBase {
           price: createPhsReboundThsPattern(this, 'hash_price'),
           value: createPhsReboundThsPattern(this, 'hash_value'),
         },
-      },
-      positions: {
       },
       cointime: {
         activity: {
@@ -9338,16 +9507,16 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
-   * Block by height
+   * Block hash by height
    *
-   * Retrieve block information by block height. Returns block metadata including hash, timestamp, difficulty, size, weight, and transaction count.
+   * Retrieve the block hash at a given height. Returns the hash as plain text.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*
    *
    * Endpoint: `GET /api/block-height/{height}`
    *
    * @param {Height} height
-   * @returns {Promise<BlockInfo>}
+   * @returns {Promise<*>}
    */
   async getBlockByHeight(height) {
     return this.getJson(`/api/block-height/${height}`);
@@ -9367,6 +9536,22 @@ class BrkClient extends BrkClientBase {
    */
   async getBlock(hash) {
     return this.getJson(`/api/block/${hash}`);
+  }
+
+  /**
+   * Block header
+   *
+   * Returns the hex-encoded block header.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
+   *
+   * Endpoint: `GET /api/block/{hash}/header`
+   *
+   * @param {BlockHash} hash
+   * @returns {Promise<*>}
+   */
+  async getBlockHeader(hash) {
+    return this.getJson(`/api/block/${hash}/header`);
   }
 
   /**
@@ -9412,7 +9597,7 @@ class BrkClient extends BrkClientBase {
    *
    * @param {BlockHash} hash - Bitcoin block hash
    * @param {TxIndex} index - Transaction index within the block (0-based)
-   * @returns {Promise<Txid>}
+   * @returns {Promise<*>}
    */
   async getBlockTxid(hash, index) {
     return this.getJson(`/api/block/${hash}/txid/${index}`);
@@ -9435,6 +9620,22 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
+   * Block transactions
+   *
+   * Retrieve transactions in a block by block hash. Returns up to 25 transactions starting from index 0.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
+   *
+   * Endpoint: `GET /api/block/{hash}/txs`
+   *
+   * @param {BlockHash} hash
+   * @returns {Promise<Transaction[]>}
+   */
+  async getBlockTxs(hash) {
+    return this.getJson(`/api/block/${hash}/txs`);
+  }
+
+  /**
    * Block transactions (paginated)
    *
    * Retrieve transactions in a block by block hash, starting from the specified index. Returns up to 25 transactions at a time.
@@ -9447,7 +9648,7 @@ class BrkClient extends BrkClientBase {
    * @param {TxIndex} start_index - Starting transaction index within the block (0-based)
    * @returns {Promise<Transaction[]>}
    */
-  async getBlockTxs(hash, start_index) {
+  async getBlockTxsFromIndex(hash, start_index) {
     return this.getJson(`/api/block/${hash}/txs/${start_index}`);
   }
 
@@ -9463,6 +9664,34 @@ class BrkClient extends BrkClientBase {
    */
   async getBlocks() {
     return this.getJson(`/api/blocks`);
+  }
+
+  /**
+   * Block tip hash
+   *
+   * Returns the hash of the last block.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
+   *
+   * Endpoint: `GET /api/blocks/tip/hash`
+   * @returns {Promise<*>}
+   */
+  async getBlockTipHash() {
+    return this.getJson(`/api/blocks/tip/hash`);
+  }
+
+  /**
+   * Block tip height
+   *
+   * Returns the height of the last block.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
+   *
+   * Endpoint: `GET /api/blocks/tip/height`
+   * @returns {Promise<*>}
+   */
+  async getBlockTipHeight() {
+    return this.getJson(`/api/blocks/tip/height`);
   }
 
   /**
@@ -9484,15 +9713,15 @@ class BrkClient extends BrkClientBase {
   /**
    * Mempool statistics
    *
-   * Get current mempool statistics including transaction count, total vsize, and total fees.
+   * Get current mempool statistics including transaction count, total vsize, total fees, and fee histogram.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
    *
-   * Endpoint: `GET /api/mempool/info`
+   * Endpoint: `GET /api/mempool`
    * @returns {Promise<MempoolInfo>}
    */
   async getMempool() {
-    return this.getJson(`/api/mempool/info`);
+    return this.getJson(`/api/mempool`);
   }
 
   /**
@@ -9505,6 +9734,20 @@ class BrkClient extends BrkClientBase {
    */
   async getLivePrice() {
     return this.getJson(`/api/mempool/price`);
+  }
+
+  /**
+   * Recent mempool transactions
+   *
+   * Get the last 10 transactions to enter the mempool.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*
+   *
+   * Endpoint: `GET /api/mempool/recent`
+   * @returns {Promise<MempoolRecentTx[]>}
+   */
+  async getMempoolRecent() {
+    return this.getJson(`/api/mempool/recent`);
   }
 
   /**
@@ -9847,10 +10090,42 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx/{txid}/hex`
    *
    * @param {Txid} txid
-   * @returns {Promise<Hex>}
+   * @returns {Promise<*>}
    */
   async getTxHex(txid) {
     return this.getJson(`/api/tx/${txid}/hex`);
+  }
+
+  /**
+   * Transaction merkle proof
+   *
+   * Get the merkle inclusion proof for a transaction.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkle-proof)*
+   *
+   * Endpoint: `GET /api/tx/{txid}/merkle-proof`
+   *
+   * @param {Txid} txid
+   * @returns {Promise<MerkleProof>}
+   */
+  async getTxMerkleProof(txid) {
+    return this.getJson(`/api/tx/${txid}/merkle-proof`);
+  }
+
+  /**
+   * Transaction merkleblock proof
+   *
+   * Get the merkleblock proof for a transaction (BIP37 format, hex encoded).
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkleblock-proof)*
+   *
+   * Endpoint: `GET /api/tx/{txid}/merkleblock-proof`
+   *
+   * @param {Txid} txid
+   * @returns {Promise<*>}
+   */
+  async getTxMerkleblockProof(txid) {
+    return this.getJson(`/api/tx/${txid}/merkleblock-proof`);
   }
 
   /**
@@ -9887,6 +10162,22 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
+   * Transaction raw
+   *
+   * Returns a transaction as binary data.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-raw)*
+   *
+   * Endpoint: `GET /api/tx/{txid}/raw`
+   *
+   * @param {Txid} txid
+   * @returns {Promise<number[]>}
+   */
+  async getTxRaw(txid) {
+    return this.getJson(`/api/tx/${txid}/raw`);
+  }
+
+  /**
    * Transaction status
    *
    * Retrieve the confirmation status of a transaction. Returns whether the transaction is confirmed and, if so, the block height, hash, and timestamp.
@@ -9903,9 +10194,71 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
+   * Block (v1)
+   *
+   * Returns block details with extras by hash.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*
+   *
+   * Endpoint: `GET /api/v1/block/{hash}`
+   *
+   * @param {BlockHash} hash
+   * @returns {Promise<BlockInfoV1>}
+   */
+  async getBlockV1(hash) {
+    return this.getJson(`/api/v1/block/${hash}`);
+  }
+
+  /**
+   * Recent blocks with extras
+   *
+   * Retrieve the last 10 blocks with extended data including pool identification and fee statistics.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
+   *
+   * Endpoint: `GET /api/v1/blocks`
+   * @returns {Promise<BlockInfoV1[]>}
+   */
+  async getBlocksV1() {
+    return this.getJson(`/api/v1/blocks`);
+  }
+
+  /**
+   * Blocks from height with extras
+   *
+   * Retrieve up to 10 blocks with extended data going backwards from the given height.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
+   *
+   * Endpoint: `GET /api/v1/blocks/{height}`
+   *
+   * @param {Height} height
+   * @returns {Promise<BlockInfoV1[]>}
+   */
+  async getBlocksV1FromHeight(height) {
+    return this.getJson(`/api/v1/blocks/${height}`);
+  }
+
+  /**
+   * CPFP info
+   *
+   * Returns ancestors and descendants for a CPFP transaction.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*
+   *
+   * Endpoint: `GET /api/v1/cpfp/{txid}`
+   *
+   * @param {Txid} txid
+   * @returns {Promise<CpfpInfo>}
+   */
+  async getCpfp(txid) {
+    return this.getJson(`/api/v1/cpfp/${txid}`);
+  }
+
+  /**
    * Difficulty adjustment
    *
-   * Get current difficulty adjustment information including progress through the current epoch, estimated retarget date, and difficulty change prediction.
+   * Get current difficulty adjustment progress and estimates.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*
    *
@@ -9919,7 +10272,7 @@ class BrkClient extends BrkClientBase {
   /**
    * Projected mempool blocks
    *
-   * Get projected blocks from the mempool for fee estimation. Each block contains statistics about transactions that would be included if a block were mined now.
+   * Get projected blocks from the mempool for fee estimation.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
    *
@@ -9931,9 +10284,23 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
+   * Precise recommended fees
+   *
+   * Get recommended fee rates with up to 3 decimal places.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
+   *
+   * Endpoint: `GET /api/v1/fees/precise`
+   * @returns {Promise<RecommendedFees>}
+   */
+  async getPreciseFees() {
+    return this.getJson(`/api/v1/fees/precise`);
+  }
+
+  /**
    * Recommended fees
    *
-   * Get recommended fee rates for different confirmation targets based on current mempool state.
+   * Get recommended fee rates for different confirmation targets.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
    *
@@ -9942,6 +10309,26 @@ class BrkClient extends BrkClientBase {
    */
   async getRecommendedFees() {
     return this.getJson(`/api/v1/fees/recommended`);
+  }
+
+  /**
+   * Historical price
+   *
+   * Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
+   *
+   * Endpoint: `GET /api/v1/historical-price`
+   *
+   * @param {Timestamp=} [timestamp]
+   * @returns {Promise<HistoricalPrice>}
+   */
+  async getHistoricalPrice(timestamp) {
+    const params = new URLSearchParams();
+    if (timestamp !== undefined) params.set('timestamp', String(timestamp));
+    const query = params.toString();
+    const path = `/api/v1/historical-price${query ? '?' + query : ''}`;
+    return this.getJson(path);
   }
 
   /**
@@ -10069,6 +10456,36 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
+   * All pools hashrate (all time)
+   *
+   * Get hashrate data for all mining pools.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
+   *
+   * Endpoint: `GET /api/v1/mining/hashrate/pools`
+   * @returns {Promise<PoolHashrateEntry[]>}
+   */
+  async getPoolsHashrate() {
+    return this.getJson(`/api/v1/mining/hashrate/pools`);
+  }
+
+  /**
+   * All pools hashrate
+   *
+   * Get hashrate data for all mining pools for a time period. Valid periods: 1m, 3m, 6m, 1y, 2y, 3y
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
+   *
+   * Endpoint: `GET /api/v1/mining/hashrate/pools/{time_period}`
+   *
+   * @param {TimePeriod} time_period
+   * @returns {Promise<PoolHashrateEntry[]>}
+   */
+  async getPoolsHashrateByPeriod(time_period) {
+    return this.getJson(`/api/v1/mining/hashrate/pools/${time_period}`);
+  }
+
+  /**
    * Network hashrate
    *
    * Get network hashrate and difficulty data for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
@@ -10098,6 +10515,55 @@ class BrkClient extends BrkClientBase {
    */
   async getPool(slug) {
     return this.getJson(`/api/v1/mining/pool/${slug}`);
+  }
+
+  /**
+   * Mining pool blocks
+   *
+   * Get the 10 most recent blocks mined by a specific pool.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+   *
+   * Endpoint: `GET /api/v1/mining/pool/{slug}/blocks`
+   *
+   * @param {PoolSlug} slug
+   * @returns {Promise<BlockInfoV1[]>}
+   */
+  async getPoolBlocks(slug) {
+    return this.getJson(`/api/v1/mining/pool/${slug}/blocks`);
+  }
+
+  /**
+   * Mining pool blocks from height
+   *
+   * Get 10 blocks mined by a specific pool before (and including) the given height.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+   *
+   * Endpoint: `GET /api/v1/mining/pool/{slug}/blocks/{height}`
+   *
+   * @param {PoolSlug} slug
+   * @param {Height} height
+   * @returns {Promise<BlockInfoV1[]>}
+   */
+  async getPoolBlocksFrom(slug, height) {
+    return this.getJson(`/api/v1/mining/pool/${slug}/blocks/${height}`);
+  }
+
+  /**
+   * Mining pool hashrate
+   *
+   * Get hashrate history for a specific mining pool.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrate)*
+   *
+   * Endpoint: `GET /api/v1/mining/pool/{slug}/hashrate`
+   *
+   * @param {PoolSlug} slug
+   * @returns {Promise<PoolHashrateEntry[]>}
+   */
+  async getPoolHashrate(slug) {
+    return this.getJson(`/api/v1/mining/pool/${slug}/hashrate`);
   }
 
   /**
@@ -10144,6 +10610,34 @@ class BrkClient extends BrkClientBase {
    */
   async getRewardStats(block_count) {
     return this.getJson(`/api/v1/mining/reward-stats/${block_count}`);
+  }
+
+  /**
+   * Current BTC price
+   *
+   * Returns bitcoin latest price (on-chain derived, USD only).
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*
+   *
+   * Endpoint: `GET /api/v1/prices`
+   * @returns {Promise<Prices>}
+   */
+  async getPrices() {
+    return this.getJson(`/api/v1/prices`);
+  }
+
+  /**
+   * Transaction first-seen times
+   *
+   * Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*
+   *
+   * Endpoint: `GET /api/v1/transaction-times`
+   * @returns {Promise<number[]>}
+   */
+  async getTransactionTimes() {
+    return this.getJson(`/api/v1/transaction-times`);
   }
 
   /**

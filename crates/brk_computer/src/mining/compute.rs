@@ -25,7 +25,7 @@ impl Vecs {
             indexer,
             indexes,
             &blocks.lookback,
-            &transactions.fees,
+            transactions,
             prices,
             starting_indexes,
             exit,

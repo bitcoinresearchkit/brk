@@ -101,7 +101,7 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
                 .response_type
                 .as_deref()
                 .map(js_type_to_python)
-                .unwrap_or_else(|| "Any".to_string()),
+                .unwrap_or_else(|| "str".to_string()),
         );
 
         let return_type = if endpoint.supports_csv {
@@ -159,11 +159,19 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         // Build path
         let path = build_path_template(&endpoint.path, &endpoint.path_params);
 
+        let fetch_method = if endpoint.returns_json() {
+            "get_json"
+        } else {
+            "get_text"
+        };
+
         if endpoint.query_params.is_empty() {
             if endpoint.path_params.is_empty() {
-                writeln!(output, "        return self.get_json('{}')", path).unwrap();
+                writeln!(output, "        return self.{}('{}')", fetch_method, path)
+                    .unwrap();
             } else {
-                writeln!(output, "        return self.get_json(f'{}')", path).unwrap();
+                writeln!(output, "        return self.{}(f'{}')", fetch_method, path)
+                    .unwrap();
             }
         } else {
             writeln!(output, "        params = []").unwrap();
@@ -197,9 +205,9 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             if endpoint.supports_csv {
                 writeln!(output, "        if format == 'csv':").unwrap();
                 writeln!(output, "            return self.get_text(path)").unwrap();
-                writeln!(output, "        return self.get_json(path)").unwrap();
+                writeln!(output, "        return self.{}(path)", fetch_method).unwrap();
             } else {
-                writeln!(output, "        return self.get_json(path)").unwrap();
+                writeln!(output, "        return self.{}(path)", fetch_method).unwrap();
             }
         }
 

@@ -12,7 +12,6 @@ impl Query {
 
     fn block_raw_by_height(&self, height: Height) -> Result<Vec<u8>> {
         let indexer = self.indexer();
-        let computer = self.computer();
         let reader = self.reader();
 
         let max_height = Height::from(indexer.vecs.blocks.blockhash.len().saturating_sub(1));
@@ -20,7 +19,7 @@ impl Query {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
 
-        let position = computer.positions.block.collect_one(height).unwrap();
+        let position = indexer.vecs.blocks.position.collect_one(height).unwrap();
         let size = indexer.vecs.blocks.total.collect_one(height).unwrap();
 
         reader.read_raw_bytes(position, *size as usize)

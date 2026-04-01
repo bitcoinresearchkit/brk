@@ -4,7 +4,6 @@ use std::{fs, path::Path, thread, time::Instant};
 
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_reader::Reader;
 use brk_traversable::Traversable;
 use brk_types::Version;
 use tracing::info;
@@ -23,7 +22,6 @@ mod market;
 mod mining;
 mod outputs;
 mod pools;
-mod positions;
 pub mod prices;
 mod scripts;
 mod supply;
@@ -35,7 +33,6 @@ pub struct Computer<M: StorageMode = Rw> {
     pub mining: Box<mining::Vecs<M>>,
     pub transactions: Box<transactions::Vecs<M>>,
     pub scripts: Box<scripts::Vecs<M>>,
-    pub positions: Box<positions::Vecs<M>>,
     pub cointime: Box<cointime::Vecs<M>>,
     pub constants: Box<constants::Vecs>,
     pub indexes: Box<indexes::Vecs<M>>,
@@ -63,24 +60,12 @@ impl Computer {
         const STACK_SIZE: usize = 8 * 1024 * 1024;
         let big_thread = || thread::Builder::new().stack_size(STACK_SIZE);
 
-        let (indexes, positions) = timed("Imported indexes/positions", || {
-            thread::scope(|s| -> Result<_> {
-                let positions_handle = big_thread().spawn_scoped(s, || -> Result<_> {
-                    Ok(Box::new(positions::Vecs::forced_import(
-                        &computed_path,
-                        VERSION,
-                    )?))
-                })?;
-
-                let indexes = Box::new(indexes::Vecs::forced_import(
-                    &computed_path,
-                    VERSION,
-                    indexer,
-                )?);
-                let positions = positions_handle.join().unwrap()?;
-
-                Ok((indexes, positions))
-            })
+        let indexes = timed("Imported indexes", || -> Result<_> {
+            Ok(Box::new(indexes::Vecs::forced_import(
+                &computed_path,
+                VERSION,
+                indexer,
+            )?))
         })?;
 
         let (constants, prices) = timed("Imported prices/constants", || -> Result<_> {
@@ -257,7 +242,6 @@ impl Computer {
             market,
             distribution,
             supply,
-            positions,
             pools,
             cointime,
             indexes,
@@ -278,7 +262,6 @@ impl Computer {
             mining::DB_NAME,
             transactions::DB_NAME,
             scripts::DB_NAME,
-            positions::DB_NAME,
             cointime::DB_NAME,
             indicators::DB_NAME,
             indexes::DB_NAME,
@@ -319,7 +302,6 @@ impl Computer {
         &mut self,
         indexer: &Indexer,
         starting_indexes: brk_indexer::Indexes,
-        reader: &Reader,
         exit: &Exit,
     ) -> Result<()> {
         internal::cache_clear_all();
@@ -387,13 +369,6 @@ impl Computer {
                 )
             })?;
 
-            let positions = scope.spawn(|| {
-                timed("Computed positions", || {
-                    self.positions
-                        .compute(indexer, &starting_indexes, reader, exit)
-                })
-            });
-
             timed("Computed transactions", || {
                 self.transactions.compute(
                     indexer,
@@ -419,7 +394,6 @@ impl Computer {
                 )
             })?;
 
-            positions.join().unwrap()?;
             market.join().unwrap()?;
             Ok(())
         })?;
@@ -561,7 +535,6 @@ impl_iter_named!(
     mining,
     transactions,
     scripts,
-    positions,
     cointime,
     constants,
     indicators,

@@ -57,7 +57,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         "**DEPRECATED** - Use `/api/series` instead.\n\n\
                         Sunset date: 2027-01-01."
                     )
-                    .ok_response::<TreeNode>()
+                    .json_response::<TreeNode>()
                     .not_modified(),
             ),
         )
@@ -80,7 +80,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         "**DEPRECATED** - Use `/api/series/count` instead.\n\n\
                         Sunset date: 2027-01-01."
                     )
-                    .ok_response::<DetailedSeriesCount>()
+                    .json_response::<DetailedSeriesCount>()
                     .not_modified(),
             ),
         )
@@ -103,7 +103,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         "**DEPRECATED** - Use `/api/series/indexes` instead.\n\n\
                         Sunset date: 2027-01-01."
                     )
-                    .ok_response::<Vec<IndexInfo>>()
+                    .json_response::<Vec<IndexInfo>>()
                     .not_modified(),
             ),
         )
@@ -127,7 +127,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         "**DEPRECATED** - Use `/api/series/list` instead.\n\n\
                         Sunset date: 2027-01-01."
                     )
-                    .ok_response::<PaginatedSeries>()
+                    .json_response::<PaginatedSeries>()
                     .not_modified(),
             ),
         )
@@ -151,7 +151,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         "**DEPRECATED** - Use `/api/series/search` instead.\n\n\
                         Sunset date: 2027-01-01."
                     )
-                    .ok_response::<Vec<&str>>()
+                    .json_response::<Vec<&str>>()
                     .not_modified()
                     .server_error(),
             ),
@@ -173,7 +173,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         "**DEPRECATED** - Use `/api/series/bulk` instead.\n\n\
                         Sunset date: 2027-01-01."
                     )
-                    .ok_response::<Vec<SeriesData>>()
+                    .json_response::<Vec<SeriesData>>()
                     .csv_response()
                     .not_modified(),
             ),
@@ -201,7 +201,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         "**DEPRECATED** - Use `/api/series/{series}` instead.\n\n\
                         Sunset date: 2027-01-01."
                     )
-                    .ok_response::<SeriesInfo>()
+                    .json_response::<SeriesInfo>()
                     .not_modified()
                     .not_found()
                     .server_error(),
@@ -231,7 +231,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         "**DEPRECATED** - Use `/api/series/{series}/{index}` instead.\n\n\
                         Sunset date: 2027-01-01."
                     )
-                    .ok_response::<SeriesData>()
+                    .json_response::<SeriesData>()
                     .csv_response()
                     .not_modified()
                     .not_found(),
@@ -261,7 +261,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         "**DEPRECATED** - Use `/api/series/{series}/{index}/data` instead.\n\n\
                         Sunset date: 2027-01-01."
                     )
-                    .ok_response::<Vec<serde_json::Value>>()
+                    .json_response::<Vec<serde_json::Value>>()
                     .csv_response()
                     .not_modified()
                     .not_found(),
@@ -289,7 +289,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         "**DEPRECATED** - Use `/api/series/{series}/{index}/latest` instead.\n\n\
                         Sunset date: 2027-01-01."
                     )
-                    .ok_response::<serde_json::Value>()
+                    .json_response::<serde_json::Value>()
                     .not_found(),
             ),
         )
@@ -315,7 +315,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         "**DEPRECATED** - Use `/api/series/{series}/{index}/len` instead.\n\n\
                         Sunset date: 2027-01-01."
                     )
-                    .ok_response::<usize>()
+                    .json_response::<usize>()
                     .not_found(),
             ),
         )
@@ -341,7 +341,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         "**DEPRECATED** - Use `/api/series/{series}/{index}/version` instead.\n\n\
                         Sunset date: 2027-01-01."
                     )
-                    .ok_response::<brk_types::Version>()
+                    .json_response::<brk_types::Version>()
                     .not_found(),
             ),
         )
@@ -363,7 +363,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                             "**DEPRECATED** - Use `/api/series/cost-basis` instead.\n\n\
                             Sunset date: 2027-01-01."
                         )
-                        .ok_response::<Vec<String>>()
+                        .json_response::<Vec<String>>()
                         .server_error()
                 },
             ),
@@ -390,7 +390,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                             "**DEPRECATED** - Use `/api/series/cost-basis/{cohort}/dates` instead.\n\n\
                             Sunset date: 2027-01-01."
                         )
-                        .ok_response::<Vec<Date>>()
+                        .json_response::<Vec<Date>>()
                         .not_found()
                         .server_error()
                 },
@@ -424,7 +424,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                             "**DEPRECATED** - Use `/api/series/cost-basis/{cohort}/{date}` instead.\n\n\
                             Sunset date: 2027-01-01."
                         )
-                        .ok_response::<CostBasisFormatted>()
+                        .json_response::<CostBasisFormatted>()
                         .not_found()
                         .server_error()
                 },
@@ -471,7 +471,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         Returns raw data without the SeriesData wrapper."
                     )
                     .deprecated()
-                    .ok_response::<serde_json::Value>()
+                    .json_response::<serde_json::Value>()
                     .not_modified(),
             ),
         )
@@ -498,7 +498,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         Legacy endpoint for querying series. Returns raw data without the SeriesData wrapper."
                     )
                     .deprecated()
-                    .ok_response::<serde_json::Value>()
+                    .json_response::<serde_json::Value>()
                     .not_modified(),
             ),
         )

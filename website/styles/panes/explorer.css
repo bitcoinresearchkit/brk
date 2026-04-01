@@ -1,4 +1,6 @@
 #explorer {
+  width: 100%;
+
   --cube: 4.5rem;
 
   #chain {
