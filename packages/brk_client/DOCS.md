@@ -31,15 +31,20 @@
     * [get\_address\_utxos](#brk_client.BrkClient.get_address_utxos)
     * [get\_block\_by\_height](#brk_client.BrkClient.get_block_by_height)
     * [get\_block](#brk_client.BrkClient.get_block)
+    * [get\_block\_header](#brk_client.BrkClient.get_block_header)
     * [get\_block\_raw](#brk_client.BrkClient.get_block_raw)
     * [get\_block\_status](#brk_client.BrkClient.get_block_status)
     * [get\_block\_txid](#brk_client.BrkClient.get_block_txid)
     * [get\_block\_txids](#brk_client.BrkClient.get_block_txids)
     * [get\_block\_txs](#brk_client.BrkClient.get_block_txs)
+    * [get\_block\_txs\_from\_index](#brk_client.BrkClient.get_block_txs_from_index)
     * [get\_blocks](#brk_client.BrkClient.get_blocks)
+    * [get\_block\_tip\_hash](#brk_client.BrkClient.get_block_tip_hash)
+    * [get\_block\_tip\_height](#brk_client.BrkClient.get_block_tip_height)
     * [get\_blocks\_from\_height](#brk_client.BrkClient.get_blocks_from_height)
     * [get\_mempool](#brk_client.BrkClient.get_mempool)
     * [get\_live\_price](#brk_client.BrkClient.get_live_price)
+    * [get\_mempool\_recent](#brk_client.BrkClient.get_mempool_recent)
     * [get\_mempool\_txids](#brk_client.BrkClient.get_mempool_txids)
     * [get\_series\_tree](#brk_client.BrkClient.get_series_tree)
     * [get\_series\_bulk](#brk_client.BrkClient.get_series_bulk)
@@ -60,12 +65,21 @@
     * [get\_sync\_status](#brk_client.BrkClient.get_sync_status)
     * [get\_tx](#brk_client.BrkClient.get_tx)
     * [get\_tx\_hex](#brk_client.BrkClient.get_tx_hex)
+    * [get\_tx\_merkle\_proof](#brk_client.BrkClient.get_tx_merkle_proof)
+    * [get\_tx\_merkleblock\_proof](#brk_client.BrkClient.get_tx_merkleblock_proof)
     * [get\_tx\_outspend](#brk_client.BrkClient.get_tx_outspend)
     * [get\_tx\_outspends](#brk_client.BrkClient.get_tx_outspends)
+    * [get\_tx\_raw](#brk_client.BrkClient.get_tx_raw)
     * [get\_tx\_status](#brk_client.BrkClient.get_tx_status)
+    * [get\_block\_v1](#brk_client.BrkClient.get_block_v1)
+    * [get\_blocks\_v1](#brk_client.BrkClient.get_blocks_v1)
+    * [get\_blocks\_v1\_from\_height](#brk_client.BrkClient.get_blocks_v1_from_height)
+    * [get\_cpfp](#brk_client.BrkClient.get_cpfp)
     * [get\_difficulty\_adjustment](#brk_client.BrkClient.get_difficulty_adjustment)
     * [get\_mempool\_blocks](#brk_client.BrkClient.get_mempool_blocks)
+    * [get\_precise\_fees](#brk_client.BrkClient.get_precise_fees)
     * [get\_recommended\_fees](#brk_client.BrkClient.get_recommended_fees)
+    * [get\_historical\_price](#brk_client.BrkClient.get_historical_price)
     * [get\_block\_fee\_rates](#brk_client.BrkClient.get_block_fee_rates)
     * [get\_block\_fees](#brk_client.BrkClient.get_block_fees)
     * [get\_block\_rewards](#brk_client.BrkClient.get_block_rewards)
@@ -74,11 +88,18 @@
     * [get\_difficulty\_adjustments](#brk_client.BrkClient.get_difficulty_adjustments)
     * [get\_difficulty\_adjustments\_by\_period](#brk_client.BrkClient.get_difficulty_adjustments_by_period)
     * [get\_hashrate](#brk_client.BrkClient.get_hashrate)
+    * [get\_pools\_hashrate](#brk_client.BrkClient.get_pools_hashrate)
+    * [get\_pools\_hashrate\_by\_period](#brk_client.BrkClient.get_pools_hashrate_by_period)
     * [get\_hashrate\_by\_period](#brk_client.BrkClient.get_hashrate_by_period)
     * [get\_pool](#brk_client.BrkClient.get_pool)
+    * [get\_pool\_blocks](#brk_client.BrkClient.get_pool_blocks)
+    * [get\_pool\_blocks\_from](#brk_client.BrkClient.get_pool_blocks_from)
+    * [get\_pool\_hashrate](#brk_client.BrkClient.get_pool_hashrate)
     * [get\_pools](#brk_client.BrkClient.get_pools)
     * [get\_pool\_stats](#brk_client.BrkClient.get_pool_stats)
     * [get\_reward\_stats](#brk_client.BrkClient.get_reward_stats)
+    * [get\_prices](#brk_client.BrkClient.get_prices)
+    * [get\_transaction\_times](#brk_client.BrkClient.get_transaction_times)
     * [validate\_address](#brk_client.BrkClient.validate_address)
     * [get\_health](#brk_client.BrkClient.get_health)
     * [get\_openapi](#brk_client.BrkClient.get_openapi)
@@ -218,7 +239,7 @@ Convert a date/datetime to an index value for date-based indexes.
 #### get\_api
 
 ```python
-def get_api() -> Any
+def get_api() -> str
 ```
 
 Compact OpenAPI specification.
@@ -315,12 +336,12 @@ Endpoint: `GET /api/address/{address}/utxo`
 #### get\_block\_by\_height
 
 ```python
-def get_block_by_height(height: Height) -> BlockInfo
+def get_block_by_height(height: Height) -> str
 ```
 
-Block by height.
+Block hash by height.
 
-Retrieve block information by block height. Returns block metadata including hash, timestamp, difficulty, size, weight, and transaction count.
+Retrieve the block hash at a given height. Returns the hash as plain text.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*
 
@@ -341,6 +362,22 @@ Retrieve block information by block hash. Returns block metadata including heigh
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block)*
 
 Endpoint: `GET /api/block/{hash}`
+
+<a id="brk_client.BrkClient.get_block_header"></a>
+
+#### get\_block\_header
+
+```python
+def get_block_header(hash: BlockHash) -> str
+```
+
+Block header.
+
+Returns the hex-encoded block header.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
+
+Endpoint: `GET /api/block/{hash}/header`
 
 <a id="brk_client.BrkClient.get_block_raw"></a>
 
@@ -379,7 +416,7 @@ Endpoint: `GET /api/block/{hash}/status`
 #### get\_block\_txid
 
 ```python
-def get_block_txid(hash: BlockHash, index: TxIndex) -> Txid
+def get_block_txid(hash: BlockHash, index: TxIndex) -> str
 ```
 
 Transaction ID at index.
@@ -411,7 +448,24 @@ Endpoint: `GET /api/block/{hash}/txids`
 #### get\_block\_txs
 
 ```python
-def get_block_txs(hash: BlockHash, start_index: TxIndex) -> List[Transaction]
+def get_block_txs(hash: BlockHash) -> List[Transaction]
+```
+
+Block transactions.
+
+Retrieve transactions in a block by block hash. Returns up to 25 transactions starting from index 0.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
+
+Endpoint: `GET /api/block/{hash}/txs`
+
+<a id="brk_client.BrkClient.get_block_txs_from_index"></a>
+
+#### get\_block\_txs\_from\_index
+
+```python
+def get_block_txs_from_index(hash: BlockHash,
+                             start_index: TxIndex) -> List[Transaction]
 ```
 
 Block transactions (paginated).
@@ -437,6 +491,38 @@ Retrieve the last 10 blocks. Returns block metadata for each block.
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
 
 Endpoint: `GET /api/blocks`
+
+<a id="brk_client.BrkClient.get_block_tip_hash"></a>
+
+#### get\_block\_tip\_hash
+
+```python
+def get_block_tip_hash() -> str
+```
+
+Block tip hash.
+
+Returns the hash of the last block.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
+
+Endpoint: `GET /api/blocks/tip/hash`
+
+<a id="brk_client.BrkClient.get_block_tip_height"></a>
+
+#### get\_block\_tip\_height
+
+```python
+def get_block_tip_height() -> str
+```
+
+Block tip height.
+
+Returns the height of the last block.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
+
+Endpoint: `GET /api/blocks/tip/height`
 
 <a id="brk_client.BrkClient.get_blocks_from_height"></a>
 
@@ -464,11 +550,11 @@ def get_mempool() -> MempoolInfo
 
 Mempool statistics.
 
-Get current mempool statistics including transaction count, total vsize, and total fees.
+Get current mempool statistics including transaction count, total vsize, total fees, and fee histogram.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
 
-Endpoint: `GET /api/mempool/info`
+Endpoint: `GET /api/mempool`
 
 <a id="brk_client.BrkClient.get_live_price"></a>
 
@@ -483,6 +569,22 @@ Live BTC/USD price.
 Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
 
 Endpoint: `GET /api/mempool/price`
+
+<a id="brk_client.BrkClient.get_mempool_recent"></a>
+
+#### get\_mempool\_recent
+
+```python
+def get_mempool_recent() -> List[MempoolRecentTx]
+```
+
+Recent mempool transactions.
+
+Get the last 10 transactions to enter the mempool.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*
+
+Endpoint: `GET /api/mempool/recent`
 
 <a id="brk_client.BrkClient.get_mempool_txids"></a>
 
@@ -697,7 +799,7 @@ Endpoint: `GET /api/series/{series}/{index}/data`
 #### get\_series\_latest
 
 ```python
-def get_series_latest(series: SeriesName, index: Index) -> Any
+def get_series_latest(series: SeriesName, index: Index) -> str
 ```
 
 Get latest series value.
@@ -783,7 +885,7 @@ Endpoint: `GET /api/tx/{txid}`
 #### get\_tx\_hex
 
 ```python
-def get_tx_hex(txid: Txid) -> Hex
+def get_tx_hex(txid: Txid) -> str
 ```
 
 Transaction hex.
@@ -793,6 +895,38 @@ Retrieve the raw transaction as a hex-encoded string. Returns the serialized tra
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-hex)*
 
 Endpoint: `GET /api/tx/{txid}/hex`
+
+<a id="brk_client.BrkClient.get_tx_merkle_proof"></a>
+
+#### get\_tx\_merkle\_proof
+
+```python
+def get_tx_merkle_proof(txid: Txid) -> MerkleProof
+```
+
+Transaction merkle proof.
+
+Get the merkle inclusion proof for a transaction.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkle-proof)*
+
+Endpoint: `GET /api/tx/{txid}/merkle-proof`
+
+<a id="brk_client.BrkClient.get_tx_merkleblock_proof"></a>
+
+#### get\_tx\_merkleblock\_proof
+
+```python
+def get_tx_merkleblock_proof(txid: Txid) -> str
+```
+
+Transaction merkleblock proof.
+
+Get the merkleblock proof for a transaction (BIP37 format, hex encoded).
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkleblock-proof)*
+
+Endpoint: `GET /api/tx/{txid}/merkleblock-proof`
 
 <a id="brk_client.BrkClient.get_tx_outspend"></a>
 
@@ -826,6 +960,22 @@ Get the spending status of all outputs in a transaction. Returns an array with t
 
 Endpoint: `GET /api/tx/{txid}/outspends`
 
+<a id="brk_client.BrkClient.get_tx_raw"></a>
+
+#### get\_tx\_raw
+
+```python
+def get_tx_raw(txid: Txid) -> List[float]
+```
+
+Transaction raw.
+
+Returns a transaction as binary data.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-raw)*
+
+Endpoint: `GET /api/tx/{txid}/raw`
+
 <a id="brk_client.BrkClient.get_tx_status"></a>
 
 #### get\_tx\_status
@@ -842,6 +992,70 @@ Retrieve the confirmation status of a transaction. Returns whether the transacti
 
 Endpoint: `GET /api/tx/{txid}/status`
 
+<a id="brk_client.BrkClient.get_block_v1"></a>
+
+#### get\_block\_v1
+
+```python
+def get_block_v1(hash: BlockHash) -> BlockInfoV1
+```
+
+Block (v1).
+
+Returns block details with extras by hash.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*
+
+Endpoint: `GET /api/v1/block/{hash}`
+
+<a id="brk_client.BrkClient.get_blocks_v1"></a>
+
+#### get\_blocks\_v1
+
+```python
+def get_blocks_v1() -> List[BlockInfoV1]
+```
+
+Recent blocks with extras.
+
+Retrieve the last 10 blocks with extended data including pool identification and fee statistics.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
+
+Endpoint: `GET /api/v1/blocks`
+
+<a id="brk_client.BrkClient.get_blocks_v1_from_height"></a>
+
+#### get\_blocks\_v1\_from\_height
+
+```python
+def get_blocks_v1_from_height(height: Height) -> List[BlockInfoV1]
+```
+
+Blocks from height with extras.
+
+Retrieve up to 10 blocks with extended data going backwards from the given height.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
+
+Endpoint: `GET /api/v1/blocks/{height}`
+
+<a id="brk_client.BrkClient.get_cpfp"></a>
+
+#### get\_cpfp
+
+```python
+def get_cpfp(txid: Txid) -> CpfpInfo
+```
+
+CPFP info.
+
+Returns ancestors and descendants for a CPFP transaction.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*
+
+Endpoint: `GET /api/v1/cpfp/{txid}`
+
 <a id="brk_client.BrkClient.get_difficulty_adjustment"></a>
 
 #### get\_difficulty\_adjustment
@@ -852,7 +1066,7 @@ def get_difficulty_adjustment() -> DifficultyAdjustment
 
 Difficulty adjustment.
 
-Get current difficulty adjustment information including progress through the current epoch, estimated retarget date, and difficulty change prediction.
+Get current difficulty adjustment progress and estimates.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*
 
@@ -868,11 +1082,27 @@ def get_mempool_blocks() -> List[MempoolBlock]
 
 Projected mempool blocks.
 
-Get projected blocks from the mempool for fee estimation. Each block contains statistics about transactions that would be included if a block were mined now.
+Get projected blocks from the mempool for fee estimation.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
 
 Endpoint: `GET /api/v1/fees/mempool-blocks`
+
+<a id="brk_client.BrkClient.get_precise_fees"></a>
+
+#### get\_precise\_fees
+
+```python
+def get_precise_fees() -> RecommendedFees
+```
+
+Precise recommended fees.
+
+Get recommended fee rates with up to 3 decimal places.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
+
+Endpoint: `GET /api/v1/fees/precise`
 
 <a id="brk_client.BrkClient.get_recommended_fees"></a>
 
@@ -884,18 +1114,35 @@ def get_recommended_fees() -> RecommendedFees
 
 Recommended fees.
 
-Get recommended fee rates for different confirmation targets based on current mempool state.
+Get recommended fee rates for different confirmation targets.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
 
 Endpoint: `GET /api/v1/fees/recommended`
+
+<a id="brk_client.BrkClient.get_historical_price"></a>
+
+#### get\_historical\_price
+
+```python
+def get_historical_price(
+        timestamp: Optional[Timestamp] = None) -> HistoricalPrice
+```
+
+Historical price.
+
+Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
+
+Endpoint: `GET /api/v1/historical-price`
 
 <a id="brk_client.BrkClient.get_block_fee_rates"></a>
 
 #### get\_block\_fee\_rates
 
 ```python
-def get_block_fee_rates(time_period: TimePeriod) -> Any
+def get_block_fee_rates(time_period: TimePeriod) -> str
 ```
 
 Block fee rates (WIP).
@@ -1019,6 +1266,39 @@ Get network hashrate and difficulty data for all time.
 
 Endpoint: `GET /api/v1/mining/hashrate`
 
+<a id="brk_client.BrkClient.get_pools_hashrate"></a>
+
+#### get\_pools\_hashrate
+
+```python
+def get_pools_hashrate() -> List[PoolHashrateEntry]
+```
+
+All pools hashrate (all time).
+
+Get hashrate data for all mining pools.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
+
+Endpoint: `GET /api/v1/mining/hashrate/pools`
+
+<a id="brk_client.BrkClient.get_pools_hashrate_by_period"></a>
+
+#### get\_pools\_hashrate\_by\_period
+
+```python
+def get_pools_hashrate_by_period(
+        time_period: TimePeriod) -> List[PoolHashrateEntry]
+```
+
+All pools hashrate.
+
+Get hashrate data for all mining pools for a time period. Valid periods: 1m, 3m, 6m, 1y, 2y, 3y
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
+
+Endpoint: `GET /api/v1/mining/hashrate/pools/{time_period}`
+
 <a id="brk_client.BrkClient.get_hashrate_by_period"></a>
 
 #### get\_hashrate\_by\_period
@@ -1050,6 +1330,54 @@ Get detailed information about a specific mining pool including block counts and
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool)*
 
 Endpoint: `GET /api/v1/mining/pool/{slug}`
+
+<a id="brk_client.BrkClient.get_pool_blocks"></a>
+
+#### get\_pool\_blocks
+
+```python
+def get_pool_blocks(slug: PoolSlug) -> List[BlockInfoV1]
+```
+
+Mining pool blocks.
+
+Get the 10 most recent blocks mined by a specific pool.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+
+Endpoint: `GET /api/v1/mining/pool/{slug}/blocks`
+
+<a id="brk_client.BrkClient.get_pool_blocks_from"></a>
+
+#### get\_pool\_blocks\_from
+
+```python
+def get_pool_blocks_from(slug: PoolSlug, height: Height) -> List[BlockInfoV1]
+```
+
+Mining pool blocks from height.
+
+Get 10 blocks mined by a specific pool before (and including) the given height.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+
+Endpoint: `GET /api/v1/mining/pool/{slug}/blocks/{height}`
+
+<a id="brk_client.BrkClient.get_pool_hashrate"></a>
+
+#### get\_pool\_hashrate
+
+```python
+def get_pool_hashrate(slug: PoolSlug) -> List[PoolHashrateEntry]
+```
+
+Mining pool hashrate.
+
+Get hashrate history for a specific mining pool.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrate)*
+
+Endpoint: `GET /api/v1/mining/pool/{slug}/hashrate`
 
 <a id="brk_client.BrkClient.get_pools"></a>
 
@@ -1099,6 +1427,38 @@ Get mining reward statistics for the last N blocks including total rewards, fees
 
 Endpoint: `GET /api/v1/mining/reward-stats/{block_count}`
 
+<a id="brk_client.BrkClient.get_prices"></a>
+
+#### get\_prices
+
+```python
+def get_prices() -> Prices
+```
+
+Current BTC price.
+
+Returns bitcoin latest price (on-chain derived, USD only).
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*
+
+Endpoint: `GET /api/v1/prices`
+
+<a id="brk_client.BrkClient.get_transaction_times"></a>
+
+#### get\_transaction\_times
+
+```python
+def get_transaction_times() -> List[float]
+```
+
+Transaction first-seen times.
+
+Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*
+
+Endpoint: `GET /api/v1/transaction-times`
+
 <a id="brk_client.BrkClient.validate_address"></a>
 
 #### validate\_address
@@ -1134,7 +1494,7 @@ Endpoint: `GET /health`
 #### get\_openapi
 
 ```python
-def get_openapi() -> Any
+def get_openapi() -> str
 ```
 
 OpenAPI specification.
