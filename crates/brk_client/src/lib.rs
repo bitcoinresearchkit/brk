@@ -8454,7 +8454,7 @@ impl BrkClient {
 
     /// Mempool statistics
     ///
-    /// Get current mempool statistics including transaction count, total vsize, and total fees.
+    /// Get current mempool statistics including transaction count, total vsize, total fees, and fee histogram.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
     ///
@@ -8835,7 +8835,7 @@ impl BrkClient {
 
     /// Difficulty adjustment
     ///
-    /// Get current difficulty adjustment information including progress through the current epoch, estimated retarget date, and difficulty change prediction.
+    /// Get current difficulty adjustment progress and estimates.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*
     ///
@@ -8846,7 +8846,7 @@ impl BrkClient {
 
     /// Projected mempool blocks
     ///
-    /// Get projected blocks from the mempool for fee estimation. Each block contains statistics about transactions that would be included if a block were mined now.
+    /// Get projected blocks from the mempool for fee estimation.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
     ///
@@ -8857,7 +8857,7 @@ impl BrkClient {
 
     /// Precise recommended fees
     ///
-    /// Get recommended fee rates with up to 3 decimal places, including sub-sat feerates.
+    /// Get recommended fee rates with up to 3 decimal places.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
     ///
@@ -8868,7 +8868,7 @@ impl BrkClient {
 
     /// Recommended fees
     ///
-    /// Get recommended fee rates for different confirmation targets based on current mempool state.
+    /// Get recommended fee rates for different confirmation targets.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
     ///

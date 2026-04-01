@@ -20,6 +20,270 @@ pub trait BlockRoutes {
 impl BlockRoutes for ApiRouter<AppState> {
     fn add_block_routes(self) -> Self {
         self.api_route(
+                "/api/block/{hash}",
+                get_with(
+                    async |uri: Uri,
+                           headers: HeaderMap,
+                           Path(path): Path<BlockHashParam>,
+                           State(state): State<AppState>| {
+                        state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| q.block(&path.hash)).await
+                    },
+                    |op| {
+                        op.id("get_block")
+                            .blocks_tag()
+                            .summary("Block information")
+                            .description(
+                                "Retrieve block information by block hash. Returns block metadata including height, timestamp, difficulty, size, weight, and transaction count.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block)*",
+                            )
+                            .ok_response::<BlockInfo>()
+                            .not_modified()
+                            .bad_request()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/v1/block/{hash}",
+                get_with(
+                    async |uri: Uri, headers: HeaderMap, Path(path): Path<BlockHashParam>, State(state): State<AppState>| {
+                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                            let height = q.height_by_hash(&path.hash)?;
+                            q.block_by_height_v1(height)
+                        }).await
+                    },
+                    |op| {
+                        op.id("get_block_v1")
+                            .blocks_tag()
+                            .summary("Block (v1)")
+                            .description("Returns block details with extras by hash.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*")
+                            .ok_response::<BlockInfoV1>()
+                            .not_modified()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/block/{hash}/header",
+                get_with(
+                    async |uri: Uri, headers: HeaderMap, Path(path): Path<BlockHashParam>, State(state): State<AppState>| {
+                        state.cached_text(&headers, CacheStrategy::Height, &uri, move |q| q.block_header_hex(&path.hash)).await
+                    },
+                    |op| {
+                        op.id("get_block_header")
+                            .blocks_tag()
+                            .summary("Block header")
+                            .description("Returns the hex-encoded block header.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*")
+                            .ok_response::<Hex>()
+                            .not_modified()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/block-height/{height}",
+                get_with(
+                    async |uri: Uri,
+                           headers: HeaderMap,
+                           Path(path): Path<HeightParam>,
+                           State(state): State<AppState>| {
+                        state.cached_text(&headers, CacheStrategy::Height, &uri, move |q| q.block_hash_by_height(path.height).map(|h| h.to_string())).await
+                    },
+                    |op| {
+                        op.id("get_block_by_height")
+                            .blocks_tag()
+                            .summary("Block hash by height")
+                            .description(
+                                "Retrieve the block hash at a given height. Returns the hash as plain text.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*",
+                            )
+                            .ok_response::<BlockHash>()
+                            .not_modified()
+                            .bad_request()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/v1/mining/blocks/timestamp/{timestamp}",
+                get_with(
+                    async |uri: Uri,
+                           headers: HeaderMap,
+                           Path(path): Path<TimestampParam>,
+                           State(state): State<AppState>| {
+                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.block_by_timestamp(path.timestamp)).await
+                    },
+                    |op| {
+                        op.id("get_block_by_timestamp")
+                            .blocks_tag()
+                            .summary("Block by timestamp")
+                            .description("Find the block closest to a given UNIX timestamp.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*")
+                            .ok_response::<BlockTimestamp>()
+                            .not_modified()
+                            .bad_request()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/block/{hash}/raw",
+                get_with(
+                    async |uri: Uri,
+                           headers: HeaderMap,
+                           Path(path): Path<BlockHashParam>,
+                           State(state): State<AppState>| {
+                        state.cached_bytes(&headers, CacheStrategy::Static, &uri, move |q| q.block_raw(&path.hash)).await
+                    },
+                    |op| {
+                        op.id("get_block_raw")
+                            .blocks_tag()
+                            .summary("Raw block")
+                            .description(
+                                "Returns the raw block data in binary format.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*",
+                            )
+                            .ok_response::<Vec<u8>>()
+                            .not_modified()
+                            .bad_request()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/block/{hash}/status",
+                get_with(
+                    async |uri: Uri,
+                           headers: HeaderMap,
+                           Path(path): Path<BlockHashParam>,
+                           State(state): State<AppState>| {
+                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.block_status(&path.hash)).await
+                    },
+                    |op| {
+                        op.id("get_block_status")
+                            .blocks_tag()
+                            .summary("Block status")
+                            .description(
+                                "Retrieve the status of a block. Returns whether the block is in the best chain and, if so, its height and the hash of the next block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-status)*",
+                            )
+                            .ok_response::<BlockStatus>()
+                            .not_modified()
+                            .bad_request()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/blocks/tip/height",
+                get_with(
+                    async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                        state.cached_text(&headers, CacheStrategy::Height, &uri, |q| Ok(q.height().to_string())).await
+                    },
+                    |op| {
+                        op.id("get_block_tip_height")
+                            .blocks_tag()
+                            .summary("Block tip height")
+                            .description("Returns the height of the last block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*")
+                            .ok_response::<Height>()
+                            .not_modified()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/blocks/tip/hash",
+                get_with(
+                    async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                        state.cached_text(&headers, CacheStrategy::Height, &uri, |q| q.block_hash_by_height(q.height()).map(|h| h.to_string())).await
+                    },
+                    |op| {
+                        op.id("get_block_tip_hash")
+                            .blocks_tag()
+                            .summary("Block tip hash")
+                            .description("Returns the hash of the last block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*")
+                            .ok_response::<BlockHash>()
+                            .not_modified()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/block/{hash}/txid/{index}",
+                get_with(
+                    async |uri: Uri,
+                           headers: HeaderMap,
+                           Path(path): Path<BlockHashTxIndex>,
+                           State(state): State<AppState>| {
+                        state.cached_text(&headers, CacheStrategy::Static, &uri, move |q| q.block_txid_at_index(&path.hash, path.index).map(|t| t.to_string())).await
+                    },
+                    |op| {
+                        op.id("get_block_txid")
+                            .blocks_tag()
+                            .summary("Transaction ID at index")
+                            .description(
+                                "Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-id)*",
+                            )
+                            .ok_response::<Txid>()
+                            .not_modified()
+                            .bad_request()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/block/{hash}/txids",
+                get_with(
+                    async |uri: Uri,
+                           headers: HeaderMap,
+                           Path(path): Path<BlockHashParam>,
+                           State(state): State<AppState>| {
+                        state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| q.block_txids(&path.hash)).await
+                    },
+                    |op| {
+                        op.id("get_block_txids")
+                            .blocks_tag()
+                            .summary("Block transaction IDs")
+                            .description(
+                                "Retrieve all transaction IDs in a block. Returns an array of txids in block order.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-ids)*",
+                            )
+                            .ok_response::<Vec<Txid>>()
+                            .not_modified()
+                            .bad_request()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
+                "/api/block/{hash}/txs/{start_index}",
+                get_with(
+                    async |uri: Uri,
+                           headers: HeaderMap,
+                           Path(path): Path<BlockHashStartIndex>,
+                           State(state): State<AppState>| {
+                        state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| q.block_txs(&path.hash, path.start_index)).await
+                    },
+                    |op| {
+                        op.id("get_block_txs")
+                            .blocks_tag()
+                            .summary("Block transactions (paginated)")
+                            .description(&format!(
+                                "Retrieve transactions in a block by block hash, starting from the specified index. Returns up to {} transactions at a time.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*",
+                                BLOCK_TXS_PAGE_SIZE
+                            ))
+                            .ok_response::<Vec<Transaction>>()
+                            .not_modified()
+                            .bad_request()
+                            .not_found()
+                            .server_error()
+                    },
+                ),
+            )
+            .api_route(
                 "/api/blocks",
                 get_with(
                     async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
@@ -97,270 +361,6 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .ok_response::<Vec<BlockInfoV1>>()
                             .not_modified()
                             .bad_request()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
-                "/api/block-height/{height}",
-                get_with(
-                    async |uri: Uri,
-                           headers: HeaderMap,
-                           Path(path): Path<HeightParam>,
-                           State(state): State<AppState>| {
-                        state.cached_text(&headers, CacheStrategy::Height, &uri, move |q| q.block_hash_by_height(path.height).map(|h| h.to_string())).await
-                    },
-                    |op| {
-                        op.id("get_block_by_height")
-                            .blocks_tag()
-                            .summary("Block hash by height")
-                            .description(
-                                "Retrieve the block hash at a given height. Returns the hash as plain text.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*",
-                            )
-                            .ok_response::<BlockHash>()
-                            .not_modified()
-                            .bad_request()
-                            .not_found()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
-                "/api/block/{hash}",
-                get_with(
-                    async |uri: Uri,
-                           headers: HeaderMap,
-                           Path(path): Path<BlockHashParam>,
-                           State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| q.block(&path.hash)).await
-                    },
-                    |op| {
-                        op.id("get_block")
-                            .blocks_tag()
-                            .summary("Block information")
-                            .description(
-                                "Retrieve block information by block hash. Returns block metadata including height, timestamp, difficulty, size, weight, and transaction count.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block)*",
-                            )
-                            .ok_response::<BlockInfo>()
-                            .not_modified()
-                            .bad_request()
-                            .not_found()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
-                "/api/block/{hash}/status",
-                get_with(
-                    async |uri: Uri,
-                           headers: HeaderMap,
-                           Path(path): Path<BlockHashParam>,
-                           State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.block_status(&path.hash)).await
-                    },
-                    |op| {
-                        op.id("get_block_status")
-                            .blocks_tag()
-                            .summary("Block status")
-                            .description(
-                                "Retrieve the status of a block. Returns whether the block is in the best chain and, if so, its height and the hash of the next block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-status)*",
-                            )
-                            .ok_response::<BlockStatus>()
-                            .not_modified()
-                            .bad_request()
-                            .not_found()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
-                "/api/block/{hash}/txids",
-                get_with(
-                    async |uri: Uri,
-                           headers: HeaderMap,
-                           Path(path): Path<BlockHashParam>,
-                           State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| q.block_txids(&path.hash)).await
-                    },
-                    |op| {
-                        op.id("get_block_txids")
-                            .blocks_tag()
-                            .summary("Block transaction IDs")
-                            .description(
-                                "Retrieve all transaction IDs in a block. Returns an array of txids in block order.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-ids)*",
-                            )
-                            .ok_response::<Vec<Txid>>()
-                            .not_modified()
-                            .bad_request()
-                            .not_found()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
-                "/api/block/{hash}/txs/{start_index}",
-                get_with(
-                    async |uri: Uri,
-                           headers: HeaderMap,
-                           Path(path): Path<BlockHashStartIndex>,
-                           State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| q.block_txs(&path.hash, path.start_index)).await
-                    },
-                    |op| {
-                        op.id("get_block_txs")
-                            .blocks_tag()
-                            .summary("Block transactions (paginated)")
-                            .description(&format!(
-                                "Retrieve transactions in a block by block hash, starting from the specified index. Returns up to {} transactions at a time.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*",
-                                BLOCK_TXS_PAGE_SIZE
-                            ))
-                            .ok_response::<Vec<Transaction>>()
-                            .not_modified()
-                            .bad_request()
-                            .not_found()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
-                "/api/block/{hash}/txid/{index}",
-                get_with(
-                    async |uri: Uri,
-                           headers: HeaderMap,
-                           Path(path): Path<BlockHashTxIndex>,
-                           State(state): State<AppState>| {
-                        state.cached_text(&headers, CacheStrategy::Static, &uri, move |q| q.block_txid_at_index(&path.hash, path.index).map(|t| t.to_string())).await
-                    },
-                    |op| {
-                        op.id("get_block_txid")
-                            .blocks_tag()
-                            .summary("Transaction ID at index")
-                            .description(
-                                "Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-id)*",
-                            )
-                            .ok_response::<Txid>()
-                            .not_modified()
-                            .bad_request()
-                            .not_found()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
-                "/api/block/{hash}/raw",
-                get_with(
-                    async |uri: Uri,
-                           headers: HeaderMap,
-                           Path(path): Path<BlockHashParam>,
-                           State(state): State<AppState>| {
-                        state.cached_bytes(&headers, CacheStrategy::Static, &uri, move |q| q.block_raw(&path.hash)).await
-                    },
-                    |op| {
-                        op.id("get_block_raw")
-                            .blocks_tag()
-                            .summary("Raw block")
-                            .description(
-                                "Returns the raw block data in binary format.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*",
-                            )
-                            .ok_response::<Vec<u8>>()
-                            .not_modified()
-                            .bad_request()
-                            .not_found()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
-                "/api/blocks/tip/height",
-                get_with(
-                    async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
-                        state.cached_text(&headers, CacheStrategy::Height, &uri, |q| Ok(q.height().to_string())).await
-                    },
-                    |op| {
-                        op.id("get_block_tip_height")
-                            .blocks_tag()
-                            .summary("Block tip height")
-                            .description("Returns the height of the last block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*")
-                            .ok_response::<Height>()
-                            .not_modified()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
-                "/api/blocks/tip/hash",
-                get_with(
-                    async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
-                        state.cached_text(&headers, CacheStrategy::Height, &uri, |q| q.block_hash_by_height(q.height()).map(|h| h.to_string())).await
-                    },
-                    |op| {
-                        op.id("get_block_tip_hash")
-                            .blocks_tag()
-                            .summary("Block tip hash")
-                            .description("Returns the hash of the last block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*")
-                            .ok_response::<BlockHash>()
-                            .not_modified()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
-                "/api/block/{hash}/header",
-                get_with(
-                    async |uri: Uri, headers: HeaderMap, Path(path): Path<BlockHashParam>, State(state): State<AppState>| {
-                        state.cached_text(&headers, CacheStrategy::Height, &uri, move |q| q.block_header_hex(&path.hash)).await
-                    },
-                    |op| {
-                        op.id("get_block_header")
-                            .blocks_tag()
-                            .summary("Block header")
-                            .description("Returns the hex-encoded block header.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*")
-                            .ok_response::<Hex>()
-                            .not_modified()
-                            .not_found()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
-                "/api/v1/block/{hash}",
-                get_with(
-                    async |uri: Uri, headers: HeaderMap, Path(path): Path<BlockHashParam>, State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
-                            let height = q.height_by_hash(&path.hash)?;
-                            q.block_by_height_v1(height)
-                        }).await
-                    },
-                    |op| {
-                        op.id("get_block_v1")
-                            .blocks_tag()
-                            .summary("Block (v1)")
-                            .description("Returns block details with extras by hash.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*")
-                            .ok_response::<BlockInfoV1>()
-                            .not_modified()
-                            .not_found()
-                            .server_error()
-                    },
-                ),
-            )
-            .api_route(
-                "/api/v1/mining/blocks/timestamp/{timestamp}",
-                get_with(
-                    async |uri: Uri,
-                           headers: HeaderMap,
-                           Path(path): Path<TimestampParam>,
-                           State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.block_by_timestamp(path.timestamp)).await
-                    },
-                    |op| {
-                        op.id("get_block_by_timestamp")
-                            .blocks_tag()
-                            .summary("Block by timestamp")
-                            .description("Find the block closest to a given UNIX timestamp.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*")
-                            .ok_response::<BlockTimestamp>()
-                            .not_modified()
-                            .bad_request()
-                            .not_found()
                             .server_error()
                     },
                 ),

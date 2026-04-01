@@ -1,11 +1,8 @@
 # BRK CLI
 
-Command-line interface for running a Bitcoin Research Kit instance.
+Run your own Bitcoin Research Kit instance. One binary, one command. Full sync in ~4-7h depending on hardware. ~44% disk overhead vs 250% for mempool/electrs.
 
-## Demo
-
-- [bitview.space](https://bitview.space) - web interface
-- [bitview.space/api](https://bitview.space/api) - API docs
+[bitview.space](https://bitview.space) is the official free hosted instance.
 
 ## Requirements
 

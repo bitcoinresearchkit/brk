@@ -11,15 +11,13 @@
 > "Shout out to Bitcoin Research Kit. [...] Couldn't recommend them highly enough."
 > — James Check (CheckOnChain), [What Bitcoin Did #1000](https://www.whatbitcoindid.com/episodes/wbd1000-checkmate)
 
-Open-source, self-hostable on-chain analytics for Bitcoin. Block explorer, address index, and thousands of metrics, everything computed from your node, even the price.
+Open-source Bitcoin data toolkit that can parse blocks, index the chain, compute metrics, serve data and render it, all from a Bitcoin Core node. It combines what [Glassnode](https://glassnode.com) and [mempool.space](https://mempool.space) do separately into a single self-hostable package, with a built-in price oracle inspired by [UTXO Oracle](https://utxo.live/oracle/).
 
-Similar to [Glassnode](https://glassnode.com) + [mempool.space](https://mempool.space) + [UTXO Oracle](https://utxo.live/oracle/) in a single package.
-
-[Bitview](https://bitview.space) is a free hosted instance of BRK.
+[Bitview](https://bitview.space) is the official free hosted instance of BRK.
 
 ## Data
 
-**Zero external dependencies.** BRK needs only a Bitcoin Core node. Historical prices are built in, live price from your mempool. Every metric is computed locally from your own copy of the blockchain. Your node, your data.
+**Zero external dependencies.** BRK needs only a Bitcoin Core node. 8,000+ metrics across 15 time resolutions, all computed locally from your own copy of the blockchain. Historical prices are built in, live price from your mempool. Your node, your data.
 
 **Blockchain:** Blocks, transactions, addresses, UTXOs.
 
@@ -41,7 +39,7 @@ Browse metrics and charts at [bitview.space](https://bitview.space), no signup r
 curl https://bitview.space/api/mempool/price
 ```
 
-Query metrics and blockchain data in JSON or CSV.
+Query metrics and blockchain data in JSON or CSV. No rate limit.
 
 [Documentation](https://bitview.space/api) · [JavaScript](https://www.npmjs.com/package/brk-client) · [Python](https://pypi.org/project/brk-client) · [Rust](https://crates.io/crates/brk_client) · [llms.txt](https://bitview.space/llms.txt) · [LLM-friendly schema](https://bitview.space/api.json)
 

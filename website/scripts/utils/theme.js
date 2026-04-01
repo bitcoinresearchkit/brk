@@ -4,7 +4,9 @@ const preferredColorSchemeMatchMedia = window.matchMedia(
   "(prefers-color-scheme: dark)",
 );
 const stored = readStored("theme");
-const initial = stored ? stored === "dark" : preferredColorSchemeMatchMedia.matches;
+const initial = stored
+  ? stored === "dark"
+  : preferredColorSchemeMatchMedia.matches;
 
 export let dark = initial;
 
@@ -47,4 +49,4 @@ function invert() {
   }
 }
 
-document.getElementById("invert-button")?.addEventListener("click", invert);
+document.getElementById("theme-button")?.addEventListener("click", invert);

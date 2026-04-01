@@ -7,7 +7,7 @@ use axum::{
 };
 use brk_types::{
     BlockCountParam, BlockFeesEntry, BlockInfoV1, BlockRewardsEntry, BlockSizesWeights,
-    DifficultyAdjustment, DifficultyAdjustmentEntry, HashrateSummary, PoolDetail,
+    DifficultyAdjustmentEntry, HashrateSummary, PoolDetail,
     PoolHashrateEntry, PoolInfo, PoolSlugAndHeightParam, PoolSlugParam, PoolsSummary,
     RewardStats, TimePeriodParam,
 };
@@ -25,23 +25,6 @@ impl MiningRoutes for ApiRouter<AppState> {
         self.route(
             "/api/v1/mining",
             get(Redirect::temporary("/api#tag/mining")),
-        )
-        .api_route(
-            "/api/v1/difficulty-adjustment",
-            get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::Height, &uri, |q| q.difficulty_adjustment()).await
-                },
-                |op| {
-                    op.id("get_difficulty_adjustment")
-                        .mining_tag()
-                        .summary("Difficulty adjustment")
-                        .description("Get current difficulty adjustment information including progress through the current epoch, estimated retarget date, and difficulty change prediction.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*")
-                        .ok_response::<DifficultyAdjustment>()
-                        .not_modified()
-                        .server_error()
-                },
-            ),
         )
         .api_route(
             "/api/v1/mining/pools",
@@ -97,6 +80,58 @@ impl MiningRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
+            "/api/v1/mining/hashrate/pools",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                    state.cached_json(&headers, CacheStrategy::Height, &uri, |q| q.pools_hashrate(None)).await
+                },
+                |op| {
+                    op.id("get_pools_hashrate")
+                        .mining_tag()
+                        .summary("All pools hashrate (all time)")
+                        .description("Get hashrate data for all mining pools.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*")
+                        .ok_response::<Vec<PoolHashrateEntry>>()
+                        .not_modified()
+                        .server_error()
+                },
+            ),
+        )
+        .api_route(
+            "/api/v1/mining/hashrate/pools/{time_period}",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, Path(path): Path<TimePeriodParam>, State(state): State<AppState>| {
+                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.pools_hashrate(Some(path.time_period))).await
+                },
+                |op| {
+                    op.id("get_pools_hashrate_by_period")
+                        .mining_tag()
+                        .summary("All pools hashrate")
+                        .description("Get hashrate data for all mining pools for a time period. Valid periods: 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*")
+                        .ok_response::<Vec<PoolHashrateEntry>>()
+                        .not_modified()
+                        .server_error()
+                },
+            ),
+        )
+        .api_route(
+            "/api/v1/mining/pool/{slug}/hashrate",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, Path(path): Path<PoolSlugParam>, State(state): State<AppState>| {
+                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.pool_hashrate(path.slug)).await
+                },
+                |op| {
+                    op.id("get_pool_hashrate")
+                        .mining_tag()
+                        .summary("Mining pool hashrate")
+                        .description("Get hashrate history for a specific mining pool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrate)*")
+                        .ok_response::<Vec<PoolHashrateEntry>>()
+                        .not_modified()
+                        .not_found()
+                        .server_error()
+                },
+            ),
+        )
+        .api_route(
             "/api/v1/mining/pool/{slug}/blocks",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(path): Path<PoolSlugParam>, State(state): State<AppState>| {
@@ -128,58 +163,6 @@ impl MiningRoutes for ApiRouter<AppState> {
                         .ok_response::<Vec<BlockInfoV1>>()
                         .not_modified()
                         .not_found()
-                        .server_error()
-                },
-            ),
-        )
-        .api_route(
-            "/api/v1/mining/pool/{slug}/hashrate",
-            get_with(
-                async |uri: Uri, headers: HeaderMap, Path(path): Path<PoolSlugParam>, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.pool_hashrate(path.slug)).await
-                },
-                |op| {
-                    op.id("get_pool_hashrate")
-                        .mining_tag()
-                        .summary("Mining pool hashrate")
-                        .description("Get hashrate history for a specific mining pool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrate)*")
-                        .ok_response::<Vec<PoolHashrateEntry>>()
-                        .not_modified()
-                        .not_found()
-                        .server_error()
-                },
-            ),
-        )
-        .api_route(
-            "/api/v1/mining/hashrate/pools",
-            get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::Height, &uri, |q| q.pools_hashrate(None)).await
-                },
-                |op| {
-                    op.id("get_pools_hashrate")
-                        .mining_tag()
-                        .summary("All pools hashrate (all time)")
-                        .description("Get hashrate data for all mining pools.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*")
-                        .ok_response::<Vec<PoolHashrateEntry>>()
-                        .not_modified()
-                        .server_error()
-                },
-            ),
-        )
-        .api_route(
-            "/api/v1/mining/hashrate/pools/{time_period}",
-            get_with(
-                async |uri: Uri, headers: HeaderMap, Path(path): Path<TimePeriodParam>, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.pools_hashrate(Some(path.time_period))).await
-                },
-                |op| {
-                    op.id("get_pools_hashrate_by_period")
-                        .mining_tag()
-                        .summary("All pools hashrate")
-                        .description("Get hashrate data for all mining pools for a time period. Valid periods: 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*")
-                        .ok_response::<Vec<PoolHashrateEntry>>()
-                        .not_modified()
                         .server_error()
                 },
             ),
@@ -253,6 +236,23 @@ impl MiningRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
+            "/api/v1/mining/reward-stats/{block_count}",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, Path(path): Path<BlockCountParam>, State(state): State<AppState>| {
+                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.reward_stats(path.block_count)).await
+                },
+                |op| {
+                    op.id("get_reward_stats")
+                        .mining_tag()
+                        .summary("Mining reward statistics")
+                        .description("Get mining reward statistics for the last N blocks including total rewards, fees, and transaction count.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-reward-stats)*")
+                        .ok_response::<RewardStats>()
+                        .not_modified()
+                        .server_error()
+                },
+            ),
+        )
+        .api_route(
             "/api/v1/mining/blocks/fees/{time_period}",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(path): Path<TimePeriodParam>, State(state): State<AppState>| {
@@ -313,23 +313,6 @@ impl MiningRoutes for ApiRouter<AppState> {
                         .summary("Block sizes and weights")
                         .description("Get average block sizes and weights for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*")
                         .ok_response::<BlockSizesWeights>()
-                        .not_modified()
-                        .server_error()
-                },
-            ),
-        )
-        .api_route(
-            "/api/v1/mining/reward-stats/{block_count}",
-            get_with(
-                async |uri: Uri, headers: HeaderMap, Path(path): Path<BlockCountParam>, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.reward_stats(path.block_count)).await
-                },
-                |op| {
-                    op.id("get_reward_stats")
-                        .mining_tag()
-                        .summary("Mining reward statistics")
-                        .description("Get mining reward statistics for the last N blocks including total rewards, fees, and transaction count.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-reward-stats)*")
-                        .ok_response::<RewardStats>()
                         .not_modified()
                         .server_error()
                 },

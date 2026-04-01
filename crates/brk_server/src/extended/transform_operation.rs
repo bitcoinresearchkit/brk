@@ -6,14 +6,16 @@ use schemars::JsonSchema;
 use crate::error::ErrorBody;
 
 pub trait TransformResponseExtended<'t> {
+    fn general_tag(self) -> Self;
     fn addrs_tag(self) -> Self;
     fn blocks_tag(self) -> Self;
-    fn mempool_tag(self) -> Self;
-    fn metrics_tag(self) -> Self;
     fn mining_tag(self) -> Self;
-    fn series_tag(self) -> Self;
-    fn server_tag(self) -> Self;
+    fn fees_tag(self) -> Self;
+    fn mempool_tag(self) -> Self;
     fn transactions_tag(self) -> Self;
+    fn server_tag(self) -> Self;
+    fn series_tag(self) -> Self;
+    fn metrics_tag(self) -> Self;
 
     /// Mark operation as deprecated
     fn deprecated(self) -> Self;
@@ -40,6 +42,10 @@ pub trait TransformResponseExtended<'t> {
 }
 
 impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
+    fn general_tag(self) -> Self {
+        self.tag("General")
+    }
+
     fn addrs_tag(self) -> Self {
         self.tag("Addresses")
     }
@@ -48,28 +54,32 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
         self.tag("Blocks")
     }
 
+    fn mining_tag(self) -> Self {
+        self.tag("Mining")
+    }
+
+    fn fees_tag(self) -> Self {
+        self.tag("Fees")
+    }
+
     fn mempool_tag(self) -> Self {
         self.tag("Mempool")
     }
 
-    fn metrics_tag(self) -> Self {
-        self.tag("Metrics")
-    }
-
-    fn series_tag(self) -> Self {
-        self.tag("Series")
-    }
-
-    fn mining_tag(self) -> Self {
-        self.tag("Mining")
+    fn transactions_tag(self) -> Self {
+        self.tag("Transactions")
     }
 
     fn server_tag(self) -> Self {
         self.tag("Server")
     }
 
-    fn transactions_tag(self) -> Self {
-        self.tag("Transactions")
+    fn series_tag(self) -> Self {
+        self.tag("Series")
+    }
+
+    fn metrics_tag(self) -> Self {
+        self.tag("Metrics")
     }
 
     fn ok_response<R>(self) -> Self

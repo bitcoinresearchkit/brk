@@ -23,6 +23,22 @@ impl TxRoutes for ApiRouter<AppState> {
     fn add_tx_routes(self) -> Self {
         self
             .api_route(
+            "/api/v1/cpfp/{txid}",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, Path(txid): Path<TxidParam>, State(state): State<AppState>| {
+                    state.cached_json(&headers, CacheStrategy::MempoolHash(0), &uri, move |q| q.cpfp(txid)).await
+                },
+                |op| op
+                    .id("get_cpfp")
+                    .transactions_tag()
+                    .summary("CPFP info")
+                    .description("Returns ancestors and descendants for a CPFP transaction.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*")
+                    .ok_response::<CpfpInfo>()
+                    .not_found()
+                    .server_error(),
+            ),
+        )
+        .api_route(
             "/api/tx/{txid}",
             get_with(
                 async |
@@ -48,31 +64,6 @@ impl TxRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/tx/{txid}/status",
-            get_with(
-                async |
-                    uri: Uri,
-                    headers: HeaderMap,
-                    Path(txid): Path<TxidParam>,
-                    State(state): State<AppState>
-                | {
-                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.transaction_status(txid)).await
-                },
-                |op| op
-                    .id("get_tx_status")
-                    .transactions_tag()
-                    .summary("Transaction status")
-                    .description(
-                        "Retrieve the confirmation status of a transaction. Returns whether the transaction is confirmed and, if so, the block height, hash, and timestamp.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-status)*",
-                    )
-                    .ok_response::<TxStatus>()
-                    .not_modified()
-                    .bad_request()
-                    .not_found()
-                    .server_error(),
-            ),
-        )
-        .api_route(
             "/api/tx/{txid}/hex",
             get_with(
                 async |
@@ -91,6 +82,42 @@ impl TxRoutes for ApiRouter<AppState> {
                         "Retrieve the raw transaction as a hex-encoded string. Returns the serialized transaction in hexadecimal format.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-hex)*",
                     )
                     .ok_response::<Hex>()
+                    .not_modified()
+                    .bad_request()
+                    .not_found()
+                    .server_error(),
+            ),
+        )
+        .api_route(
+            "/api/tx/{txid}/merkleblock-proof",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, Path(txid): Path<TxidParam>, State(state): State<AppState>| {
+                    state.cached_text(&headers, CacheStrategy::Height, &uri, move |q| q.merkleblock_proof(txid)).await
+                },
+                |op| op
+                    .id("get_tx_merkleblock_proof")
+                    .transactions_tag()
+                    .summary("Transaction merkleblock proof")
+                    .description("Get the merkleblock proof for a transaction (BIP37 format, hex encoded).\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkleblock-proof)*")
+                    .ok_response::<String>()
+                    .not_modified()
+                    .bad_request()
+                    .not_found()
+                    .server_error(),
+            ),
+        )
+        .api_route(
+            "/api/tx/{txid}/merkle-proof",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, Path(txid): Path<TxidParam>, State(state): State<AppState>| {
+                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.merkle_proof(txid)).await
+                },
+                |op| op
+                    .id("get_tx_merkle_proof")
+                    .transactions_tag()
+                    .summary("Transaction merkle proof")
+                    .description("Get the merkle inclusion proof for a transaction.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkle-proof)*")
+                    .ok_response::<MerkleProof>()
                     .not_modified()
                     .bad_request()
                     .not_found()
@@ -149,44 +176,6 @@ impl TxRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/tx",
-            post_with(
-                async |State(state): State<AppState>, body: String| {
-                    let hex = body.trim().to_string();
-                    state.sync(|q| q.broadcast_transaction(&hex))
-                        .map(|txid| txid.to_string())
-                        .map_err(crate::Error::from)
-                },
-                |op| {
-                    op.id("post_tx")
-                        .transactions_tag()
-                        .summary("Broadcast transaction")
-                        .description("Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*")
-                        .ok_response::<Txid>()
-                        .bad_request()
-                        .server_error()
-                },
-            ),
-        )
-        .api_route(
-            "/api/tx/{txid}/merkleblock-proof",
-            get_with(
-                async |uri: Uri, headers: HeaderMap, Path(txid): Path<TxidParam>, State(state): State<AppState>| {
-                    state.cached_text(&headers, CacheStrategy::Height, &uri, move |q| q.merkleblock_proof(txid)).await
-                },
-                |op| op
-                    .id("get_tx_merkleblock_proof")
-                    .transactions_tag()
-                    .summary("Transaction merkleblock proof")
-                    .description("Get the merkleblock proof for a transaction (BIP37 format, hex encoded).\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkleblock-proof)*")
-                    .ok_response::<String>()
-                    .not_modified()
-                    .bad_request()
-                    .not_found()
-                    .server_error(),
-            ),
-        )
-        .api_route(
             "/api/tx/{txid}/raw",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(txid): Path<TxidParam>, State(state): State<AppState>| {
@@ -205,35 +194,26 @@ impl TxRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/tx/{txid}/merkle-proof",
+            "/api/tx/{txid}/status",
             get_with(
-                async |uri: Uri, headers: HeaderMap, Path(txid): Path<TxidParam>, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.merkle_proof(txid)).await
+                async |
+                    uri: Uri,
+                    headers: HeaderMap,
+                    Path(txid): Path<TxidParam>,
+                    State(state): State<AppState>
+                | {
+                    state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.transaction_status(txid)).await
                 },
                 |op| op
-                    .id("get_tx_merkle_proof")
+                    .id("get_tx_status")
                     .transactions_tag()
-                    .summary("Transaction merkle proof")
-                    .description("Get the merkle inclusion proof for a transaction.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkle-proof)*")
-                    .ok_response::<MerkleProof>()
+                    .summary("Transaction status")
+                    .description(
+                        "Retrieve the confirmation status of a transaction. Returns whether the transaction is confirmed and, if so, the block height, hash, and timestamp.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-status)*",
+                    )
+                    .ok_response::<TxStatus>()
                     .not_modified()
                     .bad_request()
-                    .not_found()
-                    .server_error(),
-            ),
-        )
-        .api_route(
-            "/api/v1/cpfp/{txid}",
-            get_with(
-                async |uri: Uri, headers: HeaderMap, Path(txid): Path<TxidParam>, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::MempoolHash(0), &uri, move |q| q.cpfp(txid)).await
-                },
-                |op| op
-                    .id("get_cpfp")
-                    .transactions_tag()
-                    .summary("CPFP info")
-                    .description("Returns ancestors and descendants for a CPFP transaction.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*")
-                    .ok_response::<CpfpInfo>()
                     .not_found()
                     .server_error(),
             ),
@@ -252,6 +232,26 @@ impl TxRoutes for ApiRouter<AppState> {
                     .description("Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*")
                     .ok_response::<Vec<u64>>()
                     .server_error(),
+            ),
+        )
+        .api_route(
+            "/api/tx",
+            post_with(
+                async |State(state): State<AppState>, body: String| {
+                    let hex = body.trim().to_string();
+                    state.sync(|q| q.broadcast_transaction(&hex))
+                        .map(|txid| txid.to_string())
+                        .map_err(crate::Error::from)
+                },
+                |op| {
+                    op.id("post_tx")
+                        .transactions_tag()
+                        .summary("Broadcast transaction")
+                        .description("Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*")
+                        .ok_response::<Txid>()
+                        .bad_request()
+                        .server_error()
+                },
             ),
         )
     }

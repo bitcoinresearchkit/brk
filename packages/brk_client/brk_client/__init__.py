@@ -7250,7 +7250,7 @@ class BrkClient(BrkClientBase):
     def get_mempool(self) -> MempoolInfo:
         """Mempool statistics.
 
-        Get current mempool statistics including transaction count, total vsize, and total fees.
+        Get current mempool statistics including transaction count, total vsize, total fees, and fee histogram.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
 
@@ -7592,7 +7592,7 @@ class BrkClient(BrkClientBase):
     def get_difficulty_adjustment(self) -> DifficultyAdjustment:
         """Difficulty adjustment.
 
-        Get current difficulty adjustment information including progress through the current epoch, estimated retarget date, and difficulty change prediction.
+        Get current difficulty adjustment progress and estimates.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*
 
@@ -7602,7 +7602,7 @@ class BrkClient(BrkClientBase):
     def get_mempool_blocks(self) -> List[MempoolBlock]:
         """Projected mempool blocks.
 
-        Get projected blocks from the mempool for fee estimation. Each block contains statistics about transactions that would be included if a block were mined now.
+        Get projected blocks from the mempool for fee estimation.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
 
@@ -7612,7 +7612,7 @@ class BrkClient(BrkClientBase):
     def get_precise_fees(self) -> RecommendedFees:
         """Precise recommended fees.
 
-        Get recommended fee rates with up to 3 decimal places, including sub-sat feerates.
+        Get recommended fee rates with up to 3 decimal places.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
 
@@ -7622,7 +7622,7 @@ class BrkClient(BrkClientBase):
     def get_recommended_fees(self) -> RecommendedFees:
         """Recommended fees.
 
-        Get recommended fee rates for different confirmation targets based on current mempool state.
+        Get recommended fee rates for different confirmation targets.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
 
