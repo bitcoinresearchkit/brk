@@ -12,8 +12,8 @@ use brk_error::Result;
 use brk_reader::{Reader, XORBytes};
 use brk_rpc::Client;
 use brk_types::{BlockHash, Height};
-use parking_lot::RwLock;
 use fjall::PersistMode;
+use parking_lot::RwLock;
 use tracing::{debug, info};
 use vecdb::{
     Exit, RawDBError, ReadOnlyClone, ReadableVec, Ro, Rw, StorageMode, WritableVec, unlikely,
@@ -87,11 +87,7 @@ impl Indexer {
             let stores = Stores::forced_import(&indexed_path, VERSION)?;
             info!("Imported stores in {:?}", i.elapsed());
 
-            let tip_blockhash = vecs
-                .blocks
-                .blockhash
-                .collect_last()
-                .unwrap_or_default();
+            let tip_blockhash = vecs.blocks.blockhash.collect_last().unwrap_or_default();
 
             Ok(Self {
                 path: indexed_path.clone(),

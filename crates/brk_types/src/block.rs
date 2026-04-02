@@ -216,6 +216,9 @@ mod tests {
         assert_eq!(raw[4], 0x00, "segwit marker");
 
         let raw_txid = Block::hash_raw_tx(&raw, base_size);
-        assert_eq!(raw_txid, expected_txid, "hash_raw_tx must match compute_txid");
+        assert_eq!(
+            raw_txid, expected_txid,
+            "hash_raw_tx must match compute_txid"
+        );
     }
 }

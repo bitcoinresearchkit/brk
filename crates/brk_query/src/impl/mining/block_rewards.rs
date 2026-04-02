@@ -7,7 +7,14 @@ use crate::Query;
 impl Query {
     pub fn block_rewards(&self, time_period: TimePeriod) -> Result<Vec<BlockRewardsEntry>> {
         let bw = BlockWindow::new(self, time_period);
-        let cumulative = &self.computer().mining.rewards.coinbase.cumulative.sats.height;
+        let cumulative = &self
+            .computer()
+            .mining
+            .rewards
+            .coinbase
+            .cumulative
+            .sats
+            .height;
         Ok(bw
             .cumulative_averages(self, cumulative)
             .into_iter()

@@ -6,9 +6,7 @@ use axum::{
 use brk_types::{DifficultyAdjustment, HistoricalPrice, Prices, Timestamp};
 
 use crate::{
-    AppState, CacheStrategy,
-    extended::TransformResponseExtended,
-    params::OptionalTimestampParam,
+    AppState, CacheStrategy, extended::TransformResponseExtended, params::OptionalTimestampParam,
 };
 
 pub trait GeneralRoutes {

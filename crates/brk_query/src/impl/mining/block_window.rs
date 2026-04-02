@@ -1,4 +1,4 @@
-use brk_types::{Cents, Dollars, Height, Sats, Timestamp, TimePeriod};
+use brk_types::{Cents, Dollars, Height, Sats, TimePeriod, Timestamp};
 use vecdb::{ReadableVec, VecIndex};
 
 use crate::Query;

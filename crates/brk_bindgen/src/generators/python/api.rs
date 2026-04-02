@@ -167,11 +167,9 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
 
         if endpoint.query_params.is_empty() {
             if endpoint.path_params.is_empty() {
-                writeln!(output, "        return self.{}('{}')", fetch_method, path)
-                    .unwrap();
+                writeln!(output, "        return self.{}('{}')", fetch_method, path).unwrap();
             } else {
-                writeln!(output, "        return self.{}(f'{}')", fetch_method, path)
-                    .unwrap();
+                writeln!(output, "        return self.{}(f'{}')", fetch_method, path).unwrap();
             }
         } else {
             writeln!(output, "        params = []").unwrap();

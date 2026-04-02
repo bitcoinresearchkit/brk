@@ -1,8 +1,8 @@
 use brk_error::{Error, Result};
 use brk_types::{
-    BlockInfoV1, Day1, Height, Pool, PoolBlockCounts, PoolBlockShares, PoolDetail,
-    PoolDetailInfo, PoolHashrateEntry, PoolInfo, PoolSlug, PoolStats, PoolsSummary, StoredF64,
-    StoredU64, TimePeriod, pools,
+    BlockInfoV1, Day1, Height, Pool, PoolBlockCounts, PoolBlockShares, PoolDetail, PoolDetailInfo,
+    PoolHashrateEntry, PoolInfo, PoolSlug, PoolStats, PoolsSummary, StoredF64, StoredU64,
+    TimePeriod, pools,
 };
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
@@ -40,13 +40,29 @@ impl Query {
         // Use timestamp-based lookback for accurate time boundaries
         let lookback = &computer.blocks.lookback;
         let start = match time_period {
-            TimePeriod::Day => lookback.cached_window_starts.0._24h.collect_one(current_height),
+            TimePeriod::Day => lookback
+                .cached_window_starts
+                .0
+                ._24h
+                .collect_one(current_height),
             TimePeriod::ThreeDays => lookback._3d.collect_one(current_height),
-            TimePeriod::Week => lookback.cached_window_starts.0._1w.collect_one(current_height),
-            TimePeriod::Month => lookback.cached_window_starts.0._1m.collect_one(current_height),
+            TimePeriod::Week => lookback
+                .cached_window_starts
+                .0
+                ._1w
+                .collect_one(current_height),
+            TimePeriod::Month => lookback
+                .cached_window_starts
+                .0
+                ._1m
+                .collect_one(current_height),
             TimePeriod::ThreeMonths => lookback._3m.collect_one(current_height),
             TimePeriod::SixMonths => lookback._6m.collect_one(current_height),
-            TimePeriod::Year => lookback.cached_window_starts.0._1y.collect_one(current_height),
+            TimePeriod::Year => lookback
+                .cached_window_starts
+                .0
+                ._1y
+                .collect_one(current_height),
             TimePeriod::TwoYears => lookback._2y.collect_one(current_height),
             TimePeriod::ThreeYears => lookback._3y.collect_one(current_height),
         }
@@ -107,7 +123,12 @@ impl Query {
             .collect();
 
         let hashrate_at = |height: Height| -> u128 {
-            let day = computer.indexes.height.day1.collect_one(height).unwrap_or_default();
+            let day = computer
+                .indexes
+                .height
+                .day1
+                .collect_one(height)
+                .unwrap_or_default();
             computer
                 .mining
                 .hashrate
@@ -276,7 +297,10 @@ impl Query {
         let shared = self.hashrate_shared_data(0)?;
         let pool_cum = self.pool_daily_cumulative(slug, shared.start_day, shared.end_day)?;
         Ok(Self::compute_hashrate_entries(
-            &shared, &pool_cum, &pool_name, SAMPLE_WEEKLY,
+            &shared,
+            &pool_cum,
+            &pool_name,
+            SAMPLE_WEEKLY,
         ))
     }
 
@@ -289,13 +313,29 @@ impl Query {
                 let lookback = &self.computer().blocks.lookback;
                 let current_height = self.height();
                 match tp {
-                    TimePeriod::Day => lookback.cached_window_starts.0._24h.collect_one(current_height),
+                    TimePeriod::Day => lookback
+                        .cached_window_starts
+                        .0
+                        ._24h
+                        .collect_one(current_height),
                     TimePeriod::ThreeDays => lookback._3d.collect_one(current_height),
-                    TimePeriod::Week => lookback.cached_window_starts.0._1w.collect_one(current_height),
-                    TimePeriod::Month => lookback.cached_window_starts.0._1m.collect_one(current_height),
+                    TimePeriod::Week => lookback
+                        .cached_window_starts
+                        .0
+                        ._1w
+                        .collect_one(current_height),
+                    TimePeriod::Month => lookback
+                        .cached_window_starts
+                        .0
+                        ._1m
+                        .collect_one(current_height),
                     TimePeriod::ThreeMonths => lookback._3m.collect_one(current_height),
                     TimePeriod::SixMonths => lookback._6m.collect_one(current_height),
-                    TimePeriod::Year => lookback.cached_window_starts.0._1y.collect_one(current_height),
+                    TimePeriod::Year => lookback
+                        .cached_window_starts
+                        .0
+                        ._1y
+                        .collect_one(current_height),
                     TimePeriod::TwoYears => lookback._2y.collect_one(current_height),
                     TimePeriod::ThreeYears => lookback._3y.collect_one(current_height),
                 }
@@ -378,13 +418,20 @@ impl Query {
             .pools
             .major
             .get(&slug)
-            .map(|v| v.base.blocks_mined.cumulative.day1.collect_range_at(start_day, end_day))
+            .map(|v| {
+                v.base
+                    .blocks_mined
+                    .cumulative
+                    .day1
+                    .collect_range_at(start_day, end_day)
+            })
             .or_else(|| {
-                computer
-                    .pools
-                    .minor
-                    .get(&slug)
-                    .map(|v| v.blocks_mined.cumulative.day1.collect_range_at(start_day, end_day))
+                computer.pools.minor.get(&slug).map(|v| {
+                    v.blocks_mined
+                        .cumulative
+                        .day1
+                        .collect_range_at(start_day, end_day)
+                })
             })
             .ok_or_else(|| Error::NotFound("Pool not found".into()))
     }
@@ -405,9 +452,7 @@ impl Query {
         let mut entries = Vec::new();
         let mut i = LOOKBACK_DAYS;
         while i < total {
-            if let (Some(cum_now), Some(cum_prev)) =
-                (pool_cum[i], pool_cum[i - LOOKBACK_DAYS])
-            {
+            if let (Some(cum_now), Some(cum_prev)) = (pool_cum[i], pool_cum[i - LOOKBACK_DAYS]) {
                 let pool_blocks = (*cum_now).saturating_sub(*cum_prev);
                 if pool_blocks > 0 {
                     let h_now = shared.first_heights[i].to_usize();

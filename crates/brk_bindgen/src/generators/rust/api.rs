@@ -197,8 +197,7 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
                 .unwrap();
                 writeln!(output, "        }}").unwrap();
             } else {
-                writeln!(output, "        self.base.{}(&path)", fetch_method)
-                    .unwrap();
+                writeln!(output, "        self.base.{}(&path)", fetch_method).unwrap();
             }
         }
 

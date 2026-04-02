@@ -67,8 +67,7 @@ impl Serialize for TxIn {
         // P2WSH: witness has >2 items, last is the witnessScript
         let inner_witness = if has_witness && !has_scriptsig && self.witness.len() > 2 {
             if let Some(last) = self.witness.last() {
-                let bytes: Vec<u8> =
-                    bitcoin::hex::FromHex::from_hex(last).unwrap_or_default();
+                let bytes: Vec<u8> = bitcoin::hex::FromHex::from_hex(last).unwrap_or_default();
                 ScriptBuf::from(bytes).to_asm_string()
             } else {
                 String::new()

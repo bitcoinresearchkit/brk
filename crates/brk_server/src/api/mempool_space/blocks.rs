@@ -4,7 +4,9 @@ use axum::{
     http::{HeaderMap, Uri},
 };
 use brk_query::BLOCK_TXS_PAGE_SIZE;
-use brk_types::{BlockInfo, BlockInfoV1, BlockStatus, BlockTimestamp, Transaction, TxIndex, Txid, Version};
+use brk_types::{
+    BlockInfo, BlockInfoV1, BlockStatus, BlockTimestamp, Transaction, TxIndex, Txid, Version,
+};
 
 use crate::{
     AppState, CacheStrategy,

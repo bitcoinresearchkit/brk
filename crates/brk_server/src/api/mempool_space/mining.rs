@@ -6,9 +6,8 @@ use axum::{
     routing::get,
 };
 use brk_types::{
-    BlockFeesEntry, BlockInfoV1, BlockRewardsEntry, BlockSizesWeights,
-    DifficultyAdjustmentEntry, HashrateSummary, PoolDetail, PoolHashrateEntry, PoolInfo,
-    PoolsSummary, RewardStats,
+    BlockFeesEntry, BlockInfoV1, BlockRewardsEntry, BlockSizesWeights, DifficultyAdjustmentEntry,
+    HashrateSummary, PoolDetail, PoolHashrateEntry, PoolInfo, PoolsSummary, RewardStats,
 };
 
 use crate::{

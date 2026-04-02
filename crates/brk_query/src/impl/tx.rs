@@ -1,8 +1,8 @@
 use bitcoin::hex::DisplayHex;
 use brk_error::{Error, Result};
 use brk_types::{
-    BlockHash, Height, MerkleProof, Timestamp, TxInIndex, TxIndex, TxOutspend, TxStatus,
-    Transaction, Txid, TxidPrefix, Vin, Vout,
+    BlockHash, Height, MerkleProof, Timestamp, Transaction, TxInIndex, TxIndex, TxOutspend,
+    TxStatus, Txid, TxidPrefix, Vin, Vout,
 };
 use vecdb::{ReadableVec, VecIndex};
 
@@ -175,20 +175,20 @@ impl Query {
             let spending_tx_index = input_tx_cursor.get(usize::from(txin_index)).unwrap();
             let spending_first_txin_index =
                 first_txin_cursor.get(spending_tx_index.to_usize()).unwrap();
-            let vin =
-                Vin::from(usize::from(txin_index) - usize::from(spending_first_txin_index));
+            let vin = Vin::from(usize::from(txin_index) - usize::from(spending_first_txin_index));
             let spending_txid = txid_reader.get(spending_tx_index.to_usize());
             let spending_height = height_cursor.get(spending_tx_index.to_usize()).unwrap();
 
-            let (block_hash, block_time) =
-                if let Some((h, ref bh, bt)) = cached_block && h == spending_height {
-                    (bh.clone(), bt)
-                } else {
-                    let bh = indexer.vecs.blocks.blockhash.read_once(spending_height)?;
-                    let bt = block_ts_cursor.get(spending_height.to_usize()).unwrap();
-                    cached_block = Some((spending_height, bh.clone(), bt));
-                    (bh, bt)
-                };
+            let (block_hash, block_time) = if let Some((h, ref bh, bt)) = cached_block
+                && h == spending_height
+            {
+                (bh.clone(), bt)
+            } else {
+                let bh = indexer.vecs.blocks.blockhash.read_once(spending_height)?;
+                let bt = block_ts_cursor.get(spending_height.to_usize()).unwrap();
+                cached_block = Some((spending_height, bh.clone(), bt));
+                (bh, bt)
+            };
 
             outspends.push(TxOutspend {
                 spent: true,
@@ -217,13 +217,25 @@ impl Query {
 
     fn transaction_raw_by_index(&self, tx_index: TxIndex) -> Result<Vec<u8>> {
         let indexer = self.indexer();
-        let total_size = indexer.vecs.transactions.total_size.collect_one(tx_index).unwrap();
-        let position = indexer.vecs.transactions.position.collect_one(tx_index).unwrap();
+        let total_size = indexer
+            .vecs
+            .transactions
+            .total_size
+            .collect_one(tx_index)
+            .unwrap();
+        let position = indexer
+            .vecs
+            .transactions
+            .position
+            .collect_one(tx_index)
+            .unwrap();
         self.reader().read_raw_bytes(position, *total_size as usize)
     }
 
     fn transaction_hex_by_index(&self, tx_index: TxIndex) -> Result<String> {
-        Ok(self.transaction_raw_by_index(tx_index)?.to_lower_hex_string())
+        Ok(self
+            .transaction_raw_by_index(tx_index)?
+            .to_lower_hex_string())
     }
 
     pub fn resolve_tx(&self, txid: &Txid) -> Result<(TxIndex, Height)> {

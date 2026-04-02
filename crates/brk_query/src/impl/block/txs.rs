@@ -48,16 +48,36 @@ impl Query {
 
         // 7 range reads instead of count * 7 point reads
         let txids: Vec<Txid> = indexer.vecs.transactions.txid.collect_range_at(start, end);
-        let heights: Vec<Height> = indexer.vecs.transactions.height.collect_range_at(start, end);
-        let versions = indexer.vecs.transactions.tx_version.collect_range_at(start, end);
-        let lock_times = indexer.vecs.transactions.raw_locktime.collect_range_at(start, end);
-        let total_sizes = indexer.vecs.transactions.total_size.collect_range_at(start, end);
+        let heights: Vec<Height> = indexer
+            .vecs
+            .transactions
+            .height
+            .collect_range_at(start, end);
+        let versions = indexer
+            .vecs
+            .transactions
+            .tx_version
+            .collect_range_at(start, end);
+        let lock_times = indexer
+            .vecs
+            .transactions
+            .raw_locktime
+            .collect_range_at(start, end);
+        let total_sizes = indexer
+            .vecs
+            .transactions
+            .total_size
+            .collect_range_at(start, end);
         let first_txin_indices = indexer
             .vecs
             .transactions
             .first_txin_index
             .collect_range_at(start, end);
-        let positions = indexer.vecs.transactions.position.collect_range_at(start, end);
+        let positions = indexer
+            .vecs
+            .transactions
+            .position
+            .collect_range_at(start, end);
 
         // Readers for prevout lookups (created once)
         let txid_reader = indexer.vecs.transactions.txid.reader();
@@ -76,15 +96,16 @@ impl Query {
             let height = heights[i];
 
             // Reuse block info if same height as previous tx
-            let (block_hash, block_time) =
-                if let Some((h, ref bh, bt)) = cached_block && h == height {
-                    (bh.clone(), bt)
-                } else {
-                    let bh = indexer.vecs.blocks.blockhash.read_once(height)?;
-                    let bt = indexer.vecs.blocks.timestamp.collect_one(height).unwrap();
-                    cached_block = Some((height, bh.clone(), bt));
-                    (bh, bt)
-                };
+            let (block_hash, block_time) = if let Some((h, ref bh, bt)) = cached_block
+                && h == height
+            {
+                (bh.clone(), bt)
+            } else {
+                let bh = indexer.vecs.blocks.blockhash.read_once(height)?;
+                let bt = indexer.vecs.blocks.timestamp.collect_one(height).unwrap();
+                cached_block = Some((height, bh.clone(), bt));
+                (bh, bt)
+            };
 
             // Decode raw transaction from blk file
             let buffer = reader.read_raw_bytes(positions[i], *total_sizes[i] as usize)?;
@@ -117,8 +138,7 @@ impl Query {
                         let prev_value = value_reader.get(usize::from(prev_txout_index));
                         let prev_output_type: OutputType =
                             output_type_reader.get(usize::from(prev_txout_index));
-                        let prev_type_index =
-                            type_index_reader.get(usize::from(prev_txout_index));
+                        let prev_type_index = type_index_reader.get(usize::from(prev_txout_index));
                         let script_pubkey =
                             addr_readers.script_pubkey(prev_output_type, prev_type_index);
                         (
