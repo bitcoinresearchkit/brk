@@ -4,12 +4,13 @@ use axum::{
     http::{HeaderMap, Uri},
 };
 use brk_query::BLOCK_TXS_PAGE_SIZE;
-use brk_types::{
-    BlockHashParam, BlockHashStartIndex, BlockHashTxIndex, BlockInfo, BlockInfoV1, BlockStatus,
-    BlockTimestamp, HeightParam, TimestampParam, Transaction, TxIndex, Txid, Version,
-};
+use brk_types::{BlockInfo, BlockInfoV1, BlockStatus, BlockTimestamp, Transaction, TxIndex, Txid, Version};
 
-use crate::{AppState, CacheStrategy, extended::TransformResponseExtended};
+use crate::{
+    AppState, CacheStrategy,
+    extended::TransformResponseExtended,
+    params::{BlockHashParam, BlockHashStartIndex, BlockHashTxIndex, HeightParam, TimestampParam},
+};
 
 pub trait BlockRoutes {
     fn add_block_routes(self) -> Self;

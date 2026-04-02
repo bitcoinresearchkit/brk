@@ -144,10 +144,10 @@
  * A single block fees data point.
  *
  * @typedef {Object} BlockFeesEntry
- * @property {Height} avgHeight
- * @property {Timestamp} timestamp
- * @property {Sats} avgFees
- * @property {Dollars} uSD - BTC/USD price at that height
+ * @property {Height} avgHeight - Average block height in this window
+ * @property {Timestamp} timestamp - Unix timestamp at the window midpoint
+ * @property {Sats} avgFees - Average fees per block in this window (sats)
+ * @property {Dollars} uSD - BTC/USD price at this height
  */
 /**
  * Block hash
@@ -203,7 +203,6 @@
  * @property {number} nonce - Nonce
  * @property {number} bits - Compact target (bits)
  * @property {number} difficulty - Block difficulty
- * @property {boolean=} stale - Whether this block is stale (orphaned)
  * @property {BlockExtras} extras - Extended block data
  */
 /**
@@ -219,25 +218,25 @@
  * A single block rewards data point.
  *
  * @typedef {Object} BlockRewardsEntry
- * @property {Height} avgHeight
- * @property {Timestamp} timestamp
- * @property {Sats} avgRewards
- * @property {Dollars} uSD - BTC/USD price at that height
+ * @property {Height} avgHeight - Average block height in this window
+ * @property {Timestamp} timestamp - Unix timestamp at the window midpoint
+ * @property {Sats} avgRewards - Average coinbase reward per block (subsidy + fees, sats)
+ * @property {Dollars} uSD - BTC/USD price at this height
  */
 /**
  * A single block size data point.
  *
  * @typedef {Object} BlockSizeEntry
- * @property {Height} avgHeight
- * @property {Timestamp} timestamp
- * @property {number} avgSize
+ * @property {Height} avgHeight - Average block height in this window
+ * @property {Timestamp} timestamp - Unix timestamp at the window midpoint
+ * @property {number} avgSize - Rolling 24h median block size (bytes)
  */
 /**
  * Combined block sizes and weights response.
  *
  * @typedef {Object} BlockSizesWeights
- * @property {BlockSizeEntry[]} sizes
- * @property {BlockWeightEntry[]} weights
+ * @property {BlockSizeEntry[]} sizes - Block size data points
+ * @property {BlockWeightEntry[]} weights - Block weight data points
  */
 /**
  * Block status indicating whether block is in the best chain
@@ -259,9 +258,9 @@
  * A single block weight data point.
  *
  * @typedef {Object} BlockWeightEntry
- * @property {Height} avgHeight
- * @property {Timestamp} timestamp
- * @property {Weight} avgWeight
+ * @property {Height} avgHeight - Average block height in this window
+ * @property {Timestamp} timestamp - Unix timestamp at the window midpoint
+ * @property {Weight} avgWeight - Rolling 24h median block weight (weight units)
  */
 /**
  * Unsigned cents (u64) - for values that should never be negative.
@@ -409,10 +408,10 @@
  * Serializes as array: [timestamp, height, difficulty, change_percent]
  *
  * @typedef {Object} DifficultyAdjustmentEntry
- * @property {Timestamp} timestamp
- * @property {Height} height
- * @property {number} difficulty
- * @property {number} changePercent
+ * @property {Timestamp} timestamp - Unix timestamp of the adjustment
+ * @property {Height} height - Block height of the adjustment
+ * @property {number} difficulty - Difficulty value
+ * @property {number} changePercent - Adjustment ratio (new/previous, e.g. 1.068 = +6.8%)
  */
 /**
  * A single difficulty data point in the hashrate summary.
@@ -509,10 +508,10 @@
  * Server health status
  *
  * @typedef {Object} Health
- * @property {string} status
- * @property {string} service
- * @property {string} version
- * @property {string} timestamp
+ * @property {string} status - Health status ("healthy")
+ * @property {string} service - Service name
+ * @property {string} version - Server version
+ * @property {string} timestamp - Current server time (ISO 8601)
  * @property {string} startedAt - Server start time (ISO 8601)
  * @property {number} uptimeSeconds - Uptime in seconds
  * @property {Height} indexedHeight - Height of the last indexed block
@@ -540,15 +539,15 @@
  * Historical price response
  *
  * @typedef {Object} HistoricalPrice
- * @property {HistoricalPriceEntry[]} prices
- * @property {ExchangeRates} exchangeRates
+ * @property {HistoricalPriceEntry[]} prices - Price data points
+ * @property {ExchangeRates} exchangeRates - Exchange rates (currently empty)
  */
 /**
  * A single price data point
  *
  * @typedef {Object} HistoricalPriceEntry
- * @property {number} time
- * @property {Dollars} uSD
+ * @property {number} time - Unix timestamp
+ * @property {Dollars} uSD - BTC/USD price
  */
 /** @typedef {number} Hour1 */
 /** @typedef {number} Hour12 */
@@ -610,21 +609,21 @@
  * @property {{ [key: string]: VSize }} feeHistogram - Fee histogram: `[[fee_rate, vsize], ...]` sorted by descending fee rate
  */
 /**
- * Simplified mempool transaction for the recent transactions endpoint
+ * Simplified mempool transaction for the `/api/mempool/recent` endpoint.
  *
  * @typedef {Object} MempoolRecentTx
- * @property {Txid} txid
- * @property {Sats} fee
- * @property {VSize} vsize
- * @property {Sats} value
+ * @property {Txid} txid - Transaction ID
+ * @property {Sats} fee - Transaction fee (sats)
+ * @property {VSize} vsize - Virtual size (vbytes)
+ * @property {Sats} value - Total output value (sats)
  */
 /**
  * Merkle inclusion proof for a transaction
  *
  * @typedef {Object} MerkleProof
- * @property {Height} blockHeight
- * @property {string[]} merkle
- * @property {number} pos
+ * @property {Height} blockHeight - Block height containing the transaction
+ * @property {string[]} merkle - Merkle proof path (hex-encoded hashes)
+ * @property {number} pos - Transaction position in the block
  */
 /** @typedef {number} Minute10 */
 /** @typedef {number} Minute30 */
@@ -802,8 +801,8 @@
  * Current price response matching mempool.space /api/v1/prices format
  *
  * @typedef {Object} Prices
- * @property {Timestamp} time
- * @property {Dollars} uSD
+ * @property {Timestamp} time - Unix timestamp
+ * @property {Dollars} uSD - BTC/USD price
  */
 /**
  * A range boundary: integer index, date, or timestamp.
@@ -831,9 +830,9 @@
  * @typedef {Object} RewardStats
  * @property {Height} startBlock - First block in the range
  * @property {Height} endBlock - Last block in the range
- * @property {Sats} totalReward
- * @property {Sats} totalFee
- * @property {number} totalTx
+ * @property {Sats} totalReward - Total coinbase rewards (subsidy + fees) in sats
+ * @property {Sats} totalFee - Total transaction fees in sats
+ * @property {number} totalTx - Total number of transactions
  */
 /**
  * Satoshis
@@ -1000,17 +999,17 @@
  * Transaction information compatible with mempool.space API format
  *
  * @typedef {Object} Transaction
- * @property {(TxIndex|null)=} index
- * @property {Txid} txid
- * @property {TxVersion} version
- * @property {RawLockTime} locktime
+ * @property {(TxIndex|null)=} index - Internal transaction index (brk-specific, not in mempool.space)
+ * @property {Txid} txid - Transaction ID
+ * @property {TxVersion} version - Transaction version
+ * @property {RawLockTime} locktime - Transaction lock time
  * @property {TxIn[]} vin - Transaction inputs
  * @property {TxOut[]} vout - Transaction outputs
  * @property {number} size - Transaction size in bytes
  * @property {Weight} weight - Transaction weight
  * @property {number} sigops - Number of signature operations
  * @property {Sats} fee - Transaction fee in satoshis
- * @property {TxStatus} status
+ * @property {TxStatus} status - Confirmation status (confirmed, block height/hash/time)
  */
 /**
  * Hierarchical tree node for organizing series into categories
@@ -1096,10 +1095,10 @@
  * Unspent transaction output
  *
  * @typedef {Object} Utxo
- * @property {Txid} txid
- * @property {Vout} vout
- * @property {TxStatus} status
- * @property {Sats} value
+ * @property {Txid} txid - Transaction ID of the UTXO
+ * @property {Vout} vout - Output index
+ * @property {TxStatus} status - Confirmation status
+ * @property {Sats} value - Output value in satoshis
  */
 /**
  * Virtual size in vbytes (weight / 4, rounded up)

@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use super::{Height, PoolSlug};
+use brk_types::{Height, PoolSlug};
 
 #[derive(Deserialize, JsonSchema)]
 pub struct PoolSlugParam {

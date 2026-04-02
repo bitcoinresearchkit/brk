@@ -5,12 +5,13 @@ use axum::{
     response::Redirect,
     routing::get,
 };
-use brk_types::{
-    AddrParam, AddrStats, AddrTxidsParam, AddrValidation, Transaction, Txid, Utxo,
-    ValidateAddrParam, Version,
-};
+use brk_types::{AddrStats, AddrValidation, Transaction, Txid, Utxo, Version};
 
-use crate::{AppState, CacheStrategy, extended::TransformResponseExtended};
+use crate::{
+    AppState, CacheStrategy,
+    extended::TransformResponseExtended,
+    params::{AddrParam, AddrTxidsParam, ValidateAddrParam},
+};
 
 pub trait AddrRoutes {
     fn add_addr_routes(self) -> Self;

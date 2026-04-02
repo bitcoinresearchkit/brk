@@ -10,6 +10,7 @@
     padding: 2rem;
 
     .cube {
+      cursor: pointer;
       width: var(--cube);
       height: var(--cube);
       overflow: hidden;
@@ -17,6 +18,37 @@
       line-height: var(--line-height-sm);
       --face-color: var(--border-color);
       color: var(--color);
+      transition:
+        color,
+        background-color,
+        border-color,
+        outline-color,
+        text-decoration-color,
+        fill,
+        stroke,
+        opacity,
+        box-shadow,
+        transform,
+        translate,
+        scale,
+        rotate,
+        filter,
+        -webkit-backdrop-filter,
+        backdrop-filter,
+        display,
+        content-visibility,
+        overlay,
+        pointer-events;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 50ms;
+      user-select: none;
+      &:hover {
+        --face-color: var(--inv-border-color);
+        color: var(--background-color);
+      }
+      &:active {
+        --face-color: var(--orange);
+      }
 
       .face {
         transform-origin: 0 0;

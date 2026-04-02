@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{Txid, Vout};
+use brk_types::{Txid, Vout};
 
 /// Transaction output reference (txid + output index)
 #[derive(Deserialize, JsonSchema)]

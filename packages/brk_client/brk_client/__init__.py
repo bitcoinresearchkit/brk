@@ -387,7 +387,10 @@ class BlockFeesEntry(TypedDict):
     A single block fees data point.
 
     Attributes:
-        USD: BTC/USD price at that height
+        avgHeight: Average block height in this window
+        timestamp: Unix timestamp at the window midpoint
+        avgFees: Average fees per block in this window (sats)
+        USD: BTC/USD price at this height
     """
     avgHeight: Height
     timestamp: Timestamp
@@ -466,7 +469,6 @@ class BlockInfoV1(TypedDict):
         nonce: Nonce
         bits: Compact target (bits)
         difficulty: Block difficulty
-        stale: Whether this block is stale (orphaned)
         extras: Extended block data
     """
     id: BlockHash
@@ -482,7 +484,6 @@ class BlockInfoV1(TypedDict):
     nonce: int
     bits: int
     difficulty: float
-    stale: bool
     extras: BlockExtras
 
 class BlockRewardsEntry(TypedDict):
@@ -490,7 +491,10 @@ class BlockRewardsEntry(TypedDict):
     A single block rewards data point.
 
     Attributes:
-        USD: BTC/USD price at that height
+        avgHeight: Average block height in this window
+        timestamp: Unix timestamp at the window midpoint
+        avgRewards: Average coinbase reward per block (subsidy + fees, sats)
+        USD: BTC/USD price at this height
     """
     avgHeight: Height
     timestamp: Timestamp
@@ -500,6 +504,11 @@ class BlockRewardsEntry(TypedDict):
 class BlockSizeEntry(TypedDict):
     """
     A single block size data point.
+
+    Attributes:
+        avgHeight: Average block height in this window
+        timestamp: Unix timestamp at the window midpoint
+        avgSize: Rolling 24h median block size (bytes)
     """
     avgHeight: Height
     timestamp: Timestamp
@@ -508,6 +517,11 @@ class BlockSizeEntry(TypedDict):
 class BlockWeightEntry(TypedDict):
     """
     A single block weight data point.
+
+    Attributes:
+        avgHeight: Average block height in this window
+        timestamp: Unix timestamp at the window midpoint
+        avgWeight: Rolling 24h median block weight (weight units)
     """
     avgHeight: Height
     timestamp: Timestamp
@@ -516,6 +530,10 @@ class BlockWeightEntry(TypedDict):
 class BlockSizesWeights(TypedDict):
     """
     Combined block sizes and weights response.
+
+    Attributes:
+        sizes: Block size data points
+        weights: Block weight data points
     """
     sizes: List[BlockSizeEntry]
     weights: List[BlockWeightEntry]
@@ -684,6 +702,12 @@ class DifficultyAdjustmentEntry(TypedDict):
     """
     A single difficulty adjustment entry.
     Serializes as array: [timestamp, height, difficulty, change_percent]
+
+    Attributes:
+        timestamp: Unix timestamp of the adjustment
+        height: Block height of the adjustment
+        difficulty: Difficulty value
+        change_percent: Adjustment ratio (new/previous, e.g. 1.068 = +6.8%)
     """
     timestamp: Timestamp
     height: Height
@@ -803,6 +827,10 @@ class Health(TypedDict):
     Server health status
 
     Attributes:
+        status: Health status ("healthy")
+        service: Service name
+        version: Server version
+        timestamp: Current server time (ISO 8601)
         started_at: Server start time (ISO 8601)
         uptime_seconds: Uptime in seconds
         indexed_height: Height of the last indexed block
@@ -831,6 +859,10 @@ class HeightParam(TypedDict):
 class HistoricalPriceEntry(TypedDict):
     """
     A single price data point
+
+    Attributes:
+        time: Unix timestamp
+        USD: BTC/USD price
     """
     time: int
     USD: Dollars
@@ -838,6 +870,10 @@ class HistoricalPriceEntry(TypedDict):
 class HistoricalPrice(TypedDict):
     """
     Historical price response
+
+    Attributes:
+        prices: Price data points
+        exchangeRates: Exchange rates (currently empty)
     """
     prices: List[HistoricalPriceEntry]
     exchangeRates: ExchangeRates
@@ -902,7 +938,13 @@ class MempoolInfo(TypedDict):
 
 class MempoolRecentTx(TypedDict):
     """
-    Simplified mempool transaction for the recent transactions endpoint
+    Simplified mempool transaction for the `/api/mempool/recent` endpoint.
+
+    Attributes:
+        txid: Transaction ID
+        fee: Transaction fee (sats)
+        vsize: Virtual size (vbytes)
+        value: Total output value (sats)
     """
     txid: Txid
     fee: Sats
@@ -912,6 +954,11 @@ class MempoolRecentTx(TypedDict):
 class MerkleProof(TypedDict):
     """
     Merkle inclusion proof for a transaction
+
+    Attributes:
+        block_height: Block height containing the transaction
+        merkle: Merkle proof path (hex-encoded hashes)
+        pos: Transaction position in the block
     """
     block_height: Height
     merkle: List[str]
@@ -1121,6 +1168,10 @@ class PoolsSummary(TypedDict):
 class Prices(TypedDict):
     """
     Current price response matching mempool.space /api/v1/prices format
+
+    Attributes:
+        time: Unix timestamp
+        USD: BTC/USD price
     """
     time: Timestamp
     USD: Dollars
@@ -1149,6 +1200,9 @@ class RewardStats(TypedDict):
     Attributes:
         startBlock: First block in the range
         endBlock: Last block in the range
+        totalReward: Total coinbase rewards (subsidy + fees) in sats
+        totalFee: Total transaction fees in sats
+        totalTx: Total number of transactions
     """
     startBlock: Height
     endBlock: Height
@@ -1318,12 +1372,17 @@ class Transaction(TypedDict):
     Transaction information compatible with mempool.space API format
 
     Attributes:
+        index: Internal transaction index (brk-specific, not in mempool.space)
+        txid: Transaction ID
+        version: Transaction version
+        locktime: Transaction lock time
         vin: Transaction inputs
         vout: Transaction outputs
         size: Transaction size in bytes
         weight: Transaction weight
         sigops: Number of signature operations
         fee: Transaction fee in satoshis
+        status: Confirmation status (confirmed, block height/hash/time)
     """
     index: Union[TxIndex, None]
     txid: Txid
@@ -1369,6 +1428,12 @@ class TxidVout(TypedDict):
 class Utxo(TypedDict):
     """
     Unspent transaction output
+
+    Attributes:
+        txid: Transaction ID of the UTXO
+        vout: Output index
+        status: Confirmation status
+        value: Output value in satoshis
     """
     txid: Txid
     vout: Vout

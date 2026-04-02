@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use super::TimePeriod;
+use brk_types::TimePeriod;
 
 #[derive(Deserialize, JsonSchema)]
 pub struct TimePeriodParam {

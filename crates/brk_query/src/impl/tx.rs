@@ -2,23 +2,23 @@ use bitcoin::hex::DisplayHex;
 use brk_error::{Error, Result};
 use brk_types::{
     BlockHash, Height, MerkleProof, Timestamp, TxInIndex, TxIndex, TxOutspend, TxStatus,
-    Transaction, Txid, TxidParam, TxidPrefix, Vin, Vout,
+    Transaction, Txid, TxidPrefix, Vin, Vout,
 };
 use vecdb::{ReadableVec, VecIndex};
 
 use crate::Query;
 
 impl Query {
-    pub fn transaction(&self, TxidParam { txid }: TxidParam) -> Result<Transaction> {
+    pub fn transaction(&self, txid: &Txid) -> Result<Transaction> {
         // First check mempool for unconfirmed transactions
         if let Some(mempool) = self.mempool()
-            && let Some(tx_with_hex) = mempool.get_txs().get(&txid)
+            && let Some(tx_with_hex) = mempool.get_txs().get(txid)
         {
             return Ok(tx_with_hex.tx().clone());
         }
 
         // Look up confirmed transaction by txid prefix
-        let prefix = TxidPrefix::from(&txid);
+        let prefix = TxidPrefix::from(txid);
         let indexer = self.indexer();
         let Ok(Some(tx_index)) = indexer
             .stores
@@ -32,16 +32,16 @@ impl Query {
         self.transaction_by_index(tx_index)
     }
 
-    pub fn transaction_status(&self, TxidParam { txid }: TxidParam) -> Result<TxStatus> {
+    pub fn transaction_status(&self, txid: &Txid) -> Result<TxStatus> {
         // First check mempool for unconfirmed transactions
         if let Some(mempool) = self.mempool()
-            && mempool.get_txs().contains_key(&txid)
+            && mempool.get_txs().contains_key(txid)
         {
             return Ok(TxStatus::UNCONFIRMED);
         }
 
         // Look up confirmed transaction by txid prefix
-        let prefix = TxidPrefix::from(&txid);
+        let prefix = TxidPrefix::from(txid);
         let indexer = self.indexer();
         let Ok(Some(tx_index)) = indexer
             .stores
@@ -70,8 +70,8 @@ impl Query {
         })
     }
 
-    pub fn transaction_raw(&self, TxidParam { txid }: TxidParam) -> Result<Vec<u8>> {
-        let prefix = TxidPrefix::from(&txid);
+    pub fn transaction_raw(&self, txid: &Txid) -> Result<Vec<u8>> {
+        let prefix = TxidPrefix::from(txid);
         let indexer = self.indexer();
         let Ok(Some(tx_index)) = indexer
             .stores
@@ -84,16 +84,16 @@ impl Query {
         self.transaction_raw_by_index(tx_index)
     }
 
-    pub fn transaction_hex(&self, TxidParam { txid }: TxidParam) -> Result<String> {
+    pub fn transaction_hex(&self, txid: &Txid) -> Result<String> {
         // First check mempool for unconfirmed transactions
         if let Some(mempool) = self.mempool()
-            && let Some(tx_with_hex) = mempool.get_txs().get(&txid)
+            && let Some(tx_with_hex) = mempool.get_txs().get(txid)
         {
             return Ok(tx_with_hex.hex().to_string());
         }
 
         // Look up confirmed transaction by txid prefix
-        let prefix = TxidPrefix::from(&txid);
+        let prefix = TxidPrefix::from(txid);
         let indexer = self.indexer();
         let Ok(Some(tx_index)) = indexer
             .stores
@@ -107,24 +107,24 @@ impl Query {
         self.transaction_hex_by_index(tx_index)
     }
 
-    pub fn outspend(&self, txid: TxidParam, vout: Vout) -> Result<TxOutspend> {
+    pub fn outspend(&self, txid: &Txid, vout: Vout) -> Result<TxOutspend> {
         let all = self.outspends(txid)?;
         all.into_iter()
             .nth(usize::from(vout))
             .ok_or(Error::OutOfRange("Output index out of range".into()))
     }
 
-    pub fn outspends(&self, TxidParam { txid }: TxidParam) -> Result<Vec<TxOutspend>> {
+    pub fn outspends(&self, txid: &Txid) -> Result<Vec<TxOutspend>> {
         // Mempool outputs are unspent in on-chain terms
         if let Some(mempool) = self.mempool()
-            && let Some(tx_with_hex) = mempool.get_txs().get(&txid)
+            && let Some(tx_with_hex) = mempool.get_txs().get(txid)
         {
             let output_count = tx_with_hex.tx().output.len();
             return Ok(vec![TxOutspend::UNSPENT; output_count]);
         }
 
         // Look up confirmed transaction
-        let prefix = TxidPrefix::from(&txid);
+        let prefix = TxidPrefix::from(txid);
         let indexer = self.indexer();
         let Ok(Some(tx_index)) = indexer
             .stores
@@ -248,12 +248,12 @@ impl Query {
         self.client().send_raw_transaction(hex)
     }
 
-    pub fn merkleblock_proof(&self, txid_param: TxidParam) -> Result<String> {
-        let (_, height) = self.resolve_tx(&txid_param.txid)?;
+    pub fn merkleblock_proof(&self, txid: &Txid) -> Result<String> {
+        let (_, height) = self.resolve_tx(txid)?;
         let header = self.read_block_header(height)?;
         let txids = self.block_txids_by_height(height)?;
 
-        let target: bitcoin::Txid = (&txid_param.txid).into();
+        let target: bitcoin::Txid = txid.into();
         let btxids: Vec<bitcoin::Txid> = txids.iter().map(bitcoin::Txid::from).collect();
         let mb = bitcoin::MerkleBlock::from_header_txids_with_predicate(&header, &btxids, |t| {
             *t == target
@@ -261,8 +261,8 @@ impl Query {
         Ok(bitcoin::consensus::encode::serialize_hex(&mb))
     }
 
-    pub fn merkle_proof(&self, txid_param: TxidParam) -> Result<MerkleProof> {
-        let (tx_index, height) = self.resolve_tx(&txid_param.txid)?;
+    pub fn merkle_proof(&self, txid: &Txid) -> Result<MerkleProof> {
+        let (tx_index, height) = self.resolve_tx(txid)?;
         let first_tx = self
             .indexer()
             .vecs

@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::Limit;
+use brk_types::Limit;
 
 #[derive(Deserialize, JsonSchema)]
 pub struct LimitParam {

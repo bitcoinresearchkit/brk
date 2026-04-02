@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::Timestamp;
+use brk_types::Timestamp;
 
 #[derive(Deserialize, JsonSchema)]
 pub struct TimestampParam {

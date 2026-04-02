@@ -36,6 +36,7 @@ mod api;
 pub mod cache;
 mod error;
 mod extended;
+pub mod params;
 mod state;
 
 pub use api::ApiRoutes;

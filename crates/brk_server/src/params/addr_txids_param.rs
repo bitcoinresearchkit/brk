@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::Txid;
+use brk_types::Txid;
 
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 pub struct AddrTxidsParam {

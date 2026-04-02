@@ -6,12 +6,16 @@ use axum::{
     routing::get,
 };
 use brk_types::{
-    BlockCountParam, BlockFeesEntry, BlockInfoV1, BlockRewardsEntry, BlockSizesWeights,
+    BlockFeesEntry, BlockInfoV1, BlockRewardsEntry, BlockSizesWeights,
     DifficultyAdjustmentEntry, HashrateSummary, PoolDetail, PoolHashrateEntry, PoolInfo,
-    PoolSlugAndHeightParam, PoolSlugParam, PoolsSummary, RewardStats, TimePeriodParam,
+    PoolsSummary, RewardStats,
 };
 
-use crate::{AppState, CacheStrategy, Error, extended::TransformResponseExtended};
+use crate::{
+    AppState, CacheStrategy, Error,
+    extended::TransformResponseExtended,
+    params::{BlockCountParam, PoolSlugAndHeightParam, PoolSlugParam, TimePeriodParam},
+};
 
 pub trait MiningRoutes {
     fn add_mining_routes(self) -> Self;

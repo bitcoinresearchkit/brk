@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use schemars::JsonSchema;
 
-use crate::Txid;
+use brk_types::Txid;
 
 /// Query parameter for transaction-times endpoint.
 #[derive(JsonSchema)]

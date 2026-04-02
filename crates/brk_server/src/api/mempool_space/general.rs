@@ -3,9 +3,13 @@ use axum::{
     extract::{Query, State},
     http::{HeaderMap, Uri},
 };
-use brk_types::{DifficultyAdjustment, HistoricalPrice, OptionalTimestampParam, Prices, Timestamp};
+use brk_types::{DifficultyAdjustment, HistoricalPrice, Prices, Timestamp};
 
-use crate::{AppState, CacheStrategy, extended::TransformResponseExtended};
+use crate::{
+    AppState, CacheStrategy,
+    extended::TransformResponseExtended,
+    params::OptionalTimestampParam,
+};
 
 pub trait GeneralRoutes {
     fn add_general_routes(self) -> Self;

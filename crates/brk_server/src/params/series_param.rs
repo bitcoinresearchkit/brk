@@ -1,9 +1,9 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::Height;
+use brk_types::SeriesName;
 
 #[derive(Deserialize, JsonSchema)]
-pub struct HeightParam {
-    pub height: Height,
+pub struct SeriesParam {
+    pub series: SeriesName,
 }

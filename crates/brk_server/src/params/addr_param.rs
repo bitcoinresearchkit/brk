@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::Addr;
+use brk_types::Addr;
 
 #[derive(Deserialize, JsonSchema)]
 pub struct AddrParam {

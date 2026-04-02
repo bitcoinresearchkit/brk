@@ -1,9 +1,9 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::Txid;
+use brk_types::BlockHash;
 
 #[derive(Deserialize, JsonSchema)]
-pub struct TxidParam {
-    pub txid: Txid,
+pub struct BlockHashParam {
+    pub hash: BlockHash,
 }

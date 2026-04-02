@@ -1,9 +1,9 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::BlockHash;
+use brk_types::Height;
 
 #[derive(Deserialize, JsonSchema)]
-pub struct BlockHashParam {
-    pub hash: BlockHash,
+pub struct HeightParam {
+    pub height: Height,
 }

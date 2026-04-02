@@ -31,6 +31,7 @@
   --color: light-dark(var(--black), var(--white));
   --off-color: var(--gray);
   --border-color: light-dark(var(--light-gray), var(--dark-gray));
+  --inv-border-color: light-dark(var(--dark-gray), var(--light-gray));
   --off-border-color: light-dark(var(--dark-white), var(--light-black));
 
   --font-size-xs: 0.75rem;

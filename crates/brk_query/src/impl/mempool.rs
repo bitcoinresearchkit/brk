@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use brk_error::{Error, Result};
 use brk_types::{
     CpfpEntry, CpfpInfo, FeeRate, MempoolBlock, MempoolInfo, MempoolRecentTx, RecommendedFees,
-    Txid, TxidParam, TxidPrefix, Weight,
+    Txid, TxidPrefix, Weight,
 };
 
 use crate::Query;
@@ -51,10 +51,10 @@ impl Query {
         Ok(mempool.get_txs().recent().to_vec())
     }
 
-    pub fn cpfp(&self, TxidParam { txid }: TxidParam) -> Result<CpfpInfo> {
+    pub fn cpfp(&self, txid: &Txid) -> Result<CpfpInfo> {
         let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
         let entries = mempool.get_entries();
-        let prefix = TxidPrefix::from(&txid);
+        let prefix = TxidPrefix::from(txid);
 
         let entry = entries
             .get(&prefix)
