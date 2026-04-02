@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco};
 
-use super::{Sats, VSize};
+use super::{Sats, VSize, Weight};
 
 /// Fee rate in sats/vB
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, Pco, JsonSchema)]
@@ -33,6 +33,13 @@ impl From<(Sats, VSize)> for FeeRate {
             return Self(f64::NAN);
         }
         Self((sats * 1000).div_ceil(vsize) as f64 / 1000.0)
+    }
+}
+
+impl From<(Sats, Weight)> for FeeRate {
+    #[inline]
+    fn from((sats, weight): (Sats, Weight)) -> Self {
+        Self::from((sats, VSize::from(weight.to_vbytes_ceil())))
     }
 }
 

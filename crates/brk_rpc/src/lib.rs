@@ -137,6 +137,12 @@ impl Client {
                     None
                 };
 
+                let witness = txin
+                    .witness
+                    .iter()
+                    .map(|w| bitcoin::hex::DisplayHex::to_lower_hex_string(w))
+                    .collect();
+
                 Ok(TxIn {
                     is_coinbase,
                     prevout: txout,
@@ -144,8 +150,10 @@ impl Client {
                     vout: txin.previous_output.vout.into(),
                     script_sig: txin.script_sig,
                     script_sig_asm: (),
+                    witness,
                     sequence: txin.sequence.into(),
                     inner_redeem_script_asm: (),
+                    inner_witness_script_asm: (),
                 })
             })
             .collect::<Result<Vec<_>>>()?;

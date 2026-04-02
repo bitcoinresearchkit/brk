@@ -1,10 +1,8 @@
-use std::io::Cursor;
-
-use bitcoin::{consensus::Decodable, hex::DisplayHex};
+use bitcoin::hex::DisplayHex;
 use brk_error::{Error, Result};
 use brk_types::{
-    Height, MerkleProof, OutputType, Sats, Transaction, TxIn, TxInIndex, TxIndex, TxOut,
-    TxOutspend, TxStatus, Txid, TxidParam, TxidPrefix, Vin, Vout, Weight,
+    BlockHash, Height, MerkleProof, Timestamp, TxInIndex, TxIndex, TxOutspend, TxStatus,
+    Transaction, Txid, TxidParam, TxidPrefix, Vin, Vout,
 };
 use vecdb::{ReadableVec, VecIndex};
 
@@ -109,43 +107,11 @@ impl Query {
         self.transaction_hex_by_index(tx_index)
     }
 
-    pub fn outspend(&self, TxidParam { txid }: TxidParam, vout: Vout) -> Result<TxOutspend> {
-        // Mempool outputs are unspent in on-chain terms
-        if let Some(mempool) = self.mempool()
-            && mempool.get_txs().contains_key(&txid)
-        {
-            return Ok(TxOutspend::UNSPENT);
-        }
-
-        // Look up confirmed transaction
-        let prefix = TxidPrefix::from(&txid);
-        let indexer = self.indexer();
-        let Ok(Some(tx_index)) = indexer
-            .stores
-            .txid_prefix_to_tx_index
-            .get(&prefix)
-            .map(|opt| opt.map(|cow| cow.into_owned()))
-        else {
-            return Err(Error::UnknownTxid);
-        };
-
-        // Calculate txout_index
-        let first_txout_index = indexer
-            .vecs
-            .transactions
-            .first_txout_index
-            .read_once(tx_index)?;
-        let txout_index = first_txout_index + vout;
-
-        // Look up spend status
-        let computer = self.computer();
-        let txin_index = computer.outputs.spent.txin_index.read_once(txout_index)?;
-
-        if txin_index == TxInIndex::UNSPENT {
-            return Ok(TxOutspend::UNSPENT);
-        }
-
-        self.outspend_details(txin_index)
+    pub fn outspend(&self, txid: TxidParam, vout: Vout) -> Result<TxOutspend> {
+        let all = self.outspends(txid)?;
+        all.into_iter()
+            .nth(usize::from(vout))
+            .ok_or(Error::OutOfRange("Output index out of range".into()))
     }
 
     pub fn outspends(&self, TxidParam { txid }: TxidParam) -> Result<Vec<TxOutspend>> {
@@ -185,6 +151,16 @@ impl Query {
         // Get spend status for each output
         let computer = self.computer();
         let txin_index_reader = computer.outputs.spent.txin_index.reader();
+        let txid_reader = indexer.vecs.transactions.txid.reader();
+
+        // Cursors for PcoVec reads — buffer chunks so nearby indices share decompression
+        let mut input_tx_cursor = indexer.vecs.inputs.tx_index.cursor();
+        let mut first_txin_cursor = indexer.vecs.transactions.first_txin_index.cursor();
+        let mut height_cursor = indexer.vecs.transactions.height.cursor();
+        let mut block_ts_cursor = indexer.vecs.blocks.timestamp.cursor();
+
+        // Block info cache — spending txs in the same block share block hash/time
+        let mut cached_block: Option<(Height, BlockHash, Timestamp)> = None;
 
         let mut outspends = Vec::with_capacity(output_count);
         for i in 0..output_count {
@@ -193,9 +169,38 @@ impl Query {
 
             if txin_index == TxInIndex::UNSPENT {
                 outspends.push(TxOutspend::UNSPENT);
-            } else {
-                outspends.push(self.outspend_details(txin_index)?);
+                continue;
             }
+
+            let spending_tx_index = input_tx_cursor.get(usize::from(txin_index)).unwrap();
+            let spending_first_txin_index =
+                first_txin_cursor.get(spending_tx_index.to_usize()).unwrap();
+            let vin =
+                Vin::from(usize::from(txin_index) - usize::from(spending_first_txin_index));
+            let spending_txid = txid_reader.get(spending_tx_index.to_usize());
+            let spending_height = height_cursor.get(spending_tx_index.to_usize()).unwrap();
+
+            let (block_hash, block_time) =
+                if let Some((h, ref bh, bt)) = cached_block && h == spending_height {
+                    (bh.clone(), bt)
+                } else {
+                    let bh = indexer.vecs.blocks.blockhash.read_once(spending_height)?;
+                    let bt = block_ts_cursor.get(spending_height.to_usize()).unwrap();
+                    cached_block = Some((spending_height, bh.clone(), bt));
+                    (bh, bt)
+                };
+
+            outspends.push(TxOutspend {
+                spent: true,
+                txid: Some(spending_txid),
+                vin: Some(vin),
+                status: Some(TxStatus {
+                    confirmed: true,
+                    block_height: Some(spending_height),
+                    block_hash: Some(block_hash),
+                    block_time: Some(block_time),
+                }),
+            });
         }
 
         Ok(outspends)
@@ -204,155 +209,10 @@ impl Query {
     // === Helper methods ===
 
     pub fn transaction_by_index(&self, tx_index: TxIndex) -> Result<Transaction> {
-        let indexer = self.indexer();
-        let reader = self.reader();
-
-        // Get tx metadata using collect_one for PcoVec, read_once for BytesVec
-        let txid = indexer.vecs.transactions.txid.read_once(tx_index)?;
-        let height = indexer
-            .vecs
-            .transactions
-            .height
-            .collect_one(tx_index)
-            .unwrap();
-        let version = indexer
-            .vecs
-            .transactions
-            .tx_version
-            .collect_one(tx_index)
-            .unwrap();
-        let lock_time = indexer
-            .vecs
-            .transactions
-            .raw_locktime
-            .collect_one(tx_index)
-            .unwrap();
-        let total_size = indexer
-            .vecs
-            .transactions
-            .total_size
-            .collect_one(tx_index)
-            .unwrap();
-        let first_txin_index = indexer
-            .vecs
-            .transactions
-            .first_txin_index
-            .collect_one(tx_index)
-            .unwrap();
-        let position = indexer
-            .vecs
-            .transactions
-            .position
-            .collect_one(tx_index)
-            .unwrap();
-
-        // Get block info for status
-        let block_hash = indexer.vecs.blocks.blockhash.read_once(height)?;
-        let block_time = indexer.vecs.blocks.timestamp.collect_one(height).unwrap();
-
-        // Read and decode the raw transaction from blk file
-        let buffer = reader.read_raw_bytes(position, *total_size as usize)?;
-        let mut cursor = Cursor::new(buffer);
-        let tx = bitcoin::Transaction::consensus_decode(&mut cursor)
-            .map_err(|_| Error::Parse("Failed to decode transaction".into()))?;
-
-        // Create readers for random access lookups
-        let txid_reader = indexer.vecs.transactions.txid.reader();
-        let first_txout_index_reader = indexer.vecs.transactions.first_txout_index.reader();
-        let value_reader = indexer.vecs.outputs.value.reader();
-        let output_type_reader = indexer.vecs.outputs.output_type.reader();
-        let type_index_reader = indexer.vecs.outputs.type_index.reader();
-        let addr_readers = indexer.vecs.addrs.addr_readers();
-
-        // Batch-read outpoints for all inputs (avoids per-input PcoVec page decompression)
-        let outpoints: Vec<_> = indexer.vecs.inputs.outpoint.collect_range_at(
-            usize::from(first_txin_index),
-            usize::from(first_txin_index) + tx.input.len(),
-        );
-
-        // Build inputs with prevout information
-        let input: Vec<TxIn> = tx
-            .input
-            .iter()
-            .enumerate()
-            .map(|(i, txin)| {
-                let outpoint = outpoints[i];
-
-                let is_coinbase = outpoint.is_coinbase();
-
-                // Get prevout info if not coinbase
-                let (prev_txid, prev_vout, prevout) = if is_coinbase {
-                    (Txid::COINBASE, Vout::MAX, None)
-                } else {
-                    let prev_tx_index = outpoint.tx_index();
-                    let prev_vout = outpoint.vout();
-                    let prev_txid = txid_reader.get(prev_tx_index.to_usize());
-
-                    // Calculate the txout_index for the prevout
-                    let prev_first_txout_index =
-                        first_txout_index_reader.get(prev_tx_index.to_usize());
-                    let prev_txout_index = prev_first_txout_index + prev_vout;
-
-                    let prev_value = value_reader.get(usize::from(prev_txout_index));
-                    let prev_output_type: OutputType =
-                        output_type_reader.get(usize::from(prev_txout_index));
-                    let prev_type_index = type_index_reader.get(usize::from(prev_txout_index));
-                    let script_pubkey =
-                        addr_readers.script_pubkey(prev_output_type, prev_type_index);
-
-                    let prevout = Some(TxOut::from((script_pubkey, prev_value)));
-
-                    (prev_txid, prev_vout, prevout)
-                };
-
-                TxIn {
-                    txid: prev_txid,
-                    vout: prev_vout,
-                    prevout,
-                    script_sig: txin.script_sig.clone(),
-                    script_sig_asm: (),
-                    is_coinbase,
-                    sequence: txin.sequence.0,
-                    inner_redeem_script_asm: (),
-                }
-            })
-            .collect();
-
-        // Calculate weight before consuming tx.output
-        let weight = Weight::from(tx.weight());
-
-        // Calculate sigop cost
-        let total_sigop_cost = tx.total_sigop_cost(|_| None);
-
-        // Build outputs
-        let output: Vec<TxOut> = tx.output.into_iter().map(TxOut::from).collect();
-
-        // Build status
-        let status = TxStatus {
-            confirmed: true,
-            block_height: Some(height),
-            block_hash: Some(block_hash),
-            block_time: Some(block_time),
-        };
-
-        let mut transaction = Transaction {
-            index: Some(tx_index),
-            txid,
-            version,
-            lock_time,
-            total_size: *total_size as usize,
-            weight,
-            total_sigop_cost,
-            fee: Sats::ZERO, // Will be computed below
-            input,
-            output,
-            status,
-        };
-
-        // Compute fee from inputs - outputs
-        transaction.compute_fee();
-
-        Ok(transaction)
+        self.transactions_by_range(tx_index.to_usize(), 1)?
+            .into_iter()
+            .next()
+            .ok_or(Error::NotFound("Transaction not found".into()))
     }
 
     fn transaction_raw_by_index(&self, tx_index: TxIndex) -> Result<Vec<u8>> {
@@ -366,60 +226,7 @@ impl Query {
         Ok(self.transaction_raw_by_index(tx_index)?.to_lower_hex_string())
     }
 
-    fn outspend_details(&self, txin_index: TxInIndex) -> Result<TxOutspend> {
-        let indexer = self.indexer();
-
-        // Look up spending tx_index directly
-        let spending_tx_index = indexer
-            .vecs
-            .inputs
-            .tx_index
-            .collect_one(txin_index)
-            .unwrap();
-
-        // Calculate vin
-        let spending_first_txin_index = indexer
-            .vecs
-            .transactions
-            .first_txin_index
-            .collect_one(spending_tx_index)
-            .unwrap();
-        let vin = Vin::from(usize::from(txin_index) - usize::from(spending_first_txin_index));
-
-        // Get spending tx details
-        let spending_txid = indexer
-            .vecs
-            .transactions
-            .txid
-            .read_once(spending_tx_index)?;
-        let spending_height = indexer
-            .vecs
-            .transactions
-            .height
-            .collect_one(spending_tx_index)
-            .unwrap();
-        let block_hash = indexer.vecs.blocks.blockhash.read_once(spending_height)?;
-        let block_time = indexer
-            .vecs
-            .blocks
-            .timestamp
-            .collect_one(spending_height)
-            .unwrap();
-
-        Ok(TxOutspend {
-            spent: true,
-            txid: Some(spending_txid),
-            vin: Some(vin),
-            status: Some(TxStatus {
-                confirmed: true,
-                block_height: Some(spending_height),
-                block_hash: Some(block_hash),
-                block_time: Some(block_time),
-            }),
-        })
-    }
-
-    fn resolve_tx(&self, txid: &Txid) -> Result<(TxIndex, Height)> {
+    pub fn resolve_tx(&self, txid: &Txid) -> Result<(TxIndex, Height)> {
         let indexer = self.indexer();
         let prefix = TxidPrefix::from(txid);
         let tx_index: TxIndex = indexer

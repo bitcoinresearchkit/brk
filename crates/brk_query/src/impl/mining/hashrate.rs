@@ -79,9 +79,10 @@ impl Query {
         let difficulty: Vec<DifficultyEntry> = iter_difficulty_epochs(computer, start, end)
             .into_iter()
             .map(|e| DifficultyEntry {
-                timestamp: e.timestamp,
-                difficulty: e.difficulty,
+                time: e.timestamp,
                 height: e.height,
+                difficulty: e.difficulty,
+                adjustment: e.change_percent,
             })
             .collect();
 

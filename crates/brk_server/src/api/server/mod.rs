@@ -77,7 +77,7 @@ impl ServerRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             let tip_height = q.client().get_last_height()?;
                             Ok(q.sync_status(tip_height))
                         })
@@ -102,7 +102,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                 async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
                     let brk_path = state.data_path.clone();
                     state
-                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             let brk_bytes = dir_size(&brk_path)?;
                             let bitcoin_bytes = dir_size(q.blocks_dir())?;
                             Ok(DiskUsage::new(brk_bytes, bitcoin_bytes))

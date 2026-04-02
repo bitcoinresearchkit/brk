@@ -21,6 +21,14 @@ pub struct Transaction {
     #[serde(rename = "locktime")]
     pub lock_time: RawLockTime,
 
+    /// Transaction inputs
+    #[serde(rename = "vin")]
+    pub input: Vec<TxIn>,
+
+    /// Transaction outputs
+    #[serde(rename = "vout")]
+    pub output: Vec<TxOut>,
+
     /// Transaction size in bytes
     #[schemars(example = 222)]
     #[serde(rename = "size")]
@@ -38,14 +46,6 @@ pub struct Transaction {
     /// Transaction fee in satoshis
     #[schemars(example = Sats::new(31))]
     pub fee: Sats,
-
-    /// Transaction inputs
-    #[serde(rename = "vin")]
-    pub input: Vec<TxIn>,
-
-    /// Transaction outputs
-    #[serde(rename = "vout")]
-    pub output: Vec<TxOut>,
 
     pub status: TxStatus,
 }

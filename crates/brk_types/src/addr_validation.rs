@@ -35,11 +35,19 @@ pub struct AddrValidation {
     /// Witness program in hex
     #[serde(skip_serializing_if = "Option::is_none")]
     pub witness_program: Option<String>,
+
+    /// Error locations (empty array for most errors)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_locations: Option<Vec<usize>>,
+
+    /// Error message for invalid addresses
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
 }
 
 impl AddrValidation {
-    /// Returns an invalid validation result
-    pub fn invalid() -> Self {
+    /// Returns an invalid validation result with error detail
+    pub fn invalid(error: String) -> Self {
         Self {
             isvalid: false,
             addr: None,
@@ -48,13 +56,16 @@ impl AddrValidation {
             iswitness: None,
             witness_version: None,
             witness_program: None,
+            error_locations: Some(vec![]),
+            error: Some(error),
         }
     }
 
     /// Validate a Bitcoin address string and return details
     pub fn from_addr(addr: &str) -> Self {
-        let Ok(script) = AddrBytes::addr_to_script(addr) else {
-            return Self::invalid();
+        let script = match AddrBytes::addr_to_script(addr) {
+            Ok(s) => s,
+            Err(e) => return Self::invalid(e.to_string()),
         };
 
         let output_type = OutputType::from(&script);
@@ -86,6 +97,8 @@ impl AddrValidation {
             iswitness: Some(is_witness),
             witness_version,
             witness_program,
+            error_locations: None,
+            error: None,
         }
     }
 }

@@ -5,6 +5,7 @@ use crate::PoolSlug;
 
 /// Mining pool identification for a block
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct BlockPool {
     /// Unique pool identifier
     pub id: u8,
@@ -14,4 +15,7 @@ pub struct BlockPool {
 
     /// URL-friendly pool identifier
     pub slug: PoolSlug,
+
+    /// Alternative miner names (if identified)
+    pub miner_names: Option<String>,
 }

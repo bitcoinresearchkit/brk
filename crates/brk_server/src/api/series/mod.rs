@@ -246,7 +246,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                        State(state): State<AppState>,
                        Path(path): Path<SeriesNameWithIndex>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.latest(&path.series, path.index)
                         })
                         .await
@@ -270,7 +270,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                        State(state): State<AppState>,
                        Path(path): Path<SeriesNameWithIndex>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.len(&path.series, path.index)
                         })
                         .await
@@ -292,7 +292,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                        State(state): State<AppState>,
                        Path(path): Path<SeriesNameWithIndex>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.version(&path.series, path.index)
                         })
                         .await
@@ -352,7 +352,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                        Path(params): Path<CostBasisCohortParam>,
                        State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.cost_basis_dates(&params.cohort)
                         })
                         .await

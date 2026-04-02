@@ -44,7 +44,7 @@ impl Vecs {
         let db = open_db(parent_path, DB_NAME, 100_000)?;
         let pools = pools();
 
-        let version = parent_version + Version::new(3) + Version::new(pools.len() as u32);
+        let version = parent_version + Version::new(4) + Version::new(pools.len() as u32);
 
         let mut major_map = BTreeMap::new();
         let mut minor_map = BTreeMap::new();
@@ -123,8 +123,7 @@ impl Vecs {
                 self.pool.len()
             );
         }
-        self.pool
-            .validate_computed_version_or_reset(dep_version)?;
+        self.pool.validate_computed_version_or_reset(dep_version)?;
 
         let first_txout_index = indexer.vecs.transactions.first_txout_index.reader();
         let output_type = indexer.vecs.outputs.output_type.reader();

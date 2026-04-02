@@ -19,9 +19,6 @@ pub struct BlockHeader {
     /// Merkle root of the transaction tree
     pub merkle_root: String,
 
-    /// Block timestamp as claimed by the miner (Unix time)
-    pub time: u32,
-
     /// Compact target (bits)
     pub bits: u32,
 
@@ -35,7 +32,6 @@ impl From<Header> for BlockHeader {
             version: h.version.to_consensus() as u32,
             previous_block_hash: BlockHash::from(h.prev_blockhash),
             merkle_root: h.merkle_root.to_string(),
-            time: h.time,
             bits: h.bits.to_consensus(),
             nonce: h.nonce,
         }

@@ -7,7 +7,7 @@ use axum::{
 };
 use brk_types::{
     AddrParam, AddrStats, AddrTxidsParam, AddrValidation, Transaction, Txid, Utxo,
-    ValidateAddrParam,
+    ValidateAddrParam, Version,
 };
 
 use crate::{AppState, CacheStrategy, extended::TransformResponseExtended};
@@ -29,7 +29,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Path(path): Path<AddrParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.addr(path.addr)).await
+                let strategy = state.addr_cache(Version::ONE, &path.addr);
+                state.cached_json(&headers, strategy, &uri, move |q| q.addr(path.addr)).await
             }, |op| op
                 .id("get_address")
                 .addrs_tag()
@@ -51,7 +52,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Query(params): Query<AddrTxidsParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.addr_txs(path.addr, params.after_txid, 25)).await
+                let strategy = state.addr_cache(Version::ONE, &path.addr);
+                state.cached_json(&headers, strategy, &uri, move |q| q.addr_txs(path.addr, params.after_txid, 50)).await
             }, |op| op
                 .id("get_address_txs")
                 .addrs_tag()
@@ -73,7 +75,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Query(params): Query<AddrTxidsParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.addr_txs(path.addr, params.after_txid, 25)).await
+                let strategy = state.addr_cache(Version::ONE, &path.addr);
+                state.cached_json(&headers, strategy, &uri, move |q| q.addr_txs(path.addr, params.after_txid, 25)).await
             }, |op| op
                 .id("get_address_confirmed_txs")
                 .addrs_tag()
@@ -115,7 +118,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Path(path): Path<AddrParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Height, &uri, move |q| q.addr_utxos(path.addr)).await
+                let strategy = state.addr_cache(Version::ONE, &path.addr);
+                state.cached_json(&headers, strategy, &uri, move |q| q.addr_utxos(path.addr)).await
             }, |op| op
                 .id("get_address_utxos")
                 .addrs_tag()

@@ -29,6 +29,13 @@ impl From<ByteView> for BlockHashPrefix {
     }
 }
 
+impl From<u64> for BlockHashPrefix {
+    #[inline]
+    fn from(value: u64) -> Self {
+        Self(value)
+    }
+}
+
 impl From<BlockHashPrefix> for ByteView {
     #[inline]
     fn from(value: BlockHashPrefix) -> Self {

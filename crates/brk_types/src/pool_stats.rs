@@ -34,20 +34,26 @@ pub struct PoolStats {
 
     /// Pool's share of total blocks (0.0 - 1.0)
     pub share: f64,
+
+    /// Unique pool identifier
+    #[serde(rename = "poolUniqueId")]
+    pub pool_unique_id: u8,
 }
 
 impl PoolStats {
     /// Create a new PoolStats from a Pool reference
     pub fn new(pool: &'static Pool, block_count: u64, rank: u32, share: f64) -> Self {
+        let id = pool.unique_id();
         Self {
-            pool_id: pool.unique_id(),
+            pool_id: id,
             name: Cow::Borrowed(pool.name),
             link: Cow::Borrowed(pool.link),
             block_count,
             rank,
-            empty_blocks: 0, // TODO: track empty blocks if needed
+            empty_blocks: 0,
             slug: pool.slug(),
             share,
+            pool_unique_id: id,
         }
     }
 }

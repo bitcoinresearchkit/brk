@@ -2,7 +2,7 @@ mod block_fee_rates;
 mod block_fees;
 mod block_rewards;
 mod block_sizes;
-mod day1_iter;
+mod block_window;
 mod difficulty;
 mod difficulty_adjustments;
 mod epochs;

@@ -1,9 +1,10 @@
 use bitcoin::consensus::Decodable;
 use bitcoin::hex::DisplayHex;
 use brk_error::{Error, Result};
+use brk_reader::Reader;
 use brk_types::{
-    BlockExtras, BlockHash, BlockHashPrefix, BlockHeader, BlockInfo, BlockInfoV1, BlockPool,
-    FeeRate, Height, Sats, Timestamp, TxIndex, VSize, pools,
+    BlkPosition, BlockExtras, BlockHash, BlockHashPrefix, BlockHeader, BlockInfo, BlockInfoV1,
+    BlockPool, FeeRate, Height, Sats, Timestamp, TxIndex, VSize, pools,
 };
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
@@ -123,12 +124,16 @@ impl Query {
             blocks.push(BlockInfo {
                 id: blockhashes[i].clone(),
                 height: Height::from(begin + i),
-                header,
+                version: header.version,
                 timestamp: timestamps[i],
                 tx_count,
                 size: *sizes[i],
                 weight: weights[i],
+                merkle_root: header.merkle_root,
+                previous_block_hash: header.previous_block_hash,
                 median_time,
+                nonce: header.nonce,
+                bits: header.bits,
                 difficulty: *difficulties[i],
             });
         }
@@ -138,7 +143,7 @@ impl Query {
 
     pub(crate) fn blocks_v1_range(&self, begin: usize, end: usize) -> Result<Vec<BlockInfoV1>> {
         if begin >= end {
-            return Ok(Vec::new());
+            return Ok(vec![]);
         }
 
         let count = end - begin;
@@ -304,12 +309,16 @@ impl Query {
             let info = BlockInfo {
                 id: blockhashes[i].clone(),
                 height: Height::from(begin + i),
-                header,
+                version: header.version,
                 timestamp: timestamps[i],
                 tx_count,
                 size,
                 weight,
+                merkle_root: header.merkle_root,
+                previous_block_hash: header.previous_block_hash,
                 median_time,
+                nonce: header.nonce,
+                bits: header.bits,
                 difficulty: *difficulties[i],
             };
 
@@ -333,6 +342,7 @@ impl Query {
                     id: pool.unique_id(),
                     name: pool.name.to_string(),
                     slug: pool_slug,
+                    miner_names: None,
                 },
                 avg_fee: Sats::from(if non_coinbase > 0 {
                     total_fees_u64 / non_coinbase
@@ -441,8 +451,8 @@ impl Query {
     }
 
     fn parse_coinbase_tx(
-        reader: &brk_reader::Reader,
-        position: brk_types::BlkPosition,
+        reader: &Reader,
+        position: BlkPosition,
     ) -> (String, Option<String>, Vec<String>, String, String) {
         let raw_bytes = match reader.read_raw_bytes(position, 1000) {
             Ok(bytes) => bytes,
@@ -463,7 +473,14 @@ impl Query {
         let coinbase_signature_ascii = tx
             .input
             .first()
-            .map(|input| input.script_sig.as_bytes().iter().map(|&b| b as char).collect::<String>())
+            .map(|input| {
+                input
+                    .script_sig
+                    .as_bytes()
+                    .iter()
+                    .map(|&b| b as char)
+                    .collect::<String>()
+            })
             .unwrap_or_default();
 
         let coinbase_addresses: Vec<String> = tx

@@ -67,7 +67,7 @@ impl Query {
         // Convert timestamp to ISO 8601 format
         let ts_secs: i64 = (*best_ts).into();
         let iso_timestamp = JiffTimestamp::from_second(ts_secs)
-            .map(|t| t.to_string())
+            .map(|t| t.strftime("%Y-%m-%dT%H:%M:%S%.3fZ").to_string())
             .unwrap_or_else(|_| best_ts.to_string());
 
         Ok(BlockTimestamp {

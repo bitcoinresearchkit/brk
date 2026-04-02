@@ -76,6 +76,13 @@ impl From<VSize> for Weight {
     }
 }
 
+impl From<u64> for Weight {
+    #[inline]
+    fn from(value: u64) -> Self {
+        Self(value)
+    }
+}
+
 impl From<usize> for Weight {
     #[inline]
     fn from(value: usize) -> Self {

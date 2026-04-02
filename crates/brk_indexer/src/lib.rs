@@ -3,6 +3,7 @@
 use std::{
     fs,
     path::{Path, PathBuf},
+    sync::Arc,
     thread::{self, sleep},
     time::{Duration, Instant},
 };
@@ -10,7 +11,8 @@ use std::{
 use brk_error::Result;
 use brk_reader::{Reader, XORBytes};
 use brk_rpc::Client;
-use brk_types::Height;
+use brk_types::{BlockHash, Height};
+use parking_lot::RwLock;
 use fjall::PersistMode;
 use tracing::{debug, info};
 use vecdb::{
@@ -36,6 +38,13 @@ pub struct Indexer<M: StorageMode = Rw> {
     path: PathBuf,
     pub vecs: Vecs<M>,
     pub stores: Stores,
+    tip_blockhash: Arc<RwLock<BlockHash>>,
+}
+
+impl<M: StorageMode> Indexer<M> {
+    pub fn tip_blockhash(&self) -> BlockHash {
+        self.tip_blockhash.read().clone()
+    }
 }
 
 impl ReadOnlyClone for Indexer {
@@ -46,6 +55,7 @@ impl ReadOnlyClone for Indexer {
             path: self.path.clone(),
             vecs: self.vecs.read_only_clone(),
             stores: self.stores.clone(),
+            tip_blockhash: self.tip_blockhash.clone(),
         }
     }
 }
@@ -77,10 +87,17 @@ impl Indexer {
             let stores = Stores::forced_import(&indexed_path, VERSION)?;
             info!("Imported stores in {:?}", i.elapsed());
 
+            let tip_blockhash = vecs
+                .blocks
+                .blockhash
+                .collect_last()
+                .unwrap_or_default();
+
             Ok(Self {
                 path: indexed_path.clone(),
                 vecs,
                 stores,
+                tip_blockhash: Arc::new(RwLock::new(tip_blockhash)),
             })
         };
 
@@ -288,6 +305,8 @@ impl Indexer {
                 export(stores, vecs, height)?;
                 readers = Readers::new(vecs);
             }
+
+            *self.tip_blockhash.write() = block.block_hash().into();
         }
 
         drop(readers);
@@ -301,6 +320,9 @@ impl Indexer {
             let _lock = lock;
 
             sleep(Duration::from_secs(5));
+
+            info!("Exporting...");
+            let i = Instant::now();
 
             if !tasks.is_empty() {
                 let i = Instant::now();
@@ -317,6 +339,8 @@ impl Indexer {
             }
 
             db.compact()?;
+
+            info!("Exported in {:?}", i.elapsed());
             Ok(())
         });
 

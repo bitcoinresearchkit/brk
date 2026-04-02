@@ -1,6 +1,6 @@
 use brk_error::Result;
-use brk_types::{Dollars, ExchangeRates, HistoricalPrice, HistoricalPriceEntry, Timestamp};
-use vecdb::{ReadableVec, VecIndex};
+use brk_types::{Dollars, ExchangeRates, HistoricalPrice, HistoricalPriceEntry, Hour4, Timestamp};
+use vecdb::ReadableVec;
 
 use crate::Query;
 
@@ -21,38 +21,41 @@ impl Query {
     }
 
     pub fn historical_price(&self, timestamp: Option<Timestamp>) -> Result<HistoricalPrice> {
-        let indexer = self.indexer();
-        let computer = self.computer();
-        let max_height = self.height().to_usize();
-        let end = max_height + 1;
-
-        let timestamps = indexer.vecs.blocks.timestamp.collect();
-        let all_prices = computer.prices.spot.cents.height.collect();
-
-        let prices = if let Some(target_ts) = timestamp {
-            let target = usize::from(target_ts);
-            let h = timestamps
-                .binary_search_by_key(&target, |t| usize::from(*t))
-                .unwrap_or_else(|i| i.min(max_height));
-
-            vec![HistoricalPriceEntry {
-                time: usize::from(timestamps[h]) as u64,
-                usd: Dollars::from(all_prices[h]),
-            }]
-        } else {
-            let step = (max_height / 200).max(1);
-            (0..end)
-                .step_by(step)
-                .map(|h| HistoricalPriceEntry {
-                    time: usize::from(timestamps[h]) as u64,
-                    usd: Dollars::from(all_prices[h]),
-                })
-                .collect()
+        let prices = match timestamp {
+            Some(ts) => self.price_at(ts)?,
+            None => self.all_prices()?,
         };
-
         Ok(HistoricalPrice {
             prices,
             exchange_rates: ExchangeRates {},
         })
+    }
+
+    fn price_at(&self, target: Timestamp) -> Result<Vec<HistoricalPriceEntry>> {
+        let h4 = Hour4::from_timestamp(target);
+        let cents = self.computer().prices.spot.cents.hour4.collect_one(h4);
+        Ok(vec![HistoricalPriceEntry {
+            time: usize::from(h4.to_timestamp()) as u64,
+            usd: Dollars::from(cents.flatten().unwrap_or_default()),
+        }])
+    }
+
+    fn all_prices(&self) -> Result<Vec<HistoricalPriceEntry>> {
+        let computer = self.computer();
+        Ok(computer
+            .prices
+            .spot
+            .cents
+            .hour4
+            .collect()
+            .into_iter()
+            .enumerate()
+            .filter_map(|(i, cents)| {
+                Some(HistoricalPriceEntry {
+                    time: usize::from(Hour4::from(i).to_timestamp()) as u64,
+                    usd: Dollars::from(cents?),
+                })
+            })
+            .collect())
     }
 }

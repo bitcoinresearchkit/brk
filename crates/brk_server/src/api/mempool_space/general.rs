@@ -18,7 +18,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Height, &uri, |q| {
+                        .cached_json(&headers, CacheStrategy::Tip, &uri, |q| {
                             q.difficulty_adjustment()
                         })
                         .await
@@ -65,7 +65,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
                        Query(params): Query<OptionalTimestampParam>,
                        State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.historical_price(params.timestamp)
                         })
                         .await

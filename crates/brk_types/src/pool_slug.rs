@@ -198,10 +198,8 @@ pub enum PoolSlug {
     Parasite,
     RedRockPool,
     Est3lar,
-    #[serde(skip)]
-    Dummy168,
-    #[serde(skip)]
-    Dummy169,
+    BraiinsSolo,
+    SoloPool,
     #[serde(skip)]
     Dummy170,
     #[serde(skip)]

@@ -1,7 +1,9 @@
+use std::cmp::Ordering;
+
 use brk_error::{Error, Result};
 use brk_types::{
-    CpfpEntry, CpfpInfo, MempoolBlock, MempoolInfo, MempoolRecentTx, RecommendedFees, Txid,
-    TxidParam, TxidPrefix, Weight,
+    CpfpEntry, CpfpInfo, FeeRate, MempoolBlock, MempoolInfo, MempoolRecentTx, RecommendedFees,
+    Txid, TxidParam, TxidPrefix, Weight,
 };
 
 use crate::Query;
@@ -86,10 +88,22 @@ impl Query {
 
         let effective_fee_per_vsize = entry.effective_fee_rate();
 
+        let best_descendant = descendants
+            .iter()
+            .max_by(|a, b| {
+                FeeRate::from((a.fee, a.weight))
+                    .partial_cmp(&FeeRate::from((b.fee, b.weight)))
+                    .unwrap_or(Ordering::Equal)
+            })
+            .cloned();
+
         Ok(CpfpInfo {
             ancestors,
+            best_descendant,
             descendants,
             effective_fee_per_vsize,
+            fee: entry.fee,
+            adjusted_vsize: entry.vsize,
         })
     }
 

@@ -10,6 +10,7 @@ pub struct TxIn {
     #[schemars(example = "0000000000000000000000000000000000000000000000000000000000000000")]
     pub txid: Txid,
 
+    /// Output index being spent
     #[schemars(example = 0)]
     pub vout: Vout,
 
@@ -17,55 +18,32 @@ pub struct TxIn {
     #[schemars(example = None as Option<TxOut>)]
     pub prevout: Option<TxOut>,
 
-    /// Signature script (for non-SegWit inputs)
-    #[schemars(
-        rename = "scriptsig",
-        with = "String",
-        example = "04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73"
-    )]
+    /// Signature script (hex, for non-SegWit inputs)
+    #[schemars(rename = "scriptsig", with = "String")]
     pub script_sig: ScriptBuf,
 
     /// Signature script in assembly format
-    #[schemars(
-        rename = "scriptsig_asm",
-        with = "String",
-        example = "OP_PUSHBYTES_4 ffff001d OP_PUSHBYTES_1 04 OP_PUSHBYTES_69 5468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73"
-    )]
+    #[schemars(rename = "scriptsig_asm", with = "String")]
     pub script_sig_asm: (),
 
-    // /// Witness data (for SegWit inputs)
-    // #[schemars(example = vec!["3045022100d0c9936990bf00bdba15f425f0f360a223d5cbf81f4bf8477fe6c6d838fb5fae02207e42a8325a4dd41702bf065aa6e0a1b7b0b8ee92a5e6c182da018b0afc82c40601".to_string()])]
-    // pub witness: Vec<String>,
-    //
+    /// Witness data (hex-encoded stack items, present for SegWit inputs)
+    pub witness: Vec<String>,
+
     /// Whether this input is a coinbase (block reward) input
     #[schemars(example = false)]
     pub is_coinbase: bool,
 
     /// Input sequence number
-    #[schemars(example = 429496729)]
+    #[schemars(example = 4294967293_u32)]
     pub sequence: u32,
 
-    /// Inner redeemscript in assembly format (for P2SH-wrapped SegWit)
-    #[allow(dead_code)]
-    #[schemars(
-        rename = "inner_redeemscript_asm",
-        with = "Option<String>",
-        example = Some("OP_0 OP_PUSHBYTES_20 992a1f7420fc5285070d19c71ff2efb1e356ad2f".to_string())
-    )]
+    /// Inner redeemscript in assembly (for P2SH-wrapped SegWit: scriptsig + witness both present)
+    #[schemars(rename = "inner_redeemscript_asm", with = "String")]
     pub inner_redeem_script_asm: (),
-}
 
-impl TxIn {
-    pub fn script_sig_asm(&self) -> String {
-        self.script_sig.to_asm_string()
-    }
-
-    pub fn inner_redeemscript_asm(&self) -> String {
-        self.script_sig
-            .redeem_script()
-            .map(|s| s.to_asm_string())
-            .unwrap_or_default()
-    }
+    /// Inner witnessscript in assembly (for P2WSH: last witness item decoded as script)
+    #[schemars(rename = "inner_witnessscript_asm", with = "String")]
+    pub inner_witness_script_asm: (),
 }
 
 impl Serialize for TxIn {
@@ -73,16 +51,55 @@ impl Serialize for TxIn {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("TxIn", 8)?;
+        let has_witness = !self.witness.is_empty();
+        let has_scriptsig = !self.script_sig.is_empty();
+
+        // P2SH-wrapped SegWit: both scriptsig and witness present
+        let inner_redeem = if has_scriptsig && has_witness {
+            self.script_sig
+                .redeem_script()
+                .map(|s| s.to_asm_string())
+                .unwrap_or_default()
+        } else {
+            String::new()
+        };
+
+        // P2WSH: witness has >2 items, last is the witnessScript
+        let inner_witness = if has_witness && !has_scriptsig && self.witness.len() > 2 {
+            if let Some(last) = self.witness.last() {
+                let bytes: Vec<u8> =
+                    bitcoin::hex::FromHex::from_hex(last).unwrap_or_default();
+                ScriptBuf::from(bytes).to_asm_string()
+            } else {
+                String::new()
+            }
+        } else {
+            String::new()
+        };
+
+        let has_inner_redeem = !inner_redeem.is_empty();
+        let has_inner_witness = !inner_witness.is_empty();
+        let field_count =
+            7 + has_witness as usize + has_inner_redeem as usize + has_inner_witness as usize;
+
+        let mut state = serializer.serialize_struct("TxIn", field_count)?;
 
         state.serialize_field("txid", &self.txid)?;
         state.serialize_field("vout", &self.vout)?;
         state.serialize_field("prevout", &self.prevout)?;
         state.serialize_field("scriptsig", &self.script_sig.to_hex_string())?;
-        state.serialize_field("scriptsig_asm", &self.script_sig_asm())?;
+        state.serialize_field("scriptsig_asm", &self.script_sig.to_asm_string())?;
+        if has_witness {
+            state.serialize_field("witness", &self.witness)?;
+        }
         state.serialize_field("is_coinbase", &self.is_coinbase)?;
         state.serialize_field("sequence", &self.sequence)?;
-        state.serialize_field("inner_redeemscript_asm", &self.inner_redeemscript_asm())?;
+        if has_inner_redeem {
+            state.serialize_field("inner_redeemscript_asm", &inner_redeem)?;
+        }
+        if has_inner_witness {
+            state.serialize_field("inner_witnessscript_asm", &inner_witness)?;
+        }
 
         state.end()
     }

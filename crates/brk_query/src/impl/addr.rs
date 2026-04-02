@@ -4,8 +4,8 @@ use bitcoin::{Network, PublicKey, ScriptBuf};
 use brk_error::{Error, Result};
 use brk_types::{
     Addr, AddrBytes, AddrChainStats, AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, AddrStats,
-    AnyAddrDataIndexEnum, OutputType, Sats, Transaction, TxIndex, TxStatus, Txid, TypeIndex, Unit,
-    Utxo, Vout,
+    AnyAddrDataIndexEnum, Height, OutputType, Transaction, TxIndex, TxStatus, Txid, TypeIndex,
+    Unit, Utxo, Vout,
 };
 use vecdb::{ReadableVec, VecIndex};
 
@@ -186,25 +186,19 @@ impl Query {
         let first_txout_index_reader = vecs.transactions.first_txout_index.reader();
         let value_reader = vecs.outputs.value.reader();
         let blockhash_reader = vecs.blocks.blockhash.reader();
+        let mut height_cursor = vecs.transactions.height.cursor();
+        let mut block_ts_cursor = vecs.blocks.timestamp.cursor();
 
         let utxos: Vec<Utxo> = outpoints
             .into_iter()
             .map(|(tx_index, vout)| {
-                let txid: Txid = txid_reader.get(tx_index.to_usize());
-                let height = vecs
-                    .transactions
-                    .height
-                    .collect_one_at(tx_index.to_usize())
-                    .unwrap();
+                let txid = txid_reader.get(tx_index.to_usize());
+                let height = height_cursor.get(tx_index.to_usize()).unwrap();
                 let first_txout_index = first_txout_index_reader.get(tx_index.to_usize());
                 let txout_index = first_txout_index + vout;
-                let value: Sats = value_reader.get(usize::from(txout_index));
+                let value = value_reader.get(usize::from(txout_index));
                 let block_hash = blockhash_reader.get(usize::from(height));
-                let block_time = vecs
-                    .blocks
-                    .timestamp
-                    .collect_one_at(usize::from(height))
-                    .unwrap();
+                let block_time = block_ts_cursor.get(height.to_usize()).unwrap();
 
                 Utxo {
                     txid,
@@ -245,6 +239,29 @@ impl Query {
             .unwrap_or_default();
 
         Ok(txids)
+    }
+
+    /// Height of the last on-chain activity for an address (last tx_index → height).
+    pub fn addr_last_activity_height(&self, addr: &Addr) -> Result<Height> {
+        let (output_type, type_index) = self.resolve_addr(addr)?;
+        let store = self
+            .indexer()
+            .stores
+            .addr_type_to_addr_index_and_tx_index
+            .get(output_type)
+            .unwrap();
+        let prefix = u32::from(type_index).to_be_bytes();
+        let last_tx_index = store
+            .prefix(prefix)
+            .next_back()
+            .map(|(key, _): (AddrIndexTxIndex, Unit)| key.tx_index())
+            .ok_or(Error::UnknownAddr)?;
+        self.indexer()
+            .vecs
+            .transactions
+            .height
+            .collect_one(last_tx_index)
+            .ok_or(Error::UnknownAddr)
     }
 
     /// Resolve an address string to its output type and type_index

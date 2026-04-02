@@ -8,7 +8,7 @@ use brk_indexer::Indexer;
 use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_rpc::Client;
-use brk_types::{Height, SyncStatus};
+use brk_types::{BlockHash, BlockHashPrefix, Height, SyncStatus};
 use vecdb::{AnyVec, ReadOnlyClone, ReadableVec, Ro};
 
 #[cfg(feature = "tokio")]
@@ -70,6 +70,16 @@ impl Query {
     /// Minimum of indexed and computed heights
     pub fn height(&self) -> Height {
         self.indexed_height().min(self.computed_height())
+    }
+
+    /// Tip block hash, cached in the indexer.
+    pub fn tip_blockhash(&self) -> BlockHash {
+        self.indexer().tip_blockhash()
+    }
+
+    /// Tip block hash prefix for cache etags.
+    pub fn tip_hash_prefix(&self) -> BlockHashPrefix {
+        BlockHashPrefix::from(&self.tip_blockhash())
     }
 
     /// Build sync status with the given tip height

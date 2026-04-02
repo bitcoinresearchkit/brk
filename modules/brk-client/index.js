@@ -60,6 +60,8 @@
  * @property {?boolean=} iswitness - Whether this is a witness address
  * @property {?number=} witnessVersion - Witness version (0 for P2WPKH/P2WSH, 1 for P2TR)
  * @property {?string=} witnessProgram - Witness program in hex
+ * @property {?number[]=} errorLocations - Error locations (empty array for most errors)
+ * @property {?string=} error - Error message for invalid addresses
  */
 /**
  * Unified index for any address type (funded or empty)
@@ -145,6 +147,7 @@
  * @property {Height} avgHeight
  * @property {Timestamp} timestamp
  * @property {Sats} avgFees
+ * @property {Dollars} uSD - BTC/USD price at that height
  */
 /**
  * Block hash
@@ -171,17 +174,16 @@
  * @typedef {Object} BlockInfo
  * @property {BlockHash} id - Block hash
  * @property {Height} height - Block height
- * @property {number} version - Block version, used for soft fork signaling
- * @property {BlockHash} previousblockhash - Previous block hash
- * @property {string} merkleRoot - Merkle root of the transaction tree
- * @property {number} time - Block timestamp as claimed by the miner (Unix time)
- * @property {number} bits - Compact target (bits)
- * @property {number} nonce - Nonce used to produce a valid block hash
+ * @property {number} version - Block version
  * @property {Timestamp} timestamp - Block timestamp (Unix time)
- * @property {number} txCount - Number of transactions in the block
+ * @property {number} txCount - Number of transactions
  * @property {number} size - Block size in bytes
  * @property {Weight} weight - Block weight in weight units
+ * @property {string} merkleRoot - Merkle root of the transaction tree
+ * @property {BlockHash} previousblockhash - Previous block hash
  * @property {Timestamp} mediantime - Median time of the last 11 blocks
+ * @property {number} nonce - Nonce
+ * @property {number} bits - Compact target (bits)
  * @property {number} difficulty - Block difficulty
  */
 /**
@@ -190,18 +192,18 @@
  * @typedef {Object} BlockInfoV1
  * @property {BlockHash} id - Block hash
  * @property {Height} height - Block height
- * @property {number} version - Block version, used for soft fork signaling
- * @property {BlockHash} previousblockhash - Previous block hash
- * @property {string} merkleRoot - Merkle root of the transaction tree
- * @property {number} time - Block timestamp as claimed by the miner (Unix time)
- * @property {number} bits - Compact target (bits)
- * @property {number} nonce - Nonce used to produce a valid block hash
+ * @property {number} version - Block version
  * @property {Timestamp} timestamp - Block timestamp (Unix time)
- * @property {number} txCount - Number of transactions in the block
+ * @property {number} txCount - Number of transactions
  * @property {number} size - Block size in bytes
  * @property {Weight} weight - Block weight in weight units
+ * @property {string} merkleRoot - Merkle root of the transaction tree
+ * @property {BlockHash} previousblockhash - Previous block hash
  * @property {Timestamp} mediantime - Median time of the last 11 blocks
+ * @property {number} nonce - Nonce
+ * @property {number} bits - Compact target (bits)
  * @property {number} difficulty - Block difficulty
+ * @property {boolean=} stale - Whether this block is stale (orphaned)
  * @property {BlockExtras} extras - Extended block data
  */
 /**
@@ -211,21 +213,23 @@
  * @property {number} id - Unique pool identifier
  * @property {string} name - Pool name
  * @property {PoolSlug} slug - URL-friendly pool identifier
+ * @property {?string=} minerNames - Alternative miner names (if identified)
  */
 /**
  * A single block rewards data point.
  *
  * @typedef {Object} BlockRewardsEntry
- * @property {number} avgHeight
- * @property {number} timestamp
- * @property {number} avgRewards
+ * @property {Height} avgHeight
+ * @property {Timestamp} timestamp
+ * @property {Sats} avgRewards
+ * @property {Dollars} uSD - BTC/USD price at that height
  */
 /**
  * A single block size data point.
  *
  * @typedef {Object} BlockSizeEntry
- * @property {number} avgHeight
- * @property {number} timestamp
+ * @property {Height} avgHeight
+ * @property {Timestamp} timestamp
  * @property {number} avgSize
  */
 /**
@@ -241,7 +245,7 @@
  * @typedef {Object} BlockStatus
  * @property {boolean} inBestChain - Whether this block is in the best chain
  * @property {(Height|null)=} height - Block height (only if in best chain)
- * @property {(BlockHash|null)=} nextBest - Hash of the next block in the best chain (only if in best chain and not tip)
+ * @property {(BlockHash|null)=} nextBest - Hash of the next block in the best chain (null if tip)
  */
 /**
  * Block information returned for timestamp queries
@@ -255,9 +259,9 @@
  * A single block weight data point.
  *
  * @typedef {Object} BlockWeightEntry
- * @property {number} avgHeight
- * @property {number} timestamp
- * @property {number} avgWeight
+ * @property {Height} avgHeight
+ * @property {Timestamp} timestamp
+ * @property {Weight} avgWeight
  */
 /**
  * Unsigned cents (u64) - for values that should never be negative.
@@ -342,17 +346,20 @@
  * A transaction in a CPFP relationship
  *
  * @typedef {Object} CpfpEntry
- * @property {Txid} txid
- * @property {Weight} weight
- * @property {Sats} fee
+ * @property {Txid} txid - Transaction ID
+ * @property {Weight} weight - Transaction weight
+ * @property {Sats} fee - Transaction fee (sats)
  */
 /**
  * CPFP (Child Pays For Parent) information for a transaction
  *
  * @typedef {Object} CpfpInfo
- * @property {CpfpEntry[]} ancestors
- * @property {CpfpEntry[]} descendants
- * @property {FeeRate} effectiveFeePerVsize
+ * @property {CpfpEntry[]} ancestors - Ancestor transactions in the CPFP chain
+ * @property {(CpfpEntry|null)=} bestDescendant - Best (highest fee rate) descendant, if any
+ * @property {CpfpEntry[]} descendants - Descendant transactions in the CPFP chain
+ * @property {FeeRate} effectiveFeePerVsize - Effective fee rate considering CPFP relationships (sat/vB)
+ * @property {Sats} fee - Transaction fee (sats)
+ * @property {VSize} adjustedVsize - Adjusted virtual size (accounting for sigops)
  */
 /**
  * Data range with output format for API query parameters
@@ -386,14 +393,16 @@
  * @typedef {Object} DifficultyAdjustment
  * @property {number} progressPercent - Progress through current difficulty epoch (0-100%)
  * @property {number} difficultyChange - Estimated difficulty change at next retarget (%)
- * @property {number} estimatedRetargetDate - Estimated Unix timestamp of next retarget
+ * @property {number} estimatedRetargetDate - Estimated timestamp of next retarget (milliseconds)
  * @property {number} remainingBlocks - Blocks remaining until retarget
- * @property {number} remainingTime - Estimated seconds until retarget
+ * @property {number} remainingTime - Estimated time until retarget (milliseconds)
  * @property {number} previousRetarget - Previous difficulty adjustment (%)
+ * @property {Timestamp} previousTime - Timestamp of most recent retarget (seconds)
  * @property {Height} nextRetargetHeight - Height of next retarget
- * @property {number} timeAvg - Average block time in current epoch (seconds)
- * @property {number} adjustedTimeAvg - Time-adjusted average (accounting for timestamp manipulation)
+ * @property {number} timeAvg - Average block time in current epoch (milliseconds)
+ * @property {number} adjustedTimeAvg - Time-adjusted average (milliseconds)
  * @property {number} timeOffset - Time offset from expected schedule (seconds)
+ * @property {number} expectedBlocks - Expected blocks based on wall clock time since epoch start
  */
 /**
  * A single difficulty adjustment entry.
@@ -406,12 +415,13 @@
  * @property {number} changePercent
  */
 /**
- * A single difficulty data point.
+ * A single difficulty data point in the hashrate summary.
  *
  * @typedef {Object} DifficultyEntry
- * @property {Timestamp} timestamp - Unix timestamp of the difficulty adjustment.
- * @property {number} difficulty - Difficulty value.
- * @property {Height} height - Block height of the adjustment.
+ * @property {Timestamp} time - Unix timestamp of the difficulty adjustment
+ * @property {Height} height - Block height of the adjustment
+ * @property {number} difficulty - Difficulty value
+ * @property {number} adjustment - Adjustment ratio (new/previous, e.g. 1.068 = +6.8%)
  */
 /**
  * Disk usage of the indexed data
@@ -729,12 +739,13 @@
  * Pool information for detail view
  *
  * @typedef {Object} PoolDetailInfo
- * @property {number} id - Unique pool identifier
+ * @property {number} id - Pool identifier
  * @property {string} name - Pool name
  * @property {string} link - Pool website URL
- * @property {string[]} addrs - Known payout addresses
+ * @property {string[]} addresses - Known payout addresses
  * @property {string[]} regexes - Coinbase tag patterns (regexes)
  * @property {PoolSlug} slug - URL-friendly pool identifier
+ * @property {number} uniqueId - Unique pool identifier
  */
 /**
  * A single pool hashrate data point.
@@ -753,7 +764,7 @@
  * @property {PoolSlug} slug - URL-friendly pool identifier
  * @property {number} uniqueId - Unique numeric pool identifier
  */
-/** @typedef {("unknown"|"blockfills"|"ultimuspool"|"terrapool"|"luxor"|"onethash"|"btccom"|"bitfarms"|"huobipool"|"wayicn"|"canoepool"|"btctop"|"bitcoincom"|"pool175btc"|"gbminers"|"axbt"|"asicminer"|"bitminter"|"bitcoinrussia"|"btcserv"|"simplecoinus"|"btcguild"|"eligius"|"ozcoin"|"eclipsemc"|"maxbtc"|"triplemining"|"coinlab"|"pool50btc"|"ghashio"|"stminingcorp"|"bitparking"|"mmpool"|"polmine"|"kncminer"|"bitalo"|"f2pool"|"hhtt"|"megabigpower"|"mtred"|"nmcbit"|"yourbtcnet"|"givemecoins"|"braiinspool"|"antpool"|"multicoinco"|"bcpoolio"|"cointerra"|"kanopool"|"solock"|"ckpool"|"nicehash"|"bitclub"|"bitcoinaffiliatenetwork"|"btcc"|"bwpool"|"exxbw"|"bitsolo"|"bitfury"|"twentyoneinc"|"digitalbtc"|"eightbaochi"|"mybtccoinpool"|"tbdice"|"hashpool"|"nexious"|"bravomining"|"hotpool"|"okexpool"|"bcmonster"|"onehash"|"bixin"|"tatmaspool"|"viabtc"|"connectbtc"|"batpool"|"waterhole"|"dcexploration"|"dcex"|"btpool"|"fiftyeightcoin"|"bitcoinindia"|"shawnp0wers"|"phashio"|"rigpool"|"haozhuzhu"|"sevenpool"|"miningkings"|"hashbx"|"dpool"|"rawpool"|"haominer"|"helix"|"bitcoinukraine"|"poolin"|"secretsuperstar"|"tigerpoolnet"|"sigmapoolcom"|"okpooltop"|"hummerpool"|"tangpool"|"bytepool"|"spiderpool"|"novablock"|"miningcity"|"binancepool"|"minerium"|"lubiancom"|"okkong"|"aaopool"|"emcdpool"|"foundryusa"|"sbicrypto"|"arkpool"|"purebtccom"|"marapool"|"kucoinpool"|"entrustcharitypool"|"okminer"|"titan"|"pegapool"|"btcnuggets"|"cloudhashing"|"digitalxmintsy"|"telco214"|"btcpoolparty"|"multipool"|"transactioncoinmining"|"btcdig"|"trickysbtcpool"|"btcmp"|"eobot"|"unomp"|"patels"|"gogreenlight"|"bitcoinindiapool"|"ekanembtc"|"canoe"|"tiger"|"onem1x"|"zulupool"|"secpool"|"ocean"|"whitepool"|"wiz"|"wk057"|"futurebitapollosolo"|"carbonnegative"|"portlandhodl"|"phoenix"|"neopool"|"maxipool"|"bitfufupool"|"gdpool"|"miningdutch"|"publicpool"|"miningsquared"|"innopolistech"|"btclab"|"parasite"|"redrockpool"|"est3lar")} PoolSlug */
+/** @typedef {("unknown"|"blockfills"|"ultimuspool"|"terrapool"|"luxor"|"onethash"|"btccom"|"bitfarms"|"huobipool"|"wayicn"|"canoepool"|"btctop"|"bitcoincom"|"pool175btc"|"gbminers"|"axbt"|"asicminer"|"bitminter"|"bitcoinrussia"|"btcserv"|"simplecoinus"|"btcguild"|"eligius"|"ozcoin"|"eclipsemc"|"maxbtc"|"triplemining"|"coinlab"|"pool50btc"|"ghashio"|"stminingcorp"|"bitparking"|"mmpool"|"polmine"|"kncminer"|"bitalo"|"f2pool"|"hhtt"|"megabigpower"|"mtred"|"nmcbit"|"yourbtcnet"|"givemecoins"|"braiinspool"|"antpool"|"multicoinco"|"bcpoolio"|"cointerra"|"kanopool"|"solock"|"ckpool"|"nicehash"|"bitclub"|"bitcoinaffiliatenetwork"|"btcc"|"bwpool"|"exxbw"|"bitsolo"|"bitfury"|"twentyoneinc"|"digitalbtc"|"eightbaochi"|"mybtccoinpool"|"tbdice"|"hashpool"|"nexious"|"bravomining"|"hotpool"|"okexpool"|"bcmonster"|"onehash"|"bixin"|"tatmaspool"|"viabtc"|"connectbtc"|"batpool"|"waterhole"|"dcexploration"|"dcex"|"btpool"|"fiftyeightcoin"|"bitcoinindia"|"shawnp0wers"|"phashio"|"rigpool"|"haozhuzhu"|"sevenpool"|"miningkings"|"hashbx"|"dpool"|"rawpool"|"haominer"|"helix"|"bitcoinukraine"|"poolin"|"secretsuperstar"|"tigerpoolnet"|"sigmapoolcom"|"okpooltop"|"hummerpool"|"tangpool"|"bytepool"|"spiderpool"|"novablock"|"miningcity"|"binancepool"|"minerium"|"lubiancom"|"okkong"|"aaopool"|"emcdpool"|"foundryusa"|"sbicrypto"|"arkpool"|"purebtccom"|"marapool"|"kucoinpool"|"entrustcharitypool"|"okminer"|"titan"|"pegapool"|"btcnuggets"|"cloudhashing"|"digitalxmintsy"|"telco214"|"btcpoolparty"|"multipool"|"transactioncoinmining"|"btcdig"|"trickysbtcpool"|"btcmp"|"eobot"|"unomp"|"patels"|"gogreenlight"|"bitcoinindiapool"|"ekanembtc"|"canoe"|"tiger"|"onem1x"|"zulupool"|"secpool"|"ocean"|"whitepool"|"wiz"|"wk057"|"futurebitapollosolo"|"carbonnegative"|"portlandhodl"|"phoenix"|"neopool"|"maxipool"|"bitfufupool"|"gdpool"|"miningdutch"|"publicpool"|"miningsquared"|"innopolistech"|"btclab"|"parasite"|"redrockpool"|"est3lar"|"braiinssolo"|"solopool")} PoolSlug */
 /**
  * @typedef {Object} PoolSlugAndHeightParam
  * @property {PoolSlug} slug
@@ -775,6 +786,7 @@
  * @property {number} emptyBlocks - Number of empty blocks mined
  * @property {PoolSlug} slug - URL-friendly pool identifier
  * @property {number} share - Pool's share of total blocks (0.0 - 1.0)
+ * @property {number} poolUniqueId - Unique pool identifier
  */
 /**
  * Mining pools response for a time period
@@ -783,6 +795,8 @@
  * @property {PoolStats[]} pools - List of pools sorted by block count descending
  * @property {number} blockCount - Total blocks in the time period
  * @property {number} lastEstimatedHashrate - Estimated network hashrate (hashes per second)
+ * @property {number} lastEstimatedHashrate3d - Estimated network hashrate over last 3 days
+ * @property {number} lastEstimatedHashrate1w - Estimated network hashrate over last 1 week
  */
 /**
  * Current price response matching mempool.space /api/v1/prices format
@@ -990,12 +1004,12 @@
  * @property {Txid} txid
  * @property {TxVersion} version
  * @property {RawLockTime} locktime
+ * @property {TxIn[]} vin - Transaction inputs
+ * @property {TxOut[]} vout - Transaction outputs
  * @property {number} size - Transaction size in bytes
  * @property {Weight} weight - Transaction weight
  * @property {number} sigops - Number of signature operations
  * @property {Sats} fee - Transaction fee in satoshis
- * @property {TxIn[]} vin - Transaction inputs
- * @property {TxOut[]} vout - Transaction outputs
  * @property {TxStatus} status
  */
 /**
@@ -1008,13 +1022,15 @@
  *
  * @typedef {Object} TxIn
  * @property {Txid} txid - Transaction ID of the output being spent
- * @property {Vout} vout
+ * @property {Vout} vout - Output index being spent
  * @property {(TxOut|null)=} prevout - Information about the previous output being spent
- * @property {string} scriptsig - Signature script (for non-SegWit inputs)
+ * @property {string} scriptsig - Signature script (hex, for non-SegWit inputs)
  * @property {string} scriptsigAsm - Signature script in assembly format
+ * @property {string[]} witness - Witness data (hex-encoded stack items, present for SegWit inputs)
  * @property {boolean} isCoinbase - Whether this input is a coinbase (block reward) input
  * @property {number} sequence - Input sequence number
- * @property {?string=} innerRedeemscriptAsm - Inner redeemscript in assembly format (for P2SH-wrapped SegWit)
+ * @property {string} innerRedeemscriptAsm - Inner redeemscript in assembly (for P2SH-wrapped SegWit: scriptsig + witness both present)
+ * @property {string} innerWitnessscriptAsm - Inner witnessscript in assembly (for P2WSH: last witness item decoded as script)
  */
 /** @typedef {number} TxInIndex */
 /** @typedef {number} TxIndex */
@@ -5683,6 +5699,8 @@ function createTransferPattern(client, acc) {
  * @property {BlocksDominancePattern} parasite
  * @property {BlocksDominancePattern} redrockpool
  * @property {BlocksDominancePattern} est3lar
+ * @property {BlocksDominancePattern} braiinssolo
+ * @property {BlocksDominancePattern} solopool
  */
 
 /**
@@ -6746,7 +6764,9 @@ class BrkClient extends BrkClientBase {
     "btclab": "BTCLab",
     "parasite": "Parasite",
     "redrockpool": "RedRock Pool",
-    "est3lar": "Est3lar"
+    "est3lar": "Est3lar",
+    "braiinssolo": "Braiins Solo",
+    "solopool": "SoloPool.com"
   });
 
   TERM_NAMES = /** @type {const} */ ({
@@ -8712,6 +8732,8 @@ class BrkClient extends BrkClientBase {
           parasite: createBlocksDominancePattern(this, 'parasite'),
           redrockpool: createBlocksDominancePattern(this, 'redrockpool'),
           est3lar: createBlocksDominancePattern(this, 'est3lar'),
+          braiinssolo: createBlocksDominancePattern(this, 'braiinssolo'),
+          solopool: createBlocksDominancePattern(this, 'solopool'),
         },
       },
       prices: {

@@ -5,13 +5,13 @@ use std::{
     time::{Duration, Instant},
 };
 
-use derive_more::Deref;
-
 use axum::{
     body::{Body, Bytes},
     http::{HeaderMap, HeaderValue, Response, Uri, header},
 };
 use brk_query::AsyncQuery;
+use brk_types::{Addr, BlockHash, BlockHashPrefix, Height, Txid, Version};
+use derive_more::Deref;
 use jiff::Timestamp;
 use quick_cache::sync::{Cache, GuardResult};
 use serde::Serialize;
@@ -33,6 +33,80 @@ pub struct AppState {
 }
 
 impl AppState {
+    /// `Immutable` if height is >6 deep, `Tip` otherwise.
+    pub fn height_cache(&self, version: Version, height: Height) -> CacheStrategy {
+        let is_deep = self.sync(|q| (*q.height()).saturating_sub(*height) > 6);
+        if is_deep {
+            CacheStrategy::Immutable(version)
+        } else {
+            CacheStrategy::Tip
+        }
+    }
+
+    /// Smart address caching: checks mempool activity first, then on-chain.
+    /// - Address has mempool txs → `MempoolHash(addr_specific_hash)`
+    /// - No mempool, has on-chain activity → `BlockBound(last_activity_block)`
+    /// - Unknown address → `Tip`
+    pub fn addr_cache(&self, version: Version, addr: &Addr) -> CacheStrategy {
+        self.sync(|q| {
+            let mempool_hash = q.addr_mempool_hash(addr);
+            if mempool_hash != 0 {
+                return CacheStrategy::MempoolHash(mempool_hash);
+            }
+            q.addr_last_activity_height(addr)
+                .and_then(|h| {
+                    let block_hash = q.block_hash_by_height(h)?;
+                    Ok(CacheStrategy::BlockBound(
+                        version,
+                        BlockHashPrefix::from(&block_hash),
+                    ))
+                })
+                .unwrap_or(CacheStrategy::Tip)
+        })
+    }
+
+    /// `Immutable` if the block is >6 deep (status stable), `Tip` otherwise.
+    /// For block status which changes when the next block arrives.
+    pub fn block_status_cache(&self, version: Version, hash: &BlockHash) -> CacheStrategy {
+        self.sync(|q| {
+            q.height_by_hash(hash)
+                .map(|h| {
+                    if (*q.height()).saturating_sub(*h) > 6 {
+                        CacheStrategy::Immutable(version)
+                    } else {
+                        CacheStrategy::Tip
+                    }
+                })
+                .unwrap_or(CacheStrategy::Tip)
+        })
+    }
+
+    /// `BlockBound` if the block exists (reorg-safe via block hash), `Tip` if not found.
+    pub fn block_cache(&self, version: Version, hash: &BlockHash) -> CacheStrategy {
+        self.sync(|q| {
+            if q.height_by_hash(hash).is_ok() {
+                CacheStrategy::BlockBound(version, BlockHashPrefix::from(hash))
+            } else {
+                CacheStrategy::Tip
+            }
+        })
+    }
+
+    /// Mempool → `MempoolHash`, confirmed → `BlockBound`, unknown → `Tip`.
+    pub fn tx_cache(&self, version: Version, txid: &Txid) -> CacheStrategy {
+        self.sync(|q| {
+            if q.mempool().is_some_and(|m| m.get_txs().contains(txid)) {
+                let hash = q.mempool().map(|m| m.next_block_hash()).unwrap_or(0);
+                return CacheStrategy::MempoolHash(hash);
+            } else if let Ok((_, height)) = q.resolve_tx(txid)
+                && let Ok(block_hash) = q.block_hash_by_height(height)
+            {
+                return CacheStrategy::BlockBound(version, BlockHashPrefix::from(&block_hash));
+            }
+            CacheStrategy::Tip
+        })
+    }
+
     pub fn mempool_cache(&self) -> CacheStrategy {
         let hash = self.sync(|q| q.mempool().map(|m| m.next_block_hash()).unwrap_or(0));
         CacheStrategy::MempoolHash(hash)
@@ -51,7 +125,7 @@ impl AppState {
         F: FnOnce(&brk_query::Query, ContentEncoding) -> brk_error::Result<Bytes> + Send + 'static,
     {
         let encoding = ContentEncoding::negotiate(headers);
-        let params = CacheParams::resolve(&strategy, || self.sync(|q| q.height().into()));
+        let params = CacheParams::resolve(&strategy, || self.sync(|q| q.tip_hash_prefix()));
         if params.matches_etag(headers) {
             return ResponseExtended::new_not_modified();
         }

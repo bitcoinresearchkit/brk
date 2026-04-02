@@ -275,7 +275,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                        State(state): State<AppState>,
                        Path(path): Path<LegacySeriesWithIndex>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.latest(&path.metric, path.index)
                         })
                         .await
@@ -301,7 +301,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                        State(state): State<AppState>,
                        Path(path): Path<LegacySeriesWithIndex>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.len(&path.metric, path.index)
                         })
                         .await
@@ -327,7 +327,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                        State(state): State<AppState>,
                        Path(path): Path<LegacySeriesWithIndex>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.version(&path.metric, path.index)
                         })
                         .await
@@ -376,7 +376,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                        Path(params): Path<CostBasisCohortParam>,
                        State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Height, &uri, move |q| {
+                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.cost_basis_dates(&params.cohort)
                         })
                         .await

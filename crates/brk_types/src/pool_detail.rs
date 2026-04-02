@@ -31,7 +31,7 @@ pub struct PoolDetail {
 /// Pool information for detail view
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PoolDetailInfo {
-    /// Unique pool identifier
+    /// Pool identifier
     pub id: u8,
 
     /// Pool name
@@ -41,13 +41,16 @@ pub struct PoolDetailInfo {
     pub link: Cow<'static, str>,
 
     /// Known payout addresses
-    pub addrs: Vec<Cow<'static, str>>,
+    pub addresses: Vec<Cow<'static, str>>,
 
     /// Coinbase tag patterns (regexes)
     pub regexes: Vec<Cow<'static, str>>,
 
     /// URL-friendly pool identifier
     pub slug: PoolSlug,
+
+    /// Unique pool identifier
+    pub unique_id: u8,
 }
 
 impl From<&'static Pool> for PoolDetailInfo {
@@ -56,9 +59,10 @@ impl From<&'static Pool> for PoolDetailInfo {
             id: pool.unique_id(),
             name: Cow::Borrowed(pool.name),
             link: Cow::Borrowed(pool.link),
-            addrs: pool.addrs.iter().map(|&s| Cow::Borrowed(s)).collect(),
+            addresses: pool.addrs.iter().map(|&s| Cow::Borrowed(s)).collect(),
             regexes: pool.tags.iter().map(|&s| Cow::Borrowed(s)).collect(),
             slug: pool.slug(),
+            unique_id: pool.unique_id(),
         }
     }
 }

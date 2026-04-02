@@ -85,7 +85,7 @@ impl Query {
         let time_offset = expected_time as i64 - elapsed_time as i64;
 
         // Calculate previous retarget using stored difficulty values
-        let previous_retarget = if current_epoch_usize > 0 {
+        let (previous_retarget, previous_time) = if current_epoch_usize > 0 {
             let prev_epoch = Epoch::from(current_epoch_usize - 1);
             let prev_epoch_start = computer
                 .indexes
@@ -107,26 +107,33 @@ impl Query {
                 .collect_one(epoch_start_height)
                 .unwrap();
 
-            if *prev_difficulty > 0.0 {
+            let retarget = if *prev_difficulty > 0.0 {
                 ((*curr_difficulty / *prev_difficulty) - 1.0) * 100.0
             } else {
                 0.0
-            }
+            };
+
+            (retarget, epoch_start_timestamp)
         } else {
-            0.0
+            (0.0, epoch_start_timestamp)
         };
+
+        // Expected blocks based on wall clock time since epoch start
+        let expected_blocks = elapsed_time as f64 / TARGET_BLOCK_TIME as f64;
 
         Ok(DifficultyAdjustment {
             progress_percent,
             difficulty_change,
-            estimated_retarget_date,
+            estimated_retarget_date: estimated_retarget_date * 1000,
             remaining_blocks,
-            remaining_time,
+            remaining_time: remaining_time * 1000,
             previous_retarget,
+            previous_time,
             next_retarget_height: Height::from(next_retarget_height),
-            time_avg,
-            adjusted_time_avg: time_avg,
+            time_avg: time_avg * 1000,
+            adjusted_time_avg: time_avg * 1000,
             time_offset,
+            expected_blocks,
         })
     }
 }

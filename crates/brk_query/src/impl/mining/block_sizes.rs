@@ -1,22 +1,18 @@
 use brk_error::Result;
-use brk_types::{BlockSizeEntry, BlockSizesWeights, BlockWeightEntry, TimePeriod};
-use vecdb::{ReadableOptionVec, VecIndex};
+use brk_types::{BlockSizeEntry, BlockSizesWeights, BlockWeightEntry, TimePeriod, Weight};
+use vecdb::ReadableVec;
 
-use super::day1_iter::Day1Iter;
+use super::block_window::BlockWindow;
 use crate::Query;
 
 impl Query {
     pub fn block_sizes_weights(&self, time_period: TimePeriod) -> Result<BlockSizesWeights> {
         let computer = self.computer();
-        let current_height = self.height();
-        let start = current_height
-            .to_usize()
-            .saturating_sub(time_period.block_count());
+        let bw = BlockWindow::new(self, time_period);
+        let timestamps = bw.timestamps(self);
 
-        let iter = Day1Iter::new(computer, start, current_height.to_usize());
-
-        // Rolling 24h median, sampled at day1 boundaries
-        let sizes_vec = &computer
+        // Batch read per-block rolling 24h medians for the range
+        let all_sizes = computer
             .blocks
             .size
             .size
@@ -24,8 +20,9 @@ impl Query {
             .distribution
             .median
             ._24h
-            .day1;
-        let weights_vec = &computer
+            .height
+            .collect_range_at(bw.start, bw.end);
+        let all_weights = computer
             .blocks
             .weight
             .weight
@@ -33,35 +30,30 @@ impl Query {
             .distribution
             .median
             ._24h
-            .day1;
+            .height
+            .collect_range_at(bw.start, bw.end);
 
-        let entries: Vec<_> = iter.collect(|di, ts, h| {
-            let size: Option<u64> = sizes_vec.collect_one_flat(di).map(|s| *s);
-            let weight: Option<u64> = weights_vec.collect_one_flat(di).map(|w| *w);
-            Some((u32::from(h), (*ts), size, weight))
-        });
+        // Sample at window midpoints
+        let mut sizes = Vec::with_capacity(timestamps.len());
+        let mut weights = Vec::with_capacity(timestamps.len());
 
-        let sizes = entries
-            .iter()
-            .filter_map(|(h, ts, size, _)| {
-                size.map(|s| BlockSizeEntry {
-                    avg_height: *h,
+        for ((avg_height, start, _end), ts) in bw.iter().zip(&timestamps) {
+            let mid = start - bw.start + (bw.window / 2).min(all_sizes.len().saturating_sub(1));
+            if let Some(&size) = all_sizes.get(mid) {
+                sizes.push(BlockSizeEntry {
+                    avg_height,
                     timestamp: *ts,
-                    avg_size: s,
-                })
-            })
-            .collect();
-
-        let weights = entries
-            .iter()
-            .filter_map(|(h, ts, _, weight)| {
-                weight.map(|w| BlockWeightEntry {
-                    avg_height: *h,
+                    avg_size: *size,
+                });
+            }
+            if let Some(&weight) = all_weights.get(mid) {
+                weights.push(BlockWeightEntry {
+                    avg_height,
                     timestamp: *ts,
-                    avg_weight: w,
-                })
-            })
-            .collect();
+                    avg_weight: Weight::from(*weight),
+                });
+            }
+        }
 
         Ok(BlockSizesWeights { sizes, weights })
     }

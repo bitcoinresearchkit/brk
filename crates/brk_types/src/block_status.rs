@@ -13,8 +13,7 @@ pub struct BlockStatus {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub height: Option<Height>,
 
-    /// Hash of the next block in the best chain (only if in best chain and not tip)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Hash of the next block in the best chain (null if tip)
     pub next_best: Option<BlockHash>,
 }
 

@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::Height;
+use crate::{Height, Timestamp};
 
 /// Difficulty adjustment information.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -15,35 +15,43 @@ pub struct DifficultyAdjustment {
     #[schemars(example = 2.5)]
     pub difficulty_change: f64,
 
-    /// Estimated Unix timestamp of next retarget
-    #[schemars(example = 1627762478)]
+    /// Estimated timestamp of next retarget (milliseconds)
+    #[schemars(example = 1627762478000_u64)]
     pub estimated_retarget_date: u64,
 
     /// Blocks remaining until retarget
     #[schemars(example = 1121)]
     pub remaining_blocks: u32,
 
-    /// Estimated seconds until retarget
-    #[schemars(example = 665977)]
+    /// Estimated time until retarget (milliseconds)
+    #[schemars(example = 665977000_u64)]
     pub remaining_time: u64,
 
     /// Previous difficulty adjustment (%)
     #[schemars(example = -4.8)]
     pub previous_retarget: f64,
 
+    /// Timestamp of most recent retarget (seconds)
+    #[schemars(example = 1627000000_u64)]
+    pub previous_time: Timestamp,
+
     /// Height of next retarget
     #[schemars(example = 741888)]
     pub next_retarget_height: Height,
 
-    /// Average block time in current epoch (seconds)
-    #[schemars(example = 580)]
+    /// Average block time in current epoch (milliseconds)
+    #[schemars(example = 580000_u64)]
     pub time_avg: u64,
 
-    /// Time-adjusted average (accounting for timestamp manipulation)
-    #[schemars(example = 580)]
+    /// Time-adjusted average (milliseconds)
+    #[schemars(example = 580000_u64)]
     pub adjusted_time_avg: u64,
 
     /// Time offset from expected schedule (seconds)
     #[schemars(example = 0)]
     pub time_offset: i64,
+
+    /// Expected blocks based on wall clock time since epoch start
+    #[schemars(example = 1827.21)]
+    pub expected_blocks: f64,
 }

@@ -47,7 +47,7 @@ impl ResponseExtended for Response<Body> {
     where
         T: Serialize,
     {
-        let params = CacheParams::version();
+        let params = CacheParams::static_version();
         if params.matches_etag(headers) {
             return Self::new_not_modified();
         }

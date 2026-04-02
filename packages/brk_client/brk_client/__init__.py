@@ -49,11 +49,13 @@ BasisPointsSigned16 = int
 BasisPointsSigned32 = int
 # Bitcoin amount as floating point (1 BTC = 100,000,000 satoshis)
 Bitcoin = float
-PoolSlug = Literal["unknown", "blockfills", "ultimuspool", "terrapool", "luxor", "onethash", "btccom", "bitfarms", "huobipool", "wayicn", "canoepool", "btctop", "bitcoincom", "pool175btc", "gbminers", "axbt", "asicminer", "bitminter", "bitcoinrussia", "btcserv", "simplecoinus", "btcguild", "eligius", "ozcoin", "eclipsemc", "maxbtc", "triplemining", "coinlab", "pool50btc", "ghashio", "stminingcorp", "bitparking", "mmpool", "polmine", "kncminer", "bitalo", "f2pool", "hhtt", "megabigpower", "mtred", "nmcbit", "yourbtcnet", "givemecoins", "braiinspool", "antpool", "multicoinco", "bcpoolio", "cointerra", "kanopool", "solock", "ckpool", "nicehash", "bitclub", "bitcoinaffiliatenetwork", "btcc", "bwpool", "exxbw", "bitsolo", "bitfury", "twentyoneinc", "digitalbtc", "eightbaochi", "mybtccoinpool", "tbdice", "hashpool", "nexious", "bravomining", "hotpool", "okexpool", "bcmonster", "onehash", "bixin", "tatmaspool", "viabtc", "connectbtc", "batpool", "waterhole", "dcexploration", "dcex", "btpool", "fiftyeightcoin", "bitcoinindia", "shawnp0wers", "phashio", "rigpool", "haozhuzhu", "sevenpool", "miningkings", "hashbx", "dpool", "rawpool", "haominer", "helix", "bitcoinukraine", "poolin", "secretsuperstar", "tigerpoolnet", "sigmapoolcom", "okpooltop", "hummerpool", "tangpool", "bytepool", "spiderpool", "novablock", "miningcity", "binancepool", "minerium", "lubiancom", "okkong", "aaopool", "emcdpool", "foundryusa", "sbicrypto", "arkpool", "purebtccom", "marapool", "kucoinpool", "entrustcharitypool", "okminer", "titan", "pegapool", "btcnuggets", "cloudhashing", "digitalxmintsy", "telco214", "btcpoolparty", "multipool", "transactioncoinmining", "btcdig", "trickysbtcpool", "btcmp", "eobot", "unomp", "patels", "gogreenlight", "bitcoinindiapool", "ekanembtc", "canoe", "tiger", "onem1x", "zulupool", "secpool", "ocean", "whitepool", "wiz", "wk057", "futurebitapollosolo", "carbonnegative", "portlandhodl", "phoenix", "neopool", "maxipool", "bitfufupool", "gdpool", "miningdutch", "publicpool", "miningsquared", "innopolistech", "btclab", "parasite", "redrockpool", "est3lar"]
+PoolSlug = Literal["unknown", "blockfills", "ultimuspool", "terrapool", "luxor", "onethash", "btccom", "bitfarms", "huobipool", "wayicn", "canoepool", "btctop", "bitcoincom", "pool175btc", "gbminers", "axbt", "asicminer", "bitminter", "bitcoinrussia", "btcserv", "simplecoinus", "btcguild", "eligius", "ozcoin", "eclipsemc", "maxbtc", "triplemining", "coinlab", "pool50btc", "ghashio", "stminingcorp", "bitparking", "mmpool", "polmine", "kncminer", "bitalo", "f2pool", "hhtt", "megabigpower", "mtred", "nmcbit", "yourbtcnet", "givemecoins", "braiinspool", "antpool", "multicoinco", "bcpoolio", "cointerra", "kanopool", "solock", "ckpool", "nicehash", "bitclub", "bitcoinaffiliatenetwork", "btcc", "bwpool", "exxbw", "bitsolo", "bitfury", "twentyoneinc", "digitalbtc", "eightbaochi", "mybtccoinpool", "tbdice", "hashpool", "nexious", "bravomining", "hotpool", "okexpool", "bcmonster", "onehash", "bixin", "tatmaspool", "viabtc", "connectbtc", "batpool", "waterhole", "dcexploration", "dcex", "btpool", "fiftyeightcoin", "bitcoinindia", "shawnp0wers", "phashio", "rigpool", "haozhuzhu", "sevenpool", "miningkings", "hashbx", "dpool", "rawpool", "haominer", "helix", "bitcoinukraine", "poolin", "secretsuperstar", "tigerpoolnet", "sigmapoolcom", "okpooltop", "hummerpool", "tangpool", "bytepool", "spiderpool", "novablock", "miningcity", "binancepool", "minerium", "lubiancom", "okkong", "aaopool", "emcdpool", "foundryusa", "sbicrypto", "arkpool", "purebtccom", "marapool", "kucoinpool", "entrustcharitypool", "okminer", "titan", "pegapool", "btcnuggets", "cloudhashing", "digitalxmintsy", "telco214", "btcpoolparty", "multipool", "transactioncoinmining", "btcdig", "trickysbtcpool", "btcmp", "eobot", "unomp", "patels", "gogreenlight", "bitcoinindiapool", "ekanembtc", "canoe", "tiger", "onem1x", "zulupool", "secpool", "ocean", "whitepool", "wiz", "wk057", "futurebitapollosolo", "carbonnegative", "portlandhodl", "phoenix", "neopool", "maxipool", "bitfufupool", "gdpool", "miningdutch", "publicpool", "miningsquared", "innopolistech", "btclab", "parasite", "redrockpool", "est3lar", "braiinssolo", "solopool"]
 # Fee rate in sats/vB
 FeeRate = float
 # Transaction or block weight in weight units (WU)
 Weight = int
+# US Dollar amount as floating point
+Dollars = float
 # Block height
 Height = int
 # UNIX timestamp in seconds
@@ -74,8 +76,6 @@ CentsSigned = int
 # Used for precise accumulation of investor cap values: Σ(price² × sats).
 # investor_price = investor_cap_raw / realized_cap_raw
 CentsSquaredSats = int
-# US Dollar amount as floating point
-Dollars = float
 # Closing price value for a time period
 Close = Dollars
 # Cohort identifier for cost basis distribution.
@@ -95,6 +95,8 @@ CostBasisBucket = Literal["raw", "lin200", "lin500", "lin1000", "log10", "log50"
 # Value type for cost basis distribution.
 # Options: supply (BTC), realized (USD, price × supply), unrealized (USD, spot × supply).
 CostBasisValue = Literal["supply", "realized", "unrealized"]
+# Virtual size in vbytes (weight / 4, rounded up)
+VSize = int
 # Date in YYYYMMDD format stored as u32
 Date = int
 # Output format for API responses
@@ -121,8 +123,6 @@ Hour4 = int
 SeriesName = str
 # Lowest price value for a time period
 Low = Dollars
-# Virtual size in vbytes (weight / 4, rounded up)
-VSize = int
 Minute10 = int
 Minute30 = int
 Month1 = int
@@ -288,6 +288,8 @@ class AddrValidation(TypedDict):
         iswitness: Whether this is a witness address
         witness_version: Witness version (0 for P2WPKH/P2WSH, 1 for P2TR)
         witness_program: Witness program in hex
+        error_locations: Error locations (empty array for most errors)
+        error: Error message for invalid addresses
     """
     isvalid: bool
     address: Optional[str]
@@ -296,6 +298,8 @@ class AddrValidation(TypedDict):
     iswitness: Optional[bool]
     witness_version: Optional[int]
     witness_program: Optional[str]
+    error_locations: Optional[List[int]]
+    error: Optional[str]
 
 class BlockCountParam(TypedDict):
     """
@@ -312,10 +316,12 @@ class BlockPool(TypedDict):
         id: Unique pool identifier
         name: Pool name
         slug: URL-friendly pool identifier
+        minerNames: Alternative miner names (if identified)
     """
     id: int
     name: str
     slug: PoolSlug
+    minerNames: Optional[str]
 
 class BlockExtras(TypedDict):
     """
@@ -379,10 +385,14 @@ class BlockExtras(TypedDict):
 class BlockFeesEntry(TypedDict):
     """
     A single block fees data point.
+
+    Attributes:
+        USD: BTC/USD price at that height
     """
     avgHeight: Height
     timestamp: Timestamp
     avgFees: Sats
+    USD: Dollars
 
 class BlockHashParam(TypedDict):
     hash: BlockHash
@@ -412,32 +422,30 @@ class BlockInfo(TypedDict):
     Attributes:
         id: Block hash
         height: Block height
-        version: Block version, used for soft fork signaling
-        previousblockhash: Previous block hash
-        merkle_root: Merkle root of the transaction tree
-        time: Block timestamp as claimed by the miner (Unix time)
-        bits: Compact target (bits)
-        nonce: Nonce used to produce a valid block hash
+        version: Block version
         timestamp: Block timestamp (Unix time)
-        tx_count: Number of transactions in the block
+        tx_count: Number of transactions
         size: Block size in bytes
         weight: Block weight in weight units
+        merkle_root: Merkle root of the transaction tree
+        previousblockhash: Previous block hash
         mediantime: Median time of the last 11 blocks
+        nonce: Nonce
+        bits: Compact target (bits)
         difficulty: Block difficulty
     """
     id: BlockHash
     height: Height
     version: int
-    previousblockhash: BlockHash
-    merkle_root: str
-    time: int
-    bits: int
-    nonce: int
     timestamp: Timestamp
     tx_count: int
     size: int
     weight: Weight
+    merkle_root: str
+    previousblockhash: BlockHash
     mediantime: Timestamp
+    nonce: int
+    bits: int
     difficulty: float
 
 class BlockInfoV1(TypedDict):
@@ -447,59 +455,63 @@ class BlockInfoV1(TypedDict):
     Attributes:
         id: Block hash
         height: Block height
-        version: Block version, used for soft fork signaling
-        previousblockhash: Previous block hash
-        merkle_root: Merkle root of the transaction tree
-        time: Block timestamp as claimed by the miner (Unix time)
-        bits: Compact target (bits)
-        nonce: Nonce used to produce a valid block hash
+        version: Block version
         timestamp: Block timestamp (Unix time)
-        tx_count: Number of transactions in the block
+        tx_count: Number of transactions
         size: Block size in bytes
         weight: Block weight in weight units
+        merkle_root: Merkle root of the transaction tree
+        previousblockhash: Previous block hash
         mediantime: Median time of the last 11 blocks
+        nonce: Nonce
+        bits: Compact target (bits)
         difficulty: Block difficulty
+        stale: Whether this block is stale (orphaned)
         extras: Extended block data
     """
     id: BlockHash
     height: Height
     version: int
-    previousblockhash: BlockHash
-    merkle_root: str
-    time: int
-    bits: int
-    nonce: int
     timestamp: Timestamp
     tx_count: int
     size: int
     weight: Weight
+    merkle_root: str
+    previousblockhash: BlockHash
     mediantime: Timestamp
+    nonce: int
+    bits: int
     difficulty: float
+    stale: bool
     extras: BlockExtras
 
 class BlockRewardsEntry(TypedDict):
     """
     A single block rewards data point.
+
+    Attributes:
+        USD: BTC/USD price at that height
     """
-    avgHeight: int
-    timestamp: int
-    avgRewards: int
+    avgHeight: Height
+    timestamp: Timestamp
+    avgRewards: Sats
+    USD: Dollars
 
 class BlockSizeEntry(TypedDict):
     """
     A single block size data point.
     """
-    avgHeight: int
-    timestamp: int
+    avgHeight: Height
+    timestamp: Timestamp
     avgSize: int
 
 class BlockWeightEntry(TypedDict):
     """
     A single block weight data point.
     """
-    avgHeight: int
-    timestamp: int
-    avgWeight: int
+    avgHeight: Height
+    timestamp: Timestamp
+    avgWeight: Weight
 
 class BlockSizesWeights(TypedDict):
     """
@@ -515,7 +527,7 @@ class BlockStatus(TypedDict):
     Attributes:
         in_best_chain: Whether this block is in the best chain
         height: Block height (only if in best chain)
-        next_best: Hash of the next block in the best chain (only if in best chain and not tip)
+        next_best: Hash of the next block in the best chain (null if tip)
     """
     in_best_chain: bool
     height: Union[Height, None]
@@ -561,6 +573,11 @@ class CostBasisQuery(TypedDict):
 class CpfpEntry(TypedDict):
     """
     A transaction in a CPFP relationship
+
+    Attributes:
+        txid: Transaction ID
+        weight: Transaction weight
+        fee: Transaction fee (sats)
     """
     txid: Txid
     weight: Weight
@@ -569,10 +586,21 @@ class CpfpEntry(TypedDict):
 class CpfpInfo(TypedDict):
     """
     CPFP (Child Pays For Parent) information for a transaction
+
+    Attributes:
+        ancestors: Ancestor transactions in the CPFP chain
+        bestDescendant: Best (highest fee rate) descendant, if any
+        descendants: Descendant transactions in the CPFP chain
+        effectiveFeePerVsize: Effective fee rate considering CPFP relationships (sat/vB)
+        fee: Transaction fee (sats)
+        adjustedVsize: Adjusted virtual size (accounting for sigops)
     """
     ancestors: List[CpfpEntry]
+    bestDescendant: Union[CpfpEntry, None]
     descendants: List[CpfpEntry]
     effectiveFeePerVsize: FeeRate
+    fee: Sats
+    adjustedVsize: VSize
 
 class DataRangeFormat(TypedDict):
     """
@@ -628,14 +656,16 @@ class DifficultyAdjustment(TypedDict):
     Attributes:
         progressPercent: Progress through current difficulty epoch (0-100%)
         difficultyChange: Estimated difficulty change at next retarget (%)
-        estimatedRetargetDate: Estimated Unix timestamp of next retarget
+        estimatedRetargetDate: Estimated timestamp of next retarget (milliseconds)
         remainingBlocks: Blocks remaining until retarget
-        remainingTime: Estimated seconds until retarget
+        remainingTime: Estimated time until retarget (milliseconds)
         previousRetarget: Previous difficulty adjustment (%)
+        previousTime: Timestamp of most recent retarget (seconds)
         nextRetargetHeight: Height of next retarget
-        timeAvg: Average block time in current epoch (seconds)
-        adjustedTimeAvg: Time-adjusted average (accounting for timestamp manipulation)
+        timeAvg: Average block time in current epoch (milliseconds)
+        adjustedTimeAvg: Time-adjusted average (milliseconds)
         timeOffset: Time offset from expected schedule (seconds)
+        expectedBlocks: Expected blocks based on wall clock time since epoch start
     """
     progressPercent: float
     difficultyChange: float
@@ -643,10 +673,12 @@ class DifficultyAdjustment(TypedDict):
     remainingBlocks: int
     remainingTime: int
     previousRetarget: float
+    previousTime: Timestamp
     nextRetargetHeight: Height
     timeAvg: int
     adjustedTimeAvg: int
     timeOffset: int
+    expectedBlocks: float
 
 class DifficultyAdjustmentEntry(TypedDict):
     """
@@ -660,16 +692,18 @@ class DifficultyAdjustmentEntry(TypedDict):
 
 class DifficultyEntry(TypedDict):
     """
-    A single difficulty data point.
+    A single difficulty data point in the hashrate summary.
 
     Attributes:
-        timestamp: Unix timestamp of the difficulty adjustment.
-        difficulty: Difficulty value.
-        height: Block height of the adjustment.
+        time: Unix timestamp of the difficulty adjustment
+        height: Block height of the adjustment
+        difficulty: Difficulty value
+        adjustment: Adjustment ratio (new/previous, e.g. 1.068 = +6.8%)
     """
-    timestamp: Timestamp
-    difficulty: float
+    time: Timestamp
     height: Height
+    difficulty: float
+    adjustment: float
 
 class DiskUsage(TypedDict):
     """
@@ -974,19 +1008,21 @@ class PoolDetailInfo(TypedDict):
     Pool information for detail view
 
     Attributes:
-        id: Unique pool identifier
+        id: Pool identifier
         name: Pool name
         link: Pool website URL
-        addrs: Known payout addresses
+        addresses: Known payout addresses
         regexes: Coinbase tag patterns (regexes)
         slug: URL-friendly pool identifier
+        unique_id: Unique pool identifier
     """
     id: int
     name: str
     link: str
-    addrs: List[str]
+    addresses: List[str]
     regexes: List[str]
     slug: PoolSlug
+    unique_id: int
 
 class PoolDetail(TypedDict):
     """
@@ -1053,6 +1089,7 @@ class PoolStats(TypedDict):
         emptyBlocks: Number of empty blocks mined
         slug: URL-friendly pool identifier
         share: Pool's share of total blocks (0.0 - 1.0)
+        poolUniqueId: Unique pool identifier
     """
     poolId: int
     name: str
@@ -1062,6 +1099,7 @@ class PoolStats(TypedDict):
     emptyBlocks: int
     slug: PoolSlug
     share: float
+    poolUniqueId: int
 
 class PoolsSummary(TypedDict):
     """
@@ -1071,10 +1109,14 @@ class PoolsSummary(TypedDict):
         pools: List of pools sorted by block count descending
         blockCount: Total blocks in the time period
         lastEstimatedHashrate: Estimated network hashrate (hashes per second)
+        lastEstimatedHashrate3d: Estimated network hashrate over last 3 days
+        lastEstimatedHashrate1w: Estimated network hashrate over last 1 week
     """
     pools: List[PoolStats]
     blockCount: int
     lastEstimatedHashrate: int
+    lastEstimatedHashrate3d: int
+    lastEstimatedHashrate1w: int
 
 class Prices(TypedDict):
     """
@@ -1235,21 +1277,26 @@ class TxIn(TypedDict):
 
     Attributes:
         txid: Transaction ID of the output being spent
+        vout: Output index being spent
         prevout: Information about the previous output being spent
-        scriptsig: Signature script (for non-SegWit inputs)
+        scriptsig: Signature script (hex, for non-SegWit inputs)
         scriptsig_asm: Signature script in assembly format
+        witness: Witness data (hex-encoded stack items, present for SegWit inputs)
         is_coinbase: Whether this input is a coinbase (block reward) input
         sequence: Input sequence number
-        inner_redeemscript_asm: Inner redeemscript in assembly format (for P2SH-wrapped SegWit)
+        inner_redeemscript_asm: Inner redeemscript in assembly (for P2SH-wrapped SegWit: scriptsig + witness both present)
+        inner_witnessscript_asm: Inner witnessscript in assembly (for P2WSH: last witness item decoded as script)
     """
     txid: Txid
     vout: Vout
     prevout: Union[TxOut, None]
     scriptsig: str
     scriptsig_asm: str
+    witness: List[str]
     is_coinbase: bool
     sequence: int
-    inner_redeemscript_asm: Optional[str]
+    inner_redeemscript_asm: str
+    inner_witnessscript_asm: str
 
 class TxStatus(TypedDict):
     """
@@ -1271,23 +1318,23 @@ class Transaction(TypedDict):
     Transaction information compatible with mempool.space API format
 
     Attributes:
+        vin: Transaction inputs
+        vout: Transaction outputs
         size: Transaction size in bytes
         weight: Transaction weight
         sigops: Number of signature operations
         fee: Transaction fee in satoshis
-        vin: Transaction inputs
-        vout: Transaction outputs
     """
     index: Union[TxIndex, None]
     txid: Txid
     version: TxVersion
     locktime: RawLockTime
+    vin: List[TxIn]
+    vout: List[TxOut]
     size: int
     weight: Weight
     sigops: int
     fee: Sats
-    vin: List[TxIn]
-    vout: List[TxOut]
     status: TxStatus
 
 class TxOutspend(TypedDict):
@@ -4935,6 +4982,8 @@ class SeriesTree_Pools_Minor:
         self.parasite: BlocksDominancePattern = BlocksDominancePattern(client, 'parasite')
         self.redrockpool: BlocksDominancePattern = BlocksDominancePattern(client, 'redrockpool')
         self.est3lar: BlocksDominancePattern = BlocksDominancePattern(client, 'est3lar')
+        self.braiinssolo: BlocksDominancePattern = BlocksDominancePattern(client, 'braiinssolo')
+        self.solopool: BlocksDominancePattern = BlocksDominancePattern(client, 'solopool')
 
 class SeriesTree_Pools:
     """Series tree node."""
@@ -5952,6 +6001,7 @@ class BrkClient(BrkClientBase):
       "bixin": "Bixin",
       "blockfills": "BlockFills",
       "braiinspool": "Braiins Pool",
+      "braiinssolo": "Braiins Solo",
       "bravomining": "Bravo Mining",
       "btcc": "BTCC",
       "btccom": "BTC.com",
@@ -6063,6 +6113,7 @@ class BrkClient(BrkClientBase):
       "sigmapoolcom": "Sigmapool.com",
       "simplecoinus": "simplecoin.us",
       "solock": "Solo CK",
+      "solopool": "SoloPool.com",
       "spiderpool": "SpiderPool",
       "stminingcorp": "ST Mining Corp",
       "tangpool": "Tangpool",

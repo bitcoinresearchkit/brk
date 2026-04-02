@@ -42,7 +42,7 @@ pub fn iter_difficulty_epochs(
         let epoch_difficulty = *epoch_to_difficulty.collect_one(epoch).unwrap_or_default();
 
         let change_percent = match prev_difficulty {
-            Some(prev) if prev > 0.0 => ((epoch_difficulty / prev) - 1.0) * 100.0,
+            Some(prev) if prev > 0.0 => epoch_difficulty / prev,
             _ => 0.0,
         };
 

@@ -6139,6 +6139,8 @@ pub struct SeriesTree_Pools_Minor {
     pub parasite: BlocksDominancePattern,
     pub redrockpool: BlocksDominancePattern,
     pub est3lar: BlocksDominancePattern,
+    pub braiinssolo: BlocksDominancePattern,
+    pub solopool: BlocksDominancePattern,
 }
 
 impl SeriesTree_Pools_Minor {
@@ -6284,6 +6286,8 @@ impl SeriesTree_Pools_Minor {
             parasite: BlocksDominancePattern::new(client.clone(), "parasite".to_string()),
             redrockpool: BlocksDominancePattern::new(client.clone(), "redrockpool".to_string()),
             est3lar: BlocksDominancePattern::new(client.clone(), "est3lar".to_string()),
+            braiinssolo: BlocksDominancePattern::new(client.clone(), "braiinssolo".to_string()),
+            solopool: BlocksDominancePattern::new(client.clone(), "solopool".to_string()),
         }
     }
 }
