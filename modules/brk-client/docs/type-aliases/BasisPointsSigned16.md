@@ -8,6 +8,6 @@
 
 > **BasisPointsSigned16** = `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:91](https://github.com/bitcoinresearchkit/brk/blob/83edef4806773ef7225b7c0de863c44bd953169d/modules/brk-client/index.js#L91)
+Defined in: [Developer/brk/modules/brk-client/index.js:93](https://github.com/bitcoinresearchkit/brk/blob/6cd45c1f1f755807c6e6ab6ba61b54aff4b07f3b/modules/brk-client/index.js#L93)
 
 ## Type Parameters
