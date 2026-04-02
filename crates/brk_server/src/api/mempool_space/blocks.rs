@@ -199,7 +199,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                 "/api/blocks/tip/hash",
                 get_with(
                     async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
-                        state.cached_text(&headers, CacheStrategy::Tip, &uri, |q| q.block_hash_by_height(q.height()).map(|h| h.to_string())).await
+                        state.cached_text(&headers, CacheStrategy::Tip, &uri, |q| Ok(q.tip_blockhash().to_string())).await
                     },
                     |op| {
                         op.id("get_block_tip_hash")

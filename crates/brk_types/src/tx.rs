@@ -8,15 +8,19 @@ use vecdb::CheckedSub;
 /// Transaction information compatible with mempool.space API format
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Transaction {
+    /// Internal transaction index (brk-specific, not in mempool.space)
     #[schemars(example = TxIndex::new(0))]
     pub index: Option<TxIndex>,
 
+    /// Transaction ID
     #[schemars(example = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b")]
     pub txid: Txid,
 
+    /// Transaction version
     #[schemars(example = 2)]
     pub version: TxVersion,
 
+    /// Transaction lock time
     #[schemars(example = 0)]
     #[serde(rename = "locktime")]
     pub lock_time: RawLockTime,
@@ -47,6 +51,7 @@ pub struct Transaction {
     #[schemars(example = Sats::new(31))]
     pub fee: Sats,
 
+    /// Confirmation status (confirmed, block height/hash/time)
     pub status: TxStatus,
 }
 

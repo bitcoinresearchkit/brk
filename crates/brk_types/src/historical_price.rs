@@ -6,7 +6,9 @@ use crate::{Dollars, Timestamp};
 /// Current price response matching mempool.space /api/v1/prices format
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct Prices {
+    /// Unix timestamp
     pub time: Timestamp,
+    /// BTC/USD price
     #[serde(rename = "USD")]
     pub usd: Dollars,
 }
@@ -14,7 +16,9 @@ pub struct Prices {
 /// Historical price response
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct HistoricalPrice {
+    /// Price data points
     pub prices: Vec<HistoricalPriceEntry>,
+    /// Exchange rates (currently empty)
     #[serde(rename = "exchangeRates")]
     pub exchange_rates: ExchangeRates,
 }
@@ -22,7 +26,9 @@ pub struct HistoricalPrice {
 /// A single price data point
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct HistoricalPriceEntry {
+    /// Unix timestamp
     pub time: u64,
+    /// BTC/USD price
     #[serde(rename = "USD")]
     pub usd: Dollars,
 }

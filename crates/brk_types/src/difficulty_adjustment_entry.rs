@@ -8,9 +8,13 @@ use crate::{Height, Timestamp};
 /// Serializes as array: [timestamp, height, difficulty, change_percent]
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct DifficultyAdjustmentEntry {
+    /// Unix timestamp of the adjustment
     pub timestamp: Timestamp,
+    /// Block height of the adjustment
     pub height: Height,
+    /// Difficulty value
     pub difficulty: f64,
+    /// Adjustment ratio (new/previous, e.g. 1.068 = +6.8%)
     pub change_percent: f64,
 }
 

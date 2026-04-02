@@ -11,10 +11,13 @@ pub struct RewardStats {
     pub start_block: Height,
     /// Last block in the range
     pub end_block: Height,
+    /// Total coinbase rewards (subsidy + fees) in sats
     #[serde(serialize_with = "sats_as_string")]
     pub total_reward: Sats,
+    /// Total transaction fees in sats
     #[serde(serialize_with = "sats_as_string")]
     pub total_fee: Sats,
+    /// Total number of transactions
     #[serde(serialize_with = "u64_as_string")]
     pub total_tx: u64,
 }

@@ -3,12 +3,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Sats, Transaction, Txid, VSize};
 
-/// Simplified mempool transaction for the recent transactions endpoint
+/// Simplified mempool transaction for the `/api/mempool/recent` endpoint.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MempoolRecentTx {
+    /// Transaction ID
     pub txid: Txid,
+    /// Transaction fee (sats)
     pub fee: Sats,
+    /// Virtual size (vbytes)
     pub vsize: VSize,
+    /// Total output value (sats)
     pub value: Sats,
 }
 
