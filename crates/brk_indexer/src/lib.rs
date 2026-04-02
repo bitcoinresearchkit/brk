@@ -2,13 +2,13 @@
 
 use std::{
     fs,
-    path::Path,
+    path::{Path, PathBuf},
     thread::{self, sleep},
     time::{Duration, Instant},
 };
 
 use brk_error::Result;
-use brk_reader::Reader;
+use brk_reader::{Reader, XORBytes};
 use brk_rpc::Client;
 use brk_types::Height;
 use fjall::PersistMode;
@@ -33,6 +33,7 @@ pub use stores::Stores;
 pub use vecs::*;
 
 pub struct Indexer<M: StorageMode = Rw> {
+    path: PathBuf,
     pub vecs: Vecs<M>,
     pub stores: Stores,
 }
@@ -42,6 +43,7 @@ impl ReadOnlyClone for Indexer {
 
     fn read_only_clone(&self) -> Indexer<Ro> {
         Indexer {
+            path: self.path.clone(),
             vecs: self.vecs.read_only_clone(),
             stores: self.stores.clone(),
         }
@@ -75,7 +77,11 @@ impl Indexer {
             let stores = Stores::forced_import(&indexed_path, VERSION)?;
             info!("Imported stores in {:?}", i.elapsed());
 
-            Ok(Self { vecs, stores })
+            Ok(Self {
+                path: indexed_path.clone(),
+                vecs,
+                stores,
+            })
         };
 
         match try_import() {
@@ -108,6 +114,23 @@ impl Indexer {
         self.index_(reader, client, exit, true)
     }
 
+    fn check_xor_bytes(&mut self, reader: &Reader) -> Result<()> {
+        let current = reader.xor_bytes();
+        let cached = XORBytes::from(self.path.as_path());
+
+        if cached == current {
+            return Ok(());
+        }
+
+        info!("XOR bytes changed, full reset...");
+        self.vecs.reset()?;
+        self.stores.reset()?;
+
+        fs::write(self.path.join("xor.dat"), *current)?;
+
+        Ok(())
+    }
+
     fn index_(
         &mut self,
         reader: &Reader,
@@ -116,6 +139,8 @@ impl Indexer {
         check_collisions: bool,
     ) -> Result<Indexes> {
         self.vecs.db.sync_bg_tasks()?;
+
+        self.check_xor_bytes(reader)?;
 
         debug!("Starting indexing...");
 

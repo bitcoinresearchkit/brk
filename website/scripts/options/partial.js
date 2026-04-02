@@ -59,11 +59,11 @@ export function createPartialOptions() {
   return [
     ...(location.hostname === "localhost" || location.hostname === "127.0.0.1"
       ? [
-          {
+          /** @type {any} */ ({
             name: "Explorer",
             kind: "explorer",
             title: "Explorer",
-          },
+          }),
         ]
       : []),
     {
