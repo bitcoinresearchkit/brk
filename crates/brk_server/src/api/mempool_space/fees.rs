@@ -5,9 +5,7 @@ use axum::{
 };
 use brk_types::{MempoolBlock, RecommendedFees};
 
-use crate::extended::TransformResponseExtended;
-
-use super::AppState;
+use crate::{AppState, extended::TransformResponseExtended};
 
 pub trait FeesRoutes {
     fn add_fees_routes(self) -> Self;

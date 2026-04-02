@@ -9,9 +9,7 @@ use brk_types::{
     BlockTimestamp, HeightParam, TimestampParam, Transaction, TxIndex, Txid,
 };
 
-use crate::{CacheStrategy, extended::TransformResponseExtended};
-
-use super::AppState;
+use crate::{AppState, CacheStrategy, extended::TransformResponseExtended};
 
 pub trait BlockRoutes {
     fn add_block_routes(self) -> Self;

@@ -10,9 +10,7 @@ use brk_types::{
     ValidateAddrParam,
 };
 
-use crate::{CacheStrategy, extended::TransformResponseExtended};
-
-use super::AppState;
+use crate::{AppState, CacheStrategy, extended::TransformResponseExtended};
 
 pub trait AddrRoutes {
     fn add_addr_routes(self) -> Self;

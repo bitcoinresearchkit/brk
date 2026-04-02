@@ -273,7 +273,7 @@ impl ProfitabilityMetrics {
             ProfitabilityBucket::forced_import(db, name, version, indexes, cached_starts)
         })?;
 
-        let aggregate_version = version + Version::ONE;
+        let aggregate_version = version + Version::TWO;
 
         let profit = Profit::try_new(|name| {
             ProfitabilityBucket::forced_import(db, name, aggregate_version, indexes, cached_starts)

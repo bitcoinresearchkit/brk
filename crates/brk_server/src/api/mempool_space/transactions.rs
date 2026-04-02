@@ -7,13 +7,10 @@ use axum::{
     http::{HeaderMap, Uri},
 };
 use brk_types::{
-    CpfpInfo, MerkleProof, Transaction, TxOutspend, TxStatus, Txid, TxidParam, TxidVout,
-    TxidsParam,
+    CpfpInfo, MerkleProof, Transaction, TxOutspend, TxStatus, Txid, TxidParam, TxidVout, TxidsParam,
 };
 
-use crate::{CacheStrategy, extended::TransformResponseExtended};
-
-use super::AppState;
+use crate::{AppState, CacheStrategy, extended::TransformResponseExtended};
 
 pub trait TxRoutes {
     fn add_tx_routes(self) -> Self;
@@ -26,7 +23,7 @@ impl TxRoutes for ApiRouter<AppState> {
             "/api/v1/cpfp/{txid}",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(txid): Path<TxidParam>, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::MempoolHash(0), &uri, move |q| q.cpfp(txid)).await
+                    state.cached_json(&headers, state.mempool_cache(), &uri, move |q| q.cpfp(txid)).await
                 },
                 |op| op
                     .id("get_cpfp")
@@ -223,7 +220,7 @@ impl TxRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
                     let params = TxidsParam::from_query(uri.query().unwrap_or(""));
-                    state.cached_json(&headers, CacheStrategy::MempoolHash(0), &uri, move |q| q.transaction_times(&params.txids)).await
+                    state.cached_json(&headers, state.mempool_cache(), &uri, move |q| q.transaction_times(&params.txids)).await
                 },
                 |op| op
                     .id("get_transaction_times")

@@ -5,9 +5,7 @@ use axum::{
 };
 use brk_types::{Dollars, MempoolInfo, MempoolRecentTx, Txid};
 
-use crate::extended::TransformResponseExtended;
-
-use super::AppState;
+use crate::{AppState, extended::TransformResponseExtended};
 
 pub trait MempoolRoutes {
     fn add_mempool_routes(self) -> Self;

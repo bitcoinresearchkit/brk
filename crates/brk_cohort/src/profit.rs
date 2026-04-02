@@ -208,6 +208,6 @@ impl<T> Profit<T> {
             .into_iter()
             .rev()
             .enumerate()
-            .map(move |(n, threshold)| (threshold, &ranges[..n + 1]))
+            .map(move |(n, threshold)| (threshold, &ranges[..n + 2]))
     }
 }

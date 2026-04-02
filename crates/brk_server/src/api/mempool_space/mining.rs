@@ -7,14 +7,11 @@ use axum::{
 };
 use brk_types::{
     BlockCountParam, BlockFeesEntry, BlockInfoV1, BlockRewardsEntry, BlockSizesWeights,
-    DifficultyAdjustmentEntry, HashrateSummary, PoolDetail,
-    PoolHashrateEntry, PoolInfo, PoolSlugAndHeightParam, PoolSlugParam, PoolsSummary,
-    RewardStats, TimePeriodParam,
+    DifficultyAdjustmentEntry, HashrateSummary, PoolDetail, PoolHashrateEntry, PoolInfo,
+    PoolSlugAndHeightParam, PoolSlugParam, PoolsSummary, RewardStats, TimePeriodParam,
 };
 
-use crate::{CacheStrategy, Error, extended::TransformResponseExtended};
-
-use super::AppState;
+use crate::{AppState, CacheStrategy, Error, extended::TransformResponseExtended};
 
 pub trait MiningRoutes {
     fn add_mining_routes(self) -> Self;

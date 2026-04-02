@@ -153,6 +153,6 @@ impl<T> Loss<T> {
             .into_iter()
             .rev()
             .enumerate()
-            .map(move |(n, threshold)| (threshold, &ranges[len - 1 - n..]))
+            .map(move |(n, threshold)| (threshold, &ranges[len - 2 - n..]))
     }
 }
