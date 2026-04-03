@@ -358,7 +358,7 @@ impl Query {
             entries.extend(Self::compute_hashrate_entries(
                 &shared,
                 &pool_cum,
-                &pool.name,
+                pool.name,
                 SAMPLE_WEEKLY,
             ));
         }
@@ -459,18 +459,18 @@ impl Query {
                     let h_prev = shared.first_heights[i - LOOKBACK_DAYS].to_usize();
                     let total_blocks = h_now.saturating_sub(h_prev);
 
-                    if total_blocks > 0 {
-                        if let Some(hr) = shared.daily_hashrate[i].as_ref() {
-                            let network_hr = f64::from(**hr);
-                            let share = pool_blocks as f64 / total_blocks as f64;
-                            let day = Day1::from(shared.start_day + i);
-                            entries.push(PoolHashrateEntry {
-                                timestamp: day.to_timestamp(),
-                                avg_hashrate: (network_hr * share) as u128,
-                                share,
-                                pool_name: pool_name.to_string(),
-                            });
-                        }
+                    if total_blocks > 0
+                        && let Some(hr) = shared.daily_hashrate[i].as_ref()
+                    {
+                        let network_hr = **hr;
+                        let share = pool_blocks as f64 / total_blocks as f64;
+                        let day = Day1::from(shared.start_day + i);
+                        entries.push(PoolHashrateEntry {
+                            timestamp: day.to_timestamp(),
+                            avg_hashrate: (network_hr * share) as u128,
+                            share,
+                            pool_name: pool_name.to_string(),
+                        });
                     }
                 }
             }

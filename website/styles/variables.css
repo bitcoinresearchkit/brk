@@ -8,7 +8,6 @@
   --dark-gray: oklch(20% 0 0);
   --light-black: oklch(17.5% 0 0);
   --black: oklch(15% 0 0);
-  /*oklch(0.2038 0.0076 196.57)*/
   --red: oklch(0.607 0.241 26.328);
   --orange: oklch(67.64% 0.191 44.41);
   --amber: oklch(0.7175 0.1835 64.199);
@@ -33,6 +32,11 @@
   --border-color: light-dark(var(--light-gray), var(--dark-gray));
   --inv-border-color: light-dark(var(--dark-gray), var(--light-gray));
   --off-border-color: light-dark(var(--dark-white), var(--light-black));
+
+  --font-mono: "Lilex", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  --font-serif: Instrument, Charter, "Bitstream Charter", "Sitka Text",
+    Cambria, serif;
 
   --font-size-xs: 0.75rem;
   --line-height-xs: calc(1 / 0.75);

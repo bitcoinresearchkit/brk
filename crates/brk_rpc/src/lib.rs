@@ -140,7 +140,7 @@ impl Client {
                 let witness = txin
                     .witness
                     .iter()
-                    .map(|w| bitcoin::hex::DisplayHex::to_lower_hex_string(w))
+                    .map(bitcoin::hex::DisplayHex::to_lower_hex_string)
                     .collect();
 
                 Ok(TxIn {

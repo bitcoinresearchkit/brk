@@ -42,7 +42,8 @@ impl Stores {
 
         let database = match brk_store::open_database(path) {
             Ok(database) => database,
-            Err(_) if can_retry => {
+            Err(err) if can_retry => {
+                info!("Failed to open stores at {path:?}: {err:?}, deleting and retrying");
                 fs::remove_dir_all(path)?;
                 return Self::forced_import_inner(parent, version, false);
             }
@@ -84,7 +85,7 @@ impl Stores {
             )
         };
 
-        Ok(Self {
+        let stores = Self {
             db: database.clone(),
 
             addr_type_to_addr_hash_to_addr_index: ByAddrType::new_with_index(
@@ -113,7 +114,16 @@ impl Stores {
                 Kind::Recent,
                 5,
             )?,
-        })
+        };
+
+        debug!(
+            "Stores imported: txid_prefix empty={}, blockhash empty={}, keyspace_count={}",
+            stores.txid_prefix_to_tx_index.is_empty()?,
+            stores.blockhash_prefix_to_height.is_empty()?,
+            database.keyspace_count(),
+        );
+
+        Ok(stores)
     }
 
     pub fn starting_height(&self) -> Height {
@@ -412,3 +422,4 @@ impl Stores {
         Ok(())
     }
 }
+

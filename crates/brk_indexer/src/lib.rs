@@ -308,35 +308,13 @@ impl Indexer {
         drop(readers);
 
         let lock = exit.lock();
-        let tasks = self.stores.take_all_pending_ingests(indexes.height)?;
+        self.stores.commit(indexes.height)?;
         self.vecs.stamped_write(indexes.height)?;
-        let fjall_db = self.stores.db.clone();
 
         self.vecs.db.run_bg(move |db| {
             let _lock = lock;
-
             sleep(Duration::from_secs(5));
-
-            info!("Exporting...");
-            let i = Instant::now();
-
-            if !tasks.is_empty() {
-                let i = Instant::now();
-                for task in tasks {
-                    task().map_err(vecdb::RawDBError::other)?;
-                }
-                debug!("Stores committed in {:?}", i.elapsed());
-
-                let i = Instant::now();
-                fjall_db
-                    .persist(PersistMode::SyncData)
-                    .map_err(RawDBError::other)?;
-                debug!("Stores persisted in {:?}", i.elapsed());
-            }
-
             db.compact()?;
-
-            info!("Exported in {:?}", i.elapsed());
             Ok(())
         });
 

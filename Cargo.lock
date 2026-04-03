@@ -711,7 +711,9 @@ dependencies = [
  "brk_types",
  "byteview",
  "fjall",
+ "rayon",
  "rustc-hash",
+ "tempfile",
 ]
 
 [[package]]

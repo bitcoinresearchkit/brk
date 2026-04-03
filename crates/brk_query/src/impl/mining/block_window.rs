@@ -134,7 +134,7 @@ impl BlockWindow {
 
     /// Number of windows in this range.
     fn count(&self) -> usize {
-        (self.end - self.start + self.window - 1) / self.window
+        (self.end - self.start).div_ceil(self.window)
     }
 
     /// Iterate windows, yielding (avg_height, window_start, window_end) for each.

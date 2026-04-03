@@ -47,11 +47,11 @@ a {
 }
 
 aside {
-  min-width: 0;
+  /*min-width: 0;*/
   position: relative;
-  height: 100%;
-  width: 100%;
-  overflow-y: auto;
+  /*height: 100%;*/
+  /*width: 100%;*/
+  /*overflow-y: auto;*/
   flex: 1;
 
   @media (max-width: 767px) {
@@ -64,7 +64,7 @@ aside {
   }
 
   body > &[hidden] {
-    display: flex !important;
+    display: block !important;
   }
 }
 
@@ -103,7 +103,7 @@ h3 {
 h1,
 h2,
 h3 {
-  font-family: instrument;
+  font-family: var(--font-serif);
   letter-spacing: 0.05rem;
   font-weight: 400;
 }

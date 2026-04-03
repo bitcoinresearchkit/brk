@@ -36,12 +36,13 @@
 }
 
 html {
-  font-family:
-    "Lilex", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  font-family: var(--font-mono);
 }
 
 h1 {
-  font-family:
-    Instrument, Charter, "Bitstream Charter", "Sitka Text", Cambria, serif;
+  font-family: var(--font-serif);
+}
+
+code {
+  font-family: var(--font-mono);
 }

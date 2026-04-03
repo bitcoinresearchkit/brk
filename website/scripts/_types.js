@@ -54,6 +54,7 @@
  * @typedef {Brk._0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern} Ratio1ySdPattern
  * @typedef {Brk.Dollars} Dollars
  * @typedef {Brk.BlockInfo} BlockInfo
+ * @typedef {Brk.BlockHash} BlockHash
  * @typedef {Brk.BlockInfoV1} BlockInfoV1
  * ActivePriceRatioPattern: ratio pattern with price (extended)
  * @typedef {Brk.BpsPriceRatioPattern} ActivePriceRatioPattern

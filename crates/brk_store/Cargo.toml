@@ -16,3 +16,7 @@ brk_types = { workspace = true }
 byteview = { workspace = true }
 fjall = { workspace = true }
 rustc-hash = { workspace = true }
+
+[dev-dependencies]
+rayon.workspace = true
+tempfile = "3.27.0"

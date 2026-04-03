@@ -5,11 +5,20 @@ import { brk } from "../client.js";
 let chain;
 
 /** @type {HTMLDivElement} */
+let details;
+
+/** @type {HTMLDivElement} */
 let sentinel;
+
+/** @type {Map<BlockHash, BlockInfoV1>} */
+const blocksByHash = new Map();
 
 let newestHeight = -1;
 let oldestHeight = Infinity;
 let loading = false;
+
+/** @type {HTMLDivElement | null} */
+let selectedCube = null;
 
 /** @type {number | undefined} */
 let pollInterval;
@@ -32,9 +41,17 @@ export function init() {
   chain.id = "chain";
   explorerElement.append(chain);
 
+  const blocks = window.document.createElement("div");
+  blocks.classList.add("blocks");
+  chain.append(blocks);
+
+  details = window.document.createElement("div");
+  details.id = "block-details";
+  explorerElement.append(details);
+
   sentinel = window.document.createElement("div");
   sentinel.classList.add("sentinel");
-  chain.append(sentinel);
+  blocks.append(sentinel);
 
   // Infinite scroll: load older blocks when sentinel becomes visible
   new IntersectionObserver((entries) => {
@@ -72,11 +89,14 @@ async function loadLatest() {
 
     // First load: insert all blocks before sentinel
     if (newestHeight === -1) {
-      for (const block of blocks) {
-        sentinel.after(createBlockCube(block));
+      const cubes = blocks.map((b) => createBlockCube(b));
+      for (const cube of cubes) {
+        sentinel.after(cube);
       }
       newestHeight = blocks[0].height;
       oldestHeight = blocks[blocks.length - 1].height;
+      // Select the tip by default
+      selectCube(cubes[0]);
     } else {
       // Subsequent polls: prepend only new blocks
       const newBlocks = blocks.filter((b) => b.height > newestHeight);
@@ -109,24 +129,124 @@ async function loadOlder() {
   loading = false;
 }
 
+/** @param {HTMLDivElement} cube */
+function selectCube(cube) {
+  if (selectedCube) {
+    selectedCube.classList.remove("selected");
+  }
+  selectedCube = cube;
+  if (cube) {
+    cube.classList.add("selected");
+    const hash = cube.dataset.hash;
+    if (hash) {
+      renderDetails(blocksByHash.get(hash));
+    }
+  }
+}
+
+/** @param {BlockInfoV1 | undefined} block */
+function renderDetails(block) {
+  details.innerHTML = "";
+  if (!block) return;
+
+  const title = window.document.createElement("h1");
+  title.textContent = "Block ";
+  const titleCode = window.document.createElement("code");
+  titleCode.append(createHeightElement(block.height));
+  title.append(titleCode);
+  details.append(title);
+
+  const extras = block.extras;
+
+  /** @type {[string, string][]} */
+  const rows = [
+    ["Hash", block.id],
+    ["Previous Hash", block.previousblockhash],
+    ["Merkle Root", block.merkleRoot],
+    ["Timestamp", new Date(block.timestamp * 1000).toUTCString()],
+    ["Median Time", new Date(block.mediantime * 1000).toUTCString()],
+    ["Version", `0x${block.version.toString(16)}`],
+    ["Bits", block.bits.toString(16)],
+    ["Nonce", block.nonce.toLocaleString()],
+    ["Difficulty", Number(block.difficulty).toLocaleString()],
+    ["Size", `${(block.size / 1_000_000).toFixed(2)} MB`],
+    ["Weight", `${(block.weight / 1_000_000).toFixed(2)} MWU`],
+    ["Transactions", block.txCount.toLocaleString()],
+  ];
+
+  if (extras) {
+    rows.push(
+      ["Pool", extras.pool.name],
+      ["Pool ID", extras.pool.id.toString()],
+      ["Pool Slug", extras.pool.slug],
+      ["Miner Names", extras.pool.minerNames || "N/A"],
+      ["Reward", `${(extras.reward / 1e8).toFixed(8)} BTC`],
+      ["Total Fees", `${(extras.totalFees / 1e8).toFixed(8)} BTC`],
+      ["Median Fee Rate", `${extras.medianFee.toFixed(2)} sat/vB`],
+      ["Avg Fee Rate", `${extras.avgFeeRate.toFixed(2)} sat/vB`],
+      ["Avg Fee", `${extras.avgFee.toLocaleString()} sat`],
+      ["Median Fee", `${extras.medianFeeAmt.toLocaleString()} sat`],
+      ["Fee Range", extras.feeRange.map((f) => f.toFixed(1)).join(", ") + " sat/vB"],
+      ["Fee Percentiles", extras.feePercentiles.map((f) => f.toLocaleString()).join(", ") + " sat"],
+      ["Avg Tx Size", `${extras.avgTxSize.toLocaleString()} B`],
+      ["Virtual Size", `${extras.virtualSize.toLocaleString()} vB`],
+      ["Inputs", extras.totalInputs.toLocaleString()],
+      ["Outputs", extras.totalOutputs.toLocaleString()],
+      ["Total Input Amount", `${(extras.totalInputAmt / 1e8).toFixed(8)} BTC`],
+      ["Total Output Amount", `${(extras.totalOutputAmt / 1e8).toFixed(8)} BTC`],
+      ["UTXO Set Change", extras.utxoSetChange.toLocaleString()],
+      ["UTXO Set Size", extras.utxoSetSize.toLocaleString()],
+      ["SegWit Txs", extras.segwitTotalTxs.toLocaleString()],
+      ["SegWit Size", `${extras.segwitTotalSize.toLocaleString()} B`],
+      ["SegWit Weight", `${extras.segwitTotalWeight.toLocaleString()} WU`],
+      ["Coinbase Address", extras.coinbaseAddress || "N/A"],
+      ["Coinbase Addresses", extras.coinbaseAddresses.join(", ") || "N/A"],
+      ["Coinbase Raw", extras.coinbaseRaw],
+      ["Coinbase Signature", extras.coinbaseSignature],
+      ["Coinbase Signature ASCII", extras.coinbaseSignatureAscii],
+      ["Header", extras.header],
+    );
+  }
+
+  for (const [label, value] of rows) {
+    const row = window.document.createElement("div");
+    row.classList.add("row");
+    const labelElement = window.document.createElement("span");
+    labelElement.classList.add("label");
+    labelElement.textContent = label;
+    const valueElement = window.document.createElement("span");
+    valueElement.classList.add("value");
+    valueElement.textContent = value;
+    row.append(labelElement, valueElement);
+    details.append(row);
+  }
+}
+
+/** @param {number} height */
+function createHeightElement(height) {
+  const container = window.document.createElement("span");
+  const str = height.toString();
+  const spanPrefix = window.document.createElement("span");
+  spanPrefix.style.opacity = "0.5";
+  spanPrefix.style.userSelect = "none";
+  spanPrefix.textContent = "#" + "0".repeat(7 - str.length);
+  const spanHeight = window.document.createElement("span");
+  spanHeight.textContent = str;
+  container.append(spanPrefix, spanHeight);
+  return container;
+}
+
 /** @param {BlockInfoV1} block */
 function createBlockCube(block) {
   const { cubeElement, leftFaceElement, rightFaceElement, topFaceElement } =
     createCube();
 
-  // cubeElement.style.setProperty("--face-color", `var(--${color})`);
+  cubeElement.dataset.hash = block.id;
+  blocksByHash.set(block.id, block);
+  cubeElement.addEventListener("click", () => selectCube(cubeElement));
 
   const heightElement = window.document.createElement("p");
-  const height = block.height.toString();
-  const prefixLength = 7 - height.length;
-  const spanPrefix = window.document.createElement("span");
-  spanPrefix.style.opacity = "0.5";
-  spanPrefix.style.userSelect = "none";
-  heightElement.append(spanPrefix);
-  spanPrefix.innerHTML = "#" + "0".repeat(prefixLength);
-  const spanHeight = window.document.createElement("span");
-  heightElement.append(spanHeight);
-  spanHeight.innerHTML = height;
+  heightElement.append(createHeightElement(block.height));
   rightFaceElement.append(heightElement);
 
   const feesElement = window.document.createElement("div");
