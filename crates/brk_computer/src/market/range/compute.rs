@@ -13,7 +13,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let price = &prices.spot.cents.height;
+        let price = &prices.cached_spot_cents;
 
         for (min_vec, max_vec, starts) in [
             (

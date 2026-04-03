@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{BlockPool, FeeRate, Sats, Weight};
+use crate::{BlockPool, Dollars, FeeRate, Sats, Weight};
 
 /// Extended block data matching mempool.space /api/v1/blocks extras
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -106,4 +106,7 @@ pub struct BlockExtras {
     /// Virtual size in vbytes
     #[serde(rename = "virtualSize")]
     pub virtual_size: f64,
+
+    /// USD price at block height
+    pub price: Dollars,
 }

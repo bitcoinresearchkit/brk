@@ -15,7 +15,7 @@ impl Vecs {
     ) -> Result<()> {
         self.high.cents.height.compute_all_time_high(
             starting_indexes.height,
-            &prices.spot.cents.height,
+            &prices.cached_spot_cents,
             exit,
         )?;
 
@@ -23,7 +23,7 @@ impl Vecs {
         self.days_since.height.compute_transform3(
             starting_indexes.height,
             &self.high.cents.height,
-            &prices.spot.cents.height,
+            &prices.cached_spot_cents,
             &indexes.timestamp.monotonic,
             |(i, ath, price, ts, slf)| {
                 if ath_ts.is_none() {
@@ -68,7 +68,7 @@ impl Vecs {
 
         self.drawdown.compute_drawdown(
             starting_indexes.height,
-            &prices.spot.cents.height,
+            &prices.cached_spot_cents,
             &self.high.cents.height,
             exit,
         )?;

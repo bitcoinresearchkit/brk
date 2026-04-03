@@ -5,8 +5,8 @@ use vecdb::{Database, EagerVec, ImportableVec};
 use super::Vecs;
 use crate::{indexes, internal::PerTxDistribution};
 
-/// Bump this when fee/feerate aggregation logic changes (e.g., skip coinbase).
-const VERSION: Version = Version::new(2);
+/// Bump this when fee/feerate aggregation logic changes (e.g., skip coinbase, skip zero-fee).
+const VERSION: Version = Version::new(3);
 
 impl Vecs {
     pub(crate) fn forced_import(

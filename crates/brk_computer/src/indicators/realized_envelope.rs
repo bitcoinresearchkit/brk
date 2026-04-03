@@ -1,7 +1,7 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, Height, Indexes, StoredI8, Version};
-use vecdb::{AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, WritableVec};
+use vecdb::{AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
     cointime, distribution, indexes,
@@ -123,7 +123,7 @@ impl RealizedEnvelope {
             exit,
         )?;
 
-        let spot = &prices.spot.cents.height;
+        let spot = &prices.cached_spot_cents;
 
         // Zone: spot vs own envelope bands (-4 to +4)
         self.compute_index(spot, starting_indexes, exit)?;
@@ -136,7 +136,7 @@ impl RealizedEnvelope {
 
     fn compute_index(
         &mut self,
-        spot: &EagerVec<PcoVec<Height, Cents>>,
+        spot: &impl ReadableVec<Height, Cents>,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
@@ -214,7 +214,7 @@ impl RealizedEnvelope {
     fn compute_score(
         &mut self,
         models: &[&RatioPerBlockPercentiles; 10],
-        spot: &EagerVec<PcoVec<Height, Cents>>,
+        spot: &impl ReadableVec<Height, Cents>,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {

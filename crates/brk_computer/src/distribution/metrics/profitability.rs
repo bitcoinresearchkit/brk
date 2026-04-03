@@ -126,7 +126,7 @@ impl ProfitabilityBucket {
 
         self.unrealized_pnl.all.height.compute_transform3(
             max_from,
-            &prices.spot.cents.height,
+            &prices.cached_spot_cents,
             &self.realized_cap.all.height,
             &self.supply.all.sats.height,
             |(i, spot, cap, supply, ..)| {
@@ -139,7 +139,7 @@ impl ProfitabilityBucket {
         )?;
         self.unrealized_pnl.sth.height.compute_transform3(
             max_from,
-            &prices.spot.cents.height,
+            &prices.cached_spot_cents,
             &self.realized_cap.sth.height,
             &self.supply.sth.sats.height,
             |(i, spot, cap, supply, ..)| {
@@ -153,7 +153,7 @@ impl ProfitabilityBucket {
 
         self.nupl.bps.height.compute_transform3(
             max_from,
-            &prices.spot.cents.height,
+            &prices.cached_spot_cents,
             &self.realized_cap.all.height,
             &self.supply.all.sats.height,
             |(i, spot, cap_dollars, supply_sats, ..)| {

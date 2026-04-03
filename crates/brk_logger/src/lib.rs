@@ -26,9 +26,8 @@ pub fn init(path: Option<&Path>) -> io::Result<()> {
     let level = std::env::var("LOG").unwrap_or_else(|_| DEFAULT_LEVEL.to_string());
 
     let directives = std::env::var("RUST_LOG").unwrap_or_else(|_| {
-        // fjall=off,lsm_tree=off
         format!(
-            "{level},bitcoin=off,bitcoincore_rpc=off,corepc=off,tracing=off,aide=off,tower_http=off"
+            "{level},bitcoin=off,bitcoincore_rpc=off,corepc=off,tracing=off,aide=off,fjall=off,lsm_tree=off,tower_http=off"
         )
     });
 

@@ -176,6 +176,7 @@ function renderDetails(block) {
 
   if (extras) {
     rows.push(
+      ["Price", `$${extras.price.toLocaleString()}`],
       ["Pool", extras.pool.name],
       ["Pool ID", extras.pool.id.toString()],
       ["Pool Slug", extras.pool.slug],

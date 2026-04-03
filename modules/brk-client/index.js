@@ -139,6 +139,7 @@
  * @property {number} utxoSetSize - Total UTXO set size at this height
  * @property {Sats} totalInputAmt - Total input amount in satoshis
  * @property {number} virtualSize - Virtual size in vbytes
+ * @property {Dollars} price - USD price at block height
  */
 /**
  * A single block fees data point.
@@ -6563,7 +6564,7 @@ function createTransferPattern(client, acc) {
  * @extends BrkClientBase
  */
 class BrkClient extends BrkClientBase {
-  VERSION = "v0.3.0-alpha.1";
+  VERSION = "v0.3.0-alpha.2";
 
   INDEXES = /** @type {const} */ ([
     "minute10",

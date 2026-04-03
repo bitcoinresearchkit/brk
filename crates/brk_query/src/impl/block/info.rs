@@ -21,7 +21,7 @@ impl Query {
     }
 
     pub fn block_by_height(&self, height: Height) -> Result<BlockInfo> {
-        let max_height = self.max_height();
+        let max_height = self.indexed_height();
         if height > max_height {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
@@ -31,7 +31,7 @@ impl Query {
     }
 
     pub fn block_by_height_v1(&self, height: Height) -> Result<BlockInfoV1> {
-        let max_height = self.max_height();
+        let max_height = self.height();
         if height > max_height {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
@@ -47,7 +47,7 @@ impl Query {
     }
 
     pub fn block_hash_by_height(&self, height: Height) -> Result<BlockHash> {
-        let max_height = self.max_height();
+        let max_height = self.indexed_height();
         if height > max_height {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
@@ -219,6 +219,7 @@ impl Query {
             .block
             .sats
             .collect_range_at(begin, end);
+        let prices = computer.prices.cached_spot_usd.collect_range_at(begin, end);
         let output_volumes = computer
             .mining
             .rewards
@@ -381,6 +382,7 @@ impl Query {
                 utxo_set_size: *utxo_set_sizes[i],
                 total_input_amt,
                 virtual_size: vsize as f64,
+                price: prices[i],
             };
 
             blocks.push(BlockInfoV1 { info, extras });
@@ -413,10 +415,6 @@ impl Query {
         let raw = self.reader().read_raw_bytes(position, HEADER_SIZE)?;
         bitcoin::block::Header::consensus_decode(&mut raw.as_slice())
             .map_err(|_| Error::Internal("Failed to decode block header"))
-    }
-
-    fn max_height(&self) -> Height {
-        Height::from(self.indexer().vecs.blocks.blockhash.len().saturating_sub(1))
     }
 
     fn resolve_block_range(&self, start_height: Option<Height>, count: u32) -> (usize, usize) {

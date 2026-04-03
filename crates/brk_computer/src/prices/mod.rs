@@ -6,7 +6,8 @@ use std::path::Path;
 
 use brk_traversable::Traversable;
 use brk_types::Version;
-use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
+use brk_types::{Cents, Dollars, Height};
+use vecdb::{CachedVec, Database, LazyVecFrom1, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::{
     indexes,
@@ -26,6 +27,11 @@ pub const DB_NAME: &str = "prices";
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub db: Database,
+
+    #[traversable(skip)]
+    pub cached_spot_cents: CachedVec<Height, Cents>,
+    #[traversable(skip)]
+    pub cached_spot_usd: LazyVecFrom1<Height, Dollars, Height, Cents>,
 
     pub split: SplitByUnit<M>,
     pub ohlc: OhlcByUnit<M>,
@@ -169,6 +175,13 @@ impl Vecs {
             sats: ohlc_sats,
         };
 
+        let cached_spot_cents = CachedVec::new(&price_cents.height);
+        let cached_spot_usd = LazyVecFrom1::transformed::<CentsUnsignedToDollars>(
+            "price",
+            version,
+            cached_spot_cents.read_only_boxed_clone(),
+        );
+
         let spot = PriceByUnit {
             usd: price_usd,
             cents: price_cents,
@@ -177,6 +190,8 @@ impl Vecs {
 
         Ok(Self {
             db: db.clone(),
+            cached_spot_cents,
+            cached_spot_usd,
             split,
             ohlc,
             spot,

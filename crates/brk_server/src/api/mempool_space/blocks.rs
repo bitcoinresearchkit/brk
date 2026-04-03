@@ -185,7 +185,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                 "/api/blocks/tip/height",
                 get_with(
                     async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
-                        state.cached_text(&headers, CacheStrategy::Tip, &uri, |q| Ok(q.height().to_string())).await
+                        state.cached_text(&headers, CacheStrategy::Tip, &uri, |q| Ok(q.indexed_height().to_string())).await
                     },
                     |op| {
                         op.id("get_block_tip_height")

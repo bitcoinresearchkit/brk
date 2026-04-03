@@ -98,6 +98,7 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
         let count_indexes_batch: Vec<brk_types::StoredU64> =
             count_indexes.collect_range_at(start, fi_len);
 
+        let zero = T::from(0_usize);
         let mut values: Vec<T> = Vec::new();
 
         first_indexes_batch
@@ -114,8 +115,11 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
                     &mut values,
                 );
 
+                if skip_count > 0 {
+                    values.retain(|v| *v > zero);
+                }
+
                 if values.is_empty() {
-                    let zero = T::from(0_usize);
                     for vec in [
                         &mut *min,
                         &mut *max,

@@ -50,12 +50,12 @@ BasisPointsSigned32 = int
 # Bitcoin amount as floating point (1 BTC = 100,000,000 satoshis)
 Bitcoin = float
 PoolSlug = Literal["unknown", "blockfills", "ultimuspool", "terrapool", "luxor", "onethash", "btccom", "bitfarms", "huobipool", "wayicn", "canoepool", "btctop", "bitcoincom", "pool175btc", "gbminers", "axbt", "asicminer", "bitminter", "bitcoinrussia", "btcserv", "simplecoinus", "btcguild", "eligius", "ozcoin", "eclipsemc", "maxbtc", "triplemining", "coinlab", "pool50btc", "ghashio", "stminingcorp", "bitparking", "mmpool", "polmine", "kncminer", "bitalo", "f2pool", "hhtt", "megabigpower", "mtred", "nmcbit", "yourbtcnet", "givemecoins", "braiinspool", "antpool", "multicoinco", "bcpoolio", "cointerra", "kanopool", "solock", "ckpool", "nicehash", "bitclub", "bitcoinaffiliatenetwork", "btcc", "bwpool", "exxbw", "bitsolo", "bitfury", "twentyoneinc", "digitalbtc", "eightbaochi", "mybtccoinpool", "tbdice", "hashpool", "nexious", "bravomining", "hotpool", "okexpool", "bcmonster", "onehash", "bixin", "tatmaspool", "viabtc", "connectbtc", "batpool", "waterhole", "dcexploration", "dcex", "btpool", "fiftyeightcoin", "bitcoinindia", "shawnp0wers", "phashio", "rigpool", "haozhuzhu", "sevenpool", "miningkings", "hashbx", "dpool", "rawpool", "haominer", "helix", "bitcoinukraine", "poolin", "secretsuperstar", "tigerpoolnet", "sigmapoolcom", "okpooltop", "hummerpool", "tangpool", "bytepool", "spiderpool", "novablock", "miningcity", "binancepool", "minerium", "lubiancom", "okkong", "aaopool", "emcdpool", "foundryusa", "sbicrypto", "arkpool", "purebtccom", "marapool", "kucoinpool", "entrustcharitypool", "okminer", "titan", "pegapool", "btcnuggets", "cloudhashing", "digitalxmintsy", "telco214", "btcpoolparty", "multipool", "transactioncoinmining", "btcdig", "trickysbtcpool", "btcmp", "eobot", "unomp", "patels", "gogreenlight", "bitcoinindiapool", "ekanembtc", "canoe", "tiger", "onem1x", "zulupool", "secpool", "ocean", "whitepool", "wiz", "wk057", "futurebitapollosolo", "carbonnegative", "portlandhodl", "phoenix", "neopool", "maxipool", "bitfufupool", "gdpool", "miningdutch", "publicpool", "miningsquared", "innopolistech", "btclab", "parasite", "redrockpool", "est3lar", "braiinssolo", "solopool"]
+# US Dollar amount as floating point
+Dollars = float
 # Fee rate in sats/vB
 FeeRate = float
 # Transaction or block weight in weight units (WU)
 Weight = int
-# US Dollar amount as floating point
-Dollars = float
 # Block height
 Height = int
 # UNIX timestamp in seconds
@@ -354,6 +354,7 @@ class BlockExtras(TypedDict):
         utxoSetSize: Total UTXO set size at this height
         totalInputAmt: Total input amount in satoshis
         virtualSize: Virtual size in vbytes
+        price: USD price at block height
     """
     totalFees: Sats
     medianFee: FeeRate
@@ -381,6 +382,7 @@ class BlockExtras(TypedDict):
     utxoSetSize: int
     totalInputAmt: Sats
     virtualSize: float
+    price: Dollars
 
 class BlockFeesEntry(TypedDict):
     """
@@ -6001,7 +6003,7 @@ class SeriesTree:
 class BrkClient(BrkClientBase):
     """Main BRK client with series tree and API methods."""
 
-    VERSION = "v0.3.0-alpha.1"
+    VERSION = "v0.3.0-alpha.2"
 
     INDEXES = [
       "minute10",
