@@ -6,7 +6,7 @@
 
 # Interface: MempoolRecentTx
 
-Defined in: [Developer/brk/modules/brk-client/index.js:614](https://github.com/bitcoinresearchkit/brk/blob/6cd45c1f1f755807c6e6ab6ba61b54aff4b07f3b/modules/brk-client/index.js#L614)
+Defined in: [Developer/brk/modules/brk-client/index.js:614](https://github.com/bitcoinresearchkit/brk/blob/5bf06530ce84cd1829c2f934e5baded9c9125d45/modules/brk-client/index.js#L614)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:614](https://github.com/b
 
 > **fee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:616](https://github.com/bitcoinresearchkit/brk/blob/6cd45c1f1f755807c6e6ab6ba61b54aff4b07f3b/modules/brk-client/index.js#L616)
+Defined in: [Developer/brk/modules/brk-client/index.js:616](https://github.com/bitcoinresearchkit/brk/blob/5bf06530ce84cd1829c2f934e5baded9c9125d45/modules/brk-client/index.js#L616)
 
 Transaction fee (sats)
 
@@ -24,7 +24,7 @@ Transaction fee (sats)
 
 > **txid**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:615](https://github.com/bitcoinresearchkit/brk/blob/6cd45c1f1f755807c6e6ab6ba61b54aff4b07f3b/modules/brk-client/index.js#L615)
+Defined in: [Developer/brk/modules/brk-client/index.js:615](https://github.com/bitcoinresearchkit/brk/blob/5bf06530ce84cd1829c2f934e5baded9c9125d45/modules/brk-client/index.js#L615)
 
 Transaction ID
 
@@ -34,7 +34,7 @@ Transaction ID
 
 > **value**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:618](https://github.com/bitcoinresearchkit/brk/blob/6cd45c1f1f755807c6e6ab6ba61b54aff4b07f3b/modules/brk-client/index.js#L618)
+Defined in: [Developer/brk/modules/brk-client/index.js:618](https://github.com/bitcoinresearchkit/brk/blob/5bf06530ce84cd1829c2f934e5baded9c9125d45/modules/brk-client/index.js#L618)
 
 Total output value (sats)
 
@@ -44,6 +44,6 @@ Total output value (sats)
 
 > **vsize**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:617](https://github.com/bitcoinresearchkit/brk/blob/6cd45c1f1f755807c6e6ab6ba61b54aff4b07f3b/modules/brk-client/index.js#L617)
+Defined in: [Developer/brk/modules/brk-client/index.js:617](https://github.com/bitcoinresearchkit/brk/blob/5bf06530ce84cd1829c2f934e5baded9c9125d45/modules/brk-client/index.js#L617)
 
 Virtual size (vbytes)

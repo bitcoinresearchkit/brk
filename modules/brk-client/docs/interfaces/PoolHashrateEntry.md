@@ -6,7 +6,7 @@
 
 # Interface: PoolHashrateEntry
 
-Defined in: [Developer/brk/modules/brk-client/index.js:752](https://github.com/bitcoinresearchkit/brk/blob/6cd45c1f1f755807c6e6ab6ba61b54aff4b07f3b/modules/brk-client/index.js#L752)
+Defined in: [Developer/brk/modules/brk-client/index.js:752](https://github.com/bitcoinresearchkit/brk/blob/5bf06530ce84cd1829c2f934e5baded9c9125d45/modules/brk-client/index.js#L752)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:752](https://github.com/b
 
 > **avgHashrate**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:754](https://github.com/bitcoinresearchkit/brk/blob/6cd45c1f1f755807c6e6ab6ba61b54aff4b07f3b/modules/brk-client/index.js#L754)
+Defined in: [Developer/brk/modules/brk-client/index.js:754](https://github.com/bitcoinresearchkit/brk/blob/5bf06530ce84cd1829c2f934e5baded9c9125d45/modules/brk-client/index.js#L754)
 
 Average hashrate (H/s).
 
@@ -24,7 +24,7 @@ Average hashrate (H/s).
 
 > **poolName**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:756](https://github.com/bitcoinresearchkit/brk/blob/6cd45c1f1f755807c6e6ab6ba61b54aff4b07f3b/modules/brk-client/index.js#L756)
+Defined in: [Developer/brk/modules/brk-client/index.js:756](https://github.com/bitcoinresearchkit/brk/blob/5bf06530ce84cd1829c2f934e5baded9c9125d45/modules/brk-client/index.js#L756)
 
 Pool name.
 
@@ -34,7 +34,7 @@ Pool name.
 
 > **share**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:755](https://github.com/bitcoinresearchkit/brk/blob/6cd45c1f1f755807c6e6ab6ba61b54aff4b07f3b/modules/brk-client/index.js#L755)
+Defined in: [Developer/brk/modules/brk-client/index.js:755](https://github.com/bitcoinresearchkit/brk/blob/5bf06530ce84cd1829c2f934e5baded9c9125d45/modules/brk-client/index.js#L755)
 
 Pool's share of total network hashrate.
 
@@ -44,6 +44,6 @@ Pool's share of total network hashrate.
 
 > **timestamp**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:753](https://github.com/bitcoinresearchkit/brk/blob/6cd45c1f1f755807c6e6ab6ba61b54aff4b07f3b/modules/brk-client/index.js#L753)
+Defined in: [Developer/brk/modules/brk-client/index.js:753](https://github.com/bitcoinresearchkit/brk/blob/5bf06530ce84cd1829c2f934e5baded9c9125d45/modules/brk-client/index.js#L753)
 
 Unix timestamp.
