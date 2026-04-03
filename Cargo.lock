@@ -711,9 +711,7 @@ dependencies = [
  "brk_types",
  "byteview",
  "fjall",
- "rayon",
  "rustc-hash",
- "tempfile",
 ]
 
 [[package]]
@@ -1307,9 +1305,9 @@ checksum = "5baebc0774151f905a1a2cc41989300b1e6fbb29aff0ceffa1064fdd3088d582"
 
 [[package]]
 name = "fjall"
-version = "3.1.2"
+version = "3.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a9530ff159bc3ad3a15da746da0f6e95375c2ac64708cbb85ec1ebd26761a84"
+checksum = "0ebf22b812878dcd767879cb19e03124fd62563dce6410f96538175fba0c132d"
 dependencies = [
  "byteorder-lite",
  "byteview",
@@ -1317,7 +1315,7 @@ dependencies = [
  "flume",
  "log",
  "lsm-tree",
- "lz4_flex",
+ "lz4_flex 0.11.6",
  "tempfile",
  "xxhash-rust",
 ]
@@ -2086,9 +2084,9 @@ checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
 name = "lsm-tree"
-version = "3.1.2"
+version = "3.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d67f95fd716870329c30aaeedf87f23d426564e6ce46efa045a91444faf2a19"
+checksum = "e9bfd2a6ea0c1d430c13643002f35800a87f200fc8ac4827f18a2db9d9fd0644"
 dependencies = [
  "byteorder-lite",
  "byteview",
@@ -2096,7 +2094,7 @@ dependencies = [
  "enum_dispatch",
  "interval-heap",
  "log",
- "lz4_flex",
+ "lz4_flex 0.11.6",
  "quick_cache",
  "rustc-hash",
  "self_cell",
@@ -2108,12 +2106,18 @@ dependencies = [
 
 [[package]]
 name = "lz4_flex"
-version = "0.13.0"
+version = "0.11.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db9a0d582c2874f68138a16ce1867e0ffde6c0bb0a0df85e1f36d04146db488a"
+checksum = "373f5eceeeab7925e0c1098212f2fbc4d416adec9d35051a6ab251e824c1854a"
 dependencies = [
  "twox-hash",
 ]
+
+[[package]]
+name = "lz4_flex"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db9a0d582c2874f68138a16ce1867e0ffde6c0bb0a0df85e1f36d04146db488a"
 
 [[package]]
 name = "matchit"
@@ -3439,7 +3443,7 @@ dependencies = [
  "itoa",
  "libc",
  "log",
- "lz4_flex",
+ "lz4_flex 0.13.0",
  "parking_lot",
  "pco",
  "rawdb",

@@ -116,13 +116,6 @@ impl Stores {
             )?,
         };
 
-        debug!(
-            "Stores imported: txid_prefix empty={}, blockhash empty={}, keyspace_count={}",
-            stores.txid_prefix_to_tx_index.is_empty()?,
-            stores.blockhash_prefix_to_height.is_empty()?,
-            database.keyspace_count(),
-        );
-
         Ok(stores)
     }
 
@@ -409,17 +402,5 @@ impl Stores {
         }
     }
 
-    pub fn reset(&mut self) -> Result<()> {
-        info!("Resetting stores...");
-
-        // Clear all stores (both in-memory buffers and on-disk keyspaces)
-        self.par_iter_any_mut()
-            .try_for_each(|store| store.reset())?;
-
-        // Persist the cleared state
-        self.db.persist(PersistMode::SyncAll)?;
-
-        Ok(())
-    }
 }
 

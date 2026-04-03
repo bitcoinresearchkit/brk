@@ -114,6 +114,18 @@ impl Indexer {
         }
     }
 
+    /// Fully resets the indexer by deleting stores from disk and reimporting.
+    /// Unlike stores.reset() which uses keyspace.clear() (leaving a journal
+    /// record that gets replayed on every recovery), this cleanly recreates.
+    fn full_reset(&mut self) -> Result<()> {
+        info!("Full reset...");
+        self.vecs.reset()?;
+        let stores_path = self.path.join("stores");
+        fs::remove_dir_all(&stores_path).ok();
+        self.stores = Stores::forced_import(&self.path, VERSION)?;
+        Ok(())
+    }
+
     pub fn index(&mut self, reader: &Reader, client: &Client, exit: &Exit) -> Result<Indexes> {
         self.index_(reader, client, exit, false)
     }
@@ -135,9 +147,7 @@ impl Indexer {
             return Ok(());
         }
 
-        info!("XOR bytes changed, full reset...");
-        self.vecs.reset()?;
-        self.stores.reset()?;
+        self.full_reset()?;
 
         fs::write(self.path.join("xor.dat"), *current)?;
 
@@ -179,8 +189,7 @@ impl Indexer {
                 }
                 None => {
                     info!("Data inconsistency detected, resetting indexer...");
-                    self.vecs.reset()?;
-                    self.stores.reset()?;
+                    self.full_reset()?;
                     (Indexes::default(), None)
                 }
             }
@@ -308,13 +317,35 @@ impl Indexer {
         drop(readers);
 
         let lock = exit.lock();
-        self.stores.commit(indexes.height)?;
+        let tasks = self.stores.take_all_pending_ingests(indexes.height)?;
         self.vecs.stamped_write(indexes.height)?;
+        let fjall_db = self.stores.db.clone();
 
         self.vecs.db.run_bg(move |db| {
             let _lock = lock;
+
             sleep(Duration::from_secs(5));
+
+            info!("Exporting...");
+            let i = Instant::now();
+
+            if !tasks.is_empty() {
+                let i = Instant::now();
+                for task in tasks {
+                    task().map_err(vecdb::RawDBError::other)?;
+                }
+                debug!("Stores committed in {:?}", i.elapsed());
+
+                let i = Instant::now();
+                fjall_db
+                    .persist(PersistMode::SyncData)
+                    .map_err(RawDBError::other)?;
+                debug!("Stores persisted in {:?}", i.elapsed());
+            }
+
             db.compact()?;
+
+            info!("Exported in {:?}", i.elapsed());
             Ok(())
         });
 

@@ -12,5 +12,4 @@ pub trait AnyStore: Send + Sync {
     fn export_meta_if_needed(&mut self, height: Height) -> Result<()>;
     fn keyspace(&self) -> &Keyspace;
     fn commit(&mut self, height: Height) -> Result<()>;
-    fn reset(&mut self) -> Result<()>;
 }

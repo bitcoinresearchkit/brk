@@ -182,11 +182,11 @@ function renderDetails(block) {
       ["Miner Names", extras.pool.minerNames || "N/A"],
       ["Reward", `${(extras.reward / 1e8).toFixed(8)} BTC`],
       ["Total Fees", `${(extras.totalFees / 1e8).toFixed(8)} BTC`],
-      ["Median Fee Rate", `${extras.medianFee.toFixed(2)} sat/vB`],
-      ["Avg Fee Rate", `${extras.avgFeeRate.toFixed(2)} sat/vB`],
+      ["Median Fee Rate", `${formatFeeRate(extras.medianFee)} sat/vB`],
+      ["Avg Fee Rate", `${formatFeeRate(extras.avgFeeRate)} sat/vB`],
       ["Avg Fee", `${extras.avgFee.toLocaleString()} sat`],
       ["Median Fee", `${extras.medianFeeAmt.toLocaleString()} sat`],
-      ["Fee Range", extras.feeRange.map((f) => f.toFixed(1)).join(", ") + " sat/vB"],
+      ["Fee Range", extras.feeRange.map((f) => formatFeeRate(f)).join(", ") + " sat/vB"],
       ["Fee Percentiles", extras.feePercentiles.map((f) => f.toLocaleString()).join(", ") + " sat"],
       ["Avg Tx Size", `${extras.avgTxSize.toLocaleString()} B`],
       ["Virtual Size", `${extras.virtualSize.toLocaleString()} vB`],
@@ -220,6 +220,13 @@ function renderDetails(block) {
     row.append(labelElement, valueElement);
     details.append(row);
   }
+}
+
+/** @param {number} rate */
+function formatFeeRate(rate) {
+  if (rate >= 100) return Math.round(rate).toLocaleString();
+  if (rate >= 10) return rate.toFixed(1);
+  return rate.toFixed(2);
 }
 
 /** @param {number} height */
@@ -257,18 +264,18 @@ function createBlockCube(block) {
   const feeRange = extras ? extras.feeRange : [0, 0, 0, 0, 0, 0, 0];
   const averageFeeElement = window.document.createElement("p");
   feesElement.append(averageFeeElement);
-  averageFeeElement.innerHTML = `~${Number(medianFee).toFixed(2)}`;
+  averageFeeElement.innerHTML = `~${formatFeeRate(medianFee)}`;
   const feeRangeElement = window.document.createElement("p");
   feesElement.append(feeRangeElement);
   const minFeeElement = window.document.createElement("span");
-  minFeeElement.innerHTML = `${Number(feeRange[0]).toFixed(2)}`;
+  minFeeElement.innerHTML = formatFeeRate(feeRange[0]);
   feeRangeElement.append(minFeeElement);
   const dashElement = window.document.createElement("span");
   dashElement.style.opacity = "0.5";
   dashElement.innerHTML = `-`;
   feeRangeElement.append(dashElement);
   const maxFeeElement = window.document.createElement("span");
-  maxFeeElement.innerHTML = `${Number(feeRange[6]).toFixed(1)}`;
+  maxFeeElement.innerHTML = formatFeeRate(feeRange[6]);
   feeRangeElement.append(maxFeeElement);
   const feeUnitElement = window.document.createElement("p");
   feesElement.append(feeUnitElement);

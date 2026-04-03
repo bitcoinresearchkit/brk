@@ -365,14 +365,4 @@ where
         Ok(())
     }
 
-    fn reset(&mut self) -> Result<()> {
-        self.meta.reset()?;
-        self.puts = FxHashMap::default();
-        self.dels = FxHashSet::default();
-        for cache in &mut self.caches {
-            *cache = FxHashMap::default();
-        }
-        self.keyspace.clear()?;
-        Ok(())
-    }
 }
