@@ -1004,7 +1004,7 @@
  * @typedef {Object} Transaction
  * @property {(TxIndex|null)=} index - Internal transaction index (brk-specific, not in mempool.space)
  * @property {Txid} txid - Transaction ID
- * @property {TxVersion} version - Transaction version
+ * @property {TxVersionRaw} version - Transaction version (raw i32 from Bitcoin protocol, may contain non-standard values in coinbase txs)
  * @property {RawLockTime} locktime - Transaction lock time
  * @property {TxIn[]} vin - Transaction inputs
  * @property {TxOut[]} vout - Transaction outputs
@@ -1066,6 +1066,13 @@
  * Transaction version number
  *
  * @typedef {number} TxVersion
+ */
+/**
+ * Raw transaction version (i32) from Bitcoin protocol.
+ * Unlike TxVersion (u8, indexed), this preserves non-standard values
+ * used in coinbase txs for miner signaling/branding.
+ *
+ * @typedef {number} TxVersionRaw
  */
 /**
  * Transaction ID (hash)
@@ -6566,7 +6573,7 @@ function createTransferPattern(client, acc) {
  * @extends BrkClientBase
  */
 class BrkClient extends BrkClientBase {
-  VERSION = "v0.3.0-alpha.3";
+  VERSION = "v0.3.0-alpha.4";
 
   INDEXES = /** @type {const} */ ([
     "minute10",

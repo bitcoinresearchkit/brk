@@ -54,8 +54,12 @@ impl Serialize for TxIn {
         let has_witness = !self.witness.is_empty();
         let has_scriptsig = !self.script_sig.is_empty();
 
-        // P2SH-wrapped SegWit: both scriptsig and witness present (not coinbase)
-        let inner_redeem = if has_scriptsig && has_witness && !self.is_coinbase {
+        // P2SH / P2SH-wrapped SegWit: extract redeemscript from scriptsig
+        let is_p2sh = self
+            .prevout
+            .as_ref()
+            .is_some_and(|p| p.script_pubkey.is_p2sh());
+        let inner_redeem = if has_scriptsig && is_p2sh && !self.is_coinbase {
             self.script_sig
                 .redeem_script()
                 .map(|s| s.to_asm_string())
@@ -64,10 +68,20 @@ impl Serialize for TxIn {
             String::new()
         };
 
-        // P2WSH / P2SH-P2WSH: witness has >2 items, last is the witnessScript
+        // P2WSH/P2SH-P2WSH: last witness item is the witnessScript
+        // P2TR script path: second-to-last is the script, last is the control block
+        let is_p2tr = self
+            .prevout
+            .as_ref()
+            .is_some_and(|p| p.script_pubkey.is_p2tr());
         let inner_witness = if has_witness && self.witness.len() > 2 {
-            if let Some(last) = self.witness.last() {
-                let bytes: Vec<u8> = bitcoin::hex::FromHex::from_hex(last).unwrap_or_default();
+            let script_hex = if is_p2tr {
+                self.witness.get(self.witness.len() - 2)
+            } else {
+                self.witness.last()
+            };
+            if let Some(hex) = script_hex {
+                let bytes: Vec<u8> = bitcoin::hex::FromHex::from_hex(hex).unwrap_or_default();
                 ScriptBuf::from(bytes).to_asm_string()
             } else {
                 String::new()

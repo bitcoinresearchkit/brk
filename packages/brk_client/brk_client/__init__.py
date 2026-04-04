@@ -198,12 +198,16 @@ StoredU64 = int
 TimePeriod = Literal["24h", "3d", "1w", "1m", "3m", "6m", "1y", "2y", "3y"]
 # Index of the output being spent in the previous transaction
 Vout = int
-# Transaction version number
-TxVersion = int
+# Raw transaction version (i32) from Bitcoin protocol.
+# Unlike TxVersion (u8, indexed), this preserves non-standard values
+# used in coinbase txs for miner signaling/branding.
+TxVersionRaw = int
 TxInIndex = int
 TxOutIndex = int
 # Input index in the spending transaction
 Vin = int
+# Transaction version number
+TxVersion = int
 UnknownOutputIndex = TypeIndex
 Week1 = int
 Year1 = int
@@ -1380,7 +1384,7 @@ class Transaction(TypedDict):
     Attributes:
         index: Internal transaction index (brk-specific, not in mempool.space)
         txid: Transaction ID
-        version: Transaction version
+        version: Transaction version (raw i32 from Bitcoin protocol, may contain non-standard values in coinbase txs)
         locktime: Transaction lock time
         vin: Transaction inputs
         vout: Transaction outputs
@@ -1392,7 +1396,7 @@ class Transaction(TypedDict):
     """
     index: Union[TxIndex, None]
     txid: Txid
-    version: TxVersion
+    version: TxVersionRaw
     locktime: RawLockTime
     vin: List[TxIn]
     vout: List[TxOut]
@@ -6007,7 +6011,7 @@ class SeriesTree:
 class BrkClient(BrkClientBase):
     """Main BRK client with series tree and API methods."""
 
-    VERSION = "v0.3.0-alpha.3"
+    VERSION = "v0.3.0-alpha.4"
 
     INDEXES = [
       "minute10",

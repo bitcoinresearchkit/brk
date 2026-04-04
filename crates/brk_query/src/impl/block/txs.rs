@@ -53,11 +53,6 @@ impl Query {
             .transactions
             .height
             .collect_range_at(start, end);
-        let versions = indexer
-            .vecs
-            .transactions
-            .tx_version
-            .collect_range_at(start, end);
         let lock_times = indexer
             .vecs
             .transactions
@@ -185,7 +180,7 @@ impl Query {
             let mut transaction = Transaction {
                 index: Some(TxIndex::from(start + i)),
                 txid: txids[i].clone(),
-                version: versions[i],
+                version: tx.version.into(),
                 lock_time: lock_times[i],
                 total_size: *total_sizes[i] as usize,
                 weight,

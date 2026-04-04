@@ -1,5 +1,6 @@
 use crate::{
-    FeeRate, RawLockTime, Sats, TxIn, TxIndex, TxOut, TxStatus, TxVersion, Txid, VSize, Weight,
+    FeeRate, RawLockTime, Sats, TxIn, TxIndex, TxOut, TxStatus, TxVersionRaw, Txid, VSize,
+    Weight,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -16,9 +17,9 @@ pub struct Transaction {
     #[schemars(example = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b")]
     pub txid: Txid,
 
-    /// Transaction version
+    /// Transaction version (raw i32 from Bitcoin protocol, may contain non-standard values in coinbase txs)
     #[schemars(example = 2)]
-    pub version: TxVersion,
+    pub version: TxVersionRaw,
 
     /// Transaction lock time
     #[schemars(example = 0)]
