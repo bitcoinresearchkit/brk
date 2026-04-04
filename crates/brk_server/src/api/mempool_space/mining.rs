@@ -2,16 +2,17 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, State},
     http::{HeaderMap, Uri},
-    response::{IntoResponse, Redirect, Response},
+    response::Redirect,
     routing::get,
 };
 use brk_types::{
-    BlockFeesEntry, BlockInfoV1, BlockRewardsEntry, BlockSizesWeights, DifficultyAdjustmentEntry,
-    HashrateSummary, PoolDetail, PoolHashrateEntry, PoolInfo, PoolsSummary, RewardStats,
+    BlockFeeRatesEntry, BlockFeesEntry, BlockInfoV1, BlockRewardsEntry, BlockSizesWeights,
+    DifficultyAdjustmentEntry, HashrateSummary, PoolDetail, PoolHashrateEntry, PoolInfo,
+    PoolsSummary, RewardStats,
 };
 
 use crate::{
-    AppState, CacheStrategy, Error,
+    AppState, CacheStrategy,
     extended::TransformResponseExtended,
     params::{BlockCountParam, PoolSlugAndHeightParam, PoolSlugParam, TimePeriodParam},
 };
@@ -289,14 +290,15 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/blocks/fee-rates/{time_period}",
             get_with(
-                async |Path(_path): Path<TimePeriodParam>| -> Response {
-                    Error::not_implemented("Fee rate percentiles are not yet available").into_response()
+                async |uri: Uri, headers: HeaderMap, Path(path): Path<TimePeriodParam>, State(state): State<AppState>| {
+                    state.cached_json(&headers, CacheStrategy::Tip, &uri, move |q| q.block_fee_rates(path.time_period)).await
                 },
                 |op| {
                     op.id("get_block_fee_rates")
                         .mining_tag()
-                        .summary("Block fee rates (WIP)")
-                        .description("**Work in progress.** Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*")
+                        .summary("Block fee rates")
+                        .description("Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*")
+                        .json_response::<Vec<BlockFeeRatesEntry>>()
                         .server_error()
                 },
             ),

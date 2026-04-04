@@ -28,6 +28,8 @@ pub enum TimePeriod {
     TwoYears,
     #[serde(rename = "3y")]
     ThreeYears,
+    #[serde(rename = "all")]
+    All,
 }
 
 impl TimePeriod {
@@ -43,6 +45,7 @@ impl TimePeriod {
             TimePeriod::Year => 52560,
             TimePeriod::TwoYears => 105120,
             TimePeriod::ThreeYears => 157680,
+            TimePeriod::All => usize::MAX,
         }
     }
 
@@ -58,6 +61,7 @@ impl TimePeriod {
             "1y" => Some(TimePeriod::Year),
             "2y" => Some(TimePeriod::TwoYears),
             "3y" => Some(TimePeriod::ThreeYears),
+            "all" => Some(TimePeriod::All),
             _ => None,
         }
     }
@@ -75,6 +79,7 @@ impl fmt::Display for TimePeriod {
             TimePeriod::Year => write!(f, "1y"),
             TimePeriod::TwoYears => write!(f, "2y"),
             TimePeriod::ThreeYears => write!(f, "3y"),
+            TimePeriod::All => write!(f, "all"),
         }
     }
 }

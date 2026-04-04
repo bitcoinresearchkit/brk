@@ -1,59 +1,57 @@
-// TODO: INCOMPLETE - indexes_to_fee_rate.day1 doesn't have percentile fields
-// because from_tx_index.rs calls remove_percentiles() before creating day1.
-// Need to either:
-// 1. Use .height instead and convert height to day1 for iteration
-// 2. Fix from_tx_index.rs to preserve percentiles for day1
-// 3. Create a separate day1 computation path with percentiles
-
-#![allow(dead_code)]
-
 use brk_error::Result;
-use brk_types::{
-    BlockFeeRatesEntry,
-    // FeeRatePercentiles,
-    TimePeriod,
-};
-// use vecdb::{IterableVec, VecIndex};
+use brk_types::{BlockFeeRatesEntry, FeeRate, FeeRatePercentiles, TimePeriod};
+use vecdb::ReadableVec;
 
+use super::block_window::BlockWindow;
 use crate::Query;
 
 impl Query {
-    pub fn block_fee_rates(&self, _time_period: TimePeriod) -> Result<Vec<BlockFeeRatesEntry>> {
-        // Disabled until percentile data is available at day1 level
-        Ok(Vec::new())
+    pub fn block_fee_rates(&self, time_period: TimePeriod) -> Result<Vec<BlockFeeRatesEntry>> {
+        let bw = BlockWindow::new(self, time_period);
+        let computer = self.computer();
+        let frd = &computer.transactions.fees.effective_fee_rate.distribution.block;
 
-        // Original implementation:
-        // let computer = self.computer();
-        // let current_height = self.height();
-        // let start = current_height
-        //     .to_usize()
-        //     .saturating_sub(time_period.block_count());
-        //
-        // let iter = Day1Iter::new(computer, start, current_height.to_usize());
-        //
-        // let vecs = &computer.transactions.transaction.indexes_to_fee_rate.day1;
-        // let mut min = vecs.unwrap_min().iter();
-        // let mut pct10 = vecs.unwrap_pct10().iter();
-        // let mut pct25 = vecs.unwrap_pct25().iter();
-        // let mut median = vecs.unwrap_median().iter();
-        // let mut pct75 = vecs.unwrap_pct75().iter();
-        // let mut pct90 = vecs.unwrap_pct90().iter();
-        // let mut max = vecs.unwrap_max().iter();
-        //
-        // Ok(iter.collect(|di, ts, h| {
-        //     Some(BlockFeeRatesEntry {
-        //         avg_height: h,
-        //         timestamp: ts,
-        //         percentiles: FeeRatePercentiles::new(
-        //             min.get(di).unwrap_or_default(),
-        //             pct10.get(di).unwrap_or_default(),
-        //             pct25.get(di).unwrap_or_default(),
-        //             median.get(di).unwrap_or_default(),
-        //             pct75.get(di).unwrap_or_default(),
-        //             pct90.get(di).unwrap_or_default(),
-        //             max.get(di).unwrap_or_default(),
-        //         ),
-        //     })
-        // }))
+        let min = frd.min.height.collect_range_at(bw.start, bw.end);
+        let pct10 = frd.pct10.height.collect_range_at(bw.start, bw.end);
+        let pct25 = frd.pct25.height.collect_range_at(bw.start, bw.end);
+        let median = frd.median.height.collect_range_at(bw.start, bw.end);
+        let pct75 = frd.pct75.height.collect_range_at(bw.start, bw.end);
+        let pct90 = frd.pct90.height.collect_range_at(bw.start, bw.end);
+        let max = frd.max.height.collect_range_at(bw.start, bw.end);
+
+        let timestamps = bw.timestamps(self);
+
+        let mut results = Vec::with_capacity(timestamps.len());
+        let mut pos = 0;
+        let total = min.len();
+
+        for ts in &timestamps {
+            let window_end = (pos + bw.window).min(total);
+            let count = window_end - pos;
+            if count > 0 {
+                let mid = (pos + window_end) / 2;
+                let avg = |vals: &[FeeRate]| -> FeeRate {
+                    let sum: f64 = vals[pos..window_end].iter().map(|f| f64::from(*f)).sum();
+                    FeeRate::new(sum / count as f64)
+                };
+
+                results.push(BlockFeeRatesEntry {
+                    avg_height: brk_types::Height::from(bw.start + mid),
+                    timestamp: *ts,
+                    percentiles: FeeRatePercentiles::new(
+                        avg(&min),
+                        avg(&pct10),
+                        avg(&pct25),
+                        avg(&median),
+                        avg(&pct75),
+                        avg(&pct90),
+                        avg(&max),
+                    ),
+                });
+            }
+            pos = window_end;
+        }
+
+        Ok(results)
     }
 }

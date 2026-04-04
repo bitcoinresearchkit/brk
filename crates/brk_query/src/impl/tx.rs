@@ -109,9 +109,10 @@ impl Query {
 
     pub fn outspend(&self, txid: &Txid, vout: Vout) -> Result<TxOutspend> {
         let all = self.outspends(txid)?;
-        all.into_iter()
+        Ok(all
+            .into_iter()
             .nth(usize::from(vout))
-            .ok_or(Error::OutOfRange("Output index out of range".into()))
+            .unwrap_or(TxOutspend::UNSPENT))
     }
 
     pub fn outspends(&self, txid: &Txid) -> Result<Vec<TxOutspend>> {

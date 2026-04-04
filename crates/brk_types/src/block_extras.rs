@@ -91,11 +91,13 @@ pub struct BlockExtras {
     /// Raw 80-byte block header as hex
     pub header: String,
 
-    /// UTXO set change (outputs created minus inputs spent)
+    /// UTXO set change (total outputs - total inputs, includes unspendable like OP_RETURN).
+    /// Note: intentionally differs from utxo_set_size diff which excludes unspendable outputs.
+    /// Matches mempool.space/bitcoin-cli behavior.
     #[serde(rename = "utxoSetChange")]
     pub utxo_set_change: i64,
 
-    /// Total UTXO set size at this height
+    /// Total spendable UTXO set size at this height (excludes OP_RETURN and other unspendable outputs)
     #[serde(rename = "utxoSetSize")]
     pub utxo_set_size: u64,
 

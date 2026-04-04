@@ -4,26 +4,81 @@
   display: flex;
   overflow: hidden;
 
+  @media (max-width: 767px) {
+    overflow-y: auto;
+    padding: var(--main-padding) 0;
+    flex-direction: column;
+
+    &::before,
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: var(--main-padding);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    &::before {
+      left: 0;
+      background-image: linear-gradient(
+        to left,
+        transparent,
+        var(--background-color)
+      );
+    }
+
+    &::after {
+      right: 0;
+      background-image: linear-gradient(
+        to right,
+        transparent,
+        var(--background-color)
+      );
+    }
+  }
+
   --cube: 4.5rem;
 
   > * {
-    padding: var(--main-padding);
+    padding: 0 var(--main-padding);
+
+    @media (min-width: 768px) {
+      padding: var(--main-padding);
+    }
   }
 
   #chain {
     flex-shrink: 0;
-    height: 100%;
-    overflow-y: auto;
+
+    @media (max-width: 767px) {
+      overflow-x: auto;
+    }
+
+    @media (min-width: 768px) {
+      height: 100%;
+      overflow-y: auto;
+    }
 
     .blocks {
       display: flex;
       flex-direction: column-reverse;
-      gap: calc(var(--cube) * 0.75);
+      --gap: 0.75;
+      gap: calc(var(--cube) * var(--gap));
       margin-right: var(--cube);
       margin-top: calc(var(--cube) * -0.25);
+
+      @media (max-width: 767px) {
+        --gap: 1.25;
+        flex-direction: row-reverse;
+        height: 11.5rem;
+        width: max-content;
+      }
     }
 
     .cube {
+      margin-top: -0.375rem;
       margin-left: calc(var(--cube) * -0.25);
       flex-shrink: 0;
       position: relative;
@@ -126,9 +181,12 @@
 
   #block-details {
     flex: 1;
-    overflow-y: auto;
     font-size: var(--font-size-sm);
     line-height: var(--line-height-sm);
+
+    @media (min-width: 768px) {
+      overflow-y: auto;
+    }
 
     h1 {
       margin-bottom: 1rem;

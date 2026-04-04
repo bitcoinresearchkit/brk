@@ -195,7 +195,7 @@ StoredU64 = int
 # 
 # Used to specify the lookback window for pool statistics, hashrate calculations,
 # and other time-based mining series.
-TimePeriod = Literal["24h", "3d", "1w", "1m", "3m", "6m", "1y", "2y", "3y"]
+TimePeriod = Literal["24h", "3d", "1w", "1m", "3m", "6m", "1y", "2y", "3y", "all"]
 # Index of the output being spent in the previous transaction
 Vout = int
 # Raw transaction version (i32) from Bitcoin protocol.
@@ -354,8 +354,10 @@ class BlockExtras(TypedDict):
         segwitTotalSize: Total size of segwit transactions in bytes
         segwitTotalWeight: Total weight of segwit transactions
         header: Raw 80-byte block header as hex
-        utxoSetChange: UTXO set change (outputs created minus inputs spent)
-        utxoSetSize: Total UTXO set size at this height
+        utxoSetChange: UTXO set change (total outputs - total inputs, includes unspendable like OP_RETURN).
+Note: intentionally differs from utxo_set_size diff which excludes unspendable outputs.
+Matches mempool.space/bitcoin-cli behavior.
+        utxoSetSize: Total spendable UTXO set size at this height (excludes OP_RETURN and other unspendable outputs)
         totalInputAmt: Total input amount in satoshis
         virtualSize: Virtual size in vbytes
         firstSeen: Timestamp when the block was first seen (always null, not yet supported)
@@ -391,6 +393,24 @@ class BlockExtras(TypedDict):
     firstSeen: Optional[int]
     orphans: List[str]
     price: Dollars
+
+class BlockFeeRatesEntry(TypedDict):
+    """
+    A single block fee rates data point with percentiles.
+
+    Attributes:
+        avgHeight: Average block height in this window
+        timestamp: Unix timestamp at the window midpoint
+    """
+    avgHeight: Height
+    timestamp: Timestamp
+    avgFee_0: FeeRate
+    avgFee_10: FeeRate
+    avgFee_25: FeeRate
+    avgFee_50: FeeRate
+    avgFee_75: FeeRate
+    avgFee_90: FeeRate
+    avgFee_100: FeeRate
 
 class BlockFeesEntry(TypedDict):
     """
@@ -626,9 +646,9 @@ class CpfpInfo(TypedDict):
     ancestors: List[CpfpEntry]
     bestDescendant: Union[CpfpEntry, None]
     descendants: List[CpfpEntry]
-    effectiveFeePerVsize: FeeRate
-    fee: Sats
-    adjustedVsize: VSize
+    effectiveFeePerVsize: Union[FeeRate, None]
+    fee: Union[Sats, None]
+    adjustedVsize: Union[VSize, None]
 
 class DataRangeFormat(TypedDict):
     """
@@ -6011,7 +6031,7 @@ class SeriesTree:
 class BrkClient(BrkClientBase):
     """Main BRK client with series tree and API methods."""
 
-    VERSION = "v0.3.0-alpha.4"
+    VERSION = "v0.3.0-alpha.5"
 
     INDEXES = [
       "minute10",
@@ -7777,15 +7797,15 @@ class BrkClient(BrkClientBase):
         path = f'/api/v1/historical-price{"?" + query if query else ""}'
         return self.get_json(path)
 
-    def get_block_fee_rates(self, time_period: TimePeriod) -> str:
-        """Block fee rates (WIP).
+    def get_block_fee_rates(self, time_period: TimePeriod) -> List[BlockFeeRatesEntry]:
+        """Block fee rates.
 
-        **Work in progress.** Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+        Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
 
         Endpoint: `GET /api/v1/mining/blocks/fee-rates/{time_period}`"""
-        return self.get_text(f'/api/v1/mining/blocks/fee-rates/{time_period}')
+        return self.get_json(f'/api/v1/mining/blocks/fee-rates/{time_period}')
 
     def get_block_fees(self, time_period: TimePeriod) -> List[BlockFeesEntry]:
         """Block fees.

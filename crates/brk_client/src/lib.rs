@@ -8198,7 +8198,7 @@ pub struct BrkClient {
 
 impl BrkClient {
     /// Client version.
-    pub const VERSION: &'static str = "v0.3.0-alpha.4";
+    pub const VERSION: &'static str = "v0.3.0-alpha.5";
 
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {
@@ -8907,15 +8907,15 @@ impl BrkClient {
         self.base.get_json(&path)
     }
 
-    /// Block fee rates (WIP)
+    /// Block fee rates
     ///
-    /// **Work in progress.** Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+    /// Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
     ///
     /// Endpoint: `GET /api/v1/mining/blocks/fee-rates/{time_period}`
-    pub fn get_block_fee_rates(&self, time_period: TimePeriod) -> Result<String> {
-        self.base.get_text(&format!("/api/v1/mining/blocks/fee-rates/{time_period}"))
+    pub fn get_block_fee_rates(&self, time_period: TimePeriod) -> Result<Vec<BlockFeeRatesEntry>> {
+        self.base.get_json(&format!("/api/v1/mining/blocks/fee-rates/{time_period}"))
     }
 
     /// Block fees

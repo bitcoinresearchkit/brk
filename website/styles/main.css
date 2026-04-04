@@ -25,7 +25,7 @@ main {
 
   &::after {
     bottom: 0;
-    height: 21rem;
+    height: 16rem;
     background-image: linear-gradient(
       to bottom,
       transparent,

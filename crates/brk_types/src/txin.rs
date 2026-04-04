@@ -90,7 +90,7 @@ impl Serialize for TxIn {
             String::new()
         };
 
-        let has_inner_redeem = !inner_redeem.is_empty();
+        let has_inner_redeem = is_p2sh && !self.is_coinbase;
         let has_inner_witness = !inner_witness.is_empty();
         let field_count =
             7 + has_witness as usize + has_inner_redeem as usize + has_inner_witness as usize;

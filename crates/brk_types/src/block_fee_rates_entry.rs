@@ -1,12 +1,12 @@
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{Height, Timestamp};
 
 use super::FeeRatePercentiles;
 
 /// A single block fee rates data point with percentiles.
-#[derive(Debug, Serialize, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct BlockFeeRatesEntry {
     /// Average block height in this window

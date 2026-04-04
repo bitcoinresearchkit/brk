@@ -1,10 +1,10 @@
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::FeeRate;
 
 /// Fee rate percentiles (min, 10%, 25%, 50%, 75%, 90%, max).
-#[derive(Debug, Default, Clone, Copy, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, JsonSchema)]
 pub struct FeeRatePercentiles {
     #[serde(rename = "avgFee_0")]
     pub min: FeeRate,

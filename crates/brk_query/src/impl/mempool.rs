@@ -56,9 +56,9 @@ impl Query {
         let entries = mempool.get_entries();
         let prefix = TxidPrefix::from(txid);
 
-        let entry = entries
-            .get(&prefix)
-            .ok_or(Error::NotFound("Transaction not in mempool".into()))?;
+        let Some(entry) = entries.get(&prefix) else {
+            return Ok(CpfpInfo::default());
+        };
 
         // Ancestors: walk up the depends chain
         let mut ancestors = Vec::new();
@@ -101,9 +101,9 @@ impl Query {
             ancestors,
             best_descendant,
             descendants,
-            effective_fee_per_vsize,
-            fee: entry.fee,
-            adjusted_vsize: entry.vsize,
+            effective_fee_per_vsize: Some(effective_fee_per_vsize),
+            fee: Some(entry.fee),
+            adjusted_vsize: Some(entry.vsize),
         })
     }
 

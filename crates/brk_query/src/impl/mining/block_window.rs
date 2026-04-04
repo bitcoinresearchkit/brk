@@ -12,6 +12,7 @@ fn block_window(period: TimePeriod) -> usize {
         TimePeriod::SixMonths => 18,
         TimePeriod::Year | TimePeriod::TwoYears => 48,
         TimePeriod::ThreeYears => 72,
+        TimePeriod::All => 144,
     }
 }
 
@@ -49,6 +50,7 @@ impl BlockWindow {
             TimePeriod::Year => cached._1y.collect_one(current_height),
             TimePeriod::TwoYears => lookback._2y.collect_one(current_height),
             TimePeriod::ThreeYears => lookback._3y.collect_one(current_height),
+            TimePeriod::All => None,
         }
         .unwrap_or_default();
 

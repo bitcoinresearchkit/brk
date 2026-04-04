@@ -135,13 +135,29 @@
  * @property {number} segwitTotalSize - Total size of segwit transactions in bytes
  * @property {Weight} segwitTotalWeight - Total weight of segwit transactions
  * @property {string} header - Raw 80-byte block header as hex
- * @property {number} utxoSetChange - UTXO set change (outputs created minus inputs spent)
- * @property {number} utxoSetSize - Total UTXO set size at this height
+ * @property {number} utxoSetChange - UTXO set change (total outputs - total inputs, includes unspendable like OP_RETURN).
+Note: intentionally differs from utxo_set_size diff which excludes unspendable outputs.
+Matches mempool.space/bitcoin-cli behavior.
+ * @property {number} utxoSetSize - Total spendable UTXO set size at this height (excludes OP_RETURN and other unspendable outputs)
  * @property {Sats} totalInputAmt - Total input amount in satoshis
  * @property {number} virtualSize - Virtual size in vbytes
  * @property {?number=} firstSeen - Timestamp when the block was first seen (always null, not yet supported)
  * @property {string[]} orphans - Orphaned blocks (always empty)
  * @property {Dollars} price - USD price at block height
+ */
+/**
+ * A single block fee rates data point with percentiles.
+ *
+ * @typedef {Object} BlockFeeRatesEntry
+ * @property {Height} avgHeight - Average block height in this window
+ * @property {Timestamp} timestamp - Unix timestamp at the window midpoint
+ * @property {FeeRate} avgFee0
+ * @property {FeeRate} avgFee10
+ * @property {FeeRate} avgFee25
+ * @property {FeeRate} avgFee50
+ * @property {FeeRate} avgFee75
+ * @property {FeeRate} avgFee90
+ * @property {FeeRate} avgFee100
  */
 /**
  * A single block fees data point.
@@ -359,9 +375,9 @@
  * @property {CpfpEntry[]} ancestors - Ancestor transactions in the CPFP chain
  * @property {(CpfpEntry|null)=} bestDescendant - Best (highest fee rate) descendant, if any
  * @property {CpfpEntry[]} descendants - Descendant transactions in the CPFP chain
- * @property {FeeRate} effectiveFeePerVsize - Effective fee rate considering CPFP relationships (sat/vB)
- * @property {Sats} fee - Transaction fee (sats)
- * @property {VSize} adjustedVsize - Adjusted virtual size (accounting for sigops)
+ * @property {(FeeRate|null)=} effectiveFeePerVsize - Effective fee rate considering CPFP relationships (sat/vB)
+ * @property {(Sats|null)=} fee - Transaction fee (sats)
+ * @property {(VSize|null)=} adjustedVsize - Adjusted virtual size (accounting for sigops)
  */
 /**
  * Data range with output format for API query parameters
@@ -983,7 +999,7 @@
  * Used to specify the lookback window for pool statistics, hashrate calculations,
  * and other time-based mining series.
  *
- * @typedef {("24h"|"3d"|"1w"|"1m"|"3m"|"6m"|"1y"|"2y"|"3y")} TimePeriod
+ * @typedef {("24h"|"3d"|"1w"|"1m"|"3m"|"6m"|"1y"|"2y"|"3y"|"all")} TimePeriod
  */
 /**
  * @typedef {Object} TimePeriodParam
@@ -6573,7 +6589,7 @@ function createTransferPattern(client, acc) {
  * @extends BrkClientBase
  */
 class BrkClient extends BrkClientBase {
-  VERSION = "v0.3.0-alpha.4";
+  VERSION = "v0.3.0-alpha.5";
 
   INDEXES = /** @type {const} */ ([
     "minute10",
@@ -10363,16 +10379,16 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
-   * Block fee rates (WIP)
+   * Block fee rates
    *
-   * **Work in progress.** Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+   * Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
    *
    * Endpoint: `GET /api/v1/mining/blocks/fee-rates/{time_period}`
    *
    * @param {TimePeriod} time_period
-   * @returns {Promise<*>}
+   * @returns {Promise<BlockFeeRatesEntry[]>}
    */
   async getBlockFeeRates(time_period) {
     return this.getJson(`/api/v1/mining/blocks/fee-rates/${time_period}`);

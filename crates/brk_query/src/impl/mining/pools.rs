@@ -65,6 +65,7 @@ impl Query {
                 .collect_one(current_height),
             TimePeriod::TwoYears => lookback._2y.collect_one(current_height),
             TimePeriod::ThreeYears => lookback._3y.collect_one(current_height),
+            TimePeriod::All => None,
         }
         .unwrap_or_default()
         .to_usize();
@@ -254,7 +255,25 @@ impl Query {
                 day: share_24h,
                 week: share_1w,
             },
-            estimated_hashrate: 0, // TODO: Calculate from share and network hashrate
+            estimated_hashrate: {
+                let day = computer
+                    .indexes
+                    .height
+                    .day1
+                    .collect_one(current_height)
+                    .unwrap_or_default();
+                let network_hr = computer
+                    .mining
+                    .hashrate
+                    .rate
+                    .base
+                    .day1
+                    .collect_one(day)
+                    .flatten()
+                    .map(|v| *v as u128)
+                    .unwrap_or(0);
+                (share_24h * network_hr as f64) as u128
+            },
             reported_hashrate: None,
         })
     }
@@ -338,6 +357,7 @@ impl Query {
                         .collect_one(current_height),
                     TimePeriod::TwoYears => lookback._2y.collect_one(current_height),
                     TimePeriod::ThreeYears => lookback._3y.collect_one(current_height),
+                    TimePeriod::All => None,
                 }
                 .unwrap_or_default()
                 .to_usize()
