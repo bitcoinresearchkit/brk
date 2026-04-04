@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Outputs\_Spent
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4573](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4573)
+Defined in: [Developer/brk/modules/brk-client/index.js:4580](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4580)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4573](https://github.com/
 
 > **txinIndex**: [`SeriesPattern21`](../type-aliases/SeriesPattern21.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4574](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4574)
+Defined in: [Developer/brk/modules/brk-client/index.js:4581](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4581)

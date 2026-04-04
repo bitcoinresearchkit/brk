@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Utxo\_Profitability
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6413](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L6413)
+Defined in: [Developer/brk/modules/brk-client/index.js:6420](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6420)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6413](https://github.com/
 
 > **loss**: [`SeriesTree_Cohorts_Utxo_Profitability_Loss`](SeriesTree_Cohorts_Utxo_Profitability_Loss.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6416](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L6416)
+Defined in: [Developer/brk/modules/brk-client/index.js:6423](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6423)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6416](https://github.com/
 
 > **profit**: [`SeriesTree_Cohorts_Utxo_Profitability_Profit`](SeriesTree_Cohorts_Utxo_Profitability_Profit.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6415](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L6415)
+Defined in: [Developer/brk/modules/brk-client/index.js:6422](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6422)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6415](https://github.com/
 
 > **range**: [`SeriesTree_Cohorts_Utxo_Profitability_Range`](SeriesTree_Cohorts_Utxo_Profitability_Range.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6414](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L6414)
+Defined in: [Developer/brk/modules/brk-client/index.js:6421](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6421)

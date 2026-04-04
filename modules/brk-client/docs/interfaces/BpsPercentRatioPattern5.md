@@ -6,7 +6,7 @@
 
 # Interface: BpsPercentRatioPattern5
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3569](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3569)
+Defined in: [Developer/brk/modules/brk-client/index.js:3576](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3576)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3569](https://github.com/
 
 > **bps**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3570](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3570)
+Defined in: [Developer/brk/modules/brk-client/index.js:3577](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3577)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3570](https://github.com/
 
 > **percent**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3571](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3571)
+Defined in: [Developer/brk/modules/brk-client/index.js:3578](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3578)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3571](https://github.com/
 
 > **ratio**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3572](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3572)
+Defined in: [Developer/brk/modules/brk-client/index.js:3579](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3579)

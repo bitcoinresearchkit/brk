@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Blocks\_Halving
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4461](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4461)
+Defined in: [Developer/brk/modules/brk-client/index.js:4468](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4468)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4461](https://github.com/
 
 > **blocksToHalving**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4463](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4463)
+Defined in: [Developer/brk/modules/brk-client/index.js:4470](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4470)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4463](https://github.com/
 
 > **daysToHalving**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4464](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4464)
+Defined in: [Developer/brk/modules/brk-client/index.js:4471](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4471)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4464](https://github.com/
 
 > **epoch**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4462](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4462)
+Defined in: [Developer/brk/modules/brk-client/index.js:4469](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4469)

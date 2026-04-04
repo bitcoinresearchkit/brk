@@ -6,7 +6,7 @@
 
 # Interface: PricePattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4286](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4286)
+Defined in: [Developer/brk/modules/brk-client/index.js:4293](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4293)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4286](https://github.com/
 
 > **price**: [`BpsCentsPercentilesRatioSatsUsdPattern`](BpsCentsPercentilesRatioSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4287](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4287)
+Defined in: [Developer/brk/modules/brk-client/index.js:4294](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4294)

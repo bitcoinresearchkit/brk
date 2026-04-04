@@ -6,7 +6,7 @@
 
 # Interface: AverageBlockCumulativeInSumPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2428](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2428)
+Defined in: [Developer/brk/modules/brk-client/index.js:2435](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2435)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2428](https://github.com/
 
 > **average**: [`_1m1w1y24hPattern3`](1m1w1y24hPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2429](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2429)
+Defined in: [Developer/brk/modules/brk-client/index.js:2436](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2436)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2429](https://github.com/
 
 > **block**: [`BtcCentsSatsUsdPattern2`](BtcCentsSatsUsdPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2430](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2430)
+Defined in: [Developer/brk/modules/brk-client/index.js:2437](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2437)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2430](https://github.com/
 
 > **cumulative**: [`BtcCentsSatsUsdPattern3`](BtcCentsSatsUsdPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2431](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2431)
+Defined in: [Developer/brk/modules/brk-client/index.js:2438](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2438)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2431](https://github.com/
 
 > **inLoss**: [`AverageBlockCumulativeSumPattern3`](AverageBlockCumulativeSumPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2432](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2432)
+Defined in: [Developer/brk/modules/brk-client/index.js:2439](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2439)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2432](https://github.com/
 
 > **inProfit**: [`AverageBlockCumulativeSumPattern3`](AverageBlockCumulativeSumPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2433](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2433)
+Defined in: [Developer/brk/modules/brk-client/index.js:2440](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2440)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2433](https://github.com/
 
 > **sum**: [`_1m1w1y24hPattern4`](1m1w1y24hPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2434](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2434)
+Defined in: [Developer/brk/modules/brk-client/index.js:2441](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2441)

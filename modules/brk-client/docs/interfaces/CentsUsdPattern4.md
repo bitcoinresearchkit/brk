@@ -6,7 +6,7 @@
 
 # Interface: CentsUsdPattern4
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4093](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4093)
+Defined in: [Developer/brk/modules/brk-client/index.js:4100](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4100)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4093](https://github.com/
 
 > **cents**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4094](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4094)
+Defined in: [Developer/brk/modules/brk-client/index.js:4101](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4101)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4094](https://github.com/
 
 > **usd**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4095](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4095)
+Defined in: [Developer/brk/modules/brk-client/index.js:4102](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4102)

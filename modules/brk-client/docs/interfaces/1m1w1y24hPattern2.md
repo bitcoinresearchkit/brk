@@ -6,7 +6,7 @@
 
 # Interface: \_1m1w1y24hPattern2
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2924](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2924)
+Defined in: [Developer/brk/modules/brk-client/index.js:2931](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2931)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2924](https://github.com/
 
 > **\_1m**: [`BpsPercentRatioPattern`](BpsPercentRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2925](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2925)
+Defined in: [Developer/brk/modules/brk-client/index.js:2932](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2932)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2925](https://github.com/
 
 > **\_1w**: [`BpsPercentRatioPattern`](BpsPercentRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2926](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2926)
+Defined in: [Developer/brk/modules/brk-client/index.js:2933](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2933)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2926](https://github.com/
 
 > **\_1y**: [`BpsPercentRatioPattern`](BpsPercentRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2927](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2927)
+Defined in: [Developer/brk/modules/brk-client/index.js:2934](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2934)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2927](https://github.com/
 
 > **\_24h**: [`BpsPercentRatioPattern`](BpsPercentRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2928](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2928)
+Defined in: [Developer/brk/modules/brk-client/index.js:2935](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2935)

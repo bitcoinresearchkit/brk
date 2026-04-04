@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Market\_Technical\_Rsi
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5489](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5489)
+Defined in: [Developer/brk/modules/brk-client/index.js:5496](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5496)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5489](https://github.com/
 
 > **\_1m**: [`RsiStochPattern`](RsiStochPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5492](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5492)
+Defined in: [Developer/brk/modules/brk-client/index.js:5499](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5499)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5492](https://github.com/
 
 > **\_1w**: [`RsiStochPattern`](RsiStochPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5491](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5491)
+Defined in: [Developer/brk/modules/brk-client/index.js:5498](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5498)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5491](https://github.com/
 
 > **\_24h**: [`RsiStochPattern`](RsiStochPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5490](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5490)
+Defined in: [Developer/brk/modules/brk-client/index.js:5497](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5497)

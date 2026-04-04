@@ -6,7 +6,7 @@
 
 # Interface: PriceRatioPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4188](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4188)
+Defined in: [Developer/brk/modules/brk-client/index.js:4195](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4195)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4188](https://github.com/
 
 > **price**: [`CentsSatsUsdPattern`](CentsSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4189](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4189)
+Defined in: [Developer/brk/modules/brk-client/index.js:4196](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4196)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4189](https://github.com/
 
 > **ratio**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4190](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4190)
+Defined in: [Developer/brk/modules/brk-client/index.js:4197](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4197)

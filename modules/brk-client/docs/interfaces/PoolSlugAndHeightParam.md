@@ -6,7 +6,7 @@
 
 # Interface: PoolSlugAndHeightParam
 
-Defined in: [Developer/brk/modules/brk-client/index.js:771](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L771)
+Defined in: [Developer/brk/modules/brk-client/index.js:771](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L771)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:771](https://github.com/b
 
 > **height**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:773](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L773)
+Defined in: [Developer/brk/modules/brk-client/index.js:773](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L773)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:773](https://github.com/b
 
 > **slug**: [`PoolSlug`](../type-aliases/PoolSlug.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:772](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L772)
+Defined in: [Developer/brk/modules/brk-client/index.js:772](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L772)

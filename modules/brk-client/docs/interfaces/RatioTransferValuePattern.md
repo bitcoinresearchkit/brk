@@ -6,7 +6,7 @@
 
 # Interface: RatioTransferValuePattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3758](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3758)
+Defined in: [Developer/brk/modules/brk-client/index.js:3765](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3765)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3758](https://github.com/
 
 > **ratio**: [`_1m1w1y24hPattern`](1m1w1y24hPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3759](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3759)
+Defined in: [Developer/brk/modules/brk-client/index.js:3766](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3766)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3759](https://github.com/
 
 > **transferVolume**: [`AverageBlockCumulativeSumPattern`](AverageBlockCumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3760](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3760)
+Defined in: [Developer/brk/modules/brk-client/index.js:3767](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3767)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3760](https://github.com/
 
 > **valueDestroyed**: [`AverageBlockCumulativeSumPattern`](AverageBlockCumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3761](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3761)
+Defined in: [Developer/brk/modules/brk-client/index.js:3768](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3768)

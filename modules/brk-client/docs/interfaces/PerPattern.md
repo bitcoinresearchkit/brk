@@ -6,7 +6,7 @@
 
 # Interface: PerPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4169](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4169)
+Defined in: [Developer/brk/modules/brk-client/index.js:4176](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4176)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4169](https://github.com/
 
 > **perCoin**: [`CentsSatsUsdPattern`](CentsSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4170](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4170)
+Defined in: [Developer/brk/modules/brk-client/index.js:4177](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4177)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4170](https://github.com/
 
 > **perDollar**: [`CentsSatsUsdPattern`](CentsSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4171](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4171)
+Defined in: [Developer/brk/modules/brk-client/index.js:4178](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4178)

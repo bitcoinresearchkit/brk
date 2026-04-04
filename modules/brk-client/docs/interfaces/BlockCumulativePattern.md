@@ -6,7 +6,7 @@
 
 # Interface: BlockCumulativePattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3960](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3960)
+Defined in: [Developer/brk/modules/brk-client/index.js:3967](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3967)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3960](https://github.com/
 
 > **block**: [`BtcCentsSatsUsdPattern2`](BtcCentsSatsUsdPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3961](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3961)
+Defined in: [Developer/brk/modules/brk-client/index.js:3968](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3968)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3961](https://github.com/
 
 > **cumulative**: [`BtcCentsSatsUsdPattern3`](BtcCentsSatsUsdPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3962](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3962)
+Defined in: [Developer/brk/modules/brk-client/index.js:3969](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3969)

@@ -6,7 +6,7 @@
 
 # Interface: LossNetNuplProfitPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3346](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3346)
+Defined in: [Developer/brk/modules/brk-client/index.js:3353](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3353)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3346](https://github.com/
 
 > **loss**: [`CentsNegativeUsdPattern`](CentsNegativeUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3347](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3347)
+Defined in: [Developer/brk/modules/brk-client/index.js:3354](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3354)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3347](https://github.com/
 
 > **netPnl**: [`CentsUsdPattern`](CentsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3348](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3348)
+Defined in: [Developer/brk/modules/brk-client/index.js:3355](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3355)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3348](https://github.com/
 
 > **nupl**: [`BpsRatioPattern`](BpsRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3349](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3349)
+Defined in: [Developer/brk/modules/brk-client/index.js:3356](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3356)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3349](https://github.com/
 
 > **profit**: [`CentsUsdPattern3`](CentsUsdPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3350](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3350)
+Defined in: [Developer/brk/modules/brk-client/index.js:3357](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3357)

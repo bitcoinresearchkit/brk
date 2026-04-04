@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Blocks\_Time
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4372](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4372)
+Defined in: [Developer/brk/modules/brk-client/index.js:4379](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4379)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4372](https://github.com/
 
 > **timestamp**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4373](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4373)
+Defined in: [Developer/brk/modules/brk-client/index.js:4380](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4380)

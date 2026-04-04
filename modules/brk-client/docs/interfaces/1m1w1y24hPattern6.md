@@ -6,7 +6,7 @@
 
 # Interface: \_1m1w1y24hPattern6
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3062](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3062)
+Defined in: [Developer/brk/modules/brk-client/index.js:3069](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3069)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3062](https://github.com/
 
 > **\_1m**: [`CentsUsdPattern3`](CentsUsdPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3063](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3063)
+Defined in: [Developer/brk/modules/brk-client/index.js:3070](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3070)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3063](https://github.com/
 
 > **\_1w**: [`CentsUsdPattern3`](CentsUsdPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3064](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3064)
+Defined in: [Developer/brk/modules/brk-client/index.js:3071](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3071)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3064](https://github.com/
 
 > **\_1y**: [`CentsUsdPattern3`](CentsUsdPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3065](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3065)
+Defined in: [Developer/brk/modules/brk-client/index.js:3072](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3072)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3065](https://github.com/
 
 > **\_24h**: [`CentsUsdPattern3`](CentsUsdPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3066](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3066)
+Defined in: [Developer/brk/modules/brk-client/index.js:3073](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3073)

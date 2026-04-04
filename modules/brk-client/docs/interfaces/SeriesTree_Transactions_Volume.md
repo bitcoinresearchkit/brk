@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Transactions\_Volume
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4527](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4527)
+Defined in: [Developer/brk/modules/brk-client/index.js:4534](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4534)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4527](https://github.com/
 
 > **inputsPerSec**: [`_1m1w1y24hPattern`](1m1w1y24hPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4531](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4531)
+Defined in: [Developer/brk/modules/brk-client/index.js:4538](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4538)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4531](https://github.com/
 
 > **outputsPerSec**: [`_1m1w1y24hPattern`](1m1w1y24hPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4530](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4530)
+Defined in: [Developer/brk/modules/brk-client/index.js:4537](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4537)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4530](https://github.com/
 
 > **transferVolume**: [`AverageBlockCumulativeSumPattern3`](AverageBlockCumulativeSumPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4528](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4528)
+Defined in: [Developer/brk/modules/brk-client/index.js:4535](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4535)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4528](https://github.com/
 
 > **txPerSec**: [`_1m1w1y24hPattern`](1m1w1y24hPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4529](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4529)
+Defined in: [Developer/brk/modules/brk-client/index.js:4536](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4536)

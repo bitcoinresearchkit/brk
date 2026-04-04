@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Mining\_Rewards
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4782](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4782)
+Defined in: [Developer/brk/modules/brk-client/index.js:4789](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4789)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4782](https://github.com/
 
 > **coinbase**: [`AverageBlockCumulativeSumPattern3`](AverageBlockCumulativeSumPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4783](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4783)
+Defined in: [Developer/brk/modules/brk-client/index.js:4790](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4790)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4783](https://github.com/
 
 > **fees**: [`SeriesTree_Mining_Rewards_Fees`](SeriesTree_Mining_Rewards_Fees.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4785](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4785)
+Defined in: [Developer/brk/modules/brk-client/index.js:4792](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4792)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4785](https://github.com/
 
 > **outputVolume**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4786](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4786)
+Defined in: [Developer/brk/modules/brk-client/index.js:4793](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4793)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4786](https://github.com/
 
 > **subsidy**: [`SeriesTree_Mining_Rewards_Subsidy`](SeriesTree_Mining_Rewards_Subsidy.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4784](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4784)
+Defined in: [Developer/brk/modules/brk-client/index.js:4791](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4791)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4784](https://github.com/
 
 > **unclaimed**: [`BlockCumulativePattern`](BlockCumulativePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4787](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4787)
+Defined in: [Developer/brk/modules/brk-client/index.js:4794](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4794)

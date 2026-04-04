@@ -6,7 +6,7 @@
 
 # Interface: DifficultyAdjustmentEntry
 
-Defined in: [Developer/brk/modules/brk-client/index.js:413](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L413)
+Defined in: [Developer/brk/modules/brk-client/index.js:413](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L413)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:413](https://github.com/b
 
 > **changePercent**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:417](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L417)
+Defined in: [Developer/brk/modules/brk-client/index.js:417](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L417)
 
 Adjustment ratio (new/previous, e.g. 1.068 = +6.8%)
 
@@ -24,7 +24,7 @@ Adjustment ratio (new/previous, e.g. 1.068 = +6.8%)
 
 > **difficulty**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:416](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L416)
+Defined in: [Developer/brk/modules/brk-client/index.js:416](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L416)
 
 Difficulty value
 
@@ -34,7 +34,7 @@ Difficulty value
 
 > **height**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:415](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L415)
+Defined in: [Developer/brk/modules/brk-client/index.js:415](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L415)
 
 Block height of the adjustment
 
@@ -44,6 +44,6 @@ Block height of the adjustment
 
 > **timestamp**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:414](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L414)
+Defined in: [Developer/brk/modules/brk-client/index.js:414](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L414)
 
 Unix timestamp of the adjustment

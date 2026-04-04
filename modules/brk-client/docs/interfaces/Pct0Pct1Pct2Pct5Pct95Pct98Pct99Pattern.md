@@ -6,7 +6,7 @@
 
 # Interface: Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2167](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2167)
+Defined in: [Developer/brk/modules/brk-client/index.js:2174](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2174)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2167](https://github.com/
 
 > **pct05**: [`BpsPriceRatioPattern`](BpsPriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2168](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2168)
+Defined in: [Developer/brk/modules/brk-client/index.js:2175](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2175)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2168](https://github.com/
 
 > **pct1**: [`BpsPriceRatioPattern`](BpsPriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2169](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2169)
+Defined in: [Developer/brk/modules/brk-client/index.js:2176](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2176)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2169](https://github.com/
 
 > **pct2**: [`BpsPriceRatioPattern`](BpsPriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2170](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2170)
+Defined in: [Developer/brk/modules/brk-client/index.js:2177](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2177)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2170](https://github.com/
 
 > **pct5**: [`BpsPriceRatioPattern`](BpsPriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2171](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2171)
+Defined in: [Developer/brk/modules/brk-client/index.js:2178](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2178)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2171](https://github.com/
 
 > **pct95**: [`BpsPriceRatioPattern`](BpsPriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2172](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2172)
+Defined in: [Developer/brk/modules/brk-client/index.js:2179](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2179)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2172](https://github.com/
 
 > **pct98**: [`BpsPriceRatioPattern`](BpsPriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2173](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2173)
+Defined in: [Developer/brk/modules/brk-client/index.js:2180](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2180)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2173](https://github.com/
 
 > **pct99**: [`BpsPriceRatioPattern`](BpsPriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2174](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2174)
+Defined in: [Developer/brk/modules/brk-client/index.js:2181](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2181)
 
 ***
 
@@ -70,4 +70,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2174](https://github.com/
 
 > **pct995**: [`BpsPriceRatioPattern`](BpsPriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2175](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L2175)
+Defined in: [Developer/brk/modules/brk-client/index.js:2182](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2182)

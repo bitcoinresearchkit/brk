@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Mining\_Hashrate
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4825](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4825)
+Defined in: [Developer/brk/modules/brk-client/index.js:4832](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4832)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4825](https://github.com/
 
 > **price**: [`PhsReboundThsPattern`](PhsReboundThsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4827](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4827)
+Defined in: [Developer/brk/modules/brk-client/index.js:4834](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4834)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4827](https://github.com/
 
 > **rate**: [`SeriesTree_Mining_Hashrate_Rate`](SeriesTree_Mining_Hashrate_Rate.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4826](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4826)
+Defined in: [Developer/brk/modules/brk-client/index.js:4833](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4833)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4826](https://github.com/
 
 > **value**: [`PhsReboundThsPattern`](PhsReboundThsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4828](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4828)
+Defined in: [Developer/brk/modules/brk-client/index.js:4835](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4835)

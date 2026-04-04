@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Transactions\_Fees
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4511](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4511)
+Defined in: [Developer/brk/modules/brk-client/index.js:4518](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4518)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4511](https://github.com/
 
 > **effectiveFeeRate**: [`_6bBlockTxPattern`](6bBlockTxPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4516](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4516)
+Defined in: [Developer/brk/modules/brk-client/index.js:4523](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4523)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4516](https://github.com/
 
 > **fee**: [`_6bBlockTxPattern`](6bBlockTxPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4514](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4514)
+Defined in: [Developer/brk/modules/brk-client/index.js:4521](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4521)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4514](https://github.com/
 
 > **feeRate**: [`_6bBlockTxPattern`](6bBlockTxPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4515](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4515)
+Defined in: [Developer/brk/modules/brk-client/index.js:4522](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4522)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4515](https://github.com/
 
 > **inputValue**: [`SeriesPattern19`](../type-aliases/SeriesPattern19.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4512](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4512)
+Defined in: [Developer/brk/modules/brk-client/index.js:4519](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4519)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4512](https://github.com/
 
 > **outputValue**: [`SeriesPattern19`](../type-aliases/SeriesPattern19.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4513](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4513)
+Defined in: [Developer/brk/modules/brk-client/index.js:4520](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4520)

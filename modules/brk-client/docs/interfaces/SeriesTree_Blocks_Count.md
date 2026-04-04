@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Blocks\_Count
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4392](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4392)
+Defined in: [Developer/brk/modules/brk-client/index.js:4399](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4399)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4392](https://github.com/
 
 > **target**: [`_1m1w1y24hPattern`](1m1w1y24hPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4393](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4393)
+Defined in: [Developer/brk/modules/brk-client/index.js:4400](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4400)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4393](https://github.com/
 
 > **total**: [`AverageBlockCumulativeSumPattern2`](AverageBlockCumulativeSumPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4394](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4394)
+Defined in: [Developer/brk/modules/brk-client/index.js:4401](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4401)

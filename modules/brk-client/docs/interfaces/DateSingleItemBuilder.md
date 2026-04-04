@@ -6,7 +6,7 @@
 
 # Interface: DateSingleItemBuilder\<T\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1393](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L1393)
+Defined in: [Developer/brk/modules/brk-client/index.js:1400](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1400)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1393](https://github.com/
 
 > **fetch**: (`onUpdate?`) => `Promise`\<[`DateSeriesData`](../type-aliases/DateSeriesData.md)\<`T`\>\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1394](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L1394)
+Defined in: [Developer/brk/modules/brk-client/index.js:1401](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1401)
 
 Fetch the item
 
@@ -40,7 +40,7 @@ Fetch the item
 
 > **fetchCsv**: () => `Promise`\<`string`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1395](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L1395)
+Defined in: [Developer/brk/modules/brk-client/index.js:1402](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1402)
 
 Fetch as CSV
 
@@ -54,6 +54,6 @@ Fetch as CSV
 
 > **then**: [`DateThenable`](../type-aliases/DateThenable.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1396](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L1396)
+Defined in: [Developer/brk/modules/brk-client/index.js:1403](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1403)
 
 Thenable

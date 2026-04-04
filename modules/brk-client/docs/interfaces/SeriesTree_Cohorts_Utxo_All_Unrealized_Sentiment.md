@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Utxo\_All\_Unrealized\_Sentiment
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5988](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5988)
+Defined in: [Developer/brk/modules/brk-client/index.js:5995](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5995)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5988](https://github.com/
 
 > **greedIndex**: [`CentsUsdPattern3`](CentsUsdPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5990](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5990)
+Defined in: [Developer/brk/modules/brk-client/index.js:5997](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5997)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5990](https://github.com/
 
 > **net**: [`CentsUsdPattern`](CentsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5991](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5991)
+Defined in: [Developer/brk/modules/brk-client/index.js:5998](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5998)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5991](https://github.com/
 
 > **painIndex**: [`CentsUsdPattern3`](CentsUsdPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5989](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5989)
+Defined in: [Developer/brk/modules/brk-client/index.js:5996](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5996)

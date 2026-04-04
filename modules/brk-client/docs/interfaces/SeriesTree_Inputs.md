@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Inputs
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4535](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4535)
+Defined in: [Developer/brk/modules/brk-client/index.js:4542](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4542)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4535](https://github.com/
 
 > **count**: [`CumulativeRollingSumPattern`](CumulativeRollingSumPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4538](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4538)
+Defined in: [Developer/brk/modules/brk-client/index.js:4545](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4545)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4538](https://github.com/
 
 > **raw**: [`SeriesTree_Inputs_Raw`](SeriesTree_Inputs_Raw.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4536](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4536)
+Defined in: [Developer/brk/modules/brk-client/index.js:4543](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4543)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4536](https://github.com/
 
 > **spent**: [`SeriesTree_Inputs_Spent`](SeriesTree_Inputs_Spent.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4537](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4537)
+Defined in: [Developer/brk/modules/brk-client/index.js:4544](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4544)

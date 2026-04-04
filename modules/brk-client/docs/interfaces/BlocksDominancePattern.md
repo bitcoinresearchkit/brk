@@ -6,7 +6,7 @@
 
 # Interface: BlocksDominancePattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3979](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3979)
+Defined in: [Developer/brk/modules/brk-client/index.js:3986](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3986)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3979](https://github.com/
 
 > **blocksMined**: [`AverageBlockCumulativeSumPattern2`](AverageBlockCumulativeSumPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3980](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3980)
+Defined in: [Developer/brk/modules/brk-client/index.js:3987](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3987)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3980](https://github.com/
 
 > **dominance**: [`BpsPercentRatioPattern3`](BpsPercentRatioPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3981](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3981)
+Defined in: [Developer/brk/modules/brk-client/index.js:3988](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3988)

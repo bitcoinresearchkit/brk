@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Addrs\_New
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4690](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4690)
+Defined in: [Developer/brk/modules/brk-client/index.js:4697](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4697)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4690](https://github.com/
 
 > **all**: [`AverageBlockCumulativeSumPattern`](AverageBlockCumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4691](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4691)
+Defined in: [Developer/brk/modules/brk-client/index.js:4698](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4698)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4691](https://github.com/
 
 > **p2a**: [`AverageBlockCumulativeSumPattern`](AverageBlockCumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4699](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4699)
+Defined in: [Developer/brk/modules/brk-client/index.js:4706](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4706)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4699](https://github.com/
 
 > **p2pk33**: [`AverageBlockCumulativeSumPattern`](AverageBlockCumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4693](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4693)
+Defined in: [Developer/brk/modules/brk-client/index.js:4700](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4700)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4693](https://github.com/
 
 > **p2pk65**: [`AverageBlockCumulativeSumPattern`](AverageBlockCumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4692](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4692)
+Defined in: [Developer/brk/modules/brk-client/index.js:4699](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4699)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4692](https://github.com/
 
 > **p2pkh**: [`AverageBlockCumulativeSumPattern`](AverageBlockCumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4694](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4694)
+Defined in: [Developer/brk/modules/brk-client/index.js:4701](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4701)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4694](https://github.com/
 
 > **p2sh**: [`AverageBlockCumulativeSumPattern`](AverageBlockCumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4695](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4695)
+Defined in: [Developer/brk/modules/brk-client/index.js:4702](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4702)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4695](https://github.com/
 
 > **p2tr**: [`AverageBlockCumulativeSumPattern`](AverageBlockCumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4698](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4698)
+Defined in: [Developer/brk/modules/brk-client/index.js:4705](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4705)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4698](https://github.com/
 
 > **p2wpkh**: [`AverageBlockCumulativeSumPattern`](AverageBlockCumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4696](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4696)
+Defined in: [Developer/brk/modules/brk-client/index.js:4703](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4703)
 
 ***
 
@@ -78,4 +78,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4696](https://github.com/
 
 > **p2wsh**: [`AverageBlockCumulativeSumPattern`](AverageBlockCumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4697](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4697)
+Defined in: [Developer/brk/modules/brk-client/index.js:4704](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4704)

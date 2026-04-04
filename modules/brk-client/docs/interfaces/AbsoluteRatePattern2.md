@@ -6,7 +6,7 @@
 
 # Interface: AbsoluteRatePattern2
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3864](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3864)
+Defined in: [Developer/brk/modules/brk-client/index.js:3871](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3871)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3864](https://github.com/
 
 > **absolute**: [`_1m1w1y24hPattern5`](1m1w1y24hPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3865](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3865)
+Defined in: [Developer/brk/modules/brk-client/index.js:3872](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3872)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3865](https://github.com/
 
 > **rate**: [`_1m1w1y24hPattern2`](1m1w1y24hPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3866](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3866)
+Defined in: [Developer/brk/modules/brk-client/index.js:3873](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3873)

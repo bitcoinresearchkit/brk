@@ -6,7 +6,7 @@
 
 # Interface: NuplRealizedSupplyUnrealizedPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3369](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3369)
+Defined in: [Developer/brk/modules/brk-client/index.js:3376](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3376)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3369](https://github.com/
 
 > **nupl**: [`BpsRatioPattern`](BpsRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3370](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3370)
+Defined in: [Developer/brk/modules/brk-client/index.js:3377](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3377)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3370](https://github.com/
 
 > **realizedCap**: [`AllSthPattern`](AllSthPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3371](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3371)
+Defined in: [Developer/brk/modules/brk-client/index.js:3378](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3378)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3371](https://github.com/
 
 > **supply**: [`AllSthPattern2`](AllSthPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3372](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3372)
+Defined in: [Developer/brk/modules/brk-client/index.js:3379](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3379)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3372](https://github.com/
 
 > **unrealizedPnl**: [`AllSthPattern`](AllSthPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3373](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3373)
+Defined in: [Developer/brk/modules/brk-client/index.js:3380](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3380)

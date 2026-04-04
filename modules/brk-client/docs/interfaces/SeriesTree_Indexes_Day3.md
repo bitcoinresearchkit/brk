@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Indexes\_Day3
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5118](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5118)
+Defined in: [Developer/brk/modules/brk-client/index.js:5125](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5125)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5118](https://github.com/
 
 > **firstHeight**: [`SeriesPattern9`](../type-aliases/SeriesPattern9.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5120](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5120)
+Defined in: [Developer/brk/modules/brk-client/index.js:5127](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5127)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5120](https://github.com/
 
 > **identity**: [`SeriesPattern9`](../type-aliases/SeriesPattern9.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5119](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5119)
+Defined in: [Developer/brk/modules/brk-client/index.js:5126](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5126)

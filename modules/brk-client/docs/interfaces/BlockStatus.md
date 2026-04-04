@@ -6,7 +6,7 @@
 
 # Interface: BlockStatus
 
-Defined in: [Developer/brk/modules/brk-client/index.js:247](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L247)
+Defined in: [Developer/brk/modules/brk-client/index.js:247](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L247)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:247](https://github.com/b
 
 > `optional` **height?**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:249](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L249)
+Defined in: [Developer/brk/modules/brk-client/index.js:249](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L249)
 
 Block height (only if in best chain)
 
@@ -24,7 +24,7 @@ Block height (only if in best chain)
 
 > **inBestChain**: `boolean`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:248](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L248)
+Defined in: [Developer/brk/modules/brk-client/index.js:248](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L248)
 
 Whether this block is in the best chain
 
@@ -34,6 +34,6 @@ Whether this block is in the best chain
 
 > `optional` **nextBest?**: `string` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:250](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L250)
+Defined in: [Developer/brk/modules/brk-client/index.js:250](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L250)
 
 Hash of the next block in the best chain (null if tip)

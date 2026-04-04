@@ -6,7 +6,7 @@
 
 # Interface: Utxo
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1100](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L1100)
+Defined in: [Developer/brk/modules/brk-client/index.js:1107](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1107)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1100](https://github.com/
 
 > **status**: [`TxStatus`](TxStatus.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1103](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L1103)
+Defined in: [Developer/brk/modules/brk-client/index.js:1110](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1110)
 
 Confirmation status
 
@@ -24,7 +24,7 @@ Confirmation status
 
 > **txid**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1101](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L1101)
+Defined in: [Developer/brk/modules/brk-client/index.js:1108](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1108)
 
 Transaction ID of the UTXO
 
@@ -34,7 +34,7 @@ Transaction ID of the UTXO
 
 > **value**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1104](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L1104)
+Defined in: [Developer/brk/modules/brk-client/index.js:1111](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1111)
 
 Output value in satoshis
 
@@ -44,6 +44,6 @@ Output value in satoshis
 
 > **vout**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1102](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L1102)
+Defined in: [Developer/brk/modules/brk-client/index.js:1109](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1109)
 
 Output index

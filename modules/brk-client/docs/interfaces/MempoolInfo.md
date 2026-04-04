@@ -6,7 +6,7 @@
 
 # Interface: MempoolInfo
 
-Defined in: [Developer/brk/modules/brk-client/index.js:608](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L608)
+Defined in: [Developer/brk/modules/brk-client/index.js:608](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L608)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:608](https://github.com/b
 
 > **count**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:609](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L609)
+Defined in: [Developer/brk/modules/brk-client/index.js:609](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L609)
 
 Number of transactions in the mempool
 
@@ -24,7 +24,7 @@ Number of transactions in the mempool
 
 > **feeHistogram**: `object`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:612](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L612)
+Defined in: [Developer/brk/modules/brk-client/index.js:612](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L612)
 
 Fee histogram: `[[fee_rate, vsize], ...]` sorted by descending fee rate
 
@@ -38,7 +38,7 @@ Fee histogram: `[[fee_rate, vsize], ...]` sorted by descending fee rate
 
 > **totalFee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:611](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L611)
+Defined in: [Developer/brk/modules/brk-client/index.js:611](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L611)
 
 Total fees of all transactions in the mempool (satoshis)
 
@@ -48,6 +48,6 @@ Total fees of all transactions in the mempool (satoshis)
 
 > **vsize**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:610](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L610)
+Defined in: [Developer/brk/modules/brk-client/index.js:610](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L610)
 
 Total virtual size of all transactions in the mempool (vbytes)

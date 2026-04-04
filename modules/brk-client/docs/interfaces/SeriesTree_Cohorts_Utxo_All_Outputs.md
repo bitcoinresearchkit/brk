@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Utxo\_All\_Outputs
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5799](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5799)
+Defined in: [Developer/brk/modules/brk-client/index.js:5806](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5806)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5799](https://github.com/
 
 > **spendingRate**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5802](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5802)
+Defined in: [Developer/brk/modules/brk-client/index.js:5809](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5809)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5802](https://github.com/
 
 > **spentCount**: [`AverageBlockCumulativeSumPattern2`](AverageBlockCumulativeSumPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5801](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5801)
+Defined in: [Developer/brk/modules/brk-client/index.js:5808](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5808)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5801](https://github.com/
 
 > **unspentCount**: [`BaseDeltaPattern`](BaseDeltaPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5800](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5800)
+Defined in: [Developer/brk/modules/brk-client/index.js:5807](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5807)

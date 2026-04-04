@@ -6,7 +6,7 @@
 
 # Interface: ValidateAddrParam
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1112](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L1112)
+Defined in: [Developer/brk/modules/brk-client/index.js:1119](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1119)
 
 ## Properties
 
@@ -14,6 +14,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1112](https://github.com/
 
 > **address**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1113](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L1113)
+Defined in: [Developer/brk/modules/brk-client/index.js:1120](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1120)
 
 Bitcoin address to validate (can be any string)

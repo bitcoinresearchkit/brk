@@ -6,7 +6,7 @@
 
 # Interface: BlockCumulativeDeltaSumPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3162](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3162)
+Defined in: [Developer/brk/modules/brk-client/index.js:3169](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3169)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3162](https://github.com/
 
 > **block**: [`CentsUsdPattern4`](CentsUsdPattern4.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3163](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3163)
+Defined in: [Developer/brk/modules/brk-client/index.js:3170](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3170)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3163](https://github.com/
 
 > **cumulative**: [`CentsUsdPattern`](CentsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3164](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3164)
+Defined in: [Developer/brk/modules/brk-client/index.js:3171](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3171)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3164](https://github.com/
 
 > **delta**: [`AbsoluteRatePattern2`](AbsoluteRatePattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3165](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3165)
+Defined in: [Developer/brk/modules/brk-client/index.js:3172](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3172)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3165](https://github.com/
 
 > **sum**: [`_1m1w1y24hPattern5`](1m1w1y24hPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3166](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L3166)
+Defined in: [Developer/brk/modules/brk-client/index.js:3173](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3173)

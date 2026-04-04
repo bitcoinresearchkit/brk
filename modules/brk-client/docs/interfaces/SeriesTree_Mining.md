@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Mining
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4776](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4776)
+Defined in: [Developer/brk/modules/brk-client/index.js:4783](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4783)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4776](https://github.com/
 
 > **hashrate**: [`SeriesTree_Mining_Hashrate`](SeriesTree_Mining_Hashrate.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4778](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4778)
+Defined in: [Developer/brk/modules/brk-client/index.js:4785](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4785)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4778](https://github.com/
 
 > **rewards**: [`SeriesTree_Mining_Rewards`](SeriesTree_Mining_Rewards.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4777](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L4777)
+Defined in: [Developer/brk/modules/brk-client/index.js:4784](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4784)

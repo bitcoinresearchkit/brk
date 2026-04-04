@@ -6,7 +6,7 @@
 
 # Interface: TxidParam
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1076](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L1076)
+Defined in: [Developer/brk/modules/brk-client/index.js:1083](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1083)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1076](https://github.com/
 
 > **txid**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1077](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L1077)
+Defined in: [Developer/brk/modules/brk-client/index.js:1084](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1084)

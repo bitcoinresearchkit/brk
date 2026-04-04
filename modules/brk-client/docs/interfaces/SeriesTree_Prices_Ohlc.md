@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Prices\_Ohlc
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5724](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5724)
+Defined in: [Developer/brk/modules/brk-client/index.js:5731](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5731)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5724](https://github.com/
 
 > **cents**: [`SeriesPattern2`](../type-aliases/SeriesPattern2.md)\<[`OHLCCents`](OHLCCents.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5726](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5726)
+Defined in: [Developer/brk/modules/brk-client/index.js:5733](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5733)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5726](https://github.com/
 
 > **sats**: [`SeriesPattern2`](../type-aliases/SeriesPattern2.md)\<[`OHLCSats`](OHLCSats.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5727](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5727)
+Defined in: [Developer/brk/modules/brk-client/index.js:5734](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5734)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5727](https://github.com/
 
 > **usd**: [`SeriesPattern2`](../type-aliases/SeriesPattern2.md)\<[`OHLCDollars`](OHLCDollars.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5725](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L5725)
+Defined in: [Developer/brk/modules/brk-client/index.js:5732](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5732)

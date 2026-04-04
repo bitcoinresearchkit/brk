@@ -6,7 +6,7 @@
 
 # Interface: EmptyAddrData
 
-Defined in: [Developer/brk/modules/brk-client/index.js:446](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L446)
+Defined in: [Developer/brk/modules/brk-client/index.js:446](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L446)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:446](https://github.com/b
 
 > **fundedTxoCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:448](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L448)
+Defined in: [Developer/brk/modules/brk-client/index.js:448](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L448)
 
 Total funded/spent transaction output count (equal since address is empty)
 
@@ -24,7 +24,7 @@ Total funded/spent transaction output count (equal since address is empty)
 
 > **transfered**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:449](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L449)
+Defined in: [Developer/brk/modules/brk-client/index.js:449](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L449)
 
 Total satoshis transferred
 
@@ -34,6 +34,6 @@ Total satoshis transferred
 
 > **txCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:447](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L447)
+Defined in: [Developer/brk/modules/brk-client/index.js:447](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L447)
 
 Total transaction count

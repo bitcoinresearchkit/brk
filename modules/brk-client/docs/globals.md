@@ -548,6 +548,7 @@
 - [TxInIndex](type-aliases/TxInIndex.md)
 - [TxOutIndex](type-aliases/TxOutIndex.md)
 - [TxVersion](type-aliases/TxVersion.md)
+- [TxVersionRaw](type-aliases/TxVersionRaw.md)
 - [TypeIndex](type-aliases/TypeIndex.md)
 - [U8x2](type-aliases/U8x2.md)
 - [U8x20](type-aliases/U8x20.md)
