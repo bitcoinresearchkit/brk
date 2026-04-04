@@ -133,7 +133,7 @@ Open = Dollars
 OpReturnIndex = TypeIndex
 OutPoint = int
 # Type (P2PKH, P2WPKH, P2SH, P2TR, etc.)
-OutputType = Literal["p2pk65", "p2pk33", "p2pkh", "p2ms", "p2sh", "opreturn", "p2wpkh", "p2wsh", "p2tr", "p2a", "empty", "unknown"]
+OutputType = Literal["p2pk65", "p2pk33", "p2pkh", "p2ms", "p2sh", "op_return", "v0_p2wpkh", "v0_p2wsh", "v1_p2tr", "p2a", "empty", "unknown"]
 P2AAddrIndex = TypeIndex
 U8x2 = List[int]
 P2ABytes = U8x2
@@ -316,12 +316,12 @@ class BlockPool(TypedDict):
         id: Unique pool identifier
         name: Pool name
         slug: URL-friendly pool identifier
-        minerNames: Alternative miner names (if identified)
+        minerNames: Miner name tags found in coinbase scriptsig
     """
     id: int
     name: str
     slug: PoolSlug
-    minerNames: Optional[str]
+    minerNames: Optional[List[str]]
 
 class BlockExtras(TypedDict):
     """
@@ -354,6 +354,8 @@ class BlockExtras(TypedDict):
         utxoSetSize: Total UTXO set size at this height
         totalInputAmt: Total input amount in satoshis
         virtualSize: Virtual size in vbytes
+        firstSeen: Timestamp when the block was first seen (always null, not yet supported)
+        orphans: Orphaned blocks (always empty)
         price: USD price at block height
     """
     totalFees: Sats
@@ -382,6 +384,8 @@ class BlockExtras(TypedDict):
     utxoSetSize: int
     totalInputAmt: Sats
     virtualSize: float
+    firstSeen: Optional[int]
+    orphans: List[str]
     price: Dollars
 
 class BlockFeesEntry(TypedDict):
@@ -429,29 +433,29 @@ class BlockInfo(TypedDict):
         height: Block height
         version: Block version
         timestamp: Block timestamp (Unix time)
+        bits: Compact target (bits)
+        nonce: Nonce
+        difficulty: Block difficulty
+        merkle_root: Merkle root of the transaction tree
         tx_count: Number of transactions
         size: Block size in bytes
         weight: Block weight in weight units
-        merkle_root: Merkle root of the transaction tree
         previousblockhash: Previous block hash
         mediantime: Median time of the last 11 blocks
-        nonce: Nonce
-        bits: Compact target (bits)
-        difficulty: Block difficulty
     """
     id: BlockHash
     height: Height
     version: int
     timestamp: Timestamp
+    bits: int
+    nonce: int
+    difficulty: float
+    merkle_root: str
     tx_count: int
     size: int
     weight: Weight
-    merkle_root: str
     previousblockhash: BlockHash
     mediantime: Timestamp
-    nonce: int
-    bits: int
-    difficulty: float
 
 class BlockInfoV1(TypedDict):
     """
@@ -462,30 +466,30 @@ class BlockInfoV1(TypedDict):
         height: Block height
         version: Block version
         timestamp: Block timestamp (Unix time)
+        bits: Compact target (bits)
+        nonce: Nonce
+        difficulty: Block difficulty
+        merkle_root: Merkle root of the transaction tree
         tx_count: Number of transactions
         size: Block size in bytes
         weight: Block weight in weight units
-        merkle_root: Merkle root of the transaction tree
         previousblockhash: Previous block hash
         mediantime: Median time of the last 11 blocks
-        nonce: Nonce
-        bits: Compact target (bits)
-        difficulty: Block difficulty
         extras: Extended block data
     """
     id: BlockHash
     height: Height
     version: int
     timestamp: Timestamp
+    bits: int
+    nonce: int
+    difficulty: float
+    merkle_root: str
     tx_count: int
     size: int
     weight: Weight
-    merkle_root: str
     previousblockhash: BlockHash
     mediantime: Timestamp
-    nonce: int
-    bits: int
-    difficulty: float
     extras: BlockExtras
 
 class BlockRewardsEntry(TypedDict):
@@ -1333,7 +1337,7 @@ class TxIn(TypedDict):
 
     Attributes:
         txid: Transaction ID of the output being spent
-        vout: Output index being spent
+        vout: Output index being spent (u16: coinbase is 65535, mempool.space uses u32: 4294967295)
         prevout: Information about the previous output being spent
         scriptsig: Signature script (hex, for non-SegWit inputs)
         scriptsig_asm: Signature script in assembly format
@@ -6003,7 +6007,7 @@ class SeriesTree:
 class BrkClient(BrkClientBase):
     """Main BRK client with series tree and API methods."""
 
-    VERSION = "v0.3.0-alpha.2"
+    VERSION = "v0.3.0-alpha.3"
 
     INDEXES = [
       "minute10",

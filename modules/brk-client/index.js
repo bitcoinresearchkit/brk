@@ -139,6 +139,8 @@
  * @property {number} utxoSetSize - Total UTXO set size at this height
  * @property {Sats} totalInputAmt - Total input amount in satoshis
  * @property {number} virtualSize - Virtual size in vbytes
+ * @property {?number=} firstSeen - Timestamp when the block was first seen (always null, not yet supported)
+ * @property {string[]} orphans - Orphaned blocks (always empty)
  * @property {Dollars} price - USD price at block height
  */
 /**
@@ -177,15 +179,15 @@
  * @property {Height} height - Block height
  * @property {number} version - Block version
  * @property {Timestamp} timestamp - Block timestamp (Unix time)
+ * @property {number} bits - Compact target (bits)
+ * @property {number} nonce - Nonce
+ * @property {number} difficulty - Block difficulty
+ * @property {string} merkleRoot - Merkle root of the transaction tree
  * @property {number} txCount - Number of transactions
  * @property {number} size - Block size in bytes
  * @property {Weight} weight - Block weight in weight units
- * @property {string} merkleRoot - Merkle root of the transaction tree
  * @property {BlockHash} previousblockhash - Previous block hash
  * @property {Timestamp} mediantime - Median time of the last 11 blocks
- * @property {number} nonce - Nonce
- * @property {number} bits - Compact target (bits)
- * @property {number} difficulty - Block difficulty
  */
 /**
  * Block information with extras, matching mempool.space /api/v1/blocks
@@ -195,15 +197,15 @@
  * @property {Height} height - Block height
  * @property {number} version - Block version
  * @property {Timestamp} timestamp - Block timestamp (Unix time)
+ * @property {number} bits - Compact target (bits)
+ * @property {number} nonce - Nonce
+ * @property {number} difficulty - Block difficulty
+ * @property {string} merkleRoot - Merkle root of the transaction tree
  * @property {number} txCount - Number of transactions
  * @property {number} size - Block size in bytes
  * @property {Weight} weight - Block weight in weight units
- * @property {string} merkleRoot - Merkle root of the transaction tree
  * @property {BlockHash} previousblockhash - Previous block hash
  * @property {Timestamp} mediantime - Median time of the last 11 blocks
- * @property {number} nonce - Nonce
- * @property {number} bits - Compact target (bits)
- * @property {number} difficulty - Block difficulty
  * @property {BlockExtras} extras - Extended block data
  */
 /**
@@ -213,7 +215,7 @@
  * @property {number} id - Unique pool identifier
  * @property {string} name - Pool name
  * @property {PoolSlug} slug - URL-friendly pool identifier
- * @property {?string=} minerNames - Alternative miner names (if identified)
+ * @property {?string[]=} minerNames - Miner name tags found in coinbase scriptsig
  */
 /**
  * A single block rewards data point.
@@ -672,7 +674,7 @@
 /**
  * Type (P2PKH, P2WPKH, P2SH, P2TR, etc.)
  *
- * @typedef {("p2pk65"|"p2pk33"|"p2pkh"|"p2ms"|"p2sh"|"opreturn"|"p2wpkh"|"p2wsh"|"p2tr"|"p2a"|"empty"|"unknown")} OutputType
+ * @typedef {("p2pk65"|"p2pk33"|"p2pkh"|"p2ms"|"p2sh"|"op_return"|"v0_p2wpkh"|"v0_p2wsh"|"v1_p2tr"|"p2a"|"empty"|"unknown")} OutputType
  */
 /** @typedef {TypeIndex} P2AAddrIndex */
 /** @typedef {U8x2} P2ABytes */
@@ -1022,7 +1024,7 @@
  *
  * @typedef {Object} TxIn
  * @property {Txid} txid - Transaction ID of the output being spent
- * @property {Vout} vout - Output index being spent
+ * @property {Vout} vout - Output index being spent (u16: coinbase is 65535, mempool.space uses u32: 4294967295)
  * @property {(TxOut|null)=} prevout - Information about the previous output being spent
  * @property {string} scriptsig - Signature script (hex, for non-SegWit inputs)
  * @property {string} scriptsigAsm - Signature script in assembly format
@@ -6564,7 +6566,7 @@ function createTransferPattern(client, acc) {
  * @extends BrkClientBase
  */
 class BrkClient extends BrkClientBase {
-  VERSION = "v0.3.0-alpha.2";
+  VERSION = "v0.3.0-alpha.3";
 
   INDEXES = /** @type {const} */ ([
     "minute10",

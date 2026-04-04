@@ -107,6 +107,13 @@ pub struct BlockExtras {
     #[serde(rename = "virtualSize")]
     pub virtual_size: f64,
 
+    /// Timestamp when the block was first seen (always null, not yet supported)
+    #[serde(rename = "firstSeen")]
+    pub first_seen: Option<u64>,
+
+    /// Orphaned blocks (always empty)
+    pub orphans: Vec<String>,
+
     /// USD price at block height
     pub price: Dollars,
 }

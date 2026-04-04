@@ -170,7 +170,16 @@ impl Query {
                 .collect();
 
             let weight = Weight::from(tx.weight());
-            let total_sigop_cost = tx.total_sigop_cost(|_| None);
+            let total_sigop_cost = tx.total_sigop_cost(|outpoint| {
+                tx.input
+                    .iter()
+                    .position(|i| i.previous_output == *outpoint)
+                    .and_then(|j| input[j].prevout.as_ref())
+                    .map(|p| bitcoin::TxOut {
+                        value: bitcoin::Amount::from_sat(u64::from(p.value)),
+                        script_pubkey: p.script_pubkey.clone(),
+                    })
+            });
             let output: Vec<TxOut> = tx.output.into_iter().map(TxOut::from).collect();
 
             let mut transaction = Transaction {

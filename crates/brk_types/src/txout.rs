@@ -92,11 +92,15 @@ impl Serialize for TxOut {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("TxOut", 5)?;
+        let addr = self.addr();
+        let field_count = if addr.is_some() { 5 } else { 4 };
+        let mut state = serializer.serialize_struct("TxOut", field_count)?;
         state.serialize_field("scriptpubkey", &self.script_pubkey.to_hex_string())?;
         state.serialize_field("scriptpubkey_asm", &self.script_pubkey_asm())?;
         state.serialize_field("scriptpubkey_type", &self.type_())?;
-        state.serialize_field("scriptpubkey_address", &self.addr())?;
+        if let Some(addr) = &addr {
+            state.serialize_field("scriptpubkey_address", addr)?;
+        }
         state.serialize_field("value", &self.value)?;
         state.end()
     }

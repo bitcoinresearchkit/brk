@@ -4,7 +4,7 @@ use brk_error::{Error, Result};
 use brk_reader::Reader;
 use brk_types::{
     BlkPosition, BlockExtras, BlockHash, BlockHashPrefix, BlockHeader, BlockInfo, BlockInfoV1,
-    BlockPool, FeeRate, Height, Sats, Timestamp, TxIndex, VSize, pools,
+    BlockPool, FeeRate, Height, PoolSlug, Sats, Timestamp, TxIndex, VSize, pools,
 };
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
@@ -126,15 +126,15 @@ impl Query {
                 height: Height::from(begin + i),
                 version: header.version,
                 timestamp: timestamps[i],
+                bits: header.bits,
+                nonce: header.nonce,
+                difficulty: *difficulties[i],
+                merkle_root: header.merkle_root,
                 tx_count,
                 size: *sizes[i],
                 weight: weights[i],
-                merkle_root: header.merkle_root,
                 previous_block_hash: header.previous_block_hash,
                 median_time,
-                nonce: header.nonce,
-                bits: header.bits,
-                difficulty: *difficulties[i],
             });
         }
 
@@ -251,14 +251,6 @@ impl Query {
         let fa_pct90 = fad.pct90.height.collect_range_at(begin, end);
         let fa_max = fad.max.height.collect_range_at(begin, end);
 
-        // Bulk read tx positions range covering all coinbase txs (first tx of each block)
-        let tx_pos_begin = first_tx_indexes[0].to_usize();
-        let tx_pos_end = first_tx_indexes[count - 1].to_usize() + 1;
-        let all_tx_positions = indexer
-            .vecs
-            .transactions
-            .position
-            .collect_range_at(tx_pos_begin, tx_pos_end);
 
         // Bulk read median time window
         let median_start = begin.saturating_sub(10);
@@ -293,16 +285,25 @@ impl Query {
             let pool_slug = pool_slugs[i];
             let pool = all_pools.get(pool_slug);
 
+            let varint_len = Self::compact_size_len(tx_count);
+            let coinbase_offset = HEADER_SIZE as u32 + varint_len;
+            let coinbase_pos = positions[i] + coinbase_offset;
+            let coinbase_read_len = size as usize - coinbase_offset as usize;
+
             let (
                 coinbase_raw,
                 coinbase_address,
                 coinbase_addresses,
                 coinbase_signature,
                 coinbase_signature_ascii,
-            ) = Self::parse_coinbase_tx(
-                reader,
-                all_tx_positions[first_tx_indexes[i].to_usize() - tx_pos_begin],
-            );
+                scriptsig_bytes,
+            ) = Self::parse_coinbase_tx(reader, coinbase_pos, coinbase_read_len);
+
+            let miner_names = if pool_slug == PoolSlug::Ocean {
+                Self::parse_datum_miner_names(&scriptsig_bytes)
+            } else {
+                None
+            };
 
             let median_time =
                 Self::compute_median_time(&median_timestamps, begin + i, median_start);
@@ -312,15 +313,15 @@ impl Query {
                 height: Height::from(begin + i),
                 version: header.version,
                 timestamp: timestamps[i],
+                bits: header.bits,
+                nonce: header.nonce,
+                difficulty: *difficulties[i],
+                merkle_root: header.merkle_root,
                 tx_count,
                 size,
                 weight,
-                merkle_root: header.merkle_root,
                 previous_block_hash: header.previous_block_hash,
                 median_time,
-                nonce: header.nonce,
-                bits: header.bits,
-                difficulty: *difficulties[i],
             };
 
             let total_input_amt = input_volumes[i];
@@ -343,7 +344,7 @@ impl Query {
                     id: pool.unique_id(),
                     name: pool.name.to_string(),
                     slug: pool_slug,
-                    miner_names: None,
+                    miner_names,
                 },
                 avg_fee: Sats::from(if non_coinbase > 0 {
                     total_fees_u64 / non_coinbase
@@ -383,6 +384,8 @@ impl Query {
                 total_input_amt,
                 virtual_size: vsize as f64,
                 price: prices[i],
+                orphans: vec![],
+                first_seen: None,
             };
 
             blocks.push(BlockInfoV1 { info, extras });
@@ -448,38 +451,94 @@ impl Query {
         Timestamp::from(sorted[sorted.len() / 2])
     }
 
+    fn compact_size_len(tx_count: u32) -> u32 {
+        if tx_count <= 0xFC {
+            1
+        } else if tx_count <= 0xFFFF {
+            3
+        } else {
+            5
+        }
+    }
+
+    /// Parse OCEAN DATUM protocol miner names from coinbase scriptsig.
+    /// Skips BIP34 height push, reads tag payload, splits on 0x0F delimiter.
+    fn parse_datum_miner_names(scriptsig: &[u8]) -> Option<Vec<String>> {
+        if scriptsig.is_empty() {
+            return None;
+        }
+
+        // Skip BIP34 height push: first byte is length of height data
+        let height_len = scriptsig[0] as usize;
+        let mut tag_len_idx = 1 + height_len;
+        if tag_len_idx >= scriptsig.len() {
+            return None;
+        }
+
+        // Read tags payload length (may use OP_PUSHDATA1 for >75 bytes)
+        let mut tags_len = scriptsig[tag_len_idx] as usize;
+        if tags_len == 0x4c {
+            tag_len_idx += 1;
+            if tag_len_idx >= scriptsig.len() {
+                return None;
+            }
+            tags_len = scriptsig[tag_len_idx] as usize;
+        }
+
+        let tag_start = tag_len_idx + 1;
+        if tag_start + tags_len > scriptsig.len() {
+            return None;
+        }
+
+        // Decode tag bytes, strip nulls, split on 0x0F, keep only alphanumeric + space
+        let tag_bytes = &scriptsig[tag_start..tag_start + tags_len];
+        let tag_string: String = tag_bytes
+            .iter()
+            .filter(|&&b| b != 0x00)
+            .map(|&b| b as char)
+            .collect();
+
+        let names: Vec<String> = tag_string
+            .split('\x0f')
+            .map(|s| {
+                s.chars()
+                    .filter(|c| c.is_ascii_alphanumeric() || *c == ' ')
+                    .collect::<String>()
+            })
+            .filter(|s| !s.trim().is_empty())
+            .collect();
+
+        if names.is_empty() { None } else { Some(names) }
+    }
+
     fn parse_coinbase_tx(
         reader: &Reader,
         position: BlkPosition,
-    ) -> (String, Option<String>, Vec<String>, String, String) {
-        let raw_bytes = match reader.read_raw_bytes(position, 1000) {
+        len: usize,
+    ) -> (String, Option<String>, Vec<String>, String, String, Vec<u8>) {
+        let empty = (String::new(), None, vec![], String::new(), String::new(), vec![]);
+        let raw_bytes = match reader.read_raw_bytes(position, len) {
             Ok(bytes) => bytes,
-            Err(_) => return (String::new(), None, vec![], String::new(), String::new()),
+            Err(_) => return empty,
         };
 
         let tx = match bitcoin::Transaction::consensus_decode(&mut raw_bytes.as_slice()) {
             Ok(tx) => tx,
-            Err(_) => return (String::new(), None, vec![], String::new(), String::new()),
+            Err(_) => return empty,
         };
 
-        let coinbase_raw = tx
+        let scriptsig_bytes: Vec<u8> = tx
             .input
             .first()
-            .map(|input| input.script_sig.as_bytes().to_lower_hex_string())
+            .map(|input| input.script_sig.as_bytes().to_vec())
             .unwrap_or_default();
 
-        let coinbase_signature_ascii = tx
-            .input
-            .first()
-            .map(|input| {
-                input
-                    .script_sig
-                    .as_bytes()
-                    .iter()
-                    .map(|&b| b as char)
-                    .collect::<String>()
-            })
-            .unwrap_or_default();
+        let coinbase_raw = scriptsig_bytes.to_lower_hex_string();
+
+        let coinbase_signature_ascii: String = scriptsig_bytes
+            .iter()
+            .map(|&b| b as char)
+            .collect();
 
         let coinbase_addresses: Vec<String> = tx
             .output
@@ -494,7 +553,12 @@ impl Query {
 
         let coinbase_signature = tx
             .output
-            .first()
+            .iter()
+            .find(|output| {
+                bitcoin::Address::from_script(&output.script_pubkey, bitcoin::Network::Bitcoin)
+                    .is_ok()
+            })
+            .or(tx.output.first())
             .map(|output| output.script_pubkey.to_asm_string())
             .unwrap_or_default();
 
@@ -504,6 +568,7 @@ impl Query {
             coinbase_addresses,
             coinbase_signature,
             coinbase_signature_ascii,
+            scriptsig_bytes,
         )
     }
 }

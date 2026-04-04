@@ -10,7 +10,7 @@ pub struct TxIn {
     #[schemars(example = "0000000000000000000000000000000000000000000000000000000000000000")]
     pub txid: Txid,
 
-    /// Output index being spent
+    /// Output index being spent (u16: coinbase is 65535, mempool.space uses u32: 4294967295)
     #[schemars(example = 0)]
     pub vout: Vout,
 
@@ -54,8 +54,8 @@ impl Serialize for TxIn {
         let has_witness = !self.witness.is_empty();
         let has_scriptsig = !self.script_sig.is_empty();
 
-        // P2SH-wrapped SegWit: both scriptsig and witness present
-        let inner_redeem = if has_scriptsig && has_witness {
+        // P2SH-wrapped SegWit: both scriptsig and witness present (not coinbase)
+        let inner_redeem = if has_scriptsig && has_witness && !self.is_coinbase {
             self.script_sig
                 .redeem_script()
                 .map(|s| s.to_asm_string())
@@ -64,8 +64,8 @@ impl Serialize for TxIn {
             String::new()
         };
 
-        // P2WSH: witness has >2 items, last is the witnessScript
-        let inner_witness = if has_witness && !has_scriptsig && self.witness.len() > 2 {
+        // P2WSH / P2SH-P2WSH: witness has >2 items, last is the witnessScript
+        let inner_witness = if has_witness && self.witness.len() > 2 {
             if let Some(last) = self.witness.last() {
                 let bytes: Vec<u8> = bitcoin::hex::FromHex::from_hex(last).unwrap_or_default();
                 ScriptBuf::from(bytes).to_asm_string()

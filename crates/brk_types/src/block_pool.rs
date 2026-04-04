@@ -16,6 +16,6 @@ pub struct BlockPool {
     /// URL-friendly pool identifier
     pub slug: PoolSlug,
 
-    /// Alternative miner names (if identified)
-    pub miner_names: Option<String>,
+    /// Miner name tags found in coinbase scriptsig
+    pub miner_names: Option<Vec<String>>,
 }

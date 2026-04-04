@@ -31,9 +31,17 @@ pub enum OutputType {
     P2PKH,
     P2MS,
     P2SH,
+    #[serde(rename = "op_return")]
+    #[strum(serialize = "op_return")]
     OpReturn,
+    #[serde(rename = "v0_p2wpkh")]
+    #[strum(serialize = "v0_p2wpkh")]
     P2WPKH,
+    #[serde(rename = "v0_p2wsh")]
+    #[strum(serialize = "v0_p2wsh")]
     P2WSH,
+    #[serde(rename = "v1_p2tr")]
+    #[strum(serialize = "v1_p2tr")]
     P2TR,
     P2A,
     Empty,
