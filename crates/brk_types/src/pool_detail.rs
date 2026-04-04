@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Pool, PoolSlug};
+use crate::{Pool, PoolSlug, Sats};
 
 /// Detailed pool information with statistics across time periods
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -26,6 +26,10 @@ pub struct PoolDetail {
     /// Self-reported hashrate (if available)
     #[serde(rename = "reportedHashrate")]
     pub reported_hashrate: Option<u128>,
+
+    /// Total reward earned by this pool (sats, all time; None for minor pools)
+    #[serde(rename = "totalReward")]
+    pub total_reward: Option<Sats>,
 }
 
 /// Pool information for detail view
@@ -56,13 +60,13 @@ pub struct PoolDetailInfo {
 impl From<&'static Pool> for PoolDetailInfo {
     fn from(pool: &'static Pool) -> Self {
         Self {
-            id: pool.unique_id(),
+            id: pool.mempool_id(),
             name: Cow::Borrowed(pool.name),
             link: Cow::Borrowed(pool.link),
             addresses: pool.addrs.iter().map(|&s| Cow::Borrowed(s)).collect(),
             regexes: pool.tags.iter().map(|&s| Cow::Borrowed(s)).collect(),
             slug: pool.slug(),
-            unique_id: pool.unique_id(),
+            unique_id: pool.mempool_unique_id(),
         }
     }
 }

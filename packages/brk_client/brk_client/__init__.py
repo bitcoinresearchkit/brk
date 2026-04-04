@@ -1111,12 +1111,14 @@ class PoolDetail(TypedDict):
         blockShare: Pool's share of total blocks for different time periods
         estimatedHashrate: Estimated hashrate based on blocks mined
         reportedHashrate: Self-reported hashrate (if available)
+        totalReward: Total reward earned by this pool (sats, all time; None for minor pools)
     """
     pool: PoolDetailInfo
     blockCount: PoolBlockCounts
     blockShare: PoolBlockShares
     estimatedHashrate: int
     reportedHashrate: Optional[int]
+    totalReward: Union[Sats, None]
 
 class PoolHashrateEntry(TypedDict):
     """

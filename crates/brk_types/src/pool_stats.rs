@@ -43,9 +43,8 @@ pub struct PoolStats {
 impl PoolStats {
     /// Create a new PoolStats from a Pool reference
     pub fn new(pool: &'static Pool, block_count: u64, rank: u32, share: f64) -> Self {
-        let id = pool.unique_id();
         Self {
-            pool_id: id,
+            pool_id: pool.mempool_id(),
             name: Cow::Borrowed(pool.name),
             link: Cow::Borrowed(pool.link),
             block_count,
@@ -53,7 +52,7 @@ impl PoolStats {
             empty_blocks: 0,
             slug: pool.slug(),
             share,
-            pool_unique_id: id,
+            pool_unique_id: pool.mempool_unique_id(),
         }
     }
 }

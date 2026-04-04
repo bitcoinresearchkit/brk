@@ -752,6 +752,7 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {PoolBlockShares} blockShare - Pool's share of total blocks for different time periods
  * @property {number} estimatedHashrate - Estimated hashrate based on blocks mined
  * @property {?number=} reportedHashrate - Self-reported hashrate (if available)
+ * @property {(Sats|null)=} totalReward - Total reward earned by this pool (sats, all time; None for minor pools)
  */
 /**
  * Pool information for detail view

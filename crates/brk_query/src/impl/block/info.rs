@@ -341,7 +341,7 @@ impl Query {
                 ],
                 reward: subsidy + total_fees,
                 pool: BlockPool {
-                    id: pool.unique_id(),
+                    id: pool.mempool_unique_id(),
                     name: pool.name.to_string(),
                     slug: pool_slug,
                     miner_names,

@@ -275,6 +275,11 @@ impl Query {
                 (share_24h * network_hr as f64) as u128
             },
             reported_hashrate: None,
+            total_reward: computer
+                .pools
+                .major
+                .get(&slug)
+                .and_then(|v| v.rewards.cumulative.sats.height.collect_one(current_height)),
         })
     }
 

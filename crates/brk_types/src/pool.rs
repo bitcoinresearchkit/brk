@@ -35,8 +35,13 @@ impl Pool {
         self.slug
     }
 
-    /// Get the pool's unique numeric ID
-    pub fn unique_id(&self) -> u8 {
+    /// Pool ID matching mempool.space's `unique_id` field (0-indexed, raw pools-v2.json value)
+    pub fn mempool_unique_id(&self) -> u8 {
         self.slug.into()
+    }
+
+    /// Pool ID matching mempool.space's `id` field (1-indexed)
+    pub fn mempool_id(&self) -> u8 {
+        self.mempool_unique_id() + 1
     }
 }

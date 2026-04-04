@@ -23,7 +23,7 @@ impl From<&'static Pool> for PoolInfo {
         Self {
             name: Cow::Borrowed(pool.name),
             slug: pool.slug(),
-            unique_id: pool.unique_id(),
+            unique_id: pool.mempool_unique_id(),
         }
     }
 }
