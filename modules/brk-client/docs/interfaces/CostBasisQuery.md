@@ -6,7 +6,7 @@
 
 # Interface: CostBasisQuery
 
-Defined in: [Developer/brk/modules/brk-client/index.js:335](https://github.com/bitcoinresearchkit/brk/blob/883b38c77cb9f979692884fd56d9966e0f8ea76b/modules/brk-client/index.js#L335)
+Defined in: [Developer/brk/modules/brk-client/index.js:337](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L337)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:335](https://github.com/b
 
 > `optional` **bucket?**: [`CostBasisBucket`](../type-aliases/CostBasisBucket.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:336](https://github.com/bitcoinresearchkit/brk/blob/883b38c77cb9f979692884fd56d9966e0f8ea76b/modules/brk-client/index.js#L336)
+Defined in: [Developer/brk/modules/brk-client/index.js:338](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L338)
 
 Bucket type for aggregation. Default: raw (no aggregation).
 
@@ -24,6 +24,6 @@ Bucket type for aggregation. Default: raw (no aggregation).
 
 > `optional` **value?**: [`CostBasisValue`](../type-aliases/CostBasisValue.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:337](https://github.com/bitcoinresearchkit/brk/blob/883b38c77cb9f979692884fd56d9966e0f8ea76b/modules/brk-client/index.js#L337)
+Defined in: [Developer/brk/modules/brk-client/index.js:339](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L339)
 
 Value type to return. Default: supply.

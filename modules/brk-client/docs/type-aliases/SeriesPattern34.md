@@ -8,7 +8,7 @@
 
 > **SeriesPattern34**\<`T`\> = `object`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1802](https://github.com/bitcoinresearchkit/brk/blob/883b38c77cb9f979692884fd56d9966e0f8ea76b/modules/brk-client/index.js#L1802)
+Defined in: [Developer/brk/modules/brk-client/index.js:1804](https://github.com/bitcoinresearchkit/brk/blob/8bc993ecebee68170d873d232b25f3b1f2d71378/modules/brk-client/index.js#L1804)
 
 ## Type Parameters
 
