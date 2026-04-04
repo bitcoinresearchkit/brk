@@ -674,7 +674,7 @@
 /**
  * Type (P2PKH, P2WPKH, P2SH, P2TR, etc.)
  *
- * @typedef {("p2pk65"|"p2pk33"|"p2pkh"|"p2ms"|"p2sh"|"op_return"|"v0_p2wpkh"|"v0_p2wsh"|"v1_p2tr"|"p2a"|"empty"|"unknown")} OutputType
+ * @typedef {("p2pk"|"p2pk"|"p2pkh"|"multisig"|"p2sh"|"op_return"|"v0_p2wpkh"|"v0_p2wsh"|"v1_p2tr"|"p2a"|"empty"|"unknown")} OutputType
  */
 /** @typedef {TypeIndex} P2AAddrIndex */
 /** @typedef {U8x2} P2ABytes */

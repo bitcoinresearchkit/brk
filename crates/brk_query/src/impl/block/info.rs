@@ -206,12 +206,13 @@ impl Query {
             .total
             .sum
             .collect_range_at(begin, end);
+        let utxo_begin = begin.saturating_sub(1);
         let utxo_set_sizes = computer
             .outputs
             .count
             .unspent
             .height
-            .collect_range_at(begin, end);
+            .collect_range_at(utxo_begin, end);
         let input_volumes = computer
             .transactions
             .volume
@@ -278,6 +279,9 @@ impl Query {
             let subsidy = subsidy_sats[i];
             let total_inputs = (*input_counts[i]).saturating_sub(1);
             let total_outputs = *output_counts[i];
+            let utxo_idx = begin + i - utxo_begin;
+            let utxo_set_size = *utxo_set_sizes[utxo_idx];
+            let prev_utxo_set_size = if utxo_idx > 0 { *utxo_set_sizes[utxo_idx - 1] } else { 0 };
             let vsize = weight.to_vbytes_ceil();
             let total_fees_u64 = u64::from(total_fees);
             let non_coinbase = tx_count.saturating_sub(1) as u64;
@@ -379,8 +383,8 @@ impl Query {
                 segwit_total_size: *segwit_sizes[i],
                 segwit_total_weight: segwit_weights[i],
                 header: raw_header.to_lower_hex_string(),
-                utxo_set_change: total_outputs as i64 - total_inputs as i64,
-                utxo_set_size: *utxo_set_sizes[i],
+                utxo_set_change: utxo_set_size as i64 - prev_utxo_set_size as i64,
+                utxo_set_size,
                 total_input_amt,
                 virtual_size: vsize as f64,
                 price: prices[i],
@@ -554,10 +558,7 @@ impl Query {
         let coinbase_signature = tx
             .output
             .iter()
-            .find(|output| {
-                bitcoin::Address::from_script(&output.script_pubkey, bitcoin::Network::Bitcoin)
-                    .is_ok()
-            })
+            .find(|output| !output.script_pubkey.is_op_return())
             .or(tx.output.first())
             .map(|output| output.script_pubkey.to_asm_string())
             .unwrap_or_default();

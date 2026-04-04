@@ -133,7 +133,7 @@ Open = Dollars
 OpReturnIndex = TypeIndex
 OutPoint = int
 # Type (P2PKH, P2WPKH, P2SH, P2TR, etc.)
-OutputType = Literal["p2pk65", "p2pk33", "p2pkh", "p2ms", "p2sh", "op_return", "v0_p2wpkh", "v0_p2wsh", "v1_p2tr", "p2a", "empty", "unknown"]
+OutputType = Literal["p2pk", "p2pk", "p2pkh", "multisig", "p2sh", "op_return", "v0_p2wpkh", "v0_p2wsh", "v1_p2tr", "p2a", "empty", "unknown"]
 P2AAddrIndex = TypeIndex
 U8x2 = List[int]
 P2ABytes = U8x2
