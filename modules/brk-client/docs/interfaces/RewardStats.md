@@ -6,7 +6,7 @@
 
 # Interface: RewardStats
 
-Defined in: [Developer/brk/modules/brk-client/index.js:833](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L833)
+Defined in: [Developer/brk/modules/brk-client/index.js:850](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L850)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:833](https://github.com/b
 
 > **endBlock**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:835](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L835)
+Defined in: [Developer/brk/modules/brk-client/index.js:852](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L852)
 
 Last block in the range
 
@@ -24,7 +24,7 @@ Last block in the range
 
 > **startBlock**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:834](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L834)
+Defined in: [Developer/brk/modules/brk-client/index.js:851](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L851)
 
 First block in the range
 
@@ -34,7 +34,7 @@ First block in the range
 
 > **totalFee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:837](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L837)
+Defined in: [Developer/brk/modules/brk-client/index.js:854](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L854)
 
 Total transaction fees in sats
 
@@ -44,7 +44,7 @@ Total transaction fees in sats
 
 > **totalReward**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:836](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L836)
+Defined in: [Developer/brk/modules/brk-client/index.js:853](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L853)
 
 Total coinbase rewards (subsidy + fees) in sats
 
@@ -54,6 +54,6 @@ Total coinbase rewards (subsidy + fees) in sats
 
 > **totalTx**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:838](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L838)
+Defined in: [Developer/brk/modules/brk-client/index.js:855](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L855)
 
 Total number of transactions

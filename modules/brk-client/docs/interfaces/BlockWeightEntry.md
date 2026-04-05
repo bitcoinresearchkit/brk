@@ -6,7 +6,7 @@
 
 # Interface: BlockWeightEntry
 
-Defined in: [Developer/brk/modules/brk-client/index.js:263](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L263)
+Defined in: [Developer/brk/modules/brk-client/index.js:279](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L279)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:263](https://github.com/b
 
 > **avgHeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:264](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L264)
+Defined in: [Developer/brk/modules/brk-client/index.js:280](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L280)
 
 Average block height in this window
 
@@ -24,7 +24,7 @@ Average block height in this window
 
 > **avgWeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:266](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L266)
+Defined in: [Developer/brk/modules/brk-client/index.js:282](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L282)
 
 Rolling 24h median block weight (weight units)
 
@@ -34,6 +34,6 @@ Rolling 24h median block weight (weight units)
 
 > **timestamp**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:265](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L265)
+Defined in: [Developer/brk/modules/brk-client/index.js:281](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L281)
 
 Unix timestamp at the window midpoint

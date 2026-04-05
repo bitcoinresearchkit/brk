@@ -8,6 +8,6 @@
 
 > **StoredU16** = `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:951](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L951)
+Defined in: [Developer/brk/modules/brk-client/index.js:968](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L968)
 
 ## Type Parameters

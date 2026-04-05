@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Investing
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5231](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5231)
+Defined in: [Developer/brk/modules/brk-client/index.js:5248](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5248)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5231](https://github.com/
 
 > **class**: [`SeriesTree_Investing_Class`](SeriesTree_Investing_Class.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5234](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5234)
+Defined in: [Developer/brk/modules/brk-client/index.js:5251](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5251)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5234](https://github.com/
 
 > **period**: [`SeriesTree_Investing_Period`](SeriesTree_Investing_Period.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5233](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5233)
+Defined in: [Developer/brk/modules/brk-client/index.js:5250](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5250)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5233](https://github.com/
 
 > **satsPerDay**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5232](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5232)
+Defined in: [Developer/brk/modules/brk-client/index.js:5249](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5249)

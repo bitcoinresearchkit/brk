@@ -5,17 +5,26 @@ import { brk } from "../client.js";
 let chain;
 
 /** @type {HTMLDivElement} */
+let blocksEl;
+
+/** @type {HTMLDivElement} */
 let details;
 
 /** @type {HTMLDivElement} */
-let sentinel;
+let olderSentinel;
+
+/** @type {HTMLDivElement} */
+let newerSentinel;
 
 /** @type {Map<BlockHash, BlockInfoV1>} */
 const blocksByHash = new Map();
 
 let newestHeight = -1;
 let oldestHeight = Infinity;
-let loading = false;
+let loadingLatest = false;
+let loadingOlder = false;
+let loadingNewer = false;
+let reachedTip = false;
 
 /** @type {HTMLDivElement | null} */
 let selectedCube = null;
@@ -41,24 +50,35 @@ export function init() {
   chain.id = "chain";
   explorerElement.append(chain);
 
-  const blocks = window.document.createElement("div");
-  blocks.classList.add("blocks");
-  chain.append(blocks);
+  newerSentinel = window.document.createElement("div");
+  newerSentinel.classList.add("sentinel");
+  chain.append(newerSentinel);
+
+  blocksEl = window.document.createElement("div");
+  blocksEl.classList.add("blocks");
+  chain.append(blocksEl);
 
   details = window.document.createElement("div");
   details.id = "block-details";
   explorerElement.append(details);
 
-  sentinel = window.document.createElement("div");
-  sentinel.classList.add("sentinel");
-  blocks.append(sentinel);
+  olderSentinel = window.document.createElement("div");
+  olderSentinel.classList.add("sentinel");
+  blocksEl.append(olderSentinel);
 
-  // Infinite scroll: load older blocks when sentinel becomes visible
-  new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) {
+  function checkSentinels() {
+    const p = chain.getBoundingClientRect();
+    const older = olderSentinel.getBoundingClientRect();
+    if (older.top < p.bottom + 200 && older.bottom > p.top) {
       loadOlder();
     }
-  }).observe(sentinel);
+    const newer = newerSentinel.getBoundingClientRect();
+    if (newer.bottom > p.top - 200 && newer.top < p.bottom) {
+      loadNewer();
+    }
+  }
+
+  chain.addEventListener("scroll", checkSentinels, { passive: true });
 
   // Self-contained lifecycle: poll when visible, stop when hidden
   new MutationObserver(() => {
@@ -81,44 +101,75 @@ export function init() {
   loadLatest();
 }
 
-async function loadLatest() {
-  if (loading) return;
-  loading = true;
-  try {
-    const blocks = await brk.getBlocksV1();
+/** @returns {Promise<number | null>} */
+async function getStartHeight() {
+  const path = window.location.pathname.split("/").filter((v) => v);
+  if (path[0] !== "block" || !path[1]) return null;
+  const value = path[1];
+  if (/^\d+$/.test(value)) return Number(value);
+  const block = await brk.getBlockV1(value);
+  return block.height;
+}
 
-    // First load: insert all blocks before sentinel
+async function loadLatest() {
+  if (loadingLatest) return;
+  if (newestHeight !== -1 && !reachedTip) return;
+  loadingLatest = true;
+  try {
+    const startHeight = newestHeight === -1 ? await getStartHeight() : null;
+    const blocks =
+      startHeight !== null
+        ? await brk.getBlocksV1FromHeight(startHeight)
+        : await brk.getBlocksV1();
+
+    // First load: insert all blocks between sentinels
     if (newestHeight === -1) {
       const cubes = blocks.map((b) => createBlockCube(b));
       for (const cube of cubes) {
-        sentinel.after(cube);
+        olderSentinel.after(cube);
       }
       newestHeight = blocks[0].height;
       oldestHeight = blocks[blocks.length - 1].height;
-      // Select the tip by default
+      if (startHeight === null) reachedTip = true;
       selectCube(cubes[0]);
+      if (!reachedTip) {
+        newerSentinel.style.minHeight = chain.clientHeight + "px";
+        requestAnimationFrame(() => {
+          if (selectedCube) {
+            selectedCube.scrollIntoView({
+              behavior: "instant",
+              block: "center",
+            });
+          }
+        });
+      }
+      loadingLatest = false;
+      return;
     } else {
-      // Subsequent polls: prepend only new blocks
+      // Subsequent polls: append newer blocks to blocksEl
       const newBlocks = blocks.filter((b) => b.height > newestHeight);
       if (newBlocks.length) {
-        // sentinel.after(createBlockCube(block));
-        sentinel.after(...newBlocks.map((b) => createBlockCube(b)));
-        newestHeight = newBlocks[0].height;
+        newBlocks.sort((a, b) => a.height - b.height);
+        for (const b of newBlocks) {
+          blocksEl.append(createBlockCube(b));
+        }
+        newestHeight = newBlocks[newBlocks.length - 1].height;
       }
+      reachedTip = true;
     }
   } catch (e) {
     console.error("explorer poll:", e);
   }
-  loading = false;
+  loadingLatest = false;
 }
 
 async function loadOlder() {
-  if (loading || oldestHeight <= 0) return;
-  loading = true;
+  if (loadingOlder || oldestHeight <= 0) return;
+  loadingOlder = true;
   try {
     const blocks = await brk.getBlocksV1FromHeight(oldestHeight - 1);
     for (const block of blocks) {
-      sentinel.after(createBlockCube(block));
+      olderSentinel.after(createBlockCube(block));
     }
     if (blocks.length) {
       oldestHeight = blocks[blocks.length - 1].height;
@@ -126,7 +177,29 @@ async function loadOlder() {
   } catch (e) {
     console.error("explorer loadOlder:", e);
   }
-  loading = false;
+  loadingOlder = false;
+}
+
+async function loadNewer() {
+  if (loadingNewer || newestHeight === -1 || reachedTip) return;
+  loadingNewer = true;
+  try {
+    const blocks = await brk.getBlocksV1FromHeight(newestHeight + 15);
+    const newer = blocks.filter((b) => b.height > newestHeight);
+    if (newer.length) {
+      newer.sort((a, b) => a.height - b.height);
+      for (const b of newer) {
+        blocksEl.append(createBlockCube(b));
+      }
+      newestHeight = newer[newer.length - 1].height;
+    } else {
+      reachedTip = true;
+      newerSentinel.style.minHeight = "";
+    }
+  } catch (e) {
+    console.error("explorer loadNewer:", e);
+  }
+  loadingNewer = false;
 }
 
 /** @param {HTMLDivElement} cube */

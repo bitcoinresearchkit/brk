@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Market\_MovingAverage
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5422](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5422)
+Defined in: [Developer/brk/modules/brk-client/index.js:5439](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5439)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5422](https://github.com/
 
 > **ema**: [`SeriesTree_Market_MovingAverage_Ema`](SeriesTree_Market_MovingAverage_Ema.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5424](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5424)
+Defined in: [Developer/brk/modules/brk-client/index.js:5441](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5441)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5424](https://github.com/
 
 > **sma**: [`SeriesTree_Market_MovingAverage_Sma`](SeriesTree_Market_MovingAverage_Sma.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5423](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5423)
+Defined in: [Developer/brk/modules/brk-client/index.js:5440](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5440)

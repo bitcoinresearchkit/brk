@@ -6,7 +6,7 @@
 
 # Interface: SkippedBuilder\<T\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1406](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1406)
+Defined in: [Developer/brk/modules/brk-client/index.js:1423](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L1423)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1406](https://github.com/
 
 > **fetch**: (`onUpdate?`) => `Promise`\<[`SeriesData`](../type-aliases/SeriesData.md)\<`T`\>\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1408](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1408)
+Defined in: [Developer/brk/modules/brk-client/index.js:1425](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L1425)
 
 Fetch from skipped position to end
 
@@ -40,7 +40,7 @@ Fetch from skipped position to end
 
 > **fetchCsv**: () => `Promise`\<`string`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1409](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1409)
+Defined in: [Developer/brk/modules/brk-client/index.js:1426](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L1426)
 
 Fetch as CSV
 
@@ -54,7 +54,7 @@ Fetch as CSV
 
 > **take**: (`n`) => [`RangeBuilder`](RangeBuilder.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1407](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1407)
+Defined in: [Developer/brk/modules/brk-client/index.js:1424](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L1424)
 
 Take n items after skipped position
 
@@ -74,6 +74,6 @@ Take n items after skipped position
 
 > **then**: [`Thenable`](../type-aliases/Thenable.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1410](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1410)
+Defined in: [Developer/brk/modules/brk-client/index.js:1427](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L1427)
 
 Thenable

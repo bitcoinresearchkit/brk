@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Utxo\_All\_Realized\_Price\_StdDev\_1y
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5914](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5914)
+Defined in: [Developer/brk/modules/brk-client/index.js:5931](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5931)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5914](https://github.com/
 
 > **\_0sd**: [`CentsSatsUsdPattern`](CentsSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5917](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5917)
+Defined in: [Developer/brk/modules/brk-client/index.js:5934](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5934)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5917](https://github.com/
 
 > **m05sd**: [`PriceRatioPattern`](PriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5924](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5924)
+Defined in: [Developer/brk/modules/brk-client/index.js:5941](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5941)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5924](https://github.com/
 
 > **m15sd**: [`PriceRatioPattern`](PriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5926](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5926)
+Defined in: [Developer/brk/modules/brk-client/index.js:5943](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5943)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5926](https://github.com/
 
 > **m1sd**: [`PriceRatioPattern`](PriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5925](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5925)
+Defined in: [Developer/brk/modules/brk-client/index.js:5942](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5942)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5925](https://github.com/
 
 > **m25sd**: [`PriceRatioPattern`](PriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5928](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5928)
+Defined in: [Developer/brk/modules/brk-client/index.js:5945](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5945)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5928](https://github.com/
 
 > **m2sd**: [`PriceRatioPattern`](PriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5927](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5927)
+Defined in: [Developer/brk/modules/brk-client/index.js:5944](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5944)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5927](https://github.com/
 
 > **m3sd**: [`PriceRatioPattern`](PriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5929](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5929)
+Defined in: [Developer/brk/modules/brk-client/index.js:5946](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5946)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5929](https://github.com/
 
 > **p05sd**: [`PriceRatioPattern`](PriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5918](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5918)
+Defined in: [Developer/brk/modules/brk-client/index.js:5935](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5935)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5918](https://github.com/
 
 > **p15sd**: [`PriceRatioPattern`](PriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5920](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5920)
+Defined in: [Developer/brk/modules/brk-client/index.js:5937](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5937)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5920](https://github.com/
 
 > **p1sd**: [`PriceRatioPattern`](PriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5919](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5919)
+Defined in: [Developer/brk/modules/brk-client/index.js:5936](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5936)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5919](https://github.com/
 
 > **p25sd**: [`PriceRatioPattern`](PriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5922](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5922)
+Defined in: [Developer/brk/modules/brk-client/index.js:5939](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5939)
 
 ***
 
@@ -102,7 +102,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5922](https://github.com/
 
 > **p2sd**: [`PriceRatioPattern`](PriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5921](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5921)
+Defined in: [Developer/brk/modules/brk-client/index.js:5938](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5938)
 
 ***
 
@@ -110,7 +110,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5921](https://github.com/
 
 > **p3sd**: [`PriceRatioPattern`](PriceRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5923](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5923)
+Defined in: [Developer/brk/modules/brk-client/index.js:5940](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5940)
 
 ***
 
@@ -118,7 +118,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5923](https://github.com/
 
 > **sd**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5915](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5915)
+Defined in: [Developer/brk/modules/brk-client/index.js:5932](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5932)
 
 ***
 
@@ -126,4 +126,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5915](https://github.com/
 
 > **zscore**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5916](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5916)
+Defined in: [Developer/brk/modules/brk-client/index.js:5933](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5933)

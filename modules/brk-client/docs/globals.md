@@ -61,6 +61,7 @@
 - [BlockCumulativePattern](interfaces/BlockCumulativePattern.md)
 - [BlockCumulativeSumPattern](interfaces/BlockCumulativeSumPattern.md)
 - [BlockExtras](interfaces/BlockExtras.md)
+- [BlockFeeRatesEntry](interfaces/BlockFeeRatesEntry.md)
 - [BlockFeesEntry](interfaces/BlockFeesEntry.md)
 - [BlockHashParam](interfaces/BlockHashParam.md)
 - [BlockHashStartIndex](interfaces/BlockHashStartIndex.md)

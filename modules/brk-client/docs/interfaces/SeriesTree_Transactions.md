@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Transactions
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4475](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4475)
+Defined in: [Developer/brk/modules/brk-client/index.js:4492](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4492)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4475](https://github.com/
 
 > **count**: [`SeriesTree_Transactions_Count`](SeriesTree_Transactions_Count.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4477](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4477)
+Defined in: [Developer/brk/modules/brk-client/index.js:4494](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4494)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4477](https://github.com/
 
 > **fees**: [`SeriesTree_Transactions_Fees`](SeriesTree_Transactions_Fees.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4479](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4479)
+Defined in: [Developer/brk/modules/brk-client/index.js:4496](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4496)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4479](https://github.com/
 
 > **raw**: [`SeriesTree_Transactions_Raw`](SeriesTree_Transactions_Raw.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4476](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4476)
+Defined in: [Developer/brk/modules/brk-client/index.js:4493](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4493)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4476](https://github.com/
 
 > **size**: [`SeriesTree_Transactions_Size`](SeriesTree_Transactions_Size.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4478](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4478)
+Defined in: [Developer/brk/modules/brk-client/index.js:4495](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4495)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4478](https://github.com/
 
 > **versions**: [`SeriesTree_Transactions_Versions`](SeriesTree_Transactions_Versions.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4480](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4480)
+Defined in: [Developer/brk/modules/brk-client/index.js:4497](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4497)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4480](https://github.com/
 
 > **volume**: [`SeriesTree_Transactions_Volume`](SeriesTree_Transactions_Volume.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4481](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4481)
+Defined in: [Developer/brk/modules/brk-client/index.js:4498](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4498)

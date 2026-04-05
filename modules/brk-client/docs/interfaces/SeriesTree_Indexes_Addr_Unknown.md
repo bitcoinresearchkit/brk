@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Indexes\_Addr\_Unknown
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5043](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5043)
+Defined in: [Developer/brk/modules/brk-client/index.js:5060](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5060)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5043](https://github.com/
 
 > **identity**: [`SeriesPattern33`](../type-aliases/SeriesPattern33.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5044](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5044)
+Defined in: [Developer/brk/modules/brk-client/index.js:5061](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5061)

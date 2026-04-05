@@ -6,7 +6,7 @@
 
 # Interface: BlockRewardsEntry
 
-Defined in: [Developer/brk/modules/brk-client/index.js:223](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L223)
+Defined in: [Developer/brk/modules/brk-client/index.js:239](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L239)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:223](https://github.com/b
 
 > **avgHeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:224](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L224)
+Defined in: [Developer/brk/modules/brk-client/index.js:240](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L240)
 
 Average block height in this window
 
@@ -24,7 +24,7 @@ Average block height in this window
 
 > **avgRewards**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:226](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L226)
+Defined in: [Developer/brk/modules/brk-client/index.js:242](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L242)
 
 Average coinbase reward per block (subsidy + fees, sats)
 
@@ -34,7 +34,7 @@ Average coinbase reward per block (subsidy + fees, sats)
 
 > **timestamp**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:225](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L225)
+Defined in: [Developer/brk/modules/brk-client/index.js:241](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L241)
 
 Unix timestamp at the window midpoint
 
@@ -44,6 +44,6 @@ Unix timestamp at the window midpoint
 
 > **uSD**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:227](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L227)
+Defined in: [Developer/brk/modules/brk-client/index.js:243](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L243)
 
 BTC/USD price at this height

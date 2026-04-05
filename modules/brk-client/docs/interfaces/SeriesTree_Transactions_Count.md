@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Transactions\_Count
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4499](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4499)
+Defined in: [Developer/brk/modules/brk-client/index.js:4516](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4516)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4499](https://github.com/
 
 > **isCoinbase**: [`SeriesPattern19`](../type-aliases/SeriesPattern19.md)\<`boolean`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4501](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4501)
+Defined in: [Developer/brk/modules/brk-client/index.js:4518](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4518)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4501](https://github.com/
 
 > **total**: [`AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern`](AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4500](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4500)
+Defined in: [Developer/brk/modules/brk-client/index.js:4517](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4517)

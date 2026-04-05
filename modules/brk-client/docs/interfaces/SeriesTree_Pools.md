@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Pools
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5537](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5537)
+Defined in: [Developer/brk/modules/brk-client/index.js:5554](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5554)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5537](https://github.com/
 
 > **major**: [`SeriesTree_Pools_Major`](SeriesTree_Pools_Major.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5539](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5539)
+Defined in: [Developer/brk/modules/brk-client/index.js:5556](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5556)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5539](https://github.com/
 
 > **minor**: [`SeriesTree_Pools_Minor`](SeriesTree_Pools_Minor.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5540](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5540)
+Defined in: [Developer/brk/modules/brk-client/index.js:5557](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5557)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5540](https://github.com/
 
 > **pool**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<[`PoolSlug`](../type-aliases/PoolSlug.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5538](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L5538)
+Defined in: [Developer/brk/modules/brk-client/index.js:5555](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5555)

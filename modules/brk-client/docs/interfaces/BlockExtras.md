@@ -6,7 +6,7 @@
 
 # Interface: BlockExtras
 
-Defined in: [Developer/brk/modules/brk-client/index.js:115](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L115)
+Defined in: [Developer/brk/modules/brk-client/index.js:115](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L115)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:115](https://github.com/b
 
 > **avgFee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:121](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L121)
+Defined in: [Developer/brk/modules/brk-client/index.js:121](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L121)
 
 Average fee per transaction in satoshis
 
@@ -24,7 +24,7 @@ Average fee per transaction in satoshis
 
 > **avgFeeRate**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:122](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L122)
+Defined in: [Developer/brk/modules/brk-client/index.js:122](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L122)
 
 Average fee rate in sat/vB
 
@@ -34,7 +34,7 @@ Average fee rate in sat/vB
 
 > **avgTxSize**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:128](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L128)
+Defined in: [Developer/brk/modules/brk-client/index.js:128](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L128)
 
 Average transaction size in bytes
 
@@ -44,7 +44,7 @@ Average transaction size in bytes
 
 > `optional` **coinbaseAddress?**: `string` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:124](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L124)
+Defined in: [Developer/brk/modules/brk-client/index.js:124](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L124)
 
 Primary coinbase output address
 
@@ -54,7 +54,7 @@ Primary coinbase output address
 
 > **coinbaseAddresses**: `string`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:125](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L125)
+Defined in: [Developer/brk/modules/brk-client/index.js:125](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L125)
 
 All coinbase output addresses
 
@@ -64,7 +64,7 @@ All coinbase output addresses
 
 > **coinbaseRaw**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:123](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L123)
+Defined in: [Developer/brk/modules/brk-client/index.js:123](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L123)
 
 Raw coinbase transaction scriptsig as hex
 
@@ -74,7 +74,7 @@ Raw coinbase transaction scriptsig as hex
 
 > **coinbaseSignature**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:126](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L126)
+Defined in: [Developer/brk/modules/brk-client/index.js:126](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L126)
 
 Coinbase output script in ASM format
 
@@ -84,7 +84,7 @@ Coinbase output script in ASM format
 
 > **coinbaseSignatureAscii**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:127](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L127)
+Defined in: [Developer/brk/modules/brk-client/index.js:127](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L127)
 
 Coinbase scriptsig decoded as ASCII
 
@@ -94,7 +94,7 @@ Coinbase scriptsig decoded as ASCII
 
 > **feePercentiles**: `number`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:133](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L133)
+Defined in: [Developer/brk/modules/brk-client/index.js:133](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L133)
 
 Fee amount percentiles in satoshis: [min, 10%, 25%, 50%, 75%, 90%, max]
 
@@ -104,7 +104,7 @@ Fee amount percentiles in satoshis: [min, 10%, 25%, 50%, 75%, 90%, max]
 
 > **feeRange**: `number`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:118](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L118)
+Defined in: [Developer/brk/modules/brk-client/index.js:118](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L118)
 
 Fee rate range: [min, 10%, 25%, 50%, 75%, 90%, max]
 
@@ -114,7 +114,7 @@ Fee rate range: [min, 10%, 25%, 50%, 75%, 90%, max]
 
 > `optional` **firstSeen?**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:142](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L142)
+Defined in: [Developer/brk/modules/brk-client/index.js:144](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L144)
 
 Timestamp when the block was first seen (always null, not yet supported)
 
@@ -124,7 +124,7 @@ Timestamp when the block was first seen (always null, not yet supported)
 
 > **header**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:137](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L137)
+Defined in: [Developer/brk/modules/brk-client/index.js:137](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L137)
 
 Raw 80-byte block header as hex
 
@@ -134,7 +134,7 @@ Raw 80-byte block header as hex
 
 > **medianFee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:117](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L117)
+Defined in: [Developer/brk/modules/brk-client/index.js:117](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L117)
 
 Median fee rate in sat/vB
 
@@ -144,7 +144,7 @@ Median fee rate in sat/vB
 
 > **medianFeeAmt**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:132](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L132)
+Defined in: [Developer/brk/modules/brk-client/index.js:132](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L132)
 
 Median fee amount in satoshis
 
@@ -154,7 +154,7 @@ Median fee amount in satoshis
 
 > **orphans**: `string`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:143](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L143)
+Defined in: [Developer/brk/modules/brk-client/index.js:145](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L145)
 
 Orphaned blocks (always empty)
 
@@ -164,7 +164,7 @@ Orphaned blocks (always empty)
 
 > **pool**: [`BlockPool`](BlockPool.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:120](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L120)
+Defined in: [Developer/brk/modules/brk-client/index.js:120](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L120)
 
 Mining pool that mined this block
 
@@ -174,7 +174,7 @@ Mining pool that mined this block
 
 > **price**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:144](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L144)
+Defined in: [Developer/brk/modules/brk-client/index.js:146](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L146)
 
 USD price at block height
 
@@ -184,7 +184,7 @@ USD price at block height
 
 > **reward**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:119](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L119)
+Defined in: [Developer/brk/modules/brk-client/index.js:119](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L119)
 
 Total block reward (subsidy + fees) in satoshis
 
@@ -194,7 +194,7 @@ Total block reward (subsidy + fees) in satoshis
 
 > **segwitTotalSize**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:135](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L135)
+Defined in: [Developer/brk/modules/brk-client/index.js:135](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L135)
 
 Total size of segwit transactions in bytes
 
@@ -204,7 +204,7 @@ Total size of segwit transactions in bytes
 
 > **segwitTotalTxs**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:134](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L134)
+Defined in: [Developer/brk/modules/brk-client/index.js:134](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L134)
 
 Number of segwit transactions
 
@@ -214,7 +214,7 @@ Number of segwit transactions
 
 > **segwitTotalWeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:136](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L136)
+Defined in: [Developer/brk/modules/brk-client/index.js:136](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L136)
 
 Total weight of segwit transactions
 
@@ -224,7 +224,7 @@ Total weight of segwit transactions
 
 > **totalFees**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:116](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L116)
+Defined in: [Developer/brk/modules/brk-client/index.js:116](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L116)
 
 Total fees in satoshis
 
@@ -234,7 +234,7 @@ Total fees in satoshis
 
 > **totalInputAmt**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:140](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L140)
+Defined in: [Developer/brk/modules/brk-client/index.js:142](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L142)
 
 Total input amount in satoshis
 
@@ -244,7 +244,7 @@ Total input amount in satoshis
 
 > **totalInputs**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:129](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L129)
+Defined in: [Developer/brk/modules/brk-client/index.js:129](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L129)
 
 Total number of inputs (excluding coinbase)
 
@@ -254,7 +254,7 @@ Total number of inputs (excluding coinbase)
 
 > **totalOutputAmt**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:131](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L131)
+Defined in: [Developer/brk/modules/brk-client/index.js:131](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L131)
 
 Total output amount in satoshis
 
@@ -264,7 +264,7 @@ Total output amount in satoshis
 
 > **totalOutputs**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:130](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L130)
+Defined in: [Developer/brk/modules/brk-client/index.js:130](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L130)
 
 Total number of outputs
 
@@ -274,9 +274,11 @@ Total number of outputs
 
 > **utxoSetChange**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:138](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L138)
+Defined in: [Developer/brk/modules/brk-client/index.js:138](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L138)
 
-UTXO set change (outputs created minus inputs spent)
+UTXO set change (total outputs - total inputs, includes unspendable like OP_RETURN).
+Note: intentionally differs from utxo_set_size diff which excludes unspendable outputs.
+Matches mempool.space/bitcoin-cli behavior.
 
 ***
 
@@ -284,9 +286,9 @@ UTXO set change (outputs created minus inputs spent)
 
 > **utxoSetSize**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:139](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L139)
+Defined in: [Developer/brk/modules/brk-client/index.js:141](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L141)
 
-Total UTXO set size at this height
+Total spendable UTXO set size at this height (excludes OP_RETURN and other unspendable outputs)
 
 ***
 
@@ -294,6 +296,6 @@ Total UTXO set size at this height
 
 > **virtualSize**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:141](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L141)
+Defined in: [Developer/brk/modules/brk-client/index.js:143](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L143)
 
 Virtual size in vbytes

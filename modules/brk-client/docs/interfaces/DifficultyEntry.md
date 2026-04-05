@@ -6,7 +6,7 @@
 
 # Interface: DifficultyEntry
 
-Defined in: [Developer/brk/modules/brk-client/index.js:422](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L422)
+Defined in: [Developer/brk/modules/brk-client/index.js:438](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L438)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:422](https://github.com/b
 
 > **adjustment**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:426](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L426)
+Defined in: [Developer/brk/modules/brk-client/index.js:442](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L442)
 
 Adjustment ratio (new/previous, e.g. 1.068 = +6.8%)
 
@@ -24,7 +24,7 @@ Adjustment ratio (new/previous, e.g. 1.068 = +6.8%)
 
 > **difficulty**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:425](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L425)
+Defined in: [Developer/brk/modules/brk-client/index.js:441](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L441)
 
 Difficulty value
 
@@ -34,7 +34,7 @@ Difficulty value
 
 > **height**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:424](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L424)
+Defined in: [Developer/brk/modules/brk-client/index.js:440](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L440)
 
 Block height of the adjustment
 
@@ -44,6 +44,6 @@ Block height of the adjustment
 
 > **time**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:423](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L423)
+Defined in: [Developer/brk/modules/brk-client/index.js:439](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L439)
 
 Unix timestamp of the difficulty adjustment

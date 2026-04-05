@@ -6,7 +6,7 @@
 
 # Interface: ActivityOutputsRealizedSupplyUnrealizedPattern3
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2647](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2647)
+Defined in: [Developer/brk/modules/brk-client/index.js:2664](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L2664)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2647](https://github.com/
 
 > **activity**: [`TransferPattern`](TransferPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2648](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2648)
+Defined in: [Developer/brk/modules/brk-client/index.js:2665](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L2665)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2648](https://github.com/
 
 > **outputs**: [`SpendingSpentUnspentPattern`](SpendingSpentUnspentPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2649](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2649)
+Defined in: [Developer/brk/modules/brk-client/index.js:2666](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L2666)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2649](https://github.com/
 
 > **realized**: [`CapLossMvrvPriceProfitPattern`](CapLossMvrvPriceProfitPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2650](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2650)
+Defined in: [Developer/brk/modules/brk-client/index.js:2667](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L2667)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2650](https://github.com/
 
 > **supply**: [`DeltaHalfInTotalPattern2`](DeltaHalfInTotalPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2651](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2651)
+Defined in: [Developer/brk/modules/brk-client/index.js:2668](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L2668)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:2651](https://github.com/
 
 > **unrealized**: [`LossNuplProfitPattern`](LossNuplProfitPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:2652](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L2652)
+Defined in: [Developer/brk/modules/brk-client/index.js:2669](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L2669)

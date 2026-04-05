@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Mining\_Hashrate\_Rate
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4839](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4839)
+Defined in: [Developer/brk/modules/brk-client/index.js:4856](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4856)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4839](https://github.com/
 
 > **ath**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4842](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4842)
+Defined in: [Developer/brk/modules/brk-client/index.js:4859](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4859)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4842](https://github.com/
 
 > **base**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4840](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4840)
+Defined in: [Developer/brk/modules/brk-client/index.js:4857](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4857)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4840](https://github.com/
 
 > **drawdown**: [`BpsPercentRatioPattern5`](BpsPercentRatioPattern5.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4843](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4843)
+Defined in: [Developer/brk/modules/brk-client/index.js:4860](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4860)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4843](https://github.com/
 
 > **sma**: [`SeriesTree_Mining_Hashrate_Rate_Sma`](SeriesTree_Mining_Hashrate_Rate_Sma.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4841](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4841)
+Defined in: [Developer/brk/modules/brk-client/index.js:4858](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4858)

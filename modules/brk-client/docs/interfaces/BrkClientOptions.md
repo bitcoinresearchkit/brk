@@ -6,7 +6,7 @@
 
 # Interface: BrkClientOptions
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1151](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1151)
+Defined in: [Developer/brk/modules/brk-client/index.js:1168](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L1168)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1151](https://github.com/
 
 > **baseUrl**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1152](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1152)
+Defined in: [Developer/brk/modules/brk-client/index.js:1169](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L1169)
 
 Base URL for the API
 
@@ -24,7 +24,7 @@ Base URL for the API
 
 > `optional` **cache?**: `string` \| `boolean`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1154](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1154)
+Defined in: [Developer/brk/modules/brk-client/index.js:1171](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L1171)
 
 Enable browser cache with default name (true), custom name (string), or disable (false). No effect in Node.js. Default: true
 
@@ -34,6 +34,6 @@ Enable browser cache with default name (true), custom name (string), or disable 
 
 > `optional` **timeout?**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1153](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L1153)
+Defined in: [Developer/brk/modules/brk-client/index.js:1170](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L1170)
 
 Request timeout in milliseconds

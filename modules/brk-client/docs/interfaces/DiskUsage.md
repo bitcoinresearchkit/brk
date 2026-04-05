@@ -6,7 +6,7 @@
 
 # Interface: DiskUsage
 
-Defined in: [Developer/brk/modules/brk-client/index.js:431](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L431)
+Defined in: [Developer/brk/modules/brk-client/index.js:447](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L447)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:431](https://github.com/b
 
 > **bitcoin**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:434](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L434)
+Defined in: [Developer/brk/modules/brk-client/index.js:450](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L450)
 
 Human-readable Bitcoin blocks directory size
 
@@ -24,7 +24,7 @@ Human-readable Bitcoin blocks directory size
 
 > **bitcoinBytes**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:435](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L435)
+Defined in: [Developer/brk/modules/brk-client/index.js:451](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L451)
 
 Bitcoin blocks directory size in bytes
 
@@ -34,7 +34,7 @@ Bitcoin blocks directory size in bytes
 
 > **brk**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:432](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L432)
+Defined in: [Developer/brk/modules/brk-client/index.js:448](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L448)
 
 Human-readable brk data size (e.g., "48.8 GiB")
 
@@ -44,7 +44,7 @@ Human-readable brk data size (e.g., "48.8 GiB")
 
 > **brkBytes**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:433](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L433)
+Defined in: [Developer/brk/modules/brk-client/index.js:449](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L449)
 
 brk data size in bytes
 
@@ -54,6 +54,6 @@ brk data size in bytes
 
 > **ratio**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:436](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L436)
+Defined in: [Developer/brk/modules/brk-client/index.js:452](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L452)
 
 brk as percentage of Bitcoin data

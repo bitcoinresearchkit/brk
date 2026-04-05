@@ -6,7 +6,7 @@
 
 # Interface: RatioValuePattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4215](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4215)
+Defined in: [Developer/brk/modules/brk-client/index.js:4232](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4232)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4215](https://github.com/
 
 > **ratio**: [`_24hPattern`](24hPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4216](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4216)
+Defined in: [Developer/brk/modules/brk-client/index.js:4233](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4233)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4216](https://github.com/
 
 > **valueDestroyed**: [`AverageBlockCumulativeSumPattern`](AverageBlockCumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4217](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4217)
+Defined in: [Developer/brk/modules/brk-client/index.js:4234](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4234)

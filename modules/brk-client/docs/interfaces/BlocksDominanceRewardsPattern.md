@@ -6,7 +6,7 @@
 
 # Interface: BlocksDominanceRewardsPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3491](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3491)
+Defined in: [Developer/brk/modules/brk-client/index.js:3508](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L3508)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3491](https://github.com/
 
 > **blocksMined**: [`AverageBlockCumulativeSumPattern2`](AverageBlockCumulativeSumPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3492](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3492)
+Defined in: [Developer/brk/modules/brk-client/index.js:3509](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L3509)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3492](https://github.com/
 
 > **dominance**: [`_1m1w1y24hBpsPercentRatioPattern`](1m1w1y24hBpsPercentRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3493](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3493)
+Defined in: [Developer/brk/modules/brk-client/index.js:3510](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L3510)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3493](https://github.com/
 
 > **rewards**: [`AverageBlockCumulativeSumPattern3`](AverageBlockCumulativeSumPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3494](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L3494)
+Defined in: [Developer/brk/modules/brk-client/index.js:3511](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L3511)

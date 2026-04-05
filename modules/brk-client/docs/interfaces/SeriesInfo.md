@@ -6,7 +6,7 @@
 
 # Interface: SeriesInfo
 
-Defined in: [Developer/brk/modules/brk-client/index.js:880](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L880)
+Defined in: [Developer/brk/modules/brk-client/index.js:897](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L897)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:880](https://github.com/b
 
 > **indexes**: [`Index`](../type-aliases/Index.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:881](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L881)
+Defined in: [Developer/brk/modules/brk-client/index.js:898](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L898)
 
 Available indexes
 
@@ -24,6 +24,6 @@ Available indexes
 
 > **type**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:882](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L882)
+Defined in: [Developer/brk/modules/brk-client/index.js:899](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L899)
 
 Value type (e.g. "f32", "u64", "Sats")

@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Addrs
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4591](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4591)
+Defined in: [Developer/brk/modules/brk-client/index.js:4608](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4608)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4591](https://github.com/
 
 > **activity**: [`SeriesTree_Addrs_Activity`](SeriesTree_Addrs_Activity.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4597](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4597)
+Defined in: [Developer/brk/modules/brk-client/index.js:4614](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4614)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4597](https://github.com/
 
 > **data**: [`SeriesTree_Addrs_Data`](SeriesTree_Addrs_Data.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4594](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4594)
+Defined in: [Developer/brk/modules/brk-client/index.js:4611](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4611)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4594](https://github.com/
 
 > **delta**: [`SeriesTree_Addrs_Delta`](SeriesTree_Addrs_Delta.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4600](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4600)
+Defined in: [Developer/brk/modules/brk-client/index.js:4617](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4617)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4600](https://github.com/
 
 > **empty**: [`AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3`](AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4596](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4596)
+Defined in: [Developer/brk/modules/brk-client/index.js:4613](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4613)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4596](https://github.com/
 
 > **funded**: [`AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3`](AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4595](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4595)
+Defined in: [Developer/brk/modules/brk-client/index.js:4612](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4612)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4595](https://github.com/
 
 > **indexes**: [`SeriesTree_Addrs_Indexes`](SeriesTree_Addrs_Indexes.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4593](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4593)
+Defined in: [Developer/brk/modules/brk-client/index.js:4610](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4610)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4593](https://github.com/
 
 > **new**: [`SeriesTree_Addrs_New`](SeriesTree_Addrs_New.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4599](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4599)
+Defined in: [Developer/brk/modules/brk-client/index.js:4616](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4616)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4599](https://github.com/
 
 > **raw**: [`SeriesTree_Addrs_Raw`](SeriesTree_Addrs_Raw.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4592](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4592)
+Defined in: [Developer/brk/modules/brk-client/index.js:4609](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4609)
 
 ***
 
@@ -78,4 +78,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4592](https://github.com/
 
 > **total**: [`AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3`](AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4598](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L4598)
+Defined in: [Developer/brk/modules/brk-client/index.js:4615](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L4615)

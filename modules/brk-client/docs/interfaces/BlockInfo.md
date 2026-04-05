@@ -6,7 +6,7 @@
 
 # Interface: BlockInfo
 
-Defined in: [Developer/brk/modules/brk-client/index.js:177](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L177)
+Defined in: [Developer/brk/modules/brk-client/index.js:193](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L193)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:177](https://github.com/b
 
 > **bits**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:182](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L182)
+Defined in: [Developer/brk/modules/brk-client/index.js:198](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L198)
 
 Compact target (bits)
 
@@ -24,7 +24,7 @@ Compact target (bits)
 
 > **difficulty**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:184](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L184)
+Defined in: [Developer/brk/modules/brk-client/index.js:200](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L200)
 
 Block difficulty
 
@@ -34,7 +34,7 @@ Block difficulty
 
 > **height**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:179](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L179)
+Defined in: [Developer/brk/modules/brk-client/index.js:195](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L195)
 
 Block height
 
@@ -44,7 +44,7 @@ Block height
 
 > **id**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:178](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L178)
+Defined in: [Developer/brk/modules/brk-client/index.js:194](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L194)
 
 Block hash
 
@@ -54,7 +54,7 @@ Block hash
 
 > **mediantime**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:190](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L190)
+Defined in: [Developer/brk/modules/brk-client/index.js:206](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L206)
 
 Median time of the last 11 blocks
 
@@ -64,7 +64,7 @@ Median time of the last 11 blocks
 
 > **merkleRoot**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:185](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L185)
+Defined in: [Developer/brk/modules/brk-client/index.js:201](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L201)
 
 Merkle root of the transaction tree
 
@@ -74,7 +74,7 @@ Merkle root of the transaction tree
 
 > **nonce**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:183](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L183)
+Defined in: [Developer/brk/modules/brk-client/index.js:199](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L199)
 
 Nonce
 
@@ -84,7 +84,7 @@ Nonce
 
 > **previousblockhash**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:189](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L189)
+Defined in: [Developer/brk/modules/brk-client/index.js:205](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L205)
 
 Previous block hash
 
@@ -94,7 +94,7 @@ Previous block hash
 
 > **size**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:187](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L187)
+Defined in: [Developer/brk/modules/brk-client/index.js:203](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L203)
 
 Block size in bytes
 
@@ -104,7 +104,7 @@ Block size in bytes
 
 > **timestamp**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:181](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L181)
+Defined in: [Developer/brk/modules/brk-client/index.js:197](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L197)
 
 Block timestamp (Unix time)
 
@@ -114,7 +114,7 @@ Block timestamp (Unix time)
 
 > **txCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:186](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L186)
+Defined in: [Developer/brk/modules/brk-client/index.js:202](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L202)
 
 Number of transactions
 
@@ -124,7 +124,7 @@ Number of transactions
 
 > **version**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:180](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L180)
+Defined in: [Developer/brk/modules/brk-client/index.js:196](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L196)
 
 Block version
 
@@ -134,6 +134,6 @@ Block version
 
 > **weight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:188](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L188)
+Defined in: [Developer/brk/modules/brk-client/index.js:204](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L204)
 
 Block weight in weight units

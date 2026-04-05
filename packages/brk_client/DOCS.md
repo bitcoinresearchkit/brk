@@ -1142,12 +1142,12 @@ Endpoint: `GET /api/v1/historical-price`
 #### get\_block\_fee\_rates
 
 ```python
-def get_block_fee_rates(time_period: TimePeriod) -> str
+def get_block_fee_rates(time_period: TimePeriod) -> List[BlockFeeRatesEntry]
 ```
 
-Block fee rates (WIP).
+Block fee rates.
 
-**Work in progress.** Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
 

@@ -6,7 +6,7 @@
 
 # Interface: CpfpEntry
 
-Defined in: [Developer/brk/modules/brk-client/index.js:350](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L350)
+Defined in: [Developer/brk/modules/brk-client/index.js:366](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L366)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:350](https://github.com/b
 
 > **fee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:353](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L353)
+Defined in: [Developer/brk/modules/brk-client/index.js:369](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L369)
 
 Transaction fee (sats)
 
@@ -24,7 +24,7 @@ Transaction fee (sats)
 
 > **txid**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:351](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L351)
+Defined in: [Developer/brk/modules/brk-client/index.js:367](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L367)
 
 Transaction ID
 
@@ -34,6 +34,6 @@ Transaction ID
 
 > **weight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:352](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L352)
+Defined in: [Developer/brk/modules/brk-client/index.js:368](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L368)
 
 Transaction weight

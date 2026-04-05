@@ -6,7 +6,7 @@
 
 # Interface: OHLCSats
 
-Defined in: [Developer/brk/modules/brk-client/index.js:657](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L657)
+Defined in: [Developer/brk/modules/brk-client/index.js:673](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L673)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:657](https://github.com/b
 
 > **close**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:661](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L661)
+Defined in: [Developer/brk/modules/brk-client/index.js:677](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L677)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:661](https://github.com/b
 
 > **high**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:659](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L659)
+Defined in: [Developer/brk/modules/brk-client/index.js:675](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L675)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:659](https://github.com/b
 
 > **low**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:660](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L660)
+Defined in: [Developer/brk/modules/brk-client/index.js:676](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L676)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:660](https://github.com/b
 
 > **open**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:658](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L658)
+Defined in: [Developer/brk/modules/brk-client/index.js:674](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L674)

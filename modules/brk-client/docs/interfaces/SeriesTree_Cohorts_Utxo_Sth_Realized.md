@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Utxo\_Sth\_Realized
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6012](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6012)
+Defined in: [Developer/brk/modules/brk-client/index.js:6029](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L6029)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6012](https://github.com/
 
 > **cap**: [`CentsDeltaToUsdPattern`](CentsDeltaToUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6013](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6013)
+Defined in: [Developer/brk/modules/brk-client/index.js:6030](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L6030)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6013](https://github.com/
 
 > **grossPnl**: [`BlockCumulativeSumPattern`](BlockCumulativeSumPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6020](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6020)
+Defined in: [Developer/brk/modules/brk-client/index.js:6037](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L6037)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6020](https://github.com/
 
 > **investor**: [`PricePattern`](PricePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6023](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6023)
+Defined in: [Developer/brk/modules/brk-client/index.js:6040](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L6040)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6023](https://github.com/
 
 > **loss**: [`BlockCumulativeNegativeSumPattern`](BlockCumulativeNegativeSumPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6015](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6015)
+Defined in: [Developer/brk/modules/brk-client/index.js:6032](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L6032)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6015](https://github.com/
 
 > **mvrv**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6017](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6017)
+Defined in: [Developer/brk/modules/brk-client/index.js:6034](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L6034)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6017](https://github.com/
 
 > **netPnl**: [`BlockChangeCumulativeDeltaSumPattern`](BlockChangeCumulativeDeltaSumPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6018](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6018)
+Defined in: [Developer/brk/modules/brk-client/index.js:6035](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L6035)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6018](https://github.com/
 
 > **peakRegret**: [`BlockCumulativeSumPattern`](BlockCumulativeSumPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6022](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6022)
+Defined in: [Developer/brk/modules/brk-client/index.js:6039](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L6039)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6022](https://github.com/
 
 > **price**: [`SeriesTree_Cohorts_Utxo_Sth_Realized_Price`](SeriesTree_Cohorts_Utxo_Sth_Realized_Price.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6016](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6016)
+Defined in: [Developer/brk/modules/brk-client/index.js:6033](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L6033)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6016](https://github.com/
 
 > **profit**: [`BlockCumulativeSumPattern`](BlockCumulativeSumPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6014](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6014)
+Defined in: [Developer/brk/modules/brk-client/index.js:6031](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L6031)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6014](https://github.com/
 
 > **profitToLossRatio**: [`_1m1w1y24hPattern`](1m1w1y24hPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6024](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6024)
+Defined in: [Developer/brk/modules/brk-client/index.js:6041](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L6041)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6024](https://github.com/
 
 > **sellSideRiskRatio**: [`_1m1w1y24hPattern7`](1m1w1y24hPattern7.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6021](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6021)
+Defined in: [Developer/brk/modules/brk-client/index.js:6038](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L6038)
 
 ***
 
@@ -102,4 +102,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6021](https://github.com/
 
 > **sopr**: [`AdjustedRatioValuePattern`](AdjustedRatioValuePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6019](https://github.com/bitcoinresearchkit/brk/blob/41ec24c81e5075cce1fd92557af02306ad5e61c7/modules/brk-client/index.js#L6019)
+Defined in: [Developer/brk/modules/brk-client/index.js:6036](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L6036)
