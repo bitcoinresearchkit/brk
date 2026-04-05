@@ -33,6 +33,13 @@ pub struct CacheParams {
 }
 
 impl CacheParams {
+    pub fn immutable(version: Version) -> Self {
+        Self {
+            etag: Some(format!("i{version}")),
+            cache_control: "public, max-age=1, must-revalidate".into(),
+        }
+    }
+
     /// Cache params using CARGO_PKG_VERSION as etag (for openapi.json etc.)
     pub fn static_version() -> Self {
         Self {

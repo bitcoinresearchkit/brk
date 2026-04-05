@@ -19,6 +19,8 @@ pub trait HeaderMapExtended {
     fn insert_content_type_application_json(&mut self);
     fn insert_content_type_text_csv(&mut self);
 
+    fn insert_vary_accept_encoding(&mut self);
+
     fn insert_deprecation(&mut self, sunset: &'static str);
 }
 
@@ -59,6 +61,7 @@ impl HeaderMapExtended for HeaderMap {
     fn insert_content_encoding(&mut self, encoding: ContentEncoding) {
         if let Some(value) = encoding.header_value() {
             self.insert(header::CONTENT_ENCODING, value);
+            self.insert_vary_accept_encoding();
         }
     }
 
@@ -68,6 +71,10 @@ impl HeaderMapExtended for HeaderMap {
 
     fn insert_content_type_text_csv(&mut self) {
         self.insert(header::CONTENT_TYPE, "text/csv".parse().unwrap());
+    }
+
+    fn insert_vary_accept_encoding(&mut self) {
+        self.insert(header::VARY, "Accept-Encoding".parse().unwrap());
     }
 
     fn insert_deprecation(&mut self, sunset: &'static str) {

@@ -1,7 +1,10 @@
 use std::{
     future::Future,
     path::PathBuf,
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::{AtomicU64, Ordering},
+    },
     time::{Duration, Instant},
 };
 
@@ -10,7 +13,10 @@ use axum::{
     http::{HeaderMap, HeaderValue, Response, Uri, header},
 };
 use brk_query::AsyncQuery;
-use brk_types::{Addr, BlockHash, BlockHashPrefix, Height, Txid, Version};
+use brk_types::{
+    Addr, BlockHash, BlockHashPrefix, Height, ONE_HOUR_IN_SEC, Timestamp as BrkTimestamp, Txid,
+    Version,
+};
 use derive_more::Deref;
 use jiff::Timestamp;
 use quick_cache::sync::{Cache, GuardResult};
@@ -28,6 +34,7 @@ pub struct AppState {
     pub data_path: PathBuf,
     pub website: Website,
     pub cache: Arc<Cache<String, Bytes>>,
+    pub last_tip: Arc<AtomicU64>,
     pub started_at: Timestamp,
     pub started_instant: Instant,
 }
@@ -43,15 +50,26 @@ impl AppState {
         }
     }
 
-    /// Smart address caching: checks mempool activity first, then on-chain.
+    /// `Immutable` if timestamp is >6 hours old (block definitely >6 deep), `Tip` otherwise.
+    pub fn timestamp_cache(&self, version: Version, timestamp: BrkTimestamp) -> CacheStrategy {
+        if (*BrkTimestamp::now()).saturating_sub(*timestamp) > 6 * ONE_HOUR_IN_SEC {
+            CacheStrategy::Immutable(version)
+        } else {
+            CacheStrategy::Tip
+        }
+    }
+
+    /// Smart address caching: checks mempool activity first (unless `chain_only`), then on-chain.
     /// - Address has mempool txs → `MempoolHash(addr_specific_hash)`
     /// - No mempool, has on-chain activity → `BlockBound(last_activity_block)`
     /// - Unknown address → `Tip`
-    pub fn addr_cache(&self, version: Version, addr: &Addr) -> CacheStrategy {
+    pub fn addr_cache(&self, version: Version, addr: &Addr, chain_only: bool) -> CacheStrategy {
         self.sync(|q| {
-            let mempool_hash = q.addr_mempool_hash(addr);
-            if mempool_hash != 0 {
-                return CacheStrategy::MempoolHash(mempool_hash);
+            if !chain_only {
+                let mempool_hash = q.addr_mempool_hash(addr);
+                if mempool_hash != 0 {
+                    return CacheStrategy::MempoolHash(mempool_hash);
+                }
             }
             q.addr_last_activity_height(addr)
                 .and_then(|h| {
@@ -125,9 +143,13 @@ impl AppState {
         F: FnOnce(&brk_query::Query, ContentEncoding) -> brk_error::Result<Bytes> + Send + 'static,
     {
         let encoding = ContentEncoding::negotiate(headers);
-        let params = CacheParams::resolve(&strategy, || self.sync(|q| q.tip_hash_prefix()));
+        let tip = self.sync(|q| q.tip_hash_prefix());
+        if self.last_tip.swap(*tip, Ordering::Relaxed) != *tip {
+            self.cache.clear();
+        }
+        let params = CacheParams::resolve(&strategy, || tip);
         if params.matches_etag(headers) {
-            return ResponseExtended::new_not_modified();
+            return ResponseExtended::new_not_modified_with(&params);
         }
 
         let full_key = format!("{}-{}-{}", uri, params.etag_str(), encoding.as_str());

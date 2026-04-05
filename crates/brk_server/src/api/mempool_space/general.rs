@@ -3,7 +3,7 @@ use axum::{
     extract::{Query, State},
     http::{HeaderMap, Uri},
 };
-use brk_types::{DifficultyAdjustment, HistoricalPrice, Prices, Timestamp};
+use brk_types::{DifficultyAdjustment, HistoricalPrice, Prices, Timestamp, Version};
 
 use crate::{
     AppState, CacheStrategy, extended::TransformResponseExtended, params::OptionalTimestampParam,
@@ -66,8 +66,12 @@ impl GeneralRoutes for ApiRouter<AppState> {
                        headers: HeaderMap,
                        Query(params): Query<OptionalTimestampParam>,
                        State(state): State<AppState>| {
+                    let strategy = params
+                        .timestamp
+                        .map(|ts| state.timestamp_cache(Version::ONE, ts))
+                        .unwrap_or(CacheStrategy::Tip);
                     state
-                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
+                        .cached_json(&headers, strategy, &uri, move |q| {
                             q.historical_price(params.timestamp)
                         })
                         .await

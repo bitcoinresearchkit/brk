@@ -30,7 +30,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Path(path): Path<AddrParam>,
                 State(state): State<AppState>
             | {
-                let strategy = state.addr_cache(Version::ONE, &path.addr);
+                let strategy = state.addr_cache(Version::ONE, &path.addr, false);
                 state.cached_json(&headers, strategy, &uri, move |q| q.addr(path.addr)).await
             }, |op| op
                 .id("get_address")
@@ -53,7 +53,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Query(params): Query<AddrTxidsParam>,
                 State(state): State<AppState>
             | {
-                let strategy = state.addr_cache(Version::ONE, &path.addr);
+                let strategy = state.addr_cache(Version::ONE, &path.addr, false);
                 state.cached_json(&headers, strategy, &uri, move |q| q.addr_txs(path.addr, params.after_txid, 50)).await
             }, |op| op
                 .id("get_address_txs")
@@ -76,7 +76,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Query(params): Query<AddrTxidsParam>,
                 State(state): State<AppState>
             | {
-                let strategy = state.addr_cache(Version::ONE, &path.addr);
+                let strategy = state.addr_cache(Version::ONE, &path.addr, true);
                 state.cached_json(&headers, strategy, &uri, move |q| q.addr_txs(path.addr, params.after_txid, 25)).await
             }, |op| op
                 .id("get_address_confirmed_txs")
@@ -119,7 +119,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Path(path): Path<AddrParam>,
                 State(state): State<AppState>
             | {
-                let strategy = state.addr_cache(Version::ONE, &path.addr);
+                let strategy = state.addr_cache(Version::ONE, &path.addr, false);
                 state.cached_json(&headers, strategy, &uri, move |q| q.addr_utxos(path.addr)).await
             }, |op| op
                 .id("get_address_utxos")

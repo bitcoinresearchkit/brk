@@ -117,7 +117,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                            headers: HeaderMap,
                            Path(path): Path<TimestampParam>,
                            State(state): State<AppState>| {
-                        state.cached_json(&headers, CacheStrategy::Tip, &uri, move |q| q.block_by_timestamp(path.timestamp)).await
+                        state.cached_json(&headers, state.timestamp_cache(Version::ONE, path.timestamp), &uri, move |q| q.block_by_timestamp(path.timestamp)).await
                     },
                     |op| {
                         op.id("get_block_by_timestamp")

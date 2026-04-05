@@ -8,7 +8,7 @@ use axum::{
 use brk_types::{
     BlockFeeRatesEntry, BlockFeesEntry, BlockInfoV1, BlockRewardsEntry, BlockSizesWeights,
     DifficultyAdjustmentEntry, HashrateSummary, PoolDetail, PoolHashrateEntry, PoolInfo,
-    PoolsSummary, RewardStats,
+    PoolsSummary, RewardStats, Version,
 };
 
 use crate::{
@@ -154,7 +154,7 @@ impl MiningRoutes for ApiRouter<AppState> {
             "/api/v1/mining/pool/{slug}/blocks/{height}",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(PoolSlugAndHeightParam {slug, height}): Path<PoolSlugAndHeightParam>, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::Tip, &uri, move |q| q.pool_blocks(slug, Some(height))).await
+                    state.cached_json(&headers, state.height_cache(Version::ONE, height), &uri, move |q| q.pool_blocks(slug, Some(height))).await
                 },
                 |op| {
                     op.id("get_pool_blocks_from")

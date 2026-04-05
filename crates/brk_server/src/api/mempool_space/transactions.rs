@@ -10,7 +10,8 @@ use brk_types::{CpfpInfo, MerkleProof, Transaction, TxOutspend, TxStatus, Txid, 
 
 use crate::{
     AppState, CacheStrategy,
-    extended::TransformResponseExtended,
+    cache::CacheParams,
+    extended::{ResponseExtended, TransformResponseExtended},
     params::{TxidParam, TxidVout, TxidsParam},
 };
 
@@ -132,7 +133,16 @@ impl TxRoutes for ApiRouter<AppState> {
                     Path(path): Path<TxidVout>,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Tip, &uri, move |q| q.outspend(&path.txid, path.vout)).await
+                    let v = Version::ONE;
+                    let immutable = CacheParams::immutable(v);
+                    if immutable.matches_etag(&headers) {
+                        return ResponseExtended::new_not_modified_with(&immutable);
+                    }
+                    let outspend = state.run(move |q| q.outspend(&path.txid, path.vout)).await;
+                    let height = state.sync(|q| q.height());
+                    let is_deep = outspend.as_ref().is_ok_and(|o| o.is_deeply_spent(height));
+                    let strategy = if is_deep { CacheStrategy::Immutable(v) } else { CacheStrategy::Tip };
+                    state.cached_json(&headers, strategy, &uri, move |_| outspend).await
                 },
                 |op| op
                     .id("get_tx_outspend")
@@ -157,7 +167,16 @@ impl TxRoutes for ApiRouter<AppState> {
                     Path(param): Path<TxidParam>,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Tip, &uri, move |q| q.outspends(&param.txid)).await
+                    let v = Version::ONE;
+                    let immutable = CacheParams::immutable(v);
+                    if immutable.matches_etag(&headers) {
+                        return ResponseExtended::new_not_modified_with(&immutable);
+                    }
+                    let outspends = state.run(move |q| q.outspends(&param.txid)).await;
+                    let height = state.sync(|q| q.height());
+                    let all_deep = outspends.as_ref().is_ok_and(|os| os.iter().all(|o| o.is_deeply_spent(height)));
+                    let strategy = if all_deep { CacheStrategy::Immutable(v) } else { CacheStrategy::Tip };
+                    state.cached_json(&headers, strategy, &uri, move |_| outspends).await
                 },
                 |op| op
                     .id("get_tx_outspends")
@@ -237,7 +256,8 @@ impl TxRoutes for ApiRouter<AppState> {
             post_with(
                 async |State(state): State<AppState>, body: String| {
                     let hex = body.trim().to_string();
-                    state.sync(|q| q.broadcast_transaction(&hex))
+                    state.run(move |q| q.broadcast_transaction(&hex))
+                        .await
                         .map(|txid| txid.to_string())
                         .map_err(crate::Error::from)
                 },

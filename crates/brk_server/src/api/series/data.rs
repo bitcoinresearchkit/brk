@@ -4,8 +4,8 @@ use axum::{
     Extension,
     body::{Body, Bytes},
     extract::{Query, State},
-    http::{HeaderMap, StatusCode, Uri},
-    response::{IntoResponse, Response},
+    http::{HeaderMap, Uri},
+    response::Response,
 };
 use brk_error::Result as BrkResult;
 use brk_query::{Query as BrkQuery, ResolvedQuery};
@@ -14,7 +14,7 @@ use brk_types::{Format, Output, SeriesOutput, SeriesSelection};
 use crate::{
     Result,
     api::series::{CACHE_CONTROL, max_weight},
-    extended::{ContentEncoding, HeaderMapExtended},
+    extended::{ContentEncoding, HeaderMapExtended, ResponseExtended},
 };
 
 use super::AppState;
@@ -57,7 +57,7 @@ async fn format_and_respond(
     let csv_filename = resolved.csv_filename();
 
     if headers.has_etag(etag.as_str()) {
-        return Ok((StatusCode::NOT_MODIFIED, "").into_response());
+        return Ok(Response::new_not_modified(&etag, CACHE_CONTROL));
     }
 
     // Phase 2: Format (expensive, server-side cached)

@@ -4,7 +4,10 @@ use std::{
     any::Any,
     net::SocketAddr,
     path::PathBuf,
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::AtomicU64,
+    },
     time::{Duration, Instant},
 };
 
@@ -59,6 +62,7 @@ impl Server {
             data_path,
             website,
             cache: Arc::new(Cache::new(1_000)),
+            last_tip: Arc::new(AtomicU64::new(0)),
             started_at: jiff::Timestamp::now(),
             started_instant: Instant::now(),
         })

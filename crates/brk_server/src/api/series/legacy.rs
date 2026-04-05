@@ -4,15 +4,15 @@ use axum::{
     Extension,
     body::{Body, Bytes},
     extract::{Query, State},
-    http::{HeaderMap, StatusCode, Uri},
-    response::{IntoResponse, Response},
+    http::{HeaderMap, Uri},
+    response::Response,
 };
 use brk_types::{Format, OutputLegacy, SeriesSelection};
 
 use crate::{
     Result,
     api::series::{CACHE_CONTROL, max_weight},
-    extended::{ContentEncoding, HeaderMapExtended},
+    extended::{ContentEncoding, HeaderMapExtended, ResponseExtended},
 };
 
 pub const SUNSET: &str = "2027-01-01T00:00:00Z";
@@ -36,7 +36,7 @@ pub async fn handler(
     let csv_filename = resolved.csv_filename();
 
     if headers.has_etag(etag.as_str()) {
-        return Ok((StatusCode::NOT_MODIFIED, "").into_response());
+        return Ok(Response::new_not_modified(&etag, CACHE_CONTROL));
     }
 
     // Phase 2: Format (expensive, server-side cached)

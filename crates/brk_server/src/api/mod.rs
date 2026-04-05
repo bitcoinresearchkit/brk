@@ -6,7 +6,7 @@ use aide::{
 };
 use axum::{
     Extension,
-    http::{HeaderMap, header},
+    http::HeaderMap,
     response::{Html, Redirect, Response},
     routing::get,
 };
@@ -78,13 +78,12 @@ impl ApiRoutes for ApiRouter<AppState> {
             )
             .route("/api", get(Html::from(include_str!("./scalar.html"))))
             // Pre-compressed with: brotli -c -q 11 scalar.js > scalar.js.br
-            .route("/scalar.js", get(|| async {
-                (
-                    [
-                        (header::CONTENT_TYPE, "application/javascript"),
-                        (header::CONTENT_ENCODING, "br"),
-                    ],
+            .route("/scalar.js", get(|headers: HeaderMap| async move {
+                Response::static_bytes(
+                    &headers,
                     include_bytes!("./scalar.js.br").as_slice(),
+                    "application/javascript",
+                    "br",
                 )
             }))
             .route(
