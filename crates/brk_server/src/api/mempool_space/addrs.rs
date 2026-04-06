@@ -106,6 +106,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 .summary("Address mempool transactions")
                 .description("Get unconfirmed transaction IDs for an address from the mempool (up to 50).\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-mempool)*")
                 .json_response::<Vec<Txid>>()
+                .not_modified()
                 .bad_request()
                 .not_found()
                 .server_error()

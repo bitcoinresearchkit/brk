@@ -1,6 +1,6 @@
 [project]
 name = "brk-client"
-version = "0.3.0-alpha.5"
+version = "0.3.0-alpha.6"
 description = "Bitcoin on-chain analytics client — thousands of metrics, block explorer, and address index"
 readme = "README.md"
 requires-python = ">=3.9"

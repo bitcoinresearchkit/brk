@@ -217,5 +217,136 @@
       text-align: right;
       word-break: break-all;
     }
+
+    .transactions {
+      margin-top: 1rem;
+
+      .tx-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+
+        h2 {
+          font-size: var(--font-size-sm);
+          line-height: var(--line-height-sm);
+        }
+      }
+
+      .pagination {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        button {
+          color: var(--off-color);
+
+          &:disabled {
+            opacity: 0.25;
+            pointer-events: none;
+          }
+        }
+      }
+
+      .tx {
+        border: 1px solid var(--border-color);
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+
+        .tx-head {
+          display: flex;
+          justify-content: space-between;
+          gap: 0.5rem;
+          margin-bottom: 0.5rem;
+          padding-bottom: 0.5rem;
+          border-bottom: 1px solid var(--border-color);
+
+          .txid {
+            font-family: Lilex;
+            font-size: var(--font-size-xs);
+            line-height: var(--line-height-xs);
+            color: var(--off-color);
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .tx-time {
+            flex-shrink: 0;
+            opacity: 0.5;
+          }
+        }
+
+        .tx-body {
+          display: flex;
+          gap: 0.5rem;
+          font-size: var(--font-size-xs);
+          line-height: var(--line-height-xs);
+        }
+
+        .tx-inputs,
+        .tx-outputs {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0.125rem;
+        }
+
+        .tx-outputs {
+          padding-left: 0.5rem;
+          border-left: 1px solid var(--border-color);
+        }
+
+        .tx-io {
+          display: flex;
+          justify-content: space-between;
+          gap: 0.5rem;
+
+          .addr {
+            display: flex;
+            min-width: 0;
+            white-space: nowrap;
+            color: var(--off-color);
+
+            .addr-head {
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+
+            .addr-tail {
+              flex-shrink: 0;
+            }
+
+            &.coinbase {
+              color: var(--orange);
+            }
+
+            &.op-return {
+              opacity: 0.5;
+            }
+          }
+
+          .amount {
+            flex-shrink: 0;
+            text-align: right;
+          }
+        }
+
+        .tx-foot {
+          display: flex;
+          justify-content: space-between;
+          gap: 0.5rem;
+          margin-top: 0.5rem;
+          padding-top: 0.5rem;
+          border-top: 1px solid var(--border-color);
+          opacity: 0.5;
+
+          .total {
+            opacity: 1;
+            color: var(--orange);
+          }
+        }
+      }
+    }
   }
 }

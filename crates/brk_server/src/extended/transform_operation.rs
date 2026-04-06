@@ -31,6 +31,8 @@ pub trait TransformResponseExtended<'t> {
         F: FnOnce(TransformResponse<'_, R>) -> TransformResponse<'_, R>;
     /// 200 with text/plain content type
     fn text_response(self) -> Self;
+    /// 200 with application/octet-stream content type
+    fn binary_response(self) -> Self;
     /// 200 with text/csv content type (adds CSV as alternative response format)
     fn csv_response(self) -> Self;
     /// 400
@@ -106,6 +108,10 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
 
     fn text_response(self) -> Self {
         self.response_with::<200, String, _>(|res| res.description("Successful response"))
+    }
+
+    fn binary_response(self) -> Self {
+        self.response_with::<200, Vec<u8>, _>(|res| res.description("Raw binary data"))
     }
 
     fn csv_response(mut self) -> Self {

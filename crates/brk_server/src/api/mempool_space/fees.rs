@@ -29,6 +29,7 @@ impl FeesRoutes for ApiRouter<AppState> {
                         .summary("Projected mempool blocks")
                         .description("Get projected blocks from the mempool for fee estimation.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*")
                         .json_response::<Vec<MempoolBlock>>()
+                        .not_modified()
                         .server_error()
                 },
             ),
@@ -49,6 +50,7 @@ impl FeesRoutes for ApiRouter<AppState> {
                         .summary("Recommended fees")
                         .description("Get recommended fee rates for different confirmation targets.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*")
                         .json_response::<RecommendedFees>()
+                        .not_modified()
                         .server_error()
                 },
             ),
@@ -69,6 +71,7 @@ impl FeesRoutes for ApiRouter<AppState> {
                         .summary("Precise recommended fees")
                         .description("Get recommended fee rates with up to 3 decimal places.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*")
                         .json_response::<RecommendedFees>()
+                        .not_modified()
                         .server_error()
                 },
             ),

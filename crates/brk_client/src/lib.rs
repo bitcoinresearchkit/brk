@@ -8198,7 +8198,7 @@ pub struct BrkClient {
 
 impl BrkClient {
     /// Client version.
-    pub const VERSION: &'static str = "v0.3.0-alpha.5";
+    pub const VERSION: &'static str = "v0.3.0-alpha.6";
 
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {

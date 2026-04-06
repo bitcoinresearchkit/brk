@@ -1,6 +1,5 @@
 import { initPrice, onPrice } from "./utils/price.js";
 import { brk } from "./client.js";
-import { stringToId } from "./utils/format.js";
 import { onFirstIntersection, getElementById, isHidden } from "./utils/dom.js";
 import { initOptions } from "./options/full.js";
 import {
@@ -9,9 +8,8 @@ import {
 } from "./panes/chart.js";
 import { init as initExplorer } from "./panes/explorer.js";
 import { init as initSearch } from "./panes/search.js";
-import { replaceHistory } from "./utils/url.js";
 import { idle } from "./utils/timing.js";
-import { removeStored, writeToStorage } from "./utils/storage.js";
+import { readStored, removeStored, writeToStorage } from "./utils/storage.js";
 import {
   asideElement,
   asideLabelElement,
@@ -22,9 +20,37 @@ import {
   mainElement,
   navElement,
   navLabelElement,
+  pinButtonElement,
   searchElement,
   style,
 } from "./utils/elements.js";
+
+const DESKTOP_QUERY = window.matchMedia("(min-width: 768px)");
+let sidebarPinned = readStored("sidebar-pinned") !== "false";
+
+function updateLayout() {
+  const layout = DESKTOP_QUERY.matches && sidebarPinned ? "desktop" : "mobile";
+  document.documentElement.dataset.layout = layout;
+  if (layout === "desktop") {
+    asideElement.parentElement !== bodyElement &&
+      bodyElement.append(asideElement);
+  } else {
+    asideElement.parentElement !== mainElement &&
+      mainElement.append(asideElement);
+  }
+}
+
+DESKTOP_QUERY.addEventListener("change", updateLayout);
+updateLayout();
+
+pinButtonElement.addEventListener("click", () => {
+  sidebarPinned = !sidebarPinned;
+  writeToStorage("sidebar-pinned", String(sidebarPinned));
+  pinButtonElement.textContent = sidebarPinned ? "Unpin" : "Pin";
+  pinButtonElement.title = sidebarPinned ? "Unpin sidebar" : "Pin sidebar";
+  updateLayout();
+  if (!sidebarPinned) asideLabelElement.click();
+});
 
 function initFrameSelectors() {
   const children = Array.from(frameSelectorsElement.children);
@@ -77,7 +103,6 @@ function initFrameSelectors() {
 
   asideLabelElement.click();
 
-  // When going from mobile view to desktop view, if selected frame was open, go to the nav frame
   new IntersectionObserver((entries) => {
     for (let i = 0; i < entries.length; i++) {
       if (
@@ -89,22 +114,6 @@ function initFrameSelectors() {
       }
     }
   }).observe(asideLabelElement);
-
-  function setAsideParent() {
-    const { clientWidth } = window.document.documentElement;
-    const MEDIUM_WIDTH = 768;
-    if (clientWidth >= MEDIUM_WIDTH) {
-      asideElement.parentElement !== bodyElement &&
-        bodyElement.append(asideElement);
-    } else {
-      asideElement.parentElement !== mainElement &&
-        mainElement.append(asideElement);
-    }
-  }
-
-  setAsideParent();
-
-  window.addEventListener("resize", setAsideParent);
 }
 initFrameSelectors();
 
@@ -117,27 +126,7 @@ onPrice((price) => {
 
 const options = initOptions();
 
-window.addEventListener("popstate", (_event) => {
-  const path = window.document.location.pathname.split("/").filter((v) => v);
-  let folder = options.tree;
-
-  while (path.length) {
-    const id = path.shift();
-    const res = folder.find((v) => id === stringToId(v.name));
-    if (!res) throw "Option not found";
-    if (path.length >= 1) {
-      if (!("tree" in res)) {
-        throw "Unreachable";
-      }
-      folder = res.tree;
-    } else {
-      if ("tree" in res) {
-        throw "Unreachable";
-      }
-      options.selected.set(res);
-    }
-  }
-});
+window.addEventListener("popstate", () => options.resolveUrl());
 
 function initSelected() {
   let firstRun = true;
@@ -186,10 +175,6 @@ function initSelected() {
       if (element !== previousElement) {
         if (previousElement) previousElement.hidden = true;
         element.hidden = false;
-      }
-
-      if (!previousElement) {
-        replaceHistory({ pathname: option.path });
       }
 
       previousElement = element;

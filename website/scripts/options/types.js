@@ -104,22 +104,6 @@
  *
  * @typedef {Required<Omit<PartialChartOption, "top" | "bottom">> & ProcessedChartOptionAddons & ProcessedOptionAddons} ChartOption
  *
- * @typedef {Object} PartialTableOptionSpecific
- * @property {"table"} kind
- * @property {string} title
- *
- * @typedef {PartialOption & PartialTableOptionSpecific} PartialTableOption
- *
- * @typedef {Required<PartialTableOption> & ProcessedOptionAddons} TableOption
- *
- * @typedef {Object} PartialSimulationOptionSpecific
- * @property {"simulation"} kind
- * @property {string} title
- *
- * @typedef {PartialOption & PartialSimulationOptionSpecific} PartialSimulationOption
- *
- * @typedef {Required<PartialSimulationOption> & ProcessedOptionAddons} SimulationOption
- *
  * @typedef {Object} PartialUrlOptionSpecific
  * @property {"link"} [kind]
  * @property {() => string} url
@@ -130,9 +114,9 @@
  *
  * @typedef {Required<PartialUrlOption> & ProcessedOptionAddons} UrlOption
  *
- * @typedef {PartialExplorerOption | PartialChartOption | PartialTableOption | PartialSimulationOption | PartialUrlOption} AnyPartialOption
+ * @typedef {PartialExplorerOption | PartialChartOption | PartialUrlOption} AnyPartialOption
  *
- * @typedef {ExplorerOption | ChartOption | TableOption | SimulationOption | UrlOption} Option
+ * @typedef {ExplorerOption | ChartOption | UrlOption} Option
  *
  * @typedef {(AnyPartialOption | PartialOptionsGroup)[]} PartialOptionsTree
  *

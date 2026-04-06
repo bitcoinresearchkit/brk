@@ -149,7 +149,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .description(
                                 "Returns the raw block data in binary format.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*",
                             )
-                            .json_response::<Vec<u8>>()
+                            .binary_response()
                             .not_modified()
                             .bad_request()
                             .not_found()

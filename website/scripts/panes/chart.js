@@ -79,9 +79,7 @@ export function init() {
 
     // Convert to sats if needed
     const close =
-      unit === Unit.sats
-        ? Math.floor(ONE_BTC_IN_SATS / latest)
-        : latest;
+      unit === Unit.sats ? Math.floor(ONE_BTC_IN_SATS / latest) : latest;
 
     if ("close" in last) {
       // Candlestick data
@@ -117,11 +115,19 @@ const ALL_GROUPS = [
   {
     label: "Time",
     items: [
-      "10mn", "30mn",
-      "1h", "4h", "12h",
-      "1d", "3d", "1w",
-      "1m", "3m", "6m",
-      "1y", "10y",
+      "10mn",
+      "30mn",
+      "1h",
+      "4h",
+      "12h",
+      "1d",
+      "3d",
+      "1w",
+      "1m",
+      "3m",
+      "6m",
+      "1y",
+      "10y",
     ],
   },
   { label: "Block", items: ["blk", "epch", "halv"] },
@@ -149,16 +155,13 @@ function computeChoices(opt) {
       .flatMap((blueprint) => blueprint.series.indexes()),
   );
 
-  const groups = ALL_GROUPS
-    .map(({ label, items }) => ({
-      label,
-      items: items.filter((choice) => rawIndexes.has(INDEX_FROM_LABEL[choice])),
-    }))
-    .filter(({ items }) => items.length > 0);
+  const groups = ALL_GROUPS.map(({ label, items }) => ({
+    label,
+    items: items.filter((choice) => rawIndexes.has(INDEX_FROM_LABEL[choice])),
+  })).filter(({ items }) => items.length > 0);
 
   return {
     choices: groups.flatMap((g) => g.items),
     groups,
   };
 }
-

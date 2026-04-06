@@ -13,10 +13,6 @@ import { brk } from "../client.js";
 export function initOptions() {
   const LS_SELECTED_KEY = `selected_path`;
 
-  const urlPath_ = window.document.location.pathname
-    .split("/")
-    .filter((v) => v);
-  const urlPath = urlPath_.length ? urlPath_ : undefined;
   const savedPath = /** @type {string[]} */ (
     JSON.parse(readStored(LS_SELECTED_KEY) || "[]") || []
   ).filter((v) => v);
@@ -254,8 +250,6 @@ export function initOptions() {
    * @typedef {ProcessedGroup | ProcessedOption} ProcessedNode
    */
 
-  // Pre-compute path strings for faster comparison
-  const urlPathStr = urlPath?.join("/");
   const savedPathStr = savedPath?.join("/");
 
   /**
@@ -308,15 +302,7 @@ export function initOptions() {
         // Transform partial to full option
         if ("kind" in anyPartial && anyPartial.kind === "explorer") {
           option.kind = anyPartial.kind;
-          option.path = path;
-          option.name = name;
-        } else if ("kind" in anyPartial && anyPartial.kind === "table") {
-          option.kind = anyPartial.kind;
-          option.path = path;
-          option.name = name;
-        } else if ("kind" in anyPartial && anyPartial.kind === "simulation") {
-          option.kind = anyPartial.kind;
-          option.path = path;
+          option.path = [];
           option.name = name;
         } else if ("url" in anyPartial) {
           Object.assign(
@@ -352,10 +338,7 @@ export function initOptions() {
         list.push(option);
         totalCount++;
 
-        // Check if this matches URL or saved path (string comparison is faster)
-        if (urlPathStr && pathStr === urlPathStr) {
-          selected.set(option);
-        } else if (savedPathStr && pathStr === savedPathStr) {
+        if (savedPathStr && pathStr === savedPathStr) {
           savedOption = option;
         }
 
@@ -438,9 +421,29 @@ export function initOptions() {
     updateHighlight(selected.value);
   }
 
+  const tree = /** @type {OptionsTree} */ (partialOptions);
+
+  function resolveUrl() {
+    const segments = window.location.pathname.split("/").filter((v) => v);
+    let folder = tree;
+    for (let i = 0; i < segments.length; i++) {
+      const match = folder.find((v) => segments[i] === stringToId(v.name));
+      if (!match) break;
+      if (i < segments.length - 1) {
+        if (!("tree" in match)) break;
+        folder = match.tree;
+      } else if (!("tree" in match)) {
+        selected.set(match);
+        return;
+      }
+    }
+    selected.set(list[0]);
+  }
+
+  resolveUrl();
+
   if (!selected.value) {
-    const option =
-      savedOption || list.find((option) => option.kind === "chart");
+    const option = savedOption || list[0];
     if (option) {
       selected.set(option);
     }
@@ -449,10 +452,11 @@ export function initOptions() {
   return {
     selected,
     list,
-    tree: /** @type {OptionsTree} */ (partialOptions),
+    tree,
     setParent,
     createOptionElement,
     selectOption,
+    resolveUrl,
   };
 }
 /** @typedef {ReturnType<typeof initOptions>} Options */

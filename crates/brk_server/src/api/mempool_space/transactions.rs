@@ -34,6 +34,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .summary("CPFP info")
                     .description("Returns ancestors and descendants for a CPFP transaction.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*")
                     .json_response::<CpfpInfo>()
+                    .not_modified()
                     .not_found()
                     .server_error(),
             ),
@@ -203,7 +204,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .transactions_tag()
                     .summary("Transaction raw")
                     .description("Returns a transaction as binary data.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-raw)*")
-                    .json_response::<Vec<u8>>()
+                    .binary_response()
                     .not_modified()
                     .bad_request()
                     .not_found()
@@ -248,6 +249,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .summary("Transaction first-seen times")
                     .description("Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*")
                     .json_response::<Vec<u64>>()
+                    .not_modified()
                     .server_error(),
             ),
         )

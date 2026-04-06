@@ -27,6 +27,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                         .summary("Mempool statistics")
                         .description("Get current mempool statistics including transaction count, total vsize, total fees, and fee histogram.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*")
                         .json_response::<MempoolInfo>()
+                        .not_modified()
                         .server_error()
                 },
             ),
@@ -45,6 +46,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                         .summary("Mempool transaction IDs")
                         .description("Get all transaction IDs currently in the mempool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-transaction-ids)*")
                         .json_response::<Vec<Txid>>()
+                        .not_modified()
                         .server_error()
                 },
             ),
@@ -63,6 +65,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                         .summary("Recent mempool transactions")
                         .description("Get the last 10 transactions to enter the mempool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*")
                         .json_response::<Vec<MempoolRecentTx>>()
+                        .not_modified()
                         .server_error()
                 },
             ),
@@ -85,6 +88,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                             plus mempool.",
                         )
                         .json_response::<Dollars>()
+                        .not_modified()
                         .server_error()
                 },
             ),

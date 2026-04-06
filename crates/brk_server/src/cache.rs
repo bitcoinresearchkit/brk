@@ -26,25 +26,47 @@ pub enum CacheStrategy {
     MempoolHash(u64),
 }
 
+pub(crate) const CACHE_CONTROL: &str = "public, max-age=1, must-revalidate";
+
 /// Resolved cache parameters
 pub struct CacheParams {
     pub etag: Option<String>,
-    pub cache_control: String,
+    pub cache_control: &'static str,
 }
 
 impl CacheParams {
-    pub fn immutable(version: Version) -> Self {
+    pub fn tip(tip: BlockHashPrefix) -> Self {
         Self {
-            etag: Some(format!("i{version}")),
-            cache_control: "public, max-age=1, must-revalidate".into(),
+            etag: Some(format!("t{:x}", *tip)),
+            cache_control: CACHE_CONTROL,
         }
     }
 
-    /// Cache params using CARGO_PKG_VERSION as etag (for openapi.json etc.)
+    pub fn immutable(version: Version) -> Self {
+        Self {
+            etag: Some(format!("i{version}")),
+            cache_control: CACHE_CONTROL,
+        }
+    }
+
+    pub fn block_bound(version: Version, prefix: BlockHashPrefix) -> Self {
+        Self {
+            etag: Some(format!("b{version}-{:x}", *prefix)),
+            cache_control: CACHE_CONTROL,
+        }
+    }
+
     pub fn static_version() -> Self {
         Self {
             etag: Some(format!("s{VERSION}")),
-            cache_control: "public, max-age=1, must-revalidate".into(),
+            cache_control: CACHE_CONTROL,
+        }
+    }
+
+    pub fn mempool_hash(hash: u64) -> Self {
+        Self {
+            etag: Some(format!("m{hash:x}")),
+            cache_control: CACHE_CONTROL,
         }
     }
 
@@ -59,28 +81,12 @@ impl CacheParams {
     }
 
     pub fn resolve(strategy: &CacheStrategy, tip: impl FnOnce() -> BlockHashPrefix) -> Self {
-        let cache_control = "public, max-age=1, must-revalidate".into();
         match strategy {
-            CacheStrategy::Tip => Self {
-                etag: Some(format!("t{:x}", *tip())),
-                cache_control,
-            },
-            CacheStrategy::Immutable(v) => Self {
-                etag: Some(format!("i{v}")),
-                cache_control,
-            },
-            CacheStrategy::BlockBound(v, prefix) => Self {
-                etag: Some(format!("b{v}-{:x}", **prefix)),
-                cache_control,
-            },
-            CacheStrategy::Static => Self {
-                etag: Some(format!("s{VERSION}")),
-                cache_control,
-            },
-            CacheStrategy::MempoolHash(hash) => Self {
-                etag: Some(format!("m{hash:x}")),
-                cache_control,
-            },
+            CacheStrategy::Tip => Self::tip(tip()),
+            CacheStrategy::Immutable(v) => Self::immutable(*v),
+            CacheStrategy::BlockBound(v, prefix) => Self::block_bound(*v, *prefix),
+            CacheStrategy::Static => Self::static_version(),
+            CacheStrategy::MempoolHash(hash) => Self::mempool_hash(*hash),
         }
     }
 }

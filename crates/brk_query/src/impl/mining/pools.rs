@@ -292,7 +292,6 @@ impl Query {
         let max_height = self.height().to_usize();
         let start = start_height.map(|h| h.to_usize()).unwrap_or(max_height);
 
-        // BytesVec reader gives O(1) mmap reads — efficient for backward scan
         let reader = computer.pools.pool.reader();
         let end = start.min(reader.len().saturating_sub(1));
 
@@ -307,12 +306,20 @@ impl Query {
             }
         }
 
+        // Group consecutive descending heights into ranges for batch reads
         let mut blocks = Vec::with_capacity(heights.len());
-        for h in heights {
-            if let Ok(mut v) = self.blocks_v1_range(h, h + 1) {
+        let mut i = 0;
+        while i < heights.len() {
+            let hi = heights[i];
+            while i + 1 < heights.len() && heights[i + 1] + 1 == heights[i] {
+                i += 1;
+            }
+            if let Ok(mut v) = self.blocks_v1_range(heights[i], hi + 1) {
                 blocks.append(&mut v);
             }
+            i += 1;
         }
+
         Ok(blocks)
     }
 

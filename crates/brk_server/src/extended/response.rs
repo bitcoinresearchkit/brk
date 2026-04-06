@@ -40,7 +40,7 @@ impl ResponseExtended for Response<Body> {
 
     fn new_not_modified_with(params: &CacheParams) -> Response<Body> {
         let etag = Etag::from(params.etag_str());
-        Self::new_not_modified(&etag, &params.cache_control)
+        Self::new_not_modified(&etag, params.cache_control)
     }
 
     fn new_json_cached<T>(value: T, params: &CacheParams) -> Self
@@ -51,7 +51,7 @@ impl ResponseExtended for Response<Body> {
         let mut response = Response::builder().body(bytes.into()).unwrap();
         let headers = response.headers_mut();
         headers.insert_content_type_application_json();
-        headers.insert_cache_control(&params.cache_control);
+        headers.insert_cache_control(params.cache_control);
         if let Some(etag) = &params.etag {
             headers.insert_etag(etag);
         }
@@ -83,7 +83,7 @@ impl ResponseExtended for Response<Body> {
         let h = response.headers_mut();
         h.insert(header::CONTENT_TYPE, content_type.parse().unwrap());
         h.insert(header::CONTENT_ENCODING, content_encoding.parse().unwrap());
-        h.insert_cache_control(&params.cache_control);
+        h.insert_cache_control(params.cache_control);
         if let Some(etag) = &params.etag {
             h.insert_etag(etag);
         }

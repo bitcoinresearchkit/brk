@@ -299,6 +299,7 @@ impl MiningRoutes for ApiRouter<AppState> {
                         .summary("Block fee rates")
                         .description("Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*")
                         .json_response::<Vec<BlockFeeRatesEntry>>()
+                        .not_modified()
                         .server_error()
                 },
             ),

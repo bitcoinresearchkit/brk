@@ -20,3 +20,4 @@ export const searchInput = /** @type {HTMLInputElement} */ (
 );
 export const searchResultsElement = getElementById("search-results");
 export const frameSelectorsElement = getElementById("frame-selectors");
+export const pinButtonElement = getElementById("pin-button");

@@ -1,8 +1,8 @@
-use bitcoin::hex::DisplayHex;
+use bitcoin::hex::{DisplayHex, FromHex};
 use brk_error::{Error, Result};
 use brk_types::{
-    BlockHash, Height, MerkleProof, Timestamp, Transaction, TxInIndex, TxIndex, TxOutspend,
-    TxStatus, Txid, TxidPrefix, Vin, Vout,
+    BlockHash, Height, MerkleProof, Timestamp, Transaction, TxInIndex, TxIndex, TxOutIndex,
+    TxOutspend, TxStatus, Txid, TxidPrefix, Vin, Vout,
 };
 use vecdb::{ReadableVec, VecIndex};
 
@@ -71,6 +71,13 @@ impl Query {
     }
 
     pub fn transaction_raw(&self, txid: &Txid) -> Result<Vec<u8>> {
+        if let Some(mempool) = self.mempool()
+            && let Some(tx_with_hex) = mempool.get_txs().get(txid)
+        {
+            return Vec::from_hex(tx_with_hex.hex())
+                .map_err(|_| Error::Parse("Failed to decode mempool tx hex".into()));
+        }
+
         let prefix = TxidPrefix::from(txid);
         let indexer = self.indexer();
         let Ok(Some(tx_index)) = indexer
@@ -108,65 +115,40 @@ impl Query {
     }
 
     pub fn outspend(&self, txid: &Txid, vout: Vout) -> Result<TxOutspend> {
-        let all = self.outspends(txid)?;
-        Ok(all
-            .into_iter()
-            .nth(usize::from(vout))
-            .unwrap_or(TxOutspend::UNSPENT))
+        if self.mempool().is_some_and(|m| m.get_txs().contains_key(txid)) {
+            return Ok(TxOutspend::UNSPENT);
+        }
+        let (_, first_txout, output_count) = self.resolve_tx_outputs(txid)?;
+        if usize::from(vout) >= output_count {
+            return Ok(TxOutspend::UNSPENT);
+        }
+        self.resolve_outspend(first_txout + vout)
     }
 
     pub fn outspends(&self, txid: &Txid) -> Result<Vec<TxOutspend>> {
-        // Mempool outputs are unspent in on-chain terms
         if let Some(mempool) = self.mempool()
             && let Some(tx_with_hex) = mempool.get_txs().get(txid)
         {
-            let output_count = tx_with_hex.tx().output.len();
-            return Ok(vec![TxOutspend::UNSPENT; output_count]);
+            return Ok(vec![TxOutspend::UNSPENT; tx_with_hex.tx().output.len()]);
         }
+        let (_, first_txout, output_count) = self.resolve_tx_outputs(txid)?;
 
-        // Look up confirmed transaction
-        let prefix = TxidPrefix::from(txid);
         let indexer = self.indexer();
-        let Ok(Some(tx_index)) = indexer
-            .stores
-            .txid_prefix_to_tx_index
-            .get(&prefix)
-            .map(|opt| opt.map(|cow| cow.into_owned()))
-        else {
-            return Err(Error::UnknownTxid);
-        };
-
-        // Get output range
-        let first_txout_index = indexer
-            .vecs
-            .transactions
-            .first_txout_index
-            .read_once(tx_index)?;
-        let next_first_txout_index = indexer
-            .vecs
-            .transactions
-            .first_txout_index
-            .read_once(tx_index.incremented())?;
-        let output_count = usize::from(next_first_txout_index) - usize::from(first_txout_index);
-
-        // Get spend status for each output
-        let computer = self.computer();
-        let txin_index_reader = computer.outputs.spent.txin_index.reader();
+        let txin_index_reader = self.computer().outputs.spent.txin_index.reader();
         let txid_reader = indexer.vecs.transactions.txid.reader();
 
-        // Cursors for PcoVec reads — buffer chunks so nearby indices share decompression
+        // Cursors buffer chunks so nearby indices share decompression
         let mut input_tx_cursor = indexer.vecs.inputs.tx_index.cursor();
         let mut first_txin_cursor = indexer.vecs.transactions.first_txin_index.cursor();
         let mut height_cursor = indexer.vecs.transactions.height.cursor();
         let mut block_ts_cursor = indexer.vecs.blocks.timestamp.cursor();
 
-        // Block info cache — spending txs in the same block share block hash/time
+        // Spending txs in the same block share block hash/time
         let mut cached_block: Option<(Height, BlockHash, Timestamp)> = None;
 
         let mut outspends = Vec::with_capacity(output_count);
         for i in 0..output_count {
-            let txout_index = first_txout_index + Vout::from(i);
-            let txin_index = txin_index_reader.get(usize::from(txout_index));
+            let txin_index = txin_index_reader.get(usize::from(first_txout + Vout::from(i)));
 
             if txin_index == TxInIndex::UNSPENT {
                 outspends.push(TxOutspend::UNSPENT);
@@ -174,9 +156,9 @@ impl Query {
             }
 
             let spending_tx_index = input_tx_cursor.get(usize::from(txin_index)).unwrap();
-            let spending_first_txin_index =
+            let spending_first_txin =
                 first_txin_cursor.get(spending_tx_index.to_usize()).unwrap();
-            let vin = Vin::from(usize::from(txin_index) - usize::from(spending_first_txin_index));
+            let vin = Vin::from(usize::from(txin_index) - usize::from(spending_first_txin));
             let spending_txid = txid_reader.get(spending_tx_index.to_usize());
             let spending_height = height_cursor.get(spending_tx_index.to_usize()).unwrap();
 
@@ -205,6 +187,92 @@ impl Query {
         }
 
         Ok(outspends)
+    }
+
+    /// Resolve txid to (tx_index, first_txout_index, output_count).
+    fn resolve_tx_outputs(&self, txid: &Txid) -> Result<(TxIndex, TxOutIndex, usize)> {
+        let prefix = TxidPrefix::from(txid);
+        let indexer = self.indexer();
+        let tx_index: TxIndex = indexer
+            .stores
+            .txid_prefix_to_tx_index
+            .get(&prefix)?
+            .map(|cow| cow.into_owned())
+            .ok_or(Error::UnknownTxid)?;
+        let first = indexer
+            .vecs
+            .transactions
+            .first_txout_index
+            .read_once(tx_index)?;
+        let next = indexer
+            .vecs
+            .transactions
+            .first_txout_index
+            .read_once(tx_index.incremented())?;
+        Ok((tx_index, first, usize::from(next) - usize::from(first)))
+    }
+
+    /// Resolve spend status for a single output.
+    fn resolve_outspend(&self, txout_index: TxOutIndex) -> Result<TxOutspend> {
+        let indexer = self.indexer();
+        let txin_index = self
+            .computer()
+            .outputs
+            .spent
+            .txin_index
+            .reader()
+            .get(usize::from(txout_index));
+
+        if txin_index == TxInIndex::UNSPENT {
+            return Ok(TxOutspend::UNSPENT);
+        }
+
+        let spending_tx_index = indexer
+            .vecs
+            .inputs
+            .tx_index
+            .collect_one_at(usize::from(txin_index))
+            .unwrap();
+        let spending_first_txin = indexer
+            .vecs
+            .transactions
+            .first_txin_index
+            .collect_one(spending_tx_index)
+            .unwrap();
+        let spending_height = indexer
+            .vecs
+            .transactions
+            .height
+            .collect_one(spending_tx_index)
+            .unwrap();
+
+        Ok(TxOutspend {
+            spent: true,
+            txid: Some(
+                indexer
+                    .vecs
+                    .transactions
+                    .txid
+                    .reader()
+                    .get(spending_tx_index.to_usize()),
+            ),
+            vin: Some(Vin::from(
+                usize::from(txin_index) - usize::from(spending_first_txin),
+            )),
+            status: Some(TxStatus {
+                confirmed: true,
+                block_height: Some(spending_height),
+                block_hash: Some(indexer.vecs.blocks.blockhash.read_once(spending_height)?),
+                block_time: Some(
+                    indexer
+                        .vecs
+                        .blocks
+                        .timestamp
+                        .collect_one(spending_height)
+                        .unwrap(),
+                ),
+            }),
+        })
     }
 
     // === Helper methods ===

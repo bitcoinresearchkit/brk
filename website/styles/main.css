@@ -34,13 +34,13 @@ main {
     );
   }
 
-  @media (max-width: 767px) {
+  html[data-layout="mobile"] & {
     flex: 1;
     min-height: 0;
     width: 100% !important;
   }
 
-  @media (min-width: 768px) {
+  html[data-layout="desktop"] & {
     min-width: 300px;
     width: var(--default-main-width);
     max-width: 65dvw;
@@ -134,7 +134,7 @@ main {
       border-color: var(--off-color) !important;
     }
 
-    @media (min-width: 768px) {
+    html[data-layout="desktop"] & {
       display: block;
     }
   }

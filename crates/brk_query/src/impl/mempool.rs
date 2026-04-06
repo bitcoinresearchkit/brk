@@ -74,10 +74,9 @@ impl Query {
             }
         }
 
-        // Descendants: find entries that depend on this tx's prefix
         let mut descendants = Vec::new();
-        for e in entries.entries().iter().flatten() {
-            if e.depends.contains(&prefix) {
+        for child_prefix in entries.children(&prefix) {
+            if let Some(e) = entries.get(child_prefix) {
                 descendants.push(CpfpEntry {
                     txid: e.txid.clone(),
                     weight: Weight::from(e.vsize),

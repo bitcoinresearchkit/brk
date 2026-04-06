@@ -165,7 +165,7 @@ impl AppState {
                 let mut response = Response::new(Body::from(bytes));
                 let h = response.headers_mut();
                 h.insert(header::CONTENT_TYPE, HeaderValue::from_static(content_type));
-                h.insert_cache_control(&params.cache_control);
+                h.insert_cache_control(params.cache_control);
                 h.insert_content_encoding(encoding);
                 if let Some(etag) = &params.etag {
                     h.insert_etag(etag);

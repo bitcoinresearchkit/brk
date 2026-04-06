@@ -54,11 +54,11 @@ aside {
   /*overflow-y: auto;*/
   flex: 1;
 
-  @media (max-width: 767px) {
+  html[data-layout="mobile"] & {
     padding-bottom: calc(var(--main-padding) + 0.5rem);
   }
 
-  @media (min-width: 768px) {
+  html[data-layout="desktop"] & {
     border-left: 1px;
     order: 2;
   }
@@ -75,7 +75,7 @@ body {
   flex-direction: column;
   position: relative;
 
-  @media (min-width: 768px) {
+  html[data-layout="desktop"] & {
     flex-direction: row;
 
     html[data-display="standalone"] & {
@@ -267,9 +267,13 @@ summary {
   }
 }
 
-@media (min-width: 768px) {
-  .md\:hidden {
-    display: none !important;
+html[data-layout="desktop"] .md\:hidden {
+  display: none !important;
+}
+
+#pin-button {
+  @media (max-width: 767px) {
+    display: none;
   }
 }
 

@@ -62,11 +62,8 @@ export function numberToShortUSFormat(value, digits) {
  * @param {string} s
  */
 export function stringToId(s) {
-  return (
-    s
-      // .replace(/\W/g, " ")
-      .trim()
-      .replace(/ +/g, "-")
-      .toLowerCase()
-  );
+  return s
+    .trim()
+    .replace(/[ /]+/g, "-")
+    .toLowerCase();
 }

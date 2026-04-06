@@ -15,6 +15,7 @@ use brk_types::{
 
 use crate::{
     CacheStrategy,
+    cache::CACHE_CONTROL,
     extended::TransformResponseExtended,
     params::{CostBasisCohortParam, CostBasisParams, CostBasisQuery, SeriesParam},
 };
@@ -29,8 +30,6 @@ pub mod legacy;
 const MAX_WEIGHT: usize = 4 * 8 * 10_000;
 /// Maximum allowed request weight for localhost (50MB)
 const MAX_WEIGHT_LOCALHOST: usize = 50 * 1_000_000;
-/// Cache control header for series data responses
-const CACHE_CONTROL: &str = "public, max-age=1, must-revalidate";
 
 /// Returns the max weight for a request based on the client address.
 /// Localhost requests get a generous limit, external requests get a stricter one.
@@ -262,6 +261,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                         "Returns the single most recent value for a series, unwrapped (not inside a SeriesData object)."
                     )
                     .json_response::<serde_json::Value>()
+                    .not_modified()
                     .not_found(),
             ),
         )
@@ -284,6 +284,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     .summary("Get series data length")
                     .description("Returns the total number of data points for a series at the given index.")
                     .json_response::<usize>()
+                    .not_modified()
                     .not_found(),
             ),
         )
@@ -306,6 +307,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     .summary("Get series version")
                     .description("Returns the current version of a series. Changes when the series data is updated.")
                     .json_response::<brk_types::Version>()
+                    .not_modified()
                     .not_found(),
             ),
         )
@@ -343,6 +345,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                         .summary("Available cost basis cohorts")
                         .description("List available cohorts for cost basis distribution.")
                         .json_response::<Vec<String>>()
+                        .not_modified()
                         .server_error()
                 },
             ),
@@ -366,6 +369,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                         .summary("Available cost basis dates")
                         .description("List available dates for a cohort's cost basis distribution.")
                         .json_response::<Vec<Date>>()
+                        .not_modified()
                         .not_found()
                         .server_error()
                 },
@@ -401,6 +405,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                             - `value`: supply (default, in BTC), realized (USD), unrealized (USD)",
                         )
                         .json_response::<CostBasisFormatted>()
+                        .not_modified()
                         .not_found()
                         .server_error()
                 },

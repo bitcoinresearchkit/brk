@@ -55,6 +55,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
                         .summary("Current BTC price")
                         .description("Returns bitcoin latest price (on-chain derived, USD only).\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*")
                         .json_response::<Prices>()
+                        .not_modified()
                         .server_error()
                 },
             ),
