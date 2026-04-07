@@ -373,7 +373,7 @@ def get_block_header(hash: BlockHash) -> str
 
 Block header.
 
-Returns the hex-encoded block header.
+Returns the hex-encoded 80-byte block header.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
 
@@ -384,7 +384,7 @@ Endpoint: `GET /api/block/{hash}/header`
 #### get\_block\_raw
 
 ```python
-def get_block_raw(hash: BlockHash) -> List[float]
+def get_block_raw(hash: BlockHash) -> str
 ```
 
 Raw block.
@@ -965,7 +965,7 @@ Endpoint: `GET /api/tx/{txid}/outspends`
 #### get\_tx\_raw
 
 ```python
-def get_tx_raw(txid: Txid) -> List[float]
+def get_tx_raw(txid: Txid) -> str
 ```
 
 Transaction raw.
@@ -1050,7 +1050,7 @@ def get_cpfp(txid: Txid) -> CpfpInfo
 
 CPFP info.
 
-Returns ancestors and descendants for a CPFP transaction.
+Returns ancestors and descendants for a CPFP (Child Pays For Parent) transaction, including the effective fee rate of the package.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*
 
@@ -1147,7 +1147,7 @@ def get_block_fee_rates(time_period: TimePeriod) -> List[BlockFeeRatesEntry]
 
 Block fee rates.
 
-Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
 
@@ -1163,7 +1163,7 @@ def get_block_fees(time_period: TimePeriod) -> List[BlockFeesEntry]
 
 Block fees.
 
-Get average block fees for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+Get average total fees per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-fees)*
 
@@ -1179,7 +1179,7 @@ def get_block_rewards(time_period: TimePeriod) -> List[BlockRewardsEntry]
 
 Block rewards.
 
-Get average block rewards (coinbase = subsidy + fees) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+Get average coinbase reward (subsidy + fees) per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-rewards)*
 
@@ -1195,7 +1195,7 @@ def get_block_sizes_weights(time_period: TimePeriod) -> BlockSizesWeights
 
 Block sizes and weights.
 
-Get average block sizes and weights for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+Get average block sizes and weights for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*
 
@@ -1244,7 +1244,7 @@ def get_difficulty_adjustments_by_period(
 
 Difficulty adjustments.
 
-Get historical difficulty adjustments for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y.
+Get historical difficulty adjustments for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
 
@@ -1293,7 +1293,7 @@ def get_pools_hashrate_by_period(
 
 All pools hashrate.
 
-Get hashrate data for all mining pools for a time period. Valid periods: 1m, 3m, 6m, 1y, 2y, 3y
+Get hashrate data for all mining pools for a time period. Valid periods: `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
 
@@ -1309,7 +1309,7 @@ def get_hashrate_by_period(time_period: TimePeriod) -> HashrateSummary
 
 Network hashrate.
 
-Get network hashrate and difficulty data for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+Get network hashrate and difficulty data for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
 
@@ -1405,7 +1405,7 @@ def get_pool_stats(time_period: TimePeriod) -> PoolsSummary
 
 Mining pool statistics.
 
-Get mining pool statistics for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+Get mining pool statistics for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
 
@@ -1469,7 +1469,7 @@ def validate_address(address: str) -> AddrValidation
 
 Validate address.
 
-Validate a Bitcoin address and get information about its type and scriptPubKey.
+Validate a Bitcoin address and get information about its type and scriptPubKey. Returns `isvalid: false` with an error message for invalid addresses.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-validate)*
 

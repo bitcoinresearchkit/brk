@@ -6,7 +6,7 @@
 
 # Interface: ErrorBody
 
-Defined in: [Developer/brk/modules/brk-client/index.js:471](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L471)
+Defined in: [Developer/brk/modules/brk-client/index.js:483](https://github.com/bitcoinresearchkit/brk/blob/c76b149ef9f4e0092fec3c6aef562bc4dddd8122/modules/brk-client/index.js#L483)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:471](https://github.com/b
 
 > **error**: [`ErrorDetail`](ErrorDetail.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:472](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L472)
+Defined in: [Developer/brk/modules/brk-client/index.js:484](https://github.com/bitcoinresearchkit/brk/blob/c76b149ef9f4e0092fec3c6aef562bc4dddd8122/modules/brk-client/index.js#L484)

@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Market\_Technical\_Rsi
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5513](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5513)
+Defined in: [Developer/brk/modules/brk-client/index.js:5551](https://github.com/bitcoinresearchkit/brk/blob/c76b149ef9f4e0092fec3c6aef562bc4dddd8122/modules/brk-client/index.js#L5551)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5513](https://github.com/
 
 > **\_1m**: [`RsiStochPattern`](RsiStochPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5516](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5516)
+Defined in: [Developer/brk/modules/brk-client/index.js:5554](https://github.com/bitcoinresearchkit/brk/blob/c76b149ef9f4e0092fec3c6aef562bc4dddd8122/modules/brk-client/index.js#L5554)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5516](https://github.com/
 
 > **\_1w**: [`RsiStochPattern`](RsiStochPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5515](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5515)
+Defined in: [Developer/brk/modules/brk-client/index.js:5553](https://github.com/bitcoinresearchkit/brk/blob/c76b149ef9f4e0092fec3c6aef562bc4dddd8122/modules/brk-client/index.js#L5553)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5515](https://github.com/
 
 > **\_24h**: [`RsiStochPattern`](RsiStochPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5514](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L5514)
+Defined in: [Developer/brk/modules/brk-client/index.js:5552](https://github.com/bitcoinresearchkit/brk/blob/c76b149ef9f4e0092fec3c6aef562bc4dddd8122/modules/brk-client/index.js#L5552)

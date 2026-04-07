@@ -8,7 +8,7 @@
 
 > **SeriesData**\<`T`\> = [`SeriesDataBase`](../interfaces/SeriesDataBase.md)\<`T`\> & `Iterable`\<\[`number`, `T`\]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1365](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L1365)
+Defined in: [Developer/brk/modules/brk-client/index.js:1399](https://github.com/bitcoinresearchkit/brk/blob/c76b149ef9f4e0092fec3c6aef562bc4dddd8122/modules/brk-client/index.js#L1399)
 
 ## Type Parameters
 

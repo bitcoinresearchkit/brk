@@ -6,7 +6,7 @@
 
 # Interface: CpfpInfo
 
-Defined in: [Developer/brk/modules/brk-client/index.js:374](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L374)
+Defined in: [Developer/brk/modules/brk-client/index.js:386](https://github.com/bitcoinresearchkit/brk/blob/c76b149ef9f4e0092fec3c6aef562bc4dddd8122/modules/brk-client/index.js#L386)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:374](https://github.com/b
 
 > `optional` **adjustedVsize?**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:380](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L380)
+Defined in: [Developer/brk/modules/brk-client/index.js:392](https://github.com/bitcoinresearchkit/brk/blob/c76b149ef9f4e0092fec3c6aef562bc4dddd8122/modules/brk-client/index.js#L392)
 
 Adjusted virtual size (accounting for sigops)
 
@@ -24,7 +24,7 @@ Adjusted virtual size (accounting for sigops)
 
 > **ancestors**: [`CpfpEntry`](CpfpEntry.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:375](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L375)
+Defined in: [Developer/brk/modules/brk-client/index.js:387](https://github.com/bitcoinresearchkit/brk/blob/c76b149ef9f4e0092fec3c6aef562bc4dddd8122/modules/brk-client/index.js#L387)
 
 Ancestor transactions in the CPFP chain
 
@@ -34,7 +34,7 @@ Ancestor transactions in the CPFP chain
 
 > `optional` **bestDescendant?**: [`CpfpEntry`](CpfpEntry.md) \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:376](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L376)
+Defined in: [Developer/brk/modules/brk-client/index.js:388](https://github.com/bitcoinresearchkit/brk/blob/c76b149ef9f4e0092fec3c6aef562bc4dddd8122/modules/brk-client/index.js#L388)
 
 Best (highest fee rate) descendant, if any
 
@@ -44,7 +44,7 @@ Best (highest fee rate) descendant, if any
 
 > **descendants**: [`CpfpEntry`](CpfpEntry.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:377](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L377)
+Defined in: [Developer/brk/modules/brk-client/index.js:389](https://github.com/bitcoinresearchkit/brk/blob/c76b149ef9f4e0092fec3c6aef562bc4dddd8122/modules/brk-client/index.js#L389)
 
 Descendant transactions in the CPFP chain
 
@@ -54,7 +54,7 @@ Descendant transactions in the CPFP chain
 
 > `optional` **effectiveFeePerVsize?**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:378](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L378)
+Defined in: [Developer/brk/modules/brk-client/index.js:390](https://github.com/bitcoinresearchkit/brk/blob/c76b149ef9f4e0092fec3c6aef562bc4dddd8122/modules/brk-client/index.js#L390)
 
 Effective fee rate considering CPFP relationships (sat/vB)
 
@@ -64,6 +64,6 @@ Effective fee rate considering CPFP relationships (sat/vB)
 
 > `optional` **fee?**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:379](https://github.com/bitcoinresearchkit/brk/blob/acd3d6f42524ece8c85e7b09cc9fdb13b5687b9f/modules/brk-client/index.js#L379)
+Defined in: [Developer/brk/modules/brk-client/index.js:391](https://github.com/bitcoinresearchkit/brk/blob/c76b149ef9f4e0092fec3c6aef562bc4dddd8122/modules/brk-client/index.js#L391)
 
 Transaction fee (sats)
