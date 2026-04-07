@@ -32,9 +32,10 @@ impl TxRoutes for ApiRouter<AppState> {
                     .id("get_cpfp")
                     .transactions_tag()
                     .summary("CPFP info")
-                    .description("Returns ancestors and descendants for a CPFP transaction.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*")
+                    .description("Returns ancestors and descendants for a CPFP (Child Pays For Parent) transaction, including the effective fee rate of the package.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*")
                     .json_response::<CpfpInfo>()
                     .not_modified()
+                    .bad_request()
                     .not_found()
                     .server_error(),
             ),

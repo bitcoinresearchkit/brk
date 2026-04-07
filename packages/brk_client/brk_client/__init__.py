@@ -19,10 +19,14 @@ T = TypeVar('T')
 
 # Bitcoin address string
 Addr = str
-# Satoshis
+# US Dollar amount
+Dollars = float
+# Amount in satoshis (1 BTC = 100,000,000 sats)
 Sats = int
 # Index within its type (e.g., 0 for first P2WPKH address)
 TypeIndex = int
+# Type (P2PKH, P2WPKH, P2SH, P2TR, etc.)
+OutputType = Literal["p2pk", "p2pk", "p2pkh", "multisig", "p2sh", "op_return", "v0_p2wpkh", "v0_p2wsh", "v1_p2tr", "p2a", "empty", "unknown"]
 # Transaction ID (hash)
 Txid = str
 # Unified index for any address type (funded or empty)
@@ -49,12 +53,11 @@ BasisPointsSigned16 = int
 BasisPointsSigned32 = int
 # Bitcoin amount as floating point (1 BTC = 100,000,000 satoshis)
 Bitcoin = float
+# URL-friendly mining pool identifier
 PoolSlug = Literal["unknown", "blockfills", "ultimuspool", "terrapool", "luxor", "onethash", "btccom", "bitfarms", "huobipool", "wayicn", "canoepool", "btctop", "bitcoincom", "pool175btc", "gbminers", "axbt", "asicminer", "bitminter", "bitcoinrussia", "btcserv", "simplecoinus", "btcguild", "eligius", "ozcoin", "eclipsemc", "maxbtc", "triplemining", "coinlab", "pool50btc", "ghashio", "stminingcorp", "bitparking", "mmpool", "polmine", "kncminer", "bitalo", "f2pool", "hhtt", "megabigpower", "mtred", "nmcbit", "yourbtcnet", "givemecoins", "braiinspool", "antpool", "multicoinco", "bcpoolio", "cointerra", "kanopool", "solock", "ckpool", "nicehash", "bitclub", "bitcoinaffiliatenetwork", "btcc", "bwpool", "exxbw", "bitsolo", "bitfury", "twentyoneinc", "digitalbtc", "eightbaochi", "mybtccoinpool", "tbdice", "hashpool", "nexious", "bravomining", "hotpool", "okexpool", "bcmonster", "onehash", "bixin", "tatmaspool", "viabtc", "connectbtc", "batpool", "waterhole", "dcexploration", "dcex", "btpool", "fiftyeightcoin", "bitcoinindia", "shawnp0wers", "phashio", "rigpool", "haozhuzhu", "sevenpool", "miningkings", "hashbx", "dpool", "rawpool", "haominer", "helix", "bitcoinukraine", "poolin", "secretsuperstar", "tigerpoolnet", "sigmapoolcom", "okpooltop", "hummerpool", "tangpool", "bytepool", "spiderpool", "novablock", "miningcity", "binancepool", "minerium", "lubiancom", "okkong", "aaopool", "emcdpool", "foundryusa", "sbicrypto", "arkpool", "purebtccom", "marapool", "kucoinpool", "entrustcharitypool", "okminer", "titan", "pegapool", "btcnuggets", "cloudhashing", "digitalxmintsy", "telco214", "btcpoolparty", "multipool", "transactioncoinmining", "btcdig", "trickysbtcpool", "btcmp", "eobot", "unomp", "patels", "gogreenlight", "bitcoinindiapool", "ekanembtc", "canoe", "tiger", "onem1x", "zulupool", "secpool", "ocean", "whitepool", "wiz", "wk057", "futurebitapollosolo", "carbonnegative", "portlandhodl", "phoenix", "neopool", "maxipool", "bitfufupool", "gdpool", "miningdutch", "publicpool", "miningsquared", "innopolistech", "btclab", "parasite", "redrockpool", "est3lar", "braiinssolo", "solopool"]
-# US Dollar amount as floating point
-Dollars = float
-# Fee rate in sats/vB
+# Fee rate in sat/vB
 FeeRate = float
-# Transaction or block weight in weight units (WU)
+# Weight in weight units (WU). Max block weight is 4,000,000 WU.
 Weight = int
 # Block height
 Height = int
@@ -62,6 +65,7 @@ Height = int
 Timestamp = int
 # Block hash
 BlockHash = str
+# Transaction index within a block (0 = coinbase)
 TxIndex = int
 # Unsigned cents (u64) - for values that should never be negative.
 # Used for invested capital, realized cap, etc.
@@ -95,7 +99,7 @@ CostBasisBucket = Literal["raw", "lin200", "lin500", "lin1000", "log10", "log50"
 # Value type for cost basis distribution.
 # Options: supply (BTC), realized (USD, price × supply), unrealized (USD, spot × supply).
 CostBasisValue = Literal["supply", "realized", "unrealized"]
-# Virtual size in vbytes (weight / 4, rounded up)
+# Virtual size in vbytes (weight / 4, rounded up). Max block vsize is ~1,000,000 vB.
 VSize = int
 # Date in YYYYMMDD format stored as u32
 Date = int
@@ -132,8 +136,6 @@ Month6 = int
 Open = Dollars
 OpReturnIndex = TypeIndex
 OutPoint = int
-# Type (P2PKH, P2WPKH, P2SH, P2TR, etc.)
-OutputType = Literal["p2pk", "p2pk", "p2pkh", "multisig", "p2sh", "op_return", "v0_p2wpkh", "v0_p2wsh", "v1_p2tr", "p2a", "empty", "unknown"]
 P2AAddrIndex = TypeIndex
 U8x2 = List[int]
 P2ABytes = U8x2
@@ -156,7 +158,7 @@ P2WPKHAddrIndex = TypeIndex
 P2WPKHBytes = U8x20
 P2WSHAddrIndex = TypeIndex
 P2WSHBytes = U8x32
-# Transaction locktime
+# Transaction locktime. Values below 500,000,000 are interpreted as block heights; values at or above are Unix timestamps.
 RawLockTime = int
 # Fractional satoshis (f64) - for representing USD prices in sats
 # 
@@ -230,6 +232,7 @@ class AddrChainStats(TypedDict):
         spent_txo_sum: Total amount in satoshis spent from this address
         tx_count: Total number of confirmed transactions involving this address
         type_index: Index of this address within its type on the blockchain
+        realized_price: Realized price (average cost basis) in USD
     """
     funded_txo_count: int
     funded_txo_sum: Sats
@@ -237,6 +240,7 @@ class AddrChainStats(TypedDict):
     spent_txo_sum: Sats
     tx_count: int
     type_index: TypeIndex
+    realized_price: Dollars
 
 class AddrMempoolStats(TypedDict):
     """
@@ -258,6 +262,9 @@ class AddrMempoolStats(TypedDict):
     tx_count: int
 
 class AddrParam(TypedDict):
+    """
+    Bitcoin address path parameter
+    """
     address: Addr
 
 class AddrStats(TypedDict):
@@ -266,10 +273,12 @@ class AddrStats(TypedDict):
 
     Attributes:
         address: Bitcoin address string
+        addr_type: Address type (p2pkh, p2sh, v0_p2wpkh, v0_p2wsh, v1_p2tr, etc.)
         chain_stats: Statistics for confirmed transactions on the blockchain
         mempool_stats: Statistics for unconfirmed transactions in the mempool
     """
     address: Addr
+    addr_type: OutputType
     chain_stats: AddrChainStats
     mempool_stats: Union[AddrMempoolStats, None]
 
@@ -307,6 +316,8 @@ class AddrValidation(TypedDict):
 
 class BlockCountParam(TypedDict):
     """
+    Block count path parameter
+
     Attributes:
         block_count: Number of recent blocks to include
     """
@@ -401,6 +412,13 @@ class BlockFeeRatesEntry(TypedDict):
     Attributes:
         avgHeight: Average block height in this window
         timestamp: Unix timestamp at the window midpoint
+        avgFee_0: Minimum fee rate (sat/vB)
+        avgFee_10: 10th percentile fee rate (sat/vB)
+        avgFee_25: 25th percentile fee rate (sat/vB)
+        avgFee_50: Median fee rate (sat/vB)
+        avgFee_75: 75th percentile fee rate (sat/vB)
+        avgFee_90: 90th percentile fee rate (sat/vB)
+        avgFee_100: Maximum fee rate (sat/vB)
     """
     avgHeight: Height
     timestamp: Timestamp
@@ -428,10 +446,15 @@ class BlockFeesEntry(TypedDict):
     USD: Dollars
 
 class BlockHashParam(TypedDict):
+    """
+    Block hash path parameter
+    """
     hash: BlockHash
 
 class BlockHashStartIndex(TypedDict):
     """
+    Block hash + starting transaction index path parameters
+
     Attributes:
         hash: Bitcoin block hash
         start_index: Starting transaction index within the block (0-based)
@@ -441,6 +464,8 @@ class BlockHashStartIndex(TypedDict):
 
 class BlockHashTxIndex(TypedDict):
     """
+    Block hash + transaction index path parameters
+
     Attributes:
         hash: Bitcoin block hash
         index: Transaction index within the block (0-based)
@@ -831,8 +856,8 @@ class HashrateEntry(TypedDict):
     A single hashrate data point.
 
     Attributes:
-        timestamp: Unix timestamp.
-        avgHashrate: Average hashrate (H/s).
+        timestamp: Unix timestamp
+        avgHashrate: Average hashrate (H/s)
     """
     timestamp: Timestamp
     avgHashrate: int
@@ -842,10 +867,10 @@ class HashrateSummary(TypedDict):
     Summary of network hashrate and difficulty data.
 
     Attributes:
-        hashrates: Historical hashrate data points.
-        difficulty: Historical difficulty adjustments.
-        currentHashrate: Current network hashrate (H/s).
-        currentDifficulty: Current network difficulty.
+        hashrates: Historical hashrate data points
+        difficulty: Historical difficulty adjustments
+        currentHashrate: Current network hashrate (H/s)
+        currentDifficulty: Current network difficulty
     """
     hashrates: List[HashrateEntry]
     difficulty: List[DifficultyEntry]
@@ -884,6 +909,9 @@ class Health(TypedDict):
     last_indexed_at_unix: Timestamp
 
 class HeightParam(TypedDict):
+    """
+    Block height path parameter
+    """
     height: Height
 
 class HistoricalPriceEntry(TypedDict):
@@ -894,7 +922,7 @@ class HistoricalPriceEntry(TypedDict):
         time: Unix timestamp
         USD: BTC/USD price
     """
-    time: int
+    time: Timestamp
     USD: Dollars
 
 class HistoricalPrice(TypedDict):
@@ -988,7 +1016,7 @@ class MerkleProof(TypedDict):
     Attributes:
         block_height: Block height containing the transaction
         merkle: Merkle proof path (hex-encoded hashes)
-        pos: Transaction position in the block
+        pos: Transaction position in the block (0-indexed)
     """
     block_height: Height
     merkle: List[str]
@@ -1022,6 +1050,9 @@ class OHLCSats(TypedDict):
     close: Close
 
 class OptionalTimestampParam(TypedDict):
+    """
+    Optional UNIX timestamp query parameter
+    """
     timestamp: Union[Timestamp, None]
 
 class PaginatedSeries(TypedDict):
@@ -1073,8 +1104,8 @@ class PoolBlockShares(TypedDict):
 
     Attributes:
         all: Share of all blocks (0.0 - 1.0)
-        _24h: Share of blocks in last 24 hours
-        _1w: Share of blocks in last week
+        _24h: Share of blocks in last 24 hours (0.0 - 1.0)
+        _1w: Share of blocks in last week (0.0 - 1.0)
     """
     all: float
     _24h: float
@@ -1109,8 +1140,8 @@ class PoolDetail(TypedDict):
         pool: Pool information
         blockCount: Block counts for different time periods
         blockShare: Pool's share of total blocks for different time periods
-        estimatedHashrate: Estimated hashrate based on blocks mined
-        reportedHashrate: Self-reported hashrate (if available)
+        estimatedHashrate: Estimated hashrate based on blocks mined (H/s)
+        reportedHashrate: Self-reported hashrate (if available, H/s)
         totalReward: Total reward earned by this pool (sats, all time; None for minor pools)
     """
     pool: PoolDetailInfo
@@ -1125,10 +1156,10 @@ class PoolHashrateEntry(TypedDict):
     A single pool hashrate data point.
 
     Attributes:
-        timestamp: Unix timestamp.
-        avgHashrate: Average hashrate (H/s).
-        share: Pool's share of total network hashrate.
-        poolName: Pool name.
+        timestamp: Unix timestamp
+        avgHashrate: Average hashrate (H/s)
+        share: Pool's share of total network hashrate (0.0 - 1.0)
+        poolName: Pool name
     """
     timestamp: Timestamp
     avgHashrate: int
@@ -1149,10 +1180,16 @@ class PoolInfo(TypedDict):
     unique_id: int
 
 class PoolSlugAndHeightParam(TypedDict):
+    """
+    Mining pool slug + block height path parameters
+    """
     slug: PoolSlug
     height: Height
 
 class PoolSlugParam(TypedDict):
+    """
+    Mining pool slug path parameter
+    """
     slug: PoolSlug
 
 class PoolStats(TypedDict):
@@ -1187,9 +1224,9 @@ class PoolsSummary(TypedDict):
     Attributes:
         pools: List of pools sorted by block count descending
         blockCount: Total blocks in the time period
-        lastEstimatedHashrate: Estimated network hashrate (hashes per second)
-        lastEstimatedHashrate3d: Estimated network hashrate over last 3 days
-        lastEstimatedHashrate1w: Estimated network hashrate over last 1 week
+        lastEstimatedHashrate: Estimated network hashrate (H/s)
+        lastEstimatedHashrate3d: Estimated network hashrate over last 3 days (H/s)
+        lastEstimatedHashrate1w: Estimated network hashrate over last 1 week (H/s)
     """
     pools: List[PoolStats]
     blockCount: int
@@ -1341,9 +1378,15 @@ class SyncStatus(TypedDict):
     last_indexed_at_unix: Timestamp
 
 class TimePeriodParam(TypedDict):
+    """
+    Time period path parameter (24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y)
+    """
     time_period: TimePeriod
 
 class TimestampParam(TypedDict):
+    """
+    UNIX timestamp path parameter
+    """
     timestamp: Timestamp
 
 class TxOut(TypedDict):
@@ -1444,6 +1487,9 @@ class TxOutspend(TypedDict):
     status: Union[TxStatus, None]
 
 class TxidParam(TypedDict):
+    """
+    Transaction ID path parameter
+    """
     txid: Txid
 
 class TxidVout(TypedDict):
@@ -7296,7 +7342,7 @@ class BrkClient(BrkClientBase):
     def get_block_header(self, hash: BlockHash) -> str:
         """Block header.
 
-        Returns the hex-encoded block header.
+        Returns the hex-encoded 80-byte block header.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
 
@@ -7738,7 +7784,7 @@ class BrkClient(BrkClientBase):
     def get_cpfp(self, txid: Txid) -> CpfpInfo:
         """CPFP info.
 
-        Returns ancestors and descendants for a CPFP transaction.
+        Returns ancestors and descendants for a CPFP (Child Pays For Parent) transaction, including the effective fee rate of the package.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*
 
@@ -7802,7 +7848,7 @@ class BrkClient(BrkClientBase):
     def get_block_fee_rates(self, time_period: TimePeriod) -> List[BlockFeeRatesEntry]:
         """Block fee rates.
 
-        Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+        Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
 
@@ -7812,7 +7858,7 @@ class BrkClient(BrkClientBase):
     def get_block_fees(self, time_period: TimePeriod) -> List[BlockFeesEntry]:
         """Block fees.
 
-        Get average block fees for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+        Get average total fees per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-fees)*
 
@@ -7822,7 +7868,7 @@ class BrkClient(BrkClientBase):
     def get_block_rewards(self, time_period: TimePeriod) -> List[BlockRewardsEntry]:
         """Block rewards.
 
-        Get average block rewards (coinbase = subsidy + fees) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+        Get average coinbase reward (subsidy + fees) per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-rewards)*
 
@@ -7832,7 +7878,7 @@ class BrkClient(BrkClientBase):
     def get_block_sizes_weights(self, time_period: TimePeriod) -> BlockSizesWeights:
         """Block sizes and weights.
 
-        Get average block sizes and weights for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+        Get average block sizes and weights for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*
 
@@ -7862,7 +7908,7 @@ class BrkClient(BrkClientBase):
     def get_difficulty_adjustments_by_period(self, time_period: TimePeriod) -> List[DifficultyAdjustmentEntry]:
         """Difficulty adjustments.
 
-        Get historical difficulty adjustments for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y.
+        Get historical difficulty adjustments for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
 
@@ -7892,7 +7938,7 @@ class BrkClient(BrkClientBase):
     def get_pools_hashrate_by_period(self, time_period: TimePeriod) -> List[PoolHashrateEntry]:
         """All pools hashrate.
 
-        Get hashrate data for all mining pools for a time period. Valid periods: 1m, 3m, 6m, 1y, 2y, 3y
+        Get hashrate data for all mining pools for a time period. Valid periods: `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
 
@@ -7902,7 +7948,7 @@ class BrkClient(BrkClientBase):
     def get_hashrate_by_period(self, time_period: TimePeriod) -> HashrateSummary:
         """Network hashrate.
 
-        Get network hashrate and difficulty data for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+        Get network hashrate and difficulty data for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
 
@@ -7962,7 +8008,7 @@ class BrkClient(BrkClientBase):
     def get_pool_stats(self, time_period: TimePeriod) -> PoolsSummary:
         """Mining pool statistics.
 
-        Get mining pool statistics for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+        Get mining pool statistics for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
 
@@ -8002,7 +8048,7 @@ class BrkClient(BrkClientBase):
     def validate_address(self, address: str) -> AddrValidation:
         """Validate address.
 
-        Validate a Bitcoin address and get information about its type and scriptPubKey.
+        Validate a Bitcoin address and get information about its type and scriptPubKey. Returns `isvalid: false` with an error message for invalid addresses.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-validate)*
 

@@ -9,6 +9,7 @@ use crate::{FeeRate, Sats, Transaction, VSize};
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MempoolInfo {
     /// Number of transactions in the mempool
+    #[schemars(example = 5000)]
     pub count: usize,
     /// Total virtual size of all transactions in the mempool (vbytes)
     pub vsize: VSize,

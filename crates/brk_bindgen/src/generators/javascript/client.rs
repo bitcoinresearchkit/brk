@@ -404,11 +404,14 @@ class BrkClientBase {{
 
   /**
    * @param {{string}} path
+   * @param {{{{ signal?: AbortSignal }}}} [options]
    * @returns {{Promise<Response>}}
    */
-  async get(path) {{
+  async get(path, {{ signal }} = {{}}) {{
     const url = `${{this.baseUrl}}${{path}}`;
-    const res = await fetch(url, {{ signal: AbortSignal.timeout(this.timeout) }});
+    const signals = [AbortSignal.timeout(this.timeout)];
+    if (signal) signals.push(signal);
+    const res = await fetch(url, {{ signal: AbortSignal.any(signals) }});
     if (!res.ok) throw new BrkError(`HTTP ${{res.status}}: ${{url}}`, res.status);
     return res;
   }}
@@ -417,10 +420,10 @@ class BrkClientBase {{
    * Make a GET request - races cache vs network, first to resolve calls onUpdate
    * @template T
    * @param {{string}} path
-   * @param {{(value: T) => void}} [onUpdate] - Called when data is available (may be called twice: cache then network)
+   * @param {{{{ onUpdate?: (value: T) => void, signal?: AbortSignal }}}} [options]
    * @returns {{Promise<T>}}
    */
-  async getJson(path, onUpdate) {{
+  async getJson(path, {{ onUpdate, signal }} = {{}}) {{
     const url = `${{this.baseUrl}}${{path}}`;
     const cache = this._cache ?? await this._cachePromise;
 
@@ -440,7 +443,7 @@ class BrkClientBase {{
       return json;
     }});
 
-    const networkPromise = this.get(path).then(async (res) => {{
+    const networkPromise = this.get(path, {{ signal }}).then(async (res) => {{
       const cloned = res.clone();
       const json = _addCamelGetters(await res.json());
       // Skip update if ETag matches and cache already delivered
@@ -472,10 +475,11 @@ class BrkClientBase {{
   /**
    * Make a GET request and return raw text (for CSV responses)
    * @param {{string}} path
+   * @param {{{{ signal?: AbortSignal }}}} [options]
    * @returns {{Promise<string>}}
    */
-  async getText(path) {{
-    const res = await this.get(path);
+  async getText(path, {{ signal }} = {{}}) {{
+    const res = await this.get(path, {{ signal }});
     return res.text();
   }}
 
@@ -488,7 +492,7 @@ class BrkClientBase {{
    */
   async _fetchSeriesData(path, onUpdate) {{
     const wrappedOnUpdate = onUpdate ? (/** @type {{SeriesData<T>}} */ raw) => onUpdate(_wrapSeriesData(raw)) : undefined;
-    const raw = await this.getJson(path, wrappedOnUpdate);
+    const raw = await this.getJson(path, {{ onUpdate: wrappedOnUpdate }});
     return _wrapSeriesData(raw);
   }}
 }}

@@ -8348,7 +8348,7 @@ impl BrkClient {
 
     /// Block header
     ///
-    /// Returns the hex-encoded block header.
+    /// Returns the hex-encoded 80-byte block header.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
     ///
@@ -8839,7 +8839,7 @@ impl BrkClient {
 
     /// CPFP info
     ///
-    /// Returns ancestors and descendants for a CPFP transaction.
+    /// Returns ancestors and descendants for a CPFP (Child Pays For Parent) transaction, including the effective fee rate of the package.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*
     ///
@@ -8909,7 +8909,7 @@ impl BrkClient {
 
     /// Block fee rates
     ///
-    /// Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+    /// Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
     ///
@@ -8920,7 +8920,7 @@ impl BrkClient {
 
     /// Block fees
     ///
-    /// Get average block fees for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+    /// Get average total fees per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-fees)*
     ///
@@ -8931,7 +8931,7 @@ impl BrkClient {
 
     /// Block rewards
     ///
-    /// Get average block rewards (coinbase = subsidy + fees) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+    /// Get average coinbase reward (subsidy + fees) per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-rewards)*
     ///
@@ -8942,7 +8942,7 @@ impl BrkClient {
 
     /// Block sizes and weights
     ///
-    /// Get average block sizes and weights for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+    /// Get average block sizes and weights for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*
     ///
@@ -8975,7 +8975,7 @@ impl BrkClient {
 
     /// Difficulty adjustments
     ///
-    /// Get historical difficulty adjustments for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y.
+    /// Get historical difficulty adjustments for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
     ///
@@ -9008,7 +9008,7 @@ impl BrkClient {
 
     /// All pools hashrate
     ///
-    /// Get hashrate data for all mining pools for a time period. Valid periods: 1m, 3m, 6m, 1y, 2y, 3y
+    /// Get hashrate data for all mining pools for a time period. Valid periods: `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
     ///
@@ -9019,7 +9019,7 @@ impl BrkClient {
 
     /// Network hashrate
     ///
-    /// Get network hashrate and difficulty data for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+    /// Get network hashrate and difficulty data for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
     ///
@@ -9085,7 +9085,7 @@ impl BrkClient {
 
     /// Mining pool statistics
     ///
-    /// Get mining pool statistics for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+    /// Get mining pool statistics for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
     ///
@@ -9129,7 +9129,7 @@ impl BrkClient {
 
     /// Validate address
     ///
-    /// Validate a Bitcoin address and get information about its type and scriptPubKey.
+    /// Validate a Bitcoin address and get information about its type and scriptPubKey. Returns `isvalid: false` with an error message for invalid addresses.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-validate)*
     ///

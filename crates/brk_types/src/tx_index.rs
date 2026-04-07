@@ -8,6 +8,7 @@ use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use super::StoredU32;
 
+/// Transaction index within a block (0 = coinbase)
 #[derive(
     Debug,
     PartialEq,
@@ -25,6 +26,7 @@ use super::StoredU32;
     JsonSchema,
     Hash,
 )]
+#[schemars(example = 0)]
 pub struct TxIndex(u32);
 
 impl TxIndex {

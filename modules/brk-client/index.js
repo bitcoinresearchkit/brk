@@ -20,6 +20,7 @@
  * @property {Sats} spentTxoSum - Total amount in satoshis spent from this address
  * @property {number} txCount - Total number of confirmed transactions involving this address
  * @property {TypeIndex} typeIndex - Index of this address within its type on the blockchain
+ * @property {Dollars} realizedPrice - Realized price (average cost basis) in USD
  */
 /**
  * Address statistics in the mempool (unconfirmed transactions only)
@@ -34,6 +35,8 @@
  * @property {number} txCount - Number of unconfirmed transactions involving this address
  */
 /**
+ * Bitcoin address path parameter
+ *
  * @typedef {Object} AddrParam
  * @property {Addr} address
  */
@@ -42,6 +45,7 @@
  *
  * @typedef {Object} AddrStats
  * @property {Addr} address - Bitcoin address string
+ * @property {OutputType} addrType - Address type (p2pkh, p2sh, v0_p2wpkh, v0_p2wsh, v1_p2tr, etc.)
  * @property {AddrChainStats} chainStats - Statistics for confirmed transactions on the blockchain
  * @property {(AddrMempoolStats|null)=} mempoolStats - Statistics for unconfirmed transactions in the mempool
  */
@@ -106,6 +110,8 @@
  * @typedef {number} Bitcoin
  */
 /**
+ * Block count path parameter
+ *
  * @typedef {Object} BlockCountParam
  * @property {number} blockCount - Number of recent blocks to include
  */
@@ -151,13 +157,13 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {Object} BlockFeeRatesEntry
  * @property {Height} avgHeight - Average block height in this window
  * @property {Timestamp} timestamp - Unix timestamp at the window midpoint
- * @property {FeeRate} avgFee0
- * @property {FeeRate} avgFee10
- * @property {FeeRate} avgFee25
- * @property {FeeRate} avgFee50
- * @property {FeeRate} avgFee75
- * @property {FeeRate} avgFee90
- * @property {FeeRate} avgFee100
+ * @property {FeeRate} avgFee0 - Minimum fee rate (sat/vB)
+ * @property {FeeRate} avgFee10 - 10th percentile fee rate (sat/vB)
+ * @property {FeeRate} avgFee25 - 25th percentile fee rate (sat/vB)
+ * @property {FeeRate} avgFee50 - Median fee rate (sat/vB)
+ * @property {FeeRate} avgFee75 - 75th percentile fee rate (sat/vB)
+ * @property {FeeRate} avgFee90 - 90th percentile fee rate (sat/vB)
+ * @property {FeeRate} avgFee100 - Maximum fee rate (sat/vB)
  */
 /**
  * A single block fees data point.
@@ -174,15 +180,21 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {string} BlockHash
  */
 /**
+ * Block hash path parameter
+ *
  * @typedef {Object} BlockHashParam
  * @property {BlockHash} hash
  */
 /**
+ * Block hash + starting transaction index path parameters
+ *
  * @typedef {Object} BlockHashStartIndex
  * @property {BlockHash} hash - Bitcoin block hash
  * @property {TxIndex} startIndex - Starting transaction index within the block (0-based)
  */
 /**
+ * Block hash + transaction index path parameters
+ *
  * @typedef {Object} BlockHashTxIndex
  * @property {BlockHash} hash - Bitcoin block hash
  * @property {TxIndex} index - Transaction index within the block (0-based)
@@ -452,7 +464,7 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {number} ratio - brk as percentage of Bitcoin data
  */
 /**
- * US Dollar amount as floating point
+ * US Dollar amount
  *
  * @typedef {number} Dollars
  */
@@ -484,7 +496,7 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {Object} ExchangeRates
  */
 /**
- * Fee rate in sats/vB
+ * Fee rate in sat/vB
  *
  * @typedef {number} FeeRate
  */
@@ -511,17 +523,17 @@ Matches mempool.space/bitcoin-cli behavior.
  * A single hashrate data point.
  *
  * @typedef {Object} HashrateEntry
- * @property {Timestamp} timestamp - Unix timestamp.
- * @property {number} avgHashrate - Average hashrate (H/s).
+ * @property {Timestamp} timestamp - Unix timestamp
+ * @property {number} avgHashrate - Average hashrate (H/s)
  */
 /**
  * Summary of network hashrate and difficulty data.
  *
  * @typedef {Object} HashrateSummary
- * @property {HashrateEntry[]} hashrates - Historical hashrate data points.
- * @property {DifficultyEntry[]} difficulty - Historical difficulty adjustments.
- * @property {number} currentHashrate - Current network hashrate (H/s).
- * @property {number} currentDifficulty - Current network difficulty.
+ * @property {HashrateEntry[]} hashrates - Historical hashrate data points
+ * @property {DifficultyEntry[]} difficulty - Historical difficulty adjustments
+ * @property {number} currentHashrate - Current network hashrate (H/s)
+ * @property {number} currentDifficulty - Current network difficulty
  */
 /**
  * Server health status
@@ -546,6 +558,8 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {number} Height
  */
 /**
+ * Block height path parameter
+ *
  * @typedef {Object} HeightParam
  * @property {Height} height
  */
@@ -565,7 +579,7 @@ Matches mempool.space/bitcoin-cli behavior.
  * A single price data point
  *
  * @typedef {Object} HistoricalPriceEntry
- * @property {number} time - Unix timestamp
+ * @property {Timestamp} time - Unix timestamp
  * @property {Dollars} uSD - BTC/USD price
  */
 /** @typedef {number} Hour1 */
@@ -642,7 +656,7 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {Object} MerkleProof
  * @property {Height} blockHeight - Block height containing the transaction
  * @property {string[]} merkle - Merkle proof path (hex-encoded hashes)
- * @property {number} pos - Transaction position in the block
+ * @property {number} pos - Transaction position in the block (0-indexed)
  */
 /** @typedef {number} Minute10 */
 /** @typedef {number} Minute30 */
@@ -683,6 +697,8 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {Dollars} Open
  */
 /**
+ * Optional UNIX timestamp query parameter
+ *
  * @typedef {Object} OptionalTimestampParam
  * @property {(Timestamp|null)=} timestamp
  */
@@ -740,8 +756,8 @@ Matches mempool.space/bitcoin-cli behavior.
  *
  * @typedef {Object} PoolBlockShares
  * @property {number} all - Share of all blocks (0.0 - 1.0)
- * @property {number} _24h - Share of blocks in last 24 hours
- * @property {number} _1w - Share of blocks in last week
+ * @property {number} _24h - Share of blocks in last 24 hours (0.0 - 1.0)
+ * @property {number} _1w - Share of blocks in last week (0.0 - 1.0)
  */
 /**
  * Detailed pool information with statistics across time periods
@@ -750,8 +766,8 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {PoolDetailInfo} pool - Pool information
  * @property {PoolBlockCounts} blockCount - Block counts for different time periods
  * @property {PoolBlockShares} blockShare - Pool's share of total blocks for different time periods
- * @property {number} estimatedHashrate - Estimated hashrate based on blocks mined
- * @property {?number=} reportedHashrate - Self-reported hashrate (if available)
+ * @property {number} estimatedHashrate - Estimated hashrate based on blocks mined (H/s)
+ * @property {?number=} reportedHashrate - Self-reported hashrate (if available, H/s)
  * @property {(Sats|null)=} totalReward - Total reward earned by this pool (sats, all time; None for minor pools)
  */
 /**
@@ -770,10 +786,10 @@ Matches mempool.space/bitcoin-cli behavior.
  * A single pool hashrate data point.
  *
  * @typedef {Object} PoolHashrateEntry
- * @property {Timestamp} timestamp - Unix timestamp.
- * @property {number} avgHashrate - Average hashrate (H/s).
- * @property {number} share - Pool's share of total network hashrate.
- * @property {string} poolName - Pool name.
+ * @property {Timestamp} timestamp - Unix timestamp
+ * @property {number} avgHashrate - Average hashrate (H/s)
+ * @property {number} share - Pool's share of total network hashrate (0.0 - 1.0)
+ * @property {string} poolName - Pool name
  */
 /**
  * Basic pool information for listing all pools
@@ -783,13 +799,21 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {PoolSlug} slug - URL-friendly pool identifier
  * @property {number} uniqueId - Unique numeric pool identifier
  */
-/** @typedef {("unknown"|"blockfills"|"ultimuspool"|"terrapool"|"luxor"|"onethash"|"btccom"|"bitfarms"|"huobipool"|"wayicn"|"canoepool"|"btctop"|"bitcoincom"|"pool175btc"|"gbminers"|"axbt"|"asicminer"|"bitminter"|"bitcoinrussia"|"btcserv"|"simplecoinus"|"btcguild"|"eligius"|"ozcoin"|"eclipsemc"|"maxbtc"|"triplemining"|"coinlab"|"pool50btc"|"ghashio"|"stminingcorp"|"bitparking"|"mmpool"|"polmine"|"kncminer"|"bitalo"|"f2pool"|"hhtt"|"megabigpower"|"mtred"|"nmcbit"|"yourbtcnet"|"givemecoins"|"braiinspool"|"antpool"|"multicoinco"|"bcpoolio"|"cointerra"|"kanopool"|"solock"|"ckpool"|"nicehash"|"bitclub"|"bitcoinaffiliatenetwork"|"btcc"|"bwpool"|"exxbw"|"bitsolo"|"bitfury"|"twentyoneinc"|"digitalbtc"|"eightbaochi"|"mybtccoinpool"|"tbdice"|"hashpool"|"nexious"|"bravomining"|"hotpool"|"okexpool"|"bcmonster"|"onehash"|"bixin"|"tatmaspool"|"viabtc"|"connectbtc"|"batpool"|"waterhole"|"dcexploration"|"dcex"|"btpool"|"fiftyeightcoin"|"bitcoinindia"|"shawnp0wers"|"phashio"|"rigpool"|"haozhuzhu"|"sevenpool"|"miningkings"|"hashbx"|"dpool"|"rawpool"|"haominer"|"helix"|"bitcoinukraine"|"poolin"|"secretsuperstar"|"tigerpoolnet"|"sigmapoolcom"|"okpooltop"|"hummerpool"|"tangpool"|"bytepool"|"spiderpool"|"novablock"|"miningcity"|"binancepool"|"minerium"|"lubiancom"|"okkong"|"aaopool"|"emcdpool"|"foundryusa"|"sbicrypto"|"arkpool"|"purebtccom"|"marapool"|"kucoinpool"|"entrustcharitypool"|"okminer"|"titan"|"pegapool"|"btcnuggets"|"cloudhashing"|"digitalxmintsy"|"telco214"|"btcpoolparty"|"multipool"|"transactioncoinmining"|"btcdig"|"trickysbtcpool"|"btcmp"|"eobot"|"unomp"|"patels"|"gogreenlight"|"bitcoinindiapool"|"ekanembtc"|"canoe"|"tiger"|"onem1x"|"zulupool"|"secpool"|"ocean"|"whitepool"|"wiz"|"wk057"|"futurebitapollosolo"|"carbonnegative"|"portlandhodl"|"phoenix"|"neopool"|"maxipool"|"bitfufupool"|"gdpool"|"miningdutch"|"publicpool"|"miningsquared"|"innopolistech"|"btclab"|"parasite"|"redrockpool"|"est3lar"|"braiinssolo"|"solopool")} PoolSlug */
 /**
+ * URL-friendly mining pool identifier
+ *
+ * @typedef {("unknown"|"blockfills"|"ultimuspool"|"terrapool"|"luxor"|"onethash"|"btccom"|"bitfarms"|"huobipool"|"wayicn"|"canoepool"|"btctop"|"bitcoincom"|"pool175btc"|"gbminers"|"axbt"|"asicminer"|"bitminter"|"bitcoinrussia"|"btcserv"|"simplecoinus"|"btcguild"|"eligius"|"ozcoin"|"eclipsemc"|"maxbtc"|"triplemining"|"coinlab"|"pool50btc"|"ghashio"|"stminingcorp"|"bitparking"|"mmpool"|"polmine"|"kncminer"|"bitalo"|"f2pool"|"hhtt"|"megabigpower"|"mtred"|"nmcbit"|"yourbtcnet"|"givemecoins"|"braiinspool"|"antpool"|"multicoinco"|"bcpoolio"|"cointerra"|"kanopool"|"solock"|"ckpool"|"nicehash"|"bitclub"|"bitcoinaffiliatenetwork"|"btcc"|"bwpool"|"exxbw"|"bitsolo"|"bitfury"|"twentyoneinc"|"digitalbtc"|"eightbaochi"|"mybtccoinpool"|"tbdice"|"hashpool"|"nexious"|"bravomining"|"hotpool"|"okexpool"|"bcmonster"|"onehash"|"bixin"|"tatmaspool"|"viabtc"|"connectbtc"|"batpool"|"waterhole"|"dcexploration"|"dcex"|"btpool"|"fiftyeightcoin"|"bitcoinindia"|"shawnp0wers"|"phashio"|"rigpool"|"haozhuzhu"|"sevenpool"|"miningkings"|"hashbx"|"dpool"|"rawpool"|"haominer"|"helix"|"bitcoinukraine"|"poolin"|"secretsuperstar"|"tigerpoolnet"|"sigmapoolcom"|"okpooltop"|"hummerpool"|"tangpool"|"bytepool"|"spiderpool"|"novablock"|"miningcity"|"binancepool"|"minerium"|"lubiancom"|"okkong"|"aaopool"|"emcdpool"|"foundryusa"|"sbicrypto"|"arkpool"|"purebtccom"|"marapool"|"kucoinpool"|"entrustcharitypool"|"okminer"|"titan"|"pegapool"|"btcnuggets"|"cloudhashing"|"digitalxmintsy"|"telco214"|"btcpoolparty"|"multipool"|"transactioncoinmining"|"btcdig"|"trickysbtcpool"|"btcmp"|"eobot"|"unomp"|"patels"|"gogreenlight"|"bitcoinindiapool"|"ekanembtc"|"canoe"|"tiger"|"onem1x"|"zulupool"|"secpool"|"ocean"|"whitepool"|"wiz"|"wk057"|"futurebitapollosolo"|"carbonnegative"|"portlandhodl"|"phoenix"|"neopool"|"maxipool"|"bitfufupool"|"gdpool"|"miningdutch"|"publicpool"|"miningsquared"|"innopolistech"|"btclab"|"parasite"|"redrockpool"|"est3lar"|"braiinssolo"|"solopool")} PoolSlug
+ */
+/**
+ * Mining pool slug + block height path parameters
+ *
  * @typedef {Object} PoolSlugAndHeightParam
  * @property {PoolSlug} slug
  * @property {Height} height
  */
 /**
+ * Mining pool slug path parameter
+ *
  * @typedef {Object} PoolSlugParam
  * @property {PoolSlug} slug
  */
@@ -813,9 +837,9 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {Object} PoolsSummary
  * @property {PoolStats[]} pools - List of pools sorted by block count descending
  * @property {number} blockCount - Total blocks in the time period
- * @property {number} lastEstimatedHashrate - Estimated network hashrate (hashes per second)
- * @property {number} lastEstimatedHashrate3d - Estimated network hashrate over last 3 days
- * @property {number} lastEstimatedHashrate1w - Estimated network hashrate over last 1 week
+ * @property {number} lastEstimatedHashrate - Estimated network hashrate (H/s)
+ * @property {number} lastEstimatedHashrate3d - Estimated network hashrate over last 3 days (H/s)
+ * @property {number} lastEstimatedHashrate1w - Estimated network hashrate over last 1 week (H/s)
  */
 /**
  * Current price response matching mempool.space /api/v1/prices format
@@ -830,7 +854,7 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {(number|Date|Timestamp)} RangeIndex
  */
 /**
- * Transaction locktime
+ * Transaction locktime. Values below 500,000,000 are interpreted as block heights; values at or above are Unix timestamps.
  *
  * @typedef {number} RawLockTime
  */
@@ -855,7 +879,7 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {number} totalTx - Total number of transactions
  */
 /**
- * Satoshis
+ * Amount in satoshis (1 BTC = 100,000,000 sats)
  *
  * @typedef {number} Sats
  */
@@ -1003,6 +1027,8 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {("24h"|"3d"|"1w"|"1m"|"3m"|"6m"|"1y"|"2y"|"3y"|"all")} TimePeriod
  */
 /**
+ * Time period path parameter (24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y)
+ *
  * @typedef {Object} TimePeriodParam
  * @property {TimePeriod} timePeriod
  */
@@ -1012,6 +1038,8 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {number} Timestamp
  */
 /**
+ * UNIX timestamp path parameter
+ *
  * @typedef {Object} TimestampParam
  * @property {Timestamp} timestamp
  */
@@ -1052,7 +1080,11 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {string} innerWitnessscriptAsm - Inner witnessscript in assembly (for P2WSH: last witness item decoded as script)
  */
 /** @typedef {number} TxInIndex */
-/** @typedef {number} TxIndex */
+/**
+ * Transaction index within a block (0 = coinbase)
+ *
+ * @typedef {number} TxIndex
+ */
 /**
  * Transaction output
  *
@@ -1097,6 +1129,8 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {string} Txid
  */
 /**
+ * Transaction ID path parameter
+ *
  * @typedef {Object} TxidParam
  * @property {Txid} txid
  */
@@ -1128,7 +1162,7 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {Sats} value - Output value in satoshis
  */
 /**
- * Virtual size in vbytes (weight / 4, rounded up)
+ * Virtual size in vbytes (weight / 4, rounded up). Max block vsize is ~1,000,000 vB.
  *
  * @typedef {number} VSize
  */
@@ -1157,7 +1191,7 @@ Matches mempool.space/bitcoin-cli behavior.
  */
 /** @typedef {number} Week1 */
 /**
- * Transaction or block weight in weight units (WU)
+ * Weight in weight units (WU). Max block weight is 4,000,000 WU.
  *
  * @typedef {number} Weight
  */
@@ -1556,11 +1590,14 @@ class BrkClientBase {
 
   /**
    * @param {string} path
+   * @param {{ signal?: AbortSignal }} [options]
    * @returns {Promise<Response>}
    */
-  async get(path) {
+  async get(path, { signal } = {}) {
     const url = `${this.baseUrl}${path}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(this.timeout) });
+    const signals = [AbortSignal.timeout(this.timeout)];
+    if (signal) signals.push(signal);
+    const res = await fetch(url, { signal: AbortSignal.any(signals) });
     if (!res.ok) throw new BrkError(`HTTP ${res.status}: ${url}`, res.status);
     return res;
   }
@@ -1569,10 +1606,10 @@ class BrkClientBase {
    * Make a GET request - races cache vs network, first to resolve calls onUpdate
    * @template T
    * @param {string} path
-   * @param {(value: T) => void} [onUpdate] - Called when data is available (may be called twice: cache then network)
+   * @param {{ onUpdate?: (value: T) => void, signal?: AbortSignal }} [options]
    * @returns {Promise<T>}
    */
-  async getJson(path, onUpdate) {
+  async getJson(path, { onUpdate, signal } = {}) {
     const url = `${this.baseUrl}${path}`;
     const cache = this._cache ?? await this._cachePromise;
 
@@ -1592,7 +1629,7 @@ class BrkClientBase {
       return json;
     });
 
-    const networkPromise = this.get(path).then(async (res) => {
+    const networkPromise = this.get(path, { signal }).then(async (res) => {
       const cloned = res.clone();
       const json = _addCamelGetters(await res.json());
       // Skip update if ETag matches and cache already delivered
@@ -1624,10 +1661,11 @@ class BrkClientBase {
   /**
    * Make a GET request and return raw text (for CSV responses)
    * @param {string} path
+   * @param {{ signal?: AbortSignal }} [options]
    * @returns {Promise<string>}
    */
-  async getText(path) {
-    const res = await this.get(path);
+  async getText(path, { signal } = {}) {
+    const res = await this.get(path, { signal });
     return res.text();
   }
 
@@ -1640,7 +1678,7 @@ class BrkClientBase {
    */
   async _fetchSeriesData(path, onUpdate) {
     const wrappedOnUpdate = onUpdate ? (/** @type {SeriesData<T>} */ raw) => onUpdate(_wrapSeriesData(raw)) : undefined;
-    const raw = await this.getJson(path, wrappedOnUpdate);
+    const raw = await this.getJson(path, { onUpdate: wrappedOnUpdate });
     return _wrapSeriesData(raw);
   }
 }
@@ -9458,10 +9496,11 @@ class BrkClient extends BrkClientBase {
    * Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. Full spec available at `/openapi.json`.
    *
    * Endpoint: `GET /api.json`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: *) => void }} [options]
    * @returns {Promise<*>}
    */
-  async getApi() {
-    return this.getJson(`/api.json`);
+  async getApi({ signal, onUpdate } = {}) {
+    return this.getJson(`/api.json`, { signal, onUpdate });
   }
 
   /**
@@ -9474,10 +9513,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/address/{address}`
    *
    * @param {Addr} address
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: AddrStats) => void }} [options]
    * @returns {Promise<AddrStats>}
    */
-  async getAddress(address) {
-    return this.getJson(`/api/address/${address}`);
+  async getAddress(address, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/address/${address}`, { signal, onUpdate });
   }
 
   /**
@@ -9491,14 +9531,15 @@ class BrkClient extends BrkClientBase {
    *
    * @param {Addr} address
    * @param {Txid=} [after_txid] - Txid to paginate from (return transactions before this one)
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Transaction[]) => void }} [options]
    * @returns {Promise<Transaction[]>}
    */
-  async getAddressTxs(address, after_txid) {
+  async getAddressTxs(address, after_txid, { signal, onUpdate } = {}) {
     const params = new URLSearchParams();
     if (after_txid !== undefined) params.set('after_txid', String(after_txid));
     const query = params.toString();
     const path = `/api/address/${address}/txs${query ? '?' + query : ''}`;
-    return this.getJson(path);
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9512,14 +9553,15 @@ class BrkClient extends BrkClientBase {
    *
    * @param {Addr} address
    * @param {Txid=} [after_txid] - Txid to paginate from (return transactions before this one)
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Transaction[]) => void }} [options]
    * @returns {Promise<Transaction[]>}
    */
-  async getAddressConfirmedTxs(address, after_txid) {
+  async getAddressConfirmedTxs(address, after_txid, { signal, onUpdate } = {}) {
     const params = new URLSearchParams();
     if (after_txid !== undefined) params.set('after_txid', String(after_txid));
     const query = params.toString();
     const path = `/api/address/${address}/txs/chain${query ? '?' + query : ''}`;
-    return this.getJson(path);
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9532,10 +9574,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/address/{address}/txs/mempool`
    *
    * @param {Addr} address
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Txid[]) => void }} [options]
    * @returns {Promise<Txid[]>}
    */
-  async getAddressMempoolTxs(address) {
-    return this.getJson(`/api/address/${address}/txs/mempool`);
+  async getAddressMempoolTxs(address, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/address/${address}/txs/mempool`, { signal, onUpdate });
   }
 
   /**
@@ -9548,10 +9591,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/address/{address}/utxo`
    *
    * @param {Addr} address
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Utxo[]) => void }} [options]
    * @returns {Promise<Utxo[]>}
    */
-  async getAddressUtxos(address) {
-    return this.getJson(`/api/address/${address}/utxo`);
+  async getAddressUtxos(address, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/address/${address}/utxo`, { signal, onUpdate });
   }
 
   /**
@@ -9564,10 +9608,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/block-height/{height}`
    *
    * @param {Height} height
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: *) => void }} [options]
    * @returns {Promise<*>}
    */
-  async getBlockByHeight(height) {
-    return this.getJson(`/api/block-height/${height}`);
+  async getBlockByHeight(height, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/block-height/${height}`, { signal, onUpdate });
   }
 
   /**
@@ -9580,26 +9625,28 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/block/{hash}`
    *
    * @param {BlockHash} hash
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: BlockInfo) => void }} [options]
    * @returns {Promise<BlockInfo>}
    */
-  async getBlock(hash) {
-    return this.getJson(`/api/block/${hash}`);
+  async getBlock(hash, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/block/${hash}`, { signal, onUpdate });
   }
 
   /**
    * Block header
    *
-   * Returns the hex-encoded block header.
+   * Returns the hex-encoded 80-byte block header.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
    *
    * Endpoint: `GET /api/block/{hash}/header`
    *
    * @param {BlockHash} hash
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: *) => void }} [options]
    * @returns {Promise<*>}
    */
-  async getBlockHeader(hash) {
-    return this.getJson(`/api/block/${hash}/header`);
+  async getBlockHeader(hash, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/block/${hash}/header`, { signal, onUpdate });
   }
 
   /**
@@ -9612,10 +9659,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/block/{hash}/raw`
    *
    * @param {BlockHash} hash
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: *) => void }} [options]
    * @returns {Promise<*>}
    */
-  async getBlockRaw(hash) {
-    return this.getJson(`/api/block/${hash}/raw`);
+  async getBlockRaw(hash, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/block/${hash}/raw`, { signal, onUpdate });
   }
 
   /**
@@ -9628,10 +9676,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/block/{hash}/status`
    *
    * @param {BlockHash} hash
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: BlockStatus) => void }} [options]
    * @returns {Promise<BlockStatus>}
    */
-  async getBlockStatus(hash) {
-    return this.getJson(`/api/block/${hash}/status`);
+  async getBlockStatus(hash, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/block/${hash}/status`, { signal, onUpdate });
   }
 
   /**
@@ -9645,10 +9694,11 @@ class BrkClient extends BrkClientBase {
    *
    * @param {BlockHash} hash - Bitcoin block hash
    * @param {TxIndex} index - Transaction index within the block (0-based)
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: *) => void }} [options]
    * @returns {Promise<*>}
    */
-  async getBlockTxid(hash, index) {
-    return this.getJson(`/api/block/${hash}/txid/${index}`);
+  async getBlockTxid(hash, index, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/block/${hash}/txid/${index}`, { signal, onUpdate });
   }
 
   /**
@@ -9661,10 +9711,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/block/{hash}/txids`
    *
    * @param {BlockHash} hash
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Txid[]) => void }} [options]
    * @returns {Promise<Txid[]>}
    */
-  async getBlockTxids(hash) {
-    return this.getJson(`/api/block/${hash}/txids`);
+  async getBlockTxids(hash, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/block/${hash}/txids`, { signal, onUpdate });
   }
 
   /**
@@ -9677,10 +9728,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/block/{hash}/txs`
    *
    * @param {BlockHash} hash
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Transaction[]) => void }} [options]
    * @returns {Promise<Transaction[]>}
    */
-  async getBlockTxs(hash) {
-    return this.getJson(`/api/block/${hash}/txs`);
+  async getBlockTxs(hash, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/block/${hash}/txs`, { signal, onUpdate });
   }
 
   /**
@@ -9694,10 +9746,11 @@ class BrkClient extends BrkClientBase {
    *
    * @param {BlockHash} hash - Bitcoin block hash
    * @param {TxIndex} start_index - Starting transaction index within the block (0-based)
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Transaction[]) => void }} [options]
    * @returns {Promise<Transaction[]>}
    */
-  async getBlockTxsFromIndex(hash, start_index) {
-    return this.getJson(`/api/block/${hash}/txs/${start_index}`);
+  async getBlockTxsFromIndex(hash, start_index, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/block/${hash}/txs/${start_index}`, { signal, onUpdate });
   }
 
   /**
@@ -9708,10 +9761,11 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
    *
    * Endpoint: `GET /api/blocks`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: BlockInfo[]) => void }} [options]
    * @returns {Promise<BlockInfo[]>}
    */
-  async getBlocks() {
-    return this.getJson(`/api/blocks`);
+  async getBlocks({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/blocks`, { signal, onUpdate });
   }
 
   /**
@@ -9722,10 +9776,11 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
    *
    * Endpoint: `GET /api/blocks/tip/hash`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: *) => void }} [options]
    * @returns {Promise<*>}
    */
-  async getBlockTipHash() {
-    return this.getJson(`/api/blocks/tip/hash`);
+  async getBlockTipHash({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/blocks/tip/hash`, { signal, onUpdate });
   }
 
   /**
@@ -9736,10 +9791,11 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
    *
    * Endpoint: `GET /api/blocks/tip/height`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: *) => void }} [options]
    * @returns {Promise<*>}
    */
-  async getBlockTipHeight() {
-    return this.getJson(`/api/blocks/tip/height`);
+  async getBlockTipHeight({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/blocks/tip/height`, { signal, onUpdate });
   }
 
   /**
@@ -9752,10 +9808,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/blocks/{height}`
    *
    * @param {Height} height
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: BlockInfo[]) => void }} [options]
    * @returns {Promise<BlockInfo[]>}
    */
-  async getBlocksFromHeight(height) {
-    return this.getJson(`/api/blocks/${height}`);
+  async getBlocksFromHeight(height, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/blocks/${height}`, { signal, onUpdate });
   }
 
   /**
@@ -9766,10 +9823,11 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
    *
    * Endpoint: `GET /api/mempool`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: MempoolInfo) => void }} [options]
    * @returns {Promise<MempoolInfo>}
    */
-  async getMempool() {
-    return this.getJson(`/api/mempool`);
+  async getMempool({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/mempool`, { signal, onUpdate });
   }
 
   /**
@@ -9778,10 +9836,11 @@ class BrkClient extends BrkClientBase {
    * Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
    *
    * Endpoint: `GET /api/mempool/price`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Dollars) => void }} [options]
    * @returns {Promise<Dollars>}
    */
-  async getLivePrice() {
-    return this.getJson(`/api/mempool/price`);
+  async getLivePrice({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/mempool/price`, { signal, onUpdate });
   }
 
   /**
@@ -9792,10 +9851,11 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*
    *
    * Endpoint: `GET /api/mempool/recent`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: MempoolRecentTx[]) => void }} [options]
    * @returns {Promise<MempoolRecentTx[]>}
    */
-  async getMempoolRecent() {
-    return this.getJson(`/api/mempool/recent`);
+  async getMempoolRecent({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/mempool/recent`, { signal, onUpdate });
   }
 
   /**
@@ -9806,10 +9866,11 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-transaction-ids)*
    *
    * Endpoint: `GET /api/mempool/txids`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Txid[]) => void }} [options]
    * @returns {Promise<Txid[]>}
    */
-  async getMempoolTxids() {
-    return this.getJson(`/api/mempool/txids`);
+  async getMempoolTxids({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/mempool/txids`, { signal, onUpdate });
   }
 
   /**
@@ -9818,10 +9879,11 @@ class BrkClient extends BrkClientBase {
    * Returns the complete hierarchical catalog of available series organized as a tree structure. Series are grouped by categories and subcategories.
    *
    * Endpoint: `GET /api/series`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: TreeNode) => void }} [options]
    * @returns {Promise<TreeNode>}
    */
-  async getSeriesTree() {
-    return this.getJson(`/api/series`);
+  async getSeriesTree({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/series`, { signal, onUpdate });
   }
 
   /**
@@ -9837,9 +9899,10 @@ class BrkClient extends BrkClientBase {
    * @param {RangeIndex=} [end] - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
    * @param {Limit=} [limit] - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
    * @param {Format=} [format] - Format of the output
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: AnySeriesData[] | string) => void }} [options]
    * @returns {Promise<AnySeriesData[] | string>}
    */
-  async getSeriesBulk(series, index, start, end, limit, format) {
+  async getSeriesBulk(series, index, start, end, limit, format, { signal, onUpdate } = {}) {
     const params = new URLSearchParams();
     params.set('series', String(series));
     params.set('index', String(index));
@@ -9850,9 +9913,9 @@ class BrkClient extends BrkClientBase {
     const query = params.toString();
     const path = `/api/series/bulk${query ? '?' + query : ''}`;
     if (format === 'csv') {
-      return this.getText(path);
+      return this.getText(path, { signal });
     }
-    return this.getJson(path);
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9861,10 +9924,11 @@ class BrkClient extends BrkClientBase {
    * List available cohorts for cost basis distribution.
    *
    * Endpoint: `GET /api/series/cost-basis`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: string[]) => void }} [options]
    * @returns {Promise<string[]>}
    */
-  async getCostBasisCohorts() {
-    return this.getJson(`/api/series/cost-basis`);
+  async getCostBasisCohorts({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/series/cost-basis`, { signal, onUpdate });
   }
 
   /**
@@ -9875,10 +9939,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/series/cost-basis/{cohort}/dates`
    *
    * @param {Cohort} cohort
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Date[]) => void }} [options]
    * @returns {Promise<Date[]>}
    */
-  async getCostBasisDates(cohort) {
-    return this.getJson(`/api/series/cost-basis/${cohort}/dates`);
+  async getCostBasisDates(cohort, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/series/cost-basis/${cohort}/dates`, { signal, onUpdate });
   }
 
   /**
@@ -9896,15 +9961,16 @@ class BrkClient extends BrkClientBase {
    * @param {string} date
    * @param {CostBasisBucket=} [bucket] - Bucket type for aggregation. Default: raw (no aggregation).
    * @param {CostBasisValue=} [value] - Value type to return. Default: supply.
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Object) => void }} [options]
    * @returns {Promise<Object>}
    */
-  async getCostBasis(cohort, date, bucket, value) {
+  async getCostBasis(cohort, date, bucket, value, { signal, onUpdate } = {}) {
     const params = new URLSearchParams();
     if (bucket !== undefined) params.set('bucket', String(bucket));
     if (value !== undefined) params.set('value', String(value));
     const query = params.toString();
     const path = `/api/series/cost-basis/${cohort}/${date}${query ? '?' + query : ''}`;
-    return this.getJson(path);
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9913,10 +9979,11 @@ class BrkClient extends BrkClientBase {
    * Returns the number of series available per index type.
    *
    * Endpoint: `GET /api/series/count`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: SeriesCount[]) => void }} [options]
    * @returns {Promise<SeriesCount[]>}
    */
-  async getSeriesCount() {
-    return this.getJson(`/api/series/count`);
+  async getSeriesCount({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/series/count`, { signal, onUpdate });
   }
 
   /**
@@ -9925,10 +9992,11 @@ class BrkClient extends BrkClientBase {
    * Returns all available indexes with their accepted query aliases. Use any alias when querying series.
    *
    * Endpoint: `GET /api/series/indexes`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: IndexInfo[]) => void }} [options]
    * @returns {Promise<IndexInfo[]>}
    */
-  async getIndexes() {
-    return this.getJson(`/api/series/indexes`);
+  async getIndexes({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/series/indexes`, { signal, onUpdate });
   }
 
   /**
@@ -9940,15 +10008,16 @@ class BrkClient extends BrkClientBase {
    *
    * @param {number=} [page] - Pagination index
    * @param {number=} [per_page] - Results per page (default: 1000, max: 1000)
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: PaginatedSeries) => void }} [options]
    * @returns {Promise<PaginatedSeries>}
    */
-  async listSeries(page, per_page) {
+  async listSeries(page, per_page, { signal, onUpdate } = {}) {
     const params = new URLSearchParams();
     if (page !== undefined) params.set('page', String(page));
     if (per_page !== undefined) params.set('per_page', String(per_page));
     const query = params.toString();
     const path = `/api/series/list${query ? '?' + query : ''}`;
-    return this.getJson(path);
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9960,15 +10029,16 @@ class BrkClient extends BrkClientBase {
    *
    * @param {SeriesName} [q] - Search query string
    * @param {Limit=} [limit] - Maximum number of results
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: string[]) => void }} [options]
    * @returns {Promise<string[]>}
    */
-  async searchSeries(q, limit) {
+  async searchSeries(q, limit, { signal, onUpdate } = {}) {
     const params = new URLSearchParams();
     params.set('q', String(q));
     if (limit !== undefined) params.set('limit', String(limit));
     const query = params.toString();
     const path = `/api/series/search${query ? '?' + query : ''}`;
-    return this.getJson(path);
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9979,10 +10049,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/series/{series}`
    *
    * @param {SeriesName} series
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: SeriesInfo) => void }} [options]
    * @returns {Promise<SeriesInfo>}
    */
-  async getSeriesInfo(series) {
-    return this.getJson(`/api/series/${series}`);
+  async getSeriesInfo(series, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/series/${series}`, { signal, onUpdate });
   }
 
   /**
@@ -9998,9 +10069,10 @@ class BrkClient extends BrkClientBase {
    * @param {RangeIndex=} [end] - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
    * @param {Limit=} [limit] - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
    * @param {Format=} [format] - Format of the output
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: AnySeriesData | string) => void }} [options]
    * @returns {Promise<AnySeriesData | string>}
    */
-  async getSeries(series, index, start, end, limit, format) {
+  async getSeries(series, index, start, end, limit, format, { signal, onUpdate } = {}) {
     const params = new URLSearchParams();
     if (start !== undefined) params.set('start', String(start));
     if (end !== undefined) params.set('end', String(end));
@@ -10009,9 +10081,9 @@ class BrkClient extends BrkClientBase {
     const query = params.toString();
     const path = `/api/series/${series}/${index}${query ? '?' + query : ''}`;
     if (format === 'csv') {
-      return this.getText(path);
+      return this.getText(path, { signal });
     }
-    return this.getJson(path);
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10027,9 +10099,10 @@ class BrkClient extends BrkClientBase {
    * @param {RangeIndex=} [end] - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
    * @param {Limit=} [limit] - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
    * @param {Format=} [format] - Format of the output
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: boolean[] | string) => void }} [options]
    * @returns {Promise<boolean[] | string>}
    */
-  async getSeriesData(series, index, start, end, limit, format) {
+  async getSeriesData(series, index, start, end, limit, format, { signal, onUpdate } = {}) {
     const params = new URLSearchParams();
     if (start !== undefined) params.set('start', String(start));
     if (end !== undefined) params.set('end', String(end));
@@ -10038,9 +10111,9 @@ class BrkClient extends BrkClientBase {
     const query = params.toString();
     const path = `/api/series/${series}/${index}/data${query ? '?' + query : ''}`;
     if (format === 'csv') {
-      return this.getText(path);
+      return this.getText(path, { signal });
     }
-    return this.getJson(path);
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10052,10 +10125,11 @@ class BrkClient extends BrkClientBase {
    *
    * @param {SeriesName} series - Series name
    * @param {Index} index - Aggregation index
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: *) => void }} [options]
    * @returns {Promise<*>}
    */
-  async getSeriesLatest(series, index) {
-    return this.getJson(`/api/series/${series}/${index}/latest`);
+  async getSeriesLatest(series, index, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/series/${series}/${index}/latest`, { signal, onUpdate });
   }
 
   /**
@@ -10067,10 +10141,11 @@ class BrkClient extends BrkClientBase {
    *
    * @param {SeriesName} series - Series name
    * @param {Index} index - Aggregation index
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: number) => void }} [options]
    * @returns {Promise<number>}
    */
-  async getSeriesLen(series, index) {
-    return this.getJson(`/api/series/${series}/${index}/len`);
+  async getSeriesLen(series, index, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/series/${series}/${index}/len`, { signal, onUpdate });
   }
 
   /**
@@ -10082,10 +10157,11 @@ class BrkClient extends BrkClientBase {
    *
    * @param {SeriesName} series - Series name
    * @param {Index} index - Aggregation index
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Version) => void }} [options]
    * @returns {Promise<Version>}
    */
-  async getSeriesVersion(series, index) {
-    return this.getJson(`/api/series/${series}/${index}/version`);
+  async getSeriesVersion(series, index, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/series/${series}/${index}/version`, { signal, onUpdate });
   }
 
   /**
@@ -10094,10 +10170,11 @@ class BrkClient extends BrkClientBase {
    * Returns the disk space used by BRK and Bitcoin data.
    *
    * Endpoint: `GET /api/server/disk`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: DiskUsage) => void }} [options]
    * @returns {Promise<DiskUsage>}
    */
-  async getDiskUsage() {
-    return this.getJson(`/api/server/disk`);
+  async getDiskUsage({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/server/disk`, { signal, onUpdate });
   }
 
   /**
@@ -10106,10 +10183,11 @@ class BrkClient extends BrkClientBase {
    * Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.
    *
    * Endpoint: `GET /api/server/sync`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: SyncStatus) => void }} [options]
    * @returns {Promise<SyncStatus>}
    */
-  async getSyncStatus() {
-    return this.getJson(`/api/server/sync`);
+  async getSyncStatus({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/server/sync`, { signal, onUpdate });
   }
 
   /**
@@ -10122,10 +10200,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx/{txid}`
    *
    * @param {Txid} txid
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Transaction) => void }} [options]
    * @returns {Promise<Transaction>}
    */
-  async getTx(txid) {
-    return this.getJson(`/api/tx/${txid}`);
+  async getTx(txid, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/tx/${txid}`, { signal, onUpdate });
   }
 
   /**
@@ -10138,10 +10217,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx/{txid}/hex`
    *
    * @param {Txid} txid
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: *) => void }} [options]
    * @returns {Promise<*>}
    */
-  async getTxHex(txid) {
-    return this.getJson(`/api/tx/${txid}/hex`);
+  async getTxHex(txid, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/tx/${txid}/hex`, { signal, onUpdate });
   }
 
   /**
@@ -10154,10 +10234,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx/{txid}/merkle-proof`
    *
    * @param {Txid} txid
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: MerkleProof) => void }} [options]
    * @returns {Promise<MerkleProof>}
    */
-  async getTxMerkleProof(txid) {
-    return this.getJson(`/api/tx/${txid}/merkle-proof`);
+  async getTxMerkleProof(txid, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/tx/${txid}/merkle-proof`, { signal, onUpdate });
   }
 
   /**
@@ -10170,10 +10251,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx/{txid}/merkleblock-proof`
    *
    * @param {Txid} txid
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: *) => void }} [options]
    * @returns {Promise<*>}
    */
-  async getTxMerkleblockProof(txid) {
-    return this.getJson(`/api/tx/${txid}/merkleblock-proof`);
+  async getTxMerkleblockProof(txid, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/tx/${txid}/merkleblock-proof`, { signal, onUpdate });
   }
 
   /**
@@ -10187,10 +10269,11 @@ class BrkClient extends BrkClientBase {
    *
    * @param {Txid} txid - Transaction ID
    * @param {Vout} vout - Output index
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: TxOutspend) => void }} [options]
    * @returns {Promise<TxOutspend>}
    */
-  async getTxOutspend(txid, vout) {
-    return this.getJson(`/api/tx/${txid}/outspend/${vout}`);
+  async getTxOutspend(txid, vout, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/tx/${txid}/outspend/${vout}`, { signal, onUpdate });
   }
 
   /**
@@ -10203,10 +10286,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx/{txid}/outspends`
    *
    * @param {Txid} txid
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: TxOutspend[]) => void }} [options]
    * @returns {Promise<TxOutspend[]>}
    */
-  async getTxOutspends(txid) {
-    return this.getJson(`/api/tx/${txid}/outspends`);
+  async getTxOutspends(txid, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/tx/${txid}/outspends`, { signal, onUpdate });
   }
 
   /**
@@ -10219,10 +10303,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx/{txid}/raw`
    *
    * @param {Txid} txid
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: *) => void }} [options]
    * @returns {Promise<*>}
    */
-  async getTxRaw(txid) {
-    return this.getJson(`/api/tx/${txid}/raw`);
+  async getTxRaw(txid, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/tx/${txid}/raw`, { signal, onUpdate });
   }
 
   /**
@@ -10235,10 +10320,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx/{txid}/status`
    *
    * @param {Txid} txid
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: TxStatus) => void }} [options]
    * @returns {Promise<TxStatus>}
    */
-  async getTxStatus(txid) {
-    return this.getJson(`/api/tx/${txid}/status`);
+  async getTxStatus(txid, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/tx/${txid}/status`, { signal, onUpdate });
   }
 
   /**
@@ -10251,10 +10337,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/v1/block/{hash}`
    *
    * @param {BlockHash} hash
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: BlockInfoV1) => void }} [options]
    * @returns {Promise<BlockInfoV1>}
    */
-  async getBlockV1(hash) {
-    return this.getJson(`/api/v1/block/${hash}`);
+  async getBlockV1(hash, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/block/${hash}`, { signal, onUpdate });
   }
 
   /**
@@ -10265,10 +10352,11 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
    *
    * Endpoint: `GET /api/v1/blocks`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: BlockInfoV1[]) => void }} [options]
    * @returns {Promise<BlockInfoV1[]>}
    */
-  async getBlocksV1() {
-    return this.getJson(`/api/v1/blocks`);
+  async getBlocksV1({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/blocks`, { signal, onUpdate });
   }
 
   /**
@@ -10281,26 +10369,28 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/v1/blocks/{height}`
    *
    * @param {Height} height
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: BlockInfoV1[]) => void }} [options]
    * @returns {Promise<BlockInfoV1[]>}
    */
-  async getBlocksV1FromHeight(height) {
-    return this.getJson(`/api/v1/blocks/${height}`);
+  async getBlocksV1FromHeight(height, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/blocks/${height}`, { signal, onUpdate });
   }
 
   /**
    * CPFP info
    *
-   * Returns ancestors and descendants for a CPFP transaction.
+   * Returns ancestors and descendants for a CPFP (Child Pays For Parent) transaction, including the effective fee rate of the package.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*
    *
    * Endpoint: `GET /api/v1/cpfp/{txid}`
    *
    * @param {Txid} txid
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: CpfpInfo) => void }} [options]
    * @returns {Promise<CpfpInfo>}
    */
-  async getCpfp(txid) {
-    return this.getJson(`/api/v1/cpfp/${txid}`);
+  async getCpfp(txid, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/cpfp/${txid}`, { signal, onUpdate });
   }
 
   /**
@@ -10311,10 +10401,11 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*
    *
    * Endpoint: `GET /api/v1/difficulty-adjustment`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: DifficultyAdjustment) => void }} [options]
    * @returns {Promise<DifficultyAdjustment>}
    */
-  async getDifficultyAdjustment() {
-    return this.getJson(`/api/v1/difficulty-adjustment`);
+  async getDifficultyAdjustment({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/difficulty-adjustment`, { signal, onUpdate });
   }
 
   /**
@@ -10325,10 +10416,11 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
    *
    * Endpoint: `GET /api/v1/fees/mempool-blocks`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: MempoolBlock[]) => void }} [options]
    * @returns {Promise<MempoolBlock[]>}
    */
-  async getMempoolBlocks() {
-    return this.getJson(`/api/v1/fees/mempool-blocks`);
+  async getMempoolBlocks({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/fees/mempool-blocks`, { signal, onUpdate });
   }
 
   /**
@@ -10339,10 +10431,11 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
    *
    * Endpoint: `GET /api/v1/fees/precise`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: RecommendedFees) => void }} [options]
    * @returns {Promise<RecommendedFees>}
    */
-  async getPreciseFees() {
-    return this.getJson(`/api/v1/fees/precise`);
+  async getPreciseFees({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/fees/precise`, { signal, onUpdate });
   }
 
   /**
@@ -10353,10 +10446,11 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
    *
    * Endpoint: `GET /api/v1/fees/recommended`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: RecommendedFees) => void }} [options]
    * @returns {Promise<RecommendedFees>}
    */
-  async getRecommendedFees() {
-    return this.getJson(`/api/v1/fees/recommended`);
+  async getRecommendedFees({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/fees/recommended`, { signal, onUpdate });
   }
 
   /**
@@ -10369,78 +10463,83 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/v1/historical-price`
    *
    * @param {Timestamp=} [timestamp]
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: HistoricalPrice) => void }} [options]
    * @returns {Promise<HistoricalPrice>}
    */
-  async getHistoricalPrice(timestamp) {
+  async getHistoricalPrice(timestamp, { signal, onUpdate } = {}) {
     const params = new URLSearchParams();
     if (timestamp !== undefined) params.set('timestamp', String(timestamp));
     const query = params.toString();
     const path = `/api/v1/historical-price${query ? '?' + query : ''}`;
-    return this.getJson(path);
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
    * Block fee rates
    *
-   * Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+   * Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
    *
    * Endpoint: `GET /api/v1/mining/blocks/fee-rates/{time_period}`
    *
    * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: BlockFeeRatesEntry[]) => void }} [options]
    * @returns {Promise<BlockFeeRatesEntry[]>}
    */
-  async getBlockFeeRates(time_period) {
-    return this.getJson(`/api/v1/mining/blocks/fee-rates/${time_period}`);
+  async getBlockFeeRates(time_period, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/blocks/fee-rates/${time_period}`, { signal, onUpdate });
   }
 
   /**
    * Block fees
    *
-   * Get average block fees for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+   * Get average total fees per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-fees)*
    *
    * Endpoint: `GET /api/v1/mining/blocks/fees/{time_period}`
    *
    * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: BlockFeesEntry[]) => void }} [options]
    * @returns {Promise<BlockFeesEntry[]>}
    */
-  async getBlockFees(time_period) {
-    return this.getJson(`/api/v1/mining/blocks/fees/${time_period}`);
+  async getBlockFees(time_period, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/blocks/fees/${time_period}`, { signal, onUpdate });
   }
 
   /**
    * Block rewards
    *
-   * Get average block rewards (coinbase = subsidy + fees) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+   * Get average coinbase reward (subsidy + fees) per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-rewards)*
    *
    * Endpoint: `GET /api/v1/mining/blocks/rewards/{time_period}`
    *
    * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: BlockRewardsEntry[]) => void }} [options]
    * @returns {Promise<BlockRewardsEntry[]>}
    */
-  async getBlockRewards(time_period) {
-    return this.getJson(`/api/v1/mining/blocks/rewards/${time_period}`);
+  async getBlockRewards(time_period, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/blocks/rewards/${time_period}`, { signal, onUpdate });
   }
 
   /**
    * Block sizes and weights
    *
-   * Get average block sizes and weights for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+   * Get average block sizes and weights for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*
    *
    * Endpoint: `GET /api/v1/mining/blocks/sizes-weights/{time_period}`
    *
    * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: BlockSizesWeights) => void }} [options]
    * @returns {Promise<BlockSizesWeights>}
    */
-  async getBlockSizesWeights(time_period) {
-    return this.getJson(`/api/v1/mining/blocks/sizes-weights/${time_period}`);
+  async getBlockSizesWeights(time_period, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/blocks/sizes-weights/${time_period}`, { signal, onUpdate });
   }
 
   /**
@@ -10453,10 +10552,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/v1/mining/blocks/timestamp/{timestamp}`
    *
    * @param {Timestamp} timestamp
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: BlockTimestamp) => void }} [options]
    * @returns {Promise<BlockTimestamp>}
    */
-  async getBlockByTimestamp(timestamp) {
-    return this.getJson(`/api/v1/mining/blocks/timestamp/${timestamp}`);
+  async getBlockByTimestamp(timestamp, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/blocks/timestamp/${timestamp}`, { signal, onUpdate });
   }
 
   /**
@@ -10467,26 +10567,28 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
    *
    * Endpoint: `GET /api/v1/mining/difficulty-adjustments`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: DifficultyAdjustmentEntry[]) => void }} [options]
    * @returns {Promise<DifficultyAdjustmentEntry[]>}
    */
-  async getDifficultyAdjustments() {
-    return this.getJson(`/api/v1/mining/difficulty-adjustments`);
+  async getDifficultyAdjustments({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/difficulty-adjustments`, { signal, onUpdate });
   }
 
   /**
    * Difficulty adjustments
    *
-   * Get historical difficulty adjustments for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y.
+   * Get historical difficulty adjustments for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
    *
    * Endpoint: `GET /api/v1/mining/difficulty-adjustments/{time_period}`
    *
    * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: DifficultyAdjustmentEntry[]) => void }} [options]
    * @returns {Promise<DifficultyAdjustmentEntry[]>}
    */
-  async getDifficultyAdjustmentsByPeriod(time_period) {
-    return this.getJson(`/api/v1/mining/difficulty-adjustments/${time_period}`);
+  async getDifficultyAdjustmentsByPeriod(time_period, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/difficulty-adjustments/${time_period}`, { signal, onUpdate });
   }
 
   /**
@@ -10497,10 +10599,11 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
    *
    * Endpoint: `GET /api/v1/mining/hashrate`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: HashrateSummary) => void }} [options]
    * @returns {Promise<HashrateSummary>}
    */
-  async getHashrate() {
-    return this.getJson(`/api/v1/mining/hashrate`);
+  async getHashrate({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/hashrate`, { signal, onUpdate });
   }
 
   /**
@@ -10511,42 +10614,45 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
    *
    * Endpoint: `GET /api/v1/mining/hashrate/pools`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: PoolHashrateEntry[]) => void }} [options]
    * @returns {Promise<PoolHashrateEntry[]>}
    */
-  async getPoolsHashrate() {
-    return this.getJson(`/api/v1/mining/hashrate/pools`);
+  async getPoolsHashrate({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/hashrate/pools`, { signal, onUpdate });
   }
 
   /**
    * All pools hashrate
    *
-   * Get hashrate data for all mining pools for a time period. Valid periods: 1m, 3m, 6m, 1y, 2y, 3y
+   * Get hashrate data for all mining pools for a time period. Valid periods: `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
    *
    * Endpoint: `GET /api/v1/mining/hashrate/pools/{time_period}`
    *
    * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: PoolHashrateEntry[]) => void }} [options]
    * @returns {Promise<PoolHashrateEntry[]>}
    */
-  async getPoolsHashrateByPeriod(time_period) {
-    return this.getJson(`/api/v1/mining/hashrate/pools/${time_period}`);
+  async getPoolsHashrateByPeriod(time_period, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/hashrate/pools/${time_period}`, { signal, onUpdate });
   }
 
   /**
    * Network hashrate
    *
-   * Get network hashrate and difficulty data for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+   * Get network hashrate and difficulty data for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
    *
    * Endpoint: `GET /api/v1/mining/hashrate/{time_period}`
    *
    * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: HashrateSummary) => void }} [options]
    * @returns {Promise<HashrateSummary>}
    */
-  async getHashrateByPeriod(time_period) {
-    return this.getJson(`/api/v1/mining/hashrate/${time_period}`);
+  async getHashrateByPeriod(time_period, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/hashrate/${time_period}`, { signal, onUpdate });
   }
 
   /**
@@ -10559,10 +10665,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/v1/mining/pool/{slug}`
    *
    * @param {PoolSlug} slug
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: PoolDetail) => void }} [options]
    * @returns {Promise<PoolDetail>}
    */
-  async getPool(slug) {
-    return this.getJson(`/api/v1/mining/pool/${slug}`);
+  async getPool(slug, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/pool/${slug}`, { signal, onUpdate });
   }
 
   /**
@@ -10575,10 +10682,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/v1/mining/pool/{slug}/blocks`
    *
    * @param {PoolSlug} slug
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: BlockInfoV1[]) => void }} [options]
    * @returns {Promise<BlockInfoV1[]>}
    */
-  async getPoolBlocks(slug) {
-    return this.getJson(`/api/v1/mining/pool/${slug}/blocks`);
+  async getPoolBlocks(slug, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/pool/${slug}/blocks`, { signal, onUpdate });
   }
 
   /**
@@ -10592,10 +10700,11 @@ class BrkClient extends BrkClientBase {
    *
    * @param {PoolSlug} slug
    * @param {Height} height
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: BlockInfoV1[]) => void }} [options]
    * @returns {Promise<BlockInfoV1[]>}
    */
-  async getPoolBlocksFrom(slug, height) {
-    return this.getJson(`/api/v1/mining/pool/${slug}/blocks/${height}`);
+  async getPoolBlocksFrom(slug, height, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/pool/${slug}/blocks/${height}`, { signal, onUpdate });
   }
 
   /**
@@ -10608,10 +10717,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/v1/mining/pool/{slug}/hashrate`
    *
    * @param {PoolSlug} slug
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: PoolHashrateEntry[]) => void }} [options]
    * @returns {Promise<PoolHashrateEntry[]>}
    */
-  async getPoolHashrate(slug) {
-    return this.getJson(`/api/v1/mining/pool/${slug}/hashrate`);
+  async getPoolHashrate(slug, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/pool/${slug}/hashrate`, { signal, onUpdate });
   }
 
   /**
@@ -10622,26 +10732,28 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
    *
    * Endpoint: `GET /api/v1/mining/pools`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: PoolInfo[]) => void }} [options]
    * @returns {Promise<PoolInfo[]>}
    */
-  async getPools() {
-    return this.getJson(`/api/v1/mining/pools`);
+  async getPools({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/pools`, { signal, onUpdate });
   }
 
   /**
    * Mining pool statistics
    *
-   * Get mining pool statistics for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y
+   * Get mining pool statistics for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
    *
    * Endpoint: `GET /api/v1/mining/pools/{time_period}`
    *
    * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: PoolsSummary) => void }} [options]
    * @returns {Promise<PoolsSummary>}
    */
-  async getPoolStats(time_period) {
-    return this.getJson(`/api/v1/mining/pools/${time_period}`);
+  async getPoolStats(time_period, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/pools/${time_period}`, { signal, onUpdate });
   }
 
   /**
@@ -10654,10 +10766,11 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/v1/mining/reward-stats/{block_count}`
    *
    * @param {number} block_count - Number of recent blocks to include
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: RewardStats) => void }} [options]
    * @returns {Promise<RewardStats>}
    */
-  async getRewardStats(block_count) {
-    return this.getJson(`/api/v1/mining/reward-stats/${block_count}`);
+  async getRewardStats(block_count, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/mining/reward-stats/${block_count}`, { signal, onUpdate });
   }
 
   /**
@@ -10668,10 +10781,11 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*
    *
    * Endpoint: `GET /api/v1/prices`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Prices) => void }} [options]
    * @returns {Promise<Prices>}
    */
-  async getPrices() {
-    return this.getJson(`/api/v1/prices`);
+  async getPrices({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/prices`, { signal, onUpdate });
   }
 
   /**
@@ -10682,26 +10796,28 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*
    *
    * Endpoint: `GET /api/v1/transaction-times`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: number[]) => void }} [options]
    * @returns {Promise<number[]>}
    */
-  async getTransactionTimes() {
-    return this.getJson(`/api/v1/transaction-times`);
+  async getTransactionTimes({ signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/transaction-times`, { signal, onUpdate });
   }
 
   /**
    * Validate address
    *
-   * Validate a Bitcoin address and get information about its type and scriptPubKey.
+   * Validate a Bitcoin address and get information about its type and scriptPubKey. Returns `isvalid: false` with an error message for invalid addresses.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-validate)*
    *
    * Endpoint: `GET /api/v1/validate-address/{address}`
    *
    * @param {string} address - Bitcoin address to validate (can be any string)
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: AddrValidation) => void }} [options]
    * @returns {Promise<AddrValidation>}
    */
-  async validateAddress(address) {
-    return this.getJson(`/api/v1/validate-address/${address}`);
+  async validateAddress(address, { signal, onUpdate } = {}) {
+    return this.getJson(`/api/v1/validate-address/${address}`, { signal, onUpdate });
   }
 
   /**
@@ -10710,10 +10826,11 @@ class BrkClient extends BrkClientBase {
    * Returns the health status of the API server, including uptime information.
    *
    * Endpoint: `GET /health`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Health) => void }} [options]
    * @returns {Promise<Health>}
    */
-  async getHealth() {
-    return this.getJson(`/health`);
+  async getHealth({ signal, onUpdate } = {}) {
+    return this.getJson(`/health`, { signal, onUpdate });
   }
 
   /**
@@ -10722,10 +10839,11 @@ class BrkClient extends BrkClientBase {
    * Full OpenAPI 3.1 specification for this API.
    *
    * Endpoint: `GET /openapi.json`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: *) => void }} [options]
    * @returns {Promise<*>}
    */
-  async getOpenapi() {
-    return this.getJson(`/openapi.json`);
+  async getOpenapi({ signal, onUpdate } = {}) {
+    return this.getJson(`/openapi.json`, { signal, onUpdate });
   }
 
   /**
@@ -10734,10 +10852,11 @@ class BrkClient extends BrkClientBase {
    * Returns the current version of the API server
    *
    * Endpoint: `GET /version`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: string) => void }} [options]
    * @returns {Promise<string>}
    */
-  async getVersion() {
-    return this.getJson(`/version`);
+  async getVersion({ signal, onUpdate } = {}) {
+    return this.getJson(`/version`, { signal, onUpdate });
   }
 
 }

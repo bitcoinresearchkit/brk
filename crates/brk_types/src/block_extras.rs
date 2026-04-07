@@ -54,14 +54,17 @@ pub struct BlockExtras {
 
     /// Average transaction size in bytes
     #[serde(rename = "avgTxSize")]
+    #[schemars(example = 534.5)]
     pub avg_tx_size: f64,
 
     /// Total number of inputs (excluding coinbase)
     #[serde(rename = "totalInputs")]
+    #[schemars(example = 5000)]
     pub total_inputs: u64,
 
     /// Total number of outputs
     #[serde(rename = "totalOutputs")]
+    #[schemars(example = 7500)]
     pub total_outputs: u64,
 
     /// Total output amount in satoshis
@@ -78,10 +81,12 @@ pub struct BlockExtras {
 
     /// Number of segwit transactions
     #[serde(rename = "segwitTotalTxs")]
+    #[schemars(example = 2000)]
     pub segwit_total_txs: u32,
 
     /// Total size of segwit transactions in bytes
     #[serde(rename = "segwitTotalSize")]
+    #[schemars(example = 1200000)]
     pub segwit_total_size: u64,
 
     /// Total weight of segwit transactions
@@ -95,10 +100,12 @@ pub struct BlockExtras {
     /// Note: intentionally differs from utxo_set_size diff which excludes unspendable outputs.
     /// Matches mempool.space/bitcoin-cli behavior.
     #[serde(rename = "utxoSetChange")]
+    #[schemars(example = 2500)]
     pub utxo_set_change: i64,
 
     /// Total spendable UTXO set size at this height (excludes OP_RETURN and other unspendable outputs)
     #[serde(rename = "utxoSetSize")]
+    #[schemars(example = 170_000_000)]
     pub utxo_set_size: u64,
 
     /// Total input amount in satoshis
@@ -107,6 +114,7 @@ pub struct BlockExtras {
 
     /// Virtual size in vbytes
     #[serde(rename = "virtualSize")]
+    #[schemars(example = 998000.25)]
     pub virtual_size: f64,
 
     /// Timestamp when the block was first seen (always null, not yet supported)

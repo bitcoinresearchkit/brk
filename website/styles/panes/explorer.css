@@ -210,7 +210,7 @@
     }
 
     .label {
-      opacity: 0.5;
+      color: var(--off-color);
       white-space: nowrap;
     }
 
@@ -253,6 +253,8 @@
         border: 1px solid var(--border-color);
         padding: 0.5rem;
         margin-bottom: 0.5rem;
+        content-visibility: auto;
+        contain-intrinsic-block-size: auto 8rem;
 
         .tx-head {
           display: flex;
@@ -273,7 +275,7 @@
 
           .tx-time {
             flex-shrink: 0;
-            opacity: 0.5;
+            color: var(--off-color);
           }
         }
 
@@ -309,6 +311,11 @@
             white-space: nowrap;
             color: var(--off-color);
 
+            a {
+              display: flex;
+              min-width: 0;
+            }
+
             .addr-head {
               overflow: hidden;
               text-overflow: ellipsis;
@@ -325,14 +332,14 @@
             .coinbase-sig {
               font-family: Lilex;
               font-size: var(--font-size-xs);
-              opacity: 0.5;
+              color: var(--off-color);
               display: block;
               overflow: hidden;
               text-overflow: ellipsis;
             }
 
             &.op-return {
-              opacity: 0.5;
+              color: var(--off-color);
             }
           }
 
@@ -342,6 +349,12 @@
           }
         }
 
+        .show-more {
+          color: var(--off-color);
+          font-size: var(--font-size-xs);
+          padding: 0.25rem 0;
+        }
+
         .tx-foot {
           display: flex;
           justify-content: space-between;
@@ -349,10 +362,9 @@
           margin-top: 0.5rem;
           padding-top: 0.5rem;
           border-top: 1px solid var(--border-color);
-          opacity: 0.5;
+          color: var(--off-color);
 
           .total {
-            opacity: 1;
             color: var(--orange);
           }
         }

@@ -27,7 +27,7 @@ pub struct HistoricalPrice {
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct HistoricalPriceEntry {
     /// Unix timestamp
-    pub time: u64,
+    pub time: Timestamp,
     /// BTC/USD price
     #[serde(rename = "USD")]
     pub usd: Dollars,

@@ -3,6 +3,7 @@ use serde::Deserialize;
 
 use brk_types::{BlockHash, TxIndex};
 
+/// Block hash + transaction index path parameters
 #[derive(Deserialize, JsonSchema)]
 pub struct BlockHashTxIndex {
     /// Bitcoin block hash

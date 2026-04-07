@@ -1,6 +1,6 @@
 import { colors } from "../../utils/colors.js";
 import { entries } from "../../utils/array.js";
-import { brk } from "../../client.js";
+import { brk } from "../../utils/client.js";
 
 /** @type {readonly AddressableType[]} */
 const ADDRESSABLE_TYPES = [

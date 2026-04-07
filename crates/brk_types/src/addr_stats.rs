@@ -1,4 +1,4 @@
-use crate::{Addr, AddrChainStats, AddrMempoolStats};
+use crate::{Addr, AddrChainStats, AddrMempoolStats, OutputType};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -11,6 +11,9 @@ pub struct AddrStats {
     )]
     #[serde(rename = "address")]
     pub addr: Addr,
+
+    /// Address type (p2pkh, p2sh, v0_p2wpkh, v0_p2wsh, v1_p2tr, etc.)
+    pub addr_type: OutputType,
 
     /// Statistics for confirmed transactions on the blockchain
     pub chain_stats: AddrChainStats,

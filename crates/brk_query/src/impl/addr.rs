@@ -4,8 +4,8 @@ use bitcoin::{Network, PublicKey, ScriptBuf};
 use brk_error::{Error, Result};
 use brk_types::{
     Addr, AddrBytes, AddrChainStats, AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, AddrStats,
-    AnyAddrDataIndexEnum, BlockHash, Height, OutputType, Timestamp, Transaction, TxIndex, TxStatus,
-    Txid, TypeIndex, Unit, Utxo, Vout,
+    AnyAddrDataIndexEnum, BlockHash, Dollars, Height, OutputType, Timestamp, Transaction, TxIndex,
+    TxStatus, Txid, TypeIndex, Unit, Utxo, Vout,
 };
 use vecdb::{ReadableVec, VecIndex};
 
@@ -69,8 +69,14 @@ impl Query {
                 .into(),
         };
 
+        let realized_price = match &any_addr_index.to_enum() {
+            AnyAddrDataIndexEnum::Funded(_) => addr_data.realized_price().to_dollars(),
+            AnyAddrDataIndexEnum::Empty(_) => Dollars::default(),
+        };
+
         Ok(AddrStats {
             addr,
+            addr_type,
             chain_stats: AddrChainStats {
                 type_index,
                 funded_txo_count: addr_data.funded_txo_count,
@@ -78,6 +84,7 @@ impl Query {
                 spent_txo_count: addr_data.spent_txo_count,
                 spent_txo_sum: addr_data.sent,
                 tx_count: addr_data.tx_count,
+                realized_price,
             },
             mempool_stats: self.mempool().map(|mempool| {
                 mempool

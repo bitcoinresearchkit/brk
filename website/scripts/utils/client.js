@@ -1,4 +1,4 @@
-import { BrkClient } from "./modules/brk-client/index.js";
+import { BrkClient } from "../modules/brk-client/index.js";
 
 // const brk = new BrkClient("https://bitview.space");
 const brk = new BrkClient("/");

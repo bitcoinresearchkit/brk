@@ -10,6 +10,7 @@ pub struct MerkleProof {
     pub block_height: Height,
     /// Merkle proof path (hex-encoded hashes)
     pub merkle: Vec<String>,
-    /// Transaction position in the block
+    /// Transaction position in the block (0-indexed)
+    #[schemars(example = 42)]
     pub pos: usize,
 }

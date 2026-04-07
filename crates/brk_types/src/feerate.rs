@@ -9,8 +9,9 @@ use vecdb::{CheckedSub, Formattable, Pco};
 
 use super::{Sats, VSize, Weight};
 
-/// Fee rate in sats/vB
+/// Fee rate in sat/vB
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, Pco, JsonSchema)]
+#[schemars(example = 1.0, example = 2.5, example = 10.14, example = 25.0, example = 302.11)]
 pub struct FeeRate(f64);
 
 impl FeeRate {

@@ -8,6 +8,7 @@ use crate::{AddrBytes, OutputType};
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct AddrValidation {
     /// Whether the address is valid
+    #[schemars(example = true)]
     pub isvalid: bool,
 
     /// The validated address

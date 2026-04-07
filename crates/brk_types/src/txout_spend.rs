@@ -7,6 +7,7 @@ use crate::{Height, TxStatus, Txid, Vin};
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct TxOutspend {
     /// Whether the output has been spent
+    #[schemars(example = true)]
     pub spent: bool,
 
     /// Transaction ID of the spending transaction (only present if spent)

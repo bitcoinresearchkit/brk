@@ -2,7 +2,7 @@
 
 import { colors } from "../utils/colors.js";
 import { periodIdToName } from "../utils/time.js";
-import { brk } from "../client.js";
+import { brk } from "../utils/client.js";
 import { includes } from "../utils/array.js";
 import { Unit } from "../utils/units.js";
 import { priceLine, priceLines } from "./constants.js";

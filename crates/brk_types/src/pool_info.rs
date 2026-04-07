@@ -9,12 +9,14 @@ use crate::{Pool, PoolSlug};
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PoolInfo {
     /// Pool name
+    #[schemars(example = &"Foundry USA")]
     pub name: Cow<'static, str>,
 
     /// URL-friendly pool identifier
     pub slug: PoolSlug,
 
     /// Unique numeric pool identifier
+    #[schemars(example = 44)]
     pub unique_id: u8,
 }
 

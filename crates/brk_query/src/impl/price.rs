@@ -35,7 +35,7 @@ impl Query {
         let h4 = Hour4::from_timestamp(target);
         let cents = self.computer().prices.spot.cents.hour4.collect_one(h4);
         Ok(vec![HistoricalPriceEntry {
-            time: usize::from(h4.to_timestamp()) as u64,
+            time: h4.to_timestamp(),
             usd: Dollars::from(cents.flatten().unwrap_or_default()),
         }])
     }
@@ -52,7 +52,7 @@ impl Query {
             .enumerate()
             .filter_map(|(i, cents)| {
                 Some(HistoricalPriceEntry {
-                    time: usize::from(Hour4::from(i).to_timestamp()) as u64,
+                    time: Hour4::from(i).to_timestamp(),
                     usd: Dollars::from(cents?),
                 })
             })

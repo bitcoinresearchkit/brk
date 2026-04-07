@@ -5,7 +5,7 @@ import { Unit } from "../utils/units.js";
 import { createChart } from "../utils/chart/index.js";
 import { colors } from "../utils/colors.js";
 import { latestPrice, onPrice } from "../utils/price.js";
-import { brk } from "../client.js";
+import { brk } from "../utils/client.js";
 
 const ONE_BTC_IN_SATS = 100_000_000;
 

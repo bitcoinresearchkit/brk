@@ -13,8 +13,10 @@ pub struct DifficultyAdjustmentEntry {
     /// Block height of the adjustment
     pub height: Height,
     /// Difficulty value
+    #[schemars(example = 110_451_832_649_830.94)]
     pub difficulty: f64,
     /// Adjustment ratio (new/previous, e.g. 1.068 = +6.8%)
+    #[schemars(example = 1.068)]
     pub change_percent: f64,
 }
 

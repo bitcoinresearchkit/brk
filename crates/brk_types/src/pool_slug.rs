@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use strum::Display;
 use vecdb::{Bytes, Formattable};
 
-// Slug of a mining pool
+/// URL-friendly mining pool identifier
 #[allow(clippy::upper_case_acronyms)]
 #[derive(
     Default,

@@ -69,16 +69,32 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             .unwrap();
         }
 
+        writeln!(
+            output,
+            "   * @param {{{{ signal?: AbortSignal, onUpdate?: (value: {}) => void }}}} [options]",
+            return_type
+        )
+        .unwrap();
         writeln!(output, "   * @returns {{Promise<{}>}}", return_type).unwrap();
         writeln!(output, "   */").unwrap();
 
         let params = build_method_params(endpoint);
-        writeln!(output, "  async {}({}) {{", method_name, params).unwrap();
+        let params_with_opts = if params.is_empty() {
+            "{ signal, onUpdate } = {}".to_string()
+        } else {
+            format!("{}, {{ signal, onUpdate }} = {{}}", params)
+        };
+        writeln!(output, "  async {}({}) {{", method_name, params_with_opts).unwrap();
 
         let path = build_path_template(&endpoint.path, &endpoint.path_params);
 
         if endpoint.query_params.is_empty() {
-            writeln!(output, "    return this.getJson(`{}`);", path).unwrap();
+            writeln!(
+                output,
+                "    return this.getJson(`{}`, {{ signal, onUpdate }});",
+                path
+            )
+            .unwrap();
         } else {
             writeln!(output, "    const params = new URLSearchParams();").unwrap();
             for param in &endpoint.query_params {
@@ -109,11 +125,11 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
 
             if endpoint.supports_csv {
                 writeln!(output, "    if (format === 'csv') {{").unwrap();
-                writeln!(output, "      return this.getText(path);").unwrap();
+                writeln!(output, "      return this.getText(path, {{ signal }});").unwrap();
                 writeln!(output, "    }}").unwrap();
-                writeln!(output, "    return this.getJson(path);").unwrap();
+                writeln!(output, "    return this.getJson(path, {{ signal, onUpdate }});").unwrap();
             } else {
-                writeln!(output, "    return this.getJson(path);").unwrap();
+                writeln!(output, "    return this.getJson(path, {{ signal, onUpdate }});").unwrap();
             }
         }
 

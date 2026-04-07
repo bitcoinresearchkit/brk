@@ -8,7 +8,7 @@ import { setQr } from "../panes/share.js";
 import { getConstant } from "./constants.js";
 import { colors } from "../utils/colors.js";
 import { Unit } from "../utils/units.js";
-import { brk } from "../client.js";
+import { brk } from "../utils/client.js";
 
 export function initOptions() {
   const LS_SELECTED_KEY = `selected_path`;
@@ -435,9 +435,11 @@ export function initOptions() {
       } else if (!("tree" in match)) {
         selected.set(match);
         return;
+      } else {
+        break;
       }
     }
-    selected.set(list[0]);
+    selected.set(!segments.length && savedOption ? savedOption : list[0]);
   }
 
   resolveUrl();

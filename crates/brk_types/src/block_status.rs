@@ -7,6 +7,7 @@ use crate::{BlockHash, Height};
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct BlockStatus {
     /// Whether this block is in the best chain
+    #[schemars(example = true)]
     pub in_best_chain: bool,
 
     /// Block height (only if in best chain)

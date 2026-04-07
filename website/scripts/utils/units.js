@@ -40,7 +40,7 @@ export const Unit = /** @type {const} */ ({
   epoch: { id: "epoch", name: "Epoch" },
 
   // Fees
-  feeRate: { id: "feerate", name: "Sats/vByte" },
+  feeRate: { id: "feerate", name: "Sat/vByte" },
 
   // Rates
   perSec: { id: "per-sec", name: "Per Second" },

@@ -7,6 +7,7 @@
  * @import { Options } from './options/full.js'
  *
  * @import { PersistedValue } from './utils/persisted.js'
+ * @import { MapCache } from './utils/cache.js'
  *
  * @import { SingleValueData, CandlestickData, Series, AnySeries, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions, Chart, Legend } from "./utils/chart/index.js"
  *
@@ -57,6 +58,9 @@
  * @typedef {Brk.BlockHash} BlockHash
  * @typedef {Brk.BlockInfoV1} BlockInfoV1
  * @typedef {Brk.Transaction} Transaction
+ * @typedef {Brk.AddrStats} AddrStats
+ * @typedef {Brk.TxIn} TxIn
+ * @typedef {Brk.TxOut} TxOut
  * ActivePriceRatioPattern: ratio pattern with price (extended)
  * @typedef {Brk.BpsPriceRatioPattern} ActivePriceRatioPattern
  * PriceRatioPercentilesPattern: price pattern with ratio + percentiles (no SMAs/stdDev)

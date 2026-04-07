@@ -21,7 +21,7 @@ import {
   revenueRollingBtcSatsUsd,
   formatCohortTitle,
 } from "./shared.js";
-import { brk } from "../client.js";
+import { brk } from "../utils/client.js";
 
 /** Major pools to show in Compare section (by current hashrate dominance) */
 const MAJOR_POOL_IDS = /** @type {const} */ ([
@@ -90,20 +90,37 @@ export function createMiningSection() {
         title: title(metric),
         bottom: [
           ...ROLLING_WINDOWS.flatMap((w) =>
-            percentRatio({ pattern: dominance[w.key], name: w.name, color: w.color, defaultActive: w.key !== "_24h" }),
+            percentRatio({
+              pattern: dominance[w.key],
+              name: w.name,
+              color: w.color,
+              defaultActive: w.key !== "_24h",
+            }),
           ),
-          ...percentRatio({ pattern: dominance, name: "All Time", color: colors.time.all }),
+          ...percentRatio({
+            pattern: dominance,
+            name: "All Time",
+            color: colors.time.all,
+          }),
         ],
       },
       ...ROLLING_WINDOWS.map((w) => ({
         name: w.name,
         title: title(`${w.title} ${metric}`),
-        bottom: percentRatio({ pattern: dominance[w.key], name: "Dominance", color: w.color }),
+        bottom: percentRatio({
+          pattern: dominance[w.key],
+          name: "Dominance",
+          color: w.color,
+        }),
       })),
       {
         name: "All Time",
         title: title(`All Time ${metric}`),
-        bottom: percentRatio({ pattern: dominance, name: "Dominance", color: colors.time.all }),
+        bottom: percentRatio({
+          pattern: dominance,
+          name: "Dominance",
+          color: colors.time.all,
+        }),
       },
     ],
   });
@@ -151,7 +168,11 @@ export function createMiningSection() {
           {
             name: "Dominance",
             title: title("Dominance"),
-            bottom: percentRatio({ pattern: pool.dominance, name: "All Time", color: colors.time.all }),
+            bottom: percentRatio({
+              pattern: pool.dominance,
+              name: "All Time",
+              color: colors.time.all,
+            }),
           },
           {
             name: "Blocks Mined",
@@ -204,7 +225,6 @@ export function createMiningSection() {
       },
     ],
   });
-
 
   return {
     name: "Mining",
@@ -342,7 +362,9 @@ export function createMiningSection() {
                 tree: ROLLING_WINDOWS.map((w) => ({
                   name: w.name,
                   title: `${w.title} Fee Revenue per Block Distribution`,
-                  bottom: distributionBtcSatsUsd(statsAtWindow(mining.rewards.fees, w.key)),
+                  bottom: distributionBtcSatsUsd(
+                    statsAtWindow(mining.rewards.fees, w.key),
+                  ),
                 })),
               },
             ],
@@ -354,16 +376,32 @@ export function createMiningSection() {
                 name: w.name,
                 title: `${w.title} Mining Revenue Dominance`,
                 bottom: [
-                  ...percentRatio({ pattern: mining.rewards.subsidy.dominance[w.key], name: "Subsidy", color: colors.mining.subsidy }),
-                  ...percentRatio({ pattern: mining.rewards.fees.dominance[w.key], name: "Fees", color: colors.mining.fee }),
+                  ...percentRatio({
+                    pattern: mining.rewards.subsidy.dominance[w.key],
+                    name: "Subsidy",
+                    color: colors.mining.subsidy,
+                  }),
+                  ...percentRatio({
+                    pattern: mining.rewards.fees.dominance[w.key],
+                    name: "Fees",
+                    color: colors.mining.fee,
+                  }),
                 ],
               })),
               {
                 name: "All Time",
                 title: "All Time Mining Revenue Dominance",
                 bottom: [
-                  ...percentRatio({ pattern: mining.rewards.subsidy.dominance, name: "Subsidy", color: colors.mining.subsidy }),
-                  ...percentRatio({ pattern: mining.rewards.fees.dominance, name: "Fees", color: colors.mining.fee }),
+                  ...percentRatio({
+                    pattern: mining.rewards.subsidy.dominance,
+                    name: "Subsidy",
+                    color: colors.mining.subsidy,
+                  }),
+                  ...percentRatio({
+                    pattern: mining.rewards.fees.dominance,
+                    name: "Fees",
+                    color: colors.mining.fee,
+                  }),
                 ],
               },
             ],
@@ -373,7 +411,14 @@ export function createMiningSection() {
             tree: ROLLING_WINDOWS.map((w) => ({
               name: w.name,
               title: `${w.title} Fee-to-Subsidy Ratio`,
-              bottom: [line({ series: mining.rewards.fees.toSubsidyRatio[w.key].ratio, name: "Ratio", color: colors.mining.fee, unit: Unit.ratio })],
+              bottom: [
+                line({
+                  series: mining.rewards.fees.toSubsidyRatio[w.key].ratio,
+                  name: "Ratio",
+                  color: colors.mining.fee,
+                  unit: Unit.ratio,
+                }),
+              ],
             })),
           },
           {
@@ -395,28 +440,76 @@ export function createMiningSection() {
             name: "Hash Price",
             title: "Hash Price",
             bottom: [
-              line({ series: mining.hashrate.price.ths, name: "per TH/s", color: colors.usd, unit: Unit.usdPerThsPerDay }),
-              line({ series: mining.hashrate.price.phs, name: "per PH/s", color: colors.usd, unit: Unit.usdPerPhsPerDay }),
-              dotted({ series: mining.hashrate.price.thsMin, name: "per TH/s ATL", color: colors.stat.min, unit: Unit.usdPerThsPerDay }),
-              dotted({ series: mining.hashrate.price.phsMin, name: "per PH/s ATL", color: colors.stat.min, unit: Unit.usdPerPhsPerDay }),
+              line({
+                series: mining.hashrate.price.ths,
+                name: "per TH/s",
+                color: colors.usd,
+                unit: Unit.usdPerThsPerDay,
+              }),
+              line({
+                series: mining.hashrate.price.phs,
+                name: "per PH/s",
+                color: colors.usd,
+                unit: Unit.usdPerPhsPerDay,
+              }),
+              dotted({
+                series: mining.hashrate.price.thsMin,
+                name: "per TH/s ATL",
+                color: colors.stat.min,
+                unit: Unit.usdPerThsPerDay,
+              }),
+              dotted({
+                series: mining.hashrate.price.phsMin,
+                name: "per PH/s ATL",
+                color: colors.stat.min,
+                unit: Unit.usdPerPhsPerDay,
+              }),
             ],
           },
           {
             name: "Hash Value",
             title: "Hash Value",
             bottom: [
-              line({ series: mining.hashrate.value.ths, name: "per TH/s", color: colors.bitcoin, unit: Unit.satsPerThsPerDay }),
-              line({ series: mining.hashrate.value.phs, name: "per PH/s", color: colors.bitcoin, unit: Unit.satsPerPhsPerDay }),
-              dotted({ series: mining.hashrate.value.thsMin, name: "per TH/s ATL", color: colors.stat.min, unit: Unit.satsPerThsPerDay }),
-              dotted({ series: mining.hashrate.value.phsMin, name: "per PH/s ATL", color: colors.stat.min, unit: Unit.satsPerPhsPerDay }),
+              line({
+                series: mining.hashrate.value.ths,
+                name: "per TH/s",
+                color: colors.bitcoin,
+                unit: Unit.satsPerThsPerDay,
+              }),
+              line({
+                series: mining.hashrate.value.phs,
+                name: "per PH/s",
+                color: colors.bitcoin,
+                unit: Unit.satsPerPhsPerDay,
+              }),
+              dotted({
+                series: mining.hashrate.value.thsMin,
+                name: "per TH/s ATL",
+                color: colors.stat.min,
+                unit: Unit.satsPerThsPerDay,
+              }),
+              dotted({
+                series: mining.hashrate.value.phsMin,
+                name: "per PH/s ATL",
+                color: colors.stat.min,
+                unit: Unit.satsPerPhsPerDay,
+              }),
             ],
           },
           {
             name: "Recovery",
             title: "Hash Price & Value Recovery",
             bottom: [
-              ...percentRatio({ pattern: mining.hashrate.price.rebound, name: "Hash Price", color: colors.usd }),
-              ...percentRatio({ pattern: mining.hashrate.value.rebound, name: "Hash Value", color: colors.bitcoin }),
+              ...percentRatio({
+                pattern: mining.hashrate.price.rebound,
+                name: "Hash Price",
+                color: colors.usd,
+              }),
+              ...percentRatio({
+                pattern: mining.hashrate.value.rebound,
+                name: "Hash Value",
+                color: colors.bitcoin,
+              }),
             ],
           },
         ],
@@ -429,14 +522,28 @@ export function createMiningSection() {
             name: "Countdown",
             title: "Next Halving",
             bottom: [
-              line({ series: blocks.halving.blocksToHalving, name: "Blocks", unit: Unit.blocks }),
-              line({ series: blocks.halving.daysToHalving, name: "Days", unit: Unit.days }),
+              line({
+                series: blocks.halving.blocksToHalving,
+                name: "Blocks",
+                unit: Unit.blocks,
+              }),
+              line({
+                series: blocks.halving.daysToHalving,
+                name: "Days",
+                unit: Unit.days,
+              }),
             ],
           },
           {
             name: "Epoch",
             title: "Halving Epoch",
-            bottom: [line({ series: blocks.halving.epoch, name: "Epoch", unit: Unit.epoch })],
+            bottom: [
+              line({
+                series: blocks.halving.epoch,
+                name: "Epoch",
+                unit: Unit.epoch,
+              }),
+            ],
           },
         ],
       },
@@ -447,25 +554,48 @@ export function createMiningSection() {
           {
             name: "Current",
             title: "Mining Difficulty",
-            bottom: [line({ series: blocks.difficulty.value, name: "Difficulty", unit: Unit.difficulty })],
+            bottom: [
+              line({
+                series: blocks.difficulty.value,
+                name: "Difficulty",
+                unit: Unit.difficulty,
+              }),
+            ],
           },
           {
             name: "Adjustment",
             title: "Difficulty Adjustment",
-            bottom: percentRatioBaseline({ pattern: blocks.difficulty.adjustment, name: "Change" }),
+            bottom: percentRatioBaseline({
+              pattern: blocks.difficulty.adjustment,
+              name: "Change",
+            }),
           },
           {
             name: "Countdown",
             title: "Next Difficulty Adjustment",
             bottom: [
-              line({ series: blocks.difficulty.blocksToRetarget, name: "Blocks", unit: Unit.blocks }),
-              line({ series: blocks.difficulty.daysToRetarget, name: "Days", unit: Unit.days }),
+              line({
+                series: blocks.difficulty.blocksToRetarget,
+                name: "Blocks",
+                unit: Unit.blocks,
+              }),
+              line({
+                series: blocks.difficulty.daysToRetarget,
+                name: "Days",
+                unit: Unit.days,
+              }),
             ],
           },
           {
             name: "Epoch",
             title: "Difficulty Epoch",
-            bottom: [line({ series: blocks.difficulty.epoch, name: "Epoch", unit: Unit.epoch })],
+            bottom: [
+              line({
+                series: blocks.difficulty.epoch,
+                name: "Epoch",
+                unit: Unit.epoch,
+              }),
+            ],
           },
         ],
       },

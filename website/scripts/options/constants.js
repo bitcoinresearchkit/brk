@@ -1,7 +1,7 @@
 /** Constant helpers for creating price lines and reference lines */
 
 import { colors } from "../utils/colors.js";
-import { brk } from "../client.js";
+import { brk } from "../utils/client.js";
 import { line } from "./series.js";
 
 /**
@@ -13,9 +13,7 @@ import { line } from "./series.js";
  */
 export function getConstant(constants, num) {
   const key =
-    num >= 0
-      ? `_${String(num).replace(".", "")}`
-      : `minus${Math.abs(num)}`;
+    num >= 0 ? `_${String(num).replace(".", "")}` : `minus${Math.abs(num)}`;
   const constant = /** @type {AnySeriesPattern | undefined} */ (
     /** @type {Record<string, AnySeriesPattern>} */ (constants)[key]
   );

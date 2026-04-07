@@ -19,11 +19,12 @@ pub struct PoolDetail {
     #[serde(rename = "blockShare")]
     pub block_share: PoolBlockShares,
 
-    /// Estimated hashrate based on blocks mined
+    /// Estimated hashrate based on blocks mined (H/s)
     #[serde(rename = "estimatedHashrate")]
+    #[schemars(example = 200_000_000_000_000_000_000_u128)]
     pub estimated_hashrate: u128,
 
-    /// Self-reported hashrate (if available)
+    /// Self-reported hashrate (if available, H/s)
     #[serde(rename = "reportedHashrate")]
     pub reported_hashrate: Option<u128>,
 
@@ -36,12 +37,15 @@ pub struct PoolDetail {
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PoolDetailInfo {
     /// Pool identifier
+    #[schemars(example = 111)]
     pub id: u8,
 
     /// Pool name
+    #[schemars(example = &"Foundry USA")]
     pub name: Cow<'static, str>,
 
     /// Pool website URL
+    #[schemars(example = &"https://foundrydigital.com/")]
     pub link: Cow<'static, str>,
 
     /// Known payout addresses
@@ -54,6 +58,7 @@ pub struct PoolDetailInfo {
     pub slug: PoolSlug,
 
     /// Unique pool identifier
+    #[schemars(example = 44)]
     pub unique_id: u8,
 }
 
@@ -75,14 +80,17 @@ impl From<&'static Pool> for PoolDetailInfo {
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PoolBlockCounts {
     /// Total blocks mined (all time)
+    #[schemars(example = 75000)]
     pub all: u64,
 
     /// Blocks mined in last 24 hours
     #[serde(rename = "24h")]
+    #[schemars(example = 42)]
     pub day: u64,
 
     /// Blocks mined in last week
     #[serde(rename = "1w")]
+    #[schemars(example = 280)]
     pub week: u64,
 }
 
@@ -90,13 +98,16 @@ pub struct PoolBlockCounts {
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PoolBlockShares {
     /// Share of all blocks (0.0 - 1.0)
+    #[schemars(example = 0.28)]
     pub all: f64,
 
-    /// Share of blocks in last 24 hours
+    /// Share of blocks in last 24 hours (0.0 - 1.0)
     #[serde(rename = "24h")]
+    #[schemars(example = 0.30)]
     pub day: f64,
 
-    /// Share of blocks in last week
+    /// Share of blocks in last week (0.0 - 1.0)
     #[serde(rename = "1w")]
+    #[schemars(example = 0.29)]
     pub week: f64,
 }

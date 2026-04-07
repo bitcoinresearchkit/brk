@@ -55,9 +55,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     op.id("get_pool_stats")
                         .mining_tag()
                         .summary("Mining pool statistics")
-                        .description("Get mining pool statistics for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*")
+                        .description("Get mining pool statistics for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*")
                         .json_response::<PoolsSummary>()
                         .not_modified()
+                        .bad_request()
                         .server_error()
                 },
             ),
@@ -107,9 +108,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     op.id("get_pools_hashrate_by_period")
                         .mining_tag()
                         .summary("All pools hashrate")
-                        .description("Get hashrate data for all mining pools for a time period. Valid periods: 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*")
+                        .description("Get hashrate data for all mining pools for a time period. Valid periods: `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*")
                         .json_response::<Vec<PoolHashrateEntry>>()
                         .not_modified()
+                        .bad_request()
                         .server_error()
                 },
             ),
@@ -195,9 +197,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     op.id("get_hashrate_by_period")
                         .mining_tag()
                         .summary("Network hashrate")
-                        .description("Get network hashrate and difficulty data for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*")
+                        .description("Get network hashrate and difficulty data for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*")
                         .json_response::<HashrateSummary>()
                         .not_modified()
+                        .bad_request()
                         .server_error()
                 },
             ),
@@ -229,9 +232,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     op.id("get_difficulty_adjustments_by_period")
                         .mining_tag()
                         .summary("Difficulty adjustments")
-                        .description("Get historical difficulty adjustments for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*")
+                        .description("Get historical difficulty adjustments for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*")
                         .json_response::<Vec<DifficultyAdjustmentEntry>>()
                         .not_modified()
+                        .bad_request()
                         .server_error()
                 },
             ),
@@ -249,6 +253,7 @@ impl MiningRoutes for ApiRouter<AppState> {
                         .description("Get mining reward statistics for the last N blocks including total rewards, fees, and transaction count.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-reward-stats)*")
                         .json_response::<RewardStats>()
                         .not_modified()
+                        .bad_request()
                         .server_error()
                 },
             ),
@@ -263,9 +268,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     op.id("get_block_fees")
                         .mining_tag()
                         .summary("Block fees")
-                        .description("Get average block fees for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-fees)*")
+                        .description("Get average total fees per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-fees)*")
                         .json_response::<Vec<BlockFeesEntry>>()
                         .not_modified()
+                        .bad_request()
                         .server_error()
                 },
             ),
@@ -280,9 +286,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     op.id("get_block_rewards")
                         .mining_tag()
                         .summary("Block rewards")
-                        .description("Get average block rewards (coinbase = subsidy + fees) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-rewards)*")
+                        .description("Get average coinbase reward (subsidy + fees) per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-rewards)*")
                         .json_response::<Vec<BlockRewardsEntry>>()
                         .not_modified()
+                        .bad_request()
                         .server_error()
                 },
             ),
@@ -297,9 +304,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     op.id("get_block_fee_rates")
                         .mining_tag()
                         .summary("Block fee rates")
-                        .description("Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*")
+                        .description("Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*")
                         .json_response::<Vec<BlockFeeRatesEntry>>()
                         .not_modified()
+                        .bad_request()
                         .server_error()
                 },
             ),
@@ -314,9 +322,10 @@ impl MiningRoutes for ApiRouter<AppState> {
                     op.id("get_block_sizes_weights")
                         .mining_tag()
                         .summary("Block sizes and weights")
-                        .description("Get average block sizes and weights for a time period. Valid periods: 24h, 3d, 1w, 1m, 3m, 6m, 1y, 2y, 3y\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*")
+                        .description("Get average block sizes and weights for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*")
                         .json_response::<BlockSizesWeights>()
                         .not_modified()
+                        .bad_request()
                         .server_error()
                 },
             ),

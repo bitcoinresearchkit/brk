@@ -147,9 +147,10 @@ impl AddrRoutes for ApiRouter<AppState> {
                 .id("validate_address")
                 .addrs_tag()
                 .summary("Validate address")
-                .description("Validate a Bitcoin address and get information about its type and scriptPubKey.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-validate)*")
+                .description("Validate a Bitcoin address and get information about its type and scriptPubKey. Returns `isvalid: false` with an error message for invalid addresses.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-validate)*")
                 .json_response::<AddrValidation>()
                 .not_modified()
+                .server_error()
             ),
         )
     }

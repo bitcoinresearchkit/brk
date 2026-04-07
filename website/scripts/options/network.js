@@ -1,7 +1,7 @@
 /** Network section - On-chain activity and health */
 
 import { colors } from "../utils/colors.js";
-import { brk } from "../client.js";
+import { brk } from "../utils/client.js";
 import { Unit } from "../utils/units.js";
 import { entries } from "../utils/array.js";
 import {
@@ -19,7 +19,12 @@ import {
   multiSeriesTree,
   percentRatioDots,
 } from "./series.js";
-import { satsBtcUsd, satsBtcUsdFrom, satsBtcUsdFullTree, formatCohortTitle } from "./shared.js";
+import {
+  satsBtcUsd,
+  satsBtcUsdFrom,
+  satsBtcUsdFullTree,
+  formatCohortTitle,
+} from "./shared.js";
 
 /**
  * Create Network section
@@ -119,75 +124,79 @@ export function createNetworkSection() {
   const createAddressSeriesTree = (key, typeName) => {
     const title = formatCohortTitle(typeName);
     return [
-    {
-      name: "Count",
-      tree: [
-        {
-          name: "Compare",
-          title: title("Address Count"),
-          bottom: countMetrics.map((m) =>
-            line({
-              series: addrs[m.key][key],
-              name: m.name,
-              color: m.color,
-              unit: Unit.count,
-            }),
-          ),
-        },
-        ...countMetrics.map((m) => ({
-          name: m.name,
-          title: title(`${m.name} Addresses`),
-          bottom: [
-            line({ series: addrs[m.key][key], name: m.name, unit: Unit.count }),
-          ],
-        })),
-      ],
-    },
-    ...simpleDeltaTree({
-      delta: addrs.delta[key],
-      title,
-      metric: "Address Count",
-      unit: Unit.count,
-    }),
-    {
-      name: "New",
-      tree: chartsFromCount({
-        pattern: addrs.new[key],
-        title,
-        metric: "New Addresses",
-        unit: Unit.count,
-      }),
-    },
-    {
-      name: "Activity",
-      tree: [
-        {
-          name: "Compare",
-          tree: ROLLING_WINDOWS.map((w) => ({
-            name: w.name,
-            title: title(`${w.title} Active Addresses`),
-            bottom: activityTypes.map((t, i) =>
+      {
+        name: "Count",
+        tree: [
+          {
+            name: "Compare",
+            title: title("Address Count"),
+            bottom: countMetrics.map((m) =>
               line({
-                series: addrs.activity[key][t.key][w.key],
-                name: t.name,
-                color: colors.at(i, activityTypes.length),
+                series: addrs[m.key][key],
+                name: m.name,
+                color: m.color,
                 unit: Unit.count,
               }),
             ),
+          },
+          ...countMetrics.map((m) => ({
+            name: m.name,
+            title: title(`${m.name} Addresses`),
+            bottom: [
+              line({
+                series: addrs[m.key][key],
+                name: m.name,
+                unit: Unit.count,
+              }),
+            ],
           })),
-        },
-        ...activityTypes.map((t) => ({
-          name: t.name,
-          tree: averagesArray({
-            windows: addrs.activity[key][t.key],
-            title,
-            metric: `${t.name} Addresses`,
-            unit: Unit.count,
-          }),
-        })),
-      ],
-    },
-  ];
+        ],
+      },
+      ...simpleDeltaTree({
+        delta: addrs.delta[key],
+        title,
+        metric: "Address Count",
+        unit: Unit.count,
+      }),
+      {
+        name: "New",
+        tree: chartsFromCount({
+          pattern: addrs.new[key],
+          title,
+          metric: "New Addresses",
+          unit: Unit.count,
+        }),
+      },
+      {
+        name: "Activity",
+        tree: [
+          {
+            name: "Compare",
+            tree: ROLLING_WINDOWS.map((w) => ({
+              name: w.name,
+              title: title(`${w.title} Active Addresses`),
+              bottom: activityTypes.map((t, i) =>
+                line({
+                  series: addrs.activity[key][t.key][w.key],
+                  name: t.name,
+                  color: colors.at(i, activityTypes.length),
+                  unit: Unit.count,
+                }),
+              ),
+            })),
+          },
+          ...activityTypes.map((t) => ({
+            name: t.name,
+            tree: averagesArray({
+              windows: addrs.activity[key][t.key],
+              title,
+              metric: `${t.name} Addresses`,
+              unit: Unit.count,
+            }),
+          })),
+        ],
+      },
+    ];
   };
 
   /** @type {Record<string, typeof scriptTypes[number]>} */

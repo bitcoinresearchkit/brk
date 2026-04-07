@@ -7,7 +7,7 @@ use vecdb::{CheckedSub, Formattable, Pco};
 
 use crate::Weight;
 
-/// Virtual size in vbytes (weight / 4, rounded up)
+/// Virtual size in vbytes (weight / 4, rounded up). Max block vsize is ~1,000,000 vB.
 #[derive(
     Debug,
     Default,
@@ -23,6 +23,7 @@ use crate::Weight;
     Pco,
     JsonSchema,
 )]
+#[schemars(example = 110, example = 140, example = 225, example = 500_000, example = 998_368)]
 pub struct VSize(u64);
 
 impl VSize {

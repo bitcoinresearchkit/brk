@@ -13,5 +13,6 @@ pub struct BlockTimestamp {
     pub hash: BlockHash,
 
     /// Block timestamp in ISO 8601 format
+    #[schemars(example = &"2024-04-20T00:00:00.000Z")]
     pub timestamp: String,
 }

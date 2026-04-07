@@ -8,9 +8,11 @@ use crate::PoolSlug;
 #[serde(rename_all = "camelCase")]
 pub struct BlockPool {
     /// Unique pool identifier
+    #[schemars(example = 44)]
     pub id: u8,
 
     /// Pool name
+    #[schemars(example = &"Foundry USA")]
     pub name: String,
 
     /// URL-friendly pool identifier

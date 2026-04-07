@@ -62,6 +62,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .description("Returns block details with extras by hash.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*")
                             .json_response::<BlockInfoV1>()
                             .not_modified()
+                            .bad_request()
                             .not_found()
                             .server_error()
                     },
@@ -78,9 +79,10 @@ impl BlockRoutes for ApiRouter<AppState> {
                         op.id("get_block_header")
                             .blocks_tag()
                             .summary("Block header")
-                            .description("Returns the hex-encoded block header.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*")
+                            .description("Returns the hex-encoded 80-byte block header.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*")
                             .text_response()
                             .not_modified()
+                            .bad_request()
                             .not_found()
                             .server_error()
                     },

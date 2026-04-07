@@ -1,12 +1,12 @@
 import { initPrice, onPrice } from "./utils/price.js";
-import { brk } from "./client.js";
+import { brk } from "./utils/client.js";
 import { onFirstIntersection, getElementById, isHidden } from "./utils/dom.js";
 import { initOptions } from "./options/full.js";
 import {
   init as initChart,
   setOption as setChartOption,
 } from "./panes/chart.js";
-import { init as initExplorer } from "./panes/explorer.js";
+import { init as initExplorer } from "./explorer/index.js";
 import { init as initSearch } from "./panes/search.js";
 import { idle } from "./utils/timing.js";
 import { readStored, removeStored, writeToStorage } from "./utils/storage.js";

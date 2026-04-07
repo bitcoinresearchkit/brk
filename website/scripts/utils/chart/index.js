@@ -10,6 +10,7 @@ import { capture } from "./capture.js";
 import { colors } from "../colors.js";
 import { createRadios, createSelect, getElementById } from "../dom.js";
 import { createPersistedValue } from "../persisted.js";
+import { createMapCache } from "../cache.js";
 import { onChange as onThemeChange } from "../theme.js";
 import { throttle, debounce } from "../timing.js";
 import { serdeBool, INDEX_FROM_LABEL } from "../serde.js";
@@ -190,9 +191,7 @@ export function createChart({ parent, brk, fitContent }) {
     },
   };
 
-  // Memory cache for instant index switching
-  /** @type {Map<string, AnySeriesData>} */
-  const cache = new Map();
+  const cache = createMapCache(Infinity);
 
   // Range state: localStorage stores all ranges per-index, URL stores current range only
   /** @typedef {{ from: number, to: number }} Range */
