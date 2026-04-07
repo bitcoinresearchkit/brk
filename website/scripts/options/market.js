@@ -1,6 +1,7 @@
 /** Market section */
 
 import { colors } from "../utils/colors.js";
+import { periodIdToName } from "../utils/time.js";
 import { brk } from "../client.js";
 import { includes } from "../utils/array.js";
 import { Unit } from "../utils/units.js";
@@ -17,7 +18,6 @@ import {
   ROLLING_WINDOWS_TO_1M,
 } from "./series.js";
 import { simplePriceRatioTree, percentileBands, priceBands } from "./shared.js";
-import { periodIdToName } from "./utils.js";
 
 /**
  * @typedef {Object} Period

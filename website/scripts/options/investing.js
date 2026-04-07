@@ -4,7 +4,7 @@ import { colors } from "../utils/colors.js";
 import { brk } from "../client.js";
 import { percentRatioBaseline, price } from "./series.js";
 import { satsBtcUsd } from "./shared.js";
-import { periodIdToName } from "./utils.js";
+import { periodIdToName } from "../utils/time.js";
 
 const SHORT_PERIODS = /** @type {const} */ ([
   "_1w",

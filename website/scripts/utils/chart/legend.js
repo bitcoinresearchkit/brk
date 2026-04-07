@@ -1,11 +1,15 @@
-import { createLabeledInput, createSpanName } from "../utils/dom.js";
-import { stringToId } from "../utils/format.js";
+import { createLabeledInput, createSpanName } from "../dom.js";
+import { stringToId } from "../format.js";
 
 /** @param {HTMLElement} el */
 function captureScroll(el) {
   el.addEventListener("wheel", (e) => e.stopPropagation(), { passive: true });
-  el.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: true });
-  el.addEventListener("touchmove", (e) => e.stopPropagation(), { passive: true });
+  el.addEventListener("touchstart", (e) => e.stopPropagation(), {
+    passive: true,
+  });
+  el.addEventListener("touchmove", (e) => e.stopPropagation(), {
+    passive: true,
+  });
 }
 
 /**

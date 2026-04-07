@@ -9612,7 +9612,7 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/block/{hash}/raw`
    *
    * @param {BlockHash} hash
-   * @returns {Promise<number[]>}
+   * @returns {Promise<*>}
    */
   async getBlockRaw(hash) {
     return this.getJson(`/api/block/${hash}/raw`);
@@ -10219,7 +10219,7 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx/{txid}/raw`
    *
    * @param {Txid} txid
-   * @returns {Promise<number[]>}
+   * @returns {Promise<*>}
    */
   async getTxRaw(txid) {
     return this.getJson(`/api/tx/${txid}/raw`);

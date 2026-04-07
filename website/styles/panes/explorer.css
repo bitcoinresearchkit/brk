@@ -179,7 +179,8 @@
     }
   }
 
-  #block-details {
+  #block-details,
+  #tx-details {
     flex: 1;
     font-size: var(--font-size-sm);
     line-height: var(--line-height-sm);
@@ -319,6 +320,15 @@
 
             &.coinbase {
               color: var(--orange);
+            }
+
+            .coinbase-sig {
+              font-family: Lilex;
+              font-size: var(--font-size-xs);
+              opacity: 0.5;
+              display: block;
+              overflow: hidden;
+              text-overflow: ellipsis;
             }
 
             &.op-return {

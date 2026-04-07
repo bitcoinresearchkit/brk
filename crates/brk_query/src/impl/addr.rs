@@ -97,10 +97,7 @@ impl Query {
         limit: usize,
     ) -> Result<Vec<Transaction>> {
         let txindices = self.addr_txindices(&addr, after_txid, limit)?;
-        txindices
-            .into_iter()
-            .map(|tx_index| self.transaction_by_index(tx_index))
-            .collect()
+        self.transactions_by_indices(&txindices)
     }
 
     pub fn addr_txids(

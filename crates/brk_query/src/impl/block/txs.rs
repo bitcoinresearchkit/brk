@@ -25,7 +25,10 @@ impl Query {
             return Ok(Vec::new());
         }
         let count = BLOCK_TXS_PAGE_SIZE.min(tx_count - start);
-        self.transactions_by_range(first + start, count)
+        let indices: Vec<TxIndex> = (first + start..first + start + count)
+            .map(TxIndex::from)
+            .collect();
+        self.transactions_by_indices(&indices)
     }
 
     pub fn block_txid_at_index(&self, hash: &BlockHash, index: TxIndex) -> Result<Txid> {
@@ -33,48 +36,55 @@ impl Query {
         self.block_txid_at_index_by_height(height, index.into())
     }
 
-    // === Bulk transaction read ===
+    // === Helper methods ===
 
-    /// Batch-read `count` consecutive transactions starting at raw index `start`.
-    /// Block info is cached per unique height — free for same-block batches.
-    pub fn transactions_by_range(&self, start: usize, count: usize) -> Result<Vec<Transaction>> {
-        if count == 0 {
+    pub(crate) fn block_txids_by_height(&self, height: Height) -> Result<Vec<Txid>> {
+        let (first, tx_count) = self.block_tx_range(height)?;
+        Ok(self
+            .indexer()
+            .vecs
+            .transactions
+            .txid
+            .collect_range_at(first, first + tx_count))
+    }
+
+    fn block_txid_at_index_by_height(&self, height: Height, index: usize) -> Result<Txid> {
+        let (first, tx_count) = self.block_tx_range(height)?;
+        if index >= tx_count {
+            return Err(Error::OutOfRange("Transaction index out of range".into()));
+        }
+        Ok(self
+            .indexer()
+            .vecs
+            .transactions
+            .txid
+            .reader()
+            .get(first + index))
+    }
+
+    /// Batch-read transactions at arbitrary indices.
+    /// Reads in ascending index order for I/O locality, returns in caller's order.
+    pub fn transactions_by_indices(&self, indices: &[TxIndex]) -> Result<Vec<Transaction>> {
+        if indices.is_empty() {
             return Ok(Vec::new());
         }
 
+        let len = indices.len();
+
+        // Sort positions ascending for sequential I/O (O(n) when already sorted)
+        let mut order: Vec<usize> = (0..len).collect();
+        order.sort_unstable_by_key(|&i| indices[i]);
+
         let indexer = self.indexer();
         let reader = self.reader();
-        let end = start + count;
 
-        // 7 range reads instead of count * 7 point reads
-        let txids: Vec<Txid> = indexer.vecs.transactions.txid.collect_range_at(start, end);
-        let heights: Vec<Height> = indexer
-            .vecs
-            .transactions
-            .height
-            .collect_range_at(start, end);
-        let lock_times = indexer
-            .vecs
-            .transactions
-            .raw_locktime
-            .collect_range_at(start, end);
-        let total_sizes = indexer
-            .vecs
-            .transactions
-            .total_size
-            .collect_range_at(start, end);
-        let first_txin_indices = indexer
-            .vecs
-            .transactions
-            .first_txin_index
-            .collect_range_at(start, end);
-        let positions = indexer
-            .vecs
-            .transactions
-            .position
-            .collect_range_at(start, end);
+        let mut txid_cursor = indexer.vecs.transactions.txid.cursor();
+        let mut height_cursor = indexer.vecs.transactions.height.cursor();
+        let mut locktime_cursor = indexer.vecs.transactions.raw_locktime.cursor();
+        let mut total_size_cursor = indexer.vecs.transactions.total_size.cursor();
+        let mut first_txin_cursor = indexer.vecs.transactions.first_txin_index.cursor();
+        let mut position_cursor = indexer.vecs.transactions.position.cursor();
 
-        // Readers for prevout lookups (created once)
         let txid_reader = indexer.vecs.transactions.txid.reader();
         let first_txout_index_reader = indexer.vecs.transactions.first_txout_index.reader();
         let value_reader = indexer.vecs.outputs.value.reader();
@@ -82,15 +92,22 @@ impl Query {
         let type_index_reader = indexer.vecs.outputs.type_index.reader();
         let addr_readers = indexer.vecs.addrs.addr_readers();
 
-        // Block info cache — for same-block batches, read once
         let mut cached_block: Option<(Height, BlockHash, Timestamp)> = None;
 
-        let mut txs = Vec::with_capacity(count);
+        // Read in sorted order, write directly to original position
+        let mut txs: Vec<Option<Transaction>> = (0..len).map(|_| None).collect();
 
-        for i in 0..count {
-            let height = heights[i];
+        for &pos in &order {
+            let tx_index = indices[pos];
+            let idx = tx_index.to_usize();
 
-            // Reuse block info if same height as previous tx
+            let txid = txid_cursor.get(idx).unwrap();
+            let height = height_cursor.get(idx).unwrap();
+            let lock_time = locktime_cursor.get(idx).unwrap();
+            let total_size = total_size_cursor.get(idx).unwrap();
+            let first_txin_index = first_txin_cursor.get(idx).unwrap();
+            let position = position_cursor.get(idx).unwrap();
+
             let (block_hash, block_time) = if let Some((h, ref bh, bt)) = cached_block
                 && h == height
             {
@@ -102,15 +119,13 @@ impl Query {
                 (bh, bt)
             };
 
-            // Decode raw transaction from blk file
-            let buffer = reader.read_raw_bytes(positions[i], *total_sizes[i] as usize)?;
+            let buffer = reader.read_raw_bytes(position, *total_size as usize)?;
             let tx = bitcoin::Transaction::consensus_decode(&mut Cursor::new(buffer))
                 .map_err(|_| Error::Parse("Failed to decode transaction".into()))?;
 
-            // Batch-read outpoints for this tx's inputs
             let outpoints = indexer.vecs.inputs.outpoint.collect_range_at(
-                usize::from(first_txin_indices[i]),
-                usize::from(first_txin_indices[i]) + tx.input.len(),
+                usize::from(first_txin_index),
+                usize::from(first_txin_index) + tx.input.len(),
             );
 
             let input: Vec<TxIn> = tx
@@ -178,11 +193,11 @@ impl Query {
             let output: Vec<TxOut> = tx.output.into_iter().map(TxOut::from).collect();
 
             let mut transaction = Transaction {
-                index: Some(TxIndex::from(start + i)),
-                txid: txids[i].clone(),
+                index: Some(tx_index),
+                txid,
                 version: tx.version.into(),
-                lock_time: lock_times[i],
-                total_size: *total_sizes[i] as usize,
+                lock_time,
+                total_size: *total_size as usize,
                 weight,
                 total_sigop_cost,
                 fee: Sats::ZERO,
@@ -197,36 +212,10 @@ impl Query {
             };
 
             transaction.compute_fee();
-            txs.push(transaction);
+            txs[pos] = Some(transaction);
         }
 
-        Ok(txs)
-    }
-
-    // === Helper methods ===
-
-    pub(crate) fn block_txids_by_height(&self, height: Height) -> Result<Vec<Txid>> {
-        let (first, tx_count) = self.block_tx_range(height)?;
-        Ok(self
-            .indexer()
-            .vecs
-            .transactions
-            .txid
-            .collect_range_at(first, first + tx_count))
-    }
-
-    fn block_txid_at_index_by_height(&self, height: Height, index: usize) -> Result<Txid> {
-        let (first, tx_count) = self.block_tx_range(height)?;
-        if index >= tx_count {
-            return Err(Error::OutOfRange("Transaction index out of range".into()));
-        }
-        Ok(self
-            .indexer()
-            .vecs
-            .transactions
-            .txid
-            .reader()
-            .get(first + index))
+        Ok(txs.into_iter().map(Option::unwrap).collect())
     }
 
     /// Returns (first_tx_raw_index, tx_count) for a block at `height`.

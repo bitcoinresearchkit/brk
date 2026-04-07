@@ -7303,7 +7303,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/block/{hash}/header`"""
         return self.get_text(f'/api/block/{hash}/header')
 
-    def get_block_raw(self, hash: BlockHash) -> List[float]:
+    def get_block_raw(self, hash: BlockHash) -> str:
         """Raw block.
 
         Returns the raw block data in binary format.
@@ -7311,7 +7311,7 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*
 
         Endpoint: `GET /api/block/{hash}/raw`"""
-        return self.get_json(f'/api/block/{hash}/raw')
+        return self.get_text(f'/api/block/{hash}/raw')
 
     def get_block_status(self, hash: BlockHash) -> BlockStatus:
         """Block status.
@@ -7685,7 +7685,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/tx/{txid}/outspends`"""
         return self.get_json(f'/api/tx/{txid}/outspends')
 
-    def get_tx_raw(self, txid: Txid) -> List[float]:
+    def get_tx_raw(self, txid: Txid) -> str:
         """Transaction raw.
 
         Returns a transaction as binary data.
@@ -7693,7 +7693,7 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-raw)*
 
         Endpoint: `GET /api/tx/{txid}/raw`"""
-        return self.get_json(f'/api/tx/{txid}/raw')
+        return self.get_text(f'/api/tx/{txid}/raw')
 
     def get_tx_status(self, txid: Txid) -> TxStatus:
         """Transaction status.

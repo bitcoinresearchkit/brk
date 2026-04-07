@@ -8364,8 +8364,8 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*
     ///
     /// Endpoint: `GET /api/block/{hash}/raw`
-    pub fn get_block_raw(&self, hash: BlockHash) -> Result<Vec<f64>> {
-        self.base.get_json(&format!("/api/block/{hash}/raw"))
+    pub fn get_block_raw(&self, hash: BlockHash) -> Result<String> {
+        self.base.get_text(&format!("/api/block/{hash}/raw"))
     }
 
     /// Block status
@@ -8789,8 +8789,8 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-raw)*
     ///
     /// Endpoint: `GET /api/tx/{txid}/raw`
-    pub fn get_tx_raw(&self, txid: Txid) -> Result<Vec<f64>> {
-        self.base.get_json(&format!("/api/tx/{txid}/raw"))
+    pub fn get_tx_raw(&self, txid: Txid) -> Result<String> {
+        self.base.get_text(&format!("/api/tx/{txid}/raw"))
     }
 
     /// Transaction status

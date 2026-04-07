@@ -66,14 +66,6 @@ impl Indexer {
     }
 
     fn forced_import_inner(outputs_dir: &Path, can_retry: bool) -> Result<Self> {
-        info!("Increasing number of open files limit...");
-        let no_file_limit = rlimit::getrlimit(rlimit::Resource::NOFILE)?;
-        rlimit::setrlimit(
-            rlimit::Resource::NOFILE,
-            no_file_limit.0.max(10_000),
-            no_file_limit.1,
-        )?;
-
         info!("Importing indexer...");
 
         let indexed_path = outputs_dir.join("indexed");

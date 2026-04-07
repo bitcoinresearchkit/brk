@@ -4,18 +4,18 @@ import {
   HistogramSeries,
   LineSeries,
   BaselineSeries,
-} from "../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.production.mjs";
+} from "../../modules/lightweight-charts/5.1.0/dist/lightweight-charts.standalone.production.mjs";
 import { createLegend, createSeriesLegend } from "./legend.js";
 import { capture } from "./capture.js";
-import { colors } from "../utils/colors.js";
-import { createRadios, createSelect, getElementById } from "../utils/dom.js";
-import { createPersistedValue } from "../utils/persisted.js";
-import { onChange as onThemeChange } from "../utils/theme.js";
-import { throttle, debounce } from "../utils/timing.js";
-import { serdeBool, INDEX_FROM_LABEL } from "../utils/serde.js";
-import { stringToId, numberToShortUSFormat } from "../utils/format.js";
-import { style } from "../utils/elements.js";
-import { Unit } from "../utils/units.js";
+import { colors } from "../colors.js";
+import { createRadios, createSelect, getElementById } from "../dom.js";
+import { createPersistedValue } from "../persisted.js";
+import { onChange as onThemeChange } from "../theme.js";
+import { throttle, debounce } from "../timing.js";
+import { serdeBool, INDEX_FROM_LABEL } from "../serde.js";
+import { stringToId, numberToShortUSFormat } from "../format.js";
+import { style } from "../elements.js";
+import { Unit } from "../units.js";
 
 /**
  * @typedef {_ISeriesApi<LCSeriesType>} ISeries

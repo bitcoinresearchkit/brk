@@ -5,6 +5,7 @@ use std::{
     fs::{self, File},
     io::{Read, Seek, SeekFrom},
     ops::ControlFlow,
+    os::unix::fs::FileExt,
     path::{Path, PathBuf},
     sync::Arc,
     thread,
@@ -53,6 +54,7 @@ impl Reader {
 #[derive(Debug)]
 pub struct ReaderInner {
     blk_index_to_blk_path: Arc<RwLock<BlkIndexToBlkPath>>,
+    blk_file_cache: RwLock<BTreeMap<u16, File>>,
     xor_bytes: XORBytes,
     blocks_dir: PathBuf,
     client: Client,
@@ -60,11 +62,19 @@ pub struct ReaderInner {
 
 impl ReaderInner {
     pub fn new(blocks_dir: PathBuf, client: Client) -> Self {
+        let no_file_limit = rlimit::getrlimit(rlimit::Resource::NOFILE).unwrap_or((0, 0));
+        let _ = rlimit::setrlimit(
+            rlimit::Resource::NOFILE,
+            no_file_limit.0.max(15_000),
+            no_file_limit.1,
+        );
+
         Self {
             xor_bytes: XORBytes::from(blocks_dir.as_path()),
             blk_index_to_blk_path: Arc::new(RwLock::new(BlkIndexToBlkPath::scan(
                 blocks_dir.as_path(),
             ))),
+            blk_file_cache: RwLock::new(BTreeMap::new()),
             blocks_dir,
             client,
         }
@@ -86,24 +96,41 @@ impl ReaderInner {
         self.xor_bytes
     }
 
-    /// Read raw bytes from a blk file at the given position with XOR decoding
+    /// Read raw bytes from a blk file at the given position with XOR decoding.
+    /// File handles are cached per blk_index; reads use pread (no seek, thread-safe).
     pub fn read_raw_bytes(&self, position: BlkPosition, size: usize) -> Result<Vec<u8>> {
+        let blk_index = position.blk_index();
+
+        {
+            let cache = self.blk_file_cache.read();
+            if let Some(file) = cache.get(&blk_index) {
+                let mut buffer = vec![0u8; size];
+                file.read_at(&mut buffer, position.offset() as u64)?;
+                self.xor_decode(&mut buffer, position.offset());
+                return Ok(buffer);
+            }
+        }
+
+        // Cache miss: open file, insert, and read
         let blk_paths = self.blk_index_to_blk_path();
         let blk_path = blk_paths
-            .get(&position.blk_index())
+            .get(&blk_index)
             .ok_or(Error::NotFound("Blk file not found".into()))?;
-
-        let mut file = File::open(blk_path)?;
-        file.seek(SeekFrom::Start(position.offset() as u64))?;
+        let file = File::open(blk_path)?;
 
         let mut buffer = vec![0u8; size];
-        file.read_exact(&mut buffer)?;
+        file.read_at(&mut buffer, position.offset() as u64)?;
+        self.xor_decode(&mut buffer, position.offset());
 
-        let mut xori = XORIndex::default();
-        xori.add_assign(position.offset() as usize);
-        xori.bytes(&mut buffer, self.xor_bytes);
+        self.blk_file_cache.write().entry(blk_index).or_insert(file);
 
         Ok(buffer)
+    }
+
+    fn xor_decode(&self, buffer: &mut [u8], offset: u32) {
+        let mut xori = XORIndex::default();
+        xori.add_assign(offset as usize);
+        xori.bytes(buffer, self.xor_bytes);
     }
 
     /// Returns a receiver streaming `ReadBlock`s from `hash + 1` to the chain tip.

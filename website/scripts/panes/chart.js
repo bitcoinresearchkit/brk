@@ -2,7 +2,7 @@ import { createHeader } from "../utils/dom.js";
 import { chartElement } from "../utils/elements.js";
 import { INDEX_FROM_LABEL } from "../utils/serde.js";
 import { Unit } from "../utils/units.js";
-import { createChart } from "../chart/index.js";
+import { createChart } from "../utils/chart/index.js";
 import { colors } from "../utils/colors.js";
 import { latestPrice, onPrice } from "../utils/price.js";
 import { brk } from "../client.js";

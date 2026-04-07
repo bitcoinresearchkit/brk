@@ -278,7 +278,7 @@ impl Query {
     // === Helper methods ===
 
     pub fn transaction_by_index(&self, tx_index: TxIndex) -> Result<Transaction> {
-        self.transactions_by_range(tx_index.to_usize(), 1)?
+        self.transactions_by_indices(&[tx_index])?
             .into_iter()
             .next()
             .ok_or(Error::NotFound("Transaction not found".into()))

@@ -1,6 +1,6 @@
-import { ios, canShare } from "../utils/env.js";
-import { style } from "../utils/elements.js";
-import { colors } from "../utils/colors.js";
+import { ios, canShare } from "../env.js";
+import { style } from "../elements.js";
+import { colors } from "../colors.js";
 
 export const canCapture = !ios || canShare;
 

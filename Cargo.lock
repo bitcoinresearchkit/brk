@@ -560,7 +560,6 @@ dependencies = [
  "fjall",
  "parking_lot",
  "rayon",
- "rlimit",
  "rustc-hash",
  "schemars",
  "serde",
@@ -648,6 +647,7 @@ dependencies = [
  "derive_more",
  "parking_lot",
  "rayon",
+ "rlimit",
  "tracing",
 ]
 

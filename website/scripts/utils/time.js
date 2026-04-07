@@ -1,5 +1,3 @@
-/** Market utilities */
-
 /**
  * Convert period ID to readable name
  * @param {string} id
