@@ -1,10 +1,11 @@
+use std::io::Read;
+
 use bitcoin::consensus::Decodable;
 use bitcoin::hex::DisplayHex;
 use brk_error::{Error, Result};
-use brk_reader::Reader;
 use brk_types::{
-    BlkPosition, BlockExtras, BlockHash, BlockHashPrefix, BlockHeader, BlockInfo, BlockInfoV1,
-    BlockPool, FeeRate, Height, PoolSlug, Sats, Timestamp, TxIndex, VSize, pools,
+    BlockExtras, BlockHash, BlockHashPrefix, BlockHeader, BlockInfo, BlockInfoV1, BlockPool,
+    FeeRate, Height, PoolSlug, Sats, Timestamp, TxIndex, VSize, pools,
 };
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
@@ -263,14 +264,30 @@ impl Query {
         let mut blocks = Vec::with_capacity(count);
 
         for i in (0..count).rev() {
-            let raw_header = reader.read_raw_bytes(positions[i], HEADER_SIZE)?;
-            let header = Self::decode_header(&raw_header)?;
-
             let tx_count = if i + 1 < first_tx_indexes.len() {
                 (first_tx_indexes[i + 1].to_usize() - first_tx_indexes[i].to_usize()) as u32
             } else {
                 (total_txs - first_tx_indexes[i].to_usize()) as u32
             };
+
+            // Single reader for header + coinbase (adjacent in blk file)
+            let varint_len = Self::compact_size_len(tx_count) as usize;
+            let (raw_header, coinbase_raw, coinbase_address, coinbase_addresses, coinbase_signature, coinbase_signature_ascii, scriptsig_bytes) = match reader.reader_at(positions[i]) {
+                Ok(mut blk) => {
+                    let mut header_buf = [0u8; HEADER_SIZE];
+                    if blk.read_exact(&mut header_buf).is_err() {
+                        ([0u8; HEADER_SIZE], String::new(), None, vec![], String::new(), String::new(), vec![])
+                    } else {
+                        // Skip tx count varint
+                        let mut skip = [0u8; 5];
+                        let _ = blk.read_exact(&mut skip[..varint_len]);
+                        let coinbase = Self::parse_coinbase_from_read(blk);
+                        (header_buf, coinbase.0, coinbase.1, coinbase.2, coinbase.3, coinbase.4, coinbase.5)
+                    }
+                }
+                Err(_) => ([0u8; HEADER_SIZE], String::new(), None, vec![], String::new(), String::new(), vec![]),
+            };
+            let header = Self::decode_header(&raw_header)?;
 
             let weight = weights[i];
             let size = *sizes[i];
@@ -284,19 +301,6 @@ impl Query {
 
             let pool_slug = pool_slugs[i];
             let pool = all_pools.get(pool_slug);
-
-            let varint_len = Self::compact_size_len(tx_count);
-            let coinbase_offset = HEADER_SIZE as u32 + varint_len;
-            let coinbase_pos = positions[i] + coinbase_offset;
-
-            let (
-                coinbase_raw,
-                coinbase_address,
-                coinbase_addresses,
-                coinbase_signature,
-                coinbase_signature_ascii,
-                scriptsig_bytes,
-            ) = Self::parse_coinbase_tx(reader, coinbase_pos);
 
             let miner_names = if pool_slug == PoolSlug::Ocean {
                 Self::parse_datum_miner_names(&scriptsig_bytes)
@@ -510,17 +514,12 @@ impl Query {
         if names.is_empty() { None } else { Some(names) }
     }
 
-    fn parse_coinbase_tx(
-        reader: &Reader,
-        position: BlkPosition,
+    fn parse_coinbase_from_read(
+        reader: impl Read,
     ) -> (String, Option<String>, Vec<String>, String, String, Vec<u8>) {
         let empty = (String::new(), None, vec![], String::new(), String::new(), vec![]);
-        let blk_reader = match reader.reader_at(position) {
-            Ok(r) => r,
-            Err(_) => return empty,
-        };
 
-        let tx = match bitcoin::Transaction::consensus_decode(&mut bitcoin::io::FromStd::new(blk_reader)) {
+        let tx = match bitcoin::Transaction::consensus_decode(&mut bitcoin::io::FromStd::new(reader)) {
             Ok(tx) => tx,
             Err(_) => return empty,
         };
@@ -538,7 +537,7 @@ impl Query {
             .map(|&b| b as char)
             .collect();
 
-        let coinbase_addresses: Vec<String> = tx
+        let mut coinbase_addresses: Vec<String> = tx
             .output
             .iter()
             .filter_map(|output| {
@@ -546,8 +545,7 @@ impl Query {
                     .ok()
                     .map(|a| a.to_string())
             })
-            .collect::<Vec<_>>();
-        let mut coinbase_addresses = coinbase_addresses;
+            .collect();
         coinbase_addresses.dedup();
         let coinbase_address = coinbase_addresses.first().cloned();
 
