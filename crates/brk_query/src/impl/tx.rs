@@ -53,13 +53,8 @@ impl Query {
         };
 
         // Get block info for status
-        let height = indexer
-            .vecs
-            .transactions
-            .height
-            .collect_one(tx_index)
-            .unwrap();
-        let block_hash = indexer.vecs.blocks.blockhash.read_once(height)?;
+        let height = indexer.vecs.transactions.height.collect_one(tx_index).unwrap();
+        let block_hash = indexer.vecs.blocks.blockhash.reader().get(height.to_usize());
         let block_time = indexer.vecs.blocks.timestamp.collect_one(height).unwrap();
 
         Ok(TxStatus {
@@ -136,14 +131,13 @@ impl Query {
         let indexer = self.indexer();
         let txin_index_reader = self.computer().outputs.spent.txin_index.reader();
         let txid_reader = indexer.vecs.transactions.txid.reader();
+        let blockhash_reader = indexer.vecs.blocks.blockhash.reader();
 
-        // Cursors buffer chunks so nearby indices share decompression
         let mut input_tx_cursor = indexer.vecs.inputs.tx_index.cursor();
         let mut first_txin_cursor = indexer.vecs.transactions.first_txin_index.cursor();
         let mut height_cursor = indexer.vecs.transactions.height.cursor();
         let mut block_ts_cursor = indexer.vecs.blocks.timestamp.cursor();
 
-        // Spending txs in the same block share block hash/time
         let mut cached_block: Option<(Height, BlockHash, Timestamp)> = None;
 
         let mut outspends = Vec::with_capacity(output_count);
@@ -167,7 +161,7 @@ impl Query {
             {
                 (bh.clone(), bt)
             } else {
-                let bh = indexer.vecs.blocks.blockhash.read_once(spending_height)?;
+                let bh = blockhash_reader.get(spending_height.to_usize());
                 let bt = block_ts_cursor.get(spending_height.to_usize()).unwrap();
                 cached_block = Some((spending_height, bh.clone(), bt));
                 (bh, bt)
@@ -262,7 +256,14 @@ impl Query {
             status: Some(TxStatus {
                 confirmed: true,
                 block_height: Some(spending_height),
-                block_hash: Some(indexer.vecs.blocks.blockhash.read_once(spending_height)?),
+                block_hash: Some(
+                    indexer
+                        .vecs
+                        .blocks
+                        .blockhash
+                        .reader()
+                        .get(spending_height.to_usize()),
+                ),
                 block_time: Some(
                     indexer
                         .vecs

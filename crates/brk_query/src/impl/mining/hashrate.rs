@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::{Day1, DifficultyEntry, HashrateEntry, HashrateSummary, Height, TimePeriod};
+use brk_types::{DifficultyEntry, HashrateEntry, HashrateSummary, Height, TimePeriod};
 use vecdb::{ReadableOptionVec, ReadableVec, VecIndex};
 
 use super::epochs::iter_difficulty_epochs;
@@ -56,16 +56,15 @@ impl Query {
         let total_days = end_day1.to_usize().saturating_sub(start_day1.to_usize()) + 1;
         let step = (total_days / 200).max(1); // Max ~200 data points
 
-        let hashrate_vec = &computer.mining.hashrate.rate.base.day1;
-        let timestamp_vec = &computer.indexes.timestamp.day1;
+        let mut hr_cursor = computer.mining.hashrate.rate.base.day1.cursor();
+        let mut ts_cursor = computer.indexes.timestamp.day1.cursor();
 
         let mut hashrates = Vec::with_capacity(total_days / step + 1);
         let mut di = start_day1.to_usize();
         while di <= end_day1.to_usize() {
-            let day1 = Day1::from(di);
-            if let (Some(hr), Some(timestamp)) = (
-                hashrate_vec.collect_one_flat(day1),
-                timestamp_vec.collect_one(day1),
+            if let (Some(Some(hr)), Some(timestamp)) = (
+                hr_cursor.get(di),
+                ts_cursor.get(di),
             ) {
                 hashrates.push(HashrateEntry {
                     timestamp,

@@ -96,41 +96,47 @@ impl ReaderInner {
         self.xor_bytes
     }
 
-    /// Read raw bytes from a blk file at the given position with XOR decoding.
-    /// File handles are cached per blk_index; reads use pread (no seek, thread-safe).
-    pub fn read_raw_bytes(&self, position: BlkPosition, size: usize) -> Result<Vec<u8>> {
-        let blk_index = position.blk_index();
-
-        {
-            let cache = self.blk_file_cache.read();
-            if let Some(file) = cache.get(&blk_index) {
-                let mut buffer = vec![0u8; size];
-                file.read_at(&mut buffer, position.offset() as u64)?;
-                self.xor_decode(&mut buffer, position.offset());
-                return Ok(buffer);
-            }
+    /// Ensure the blk file for `blk_index` is in the file handle cache.
+    fn ensure_blk_cached(&self, blk_index: u16) -> Result<()> {
+        if self.blk_file_cache.read().contains_key(&blk_index) {
+            return Ok(());
         }
-
-        // Cache miss: open file, insert, and read
         let blk_paths = self.blk_index_to_blk_path();
         let blk_path = blk_paths
             .get(&blk_index)
             .ok_or(Error::NotFound("Blk file not found".into()))?;
         let file = File::open(blk_path)?;
+        self.blk_file_cache.write().entry(blk_index).or_insert(file);
+        Ok(())
+    }
 
+    /// Read raw bytes from a blk file at the given position with XOR decoding.
+    pub fn read_raw_bytes(&self, position: BlkPosition, size: usize) -> Result<Vec<u8>> {
+        self.ensure_blk_cached(position.blk_index())?;
+
+        let cache = self.blk_file_cache.read();
+        let file = cache.get(&position.blk_index()).unwrap();
         let mut buffer = vec![0u8; size];
         file.read_at(&mut buffer, position.offset() as u64)?;
-        self.xor_decode(&mut buffer, position.offset());
-
-        self.blk_file_cache.write().entry(blk_index).or_insert(file);
-
+        XORIndex::decode_at(&mut buffer, position.offset() as usize, self.xor_bytes);
         Ok(buffer)
     }
 
-    fn xor_decode(&self, buffer: &mut [u8], offset: u32) {
-        let mut xori = XORIndex::default();
-        xori.add_assign(offset as usize);
-        xori.bytes(buffer, self.xor_bytes);
+    /// Returns a `Read` impl positioned at `position` in the blk file.
+    /// Reads only the bytes requested — no upfront allocation.
+    pub fn reader_at(&self, position: BlkPosition) -> Result<BlkRead<'_>> {
+        self.ensure_blk_cached(position.blk_index())?;
+
+        let mut xor_index = XORIndex::default();
+        xor_index.add_assign(position.offset() as usize);
+
+        Ok(BlkRead {
+            cache: self.blk_file_cache.read(),
+            blk_index: position.blk_index(),
+            offset: position.offset() as u64,
+            xor_index,
+            xor_bytes: self.xor_bytes,
+        })
     }
 
     /// Returns a receiver streaming `ReadBlock`s from `hash + 1` to the chain tip.
@@ -466,5 +472,24 @@ impl ReaderInner {
         let height = self.client.get_block_info(&header.block_hash())?.height as u32;
 
         Ok(Height::new(height))
+    }
+}
+
+/// Streaming reader at a position in a blk file. Reads via pread + XOR on demand.
+pub struct BlkRead<'a> {
+    cache: RwLockReadGuard<'a, BTreeMap<u16, File>>,
+    blk_index: u16,
+    offset: u64,
+    xor_index: XORIndex,
+    xor_bytes: XORBytes,
+}
+
+impl Read for BlkRead<'_> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let file = self.cache.get(&self.blk_index).unwrap();
+        let n = file.read_at(buf, self.offset)?;
+        self.xor_index.bytes(&mut buf[..n], self.xor_bytes);
+        self.offset += n as u64;
+        Ok(n)
     }
 }

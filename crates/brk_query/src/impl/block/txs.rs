@@ -91,6 +91,8 @@ impl Query {
         let output_type_reader = indexer.vecs.outputs.output_type.reader();
         let type_index_reader = indexer.vecs.outputs.type_index.reader();
         let addr_readers = indexer.vecs.addrs.addr_readers();
+        let blockhash_reader = indexer.vecs.blocks.blockhash.reader();
+        let mut block_ts_cursor = indexer.vecs.blocks.timestamp.cursor();
 
         let mut cached_block: Option<(Height, BlockHash, Timestamp)> = None;
 
@@ -113,8 +115,8 @@ impl Query {
             {
                 (bh.clone(), bt)
             } else {
-                let bh = indexer.vecs.blocks.blockhash.read_once(height)?;
-                let bt = indexer.vecs.blocks.timestamp.collect_one(height).unwrap();
+                let bh = blockhash_reader.get(height.to_usize());
+                let bt = block_ts_cursor.get(height.to_usize()).unwrap();
                 cached_block = Some((height, bh.clone(), bt));
                 (bh, bt)
             };

@@ -288,7 +288,6 @@ impl Query {
             let varint_len = Self::compact_size_len(tx_count);
             let coinbase_offset = HEADER_SIZE as u32 + varint_len;
             let coinbase_pos = positions[i] + coinbase_offset;
-            let coinbase_read_len = size as usize - coinbase_offset as usize;
 
             let (
                 coinbase_raw,
@@ -297,7 +296,7 @@ impl Query {
                 coinbase_signature,
                 coinbase_signature_ascii,
                 scriptsig_bytes,
-            ) = Self::parse_coinbase_tx(reader, coinbase_pos, coinbase_read_len);
+            ) = Self::parse_coinbase_tx(reader, coinbase_pos);
 
             let miner_names = if pool_slug == PoolSlug::Ocean {
                 Self::parse_datum_miner_names(&scriptsig_bytes)
@@ -514,15 +513,14 @@ impl Query {
     fn parse_coinbase_tx(
         reader: &Reader,
         position: BlkPosition,
-        len: usize,
     ) -> (String, Option<String>, Vec<String>, String, String, Vec<u8>) {
         let empty = (String::new(), None, vec![], String::new(), String::new(), vec![]);
-        let raw_bytes = match reader.read_raw_bytes(position, len) {
-            Ok(bytes) => bytes,
+        let blk_reader = match reader.reader_at(position) {
+            Ok(r) => r,
             Err(_) => return empty,
         };
 
-        let tx = match bitcoin::Transaction::consensus_decode(&mut raw_bytes.as_slice()) {
+        let tx = match bitcoin::Transaction::consensus_decode(&mut bitcoin::io::FromStd::new(blk_reader)) {
             Ok(tx) => tx,
             Err(_) => return empty,
         };

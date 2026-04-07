@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::{borrow::Cow, fmt::Debug, fs, hash::Hash, mem, path::Path};
+use std::{borrow::Cow, fmt::Debug, fs, hash::Hash, mem, ops::Range, path::Path};
 
 use brk_error::Result;
 use brk_types::{Height, Version};
@@ -242,6 +242,19 @@ where
     ) -> impl DoubleEndedIterator<Item = (K, V)> + '_ {
         self.keyspace
             .prefix(prefix)
+            .map(|res| res.into_inner().unwrap())
+            .map(|(k, v)| (K::from(ByteView::from(&*k)), V::from(ByteView::from(&*v))))
+    }
+
+    #[inline]
+    pub fn range<B: Into<ByteView>>(
+        &self,
+        range: Range<B>,
+    ) -> impl DoubleEndedIterator<Item = (K, V)> + '_ {
+        let start: ByteView = range.start.into();
+        let end: ByteView = range.end.into();
+        self.keyspace
+            .range(start..end)
             .map(|res| res.into_inner().unwrap())
             .map(|(k, v)| (K::from(ByteView::from(&*k)), V::from(ByteView::from(&*v))))
     }

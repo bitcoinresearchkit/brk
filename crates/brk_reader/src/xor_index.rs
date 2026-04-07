@@ -36,4 +36,12 @@ impl XORIndex {
     pub fn add_assign(&mut self, i: usize) {
         self.0 = (self.0 + i) % XOR_LEN;
     }
+
+    /// XOR-decode `buffer` starting at `offset`.
+    #[inline]
+    pub fn decode_at(buffer: &mut [u8], offset: usize, xor_bytes: XORBytes) {
+        let mut xori = Self::default();
+        xori.add_assign(offset);
+        xori.bytes(buffer, xor_bytes);
+    }
 }

@@ -4,8 +4,8 @@ use bitcoin::{Network, PublicKey, ScriptBuf};
 use brk_error::{Error, Result};
 use brk_types::{
     Addr, AddrBytes, AddrChainStats, AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, AddrStats,
-    AnyAddrDataIndexEnum, Height, OutputType, Transaction, TxIndex, TxStatus, Txid, TypeIndex,
-    Unit, Utxo, Vout,
+    AnyAddrDataIndexEnum, BlockHash, Height, OutputType, Timestamp, Transaction, TxIndex, TxStatus,
+    Txid, TypeIndex, Unit, Utxo, Vout,
 };
 use vecdb::{ReadableVec, VecIndex};
 
@@ -131,33 +131,33 @@ impl Query {
             .get(output_type)
             .unwrap();
 
-        let prefix = u32::from(type_index).to_be_bytes();
-
-        let after_tx_index = if let Some(after_txid) = after_txid {
-            let tx_index = stores
+        if let Some(after_txid) = after_txid {
+            let after_tx_index = stores
                 .txid_prefix_to_tx_index
                 .get(&after_txid.into())
                 .map_err(|_| Error::UnknownTxid)?
                 .ok_or(Error::UnknownTxid)?
                 .into_owned();
-            Some(tx_index)
-        } else {
-            None
-        };
 
-        Ok(store
-            .prefix(prefix)
-            .rev()
-            .filter(|(key, _): &(AddrIndexTxIndex, Unit)| {
-                if let Some(after) = after_tx_index {
-                    key.tx_index() < after
-                } else {
-                    true
-                }
-            })
-            .take(limit)
-            .map(|(key, _)| key.tx_index())
-            .collect())
+            // Seek directly to after_tx_index and iterate backward — O(limit)
+            let min = AddrIndexTxIndex::min_for_addr(type_index);
+            let bound = AddrIndexTxIndex::from((type_index, after_tx_index));
+            Ok(store
+                .range(min..bound)
+                .rev()
+                .take(limit)
+                .map(|(key, _): (AddrIndexTxIndex, Unit)| key.tx_index())
+                .collect())
+        } else {
+            // No pagination — scan from end of prefix
+            let prefix = u32::from(type_index).to_be_bytes();
+            Ok(store
+                .prefix(prefix)
+                .rev()
+                .take(limit)
+                .map(|(key, _): (AddrIndexTxIndex, Unit)| key.tx_index())
+                .collect())
+        }
     }
 
     pub fn addr_utxos(&self, addr: Addr) -> Result<Vec<Utxo>> {
@@ -186,30 +186,38 @@ impl Query {
         let mut height_cursor = vecs.transactions.height.cursor();
         let mut block_ts_cursor = vecs.blocks.timestamp.cursor();
 
-        let utxos: Vec<Utxo> = outpoints
-            .into_iter()
-            .map(|(tx_index, vout)| {
-                let txid = txid_reader.get(tx_index.to_usize());
-                let height = height_cursor.get(tx_index.to_usize()).unwrap();
-                let first_txout_index = first_txout_index_reader.get(tx_index.to_usize());
-                let txout_index = first_txout_index + vout;
-                let value = value_reader.get(usize::from(txout_index));
-                let block_hash = blockhash_reader.get(usize::from(height));
-                let block_time = block_ts_cursor.get(height.to_usize()).unwrap();
+        let mut cached_block: Option<(Height, BlockHash, Timestamp)> = None;
+        let mut utxos = Vec::with_capacity(outpoints.len());
 
-                Utxo {
-                    txid,
-                    vout,
-                    status: TxStatus {
-                        confirmed: true,
-                        block_height: Some(height),
-                        block_hash: Some(block_hash),
-                        block_time: Some(block_time),
-                    },
-                    value,
-                }
-            })
-            .collect();
+        for (tx_index, vout) in outpoints {
+            let txid = txid_reader.get(tx_index.to_usize());
+            let height: Height = height_cursor.get(tx_index.to_usize()).unwrap();
+            let first_txout_index = first_txout_index_reader.get(tx_index.to_usize());
+            let value = value_reader.get(usize::from(first_txout_index + vout));
+
+            let (block_hash, block_time) = if let Some((h, ref bh, bt)) = cached_block
+                && h == height
+            {
+                (bh.clone(), bt)
+            } else {
+                let bh = blockhash_reader.get(height.to_usize());
+                let bt = block_ts_cursor.get(height.to_usize()).unwrap();
+                cached_block = Some((height, bh.clone(), bt));
+                (bh, bt)
+            };
+
+            utxos.push(Utxo {
+                txid,
+                vout,
+                status: TxStatus {
+                    confirmed: true,
+                    block_height: Some(height),
+                    block_hash: Some(block_hash),
+                    block_time: Some(block_time),
+                },
+                value,
+            });
+        }
 
         Ok(utxos)
     }

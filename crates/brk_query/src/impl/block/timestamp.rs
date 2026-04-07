@@ -31,14 +31,14 @@ impl Query {
 
         let start: usize = usize::from(first_height_of_day).min(max_height_usize);
 
-        let timestamps = &indexer.vecs.blocks.timestamp;
+        let mut ts_cursor = indexer.vecs.blocks.timestamp.cursor();
 
         // Search forward from start to find the last block <= target timestamp
         let mut best_height = start;
-        let mut best_ts = timestamps.collect_one_at(start).unwrap();
+        let mut best_ts = ts_cursor.get(start).unwrap();
 
         for h in (start + 1)..=max_height_usize {
-            let block_ts = timestamps.collect_one_at(h).unwrap();
+            let block_ts = ts_cursor.get(h).unwrap();
             if block_ts <= target {
                 best_height = h;
                 best_ts = block_ts;
@@ -49,7 +49,7 @@ impl Query {
 
         // Check one block before start in case we need to go backward
         if start > 0 && best_ts > target {
-            let prev_ts = timestamps.collect_one_at(start - 1).unwrap();
+            let prev_ts = ts_cursor.get(start - 1).unwrap();
             if prev_ts <= target {
                 best_height = start - 1;
                 best_ts = prev_ts;
