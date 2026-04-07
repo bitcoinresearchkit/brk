@@ -156,17 +156,17 @@ function route() {
   if (pendingTx) {
     const hash = pendingTx.status?.blockHash;
     const cube = hash ? findCube(hash) : null;
-    if (cube) selectCube(cube);
+    if (cube) selectCube(cube, { scroll: "instant" });
     showTxFromData(pendingTx, secondaryPanel);
     showSecondaryPanel();
     pendingTx = null;
   } else if (kind === "address" && value) {
     const cube = lastCube();
-    if (cube) selectCube(cube);
+    if (cube) selectCube(cube, { scroll: "instant" });
     navigateToAddr(value);
   } else {
     const cube = lastCube();
-    if (cube) selectCube(cube);
+    if (cube) selectCube(cube, { scroll: "instant" });
   }
 }
 
@@ -175,7 +175,7 @@ async function navigateToBlock(hash, pushUrl = true) {
   if (pushUrl) history.pushState(null, "", `/block/${hash}`);
   const cube = findCube(hash);
   if (cube) {
-    selectCube(cube, { scroll: true });
+    selectCube(cube, { scroll: "smooth" });
   } else {
     const signal = navigate();
     try {
@@ -217,7 +217,7 @@ function showTxAndSelectBlock(tx) {
   if (tx.status?.blockHash) {
     const cube = findCube(tx.status.blockHash);
     if (cube) {
-      selectCube(cube, { scroll: true });
+      selectCube(cube, { scroll: "smooth" });
       showTxFromData(tx, secondaryPanel);
       showSecondaryPanel();
       return;

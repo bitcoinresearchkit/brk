@@ -72,15 +72,15 @@ export function lastCube() {
   return /** @type {HTMLDivElement | null} */ (blocksEl.lastElementChild);
 }
 
-/** @param {HTMLDivElement} cube @param {{ scroll?: boolean }} [opts] */
-export function selectCube(cube, { scroll = false } = {}) {
+/** @param {HTMLDivElement} cube @param {{ scroll?: "smooth" | "instant" }} [opts] */
+export function selectCube(cube, { scroll } = {}) {
   const changed = cube !== selectedCube;
   if (changed) {
     if (selectedCube) selectedCube.classList.remove("selected");
     selectedCube = cube;
     cube.classList.add("selected");
   }
-  if (scroll) cube.scrollIntoView({ behavior: "smooth" });
+  if (scroll) cube.scrollIntoView({ behavior: scroll });
   const hash = cube.dataset.hash;
   if (hash) {
     const block = blocksByHash.get(hash);
