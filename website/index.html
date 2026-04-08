@@ -74,6 +74,11 @@
           });
         });
       }
+
+      let storedLayout;
+      try { storedLayout = localStorage.getItem("split-view"); } catch (_) {}
+      const isSplit = storedLayout !== "false" && window.matchMedia("(min-width: 768px)").matches;
+      document.documentElement.dataset.layout = isSplit ? "split" : "full";
     </script>
     <script type="module" src="/scripts/entry.js"></script>
 
@@ -88,8 +93,6 @@
   </head>
   <body>
     <main id="main">
-      <div id="resize-bar"></div>
-
       <nav id="nav" hidden></nav>
 
       <search id="search" hidden>
@@ -109,53 +112,54 @@
         <ul id="search-results"></ul>
       </search>
 
-      <footer>
-        <fieldset id="frame-selectors">
-          <label
-            id="aside-selector-label"
-            for="aside-selector"
-            title="View sidebar"
-            class="md:hidden"
-          >
-            <input
-              type="radio"
-              name="frame"
-              id="aside-selector"
-              value="aside"
-            />
-            View
-          </label>
-
-          <label id="nav-selector-label" for="nav-selector" title="Nav">
-            <input type="radio" name="frame" id="nav-selector" value="nav" />
-            Browse
-          </label>
-
-          <label
-            id="search-selector-label"
-            for="search-selector"
-            title="Search"
-          >
-            <input
-              type="radio"
-              name="frame"
-              id="search-selector"
-              value="search"
-            />
-            Search
-          </label>
-
-          <button id="share-button" title="Share">Share</button>
-          <button id="theme-button" title="Invert theme">Theme</button>
-          <button id="pin-button" title="Unpin sidebar">Unpin</button>
-        </fieldset>
-      </footer>
     </main>
+    <div id="resize-bar"></div>
     <aside id="aside">
       <div id="explorer" hidden></div>
       <div id="chart" hidden></div>
       <div id="table" hidden></div>
     </aside>
+    <footer>
+      <fieldset id="frame-selectors">
+        <label
+          id="aside-selector-label"
+          for="aside-selector"
+          title="View sidebar"
+          class="full-only"
+        >
+          <input
+            type="radio"
+            name="frame"
+            id="aside-selector"
+            value="aside"
+          />
+          View
+        </label>
+
+        <label id="nav-selector-label" for="nav-selector" title="Nav">
+          <input type="radio" name="frame" id="nav-selector" value="nav" />
+          Browse
+        </label>
+
+        <label
+          id="search-selector-label"
+          for="search-selector"
+          title="Search"
+        >
+          <input
+            type="radio"
+            name="frame"
+            id="search-selector"
+            value="search"
+          />
+          Search
+        </label>
+
+        <button id="share-button" title="Share">Share</button>
+        <button id="theme-button" title="Invert theme">Theme</button>
+        <button id="layout-button"></button>
+      </fieldset>
+    </footer>
     <div id="share-div" hidden>
       <div id="share-content-div">
         <img id="share-img" src="" />

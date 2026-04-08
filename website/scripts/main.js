@@ -8,48 +8,49 @@ import {
 } from "./panes/chart.js";
 import { init as initExplorer } from "./explorer/index.js";
 import { init as initSearch } from "./panes/search.js";
-import { idle } from "./utils/timing.js";
 import { readStored, removeStored, writeToStorage } from "./utils/storage.js";
 import {
   asideElement,
   asideLabelElement,
-  bodyElement,
   chartElement,
   explorerElement,
   frameSelectorsElement,
   mainElement,
   navElement,
   navLabelElement,
-  pinButtonElement,
   searchElement,
+  layoutButtonElement,
   style,
 } from "./utils/elements.js";
+import { idle } from "./utils/timing.js";
 
 const DESKTOP_QUERY = window.matchMedia("(min-width: 768px)");
-let sidebarPinned = readStored("sidebar-pinned") !== "false";
+
+const SPLIT = "split";
 
 function updateLayout() {
-  const layout = DESKTOP_QUERY.matches && sidebarPinned ? "desktop" : "mobile";
-  document.documentElement.dataset.layout = layout;
-  if (layout === "desktop") {
-    asideElement.parentElement !== bodyElement &&
-      bodyElement.append(asideElement);
-  } else {
-    asideElement.parentElement !== mainElement &&
-      mainElement.append(asideElement);
-  }
+  const pref = readStored("split-view") !== "false";
+  const wasSplit = isSplit();
+  document.documentElement.dataset.layout =
+    DESKTOP_QUERY.matches && pref ? "split" : "full";
+  if (isSplit() !== wasSplit) syncFrame();
+}
+
+function isSplit() {
+  return document.documentElement.dataset.layout === SPLIT;
+}
+
+function syncFrame() {
+  if (isSplit()) navLabelElement.click();
+  else asideLabelElement.click();
 }
 
 DESKTOP_QUERY.addEventListener("change", updateLayout);
 updateLayout();
 
-pinButtonElement.addEventListener("click", () => {
-  sidebarPinned = !sidebarPinned;
-  writeToStorage("sidebar-pinned", String(sidebarPinned));
-  pinButtonElement.textContent = sidebarPinned ? "Unpin" : "Pin";
-  pinButtonElement.title = sidebarPinned ? "Unpin sidebar" : "Pin sidebar";
+layoutButtonElement.addEventListener("click", () => {
+  writeToStorage("split-view", String(!isSplit()));
   updateLayout();
-  if (!sidebarPinned) asideLabelElement.click();
 });
 
 function initFrameSelectors() {
@@ -101,19 +102,7 @@ function initFrameSelectors() {
     }
   }
 
-  asideLabelElement.click();
-
-  new IntersectionObserver((entries) => {
-    for (let i = 0; i < entries.length; i++) {
-      if (
-        !entries[i].isIntersecting &&
-        entries[i].target === asideLabelElement &&
-        focusedFrame == asideElement
-      ) {
-        navLabelElement.click();
-      }
-    }
-  }).observe(asideLabelElement);
+  syncFrame();
 }
 initFrameSelectors();
 
@@ -206,62 +195,54 @@ onFirstIntersection(navElement, () => {
     });
 });
 
-onFirstIntersection(searchElement, () => {
-  initSearch(options);
-});
+function initResizeBar() {
+  const bar = getElementById("resize-bar");
+  const key = "bar-width";
+  const max = () => parseFloat(style.getPropertyValue("--max-main-width")) / 100 * window.innerWidth;
 
-function initDesktopResizeBar() {
-  const resizeBar = getElementById("resize-bar");
-  let resize = false;
-  let startingWidth = 0;
-  let startingClientX = 0;
+  const saved = readStored(key);
+  if (saved) mainElement.style.width = `${saved}px`;
 
-  const barWidthLocalStorageKey = "bar-width";
-
-  /**
-   * @param {number | null} width
-   */
-  function setBarWidth(width) {
-    try {
-      if (typeof width === "number") {
-        mainElement.style.width = `${width}px`;
-        writeToStorage(barWidthLocalStorageKey, String(width));
-      } else {
-        mainElement.style.width = style.getPropertyValue(
-          "--default-main-width",
-        );
-        removeStored(barWidthLocalStorageKey);
-      }
-    } catch (_) {}
-  }
-
-  /**
-   * @param {MouseEvent} event
-   */
-  function mouseMoveEvent(event) {
-    if (resize) {
-      setBarWidth(startingWidth + (event.clientX - startingClientX));
+  /** @param {number | null} width */
+  function setWidth(width) {
+    if (width != null) {
+      const clamped = Math.min(width, max());
+      mainElement.style.width = `${clamped}px`;
+      writeToStorage(key, String(clamped));
+    } else {
+      mainElement.style.width = "";
+      removeStored(key);
     }
   }
 
-  resizeBar.addEventListener("mousedown", (event) => {
-    startingClientX = event.clientX;
-    startingWidth = mainElement.clientWidth;
-    resize = true;
-    window.document.documentElement.dataset.resize = "";
-    window.addEventListener("mousemove", mouseMoveEvent);
+  bar.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    bar.setPointerCapture(e.pointerId);
+    const startX = e.clientX;
+    const startW = mainElement.clientWidth;
+    document.documentElement.dataset.resize = "";
+
+    /** @param {PointerEvent} e */
+    function onMove(e) {
+      setWidth(startW + (e.clientX - startX));
+    }
+
+    function onUp() {
+      delete document.documentElement.dataset.resize;
+      bar.removeEventListener("pointermove", onMove);
+      bar.removeEventListener("pointerup", onUp);
+      bar.removeEventListener("pointercancel", onUp);
+    }
+
+    bar.addEventListener("pointermove", onMove);
+    bar.addEventListener("pointerup", onUp);
+    bar.addEventListener("pointercancel", onUp);
   });
 
-  resizeBar.addEventListener("dblclick", () => {
-    setBarWidth(null);
-  });
-
-  const setResizeFalse = () => {
-    resize = false;
-    delete window.document.documentElement.dataset.resize;
-    window.removeEventListener("mousemove", mouseMoveEvent);
-  };
-  window.addEventListener("mouseup", setResizeFalse);
-  window.addEventListener("mouseleave", setResizeFalse);
+  bar.addEventListener("dblclick", () => setWidth(null));
 }
-initDesktopResizeBar();
+initResizeBar();
+
+onFirstIntersection(searchElement, () => {
+  initSearch(options);
+});

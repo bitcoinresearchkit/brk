@@ -1,7 +1,9 @@
 main {
-  order: 1;
+  grid-row: 1;
+  grid-column: 1;
   position: relative;
   display: flex;
+  min-height: 0;
 
   &::before,
   &::after {
@@ -34,16 +36,13 @@ main {
     );
   }
 
-  html[data-layout="mobile"] & {
-    flex: 1;
-    min-height: 0;
+  html[data-layout="full"] & {
     width: 100% !important;
   }
 
-  html[data-layout="desktop"] & {
-    min-width: 300px;
-    width: var(--default-main-width);
-    max-width: 65dvw;
+  html[data-layout="split"] & {
+    min-width: 100%;
+    max-width: var(--max-main-width);
   }
 
   > nav,
@@ -57,85 +56,109 @@ main {
     flex-direction: column;
     padding-bottom: var(--bottom-area);
   }
+}
 
-  > footer {
+#resize-bar {
+  display: none;
+  grid-column: 1;
+  grid-row: 1 / -1;
+  justify-self: end;
+  width: 8px;
+  margin: 0 -4px;
+  z-index: 50;
+  position: relative;
+  cursor: col-resize;
+  touch-action: none;
+
+  &::after {
+    content: "";
     position: absolute;
+    top: 0;
     bottom: 0;
-    right: 0;
-    left: 0;
-    text-transform: uppercase;
-    z-index: 100;
-    padding-bottom: var(--main-padding);
+    left: 50%;
+    width: 2px;
+    translate: -50% 0;
+    background: transparent;
+    transition: background 0.15s;
+  }
 
-    &::before,
-    &::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: var(--main-padding);
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    &::before {
-      left: 0;
-      background-image: linear-gradient(
-        to left,
-        transparent,
-        var(--background-color)
-      );
-    }
+  &:hover {
+    background: var(--border-color);
 
     &::after {
-      right: 0;
-      background-image: linear-gradient(
-        to right,
-        transparent,
-        var(--background-color)
-      );
-    }
-
-    > fieldset {
-      display: flex;
-      gap: 1.125rem;
-      overflow-x: auto;
-      scrollbar-width: thin;
-      min-width: 0;
-      margin: -0.5rem 0;
-      padding: 0.5rem var(--main-padding);
-      pointer-events: auto;
-
-      > label,
-      > button {
-        flex-shrink: 0;
-      }
-
-      > button {
-        color: var(--off-color);
-      }
+      background: var(--color);
     }
   }
 
-  > #resize-bar {
-    display: none;
+  html[data-resize] &::after {
+    background: var(--color);
+  }
+
+  html[data-layout="split"] & {
+    display: block;
+  }
+}
+
+footer {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  overflow: hidden;
+  text-transform: uppercase;
+  padding-bottom: var(--main-padding);
+
+  html[data-layout="split"] & {
+    grid-column: 1;
+  }
+
+  &::before,
+  &::after {
+    content: "";
     position: absolute;
-    right: 0;
     top: 0;
     bottom: 0;
-    width: 4px;
-    margin: 0 -2px;
-    z-index: 50;
+    width: var(--main-padding);
+    z-index: 1;
+    pointer-events: none;
+  }
 
-    html[data-resize] &,
-    &:hover {
-      border-right: 4px;
-      cursor: col-resize;
-      border-color: var(--off-color) !important;
+  &::before {
+    left: 0;
+    background-image: linear-gradient(
+      to left,
+      transparent,
+      var(--background-color)
+    );
+  }
+
+  &::after {
+    right: 0;
+    background-image: linear-gradient(
+      to right,
+      transparent,
+      var(--background-color)
+    );
+  }
+
+  > fieldset {
+    display: flex;
+    gap: 1.125rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    min-width: 0;
+    margin: -0.5rem 0;
+    padding: 0.5rem var(--main-padding);
+    pointer-events: auto;
+
+    > label,
+    > button {
+      flex-shrink: 0;
     }
 
-    html[data-layout="desktop"] & {
-      display: block;
+    > button {
+      color: var(--off-color);
     }
   }
 }

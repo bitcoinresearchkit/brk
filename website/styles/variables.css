@@ -55,6 +55,6 @@
   }*/
   --negative-main-padding: calc(-1 * var(--main-padding));
   --font-weight-base: 400;
-  --default-main-width: 25rem;
+  --max-main-width: 70dvw;
   --bottom-area: 69vh;
 }
