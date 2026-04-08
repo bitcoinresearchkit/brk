@@ -27,11 +27,10 @@ main {
 
   &::after {
     bottom: 0;
-    height: 16rem;
+    height: var(--main-padding);
     background-image: linear-gradient(
       to bottom,
       transparent,
-      var(--background-color) 85%,
       var(--background-color)
     );
   }
@@ -54,7 +53,7 @@ main {
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding-bottom: var(--bottom-area);
+    padding-bottom: 12rem;
   }
 }
 

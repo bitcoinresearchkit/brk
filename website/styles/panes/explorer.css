@@ -1,6 +1,6 @@
 #explorer {
   width: 100%;
-  height: 100dvh;
+  height: 100%;
   display: flex;
   overflow: hidden;
 
@@ -12,35 +12,6 @@
     overflow-y: auto;
     padding: var(--main-padding) 0;
     flex-direction: column;
-
-    &::before,
-    &::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: var(--main-padding);
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    &::before {
-      left: 0;
-      background-image: linear-gradient(
-        to left,
-        transparent,
-        var(--background-color)
-      );
-    }
-
-    &::after {
-      right: 0;
-      background-image: linear-gradient(
-        to right,
-        transparent,
-        var(--background-color)
-      );
-    }
   }
 
   --cube: 4.5rem;
@@ -63,6 +34,7 @@
     @media (min-width: 768px) {
       height: 100%;
       overflow-y: auto;
+      padding-right: calc(var(--main-padding) / 2);
     }
 
     .blocks {
@@ -78,6 +50,10 @@
         flex-direction: row-reverse;
         height: 11.5rem;
         width: max-content;
+      }
+
+      @media (min-width: 768px) {
+        padding-bottom: 6rem;
       }
     }
 
@@ -192,6 +168,7 @@
 
     @media (min-width: 768px) {
       overflow-y: auto;
+      padding-left: calc(var(--main-padding) / 2);
     }
 
     h1 {
