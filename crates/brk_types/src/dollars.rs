@@ -17,7 +17,13 @@ use super::{Bitcoin, CentsSigned, Close, High, Sats, StoredF32, StoredF64};
 
 /// US Dollar amount
 #[derive(Debug, Default, Clone, Copy, Deref, Serialize, Deserialize, Pco, JsonSchema)]
-#[schemars(example = 0.0, example = 100.50, example = 30_000.0, example = 69_000.0, example = 84_342.12)]
+#[schemars(
+    example = &0.0,
+    example = &100.50,
+    example = &30_000.0,
+    example = &69_000.0,
+    example = &84_342.12
+)]
 pub struct Dollars(f64);
 
 impl Hash for Dollars {

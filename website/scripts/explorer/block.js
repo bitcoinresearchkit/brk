@@ -1,7 +1,7 @@
 import { brk } from "../utils/client.js";
 import { createMapCache } from "../utils/cache.js";
 import { createPersistedValue } from "../utils/persisted.js";
-import { formatFeeRate, renderTx, TX_PAGE_SIZE } from "./render.js";
+import { formatFeeRate, renderTx, showPanel, hidePanel, TX_PAGE_SIZE } from "./render.js";
 
 /** @typedef {[string, (b: BlockInfoV1) => string | null, ((b: BlockInfoV1) => string | null)?]} RowDef */
 
@@ -88,7 +88,7 @@ export function initBlockDetails(parent, linkHandler) {
   const code = document.createElement("code");
   const container = document.createElement("span");
   heightPrefix = document.createElement("span");
-  heightPrefix.style.opacity = "0.5";
+  heightPrefix.classList.add("dim");
   heightPrefix.style.userSelect = "none";
   heightNum = document.createElement("span");
   container.append(heightPrefix, heightNum);
@@ -170,9 +170,6 @@ function updateTxNavs(page) {
 
 /** @param {BlockInfoV1} block */
 export function update(block) {
-  show();
-  el.scrollTop = 0;
-
   const str = block.height.toString();
   heightPrefix.textContent = "#" + "0".repeat(7 - str.length);
   heightNum.textContent = str;
@@ -200,13 +197,8 @@ export function update(block) {
   txObserver.observe(txSection);
 }
 
-export function show() {
-  el.hidden = false;
-}
-
-export function hide() {
-  el.hidden = true;
-}
+export function show() { showPanel(el); }
+export function hide() { hidePanel(el); }
 
 /** @param {number} page @param {boolean} [pushUrl] */
 async function loadTxPage(page, pushUrl = true) {

@@ -1,12 +1,34 @@
-import { formatBtc, formatFeeRate, renderRows, renderTx } from "./render.js";
+import { formatBtc, formatFeeRate, renderRows, renderTx, showPanel, hidePanel } from "./render.js";
 
-/**
- * @param {Transaction} tx
- * @param {HTMLDivElement} el
- */
-export function showTxFromData(tx, el) {
-  el.hidden = false;
-  el.scrollTop = 0;
+/** @type {HTMLDivElement} */ let el;
+
+/** @param {HTMLElement} parent @param {(e: MouseEvent) => void} linkHandler */
+export function initTxDetails(parent, linkHandler) {
+  el = document.createElement("div");
+  el.id = "tx-details";
+  el.hidden = true;
+  parent.append(el);
+  el.addEventListener("click", linkHandler);
+}
+
+export function show() { showPanel(el); }
+export function hide() { hidePanel(el); }
+
+export function clear() {
+  if (el.children.length) {
+    el.querySelector(".transactions")?.remove();
+    for (const v of el.querySelectorAll(".row .value")) {
+      v.classList.add("dim");
+    }
+  } else {
+    const title = document.createElement("h1");
+    title.textContent = "Transaction";
+    el.append(title);
+  }
+}
+
+/** @param {Transaction} tx */
+export function update(tx) {
   el.innerHTML = "";
 
   const title = document.createElement("h1");

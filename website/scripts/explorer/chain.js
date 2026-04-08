@@ -57,23 +57,19 @@ export function initChain(parent, callbacks) {
 }
 
 /** @param {string} hash */
-export function getBlock(hash) {
-  return blocksByHash.get(hash);
-}
-
-/** @param {string} hash */
 export function findCube(hash) {
   return /** @type {HTMLDivElement | null} */ (
     blocksEl.querySelector(`[data-hash="${hash}"]`)
   );
 }
 
-export function lastCube() {
-  return /** @type {HTMLDivElement | null} */ (blocksEl.lastElementChild);
+export function deselectCube() {
+  if (selectedCube) selectedCube.classList.remove("selected");
+  selectedCube = null;
 }
 
-/** @param {HTMLDivElement} cube @param {{ scroll?: "smooth" | "instant" }} [opts] */
-export function selectCube(cube, { scroll } = {}) {
+/** @param {HTMLDivElement} cube @param {{ scroll?: "smooth" | "instant", silent?: boolean }} [opts] */
+export function selectCube(cube, { scroll, silent } = {}) {
   const changed = cube !== selectedCube;
   if (changed) {
     if (selectedCube) selectedCube.classList.remove("selected");
@@ -81,10 +77,12 @@ export function selectCube(cube, { scroll } = {}) {
     cube.classList.add("selected");
   }
   if (scroll) cube.scrollIntoView({ behavior: scroll });
-  const hash = cube.dataset.hash;
-  if (hash) {
-    const block = blocksByHash.get(hash);
-    if (block) onSelect(block);
+  if (!silent) {
+    const hash = cube.dataset.hash;
+    if (hash) {
+      const block = blocksByHash.get(hash);
+      if (block) onSelect(block);
+    }
   }
 }
 
@@ -127,7 +125,7 @@ function appendNewerBlocks(blocks) {
   return true;
 }
 
-/** @param {number | null} [height] */
+/** @param {number | null} [height] @returns {Promise<BlockHash>} */
 export async function loadInitial(height) {
   const blocks =
     height != null
@@ -140,6 +138,7 @@ export async function loadInitial(height) {
   reachedTip = height == null;
   observeOldestEdge();
   if (!reachedTip) await loadNewer();
+  return blocks[0].id;
 }
 
 export async function poll() {
@@ -206,14 +205,14 @@ function createBlockCube(block) {
   const min = document.createElement("span");
   min.innerHTML = formatFeeRate(feeRange[0]);
   const dash = document.createElement("span");
-  dash.style.opacity = "0.5";
+  dash.classList.add("dim");
   dash.innerHTML = `-`;
   const max = document.createElement("span");
   max.innerHTML = formatFeeRate(feeRange[6]);
   range.append(min, dash, max);
   feesEl.append(range);
   const unit = document.createElement("p");
-  unit.style.opacity = "0.5";
+  unit.classList.add("dim");
   unit.innerHTML = `sat/vB`;
   feesEl.append(unit);
 

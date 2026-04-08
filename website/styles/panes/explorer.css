@@ -4,6 +4,10 @@
   display: flex;
   overflow: hidden;
 
+  .dim {
+    opacity: 0.5;
+  }
+
   @media (max-width: 767px) {
     overflow-y: auto;
     padding: var(--main-padding) 0;
@@ -180,7 +184,8 @@
   }
 
   #block-details,
-  #tx-details {
+  #tx-details,
+  #addr-details {
     flex: 1;
     font-size: var(--font-size-sm);
     line-height: var(--line-height-sm);

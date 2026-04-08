@@ -25,11 +25,11 @@ use super::Date;
     JsonSchema,
 )]
 #[schemars(
-    example = 1231006505,
-    example = 1672531200,
-    example = 1713571200,
-    example = 1743631892,
-    example = 1759000868
+    example = &1231006505,
+    example = &1672531200,
+    example = &1713571200,
+    example = &1743631892,
+    example = &1759000868
 )]
 pub struct Timestamp(u32);
 

@@ -31,11 +31,11 @@ use super::{Bitcoin, Cents, Dollars, Height};
     JsonSchema,
 )]
 #[schemars(
-    example = 0,
-    example = 546,
-    example = 10000,
-    example = 100_000_000,
-    example = 2_100_000_000_000_000_u64
+    example = &0,
+    example = &546,
+    example = &10000,
+    example = &100_000_000,
+    example = &2_100_000_000_000_000_u64
 )]
 pub struct Sats(u64);
 

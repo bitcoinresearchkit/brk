@@ -9,7 +9,12 @@ impl Query {
     pub fn block_fee_rates(&self, time_period: TimePeriod) -> Result<Vec<BlockFeeRatesEntry>> {
         let bw = BlockWindow::new(self, time_period);
         let computer = self.computer();
-        let frd = &computer.transactions.fees.effective_fee_rate.distribution.block;
+        let frd = &computer
+            .transactions
+            .fees
+            .effective_fee_rate
+            .distribution
+            .block;
 
         let min = frd.min.height.collect_range_at(bw.start, bw.end);
         let pct10 = frd.pct10.height.collect_range_at(bw.start, bw.end);

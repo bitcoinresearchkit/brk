@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 #[derive(
     Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
-#[schemars(example = 0, example = 1, example = 2, example = 5, example = 10)]
+#[schemars(example = &0, example = &1, example = &2, example = &5, example = &10)]
 pub struct Vin(u16);
 
 impl Vin {

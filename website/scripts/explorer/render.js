@@ -1,5 +1,16 @@
 export const TX_PAGE_SIZE = 25;
 
+/** @param {HTMLElement} el */
+export function showPanel(el) {
+  el.hidden = false;
+  el.scrollTop = 0;
+}
+
+/** @param {HTMLElement} el */
+export function hidePanel(el) {
+  el.hidden = true;
+}
+
 /** @param {number} sats */
 export function formatBtc(sats) {
   return (sats / 1e8).toFixed(8);
@@ -33,7 +44,7 @@ export function createHeightElement(height) {
   const container = document.createElement("span");
   const str = height.toString();
   const prefix = document.createElement("span");
-  prefix.style.opacity = "0.5";
+  prefix.classList.add("dim");
   prefix.style.userSelect = "none";
   prefix.textContent = "#" + "0".repeat(7 - str.length);
   const num = document.createElement("span");
@@ -61,12 +72,6 @@ export function renderRows(rows, parent) {
     parent.append(row);
   }
 }
-
-/**
- * @param {Transaction} tx
- * @param {string} [coinbaseAscii]
- */
-const IO_LIMIT = 10;
 
 /**
  * @param {TxIn} vin
@@ -142,16 +147,16 @@ function renderOutput(vout) {
  * @param {(item: T) => HTMLElement} render
  * @param {HTMLElement} container
  */
-function renderCapped(items, render, container) {
-  const limit = Math.min(items.length, IO_LIMIT);
+function renderCapped(items, render, container, max = 10) {
+  const limit = Math.min(items.length, max);
   for (let i = 0; i < limit; i++) container.append(render(items[i]));
-  if (items.length > IO_LIMIT) {
+  if (items.length > max) {
     const btn = document.createElement("button");
     btn.classList.add("show-more");
-    btn.textContent = `Show ${items.length - IO_LIMIT} more`;
+    btn.textContent = `Show ${items.length - max} more`;
     btn.addEventListener("click", () => {
       btn.remove();
-      for (let i = IO_LIMIT; i < items.length; i++) container.append(render(items[i]));
+      for (let i = max; i < items.length; i++) container.append(render(items[i]));
     });
     container.append(btn);
   }

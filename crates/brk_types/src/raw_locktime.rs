@@ -5,7 +5,7 @@ use vecdb::{Formattable, Pco};
 
 /// Transaction locktime. Values below 500,000,000 are interpreted as block heights; values at or above are Unix timestamps.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Pco, JsonSchema)]
-#[schemars(example = 0, example = 840000, example = 840001, example = 1713571200, example = 4294967295_u32)]
+#[schemars(example = &0, example = &840000, example = &840001, example = &1713571200)]
 pub struct RawLockTime(u32);
 
 impl From<LockTime> for RawLockTime {

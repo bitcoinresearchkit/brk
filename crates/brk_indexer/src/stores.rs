@@ -401,6 +401,4 @@ impl Stores {
                 .remove(AddrIndexTxIndex::from((addr_index, tx_index)));
         }
     }
-
 }
-

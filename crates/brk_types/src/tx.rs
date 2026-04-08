@@ -1,6 +1,5 @@
 use crate::{
-    FeeRate, RawLockTime, Sats, TxIn, TxIndex, TxOut, TxStatus, TxVersionRaw, Txid, VSize,
-    Weight,
+    FeeRate, RawLockTime, Sats, TxIn, TxIndex, TxOut, TxStatus, TxVersionRaw, Txid, VSize, Weight,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

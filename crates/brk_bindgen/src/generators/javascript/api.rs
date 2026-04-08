@@ -127,9 +127,17 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
                 writeln!(output, "    if (format === 'csv') {{").unwrap();
                 writeln!(output, "      return this.getText(path, {{ signal }});").unwrap();
                 writeln!(output, "    }}").unwrap();
-                writeln!(output, "    return this.getJson(path, {{ signal, onUpdate }});").unwrap();
+                writeln!(
+                    output,
+                    "    return this.getJson(path, {{ signal, onUpdate }});"
+                )
+                .unwrap();
             } else {
-                writeln!(output, "    return this.getJson(path, {{ signal, onUpdate }});").unwrap();
+                writeln!(
+                    output,
+                    "    return this.getJson(path, {{ signal, onUpdate }});"
+                )
+                .unwrap();
             }
         }
 

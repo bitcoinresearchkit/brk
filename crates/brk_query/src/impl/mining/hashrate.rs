@@ -62,10 +62,7 @@ impl Query {
         let mut hashrates = Vec::with_capacity(total_days / step + 1);
         let mut di = start_day1.to_usize();
         while di <= end_day1.to_usize() {
-            if let (Some(Some(hr)), Some(timestamp)) = (
-                hr_cursor.get(di),
-                ts_cursor.get(di),
-            ) {
+            if let (Some(Some(hr)), Some(timestamp)) = (hr_cursor.get(di), ts_cursor.get(di)) {
                 hashrates.push(HashrateEntry {
                     timestamp,
                     avg_hashrate: *hr as u128,

@@ -4,10 +4,7 @@ use std::{
     any::Any,
     net::SocketAddr,
     path::PathBuf,
-    sync::{
-        Arc,
-        atomic::AtomicU64,
-    },
+    sync::{Arc, atomic::AtomicU64},
     time::{Duration, Instant},
 };
 

@@ -53,8 +53,18 @@ impl Query {
         };
 
         // Get block info for status
-        let height = indexer.vecs.transactions.height.collect_one(tx_index).unwrap();
-        let block_hash = indexer.vecs.blocks.blockhash.reader().get(height.to_usize());
+        let height = indexer
+            .vecs
+            .transactions
+            .height
+            .collect_one(tx_index)
+            .unwrap();
+        let block_hash = indexer
+            .vecs
+            .blocks
+            .blockhash
+            .reader()
+            .get(height.to_usize());
         let block_time = indexer.vecs.blocks.timestamp.collect_one(height).unwrap();
 
         Ok(TxStatus {
@@ -110,7 +120,10 @@ impl Query {
     }
 
     pub fn outspend(&self, txid: &Txid, vout: Vout) -> Result<TxOutspend> {
-        if self.mempool().is_some_and(|m| m.get_txs().contains_key(txid)) {
+        if self
+            .mempool()
+            .is_some_and(|m| m.get_txs().contains_key(txid))
+        {
             return Ok(TxOutspend::UNSPENT);
         }
         let (_, first_txout, output_count) = self.resolve_tx_outputs(txid)?;
@@ -150,8 +163,7 @@ impl Query {
             }
 
             let spending_tx_index = input_tx_cursor.get(usize::from(txin_index)).unwrap();
-            let spending_first_txin =
-                first_txin_cursor.get(spending_tx_index.to_usize()).unwrap();
+            let spending_first_txin = first_txin_cursor.get(spending_tx_index.to_usize()).unwrap();
             let vin = Vin::from(usize::from(txin_index) - usize::from(spending_first_txin));
             let spending_txid = txid_reader.get(spending_tx_index.to_usize());
             let spending_height = height_cursor.get(spending_tx_index.to_usize()).unwrap();

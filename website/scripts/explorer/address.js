@@ -1,32 +1,81 @@
 import { brk } from "../utils/client.js";
 import { createMapCache } from "../utils/cache.js";
 import { latestPrice } from "../utils/price.js";
-import { formatBtc, renderRows, renderTx, TX_PAGE_SIZE } from "./render.js";
+import { formatBtc, renderTx, showPanel, hidePanel, TX_PAGE_SIZE } from "./render.js";
 
-/** @type {MapCache<Transaction[]>} */
-const addrTxCache = createMapCache(200);
+/** @type {HTMLDivElement} */ let el;
+/** @type {HTMLSpanElement[]} */ let valueEls;
+/** @type {HTMLDivElement} */ let txSection;
+/** @type {string} */ let currentAddr = "";
+
+const statsCache = createMapCache(50);
+const txCache = createMapCache(200);
+
+const ROW_LABELS = [
+  "Address",
+  "Confirmed Balance",
+  "Pending",
+  "Confirmed UTXOs",
+  "Pending UTXOs",
+  "Total Received",
+  "Tx Count",
+  "Type",
+  "Avg Cost Basis",
+];
+
+/** @param {HTMLElement} parent @param {(e: MouseEvent) => void} linkHandler */
+export function initAddrDetails(parent, linkHandler) {
+  el = document.createElement("div");
+  el.id = "addr-details";
+  el.hidden = true;
+  parent.append(el);
+  el.addEventListener("click", linkHandler);
+
+  const title = document.createElement("h1");
+  title.textContent = "Address";
+  el.append(title);
+
+  valueEls = ROW_LABELS.map((label) => {
+    const row = document.createElement("div");
+    row.classList.add("row");
+    const labelEl = document.createElement("span");
+    labelEl.classList.add("label");
+    labelEl.textContent = label;
+    const valueEl = document.createElement("span");
+    valueEl.classList.add("value");
+    row.append(labelEl, valueEl);
+    el.append(row);
+    return valueEl;
+  });
+
+  txSection = document.createElement("div");
+  txSection.classList.add("transactions");
+  const heading = document.createElement("h2");
+  heading.textContent = "Transactions";
+  txSection.append(heading);
+  el.append(txSection);
+}
 
 /**
  * @param {string} address
- * @param {HTMLDivElement} el
- * @param {{ signal: AbortSignal, cache: MapCache<AddrStats> }} options
+ * @param {AbortSignal} signal
  */
-export async function showAddrDetail(address, el, { signal, cache }) {
-  el.hidden = false;
-  el.scrollTop = 0;
-  el.innerHTML = "";
+export async function update(address, signal) {
+  currentAddr = address;
+  valueEls[0].textContent = address;
+  for (let i = 1; i < valueEls.length; i++) {
+    valueEls[i].textContent = "...";
+    valueEls[i].classList.add("dim");
+  }
+  while (txSection.children.length > 1) txSection.lastChild?.remove();
 
   try {
-    const cached = cache.get(address);
+    const cached = statsCache.get(address);
     const stats = cached ?? (await brk.getAddress(address, { signal }));
-    if (!cached) cache.set(address, stats);
-    if (signal.aborted) return;
+    if (!cached) statsCache.set(address, stats);
+    if (signal.aborted || currentAddr !== address) return;
+
     const chain = stats.chainStats;
-
-    const title = document.createElement("h1");
-    title.textContent = "Address";
-    el.append(title);
-
     const balance = chain.fundedTxoSum - chain.spentTxoSum;
     const mempool = stats.mempoolStats;
     const pending = mempool ? mempool.fundedTxoSum - mempool.spentTxoSum : 0;
@@ -40,40 +89,26 @@ export async function showAddrDetail(address, el, { signal, cache }) {
         ? ` $${((sats / 1e8) * price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         : "";
 
-    renderRows(
-      [
-        ["Address", address],
-        ["Confirmed Balance", `${formatBtc(balance)} BTC${fmtUsd(balance)}`],
-        [
-          "Pending",
-          `${pending >= 0 ? "+" : ""}${formatBtc(pending)} BTC${fmtUsd(pending)}`,
-        ],
-        ["Confirmed UTXOs", confirmedUtxos.toLocaleString()],
-        ["Pending UTXOs", pendingUtxos.toLocaleString()],
-        ["Total Received", `${formatBtc(chain.fundedTxoSum)} BTC`],
-        ["Tx Count", chain.txCount.toLocaleString()],
-        [
-          "Type",
-          /** @type {any} */ ((stats).addrType ?? "unknown")
-            .replace(/^v\d+_/, "")
-            .toUpperCase(),
-        ],
-        [
-          "Avg Cost Basis",
-          chain.realizedPrice
-            ? `$${Number(chain.realizedPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-            : "N/A",
-        ],
-      ],
-      el,
-    );
+    const values = [
+      address,
+      `${formatBtc(balance)} BTC${fmtUsd(balance)}`,
+      `${pending >= 0 ? "+" : ""}${formatBtc(pending)} BTC${fmtUsd(pending)}`,
+      confirmedUtxos.toLocaleString(),
+      pendingUtxos.toLocaleString(),
+      `${formatBtc(chain.fundedTxoSum)} BTC`,
+      chain.txCount.toLocaleString(),
+      (/** @type {any} */ (stats).addrType ?? "unknown")
+        .replace(/^v\d+_/, "")
+        .toUpperCase(),
+      chain.realizedPrice
+        ? `$${Number(chain.realizedPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : "N/A",
+    ];
 
-    const section = document.createElement("div");
-    section.classList.add("transactions");
-    const heading = document.createElement("h2");
-    heading.textContent = "Transactions";
-    section.append(heading);
-    el.append(section);
+    for (let i = 0; i < valueEls.length; i++) {
+      valueEls[i].textContent = values[i];
+      valueEls[i].classList.remove("dim");
+    }
 
     let loading = false;
     let pageIndex = 0;
@@ -81,35 +116,44 @@ export async function showAddrDetail(address, el, { signal, cache }) {
     let afterTxid;
 
     const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && !loading && pageIndex * TX_PAGE_SIZE < chain.txCount)
+      if (
+        entries[0].isIntersecting &&
+        !loading &&
+        pageIndex * TX_PAGE_SIZE < chain.txCount
+      )
         loadMore();
     });
 
     async function loadMore() {
+      if (currentAddr !== address) return;
       loading = true;
       const key = `${address}:${pageIndex}`;
       try {
-        const cached = addrTxCache.get(key);
-        const txs = cached ?? await brk.getAddressTxs(address, afterTxid, { signal });
-        if (!cached) addrTxCache.set(key, txs);
-        for (const tx of txs) section.append(renderTx(tx));
+        const cached = txCache.get(key);
+        const txs =
+          cached ?? (await brk.getAddressTxs(address, afterTxid, { signal }));
+        if (!cached) txCache.set(key, txs);
+        if (currentAddr !== address) return;
+        for (const tx of txs) txSection.append(renderTx(tx));
         pageIndex++;
         if (txs.length) {
           afterTxid = txs[txs.length - 1].txid;
           observer.disconnect();
-          const last = section.lastElementChild;
+          const last = txSection.lastElementChild;
           if (last) observer.observe(last);
         }
       } catch (e) {
-        console.error("explorer addr txs:", e);
-        pageIndex = chain.txCount; // stop loading
+        if (!signal.aborted) console.error("explorer addr txs:", e);
+        pageIndex = chain.txCount;
       }
       loading = false;
     }
 
     await loadMore();
   } catch (e) {
-    console.error("explorer addr:", e);
-    el.textContent = "Address not found";
+    if (!signal.aborted) console.error("explorer addr:", e);
   }
 }
+
+export function show() { showPanel(el); }
+export function hide() { hidePanel(el); }

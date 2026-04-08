@@ -23,7 +23,13 @@ use crate::VSize;
     Pco,
     JsonSchema,
 )]
-#[schemars(example = 396, example = 561, example = 900, example = 2_000_000, example = 3_993_472)]
+#[schemars(
+    example = &396,
+    example = &561,
+    example = &900,
+    example = &2_000_000,
+    example = &3_993_472
+)]
 pub struct Weight(u64);
 
 impl Weight {

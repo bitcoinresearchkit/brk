@@ -26,7 +26,6 @@ pub struct CpfpInfo {
     pub adjusted_vsize: Option<VSize>,
 }
 
-
 /// A transaction in a CPFP relationship
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct CpfpEntry {

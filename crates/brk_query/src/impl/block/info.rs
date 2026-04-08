@@ -252,7 +252,6 @@ impl Query {
         let fa_pct90 = fad.pct90.height.collect_range_at(begin, end);
         let fa_max = fad.max.height.collect_range_at(begin, end);
 
-
         // Bulk read median time window
         let median_start = begin.saturating_sub(10);
         let median_timestamps = indexer
@@ -272,20 +271,47 @@ impl Query {
 
             // Single reader for header + coinbase (adjacent in blk file)
             let varint_len = Self::compact_size_len(tx_count) as usize;
-            let (raw_header, coinbase_raw, coinbase_address, coinbase_addresses, coinbase_signature, coinbase_signature_ascii, scriptsig_bytes) = match reader.reader_at(positions[i]) {
+            let (
+                raw_header,
+                coinbase_raw,
+                coinbase_address,
+                coinbase_addresses,
+                coinbase_signature,
+                coinbase_signature_ascii,
+                scriptsig_bytes,
+            ) = match reader.reader_at(positions[i]) {
                 Ok(mut blk) => {
                     let mut header_buf = [0u8; HEADER_SIZE];
                     if blk.read_exact(&mut header_buf).is_err() {
-                        ([0u8; HEADER_SIZE], String::new(), None, vec![], String::new(), String::new(), vec![])
+                        (
+                            [0u8; HEADER_SIZE],
+                            String::new(),
+                            None,
+                            vec![],
+                            String::new(),
+                            String::new(),
+                            vec![],
+                        )
                     } else {
                         // Skip tx count varint
                         let mut skip = [0u8; 5];
                         let _ = blk.read_exact(&mut skip[..varint_len]);
                         let coinbase = Self::parse_coinbase_from_read(blk);
-                        (header_buf, coinbase.0, coinbase.1, coinbase.2, coinbase.3, coinbase.4, coinbase.5)
+                        (
+                            header_buf, coinbase.0, coinbase.1, coinbase.2, coinbase.3, coinbase.4,
+                            coinbase.5,
+                        )
                     }
                 }
-                Err(_) => ([0u8; HEADER_SIZE], String::new(), None, vec![], String::new(), String::new(), vec![]),
+                Err(_) => (
+                    [0u8; HEADER_SIZE],
+                    String::new(),
+                    None,
+                    vec![],
+                    String::new(),
+                    String::new(),
+                    vec![],
+                ),
             };
             let header = Self::decode_header(&raw_header)?;
 
@@ -517,12 +543,20 @@ impl Query {
     fn parse_coinbase_from_read(
         reader: impl Read,
     ) -> (String, Option<String>, Vec<String>, String, String, Vec<u8>) {
-        let empty = (String::new(), None, vec![], String::new(), String::new(), vec![]);
+        let empty = (
+            String::new(),
+            None,
+            vec![],
+            String::new(),
+            String::new(),
+            vec![],
+        );
 
-        let tx = match bitcoin::Transaction::consensus_decode(&mut bitcoin::io::FromStd::new(reader)) {
-            Ok(tx) => tx,
-            Err(_) => return empty,
-        };
+        let tx =
+            match bitcoin::Transaction::consensus_decode(&mut bitcoin::io::FromStd::new(reader)) {
+                Ok(tx) => tx,
+                Err(_) => return empty,
+            };
 
         let scriptsig_bytes: Vec<u8> = tx
             .input
@@ -532,10 +566,7 @@ impl Query {
 
         let coinbase_raw = scriptsig_bytes.to_lower_hex_string();
 
-        let coinbase_signature_ascii: String = scriptsig_bytes
-            .iter()
-            .map(|&b| b as char)
-            .collect();
+        let coinbase_signature_ascii: String = scriptsig_bytes.iter().map(|&b| b as char).collect();
 
         let mut coinbase_addresses: Vec<String> = tx
             .output

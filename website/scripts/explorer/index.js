@@ -6,8 +6,8 @@ import {
   loadInitial,
   poll,
   selectCube,
+  deselectCube,
   findCube,
-  lastCube,
   clear as clearChain,
 } from "./chain.js";
 import {
@@ -16,20 +16,28 @@ import {
   show as showBlock,
   hide as hideBlock,
 } from "./block.js";
-import { showTxFromData } from "./tx.js";
-import { showAddrDetail } from "./address.js";
+import {
+  initTxDetails,
+  update as updateTx,
+  clear as clearTx,
+  show as showTx,
+  hide as hideTx,
+} from "./tx.js";
+import {
+  initAddrDetails,
+  update as updateAddr,
+  show as showAddr,
+  hide as hideAddr,
+} from "./address.js";
 
 /** @returns {string[]} */
 function pathSegments() {
   return window.location.pathname.split("/").filter((v) => v);
 }
 
-/** @type {HTMLDivElement} */ let secondaryPanel;
 /** @type {number | undefined} */ let pollInterval;
-/** @type {Transaction | null} */ let pendingTx = null;
 let navController = new AbortController();
 const txCache = createMapCache(50);
-const addrCache = createMapCache(50);
 
 function navigate() {
   navController.abort();
@@ -37,14 +45,10 @@ function navigate() {
   return navController.signal;
 }
 
-function showBlockPanel() {
-  showBlock();
-  secondaryPanel.hidden = true;
-}
-
-function showSecondaryPanel() {
-  hideBlock();
-  secondaryPanel.hidden = false;
+function showPanel(/** @type {"block" | "tx" | "addr"} */ which) {
+  which === "block" ? showBlock() : hideBlock();
+  which === "tx" ? showTx() : hideTx();
+  which === "addr" ? showAddr() : hideAddr();
 }
 
 /** @param {MouseEvent} e */
@@ -71,9 +75,10 @@ export function init() {
   initChain(explorerElement, {
     onSelect: (block) => {
       updateBlock(block);
-      showBlockPanel();
+      showPanel("block");
     },
     onCubeClick: (cube) => {
+      navigate();
       const hash = cube.dataset.hash;
       if (hash) history.pushState(null, "", `/block/${hash}`);
       selectCube(cube);
@@ -81,12 +86,8 @@ export function init() {
   });
 
   initBlockDetails(explorerElement, handleLinkClick);
-
-  secondaryPanel = document.createElement("div");
-  secondaryPanel.id = "tx-details";
-  secondaryPanel.hidden = true;
-  explorerElement.append(secondaryPanel);
-  secondaryPanel.addEventListener("click", handleLinkClick);
+  initTxDetails(explorerElement, handleLinkClick);
+  initAddrDetails(explorerElement, handleLinkClick);
 
   new MutationObserver(() => {
     if (explorerElement.hidden) stopPolling();
@@ -105,7 +106,7 @@ export function init() {
     if (kind === "block" && value) navigateToBlock(value, false);
     else if (kind === "tx" && value) navigateToTx(value);
     else if (kind === "address" && value) navigateToAddr(value);
-    else showBlockPanel();
+    else showPanel("block");
   });
 
   load();
@@ -126,116 +127,97 @@ function stopPolling() {
 
 async function load() {
   try {
-    const height = await resolveStartHeight();
-    await loadInitial(height);
-    route();
+    const [kind, value] = pathSegments();
+
+    if (kind === "tx" && value) {
+      const tx = txCache.get(value) ?? (await brk.getTx(value));
+      txCache.set(value, tx);
+      const startHash = await loadInitial(tx.status?.blockHeight ?? null);
+      const cube = tx.status?.blockHash ? findCube(tx.status.blockHash) : findCube(startHash);
+      if (cube) selectCube(cube, { silent: true });
+      updateTx(tx);
+      showPanel("tx");
+      return;
+    }
+
+    if (kind === "address" && value) {
+      const startHash = await loadInitial(null);
+      const cube = findCube(startHash);
+      if (cube) selectCube(cube, { silent: true });
+      navigateToAddr(value);
+      return;
+    }
+
+    const height =
+      kind === "block" && value
+        ? /^\d+$/.test(value)
+          ? Number(value)
+          : (await brk.getBlockV1(value)).height
+        : null;
+    const startHash = await loadInitial(height);
+    const cube = findCube(startHash);
+    if (cube) selectCube(cube, { scroll: "instant" });
   } catch (e) {
     console.error("explorer load:", e);
-  }
-}
-
-/** @param {AbortSignal} [signal] @returns {Promise<number | null>} */
-async function resolveStartHeight(signal) {
-  const [kind, value] = pathSegments();
-  if (!value) return null;
-  if (kind === "block") {
-    if (/^\d+$/.test(value)) return Number(value);
-    return (await brk.getBlockV1(value, { signal })).height;
-  }
-  if (kind === "tx") {
-    const tx = txCache.get(value) ?? (await brk.getTx(value, { signal }));
-    txCache.set(value, tx);
-    pendingTx = tx;
-    return tx.status?.blockHeight ?? null;
-  }
-  return null;
-}
-
-function route() {
-  const [kind, value] = pathSegments();
-  if (pendingTx) {
-    const hash = pendingTx.status?.blockHash;
-    const cube = hash ? findCube(hash) : null;
-    if (cube) selectCube(cube, { scroll: "instant" });
-    showTxFromData(pendingTx, secondaryPanel);
-    showSecondaryPanel();
-    pendingTx = null;
-  } else if (kind === "address" && value) {
-    const cube = lastCube();
-    if (cube) selectCube(cube, { scroll: "instant" });
-    navigateToAddr(value);
-  } else {
-    const cube = lastCube();
-    if (cube) selectCube(cube, { scroll: "instant" });
   }
 }
 
 /** @param {string} hash @param {boolean} [pushUrl] */
 async function navigateToBlock(hash, pushUrl = true) {
   if (pushUrl) history.pushState(null, "", `/block/${hash}`);
-  const cube = findCube(hash);
-  if (cube) {
-    selectCube(cube, { scroll: "smooth" });
-  } else {
-    const signal = navigate();
-    try {
-      clearChain();
-      await loadInitial(await resolveStartHeight(signal));
-      if (signal.aborted) return;
-      route();
-    } catch (e) {
-      if (!signal.aborted) console.error("explorer block:", e);
-    }
+  const existing = findCube(hash);
+  if (existing) {
+    navigate();
+    selectCube(existing, { scroll: "smooth" });
+    return;
+  }
+  const signal = navigate();
+  try {
+    clearChain();
+    const height = /^\d+$/.test(hash)
+      ? Number(hash)
+      : (await brk.getBlockV1(hash, { signal })).height;
+    if (signal.aborted) return;
+    const startHash = await loadInitial(height);
+    if (signal.aborted) return;
+    const cube = findCube(hash) ?? findCube(startHash);
+    if (cube) selectCube(cube);
+  } catch (e) {
+    if (!signal.aborted) console.error("explorer block:", e);
   }
 }
 
 /** @param {string} txid */
 async function navigateToTx(txid) {
-  const cached = txCache.get(txid);
-  if (cached) {
-    navigate();
-    showTxAndSelectBlock(cached);
-    return;
-  }
   const signal = navigate();
+  clearTx();
+  showPanel("tx");
   try {
-    const tx = await brk.getTx(txid, {
-      signal,
-      onUpdate: (tx) => {
-        txCache.set(txid, tx);
-        if (!signal.aborted) showTxAndSelectBlock(tx);
-      },
-    });
+    const tx = txCache.get(txid) ?? (await brk.getTx(txid, { signal }));
+    if (signal.aborted) return;
     txCache.set(txid, tx);
+
+    if (tx.status?.blockHash) {
+      let cube = findCube(tx.status.blockHash);
+      if (!cube) {
+        clearChain();
+        const startHash = await loadInitial(tx.status.blockHeight ?? null);
+        if (signal.aborted) return;
+        cube = findCube(tx.status.blockHash) ?? findCube(startHash);
+      }
+      if (cube) selectCube(cube, { scroll: "smooth", silent: true });
+    }
+
+    updateTx(tx);
   } catch (e) {
     if (!signal.aborted) console.error("explorer tx:", e);
   }
 }
 
-/** @param {Transaction} tx */
-function showTxAndSelectBlock(tx) {
-  if (tx.status?.blockHash) {
-    const cube = findCube(tx.status.blockHash);
-    if (cube) {
-      selectCube(cube, { scroll: "smooth" });
-      showTxFromData(tx, secondaryPanel);
-      showSecondaryPanel();
-      return;
-    }
-    pendingTx = tx;
-    clearChain();
-    loadInitial(tx.status.blockHeight ?? null).then(() => {
-      if (!navController.signal.aborted) route();
-    });
-    return;
-  }
-  showTxFromData(tx, secondaryPanel);
-  showSecondaryPanel();
-}
-
 /** @param {string} address */
 function navigateToAddr(address) {
-  const signal = navigate();
-  showAddrDetail(address, secondaryPanel, { signal, cache: addrCache });
-  showSecondaryPanel();
+  navigate();
+  deselectCube();
+  updateAddr(address, navController.signal);
+  showPanel("addr");
 }

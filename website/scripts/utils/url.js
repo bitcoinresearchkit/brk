@@ -11,14 +11,21 @@ function processPathname(pathname) {
 const chartParamsWhitelist = ["range"];
 
 /**
+ * @param {string | string[]} [pathname]
+ * @param {URLSearchParams} [urlParams]
+ */
+function buildUrl(pathname, urlParams) {
+  const path = processPathname(pathname);
+  const query = (urlParams ?? new URLSearchParams(window.location.search)).toString();
+  return `/${path}${query ? `?${query}` : ""}`;
+}
+
+/**
  * @param {string | string[]} pathname
  */
 export function pushHistory(pathname) {
-  const urlParams = new URLSearchParams(window.location.search);
-  pathname = processPathname(pathname);
   try {
-    const url = `/${pathname}?${urlParams.toString()}`;
-    window.history.pushState(null, "", url);
+    window.history.pushState(null, "", buildUrl(pathname));
   } catch (_) {}
 }
 
@@ -28,11 +35,8 @@ export function pushHistory(pathname) {
  * @param {string | string[]} [args.pathname]
  */
 export function replaceHistory({ urlParams, pathname }) {
-  urlParams ||= new URLSearchParams(window.location.search);
-  pathname = processPathname(pathname);
   try {
-    const url = `/${pathname}?${urlParams.toString()}`;
-    window.history.replaceState(null, "", url);
+    window.history.replaceState(null, "", buildUrl(pathname, urlParams));
   } catch (_) {}
 }
 

@@ -98,7 +98,7 @@ main {
 
     > fieldset {
       display: flex;
-      gap: 1.25rem;
+      gap: 1.125rem;
       overflow-x: auto;
       scrollbar-width: thin;
       min-width: 0;
