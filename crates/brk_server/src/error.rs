@@ -173,3 +173,63 @@ impl IntoResponse for Error {
             .into_response()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use axum::{
+        body::to_bytes,
+        http::{
+            StatusCode,
+            header::{CACHE_CONTROL, CONTENT_TYPE, ETAG},
+        },
+        response::IntoResponse,
+    };
+    use brk_error::Error as BrkError;
+
+    use super::Error;
+
+    #[tokio::test]
+    async fn into_response_serializes_problem_json() {
+        let response = Error::bad_request("bad input").into_response();
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(
+            response.headers().get(CONTENT_TYPE).unwrap(),
+            "application/problem+json",
+        );
+
+        let body = to_bytes(response.into_body(), 1024).await.unwrap();
+        let parsed: serde_json::Value = serde_json::from_slice(&body).unwrap();
+
+        assert_eq!(parsed["error"]["type"], "invalid_request");
+        assert_eq!(parsed["error"]["code"], "bad_request");
+        assert_eq!(parsed["error"]["message"], "bad input");
+        assert_eq!(parsed["error"]["doc_url"], "/api");
+    }
+
+    #[tokio::test]
+    async fn into_response_with_etag_sets_cache_headers() {
+        let response = Error::not_found("missing").into_response_with_etag("v1");
+
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        assert_eq!(response.headers().get(ETAG).unwrap(), "\"v1\"");
+        assert_eq!(
+            response.headers().get(CACHE_CONTROL).unwrap(),
+            "public, max-age=1, must-revalidate",
+        );
+    }
+
+    #[tokio::test]
+    async fn from_brk_error_maps_status_and_code() {
+        let response = Error::from(BrkError::MempoolNotAvailable).into_response();
+
+        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+
+        let body = to_bytes(response.into_body(), 1024).await.unwrap();
+        let parsed: serde_json::Value = serde_json::from_slice(&body).unwrap();
+
+        assert_eq!(parsed["error"]["type"], "unavailable");
+        assert_eq!(parsed["error"]["code"], "mempool_not_available");
+        assert_eq!(parsed["error"]["message"], "Mempool data is not available");
+    }
+}
