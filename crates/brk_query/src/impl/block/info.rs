@@ -2,7 +2,7 @@ use std::io::Read;
 
 use bitcoin::consensus::Decodable;
 use bitcoin::hex::DisplayHex;
-use brk_error::{Error, Result};
+use brk_error::{Error, OptionData, Result};
 use brk_types::{
     BlockExtras, BlockHash, BlockHashPrefix, BlockHeader, BlockInfo, BlockInfoV1, BlockPool,
     FeeRate, Height, PoolSlug, Sats, Timestamp, TxIndex, VSize, pools,
@@ -443,7 +443,7 @@ impl Query {
             .blocks
             .position
             .collect_one(height)
-            .unwrap();
+            .data()?;
         let raw = self.reader().read_raw_bytes(position, HEADER_SIZE)?;
         bitcoin::block::Header::consensus_decode(&mut raw.as_slice())
             .map_err(|_| Error::Internal("Failed to decode block header"))

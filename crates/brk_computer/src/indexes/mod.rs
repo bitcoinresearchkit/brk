@@ -14,6 +14,7 @@ mod month1;
 mod month3;
 mod month6;
 pub mod timestamp;
+mod tx_heights;
 mod tx_index;
 mod txin_index;
 mod txout_index;
@@ -50,6 +51,7 @@ pub use month1::Vecs as Month1Vecs;
 pub use month3::Vecs as Month3Vecs;
 pub use month6::Vecs as Month6Vecs;
 pub use timestamp::Timestamps;
+pub use tx_heights::TxHeights;
 pub use tx_index::Vecs as TxIndexVecs;
 pub use txin_index::Vecs as TxInIndexVecs;
 pub use txout_index::Vecs as TxOutIndexVecs;
@@ -64,6 +66,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     db: Database,
     #[traversable(skip)]
     pub cached_mappings: CachedMappings,
+    #[traversable(skip)]
+    pub tx_heights: TxHeights,
     pub addr: AddrVecs,
     pub height: HeightVecs<M>,
     pub epoch: EpochVecs<M>,
@@ -143,6 +147,7 @@ impl Vecs {
 
         let this = Self {
             cached_mappings,
+            tx_heights: TxHeights::init(indexer),
             addr,
             height,
             epoch,
@@ -178,6 +183,8 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<Indexes> {
         self.db.sync_bg_tasks()?;
+
+        self.tx_heights.update(indexer, starting_indexes.height);
 
         // timestamp_monotonic must be computed first — other mappings read it
         self.timestamp

@@ -12,6 +12,9 @@ use vecdb::{
 
 pub mod major;
 pub mod minor;
+mod pool_heights;
+
+pub use pool_heights::PoolHeights;
 
 use crate::{
     blocks, indexes,
@@ -30,6 +33,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     pools: &'static Pools,
 
     pub pool: M::Stored<BytesVec<Height, PoolSlug>>,
+    #[traversable(skip)]
+    pub pool_heights: PoolHeights,
     pub major: BTreeMap<PoolSlug, major::Vecs<M>>,
     pub minor: BTreeMap<PoolSlug, minor::Vecs<M>>,
 }
@@ -63,8 +68,12 @@ impl Vecs {
             }
         }
 
+        let pool = BytesVec::forced_import(&db, "pool", version)?;
+        let pool_heights = PoolHeights::build(&pool);
+
         let this = Self {
-            pool: BytesVec::forced_import(&db, "pool", version)?,
+            pool,
+            pool_heights,
             major: major_map,
             minor: minor_map,
             pools,
@@ -149,8 +158,10 @@ impl Vecs {
         let mut output_count_cursor = indexes.tx_index.output_count.cursor();
 
         self.pool.truncate_if_needed_at(min)?;
+        self.pool_heights.truncate(min);
 
         let len = indexer.vecs.blocks.coinbase_tag.len();
+        let mut next_height = min;
 
         indexer.vecs.blocks.coinbase_tag.try_for_each_range_at(
             min,
@@ -186,6 +197,9 @@ impl Vecs {
                     .unwrap_or(unknown);
 
                 self.pool.push(pool.slug);
+                self.pool_heights.push(pool.slug, Height::from(next_height));
+                next_height += 1;
+
                 Ok(())
             },
         )?;

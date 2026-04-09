@@ -1,4 +1,4 @@
-use brk_error::Result;
+use brk_error::{OptionData, Result};
 use brk_types::{DifficultyEntry, HashrateEntry, HashrateSummary, Height, TimePeriod};
 use vecdb::{ReadableOptionVec, ReadableVec, VecIndex};
 
@@ -17,7 +17,7 @@ impl Query {
             .blocks
             .difficulty
             .collect_one(current_height)
-            .unwrap();
+            .data()?;
 
         // Get current hashrate
         let current_day1 = computer
@@ -25,7 +25,7 @@ impl Query {
             .height
             .day1
             .collect_one(current_height)
-            .unwrap();
+            .data()?;
 
         let current_hashrate = *computer
             .mining
@@ -49,7 +49,7 @@ impl Query {
             .height
             .day1
             .collect_one(Height::from(start))
-            .unwrap();
+            .data()?;
         let end_day1 = current_day1;
 
         // Sample at regular intervals to avoid too many data points

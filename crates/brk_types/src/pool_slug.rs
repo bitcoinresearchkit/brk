@@ -15,6 +15,7 @@ use vecdb::{Bytes, Formattable};
     Eq,
     PartialOrd,
     Ord,
+    Hash,
     Serialize,
     Deserialize,
     JsonSchema,

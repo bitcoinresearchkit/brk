@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use bitcoin::{Network, PublicKey, ScriptBuf};
-use brk_error::{Error, Result};
+use brk_error::{Error, OptionData, Result};
 use brk_types::{
     Addr, AddrBytes, AddrChainStats, AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, AddrStats,
     AnyAddrDataIndexEnum, BlockHash, Dollars, Height, OutputType, Timestamp, Transaction, TxIndex,
@@ -136,7 +136,7 @@ impl Query {
         let store = stores
             .addr_type_to_addr_index_and_tx_index
             .get(output_type)
-            .unwrap();
+            .data()?;
 
         if let Some(after_txid) = after_txid {
             let after_tx_index = stores
@@ -177,7 +177,7 @@ impl Query {
         let store = stores
             .addr_type_to_addr_index_and_unspent_outpoint
             .get(output_type)
-            .unwrap();
+            .data()?;
 
         let prefix = u32::from(type_index).to_be_bytes();
 
@@ -190,7 +190,7 @@ impl Query {
         let first_txout_index_reader = vecs.transactions.first_txout_index.reader();
         let value_reader = vecs.outputs.value.reader();
         let blockhash_reader = vecs.blocks.blockhash.reader();
-        let mut height_cursor = vecs.transactions.height.cursor();
+        let tx_heights = &self.computer().indexes.tx_heights;
         let mut block_ts_cursor = vecs.blocks.timestamp.cursor();
 
         let mut cached_block: Option<(Height, BlockHash, Timestamp)> = None;
@@ -198,7 +198,7 @@ impl Query {
 
         for (tx_index, vout) in outpoints {
             let txid = txid_reader.get(tx_index.to_usize());
-            let height: Height = height_cursor.get(tx_index.to_usize()).unwrap();
+            let height: Height = tx_heights.get_shared(tx_index).data()?;
             let first_txout_index = first_txout_index_reader.get(tx_index.to_usize());
             let value = value_reader.get(usize::from(first_txout_index + vout));
 
@@ -208,7 +208,7 @@ impl Query {
                 (bh.clone(), bt)
             } else {
                 let bh = blockhash_reader.get(height.to_usize());
-                let bt = block_ts_cursor.get(height.to_usize()).unwrap();
+                let bt = block_ts_cursor.get(height.to_usize()).data()?;
                 cached_block = Some((height, bh.clone(), bt));
                 (bh, bt)
             };
@@ -261,7 +261,7 @@ impl Query {
             .stores
             .addr_type_to_addr_index_and_tx_index
             .get(output_type)
-            .unwrap();
+            .data()?;
         let prefix = u32::from(type_index).to_be_bytes();
         let last_tx_index = store
             .prefix(prefix)
@@ -287,7 +287,7 @@ impl Query {
         let Ok(Some(type_index)) = stores
             .addr_type_to_addr_hash_to_addr_index
             .get(output_type)
-            .unwrap()
+            .data()?
             .get(&hash)
             .map(|opt| opt.map(|cow| cow.into_owned()))
         else {

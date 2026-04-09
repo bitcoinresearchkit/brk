@@ -6,6 +6,21 @@ use thiserror::Error;
 
 pub type Result<T, E = Error> = result::Result<T, E>;
 
+/// Convert `Option<T>` → `Result<T>` without panicking.
+///
+/// Replaces `.unwrap()` in query paths so a missing value returns
+/// HTTP 500 instead of crashing the server (`panic = "abort"`).
+pub trait OptionData<T> {
+    fn data(self) -> Result<T>;
+}
+
+impl<T> OptionData<T> for Option<T> {
+    #[inline]
+    fn data(self) -> Result<T> {
+        self.ok_or(Error::Internal("data unavailable"))
+    }
+}
+
 #[derive(Debug, Error)]
 pub enum Error {
     #[error(transparent)]

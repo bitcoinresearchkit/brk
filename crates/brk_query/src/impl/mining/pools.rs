@@ -291,20 +291,25 @@ impl Query {
         let computer = self.computer();
         let max_height = self.height().to_usize();
         let start = start_height.map(|h| h.to_usize()).unwrap_or(max_height);
-
-        let reader = computer.pools.pool.reader();
-        let end = start.min(reader.len().saturating_sub(1));
+        let end = start.min(computer.pools.pool.len().saturating_sub(1));
 
         const POOL_BLOCKS_LIMIT: usize = 100;
-        let mut heights = Vec::with_capacity(POOL_BLOCKS_LIMIT);
-        for h in (0..=end).rev() {
-            if reader.get(h) == slug {
-                heights.push(h);
-                if heights.len() >= POOL_BLOCKS_LIMIT {
-                    break;
-                }
-            }
-        }
+
+        let heights: Vec<usize> = computer
+            .pools
+            .pool_heights
+            .read()
+            .get(&slug)
+            .map(|pool_heights| {
+                let pos = pool_heights.partition_point(|h| h.to_usize() <= end);
+                let start = pos.saturating_sub(POOL_BLOCKS_LIMIT);
+                pool_heights[start..pos]
+                    .iter()
+                    .rev()
+                    .map(|h| h.to_usize())
+                    .collect()
+            })
+            .unwrap_or_default();
 
         // Group consecutive descending heights into ranges for batch reads
         let mut blocks = Vec::with_capacity(heights.len());

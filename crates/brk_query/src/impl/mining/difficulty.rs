@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use brk_error::Result;
+use brk_error::{OptionData, Result};
 use brk_types::{DifficultyAdjustment, Epoch, Height};
 use vecdb::ReadableVec;
 
@@ -25,7 +25,7 @@ impl Query {
             .height
             .epoch
             .collect_one(current_height)
-            .unwrap();
+            .data()?;
         let current_epoch_usize: usize = current_epoch.into();
 
         // Get epoch start height
@@ -34,7 +34,7 @@ impl Query {
             .epoch
             .first_height
             .collect_one(current_epoch)
-            .unwrap();
+            .data()?;
         let epoch_start_u32: u32 = epoch_start_height.into();
 
         // Calculate epoch progress
@@ -49,13 +49,13 @@ impl Query {
             .timestamp
             .epoch
             .collect_one(current_epoch)
-            .unwrap();
+            .data()?;
         let current_timestamp = indexer
             .vecs
             .blocks
             .timestamp
             .collect_one(current_height)
-            .unwrap();
+            .data()?;
 
         // Calculate average block time in current epoch
         let elapsed_time = (*current_timestamp - *epoch_start_timestamp) as u64;
@@ -92,20 +92,20 @@ impl Query {
                 .epoch
                 .first_height
                 .collect_one(prev_epoch)
-                .unwrap();
+                .data()?;
 
             let prev_difficulty = indexer
                 .vecs
                 .blocks
                 .difficulty
                 .collect_one(prev_epoch_start)
-                .unwrap();
+                .data()?;
             let curr_difficulty = indexer
                 .vecs
                 .blocks
                 .difficulty
                 .collect_one(epoch_start_height)
-                .unwrap();
+                .data()?;
 
             let retarget = if *prev_difficulty > 0.0 {
                 ((*curr_difficulty / *prev_difficulty) - 1.0) * 100.0

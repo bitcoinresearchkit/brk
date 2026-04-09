@@ -1,4 +1,4 @@
-use brk_error::{Error, Result};
+use brk_error::{Error, OptionData, Result};
 use brk_types::{BlockTimestamp, Date, Day1, Height, Timestamp};
 use jiff::Timestamp as JiffTimestamp;
 use vecdb::ReadableVec;
@@ -35,10 +35,10 @@ impl Query {
 
         // Search forward from start to find the last block <= target timestamp
         let mut best_height = start;
-        let mut best_ts = ts_cursor.get(start).unwrap();
+        let mut best_ts = ts_cursor.get(start).data()?;
 
         for h in (start + 1)..=max_height_usize {
-            let block_ts = ts_cursor.get(h).unwrap();
+            let block_ts = ts_cursor.get(h).data()?;
             if block_ts <= target {
                 best_height = h;
                 best_ts = block_ts;
@@ -49,7 +49,7 @@ impl Query {
 
         // Check one block before start in case we need to go backward
         if start > 0 && best_ts > target {
-            let prev_ts = ts_cursor.get(start - 1).unwrap();
+            let prev_ts = ts_cursor.get(start - 1).data()?;
             if prev_ts <= target {
                 best_height = start - 1;
                 best_ts = prev_ts;

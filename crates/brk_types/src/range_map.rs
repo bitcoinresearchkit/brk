@@ -132,6 +132,17 @@ impl<I: Ord + Copy + Default + Into<usize>, V: From<usize> + Copy + Default> Ran
         }
     }
 
+    /// Shared (immutable) floor lookup — binary search only, no cache update.
+    /// Use when you only have `&self` (e.g. read-only clones in the query layer).
+    #[inline]
+    pub fn get_shared(&self, index: I) -> Option<V> {
+        if self.first_indexes.is_empty() {
+            return None;
+        }
+        let pos = self.first_indexes.partition_point(|&first| first <= index);
+        if pos > 0 { Some(V::from(pos - 1)) } else { None }
+    }
+
     #[inline]
     fn cache_slot(index: &I) -> usize {
         let v: usize = (*index).into();

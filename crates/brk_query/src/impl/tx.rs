@@ -1,5 +1,5 @@
 use bitcoin::hex::{DisplayHex, FromHex};
-use brk_error::{Error, Result};
+use brk_error::{Error, OptionData, Result};
 use brk_types::{
     BlockHash, Height, MerkleProof, Timestamp, Transaction, TxInIndex, TxIndex, TxOutIndex,
     TxOutspend, TxStatus, Txid, TxidPrefix, Vin, Vout,
@@ -53,19 +53,19 @@ impl Query {
         };
 
         // Get block info for status
-        let height = indexer
-            .vecs
-            .transactions
-            .height
-            .collect_one(tx_index)
-            .unwrap();
+        let height = self
+            .computer()
+            .indexes
+            .tx_heights
+            .get_shared(tx_index)
+            .data()?;
         let block_hash = indexer
             .vecs
             .blocks
             .blockhash
             .reader()
             .get(height.to_usize());
-        let block_time = indexer.vecs.blocks.timestamp.collect_one(height).unwrap();
+        let block_time = indexer.vecs.blocks.timestamp.collect_one(height).data()?;
 
         Ok(TxStatus {
             confirmed: true,
@@ -146,9 +146,9 @@ impl Query {
         let txid_reader = indexer.vecs.transactions.txid.reader();
         let blockhash_reader = indexer.vecs.blocks.blockhash.reader();
 
+        let tx_heights = &self.computer().indexes.tx_heights;
         let mut input_tx_cursor = indexer.vecs.inputs.tx_index.cursor();
         let mut first_txin_cursor = indexer.vecs.transactions.first_txin_index.cursor();
-        let mut height_cursor = indexer.vecs.transactions.height.cursor();
         let mut block_ts_cursor = indexer.vecs.blocks.timestamp.cursor();
 
         let mut cached_block: Option<(Height, BlockHash, Timestamp)> = None;
@@ -162,11 +162,11 @@ impl Query {
                 continue;
             }
 
-            let spending_tx_index = input_tx_cursor.get(usize::from(txin_index)).unwrap();
-            let spending_first_txin = first_txin_cursor.get(spending_tx_index.to_usize()).unwrap();
+            let spending_tx_index = input_tx_cursor.get(usize::from(txin_index)).data()?;
+            let spending_first_txin = first_txin_cursor.get(spending_tx_index.to_usize()).data()?;
             let vin = Vin::from(usize::from(txin_index) - usize::from(spending_first_txin));
             let spending_txid = txid_reader.get(spending_tx_index.to_usize());
-            let spending_height = height_cursor.get(spending_tx_index.to_usize()).unwrap();
+            let spending_height = tx_heights.get_shared(spending_tx_index).data()?;
 
             let (block_hash, block_time) = if let Some((h, ref bh, bt)) = cached_block
                 && h == spending_height
@@ -174,7 +174,7 @@ impl Query {
                 (bh.clone(), bt)
             } else {
                 let bh = blockhash_reader.get(spending_height.to_usize());
-                let bt = block_ts_cursor.get(spending_height.to_usize()).unwrap();
+                let bt = block_ts_cursor.get(spending_height.to_usize()).data()?;
                 cached_block = Some((spending_height, bh.clone(), bt));
                 (bh, bt)
             };
@@ -238,19 +238,19 @@ impl Query {
             .inputs
             .tx_index
             .collect_one_at(usize::from(txin_index))
-            .unwrap();
+            .data()?;
         let spending_first_txin = indexer
             .vecs
             .transactions
             .first_txin_index
             .collect_one(spending_tx_index)
-            .unwrap();
-        let spending_height = indexer
-            .vecs
-            .transactions
-            .height
-            .collect_one(spending_tx_index)
-            .unwrap();
+            .data()?;
+        let spending_height = self
+            .computer()
+            .indexes
+            .tx_heights
+            .get_shared(spending_tx_index)
+            .data()?;
 
         Ok(TxOutspend {
             spent: true,
@@ -282,7 +282,7 @@ impl Query {
                         .blocks
                         .timestamp
                         .collect_one(spending_height)
-                        .unwrap(),
+                        .data()?,
                 ),
             }),
         })
@@ -304,13 +304,13 @@ impl Query {
             .transactions
             .total_size
             .collect_one(tx_index)
-            .unwrap();
+            .data()?;
         let position = indexer
             .vecs
             .transactions
             .position
             .collect_one(tx_index)
-            .unwrap();
+            .data()?;
         self.reader().read_raw_bytes(position, *total_size as usize)
     }
 
@@ -329,12 +329,12 @@ impl Query {
             .get(&prefix)?
             .map(|cow| cow.into_owned())
             .ok_or(Error::UnknownTxid)?;
-        let height: Height = indexer
-            .vecs
-            .transactions
-            .height
-            .collect_one(tx_index)
-            .unwrap();
+        let height: Height = self
+            .computer()
+            .indexes
+            .tx_heights
+            .get_shared(tx_index)
+            .data()?;
         Ok((tx_index, height))
     }
 
