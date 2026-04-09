@@ -3,7 +3,7 @@ use std::io::Cursor;
 use bitcoin::{consensus::Decodable, hex::DisplayHex};
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
-    BlkPosition, BlockHash, Height, OutPoint, OutputType, RawLockTime, Sats, StoredU32, Timestamp,
+    BlkPosition, BlockHash, Height, OutPoint, OutputType, RawLockTime, Sats, StoredU32,
     Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxStatus, Txid, TypeIndex, Vout, Weight,
 };
 use rustc_hash::FxHashMap;
@@ -75,7 +75,6 @@ impl Query {
             return Ok(Vec::new());
         }
 
-        let t0 = std::time::Instant::now();
         let len = indices.len();
 
         // Sort positions ascending for sequential I/O (O(n) when already sorted)
@@ -87,21 +86,19 @@ impl Query {
 
         // ── Phase 1: Decode all transactions, collect outpoints ─────────
 
-        let tx_heights = &self.computer().indexes.tx_heights;
         let mut txid_cursor = indexer.vecs.transactions.txid.cursor();
         let mut locktime_cursor = indexer.vecs.transactions.raw_locktime.cursor();
         let mut total_size_cursor = indexer.vecs.transactions.total_size.cursor();
         let mut first_txin_cursor = indexer.vecs.transactions.first_txin_index.cursor();
         let mut position_cursor = indexer.vecs.transactions.position.cursor();
+
         struct DecodedTx {
             pos: usize,
             tx_index: TxIndex,
             txid: Txid,
-            height: Height,
             lock_time: RawLockTime,
             total_size: StoredU32,
-            block_hash: BlockHash,
-            block_time: Timestamp,
+            status: TxStatus,
             decoded: bitcoin::Transaction,
             first_txin_index: TxInIndex,
             outpoints: Vec<OutPoint>,
@@ -109,6 +106,7 @@ impl Query {
 
         let mut decoded_txs: Vec<DecodedTx> = Vec::with_capacity(len);
         let mut total_inputs: usize = 0;
+        let mut cached_status: Option<(Height, TxStatus)> = None;
 
         // Phase 1a: Read metadata + decode transactions (no outpoint reads yet)
         for &pos in &order {
@@ -116,24 +114,21 @@ impl Query {
             let idx = tx_index.to_usize();
 
             let txid: Txid = txid_cursor.get(idx).data()?;
-            let height: Height = tx_heights.get_shared(tx_index).data()?;
             let lock_time: RawLockTime = locktime_cursor.get(idx).data()?;
             let total_size: StoredU32 = total_size_cursor.get(idx).data()?;
             let first_txin_index: TxInIndex = first_txin_cursor.get(idx).data()?;
             let position: BlkPosition = position_cursor.get(idx).data()?;
 
-            let block_hash = indexer
-                .vecs
-                .blocks
-                .cached_blockhash
-                .collect_one(height)
-                .data()?;
-            let block_time = indexer
-                .vecs
-                .blocks
-                .cached_timestamp
-                .collect_one(height)
-                .data()?;
+            let height = self.confirmed_status_height(tx_index)?;
+            let status = if let Some((h, ref s)) = cached_status
+                && h == height
+            {
+                s.clone()
+            } else {
+                let s = self.confirmed_status_at(height)?;
+                cached_status = Some((height, s.clone()));
+                s
+            };
 
             let buffer = reader.read_raw_bytes(position, *total_size as usize)?;
             let decoded = bitcoin::Transaction::consensus_decode(&mut Cursor::new(buffer))
@@ -145,18 +140,14 @@ impl Query {
                 pos,
                 tx_index,
                 txid,
-                height,
                 lock_time,
                 total_size,
-                block_hash,
-                block_time,
+                status,
                 decoded,
                 first_txin_index,
                 outpoints: Vec::new(),
             });
         }
-
-        let t_phase1a = t0.elapsed();
 
         // Phase 1b: Batch-read outpoints + prevout data via cursors (PcoVec —
         // sequential cursor avoids re-decompressing the same pages).
@@ -187,40 +178,17 @@ impl Query {
             dtx.outpoints = outpoints;
         }
 
-        let t_phase1b = t0.elapsed();
-
-        // ── Phase 2: Batch-read prevout data in sorted order ────────────
-
-        // Collect all non-coinbase outpoints, deduplicate, sort by tx_index
-        let mut prevout_keys: Vec<OutPoint> = Vec::with_capacity(total_inputs);
-        for dtx in &decoded_txs {
-            for &op in &dtx.outpoints {
-                if op.is_not_coinbase() {
-                    prevout_keys.push(op);
-                }
-            }
-        }
-        prevout_keys.sort_unstable();
-        prevout_keys.dedup();
-
-        // Batch-read txid sorted by prev_tx_index (only remaining random read)
-        let txid_reader = indexer.vecs.transactions.txid.reader();
+        // ── Phase 2: Build prevout TxOut map (script_pubkey from addr vecs) ──
 
         let addr_readers = indexer.vecs.addrs.addr_readers();
 
-        let mut prevout_map: FxHashMap<OutPoint, (Txid, TxOut)> =
-            FxHashMap::with_capacity_and_hasher(prevout_keys.len(), Default::default());
+        let mut prevout_map: FxHashMap<OutPoint, TxOut> =
+            FxHashMap::with_capacity_and_hasher(total_inputs, Default::default());
 
-        for &op in &prevout_keys {
-            let txid = txid_reader.get(op.tx_index().to_usize());
-            // output_type, type_index, value pre-read from inputs vecs (sequential)
-            let &(output_type, type_index, value) =
-                prevout_input_data.get(&op).unwrap();
+        for (&op, &(output_type, type_index, value)) in &prevout_input_data {
             let script_pubkey = addr_readers.script_pubkey(output_type, type_index);
-            prevout_map.insert(op, (txid, TxOut::from((script_pubkey, value))));
+            prevout_map.insert(op, TxOut::from((script_pubkey, value)));
         }
-
-        let t_phase2 = t0.elapsed();
 
         // ── Phase 3: Assemble Transaction objects ───────────────────────
 
@@ -239,8 +207,8 @@ impl Query {
                     let (prev_txid, prev_vout, prevout) = if is_coinbase {
                         (Txid::COINBASE, Vout::MAX, None)
                     } else {
-                        let (prev_txid, prev_txout) =
-                            prevout_map.get(&outpoint).data()?.clone();
+                        let prev_txid = Txid::from(txin.previous_output.txid);
+                        let prev_txout = prevout_map.get(&outpoint).data()?.clone();
                         (prev_txid, outpoint.vout(), Some(prev_txout))
                     };
 
@@ -299,32 +267,11 @@ impl Query {
                 fee: Sats::ZERO,
                 input,
                 output,
-                status: TxStatus {
-                    confirmed: true,
-                    block_height: Some(dtx.height),
-                    block_hash: Some(dtx.block_hash),
-                    block_time: Some(dtx.block_time),
-                },
+                status: dtx.status,
             };
 
             transaction.compute_fee();
             txs[dtx.pos] = Some(transaction);
-        }
-
-        let t_phase3 = t0.elapsed();
-
-        if t_phase3.as_millis() > 50 {
-            eprintln!(
-                "[perf:txs] n={} vin={} prevouts={} | 1a={:.1?} 1b={:.1?} | 2={:.1?} | 3={:.1?} | total={:.1?}",
-                len,
-                total_inputs,
-                prevout_keys.len(),
-                t_phase1a,
-                t_phase1b - t_phase1a,
-                t_phase2 - t_phase1b,
-                t_phase3 - t_phase2,
-                t_phase3,
-            );
         }
 
         Ok(txs.into_iter().map(Option::unwrap).collect())

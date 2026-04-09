@@ -1,7 +1,7 @@
 use bitcoin::hex::{DisplayHex, FromHex};
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
-    Height, MerkleProof, Transaction, TxInIndex, TxIndex, TxOutIndex,
+    BlockHash, Height, MerkleProof, Timestamp, Transaction, TxInIndex, TxIndex, TxOutIndex,
     TxOutspend, TxStatus, Txid, TxidPrefix, Vin, Vout,
 };
 use vecdb::{ReadableVec, VecIndex};
@@ -9,65 +9,83 @@ use vecdb::{ReadableVec, VecIndex};
 use crate::Query;
 
 impl Query {
-    pub fn transaction(&self, txid: &Txid) -> Result<Transaction> {
-        // First check mempool for unconfirmed transactions
-        if let Some(mempool) = self.mempool()
-            && let Some(tx_with_hex) = mempool.get_txs().get(txid)
-        {
-            return Ok(tx_with_hex.tx().clone());
-        }
+    // ── Txid → TxIndex resolution (single source of truth) ─────────
 
-        // Look up confirmed transaction by txid prefix
-        let prefix = TxidPrefix::from(txid);
-        let indexer = self.indexer();
-        let Ok(Some(tx_index)) = indexer
+    /// Resolve a txid to its internal TxIndex via prefix lookup.
+    #[inline]
+    pub(crate) fn resolve_tx_index(&self, txid: &Txid) -> Result<TxIndex> {
+        self.indexer()
             .stores
             .txid_prefix_to_tx_index
-            .get(&prefix)
-            .map(|opt| opt.map(|cow| cow.into_owned()))
-        else {
-            return Err(Error::UnknownTxid);
-        };
-
-        self.transaction_by_index(tx_index)
+            .get(&TxidPrefix::from(txid))
+            .map_err(|_| Error::UnknownTxid)?
+            .map(|cow| cow.into_owned())
+            .ok_or(Error::UnknownTxid)
     }
 
-    pub fn transaction_status(&self, txid: &Txid) -> Result<TxStatus> {
-        // First check mempool for unconfirmed transactions
-        if let Some(mempool) = self.mempool()
-            && mempool.get_txs().contains_key(txid)
-        {
-            return Ok(TxStatus::UNCONFIRMED);
-        }
+    /// Resolve a txid to (TxIndex, Height).
+    pub fn resolve_tx(&self, txid: &Txid) -> Result<(TxIndex, Height)> {
+        let tx_index = self.resolve_tx_index(txid)?;
+        let height = self.confirmed_status_height(tx_index)?;
+        Ok((tx_index, height))
+    }
 
-        // Look up confirmed transaction by txid prefix
-        let prefix = TxidPrefix::from(txid);
-        let indexer = self.indexer();
-        let Ok(Some(tx_index)) = indexer
-            .stores
-            .txid_prefix_to_tx_index
-            .get(&prefix)
-            .map(|opt| opt.map(|cow| cow.into_owned()))
-        else {
-            return Err(Error::UnknownTxid);
-        };
+    // ── TxStatus construction (single source of truth) ─────────────
 
-        // Get block info for status
-        let height = self
-            .computer()
+    /// Height for a confirmed tx_index via in-memory TxHeights lookup.
+    #[inline]
+    pub(crate) fn confirmed_status_height(&self, tx_index: TxIndex) -> Result<Height> {
+        self.computer()
             .indexes
             .tx_heights
             .get_shared(tx_index)
-            .data()?;
-        let block_hash = indexer.vecs.blocks.cached_blockhash.collect_one(height).data()?;
-        let block_time = indexer.vecs.blocks.cached_timestamp.collect_one(height).data()?;
+            .data()
+    }
 
+    /// Full confirmed TxStatus from a tx_index.
+    #[inline]
+    pub(crate) fn confirmed_status(&self, tx_index: TxIndex) -> Result<TxStatus> {
+        let height = self.confirmed_status_height(tx_index)?;
+        self.confirmed_status_at(height)
+    }
+
+    /// Full confirmed TxStatus from a known height.
+    #[inline]
+    pub(crate) fn confirmed_status_at(&self, height: Height) -> Result<TxStatus> {
+        let (block_hash, block_time) = self.block_hash_and_time(height)?;
         Ok(TxStatus {
             confirmed: true,
             block_height: Some(height),
             block_hash: Some(block_hash),
             block_time: Some(block_time),
         })
+    }
+
+    /// Block hash + timestamp for a height (cached vecs, fast).
+    #[inline]
+    pub(crate) fn block_hash_and_time(&self, height: Height) -> Result<(BlockHash, Timestamp)> {
+        let indexer = self.indexer();
+        let hash = indexer.vecs.blocks.cached_blockhash.collect_one(height).data()?;
+        let time = indexer.vecs.blocks.cached_timestamp.collect_one(height).data()?;
+        Ok((hash, time))
+    }
+
+    // ── Transaction queries ────────────────────────────────────────
+
+    pub fn transaction(&self, txid: &Txid) -> Result<Transaction> {
+        if let Some(mempool) = self.mempool()
+            && let Some(tx_with_hex) = mempool.get_txs().get(txid)
+        {
+            return Ok(tx_with_hex.tx().clone());
+        }
+        self.transaction_by_index(self.resolve_tx_index(txid)?)
+    }
+
+    pub fn transaction_status(&self, txid: &Txid) -> Result<TxStatus> {
+        if self.mempool().is_some_and(|m| m.get_txs().contains_key(txid)) {
+            return Ok(TxStatus::UNCONFIRMED);
+        }
+        self.confirmed_status(self.resolve_tx_index(txid)?)
     }
 
     pub fn transaction_raw(&self, txid: &Txid) -> Result<Vec<u8>> {
@@ -77,48 +95,22 @@ impl Query {
             return Vec::from_hex(tx_with_hex.hex())
                 .map_err(|_| Error::Parse("Failed to decode mempool tx hex".into()));
         }
-
-        let prefix = TxidPrefix::from(txid);
-        let indexer = self.indexer();
-        let Ok(Some(tx_index)) = indexer
-            .stores
-            .txid_prefix_to_tx_index
-            .get(&prefix)
-            .map(|opt| opt.map(|cow| cow.into_owned()))
-        else {
-            return Err(Error::UnknownTxid);
-        };
-        self.transaction_raw_by_index(tx_index)
+        self.transaction_raw_by_index(self.resolve_tx_index(txid)?)
     }
 
     pub fn transaction_hex(&self, txid: &Txid) -> Result<String> {
-        // First check mempool for unconfirmed transactions
         if let Some(mempool) = self.mempool()
             && let Some(tx_with_hex) = mempool.get_txs().get(txid)
         {
             return Ok(tx_with_hex.hex().to_string());
         }
-
-        // Look up confirmed transaction by txid prefix
-        let prefix = TxidPrefix::from(txid);
-        let indexer = self.indexer();
-        let Ok(Some(tx_index)) = indexer
-            .stores
-            .txid_prefix_to_tx_index
-            .get(&prefix)
-            .map(|opt| opt.map(|cow| cow.into_owned()))
-        else {
-            return Err(Error::UnknownTxid);
-        };
-
-        self.transaction_hex_by_index(tx_index)
+        self.transaction_hex_by_index(self.resolve_tx_index(txid)?)
     }
 
+    // ── Outspend queries ───────────────────────────────────────────
+
     pub fn outspend(&self, txid: &Txid, vout: Vout) -> Result<TxOutspend> {
-        if self
-            .mempool()
-            .is_some_and(|m| m.get_txs().contains_key(txid))
-        {
+        if self.mempool().is_some_and(|m| m.get_txs().contains_key(txid)) {
             return Ok(TxOutspend::UNSPENT);
         }
         let (_, first_txout, output_count) = self.resolve_tx_outputs(txid)?;
@@ -135,7 +127,33 @@ impl Query {
             return Ok(vec![TxOutspend::UNSPENT; tx_with_hex.tx().output.len()]);
         }
         let (_, first_txout, output_count) = self.resolve_tx_outputs(txid)?;
+        self.resolve_outspends(first_txout, output_count)
+    }
 
+    /// Resolve spend status for a single output. Minimal reads.
+    fn resolve_outspend(&self, txout_index: TxOutIndex) -> Result<TxOutspend> {
+        let txin_index = self
+            .computer()
+            .outputs
+            .spent
+            .txin_index
+            .reader()
+            .get(usize::from(txout_index));
+
+        if txin_index == TxInIndex::UNSPENT {
+            return Ok(TxOutspend::UNSPENT);
+        }
+
+        self.build_outspend(txin_index)
+    }
+
+    /// Resolve spend status for a contiguous range of outputs.
+    /// Readers/cursors created once, reused for all outputs.
+    fn resolve_outspends(
+        &self,
+        first_txout: TxOutIndex,
+        output_count: usize,
+    ) -> Result<Vec<TxOutspend>> {
         let indexer = self.indexer();
         let txin_index_reader = self.computer().outputs.spent.txin_index.reader();
         let txid_reader = indexer.vecs.transactions.txid.reader();
@@ -144,6 +162,7 @@ impl Query {
         let mut input_tx_cursor = indexer.vecs.inputs.tx_index.cursor();
         let mut first_txin_cursor = indexer.vecs.transactions.first_txin_index.cursor();
 
+        let mut cached_status: Option<(Height, BlockHash, Timestamp)> = None;
         let mut outspends = Vec::with_capacity(output_count);
         for i in 0..output_count {
             let txin_index = txin_index_reader.get(usize::from(first_txout + Vout::from(i)));
@@ -157,20 +176,18 @@ impl Query {
             let spending_first_txin = first_txin_cursor.get(spending_tx_index.to_usize()).data()?;
             let vin = Vin::from(usize::from(txin_index) - usize::from(spending_first_txin));
             let spending_txid = txid_reader.get(spending_tx_index.to_usize());
-            let spending_height = tx_heights.get_shared(spending_tx_index).data()?;
+            let spending_height: Height = tx_heights.get_shared(spending_tx_index).data()?;
 
-            let block_hash = indexer
-                .vecs
-                .blocks
-                .cached_blockhash
-                .collect_one(spending_height)
-                .data()?;
-            let block_time = indexer
-                .vecs
-                .blocks
-                .cached_timestamp
-                .collect_one(spending_height)
-                .data()?;
+            let (block_hash, block_time) =
+                if let Some((h, ref bh, bt)) = cached_status
+                    && h == spending_height
+                {
+                    (bh.clone(), bt)
+                } else {
+                    let (bh, bt) = self.block_hash_and_time(spending_height)?;
+                    cached_status = Some((spending_height, bh.clone(), bt));
+                    (bh, bt)
+                };
 
             outspends.push(TxOutspend {
                 spent: true,
@@ -188,16 +205,48 @@ impl Query {
         Ok(outspends)
     }
 
+    /// Build a single TxOutspend from a known-spent TxInIndex.
+    fn build_outspend(&self, txin_index: TxInIndex) -> Result<TxOutspend> {
+        let indexer = self.indexer();
+        let spending_tx_index: TxIndex = indexer
+            .vecs
+            .inputs
+            .tx_index
+            .collect_one_at(usize::from(txin_index))
+            .data()?;
+        let spending_first_txin: TxInIndex = indexer
+            .vecs
+            .transactions
+            .first_txin_index
+            .collect_one(spending_tx_index)
+            .data()?;
+        let vin = Vin::from(usize::from(txin_index) - usize::from(spending_first_txin));
+        let spending_txid = indexer
+            .vecs
+            .transactions
+            .txid
+            .reader()
+            .get(spending_tx_index.to_usize());
+        let spending_height = self.confirmed_status_height(spending_tx_index)?;
+        let (block_hash, block_time) = self.block_hash_and_time(spending_height)?;
+
+        Ok(TxOutspend {
+            spent: true,
+            txid: Some(spending_txid),
+            vin: Some(vin),
+            status: Some(TxStatus {
+                confirmed: true,
+                block_height: Some(spending_height),
+                block_hash: Some(block_hash),
+                block_time: Some(block_time),
+            }),
+        })
+    }
+
     /// Resolve txid to (tx_index, first_txout_index, output_count).
     fn resolve_tx_outputs(&self, txid: &Txid) -> Result<(TxIndex, TxOutIndex, usize)> {
-        let prefix = TxidPrefix::from(txid);
+        let tx_index = self.resolve_tx_index(txid)?;
         let indexer = self.indexer();
-        let tx_index: TxIndex = indexer
-            .stores
-            .txid_prefix_to_tx_index
-            .get(&prefix)?
-            .map(|cow| cow.into_owned())
-            .ok_or(Error::UnknownTxid)?;
         let first = indexer
             .vecs
             .transactions
@@ -209,76 +258,6 @@ impl Query {
             .first_txout_index
             .read_once(tx_index.incremented())?;
         Ok((tx_index, first, usize::from(next) - usize::from(first)))
-    }
-
-    /// Resolve spend status for a single output.
-    fn resolve_outspend(&self, txout_index: TxOutIndex) -> Result<TxOutspend> {
-        let indexer = self.indexer();
-        let txin_index = self
-            .computer()
-            .outputs
-            .spent
-            .txin_index
-            .reader()
-            .get(usize::from(txout_index));
-
-        if txin_index == TxInIndex::UNSPENT {
-            return Ok(TxOutspend::UNSPENT);
-        }
-
-        let spending_tx_index = indexer
-            .vecs
-            .inputs
-            .tx_index
-            .collect_one_at(usize::from(txin_index))
-            .data()?;
-        let spending_first_txin = indexer
-            .vecs
-            .transactions
-            .first_txin_index
-            .collect_one(spending_tx_index)
-            .data()?;
-        let spending_height = self
-            .computer()
-            .indexes
-            .tx_heights
-            .get_shared(spending_tx_index)
-            .data()?;
-
-        Ok(TxOutspend {
-            spent: true,
-            txid: Some(
-                indexer
-                    .vecs
-                    .transactions
-                    .txid
-                    .reader()
-                    .get(spending_tx_index.to_usize()),
-            ),
-            vin: Some(Vin::from(
-                usize::from(txin_index) - usize::from(spending_first_txin),
-            )),
-            status: Some(TxStatus {
-                confirmed: true,
-                block_height: Some(spending_height),
-                block_hash: Some(
-                    indexer
-                        .vecs
-                        .blocks
-                        .blockhash
-                        .reader()
-                        .get(spending_height.to_usize()),
-                ),
-                block_time: Some(
-                    indexer
-                        .vecs
-                        .blocks
-                        .timestamp
-                        .collect_one(spending_height)
-                        .data()?,
-                ),
-            }),
-        })
     }
 
     // === Helper methods ===
@@ -311,24 +290,6 @@ impl Query {
         Ok(self
             .transaction_raw_by_index(tx_index)?
             .to_lower_hex_string())
-    }
-
-    pub fn resolve_tx(&self, txid: &Txid) -> Result<(TxIndex, Height)> {
-        let indexer = self.indexer();
-        let prefix = TxidPrefix::from(txid);
-        let tx_index: TxIndex = indexer
-            .stores
-            .txid_prefix_to_tx_index
-            .get(&prefix)?
-            .map(|cow| cow.into_owned())
-            .ok_or(Error::UnknownTxid)?;
-        let height: Height = self
-            .computer()
-            .indexes
-            .tx_heights
-            .get_shared(tx_index)
-            .data()?;
-        Ok((tx_index, height))
     }
 
     pub fn broadcast_transaction(&self, hex: &str) -> Result<Txid> {

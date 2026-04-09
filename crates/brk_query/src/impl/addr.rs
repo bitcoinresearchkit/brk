@@ -39,9 +39,13 @@ impl Query {
         let addr_type = output_type;
         let hash = AddrHash::from(&bytes);
 
-        let Ok(Some(type_index)) = stores
+        let Some(store) = stores
             .addr_type_to_addr_hash_to_addr_index
-            .get_unwrap(addr_type)
+            .get(addr_type)
+        else {
+            return Err(Error::InvalidAddr);
+        };
+        let Ok(Some(type_index)) = store
             .get(&hash)
             .map(|opt| opt.map(|cow| cow.into_owned()))
         else {
@@ -139,12 +143,7 @@ impl Query {
             .data()?;
 
         if let Some(after_txid) = after_txid {
-            let after_tx_index = stores
-                .txid_prefix_to_tx_index
-                .get(&after_txid.into())
-                .map_err(|_| Error::UnknownTxid)?
-                .ok_or(Error::UnknownTxid)?
-                .into_owned();
+            let after_tx_index = self.resolve_tx_index(&after_txid)?;
 
             // Seek directly to after_tx_index and iterate backward — O(limit)
             let min = AddrIndexTxIndex::min_for_addr(type_index);
@@ -189,28 +188,30 @@ impl Query {
         let txid_reader = vecs.transactions.txid.reader();
         let first_txout_index_reader = vecs.transactions.first_txout_index.reader();
         let value_reader = vecs.outputs.value.reader();
-        let tx_heights = &self.computer().indexes.tx_heights;
 
+        let mut cached_status: Option<(Height, TxStatus)> = None;
         let mut utxos = Vec::with_capacity(outpoints.len());
 
         for (tx_index, vout) in outpoints {
             let txid = txid_reader.get(tx_index.to_usize());
-            let height: Height = tx_heights.get_shared(tx_index).data()?;
             let first_txout_index = first_txout_index_reader.get(tx_index.to_usize());
             let value = value_reader.get(usize::from(first_txout_index + vout));
 
-            let block_hash = vecs.blocks.cached_blockhash.collect_one(height).data()?;
-            let block_time = vecs.blocks.cached_timestamp.collect_one(height).data()?;
+            let height = self.confirmed_status_height(tx_index)?;
+            let status = if let Some((h, ref s)) = cached_status
+                && h == height
+            {
+                s.clone()
+            } else {
+                let s = self.confirmed_status_at(height)?;
+                cached_status = Some((height, s.clone()));
+                s
+            };
 
             utxos.push(Utxo {
                 txid,
                 vout,
-                status: TxStatus {
-                    confirmed: true,
-                    block_height: Some(height),
-                    block_hash: Some(block_hash),
-                    block_time: Some(block_time),
-                },
+                status,
                 value,
             });
         }

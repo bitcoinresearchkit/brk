@@ -189,26 +189,8 @@ impl AppState {
         F: FnOnce(&brk_query::Query) -> brk_error::Result<T> + Send + 'static,
     {
         self.cached(headers, strategy, uri, "application/json", move |q, enc| {
-            let t0 = std::time::Instant::now();
             let value = f(q)?;
-            let t_query = t0.elapsed();
-            let json = serde_json::to_vec(&value).unwrap();
-            let t_json = t0.elapsed();
-            let json_len = json.len();
-            let compressed = enc.compress(Bytes::from(json));
-            let t_total = t0.elapsed();
-            if t_total.as_millis() > 100 {
-                eprintln!(
-                    "[perf] query={:.1?} json={:.1?}({:.1}MB) compress={:.1?}({}) total={:.1?}",
-                    t_query,
-                    t_json - t_query,
-                    json_len as f64 / 1_048_576.0,
-                    t_total - t_json,
-                    enc.as_str(),
-                    t_total,
-                );
-            }
-            Ok(compressed)
+            Ok(enc.compress(Bytes::from(serde_json::to_vec(&value).unwrap())))
         })
         .await
     }
