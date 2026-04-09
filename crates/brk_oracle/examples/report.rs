@@ -181,7 +181,7 @@ fn main() {
     let config = Config::default();
     let mut oracle = Oracle::new(cents_to_bin(start_price * 100.0), config);
 
-    let total_txs = indexer.vecs.transactions.height.len();
+    let total_txs = indexer.vecs.transactions.txid.len();
     let total_outputs = indexer.vecs.outputs.value.len();
 
     // Pre-collect height-indexed vecs (small). Transaction-indexed vecs are too large.

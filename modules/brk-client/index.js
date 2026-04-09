@@ -4539,7 +4539,6 @@ function createTransferPattern(client, acc) {
 /**
  * @typedef {Object} SeriesTree_Transactions_Raw
  * @property {SeriesPattern18<TxIndex>} firstTxIndex
- * @property {SeriesPattern19<Height>} height
  * @property {SeriesPattern19<Txid>} txid
  * @property {SeriesPattern19<TxVersion>} txVersion
  * @property {SeriesPattern19<RawLockTime>} rawLocktime
@@ -4553,7 +4552,6 @@ function createTransferPattern(client, acc) {
 /**
  * @typedef {Object} SeriesTree_Transactions_Count
  * @property {AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern} total
- * @property {SeriesPattern19<StoredBool>} isCoinbase
  */
 
 /**
@@ -7921,7 +7919,6 @@ class BrkClient extends BrkClientBase {
       transactions: {
         raw: {
           firstTxIndex: createSeriesPattern18(this, 'first_tx_index'),
-          height: createSeriesPattern19(this, 'height'),
           txid: createSeriesPattern19(this, 'txid'),
           txVersion: createSeriesPattern19(this, 'tx_version'),
           rawLocktime: createSeriesPattern19(this, 'raw_locktime'),
@@ -7933,7 +7930,6 @@ class BrkClient extends BrkClientBase {
         },
         count: {
           total: createAverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(this, 'tx_count'),
-          isCoinbase: createSeriesPattern19(this, 'is_coinbase'),
         },
         size: {
           vsize: create_6bBlockTxPattern(this, 'tx_vsize'),

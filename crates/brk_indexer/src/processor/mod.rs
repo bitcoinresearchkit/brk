@@ -43,7 +43,6 @@ impl BlockProcessor<'_> {
         already_added: &mut ByAddrType<FxHashMap<AddrHash, TypeIndex>>,
         same_block_info: &mut FxHashMap<OutPoint, SameBlockOutputInfo>,
     ) -> Result<()> {
-        let height = self.height;
         let indexes = &mut *self.indexes;
 
         // Split transactions vecs: finalize needs first_txout_index/first_txin_index, metadata needs the rest
@@ -85,7 +84,7 @@ impl BlockProcessor<'_> {
                     same_block_info,
                 )
             },
-            || tx::store_tx_metadata(height, txs, txid_prefix_store, &mut tx_metadata),
+            || tx::store_tx_metadata(txs, txid_prefix_store, &mut tx_metadata),
         );
 
         finalize_result?;

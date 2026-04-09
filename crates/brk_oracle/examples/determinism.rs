@@ -46,7 +46,7 @@ fn main() {
     let config = Config::default();
     let window_size = config.window_size;
 
-    let total_txs = indexer.vecs.transactions.height.len();
+    let total_txs = indexer.vecs.transactions.txid.len();
     let total_outputs = indexer.vecs.outputs.value.len();
 
     let first_tx_index: Vec<TxIndex> = indexer.vecs.transactions.first_tx_index.collect();

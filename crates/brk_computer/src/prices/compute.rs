@@ -157,7 +157,7 @@ impl Vecs {
         indexer: &Indexer<M>,
         range: Range<usize>,
     ) -> Vec<f64> {
-        let total_txs = indexer.vecs.transactions.height.len();
+        let total_txs = indexer.vecs.transactions.txid.len();
         let total_outputs = indexer.vecs.outputs.value.len();
 
         // Pre-collect height-indexed data for the range (plus one extra for next-block lookups)

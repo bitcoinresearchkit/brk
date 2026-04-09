@@ -25,7 +25,7 @@ impl Vecs {
         let db = open_db(parent_path, super::DB_NAME, 10_000_000)?;
         let version = parent_version;
 
-        let count = CountVecs::forced_import(&db, version, indexer, indexes, cached_starts)?;
+        let count = CountVecs::forced_import(&db, version, indexes, cached_starts)?;
         let size = SizeVecs::forced_import(&db, version, indexer, indexes)?;
         let fees = FeesVecs::forced_import(&db, version, indexes)?;
         let versions = VersionsVecs::forced_import(&db, version, indexes, cached_starts)?;

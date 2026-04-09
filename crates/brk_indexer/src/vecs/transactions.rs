@@ -14,7 +14,6 @@ use crate::parallel_import;
 #[derive(Traversable)]
 pub struct TransactionsVecs<M: StorageMode = Rw> {
     pub first_tx_index: M::Stored<PcoVec<Height, TxIndex>>,
-    pub height: M::Stored<PcoVec<TxIndex, Height>>,
     pub txid: M::Stored<BytesVec<TxIndex, Txid>>,
     pub tx_version: M::Stored<PcoVec<TxIndex, TxVersion>>,
     pub raw_locktime: M::Stored<PcoVec<TxIndex, RawLockTime>>,
@@ -28,7 +27,6 @@ pub struct TransactionsVecs<M: StorageMode = Rw> {
 }
 
 pub struct TxMetadataVecs<'a> {
-    pub height: &'a mut PcoVec<TxIndex, Height>,
     pub tx_version: &'a mut PcoVec<TxIndex, TxVersion>,
     pub txid: &'a mut BytesVec<TxIndex, Txid>,
     pub raw_locktime: &'a mut PcoVec<TxIndex, RawLockTime>,
@@ -49,7 +47,6 @@ impl TransactionsVecs {
             &mut self.first_txout_index,
             &mut self.first_txin_index,
             TxMetadataVecs {
-                height: &mut self.height,
                 tx_version: &mut self.tx_version,
                 txid: &mut self.txid,
                 raw_locktime: &mut self.raw_locktime,
@@ -63,7 +60,6 @@ impl TransactionsVecs {
     pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
         let (
             first_tx_index,
-            height,
             txid,
             tx_version,
             raw_locktime,
@@ -75,7 +71,6 @@ impl TransactionsVecs {
             position,
         ) = parallel_import! {
             first_tx_index = PcoVec::forced_import(db, "first_tx_index", version),
-            height = PcoVec::forced_import(db, "height", version),
             txid = BytesVec::forced_import(db, "txid", version),
             tx_version = PcoVec::forced_import(db, "tx_version", version),
             raw_locktime = PcoVec::forced_import(db, "raw_locktime", version),
@@ -88,7 +83,6 @@ impl TransactionsVecs {
         };
         Ok(Self {
             first_tx_index,
-            height,
             txid,
             tx_version,
             raw_locktime,
@@ -104,7 +98,6 @@ impl TransactionsVecs {
     pub fn truncate(&mut self, height: Height, tx_index: TxIndex, stamp: Stamp) -> Result<()> {
         self.first_tx_index
             .truncate_if_needed_with_stamp(height, stamp)?;
-        self.height.truncate_if_needed_with_stamp(tx_index, stamp)?;
         self.txid.truncate_if_needed_with_stamp(tx_index, stamp)?;
         self.tx_version
             .truncate_if_needed_with_stamp(tx_index, stamp)?;
@@ -128,7 +121,6 @@ impl TransactionsVecs {
     pub fn par_iter_mut_any(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
             &mut self.first_tx_index as &mut dyn AnyStoredVec,
-            &mut self.height,
             &mut self.txid,
             &mut self.tx_version,
             &mut self.raw_locktime,

@@ -3464,7 +3464,6 @@ impl SeriesTree_Transactions {
 /// Series tree node.
 pub struct SeriesTree_Transactions_Raw {
     pub first_tx_index: SeriesPattern18<TxIndex>,
-    pub height: SeriesPattern19<Height>,
     pub txid: SeriesPattern19<Txid>,
     pub tx_version: SeriesPattern19<TxVersion>,
     pub raw_locktime: SeriesPattern19<RawLockTime>,
@@ -3479,7 +3478,6 @@ impl SeriesTree_Transactions_Raw {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             first_tx_index: SeriesPattern18::new(client.clone(), "first_tx_index".to_string()),
-            height: SeriesPattern19::new(client.clone(), "height".to_string()),
             txid: SeriesPattern19::new(client.clone(), "txid".to_string()),
             tx_version: SeriesPattern19::new(client.clone(), "tx_version".to_string()),
             raw_locktime: SeriesPattern19::new(client.clone(), "raw_locktime".to_string()),
@@ -3495,14 +3493,12 @@ impl SeriesTree_Transactions_Raw {
 /// Series tree node.
 pub struct SeriesTree_Transactions_Count {
     pub total: AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern,
-    pub is_coinbase: SeriesPattern19<StoredBool>,
 }
 
 impl SeriesTree_Transactions_Count {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             total: AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern::new(client.clone(), "tx_count".to_string()),
-            is_coinbase: SeriesPattern19::new(client.clone(), "is_coinbase".to_string()),
         }
     }
 }

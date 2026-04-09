@@ -161,7 +161,7 @@ fn main() {
     // filter at different tolerance thresholds in Phase 2.
     eprintln!("Phase 1: precomputing block data...");
 
-    let total_txs = indexer.vecs.transactions.height.len();
+    let total_txs = indexer.vecs.transactions.txid.len();
     let total_outputs = indexer.vecs.outputs.value.len();
 
     let first_tx_index: Vec<TxIndex> = indexer.vecs.transactions.first_tx_index.collect();

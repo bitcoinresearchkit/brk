@@ -3776,7 +3776,6 @@ class SeriesTree_Transactions_Raw:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.first_tx_index: SeriesPattern18[TxIndex] = SeriesPattern18(client, 'first_tx_index')
-        self.height: SeriesPattern19[Height] = SeriesPattern19(client, 'height')
         self.txid: SeriesPattern19[Txid] = SeriesPattern19(client, 'txid')
         self.tx_version: SeriesPattern19[TxVersion] = SeriesPattern19(client, 'tx_version')
         self.raw_locktime: SeriesPattern19[RawLockTime] = SeriesPattern19(client, 'raw_locktime')
@@ -3791,7 +3790,6 @@ class SeriesTree_Transactions_Count:
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.total: AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'tx_count')
-        self.is_coinbase: SeriesPattern19[StoredBool] = SeriesPattern19(client, 'is_coinbase')
 
 class SeriesTree_Transactions_Size_Weight:
     """Series tree node."""

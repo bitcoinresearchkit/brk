@@ -148,7 +148,7 @@ fn main() {
     ];
 
     // Build per-block filtered histograms from the indexer, feeding all oracles in one pass.
-    let total_txs = indexer.vecs.transactions.height.len();
+    let total_txs = indexer.vecs.transactions.txid.len();
     let total_outputs = indexer.vecs.outputs.value.len();
 
     // Pre-collect height-indexed vecs (small). Transaction-indexed vecs are too large.

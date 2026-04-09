@@ -1,6 +1,6 @@
 use brk_error::{Error, Result};
 use brk_store::Store;
-use brk_types::{Height, StoredBool, TxIndex, Txid, TxidPrefix};
+use brk_types::{StoredBool, TxIndex, Txid, TxidPrefix};
 use rayon::prelude::*;
 use tracing::error;
 use vecdb::{AnyVec, WritableVec, likely};
@@ -89,7 +89,6 @@ impl<'a> BlockProcessor<'a> {
 }
 
 pub(super) fn store_tx_metadata(
-    height: Height,
     txs: Vec<ComputedTx>,
     store: &mut Store<TxidPrefix, TxIndex>,
     md: &mut TxMetadataVecs<'_>,
@@ -98,7 +97,6 @@ pub(super) fn store_tx_metadata(
         if ct.prev_tx_index_opt.is_none() {
             store.insert(ct.txid_prefix, ct.tx_index);
         }
-        md.height.checked_push(ct.tx_index, height)?;
         md.tx_version
             .checked_push(ct.tx_index, ct.tx.version.into())?;
         md.txid.checked_push(ct.tx_index, ct.txid)?;

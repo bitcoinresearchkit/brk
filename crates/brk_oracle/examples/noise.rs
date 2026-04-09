@@ -91,7 +91,7 @@ fn main() {
     // Build per-block RAW histograms from the lowest start height.
     eprintln!("Building histograms from height {}...", lowest);
 
-    let total_txs = indexer.vecs.transactions.height.len();
+    let total_txs = indexer.vecs.transactions.txid.len();
     let total_outputs = indexer.vecs.outputs.value.len();
 
     let first_txout_index_reader = indexer.vecs.transactions.first_txout_index.reader();

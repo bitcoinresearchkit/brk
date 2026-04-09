@@ -1,7 +1,7 @@
 use bitcoin::hex::{DisplayHex, FromHex};
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
-    BlockHash, Height, MerkleProof, Timestamp, Transaction, TxInIndex, TxIndex, TxOutIndex,
+    Height, MerkleProof, Transaction, TxInIndex, TxIndex, TxOutIndex,
     TxOutspend, TxStatus, Txid, TxidPrefix, Vin, Vout,
 };
 use vecdb::{ReadableVec, VecIndex};
@@ -59,13 +59,8 @@ impl Query {
             .tx_heights
             .get_shared(tx_index)
             .data()?;
-        let block_hash = indexer
-            .vecs
-            .blocks
-            .blockhash
-            .reader()
-            .get(height.to_usize());
-        let block_time = indexer.vecs.blocks.timestamp.collect_one(height).data()?;
+        let block_hash = indexer.vecs.blocks.cached_blockhash.collect_one(height).data()?;
+        let block_time = indexer.vecs.blocks.cached_timestamp.collect_one(height).data()?;
 
         Ok(TxStatus {
             confirmed: true,
@@ -144,14 +139,10 @@ impl Query {
         let indexer = self.indexer();
         let txin_index_reader = self.computer().outputs.spent.txin_index.reader();
         let txid_reader = indexer.vecs.transactions.txid.reader();
-        let blockhash_reader = indexer.vecs.blocks.blockhash.reader();
 
         let tx_heights = &self.computer().indexes.tx_heights;
         let mut input_tx_cursor = indexer.vecs.inputs.tx_index.cursor();
         let mut first_txin_cursor = indexer.vecs.transactions.first_txin_index.cursor();
-        let mut block_ts_cursor = indexer.vecs.blocks.timestamp.cursor();
-
-        let mut cached_block: Option<(Height, BlockHash, Timestamp)> = None;
 
         let mut outspends = Vec::with_capacity(output_count);
         for i in 0..output_count {
@@ -168,16 +159,18 @@ impl Query {
             let spending_txid = txid_reader.get(spending_tx_index.to_usize());
             let spending_height = tx_heights.get_shared(spending_tx_index).data()?;
 
-            let (block_hash, block_time) = if let Some((h, ref bh, bt)) = cached_block
-                && h == spending_height
-            {
-                (bh.clone(), bt)
-            } else {
-                let bh = blockhash_reader.get(spending_height.to_usize());
-                let bt = block_ts_cursor.get(spending_height.to_usize()).data()?;
-                cached_block = Some((spending_height, bh.clone(), bt));
-                (bh, bt)
-            };
+            let block_hash = indexer
+                .vecs
+                .blocks
+                .cached_blockhash
+                .collect_one(spending_height)
+                .data()?;
+            let block_time = indexer
+                .vecs
+                .blocks
+                .cached_timestamp
+                .collect_one(spending_height)
+                .data()?;
 
             outspends.push(TxOutspend {
                 spent: true,

@@ -60,9 +60,9 @@ impl Query {
         let blockhash = indexer
             .vecs
             .blocks
-            .blockhash
-            .reader()
-            .get(usize::from(height));
+            .cached_blockhash
+            .collect_one(height)
+            .data()?;
 
         // Convert timestamp to ISO 8601 format
         let ts_secs: i64 = (*best_ts).into();

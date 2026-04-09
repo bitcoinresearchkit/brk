@@ -6,7 +6,8 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, BytesVec, Database, ImportableVec, PcoVec, Rw, Stamp, StorageMode, WritableVec,
+    AnyStoredVec, BytesVec, CachedVec, Database, ImportableVec, PcoVec, Rw, Stamp, StorageMode,
+    WritableVec,
 };
 
 use crate::parallel_import;
@@ -14,12 +15,16 @@ use crate::parallel_import;
 #[derive(Traversable)]
 pub struct BlocksVecs<M: StorageMode = Rw> {
     pub blockhash: M::Stored<BytesVec<Height, BlockHash>>,
+    #[traversable(skip)]
+    pub cached_blockhash: CachedVec<Height, BlockHash>,
     pub coinbase_tag: M::Stored<BytesVec<Height, CoinbaseTag>>,
     #[traversable(wrap = "difficulty", rename = "value")]
     pub difficulty: M::Stored<PcoVec<Height, StoredF64>>,
     /// Doesn't guarantee continuity due to possible reorgs and more generally the nature of mining
     #[traversable(wrap = "time")]
     pub timestamp: M::Stored<PcoVec<Height, Timestamp>>,
+    #[traversable(skip)]
+    pub cached_timestamp: CachedVec<Height, Timestamp>,
     #[traversable(wrap = "size", rename = "base")]
     pub total: M::Stored<PcoVec<Height, StoredU64>>,
     #[traversable(wrap = "weight", rename = "base")]
@@ -56,11 +61,16 @@ impl BlocksVecs {
             segwit_size = PcoVec::forced_import(db, "segwit_size", version),
             segwit_weight = PcoVec::forced_import(db, "segwit_weight", version),
         };
+        let cached_blockhash = CachedVec::new(&blockhash);
+        let cached_timestamp = CachedVec::new(&timestamp);
+
         Ok(Self {
             blockhash,
+            cached_blockhash,
             coinbase_tag,
             difficulty,
             timestamp,
+            cached_timestamp,
             total,
             weight,
             position,

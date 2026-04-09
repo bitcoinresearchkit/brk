@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{FeeRate, Indexes, OutPoint, Sats, TxInIndex, VSize};
+use brk_types::{FeeRate, Indexes, OutPoint, Sats, TxInIndex, TxIndex, VSize};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec, unlikely};
 
 use super::super::size;
@@ -125,11 +125,9 @@ impl Vecs {
         let start_height = if start_tx == 0 {
             0
         } else {
-            indexer
-                .vecs
-                .transactions
-                .height
-                .collect_one_at(start_tx)
+            indexes
+                .tx_heights
+                .get_shared(TxIndex::from(start_tx))
                 .unwrap()
                 .to_usize()
         };

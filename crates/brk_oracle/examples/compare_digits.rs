@@ -150,7 +150,7 @@ fn main() {
 
     let idx = |m: usize, s: usize| -> usize { m * start_heights.len() + s };
 
-    let total_txs = indexer.vecs.transactions.height.len();
+    let total_txs = indexer.vecs.transactions.txid.len();
     let total_outputs = indexer.vecs.outputs.value.len();
 
     let first_tx_index: Vec<TxIndex> = indexer.vecs.transactions.first_tx_index.collect();

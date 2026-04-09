@@ -4,7 +4,7 @@ use bitcoin::{consensus::Decodable, hex::DisplayHex};
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
     BlkPosition, BlockHash, Height, OutPoint, OutputType, RawLockTime, Sats, StoredU32, Timestamp,
-    Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxOutIndex, TxStatus, Txid, Vout, Weight,
+    Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxStatus, Txid, TypeIndex, Vout, Weight,
 };
 use rustc_hash::FxHashMap;
 use vecdb::{AnyVec, ReadableVec, VecIndex};
@@ -75,6 +75,7 @@ impl Query {
             return Ok(Vec::new());
         }
 
+        let t0 = std::time::Instant::now();
         let len = indices.len();
 
         // Sort positions ascending for sequential I/O (O(n) when already sorted)
@@ -92,9 +93,6 @@ impl Query {
         let mut total_size_cursor = indexer.vecs.transactions.total_size.cursor();
         let mut first_txin_cursor = indexer.vecs.transactions.first_txin_index.cursor();
         let mut position_cursor = indexer.vecs.transactions.position.cursor();
-        let blockhash_reader = indexer.vecs.blocks.blockhash.reader();
-        let mut block_ts_cursor = indexer.vecs.blocks.timestamp.cursor();
-
         struct DecodedTx {
             pos: usize,
             tx_index: TxIndex,
@@ -109,7 +107,6 @@ impl Query {
             outpoints: Vec<OutPoint>,
         }
 
-        let mut cached_block: Option<(Height, BlockHash, Timestamp)> = None;
         let mut decoded_txs: Vec<DecodedTx> = Vec::with_capacity(len);
         let mut total_inputs: usize = 0;
 
@@ -125,16 +122,18 @@ impl Query {
             let first_txin_index: TxInIndex = first_txin_cursor.get(idx).data()?;
             let position: BlkPosition = position_cursor.get(idx).data()?;
 
-            let (block_hash, block_time) = if let Some((h, ref bh, bt)) = cached_block
-                && h == height
-            {
-                (bh.clone(), bt)
-            } else {
-                let bh = blockhash_reader.get(height.to_usize());
-                let bt = block_ts_cursor.get(height.to_usize()).data()?;
-                cached_block = Some((height, bh.clone(), bt));
-                (bh, bt)
-            };
+            let block_hash = indexer
+                .vecs
+                .blocks
+                .cached_blockhash
+                .collect_one(height)
+                .data()?;
+            let block_time = indexer
+                .vecs
+                .blocks
+                .cached_timestamp
+                .collect_one(height)
+                .data()?;
 
             let buffer = reader.read_raw_bytes(position, *total_size as usize)?;
             let decoded = bitcoin::Transaction::consensus_decode(&mut Cursor::new(buffer))
@@ -157,18 +156,38 @@ impl Query {
             });
         }
 
-        // Phase 1b: Batch-read outpoints via cursor (PcoVec — sequential
-        // cursor avoids re-decompressing the same pages)
+        let t_phase1a = t0.elapsed();
+
+        // Phase 1b: Batch-read outpoints + prevout data via cursors (PcoVec —
+        // sequential cursor avoids re-decompressing the same pages).
+        // Reading output_type/type_index/value HERE from inputs vecs (sequential)
+        // avoids random-reading them from outputs vecs in Phase 2.
         let mut outpoint_cursor = indexer.vecs.inputs.outpoint.cursor();
+        let mut input_output_type_cursor = indexer.vecs.inputs.output_type.cursor();
+        let mut input_type_index_cursor = indexer.vecs.inputs.type_index.cursor();
+        let mut input_value_cursor = self.computer().inputs.spent.value.cursor();
+
+        let mut prevout_input_data: FxHashMap<OutPoint, (OutputType, TypeIndex, Sats)> =
+            FxHashMap::with_capacity_and_hasher(total_inputs, Default::default());
+
         for dtx in &mut decoded_txs {
             let start = usize::from(dtx.first_txin_index);
             let count = dtx.decoded.input.len();
             let mut outpoints = Vec::with_capacity(count);
             for i in 0..count {
-                outpoints.push(outpoint_cursor.get(start + i).data()?);
+                let op: OutPoint = outpoint_cursor.get(start + i).data()?;
+                if op.is_not_coinbase() {
+                    let ot: OutputType = input_output_type_cursor.get(start + i).data()?;
+                    let ti: TypeIndex = input_type_index_cursor.get(start + i).data()?;
+                    let val: Sats = input_value_cursor.get(start + i).data()?;
+                    prevout_input_data.insert(op, (ot, ti, val));
+                }
+                outpoints.push(op);
             }
             dtx.outpoints = outpoints;
         }
+
+        let t_phase1b = t0.elapsed();
 
         // ── Phase 2: Batch-read prevout data in sorted order ────────────
 
@@ -184,52 +203,24 @@ impl Query {
         prevout_keys.sort_unstable();
         prevout_keys.dedup();
 
-        // Batch-read txid + first_txout_index sorted by prev_tx_index
+        // Batch-read txid sorted by prev_tx_index (only remaining random read)
         let txid_reader = indexer.vecs.transactions.txid.reader();
-        let first_txout_index_reader = indexer.vecs.transactions.first_txout_index.reader();
 
-        struct PrevoutIntermediate {
-            outpoint: OutPoint,
-            txid: Txid,
-            txout_index: TxOutIndex,
-        }
-
-        let mut intermediates: Vec<PrevoutIntermediate> = Vec::with_capacity(prevout_keys.len());
-
-        for &op in &prevout_keys {
-            let prev_tx_idx = op.tx_index().to_usize();
-            let txid = txid_reader.get(prev_tx_idx);
-            let first_txout = first_txout_index_reader.get(prev_tx_idx);
-            let txout_index = first_txout + op.vout();
-            intermediates.push(PrevoutIntermediate {
-                outpoint: op,
-                txid,
-                txout_index,
-            });
-        }
-
-        // Re-sort by txout_index for sequential output data reads
-        intermediates.sort_unstable_by_key(|i| i.txout_index);
-
-        let value_reader = indexer.vecs.outputs.value.reader();
-        let output_type_reader = indexer.vecs.outputs.output_type.reader();
-        let type_index_reader = indexer.vecs.outputs.type_index.reader();
         let addr_readers = indexer.vecs.addrs.addr_readers();
 
         let mut prevout_map: FxHashMap<OutPoint, (Txid, TxOut)> =
-            FxHashMap::with_capacity_and_hasher(intermediates.len(), Default::default());
+            FxHashMap::with_capacity_and_hasher(prevout_keys.len(), Default::default());
 
-        for inter in &intermediates {
-            let txout_idx = usize::from(inter.txout_index);
-            let value: Sats = value_reader.get(txout_idx);
-            let output_type: OutputType = output_type_reader.get(txout_idx);
-            let type_index = type_index_reader.get(txout_idx);
+        for &op in &prevout_keys {
+            let txid = txid_reader.get(op.tx_index().to_usize());
+            // output_type, type_index, value pre-read from inputs vecs (sequential)
+            let &(output_type, type_index, value) =
+                prevout_input_data.get(&op).unwrap();
             let script_pubkey = addr_readers.script_pubkey(output_type, type_index);
-            prevout_map.insert(
-                inter.outpoint,
-                (inter.txid.clone(), TxOut::from((script_pubkey, value))),
-            );
+            prevout_map.insert(op, (txid, TxOut::from((script_pubkey, value))));
         }
+
+        let t_phase2 = t0.elapsed();
 
         // ── Phase 3: Assemble Transaction objects ───────────────────────
 
@@ -318,6 +309,22 @@ impl Query {
 
             transaction.compute_fee();
             txs[dtx.pos] = Some(transaction);
+        }
+
+        let t_phase3 = t0.elapsed();
+
+        if t_phase3.as_millis() > 50 {
+            eprintln!(
+                "[perf:txs] n={} vin={} prevouts={} | 1a={:.1?} 1b={:.1?} | 2={:.1?} | 3={:.1?} | total={:.1?}",
+                len,
+                total_inputs,
+                prevout_keys.len(),
+                t_phase1a,
+                t_phase1b - t_phase1a,
+                t_phase2 - t_phase1b,
+                t_phase3 - t_phase2,
+                t_phase3,
+            );
         }
 
         Ok(txs.into_iter().map(Option::unwrap).collect())

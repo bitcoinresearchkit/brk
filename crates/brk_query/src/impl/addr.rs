@@ -4,7 +4,7 @@ use bitcoin::{Network, PublicKey, ScriptBuf};
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
     Addr, AddrBytes, AddrChainStats, AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, AddrStats,
-    AnyAddrDataIndexEnum, BlockHash, Dollars, Height, OutputType, Timestamp, Transaction, TxIndex,
+    AnyAddrDataIndexEnum, Dollars, Height, OutputType, Transaction, TxIndex,
     TxStatus, Txid, TypeIndex, Unit, Utxo, Vout,
 };
 use vecdb::{ReadableVec, VecIndex};
@@ -189,11 +189,8 @@ impl Query {
         let txid_reader = vecs.transactions.txid.reader();
         let first_txout_index_reader = vecs.transactions.first_txout_index.reader();
         let value_reader = vecs.outputs.value.reader();
-        let blockhash_reader = vecs.blocks.blockhash.reader();
         let tx_heights = &self.computer().indexes.tx_heights;
-        let mut block_ts_cursor = vecs.blocks.timestamp.cursor();
 
-        let mut cached_block: Option<(Height, BlockHash, Timestamp)> = None;
         let mut utxos = Vec::with_capacity(outpoints.len());
 
         for (tx_index, vout) in outpoints {
@@ -202,16 +199,8 @@ impl Query {
             let first_txout_index = first_txout_index_reader.get(tx_index.to_usize());
             let value = value_reader.get(usize::from(first_txout_index + vout));
 
-            let (block_hash, block_time) = if let Some((h, ref bh, bt)) = cached_block
-                && h == height
-            {
-                (bh.clone(), bt)
-            } else {
-                let bh = blockhash_reader.get(height.to_usize());
-                let bt = block_ts_cursor.get(height.to_usize()).data()?;
-                cached_block = Some((height, bh.clone(), bt));
-                (bh, bt)
-            };
+            let block_hash = vecs.blocks.cached_blockhash.collect_one(height).data()?;
+            let block_time = vecs.blocks.cached_timestamp.collect_one(height).data()?;
 
             utxos.push(Utxo {
                 txid,
@@ -268,11 +257,10 @@ impl Query {
             .next_back()
             .map(|(key, _): (AddrIndexTxIndex, Unit)| key.tx_index())
             .ok_or(Error::UnknownAddr)?;
-        self.indexer()
-            .vecs
-            .transactions
-            .height
-            .collect_one(last_tx_index)
+        self.computer()
+            .indexes
+            .tx_heights
+            .get_shared(last_tx_index)
             .ok_or(Error::UnknownAddr)
     }
 
