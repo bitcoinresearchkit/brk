@@ -87,7 +87,6 @@ impl Query {
         // ── Phase 1: Decode all transactions, collect outpoints ─────────
 
         let mut txid_cursor = indexer.vecs.transactions.txid.cursor();
-        let mut locktime_cursor = indexer.vecs.transactions.raw_locktime.cursor();
         let mut total_size_cursor = indexer.vecs.transactions.total_size.cursor();
         let mut first_txin_cursor = indexer.vecs.transactions.first_txin_index.cursor();
         let mut position_cursor = indexer.vecs.transactions.position.cursor();
@@ -96,7 +95,6 @@ impl Query {
             pos: usize,
             tx_index: TxIndex,
             txid: Txid,
-            lock_time: RawLockTime,
             total_size: StoredU32,
             status: TxStatus,
             decoded: bitcoin::Transaction,
@@ -114,7 +112,6 @@ impl Query {
             let idx = tx_index.to_usize();
 
             let txid: Txid = txid_cursor.get(idx).data()?;
-            let lock_time: RawLockTime = locktime_cursor.get(idx).data()?;
             let total_size: StoredU32 = total_size_cursor.get(idx).data()?;
             let first_txin_index: TxInIndex = first_txin_cursor.get(idx).data()?;
             let position: BlkPosition = position_cursor.get(idx).data()?;
@@ -140,7 +137,6 @@ impl Query {
                 pos,
                 tx_index,
                 txid,
-                lock_time,
                 total_size,
                 status,
                 decoded,
@@ -179,13 +175,22 @@ impl Query {
         }
 
         // ── Phase 2: Build prevout TxOut map (script_pubkey from addr vecs) ──
+        // Sort by (output_type, type_index) for sequential BytesVec access
+        // within each address type's file.
 
         let addr_readers = indexer.vecs.addrs.addr_readers();
 
-        let mut prevout_map: FxHashMap<OutPoint, TxOut> =
-            FxHashMap::with_capacity_and_hasher(total_inputs, Default::default());
+        let mut sorted_prevouts: Vec<(OutPoint, OutputType, TypeIndex, Sats)> =
+            Vec::with_capacity(prevout_input_data.len());
+        for (&op, &(ot, ti, val)) in &prevout_input_data {
+            sorted_prevouts.push((op, ot, ti, val));
+        }
+        sorted_prevouts.sort_unstable_by_key(|&(_, ot, ti, _)| (ot, ti));
 
-        for (&op, &(output_type, type_index, value)) in &prevout_input_data {
+        let mut prevout_map: FxHashMap<OutPoint, TxOut> =
+            FxHashMap::with_capacity_and_hasher(sorted_prevouts.len(), Default::default());
+
+        for &(op, output_type, type_index, value) in &sorted_prevouts {
             let script_pubkey = addr_readers.script_pubkey(output_type, type_index);
             prevout_map.insert(op, TxOut::from((script_pubkey, value)));
         }
@@ -260,7 +265,7 @@ impl Query {
                 index: Some(dtx.tx_index),
                 txid: dtx.txid,
                 version: dtx.decoded.version.into(),
-                lock_time: dtx.lock_time,
+                lock_time: RawLockTime::from(dtx.decoded.lock_time),
                 total_size: *dtx.total_size as usize,
                 weight,
                 total_sigop_cost,
