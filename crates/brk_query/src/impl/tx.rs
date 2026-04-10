@@ -65,8 +65,8 @@ impl Query {
     #[inline]
     pub(crate) fn block_hash_and_time(&self, height: Height) -> Result<(BlockHash, Timestamp)> {
         let indexer = self.indexer();
-        let hash = indexer.vecs.blocks.cached_blockhash.collect_one(height).data()?;
-        let time = indexer.vecs.blocks.cached_timestamp.collect_one(height).data()?;
+        let hash = indexer.vecs.blocks.blockhash.collect_one(height).data()?;
+        let time = indexer.vecs.blocks.timestamp.collect_one(height).data()?;
         Ok((hash, time))
     }
 

@@ -60,7 +60,7 @@ impl Query {
         let blockhash = indexer
             .vecs
             .blocks
-            .cached_blockhash
+            .blockhash
             .collect_one(height)
             .data()?;
 

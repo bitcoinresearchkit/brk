@@ -31,6 +31,7 @@ impl BlockProcessor<'_> {
         self.vecs
             .blocks
             .blockhash
+            .inner
             .checked_push(height, blockhash.clone())?;
         self.vecs
             .blocks
@@ -43,6 +44,7 @@ impl BlockProcessor<'_> {
         self.vecs
             .blocks
             .timestamp
+            .inner
             .checked_push(height, Timestamp::from(self.block.header.time))?;
 
         Ok(())

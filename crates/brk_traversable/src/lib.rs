@@ -8,9 +8,10 @@ pub use brk_traversable_derive::Traversable;
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AggFold, AnyExportableVec, AnyVec, BytesVec, BytesVecValue, CompressionStrategy, DeltaOp,
-    EagerVec, Formattable, LazyAggVec, LazyDeltaVec, LazyVecFrom1, LazyVecFrom2, LazyVecFrom3,
-    RawStrategy, ReadOnlyCompressedVec, ReadOnlyRawVec, StoredVec, VecIndex, VecValue,
+    AggFold, AnyExportableVec, AnyVec, BytesVec, BytesVecValue, CachedVec, CompressionStrategy,
+    DeltaOp, EagerVec, Formattable, LazyAggVec, LazyDeltaVec, LazyVecFrom1, LazyVecFrom2,
+    LazyVecFrom3, RawStrategy, ReadOnlyCompressedVec, ReadOnlyRawVec, StoredVec, TypedVec,
+    VecIndex, VecValue,
 };
 
 pub trait Traversable {
@@ -253,6 +254,20 @@ where
 
     fn to_tree_node(&self) -> TreeNode {
         make_leaf::<I, T, _>(self)
+    }
+}
+
+impl<V: TypedVec + Traversable> Traversable for CachedVec<V> {
+    fn to_tree_node(&self) -> TreeNode {
+        self.inner.to_tree_node()
+    }
+
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        self.inner.iter_any_exportable()
+    }
+
+    fn iter_any_visible(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        self.inner.iter_any_visible()
     }
 }
 

@@ -9,9 +9,7 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{Database, EagerVec, PcoVec, Rw, StorageMode};
-
-use vecdb::CachedVec;
+use vecdb::{CachedVec, Database, EagerVec, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,

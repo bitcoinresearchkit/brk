@@ -14,17 +14,13 @@ use crate::parallel_import;
 
 #[derive(Traversable)]
 pub struct BlocksVecs<M: StorageMode = Rw> {
-    pub blockhash: M::Stored<BytesVec<Height, BlockHash>>,
-    #[traversable(skip)]
-    pub cached_blockhash: CachedVec<Height, BlockHash>,
+    pub blockhash: CachedVec<M::Stored<BytesVec<Height, BlockHash>>>,
     pub coinbase_tag: M::Stored<BytesVec<Height, CoinbaseTag>>,
     #[traversable(wrap = "difficulty", rename = "value")]
     pub difficulty: M::Stored<PcoVec<Height, StoredF64>>,
     /// Doesn't guarantee continuity due to possible reorgs and more generally the nature of mining
     #[traversable(wrap = "time")]
-    pub timestamp: M::Stored<PcoVec<Height, Timestamp>>,
-    #[traversable(skip)]
-    pub cached_timestamp: CachedVec<Height, Timestamp>,
+    pub timestamp: CachedVec<M::Stored<PcoVec<Height, Timestamp>>>,
     #[traversable(wrap = "size", rename = "base")]
     pub total: M::Stored<PcoVec<Height, StoredU64>>,
     #[traversable(wrap = "weight", rename = "base")]
@@ -61,16 +57,11 @@ impl BlocksVecs {
             segwit_size = PcoVec::forced_import(db, "segwit_size", version),
             segwit_weight = PcoVec::forced_import(db, "segwit_weight", version),
         };
-        let cached_blockhash = CachedVec::new(&blockhash);
-        let cached_timestamp = CachedVec::new(&timestamp);
-
         Ok(Self {
-            blockhash,
-            cached_blockhash,
+            blockhash: CachedVec::wrap(blockhash),
             coinbase_tag,
             difficulty,
-            timestamp,
-            cached_timestamp,
+            timestamp: CachedVec::wrap(timestamp),
             total,
             weight,
             position,
@@ -82,12 +73,14 @@ impl BlocksVecs {
 
     pub fn truncate(&mut self, height: Height, stamp: Stamp) -> Result<()> {
         self.blockhash
+            .inner
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.coinbase_tag
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.difficulty
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.timestamp
+            .inner
             .truncate_if_needed_with_stamp(height, stamp)?;
         self.total.truncate_if_needed_with_stamp(height, stamp)?;
         self.weight.truncate_if_needed_with_stamp(height, stamp)?;
@@ -103,10 +96,10 @@ impl BlocksVecs {
 
     pub fn par_iter_mut_any(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
-            &mut self.blockhash as &mut dyn AnyStoredVec,
+            &mut self.blockhash.inner as &mut dyn AnyStoredVec,
             &mut self.coinbase_tag,
             &mut self.difficulty,
-            &mut self.timestamp,
+            &mut self.timestamp.inner,
             &mut self.total,
             &mut self.weight,
             &mut self.position,
