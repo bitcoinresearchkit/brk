@@ -40,29 +40,13 @@ impl Query {
         // Use timestamp-based lookback for accurate time boundaries
         let lookback = &computer.blocks.lookback;
         let start = match time_period {
-            TimePeriod::Day => lookback
-                .cached_window_starts
-                .0
-                ._24h
-                .collect_one(current_height),
+            TimePeriod::Day => lookback._24h.collect_one(current_height),
             TimePeriod::ThreeDays => lookback._3d.collect_one(current_height),
-            TimePeriod::Week => lookback
-                .cached_window_starts
-                .0
-                ._1w
-                .collect_one(current_height),
-            TimePeriod::Month => lookback
-                .cached_window_starts
-                .0
-                ._1m
-                .collect_one(current_height),
+            TimePeriod::Week => lookback._1w.collect_one(current_height),
+            TimePeriod::Month => lookback._1m.collect_one(current_height),
             TimePeriod::ThreeMonths => lookback._3m.collect_one(current_height),
             TimePeriod::SixMonths => lookback._6m.collect_one(current_height),
-            TimePeriod::Year => lookback
-                .cached_window_starts
-                .0
-                ._1y
-                .collect_one(current_height),
+            TimePeriod::Year => lookback._1y.collect_one(current_height),
             TimePeriod::TwoYears => lookback._2y.collect_one(current_height),
             TimePeriod::ThreeYears => lookback._3y.collect_one(current_height),
             TimePeriod::All => None,
@@ -191,8 +175,6 @@ impl Query {
         // Use timestamp-based lookback for accurate time boundaries
         let lookback = &computer.blocks.lookback;
         let start_24h = lookback
-            .cached_window_starts
-            .0
             ._24h
             .collect_one(current_height)
             .unwrap_or_default()
@@ -207,8 +189,6 @@ impl Query {
         let total_24h = total_all.saturating_sub(count_before_24h);
 
         let start_1w = lookback
-            .cached_window_starts
-            .0
             ._1w
             .collect_one(current_height)
             .unwrap_or_default()
@@ -349,29 +329,13 @@ impl Query {
                 let lookback = &self.computer().blocks.lookback;
                 let current_height = self.height();
                 match tp {
-                    TimePeriod::Day => lookback
-                        .cached_window_starts
-                        .0
-                        ._24h
-                        .collect_one(current_height),
+                    TimePeriod::Day => lookback._24h.collect_one(current_height),
                     TimePeriod::ThreeDays => lookback._3d.collect_one(current_height),
-                    TimePeriod::Week => lookback
-                        .cached_window_starts
-                        .0
-                        ._1w
-                        .collect_one(current_height),
-                    TimePeriod::Month => lookback
-                        .cached_window_starts
-                        .0
-                        ._1m
-                        .collect_one(current_height),
+                    TimePeriod::Week => lookback._1w.collect_one(current_height),
+                    TimePeriod::Month => lookback._1m.collect_one(current_height),
                     TimePeriod::ThreeMonths => lookback._3m.collect_one(current_height),
                     TimePeriod::SixMonths => lookback._6m.collect_one(current_height),
-                    TimePeriod::Year => lookback
-                        .cached_window_starts
-                        .0
-                        ._1y
-                        .collect_one(current_height),
+                    TimePeriod::Year => lookback._1y.collect_one(current_height),
                     TimePeriod::TwoYears => lookback._2y.collect_one(current_height),
                     TimePeriod::ThreeYears => lookback._3y.collect_one(current_height),
                     TimePeriod::All => None,

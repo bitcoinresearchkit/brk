@@ -58,7 +58,7 @@ impl Query {
 
     /// Current indexed height
     pub fn indexed_height(&self) -> Height {
-        Height::from(self.indexer().vecs.blocks.blockhash.stamp())
+        Height::from(self.indexer().vecs.blocks.blockhash.inner.stamp())
     }
 
     /// Current computed height (series)

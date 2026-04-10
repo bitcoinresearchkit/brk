@@ -1,26 +1,12 @@
 mod addr;
-mod cached_mappings;
 mod day1;
-mod day3;
-mod epoch;
-mod halving;
 mod height;
-mod hour1;
-mod hour12;
-mod hour4;
-mod minute10;
-mod minute30;
-mod month1;
-mod month3;
-mod month6;
+mod resolution;
 pub mod timestamp;
 mod tx_heights;
 mod tx_index;
 mod txin_index;
 mod txout_index;
-mod week1;
-mod year1;
-mod year10;
 
 use std::path::Path;
 
@@ -28,44 +14,43 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
-    Date, Day1, Day3, Height, Hour1, Hour4, Hour12, Indexes, Minute10, Minute30, Month1, Month3,
-    Month6, Version, Week1, Year1, Year10,
+    Date, Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Indexes, Minute10, Minute30,
+    Month1, Month3, Month6, Version, Week1, Year1, Year10,
 };
-use vecdb::{CachedVec, Database, Exit, ReadableVec, Rw, StorageMode};
+use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::internal::db_utils::{finalize_db, open_db};
 
 pub use addr::Vecs as AddrVecs;
-pub use cached_mappings::CachedMappings;
 pub use day1::Vecs as Day1Vecs;
-pub use day3::Vecs as Day3Vecs;
-pub use epoch::Vecs as EpochVecs;
-pub use halving::Vecs as HalvingVecs;
 pub use height::Vecs as HeightVecs;
-pub use hour1::Vecs as Hour1Vecs;
-pub use hour4::Vecs as Hour4Vecs;
-pub use hour12::Vecs as Hour12Vecs;
-pub use minute10::Vecs as Minute10Vecs;
-pub use minute30::Vecs as Minute30Vecs;
-pub use month1::Vecs as Month1Vecs;
-pub use month3::Vecs as Month3Vecs;
-pub use month6::Vecs as Month6Vecs;
+pub use resolution::{CachedResolutionVecs, DatedResolutionVecs, ResolutionVecs};
 pub use timestamp::Timestamps;
 pub use tx_heights::TxHeights;
 pub use tx_index::Vecs as TxIndexVecs;
 pub use txin_index::Vecs as TxInIndexVecs;
 pub use txout_index::Vecs as TxOutIndexVecs;
-pub use week1::Vecs as Week1Vecs;
-pub use year1::Vecs as Year1Vecs;
-pub use year10::Vecs as Year10Vecs;
+
+pub type Minute10Vecs<M = Rw> = ResolutionVecs<Minute10, M>;
+pub type Minute30Vecs<M = Rw> = ResolutionVecs<Minute30, M>;
+pub type Hour1Vecs<M = Rw> = ResolutionVecs<Hour1, M>;
+pub type Hour4Vecs<M = Rw> = ResolutionVecs<Hour4, M>;
+pub type Hour12Vecs<M = Rw> = ResolutionVecs<Hour12, M>;
+pub type Day3Vecs<M = Rw> = ResolutionVecs<Day3, M>;
+pub type EpochVecs<M = Rw> = CachedResolutionVecs<Epoch, M>;
+pub type HalvingVecs<M = Rw> = CachedResolutionVecs<Halving, M>;
+pub type Week1Vecs<M = Rw> = DatedResolutionVecs<Week1, M>;
+pub type Month1Vecs<M = Rw> = DatedResolutionVecs<Month1, M>;
+pub type Month3Vecs<M = Rw> = DatedResolutionVecs<Month3, M>;
+pub type Month6Vecs<M = Rw> = DatedResolutionVecs<Month6, M>;
+pub type Year1Vecs<M = Rw> = DatedResolutionVecs<Year1, M>;
+pub type Year10Vecs<M = Rw> = DatedResolutionVecs<Year10, M>;
 
 pub const DB_NAME: &str = "indexes";
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     db: Database,
-    #[traversable(skip)]
-    pub cached_mappings: CachedMappings,
     #[traversable(skip)]
     pub tx_heights: TxHeights,
     pub addr: AddrVecs,
@@ -103,42 +88,24 @@ impl Vecs {
 
         let addr = AddrVecs::forced_import(version, indexer);
         let height = HeightVecs::forced_import(&db, version)?;
-        let epoch = EpochVecs::forced_import(&db, version)?;
-        let halving = HalvingVecs::forced_import(&db, version)?;
-        let minute10 = Minute10Vecs::forced_import(&db, version)?;
-        let minute30 = Minute30Vecs::forced_import(&db, version)?;
-        let hour1 = Hour1Vecs::forced_import(&db, version)?;
-        let hour4 = Hour4Vecs::forced_import(&db, version)?;
-        let hour12 = Hour12Vecs::forced_import(&db, version)?;
+        let epoch = CachedResolutionVecs::forced_import(&db, "epoch", version)?;
+        let halving = CachedResolutionVecs::forced_import(&db, "halving", version)?;
+        let minute10 = ResolutionVecs::forced_import(&db, "minute10_index", version)?;
+        let minute30 = ResolutionVecs::forced_import(&db, "minute30_index", version)?;
+        let hour1 = ResolutionVecs::forced_import(&db, "hour1_index", version)?;
+        let hour4 = ResolutionVecs::forced_import(&db, "hour4_index", version)?;
+        let hour12 = ResolutionVecs::forced_import(&db, "hour12_index", version)?;
         let day1 = Day1Vecs::forced_import(&db, version)?;
-        let day3 = Day3Vecs::forced_import(&db, version)?;
-        let week1 = Week1Vecs::forced_import(&db, version)?;
-        let month1 = Month1Vecs::forced_import(&db, version)?;
-        let month3 = Month3Vecs::forced_import(&db, version)?;
-        let month6 = Month6Vecs::forced_import(&db, version)?;
-        let year1 = Year1Vecs::forced_import(&db, version)?;
-        let year10 = Year10Vecs::forced_import(&db, version)?;
+        let day3 = ResolutionVecs::forced_import(&db, "day3_index", version)?;
+        let week1 = DatedResolutionVecs::forced_import(&db, "week1_index", version)?;
+        let month1 = DatedResolutionVecs::forced_import(&db, "month1_index", version)?;
+        let month3 = DatedResolutionVecs::forced_import(&db, "month3_index", version)?;
+        let month6 = DatedResolutionVecs::forced_import(&db, "month6_index", version)?;
+        let year1 = DatedResolutionVecs::forced_import(&db, "year1_index", version)?;
+        let year10 = DatedResolutionVecs::forced_import(&db, "year10_index", version)?;
         let tx_index = TxIndexVecs::forced_import(&db, version, indexer)?;
         let txin_index = TxInIndexVecs::forced_import(version, indexer);
         let txout_index = TxOutIndexVecs::forced_import(version, indexer);
-
-        let cached_mappings = CachedMappings {
-            minute10_first_height: CachedVec::new(&minute10.first_height),
-            minute30_first_height: CachedVec::new(&minute30.first_height),
-            hour1_first_height: CachedVec::new(&hour1.first_height),
-            hour4_first_height: CachedVec::new(&hour4.first_height),
-            hour12_first_height: CachedVec::new(&hour12.first_height),
-            day1_first_height: CachedVec::new(&day1.first_height),
-            day3_first_height: CachedVec::new(&day3.first_height),
-            week1_first_height: CachedVec::new(&week1.first_height),
-            month1_first_height: CachedVec::new(&month1.first_height),
-            month3_first_height: CachedVec::new(&month3.first_height),
-            month6_first_height: CachedVec::new(&month6.first_height),
-            year1_first_height: CachedVec::new(&year1.first_height),
-            year10_first_height: CachedVec::new(&year10.first_height),
-            halving_identity: CachedVec::new(&halving.identity),
-            epoch_identity: CachedVec::new(&epoch.identity),
-        };
 
         let timestamp = Timestamps::forced_import_from_locals(
             &db, version, &minute10, &minute30, &hour1, &hour4, &hour12, &day1, &day3, &week1,
@@ -146,7 +113,6 @@ impl Vecs {
         )?;
 
         let this = Self {
-            cached_mappings,
             tx_heights: TxHeights::init(indexer),
             addr,
             height,
@@ -200,7 +166,7 @@ impl Vecs {
         let starting_day1 =
             self.compute_calendar_mappings(indexer, &starting_indexes, prev_height, exit)?;
 
-        self.compute_period_vecs(indexer, &starting_indexes, prev_height, starting_day1, exit)?;
+        self.compute_period_vecs(&starting_indexes, prev_height, starting_day1, exit)?;
 
         self.timestamp.compute_per_resolution(
             indexer,
@@ -380,23 +346,16 @@ impl Vecs {
             &indexer.vecs.blocks.weight,
             exit,
         )?;
-        self.epoch.first_height.compute_first_per_index(
+        self.epoch.first_height.inner.compute_first_per_index(
             starting_indexes.height,
             &self.height.epoch,
             exit,
         )?;
-        self.epoch.identity.compute_from_index(
+        self.epoch.identity.inner.compute_from_index(
             starting_difficulty,
             &self.epoch.first_height,
             exit,
         )?;
-        self.epoch.height_count.compute_count_from_indexes(
-            starting_difficulty,
-            &self.epoch.first_height,
-            &self.timestamp.monotonic,
-            exit,
-        )?;
-
         let starting_halving = self
             .height
             .halving
@@ -408,12 +367,12 @@ impl Vecs {
             &indexer.vecs.blocks.weight,
             exit,
         )?;
-        self.halving.first_height.compute_first_per_index(
+        self.halving.first_height.inner.compute_first_per_index(
             starting_indexes.height,
             &self.height.halving,
             exit,
         )?;
-        self.halving.identity.compute_from_index(
+        self.halving.identity.inner.compute_from_index(
             starting_halving,
             &self.halving.first_height,
             exit,
@@ -424,7 +383,6 @@ impl Vecs {
 
     fn compute_period_vecs(
         &mut self,
-        indexer: &Indexer,
         starting_indexes: &Indexes,
         prev_height: Height,
         starting_day1: Day1,
@@ -432,7 +390,7 @@ impl Vecs {
     ) -> Result<()> {
         macro_rules! basic_period {
             ($period:ident) => {
-                self.$period.first_height.compute_first_per_index(
+                self.$period.first_height.inner.compute_first_per_index(
                     starting_indexes.height,
                     &self.height.$period,
                     exit,
@@ -455,7 +413,7 @@ impl Vecs {
         basic_period!(hour12);
         basic_period!(day3);
 
-        self.day1.first_height.compute_first_per_index(
+        self.day1.first_height.inner.compute_first_per_index(
             starting_indexes.height,
             &self.height.day1,
             exit,
@@ -469,18 +427,11 @@ impl Vecs {
             |(di, ..)| (di, Date::from(di)),
             exit,
         )?;
-        self.day1.height_count.compute_count_from_indexes(
-            starting_day1,
-            &self.day1.first_height,
-            &indexer.vecs.blocks.weight,
-            exit,
-        )?;
-
         let ts = &self.timestamp.monotonic;
 
         macro_rules! dated_period {
             ($period:ident) => {{
-                self.$period.first_height.compute_first_per_index(
+                self.$period.first_height.inner.compute_first_per_index(
                     starting_indexes.height,
                     &self.height.$period,
                     exit,

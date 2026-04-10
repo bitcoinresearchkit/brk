@@ -6,8 +6,8 @@ use vecdb::{ReadableCloneableVec, UnaryTransform};
 use crate::{
     indexes,
     internal::{
-        CachedWindowStarts, ComputedVecValue, LazyPerBlock, LazyRollingComplete, NumericValue,
-        PerBlockFull,
+        ComputedVecValue, LazyPerBlock, LazyRollingComplete, NumericValue, PerBlockFull,
+        WindowStartVec, Windows,
     },
 };
 
@@ -33,7 +33,7 @@ where
         name: &str,
         version: Version,
         source: &PerBlockFull<S1T>,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
         indexes: &indexes::Vecs,
     ) -> Self {
         let cumulative = LazyPerBlock::from_computed::<F>(

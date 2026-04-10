@@ -19,7 +19,7 @@ use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, PerBlockRollingAverage},
+    internal::{PerBlockRollingAverage, WindowStartVec, Windows},
 };
 
 /// Per-block activity counts - reset each block.
@@ -77,7 +77,7 @@ impl ActivityCountVecs {
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         Ok(Self {
             reactivated: PerBlockRollingAverage::forced_import(
@@ -174,7 +174,7 @@ impl AddrTypeToActivityCountVecs {
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         Ok(Self::from(ByAddrType::<ActivityCountVecs>::new_with_name(
             |type_name| {
@@ -246,7 +246,7 @@ impl AddrActivityVecs {
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         Ok(Self {
             all: ActivityCountVecs::forced_import(db, name, version, indexes, cached_starts)?,

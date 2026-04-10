@@ -7,8 +7,8 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        AmountPerBlockCumulative, CachedWindowStarts, LazyRollingAvgsAmountFromHeight,
-        LazyRollingSumsAmountFromHeight,
+        AmountPerBlockCumulative, LazyRollingAvgsAmountFromHeight, LazyRollingSumsAmountFromHeight,
+        WindowStartVec, Windows,
     },
     prices,
 };
@@ -31,7 +31,7 @@ impl AmountPerBlockCumulativeRolling {
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let v = version + VERSION;
 

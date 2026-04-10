@@ -6,7 +6,7 @@ use vecdb::{Database, Exit, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, PerBlockCumulativeRolling},
+    internal::{PerBlockCumulativeRolling, WindowStartVec, Windows},
 };
 
 use super::TotalAddrCountVecs;
@@ -24,7 +24,7 @@ impl NewAddrCountVecs {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let all = PerBlockCumulativeRolling::forced_import(
             db,

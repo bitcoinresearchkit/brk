@@ -13,7 +13,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let price = &prices.cached_spot_cents;
+        let price = &prices.spot.cents.height;
 
         for (price_past, days) in self.price_past.iter_mut_with_days() {
             let window_starts = blocks.lookback.start_vec(days as usize);

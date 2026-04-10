@@ -24,7 +24,7 @@ use crate::{
     },
     indexes, inputs,
     internal::{
-        CachedWindowStarts, PerBlockCumulativeRolling,
+        PerBlockCumulativeRolling, WindowStartVec, Windows,
         db_utils::{finalize_db, open_db},
     },
     outputs, prices, transactions,
@@ -102,7 +102,7 @@ impl Vecs {
         parent: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let db_path = parent.join(super::DB_NAME);
         let states_path = db_path.join("states");

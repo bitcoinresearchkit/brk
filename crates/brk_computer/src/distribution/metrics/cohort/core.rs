@@ -140,7 +140,7 @@ impl CoreCohortMetrics {
 
         self.unrealized.compute(
             starting_indexes.height,
-            &prices.cached_spot_cents,
+            &prices.spot.cents.height,
             &self.realized.price.cents.height,
             exit,
         )?;

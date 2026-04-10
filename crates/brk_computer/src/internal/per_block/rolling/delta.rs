@@ -2,13 +2,16 @@ use brk_traversable::Traversable;
 use brk_types::{Dollars, Height, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{DeltaChange, DeltaRate, LazyDeltaVec, LazyVecFrom1, ReadableCloneableVec, VecValue};
+use vecdb::{
+    DeltaChange, DeltaRate, LazyDeltaVec, LazyVecFrom1, ReadOnlyClone, ReadableCloneableVec,
+    VecValue,
+};
 
 use crate::{
     indexes,
     internal::{
-        BpsType, CachedWindowStarts, CentsType, DerivedResolutions, LazyPerBlock, NumericValue,
-        Percent, Resolutions, Windows,
+        BpsType, CentsType, DerivedResolutions, LazyPerBlock, NumericValue, Percent, Resolutions,
+        WindowStartVec, Windows,
     },
 };
 
@@ -68,14 +71,14 @@ where
         name: &str,
         version: Version,
         source: &(impl ReadableCloneableVec<Height, S> + 'static),
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
         indexes: &indexes::Vecs,
     ) -> Self {
         let src = source.read_only_boxed_clone();
 
-        let make_slot = |suffix: &str, cached_start: &vecdb::CachedVec<Height, Height>| {
+        let make_slot = |suffix: &str, cached_start: &&WindowStartVec| {
             let full_name = format!("{name}_{suffix}");
-            let cached = cached_start.clone();
+            let cached = cached_start.read_only_clone();
             let starts_version = cached.version();
 
             // Absolute change: source[h] - source[ago] as C (via f64)
@@ -86,15 +89,11 @@ where
                 starts_version,
                 {
                     let cached = cached.clone();
-                    move || cached.get()
+                    move || cached.cached()
                 },
             );
-            let change_resolutions = Resolutions::forced_import(
-                &full_name,
-                change_vec.read_only_boxed_clone(),
-                version,
-                indexes,
-            );
+            let change_resolutions =
+                Resolutions::forced_import(&full_name, change_vec.clone(), version, indexes);
             let absolute = LazyDeltaFromHeight {
                 height: change_vec,
                 resolutions: Box::new(change_resolutions),
@@ -107,14 +106,10 @@ where
                 version,
                 src.clone(),
                 starts_version,
-                move || cached.get(),
+                move || cached.cached(),
             );
-            let rate_resolutions = Resolutions::forced_import(
-                &rate_bps_name,
-                rate_vec.read_only_boxed_clone(),
-                version,
-                indexes,
-            );
+            let rate_resolutions =
+                Resolutions::forced_import(&rate_bps_name, rate_vec.clone(), version, indexes);
             let bps = LazyDeltaFromHeight {
                 height: rate_vec,
                 resolutions: Box::new(rate_resolutions),
@@ -159,7 +154,7 @@ where
             (absolute, rate)
         };
 
-        let (absolute, rate) = cached_starts.0.map_with_suffix(make_slot).unzip();
+        let (absolute, rate) = cached_starts.map_with_suffix(make_slot).unzip();
 
         Self { absolute, rate }
     }
@@ -206,14 +201,14 @@ where
         name: &str,
         version: Version,
         source: &(impl ReadableCloneableVec<Height, S> + 'static),
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
         indexes: &indexes::Vecs,
     ) -> Self {
         let src = source.read_only_boxed_clone();
 
-        let make_slot = |suffix: &str, cached_start: &vecdb::CachedVec<Height, Height>| {
+        let make_slot = |suffix: &str, cached_start: &&WindowStartVec| {
             let full_name = format!("{name}_{suffix}");
-            let cached = cached_start.clone();
+            let cached = cached_start.read_only_clone();
             let starts_version = cached.version();
 
             // Absolute change (cents): source[h] - source[ago] as C (via f64)
@@ -225,12 +220,12 @@ where
                 starts_version,
                 {
                     let cached = cached.clone();
-                    move || cached.get()
+                    move || cached.cached()
                 },
             );
             let change_resolutions = Resolutions::forced_import(
                 &cents_name,
-                change_vec.read_only_boxed_clone(),
+                change_vec.clone(),
                 version,
                 indexes,
             );
@@ -262,14 +257,10 @@ where
                 version,
                 src.clone(),
                 starts_version,
-                move || cached.get(),
+                move || cached.cached(),
             );
-            let rate_resolutions = Resolutions::forced_import(
-                &rate_bps_name,
-                rate_vec.read_only_boxed_clone(),
-                version,
-                indexes,
-            );
+            let rate_resolutions =
+                Resolutions::forced_import(&rate_bps_name, rate_vec.clone(), version, indexes);
             let bps = LazyDeltaFromHeight {
                 height: rate_vec,
                 resolutions: Box::new(rate_resolutions),
@@ -312,7 +303,7 @@ where
             (absolute, rate)
         };
 
-        let (absolute, rate) = cached_starts.0.map_with_suffix(make_slot).unzip();
+        let (absolute, rate) = cached_starts.map_with_suffix(make_slot).unzip();
 
         Self { absolute, rate }
     }

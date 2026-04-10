@@ -13,7 +13,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let close = &prices.cached_spot_cents;
+        let close = &prices.spot.cents.height;
 
         for (sma, period) in [
             (&mut self.sma._1w, 7),

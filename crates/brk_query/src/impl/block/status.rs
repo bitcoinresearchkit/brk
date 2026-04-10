@@ -1,4 +1,4 @@
-use brk_error::Result;
+use brk_error::{OptionData, Result};
 use brk_types::{BlockHash, BlockStatus, Height};
 use vecdb::AnyVec;
 
@@ -25,7 +25,8 @@ impl Query {
                     .vecs
                     .blocks
                     .blockhash
-                    .read_once(height.incremented())?,
+                    .get(height.incremented())
+                    .data()?,
             )
         } else {
             None

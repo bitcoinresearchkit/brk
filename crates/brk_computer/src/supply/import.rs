@@ -6,8 +6,8 @@ use brk_types::Version;
 use crate::{
     cointime, distribution, indexes,
     internal::{
-        CachedWindowStarts, LazyAmountPerBlock, LazyFiatPerBlock, LazyRollingDeltasFiatFromHeight,
-        PercentPerBlock, RollingWindows,
+        LazyAmountPerBlock, LazyFiatPerBlock, LazyRollingDeltasFiatFromHeight, PercentPerBlock,
+        RollingWindows, WindowStartVec, Windows,
         db_utils::{finalize_db, open_db},
     },
     supply::burned,
@@ -24,7 +24,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         distribution: &distribution::Vecs,
         cointime: &cointime::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let db = open_db(parent, super::DB_NAME, 1_000_000)?;
 

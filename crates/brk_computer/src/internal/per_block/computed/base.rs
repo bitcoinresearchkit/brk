@@ -5,8 +5,8 @@ use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    BinaryTransform, Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableCloneableVec,
-    ReadableVec, Rw, StorageMode, VecValue,
+    BinaryTransform, Database, EagerVec, Exit, ImportableVec, PcoVec, ReadOnlyClone, ReadableVec,
+    Rw, StorageMode, VecValue,
 };
 
 use crate::indexes;
@@ -39,7 +39,7 @@ where
         let height: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, version)?;
 
         let resolutions =
-            Resolutions::forced_import(name, height.read_only_boxed_clone(), version, indexes);
+            Resolutions::forced_import(name, height.read_only_clone(), version, indexes);
 
         Ok(Self {
             height,

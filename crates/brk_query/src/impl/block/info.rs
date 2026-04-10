@@ -52,7 +52,7 @@ impl Query {
         if height > max_height {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
-        Ok(self.indexer().vecs.blocks.blockhash.read_once(height)?)
+        self.indexer().vecs.blocks.blockhash.get(height).data()
     }
 
     pub fn blocks(&self, start_height: Option<Height>) -> Result<Vec<BlockInfo>> {
@@ -220,7 +220,7 @@ impl Query {
             .block
             .sats
             .collect_range_at(begin, end);
-        let prices = computer.prices.cached_spot_usd.collect_range_at(begin, end);
+        let prices = computer.prices.spot.usd.height.collect_range_at(begin, end);
         let output_volumes = computer
             .mining
             .rewards

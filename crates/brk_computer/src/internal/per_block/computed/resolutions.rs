@@ -8,8 +8,8 @@ use brk_types::{
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    AggFold, LazyAggVec, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, ReadableVec,
-    VecIndex, VecValue,
+    AggFold, LazyAggVec, ReadOnlyClone, ReadableCloneableVec, ReadableVec, TypedVec, VecIndex,
+    VecValue,
 };
 
 use crate::{
@@ -102,47 +102,48 @@ impl<T> Resolutions<T>
 where
     T: NumericValue + JsonSchema,
 {
-    pub(crate) fn forced_import(
+    pub(crate) fn forced_import<V>(
         name: &str,
-        height_source: ReadableBoxedVec<Height, T>,
+        height_source: V,
         version: Version,
         indexes: &indexes::Vecs,
-    ) -> Self {
+    ) -> Self
+    where
+        V: TypedVec<I = Height, T = T> + ReadableVec<Height, T> + Clone + 'static,
+    {
         let cached = cache_wrap(height_source);
         let height_source = cached.read_only_boxed_clone();
 
-        let cm = &indexes.cached_mappings;
-
         macro_rules! res {
-            ($cached:expr) => {{
-                let cached = $cached.clone();
+            ($field:expr) => {{
+                let cached = $field.read_only_clone();
                 let mapping_version = cached.version();
                 LazyAggVec::new(
                     name,
                     version,
                     mapping_version,
                     height_source.clone(),
-                    move || cached.get(),
+                    move || cached.cached(),
                 )
             }};
         }
 
         Self(PerResolution {
-            minute10: res!(cm.minute10_first_height),
-            minute30: res!(cm.minute30_first_height),
-            hour1: res!(cm.hour1_first_height),
-            hour4: res!(cm.hour4_first_height),
-            hour12: res!(cm.hour12_first_height),
-            day1: res!(cm.day1_first_height),
-            day3: res!(cm.day3_first_height),
-            week1: res!(cm.week1_first_height),
-            month1: res!(cm.month1_first_height),
-            month3: res!(cm.month3_first_height),
-            month6: res!(cm.month6_first_height),
-            year1: res!(cm.year1_first_height),
-            year10: res!(cm.year10_first_height),
-            halving: res!(cm.halving_identity),
-            epoch: res!(cm.epoch_identity),
+            minute10: res!(indexes.minute10.first_height),
+            minute30: res!(indexes.minute30.first_height),
+            hour1: res!(indexes.hour1.first_height),
+            hour4: res!(indexes.hour4.first_height),
+            hour12: res!(indexes.hour12.first_height),
+            day1: res!(indexes.day1.first_height),
+            day3: res!(indexes.day3.first_height),
+            week1: res!(indexes.week1.first_height),
+            month1: res!(indexes.month1.first_height),
+            month3: res!(indexes.month3.first_height),
+            month6: res!(indexes.month6.first_height),
+            year1: res!(indexes.year1.first_height),
+            year10: res!(indexes.year10.first_height),
+            halving: res!(indexes.halving.identity),
+            epoch: res!(indexes.epoch.identity),
         })
     }
 }

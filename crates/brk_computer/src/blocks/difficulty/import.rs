@@ -20,10 +20,10 @@ impl Vecs {
     ) -> Result<Self> {
         let v2 = Version::TWO;
 
-        let hashrate = LazyPerBlock::from_height_source::<DifficultyToHashF64>(
+        let hashrate = LazyPerBlock::from_height_source::<DifficultyToHashF64, _>(
             "difficulty_hashrate",
             version,
-            indexer.vecs.blocks.difficulty.read_only_boxed_clone(),
+            indexer.vecs.blocks.difficulty.read_only_clone(),
             indexes,
         );
 
@@ -40,7 +40,7 @@ impl Vecs {
         Ok(Self {
             value: Resolutions::forced_import(
                 "difficulty",
-                indexer.vecs.blocks.difficulty.read_only_boxed_clone(),
+                indexer.vecs.blocks.difficulty.read_only_clone(),
                 version,
                 indexes,
             ),

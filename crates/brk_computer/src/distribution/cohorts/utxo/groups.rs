@@ -25,7 +25,7 @@ use crate::{
         state::UTXOCohortState,
     },
     indexes,
-    internal::{AmountPerBlockCumulativeRolling, CachedWindowStarts},
+    internal::{AmountPerBlockCumulativeRolling, WindowStartVec, Windows},
     prices,
 };
 
@@ -75,7 +75,7 @@ impl UTXOCohorts<Rw> {
         version: Version,
         indexes: &indexes::Vecs,
         states_path: &Path,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let v = version + VERSION;
 

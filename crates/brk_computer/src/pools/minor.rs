@@ -5,7 +5,7 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode, Version};
 
 use crate::{
     blocks, indexes,
-    internal::{CachedWindowStarts, PerBlockCumulativeRolling, PercentPerBlock, RatioU64Bp16},
+    internal::{PerBlockCumulativeRolling, PercentPerBlock, RatioU64Bp16, WindowStartVec, Windows},
 };
 
 #[derive(Traversable)]
@@ -23,7 +23,7 @@ impl Vecs {
         slug: PoolSlug,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let suffix = |s: &str| format!("{}_{s}", slug);
 

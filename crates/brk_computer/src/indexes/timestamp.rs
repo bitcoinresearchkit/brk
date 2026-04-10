@@ -6,8 +6,8 @@ use brk_types::{
 };
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    Database, EagerVec, Exit, ImportableVec, LazyVecFrom1, PcoVec, ReadableCloneableVec,
-    ReadableVec, Rw, StorageMode, Version,
+    Database, EagerVec, Exit, ImportableVec, LazyVecFrom1, PcoVec, ReadableVec, Rw, StorageMode,
+    Version,
 };
 
 use crate::internal::PerResolution;

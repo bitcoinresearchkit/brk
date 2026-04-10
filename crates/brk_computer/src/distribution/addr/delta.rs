@@ -4,7 +4,7 @@ use brk_types::{BasisPointsSigned32, StoredI64, StoredU64, Version};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, LazyRollingDeltasFromHeight},
+    internal::{LazyRollingDeltasFromHeight, WindowStartVec, Windows},
 };
 
 use super::AddrCountsVecs;
@@ -22,7 +22,7 @@ impl DeltaVecs {
     pub(crate) fn new(
         version: Version,
         addr_count: &AddrCountsVecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
         indexes: &indexes::Vecs,
     ) -> Self {
         let version = version + Version::TWO;

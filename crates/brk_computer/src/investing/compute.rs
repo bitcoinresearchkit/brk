@@ -102,7 +102,7 @@ impl Vecs {
         {
             returns.compute_binary::<Cents, Cents, RatioDiffCentsBps32>(
                 starting_indexes.height,
-                &prices.cached_spot_cents,
+                &prices.spot.cents.height,
                 &average_price.cents.height,
                 exit,
             )?;
@@ -163,7 +163,7 @@ impl Vecs {
         {
             returns.compute_binary::<Cents, Cents, RatioDiffCentsBps32>(
                 starting_indexes.height,
-                &prices.cached_spot_cents,
+                &prices.spot.cents.height,
                 &lookback_price.cents.height,
                 exit,
             )?;
@@ -266,7 +266,7 @@ impl Vecs {
         {
             returns.compute_binary::<Cents, Cents, RatioDiffCentsBps32>(
                 starting_indexes.height,
-                &prices.cached_spot_cents,
+                &prices.spot.cents.height,
                 &average_price.cents.height,
                 exit,
             )?;

@@ -7,7 +7,7 @@ use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 use crate::{
     indexes,
     internal::{
-        AmountPerBlock, AmountPerBlockWithDeltas, CachedWindowStarts, PerBlock, RatioPerBlock,
+        AmountPerBlock, AmountPerBlockWithDeltas, PerBlock, RatioPerBlock, WindowStartVec, Windows,
     },
     prices,
 };
@@ -43,7 +43,7 @@ impl ProfitabilityBucket {
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         Ok(Self {
             supply: WithSth {
@@ -126,7 +126,7 @@ impl ProfitabilityBucket {
 
         self.unrealized_pnl.all.height.compute_transform3(
             max_from,
-            &prices.cached_spot_cents,
+            &prices.spot.cents.height,
             &self.realized_cap.all.height,
             &self.supply.all.sats.height,
             |(i, spot, cap, supply, ..)| {
@@ -139,7 +139,7 @@ impl ProfitabilityBucket {
         )?;
         self.unrealized_pnl.sth.height.compute_transform3(
             max_from,
-            &prices.cached_spot_cents,
+            &prices.spot.cents.height,
             &self.realized_cap.sth.height,
             &self.supply.sth.sats.height,
             |(i, spot, cap, supply, ..)| {
@@ -153,7 +153,7 @@ impl ProfitabilityBucket {
 
         self.nupl.bps.height.compute_transform3(
             max_from,
-            &prices.cached_spot_cents,
+            &prices.spot.cents.height,
             &self.realized_cap.all.height,
             &self.supply.all.sats.height,
             |(i, spot, cap_dollars, supply_sats, ..)| {
@@ -267,7 +267,7 @@ impl ProfitabilityMetrics {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let range = ProfitabilityRange::try_new(|name| {
             ProfitabilityBucket::forced_import(db, name, version, indexes, cached_starts)

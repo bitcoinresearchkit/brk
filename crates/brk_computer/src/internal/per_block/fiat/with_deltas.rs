@@ -7,7 +7,7 @@ use vecdb::{Database, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{BpsType, CachedWindowStarts, LazyRollingDeltasFiatFromHeight},
+    internal::{BpsType, LazyRollingDeltasFiatFromHeight, WindowStartVec, Windows},
 };
 
 use super::{CentsType, FiatPerBlock};
@@ -38,7 +38,7 @@ where
         version: Version,
         delta_version_offset: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let inner = FiatPerBlock::forced_import(db, name, version, indexes)?;
 

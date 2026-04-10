@@ -8,7 +8,12 @@ use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{distribution::DynCohortVecs, indexes, internal::CachedWindowStarts, prices};
+use crate::{
+    distribution::DynCohortVecs,
+    indexes,
+    internal::{WindowStartVec, Windows},
+    prices,
+};
 
 use super::{super::traits::CohortVecs, vecs::AddrCohortVecs};
 
@@ -25,7 +30,7 @@ impl AddrCohorts {
         version: Version,
         indexes: &indexes::Vecs,
         states_path: &Path,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let v = version + VERSION;
 

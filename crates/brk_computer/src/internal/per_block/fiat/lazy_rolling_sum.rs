@@ -1,13 +1,13 @@
 use brk_traversable::Traversable;
 use brk_types::{Dollars, Height, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{DeltaSub, LazyDeltaVec, LazyVecFrom1, ReadableCloneableVec};
+use vecdb::{DeltaSub, LazyDeltaVec, LazyVecFrom1, ReadOnlyClone, ReadableCloneableVec};
 
 use crate::{
     indexes,
     internal::{
-        CachedWindowStarts, CentsType, DerivedResolutions, LazyPerBlock, LazyRollingSumFromHeight,
-        Resolutions, Windows,
+        CentsType, DerivedResolutions, LazyPerBlock, LazyRollingSumFromHeight, Resolutions,
+        WindowStartVec, Windows,
     },
 };
 
@@ -28,14 +28,14 @@ impl<C: CentsType> LazyRollingSumsFiatFromHeight<C> {
         name: &str,
         version: Version,
         cumulative_cents: &(impl ReadableCloneableVec<Height, C> + 'static),
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
         indexes: &indexes::Vecs,
     ) -> Self {
         let cum_cents = cumulative_cents.read_only_boxed_clone();
 
-        let make_slot = |suffix: &str, cached_start: &vecdb::CachedVec<Height, Height>| {
+        let make_slot = |suffix: &str, cached_start: &&WindowStartVec| {
             let full_name = format!("{name}_{suffix}");
-            let cached = cached_start.clone();
+            let cached = cached_start.read_only_clone();
             let starts_version = cached.version();
 
             let cents_sum = LazyDeltaVec::<Height, C, C, DeltaSub>::new(
@@ -43,11 +43,11 @@ impl<C: CentsType> LazyRollingSumsFiatFromHeight<C> {
                 version,
                 cum_cents.clone(),
                 starts_version,
-                move || cached.get(),
+                move || cached.cached(),
             );
             let cents_resolutions = Resolutions::forced_import(
                 &format!("{full_name}_cents"),
-                cents_sum.read_only_boxed_clone(),
+                cents_sum.clone(),
                 version,
                 indexes,
             );
@@ -72,6 +72,6 @@ impl<C: CentsType> LazyRollingSumsFiatFromHeight<C> {
             LazyRollingSumFiatFromHeight { usd, cents }
         };
 
-        Self(cached_starts.0.map_with_suffix(make_slot))
+        Self(cached_starts.map_with_suffix(make_slot))
     }
 }

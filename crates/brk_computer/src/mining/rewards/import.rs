@@ -7,8 +7,8 @@ use crate::{
     indexes,
     internal::{
         AmountPerBlockCumulative, AmountPerBlockCumulativeRolling, AmountPerBlockFull,
-        CachedWindowStarts, LazyPercentRollingWindows, OneMinusBp16, PercentPerBlock,
-        PercentRollingWindows, RatioRollingWindows,
+        LazyPercentRollingWindows, OneMinusBp16, PercentPerBlock, PercentRollingWindows,
+        RatioRollingWindows, WindowStartVec, Windows,
     },
 };
 
@@ -17,7 +17,7 @@ impl Vecs {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let fee_dominance_rolling =
             PercentRollingWindows::forced_import(db, "fee_dominance", version, indexes)?;

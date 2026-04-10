@@ -6,7 +6,7 @@ use vecdb::{Database, Exit, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        CachedWindowStarts, CentsType, FiatBlock, FiatPerBlock, LazyRollingSumsFiatFromHeight,
+        CentsType, FiatBlock, FiatPerBlock, LazyRollingSumsFiatFromHeight, WindowStartVec, Windows,
     },
 };
 
@@ -23,7 +23,7 @@ impl<C: CentsType> FiatPerBlockCumulativeWithSums<C> {
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let block = FiatBlock::forced_import(db, name, version)?;
         let cumulative =

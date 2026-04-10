@@ -2,11 +2,16 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{LazyVecFrom1, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, UnaryTransform};
+use vecdb::{
+    LazyVecFrom1, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, TypedVec,
+    UnaryTransform,
+};
 
 use crate::{
     indexes,
-    internal::{ComputedVecValue, DerivedResolutions, NumericValue, PerBlock},
+    internal::{
+        CachedPerBlock, ComputedVecValue, DerivedResolutions, NumericValue, PerBlock, Resolutions,
+    },
 };
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -27,6 +32,23 @@ where
     T: ComputedVecValue + JsonSchema + 'static,
     S1T: ComputedVecValue + JsonSchema,
 {
+    pub(crate) fn from_resolutions<F: UnaryTransform<S1T, T>>(
+        name: &str,
+        version: Version,
+        height_source: ReadableBoxedVec<Height, S1T>,
+        resolutions: &Resolutions<S1T>,
+    ) -> Self
+    where
+        S1T: NumericValue,
+    {
+        Self {
+            height: LazyVecFrom1::transformed::<F>(name, version, height_source),
+            resolutions: Box::new(DerivedResolutions::from_derived_computed::<F>(
+                name, version, resolutions,
+            )),
+        }
+    }
+
     pub(crate) fn from_computed<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
@@ -36,26 +58,38 @@ where
     where
         S1T: NumericValue,
     {
-        Self {
-            height: LazyVecFrom1::transformed::<F>(name, version, height_source),
-            resolutions: Box::new(DerivedResolutions::from_computed::<F>(
-                name, version, source,
-            )),
-        }
+        Self::from_resolutions::<F>(name, version, height_source, &source.resolutions)
     }
 
-    pub(crate) fn from_height_source<F: UnaryTransform<S1T, T>>(
+    pub(crate) fn from_cached_computed<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
         height_source: ReadableBoxedVec<Height, S1T>,
-        indexes: &indexes::Vecs,
+        source: &CachedPerBlock<S1T>,
     ) -> Self
     where
         S1T: NumericValue,
     {
+        Self::from_resolutions::<F>(name, version, height_source, &source.resolutions)
+    }
+
+    pub(crate) fn from_height_source<F: UnaryTransform<S1T, T>, V>(
+        name: &str,
+        version: Version,
+        height_source: V,
+        indexes: &indexes::Vecs,
+    ) -> Self
+    where
+        S1T: NumericValue,
+        V: TypedVec<I = Height, T = S1T> + ReadableVec<Height, S1T> + Clone + 'static,
+    {
         Self {
-            height: LazyVecFrom1::transformed::<F>(name, version, height_source.clone()),
-            resolutions: Box::new(DerivedResolutions::from_height_source::<F>(
+            height: LazyVecFrom1::transformed::<F>(
+                name,
+                version,
+                height_source.read_only_boxed_clone(),
+            ),
+            resolutions: Box::new(DerivedResolutions::from_height_source::<F, V>(
                 name,
                 version,
                 height_source,

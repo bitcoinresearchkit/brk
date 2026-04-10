@@ -1,13 +1,13 @@
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{DeltaSub, LazyDeltaVec, LazyVecFrom1, ReadableCloneableVec};
+use vecdb::{DeltaSub, LazyDeltaVec, LazyVecFrom1, ReadOnlyClone, ReadableCloneableVec};
 
 use crate::{
     indexes,
     internal::{
-        CachedWindowStarts, CentsUnsignedToDollars, DerivedResolutions, LazyPerBlock,
-        LazyRollingSumFromHeight, Resolutions, SatsToBitcoin, Windows,
+        CentsUnsignedToDollars, DerivedResolutions, LazyPerBlock, LazyRollingSumFromHeight,
+        Resolutions, SatsToBitcoin, WindowStartVec, Windows,
     },
 };
 
@@ -31,15 +31,15 @@ impl LazyRollingSumsAmountFromHeight {
         version: Version,
         cumulative_sats: &(impl ReadableCloneableVec<Height, Sats> + 'static),
         cumulative_cents: &(impl ReadableCloneableVec<Height, Cents> + 'static),
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
         indexes: &indexes::Vecs,
     ) -> Self {
         let cum_sats = cumulative_sats.read_only_boxed_clone();
         let cum_cents = cumulative_cents.read_only_boxed_clone();
 
-        let make_slot = |suffix: &str, cached_start: &vecdb::CachedVec<Height, Height>| {
+        let make_slot = |suffix: &str, cached_start: &&WindowStartVec| {
             let full_name = format!("{name}_{suffix}");
-            let cached = cached_start.clone();
+            let cached = cached_start.read_only_clone();
             let starts_version = cached.version();
 
             // Sats lazy rolling sum
@@ -50,12 +50,12 @@ impl LazyRollingSumsAmountFromHeight {
                 starts_version,
                 {
                     let cached = cached.clone();
-                    move || cached.get()
+                    move || cached.cached()
                 },
             );
             let sats_resolutions = Resolutions::forced_import(
                 &format!("{full_name}_sats"),
-                sats_sum.read_only_boxed_clone(),
+                sats_sum.clone(),
                 version,
                 indexes,
             );
@@ -84,11 +84,11 @@ impl LazyRollingSumsAmountFromHeight {
                 version,
                 cum_cents.clone(),
                 starts_version,
-                move || cached.get(),
+                move || cached.cached(),
             );
             let cents_resolutions = Resolutions::forced_import(
                 &format!("{full_name}_cents"),
-                cents_sum.read_only_boxed_clone(),
+                cents_sum.clone(),
                 version,
                 indexes,
             );
@@ -119,6 +119,6 @@ impl LazyRollingSumsAmountFromHeight {
             }
         };
 
-        Self(cached_starts.0.map_with_suffix(make_slot))
+        Self(cached_starts.map_with_suffix(make_slot))
     }
 }

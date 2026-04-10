@@ -87,7 +87,7 @@ impl Computer {
             )?))
         })?;
 
-        let cached_starts = &blocks.lookback.cached_window_starts;
+        let cached_starts = blocks.lookback.cached_window_starts();
 
         let (inputs, outputs, mining, transactions, scripts, pools, cointime) = timed(
             "Imported inputs/outputs/mining/tx/scripts/pools/cointime",
@@ -98,7 +98,7 @@ impl Computer {
                             &computed_path,
                             VERSION,
                             &indexes,
-                            cached_starts,
+                            &cached_starts,
                         )?))
                     })?;
 
@@ -107,7 +107,7 @@ impl Computer {
                             &computed_path,
                             VERSION,
                             &indexes,
-                            cached_starts,
+                            &cached_starts,
                         )?))
                     })?;
 
@@ -116,7 +116,7 @@ impl Computer {
                             &computed_path,
                             VERSION,
                             &indexes,
-                            cached_starts,
+                            &cached_starts,
                         )?))
                     })?;
 
@@ -126,7 +126,7 @@ impl Computer {
                             VERSION,
                             indexer,
                             &indexes,
-                            cached_starts,
+                            &cached_starts,
                         )?))
                     })?;
 
@@ -135,7 +135,7 @@ impl Computer {
                             &computed_path,
                             VERSION,
                             &indexes,
-                            cached_starts,
+                            &cached_starts,
                         )?))
                     })?;
 
@@ -144,7 +144,7 @@ impl Computer {
                             &computed_path,
                             VERSION,
                             &indexes,
-                            cached_starts,
+                            &cached_starts,
                         )?))
                     })?;
 
@@ -152,7 +152,7 @@ impl Computer {
                         &computed_path,
                         VERSION,
                         &indexes,
-                        cached_starts,
+                        &cached_starts,
                     )?);
 
                     let inputs = inputs_handle.join().unwrap()?;
@@ -208,7 +208,7 @@ impl Computer {
                         &computed_path,
                         VERSION,
                         &indexes,
-                        cached_starts,
+                        &cached_starts,
                     )?);
 
                     let market = market_handle.join().unwrap()?;
@@ -225,7 +225,7 @@ impl Computer {
                 &indexes,
                 &distribution,
                 &cointime,
-                cached_starts,
+                &cached_starts,
             )?))
         })?;
 

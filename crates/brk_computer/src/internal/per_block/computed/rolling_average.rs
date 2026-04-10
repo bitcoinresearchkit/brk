@@ -12,7 +12,7 @@ use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode};
 
 use crate::indexes;
 
-use crate::internal::{CachedWindowStarts, LazyRollingAvgsFromHeight, NumericValue};
+use crate::internal::{LazyRollingAvgsFromHeight, NumericValue, WindowStartVec, Windows};
 
 #[derive(Traversable)]
 pub struct PerBlockRollingAverage<T, M: StorageMode = Rw>
@@ -35,7 +35,7 @@ where
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let block: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, version)?;
         let cumulative: EagerVec<PcoVec<Height, T>> =

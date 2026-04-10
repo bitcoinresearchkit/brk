@@ -10,7 +10,7 @@ use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, NumericValue, PerBlock, RollingComplete, WindowStarts},
+    internal::{NumericValue, PerBlock, RollingComplete, WindowStartVec, WindowStarts, Windows},
 };
 
 #[derive(Traversable)]
@@ -33,7 +33,7 @@ where
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let block = EagerVec::forced_import(db, name, version)?;
         let cumulative =

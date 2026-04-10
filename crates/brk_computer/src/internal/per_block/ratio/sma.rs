@@ -67,9 +67,9 @@ impl RatioSma {
 
         // Rolling SMAs
         for (sma, lookback) in [
-            (&mut self._1w, &blocks.lookback._1w),
-            (&mut self._1m, &blocks.lookback._1m),
-            (&mut self._1y, &blocks.lookback._1y),
+            (&mut self._1w, &blocks.lookback._1w.inner),
+            (&mut self._1m, &blocks.lookback._1m.inner),
+            (&mut self._1y, &blocks.lookback._1y.inner),
             (&mut self._2y, &blocks.lookback._2y),
             (&mut self._4y, &blocks.lookback._4y),
         ] {

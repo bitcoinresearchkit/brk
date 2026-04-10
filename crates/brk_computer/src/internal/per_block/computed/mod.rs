@@ -1,5 +1,6 @@
 mod aggregated;
 mod base;
+mod cached;
 mod cumulative_rolling;
 mod distribution;
 mod full;
@@ -12,6 +13,7 @@ mod with_deltas;
 
 pub use aggregated::*;
 pub use base::*;
+pub use cached::*;
 pub use cumulative_rolling::*;
 pub use distribution::*;
 pub use full::*;

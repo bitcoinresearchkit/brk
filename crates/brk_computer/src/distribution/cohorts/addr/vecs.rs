@@ -10,7 +10,7 @@ use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, 
 use crate::{
     distribution::state::{AddrCohortState, MinimalRealizedState},
     indexes,
-    internal::{CachedWindowStarts, PerBlockWithDeltas},
+    internal::{PerBlockWithDeltas, WindowStartVec, Windows},
     prices,
 };
 
@@ -38,7 +38,7 @@ impl AddrCohortVecs {
         version: Version,
         indexes: &indexes::Vecs,
         states_path: Option<&Path>,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let full_name = CohortContext::Addr.full_name(&filter, name);
 

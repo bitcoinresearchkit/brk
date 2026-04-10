@@ -6,7 +6,7 @@ use vecdb::{Database, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{AmountPerBlock, CachedWindowStarts, LazyRollingDeltasFromHeight},
+    internal::{AmountPerBlock, LazyRollingDeltasFromHeight, WindowStartVec, Windows},
 };
 
 #[derive(Deref, DerefMut, Traversable)]
@@ -24,7 +24,7 @@ impl AmountPerBlockWithDeltas {
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let inner = AmountPerBlock::forced_import(db, name, version, indexes)?;
 

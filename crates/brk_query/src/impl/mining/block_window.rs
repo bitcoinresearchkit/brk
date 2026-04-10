@@ -39,15 +39,14 @@ impl BlockWindow {
 
         // Use pre-computed timestamp-based lookback for accurate time boundaries.
         // 24h, 1w, 1m, 1y use in-memory CachedVec; others fall back to PcoVec.
-        let cached = &lookback.cached_window_starts.0;
         let start_height = match time_period {
-            TimePeriod::Day => cached._24h.collect_one(current_height),
+            TimePeriod::Day => lookback._24h.collect_one(current_height),
             TimePeriod::ThreeDays => lookback._3d.collect_one(current_height),
-            TimePeriod::Week => cached._1w.collect_one(current_height),
-            TimePeriod::Month => cached._1m.collect_one(current_height),
+            TimePeriod::Week => lookback._1w.collect_one(current_height),
+            TimePeriod::Month => lookback._1m.collect_one(current_height),
             TimePeriod::ThreeMonths => lookback._3m.collect_one(current_height),
             TimePeriod::SixMonths => lookback._6m.collect_one(current_height),
-            TimePeriod::Year => cached._1y.collect_one(current_height),
+            TimePeriod::Year => lookback._1y.collect_one(current_height),
             TimePeriod::TwoYears => lookback._2y.collect_one(current_height),
             TimePeriod::ThreeYears => lookback._3y.collect_one(current_height),
             TimePeriod::All => None,
@@ -79,7 +78,7 @@ impl BlockWindow {
             .collect_range_at(self.start, self.end);
         let all_prices: Vec<Cents> = computer
             .prices
-            .cached_spot_cents
+            .spot.cents.height
             .collect_range_at(self.start, self.end);
         let read_start = self.start.saturating_sub(1).max(0);
         let all_cum = cumulative.collect_range_at(read_start, self.end);

@@ -18,10 +18,7 @@ use crate::{
     },
 };
 
-/// Cached window starts for lazy rolling computations.
-/// Clone-cheap (all fields are Arc-backed). Shared across all metrics.
-#[derive(Clone)]
-pub struct CachedWindowStarts(pub Windows<CachedVec<Height, Height>>);
+pub type WindowStartVec = CachedVec<EagerVec<PcoVec<Height, Height>>>;
 
 /// Rolling window start heights — the 4 height-ago vecs (24h, 1w, 1m, 1y).
 pub type WindowStarts<'a> = Windows<&'a EagerVec<PcoVec<Height, Height>>>;

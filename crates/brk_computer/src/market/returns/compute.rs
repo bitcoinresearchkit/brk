@@ -24,7 +24,7 @@ impl Vecs {
         {
             returns.compute_binary::<Dollars, Dollars, RatioDiffDollarsBps32>(
                 starting_indexes.height,
-                &prices.cached_spot_usd,
+                &prices.spot.usd.height,
                 &lookback_price.usd.height,
                 exit,
             )?;

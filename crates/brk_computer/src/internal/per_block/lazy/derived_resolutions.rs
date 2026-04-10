@@ -5,11 +5,11 @@ use brk_types::{
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{ReadableBoxedVec, ReadableCloneableVec, UnaryTransform, VecValue};
+use vecdb::{ReadableCloneableVec, ReadableVec, TypedVec, UnaryTransform, VecValue};
 
 use crate::{
     indexes,
-    internal::{ComputedVecValue, NumericValue, PerBlock, PerResolution, Resolutions},
+    internal::{ComputedVecValue, NumericValue, PerResolution, Resolutions},
 };
 
 use super::{LazyTransformLast, MapOption};
@@ -45,25 +45,15 @@ where
     T: VecValue + PartialOrd + JsonSchema + 'static,
     S1T: VecValue + PartialOrd + JsonSchema,
 {
-    pub(crate) fn from_computed<F: UnaryTransform<S1T, T>>(
+    pub(crate) fn from_height_source<F: UnaryTransform<S1T, T>, V>(
         name: &str,
         version: Version,
-        source: &PerBlock<S1T>,
-    ) -> Self
-    where
-        S1T: NumericValue,
-    {
-        Self::from_derived_computed::<F>(name, version, &source.resolutions)
-    }
-
-    pub(crate) fn from_height_source<F: UnaryTransform<S1T, T>>(
-        name: &str,
-        version: Version,
-        height_source: ReadableBoxedVec<Height, S1T>,
+        height_source: V,
         indexes: &indexes::Vecs,
     ) -> Self
     where
         S1T: NumericValue,
+        V: TypedVec<I = Height, T = S1T> + ReadableVec<Height, S1T> + Clone + 'static,
     {
         let derived = Resolutions::forced_import(name, height_source, version, indexes);
         Self::from_derived_computed::<F>(name, version, &derived)

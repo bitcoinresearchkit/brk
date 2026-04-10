@@ -19,7 +19,7 @@ pub use pool_heights::PoolHeights;
 use crate::{
     blocks, indexes,
     internal::{
-        CachedWindowStarts,
+        WindowStartVec, Windows,
         db_utils::{finalize_db, open_db},
     },
     mining, prices,
@@ -44,7 +44,7 @@ impl Vecs {
         parent_path: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let db = open_db(parent_path, DB_NAME, 100_000)?;
         let pools = pools();

@@ -13,14 +13,14 @@ use super::{
     ValueVecs, Vecs,
 };
 
-use crate::internal::CachedWindowStarts;
+use crate::internal::{WindowStartVec, Windows};
 
 impl Vecs {
     pub(crate) fn forced_import(
         parent_path: &Path,
         parent_version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let db = open_db(parent_path, DB_NAME, 250_000)?;
         let version = parent_version;

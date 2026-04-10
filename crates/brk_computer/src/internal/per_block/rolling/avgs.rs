@@ -2,11 +2,11 @@ use brk_traversable::Traversable;
 use brk_types::{Height, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{DeltaAvg, LazyDeltaVec, ReadableCloneableVec};
+use vecdb::{DeltaAvg, LazyDeltaVec, ReadOnlyClone, ReadableCloneableVec};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, NumericValue, Resolutions, Windows},
+    internal::{NumericValue, Resolutions, WindowStartVec, Windows},
 };
 
 use super::LazyRollingAvgFromHeight;
@@ -30,25 +30,25 @@ where
         name: &str,
         version: Version,
         cumulative: &(impl ReadableCloneableVec<Height, T> + 'static),
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
         indexes: &indexes::Vecs,
     ) -> Self {
         let cum_source = cumulative.read_only_boxed_clone();
 
-        Self(cached_starts.0.map_with_suffix(|suffix, cached_start| {
+        Self(cached_starts.map_with_suffix(|suffix, cached_start| {
             let full_name = format!("{name}_{suffix}");
-            let cached = cached_start.clone();
+            let cached = cached_start.read_only_clone();
             let starts_version = cached.version();
             let avg = LazyDeltaVec::<Height, T, StoredF32, DeltaAvg>::new(
                 &full_name,
                 version,
                 cum_source.clone(),
                 starts_version,
-                move || cached.get(),
+                move || cached.cached(),
             );
             let resolutions = Resolutions::forced_import(
                 &full_name,
-                avg.read_only_boxed_clone(),
+                avg.clone(),
                 version,
                 indexes,
             );

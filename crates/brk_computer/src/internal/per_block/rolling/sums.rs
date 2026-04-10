@@ -2,11 +2,11 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{DeltaSub, LazyDeltaVec, ReadableCloneableVec};
+use vecdb::{DeltaSub, LazyDeltaVec, ReadOnlyClone, ReadableCloneableVec};
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, NumericValue, Resolutions, Windows},
+    internal::{NumericValue, Resolutions, WindowStartVec, Windows},
 };
 
 use super::LazyRollingSumFromHeight;
@@ -33,28 +33,23 @@ where
         name: &str,
         version: Version,
         cumulative: &(impl ReadableCloneableVec<Height, T> + 'static),
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
         indexes: &indexes::Vecs,
     ) -> Self {
         let cum_source = cumulative.read_only_boxed_clone();
 
-        Self(cached_starts.0.map_with_suffix(|suffix, cached_start| {
+        Self(cached_starts.map_with_suffix(|suffix, cached_start| {
             let full_name = format!("{name}_{suffix}");
-            let cached = cached_start.clone();
+            let cached = cached_start.read_only_clone();
             let starts_version = cached.version();
             let sum = LazyDeltaVec::<Height, T, T, DeltaSub>::new(
                 &full_name,
                 version,
                 cum_source.clone(),
                 starts_version,
-                move || cached.get(),
+                move || cached.cached(),
             );
-            let resolutions = Resolutions::forced_import(
-                &full_name,
-                sum.read_only_boxed_clone(),
-                version,
-                indexes,
-            );
+            let resolutions = Resolutions::forced_import(&full_name, sum.clone(), version, indexes);
             LazyRollingSumFromHeight {
                 height: sum,
                 resolutions: Box::new(resolutions),

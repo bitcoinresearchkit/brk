@@ -13,13 +13,13 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let price = &prices.cached_spot_cents;
+        let price = &prices.spot.cents.height;
 
         for (min_vec, max_vec, starts) in [
             (
                 &mut self.min._1w.cents.height,
                 &mut self.max._1w.cents.height,
-                &blocks.lookback._1w,
+                &blocks.lookback._1w.inner,
             ),
             (
                 &mut self.min._2w.cents.height,
@@ -29,12 +29,12 @@ impl Vecs {
             (
                 &mut self.min._1m.cents.height,
                 &mut self.max._1m.cents.height,
-                &blocks.lookback._1m,
+                &blocks.lookback._1m.inner,
             ),
             (
                 &mut self.min._1y.cents.height,
                 &mut self.max._1y.cents.height,
-                &blocks.lookback._1y,
+                &blocks.lookback._1y.inner,
             ),
         ] {
             min_vec.compute_rolling_min_from_starts(

@@ -24,7 +24,7 @@ impl Vecs {
             .compute(starting_indexes.height, exit, |vec| {
                 vec.compute_multiply(
                     starting_indexes.height,
-                    &prices.cached_spot_usd,
+                    &prices.spot.usd.height,
                     &coinblocks_destroyed.block,
                     exit,
                 )?;
@@ -34,7 +34,7 @@ impl Vecs {
         self.created.compute(starting_indexes.height, exit, |vec| {
             vec.compute_multiply(
                 starting_indexes.height,
-                &prices.cached_spot_usd,
+                &prices.spot.usd.height,
                 &activity.coinblocks_created.block,
                 exit,
             )?;
@@ -44,7 +44,7 @@ impl Vecs {
         self.stored.compute(starting_indexes.height, exit, |vec| {
             vec.compute_multiply(
                 starting_indexes.height,
-                &prices.cached_spot_usd,
+                &prices.spot.usd.height,
                 &activity.coinblocks_stored.block,
                 exit,
             )?;
@@ -57,7 +57,7 @@ impl Vecs {
         self.vocdd.compute(starting_indexes.height, exit, |vec| {
             vec.compute_transform3(
                 starting_indexes.height,
-                &prices.cached_spot_usd,
+                &prices.spot.usd.height,
                 &coindays_destroyed.block,
                 circulating_supply,
                 |(i, price, cdd, supply, _): (_, Dollars, StoredF64, Bitcoin, _)| {

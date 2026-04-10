@@ -123,7 +123,7 @@ impl RealizedEnvelope {
             exit,
         )?;
 
-        let spot = &prices.cached_spot_cents;
+        let spot = &prices.spot.cents.height;
 
         // Zone: spot vs own envelope bands (-4 to +4)
         self.compute_index(spot, starting_indexes, exit)?;

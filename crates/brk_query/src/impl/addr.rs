@@ -4,10 +4,10 @@ use bitcoin::{Network, PublicKey, ScriptBuf};
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
     Addr, AddrBytes, AddrChainStats, AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, AddrStats,
-    AnyAddrDataIndexEnum, Dollars, Height, OutputType, Transaction, TxIndex,
-    TxStatus, Txid, TypeIndex, Unit, Utxo, Vout,
+    AnyAddrDataIndexEnum, Dollars, Height, OutputType, Transaction, TxIndex, TxStatus, Txid,
+    TypeIndex, Unit, Utxo, Vout,
 };
-use vecdb::{ReadableVec, VecIndex};
+use vecdb::VecIndex;
 
 use crate::Query;
 
@@ -39,15 +39,10 @@ impl Query {
         let addr_type = output_type;
         let hash = AddrHash::from(&bytes);
 
-        let Some(store) = stores
-            .addr_type_to_addr_hash_to_addr_index
-            .get(addr_type)
-        else {
+        let Some(store) = stores.addr_type_to_addr_hash_to_addr_index.get(addr_type) else {
             return Err(Error::InvalidAddr);
         };
-        let Ok(Some(type_index)) = store
-            .get(&hash)
-            .map(|opt| opt.map(|cow| cow.into_owned()))
+        let Ok(Some(type_index)) = store.get(&hash).map(|opt| opt.map(|cow| cow.into_owned()))
         else {
             return Err(Error::UnknownAddr);
         };

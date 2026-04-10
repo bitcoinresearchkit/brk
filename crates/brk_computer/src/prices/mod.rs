@@ -6,14 +6,13 @@ use std::path::Path;
 
 use brk_traversable::Traversable;
 use brk_types::Version;
-use brk_types::{Cents, Dollars, Height};
-use vecdb::{CachedVec, Database, LazyVecFrom1, ReadableCloneableVec, Rw, StorageMode};
+use vecdb::{Database, ReadOnlyClone, Rw, StorageMode};
 
 use crate::{
     indexes,
     internal::{
-        CentsUnsignedToDollars, CentsUnsignedToSats, EagerIndexes, LazyEagerIndexes, LazyPerBlock,
-        OhlcCentsToDollars, OhlcCentsToSats, PerBlock, Resolutions,
+        CachedPerBlock, CentsUnsignedToDollars, CentsUnsignedToSats, EagerIndexes,
+        LazyEagerIndexes, LazyPerBlock, OhlcCentsToDollars, OhlcCentsToSats, Resolutions,
         db_utils::{finalize_db, open_db},
     },
 };
@@ -27,11 +26,6 @@ pub const DB_NAME: &str = "prices";
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     pub db: Database,
-
-    #[traversable(skip)]
-    pub cached_spot_cents: CachedVec<Height, Cents>,
-    #[traversable(skip)]
-    pub cached_spot_usd: LazyVecFrom1<Height, Dollars, Height, Cents>,
 
     pub split: SplitByUnit<M>,
     pub ohlc: OhlcByUnit<M>,
@@ -57,7 +51,7 @@ impl Vecs {
     ) -> brk_error::Result<Self> {
         let version = version + Version::new(11);
 
-        let price_cents = PerBlock::forced_import(db, "price_cents", version, indexes)?;
+        let price_cents = CachedPerBlock::forced_import(db, "price_cents", version, indexes)?;
 
         let open_cents = EagerIndexes::forced_import(db, "price_open_cents", version)?;
         let high_cents = EagerIndexes::forced_import(db, "price_high_cents", version)?;
@@ -65,14 +59,14 @@ impl Vecs {
 
         let close_cents = Resolutions::forced_import(
             "price_close_cents",
-            price_cents.height.read_only_boxed_clone(),
+            price_cents.height.read_only_clone(),
             version,
             indexes,
         );
 
         let ohlc_cents = OhlcVecs::forced_import(db, "price_ohlc_cents", version)?;
 
-        let price_usd = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
+        let price_usd = LazyPerBlock::from_cached_computed::<CentsUnsignedToDollars>(
             "price",
             version,
             price_cents.height.read_only_boxed_clone(),
@@ -95,12 +89,8 @@ impl Vecs {
             &low_cents,
         );
 
-        let close_usd = Resolutions::forced_import(
-            "price_close",
-            price_usd.height.read_only_boxed_clone(),
-            version,
-            indexes,
-        );
+        let close_usd =
+            Resolutions::forced_import("price_close", price_usd.height.clone(), version, indexes);
 
         let ohlc_usd = LazyOhlcVecs::from_eager_ohlc_indexes::<OhlcCentsToDollars>(
             "price_ohlc",
@@ -108,7 +98,7 @@ impl Vecs {
             &ohlc_cents,
         );
 
-        let price_sats = LazyPerBlock::from_computed::<CentsUnsignedToSats>(
+        let price_sats = LazyPerBlock::from_cached_computed::<CentsUnsignedToSats>(
             "price_sats",
             version,
             price_cents.height.read_only_boxed_clone(),
@@ -134,7 +124,7 @@ impl Vecs {
 
         let close_sats = Resolutions::forced_import(
             "price_close_sats",
-            price_sats.height.read_only_boxed_clone(),
+            price_sats.height.clone(),
             version,
             indexes,
         );
@@ -175,13 +165,6 @@ impl Vecs {
             sats: ohlc_sats,
         };
 
-        let cached_spot_cents = CachedVec::new(&price_cents.height);
-        let cached_spot_usd = LazyVecFrom1::transformed::<CentsUnsignedToDollars>(
-            "price",
-            version,
-            cached_spot_cents.read_only_boxed_clone(),
-        );
-
         let spot = PriceByUnit {
             usd: price_usd,
             cents: price_cents,
@@ -190,8 +173,6 @@ impl Vecs {
 
         Ok(Self {
             db: db.clone(),
-            cached_spot_cents,
-            cached_spot_usd,
             split,
             ohlc,
             spot,

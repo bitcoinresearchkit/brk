@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Indexes, StoredF32, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, Exit, ReadableCloneableVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
 
 use crate::internal::{Identity, LazyPerBlock, PerBlock, Windows};
 
@@ -33,15 +33,10 @@ impl ActivityFull {
         let v1 = Version::ONE;
         let inner = ActivityCore::forced_import(cfg)?;
 
-        let coinyears_destroyed = LazyPerBlock::from_height_source::<Identity<StoredF64>>(
+        let coinyears_destroyed = LazyPerBlock::from_height_source::<Identity<StoredF64>, _>(
             &cfg.name("coinyears_destroyed"),
             cfg.version + v1,
-            inner
-                .coindays_destroyed
-                .sum
-                ._1y
-                .height
-                .read_only_boxed_clone(),
+            inner.coindays_destroyed.sum._1y.height.clone(),
             cfg.indexes,
         );
 

@@ -8,17 +8,15 @@ use vecdb::{
 
 use crate::{
     indexes,
-    internal::{CachedWindowStarts, WindowStarts, Windows},
+    internal::{WindowStartVec, WindowStarts, Windows},
 };
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    #[traversable(skip)]
-    pub cached_window_starts: CachedWindowStarts,
     pub _1h: M::Stored<EagerVec<PcoVec<Height, Height>>>,
-    pub _24h: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 1d
+    pub _24h: CachedVec<M::Stored<EagerVec<PcoVec<Height, Height>>>>, // 1d
     pub _3d: M::Stored<EagerVec<PcoVec<Height, Height>>>,
-    pub _1w: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 7d
+    pub _1w: CachedVec<M::Stored<EagerVec<PcoVec<Height, Height>>>>, // 7d
     pub _8d: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub _9d: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub _12d: M::Stored<EagerVec<PcoVec<Height, Height>>>,
@@ -26,7 +24,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub _2w: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 14d
     pub _21d: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub _26d: M::Stored<EagerVec<PcoVec<Height, Height>>>,
-    pub _1m: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 30d
+    pub _1m: CachedVec<M::Stored<EagerVec<PcoVec<Height, Height>>>>, // 30d
     pub _34d: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub _55d: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub _2m: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 60d
@@ -43,7 +41,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub _9m: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 270d
     pub _350d: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub _12m: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 360d
-    pub _1y: M::Stored<EagerVec<PcoVec<Height, Height>>>,  // 365d
+    pub _1y: CachedVec<M::Stored<EagerVec<PcoVec<Height, Height>>>>,  // 365d
     pub _14m: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 420d
     pub _2y: M::Stored<EagerVec<PcoVec<Height, Height>>>,  // 730d
     pub _26m: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 780d
@@ -106,19 +104,11 @@ impl Vecs {
         let _14y = ImportableVec::forced_import(db, "height_14y_ago", version)?;
         let _26y = ImportableVec::forced_import(db, "height_26y_ago", version)?;
 
-        let cached_window_starts = CachedWindowStarts(Windows {
-            _24h: CachedVec::new(&_24h),
-            _1w: CachedVec::new(&_1w),
-            _1m: CachedVec::new(&_1m),
-            _1y: CachedVec::new(&_1y),
-        });
-
         Ok(Self {
-            cached_window_starts,
             _1h,
-            _24h,
+            _24h: CachedVec::wrap(_24h),
             _3d,
-            _1w,
+            _1w: CachedVec::wrap(_1w),
             _8d,
             _9d,
             _12d,
@@ -126,7 +116,7 @@ impl Vecs {
             _2w,
             _21d,
             _26d,
-            _1m,
+            _1m: CachedVec::wrap(_1m),
             _34d,
             _55d,
             _2m,
@@ -143,7 +133,7 @@ impl Vecs {
             _9m,
             _350d,
             _12m,
-            _1y,
+            _1y: CachedVec::wrap(_1y),
             _14m,
             _2y,
             _26m,
@@ -161,8 +151,8 @@ impl Vecs {
         })
     }
 
-    pub fn window_starts(&self) -> WindowStarts<'_> {
-        WindowStarts {
+    pub fn cached_window_starts(&self) -> Windows<&WindowStartVec> {
+        Windows {
             _24h: &self._24h,
             _1w: &self._1w,
             _1m: &self._1m,
@@ -170,11 +160,20 @@ impl Vecs {
         }
     }
 
+    pub fn window_starts(&self) -> WindowStarts<'_> {
+        WindowStarts {
+            _24h: &self._24h.inner,
+            _1w: &self._1w.inner,
+            _1m: &self._1m.inner,
+            _1y: &self._1y.inner,
+        }
+    }
+
     pub fn start_vec(&self, days: usize) -> &EagerVec<PcoVec<Height, Height>> {
         match days {
-            1 => &self._24h,
+            1 => &self._24h.inner,
             3 => &self._3d,
-            7 => &self._1w,
+            7 => &self._1w.inner,
             8 => &self._8d,
             9 => &self._9d,
             12 => &self._12d,
@@ -182,7 +181,7 @@ impl Vecs {
             14 => &self._2w,
             21 => &self._21d,
             26 => &self._26d,
-            30 => &self._1m,
+            30 => &self._1m.inner,
             34 => &self._34d,
             55 => &self._55d,
             60 => &self._2m,
@@ -199,7 +198,7 @@ impl Vecs {
             270 => &self._9m,
             350 => &self._350d,
             360 => &self._12m,
-            365 => &self._1y,
+            365 => &self._1y.inner,
             420 => &self._14m,
             730 => &self._2y,
             780 => &self._26m,
@@ -225,9 +224,9 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         self.compute_rolling_start_hours(indexes, starting_indexes, exit, 1, |s| &mut s._1h)?;
-        self.compute_rolling_start(indexes, starting_indexes, exit, 1, |s| &mut s._24h)?;
+        self.compute_rolling_start(indexes, starting_indexes, exit, 1, |s| &mut s._24h.inner)?;
         self.compute_rolling_start(indexes, starting_indexes, exit, 3, |s| &mut s._3d)?;
-        self.compute_rolling_start(indexes, starting_indexes, exit, 7, |s| &mut s._1w)?;
+        self.compute_rolling_start(indexes, starting_indexes, exit, 7, |s| &mut s._1w.inner)?;
         self.compute_rolling_start(indexes, starting_indexes, exit, 8, |s| &mut s._8d)?;
         self.compute_rolling_start(indexes, starting_indexes, exit, 9, |s| &mut s._9d)?;
         self.compute_rolling_start(indexes, starting_indexes, exit, 12, |s| &mut s._12d)?;
@@ -235,7 +234,7 @@ impl Vecs {
         self.compute_rolling_start(indexes, starting_indexes, exit, 14, |s| &mut s._2w)?;
         self.compute_rolling_start(indexes, starting_indexes, exit, 21, |s| &mut s._21d)?;
         self.compute_rolling_start(indexes, starting_indexes, exit, 26, |s| &mut s._26d)?;
-        self.compute_rolling_start(indexes, starting_indexes, exit, 30, |s| &mut s._1m)?;
+        self.compute_rolling_start(indexes, starting_indexes, exit, 30, |s| &mut s._1m.inner)?;
         self.compute_rolling_start(indexes, starting_indexes, exit, 34, |s| &mut s._34d)?;
         self.compute_rolling_start(indexes, starting_indexes, exit, 55, |s| &mut s._55d)?;
         self.compute_rolling_start(indexes, starting_indexes, exit, 60, |s| &mut s._2m)?;
@@ -252,7 +251,7 @@ impl Vecs {
         self.compute_rolling_start(indexes, starting_indexes, exit, 270, |s| &mut s._9m)?;
         self.compute_rolling_start(indexes, starting_indexes, exit, 350, |s| &mut s._350d)?;
         self.compute_rolling_start(indexes, starting_indexes, exit, 360, |s| &mut s._12m)?;
-        self.compute_rolling_start(indexes, starting_indexes, exit, 365, |s| &mut s._1y)?;
+        self.compute_rolling_start(indexes, starting_indexes, exit, 365, |s| &mut s._1y.inner)?;
         self.compute_rolling_start(indexes, starting_indexes, exit, 420, |s| &mut s._14m)?;
         self.compute_rolling_start(indexes, starting_indexes, exit, 730, |s| &mut s._2y)?;
         self.compute_rolling_start(indexes, starting_indexes, exit, 780, |s| &mut s._26m)?;

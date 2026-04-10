@@ -1,6 +1,6 @@
 use brk_traversable::Traversable;
 
-#[derive(Clone, Traversable)]
+#[derive(Clone, Copy, Traversable)]
 pub struct Windows<A> {
     pub _24h: A,
     pub _1w: A,

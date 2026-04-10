@@ -62,10 +62,10 @@ impl RealizedCore {
         );
 
         let neg_loss_sum = minimal.loss.sum.0.map_with_suffix(|suffix, slot| {
-            LazyPerBlock::from_height_source::<NegCentsUnsignedToDollars>(
+            LazyPerBlock::from_height_source::<NegCentsUnsignedToDollars, _>(
                 &cfg.name(&format!("realized_loss_neg_sum_{suffix}")),
                 cfg.version + Version::ONE,
-                slot.cents.height.read_only_boxed_clone(),
+                slot.cents.height.clone(),
                 cfg.indexes,
             )
         });

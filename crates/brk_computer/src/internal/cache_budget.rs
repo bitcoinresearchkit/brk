@@ -4,7 +4,7 @@ use std::sync::{
 };
 
 use parking_lot::Mutex;
-use vecdb::{CachedVec, CachedVecBudget, ReadableBoxedVec, VecIndex, VecValue};
+use vecdb::{CachedVec, CachedVecBudget, ReadableVec, TypedVec};
 
 const MAX_CACHED: usize = 256;
 const MIN_ACCESSES: u64 = 2;
@@ -67,10 +67,13 @@ fn evict_less_popular_than(threshold: u64) -> bool {
     }
 }
 
-/// Wraps a boxed source in a budgeted [`CachedVec`] and registers it for eviction.
-pub fn cache_wrap<I: VecIndex, T: VecValue>(source: ReadableBoxedVec<I, T>) -> CachedVec<I, T> {
+/// Wraps a source vec in a budgeted [`CachedVec`] and registers it for eviction.
+pub fn cache_wrap<V>(source: V) -> CachedVec<V>
+where
+    V: TypedVec + ReadableVec<V::I, V::T> + Clone + 'static,
+{
     let access_count = Arc::new(AtomicU64::new(0));
-    let cached = CachedVec::new_budgeted(source, &BUDGET, access_count.clone());
+    let cached = CachedVec::wrap_budgeted(source, &BUDGET, access_count.clone());
     let clone = cached.clone();
     CACHES.lock().push(CacheEntry {
         access_count,

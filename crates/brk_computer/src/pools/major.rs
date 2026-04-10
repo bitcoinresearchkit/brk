@@ -7,8 +7,8 @@ use vecdb::{BinaryTransform, Database, Exit, ReadableVec, Rw, StorageMode, Versi
 use crate::{
     blocks, indexes,
     internal::{
-        AmountPerBlockCumulativeRolling, CachedWindowStarts, MaskSats, PercentRollingWindows,
-        RatioU64Bp16,
+        AmountPerBlockCumulativeRolling, MaskSats, PercentRollingWindows, RatioU64Bp16,
+        WindowStartVec, Windows,
     },
     mining, prices,
 };
@@ -33,7 +33,7 @@ impl Vecs {
         slug: PoolSlug,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let suffix = |s: &str| format!("{}_{s}", slug);
 

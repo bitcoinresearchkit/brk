@@ -108,14 +108,14 @@ impl ExtendedCohortMetrics {
 
         self.unrealized.compute(
             starting_indexes.height,
-            &prices.cached_spot_cents,
+            &prices.spot.cents.height,
             &self.realized.price.cents.height,
             exit,
         )?;
 
         self.cost_basis.compute_prices(
             starting_indexes,
-            &prices.cached_spot_cents,
+            &prices.spot.cents.height,
             &self.unrealized.invested_capital.in_profit.cents.height,
             &self.unrealized.invested_capital.in_loss.cents.height,
             &self.supply.in_profit.sats.height,
@@ -126,7 +126,7 @@ impl ExtendedCohortMetrics {
         )?;
 
         self.unrealized
-            .compute_sentiment(starting_indexes, &prices.cached_spot_cents, exit)?;
+            .compute_sentiment(starting_indexes, &prices.spot.cents.height, exit)?;
 
         self.relative.compute(
             starting_indexes.height,

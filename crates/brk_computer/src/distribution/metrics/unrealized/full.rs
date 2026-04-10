@@ -122,7 +122,7 @@ impl UnrealizedFull {
             .compute_transform3(
                 starting_indexes.height,
                 supply_in_profit_sats,
-                &prices.cached_spot_cents,
+                &prices.spot.cents.height,
                 &self.inner.basic.profit.cents.height,
                 |(h, supply_sats, spot, profit, ..): (_, Sats, Cents, Cents, _)| {
                     let market_value = supply_sats.as_u128() * spot.as_u128() / Sats::ONE_BTC_U128;
@@ -142,7 +142,7 @@ impl UnrealizedFull {
             .compute_transform3(
                 starting_indexes.height,
                 supply_in_loss_sats,
-                &prices.cached_spot_cents,
+                &prices.spot.cents.height,
                 &self.inner.basic.loss.cents.height,
                 |(h, supply_sats, spot, loss, ..): (_, Sats, Cents, Cents, _)| {
                     let market_value = supply_sats.as_u128() * spot.as_u128() / Sats::ONE_BTC_U128;

@@ -50,7 +50,7 @@ impl AmountBlock {
         self.cents.compute_binary::<Sats, Cents, SatsToCents>(
             max_from,
             &self.sats,
-            &prices.cached_spot_cents,
+            &prices.spot.cents.height,
             exit,
         )?;
         Ok(())

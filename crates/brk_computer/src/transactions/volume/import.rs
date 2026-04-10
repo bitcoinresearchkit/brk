@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{AmountPerBlockCumulativeRolling, CachedWindowStarts, PerBlock, Windows},
+    internal::{AmountPerBlockCumulativeRolling, PerBlock, WindowStartVec, Windows},
 };
 
 impl Vecs {
@@ -13,7 +13,7 @@ impl Vecs {
         db: &Database,
         version: Version,
         indexes: &indexes::Vecs,
-        cached_starts: &CachedWindowStarts,
+        cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         let v = version + Version::TWO;
         Ok(Self {

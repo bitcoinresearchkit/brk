@@ -68,6 +68,7 @@ impl Vecs {
         self.spot
             .cents
             .height
+            .inner
             .validate_computed_version_or_reset(source_version)?;
 
         let total_heights = indexer.vecs.blocks.timestamp.len();
@@ -83,7 +84,7 @@ impl Vecs {
             .height
             .len()
             .min(starting_indexes.height.to_usize());
-        self.spot.cents.height.truncate_if_needed_at(truncate_to)?;
+        self.spot.cents.height.inner.truncate_if_needed_at(truncate_to)?;
 
         if self.spot.cents.height.len() < START_HEIGHT {
             for line in brk_oracle::PRICES
@@ -95,7 +96,7 @@ impl Vecs {
                 }
                 let dollars: f64 = line.parse().unwrap_or(0.0);
                 let cents = (dollars * 100.0).round() as u64;
-                self.spot.cents.height.push(Cents::new(cents));
+                self.spot.cents.height.inner.push(Cents::new(cents));
             }
         }
 
@@ -129,6 +130,7 @@ impl Vecs {
             self.spot
                 .cents
                 .height
+                .inner
                 .push(Cents::new(bin_to_cents(ref_bin)));
 
             let progress = ((i + 1) * 100 / num_new) as u8;
@@ -139,7 +141,7 @@ impl Vecs {
 
         {
             let _lock = exit.lock();
-            self.spot.cents.height.write()?;
+            self.spot.cents.height.inner.write()?;
         }
 
         info!(
