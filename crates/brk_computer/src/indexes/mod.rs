@@ -1,5 +1,4 @@
 mod addr;
-mod day1;
 mod height;
 mod resolution;
 pub mod timestamp;
@@ -22,9 +21,8 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 use crate::internal::db_utils::{finalize_db, open_db};
 
 pub use addr::Vecs as AddrVecs;
-pub use day1::Vecs as Day1Vecs;
 pub use height::Vecs as HeightVecs;
-pub use resolution::{CachedResolutionVecs, DatedResolutionVecs, ResolutionVecs};
+pub use resolution::{DatedResolutionVecs, ResolutionVecs};
 pub use timestamp::Timestamps;
 pub use tx_heights::TxHeights;
 pub use tx_index::Vecs as TxIndexVecs;
@@ -36,9 +34,10 @@ pub type Minute30Vecs<M = Rw> = ResolutionVecs<Minute30, M>;
 pub type Hour1Vecs<M = Rw> = ResolutionVecs<Hour1, M>;
 pub type Hour4Vecs<M = Rw> = ResolutionVecs<Hour4, M>;
 pub type Hour12Vecs<M = Rw> = ResolutionVecs<Hour12, M>;
-pub type Day3Vecs<M = Rw> = ResolutionVecs<Day3, M>;
-pub type EpochVecs<M = Rw> = CachedResolutionVecs<Epoch, M>;
-pub type HalvingVecs<M = Rw> = CachedResolutionVecs<Halving, M>;
+pub type Day1Vecs<M = Rw> = DatedResolutionVecs<Day1, M>;
+pub type Day3Vecs<M = Rw> = DatedResolutionVecs<Day3, M>;
+pub type EpochVecs<M = Rw> = ResolutionVecs<Epoch, M>;
+pub type HalvingVecs<M = Rw> = ResolutionVecs<Halving, M>;
 pub type Week1Vecs<M = Rw> = DatedResolutionVecs<Week1, M>;
 pub type Month1Vecs<M = Rw> = DatedResolutionVecs<Month1, M>;
 pub type Month3Vecs<M = Rw> = DatedResolutionVecs<Month3, M>;
@@ -88,21 +87,21 @@ impl Vecs {
 
         let addr = AddrVecs::forced_import(version, indexer);
         let height = HeightVecs::forced_import(&db, version)?;
-        let epoch = CachedResolutionVecs::forced_import(&db, "epoch", version)?;
-        let halving = CachedResolutionVecs::forced_import(&db, "halving", version)?;
-        let minute10 = ResolutionVecs::forced_import(&db, "minute10_index", version)?;
-        let minute30 = ResolutionVecs::forced_import(&db, "minute30_index", version)?;
-        let hour1 = ResolutionVecs::forced_import(&db, "hour1_index", version)?;
-        let hour4 = ResolutionVecs::forced_import(&db, "hour4_index", version)?;
-        let hour12 = ResolutionVecs::forced_import(&db, "hour12_index", version)?;
+        let epoch = ResolutionVecs::forced_import(&db, version)?;
+        let halving = ResolutionVecs::forced_import(&db, version)?;
+        let minute10 = ResolutionVecs::forced_import(&db, version)?;
+        let minute30 = ResolutionVecs::forced_import(&db, version)?;
+        let hour1 = ResolutionVecs::forced_import(&db, version)?;
+        let hour4 = ResolutionVecs::forced_import(&db, version)?;
+        let hour12 = ResolutionVecs::forced_import(&db, version)?;
         let day1 = Day1Vecs::forced_import(&db, version)?;
-        let day3 = ResolutionVecs::forced_import(&db, "day3_index", version)?;
-        let week1 = DatedResolutionVecs::forced_import(&db, "week1_index", version)?;
-        let month1 = DatedResolutionVecs::forced_import(&db, "month1_index", version)?;
-        let month3 = DatedResolutionVecs::forced_import(&db, "month3_index", version)?;
-        let month6 = DatedResolutionVecs::forced_import(&db, "month6_index", version)?;
-        let year1 = DatedResolutionVecs::forced_import(&db, "year1_index", version)?;
-        let year10 = DatedResolutionVecs::forced_import(&db, "year10_index", version)?;
+        let day3 = DatedResolutionVecs::forced_import(&db, version)?;
+        let week1 = DatedResolutionVecs::forced_import(&db, version)?;
+        let month1 = DatedResolutionVecs::forced_import(&db, version)?;
+        let month3 = DatedResolutionVecs::forced_import(&db, version)?;
+        let month6 = DatedResolutionVecs::forced_import(&db, version)?;
+        let year1 = DatedResolutionVecs::forced_import(&db, version)?;
+        let year10 = DatedResolutionVecs::forced_import(&db, version)?;
         let tx_index = TxIndexVecs::forced_import(&db, version, indexer)?;
         let txin_index = TxInIndexVecs::forced_import(version, indexer);
         let txout_index = TxOutIndexVecs::forced_import(version, indexer);
@@ -226,11 +225,6 @@ impl Vecs {
             &indexer.vecs.transactions.txid,
             exit,
         )?;
-        self.height.identity.compute_from_index(
-            starting_indexes.height,
-            &indexer.vecs.blocks.weight,
-            exit,
-        )?;
         Ok(())
     }
 
@@ -286,7 +280,7 @@ impl Vecs {
             starting_day1
         };
 
-        self.compute_epoch(indexer, starting_indexes, prev_height, exit)?;
+        self.compute_epoch(indexer, starting_indexes, exit)?;
 
         self.height.week1.compute_transform(
             starting_indexes.height,
@@ -332,15 +326,8 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         starting_indexes: &Indexes,
-        prev_height: Height,
         exit: &Exit,
     ) -> Result<()> {
-        let starting_difficulty = self
-            .height
-            .epoch
-            .collect_one(prev_height)
-            .unwrap_or_default();
-
         self.height.epoch.compute_from_index(
             starting_indexes.height,
             &indexer.vecs.blocks.weight,
@@ -351,16 +338,6 @@ impl Vecs {
             &self.height.epoch,
             exit,
         )?;
-        self.epoch.identity.inner.compute_from_index(
-            starting_difficulty,
-            &self.epoch.first_height,
-            exit,
-        )?;
-        let starting_halving = self
-            .height
-            .halving
-            .collect_one(prev_height)
-            .unwrap_or_default();
 
         self.height.halving.compute_from_index(
             starting_indexes.height,
@@ -372,12 +349,6 @@ impl Vecs {
             &self.height.halving,
             exit,
         )?;
-        self.halving.identity.inner.compute_from_index(
-            starting_halving,
-            &self.halving.first_height,
-            exit,
-        )?;
-
         Ok(())
     }
 
@@ -395,14 +366,6 @@ impl Vecs {
                     &self.height.$period,
                     exit,
                 )?;
-                self.$period.identity.compute_from_index(
-                    self.height
-                        .$period
-                        .collect_one(prev_height)
-                        .unwrap_or_default(),
-                    &self.$period.first_height,
-                    exit,
-                )?;
             };
         }
 
@@ -411,19 +374,15 @@ impl Vecs {
         basic_period!(hour1);
         basic_period!(hour4);
         basic_period!(hour12);
-        basic_period!(day3);
 
         self.day1.first_height.inner.compute_first_per_index(
             starting_indexes.height,
             &self.height.day1,
             exit,
         )?;
-        self.day1
-            .identity
-            .compute_from_index(starting_day1, &self.day1.first_height, exit)?;
         self.day1.date.compute_transform(
             starting_day1,
-            &self.day1.identity,
+            &self.day1.first_height,
             |(di, ..)| (di, Date::from(di)),
             exit,
         )?;
@@ -441,11 +400,6 @@ impl Vecs {
                     .$period
                     .collect_one(prev_height)
                     .unwrap_or_default();
-                self.$period.identity.compute_from_index(
-                    start,
-                    &self.$period.first_height,
-                    exit,
-                )?;
                 self.$period.date.compute_transform(
                     start,
                     &self.$period.first_height,
@@ -455,6 +409,7 @@ impl Vecs {
             }};
         }
 
+        dated_period!(day3);
         dated_period!(week1);
         dated_period!(month1);
         dated_period!(month3);

@@ -15,22 +15,22 @@ pub struct ConstantVecs<T>
 where
     T: VecValue + Formattable + Serialize + JsonSchema,
 {
-    pub height: LazyVecFrom1<Height, T, Height, Height>,
-    pub minute10: LazyVecFrom1<Minute10, T, Minute10, Minute10>,
-    pub minute30: LazyVecFrom1<Minute30, T, Minute30, Minute30>,
-    pub hour1: LazyVecFrom1<Hour1, T, Hour1, Hour1>,
-    pub hour4: LazyVecFrom1<Hour4, T, Hour4, Hour4>,
-    pub hour12: LazyVecFrom1<Hour12, T, Hour12, Hour12>,
-    pub day1: LazyVecFrom1<Day1, T, Day1, Day1>,
-    pub day3: LazyVecFrom1<Day3, T, Day3, Day3>,
-    pub week1: LazyVecFrom1<Week1, T, Week1, Week1>,
-    pub month1: LazyVecFrom1<Month1, T, Month1, Month1>,
-    pub month3: LazyVecFrom1<Month3, T, Month3, Month3>,
-    pub month6: LazyVecFrom1<Month6, T, Month6, Month6>,
-    pub year1: LazyVecFrom1<Year1, T, Year1, Year1>,
-    pub year10: LazyVecFrom1<Year10, T, Year10, Year10>,
-    pub halving: LazyVecFrom1<Halving, T, Halving, Halving>,
-    pub epoch: LazyVecFrom1<Epoch, T, Epoch, Epoch>,
+    pub height: LazyVecFrom1<Height, T, Height, Minute10>,
+    pub minute10: LazyVecFrom1<Minute10, T, Minute10, Height>,
+    pub minute30: LazyVecFrom1<Minute30, T, Minute30, Height>,
+    pub hour1: LazyVecFrom1<Hour1, T, Hour1, Height>,
+    pub hour4: LazyVecFrom1<Hour4, T, Hour4, Height>,
+    pub hour12: LazyVecFrom1<Hour12, T, Hour12, Height>,
+    pub day1: LazyVecFrom1<Day1, T, Day1, Height>,
+    pub day3: LazyVecFrom1<Day3, T, Day3, Height>,
+    pub week1: LazyVecFrom1<Week1, T, Week1, Height>,
+    pub month1: LazyVecFrom1<Month1, T, Month1, Height>,
+    pub month3: LazyVecFrom1<Month3, T, Month3, Height>,
+    pub month6: LazyVecFrom1<Month6, T, Month6, Height>,
+    pub year1: LazyVecFrom1<Year1, T, Year1, Height>,
+    pub year10: LazyVecFrom1<Year10, T, Year10, Height>,
+    pub halving: LazyVecFrom1<Halving, T, Halving, Height>,
+    pub epoch: LazyVecFrom1<Epoch, T, Epoch, Height>,
 }
 
 impl<T: VecValue + Formattable + Serialize + JsonSchema> ConstantVecs<T> {
@@ -55,16 +55,22 @@ impl<T: VecValue + Formattable + Serialize + JsonSchema> ConstantVecs<T> {
     {
         macro_rules! period {
             ($idx:ident) => {
-                LazyVecFrom1::transformed::<F>(
+                LazyVecFrom1::init(
                     name,
                     version,
-                    indexes.$idx.identity.read_only_boxed_clone(),
+                    indexes.$idx.first_height.read_only_boxed_clone(),
+                    |idx, _: Height| F::apply(idx),
                 )
             };
         }
 
         Self {
-            height: period!(height),
+            height: LazyVecFrom1::init(
+                name,
+                version,
+                indexes.height.minute10.read_only_boxed_clone(),
+                |idx, _| F::apply(idx),
+            ),
             minute10: period!(minute10),
             minute30: period!(minute30),
             hour1: period!(hour1),

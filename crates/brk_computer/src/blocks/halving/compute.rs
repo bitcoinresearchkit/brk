@@ -21,7 +21,7 @@ impl Vecs {
 
         self.blocks_to_halving.height.compute_transform(
             starting_indexes.height,
-            &indexes.height.identity,
+            &indexes.height.halving,
             |(h, ..)| (h, StoredU32::from(h.left_before_next_halving())),
             exit,
         )?;

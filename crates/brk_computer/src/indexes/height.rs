@@ -9,7 +9,6 @@ use brk_error::Result;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub identity: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub minute10: M::Stored<EagerVec<PcoVec<Height, Minute10>>>,
     pub minute30: M::Stored<EagerVec<PcoVec<Height, Minute30>>>,
     pub hour1: M::Stored<EagerVec<PcoVec<Height, Hour1>>>,
@@ -31,7 +30,6 @@ pub struct Vecs<M: StorageMode = Rw> {
 impl Vecs {
     pub(crate) fn forced_import(db: &Database, version: Version) -> Result<Self> {
         Ok(Self {
-            identity: EagerVec::forced_import(db, "height", version)?,
             minute10: EagerVec::forced_import(db, "minute10", version)?,
             minute30: EagerVec::forced_import(db, "minute30", version)?,
             hour1: EagerVec::forced_import(db, "hour1", version)?,

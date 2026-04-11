@@ -81,8 +81,8 @@ pub struct Resolutions<T>(
         LazyAggVec<Month6, Option<T>, Height, Height, T>,
         LazyAggVec<Year1, Option<T>, Height, Height, T>,
         LazyAggVec<Year10, Option<T>, Height, Height, T>,
-        LazyAggVec<Halving, T, Height, Halving, T, CoarserIndex<Halving>>,
-        LazyAggVec<Epoch, T, Height, Epoch, T, CoarserIndex<Epoch>>,
+        LazyAggVec<Halving, T, Height, Height, T, CoarserIndex<Halving>>,
+        LazyAggVec<Epoch, T, Height, Height, T, CoarserIndex<Epoch>>,
     >,
 )
 where
@@ -142,8 +142,8 @@ where
             month6: res!(indexes.month6.first_height),
             year1: res!(indexes.year1.first_height),
             year10: res!(indexes.year10.first_height),
-            halving: res!(indexes.halving.identity),
-            epoch: res!(indexes.epoch.identity),
+            halving: res!(indexes.halving.first_height),
+            epoch: res!(indexes.epoch.first_height),
         })
     }
 }
