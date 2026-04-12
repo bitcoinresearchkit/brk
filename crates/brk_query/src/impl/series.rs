@@ -3,10 +3,10 @@ use std::{collections::BTreeMap, sync::LazyLock};
 use brk_error::{Error, Result};
 use brk_traversable::TreeNode;
 use brk_types::{
-    Date, DetailedSeriesCount, Epoch, Etag, Format, Halving, Height, Index, IndexInfo, LegacyValue,
-    Limit, Output, OutputLegacy, PaginatedSeries, Pagination, PaginationIndex, RangeIndex,
-    RangeMap, SearchQuery, SeriesData, SeriesInfo, SeriesName, SeriesOutput, SeriesOutputLegacy,
-    SeriesSelection, Timestamp, Version,
+    BlockHashPrefix, Date, DetailedSeriesCount, Epoch, Etag, Format, Halving, Height, Index,
+    IndexInfo, LegacyValue, Limit, Output, OutputLegacy, PaginatedSeries, Pagination,
+    PaginationIndex, RangeIndex, RangeMap, SearchQuery, SeriesData, SeriesInfo, SeriesName,
+    SeriesOutput, SeriesOutputLegacy, SeriesSelection, Timestamp, Version,
 };
 use parking_lot::RwLock;
 use vecdb::{AnyExportableVec, ReadableVec};
@@ -204,7 +204,7 @@ impl Query {
             total,
             start,
             end,
-            height: *self.height(),
+            hash_prefix: self.tip_hash_prefix(),
         })
     }
 
@@ -458,12 +458,12 @@ pub struct ResolvedQuery {
     pub total: usize,
     pub start: usize,
     pub end: usize,
-    pub height: u32,
+    pub hash_prefix: BlockHashPrefix,
 }
 
 impl ResolvedQuery {
     pub fn etag(&self) -> Etag {
-        Etag::from_series(self.version, self.total, self.start, self.end, self.height)
+        Etag::from_series(self.version, self.total, self.end, self.hash_prefix)
     }
 
     pub fn format(&self) -> Format {

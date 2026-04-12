@@ -55,9 +55,12 @@
  * @typedef {Brk._0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern} Ratio1ySdPattern
  * @typedef {Brk.Dollars} Dollars
  * @typedef {Brk.BlockInfo} BlockInfo
+ * @typedef {Brk.Height} Height
  * @typedef {Brk.BlockHash} BlockHash
  * @typedef {Brk.BlockInfoV1} BlockInfoV1
  * @typedef {Brk.Transaction} Transaction
+ * @typedef {Brk.Txid} Txid
+ * @typedef {Brk.TxIndex} TxIndex
  * @typedef {Brk.AddrStats} AddrStats
  * @typedef {Brk.TxIn} TxIn
  * @typedef {Brk.TxOut} TxOut

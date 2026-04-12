@@ -88,13 +88,14 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
 
         let path = build_path_template(&endpoint.path, &endpoint.path_params);
 
+        let fetch_call = if endpoint.returns_json() {
+            "this.getJson(path, { signal, onUpdate })"
+        } else {
+            "this.getText(path, { signal })"
+        };
+
         if endpoint.query_params.is_empty() {
-            writeln!(
-                output,
-                "    return this.getJson(`{}`, {{ signal, onUpdate }});",
-                path
-            )
-            .unwrap();
+            writeln!(output, "    const path = `{}`;", path).unwrap();
         } else {
             writeln!(output, "    const params = new URLSearchParams();").unwrap();
             for param in &endpoint.query_params {
@@ -122,24 +123,12 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
                 path
             )
             .unwrap();
-
-            if endpoint.supports_csv {
-                writeln!(output, "    if (format === 'csv') {{").unwrap();
-                writeln!(output, "      return this.getText(path, {{ signal }});").unwrap();
-                writeln!(output, "    }}").unwrap();
-                writeln!(
-                    output,
-                    "    return this.getJson(path, {{ signal, onUpdate }});"
-                )
-                .unwrap();
-            } else {
-                writeln!(
-                    output,
-                    "    return this.getJson(path, {{ signal, onUpdate }});"
-                )
-                .unwrap();
-            }
         }
+
+        if endpoint.supports_csv {
+            writeln!(output, "    if (format === 'csv') return this.getText(path, {{ signal }});").unwrap();
+        }
+        writeln!(output, "    return {};", fetch_call).unwrap();
 
         writeln!(output, "  }}\n").unwrap();
     }

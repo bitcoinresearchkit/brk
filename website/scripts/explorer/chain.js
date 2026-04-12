@@ -56,10 +56,16 @@ export function initChain(parent, callbacks) {
   );
 }
 
-/** @param {string} hash */
-export function findCube(hash) {
+/** @param {BlockHash | Height | null} [hashOrHeight] */
+function findCube(hashOrHeight) {
+  if (hashOrHeight == null) {
+    return reachedTip && newestHeight >= 0
+      ? /** @type {HTMLDivElement | null} */ (blocksEl.lastElementChild)
+      : null;
+  }
+  const attr = typeof hashOrHeight === "number" ? "height" : "hash";
   return /** @type {HTMLDivElement | null} */ (
-    blocksEl.querySelector(`[data-hash="${hash}"]`)
+    blocksEl.querySelector(`[data-${attr}="${hashOrHeight}"]`)
   );
 }
 
@@ -86,7 +92,7 @@ export function selectCube(cube, { scroll, silent } = {}) {
   }
 }
 
-export function clear() {
+function clear() {
   newestHeight = -1;
   oldestHeight = Infinity;
   loadingOlder = false;
@@ -126,12 +132,13 @@ function appendNewerBlocks(blocks) {
 }
 
 /** @param {number | null} [height] @returns {Promise<BlockHash>} */
-export async function loadInitial(height) {
+async function loadInitial(height) {
   const blocks =
     height != null
       ? await brk.getBlocksV1FromHeight(height)
       : await brk.getBlocksV1();
 
+  clear();
   for (const b of blocks) blocksEl.prepend(createBlockCube(b));
   newestHeight = blocks[0].height;
   oldestHeight = blocks[blocks.length - 1].height;
@@ -139,6 +146,39 @@ export async function loadInitial(height) {
   observeOldestEdge();
   if (!reachedTip) await loadNewer();
   return blocks[0].id;
+}
+
+/** @param {BlockHash | Height | null} [hashOrHeight] @returns {Promise<Height | null>} */
+async function resolveHeight(hashOrHeight) {
+  if (typeof hashOrHeight === "number") return hashOrHeight;
+  if (typeof hashOrHeight === "string") {
+    const cached = blocksByHash.get(hashOrHeight);
+    if (cached) return cached.height;
+    const block = await brk.getBlockV1(hashOrHeight);
+    blocksByHash.set(hashOrHeight, block);
+    return block.height;
+  }
+  return null;
+}
+
+/** @param {BlockHash | Height | string | null} [hashOrHeight] @param {{ silent?: boolean }} [options] */
+export async function goToCube(hashOrHeight, { silent } = {}) {
+  if (typeof hashOrHeight === "string" && /^\d+$/.test(hashOrHeight)) {
+    hashOrHeight = Number(hashOrHeight);
+  }
+  let cube = findCube(hashOrHeight);
+  if (cube) {
+    selectCube(cube, { scroll: "smooth", silent });
+    return;
+  }
+  let startHash;
+  try {
+    const height = await resolveHeight(hashOrHeight);
+    startHash = await loadInitial(height);
+  } catch (e) {
+    try { startHash = await loadInitial(null); } catch (_) { return; }
+  }
+  selectCube(/** @type {HTMLDivElement} */ (findCube(startHash)), { scroll: "instant", silent });
 }
 
 export async function poll() {
@@ -185,6 +225,7 @@ function createBlockCube(block) {
     createCube();
 
   cubeElement.dataset.hash = block.id;
+  cubeElement.dataset.height = String(block.height);
   blocksByHash.set(block.id, block);
   cubeElement.addEventListener("click", () => onCubeClick(cubeElement));
 

@@ -417,7 +417,11 @@ impl Query {
                 first_seen: None,
             };
 
-            blocks.push(BlockInfoV1 { info, extras });
+            blocks.push(BlockInfoV1 {
+                info,
+                stale: false,
+                extras,
+            });
         }
 
         Ok(blocks)

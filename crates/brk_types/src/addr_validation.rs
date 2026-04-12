@@ -72,7 +72,7 @@ impl AddrValidation {
         let output_type = OutputType::from(&script);
         let script_hex = script.as_bytes().to_lower_hex_string();
 
-        let is_script = matches!(output_type, OutputType::P2SH);
+        let is_script = matches!(output_type, OutputType::P2SH | OutputType::P2TR);
         let is_witness = matches!(
             output_type,
             OutputType::P2WPKH | OutputType::P2WSH | OutputType::P2TR | OutputType::P2A

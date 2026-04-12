@@ -49,6 +49,13 @@ export function initOptions() {
         highlightedLis.push(li);
       }
     }
+    if (!highlightedLis.length) {
+      const li = liByPath.get(stringToId(sel.name));
+      if (li) {
+        li.dataset.highlight = "";
+        highlightedLis.push(li);
+      }
+    }
   }
 
   const selected = {
@@ -360,8 +367,9 @@ export function initOptions() {
   /**
    * @param {ProcessedNode[]} nodes
    * @param {HTMLElement} parentEl
+   * @param {boolean} autoOpen
    */
-  function buildTreeDOM(nodes, parentEl) {
+  function buildTreeDOM(nodes, parentEl, autoOpen) {
     const ul = window.document.createElement("ul");
 
     for (const node of nodes) {
@@ -369,8 +377,6 @@ export function initOptions() {
       ul.append(li);
 
       liByPath.set(node.pathKey, li);
-
-      const onSelectedPath = isOnSelectedPath(node.path);
 
       if (node.type === "group") {
         const details = window.document.createElement("details");
@@ -386,16 +392,17 @@ export function initOptions() {
         summary.append(count);
 
         let built = false;
-        if (onSelectedPath) {
+        if (autoOpen && isOnSelectedPath(node.path)) {
           built = true;
           details.open = true;
-          buildTreeDOM(node.children, details);
+          buildTreeDOM(node.children, details, true);
         }
         details.addEventListener("toggle", () => {
           if (details.open && !built) {
             built = true;
-            buildTreeDOM(node.children, details);
+            buildTreeDOM(node.children, details, false);
           }
+          updateHighlight(selected.value);
         });
       } else {
         const element = createOptionElement({
@@ -417,7 +424,7 @@ export function initOptions() {
   function setParent(el) {
     if (parentEl) return;
     parentEl = el;
-    buildTreeDOM(processedTree, el);
+    buildTreeDOM(processedTree, el, true);
     updateHighlight(selected.value);
   }
 

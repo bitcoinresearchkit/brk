@@ -197,7 +197,6 @@ impl Server {
         let router = router
             .with_state(state)
             .merge(website_router)
-            .layer(compression_layer)
             .layer(response_time_layer)
             .layer(trace_layer)
             .layer(CatchPanicLayer::custom(|panic: Box<dyn Any + Send>| {
@@ -213,6 +212,7 @@ impl Server {
                 Duration::from_secs(5),
             ))
             .layer(json_error_layer)
+            .layer(compression_layer)
             .layer(CorsLayer::permissive())
             .layer(axum::middleware::from_fn(
                 async |request: Request<Body>, next: Next| -> Response<Body> {

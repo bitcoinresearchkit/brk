@@ -4799,7 +4799,6 @@ impl SeriesTree_Indexes_Addr_OpReturn {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Height {
-    pub identity: SeriesPattern18<Height>,
     pub minute10: SeriesPattern18<Minute10>,
     pub minute30: SeriesPattern18<Minute30>,
     pub hour1: SeriesPattern18<Hour1>,
@@ -4821,7 +4820,6 @@ pub struct SeriesTree_Indexes_Height {
 impl SeriesTree_Indexes_Height {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern18::new(client.clone(), "height".to_string()),
             minute10: SeriesPattern18::new(client.clone(), "minute10".to_string()),
             minute30: SeriesPattern18::new(client.clone(), "minute30".to_string()),
             hour1: SeriesPattern18::new(client.clone(), "hour1".to_string()),
@@ -4844,31 +4842,25 @@ impl SeriesTree_Indexes_Height {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Epoch {
-    pub identity: SeriesPattern17<Epoch>,
     pub first_height: SeriesPattern17<Height>,
-    pub height_count: SeriesPattern17<StoredU64>,
 }
 
 impl SeriesTree_Indexes_Epoch {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern17::new(client.clone(), "epoch".to_string()),
             first_height: SeriesPattern17::new(client.clone(), "first_height".to_string()),
-            height_count: SeriesPattern17::new(client.clone(), "height_count".to_string()),
         }
     }
 }
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Halving {
-    pub identity: SeriesPattern16<Halving>,
     pub first_height: SeriesPattern16<Height>,
 }
 
 impl SeriesTree_Indexes_Halving {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern16::new(client.clone(), "halving".to_string()),
             first_height: SeriesPattern16::new(client.clone(), "first_height".to_string()),
         }
     }
@@ -4876,14 +4868,12 @@ impl SeriesTree_Indexes_Halving {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Minute10 {
-    pub identity: SeriesPattern3<Minute10>,
     pub first_height: SeriesPattern3<Height>,
 }
 
 impl SeriesTree_Indexes_Minute10 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern3::new(client.clone(), "minute10_index".to_string()),
             first_height: SeriesPattern3::new(client.clone(), "first_height".to_string()),
         }
     }
@@ -4891,14 +4881,12 @@ impl SeriesTree_Indexes_Minute10 {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Minute30 {
-    pub identity: SeriesPattern4<Minute30>,
     pub first_height: SeriesPattern4<Height>,
 }
 
 impl SeriesTree_Indexes_Minute30 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern4::new(client.clone(), "minute30_index".to_string()),
             first_height: SeriesPattern4::new(client.clone(), "first_height".to_string()),
         }
     }
@@ -4906,14 +4894,12 @@ impl SeriesTree_Indexes_Minute30 {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Hour1 {
-    pub identity: SeriesPattern5<Hour1>,
     pub first_height: SeriesPattern5<Height>,
 }
 
 impl SeriesTree_Indexes_Hour1 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern5::new(client.clone(), "hour1_index".to_string()),
             first_height: SeriesPattern5::new(client.clone(), "first_height".to_string()),
         }
     }
@@ -4921,14 +4907,12 @@ impl SeriesTree_Indexes_Hour1 {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Hour4 {
-    pub identity: SeriesPattern6<Hour4>,
     pub first_height: SeriesPattern6<Height>,
 }
 
 impl SeriesTree_Indexes_Hour4 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern6::new(client.clone(), "hour4_index".to_string()),
             first_height: SeriesPattern6::new(client.clone(), "first_height".to_string()),
         }
     }
@@ -4936,14 +4920,12 @@ impl SeriesTree_Indexes_Hour4 {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Hour12 {
-    pub identity: SeriesPattern7<Hour12>,
     pub first_height: SeriesPattern7<Height>,
 }
 
 impl SeriesTree_Indexes_Hour12 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern7::new(client.clone(), "hour12_index".to_string()),
             first_height: SeriesPattern7::new(client.clone(), "first_height".to_string()),
         }
     }
@@ -4951,33 +4933,29 @@ impl SeriesTree_Indexes_Hour12 {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Day1 {
-    pub identity: SeriesPattern8<Day1>,
     pub date: SeriesPattern8<Date>,
     pub first_height: SeriesPattern8<Height>,
-    pub height_count: SeriesPattern8<StoredU64>,
 }
 
 impl SeriesTree_Indexes_Day1 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern8::new(client.clone(), "day1_index".to_string()),
             date: SeriesPattern8::new(client.clone(), "date".to_string()),
             first_height: SeriesPattern8::new(client.clone(), "first_height".to_string()),
-            height_count: SeriesPattern8::new(client.clone(), "height_count".to_string()),
         }
     }
 }
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Day3 {
-    pub identity: SeriesPattern9<Day3>,
+    pub date: SeriesPattern9<Date>,
     pub first_height: SeriesPattern9<Height>,
 }
 
 impl SeriesTree_Indexes_Day3 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern9::new(client.clone(), "day3_index".to_string()),
+            date: SeriesPattern9::new(client.clone(), "date".to_string()),
             first_height: SeriesPattern9::new(client.clone(), "first_height".to_string()),
         }
     }
@@ -4985,7 +4963,6 @@ impl SeriesTree_Indexes_Day3 {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Week1 {
-    pub identity: SeriesPattern10<Week1>,
     pub date: SeriesPattern10<Date>,
     pub first_height: SeriesPattern10<Height>,
 }
@@ -4993,7 +4970,6 @@ pub struct SeriesTree_Indexes_Week1 {
 impl SeriesTree_Indexes_Week1 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern10::new(client.clone(), "week1_index".to_string()),
             date: SeriesPattern10::new(client.clone(), "date".to_string()),
             first_height: SeriesPattern10::new(client.clone(), "first_height".to_string()),
         }
@@ -5002,7 +4978,6 @@ impl SeriesTree_Indexes_Week1 {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Month1 {
-    pub identity: SeriesPattern11<Month1>,
     pub date: SeriesPattern11<Date>,
     pub first_height: SeriesPattern11<Height>,
 }
@@ -5010,7 +4985,6 @@ pub struct SeriesTree_Indexes_Month1 {
 impl SeriesTree_Indexes_Month1 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern11::new(client.clone(), "month1_index".to_string()),
             date: SeriesPattern11::new(client.clone(), "date".to_string()),
             first_height: SeriesPattern11::new(client.clone(), "first_height".to_string()),
         }
@@ -5019,7 +4993,6 @@ impl SeriesTree_Indexes_Month1 {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Month3 {
-    pub identity: SeriesPattern12<Month3>,
     pub date: SeriesPattern12<Date>,
     pub first_height: SeriesPattern12<Height>,
 }
@@ -5027,7 +5000,6 @@ pub struct SeriesTree_Indexes_Month3 {
 impl SeriesTree_Indexes_Month3 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern12::new(client.clone(), "month3_index".to_string()),
             date: SeriesPattern12::new(client.clone(), "date".to_string()),
             first_height: SeriesPattern12::new(client.clone(), "first_height".to_string()),
         }
@@ -5036,7 +5008,6 @@ impl SeriesTree_Indexes_Month3 {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Month6 {
-    pub identity: SeriesPattern13<Month6>,
     pub date: SeriesPattern13<Date>,
     pub first_height: SeriesPattern13<Height>,
 }
@@ -5044,7 +5015,6 @@ pub struct SeriesTree_Indexes_Month6 {
 impl SeriesTree_Indexes_Month6 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern13::new(client.clone(), "month6_index".to_string()),
             date: SeriesPattern13::new(client.clone(), "date".to_string()),
             first_height: SeriesPattern13::new(client.clone(), "first_height".to_string()),
         }
@@ -5053,7 +5023,6 @@ impl SeriesTree_Indexes_Month6 {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Year1 {
-    pub identity: SeriesPattern14<Year1>,
     pub date: SeriesPattern14<Date>,
     pub first_height: SeriesPattern14<Height>,
 }
@@ -5061,7 +5030,6 @@ pub struct SeriesTree_Indexes_Year1 {
 impl SeriesTree_Indexes_Year1 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern14::new(client.clone(), "year1_index".to_string()),
             date: SeriesPattern14::new(client.clone(), "date".to_string()),
             first_height: SeriesPattern14::new(client.clone(), "first_height".to_string()),
         }
@@ -5070,7 +5038,6 @@ impl SeriesTree_Indexes_Year1 {
 
 /// Series tree node.
 pub struct SeriesTree_Indexes_Year10 {
-    pub identity: SeriesPattern15<Year10>,
     pub date: SeriesPattern15<Date>,
     pub first_height: SeriesPattern15<Height>,
 }
@@ -5078,7 +5045,6 @@ pub struct SeriesTree_Indexes_Year10 {
 impl SeriesTree_Indexes_Year10 {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            identity: SeriesPattern15::new(client.clone(), "year10_index".to_string()),
             date: SeriesPattern15::new(client.clone(), "date".to_string()),
             first_height: SeriesPattern15::new(client.clone(), "first_height".to_string()),
         }
@@ -8710,6 +8676,15 @@ impl BrkClient {
     /// Endpoint: `GET /api/server/sync`
     pub fn get_sync_status(&self) -> Result<SyncStatus> {
         self.base.get_json(&format!("/api/server/sync"))
+    }
+
+    /// Txid by index
+    ///
+    /// Retrieve the transaction ID (txid) at a given global transaction index. Returns the txid as plain text.
+    ///
+    /// Endpoint: `GET /api/tx-index/{index}`
+    pub fn get_tx_by_index(&self, index: TxIndex) -> Result<String> {
+        self.base.get_text(&format!("/api/tx-index/{index}"))
     }
 
     /// Transaction information

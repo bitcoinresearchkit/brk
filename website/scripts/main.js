@@ -136,7 +136,7 @@ function initSelected() {
           element = explorerElement;
 
           if (firstTimeLoadingExplorer) {
-            initExplorer();
+            initExplorer(options.selected);
           }
           firstTimeLoadingExplorer = false;
 

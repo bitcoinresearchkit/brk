@@ -40,7 +40,7 @@
     .blocks {
       display: flex;
       flex-direction: column-reverse;
-      --gap: 0.75;
+      --gap: 0.8;
       gap: calc(var(--cube) * var(--gap));
       margin-right: var(--cube);
       margin-top: calc(var(--cube) * -0.25);

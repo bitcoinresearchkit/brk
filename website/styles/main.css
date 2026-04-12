@@ -42,6 +42,7 @@ main {
   html[data-layout="split"] & {
     min-width: 100%;
     max-width: var(--max-main-width);
+    overflow-x: hidden;
   }
 
   > nav,

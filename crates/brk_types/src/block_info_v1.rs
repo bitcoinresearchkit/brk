@@ -10,6 +10,10 @@ pub struct BlockInfoV1 {
     #[serde(flatten)]
     pub info: BlockInfo,
 
+    /// Whether this block has been replaced by a longer chain
+    #[serde(default)]
+    pub stale: bool,
+
     /// Extended block data
     pub extras: BlockExtras,
 }

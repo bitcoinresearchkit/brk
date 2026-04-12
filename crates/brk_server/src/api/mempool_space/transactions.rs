@@ -12,7 +12,7 @@ use crate::{
     AppState, CacheStrategy,
     cache::CacheParams,
     extended::{ResponseExtended, TransformResponseExtended},
-    params::{TxidParam, TxidVout, TxidsParam},
+    params::{TxIndexParam, TxidParam, TxidVout, TxidsParam},
 };
 
 pub trait TxRoutes {
@@ -23,6 +23,24 @@ impl TxRoutes for ApiRouter<AppState> {
     fn add_tx_routes(self) -> Self {
         self
             .api_route(
+            "/api/tx-index/{index}",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, Path(param): Path<TxIndexParam>, State(state): State<AppState>| {
+                    state.cached_text(&headers, CacheStrategy::Immutable(Version::ONE), &uri, move |q| q.txid_by_index(param.index).map(|t| t.to_string())).await
+                },
+                |op| op
+                    .id("get_tx_by_index")
+                    .transactions_tag()
+                    .summary("Txid by index")
+                    .description("Retrieve the transaction ID (txid) at a given global transaction index. Returns the txid as plain text.")
+                    .text_response()
+                    .not_modified()
+                    .bad_request()
+                    .not_found()
+                    .server_error(),
+            ),
+        )
+        .api_route(
             "/api/v1/cpfp/{txid}",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(param): Path<TxidParam>, State(state): State<AppState>| {

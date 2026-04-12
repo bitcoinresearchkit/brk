@@ -524,6 +524,7 @@ class BlockInfoV1(TypedDict):
         weight: Block weight in weight units
         previousblockhash: Previous block hash
         mediantime: Median time of the last 11 blocks
+        stale: Whether this block has been replaced by a longer chain
         extras: Extended block data
     """
     id: BlockHash
@@ -539,6 +540,7 @@ class BlockInfoV1(TypedDict):
     weight: Weight
     previousblockhash: BlockHash
     mediantime: Timestamp
+    stale: bool
     extras: BlockExtras
 
 class BlockRewardsEntry(TypedDict):
@@ -1470,6 +1472,12 @@ class Transaction(TypedDict):
     sigops: int
     fee: Sats
     status: TxStatus
+
+class TxIndexParam(TypedDict):
+    """
+    Transaction index path parameter
+    """
+    index: TxIndex
 
 class TxOutspend(TypedDict):
     """
@@ -4394,7 +4402,6 @@ class SeriesTree_Indexes_Height:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern18[Height] = SeriesPattern18(client, 'height')
         self.minute10: SeriesPattern18[Minute10] = SeriesPattern18(client, 'minute10')
         self.minute30: SeriesPattern18[Minute30] = SeriesPattern18(client, 'minute30')
         self.hour1: SeriesPattern18[Hour1] = SeriesPattern18(client, 'hour1')
@@ -4416,73 +4423,62 @@ class SeriesTree_Indexes_Epoch:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern17[Epoch] = SeriesPattern17(client, 'epoch')
         self.first_height: SeriesPattern17[Height] = SeriesPattern17(client, 'first_height')
-        self.height_count: SeriesPattern17[StoredU64] = SeriesPattern17(client, 'height_count')
 
 class SeriesTree_Indexes_Halving:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern16[Halving] = SeriesPattern16(client, 'halving')
         self.first_height: SeriesPattern16[Height] = SeriesPattern16(client, 'first_height')
 
 class SeriesTree_Indexes_Minute10:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern3[Minute10] = SeriesPattern3(client, 'minute10_index')
         self.first_height: SeriesPattern3[Height] = SeriesPattern3(client, 'first_height')
 
 class SeriesTree_Indexes_Minute30:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern4[Minute30] = SeriesPattern4(client, 'minute30_index')
         self.first_height: SeriesPattern4[Height] = SeriesPattern4(client, 'first_height')
 
 class SeriesTree_Indexes_Hour1:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern5[Hour1] = SeriesPattern5(client, 'hour1_index')
         self.first_height: SeriesPattern5[Height] = SeriesPattern5(client, 'first_height')
 
 class SeriesTree_Indexes_Hour4:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern6[Hour4] = SeriesPattern6(client, 'hour4_index')
         self.first_height: SeriesPattern6[Height] = SeriesPattern6(client, 'first_height')
 
 class SeriesTree_Indexes_Hour12:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern7[Hour12] = SeriesPattern7(client, 'hour12_index')
         self.first_height: SeriesPattern7[Height] = SeriesPattern7(client, 'first_height')
 
 class SeriesTree_Indexes_Day1:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern8[Day1] = SeriesPattern8(client, 'day1_index')
         self.date: SeriesPattern8[Date] = SeriesPattern8(client, 'date')
         self.first_height: SeriesPattern8[Height] = SeriesPattern8(client, 'first_height')
-        self.height_count: SeriesPattern8[StoredU64] = SeriesPattern8(client, 'height_count')
 
 class SeriesTree_Indexes_Day3:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern9[Day3] = SeriesPattern9(client, 'day3_index')
+        self.date: SeriesPattern9[Date] = SeriesPattern9(client, 'date')
         self.first_height: SeriesPattern9[Height] = SeriesPattern9(client, 'first_height')
 
 class SeriesTree_Indexes_Week1:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern10[Week1] = SeriesPattern10(client, 'week1_index')
         self.date: SeriesPattern10[Date] = SeriesPattern10(client, 'date')
         self.first_height: SeriesPattern10[Height] = SeriesPattern10(client, 'first_height')
 
@@ -4490,7 +4486,6 @@ class SeriesTree_Indexes_Month1:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern11[Month1] = SeriesPattern11(client, 'month1_index')
         self.date: SeriesPattern11[Date] = SeriesPattern11(client, 'date')
         self.first_height: SeriesPattern11[Height] = SeriesPattern11(client, 'first_height')
 
@@ -4498,7 +4493,6 @@ class SeriesTree_Indexes_Month3:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern12[Month3] = SeriesPattern12(client, 'month3_index')
         self.date: SeriesPattern12[Date] = SeriesPattern12(client, 'date')
         self.first_height: SeriesPattern12[Height] = SeriesPattern12(client, 'first_height')
 
@@ -4506,7 +4500,6 @@ class SeriesTree_Indexes_Month6:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern13[Month6] = SeriesPattern13(client, 'month6_index')
         self.date: SeriesPattern13[Date] = SeriesPattern13(client, 'date')
         self.first_height: SeriesPattern13[Height] = SeriesPattern13(client, 'first_height')
 
@@ -4514,7 +4507,6 @@ class SeriesTree_Indexes_Year1:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern14[Year1] = SeriesPattern14(client, 'year1_index')
         self.date: SeriesPattern14[Date] = SeriesPattern14(client, 'date')
         self.first_height: SeriesPattern14[Height] = SeriesPattern14(client, 'first_height')
 
@@ -4522,7 +4514,6 @@ class SeriesTree_Indexes_Year10:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.identity: SeriesPattern15[Year10] = SeriesPattern15(client, 'year10_index')
         self.date: SeriesPattern15[Date] = SeriesPattern15(client, 'date')
         self.first_height: SeriesPattern15[Height] = SeriesPattern15(client, 'first_height')
 
@@ -7668,6 +7659,14 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/server/sync`"""
         return self.get_json('/api/server/sync')
+
+    def get_tx_by_index(self, index: TxIndex) -> str:
+        """Txid by index.
+
+        Retrieve the transaction ID (txid) at a given global transaction index. Returns the txid as plain text.
+
+        Endpoint: `GET /api/tx-index/{index}`"""
+        return self.get_text(f'/api/tx-index/{index}')
 
     def get_tx(self, txid: Txid) -> Transaction:
         """Transaction information.

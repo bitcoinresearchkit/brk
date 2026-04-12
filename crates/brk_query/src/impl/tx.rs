@@ -4,7 +4,7 @@ use brk_types::{
     BlockHash, Height, MerkleProof, Timestamp, Transaction, TxInIndex, TxIndex, TxOutIndex,
     TxOutspend, TxStatus, Txid, TxidPrefix, Vin, Vout,
 };
-use vecdb::{ReadableVec, VecIndex};
+use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 use crate::Query;
 
@@ -21,6 +21,19 @@ impl Query {
             .map_err(|_| Error::UnknownTxid)?
             .map(|cow| cow.into_owned())
             .ok_or(Error::UnknownTxid)
+    }
+
+    pub fn txid_by_index(&self, index: TxIndex) -> Result<Txid> {
+        let len = self.indexer().vecs.transactions.txid.len();
+        if index.to_usize() >= len {
+            return Err(Error::OutOfRange("Transaction index out of range".into()));
+        }
+        self.indexer()
+            .vecs
+            .transactions
+            .txid
+            .collect_one(index)
+            .ok_or_else(|| Error::OutOfRange("Transaction index out of range".into()))
     }
 
     /// Resolve a txid to (TxIndex, Height).

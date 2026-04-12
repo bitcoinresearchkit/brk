@@ -3,12 +3,10 @@ import { brk } from "../utils/client.js";
 import { createMapCache } from "../utils/cache.js";
 import {
   initChain,
-  loadInitial,
+  goToCube,
   poll,
   selectCube,
   deselectCube,
-  findCube,
-  clear as clearChain,
 } from "./chain.js";
 import {
   initBlockDetails,
@@ -38,10 +36,12 @@ function pathSegments() {
 /** @type {number | undefined} */ let pollInterval;
 let navController = new AbortController();
 const txCache = createMapCache(50);
+let lastLoadedUrl = "";
 
 function navigate() {
   navController.abort();
   navController = new AbortController();
+  lastLoadedUrl = window.location.pathname;
   return navController.signal;
 }
 
@@ -60,27 +60,27 @@ function handleLinkClick(e) {
   const m = a.pathname.match(/^\/(block|tx|address)\/(.+)/);
   if (!m) return;
   e.preventDefault();
+  history.pushState(null, "", a.href);
   if (m[1] === "block") {
     navigateToBlock(m[2]);
   } else if (m[1] === "tx") {
-    history.pushState(null, "", a.href);
     navigateToTx(m[2]);
   } else {
-    history.pushState(null, "", a.href);
     navigateToAddr(m[2]);
   }
 }
 
-export function init() {
+/** @param {{ onChange: (cb: (option: Option) => void) => void }} selected */
+export function init(selected) {
   initChain(explorerElement, {
     onSelect: (block) => {
       updateBlock(block);
       showPanel("block");
     },
     onCubeClick: (cube) => {
-      navigate();
       const hash = cube.dataset.hash;
       if (hash) history.pushState(null, "", `/block/${hash}`);
+      navigate();
       selectCube(cube);
     },
   });
@@ -101,15 +101,12 @@ export function init() {
     if (!document.hidden && !explorerElement.hidden) poll();
   });
 
-  window.addEventListener("popstate", () => {
-    const [kind, value] = pathSegments();
-    if (kind === "block" && value) navigateToBlock(value, false);
-    else if (kind === "tx" && value) navigateToTx(value);
-    else if (kind === "address" && value) navigateToAddr(value);
-    else showPanel("block");
+  selected.onChange((option) => {
+    if (option.kind === "explorer") {
+      const url = window.location.pathname;
+      if (url !== lastLoadedUrl) load();
+    }
   });
-
-  load();
 }
 
 function startPolling() {
@@ -126,98 +123,77 @@ function stopPolling() {
 }
 
 async function load() {
+  const signal = navigate();
   try {
     const [kind, value] = pathSegments();
 
     if (kind === "tx" && value) {
-      const tx = txCache.get(value) ?? (await brk.getTx(value));
-      txCache.set(value, tx);
-      const startHash = await loadInitial(tx.status?.blockHeight ?? null);
-      const cube = tx.status?.blockHash ? findCube(tx.status.blockHash) : findCube(startHash);
-      if (cube) selectCube(cube, { silent: true });
+      const txid = await resolveTxid(value, { signal });
+      if (signal.aborted) return;
+      const tx = txCache.get(txid) ?? (await brk.getTx(txid, { signal }));
+      if (signal.aborted) return;
+      txCache.set(txid, tx);
+      await goToCube(tx.status?.blockHash ?? tx.status?.blockHeight ?? null, { silent: true });
       updateTx(tx);
       showPanel("tx");
       return;
     }
 
     if (kind === "address" && value) {
-      const startHash = await loadInitial(null);
-      const cube = findCube(startHash);
-      if (cube) selectCube(cube, { silent: true });
+      await goToCube(null, { silent: true });
       navigateToAddr(value);
       return;
     }
 
-    const height =
-      kind === "block" && value
-        ? /^\d+$/.test(value)
-          ? Number(value)
-          : (await brk.getBlockV1(value)).height
-        : null;
-    const startHash = await loadInitial(height);
-    const cube = findCube(startHash);
-    if (cube) selectCube(cube, { scroll: "instant" });
+    await goToCube(kind === "block" ? value : null);
   } catch (e) {
+    if (signal.aborted) return;
     console.error("explorer load:", e);
+    await goToCube();
+    showPanel("block");
   }
 }
 
-/** @param {string} hash @param {boolean} [pushUrl] */
-async function navigateToBlock(hash, pushUrl = true) {
-  if (pushUrl) history.pushState(null, "", `/block/${hash}`);
-  const existing = findCube(hash);
-  if (existing) {
-    navigate();
-    selectCube(existing, { scroll: "smooth" });
-    return;
-  }
+/** @param {string} hashOrHeight */
+async function navigateToBlock(hashOrHeight) {
   const signal = navigate();
-  try {
-    clearChain();
-    const height = /^\d+$/.test(hash)
-      ? Number(hash)
-      : (await brk.getBlockV1(hash, { signal })).height;
-    if (signal.aborted) return;
-    const startHash = await loadInitial(height);
-    if (signal.aborted) return;
-    const cube = findCube(hash) ?? findCube(startHash);
-    if (cube) selectCube(cube);
-  } catch (e) {
-    if (!signal.aborted) console.error("explorer block:", e);
-  }
+  await goToCube(hashOrHeight);
+  if (!signal.aborted) showPanel("block");
 }
 
-/** @param {string} txid */
-async function navigateToTx(txid) {
+/** @param {Txid | TxIndex} value @param {{ signal?: AbortSignal }} [options] */
+async function resolveTxid(value, { signal } = {}) {
+  return typeof value === "number" || /^\d+$/.test(value)
+    ? await brk.getTxByIndex(Number(value), { signal })
+    : value;
+}
+
+/** @param {Txid | TxIndex} txidOrIndex */
+async function navigateToTx(txidOrIndex) {
   const signal = navigate();
   clearTx();
   showPanel("tx");
   try {
+    const txid = await resolveTxid(txidOrIndex, { signal });
+    if (signal.aborted) return;
     const tx = txCache.get(txid) ?? (await brk.getTx(txid, { signal }));
     if (signal.aborted) return;
     txCache.set(txid, tx);
-
-    if (tx.status?.blockHash) {
-      let cube = findCube(tx.status.blockHash);
-      if (!cube) {
-        clearChain();
-        const startHash = await loadInitial(tx.status.blockHeight ?? null);
-        if (signal.aborted) return;
-        cube = findCube(tx.status.blockHash) ?? findCube(startHash);
-      }
-      if (cube) selectCube(cube, { scroll: "smooth", silent: true });
-    }
-
+    await goToCube(tx.status?.blockHash ?? tx.status?.blockHeight ?? null, { silent: true });
     updateTx(tx);
   } catch (e) {
-    if (!signal.aborted) console.error("explorer tx:", e);
+    if (!signal.aborted) {
+      console.error("explorer tx:", e);
+      await goToCube();
+      showPanel("block");
+    }
   }
 }
 
 /** @param {string} address */
 function navigateToAddr(address) {
-  navigate();
+  const signal = navigate();
   deselectCube();
-  updateAddr(address, navController.signal);
+  updateAddr(address, signal);
   showPanel("addr");
 }

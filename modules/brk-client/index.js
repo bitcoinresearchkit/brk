@@ -234,6 +234,7 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {Weight} weight - Block weight in weight units
  * @property {BlockHash} previousblockhash - Previous block hash
  * @property {Timestamp} mediantime - Median time of the last 11 blocks
+ * @property {boolean=} stale - Whether this block has been replaced by a longer chain
  * @property {BlockExtras} extras - Extended block data
  */
 /**
@@ -1084,6 +1085,12 @@ Matches mempool.space/bitcoin-cli behavior.
  * Transaction index within a block (0 = coinbase)
  *
  * @typedef {number} TxIndex
+ */
+/**
+ * Transaction index path parameter
+ *
+ * @typedef {Object} TxIndexParam
+ * @property {TxIndex} index
  */
 /**
  * Transaction output
@@ -5104,7 +5111,6 @@ function createTransferPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Height
- * @property {SeriesPattern18<Height>} identity
  * @property {SeriesPattern18<Minute10>} minute10
  * @property {SeriesPattern18<Minute30>} minute30
  * @property {SeriesPattern18<Hour1>} hour1
@@ -5125,99 +5131,83 @@ function createTransferPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Epoch
- * @property {SeriesPattern17<Epoch>} identity
  * @property {SeriesPattern17<Height>} firstHeight
- * @property {SeriesPattern17<StoredU64>} heightCount
  */
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Halving
- * @property {SeriesPattern16<Halving>} identity
  * @property {SeriesPattern16<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Minute10
- * @property {SeriesPattern3<Minute10>} identity
  * @property {SeriesPattern3<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Minute30
- * @property {SeriesPattern4<Minute30>} identity
  * @property {SeriesPattern4<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Hour1
- * @property {SeriesPattern5<Hour1>} identity
  * @property {SeriesPattern5<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Hour4
- * @property {SeriesPattern6<Hour4>} identity
  * @property {SeriesPattern6<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Hour12
- * @property {SeriesPattern7<Hour12>} identity
  * @property {SeriesPattern7<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Day1
- * @property {SeriesPattern8<Day1>} identity
  * @property {SeriesPattern8<Date>} date
  * @property {SeriesPattern8<Height>} firstHeight
- * @property {SeriesPattern8<StoredU64>} heightCount
  */
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Day3
- * @property {SeriesPattern9<Day3>} identity
+ * @property {SeriesPattern9<Date>} date
  * @property {SeriesPattern9<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Week1
- * @property {SeriesPattern10<Week1>} identity
  * @property {SeriesPattern10<Date>} date
  * @property {SeriesPattern10<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Month1
- * @property {SeriesPattern11<Month1>} identity
  * @property {SeriesPattern11<Date>} date
  * @property {SeriesPattern11<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Month3
- * @property {SeriesPattern12<Month3>} identity
  * @property {SeriesPattern12<Date>} date
  * @property {SeriesPattern12<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Month6
- * @property {SeriesPattern13<Month6>} identity
  * @property {SeriesPattern13<Date>} date
  * @property {SeriesPattern13<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Year1
- * @property {SeriesPattern14<Year1>} identity
  * @property {SeriesPattern14<Date>} date
  * @property {SeriesPattern14<Height>} firstHeight
  */
 
 /**
  * @typedef {Object} SeriesTree_Indexes_Year10
- * @property {SeriesPattern15<Year10>} identity
  * @property {SeriesPattern15<Date>} date
  * @property {SeriesPattern15<Height>} firstHeight
  */
@@ -8274,7 +8264,6 @@ class BrkClient extends BrkClientBase {
           },
         },
         height: {
-          identity: createSeriesPattern18(this, 'height'),
           minute10: createSeriesPattern18(this, 'minute10'),
           minute30: createSeriesPattern18(this, 'minute30'),
           hour1: createSeriesPattern18(this, 'hour1'),
@@ -8293,71 +8282,55 @@ class BrkClient extends BrkClientBase {
           txIndexCount: createSeriesPattern18(this, 'tx_index_count'),
         },
         epoch: {
-          identity: createSeriesPattern17(this, 'epoch'),
           firstHeight: createSeriesPattern17(this, 'first_height'),
-          heightCount: createSeriesPattern17(this, 'height_count'),
         },
         halving: {
-          identity: createSeriesPattern16(this, 'halving'),
           firstHeight: createSeriesPattern16(this, 'first_height'),
         },
         minute10: {
-          identity: createSeriesPattern3(this, 'minute10_index'),
           firstHeight: createSeriesPattern3(this, 'first_height'),
         },
         minute30: {
-          identity: createSeriesPattern4(this, 'minute30_index'),
           firstHeight: createSeriesPattern4(this, 'first_height'),
         },
         hour1: {
-          identity: createSeriesPattern5(this, 'hour1_index'),
           firstHeight: createSeriesPattern5(this, 'first_height'),
         },
         hour4: {
-          identity: createSeriesPattern6(this, 'hour4_index'),
           firstHeight: createSeriesPattern6(this, 'first_height'),
         },
         hour12: {
-          identity: createSeriesPattern7(this, 'hour12_index'),
           firstHeight: createSeriesPattern7(this, 'first_height'),
         },
         day1: {
-          identity: createSeriesPattern8(this, 'day1_index'),
           date: createSeriesPattern8(this, 'date'),
           firstHeight: createSeriesPattern8(this, 'first_height'),
-          heightCount: createSeriesPattern8(this, 'height_count'),
         },
         day3: {
-          identity: createSeriesPattern9(this, 'day3_index'),
+          date: createSeriesPattern9(this, 'date'),
           firstHeight: createSeriesPattern9(this, 'first_height'),
         },
         week1: {
-          identity: createSeriesPattern10(this, 'week1_index'),
           date: createSeriesPattern10(this, 'date'),
           firstHeight: createSeriesPattern10(this, 'first_height'),
         },
         month1: {
-          identity: createSeriesPattern11(this, 'month1_index'),
           date: createSeriesPattern11(this, 'date'),
           firstHeight: createSeriesPattern11(this, 'first_height'),
         },
         month3: {
-          identity: createSeriesPattern12(this, 'month3_index'),
           date: createSeriesPattern12(this, 'date'),
           firstHeight: createSeriesPattern12(this, 'first_height'),
         },
         month6: {
-          identity: createSeriesPattern13(this, 'month6_index'),
           date: createSeriesPattern13(this, 'date'),
           firstHeight: createSeriesPattern13(this, 'first_height'),
         },
         year1: {
-          identity: createSeriesPattern14(this, 'year1_index'),
           date: createSeriesPattern14(this, 'date'),
           firstHeight: createSeriesPattern14(this, 'first_height'),
         },
         year10: {
-          identity: createSeriesPattern15(this, 'year10_index'),
           date: createSeriesPattern15(this, 'date'),
           firstHeight: createSeriesPattern15(this, 'first_height'),
         },
@@ -9496,7 +9469,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<*>}
    */
   async getApi({ signal, onUpdate } = {}) {
-    return this.getJson(`/api.json`, { signal, onUpdate });
+    const path = `/api.json`;
+    return this.getText(path, { signal });
   }
 
   /**
@@ -9513,7 +9487,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<AddrStats>}
    */
   async getAddress(address, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/address/${address}`, { signal, onUpdate });
+    const path = `/api/address/${address}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9574,7 +9549,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<Txid[]>}
    */
   async getAddressMempoolTxs(address, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/address/${address}/txs/mempool`, { signal, onUpdate });
+    const path = `/api/address/${address}/txs/mempool`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9591,7 +9567,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<Utxo[]>}
    */
   async getAddressUtxos(address, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/address/${address}/utxo`, { signal, onUpdate });
+    const path = `/api/address/${address}/utxo`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9608,7 +9585,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<*>}
    */
   async getBlockByHeight(height, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/block-height/${height}`, { signal, onUpdate });
+    const path = `/api/block-height/${height}`;
+    return this.getText(path, { signal });
   }
 
   /**
@@ -9625,7 +9603,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<BlockInfo>}
    */
   async getBlock(hash, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/block/${hash}`, { signal, onUpdate });
+    const path = `/api/block/${hash}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9642,7 +9621,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<*>}
    */
   async getBlockHeader(hash, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/block/${hash}/header`, { signal, onUpdate });
+    const path = `/api/block/${hash}/header`;
+    return this.getText(path, { signal });
   }
 
   /**
@@ -9659,7 +9639,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<*>}
    */
   async getBlockRaw(hash, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/block/${hash}/raw`, { signal, onUpdate });
+    const path = `/api/block/${hash}/raw`;
+    return this.getText(path, { signal });
   }
 
   /**
@@ -9676,7 +9657,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<BlockStatus>}
    */
   async getBlockStatus(hash, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/block/${hash}/status`, { signal, onUpdate });
+    const path = `/api/block/${hash}/status`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9694,7 +9676,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<*>}
    */
   async getBlockTxid(hash, index, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/block/${hash}/txid/${index}`, { signal, onUpdate });
+    const path = `/api/block/${hash}/txid/${index}`;
+    return this.getText(path, { signal });
   }
 
   /**
@@ -9711,7 +9694,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<Txid[]>}
    */
   async getBlockTxids(hash, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/block/${hash}/txids`, { signal, onUpdate });
+    const path = `/api/block/${hash}/txids`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9728,7 +9712,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<Transaction[]>}
    */
   async getBlockTxs(hash, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/block/${hash}/txs`, { signal, onUpdate });
+    const path = `/api/block/${hash}/txs`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9746,7 +9731,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<Transaction[]>}
    */
   async getBlockTxsFromIndex(hash, start_index, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/block/${hash}/txs/${start_index}`, { signal, onUpdate });
+    const path = `/api/block/${hash}/txs/${start_index}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9761,7 +9747,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<BlockInfo[]>}
    */
   async getBlocks({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/blocks`, { signal, onUpdate });
+    const path = `/api/blocks`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9776,7 +9763,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<*>}
    */
   async getBlockTipHash({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/blocks/tip/hash`, { signal, onUpdate });
+    const path = `/api/blocks/tip/hash`;
+    return this.getText(path, { signal });
   }
 
   /**
@@ -9791,7 +9779,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<*>}
    */
   async getBlockTipHeight({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/blocks/tip/height`, { signal, onUpdate });
+    const path = `/api/blocks/tip/height`;
+    return this.getText(path, { signal });
   }
 
   /**
@@ -9808,7 +9797,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<BlockInfo[]>}
    */
   async getBlocksFromHeight(height, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/blocks/${height}`, { signal, onUpdate });
+    const path = `/api/blocks/${height}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9823,7 +9813,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<MempoolInfo>}
    */
   async getMempool({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/mempool`, { signal, onUpdate });
+    const path = `/api/mempool`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9836,7 +9827,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<Dollars>}
    */
   async getLivePrice({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/mempool/price`, { signal, onUpdate });
+    const path = `/api/mempool/price`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9851,7 +9843,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<MempoolRecentTx[]>}
    */
   async getMempoolRecent({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/mempool/recent`, { signal, onUpdate });
+    const path = `/api/mempool/recent`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9866,7 +9859,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<Txid[]>}
    */
   async getMempoolTxids({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/mempool/txids`, { signal, onUpdate });
+    const path = `/api/mempool/txids`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9879,7 +9873,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<TreeNode>}
    */
   async getSeriesTree({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/series`, { signal, onUpdate });
+    const path = `/api/series`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9908,9 +9903,7 @@ class BrkClient extends BrkClientBase {
     if (format !== undefined) params.set('format', String(format));
     const query = params.toString();
     const path = `/api/series/bulk${query ? '?' + query : ''}`;
-    if (format === 'csv') {
-      return this.getText(path, { signal });
-    }
+    if (format === 'csv') return this.getText(path, { signal });
     return this.getJson(path, { signal, onUpdate });
   }
 
@@ -9924,7 +9917,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<string[]>}
    */
   async getCostBasisCohorts({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/series/cost-basis`, { signal, onUpdate });
+    const path = `/api/series/cost-basis`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9939,7 +9933,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<Date[]>}
    */
   async getCostBasisDates(cohort, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/series/cost-basis/${cohort}/dates`, { signal, onUpdate });
+    const path = `/api/series/cost-basis/${cohort}/dates`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9979,7 +9974,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<SeriesCount[]>}
    */
   async getSeriesCount({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/series/count`, { signal, onUpdate });
+    const path = `/api/series/count`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -9992,7 +9988,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<IndexInfo[]>}
    */
   async getIndexes({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/series/indexes`, { signal, onUpdate });
+    const path = `/api/series/indexes`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10049,7 +10046,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<SeriesInfo>}
    */
   async getSeriesInfo(series, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/series/${series}`, { signal, onUpdate });
+    const path = `/api/series/${series}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10076,9 +10074,7 @@ class BrkClient extends BrkClientBase {
     if (format !== undefined) params.set('format', String(format));
     const query = params.toString();
     const path = `/api/series/${series}/${index}${query ? '?' + query : ''}`;
-    if (format === 'csv') {
-      return this.getText(path, { signal });
-    }
+    if (format === 'csv') return this.getText(path, { signal });
     return this.getJson(path, { signal, onUpdate });
   }
 
@@ -10106,9 +10102,7 @@ class BrkClient extends BrkClientBase {
     if (format !== undefined) params.set('format', String(format));
     const query = params.toString();
     const path = `/api/series/${series}/${index}/data${query ? '?' + query : ''}`;
-    if (format === 'csv') {
-      return this.getText(path, { signal });
-    }
+    if (format === 'csv') return this.getText(path, { signal });
     return this.getJson(path, { signal, onUpdate });
   }
 
@@ -10125,7 +10119,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<*>}
    */
   async getSeriesLatest(series, index, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/series/${series}/${index}/latest`, { signal, onUpdate });
+    const path = `/api/series/${series}/${index}/latest`;
+    return this.getText(path, { signal });
   }
 
   /**
@@ -10141,7 +10136,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<number>}
    */
   async getSeriesLen(series, index, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/series/${series}/${index}/len`, { signal, onUpdate });
+    const path = `/api/series/${series}/${index}/len`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10157,7 +10153,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<Version>}
    */
   async getSeriesVersion(series, index, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/series/${series}/${index}/version`, { signal, onUpdate });
+    const path = `/api/series/${series}/${index}/version`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10170,7 +10167,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<DiskUsage>}
    */
   async getDiskUsage({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/server/disk`, { signal, onUpdate });
+    const path = `/api/server/disk`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10183,7 +10181,24 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<SyncStatus>}
    */
   async getSyncStatus({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/server/sync`, { signal, onUpdate });
+    const path = `/api/server/sync`;
+    return this.getJson(path, { signal, onUpdate });
+  }
+
+  /**
+   * Txid by index
+   *
+   * Retrieve the transaction ID (txid) at a given global transaction index. Returns the txid as plain text.
+   *
+   * Endpoint: `GET /api/tx-index/{index}`
+   *
+   * @param {TxIndex} index
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: *) => void }} [options]
+   * @returns {Promise<*>}
+   */
+  async getTxByIndex(index, { signal, onUpdate } = {}) {
+    const path = `/api/tx-index/${index}`;
+    return this.getText(path, { signal });
   }
 
   /**
@@ -10200,7 +10215,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<Transaction>}
    */
   async getTx(txid, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/tx/${txid}`, { signal, onUpdate });
+    const path = `/api/tx/${txid}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10217,7 +10233,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<*>}
    */
   async getTxHex(txid, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/tx/${txid}/hex`, { signal, onUpdate });
+    const path = `/api/tx/${txid}/hex`;
+    return this.getText(path, { signal });
   }
 
   /**
@@ -10234,7 +10251,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<MerkleProof>}
    */
   async getTxMerkleProof(txid, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/tx/${txid}/merkle-proof`, { signal, onUpdate });
+    const path = `/api/tx/${txid}/merkle-proof`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10251,7 +10269,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<*>}
    */
   async getTxMerkleblockProof(txid, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/tx/${txid}/merkleblock-proof`, { signal, onUpdate });
+    const path = `/api/tx/${txid}/merkleblock-proof`;
+    return this.getText(path, { signal });
   }
 
   /**
@@ -10269,7 +10288,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<TxOutspend>}
    */
   async getTxOutspend(txid, vout, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/tx/${txid}/outspend/${vout}`, { signal, onUpdate });
+    const path = `/api/tx/${txid}/outspend/${vout}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10286,7 +10306,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<TxOutspend[]>}
    */
   async getTxOutspends(txid, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/tx/${txid}/outspends`, { signal, onUpdate });
+    const path = `/api/tx/${txid}/outspends`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10303,7 +10324,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<*>}
    */
   async getTxRaw(txid, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/tx/${txid}/raw`, { signal, onUpdate });
+    const path = `/api/tx/${txid}/raw`;
+    return this.getText(path, { signal });
   }
 
   /**
@@ -10320,7 +10342,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<TxStatus>}
    */
   async getTxStatus(txid, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/tx/${txid}/status`, { signal, onUpdate });
+    const path = `/api/tx/${txid}/status`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10337,7 +10360,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<BlockInfoV1>}
    */
   async getBlockV1(hash, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/block/${hash}`, { signal, onUpdate });
+    const path = `/api/v1/block/${hash}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10352,7 +10376,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<BlockInfoV1[]>}
    */
   async getBlocksV1({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/blocks`, { signal, onUpdate });
+    const path = `/api/v1/blocks`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10369,7 +10394,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<BlockInfoV1[]>}
    */
   async getBlocksV1FromHeight(height, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/blocks/${height}`, { signal, onUpdate });
+    const path = `/api/v1/blocks/${height}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10386,7 +10412,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<CpfpInfo>}
    */
   async getCpfp(txid, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/cpfp/${txid}`, { signal, onUpdate });
+    const path = `/api/v1/cpfp/${txid}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10401,7 +10428,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<DifficultyAdjustment>}
    */
   async getDifficultyAdjustment({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/difficulty-adjustment`, { signal, onUpdate });
+    const path = `/api/v1/difficulty-adjustment`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10416,7 +10444,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<MempoolBlock[]>}
    */
   async getMempoolBlocks({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/fees/mempool-blocks`, { signal, onUpdate });
+    const path = `/api/v1/fees/mempool-blocks`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10431,7 +10460,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<RecommendedFees>}
    */
   async getPreciseFees({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/fees/precise`, { signal, onUpdate });
+    const path = `/api/v1/fees/precise`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10446,7 +10476,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<RecommendedFees>}
    */
   async getRecommendedFees({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/fees/recommended`, { signal, onUpdate });
+    const path = `/api/v1/fees/recommended`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10484,7 +10515,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<BlockFeeRatesEntry[]>}
    */
   async getBlockFeeRates(time_period, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/blocks/fee-rates/${time_period}`, { signal, onUpdate });
+    const path = `/api/v1/mining/blocks/fee-rates/${time_period}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10501,7 +10533,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<BlockFeesEntry[]>}
    */
   async getBlockFees(time_period, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/blocks/fees/${time_period}`, { signal, onUpdate });
+    const path = `/api/v1/mining/blocks/fees/${time_period}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10518,7 +10551,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<BlockRewardsEntry[]>}
    */
   async getBlockRewards(time_period, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/blocks/rewards/${time_period}`, { signal, onUpdate });
+    const path = `/api/v1/mining/blocks/rewards/${time_period}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10535,7 +10569,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<BlockSizesWeights>}
    */
   async getBlockSizesWeights(time_period, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/blocks/sizes-weights/${time_period}`, { signal, onUpdate });
+    const path = `/api/v1/mining/blocks/sizes-weights/${time_period}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10552,7 +10587,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<BlockTimestamp>}
    */
   async getBlockByTimestamp(timestamp, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/blocks/timestamp/${timestamp}`, { signal, onUpdate });
+    const path = `/api/v1/mining/blocks/timestamp/${timestamp}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10567,7 +10603,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<DifficultyAdjustmentEntry[]>}
    */
   async getDifficultyAdjustments({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/difficulty-adjustments`, { signal, onUpdate });
+    const path = `/api/v1/mining/difficulty-adjustments`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10584,7 +10621,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<DifficultyAdjustmentEntry[]>}
    */
   async getDifficultyAdjustmentsByPeriod(time_period, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/difficulty-adjustments/${time_period}`, { signal, onUpdate });
+    const path = `/api/v1/mining/difficulty-adjustments/${time_period}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10599,7 +10637,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<HashrateSummary>}
    */
   async getHashrate({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/hashrate`, { signal, onUpdate });
+    const path = `/api/v1/mining/hashrate`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10614,7 +10653,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<PoolHashrateEntry[]>}
    */
   async getPoolsHashrate({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/hashrate/pools`, { signal, onUpdate });
+    const path = `/api/v1/mining/hashrate/pools`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10631,7 +10671,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<PoolHashrateEntry[]>}
    */
   async getPoolsHashrateByPeriod(time_period, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/hashrate/pools/${time_period}`, { signal, onUpdate });
+    const path = `/api/v1/mining/hashrate/pools/${time_period}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10648,7 +10689,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<HashrateSummary>}
    */
   async getHashrateByPeriod(time_period, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/hashrate/${time_period}`, { signal, onUpdate });
+    const path = `/api/v1/mining/hashrate/${time_period}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10665,7 +10707,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<PoolDetail>}
    */
   async getPool(slug, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/pool/${slug}`, { signal, onUpdate });
+    const path = `/api/v1/mining/pool/${slug}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10682,7 +10725,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<BlockInfoV1[]>}
    */
   async getPoolBlocks(slug, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/pool/${slug}/blocks`, { signal, onUpdate });
+    const path = `/api/v1/mining/pool/${slug}/blocks`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10700,7 +10744,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<BlockInfoV1[]>}
    */
   async getPoolBlocksFrom(slug, height, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/pool/${slug}/blocks/${height}`, { signal, onUpdate });
+    const path = `/api/v1/mining/pool/${slug}/blocks/${height}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10717,7 +10762,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<PoolHashrateEntry[]>}
    */
   async getPoolHashrate(slug, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/pool/${slug}/hashrate`, { signal, onUpdate });
+    const path = `/api/v1/mining/pool/${slug}/hashrate`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10732,7 +10778,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<PoolInfo[]>}
    */
   async getPools({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/pools`, { signal, onUpdate });
+    const path = `/api/v1/mining/pools`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10749,7 +10796,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<PoolsSummary>}
    */
   async getPoolStats(time_period, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/pools/${time_period}`, { signal, onUpdate });
+    const path = `/api/v1/mining/pools/${time_period}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10766,7 +10814,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<RewardStats>}
    */
   async getRewardStats(block_count, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/mining/reward-stats/${block_count}`, { signal, onUpdate });
+    const path = `/api/v1/mining/reward-stats/${block_count}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10781,7 +10830,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<Prices>}
    */
   async getPrices({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/prices`, { signal, onUpdate });
+    const path = `/api/v1/prices`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10796,7 +10846,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<number[]>}
    */
   async getTransactionTimes({ signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/transaction-times`, { signal, onUpdate });
+    const path = `/api/v1/transaction-times`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10813,7 +10864,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<AddrValidation>}
    */
   async validateAddress(address, { signal, onUpdate } = {}) {
-    return this.getJson(`/api/v1/validate-address/${address}`, { signal, onUpdate });
+    const path = `/api/v1/validate-address/${address}`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10826,7 +10878,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<Health>}
    */
   async getHealth({ signal, onUpdate } = {}) {
-    return this.getJson(`/health`, { signal, onUpdate });
+    const path = `/health`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
   /**
@@ -10839,7 +10892,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<*>}
    */
   async getOpenapi({ signal, onUpdate } = {}) {
-    return this.getJson(`/openapi.json`, { signal, onUpdate });
+    const path = `/openapi.json`;
+    return this.getText(path, { signal });
   }
 
   /**
@@ -10852,7 +10906,8 @@ class BrkClient extends BrkClientBase {
    * @returns {Promise<string>}
    */
   async getVersion({ signal, onUpdate } = {}) {
-    return this.getJson(`/version`, { signal, onUpdate });
+    const path = `/version`;
+    return this.getJson(path, { signal, onUpdate });
   }
 
 }

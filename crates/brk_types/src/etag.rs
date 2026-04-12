@@ -1,5 +1,7 @@
 use std::fmt;
 
+use super::{BlockHashPrefix, Version};
+
 /// HTTP ETag value.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Etag(String);
@@ -40,27 +42,20 @@ impl From<&str> for Etag {
 }
 
 impl Etag {
-    /// Create ETag from series data response info.
-    ///
-    /// Format varies based on whether the slice touches the end:
-    /// - Slice ends before total: `{version:x}-{start}-{end}` (len irrelevant, data won't change if series grows)
-    /// - Slice reaches the end: `{version:x}-{start}-{total}-{height}` (includes height since last value may be recomputed each block)
-    ///
-    /// `version` is the series version for single queries, or the sum of versions for bulk queries.
+    /// Tail uses hash prefix (changes per-block and on reorgs),
+    /// non-tail uses total (changes per-block).
     pub fn from_series(
-        version: super::Version,
+        version: Version,
         total: usize,
-        start: usize,
         end: usize,
-        height: u32,
+        hash_prefix: BlockHashPrefix,
     ) -> Self {
         let v = u32::from(version);
-        if end < total {
-            // Fixed window not at the end - len doesn't matter
-            Self(format!("{v:x}-{start}-{end}"))
+        if end >= total {
+            let h = *hash_prefix;
+            Self(format!("v{v}-{h:x}"))
         } else {
-            // Fetching up to current end - include height since last value may change each block
-            Self(format!("{v:x}-{start}-{total}-{height}"))
+            Self(format!("v{v}-{total}"))
         }
     }
 }

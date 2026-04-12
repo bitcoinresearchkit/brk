@@ -18,43 +18,103 @@ export function init(options) {
 
   const matcher = new QuickMatch(haystack);
 
+  /** @type {HTMLLIElement | undefined} */
+  let highlighted;
+
+  /** @param {HTMLLIElement} [li] */
+  function setHighlight(li) {
+    if (highlighted) delete highlighted.dataset.highlight;
+    highlighted = li;
+    if (li) li.dataset.highlight = "";
+  }
+
   function inputEvent() {
     const needle = /** @type {string} */ (searchInput.value).trim();
 
     searchResultsElement.scrollTo({ top: 0 });
     searchResultsElement.innerHTML = "";
+    setHighlight();
 
-    if (!needle.length) {
-      return;
-    }
+    if (!needle.length) return;
 
     const matches = matcher.matches(needle);
 
-    if (!matches.length) {
+    const indexMatch = needle.match(
+      /^(?:(block|b)|(transaction|tx))?\s*#?\s*(\d+)$/i,
+    );
+
+    if (indexMatch) {
+      const num = indexMatch[3];
+      const entries = indexMatch[1]
+        ? [["Block", `/block/${num}`]]
+        : indexMatch[2]
+          ? [["Transaction", `/tx/${num}`]]
+          : [
+              ["Block", `/block/${num}`],
+              ["Transaction", `/tx/${num}`],
+            ];
+      for (const [label, href] of entries) {
+        const li = window.document.createElement("li");
+        const a = window.document.createElement("a");
+        a.href = href;
+        a.textContent = `${label} #${num}`;
+        a.title = `${label} #${num}`;
+        if (href === window.location.pathname) setHighlight(li);
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          setHighlight(li);
+          history.pushState(null, "", href);
+          options.resolveUrl();
+        });
+        li.append(a);
+        searchResultsElement.appendChild(li);
+      }
+    }
+
+    if (matches.length) {
+      matches.forEach((title) => {
+        const option = titleToOption.get(title);
+        if (!option) return;
+
+        const li = window.document.createElement("li");
+        searchResultsElement.appendChild(li);
+
+        if (option === options.selected.value) setHighlight(li);
+
+        const element = options.createOptionElement({
+          option,
+          name: option.title,
+        });
+
+        if (element) li.append(element);
+      });
+    }
+
+    if (!searchResultsElement.children.length) {
       const li = window.document.createElement("li");
       li.textContent = "No results";
       li.style.color = "var(--off-color)";
       searchResultsElement.appendChild(li);
-      return;
     }
-
-    matches.forEach((title) => {
-      const option = titleToOption.get(title);
-      if (!option) return;
-
-      const li = window.document.createElement("li");
-      searchResultsElement.appendChild(li);
-
-      const element = options.createOptionElement({
-        option,
-        name: option.title,
-      });
-
-      if (element) {
-        li.append(element);
-      }
-    });
   }
+
+  options.selected.onChange(() => {
+    const selected = options.selected.value;
+    const href =
+      selected?.kind === "explorer"
+        ? window.location.pathname
+        : selected?.path.length
+          ? `/${selected.path.join("/")}`
+          : null;
+    if (!href) return setHighlight();
+    for (const li of searchResultsElement.children) {
+      const a = li.querySelector("a");
+      if (a && a.getAttribute("href") === href) {
+        return setHighlight(/** @type {HTMLLIElement} */ (li));
+      }
+    }
+    setHighlight();
+  });
 
   inputEvent();
 
