@@ -7,7 +7,7 @@ use crate::{
     indexes,
     internal::{
         AmountPerBlockCumulative, AmountPerBlockCumulativeRolling, AmountPerBlockFull,
-        LazyPercentRollingWindows, OneMinusBp16, PercentPerBlock, PercentRollingWindows,
+        LazyPercentRollingWindows, OneMinusBp16, PercentCumulativeRolling, PercentPerBlock,
         RatioRollingWindows, WindowStartVec, Windows,
     },
 };
@@ -19,13 +19,13 @@ impl Vecs {
         indexes: &indexes::Vecs,
         cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
-        let fee_dominance_rolling =
-            PercentRollingWindows::forced_import(db, "fee_dominance", version, indexes)?;
+        let fee_dominance =
+            PercentCumulativeRolling::forced_import_flat(db, "fee_dominance", version, indexes)?;
 
         let subsidy_dominance_rolling = LazyPercentRollingWindows::from_rolling::<OneMinusBp16>(
             "subsidy_dominance",
             version,
-            &fee_dominance_rolling,
+            &fee_dominance.rolling,
         );
 
         Ok(Self {
@@ -51,8 +51,7 @@ impl Vecs {
                 version,
                 indexes,
             )?,
-            fee_dominance: PercentPerBlock::forced_import(db, "fee_dominance", version, indexes)?,
-            fee_dominance_rolling,
+            fee_dominance,
             subsidy_dominance: PercentPerBlock::forced_import(
                 db,
                 "subsidy_dominance",

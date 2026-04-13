@@ -35,37 +35,25 @@ impl Vecs {
 
         self.compute_fees(indexer, indexes, size_vecs, starting_indexes, exit)?;
 
-        let (r1, (r2, r3)) = rayon::join(
+        let vsize_source = &size_vecs.vsize.tx_index;
+        let (r1, r2) = rayon::join(
             || {
                 self.fee
                     .derive_from_with_skip(indexer, indexes, starting_indexes, exit, 1)
             },
             || {
-                rayon::join(
-                    || {
-                        self.fee_rate.derive_from_with_skip(
-                            indexer,
-                            indexes,
-                            starting_indexes,
-                            exit,
-                            1,
-                        )
-                    },
-                    || {
-                        self.effective_fee_rate.derive_from_with_skip(
-                            indexer,
-                            indexes,
-                            starting_indexes,
-                            exit,
-                            1,
-                        )
-                    },
+                self.effective_fee_rate.derive_from_with_skip_weighted(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    vsize_source,
+                    exit,
+                    1,
                 )
             },
         );
         r1?;
         r2?;
-        r3?;
 
         Ok(())
     }
@@ -86,7 +74,6 @@ impl Vecs {
             .tx_index
             .validate_computed_version_or_reset(dep_version)?;
         self.fee_rate
-            .tx_index
             .validate_computed_version_or_reset(dep_version)?;
         self.effective_fee_rate
             .tx_index
@@ -101,7 +88,7 @@ impl Vecs {
             .fee
             .tx_index
             .len()
-            .min(self.fee_rate.tx_index.len())
+            .min(self.fee_rate.len())
             .min(self.effective_fee_rate.tx_index.len())
             .min(starting_indexes.tx_index.to_usize());
 
@@ -113,7 +100,6 @@ impl Vecs {
             .tx_index
             .truncate_if_needed(starting_indexes.tx_index)?;
         self.fee_rate
-            .tx_index
             .truncate_if_needed(starting_indexes.tx_index)?;
         self.effective_fee_rate
             .tx_index
@@ -185,7 +171,7 @@ impl Vecs {
                     input_values[j] - output_values[j]
                 };
                 self.fee.tx_index.push(fee);
-                self.fee_rate.tx_index.push(FeeRate::from((fee, vsizes[j])));
+                self.fee_rate.push(FeeRate::from((fee, vsizes[j])));
                 fees.push(fee);
             }
 
@@ -205,14 +191,14 @@ impl Vecs {
             if h % 1_000 == 0 {
                 let _lock = exit.lock();
                 self.fee.tx_index.write()?;
-                self.fee_rate.tx_index.write()?;
+                self.fee_rate.write()?;
                 self.effective_fee_rate.tx_index.write()?;
             }
         }
 
         let _lock = exit.lock();
         self.fee.tx_index.write()?;
-        self.fee_rate.tx_index.write()?;
+        self.fee_rate.write()?;
         self.effective_fee_rate.tx_index.write()?;
 
         Ok(())

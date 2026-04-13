@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize, Serializer, de};
 use vecdb::{Bytes, Formattable};
 
 /// Block hash
-#[derive(Default, Debug, Deref, Clone, PartialEq, Eq, Bytes, JsonSchema)]
+#[derive(Default, Debug, Deref, Clone, PartialEq, Eq, Hash, Bytes, JsonSchema)]
 #[repr(C)]
 #[schemars(
     transparent,

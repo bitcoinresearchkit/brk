@@ -21,3 +21,4 @@ tracing = { workspace = true }
 parking_lot = { workspace = true }
 rayon = { workspace = true }
 rlimit = "0.11.0"
+rustc-hash = { workspace = true }

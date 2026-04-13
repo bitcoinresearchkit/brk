@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, get_percentile};
+use brk_types::{Height, VSize, get_percentile, get_weighted_percentile};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
@@ -141,6 +141,141 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
                     pct25.push(get_percentile(&values, 0.25));
                     pct10.push(get_percentile(&values, 0.10));
                     min.push(*values.first().unwrap());
+                }
+
+                Ok(())
+            })?;
+
+        let _lock = exit.lock();
+        for vec in [min, max, median, pct10, pct25, pct75, pct90] {
+            vec.write()?;
+        }
+
+        Ok(())
+    }
+
+    /// Like `compute_with_skip` but uses vsize-weighted percentiles.
+    /// Each transaction's contribution to percentile rank is proportional to its vsize.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn compute_with_skip_weighted<A>(
+        &mut self,
+        max_from: Height,
+        source: &impl ReadableVec<A, T>,
+        vsize_source: &impl ReadableVec<A, VSize>,
+        first_indexes: &impl ReadableVec<Height, A>,
+        count_indexes: &impl ReadableVec<Height, brk_types::StoredU64>,
+        exit: &Exit,
+        skip_count: usize,
+    ) -> Result<()>
+    where
+        A: VecIndex + VecValue + brk_types::CheckedSub<A>,
+    {
+        let DistributionStats {
+            min,
+            max,
+            pct10,
+            pct25,
+            median,
+            pct75,
+            pct90,
+        } = &mut self.0;
+
+        let min = &mut min.height;
+        let max = &mut max.height;
+        let pct10 = &mut pct10.height;
+        let pct25 = &mut pct25.height;
+        let median = &mut median.height;
+        let pct75 = &mut pct75.height;
+        let pct90 = &mut pct90.height;
+
+        let combined_version = source.version()
+            + vsize_source.version()
+            + first_indexes.version()
+            + count_indexes.version();
+
+        let mut index = max_from;
+        for vec in [
+            &mut *min,
+            &mut *max,
+            &mut *median,
+            &mut *pct10,
+            &mut *pct25,
+            &mut *pct75,
+            &mut *pct90,
+        ] {
+            vec.validate_computed_version_or_reset(combined_version)?;
+            index = index.min(Height::from(vec.len()));
+        }
+
+        let start = index.to_usize();
+
+        for vec in [
+            &mut *min,
+            &mut *max,
+            &mut *median,
+            &mut *pct10,
+            &mut *pct25,
+            &mut *pct75,
+            &mut *pct90,
+        ] {
+            vec.truncate_if_needed_at(start)?;
+        }
+
+        let fi_len = first_indexes.len();
+        let first_indexes_batch: Vec<A> = first_indexes.collect_range_at(start, fi_len);
+        let count_indexes_batch: Vec<brk_types::StoredU64> =
+            count_indexes.collect_range_at(start, fi_len);
+
+        let zero = T::from(0_usize);
+        let mut values: Vec<T> = Vec::new();
+        let mut vsizes: Vec<VSize> = Vec::new();
+        let mut weighted: Vec<(T, VSize)> = Vec::new();
+
+        first_indexes_batch
+            .into_iter()
+            .zip(count_indexes_batch)
+            .try_for_each(|(first_index, count_index)| -> Result<()> {
+                let count = u64::from(count_index) as usize;
+                let effective_count = count.saturating_sub(skip_count);
+                let effective_first_index = first_index + skip_count.min(count);
+
+                let start_at = effective_first_index.to_usize();
+                let end_at = start_at + effective_count;
+
+                source.collect_range_into_at(start_at, end_at, &mut values);
+                vsize_source.collect_range_into_at(start_at, end_at, &mut vsizes);
+
+                weighted.clear();
+                weighted.extend(
+                    values
+                        .iter()
+                        .copied()
+                        .zip(vsizes.iter().copied())
+                        .filter(|(v, _)| skip_count == 0 || *v > zero),
+                );
+
+                if weighted.is_empty() {
+                    for vec in [
+                        &mut *min,
+                        &mut *max,
+                        &mut *median,
+                        &mut *pct10,
+                        &mut *pct25,
+                        &mut *pct75,
+                        &mut *pct90,
+                    ] {
+                        vec.push(zero);
+                    }
+                } else {
+                    weighted.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+
+                    max.push(weighted.last().unwrap().0);
+                    pct90.push(get_weighted_percentile(&weighted, 0.90));
+                    pct75.push(get_weighted_percentile(&weighted, 0.75));
+                    median.push(get_weighted_percentile(&weighted, 0.50));
+                    pct25.push(get_weighted_percentile(&weighted, 0.25));
+                    pct10.push(get_weighted_percentile(&weighted, 0.10));
+                    min.push(weighted.first().unwrap().0);
                 }
 
                 Ok(())

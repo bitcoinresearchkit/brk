@@ -149,6 +149,11 @@
           scaleY(0.864);
       }
 
+      &.skeleton {
+        pointer-events: none;
+        .face { color: transparent; }
+      }
+
       .fees {
         display: flex;
         flex-direction: column;

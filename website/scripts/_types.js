@@ -102,6 +102,9 @@
  * BPS + percent + ratio pattern
  * @typedef {Brk.BpsPercentRatioPattern3} PercentRatioPattern
  *
+ * Percent + ratio per window + cumulative (mirrors CountPattern but for percent)
+ * @typedef {Brk._1m1w1y24hCumulativePattern} PercentRatioCumulativePattern
+ *
  * BPS + ratio pattern (for NUPL and similar)
  * @typedef {Brk.BpsRatioPattern} NuplPattern
  *

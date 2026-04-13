@@ -78,6 +78,22 @@ impl Client {
         self.0.get_block_hash(height.into()).map(BlockHash::from)
     }
 
+    /// Get every canonical block hash for the inclusive height range
+    /// `start..=end` in a single JSON-RPC batch request. Returns hashes
+    /// in canonical order (`start`, `start+1`, …, `end`). Use this
+    /// whenever resolving more than ~2 heights — one HTTP round-trip
+    /// beats N sequential `get_block_hash` calls once the per-call
+    /// overhead dominates.
+    pub fn get_block_hashes_range<H1, H2>(&self, start: H1, end: H2) -> Result<Vec<BlockHash>>
+    where
+        H1: Into<u64>,
+        H2: Into<u64>,
+    {
+        self.0
+            .get_block_hashes_range(start.into(), end.into())
+            .map(|v| v.into_iter().map(BlockHash::from).collect())
+    }
+
     pub fn get_block_header<'a, H>(&self, hash: &'a H) -> Result<bitcoin::block::Header>
     where
         &'a H: Into<&'a bitcoin::BlockHash>,

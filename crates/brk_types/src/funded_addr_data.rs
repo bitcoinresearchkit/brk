@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
-use crate::{Cents, CentsSats, CentsSquaredSats, EmptyAddrData, Sats, SupplyState};
+use crate::{Cents, CentsSats, CentsSquaredSats, EmptyAddrData, OutputType, Sats, SupplyState};
 
 /// Snapshot of cost basis related state.
 /// Uses CentsSats (u64) for single-UTXO values, CentsSquaredSats (u128) for investor cap.
@@ -102,6 +102,47 @@ impl FundedAddrData {
     #[inline]
     pub fn has_0_utxos(&self) -> bool {
         self.funded_txo_count == self.spent_txo_count
+    }
+
+    /// Whether this address currently holds at least one UTXO.
+    #[inline]
+    pub fn is_funded(&self) -> bool {
+        !self.has_0_utxos()
+    }
+
+    /// Whether this address has received more than one output over its
+    /// lifetime — the simplest proxy for address reuse (close to but not
+    /// exactly "received in 2+ distinct transactions"; over-counts the rare
+    /// case of multi-output funding to the same address in one tx).
+    #[inline]
+    pub fn is_reused(&self) -> bool {
+        self.funded_txo_count > 1
+    }
+
+    /// Whether this address's public key has been revealed in the chain.
+    /// For P2PK33/P2PK65/P2TR the pubkey is in the locking script of any
+    /// funding output; for other types it's only revealed when spending.
+    #[inline]
+    pub fn is_pubkey_exposed(&self, output_type: OutputType) -> bool {
+        output_type.pubkey_exposed_at_funding() || self.spent_txo_count > 0
+    }
+
+    /// Whether this address currently holds funds AND its pubkey is exposed.
+    /// True iff the address contributes to the "funds at quantum risk" set.
+    #[inline]
+    pub fn is_funded_with_exposed_pubkey(&self, output_type: OutputType) -> bool {
+        self.is_funded() && self.is_pubkey_exposed(output_type)
+    }
+
+    /// This address's contribution (in sats) to the "funds at quantum risk"
+    /// supply: its balance if currently in the funded-exposed set, else 0.
+    #[inline]
+    pub fn exposed_supply_contribution(&self, output_type: OutputType) -> u64 {
+        if self.is_funded_with_exposed_pubkey(output_type) {
+            u64::from(self.balance())
+        } else {
+            0
+        }
     }
 
     pub fn receive(&mut self, amount: Sats, price: Cents) {

@@ -1,3 +1,4 @@
+pub mod by_type;
 pub mod count;
 pub mod spent;
 
@@ -7,6 +8,7 @@ mod import;
 use brk_traversable::Traversable;
 use vecdb::{Database, Rw, StorageMode};
 
+pub use by_type::Vecs as ByTypeVecs;
 pub use count::Vecs as CountVecs;
 pub use spent::Vecs as SpentVecs;
 
@@ -19,4 +21,5 @@ pub struct Vecs<M: StorageMode = Rw> {
 
     pub spent: SpentVecs<M>,
     pub count: CountVecs<M>,
+    pub by_type: ByTypeVecs<M>,
 }

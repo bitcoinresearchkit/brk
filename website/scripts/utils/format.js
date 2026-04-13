@@ -65,5 +65,6 @@ export function stringToId(s) {
   return s
     .trim()
     .replace(/[ /]+/g, "-")
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/%/g, "%25");
 }

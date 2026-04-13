@@ -364,8 +364,6 @@ dependencies = [
 [[package]]
 name = "brk-corepc-client"
 version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c15bc86010adb0c3118d88a531a7d2633b726fe97a6c2888ce200946d198e7b"
 dependencies = [
  "bitcoin",
  "brk-corepc-jsonrpc",
@@ -378,8 +376,6 @@ dependencies = [
 [[package]]
 name = "brk-corepc-jsonrpc"
 version = "0.19.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbb72c73b4c3aafd6ab3d0a0ad07b2961543929452d7c5d8f11b88e7a1ca7725"
 dependencies = [
  "base64 0.22.1",
  "serde",
@@ -389,8 +385,6 @@ dependencies = [
 [[package]]
 name = "brk-corepc-types"
 version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca4662e4e22838c09a6f80d1677f6177295eddbb524515be9156a8f8412c4147"
 dependencies = [
  "bitcoin",
  "serde",
@@ -649,6 +643,7 @@ dependencies = [
  "parking_lot",
  "rayon",
  "rlimit",
+ "rustc-hash",
  "tracing",
 ]
 

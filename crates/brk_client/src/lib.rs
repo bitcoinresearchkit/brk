@@ -1256,6 +1256,30 @@ pub struct BpsCentsPercentilesRatioSatsSmaStdUsdPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct P2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern2 {
+    pub p2a: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2pk33: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2pk65: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2pkh: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2sh: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2tr: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2wpkh: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2wsh: AverageBlockCumulativeSumPattern<StoredU64>,
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct P2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 {
+    pub p2a: _1m1w1y24hCumulativePattern,
+    pub p2pk33: _1m1w1y24hCumulativePattern,
+    pub p2pk65: _1m1w1y24hCumulativePattern,
+    pub p2pkh: _1m1w1y24hCumulativePattern,
+    pub p2sh: _1m1w1y24hCumulativePattern,
+    pub p2tr: _1m1w1y24hCumulativePattern,
+    pub p2wpkh: _1m1w1y24hCumulativePattern,
+    pub p2wsh: _1m1w1y24hCumulativePattern,
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern {
     pub pct0_5: BpsPriceRatioPattern,
     pub pct1: BpsPriceRatioPattern,
@@ -1627,6 +1651,28 @@ impl DeltaHalfInToTotalPattern2 {
             in_profit: BtcCentsSatsToUsdPattern3::new(client.clone(), _m(&acc, "in_profit")),
             to_circulating: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, "to_circulating")),
             total: BtcCentsSatsUsdPattern3::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct _1m1w1y24hCumulativePattern {
+    pub _1m: BpsPercentRatioPattern3,
+    pub _1w: BpsPercentRatioPattern3,
+    pub _1y: BpsPercentRatioPattern3,
+    pub _24h: BpsPercentRatioPattern3,
+    pub cumulative: BpsPercentRatioPattern3,
+}
+
+impl _1m1w1y24hCumulativePattern {
+    /// Create a new pattern node with accumulated series name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            _1m: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, "sum_1m")),
+            _1w: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, "sum_1w")),
+            _1y: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, "sum_1y")),
+            _24h: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, "sum_24h")),
+            cumulative: BpsPercentRatioPattern3::new(client.clone(), _m(&acc, "cumulative")),
         }
     }
 }
@@ -2877,6 +2923,12 @@ impl BpsRatioPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct ByPercentPattern {
+    pub by_type: P2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern2,
+    pub percent: P2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3,
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct CentsUsdPattern3 {
     pub cents: SeriesPattern1<Cents>,
     pub usd: SeriesPattern1<Dollars>,
@@ -3446,6 +3498,8 @@ pub struct SeriesTree_Transactions {
     pub fees: SeriesTree_Transactions_Fees,
     pub versions: SeriesTree_Transactions_Versions,
     pub volume: SeriesTree_Transactions_Volume,
+    pub input_types: SeriesTree_Transactions_InputTypes,
+    pub output_types: SeriesTree_Transactions_OutputTypes,
 }
 
 impl SeriesTree_Transactions {
@@ -3457,6 +3511,8 @@ impl SeriesTree_Transactions {
             fees: SeriesTree_Transactions_Fees::new(client.clone(), format!("{base_path}_fees")),
             versions: SeriesTree_Transactions_Versions::new(client.clone(), format!("{base_path}_versions")),
             volume: SeriesTree_Transactions_Volume::new(client.clone(), format!("{base_path}_volume")),
+            input_types: SeriesTree_Transactions_InputTypes::new(client.clone(), format!("{base_path}_input_types")),
+            output_types: SeriesTree_Transactions_OutputTypes::new(client.clone(), format!("{base_path}_output_types")),
         }
     }
 }
@@ -3540,7 +3596,7 @@ pub struct SeriesTree_Transactions_Fees {
     pub input_value: SeriesPattern19<Sats>,
     pub output_value: SeriesPattern19<Sats>,
     pub fee: _6bBlockTxPattern<Sats>,
-    pub fee_rate: _6bBlockTxPattern<FeeRate>,
+    pub fee_rate: SeriesPattern19<FeeRate>,
     pub effective_fee_rate: _6bBlockTxPattern<FeeRate>,
 }
 
@@ -3550,7 +3606,7 @@ impl SeriesTree_Transactions_Fees {
             input_value: SeriesPattern19::new(client.clone(), "input_value".to_string()),
             output_value: SeriesPattern19::new(client.clone(), "output_value".to_string()),
             fee: _6bBlockTxPattern::new(client.clone(), "fee".to_string()),
-            fee_rate: _6bBlockTxPattern::new(client.clone(), "fee_rate".to_string()),
+            fee_rate: SeriesPattern19::new(client.clone(), "fee_rate".to_string()),
             effective_fee_rate: _6bBlockTxPattern::new(client.clone(), "effective_fee_rate".to_string()),
         }
     }
@@ -3588,6 +3644,144 @@ impl SeriesTree_Transactions_Volume {
             tx_per_sec: _1m1w1y24hPattern::new(client.clone(), "tx_per_sec".to_string()),
             outputs_per_sec: _1m1w1y24hPattern::new(client.clone(), "outputs_per_sec".to_string()),
             inputs_per_sec: _1m1w1y24hPattern::new(client.clone(), "inputs_per_sec".to_string()),
+        }
+    }
+}
+
+/// Series tree node.
+pub struct SeriesTree_Transactions_InputTypes {
+    pub by_type: SeriesTree_Transactions_InputTypes_ByType,
+    pub percent: SeriesTree_Transactions_InputTypes_Percent,
+}
+
+impl SeriesTree_Transactions_InputTypes {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            by_type: SeriesTree_Transactions_InputTypes_ByType::new(client.clone(), format!("{base_path}_by_type")),
+            percent: SeriesTree_Transactions_InputTypes_Percent::new(client.clone(), format!("{base_path}_percent")),
+        }
+    }
+}
+
+/// Series tree node.
+pub struct SeriesTree_Transactions_InputTypes_ByType {
+    pub p2pk65: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2pk33: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2pkh: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2sh: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2wpkh: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2wsh: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2tr: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2a: AverageBlockCumulativeSumPattern<StoredU64>,
+}
+
+impl SeriesTree_Transactions_InputTypes_ByType {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            p2pk65: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2pk65_in".to_string()),
+            p2pk33: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2pk33_in".to_string()),
+            p2pkh: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2pkh_in".to_string()),
+            p2sh: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2sh_in".to_string()),
+            p2wpkh: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2wpkh_in".to_string()),
+            p2wsh: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2wsh_in".to_string()),
+            p2tr: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2tr_in".to_string()),
+            p2a: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2a_in".to_string()),
+        }
+    }
+}
+
+/// Series tree node.
+pub struct SeriesTree_Transactions_InputTypes_Percent {
+    pub p2pk65: _1m1w1y24hCumulativePattern,
+    pub p2pk33: _1m1w1y24hCumulativePattern,
+    pub p2pkh: _1m1w1y24hCumulativePattern,
+    pub p2sh: _1m1w1y24hCumulativePattern,
+    pub p2wpkh: _1m1w1y24hCumulativePattern,
+    pub p2wsh: _1m1w1y24hCumulativePattern,
+    pub p2tr: _1m1w1y24hCumulativePattern,
+    pub p2a: _1m1w1y24hCumulativePattern,
+}
+
+impl SeriesTree_Transactions_InputTypes_Percent {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            p2pk65: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2pk65_in_rel_to_all".to_string()),
+            p2pk33: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2pk33_in_rel_to_all".to_string()),
+            p2pkh: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2pkh_in_rel_to_all".to_string()),
+            p2sh: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2sh_in_rel_to_all".to_string()),
+            p2wpkh: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2wpkh_in_rel_to_all".to_string()),
+            p2wsh: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2wsh_in_rel_to_all".to_string()),
+            p2tr: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2tr_in_rel_to_all".to_string()),
+            p2a: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2a_in_rel_to_all".to_string()),
+        }
+    }
+}
+
+/// Series tree node.
+pub struct SeriesTree_Transactions_OutputTypes {
+    pub by_type: SeriesTree_Transactions_OutputTypes_ByType,
+    pub percent: SeriesTree_Transactions_OutputTypes_Percent,
+}
+
+impl SeriesTree_Transactions_OutputTypes {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            by_type: SeriesTree_Transactions_OutputTypes_ByType::new(client.clone(), format!("{base_path}_by_type")),
+            percent: SeriesTree_Transactions_OutputTypes_Percent::new(client.clone(), format!("{base_path}_percent")),
+        }
+    }
+}
+
+/// Series tree node.
+pub struct SeriesTree_Transactions_OutputTypes_ByType {
+    pub p2pk65: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2pk33: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2pkh: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2sh: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2wpkh: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2wsh: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2tr: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub p2a: AverageBlockCumulativeSumPattern<StoredU64>,
+}
+
+impl SeriesTree_Transactions_OutputTypes_ByType {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            p2pk65: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2pk65_out".to_string()),
+            p2pk33: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2pk33_out".to_string()),
+            p2pkh: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2pkh_out".to_string()),
+            p2sh: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2sh_out".to_string()),
+            p2wpkh: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2wpkh_out".to_string()),
+            p2wsh: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2wsh_out".to_string()),
+            p2tr: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2tr_out".to_string()),
+            p2a: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2a_out".to_string()),
+        }
+    }
+}
+
+/// Series tree node.
+pub struct SeriesTree_Transactions_OutputTypes_Percent {
+    pub p2pk65: _1m1w1y24hCumulativePattern,
+    pub p2pk33: _1m1w1y24hCumulativePattern,
+    pub p2pkh: _1m1w1y24hCumulativePattern,
+    pub p2sh: _1m1w1y24hCumulativePattern,
+    pub p2wpkh: _1m1w1y24hCumulativePattern,
+    pub p2wsh: _1m1w1y24hCumulativePattern,
+    pub p2tr: _1m1w1y24hCumulativePattern,
+    pub p2a: _1m1w1y24hCumulativePattern,
+}
+
+impl SeriesTree_Transactions_OutputTypes_Percent {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            p2pk65: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2pk65_out_rel_to_all".to_string()),
+            p2pk33: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2pk33_out_rel_to_all".to_string()),
+            p2pkh: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2pkh_out_rel_to_all".to_string()),
+            p2sh: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2sh_out_rel_to_all".to_string()),
+            p2wpkh: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2wpkh_out_rel_to_all".to_string()),
+            p2wsh: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2wsh_out_rel_to_all".to_string()),
+            p2tr: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2tr_out_rel_to_all".to_string()),
+            p2a: _1m1w1y24hCumulativePattern::new(client.clone(), "tx_count_with_p2a_out_rel_to_all".to_string()),
         }
     }
 }
@@ -3721,6 +3915,7 @@ pub struct SeriesTree_Addrs {
     pub activity: SeriesTree_Addrs_Activity,
     pub total: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3,
     pub new: SeriesTree_Addrs_New,
+    pub reused: SeriesTree_Addrs_Reused,
     pub delta: SeriesTree_Addrs_Delta,
 }
 
@@ -3735,6 +3930,7 @@ impl SeriesTree_Addrs {
             activity: SeriesTree_Addrs_Activity::new(client.clone(), format!("{base_path}_activity")),
             total: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3::new(client.clone(), "total_addr_count".to_string()),
             new: SeriesTree_Addrs_New::new(client.clone(), format!("{base_path}_new")),
+            reused: SeriesTree_Addrs_Reused::new(client.clone(), format!("{base_path}_reused")),
             delta: SeriesTree_Addrs_Delta::new(client.clone(), format!("{base_path}_delta")),
         }
     }
@@ -3987,6 +4183,21 @@ impl SeriesTree_Addrs_New {
             p2wsh: AverageBlockCumulativeSumPattern::new(client.clone(), "p2wsh_new_addr_count".to_string()),
             p2tr: AverageBlockCumulativeSumPattern::new(client.clone(), "p2tr_new_addr_count".to_string()),
             p2a: AverageBlockCumulativeSumPattern::new(client.clone(), "p2a_new_addr_count".to_string()),
+        }
+    }
+}
+
+/// Series tree node.
+pub struct SeriesTree_Addrs_Reused {
+    pub funded: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3,
+    pub total: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3,
+}
+
+impl SeriesTree_Addrs_Reused {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            funded: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3::new(client.clone(), "reused_addr_count".to_string()),
+            total: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3::new(client.clone(), "total_reused_addr_count".to_string()),
         }
     }
 }

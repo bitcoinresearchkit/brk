@@ -5,7 +5,10 @@ use rustc_hash::FxHashSet;
 use vecdb::VecIndex;
 
 use crate::distribution::{
-    addr::{AddrTypeToActivityCounts, HeightToAddrTypeToVec},
+    addr::{
+        AddrTypeToActivityCounts, AddrTypeToExposedAddrCount, AddrTypeToExposedAddrSupply,
+        AddrTypeToReusedAddrCount, HeightToAddrTypeToVec,
+    },
     cohorts::AddrCohorts,
     compute::PriceRangeMax,
 };
@@ -35,6 +38,10 @@ pub(crate) fn process_sent(
     addr_count: &mut ByAddrType<u64>,
     empty_addr_count: &mut ByAddrType<u64>,
     activity_counts: &mut AddrTypeToActivityCounts,
+    reused_addr_count: &mut AddrTypeToReusedAddrCount,
+    exposed_addr_count: &mut AddrTypeToExposedAddrCount,
+    total_exposed_addr_count: &mut AddrTypeToExposedAddrCount,
+    exposed_addr_supply: &mut AddrTypeToExposedAddrSupply,
     received_addrs: &ByAddrType<FxHashSet<TypeIndex>>,
     height_to_price: &[Cents],
     height_to_timestamp: &[Timestamp],
@@ -57,6 +64,10 @@ pub(crate) fn process_sent(
             let type_addr_count = addr_count.get_mut(output_type).unwrap();
             let type_empty_count = empty_addr_count.get_mut(output_type).unwrap();
             let type_activity = activity_counts.get_mut_unwrap(output_type);
+            let type_reused_count = reused_addr_count.get_mut(output_type).unwrap();
+            let type_exposed_count = exposed_addr_count.get_mut(output_type).unwrap();
+            let type_total_exposed_count = total_exposed_addr_count.get_mut(output_type).unwrap();
+            let type_exposed_supply = exposed_addr_supply.get_mut(output_type).unwrap();
             let type_received = received_addrs.get(output_type);
             let type_seen = seen_senders.get_mut_unwrap(output_type);
 
@@ -78,6 +89,11 @@ pub(crate) fn process_sent(
 
                 let will_be_empty = addr_data.has_1_utxos();
 
+                // Capture exposed state BEFORE the spend mutates spent_txo_count.
+                let was_pubkey_exposed = addr_data.is_pubkey_exposed(output_type);
+                let exposed_contribution_before =
+                    addr_data.exposed_supply_contribution(output_type);
+
                 // Compute buckets once
                 let prev_bucket = AmountBucket::from(prev_balance);
                 let new_bucket = AmountBucket::from(new_balance);
@@ -91,6 +107,27 @@ pub(crate) fn process_sent(
                     .unwrap();
 
                 cohort_state.send(addr_data, value, current_price, prev_price, peak_price, age)?;
+                // addr_data.spent_txo_count is now incremented by 1.
+
+                // Update exposed supply via post-spend contribution delta.
+                let exposed_contribution_after =
+                    addr_data.exposed_supply_contribution(output_type);
+                if exposed_contribution_after >= exposed_contribution_before {
+                    *type_exposed_supply += exposed_contribution_after - exposed_contribution_before;
+                } else {
+                    *type_exposed_supply -= exposed_contribution_before - exposed_contribution_after;
+                }
+
+                // Update exposed counts on first-ever pubkey exposure.
+                // For non-pk-exposed types this fires on the first spend; for
+                // pk-exposed types it never fires here (was_pubkey_exposed was
+                // already true at first receive in process_received).
+                if !was_pubkey_exposed {
+                    *type_total_exposed_count += 1;
+                    if !will_be_empty {
+                        *type_exposed_count += 1;
+                    }
+                }
 
                 // If crossing a bucket boundary, remove the (now-updated) address from old bucket
                 if will_be_empty || crossing_boundary {
@@ -101,6 +138,17 @@ pub(crate) fn process_sent(
                 if will_be_empty {
                     *type_addr_count -= 1;
                     *type_empty_count += 1;
+                    // Reused addr leaving the funded reused set
+                    if addr_data.is_reused() {
+                        *type_reused_count -= 1;
+                    }
+                    // Exposed addr leaving the funded exposed set: was in set
+                    // iff its pubkey was exposed pre-spend (since it was funded
+                    // to be in process_sent in the first place), and now leaves
+                    // because it's empty.
+                    if was_pubkey_exposed {
+                        *type_exposed_count -= 1;
+                    }
                     lookup.move_to_empty(output_type, type_index);
                 } else if crossing_boundary {
                     cohorts

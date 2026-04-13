@@ -6,9 +6,9 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
-use brk_types::{Indexes, TxIndex};
+use brk_types::{Indexes, TxIndex, VSize};
 use schemars::JsonSchema;
-use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec, Rw, StorageMode, Version};
+use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode, Version};
 
 use crate::{
     indexes,
@@ -61,6 +61,31 @@ where
             indexes,
             starting_indexes,
             &self.tx_index,
+            exit,
+            skip_count,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn derive_from_with_skip_weighted(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &Indexes,
+        vsize_source: &impl ReadableVec<TxIndex, VSize>,
+        exit: &Exit,
+        skip_count: usize,
+    ) -> Result<()>
+    where
+        T: Copy + Ord + From<f64> + Default,
+        f64: From<T>,
+    {
+        self.distribution.derive_from_with_skip_weighted(
+            indexer,
+            indexes,
+            starting_indexes,
+            &self.tx_index,
+            vsize_source,
             exit,
             skip_count,
         )

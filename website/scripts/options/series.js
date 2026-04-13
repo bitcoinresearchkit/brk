@@ -1100,6 +1100,60 @@ export function chartsFromCount({ pattern, title = (s) => s, metric, unit, color
 }
 
 /**
+ * Percent + ratio per rolling window + cumulative — mirrors chartsFromCount for percent data.
+ * @param {Object} args
+ * @param {PercentRatioCumulativePattern} args.pattern
+ * @param {(metric: string) => string} [args.title]
+ * @param {string} args.metric
+ * @param {Color} [args.color]
+ * @returns {PartialOptionsTree}
+ */
+export function chartsFromPercentCumulative({
+  pattern,
+  title = (s) => s,
+  metric,
+  color,
+}) {
+  return [
+    {
+      name: "Compare",
+      title: title(metric),
+      bottom: ROLLING_WINDOWS.flatMap((w) =>
+        percentRatio({
+          pattern: pattern[w.key],
+          name: w.name,
+          color: w.color,
+        }),
+      ).concat(
+        percentRatio({
+          pattern: pattern.cumulative,
+          name: "All Time",
+          color: colors.time.all,
+        }),
+      ),
+    },
+    ...ROLLING_WINDOWS.map((w) => ({
+      name: w.name,
+      title: title(`${w.title} ${metric}`),
+      bottom: percentRatio({
+        pattern: pattern[w.key],
+        name: w.name,
+        color: color ?? w.color,
+      }),
+    })),
+    {
+      name: "Cumulative",
+      title: title(`Cumulative ${metric}`),
+      bottom: percentRatio({
+        pattern: pattern.cumulative,
+        name: "All Time",
+        color: color ?? colors.time.all,
+      }),
+    },
+  ];
+}
+
+/**
  * Windowed sums + cumulative for multiple named entries (e.g. transaction versions)
  * @param {Object} args
  * @param {Array<[string, CountPattern<number>]>} args.entries

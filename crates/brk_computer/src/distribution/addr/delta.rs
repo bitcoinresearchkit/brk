@@ -1,22 +1,18 @@
-use brk_cohort::ByAddrType;
 use brk_traversable::Traversable;
 use brk_types::{BasisPointsSigned32, StoredI64, StoredU64, Version};
+use derive_more::{Deref, DerefMut};
 
 use crate::{
     indexes,
     internal::{LazyRollingDeltasFromHeight, WindowStartVec, Windows},
 };
 
-use super::AddrCountsVecs;
+use super::{AddrCountsVecs, WithAddrTypes};
 
 type AddrDelta = LazyRollingDeltasFromHeight<StoredU64, StoredI64, BasisPointsSigned32>;
 
-#[derive(Clone, Traversable)]
-pub struct DeltaVecs {
-    pub all: AddrDelta,
-    #[traversable(flatten)]
-    pub by_addr_type: ByAddrType<AddrDelta>,
-}
+#[derive(Clone, Deref, DerefMut, Traversable)]
+pub struct DeltaVecs(#[traversable(flatten)] pub WithAddrTypes<AddrDelta>);
 
 impl DeltaVecs {
     pub(crate) fn new(
@@ -45,6 +41,6 @@ impl DeltaVecs {
             )
         });
 
-        Self { all, by_addr_type }
+        Self(WithAddrTypes { all, by_addr_type })
     }
 }

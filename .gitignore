@@ -39,6 +39,7 @@ flamegraph.svg
 
 # AI
 .claude/settings*
+!CLAUDE.md
 
 # Expand
 expand.rs

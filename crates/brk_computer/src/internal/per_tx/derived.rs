@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 
 use brk_traversable::Traversable;
-use brk_types::{Indexes, TxIndex};
+use brk_types::{Indexes, TxIndex, VSize};
 use schemars::JsonSchema;
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode, Version};
 
@@ -96,6 +96,45 @@ where
         self.block.compute_with_skip(
             starting_indexes.height,
             tx_index_source,
+            &indexer.vecs.transactions.first_tx_index,
+            &indexes.height.tx_index_count,
+            exit,
+            skip_count,
+        )?;
+
+        self.distribution._6b.compute_from_nblocks(
+            starting_indexes.height,
+            tx_index_source,
+            &indexer.vecs.transactions.first_tx_index,
+            &indexes.height.tx_index_count,
+            6,
+            exit,
+        )?;
+
+        Ok(())
+    }
+
+    /// Like `derive_from_with_skip` but uses vsize-weighted percentiles for the
+    /// per-block distribution. The rolling 6-block distribution stays count-based.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn derive_from_with_skip_weighted(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &Indexes,
+        tx_index_source: &impl ReadableVec<TxIndex, T>,
+        vsize_source: &impl ReadableVec<TxIndex, VSize>,
+        exit: &Exit,
+        skip_count: usize,
+    ) -> Result<()>
+    where
+        T: Copy + Ord + From<f64> + Default,
+        f64: From<T>,
+    {
+        self.block.compute_with_skip_weighted(
+            starting_indexes.height,
+            tx_index_source,
+            vsize_source,
             &indexer.vecs.transactions.first_tx_index,
             &indexes.height.tx_index_count,
             exit,

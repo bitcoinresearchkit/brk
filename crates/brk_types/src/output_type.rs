@@ -112,6 +112,15 @@ impl OutputType {
         !self.is_spendable()
     }
 
+    /// Whether the address type's public key is revealed at funding time
+    /// (vs. only at spending time). For P2PK33/P2PK65 the pubkey is directly
+    /// in the locking script; for P2TR the tweaked output key is in the
+    /// locking script. All other address types hash the pubkey/script and
+    /// only reveal it on spending.
+    pub fn pubkey_exposed_at_funding(&self) -> bool {
+        matches!(self, Self::P2PK65 | Self::P2PK33 | Self::P2TR)
+    }
+
     pub fn as_vec() -> Vec<Self> {
         vec![
             Self::P2PK65,

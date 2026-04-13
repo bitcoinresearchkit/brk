@@ -93,11 +93,7 @@ impl Serialize for TxOut {
         S: Serializer,
     {
         let output_type = self.type_();
-        // P2PK has no standard address format — don't include scriptpubkey_address
-        let addr = match output_type {
-            OutputType::P2PK65 | OutputType::P2PK33 => None,
-            _ => self.addr(),
-        };
+        let addr = self.addr();
         let field_count = if addr.is_some() { 5 } else { 4 };
         let mut state = serializer.serialize_struct("TxOut", field_count)?;
         state.serialize_field("scriptpubkey", &self.script_pubkey.to_hex_string())?;

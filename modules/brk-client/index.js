@@ -2233,6 +2233,30 @@ function createGrossInvestedInvestorLossNetNuplProfitSentimentPattern2(client, a
  */
 
 /**
+ * @typedef {Object} P2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern2
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2a
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2pk33
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2pk65
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2pkh
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2sh
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2tr
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2wpkh
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2wsh
+ */
+
+/**
+ * @typedef {Object} P2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3
+ * @property {_1m1w1y24hCumulativePattern} p2a
+ * @property {_1m1w1y24hCumulativePattern} p2pk33
+ * @property {_1m1w1y24hCumulativePattern} p2pk65
+ * @property {_1m1w1y24hCumulativePattern} p2pkh
+ * @property {_1m1w1y24hCumulativePattern} p2sh
+ * @property {_1m1w1y24hCumulativePattern} p2tr
+ * @property {_1m1w1y24hCumulativePattern} p2wpkh
+ * @property {_1m1w1y24hCumulativePattern} p2wsh
+ */
+
+/**
  * @typedef {Object} Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern
  * @property {BpsPriceRatioPattern} pct05
  * @property {BpsPriceRatioPattern} pct1
@@ -2652,6 +2676,31 @@ function createDeltaHalfInToTotalPattern2(client, acc) {
     inProfit: createBtcCentsSatsToUsdPattern3(client, _m(acc, 'in_profit')),
     toCirculating: createBpsPercentRatioPattern3(client, _m(acc, 'to_circulating')),
     total: createBtcCentsSatsUsdPattern3(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} _1m1w1y24hCumulativePattern
+ * @property {BpsPercentRatioPattern3} _1m
+ * @property {BpsPercentRatioPattern3} _1w
+ * @property {BpsPercentRatioPattern3} _1y
+ * @property {BpsPercentRatioPattern3} _24h
+ * @property {BpsPercentRatioPattern3} cumulative
+ */
+
+/**
+ * Create a _1m1w1y24hCumulativePattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {_1m1w1y24hCumulativePattern}
+ */
+function create_1m1w1y24hCumulativePattern(client, acc) {
+  return {
+    _1m: createBpsPercentRatioPattern3(client, _m(acc, 'sum_1m')),
+    _1w: createBpsPercentRatioPattern3(client, _m(acc, 'sum_1w')),
+    _1y: createBpsPercentRatioPattern3(client, _m(acc, 'sum_1y')),
+    _24h: createBpsPercentRatioPattern3(client, _m(acc, 'sum_24h')),
+    cumulative: createBpsPercentRatioPattern3(client, _m(acc, 'cumulative')),
   };
 }
 
@@ -4102,6 +4151,12 @@ function createBpsRatioPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} ByPercentPattern
+ * @property {P2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern2} byType
+ * @property {P2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} percent
+ */
+
+/**
  * @typedef {Object} CentsUsdPattern3
  * @property {SeriesPattern1<Cents>} cents
  * @property {SeriesPattern1<Dollars>} usd
@@ -4541,6 +4596,8 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Transactions_Fees} fees
  * @property {SeriesTree_Transactions_Versions} versions
  * @property {SeriesTree_Transactions_Volume} volume
+ * @property {SeriesTree_Transactions_InputTypes} inputTypes
+ * @property {SeriesTree_Transactions_OutputTypes} outputTypes
  */
 
 /**
@@ -4579,7 +4636,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesPattern19<Sats>} inputValue
  * @property {SeriesPattern19<Sats>} outputValue
  * @property {_6bBlockTxPattern<Sats>} fee
- * @property {_6bBlockTxPattern<FeeRate>} feeRate
+ * @property {SeriesPattern19<FeeRate>} feeRate
  * @property {_6bBlockTxPattern<FeeRate>} effectiveFeeRate
  */
 
@@ -4596,6 +4653,66 @@ function createTransferPattern(client, acc) {
  * @property {_1m1w1y24hPattern<StoredF32>} txPerSec
  * @property {_1m1w1y24hPattern<StoredF32>} outputsPerSec
  * @property {_1m1w1y24hPattern<StoredF32>} inputsPerSec
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Transactions_InputTypes
+ * @property {SeriesTree_Transactions_InputTypes_ByType} byType
+ * @property {SeriesTree_Transactions_InputTypes_Percent} percent
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Transactions_InputTypes_ByType
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2pk65
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2pk33
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2pkh
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2sh
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2wpkh
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2wsh
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2tr
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2a
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Transactions_InputTypes_Percent
+ * @property {_1m1w1y24hCumulativePattern} p2pk65
+ * @property {_1m1w1y24hCumulativePattern} p2pk33
+ * @property {_1m1w1y24hCumulativePattern} p2pkh
+ * @property {_1m1w1y24hCumulativePattern} p2sh
+ * @property {_1m1w1y24hCumulativePattern} p2wpkh
+ * @property {_1m1w1y24hCumulativePattern} p2wsh
+ * @property {_1m1w1y24hCumulativePattern} p2tr
+ * @property {_1m1w1y24hCumulativePattern} p2a
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Transactions_OutputTypes
+ * @property {SeriesTree_Transactions_OutputTypes_ByType} byType
+ * @property {SeriesTree_Transactions_OutputTypes_Percent} percent
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Transactions_OutputTypes_ByType
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2pk65
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2pk33
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2pkh
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2sh
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2wpkh
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2wsh
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2tr
+ * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2a
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Transactions_OutputTypes_Percent
+ * @property {_1m1w1y24hCumulativePattern} p2pk65
+ * @property {_1m1w1y24hCumulativePattern} p2pk33
+ * @property {_1m1w1y24hCumulativePattern} p2pkh
+ * @property {_1m1w1y24hCumulativePattern} p2sh
+ * @property {_1m1w1y24hCumulativePattern} p2wpkh
+ * @property {_1m1w1y24hCumulativePattern} p2wsh
+ * @property {_1m1w1y24hCumulativePattern} p2tr
+ * @property {_1m1w1y24hCumulativePattern} p2a
  */
 
 /**
@@ -4657,6 +4774,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Addrs_Activity} activity
  * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} total
  * @property {SeriesTree_Addrs_New} new
+ * @property {SeriesTree_Addrs_Reused} reused
  * @property {SeriesTree_Addrs_Delta} delta
  */
 
@@ -4764,6 +4882,12 @@ function createTransferPattern(client, acc) {
  * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2wsh
  * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2tr
  * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2a
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Addrs_Reused
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} funded
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} total
  */
 
 /**
@@ -7933,7 +8057,7 @@ class BrkClient extends BrkClientBase {
           inputValue: createSeriesPattern19(this, 'input_value'),
           outputValue: createSeriesPattern19(this, 'output_value'),
           fee: create_6bBlockTxPattern(this, 'fee'),
-          feeRate: create_6bBlockTxPattern(this, 'fee_rate'),
+          feeRate: createSeriesPattern19(this, 'fee_rate'),
           effectiveFeeRate: create_6bBlockTxPattern(this, 'effective_fee_rate'),
         },
         versions: {
@@ -7946,6 +8070,50 @@ class BrkClient extends BrkClientBase {
           txPerSec: create_1m1w1y24hPattern(this, 'tx_per_sec'),
           outputsPerSec: create_1m1w1y24hPattern(this, 'outputs_per_sec'),
           inputsPerSec: create_1m1w1y24hPattern(this, 'inputs_per_sec'),
+        },
+        inputTypes: {
+          byType: {
+            p2pk65: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2pk65_in'),
+            p2pk33: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2pk33_in'),
+            p2pkh: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2pkh_in'),
+            p2sh: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2sh_in'),
+            p2wpkh: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2wpkh_in'),
+            p2wsh: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2wsh_in'),
+            p2tr: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2tr_in'),
+            p2a: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2a_in'),
+          },
+          percent: {
+            p2pk65: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2pk65_in_rel_to_all'),
+            p2pk33: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2pk33_in_rel_to_all'),
+            p2pkh: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2pkh_in_rel_to_all'),
+            p2sh: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2sh_in_rel_to_all'),
+            p2wpkh: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2wpkh_in_rel_to_all'),
+            p2wsh: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2wsh_in_rel_to_all'),
+            p2tr: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2tr_in_rel_to_all'),
+            p2a: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2a_in_rel_to_all'),
+          },
+        },
+        outputTypes: {
+          byType: {
+            p2pk65: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2pk65_out'),
+            p2pk33: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2pk33_out'),
+            p2pkh: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2pkh_out'),
+            p2sh: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2sh_out'),
+            p2wpkh: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2wpkh_out'),
+            p2wsh: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2wsh_out'),
+            p2tr: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2tr_out'),
+            p2a: createAverageBlockCumulativeSumPattern(this, 'tx_count_with_p2a_out'),
+          },
+          percent: {
+            p2pk65: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2pk65_out_rel_to_all'),
+            p2pk33: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2pk33_out_rel_to_all'),
+            p2pkh: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2pkh_out_rel_to_all'),
+            p2sh: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2sh_out_rel_to_all'),
+            p2wpkh: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2wpkh_out_rel_to_all'),
+            p2wsh: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2wsh_out_rel_to_all'),
+            p2tr: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2tr_out_rel_to_all'),
+            p2a: create_1m1w1y24hCumulativePattern(this, 'tx_count_with_p2a_out_rel_to_all'),
+          },
         },
       },
       inputs: {
@@ -8053,6 +8221,10 @@ class BrkClient extends BrkClientBase {
           p2wsh: createAverageBlockCumulativeSumPattern(this, 'p2wsh_new_addr_count'),
           p2tr: createAverageBlockCumulativeSumPattern(this, 'p2tr_new_addr_count'),
           p2a: createAverageBlockCumulativeSumPattern(this, 'p2a_new_addr_count'),
+        },
+        reused: {
+          funded: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(this, 'reused_addr_count'),
+          total: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(this, 'total_reused_addr_count'),
         },
         delta: {
           all: createAbsoluteRatePattern(this, 'addr_count'),

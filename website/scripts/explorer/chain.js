@@ -171,6 +171,7 @@ export async function goToCube(hashOrHeight, { silent } = {}) {
     selectCube(cube, { scroll: "smooth", silent });
     return;
   }
+  for (const cube of blocksEl.children) cube.classList.add("skeleton");
   let startHash;
   try {
     const height = await resolveHeight(hashOrHeight);

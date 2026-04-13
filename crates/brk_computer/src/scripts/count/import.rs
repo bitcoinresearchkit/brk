@@ -88,6 +88,13 @@ impl Vecs {
             p2tr,
             p2wpkh,
             p2wsh,
+            addr_output_count: PerBlockCumulativeRolling::forced_import(
+                db,
+                "addr_output_count",
+                version,
+                indexes,
+                cached_starts,
+            )?,
             op_return: PerBlockCumulativeRolling::forced_import(
                 db,
                 "op_return_count",

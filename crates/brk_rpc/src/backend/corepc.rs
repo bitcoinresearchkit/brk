@@ -1,15 +1,21 @@
 use std::{thread::sleep, time::Duration};
 
-use brk_error::Result;
+use brk_error::{Error, Result};
 use brk_types::Sats;
 use corepc_client::client_sync::Auth as CorepcAuth;
 use parking_lot::RwLock;
+use serde_json::value::RawValue;
 use tracing::info;
 
 use super::{Auth, BlockHeaderInfo, BlockInfo, BlockchainInfo, RawMempoolEntry, TxOutInfo};
 
 type CoreClient = corepc_client::client_sync::v30::Client;
 type CoreError = corepc_client::client_sync::Error;
+
+/// Per-batch request count for `get_block_hashes_range`. Sized so the
+/// JSON request body stays well under a megabyte and bitcoind doesn't
+/// spend too long on a single batch before yielding results.
+const BATCH_CHUNK: usize = 2000;
 
 #[derive(Debug)]
 pub struct ClientInner {
@@ -172,6 +178,73 @@ impl ClientInner {
     pub fn get_block_hash(&self, height: u64) -> Result<bitcoin::BlockHash> {
         let r = self.call_with_retry(|c| c.get_block_hash(height))?;
         Ok(r.block_hash()?)
+    }
+
+    /// Batched canonical height → block hash lookup over the inclusive
+    /// range `start..=end`. Internally splits into JSON-RPC batches of
+    /// `BATCH_CHUNK` requests so a 1M-block reindex doesn't try to push
+    /// a 50 MB request body or hold every response in memory at once.
+    /// Each chunk is one HTTP round-trip — still drops the per-call
+    /// overhead that dominates a sequential `get_block_hash` loop.
+    ///
+    /// Returns hashes in canonical order (`start`, `start+1`, …, `end`).
+    pub fn get_block_hashes_range(
+        &self,
+        start: u64,
+        end: u64,
+    ) -> Result<Vec<bitcoin::BlockHash>> {
+        if end < start {
+            return Ok(Vec::new());
+        }
+        let total = (end - start + 1) as usize;
+        let mut hashes = Vec::with_capacity(total);
+
+        let mut chunk_start = start;
+        while chunk_start <= end {
+            let chunk_end = (chunk_start + BATCH_CHUNK as u64 - 1).min(end);
+            self.batch_get_block_hashes(chunk_start, chunk_end, &mut hashes)?;
+            chunk_start = chunk_end + 1;
+        }
+        Ok(hashes)
+    }
+
+    fn batch_get_block_hashes(
+        &self,
+        start: u64,
+        end: u64,
+        out: &mut Vec<bitcoin::BlockHash>,
+    ) -> Result<()> {
+        // Build raw param strings up front so each `Request` can borrow
+        // them; `corepc_jsonrpc::Client::build_request` takes a borrowed
+        // `&RawValue`.
+        let params: Vec<Box<RawValue>> = (start..=end)
+            .map(|h| {
+                RawValue::from_string(format!("[{h}]")).map_err(|e| Error::Parse(e.to_string()))
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        let client = self.client.read();
+        let requests: Vec<corepc_jsonrpc::Request> = params
+            .iter()
+            .map(|p| client.jsonrpc().build_request("getblockhash", Some(p)))
+            .collect();
+
+        let responses = client
+            .jsonrpc()
+            .send_batch(&requests)
+            .map_err(|e| Error::Parse(format!("getblockhash batch failed: {e}")))?;
+
+        for response in responses {
+            let response = response.ok_or(Error::Internal("Missing response in JSON-RPC batch"))?;
+            let hex: String = response
+                .result()
+                .map_err(|e| Error::Parse(format!("getblockhash batch result: {e}")))?;
+            out.push(
+                hex.parse::<bitcoin::BlockHash>()
+                    .map_err(|e| Error::Parse(format!("invalid block hash hex: {e}")))?,
+            );
+        }
+        Ok(())
     }
 
     pub fn get_block_header(&self, hash: &bitcoin::BlockHash) -> Result<bitcoin::block::Header> {

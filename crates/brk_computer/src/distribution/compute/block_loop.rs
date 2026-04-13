@@ -11,7 +11,10 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec, unli
 
 use crate::{
     distribution::{
-        addr::{AddrTypeToActivityCounts, AddrTypeToAddrCount},
+        addr::{
+            AddrTypeToActivityCounts, AddrTypeToAddrCount, AddrTypeToExposedAddrCount,
+            AddrTypeToExposedAddrSupply, AddrTypeToReusedAddrCount, AddrTypeToReusedAddrUseCount,
+        },
         block::{
             AddrCache, InputsResult, process_inputs, process_outputs, process_received,
             process_sent,
@@ -192,22 +195,41 @@ pub(crate) fn process_blocks(
 
     // Track running totals - recover from previous height if resuming
     debug!("recovering addr_counts from height {}", starting_height);
-    let (mut addr_counts, mut empty_addr_counts) = if starting_height > Height::ZERO {
-        let addr_counts =
-            AddrTypeToAddrCount::from((&vecs.addrs.funded.by_addr_type, starting_height));
-        let empty_addr_counts =
-            AddrTypeToAddrCount::from((&vecs.addrs.empty.by_addr_type, starting_height));
-        (addr_counts, empty_addr_counts)
+    let (
+        mut addr_counts,
+        mut empty_addr_counts,
+        mut reused_addr_counts,
+        mut total_reused_addr_counts,
+        mut exposed_addr_counts,
+        mut total_exposed_addr_counts,
+        mut exposed_addr_supply,
+    ) = if starting_height > Height::ZERO {
+        (
+            AddrTypeToAddrCount::from((&vecs.addrs.funded.by_addr_type, starting_height)),
+            AddrTypeToAddrCount::from((&vecs.addrs.empty.by_addr_type, starting_height)),
+            AddrTypeToReusedAddrCount::from((&vecs.addrs.reused.count.funded, starting_height)),
+            AddrTypeToReusedAddrCount::from((&vecs.addrs.reused.count.total, starting_height)),
+            AddrTypeToExposedAddrCount::from((&vecs.addrs.exposed.count.funded, starting_height)),
+            AddrTypeToExposedAddrCount::from((&vecs.addrs.exposed.count.total, starting_height)),
+            AddrTypeToExposedAddrSupply::from((&vecs.addrs.exposed.supply, starting_height)),
+        )
     } else {
         (
             AddrTypeToAddrCount::default(),
             AddrTypeToAddrCount::default(),
+            AddrTypeToReusedAddrCount::default(),
+            AddrTypeToReusedAddrCount::default(),
+            AddrTypeToExposedAddrCount::default(),
+            AddrTypeToExposedAddrCount::default(),
+            AddrTypeToExposedAddrSupply::default(),
         )
     };
     debug!("addr_counts recovered");
 
     // Track activity counts - reset each block
     let mut activity_counts = AddrTypeToActivityCounts::default();
+    // Reused-use count - per-block flow, reset each block
+    let mut reused_addr_use_counts = AddrTypeToReusedAddrUseCount::default();
 
     debug!("creating AddrCache");
     let mut cache = AddrCache::new();
@@ -226,6 +248,8 @@ pub(crate) fn process_blocks(
             .chain(vecs.addrs.funded.par_iter_height_mut())
             .chain(vecs.addrs.empty.par_iter_height_mut())
             .chain(vecs.addrs.activity.par_iter_height_mut())
+            .chain(vecs.addrs.reused.par_iter_height_mut())
+            .chain(vecs.addrs.exposed.par_iter_height_mut())
             .chain(rayon::iter::once(
                 &mut vecs.coinblocks_destroyed.block as &mut dyn AnyStoredVec,
             ))
@@ -278,6 +302,7 @@ pub(crate) fn process_blocks(
 
         // Reset per-block activity counts
         activity_counts.reset();
+        reused_addr_use_counts.reset();
 
         // Process outputs, inputs, and tick-tock in parallel via rayon::join.
         // Collection (build tx_index mappings + bulk mmap reads) is merged into the
@@ -447,6 +472,12 @@ pub(crate) fn process_blocks(
                     &mut addr_counts,
                     &mut empty_addr_counts,
                     &mut activity_counts,
+                    &mut reused_addr_counts,
+                    &mut total_reused_addr_counts,
+                    &mut reused_addr_use_counts,
+                    &mut exposed_addr_counts,
+                    &mut total_exposed_addr_counts,
+                    &mut exposed_addr_supply,
                 );
 
                 // Process sent inputs (addresses sending funds)
@@ -459,6 +490,10 @@ pub(crate) fn process_blocks(
                     &mut addr_counts,
                     &mut empty_addr_counts,
                     &mut activity_counts,
+                    &mut reused_addr_counts,
+                    &mut exposed_addr_counts,
+                    &mut total_exposed_addr_counts,
+                    &mut exposed_addr_supply,
                     &received_addrs,
                     height_to_price_vec,
                     height_to_timestamp_vec,
@@ -481,6 +516,27 @@ pub(crate) fn process_blocks(
             .empty
             .push_height(empty_addr_counts.sum(), &empty_addr_counts);
         vecs.addrs.activity.push_height(&activity_counts);
+        vecs.addrs.reused.count.funded.push_height(
+            reused_addr_counts.sum(),
+            reused_addr_counts.values().copied(),
+        );
+        vecs.addrs.reused.count.total.push_height(
+            total_reused_addr_counts.sum(),
+            total_reused_addr_counts.values().copied(),
+        );
+        vecs.addrs.reused.uses.push_height(&reused_addr_use_counts);
+        vecs.addrs.exposed.count.funded.push_height(
+            exposed_addr_counts.sum(),
+            exposed_addr_counts.values().copied(),
+        );
+        vecs.addrs.exposed.count.total.push_height(
+            total_exposed_addr_counts.sum(),
+            total_exposed_addr_counts.values().copied(),
+        );
+        vecs.addrs.exposed.supply.push_height(
+            exposed_addr_supply.sum(),
+            exposed_addr_supply.values().copied(),
+        );
 
         let is_last_of_day = is_last_of_day[offset];
         let date_opt = is_last_of_day.then(|| Date::from(timestamp));

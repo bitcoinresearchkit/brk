@@ -24,11 +24,13 @@ use rayon::prelude::*;
 use tracing::{error, warn};
 
 mod blk_index_to_blk_path;
+mod canonical;
 mod decode;
 mod scan;
 mod xor_bytes;
 mod xor_index;
 
+pub use canonical::CanonicalRange;
 use decode::*;
 use scan::*;
 pub use xor_bytes::*;

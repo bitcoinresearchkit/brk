@@ -11,6 +11,7 @@ import {
   chartsFromFullPerBlock,
   chartsFromCount,
   chartsFromCountEntries,
+  chartsFromPercentCumulative,
   chartsFromAggregatedPerBlock,
   averagesArray,
   simpleDeltaTree,
@@ -109,6 +110,18 @@ export function createNetworkSection() {
       /** @param {AddressableType} t */
       getSeries: (t) => addrs.total[t],
     },
+    {
+      name: "Funded Reused",
+      title: "Funded Reused Address Count by Type",
+      /** @param {AddressableType} t */
+      getSeries: (t) => addrs.reused.funded[t],
+    },
+    {
+      name: "Total Reused",
+      title: "Total Reused Address Count by Type",
+      /** @param {AddressableType} t */
+      getSeries: (t) => addrs.reused.total[t],
+    },
   ]);
 
   const countMetrics = /** @type {const} */ ([
@@ -150,6 +163,51 @@ export function createNetworkSection() {
               }),
             ],
           })),
+        ],
+      },
+      {
+        name: "Reused",
+        tree: [
+          {
+            name: "Compare",
+            title: title("Reused Address Count"),
+            bottom: [
+              line({
+                series: addrs.reused.funded[key],
+                name: "Funded",
+                unit: Unit.count,
+              }),
+              line({
+                series: addrs.reused.total[key],
+                name: "Total",
+                color: colors.gray,
+                unit: Unit.count,
+              }),
+            ],
+          },
+          {
+            name: "Funded",
+            title: title("Funded Reused Addresses"),
+            bottom: [
+              line({
+                series: addrs.reused.funded[key],
+                name: "Funded Reused",
+                unit: Unit.count,
+              }),
+            ],
+          },
+          {
+            name: "Total",
+            title: title("Total Reused Addresses"),
+            bottom: [
+              line({
+                series: addrs.reused.total[key],
+                name: "Total Reused",
+                color: colors.gray,
+                unit: Unit.count,
+              }),
+            ],
+          },
         ],
       },
       ...simpleDeltaTree({
@@ -212,6 +270,103 @@ export function createNetworkSection() {
       types: [byKey.opReturn, byKey.emptyOutput, byKey.unknownOutput],
     },
   ];
+
+  /**
+   * @param {string} direction
+   * @param {{ byType: Record<AddressableType, CountPattern<number>>, percent: Record<AddressableType, PercentRatioCumulativePattern> }} source
+   */
+  const createTxTypeGroup = (direction, source) => {
+    const lowerDir = direction.toLowerCase();
+    return {
+      name: `By ${direction} Type`,
+      tree: [
+        {
+          name: "Count Compare",
+          tree: [
+            ...ROLLING_WINDOWS.map((w) => ({
+              name: w.name,
+              title: `${w.title} Transactions by ${direction} Type`,
+              bottom: addressTypes.map((t) =>
+                line({
+                  series: source.byType[t.key].sum[w.key],
+                  name: t.name,
+                  color: t.color,
+                  unit: Unit.count,
+                  defaultActive: t.defaultActive,
+                }),
+              ),
+            })),
+            {
+              name: "Cumulative",
+              title: `Cumulative Transactions by ${direction} Type`,
+              bottom: addressTypes.map((t) =>
+                line({
+                  series: source.byType[t.key].cumulative,
+                  name: t.name,
+                  color: t.color,
+                  unit: Unit.count,
+                  defaultActive: t.defaultActive,
+                }),
+              ),
+            },
+          ],
+        },
+        {
+          name: "% Compare",
+          tree: [
+            ...ROLLING_WINDOWS.map((w) => ({
+              name: w.name,
+              title: `${w.title} Share of Transactions by ${direction} Type`,
+              bottom: addressTypes.map((t) =>
+                line({
+                  series: source.percent[t.key][w.key].percent,
+                  name: t.name,
+                  color: t.color,
+                  unit: Unit.percentage,
+                  defaultActive: t.defaultActive,
+                }),
+              ),
+            })),
+            {
+              name: "Cumulative",
+              title: `Cumulative Share of Transactions by ${direction} Type`,
+              bottom: addressTypes.map((t) =>
+                line({
+                  series: source.percent[t.key].cumulative.percent,
+                  name: t.name,
+                  color: t.color,
+                  unit: Unit.percentage,
+                  defaultActive: t.defaultActive,
+                }),
+              ),
+            },
+          ],
+        },
+        ...addressTypes.map((t) => ({
+          name: t.name,
+          tree: [
+            {
+              name: "Count",
+              tree: chartsFromCount({
+                pattern: source.byType[t.key],
+                metric: `Transactions with ${t.name} ${lowerDir}`,
+                unit: Unit.count,
+                color: t.color,
+              }),
+            },
+            {
+              name: "% of All",
+              tree: chartsFromPercentCumulative({
+                pattern: source.percent[t.key],
+                metric: `Share of Transactions with ${t.name} ${lowerDir}`,
+                color: t.color,
+              }),
+            },
+          ],
+        })),
+      ],
+    };
+  };
 
   /**
    * @template {keyof typeof scripts.count} K
@@ -335,10 +490,10 @@ export function createNetworkSection() {
             }),
           },
           {
-            name: "Fee Rate",
+            name: "Effective Fee Rate",
             tree: chartsFromBlockAnd6b({
-              pattern: transactions.fees.feeRate,
-              metric: "Transaction Fee Rate",
+              pattern: transactions.fees.effectiveFeeRate,
+              metric: "Effective Transaction Fee Rate",
               unit: Unit.feeRate,
             }),
           },
@@ -374,6 +529,8 @@ export function createNetworkSection() {
               unit: Unit.count,
             }),
           },
+          createTxTypeGroup("Input", transactions.inputTypes),
+          createTxTypeGroup("Output", transactions.outputTypes),
           {
             name: "Velocity",
             title: "Transaction Velocity",

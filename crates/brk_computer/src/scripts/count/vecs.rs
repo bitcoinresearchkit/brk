@@ -15,6 +15,9 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub p2tr: PerBlockCumulativeRolling<StoredU64, StoredU64, M>,
     pub p2wpkh: PerBlockCumulativeRolling<StoredU64, StoredU64, M>,
     pub p2wsh: PerBlockCumulativeRolling<StoredU64, StoredU64, M>,
+    /// Sum of the 8 address-type per-block counts. Useful as a denominator
+    /// for any "fraction of address outputs that …" metric.
+    pub addr_output_count: PerBlockCumulativeRolling<StoredU64, StoredU64, M>,
     pub op_return: PerBlockCumulativeRolling<StoredU64, StoredU64, M>,
     pub empty_output: PerBlockCumulativeRolling<StoredU64, StoredU64, M>,
     pub unknown_output: PerBlockCumulativeRolling<StoredU64, StoredU64, M>,

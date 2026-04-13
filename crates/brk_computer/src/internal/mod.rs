@@ -1,5 +1,6 @@
 pub(crate) mod algo;
 mod amount;
+mod by_type_counts;
 mod cache_budget;
 mod containers;
 pub(crate) mod db_utils;
@@ -10,6 +11,7 @@ mod traits;
 mod transform;
 
 pub(crate) use amount::*;
+pub(crate) use by_type_counts::*;
 pub(crate) use cache_budget::*;
 pub(crate) use containers::*;
 pub(crate) use indexes::*;

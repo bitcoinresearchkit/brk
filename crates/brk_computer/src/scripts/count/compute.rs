@@ -93,6 +93,26 @@ impl Vecs {
             )?)
         })?;
 
+        // addr_output_count = sum of the 8 address-type per-block counts.
+        // Lives here (not in addr/) because every consumer that asks "what
+        // fraction of address outputs are X" needs it as the denominator.
+        self.addr_output_count.block.compute_sum_of_others(
+            starting_indexes.height,
+            &[
+                &self.p2pk65.block,
+                &self.p2pk33.block,
+                &self.p2pkh.block,
+                &self.p2sh.block,
+                &self.p2wpkh.block,
+                &self.p2wsh.block,
+                &self.p2tr.block,
+                &self.p2a.block,
+            ],
+            exit,
+        )?;
+        self.addr_output_count
+            .compute_rest(starting_indexes.height, exit)?;
+
         self.op_return.compute(starting_indexes.height, exit, |v| {
             Ok(v.compute_count_from_indexes(
                 starting_indexes.height,

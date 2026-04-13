@@ -3,7 +3,10 @@ use brk_types::{Cents, Sats, TypeIndex};
 use rustc_hash::FxHashMap;
 
 use crate::distribution::{
-    addr::{AddrTypeToActivityCounts, AddrTypeToVec},
+    addr::{
+        AddrTypeToActivityCounts, AddrTypeToExposedAddrCount, AddrTypeToExposedAddrSupply,
+        AddrTypeToReusedAddrCount, AddrTypeToReusedAddrUseCount, AddrTypeToVec,
+    },
     cohorts::AddrCohorts,
 };
 
@@ -25,6 +28,12 @@ pub(crate) fn process_received(
     addr_count: &mut ByAddrType<u64>,
     empty_addr_count: &mut ByAddrType<u64>,
     activity_counts: &mut AddrTypeToActivityCounts,
+    reused_addr_count: &mut AddrTypeToReusedAddrCount,
+    total_reused_addr_count: &mut AddrTypeToReusedAddrCount,
+    reused_addr_use_count: &mut AddrTypeToReusedAddrUseCount,
+    exposed_addr_count: &mut AddrTypeToExposedAddrCount,
+    total_exposed_addr_count: &mut AddrTypeToExposedAddrCount,
+    exposed_addr_supply: &mut AddrTypeToExposedAddrSupply,
 ) {
     let max_type_len = received_data
         .iter()
@@ -43,6 +52,12 @@ pub(crate) fn process_received(
         let type_addr_count = addr_count.get_mut(output_type).unwrap();
         let type_empty_count = empty_addr_count.get_mut(output_type).unwrap();
         let type_activity = activity_counts.get_mut_unwrap(output_type);
+        let type_reused_count = reused_addr_count.get_mut(output_type).unwrap();
+        let type_total_reused_count = total_reused_addr_count.get_mut(output_type).unwrap();
+        let type_reused_use_count = reused_addr_use_count.get_mut(output_type).unwrap();
+        let type_exposed_count = exposed_addr_count.get_mut(output_type).unwrap();
+        let type_total_exposed_count = total_exposed_addr_count.get_mut(output_type).unwrap();
+        let type_exposed_supply = exposed_addr_supply.get_mut(output_type).unwrap();
 
         // Aggregate receives by address - each address processed exactly once
         for (type_index, value) in vec {
@@ -56,6 +71,13 @@ pub(crate) fn process_received(
 
             // Track receiving activity - each address in receive aggregation
             type_activity.receiving += 1;
+
+            // Capture state BEFORE the receive mutates funded_txo_count
+            let was_funded = addr_data.is_funded();
+            let was_reused = addr_data.is_reused();
+            let funded_txo_count_before = addr_data.funded_txo_count;
+            let was_pubkey_exposed = addr_data.is_pubkey_exposed(output_type);
+            let exposed_contribution_before = addr_data.exposed_supply_contribution(output_type);
 
             match status {
                 TrackingStatus::New => {
@@ -134,6 +156,54 @@ pub(crate) fn process_received(
                         .receive_outputs(addr_data, recv.total_value, price, recv.output_count);
                 }
             }
+
+            // Update reused counts based on the post-receive state
+            let is_now_reused = addr_data.is_reused();
+            if is_now_reused && !was_reused {
+                // Newly crossed the reuse threshold this block
+                *type_reused_count += 1;
+                *type_total_reused_count += 1;
+            } else if is_now_reused && !was_funded {
+                // Already-reused address reactivating into the funded set
+                *type_reused_count += 1;
+            }
+
+            // Per-block reused-use count: every individual output to this
+            // address counts iff the address was already reused at the
+            // moment of that output. With aggregation, that means we
+            // skip enough outputs at the front to take the lifetime
+            // funding count from `funded_txo_count_before` past 1, then
+            // count the rest. `skipped` is `max(0, 2 - before)`.
+            let skipped = 2u32.saturating_sub(funded_txo_count_before);
+            let counted = recv.output_count.saturating_sub(skipped);
+            *type_reused_use_count += u64::from(counted);
+
+            // Update exposed counts. The address's pubkey-exposure state
+            // is unchanged by a receive (spent_txo_count unchanged), so we
+            // can use the captured `was_pubkey_exposed` for both pre and post.
+            // After the receive the address is always funded, so it's in the
+            // funded exposed set iff its pubkey is exposed.
+            //
+            // Funded exposed enters when the address wasn't funded before but
+            // is now AND its pubkey is exposed.
+            // Total exposed (pk_exposed_at_funding types only) increments on
+            // first-ever receive (status == TrackingStatus::New); for other
+            // types it's incremented in process_sent on the first spend.
+            if !was_funded && was_pubkey_exposed {
+                *type_exposed_count += 1;
+            }
+            if output_type.pubkey_exposed_at_funding()
+                && matches!(status, TrackingStatus::New)
+            {
+                *type_total_exposed_count += 1;
+            }
+
+            // Update exposed supply via post-receive contribution delta.
+            let exposed_contribution_after =
+                addr_data.exposed_supply_contribution(output_type);
+            // Receives can only add to balance and membership, so the delta
+            // is always non-negative.
+            *type_exposed_supply += exposed_contribution_after - exposed_contribution_before;
         }
     }
 }

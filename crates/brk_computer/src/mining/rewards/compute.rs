@@ -116,16 +116,10 @@ impl Vecs {
             .compute(prices, starting_indexes.height, exit)?;
 
         self.fee_dominance
-            .compute_binary::<Sats, Sats, RatioSatsBp16>(
+            .compute_binary::<Sats, Sats, RatioSatsBp16, _, _, _, _>(
                 starting_indexes.height,
                 &self.fees.cumulative.sats.height,
                 &self.coinbase.cumulative.sats.height,
-                exit,
-            )?;
-
-        self.fee_dominance_rolling
-            .compute_binary::<Sats, Sats, RatioSatsBp16, _, _>(
-                starting_indexes.height,
                 self.fees.sum.as_array().map(|w| &w.sats.height),
                 self.coinbase.sum.as_array().map(|w| &w.sats.height),
                 exit,

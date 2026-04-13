@@ -27,12 +27,15 @@ use crate::{
         PerBlockCumulativeRolling, WindowStartVec, Windows,
         db_utils::{finalize_db, open_db},
     },
-    outputs, prices, transactions,
+    outputs, prices, scripts, transactions,
 };
 
 use super::{
     AddrCohorts, AddrsDataVecs, AnyAddrIndexesVecs, RangeMap, UTXOCohorts,
-    addr::{AddrActivityVecs, AddrCountsVecs, DeltaVecs, NewAddrCountVecs, TotalAddrCountVecs},
+    addr::{
+        AddrActivityVecs, AddrCountsVecs, DeltaVecs, ExposedAddrVecs, NewAddrCountVecs,
+        ReusedAddrVecs, TotalAddrCountVecs,
+    },
 };
 
 const VERSION: Version = Version::new(22);
@@ -44,6 +47,8 @@ pub struct AddrMetricsVecs<M: StorageMode = Rw> {
     pub activity: AddrActivityVecs<M>,
     pub total: TotalAddrCountVecs<M>,
     pub new: NewAddrCountVecs<M>,
+    pub reused: ReusedAddrVecs<M>,
+    pub exposed: ExposedAddrVecs<M>,
     pub delta: DeltaVecs,
     #[traversable(wrap = "indexes", rename = "funded")]
     pub funded_index:
@@ -154,6 +159,13 @@ impl Vecs {
         // Per-block delta of total (global + per-type)
         let new_addr_count = NewAddrCountVecs::forced_import(&db, version, indexes, cached_starts)?;
 
+        // Reused address tracking (counts + per-block uses + percent)
+        let reused_addr_count =
+            ReusedAddrVecs::forced_import(&db, version, indexes, cached_starts)?;
+
+        // Exposed address tracking (counts + supply) - quantum / pubkey-exposure sense
+        let exposed_addr_vecs = ExposedAddrVecs::forced_import(&db, version, indexes)?;
+
         // Growth rate: delta change + rate (global + per-type)
         let delta = DeltaVecs::new(version, &addr_count, cached_starts, indexes);
 
@@ -169,6 +181,8 @@ impl Vecs {
                 activity: addr_activity,
                 total: total_addr_count,
                 new: new_addr_count,
+                reused: reused_addr_count,
+                exposed: exposed_addr_vecs,
                 delta,
                 funded_index: funded_addr_index,
                 empty_index: empty_addr_index,
@@ -221,6 +235,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         inputs: &inputs::Vecs,
         outputs: &outputs::Vecs,
+        scripts: &scripts::Vecs,
         transactions: &transactions::Vecs,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
@@ -285,6 +300,8 @@ impl Vecs {
             self.addrs.funded.reset_height()?;
             self.addrs.empty.reset_height()?;
             self.addrs.activity.reset_height()?;
+            self.addrs.reused.reset_height()?;
+            self.addrs.exposed.reset_height()?;
             reset_state(
                 &mut self.any_addr_indexes,
                 &mut self.addrs_data,
@@ -454,6 +471,10 @@ impl Vecs {
         // 6b. Compute address count sum (by addr_type -> all)
         self.addrs.funded.compute_rest(starting_indexes, exit)?;
         self.addrs.empty.compute_rest(starting_indexes, exit)?;
+        self.addrs
+            .reused
+            .compute_rest(starting_indexes, &scripts.count, exit)?;
+        self.addrs.exposed.compute_rest(starting_indexes, exit)?;
 
         // 6c. Compute total_addr_count = addr_count + empty_addr_count
         self.addrs.total.compute(
@@ -524,6 +545,8 @@ impl Vecs {
             .min(Height::from(self.addrs.funded.min_stateful_len()))
             .min(Height::from(self.addrs.empty.min_stateful_len()))
             .min(Height::from(self.addrs.activity.min_stateful_len()))
+            .min(Height::from(self.addrs.reused.min_stateful_len()))
+            .min(Height::from(self.addrs.exposed.min_stateful_len()))
             .min(Height::from(self.coinblocks_destroyed.block.len()))
     }
 }

@@ -433,6 +433,7 @@ impl Computer {
                     &self.indexes,
                     &self.inputs,
                     &self.outputs,
+                    &self.scripts,
                     &self.transactions,
                     &self.blocks,
                     &self.prices,
