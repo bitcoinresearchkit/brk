@@ -88,12 +88,12 @@ impl Blocks {
                 if count <= 10 {
                     State::new_rpc(client.clone(), start, end, hash_opt)
                 } else {
-                    State::new_reader(reader.clone(), start, end, hash_opt)
+                    State::new_reader(reader.clone(), start, end, hash_opt)?
                 }
             }
             Source::Rpc { client } => State::new_rpc(client.clone(), start, end, hash_opt),
             Source::Reader { reader, .. } => {
-                State::new_reader(reader.clone(), start, end, hash_opt)
+                State::new_reader(reader.clone(), start, end, hash_opt)?
             }
         };
 

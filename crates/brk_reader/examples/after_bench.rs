@@ -1,12 +1,12 @@
-//! End-to-end benchmark: `Reader::after` (rayon-parallel + reorder thread)
-//! versus `Reader::after_canonical` (1 reader + N parser threads + canonical
-//! hash filter).
+//! Benchmark `Reader::after` / `Reader::after_with` across three
+//! parser-thread counts (1 / 4 / 16).
 //!
 //! Three phases:
 //!
-//! 1. **Tail scenarios** — pick an anchor `N` blocks below the chain tip
-//!    and run each implementation `REPEATS` times. Exercises the tail
-//!    (≤10) and forward (>10) code paths under realistic catchup ranges.
+//! 1. **Tail scenarios** — pick an anchor `N` blocks below the chain
+//!    tip and run each config `REPEATS` times. Exercises the tail
+//!    (≤10) and forward (>10) code paths under realistic catchup
+//!    ranges.
 //! 2. **Partial reindex** — anchor=`None` but stop after
 //!    `PARTIAL_LIMIT` blocks. Exercises the early-chain blk files
 //!    where blocks are small and dense-parsing isn't the bottleneck.
@@ -29,6 +29,7 @@ use brk_types::{BlockHash, Height, ReadBlock};
 const SCENARIOS: &[usize] = &[5, 10, 100, 1_000, 10_000];
 const REPEATS: usize = 3;
 const PARTIAL_LIMIT: usize = 400_000;
+const PARSER_COUNTS: &[usize] = &[1, 4, 16];
 
 fn main() -> Result<()> {
     let bitcoin_dir = Client::default_bitcoin_path();
@@ -42,75 +43,64 @@ fn main() -> Result<()> {
     println!("Tip: {tip}");
     println!();
     println!(
-        "{:>10}  {:>16}  {:>12}  {:>12}  {:>10}",
-        "blocks", "impl", "best", "avg", "blk/s"
+        "{:>10}  {:>12}  {:>12}  {:>12}  {:>10}",
+        "blocks", "parsers", "best", "avg", "blk/s"
     );
-    println!("{}", "-".repeat(68));
+    println!("{}", "-".repeat(64));
 
     for &n in SCENARIOS {
         let anchor_height = Height::from(tip.saturating_sub(n as u32));
         let anchor_hash = client.get_block_hash(*anchor_height as u64)?;
         let anchor = Some(BlockHash::from(anchor_hash));
 
-        let after = bench(REPEATS, || reader.after(anchor.clone()))?;
-        print_row(n, "after", &after);
-
-        let canonical_1 = bench(REPEATS, || reader.after_canonical(anchor.clone()))?;
-        print_row(n, "canonical[p=1]", &canonical_1);
-
-        let canonical_4 =
-            bench(REPEATS, || reader.after_canonical_with(anchor.clone(), 4))?;
-        print_row(n, "canonical[p=4]", &canonical_4);
-
-        let canonical_16 =
-            bench(REPEATS, || reader.after_canonical_with(anchor.clone(), 16))?;
-        print_row(n, "canonical[p=16]", &canonical_16);
-
-        sanity_check(n, &after, &canonical_1);
-        sanity_check(n, &after, &canonical_4);
-        sanity_check(n, &after, &canonical_16);
+        let mut first: Option<RunStats> = None;
+        for &p in PARSER_COUNTS {
+            let stats = bench(REPEATS, || reader.after_with(anchor.clone(), p))?;
+            print_row(n, p, &stats);
+            if let Some(baseline) = &first {
+                sanity_check(n, baseline, &stats);
+            } else {
+                first = Some(stats);
+            }
+        }
         println!();
     }
 
     println!();
     println!("Partial reindex (genesis → {PARTIAL_LIMIT} blocks), one run per config:");
     println!(
-        "{:>10}  {:>16}  {:>12}  {:>10}",
-        "blocks", "impl", "elapsed", "blk/s"
+        "{:>10}  {:>12}  {:>12}  {:>10}",
+        "blocks", "parsers", "elapsed", "blk/s"
     );
-    println!("{}", "-".repeat(54));
-
-    let after_partial = run_bounded(PARTIAL_LIMIT, || reader.after(None))?;
-    print_full_row("after", &after_partial);
-    let p1_partial = run_bounded(PARTIAL_LIMIT, || reader.after_canonical(None))?;
-    print_full_row("canonical[p=1]", &p1_partial);
-    sanity_check_full(&after_partial, &p1_partial);
-    let p4_partial = run_bounded(PARTIAL_LIMIT, || reader.after_canonical_with(None, 4))?;
-    print_full_row("canonical[p=4]", &p4_partial);
-    sanity_check_full(&after_partial, &p4_partial);
-    let p16_partial = run_bounded(PARTIAL_LIMIT, || reader.after_canonical_with(None, 16))?;
-    print_full_row("canonical[p=16]", &p16_partial);
-    sanity_check_full(&after_partial, &p16_partial);
+    println!("{}", "-".repeat(50));
+    let mut partial_baseline: Option<FullRun> = None;
+    for &p in PARSER_COUNTS {
+        let run = run_bounded(PARTIAL_LIMIT, || reader.after_with(None, p))?;
+        print_full_row(p, &run);
+        if let Some(baseline) = &partial_baseline {
+            sanity_check_full(baseline, &run);
+        } else {
+            partial_baseline = Some(run);
+        }
+    }
 
     println!();
     println!("Full reindex (genesis → tip), one run per config:");
     println!(
-        "{:>10}  {:>16}  {:>12}  {:>10}",
-        "blocks", "impl", "elapsed", "blk/s"
+        "{:>10}  {:>12}  {:>12}  {:>10}",
+        "blocks", "parsers", "elapsed", "blk/s"
     );
-    println!("{}", "-".repeat(54));
-
-    let after_full = run_once(|| reader.after(None))?;
-    print_full_row("after", &after_full);
-    let p1_full = run_once(|| reader.after_canonical(None))?;
-    print_full_row("canonical[p=1]", &p1_full);
-    sanity_check_full(&after_full, &p1_full);
-    let p4_full = run_once(|| reader.after_canonical_with(None, 4))?;
-    print_full_row("canonical[p=4]", &p4_full);
-    sanity_check_full(&after_full, &p4_full);
-    let p16_full = run_once(|| reader.after_canonical_with(None, 16))?;
-    print_full_row("canonical[p=16]", &p16_full);
-    sanity_check_full(&after_full, &p16_full);
+    println!("{}", "-".repeat(50));
+    let mut full_baseline: Option<FullRun> = None;
+    for &p in PARSER_COUNTS {
+        let run = run_once(|| reader.after_with(None, p))?;
+        print_full_row(p, &run);
+        if let Some(baseline) = &full_baseline {
+            sanity_check_full(baseline, &run);
+        } else {
+            full_baseline = Some(run);
+        }
+    }
 
     Ok(())
 }
@@ -152,28 +142,28 @@ where
     })
 }
 
-fn print_row(requested: usize, label: &str, s: &RunStats) {
+fn print_row(requested: usize, parsers: usize, s: &RunStats) {
     let blk_per_s = if s.best.is_zero() {
         0.0
     } else {
         s.count as f64 / s.best.as_secs_f64()
     };
     println!(
-        "{:>10}  {:>16}  {:>12?}  {:>12?}  {:>10.0}",
-        requested, label, s.best, s.avg, blk_per_s
+        "{:>10}  {:>12}  {:>12?}  {:>12?}  {:>10.0}",
+        requested, parsers, s.best, s.avg, blk_per_s
     );
 }
 
-fn sanity_check(requested: usize, after: &RunStats, canonical: &RunStats) {
-    if after.count != canonical.count {
+fn sanity_check(requested: usize, baseline: &RunStats, stats: &RunStats) {
+    if baseline.count != stats.count {
         println!(
-            "  ⚠ block count mismatch: after={} canonical={}",
-            after.count, canonical.count
+            "  ⚠ block count mismatch: {} vs {}",
+            baseline.count, stats.count
         );
-    } else if after.count != requested {
+    } else if baseline.count != requested {
         println!(
             "  (note: got {} blocks, requested {}; tip may have advanced)",
-            after.count, requested
+            baseline.count, requested
         );
     }
 }
@@ -221,23 +211,23 @@ where
     Ok(FullRun { elapsed, count })
 }
 
-fn print_full_row(label: &str, run: &FullRun) {
+fn print_full_row(parsers: usize, run: &FullRun) {
     let blk_per_s = if run.elapsed.is_zero() {
         0.0
     } else {
         run.count as f64 / run.elapsed.as_secs_f64()
     };
     println!(
-        "{:>10}  {:>16}  {:>12?}  {:>10.0}",
-        run.count, label, run.elapsed, blk_per_s
+        "{:>10}  {:>12}  {:>12?}  {:>10.0}",
+        run.count, parsers, run.elapsed, blk_per_s
     );
 }
 
-fn sanity_check_full(after: &FullRun, canonical: &FullRun) {
-    if after.count != canonical.count {
+fn sanity_check_full(baseline: &FullRun, run: &FullRun) {
+    if baseline.count != run.count {
         println!(
-            "  ⚠ block count mismatch vs after: {} vs {}",
-            after.count, canonical.count
+            "  ⚠ block count mismatch: {} vs {}",
+            baseline.count, run.count
         );
     }
 }

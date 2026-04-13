@@ -1,5 +1,6 @@
 use std::vec;
 
+use brk_error::Result;
 use brk_reader::{Reader, Receiver};
 use brk_rpc::Client;
 use brk_types::{BlockHash, Height, ReadBlock};
@@ -40,10 +41,10 @@ impl State {
         start: Height,
         end: Height,
         after_hash: Option<BlockHash>,
-    ) -> Self {
-        State::Reader {
-            receiver: reader.read(Some(start), Some(end)),
+    ) -> Result<Self> {
+        Ok(State::Reader {
+            receiver: reader.range(start, end)?,
             after_hash,
-        }
+        })
     }
 }

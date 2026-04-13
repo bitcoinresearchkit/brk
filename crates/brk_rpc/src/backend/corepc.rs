@@ -184,8 +184,6 @@ impl ClientInner {
     /// range `start..=end`. Internally splits into JSON-RPC batches of
     /// `BATCH_CHUNK` requests so a 1M-block reindex doesn't try to push
     /// a 50 MB request body or hold every response in memory at once.
-    /// Each chunk is one HTTP round-trip — still drops the per-call
-    /// overhead that dominates a sequential `get_block_hash` loop.
     ///
     /// Returns hashes in canonical order (`start`, `start+1`, …, `end`).
     pub fn get_block_hashes_range(
@@ -214,9 +212,6 @@ impl ClientInner {
         end: u64,
         out: &mut Vec<bitcoin::BlockHash>,
     ) -> Result<()> {
-        // Build raw param strings up front so each `Request` can borrow
-        // them; `corepc_jsonrpc::Client::build_request` takes a borrowed
-        // `&RawValue`.
         let params: Vec<Box<RawValue>> = (start..=end)
             .map(|h| {
                 RawValue::from_string(format!("[{h}]")).map_err(|e| Error::Parse(e.to_string()))

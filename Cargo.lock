@@ -363,7 +363,9 @@ dependencies = [
 
 [[package]]
 name = "brk-corepc-client"
-version = "0.11.0"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a735b1f9b9e14301a267946f66b5e72bb147ce6e002ac1a34f5857f6849a5e24"
 dependencies = [
  "bitcoin",
  "brk-corepc-jsonrpc",
@@ -375,7 +377,9 @@ dependencies = [
 
 [[package]]
 name = "brk-corepc-jsonrpc"
-version = "0.19.0"
+version = "0.19.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4eb0983c8009f2d34fa8dce3f08c2ab3aa1ea0cf092cc47be8934219b0b383eb"
 dependencies = [
  "base64 0.22.1",
  "serde",
@@ -384,7 +388,9 @@ dependencies = [
 
 [[package]]
 name = "brk-corepc-types"
-version = "0.11.0"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3f711507c9872a538ab57241486a3c59bf5827651a725928b862f296828f9b0"
 dependencies = [
  "bitcoin",
  "serde",
@@ -641,7 +647,6 @@ dependencies = [
  "crossbeam",
  "derive_more",
  "parking_lot",
- "rayon",
  "rlimit",
  "rustc-hash",
  "tracing",
@@ -2545,6 +2550,8 @@ dependencies = [
 [[package]]
 name = "rawdb"
 version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f23b5d5fae99af33e8d0c82763b890c469dcf18b48600ed78b0d70fce4dbe189"
 dependencies = [
  "libc",
  "log",
@@ -3437,6 +3444,8 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 [[package]]
 name = "vecdb"
 version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5fe60956ddba8c141ca8020aaf5bea55683475b83d19006c5f44b85c71bf974"
 dependencies = [
  "itoa",
  "libc",
@@ -3458,6 +3467,8 @@ dependencies = [
 [[package]]
 name = "vecdb_derive"
 version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "789897c1999d5d74f977020ad3d449846df046194103a4afcbac6d49baeaaffc"
 dependencies = [
  "quote",
  "syn",

@@ -19,7 +19,7 @@ fn main() -> Result<()> {
         let height = Height::new(h);
         let i = std::time::Instant::now();
 
-        if let Some(block) = reader.read(Some(height), Some(height)).iter().next() {
+        if let Some(block) = reader.range(height, height)?.iter().next() {
             println!(
                 "height={} hash={} txs={} coinbase=\"{:?}\" ({:?})",
                 block.height(),

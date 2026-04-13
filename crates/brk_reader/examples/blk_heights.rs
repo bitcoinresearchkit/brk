@@ -18,7 +18,7 @@ fn main() -> Result<()> {
     let mut max_drop_at: u16 = 0;
 
     for (&blk_index, blk_path) in blk_map.iter() {
-        match reader.get_first_block_height(blk_path, xor_bytes) {
+        match reader.first_block_height(blk_path, xor_bytes) {
             Ok(height) => {
                 let h = u32::from(height);
                 let drop = prev_height.map(|p| p.saturating_sub(h)).unwrap_or(0);

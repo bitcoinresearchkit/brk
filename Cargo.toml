@@ -65,10 +65,10 @@ brk_types = { version = "0.3.0-beta.1", path = "crates/brk_types" }
 brk_website = { version = "0.3.0-beta.1", path = "crates/brk_website" }
 byteview = "0.10.1"
 color-eyre = "0.6.5"
-# corepc-client = { package = "brk-corepc-client", version = "0.11.0", features = ["client-sync"] }
-corepc-client = { package = "brk-corepc-client", path = "../corepc/client", features = ["client-sync"] }
-# corepc-jsonrpc = { package = "brk-corepc-jsonrpc", version = "0.19.0", features = ["simple_http"], default-features = false }
-corepc-jsonrpc = { package = "brk-corepc-jsonrpc", path = "../corepc/jsonrpc", features = ["simple_http"], default-features = false }
+corepc-client = { package = "brk-corepc-client", version = "0.11.1", features = ["client-sync"] }
+# corepc-client = { package = "brk-corepc-client", path = "../corepc/client", features = ["client-sync"] }
+corepc-jsonrpc = { package = "brk-corepc-jsonrpc", version = "0.19.1", features = ["simple_http"], default-features = false }
+# corepc-jsonrpc = { package = "brk-corepc-jsonrpc", path = "../corepc/jsonrpc", features = ["simple_http"], default-features = false }
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
 fjall = "=3.0.4"
 indexmap = { version = "2.14.0", features = ["serde"] }
@@ -89,8 +89,8 @@ tower-http = { version = "0.6.8", features = ["catch-panic", "compression-br", "
 tower-layer = "0.3"
 tracing = { version = "0.1", default-features = false, features = ["std"] }
 ureq = { version = "3.3.0", features = ["json"] }
-# vecdb = { version = "0.9.3", features = ["derive", "serde_json", "pco", "schemars"] }
-vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco", "schemars"] }
+vecdb = { version = "0.9.3", features = ["derive", "serde_json", "pco", "schemars"] }
+# vecdb = { path = "../anydb/crates/vecdb", features = ["derive", "serde_json", "pco", "schemars"] }
 
 [workspace.metadata.release]
 shared-version = true

@@ -32,15 +32,8 @@ import {
  * @returns {PartialOptionsGroup}
  */
 export function createNetworkSection() {
-  const {
-    blocks,
-    transactions,
-    inputs,
-    outputs,
-    supply,
-    addrs,
-    cohorts,
-  } = brk.series;
+  const { blocks, transactions, inputs, outputs, supply, addrs, cohorts } =
+    brk.series;
 
   const st = colors.scriptType;
 
@@ -213,7 +206,7 @@ export function createNetworkSection() {
             ],
           },
           {
-            name: "Count",
+            name: "Uses",
             tree: chartsFromCount({
               pattern: addrs.reused.uses.reusedAddrUseCount[key],
               title,
@@ -236,7 +229,7 @@ export function createNetworkSection() {
         tree: [
           {
             name: "Compare",
-            title: title("Exposed Address Count"),
+            title: title("Quantum Exposed Address Count"),
             bottom: [
               line({
                 series: addrs.exposed.count.funded[key],
@@ -253,7 +246,7 @@ export function createNetworkSection() {
           },
           {
             name: "Funded",
-            title: title("Funded Exposed Addresses"),
+            title: title("Funded Quantum Exposed Address Count"),
             bottom: [
               line({
                 series: addrs.exposed.count.funded[key],
@@ -264,7 +257,7 @@ export function createNetworkSection() {
           },
           {
             name: "Total",
-            title: title("Total Exposed Addresses"),
+            title: title("Total Quantum Exposed Address Count"),
             bottom: [
               line({
                 series: addrs.exposed.count.total[key],
@@ -276,7 +269,7 @@ export function createNetworkSection() {
           },
           {
             name: "Supply",
-            title: title("Supply in Exposed Addresses"),
+            title: title("Supply in Quantum Exposed Addresses"),
             bottom: satsBtcUsd({
               pattern: addrs.exposed.supply[key],
               name: "Supply",
@@ -331,7 +324,6 @@ export function createNetworkSection() {
     ];
   };
 
-
   /**
    * Build a "By Type" subtree: Compare (count / tx count / tx %) plus a
    * per-type drill-down with the same three metrics.
@@ -352,7 +344,7 @@ export function createNetworkSection() {
         name: "Compare",
         tree: [
           {
-            name: `${label} Count`,
+            name: "Count",
             tree: [
               ...ROLLING_WINDOWS.map((w) => ({
                 name: w.name,
@@ -414,7 +406,7 @@ export function createNetworkSection() {
             ],
           },
           {
-            name: "TX %",
+            name: "TX Share",
             tree: [
               ...ROLLING_WINDOWS.map((w) => ({
                 name: w.name,
@@ -450,7 +442,7 @@ export function createNetworkSection() {
         name: t.name,
         tree: [
           {
-            name: `${label} Count`,
+            name: "Count",
             tree: chartsFromCount({
               pattern: count[t.key],
               metric: `${t.name} ${label} Count`,
@@ -468,7 +460,7 @@ export function createNetworkSection() {
             }),
           },
           {
-            name: "TX %",
+            name: "TX Share",
             tree: chartsFromPercentCumulative({
               pattern: txPercent[t.key],
               metric: `Share of Transactions with ${t.name} ${lowerLabel}`,
@@ -511,101 +503,26 @@ export function createNetworkSection() {
               name: "Supply",
             }),
           },
-
           {
             name: "Unspendable",
-            title: "Unspendable Supply",
-            bottom: satsBtcUsdFrom({
-              source: supply.burned,
-              key: "cumulative",
-              name: "All Time",
-            }),
-          },
-          {
-            name: "OP_RETURN",
-            title: "OP_RETURN Burned",
-            bottom: satsBtcUsd({
-              pattern: outputs.value.opReturn.cumulative,
-              name: "All Time",
-            }),
-          },
-        ],
-      },
-
-      // Transactions
-      {
-        name: "Transactions",
-        tree: [
-          {
-            name: "Count",
-            tree: chartsFromFullPerBlock({
-              pattern: transactions.count.total,
-              metric: "Transaction Count",
-              unit: Unit.count,
-            }),
-          },
-          {
-            name: "Volume",
-            tree: satsBtcUsdFullTree({
-              pattern: transactions.volume.transferVolume,
-              metric: "Transaction Volume",
-            }),
-          },
-          {
-            name: "Effective Fee Rate",
-            tree: chartsFromBlockAnd6b({
-              pattern: transactions.fees.effectiveFeeRate,
-              metric: "Effective Transaction Fee Rate",
-              unit: Unit.feeRate,
-            }),
-          },
-          {
-            name: "Fee",
-            tree: chartsFromBlockAnd6b({
-              pattern: transactions.fees.fee,
-              metric: "Transaction Fee",
-              unit: Unit.sats,
-            }),
-          },
-          {
-            name: "Weight",
-            tree: chartsFromBlockAnd6b({
-              pattern: transactions.size.weight,
-              metric: "Transaction Weight",
-              unit: Unit.wu,
-            }),
-          },
-          {
-            name: "vSize",
-            tree: chartsFromBlockAnd6b({
-              pattern: transactions.size.vsize,
-              metric: "Transaction vSize",
-              unit: Unit.vb,
-            }),
-          },
-          {
-            name: "Versions",
-            tree: chartsFromCountEntries({
-              entries: entries(transactions.versions),
-              metric: "Transaction Versions",
-              unit: Unit.count,
-            }),
-          },
-          {
-            name: "Velocity",
-            title: "Transaction Velocity",
-            bottom: [
-              line({
-                series: supply.velocity.native,
-                name: "BTC",
-                unit: Unit.ratio,
-              }),
-              line({
-                series: supply.velocity.fiat,
-                name: "USD",
-                color: colors.usd,
-                unit: Unit.ratio,
-              }),
+            tree: [
+              {
+                name: "Total",
+                title: "Unspendable Supply",
+                bottom: satsBtcUsdFrom({
+                  source: supply.burned,
+                  key: "cumulative",
+                  name: "All Time",
+                }),
+              },
+              {
+                name: "OP_RETURN",
+                title: "OP_RETURN Burned",
+                bottom: satsBtcUsd({
+                  pattern: outputs.value.opReturn.cumulative,
+                  name: "All Time",
+                }),
+              },
             ],
           },
         ],
@@ -696,6 +613,93 @@ export function createNetworkSection() {
         ],
       },
 
+      // Transactions
+      {
+        name: "Transactions",
+        tree: [
+          {
+            name: "Count",
+            tree: chartsFromFullPerBlock({
+              pattern: transactions.count.total,
+              metric: "Transaction Count",
+              unit: Unit.count,
+            }),
+          },
+          {
+            name: "Per Second",
+            tree: averagesArray({
+              windows: transactions.volume.txPerSec,
+              metric: "Transactions per Second",
+              unit: Unit.perSec,
+            }),
+          },
+          {
+            name: "Volume",
+            tree: satsBtcUsdFullTree({
+              pattern: transactions.volume.transferVolume,
+              metric: "Transaction Volume",
+            }),
+          },
+          {
+            name: "Effective Fee Rate",
+            tree: chartsFromBlockAnd6b({
+              pattern: transactions.fees.effectiveFeeRate,
+              metric: "Effective Transaction Fee Rate",
+              unit: Unit.feeRate,
+            }),
+          },
+          {
+            name: "Fee",
+            tree: chartsFromBlockAnd6b({
+              pattern: transactions.fees.fee,
+              metric: "Transaction Fee",
+              unit: Unit.sats,
+            }),
+          },
+          {
+            name: "Weight",
+            tree: chartsFromBlockAnd6b({
+              pattern: transactions.size.weight,
+              metric: "Transaction Weight",
+              unit: Unit.wu,
+            }),
+          },
+          {
+            name: "vSize",
+            tree: chartsFromBlockAnd6b({
+              pattern: transactions.size.vsize,
+              metric: "Transaction vSize",
+              unit: Unit.vb,
+            }),
+          },
+          {
+            name: "Versions",
+            tree: chartsFromCountEntries({
+              entries: entries(transactions.versions),
+              metric: "Transaction Versions",
+              unit: Unit.count,
+            }),
+          },
+          {
+            name: "Velocity",
+            title: "Transaction Velocity",
+            bottom: [
+              line({
+                series: supply.velocity.native,
+                name: "BTC",
+                unit: Unit.ratio,
+              }),
+              line({
+                series: supply.velocity.fiat,
+                name: "USD",
+                color: colors.usd,
+                unit: Unit.ratio,
+              }),
+            ],
+          },
+        ],
+      },
+
       // UTXOs
       {
         name: "UTXOs",
@@ -742,37 +746,6 @@ export function createNetworkSection() {
         ],
       },
       {
-        name: "Inputs",
-        tree: [
-          {
-            name: "Count",
-            tree: chartsFromAggregatedPerBlock({
-              pattern: inputs.count,
-              metric: "Input Count",
-              unit: Unit.count,
-            }),
-          },
-          {
-            name: "Per Second",
-            tree: averagesArray({
-              windows: inputs.perSec,
-              metric: "Inputs per Second",
-              unit: Unit.perSec,
-            }),
-          },
-          {
-            name: "By Type",
-            tree: createByTypeTree({
-              label: "Prev-Out",
-              count: inputs.byType.inputCount,
-              txCount: inputs.byType.txCount,
-              txPercent: inputs.byType.txPercent,
-              types: inputTypes,
-            }),
-          },
-        ],
-      },
-      {
         name: "Outputs",
         tree: [
           {
@@ -799,6 +772,37 @@ export function createNetworkSection() {
               txCount: outputs.byType.txCount,
               txPercent: outputs.byType.txPercent,
               types: outputTypes,
+            }),
+          },
+        ],
+      },
+      {
+        name: "Inputs",
+        tree: [
+          {
+            name: "Count",
+            tree: chartsFromAggregatedPerBlock({
+              pattern: inputs.count,
+              metric: "Input Count",
+              unit: Unit.count,
+            }),
+          },
+          {
+            name: "Per Second",
+            tree: averagesArray({
+              windows: inputs.perSec,
+              metric: "Inputs per Second",
+              unit: Unit.perSec,
+            }),
+          },
+          {
+            name: "By Type",
+            tree: createByTypeTree({
+              label: "Prev-Out",
+              count: inputs.byType.inputCount,
+              txCount: inputs.byType.txCount,
+              txPercent: inputs.byType.txPercent,
+              types: inputTypes,
             }),
           },
         ],
@@ -863,7 +867,6 @@ export function createNetworkSection() {
           },
         ],
       },
-
     ],
   };
 }

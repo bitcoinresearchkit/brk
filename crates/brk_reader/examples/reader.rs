@@ -12,9 +12,9 @@ fn main() -> Result<()> {
 
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
 
-    // Stream all blocks
+    // Stream all blocks from genesis to the current tip.
     let i = std::time::Instant::now();
-    for block in reader.read(None, None) {
+    for block in reader.after(None)?.iter() {
         println!("{}: {}", block.height(), block.hash());
     }
     println!("Full read: {:?}", i.elapsed());
