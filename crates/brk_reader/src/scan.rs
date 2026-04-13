@@ -23,14 +23,17 @@ pub struct ScanResult {
     pub interrupted: bool,
 }
 
-/// Scans `buf` for blocks. `file_offset` is the absolute position of `buf[0]` in the file.
-/// Calls `on_block` for each complete block found.
+/// Scans `buf` for blocks. `file_offset` is the absolute position of
+/// `buf[0]` in the file. Calls `on_block` for each complete block found,
+/// passing the block's raw bytes as a mutable borrow of the buffer — the
+/// caller decides whether to clone them (e.g. to ship owned data to a
+/// parser thread) or process them in place (e.g. cheap header peek).
 pub fn scan_bytes(
     buf: &mut [u8],
     blk_index: u16,
     file_offset: usize,
     xor_bytes: XORBytes,
-    mut on_block: impl FnMut(BlkMetadata, Vec<u8>, XORIndex) -> ControlFlow<()>,
+    mut on_block: impl FnMut(BlkMetadata, &mut [u8], XORIndex) -> ControlFlow<()>,
 ) -> ScanResult {
     let mut xor_i = XORIndex::default();
     xor_i.add_assign(file_offset);
@@ -56,7 +59,7 @@ pub fn scan_bytes(
         }
         let position = BlkPosition::new(blk_index, (file_offset + i) as u32);
         let metadata = BlkMetadata::new(position, len as u32);
-        if on_block(metadata, buf[i..i + len].to_vec(), xor_i).is_break() {
+        if on_block(metadata, &mut buf[i..i + len], xor_i).is_break() {
             return ScanResult {
                 first_magic,
                 interrupted: true,

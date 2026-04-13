@@ -3,12 +3,12 @@ use brk_types::{Indexes, Sats};
 use vecdb::{Exit, VecIndex};
 
 use super::Vecs;
-use crate::{mining, prices, scripts};
+use crate::{mining, outputs, prices};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
-        scripts: &scripts::Vecs,
+        outputs: &outputs::Vecs,
         mining: &mining::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
@@ -18,7 +18,7 @@ impl Vecs {
             .compute_with(starting_indexes.height, prices, exit, |sats| {
                 Ok(sats.compute_transform2(
                     starting_indexes.height,
-                    &scripts.value.op_return.block.sats,
+                    &outputs.value.op_return.block.sats,
                     &mining.rewards.unclaimed.block.sats,
                     |(h, op_return, unclaimed, ..)| {
                         let genesis = if h.to_usize() == 0 {

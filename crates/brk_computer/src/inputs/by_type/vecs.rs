@@ -1,18 +1,14 @@
-use brk_cohort::ByAddrType;
+use brk_cohort::SpendableType;
 use brk_traversable::Traversable;
 use brk_types::{BasisPoints16, StoredU64};
 use vecdb::{Rw, StorageMode};
 
+use super::WithInputTypes;
 use crate::internal::{PerBlockCumulativeRolling, PercentCumulativeRolling};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    /// Per-block, per-type total input count (granular). The "type" is the
-    /// type of the spent output that the input consumes.
-    pub input_count: ByAddrType<PerBlockCumulativeRolling<StoredU64, StoredU64, M>>,
-    /// Per-block, per-type count of TXs containing at least one input that
-    /// spends an output of this type.
-    pub tx_count: ByAddrType<PerBlockCumulativeRolling<StoredU64, StoredU64, M>>,
-    /// Per-type tx_count as a percent of total tx count.
-    pub tx_percent: ByAddrType<PercentCumulativeRolling<BasisPoints16, M>>,
+    pub input_count: WithInputTypes<PerBlockCumulativeRolling<StoredU64, StoredU64, M>>,
+    pub tx_count: WithInputTypes<PerBlockCumulativeRolling<StoredU64, StoredU64, M>>,
+    pub tx_percent: SpendableType<PercentCumulativeRolling<BasisPoints16, M>>,
 }

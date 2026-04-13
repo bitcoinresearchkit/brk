@@ -4,9 +4,12 @@ use brk_types::{Height, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, Exit, Rw, StorageMode};
 
-use crate::{indexes, internal::PerBlock};
+use crate::{
+    indexes,
+    internal::{PerBlock, WithAddrTypes},
+};
 
-use super::{AddrCountsVecs, WithAddrTypes};
+use super::AddrCountsVecs;
 
 /// Total address count (global + per-type) with all derived indexes.
 #[derive(Deref, DerefMut, Traversable)]

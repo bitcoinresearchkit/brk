@@ -45,7 +45,7 @@ use brk_types::{Indexes, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, Rw, StorageMode};
 
-use crate::indexes;
+use crate::{indexes, prices};
 
 /// Top-level container for all exposed address tracking: counts (funded +
 /// total) plus the funded supply.
@@ -87,9 +87,15 @@ impl ExposedAddrVecs {
         Ok(())
     }
 
-    pub(crate) fn compute_rest(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
+    pub(crate) fn compute_rest(
+        &mut self,
+        starting_indexes: &Indexes,
+        prices: &prices::Vecs,
+        exit: &Exit,
+    ) -> Result<()> {
         self.count.compute_rest(starting_indexes, exit)?;
-        self.supply.compute_rest(starting_indexes, exit)?;
+        self.supply
+            .compute_rest(starting_indexes.height, prices, exit)?;
         Ok(())
     }
 }

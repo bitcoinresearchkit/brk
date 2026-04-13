@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{PerBlock, PerBlockAggregated, WindowStartVec, Windows},
+    internal::{PerBlockAggregated, WindowStartVec, Windows},
 };
 
 impl Vecs {
@@ -23,7 +23,6 @@ impl Vecs {
                 indexes,
                 cached_starts,
             )?,
-            unspent: PerBlock::forced_import(db, "utxo_count_bis", version, indexes)?,
         })
     }
 }

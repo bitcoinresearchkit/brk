@@ -1,9 +1,9 @@
 use brk_cohort::ByAddrType;
-use brk_types::{Height, Sats};
+use brk_types::Height;
 use derive_more::{Deref, DerefMut};
 use vecdb::ReadableVec;
 
-use crate::internal::PerBlock;
+use crate::internal::AmountPerBlock;
 
 use super::vecs::ExposedAddrSupplyVecs;
 
@@ -23,8 +23,8 @@ impl From<(&ExposedAddrSupplyVecs, Height)> for AddrTypeToExposedAddrSupply {
     #[inline]
     fn from((vecs, starting_height): (&ExposedAddrSupplyVecs, Height)) -> Self {
         if let Some(prev_height) = starting_height.decremented() {
-            let read = |v: &PerBlock<Sats>| -> u64 {
-                u64::from(v.height.collect_one(prev_height).unwrap())
+            let read = |v: &AmountPerBlock| -> u64 {
+                u64::from(v.sats.height.collect_one(prev_height).unwrap())
             };
             Self(ByAddrType {
                 p2pk65: read(&vecs.by_addr_type.p2pk65),

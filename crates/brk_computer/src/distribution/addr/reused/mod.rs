@@ -10,7 +10,7 @@
 //!   an aggregated `all`.
 //! - [`uses`] — per-block count of outputs going to addresses that were
 //!   already reused, plus the derived percent over total address-output
-//!   count (denominator from `scripts::count`).
+//!   count (denominator from `outputs::by_type`).
 
 mod count;
 mod uses;
@@ -27,7 +27,7 @@ use vecdb::{AnyStoredVec, Database, Exit, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{WindowStartVec, Windows},
-    scripts,
+    outputs,
 };
 
 /// Top-level container for all reused address tracking: counts (funded +
@@ -74,12 +74,12 @@ impl ReusedAddrVecs {
     pub(crate) fn compute_rest(
         &mut self,
         starting_indexes: &Indexes,
-        scripts_count: &scripts::CountVecs,
+        outputs_by_type: &outputs::ByTypeVecs,
         exit: &Exit,
     ) -> Result<()> {
         self.count.compute_rest(starting_indexes, exit)?;
         self.uses
-            .compute_rest(starting_indexes, scripts_count, exit)?;
+            .compute_rest(starting_indexes, outputs_by_type, exit)?;
         Ok(())
     }
 }

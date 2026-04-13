@@ -1126,7 +1126,7 @@ export function chartsFromPercentCumulative({
         }),
       ).concat(
         percentRatio({
-          pattern: pattern.cumulative,
+          pattern,
           name: "All Time",
           color: colors.time.all,
         }),
@@ -1145,7 +1145,7 @@ export function chartsFromPercentCumulative({
       name: "Cumulative",
       title: title(`Cumulative ${metric}`),
       bottom: percentRatio({
-        pattern: pattern.cumulative,
+        pattern,
         name: "All Time",
         color: color ?? colors.time.all,
       }),

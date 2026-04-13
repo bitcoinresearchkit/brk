@@ -2,12 +2,15 @@
 //! versus `Reader::after_canonical` (1 reader + N parser threads + canonical
 //! hash filter).
 //!
-//! Two phases:
+//! Three phases:
 //!
 //! 1. **Tail scenarios** — pick an anchor `N` blocks below the chain tip
 //!    and run each implementation `REPEATS` times. Exercises the tail
 //!    (≤10) and forward (>10) code paths under realistic catchup ranges.
-//! 2. **Full reindex** — anchor=`None` (genesis to tip), one run per
+//! 2. **Partial reindex** — anchor=`None` but stop after
+//!    `PARTIAL_LIMIT` blocks. Exercises the early-chain blk files
+//!    where blocks are small and dense-parsing isn't the bottleneck.
+//! 3. **Full reindex** — anchor=`None` (genesis to tip), one run per
 //!    config. Exercises every blk file once and shows steady-state
 //!    throughput on the densest possible workload.
 //!
@@ -25,6 +28,7 @@ use brk_types::{BlockHash, Height, ReadBlock};
 
 const SCENARIOS: &[usize] = &[5, 10, 100, 1_000, 10_000];
 const REPEATS: usize = 3;
+const PARTIAL_LIMIT: usize = 400_000;
 
 fn main() -> Result<()> {
     let bitcoin_dir = Client::default_bitcoin_path();
@@ -67,6 +71,26 @@ fn main() -> Result<()> {
         sanity_check(n, &after, &canonical_16);
         println!();
     }
+
+    println!();
+    println!("Partial reindex (genesis → {PARTIAL_LIMIT} blocks), one run per config:");
+    println!(
+        "{:>10}  {:>16}  {:>12}  {:>10}",
+        "blocks", "impl", "elapsed", "blk/s"
+    );
+    println!("{}", "-".repeat(54));
+
+    let after_partial = run_bounded(PARTIAL_LIMIT, || reader.after(None))?;
+    print_full_row("after", &after_partial);
+    let p1_partial = run_bounded(PARTIAL_LIMIT, || reader.after_canonical(None))?;
+    print_full_row("canonical[p=1]", &p1_partial);
+    sanity_check_full(&after_partial, &p1_partial);
+    let p4_partial = run_bounded(PARTIAL_LIMIT, || reader.after_canonical_with(None, 4))?;
+    print_full_row("canonical[p=4]", &p4_partial);
+    sanity_check_full(&after_partial, &p4_partial);
+    let p16_partial = run_bounded(PARTIAL_LIMIT, || reader.after_canonical_with(None, 16))?;
+    print_full_row("canonical[p=16]", &p16_partial);
+    sanity_check_full(&after_partial, &p16_partial);
 
     println!();
     println!("Full reindex (genesis → tip), one run per config:");
@@ -174,6 +198,27 @@ where
         elapsed: start.elapsed(),
         count,
     })
+}
+
+/// Runs the pipeline starting from genesis but stops consuming once
+/// `limit` blocks have been received. Dropping the receiver then closes
+/// the channel, which unblocks and unwinds the reader's spawned worker.
+fn run_bounded<F>(limit: usize, mut f: F) -> Result<FullRun>
+where
+    F: FnMut() -> Result<Receiver<ReadBlock>>,
+{
+    let start = Instant::now();
+    let recv = f()?;
+    let mut count = 0;
+    for block in recv.iter().take(limit) {
+        std::hint::black_box(block.height());
+        count += 1;
+    }
+    let elapsed = start.elapsed();
+    // Explicit drop so the reader worker sees the channel close before
+    // the next bench config spins up another one.
+    drop(recv);
+    Ok(FullRun { elapsed, count })
 }
 
 fn print_full_row(label: &str, run: &FullRun) {

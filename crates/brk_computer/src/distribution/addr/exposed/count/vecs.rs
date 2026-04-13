@@ -5,9 +5,8 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{Database, Rw, StorageMode};
 
 use crate::{
-    distribution::addr::WithAddrTypes,
     indexes,
-    internal::PerBlock,
+    internal::{PerBlock, WithAddrTypes},
 };
 
 /// Exposed address count (`all` + per-type) for a single variant (funded or total).

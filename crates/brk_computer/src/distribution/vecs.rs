@@ -27,7 +27,7 @@ use crate::{
         PerBlockCumulativeRolling, WindowStartVec, Windows,
         db_utils::{finalize_db, open_db},
     },
-    outputs, prices, scripts, transactions,
+    outputs, prices, transactions,
 };
 
 use super::{
@@ -235,7 +235,6 @@ impl Vecs {
         indexes: &indexes::Vecs,
         inputs: &inputs::Vecs,
         outputs: &outputs::Vecs,
-        scripts: &scripts::Vecs,
         transactions: &transactions::Vecs,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
@@ -473,8 +472,10 @@ impl Vecs {
         self.addrs.empty.compute_rest(starting_indexes, exit)?;
         self.addrs
             .reused
-            .compute_rest(starting_indexes, &scripts.count, exit)?;
-        self.addrs.exposed.compute_rest(starting_indexes, exit)?;
+            .compute_rest(starting_indexes, &outputs.by_type, exit)?;
+        self.addrs
+            .exposed
+            .compute_rest(starting_indexes, prices, exit)?;
 
         // 6c. Compute total_addr_count = addr_count + empty_addr_count
         self.addrs.total.compute(

@@ -209,8 +209,8 @@ impl Query {
             .collect_range_at(begin, end);
         let utxo_set_sizes = computer
             .outputs
-            .count
             .unspent
+            .count
             .height
             .collect_range_at(begin, end);
         let input_volumes = computer

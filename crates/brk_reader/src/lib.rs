@@ -221,7 +221,8 @@ impl ReaderInner {
                         0,
                         xor_bytes,
                         |metadata, block_bytes, xor_i| {
-                            if send_bytes.send((metadata, block_bytes, xor_i)).is_err() {
+                            // Send owned bytes to the rayon parser pool.
+                            if send_bytes.send((metadata, block_bytes.to_vec(), xor_i)).is_err() {
                                 return ControlFlow::Break(());
                             }
                             ControlFlow::Continue(())
@@ -371,8 +372,10 @@ impl ReaderInner {
                         read_start,
                         xor_bytes,
                         |metadata, bytes, xor_i| {
+                            // `decode_block` needs owned bytes — it XOR-
+                            // decodes in place before parsing.
                             if let Ok(Some(block)) = decode_block(
-                                bytes, metadata, &client, xor_i, xor_bytes, start, end, 0, 0,
+                                bytes.to_vec(), metadata, &client, xor_i, xor_bytes, start, end, 0, 0,
                             ) {
                                 blocks.push(block);
                             }

@@ -8,7 +8,6 @@ mod new_addr_count;
 mod reused;
 mod total_addr_count;
 mod type_map;
-mod with_addr_types;
 
 pub use activity::{AddrActivityVecs, AddrTypeToActivityCounts};
 pub use addr_count::{AddrCountsVecs, AddrTypeToAddrCount};
@@ -24,4 +23,3 @@ pub use reused::{
 };
 pub use total_addr_count::TotalAddrCountVecs;
 pub use type_map::{AddrTypeToTypeIndexMap, AddrTypeToVec, HeightToAddrTypeToVec};
-pub use with_addr_types::WithAddrTypes;

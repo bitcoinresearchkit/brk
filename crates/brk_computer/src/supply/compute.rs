@@ -6,13 +6,13 @@ use vecdb::Exit;
 const INITIAL_SUBSIDY: f64 = Sats::ONE_BTC_U64 as f64 * 50.0;
 
 use super::Vecs;
-use crate::{blocks, distribution, mining, prices, scripts, transactions};
+use crate::{blocks, distribution, mining, outputs, prices, transactions};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
-        scripts: &scripts::Vecs,
+        outputs: &outputs::Vecs,
         blocks: &blocks::Vecs,
         mining: &mining::Vecs,
         transactions: &transactions::Vecs,
@@ -25,7 +25,7 @@ impl Vecs {
 
         // 1. Compute burned/unspendable supply
         self.burned
-            .compute(scripts, mining, prices, starting_indexes, exit)?;
+            .compute(outputs, mining, prices, starting_indexes, exit)?;
 
         // 2. Compute inflation rate: (supply[h] / supply[1y_ago]) - 1
         // Skip when lookback supply <= first block (50 BTC = 5B sats),

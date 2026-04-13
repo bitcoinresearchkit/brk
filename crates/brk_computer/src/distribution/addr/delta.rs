@@ -4,10 +4,10 @@ use derive_more::{Deref, DerefMut};
 
 use crate::{
     indexes,
-    internal::{LazyRollingDeltasFromHeight, WindowStartVec, Windows},
+    internal::{LazyRollingDeltasFromHeight, WindowStartVec, Windows, WithAddrTypes},
 };
 
-use super::{AddrCountsVecs, WithAddrTypes};
+use super::AddrCountsVecs;
 
 type AddrDelta = LazyRollingDeltasFromHeight<StoredU64, StoredI64, BasisPointsSigned32>;
 

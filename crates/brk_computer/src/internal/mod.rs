@@ -1,6 +1,6 @@
 pub(crate) mod algo;
 mod amount;
-mod by_type_counts;
+mod block_walker;
 mod cache_budget;
 mod containers;
 pub(crate) mod db_utils;
@@ -9,9 +9,10 @@ mod per_block;
 mod per_tx;
 mod traits;
 mod transform;
+mod with_addr_types;
 
 pub(crate) use amount::*;
-pub(crate) use by_type_counts::*;
+pub(crate) use block_walker::*;
 pub(crate) use cache_budget::*;
 pub(crate) use containers::*;
 pub(crate) use indexes::*;
@@ -19,3 +20,4 @@ pub(crate) use per_block::*;
 pub(crate) use per_tx::*;
 pub(crate) use traits::*;
 pub use transform::*;
+pub(crate) use with_addr_types::*;

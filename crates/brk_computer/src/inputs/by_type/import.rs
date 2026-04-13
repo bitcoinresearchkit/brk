@@ -1,12 +1,14 @@
-use brk_cohort::ByAddrType;
+use brk_cohort::SpendableType;
 use brk_error::Result;
-use brk_types::Version;
+use brk_types::{StoredU64, Version};
 use vecdb::Database;
 
-use super::Vecs;
+use super::{Vecs, WithInputTypes};
 use crate::{
     indexes,
-    internal::{PerBlockCumulativeRolling, PercentCumulativeRolling, WindowStartVec, Windows},
+    internal::{
+        PerBlockCumulativeRolling, PercentCumulativeRolling, WindowStartVec, Windows,
+    },
 };
 
 impl Vecs {
@@ -16,33 +18,39 @@ impl Vecs {
         indexes: &indexes::Vecs,
         cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
+        let input_count = WithInputTypes::<
+            PerBlockCumulativeRolling<StoredU64, StoredU64>,
+        >::forced_import_with(
+            db,
+            "input_count_bis",
+            |t| format!("{t}_prevout_count"),
+            version,
+            indexes,
+            cached_starts,
+        )?;
+        let tx_count = WithInputTypes::<
+            PerBlockCumulativeRolling<StoredU64, StoredU64>,
+        >::forced_import_with(
+            db,
+            "non_coinbase_tx_count",
+            |t| format!("tx_count_with_{t}_prevout"),
+            version,
+            indexes,
+            cached_starts,
+        )?;
+
+        let tx_percent = SpendableType::try_new(|_, name| {
+            PercentCumulativeRolling::forced_import(
+                db,
+                &format!("tx_percent_with_{name}_prevout"),
+                version,
+                indexes,
+            )
+        })?;
         Ok(Self {
-            input_count: ByAddrType::new_with_name(|name| {
-                PerBlockCumulativeRolling::forced_import(
-                    db,
-                    &format!("{name}_input_count"),
-                    version,
-                    indexes,
-                    cached_starts,
-                )
-            })?,
-            tx_count: ByAddrType::new_with_name(|name| {
-                PerBlockCumulativeRolling::forced_import(
-                    db,
-                    &format!("tx_count_with_{name}_in"),
-                    version,
-                    indexes,
-                    cached_starts,
-                )
-            })?,
-            tx_percent: ByAddrType::new_with_name(|name| {
-                PercentCumulativeRolling::forced_import(
-                    db,
-                    &format!("tx_count_with_{name}_in_rel_to_all"),
-                    version,
-                    indexes,
-                )
-            })?,
+            input_count,
+            tx_count,
+            tx_percent,
         })
     }
 }

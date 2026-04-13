@@ -125,14 +125,6 @@ impl Vecs {
                 exit,
             )?;
 
-        self.subsidy_dominance
-            .compute_binary::<Sats, Sats, RatioSatsBp16>(
-                starting_indexes.height,
-                &self.subsidy.cumulative.sats.height,
-                &self.coinbase.cumulative.sats.height,
-                exit,
-            )?;
-
         self.fee_to_subsidy_ratio
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32, _, _>(
                 starting_indexes.height,

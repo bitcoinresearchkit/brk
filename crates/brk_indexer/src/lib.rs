@@ -301,6 +301,10 @@ impl Indexer {
                 drop(readers);
                 export(stores, vecs, height)?;
                 readers = Readers::new(vecs);
+
+                if height == Height::new(500_000) {
+                    break;
+                }
             }
 
             *self.tip_blockhash.write() = block.block_hash().into();

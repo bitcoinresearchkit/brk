@@ -6,10 +6,10 @@ use vecdb::{Database, Exit, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{PerBlockCumulativeRolling, WindowStartVec, Windows},
+    internal::{PerBlockCumulativeRolling, WindowStartVec, Windows, WithAddrTypes},
 };
 
-use super::{TotalAddrCountVecs, WithAddrTypes};
+use super::TotalAddrCountVecs;
 
 /// New address count per block (global + per-type).
 #[derive(Deref, DerefMut, Traversable)]

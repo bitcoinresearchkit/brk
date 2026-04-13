@@ -23,7 +23,6 @@ mod mining;
 mod outputs;
 mod pools;
 pub mod prices;
-mod scripts;
 mod supply;
 mod transactions;
 
@@ -32,7 +31,6 @@ pub struct Computer<M: StorageMode = Rw> {
     pub blocks: Box<blocks::Vecs<M>>,
     pub mining: Box<mining::Vecs<M>>,
     pub transactions: Box<transactions::Vecs<M>>,
-    pub scripts: Box<scripts::Vecs<M>>,
     pub cointime: Box<cointime::Vecs<M>>,
     pub constants: Box<constants::Vecs>,
     pub indexes: Box<indexes::Vecs<M>>,
@@ -89,8 +87,8 @@ impl Computer {
 
         let cached_starts = blocks.lookback.cached_window_starts();
 
-        let (inputs, outputs, mining, transactions, scripts, pools, cointime) = timed(
-            "Imported inputs/outputs/mining/tx/scripts/pools/cointime",
+        let (inputs, outputs, mining, transactions, pools, cointime) = timed(
+            "Imported inputs/outputs/mining/tx/pools/cointime",
             || {
                 thread::scope(|s| -> Result<_> {
                     let inputs_handle = big_thread().spawn_scoped(s, || -> Result<_> {
@@ -130,15 +128,6 @@ impl Computer {
                         )?))
                     })?;
 
-                    let scripts_handle = big_thread().spawn_scoped(s, || -> Result<_> {
-                        Ok(Box::new(scripts::Vecs::forced_import(
-                            &computed_path,
-                            VERSION,
-                            &indexes,
-                            &cached_starts,
-                        )?))
-                    })?;
-
                     let pools_handle = big_thread().spawn_scoped(s, || -> Result<_> {
                         Ok(Box::new(pools::Vecs::forced_import(
                             &computed_path,
@@ -159,18 +148,9 @@ impl Computer {
                     let outputs = outputs_handle.join().unwrap()?;
                     let mining = mining_handle.join().unwrap()?;
                     let transactions = transactions_handle.join().unwrap()?;
-                    let scripts = scripts_handle.join().unwrap()?;
                     let pools = pools_handle.join().unwrap()?;
 
-                    Ok((
-                        inputs,
-                        outputs,
-                        mining,
-                        transactions,
-                        scripts,
-                        pools,
-                        cointime,
-                    ))
+                    Ok((inputs, outputs, mining, transactions, pools, cointime))
                 })
             },
         )?;
@@ -235,7 +215,6 @@ impl Computer {
             blocks,
             mining,
             transactions,
-            scripts,
             constants,
             indicators,
             investing,
@@ -261,7 +240,6 @@ impl Computer {
             blocks::DB_NAME,
             mining::DB_NAME,
             transactions::DB_NAME,
-            scripts::DB_NAME,
             cointime::DB_NAME,
             indicators::DB_NAME,
             indexes::DB_NAME,
@@ -340,6 +318,8 @@ impl Computer {
             inputs_result?;
             prices_result?;
 
+            // market, outputs, and (transactions → mining) are pairwise
+            // independent. Run all three in parallel.
             let market = scope.spawn(|| {
                 timed("Computed market", || {
                     self.market.compute(
@@ -352,48 +332,44 @@ impl Computer {
                 })
             });
 
-            timed("Computed scripts", || {
-                self.scripts
-                    .compute(indexer, &self.prices, &starting_indexes, exit)
-            })?;
+            let tx_mining = scope.spawn(|| -> Result<()> {
+                timed("Computed transactions", || {
+                    self.transactions.compute(
+                        indexer,
+                        &self.indexes,
+                        &self.blocks,
+                        &self.inputs,
+                        &self.prices,
+                        &starting_indexes,
+                        exit,
+                    )
+                })?;
+                timed("Computed mining", || {
+                    self.mining.compute(
+                        indexer,
+                        &self.indexes,
+                        &self.blocks,
+                        &self.transactions,
+                        &self.prices,
+                        &starting_indexes,
+                        exit,
+                    )
+                })
+            });
 
             timed("Computed outputs", || {
                 self.outputs.compute(
                     indexer,
                     &self.indexes,
                     &self.inputs,
-                    &self.scripts,
                     &self.blocks,
-                    &starting_indexes,
-                    exit,
-                )
-            })?;
-
-            timed("Computed transactions", || {
-                self.transactions.compute(
-                    indexer,
-                    &self.indexes,
-                    &self.blocks,
-                    &self.inputs,
-                    &self.outputs,
                     &self.prices,
                     &starting_indexes,
                     exit,
                 )
             })?;
 
-            timed("Computed mining", || {
-                self.mining.compute(
-                    indexer,
-                    &self.indexes,
-                    &self.blocks,
-                    &self.transactions,
-                    &self.prices,
-                    &starting_indexes,
-                    exit,
-                )
-            })?;
-
+            tx_mining.join().unwrap()?;
             market.join().unwrap()?;
             Ok(())
         })?;
@@ -433,7 +409,6 @@ impl Computer {
                     &self.indexes,
                     &self.inputs,
                     &self.outputs,
-                    &self.scripts,
                     &self.transactions,
                     &self.blocks,
                     &self.prices,
@@ -465,7 +440,7 @@ impl Computer {
 
             timed("Computed supply", || {
                 self.supply.compute(
-                    &self.scripts,
+                    &self.outputs,
                     &self.blocks,
                     &self.mining,
                     &self.transactions,
@@ -535,7 +510,6 @@ impl_iter_named!(
     blocks,
     mining,
     transactions,
-    scripts,
     cointime,
     constants,
     indicators,

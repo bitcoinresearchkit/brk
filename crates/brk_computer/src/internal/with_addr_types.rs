@@ -5,14 +5,15 @@
 use brk_cohort::ByAddrType;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, Version};
+use brk_types::{Height, Indexes, Sats, Version};
 use rayon::prelude::*;
 use schemars::JsonSchema;
 use vecdb::{AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, WritableVec};
 
-use crate::{
-    indexes,
-    internal::{NumericValue, PerBlock, PerBlockCumulativeRolling, WindowStartVec, Windows},
+use crate::{indexes, prices};
+
+use super::{
+    AmountPerBlock, NumericValue, PerBlock, PerBlockCumulativeRolling, WindowStartVec, Windows,
 };
 
 /// `all` aggregate plus per-`AddrType` breakdown.
@@ -167,6 +168,78 @@ where
         self.all.compute_rest(max_from, exit)?;
         for v in self.by_addr_type.values_mut() {
             v.compute_rest(max_from, exit)?;
+        }
+        Ok(())
+    }
+}
+
+impl WithAddrTypes<AmountPerBlock> {
+    pub(crate) fn forced_import(
+        db: &Database,
+        name: &str,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
+        let all = AmountPerBlock::forced_import(db, name, version, indexes)?;
+        let by_addr_type = ByAddrType::new_with_name(|type_name| {
+            AmountPerBlock::forced_import(db, &format!("{type_name}_{name}"), version, indexes)
+        })?;
+        Ok(Self { all, by_addr_type })
+    }
+
+    pub(crate) fn min_stateful_len(&self) -> usize {
+        self.by_addr_type
+            .values()
+            .map(|v| v.sats.height.len())
+            .min()
+            .unwrap()
+            .min(self.all.sats.height.len())
+    }
+
+    pub(crate) fn par_iter_height_mut(
+        &mut self,
+    ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        rayon::iter::once(&mut self.all.sats.height as &mut dyn AnyStoredVec).chain(
+            self.by_addr_type
+                .par_values_mut()
+                .map(|v| &mut v.sats.height as &mut dyn AnyStoredVec),
+        )
+    }
+
+    pub(crate) fn reset_height(&mut self) -> Result<()> {
+        self.all.sats.height.reset()?;
+        self.all.cents.height.reset()?;
+        for v in self.by_addr_type.values_mut() {
+            v.sats.height.reset()?;
+            v.cents.height.reset()?;
+        }
+        Ok(())
+    }
+
+    /// Push the stateful sats value for `all` and each per-type. Cents are
+    /// derived post-hoc from sats × price in [`Self::compute_rest`].
+    #[inline(always)]
+    pub(crate) fn push_height<U>(&mut self, total: U, per_type: impl IntoIterator<Item = U>)
+    where
+        U: Into<Sats>,
+    {
+        self.all.sats.height.push(total.into());
+        for (v, value) in self.by_addr_type.values_mut().zip(per_type) {
+            v.sats.height.push(value.into());
+        }
+    }
+
+    /// Derive cents (and thus lazy btc/usd) for `all` and every per-type vec
+    /// from the stateful sats values × spot price.
+    pub(crate) fn compute_rest(
+        &mut self,
+        max_from: Height,
+        prices: &prices::Vecs,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.all.compute(prices, max_from, exit)?;
+        for v in self.by_addr_type.values_mut() {
+            v.compute(prices, max_from, exit)?;
         }
         Ok(())
     }

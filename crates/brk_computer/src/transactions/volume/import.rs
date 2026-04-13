@@ -27,12 +27,6 @@ impl Vecs {
             tx_per_sec: Windows::try_from_fn(|suffix| {
                 PerBlock::forced_import(db, &format!("tx_per_sec_{suffix}"), v, indexes)
             })?,
-            outputs_per_sec: Windows::try_from_fn(|suffix| {
-                PerBlock::forced_import(db, &format!("outputs_per_sec_{suffix}"), v, indexes)
-            })?,
-            inputs_per_sec: Windows::try_from_fn(|suffix| {
-                PerBlock::forced_import(db, &format!("inputs_per_sec_{suffix}"), v, indexes)
-            })?,
         })
     }
 }
