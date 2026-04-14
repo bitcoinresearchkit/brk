@@ -1,7 +1,7 @@
 use brk_error::{OptionData, Result};
 use brk_indexer::Indexer;
-use brk_types::{Indexes, StoredU64};
-use vecdb::{AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
+use brk_types::{Indexes, OutputType, StoredU64};
+use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
 use super::{Vecs, WithOutputTypes};
 use crate::internal::{CoinbasePolicy, PerBlockCumulativeRolling, walk_blocks};
@@ -20,18 +20,25 @@ impl Vecs {
 
         self.output_count
             .validate_and_truncate(dep_version, starting_indexes.height)?;
+        self.spendable_output_count
+            .block
+            .validate_and_truncate(dep_version, starting_indexes.height)?;
         self.tx_count
             .validate_and_truncate(dep_version, starting_indexes.height)?;
 
         let skip = self
             .output_count
             .min_stateful_len()
+            .min(self.spendable_output_count.block.len())
             .min(self.tx_count.min_stateful_len());
 
         let first_tx_index = &indexer.vecs.transactions.first_tx_index;
         let end = first_tx_index.len();
         if skip < end {
             self.output_count.truncate_if_needed_at(skip)?;
+            self.spendable_output_count
+                .block
+                .truncate_if_needed_at(skip)?;
             self.tx_count.truncate_if_needed_at(skip)?;
 
             let fi_batch = first_tx_index.collect_range_at(skip, end);
@@ -63,10 +70,16 @@ impl Vecs {
                 |agg| {
                     push_block(&mut self.output_count, agg.entries_all, &agg.entries_per_type);
                     push_block(&mut self.tx_count, agg.txs_all, &agg.txs_per_type);
+                    let spendable_total = agg.entries_all
+                        - agg.entries_per_type[OutputType::OpReturn as usize];
+                    self.spendable_output_count
+                        .block
+                        .push(StoredU64::from(spendable_total));
 
                     if self.output_count.all.block.batch_limit_reached() {
                         let _lock = exit.lock();
                         self.output_count.write()?;
+                        self.spendable_output_count.block.write()?;
                         self.tx_count.write()?;
                     }
                     Ok(())
@@ -76,17 +89,29 @@ impl Vecs {
             {
                 let _lock = exit.lock();
                 self.output_count.write()?;
+                self.spendable_output_count.block.write()?;
                 self.tx_count.write()?;
             }
 
             self.output_count
                 .compute_rest(starting_indexes.height, exit)?;
+            self.spendable_output_count
+                .compute_rest(starting_indexes.height, exit)?;
             self.tx_count
                 .compute_rest(starting_indexes.height, exit)?;
         }
 
+        for (otype, source) in self.output_count.by_type.iter_typed() {
+            self.output_share.get_mut(otype).compute_count_ratio(
+                source,
+                &self.output_count.all,
+                starting_indexes.height,
+                exit,
+            )?;
+        }
+
         for (otype, source) in self.tx_count.by_type.iter_typed() {
-            self.tx_percent.get_mut(otype).compute_count_ratio(
+            self.tx_share.get_mut(otype).compute_count_ratio(
                 source,
                 &self.tx_count.all,
                 starting_indexes.height,

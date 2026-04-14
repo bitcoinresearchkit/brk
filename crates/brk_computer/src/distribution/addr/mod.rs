@@ -19,7 +19,7 @@ pub use exposed::{
 pub use indexes::AnyAddrIndexesVecs;
 pub use new_addr_count::NewAddrCountVecs;
 pub use reused::{
-    AddrTypeToReusedAddrCount, AddrTypeToReusedAddrUseCount, ReusedAddrVecs,
+    AddrTypeToReusedAddrCount, AddrTypeToReusedAddrEventCount, ReusedAddrVecs,
 };
 pub use total_addr_count::TotalAddrCountVecs;
 pub use type_map::{AddrTypeToTypeIndexMap, AddrTypeToVec, HeightToAddrTypeToVec};

@@ -1140,6 +1140,42 @@ pub struct CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct EmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2 {
+    pub empty: _1m1w1y24hBpsPercentRatioPattern,
+    pub op_return: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2a: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2ms: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2pk33: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2pk65: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2pkh: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2sh: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2tr: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2wpkh: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2wsh: _1m1w1y24hBpsPercentRatioPattern,
+    pub unknown: _1m1w1y24hBpsPercentRatioPattern,
+}
+
+impl EmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2 {
+    /// Create a new pattern node with accumulated series name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            empty: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "empty_outputs_output")),
+            op_return: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "op_return_output")),
+            p2a: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2a_output")),
+            p2ms: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2ms_output")),
+            p2pk33: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2pk33_output")),
+            p2pk65: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2pk65_output")),
+            p2pkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2pkh_output")),
+            p2sh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2sh_output")),
+            p2tr: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2tr_output")),
+            p2wpkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2wpkh_output")),
+            p2wsh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2wsh_output")),
+            unknown: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "unknown_outputs_output")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern {
     pub average: _1m1w1y24hPattern<StoredF32>,
     pub block: SeriesPattern18<StoredU64>,
@@ -1169,6 +1205,40 @@ impl AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern {
             pct75: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "pct75")),
             pct90: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "pct90")),
             sum: _1m1w1y24hPattern::new(client.clone(), _m(&acc, "sum")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2 {
+    pub empty: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2a: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2ms: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2pk33: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2pk65: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2pkh: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2sh: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2tr: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2wpkh: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2wsh: _1m1w1y24hBpsPercentRatioPattern,
+    pub unknown: _1m1w1y24hBpsPercentRatioPattern,
+}
+
+impl EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2 {
+    /// Create a new pattern node with accumulated series name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            empty: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "empty_outputs_prevout")),
+            p2a: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2a_prevout")),
+            p2ms: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2ms_prevout")),
+            p2pk33: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2pk33_prevout")),
+            p2pk65: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2pk65_prevout")),
+            p2pkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2pkh_prevout")),
+            p2sh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2sh_prevout")),
+            p2tr: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2tr_prevout")),
+            p2wpkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2wpkh_prevout")),
+            p2wsh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "p2wsh_prevout")),
+            unknown: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _m(&acc, "unknown_outputs_prevout")),
         }
     }
 }
@@ -1263,6 +1333,36 @@ impl AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 {
             p2tr: SeriesPattern1::new(client.clone(), _p("p2tr", &acc)),
             p2wpkh: SeriesPattern1::new(client.clone(), _p("p2wpkh", &acc)),
             p2wsh: SeriesPattern1::new(client.clone(), _p("p2wsh", &acc)),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6 {
+    pub all: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2a: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2pk33: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2pk65: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2pkh: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2sh: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2tr: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2wpkh: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2wsh: _1m1w1y24hBpsPercentRatioPattern,
+}
+
+impl AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6 {
+    /// Create a new pattern node with accumulated series name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            all: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), acc.clone()),
+            p2a: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _p("p2a", &acc)),
+            p2pk33: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _p("p2pk33", &acc)),
+            p2pk65: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _p("p2pk65", &acc)),
+            p2pkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _p("p2pkh", &acc)),
+            p2sh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _p("p2sh", &acc)),
+            p2tr: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _p("p2tr", &acc)),
+            p2wpkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _p("p2wpkh", &acc)),
+            p2wsh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), _p("p2wsh", &acc)),
         }
     }
 }
@@ -1733,6 +1833,28 @@ impl _1m1w1y24hBlockPattern {
             _1y: SeriesPattern1::new(client.clone(), _m(&acc, "average_1y")),
             _24h: SeriesPattern1::new(client.clone(), _m(&acc, "average_24h")),
             block: SeriesPattern18::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
+pub struct ActiveBidirectionalReactivatedReceivingSendingPattern {
+    pub active: _1m1w1y24hBlockPattern,
+    pub bidirectional: _1m1w1y24hBlockPattern,
+    pub reactivated: _1m1w1y24hBlockPattern,
+    pub receiving: _1m1w1y24hBlockPattern,
+    pub sending: _1m1w1y24hBlockPattern,
+}
+
+impl ActiveBidirectionalReactivatedReceivingSendingPattern {
+    /// Create a new pattern node with accumulated series name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            active: _1m1w1y24hBlockPattern::new(client.clone(), _m(&acc, "active_addrs")),
+            bidirectional: _1m1w1y24hBlockPattern::new(client.clone(), _m(&acc, "bidirectional_addrs")),
+            reactivated: _1m1w1y24hBlockPattern::new(client.clone(), _m(&acc, "reactivated_addrs")),
+            receiving: _1m1w1y24hBlockPattern::new(client.clone(), _m(&acc, "receiving_addrs")),
+            sending: _1m1w1y24hBlockPattern::new(client.clone(), _m(&acc, "sending_addrs")),
         }
     }
 }
@@ -2234,26 +2356,6 @@ impl BlockCumulativeDeltaSumPattern {
             cumulative: CentsUsdPattern::new(client.clone(), _m(&acc, "cumulative")),
             delta: AbsoluteRatePattern2::new(client.clone(), _m(&acc, "delta")),
             sum: _1m1w1y24hPattern5::new(client.clone(), _m(&acc, "sum")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct BothReactivatedReceivingSendingPattern {
-    pub both: _1m1w1y24hBlockPattern,
-    pub reactivated: _1m1w1y24hBlockPattern,
-    pub receiving: _1m1w1y24hBlockPattern,
-    pub sending: _1m1w1y24hBlockPattern,
-}
-
-impl BothReactivatedReceivingSendingPattern {
-    /// Create a new pattern node with accumulated series name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            both: _1m1w1y24hBlockPattern::new(client.clone(), _m(&acc, "both")),
-            reactivated: _1m1w1y24hBlockPattern::new(client.clone(), _m(&acc, "reactivated")),
-            receiving: _1m1w1y24hBlockPattern::new(client.clone(), _m(&acc, "receiving")),
-            sending: _1m1w1y24hBlockPattern::new(client.clone(), _m(&acc, "sending")),
         }
     }
 }
@@ -3748,16 +3850,18 @@ impl SeriesTree_Inputs_Spent {
 /// Series tree node.
 pub struct SeriesTree_Inputs_ByType {
     pub input_count: SeriesTree_Inputs_ByType_InputCount,
+    pub input_share: SeriesTree_Inputs_ByType_InputShare,
     pub tx_count: SeriesTree_Inputs_ByType_TxCount,
-    pub tx_percent: SeriesTree_Inputs_ByType_TxPercent,
+    pub tx_share: EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2,
 }
 
 impl SeriesTree_Inputs_ByType {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             input_count: SeriesTree_Inputs_ByType_InputCount::new(client.clone(), format!("{base_path}_input_count")),
+            input_share: SeriesTree_Inputs_ByType_InputShare::new(client.clone(), format!("{base_path}_input_share")),
             tx_count: SeriesTree_Inputs_ByType_TxCount::new(client.clone(), format!("{base_path}_tx_count")),
-            tx_percent: SeriesTree_Inputs_ByType_TxPercent::new(client.clone(), format!("{base_path}_tx_percent")),
+            tx_share: EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2::new(client.clone(), "tx_share_with".to_string()),
         }
     }
 }
@@ -3798,6 +3902,39 @@ impl SeriesTree_Inputs_ByType_InputCount {
 }
 
 /// Series tree node.
+pub struct SeriesTree_Inputs_ByType_InputShare {
+    pub p2pk65: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2pk33: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2pkh: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2ms: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2sh: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2wpkh: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2wsh: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2tr: _1m1w1y24hBpsPercentRatioPattern,
+    pub p2a: _1m1w1y24hBpsPercentRatioPattern,
+    pub unknown: _1m1w1y24hBpsPercentRatioPattern,
+    pub empty: _1m1w1y24hBpsPercentRatioPattern,
+}
+
+impl SeriesTree_Inputs_ByType_InputShare {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            p2pk65: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2pk65_prevout_share".to_string()),
+            p2pk33: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2pk33_prevout_share".to_string()),
+            p2pkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2pkh_prevout_share".to_string()),
+            p2ms: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2ms_prevout_share".to_string()),
+            p2sh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2sh_prevout_share".to_string()),
+            p2wpkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2wpkh_prevout_share".to_string()),
+            p2wsh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2wsh_prevout_share".to_string()),
+            p2tr: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2tr_prevout_share".to_string()),
+            p2a: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2a_prevout_share".to_string()),
+            unknown: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "unknown_outputs_prevout_share".to_string()),
+            empty: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "empty_outputs_prevout_share".to_string()),
+        }
+    }
+}
+
+/// Series tree node.
 pub struct SeriesTree_Inputs_ByType_TxCount {
     pub all: AverageBlockCumulativeSumPattern<StoredU64>,
     pub p2pk65: AverageBlockCumulativeSumPattern<StoredU64>,
@@ -3828,39 +3965,6 @@ impl SeriesTree_Inputs_ByType_TxCount {
             p2a: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_p2a_prevout".to_string()),
             unknown: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_unknown_outputs_prevout".to_string()),
             empty: AverageBlockCumulativeSumPattern::new(client.clone(), "tx_count_with_empty_outputs_prevout".to_string()),
-        }
-    }
-}
-
-/// Series tree node.
-pub struct SeriesTree_Inputs_ByType_TxPercent {
-    pub p2pk65: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2pk33: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2pkh: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2ms: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2sh: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2wpkh: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2wsh: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2tr: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2a: _1m1w1y24hBpsPercentRatioPattern,
-    pub unknown: _1m1w1y24hBpsPercentRatioPattern,
-    pub empty: _1m1w1y24hBpsPercentRatioPattern,
-}
-
-impl SeriesTree_Inputs_ByType_TxPercent {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            p2pk65: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2pk65_prevout".to_string()),
-            p2pk33: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2pk33_prevout".to_string()),
-            p2pkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2pkh_prevout".to_string()),
-            p2ms: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2ms_prevout".to_string()),
-            p2sh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2sh_prevout".to_string()),
-            p2wpkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2wpkh_prevout".to_string()),
-            p2wsh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2wsh_prevout".to_string()),
-            p2tr: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2tr_prevout".to_string()),
-            p2a: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2a_prevout".to_string()),
-            unknown: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_unknown_outputs_prevout".to_string()),
-            empty: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_empty_outputs_prevout".to_string()),
         }
     }
 }
@@ -3953,16 +4057,20 @@ impl SeriesTree_Outputs_Unspent {
 /// Series tree node.
 pub struct SeriesTree_Outputs_ByType {
     pub output_count: SeriesTree_Outputs_ByType_OutputCount,
+    pub spendable_output_count: AverageBlockCumulativeSumPattern<StoredU64>,
+    pub output_share: SeriesTree_Outputs_ByType_OutputShare,
     pub tx_count: AllEmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern,
-    pub tx_percent: SeriesTree_Outputs_ByType_TxPercent,
+    pub tx_share: EmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2,
 }
 
 impl SeriesTree_Outputs_ByType {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             output_count: SeriesTree_Outputs_ByType_OutputCount::new(client.clone(), format!("{base_path}_output_count")),
+            spendable_output_count: AverageBlockCumulativeSumPattern::new(client.clone(), "spendable_output_count".to_string()),
+            output_share: SeriesTree_Outputs_ByType_OutputShare::new(client.clone(), format!("{base_path}_output_share")),
             tx_count: AllEmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern::new(client.clone(), "tx_count".to_string()),
-            tx_percent: SeriesTree_Outputs_ByType_TxPercent::new(client.clone(), format!("{base_path}_tx_percent")),
+            tx_share: EmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2::new(client.clone(), "tx_share_with".to_string()),
         }
     }
 }
@@ -4005,7 +4113,7 @@ impl SeriesTree_Outputs_ByType_OutputCount {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Outputs_ByType_TxPercent {
+pub struct SeriesTree_Outputs_ByType_OutputShare {
     pub p2pk65: _1m1w1y24hBpsPercentRatioPattern,
     pub p2pk33: _1m1w1y24hBpsPercentRatioPattern,
     pub p2pkh: _1m1w1y24hBpsPercentRatioPattern,
@@ -4020,21 +4128,21 @@ pub struct SeriesTree_Outputs_ByType_TxPercent {
     pub op_return: _1m1w1y24hBpsPercentRatioPattern,
 }
 
-impl SeriesTree_Outputs_ByType_TxPercent {
+impl SeriesTree_Outputs_ByType_OutputShare {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            p2pk65: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2pk65_output".to_string()),
-            p2pk33: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2pk33_output".to_string()),
-            p2pkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2pkh_output".to_string()),
-            p2ms: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2ms_output".to_string()),
-            p2sh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2sh_output".to_string()),
-            p2wpkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2wpkh_output".to_string()),
-            p2wsh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2wsh_output".to_string()),
-            p2tr: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2tr_output".to_string()),
-            p2a: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_p2a_output".to_string()),
-            unknown: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_unknown_outputs_output".to_string()),
-            empty: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_empty_outputs_output".to_string()),
-            op_return: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "tx_percent_with_op_return_output".to_string()),
+            p2pk65: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2pk65_output_share".to_string()),
+            p2pk33: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2pk33_output_share".to_string()),
+            p2pkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2pkh_output_share".to_string()),
+            p2ms: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2ms_output_share".to_string()),
+            p2sh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2sh_output_share".to_string()),
+            p2wpkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2wpkh_output_share".to_string()),
+            p2wsh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2wsh_output_share".to_string()),
+            p2tr: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2tr_output_share".to_string()),
+            p2a: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2a_output_share".to_string()),
+            unknown: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "unknown_outputs_output_share".to_string()),
+            empty: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "empty_outputs_output_share".to_string()),
+            op_return: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "op_return_output_share".to_string()),
         }
     }
 }
@@ -4280,29 +4388,50 @@ impl SeriesTree_Addrs_Data {
 
 /// Series tree node.
 pub struct SeriesTree_Addrs_Activity {
-    pub all: BothReactivatedReceivingSendingPattern,
-    pub p2pk65: BothReactivatedReceivingSendingPattern,
-    pub p2pk33: BothReactivatedReceivingSendingPattern,
-    pub p2pkh: BothReactivatedReceivingSendingPattern,
-    pub p2sh: BothReactivatedReceivingSendingPattern,
-    pub p2wpkh: BothReactivatedReceivingSendingPattern,
-    pub p2wsh: BothReactivatedReceivingSendingPattern,
-    pub p2tr: BothReactivatedReceivingSendingPattern,
-    pub p2a: BothReactivatedReceivingSendingPattern,
+    pub all: SeriesTree_Addrs_Activity_All,
+    pub p2pk65: ActiveBidirectionalReactivatedReceivingSendingPattern,
+    pub p2pk33: ActiveBidirectionalReactivatedReceivingSendingPattern,
+    pub p2pkh: ActiveBidirectionalReactivatedReceivingSendingPattern,
+    pub p2sh: ActiveBidirectionalReactivatedReceivingSendingPattern,
+    pub p2wpkh: ActiveBidirectionalReactivatedReceivingSendingPattern,
+    pub p2wsh: ActiveBidirectionalReactivatedReceivingSendingPattern,
+    pub p2tr: ActiveBidirectionalReactivatedReceivingSendingPattern,
+    pub p2a: ActiveBidirectionalReactivatedReceivingSendingPattern,
 }
 
 impl SeriesTree_Addrs_Activity {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            all: BothReactivatedReceivingSendingPattern::new(client.clone(), "addr_activity".to_string()),
-            p2pk65: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2pk65_addr_activity".to_string()),
-            p2pk33: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2pk33_addr_activity".to_string()),
-            p2pkh: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2pkh_addr_activity".to_string()),
-            p2sh: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2sh_addr_activity".to_string()),
-            p2wpkh: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2wpkh_addr_activity".to_string()),
-            p2wsh: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2wsh_addr_activity".to_string()),
-            p2tr: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2tr_addr_activity".to_string()),
-            p2a: BothReactivatedReceivingSendingPattern::new(client.clone(), "p2a_addr_activity".to_string()),
+            all: SeriesTree_Addrs_Activity_All::new(client.clone(), format!("{base_path}_all")),
+            p2pk65: ActiveBidirectionalReactivatedReceivingSendingPattern::new(client.clone(), "p2pk65".to_string()),
+            p2pk33: ActiveBidirectionalReactivatedReceivingSendingPattern::new(client.clone(), "p2pk33".to_string()),
+            p2pkh: ActiveBidirectionalReactivatedReceivingSendingPattern::new(client.clone(), "p2pkh".to_string()),
+            p2sh: ActiveBidirectionalReactivatedReceivingSendingPattern::new(client.clone(), "p2sh".to_string()),
+            p2wpkh: ActiveBidirectionalReactivatedReceivingSendingPattern::new(client.clone(), "p2wpkh".to_string()),
+            p2wsh: ActiveBidirectionalReactivatedReceivingSendingPattern::new(client.clone(), "p2wsh".to_string()),
+            p2tr: ActiveBidirectionalReactivatedReceivingSendingPattern::new(client.clone(), "p2tr".to_string()),
+            p2a: ActiveBidirectionalReactivatedReceivingSendingPattern::new(client.clone(), "p2a".to_string()),
+        }
+    }
+}
+
+/// Series tree node.
+pub struct SeriesTree_Addrs_Activity_All {
+    pub reactivated: _1m1w1y24hBlockPattern,
+    pub sending: _1m1w1y24hBlockPattern,
+    pub receiving: _1m1w1y24hBlockPattern,
+    pub bidirectional: _1m1w1y24hBlockPattern,
+    pub active: _1m1w1y24hBlockPattern,
+}
+
+impl SeriesTree_Addrs_Activity_All {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            reactivated: _1m1w1y24hBlockPattern::new(client.clone(), "reactivated_addrs".to_string()),
+            sending: _1m1w1y24hBlockPattern::new(client.clone(), "sending_addrs".to_string()),
+            receiving: _1m1w1y24hBlockPattern::new(client.clone(), "receiving_addrs".to_string()),
+            bidirectional: _1m1w1y24hBlockPattern::new(client.clone(), "bidirectional_addrs".to_string()),
+            active: _1m1w1y24hBlockPattern::new(client.clone(), "active_addrs".to_string()),
         }
     }
 }
@@ -4310,58 +4439,60 @@ impl SeriesTree_Addrs_Activity {
 /// Series tree node.
 pub struct SeriesTree_Addrs_Reused {
     pub count: FundedTotalPattern,
-    pub uses: SeriesTree_Addrs_Reused_Uses,
+    pub events: SeriesTree_Addrs_Reused_Events,
 }
 
 impl SeriesTree_Addrs_Reused {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             count: FundedTotalPattern::new(client.clone(), "reused_addr_count".to_string()),
-            uses: SeriesTree_Addrs_Reused_Uses::new(client.clone(), format!("{base_path}_uses")),
+            events: SeriesTree_Addrs_Reused_Events::new(client.clone(), format!("{base_path}_events")),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addrs_Reused_Uses {
-    pub reused_addr_use_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5,
-    pub reused_addr_use_percent: SeriesTree_Addrs_Reused_Uses_ReusedAddrUsePercent,
+pub struct SeriesTree_Addrs_Reused_Events {
+    pub output_to_reused_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5,
+    pub output_to_reused_addr_share: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6,
+    pub spendable_output_to_reused_addr_share: _1m1w1y24hBpsPercentRatioPattern,
+    pub input_from_reused_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5,
+    pub input_from_reused_addr_share: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6,
+    pub active_reused_addr_count: _1m1w1y24hBlockPattern,
+    pub active_reused_addr_share: SeriesTree_Addrs_Reused_Events_ActiveReusedAddrShare,
 }
 
-impl SeriesTree_Addrs_Reused_Uses {
+impl SeriesTree_Addrs_Reused_Events {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            reused_addr_use_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5::new(client.clone(), "reused_addr_use_count".to_string()),
-            reused_addr_use_percent: SeriesTree_Addrs_Reused_Uses_ReusedAddrUsePercent::new(client.clone(), format!("{base_path}_reused_addr_use_percent")),
+            output_to_reused_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5::new(client.clone(), "output_to_reused_addr_count".to_string()),
+            output_to_reused_addr_share: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6::new(client.clone(), "output_to_reused_addr_share".to_string()),
+            spendable_output_to_reused_addr_share: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "spendable_output_to_reused_addr_share".to_string()),
+            input_from_reused_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5::new(client.clone(), "input_from_reused_addr_count".to_string()),
+            input_from_reused_addr_share: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6::new(client.clone(), "input_from_reused_addr_share".to_string()),
+            active_reused_addr_count: _1m1w1y24hBlockPattern::new(client.clone(), "active_reused_addr_count".to_string()),
+            active_reused_addr_share: SeriesTree_Addrs_Reused_Events_ActiveReusedAddrShare::new(client.clone(), format!("{base_path}_active_reused_addr_share")),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Addrs_Reused_Uses_ReusedAddrUsePercent {
-    pub all: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2pk65: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2pk33: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2pkh: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2sh: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2wpkh: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2wsh: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2tr: _1m1w1y24hBpsPercentRatioPattern,
-    pub p2a: _1m1w1y24hBpsPercentRatioPattern,
+pub struct SeriesTree_Addrs_Reused_Events_ActiveReusedAddrShare {
+    pub block: SeriesPattern18<StoredF32>,
+    pub _24h: SeriesPattern1<StoredF32>,
+    pub _1w: SeriesPattern1<StoredF32>,
+    pub _1m: SeriesPattern1<StoredF32>,
+    pub _1y: SeriesPattern1<StoredF32>,
 }
 
-impl SeriesTree_Addrs_Reused_Uses_ReusedAddrUsePercent {
+impl SeriesTree_Addrs_Reused_Events_ActiveReusedAddrShare {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            all: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "reused_addr_use_percent".to_string()),
-            p2pk65: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2pk65_reused_addr_use_percent".to_string()),
-            p2pk33: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2pk33_reused_addr_use_percent".to_string()),
-            p2pkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2pkh_reused_addr_use_percent".to_string()),
-            p2sh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2sh_reused_addr_use_percent".to_string()),
-            p2wpkh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2wpkh_reused_addr_use_percent".to_string()),
-            p2wsh: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2wsh_reused_addr_use_percent".to_string()),
-            p2tr: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2tr_reused_addr_use_percent".to_string()),
-            p2a: _1m1w1y24hBpsPercentRatioPattern::new(client.clone(), "p2a_reused_addr_use_percent".to_string()),
+            block: SeriesPattern18::new(client.clone(), "active_reused_addr_share".to_string()),
+            _24h: SeriesPattern1::new(client.clone(), "active_reused_addr_share_average_24h".to_string()),
+            _1w: SeriesPattern1::new(client.clone(), "active_reused_addr_share_average_1w".to_string()),
+            _1m: SeriesPattern1::new(client.clone(), "active_reused_addr_share_average_1m".to_string()),
+            _1y: SeriesPattern1::new(client.clone(), "active_reused_addr_share_average_1y".to_string()),
         }
     }
 }
@@ -5483,8 +5614,8 @@ pub struct SeriesTree_Indicators {
     pub gini: BpsPercentRatioPattern2,
     pub rhodl_ratio: BpsRatioPattern2,
     pub thermo_cap_multiple: BpsRatioPattern2,
-    pub coindays_destroyed_supply_adjusted: SeriesPattern1<StoredF32>,
-    pub coinyears_destroyed_supply_adjusted: SeriesPattern1<StoredF32>,
+    pub coindays_destroyed_supply_adj: SeriesPattern1<StoredF32>,
+    pub coinyears_destroyed_supply_adj: SeriesPattern1<StoredF32>,
     pub dormancy: SeriesTree_Indicators_Dormancy,
     pub stock_to_flow: SeriesPattern1<StoredF32>,
     pub seller_exhaustion: SeriesPattern1<StoredF32>,
@@ -5499,8 +5630,8 @@ impl SeriesTree_Indicators {
             gini: BpsPercentRatioPattern2::new(client.clone(), "gini".to_string()),
             rhodl_ratio: BpsRatioPattern2::new(client.clone(), "rhodl_ratio".to_string()),
             thermo_cap_multiple: BpsRatioPattern2::new(client.clone(), "thermo_cap_multiple".to_string()),
-            coindays_destroyed_supply_adjusted: SeriesPattern1::new(client.clone(), "coindays_destroyed_supply_adjusted".to_string()),
-            coinyears_destroyed_supply_adjusted: SeriesPattern1::new(client.clone(), "coinyears_destroyed_supply_adjusted".to_string()),
+            coindays_destroyed_supply_adj: SeriesPattern1::new(client.clone(), "coindays_destroyed_supply_adj".to_string()),
+            coinyears_destroyed_supply_adj: SeriesPattern1::new(client.clone(), "coinyears_destroyed_supply_adj".to_string()),
             dormancy: SeriesTree_Indicators_Dormancy::new(client.clone(), format!("{base_path}_dormancy")),
             stock_to_flow: SeriesPattern1::new(client.clone(), "stock_to_flow".to_string()),
             seller_exhaustion: SeriesPattern1::new(client.clone(), "seller_exhaustion".to_string()),
@@ -5511,14 +5642,14 @@ impl SeriesTree_Indicators {
 
 /// Series tree node.
 pub struct SeriesTree_Indicators_Dormancy {
-    pub supply_adjusted: SeriesPattern1<StoredF32>,
+    pub supply_adj: SeriesPattern1<StoredF32>,
     pub flow: SeriesPattern1<StoredF32>,
 }
 
 impl SeriesTree_Indicators_Dormancy {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            supply_adjusted: SeriesPattern1::new(client.clone(), "dormancy_supply_adjusted".to_string()),
+            supply_adj: SeriesPattern1::new(client.clone(), "dormancy_supply_adj".to_string()),
             flow: SeriesPattern1::new(client.clone(), "dormancy_flow".to_string()),
         }
     }

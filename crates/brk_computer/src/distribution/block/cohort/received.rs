@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 use crate::distribution::{
     addr::{
         AddrTypeToActivityCounts, AddrTypeToExposedAddrCount, AddrTypeToExposedAddrSupply,
-        AddrTypeToReusedAddrCount, AddrTypeToReusedAddrUseCount, AddrTypeToVec,
+        AddrTypeToReusedAddrCount, AddrTypeToReusedAddrEventCount, AddrTypeToVec,
     },
     cohorts::AddrCohorts,
 };
@@ -30,7 +30,8 @@ pub(crate) fn process_received(
     activity_counts: &mut AddrTypeToActivityCounts,
     reused_addr_count: &mut AddrTypeToReusedAddrCount,
     total_reused_addr_count: &mut AddrTypeToReusedAddrCount,
-    reused_addr_use_count: &mut AddrTypeToReusedAddrUseCount,
+    output_to_reused_addr_count: &mut AddrTypeToReusedAddrEventCount,
+    active_reused_addr_count: &mut AddrTypeToReusedAddrEventCount,
     exposed_addr_count: &mut AddrTypeToExposedAddrCount,
     total_exposed_addr_count: &mut AddrTypeToExposedAddrCount,
     exposed_addr_supply: &mut AddrTypeToExposedAddrSupply,
@@ -54,7 +55,9 @@ pub(crate) fn process_received(
         let type_activity = activity_counts.get_mut_unwrap(output_type);
         let type_reused_count = reused_addr_count.get_mut(output_type).unwrap();
         let type_total_reused_count = total_reused_addr_count.get_mut(output_type).unwrap();
-        let type_reused_use_count = reused_addr_use_count.get_mut(output_type).unwrap();
+        let type_output_to_reused_count = output_to_reused_addr_count.get_mut(output_type).unwrap();
+        let type_active_reused_count =
+            active_reused_addr_count.get_mut(output_type).unwrap();
         let type_exposed_count = exposed_addr_count.get_mut(output_type).unwrap();
         let type_total_exposed_count = total_exposed_addr_count.get_mut(output_type).unwrap();
         let type_exposed_supply = exposed_addr_supply.get_mut(output_type).unwrap();
@@ -168,15 +171,26 @@ pub(crate) fn process_received(
                 *type_reused_count += 1;
             }
 
+            // Block-level "active reused address" count: each address
+            // is processed exactly once here (via aggregation), so we
+            // count it once iff it is reused after the block's receives.
+            // The sender-side counterpart in process_sent dedupes
+            // against `received_addrs` so addresses that did both
+            // aren't double-counted.
+            if is_now_reused {
+                *type_active_reused_count += 1;
+            }
+
             // Per-block reused-use count: every individual output to this
-            // address counts iff the address was already reused at the
-            // moment of that output. With aggregation, that means we
-            // skip enough outputs at the front to take the lifetime
-            // funding count from `funded_txo_count_before` past 1, then
-            // count the rest. `skipped` is `max(0, 2 - before)`.
-            let skipped = 2u32.saturating_sub(funded_txo_count_before);
+            // address counts iff, at the moment the output arrives, the
+            // address had already received at least one prior output
+            // (i.e. it is an output-level "address reuse event"). With
+            // aggregation, that means we skip the very first output the
+            // address ever sees and count every subsequent one, so
+            // `skipped` is `max(0, 1 - before)`.
+            let skipped = 1u32.saturating_sub(funded_txo_count_before);
             let counted = recv.output_count.saturating_sub(skipped);
-            *type_reused_use_count += u64::from(counted);
+            *type_output_to_reused_count += u64::from(counted);
 
             // Update exposed counts. The address's pubkey-exposure state
             // is unchanged by a receive (spent_txo_count unchanged), so we

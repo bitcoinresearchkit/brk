@@ -9,15 +9,14 @@ use std::{
     sync::Arc,
 };
 
-use bitcoin::{block::Header, consensus::Decodable};
-use blk_index_to_blk_path::*;
 use brk_error::{Error, Result};
 use brk_rpc::Client;
 use brk_types::{BlkPosition, BlockHash, Height, ReadBlock};
 pub use crossbeam::channel::Receiver;
-use derive_more::Deref;
-use parking_lot::{RwLock, RwLockReadGuard};
+use parking_lot::RwLock;
+use tracing::warn;
 
+mod bisect;
 mod blk_index_to_blk_path;
 mod canonical;
 mod parse;
@@ -26,259 +25,201 @@ mod scan;
 mod xor_bytes;
 mod xor_index;
 
+pub use blk_index_to_blk_path::BlkIndexToBlkPath;
 pub use canonical::CanonicalRange;
-use scan::*;
 pub use xor_bytes::*;
 pub use xor_index::*;
 
-/// How many blk files to step back from the binary-search hit in
-/// [`ReaderInner::find_start_blk_index`]. Guards against blocks that
-/// bitcoind wrote to the "current" file slightly out of height order
-/// (e.g. the tail of a reorg landing in an earlier file index than
-/// its successors).
-const START_BLK_INDEX_BACKOFF: usize = 21;
+/// Files of out-of-order play to tolerate. bitcoind sometimes writes
+/// blocks slightly out of height order across files (initial sync,
+/// headers-first body fetch, reindex), so a single "out of bounds"
+/// signal isn't enough to declare failure. Used by the forward
+/// bisection backoff and the tail bailout streak.
+pub(crate) const OUT_OF_ORDER_FILE_BACKOFF: usize = 21;
 
-/// Handle to a Bitcoin Core blk-file reader.
-///
-/// Cheap to clone (`Arc`-backed) and thread-safe: all streaming
-/// methods take `&self` and the returned `Receiver<ReadBlock>` can be
+const TARGET_NOFILE: u64 = 15_000;
+
+/// Bitcoin Core blk-file reader. Cheap to clone (`Arc`-backed) and
+/// thread-safe: every method takes `&self` and the
+/// `Receiver<Result<ReadBlock>>` from the streaming API can be
 /// drained from any thread.
-#[derive(Debug, Clone, Deref)]
+#[derive(Debug, Clone)]
 pub struct Reader(Arc<ReaderInner>);
 
 impl Reader {
+    /// Raises the per-process `NOFILE` limit so the file-handle cache
+    /// can keep one open `File` per `blkNNNNN.dat`. For tests or
+    /// embeddings that don't want the process-wide rlimit side
+    /// effect, use [`Self::new_without_rlimit`].
     pub fn new(blocks_dir: PathBuf, client: &Client) -> Self {
-        Self(Arc::new(ReaderInner::new(blocks_dir, client.clone())))
+        Self::raise_fd_limit();
+        Self::new_without_rlimit(blocks_dir, client)
     }
-}
 
-#[derive(Debug)]
-pub struct ReaderInner {
-    blk_index_to_blk_path: Arc<RwLock<BlkIndexToBlkPath>>,
-    blk_file_cache: RwLock<BTreeMap<u16, File>>,
-    xor_bytes: XORBytes,
-    blocks_dir: PathBuf,
-    client: Client,
-}
-
-impl ReaderInner {
-    pub fn new(blocks_dir: PathBuf, client: Client) -> Self {
-        let no_file_limit = rlimit::getrlimit(rlimit::Resource::NOFILE).unwrap_or((0, 0));
-        let _ = rlimit::setrlimit(
-            rlimit::Resource::NOFILE,
-            no_file_limit.0.max(15_000),
-            no_file_limit.1,
-        );
-
-        Self {
+    pub fn new_without_rlimit(blocks_dir: PathBuf, client: &Client) -> Self {
+        Self(Arc::new(ReaderInner {
             xor_bytes: XORBytes::from(blocks_dir.as_path()),
-            blk_index_to_blk_path: Arc::new(RwLock::new(BlkIndexToBlkPath::scan(
-                blocks_dir.as_path(),
-            ))),
             blk_file_cache: RwLock::new(BTreeMap::new()),
             blocks_dir,
-            client,
+            client: client.clone(),
+        }))
+    }
+
+    /// Called automatically by [`Self::new`]. Exposed so callers
+    /// using [`Self::new_without_rlimit`] can opt in once.
+    ///
+    /// Raises **only the soft limit**, clamped to the current hard
+    /// limit — raising the hard limit requires `CAP_SYS_RESOURCE`
+    /// and would fail (dropping the entire call) on containers and
+    /// unprivileged macOS user processes.
+    pub fn raise_fd_limit() {
+        let (soft, hard) = rlimit::getrlimit(rlimit::Resource::NOFILE).unwrap_or((0, 0));
+        let new_soft = soft.max(TARGET_NOFILE).min(hard);
+        if new_soft > soft
+            && let Err(e) = rlimit::setrlimit(rlimit::Resource::NOFILE, new_soft, hard)
+        {
+            warn!("failed to raise NOFILE rlimit: {e}");
         }
     }
 
     pub fn client(&self) -> &Client {
-        &self.client
+        &self.0.client
     }
 
     pub fn blocks_dir(&self) -> &Path {
-        &self.blocks_dir
+        &self.0.blocks_dir
     }
 
-    pub fn blk_index_to_blk_path(&self) -> RwLockReadGuard<'_, BlkIndexToBlkPath> {
-        self.blk_index_to_blk_path.read()
-    }
-
+    #[inline]
     pub fn xor_bytes(&self) -> XORBytes {
-        self.xor_bytes
+        self.0.xor_bytes
     }
 
-    /// Ensure the blk file for `blk_index` is in the file handle cache.
-    fn ensure_blk_cached(&self, blk_index: u16) -> Result<()> {
-        if self.blk_file_cache.read().contains_key(&blk_index) {
-            return Ok(());
-        }
-        let blk_paths = self.blk_index_to_blk_path();
-        let blk_path = blk_paths
-            .get(&blk_index)
-            .ok_or(Error::NotFound("Blk file not found".into()))?;
-        let file = File::open(blk_path)?;
-        self.blk_file_cache.write().entry(blk_index).or_insert(file);
-        Ok(())
+    /// Decode the first block in `blk_path` and resolve its height
+    /// via RPC. Exposed for inspection tools (see
+    /// `examples/blk_heights.rs`).
+    pub fn first_block_height(&self, blk_path: &Path, xor_bytes: XORBytes) -> Result<Height> {
+        bisect::first_block_height(&self.0.client, blk_path, xor_bytes)
     }
 
-    /// Read raw bytes from a blk file at the given position with XOR decoding.
+    /// `read_exact_at` so a short read becomes a hard error instead
+    /// of silent corruption from the buffer's zero-init tail.
     pub fn read_raw_bytes(&self, position: BlkPosition, size: usize) -> Result<Vec<u8>> {
-        self.ensure_blk_cached(position.blk_index())?;
-
-        let cache = self.blk_file_cache.read();
-        let file = cache.get(&position.blk_index()).unwrap();
+        let file = self.0.open_blk(position.blk_index())?;
         let mut buffer = vec![0u8; size];
-        file.read_at(&mut buffer, position.offset() as u64)?;
-        XORIndex::decode_at(&mut buffer, position.offset() as usize, self.xor_bytes);
+        file.read_exact_at(&mut buffer, position.offset() as u64)?;
+        XORIndex::decode_at(&mut buffer, position.offset() as usize, self.0.xor_bytes);
         Ok(buffer)
     }
 
-    /// Returns a `Read` impl positioned at `position` in the blk file.
-    /// Reads only the bytes requested — no upfront allocation.
-    pub fn reader_at(&self, position: BlkPosition) -> Result<BlkRead<'_>> {
-        self.ensure_blk_cached(position.blk_index())?;
-
-        let mut xor_index = XORIndex::default();
-        xor_index.add_assign(position.offset() as usize);
-
+    /// Streaming `Read` at `position`. Holds an `Arc<File>` so the
+    /// cache lock isn't held across the I/O.
+    pub fn reader_at(&self, position: BlkPosition) -> Result<BlkRead> {
+        let file = self.0.open_blk(position.blk_index())?;
         Ok(BlkRead {
-            cache: self.blk_file_cache.read(),
-            blk_index: position.blk_index(),
+            file,
             offset: position.offset() as u64,
-            xor_index,
-            xor_bytes: self.xor_bytes,
+            xor_index: XORIndex::at_offset(position.offset() as usize),
+            xor_bytes: self.0.xor_bytes,
         })
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Public streaming API — all calls delegate to `pipeline::spawn`.
-    // ─────────────────────────────────────────────────────────────────
-
     /// Streams every canonical block strictly after `hash` (or from
-    /// genesis when `None`) up to the current chain tip, in canonical
-    /// order. Uses the default parser-thread count; see
-    /// [`after_with`](Self::after_with) to override.
-    pub fn after(&self, hash: Option<BlockHash>) -> Result<Receiver<ReadBlock>> {
+    /// genesis when `None`) up to the current chain tip.
+    pub fn after(&self, hash: Option<BlockHash>) -> Result<Receiver<Result<ReadBlock>>> {
         self.after_with(hash, pipeline::DEFAULT_PARSER_THREADS)
     }
 
-    /// Like [`after`](Self::after) but with a configurable number of
-    /// parser threads. `parser_threads = 1` is the minimal-thread
-    /// default (1 reader + 1 parser, uncontended mutex). Higher values
-    /// trade extra cores for throughput on dense ranges where the
-    /// parser is the bottleneck.
+    /// Like [`after`](Self::after) with a configurable parser-thread
+    /// count. The default of 1 reader + 1 parser leaves the rest of
+    /// the cores for the indexer; bench tools that drain the channel
+    /// cheaply can override.
     pub fn after_with(
         &self,
         hash: Option<BlockHash>,
         parser_threads: usize,
-    ) -> Result<Receiver<ReadBlock>> {
-        let tip = self.client.get_last_height()?;
-        let canonical = CanonicalRange::walk(&self.client, hash, tip)?;
-        pipeline::spawn(self, canonical, parser_threads)
+    ) -> Result<Receiver<Result<ReadBlock>>> {
+        let tip = self.0.client.get_last_height()?;
+        let canonical = CanonicalRange::walk(&self.0.client, hash.as_ref(), tip)?;
+        pipeline::spawn(self.0.clone(), canonical, hash, parser_threads)
     }
 
-    /// Streams every canonical block in the inclusive height range
-    /// `start..=end` in canonical order, via the same pipeline as
-    /// [`after`](Self::after).
-    pub fn range(&self, start: Height, end: Height) -> Result<Receiver<ReadBlock>> {
+    /// Inclusive height range `start..=end` in canonical order.
+    pub fn range(&self, start: Height, end: Height) -> Result<Receiver<Result<ReadBlock>>> {
         self.range_with(start, end, pipeline::DEFAULT_PARSER_THREADS)
     }
 
-    /// Like [`range`](Self::range) but with a configurable number of
-    /// parser threads. See [`after_with`](Self::after_with) for the
-    /// parser-count tradeoff.
     pub fn range_with(
         &self,
         start: Height,
         end: Height,
         parser_threads: usize,
-    ) -> Result<Receiver<ReadBlock>> {
-        let canonical = CanonicalRange::between(&self.client, start, end)?;
-        pipeline::spawn(self, canonical, parser_threads)
-    }
-
-    /// Binary-searches `blk_index_to_blk_path` for the first file
-    /// whose earliest block height is ≤ `target_start`, then backs
-    /// off a few files as a safety margin for blocks that were written
-    /// out of height order (see [`START_BLK_INDEX_BACKOFF`]).
-    fn find_start_blk_index(
-        &self,
-        target_start: Option<Height>,
-        blk_index_to_blk_path: &BlkIndexToBlkPath,
-        xor_bytes: XORBytes,
-    ) -> Result<u16> {
-        let Some(target_start) = target_start else {
-            return Ok(0);
-        };
-
-        let blk_indices: Vec<u16> = blk_index_to_blk_path.keys().copied().collect();
-        if blk_indices.is_empty() {
-            return Ok(0);
+    ) -> Result<Receiver<Result<ReadBlock>>> {
+        let tip = self.0.client.get_last_height()?;
+        if end > tip {
+            return Err(Error::OutOfRange(format!(
+                "range end {end} is past current tip {tip}"
+            )));
         }
-
-        let mut left = 0;
-        let mut right = blk_indices.len() - 1;
-        let mut best_start_idx = 0;
-
-        while left <= right {
-            let mid = (left + right) / 2;
-            let blk_index = blk_indices[mid];
-
-            let Some(blk_path) = blk_index_to_blk_path.get(&blk_index) else {
-                break;
-            };
-            match self.first_block_height(blk_path, xor_bytes) {
-                Ok(height) if height <= target_start => {
-                    best_start_idx = mid;
-                    left = mid + 1;
-                }
-                Ok(_) => {
-                    if mid == 0 {
-                        break;
-                    }
-                    right = mid - 1;
-                }
-                Err(_) => {
-                    left = mid + 1;
-                }
-            }
-        }
-
-        let final_idx = best_start_idx.saturating_sub(START_BLK_INDEX_BACKOFF);
-        Ok(blk_indices.get(final_idx).copied().unwrap_or(0))
-    }
-
-    pub fn first_block_height(
-        &self,
-        blk_path: &Path,
-        xor_bytes: XORBytes,
-    ) -> Result<Height> {
-        let mut file = File::open(blk_path)?;
-        let mut buf = [0u8; 4096];
-        let n = file.read(&mut buf)?;
-
-        let mut xor_i = XORIndex::default();
-        let magic_end = find_magic(&buf[..n], &mut xor_i, xor_bytes)
-            .ok_or_else(|| Error::NotFound("No magic bytes found".into()))?;
-
-        let size_end = magic_end + 4;
-        xor_i.bytes(&mut buf[magic_end..size_end], xor_bytes);
-
-        let header_end = size_end + 80;
-        xor_i.bytes(&mut buf[size_end..header_end], xor_bytes);
-
-        let header =
-            Header::consensus_decode(&mut std::io::Cursor::new(&buf[size_end..header_end]))?;
-
-        let height = self.client.get_block_info(&header.block_hash())?.height as u32;
-
-        Ok(Height::new(height))
+        let canonical = CanonicalRange::between(&self.0.client, start, end)?;
+        // No anchor: caller asked for "blocks at heights X..=Y", they
+        // get whatever bitcoind says is canonical there.
+        pipeline::spawn(self.0.clone(), canonical, None, parser_threads)
     }
 }
 
-/// Streaming reader at a position in a blk file. Reads via pread + XOR on demand.
-pub struct BlkRead<'a> {
-    cache: RwLockReadGuard<'a, BTreeMap<u16, File>>,
-    blk_index: u16,
+/// `pub(crate)` so `pipeline` can capture it via `Arc<ReaderInner>`
+/// for spawned workers; everything else goes through `Reader`.
+#[derive(Debug)]
+pub(crate) struct ReaderInner {
+    /// Invalidated on every [`refresh_paths`](Self::refresh_paths) so
+    /// a pruned/reindexed blk file can't keep serving stale bytes
+    /// from a dead inode. `Arc<File>` lets us hand out cheap clones
+    /// without holding the cache lock during I/O.
+    blk_file_cache: RwLock<BTreeMap<u16, Arc<File>>>,
+    pub(crate) xor_bytes: XORBytes,
+    pub(crate) blocks_dir: PathBuf,
+    pub(crate) client: Client,
+}
+
+impl ReaderInner {
+    /// Rescan the blocks directory and drop the file-handle cache in
+    /// the same critical section. Old `Arc<File>`s already in flight
+    /// stay valid until their last drop; new lookups go through the
+    /// fresh inode.
+    pub(crate) fn refresh_paths(&self) -> Result<BlkIndexToBlkPath> {
+        let paths = BlkIndexToBlkPath::scan(&self.blocks_dir)?;
+        self.blk_file_cache.write().clear();
+        Ok(paths)
+    }
+
+    /// The blk path is deterministic (`<blocks_dir>/blkNNNNN.dat`),
+    /// so we don't need a directory scan to resolve it. Two threads
+    /// racing on a missing entry will both call `File::open`; the
+    /// loser's `Arc` is dropped via `or_insert`.
+    fn open_blk(&self, blk_index: u16) -> Result<Arc<File>> {
+        if let Some(file) = self.blk_file_cache.read().get(&blk_index).cloned() {
+            return Ok(file);
+        }
+        let path = self.blocks_dir.join(format!("blk{blk_index:05}.dat"));
+        let file = Arc::new(File::open(&path)?);
+        let mut cache = self.blk_file_cache.write();
+        Ok(cache.entry(blk_index).or_insert(file).clone())
+    }
+}
+
+/// Streaming reader at a position in a blk file. Holds an `Arc<File>`
+/// so it doesn't lock the file cache while the consumer is reading.
+pub struct BlkRead {
+    file: Arc<File>,
     offset: u64,
     xor_index: XORIndex,
     xor_bytes: XORBytes,
 }
 
-impl Read for BlkRead<'_> {
+impl Read for BlkRead {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        let file = self.cache.get(&self.blk_index).unwrap();
-        let n = file.read_at(buf, self.offset)?;
+        let n = self.file.read_at(buf, self.offset)?;
         self.xor_index.bytes(&mut buf[..n], self.xor_bytes);
         self.offset += n as u64;
         Ok(n)

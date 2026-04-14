@@ -7,7 +7,7 @@ use vecdb::VecIndex;
 use crate::distribution::{
     addr::{
         AddrTypeToActivityCounts, AddrTypeToExposedAddrCount, AddrTypeToExposedAddrSupply,
-        AddrTypeToReusedAddrCount, HeightToAddrTypeToVec,
+        AddrTypeToReusedAddrCount, AddrTypeToReusedAddrEventCount, HeightToAddrTypeToVec,
     },
     cohorts::AddrCohorts,
     compute::PriceRangeMax,
@@ -39,6 +39,8 @@ pub(crate) fn process_sent(
     empty_addr_count: &mut ByAddrType<u64>,
     activity_counts: &mut AddrTypeToActivityCounts,
     reused_addr_count: &mut AddrTypeToReusedAddrCount,
+    input_from_reused_addr_count: &mut AddrTypeToReusedAddrEventCount,
+    active_reused_addr_count: &mut AddrTypeToReusedAddrEventCount,
     exposed_addr_count: &mut AddrTypeToExposedAddrCount,
     total_exposed_addr_count: &mut AddrTypeToExposedAddrCount,
     exposed_addr_supply: &mut AddrTypeToExposedAddrSupply,
@@ -65,6 +67,10 @@ pub(crate) fn process_sent(
             let type_empty_count = empty_addr_count.get_mut(output_type).unwrap();
             let type_activity = activity_counts.get_mut_unwrap(output_type);
             let type_reused_count = reused_addr_count.get_mut(output_type).unwrap();
+            let type_input_from_reused_count =
+                input_from_reused_addr_count.get_mut(output_type).unwrap();
+            let type_active_reused_count =
+                active_reused_addr_count.get_mut(output_type).unwrap();
             let type_exposed_count = exposed_addr_count.get_mut(output_type).unwrap();
             let type_total_exposed_count = total_exposed_addr_count.get_mut(output_type).unwrap();
             let type_exposed_supply = exposed_addr_supply.get_mut(output_type).unwrap();
@@ -74,6 +80,15 @@ pub(crate) fn process_sent(
             for (type_index, value) in vec {
                 let addr_data = lookup.get_for_send(output_type, type_index);
 
+                // "Input from a reused address" event: the sending
+                // address is in the reused set (lifetime
+                // funded_txo_count > 1). Checked once per input. The
+                // spend itself doesn't touch funded_txo_count so the
+                // predicate is stable before/after `cohort_state.send`.
+                if addr_data.is_reused() {
+                    *type_input_from_reused_count += 1;
+                }
+
                 let prev_balance = addr_data.balance();
                 let new_balance = prev_balance.checked_sub(value).unwrap();
 
@@ -81,9 +96,20 @@ pub(crate) fn process_sent(
                 if type_seen.insert(type_index) {
                     type_activity.sending += 1;
 
-                    // Track "both" - addresses that sent AND received this block
-                    if type_received.is_some_and(|s| s.contains(&type_index)) {
-                        type_activity.both += 1;
+                    let also_received =
+                        type_received.is_some_and(|s| s.contains(&type_index));
+                    // Track "bidirectional": addresses that sent AND
+                    // received this block.
+                    if also_received {
+                        type_activity.bidirectional += 1;
+                    }
+
+                    // Block-level "active reused address" count: count
+                    // every distinct sender that's reused, but skip
+                    // those that also received this block (already
+                    // counted in process_received).
+                    if !also_received && addr_data.is_reused() {
+                        *type_active_reused_count += 1;
                     }
                 }
 

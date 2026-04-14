@@ -6,9 +6,7 @@ use vecdb::Database;
 use super::{Vecs, WithOutputTypes};
 use crate::{
     indexes,
-    internal::{
-        PerBlockCumulativeRolling, PercentCumulativeRolling, WindowStartVec, Windows,
-    },
+    internal::{PerBlockCumulativeRolling, PercentCumulativeRolling, WindowStartVec, Windows},
 };
 
 impl Vecs {
@@ -39,18 +37,37 @@ impl Vecs {
             cached_starts,
         )?;
 
-        let tx_percent = ByType::try_new(|_, name| {
+        let spendable_output_count = PerBlockCumulativeRolling::forced_import(
+            db,
+            "spendable_output_count",
+            version,
+            indexes,
+            cached_starts,
+        )?;
+
+        let output_share = ByType::try_new(|_, name| {
             PercentCumulativeRolling::forced_import(
                 db,
-                &format!("tx_percent_with_{name}_output"),
+                &format!("{name}_output_share"),
+                version,
+                indexes,
+            )
+        })?;
+
+        let tx_share = ByType::try_new(|_, name| {
+            PercentCumulativeRolling::forced_import(
+                db,
+                &format!("tx_share_with_{name}_output"),
                 version,
                 indexes,
             )
         })?;
         Ok(Self {
             output_count,
+            spendable_output_count,
+            output_share,
             tx_count,
-            tx_percent,
+            tx_share,
         })
     }
 }

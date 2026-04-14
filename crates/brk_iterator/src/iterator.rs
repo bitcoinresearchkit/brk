@@ -1,3 +1,4 @@
+use brk_error::{Error, Result};
 use brk_types::Block;
 
 use crate::State;
@@ -11,7 +12,7 @@ impl BlockIterator {
 }
 
 impl Iterator for BlockIterator {
-    type Item = Block;
+    type Item = Result<Block>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match &mut self.0 {
@@ -21,35 +22,32 @@ impl Iterator for BlockIterator {
                 prev_hash,
             } => {
                 let height = heights.next()?;
-                let hash = client.get_block_hash(height).ok()?;
-                let block = client.get_block(&hash).ok()?;
+                let hash = match client.get_block_hash(height) {
+                    Ok(h) => h,
+                    Err(e) => return Some(Err(e)),
+                };
+                let block = match client.get_block(&hash) {
+                    Ok(b) => b,
+                    Err(e) => return Some(Err(e)),
+                };
 
                 if prev_hash
                     .as_ref()
-                    .is_some_and(|prev_hash| block.header.prev_blockhash != prev_hash.into())
+                    .is_some_and(|prev| block.header.prev_blockhash != prev.into())
                 {
-                    return None;
+                    return Some(Err(Error::Internal(
+                        "rpc iterator: chain continuity broken (likely reorg mid-iteration)",
+                    )));
                 }
 
                 prev_hash.replace(hash.clone());
 
-                Some(Block::from((height, hash, block)))
+                Some(Ok(Block::from((height, hash, block))))
             }
-            State::Reader {
-                receiver,
-                after_hash,
-            } => {
-                let block = Block::from(receiver.recv().ok()?);
-
-                // Only validate the first block (Reader validates the rest)
-                if let Some(expected_prev) = after_hash.take()
-                    && block.header.prev_blockhash != expected_prev.into()
-                {
-                    return None;
-                }
-
-                Some(block)
-            }
+            State::Reader { receiver } => match receiver.recv().ok()? {
+                Ok(b) => Some(Ok(Block::from(b))),
+                Err(e) => Some(Err(e)),
+            },
         }
     }
 }

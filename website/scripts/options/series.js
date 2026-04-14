@@ -1100,7 +1100,7 @@ export function chartsFromCount({ pattern, title = (s) => s, metric, unit, color
 }
 
 /**
- * Percent + ratio per rolling window + cumulative — mirrors chartsFromCount for percent data.
+ * Percent + ratio per rolling window + cumulative, mirroring chartsFromCount for percent data.
  * @param {Object} args
  * @param {PercentRatioCumulativePattern} args.pattern
  * @param {(metric: string) => string} [args.title]
@@ -1149,6 +1149,75 @@ export function chartsFromPercentCumulative({
         name: "All Time",
         color: color ?? colors.time.all,
       }),
+    },
+  ];
+}
+
+/**
+ * N-pattern variant of {@link chartsFromPercentCumulative}: each chart
+ * overlays one `percentRatio` pair per entry (percent + ratio lines).
+ * Use when comparing alternate views of the same metric (e.g. a share
+ * with two different denominators). Each entry MUST provide a `name`;
+ * if `color` is omitted the entry inherits the per-slot default colors
+ * (window color in Compare/per-window, all-time color for cumulative).
+ * @param {Object} args
+ * @param {ReadonlyArray<{
+ *   name: string,
+ *   pattern: PercentRatioCumulativePattern,
+ *   color?: Color,
+ * }>} args.entries
+ * @param {(metric: string) => string} [args.title]
+ * @param {string} args.metric
+ * @returns {PartialOptionsTree}
+ */
+export function chartsFromPercentCumulativeEntries({
+  entries,
+  title = (s) => s,
+  metric,
+}) {
+  return [
+    {
+      name: "Compare",
+      title: title(metric),
+      bottom: ROLLING_WINDOWS.flatMap((w) =>
+        entries.flatMap((e) =>
+          percentRatio({
+            pattern: e.pattern[w.key],
+            name: `${w.name} ${e.name}`,
+            color: e.color ?? w.color,
+          }),
+        ),
+      ).concat(
+        entries.flatMap((e) =>
+          percentRatio({
+            pattern: e.pattern,
+            name: `All Time ${e.name}`,
+            color: e.color ?? colors.time.all,
+          }),
+        ),
+      ),
+    },
+    ...ROLLING_WINDOWS.map((w) => ({
+      name: w.name,
+      title: title(`${w.title} ${metric}`),
+      bottom: entries.flatMap((e) =>
+        percentRatio({
+          pattern: e.pattern[w.key],
+          name: e.name,
+          color: e.color ?? w.color,
+        }),
+      ),
+    })),
+    {
+      name: "Cumulative",
+      title: title(`Cumulative ${metric}`),
+      bottom: entries.flatMap((e) =>
+        percentRatio({
+          pattern: e.pattern,
+          name: e.name,
+          color: e.color ?? colors.time.all,
+        }),
+      ),
     },
   ];
 }

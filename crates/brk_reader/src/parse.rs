@@ -1,8 +1,5 @@
-//! Pure block parsing — XOR decoding, header and body decode.
-//!
-//! Split into a cheap header peek and a full body parse so the scan
-//! loop can reject non-canonical blocks without copying them. No RPC,
-//! no threading, no state.
+//! Block parsing — XOR decoding, header peek, full body parse. Split
+//! so the scan loop can reject non-canonical blocks before copying.
 
 use std::io::Cursor;
 
@@ -12,19 +9,18 @@ use brk_types::{BlkMetadata, Block, BlockHash, Height, ReadBlock};
 
 use crate::{XORBytes, XORIndex, canonical::CanonicalRange};
 
-const HEADER_LEN: usize = 80;
+pub(crate) const HEADER_LEN: usize = 80;
 
-/// Returns the canonical offset of `bytes` if its header hashes to a
-/// known canonical block, otherwise `None`. Does not allocate and does
-/// not mutate `bytes`: the header is copied onto a stack buffer and
-/// XOR-decoded there so an orphan short-circuits cleanly and a
-/// canonical hit can still be cloned out intact.
-pub fn peek_canonical_offset(
+/// Cheap canonical-membership check. Decodes the header onto a stack
+/// buffer so `bytes` stays untouched (the parser later re-XORs the
+/// full block from the original phase). Returning the parsed header
+/// lets the body parse skip a second decode.
+pub(crate) fn peek_canonical(
     bytes: &[u8],
     mut xor_state: XORIndex,
     xor_bytes: XORBytes,
     canonical: &CanonicalRange,
-) -> Option<u32> {
+) -> Option<(u32, Header)> {
     if bytes.len() < HEADER_LEN {
         return None;
     }
@@ -32,27 +28,30 @@ pub fn peek_canonical_offset(
     header_buf.copy_from_slice(&bytes[..HEADER_LEN]);
     xor_state.bytes(&mut header_buf, xor_bytes);
     let header = Header::consensus_decode(&mut &header_buf[..]).ok()?;
-    canonical.offset_of(&BlockHash::from(header.block_hash()))
+    let offset = canonical.offset_of(&BlockHash::from(header.block_hash()))?;
+    Some((offset, header))
 }
 
-/// Full XOR-decode + parse for a block that has already been confirmed
-/// canonical by `peek_canonical_offset`. Takes owned `bytes` so it can
-/// mutate them in place and hand them to the resulting `ReadBlock`.
-pub fn parse_canonical_body(
+/// Full XOR-decode + body parse. Takes the previously-parsed `header`
+/// from `peek_canonical` so we don't re-parse it.
+pub(crate) fn parse_canonical_body(
     mut bytes: Vec<u8>,
     metadata: BlkMetadata,
     mut xor_state: XORIndex,
     xor_bytes: XORBytes,
     height: Height,
+    header: Header,
 ) -> Result<ReadBlock> {
     if bytes.len() < HEADER_LEN {
         return Err(Error::Internal("Block bytes shorter than header"));
     }
 
     xor_state.bytes(&mut bytes, xor_bytes);
-    let mut cursor = Cursor::new(bytes);
-    let header = Header::consensus_decode(&mut cursor)?;
     let bitcoin_hash = header.block_hash();
+
+    let mut cursor = Cursor::new(bytes);
+    cursor.set_position(HEADER_LEN as u64);
+
     let tx_count = VarInt::consensus_decode(&mut cursor)?.0 as usize;
     let mut txdata = Vec::with_capacity(tx_count);
     let mut tx_metadata = Vec::with_capacity(tx_count);

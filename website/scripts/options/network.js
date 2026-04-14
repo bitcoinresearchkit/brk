@@ -12,6 +12,7 @@ import {
   chartsFromCount,
   chartsFromCountEntries,
   chartsFromPercentCumulative,
+  chartsFromPercentCumulativeEntries,
   chartsFromAggregatedPerBlock,
   averagesArray,
   simpleDeltaTree,
@@ -25,6 +26,7 @@ import {
   satsBtcUsdFrom,
   satsBtcUsdFullTree,
   formatCohortTitle,
+  groupedWindowsCumulative,
 } from "./shared.js";
 
 /**
@@ -82,9 +84,10 @@ export function createNetworkSection() {
 
   // Transacting types (transaction participation)
   const activityTypes = /** @type {const} */ ([
+    { key: "active", name: "Active" },
     { key: "sending", name: "Sending" },
     { key: "receiving", name: "Receiving" },
-    { key: "both", name: "Sending & Receiving" },
+    { key: "bidirectional", name: "Bidirectional" },
     { key: "reactivated", name: "Reactivated" },
   ]);
 
@@ -127,202 +130,418 @@ export function createNetworkSection() {
     { key: "total", name: "Total", color: colors.default },
   ]);
 
-  /**
-   * @param {AddressableType | "all"} key
-   * @param {string} [typeName]
-   */
-  const createAddressSeriesTree = (key, typeName) => {
-    const title = formatCohortTitle(typeName);
-    return [
+  const reusedSetEntries =
+    /**
+     * @param {AddressableType | "all"} key
+     * @param {(name: string) => string} title
+     */
+    (key, title) => [
       {
-        name: "Count",
-        tree: [
-          {
-            name: "Compare",
-            title: title("Address Count"),
-            bottom: countMetrics.map((m) =>
-              line({
-                series: addrs[m.key][key],
-                name: m.name,
-                color: m.color,
-                unit: Unit.count,
-              }),
-            ),
-          },
-          ...countMetrics.map((m) => ({
-            name: m.name,
-            title: title(`${m.name} Addresses`),
-            bottom: [
-              line({
-                series: addrs[m.key][key],
-                name: m.name,
-                unit: Unit.count,
-              }),
-            ],
-          })),
+        name: "Compare",
+        title: title("Reused Address Count"),
+        bottom: [
+          line({
+            series: addrs.reused.count.funded[key],
+            name: "Funded",
+            unit: Unit.count,
+          }),
+          line({
+            series: addrs.reused.count.total[key],
+            name: "Total",
+            color: colors.gray,
+            unit: Unit.count,
+          }),
         ],
       },
       {
-        name: "Reused",
-        tree: [
-          {
-            name: "Compare",
-            title: title("Reused Address Count"),
-            bottom: [
-              line({
-                series: addrs.reused.count.funded[key],
-                name: "Funded",
-                unit: Unit.count,
-              }),
-              line({
-                series: addrs.reused.count.total[key],
-                name: "Total",
+        name: "Funded",
+        title: title("Funded Reused Addresses"),
+        bottom: [
+          line({
+            series: addrs.reused.count.funded[key],
+            name: "Funded Reused",
+            unit: Unit.count,
+          }),
+        ],
+      },
+      {
+        name: "Total",
+        title: title("Total Reused Addresses"),
+        bottom: [
+          line({
+            series: addrs.reused.count.total[key],
+            name: "Total Reused",
+            color: colors.gray,
+            unit: Unit.count,
+          }),
+        ],
+      },
+    ];
+
+  const reusedInputsSubtree =
+    /**
+     * @param {AddressableType | "all"} key
+     * @param {(name: string) => string} title
+     */
+    (key, title) => ({
+      name: "Inputs",
+      tree: [
+        {
+          name: "Count",
+          tree: chartsFromCount({
+            pattern: addrs.reused.events.inputFromReusedAddrCount[key],
+            title,
+            metric: "Transaction Inputs from Reused Addresses",
+            unit: Unit.count,
+          }),
+        },
+        {
+          name: "Share",
+          tree: chartsFromPercentCumulative({
+            pattern: addrs.reused.events.inputFromReusedAddrShare[key],
+            title,
+            metric: "Share of Transaction Inputs from Reused Addresses",
+          }),
+        },
+      ],
+    });
+
+  const reusedOutputsSubtreeForAll =
+    /** @param {(name: string) => string} title */
+    (title) => ({
+      name: "Outputs",
+      tree: [
+        {
+          name: "Count",
+          tree: chartsFromCount({
+            pattern: addrs.reused.events.outputToReusedAddrCount.all,
+            title,
+            metric: "Transaction Outputs to Reused Addresses",
+            unit: Unit.count,
+          }),
+        },
+        {
+          name: "Share",
+          tree: chartsFromPercentCumulativeEntries({
+            entries: [
+              {
+                name: "All",
+                pattern: addrs.reused.events.outputToReusedAddrShare.all,
+              },
+              {
+                name: "Spendable",
+                pattern: addrs.reused.events.spendableOutputToReusedAddrShare,
                 color: colors.gray,
-                unit: Unit.count,
-              }),
+              },
             ],
-          },
-          {
-            name: "Funded",
-            title: title("Funded Reused Addresses"),
-            bottom: [
-              line({
-                series: addrs.reused.count.funded[key],
-                name: "Funded Reused",
-                unit: Unit.count,
-              }),
-            ],
-          },
-          {
-            name: "Total",
-            title: title("Total Reused Addresses"),
-            bottom: [
-              line({
-                series: addrs.reused.count.total[key],
-                name: "Total Reused",
-                color: colors.gray,
-                unit: Unit.count,
-              }),
-            ],
-          },
-          {
-            name: "Uses",
-            tree: chartsFromCount({
-              pattern: addrs.reused.uses.reusedAddrUseCount[key],
-              title,
-              metric: "Reused Address Uses",
+            title,
+            metric: "Share of Transaction Outputs to Reused Addresses",
+          }),
+        },
+      ],
+    });
+
+  const reusedOutputsSubtreeForType =
+    /**
+     * @param {AddressableType} key
+     * @param {(name: string) => string} title
+     */
+    (key, title) => ({
+      name: "Outputs",
+      tree: [
+        {
+          name: "Count",
+          tree: chartsFromCount({
+            pattern: addrs.reused.events.outputToReusedAddrCount[key],
+            title,
+            metric: "Transaction Outputs to Reused Addresses",
+            unit: Unit.count,
+          }),
+        },
+        {
+          name: "Share",
+          tree: chartsFromPercentCumulative({
+            pattern: addrs.reused.events.outputToReusedAddrShare[key],
+            title,
+            metric: "Share of Transaction Outputs to Reused Addresses",
+          }),
+        },
+      ],
+    });
+
+  const reusedActiveSubtreeForAll =
+    /** @param {(name: string) => string} title */
+    (title) => ({
+      name: "Active",
+      tree: [
+        {
+          name: "Count",
+          tree: averagesArray({
+            windows: addrs.reused.events.activeReusedAddrCount,
+            title,
+            metric: "Active Reused Addresses",
+            unit: Unit.count,
+          }),
+        },
+        {
+          name: "Share",
+          tree: averagesArray({
+            windows: addrs.reused.events.activeReusedAddrShare,
+            title,
+            metric: "Active Reused Address Share",
+            unit: Unit.percentage,
+          }),
+        },
+      ],
+    });
+
+  const reusedSubtreeForAll =
+    /** @param {(name: string) => string} title */
+    (title) => ({
+      name: "Reused",
+      tree: [
+        ...reusedSetEntries("all", title),
+        reusedActiveSubtreeForAll(title),
+        reusedOutputsSubtreeForAll(title),
+        reusedInputsSubtree("all", title),
+      ],
+    });
+
+  const reusedSubtreeForType =
+    /**
+     * @param {AddressableType} key
+     * @param {(name: string) => string} title
+     */
+    (key, title) => ({
+      name: "Reused",
+      tree: [
+        ...reusedSetEntries(key, title),
+        reusedOutputsSubtreeForType(key, title),
+        reusedInputsSubtree(key, title),
+      ],
+    });
+
+  const countSubtree =
+    /**
+     * @param {AddressableType | "all"} key
+     * @param {(name: string) => string} title
+     */
+    (key, title) => ({
+      name: "Count",
+      tree: [
+        {
+          name: "Compare",
+          title: title("Address Count"),
+          bottom: countMetrics.map((m) =>
+            line({
+              series: addrs[m.key][key],
+              name: m.name,
+              color: m.color,
               unit: Unit.count,
             }),
-          },
-          {
-            name: "Share",
-            tree: chartsFromPercentCumulative({
-              pattern: addrs.reused.uses.reusedAddrUsePercent[key],
-              title,
-              metric: "Share of Outputs to Reused Addresses",
+          ),
+        },
+        ...countMetrics.map((m) => ({
+          name: m.name,
+          title: title(`${m.name} Addresses`),
+          bottom: [
+            line({
+              series: addrs[m.key][key],
+              name: m.name,
+              unit: Unit.count,
             }),
-          },
-        ],
-      },
-      {
-        name: "Exposed",
-        tree: [
-          {
-            name: "Compare",
-            title: title("Quantum Exposed Address Count"),
-            bottom: [
-              line({
-                series: addrs.exposed.count.funded[key],
-                name: "Funded",
-                unit: Unit.count,
-              }),
-              line({
-                series: addrs.exposed.count.total[key],
-                name: "Total",
-                color: colors.gray,
-                unit: Unit.count,
-              }),
-            ],
-          },
-          {
-            name: "Funded",
-            title: title("Funded Quantum Exposed Address Count"),
-            bottom: [
-              line({
-                series: addrs.exposed.count.funded[key],
-                name: "Funded Exposed",
-                unit: Unit.count,
-              }),
-            ],
-          },
-          {
-            name: "Total",
-            title: title("Total Quantum Exposed Address Count"),
-            bottom: [
-              line({
-                series: addrs.exposed.count.total[key],
-                name: "Total Exposed",
-                color: colors.gray,
-                unit: Unit.count,
-              }),
-            ],
-          },
-          {
+          ],
+        })),
+      ],
+    });
+
+  const exposedSubtree =
+    /**
+     * @param {AddressableType | "all"} key
+     * @param {(name: string) => string} title
+     */
+    (key, title) => ({
+      name: "Exposed",
+      tree: [
+        {
+          name: "Compare",
+          title: title("Exposed Address Count"),
+          bottom: [
+            line({
+              series: addrs.exposed.count.funded[key],
+              name: "Funded",
+              unit: Unit.count,
+            }),
+            line({
+              series: addrs.exposed.count.total[key],
+              name: "Total",
+              color: colors.gray,
+              unit: Unit.count,
+            }),
+          ],
+        },
+        {
+          name: "Funded",
+          title: title("Funded Exposed Address Count"),
+          bottom: [
+            line({
+              series: addrs.exposed.count.funded[key],
+              name: "Funded Exposed",
+              unit: Unit.count,
+            }),
+          ],
+        },
+        {
+          name: "Total",
+          title: title("Total Exposed Address Count"),
+          bottom: [
+            line({
+              series: addrs.exposed.count.total[key],
+              name: "Total Exposed",
+              color: colors.gray,
+              unit: Unit.count,
+            }),
+          ],
+        },
+        {
+          name: "Supply",
+          title: title("Supply in Exposed Addresses"),
+          bottom: satsBtcUsd({
+            pattern: addrs.exposed.supply[key],
             name: "Supply",
-            title: title("Supply in Quantum Exposed Addresses"),
-            bottom: satsBtcUsd({
-              pattern: addrs.exposed.supply[key],
-              name: "Supply",
-            }),
-          },
-        ],
-      },
-      ...simpleDeltaTree({
-        delta: addrs.delta[key],
-        title,
-        metric: "Address Count",
-        unit: Unit.count,
-      }),
-      {
-        name: "New",
-        tree: chartsFromCount({
-          pattern: addrs.new[key],
+          }),
+        },
+      ],
+    });
+
+  const activityPerTypeEntries =
+    /**
+     * @param {AddressableType | "all"} key
+     * @param {(name: string) => string} title
+     */
+    (key, title) =>
+      activityTypes.map((t) => ({
+        name: t.name,
+        tree: averagesArray({
+          windows: addrs.activity[key][t.key],
           title,
-          metric: "New Addresses",
+          metric: `${t.name} Addresses`,
           unit: Unit.count,
         }),
-      },
-      {
-        name: "Activity",
-        tree: [
-          {
-            name: "Compare",
-            tree: ROLLING_WINDOWS.map((w) => ({
-              name: w.name,
-              title: title(`${w.title} Active Addresses`),
-              bottom: activityTypes.map((t, i) =>
+      }));
+
+  const activitySubtreeForAll =
+    /** @param {(name: string) => string} title */
+    (title) => ({
+      name: "Activity",
+      tree: [
+        {
+          name: "Compare",
+          tree: ROLLING_WINDOWS.map((w) => ({
+            name: w.name,
+            title: title(`${w.title} Active Addresses`),
+            bottom: [
+              ...activityTypes.map((t, i) =>
                 line({
-                  series: addrs.activity[key][t.key][w.key],
+                  series: addrs.activity.all[t.key][w.key],
                   name: t.name,
                   color: colors.at(i, activityTypes.length),
                   unit: Unit.count,
                 }),
               ),
-            })),
-          },
-          ...activityTypes.map((t) => ({
-            name: t.name,
-            tree: averagesArray({
-              windows: addrs.activity[key][t.key],
-              title,
-              metric: `${t.name} Addresses`,
-              unit: Unit.count,
-            }),
+              line({
+                series: addrs.reused.events.activeReusedAddrShare[w.key],
+                name: "Reused Share",
+                unit: Unit.percentage,
+              }),
+            ],
           })),
-        ],
+        },
+        ...activityPerTypeEntries("all", title),
+      ],
+    });
+
+  const activitySubtreeForType =
+    /**
+     * @param {AddressableType} key
+     * @param {(name: string) => string} title
+     */
+    (key, title) => ({
+      name: "Activity",
+      tree: [
+        {
+          name: "Compare",
+          tree: ROLLING_WINDOWS.map((w) => ({
+            name: w.name,
+            title: title(`${w.title} Active Addresses`),
+            bottom: activityTypes.map((t, i) =>
+              line({
+                series: addrs.activity[key][t.key][w.key],
+                name: t.name,
+                color: colors.at(i, activityTypes.length),
+                unit: Unit.count,
+              }),
+            ),
+          })),
+        },
+        ...activityPerTypeEntries(key, title),
+      ],
+    });
+
+  const createAddressSeriesTreeForAll = () => {
+    const title = formatCohortTitle();
+    return [
+      countSubtree("all", title),
+      {
+        name: "New",
+        tree: chartsFromCount({
+          pattern: addrs.new.all,
+          title,
+          metric: "New Addresses",
+          unit: Unit.count,
+        }),
       },
+      ...simpleDeltaTree({
+        delta: addrs.delta.all,
+        title,
+        metric: "Address Count",
+        unit: Unit.count,
+      }),
+      activitySubtreeForAll(title),
+      reusedSubtreeForAll(title),
+      exposedSubtree("all", title),
     ];
   };
+
+  const createAddressSeriesTreeForType =
+    /**
+     * @param {AddressableType} addrType
+     * @param {string} typeName
+     */
+    (addrType, typeName) => {
+      const title = formatCohortTitle(typeName);
+      return [
+        countSubtree(addrType, title),
+        {
+          name: "New",
+          tree: chartsFromCount({
+            pattern: addrs.new[addrType],
+            title,
+            metric: "New Addresses",
+            unit: Unit.count,
+          }),
+        },
+        ...simpleDeltaTree({
+          delta: addrs.delta[addrType],
+          title,
+          metric: "Address Count",
+          unit: Unit.count,
+        }),
+        activitySubtreeForType(addrType, title),
+        reusedSubtreeForType(addrType, title),
+        exposedSubtree(addrType, title),
+      ];
+    };
 
   /**
    * Build a "By Type" subtree: Compare (count / tx count / tx %) plus a
@@ -333,11 +552,19 @@ export function createNetworkSection() {
    * @param {string} args.label - Singular noun for count/tree labels ("Output" / "Prev-Out")
    * @param {Readonly<Record<K, CountPattern<number>>>} args.count
    * @param {Readonly<Record<K, CountPattern<number>>>} args.txCount
-   * @param {Readonly<Record<K, PercentRatioCumulativePattern>>} args.txPercent
+   * @param {Readonly<Record<K, PercentRatioCumulativePattern>>} args.share
+   * @param {Readonly<Record<K, PercentRatioCumulativePattern>>} args.txShare
    * @param {ReadonlyArray<{key: K, name: string, color: Color, defaultActive: boolean}>} args.types
    * @returns {PartialOptionsTree}
    */
-  const createByTypeTree = ({ label, count, txCount, txPercent, types }) => {
+  const createByTypeTree = ({
+    label,
+    count,
+    share,
+    txCount,
+    txShare,
+    types,
+  }) => {
     const lowerLabel = label.toLowerCase();
     return [
       {
@@ -375,7 +602,19 @@ export function createNetworkSection() {
             ],
           },
           {
-            name: "TX Count",
+            name: "Share",
+            tree: groupedWindowsCumulative({
+              list: types,
+              title: (n) => n,
+              metricTitle: `Share of ${label}s by Type`,
+              getWindowSeries: (t, key) => share[t.key][key].percent,
+              getCumulativeSeries: (t) => share[t.key].percent,
+              seriesFn: line,
+              unit: Unit.percentage,
+            }),
+          },
+          {
+            name: "Transaction Count",
             tree: [
               ...ROLLING_WINDOWS.map((w) => ({
                 name: w.name,
@@ -406,14 +645,14 @@ export function createNetworkSection() {
             ],
           },
           {
-            name: "TX Share",
+            name: "Transaction Share",
             tree: [
               ...ROLLING_WINDOWS.map((w) => ({
                 name: w.name,
                 title: `${w.title} Share of Transactions by ${label} Type`,
                 bottom: types.map((t) =>
                   line({
-                    series: txPercent[t.key][w.key].percent,
+                    series: txShare[t.key][w.key].percent,
                     name: t.name,
                     color: t.color,
                     unit: Unit.percentage,
@@ -426,7 +665,7 @@ export function createNetworkSection() {
                 title: `Cumulative Share of Transactions by ${label} Type`,
                 bottom: types.map((t) =>
                   line({
-                    series: txPercent[t.key].percent,
+                    series: txShare[t.key].percent,
                     name: t.name,
                     color: t.color,
                     unit: Unit.percentage,
@@ -451,7 +690,15 @@ export function createNetworkSection() {
             }),
           },
           {
-            name: "TX Count",
+            name: "Share",
+            tree: chartsFromPercentCumulative({
+              pattern: share[t.key],
+              metric: `Share of ${label}s that are ${t.name}`,
+              color: t.color,
+            }),
+          },
+          {
+            name: "Transaction Count",
             tree: chartsFromCount({
               pattern: txCount[t.key],
               metric: `Transactions with ${t.name} ${lowerLabel}`,
@@ -460,9 +707,9 @@ export function createNetworkSection() {
             }),
           },
           {
-            name: "TX Share",
+            name: "Transaction Share",
             tree: chartsFromPercentCumulative({
-              pattern: txPercent[t.key],
+              pattern: txShare[t.key],
               metric: `Share of Transactions with ${t.name} ${lowerLabel}`,
               color: t.color,
             }),
@@ -657,20 +904,25 @@ export function createNetworkSection() {
             }),
           },
           {
-            name: "Weight",
-            tree: chartsFromBlockAnd6b({
-              pattern: transactions.size.weight,
-              metric: "Transaction Weight",
-              unit: Unit.wu,
-            }),
-          },
-          {
-            name: "vSize",
-            tree: chartsFromBlockAnd6b({
-              pattern: transactions.size.vsize,
-              metric: "Transaction vSize",
-              unit: Unit.vb,
-            }),
+            name: "Size",
+            tree: [
+              {
+                name: "Weight",
+                tree: chartsFromBlockAnd6b({
+                  pattern: transactions.size.weight,
+                  metric: "Transaction Weight",
+                  unit: Unit.wu,
+                }),
+              },
+              {
+                name: "Virtual",
+                tree: chartsFromBlockAnd6b({
+                  pattern: transactions.size.vsize,
+                  metric: "Transaction vSize",
+                  unit: Unit.vb,
+                }),
+              },
+            ],
           },
           {
             name: "Versions",
@@ -757,6 +1009,14 @@ export function createNetworkSection() {
             }),
           },
           {
+            name: "Spendable",
+            tree: chartsFromCount({
+              pattern: outputs.byType.spendableOutputCount,
+              metric: "Spendable Output Count",
+              unit: Unit.count,
+            }),
+          },
+          {
             name: "Per Second",
             tree: averagesArray({
               windows: outputs.perSec,
@@ -769,8 +1029,9 @@ export function createNetworkSection() {
             tree: createByTypeTree({
               label: "Output",
               count: outputs.byType.outputCount,
+              share: outputs.byType.outputShare,
               txCount: outputs.byType.txCount,
-              txPercent: outputs.byType.txPercent,
+              txShare: outputs.byType.txShare,
               types: outputTypes,
             }),
           },
@@ -800,8 +1061,9 @@ export function createNetworkSection() {
             tree: createByTypeTree({
               label: "Prev-Out",
               count: inputs.byType.inputCount,
+              share: inputs.byType.inputShare,
               txCount: inputs.byType.txCount,
-              txPercent: inputs.byType.txPercent,
+              txShare: inputs.byType.txShare,
               types: inputTypes,
             }),
           },
@@ -839,7 +1101,7 @@ export function createNetworkSection() {
       {
         name: "Addresses",
         tree: [
-          ...createAddressSeriesTree("all"),
+          ...createAddressSeriesTreeForAll(),
           {
             name: "By Type",
             tree: [
@@ -861,7 +1123,7 @@ export function createNetworkSection() {
               },
               ...addressTypes.map((t) => ({
                 name: t.name,
-                tree: createAddressSeriesTree(t.key, t.name),
+                tree: createAddressSeriesTreeForType(t.key, t.name),
               })),
             ],
           },

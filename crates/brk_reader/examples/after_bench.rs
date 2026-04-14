@@ -24,7 +24,9 @@ use std::time::{Duration, Instant};
 use brk_error::Result;
 use brk_reader::{Reader, Receiver};
 use brk_rpc::{Auth, Client};
-use brk_types::{BlockHash, Height, ReadBlock};
+use brk_types::{Height, ReadBlock};
+
+type BlockStream = Receiver<Result<ReadBlock>>;
 
 const SCENARIOS: &[usize] = &[5, 10, 100, 1_000, 10_000];
 const REPEATS: usize = 3;
@@ -51,7 +53,7 @@ fn main() -> Result<()> {
     for &n in SCENARIOS {
         let anchor_height = Height::from(tip.saturating_sub(n as u32));
         let anchor_hash = client.get_block_hash(*anchor_height as u64)?;
-        let anchor = Some(BlockHash::from(anchor_hash));
+        let anchor = Some(anchor_hash);
 
         let mut first: Option<RunStats> = None;
         for &p in PARSER_COUNTS {
@@ -113,7 +115,7 @@ struct RunStats {
 
 fn bench<F>(repeats: usize, mut f: F) -> Result<RunStats>
 where
-    F: FnMut() -> Result<Receiver<ReadBlock>>,
+    F: FnMut() -> Result<BlockStream>,
 {
     let mut best = Duration::MAX;
     let mut total = Duration::ZERO;
@@ -124,6 +126,7 @@ where
         let recv = f()?;
         let mut n = 0;
         for block in recv.iter() {
+            let block = block?;
             std::hint::black_box(block.height());
             n += 1;
         }
@@ -175,12 +178,13 @@ struct FullRun {
 
 fn run_once<F>(mut f: F) -> Result<FullRun>
 where
-    F: FnMut() -> Result<Receiver<ReadBlock>>,
+    F: FnMut() -> Result<BlockStream>,
 {
     let start = Instant::now();
     let recv = f()?;
     let mut count = 0;
     for block in recv.iter() {
+        let block = block?;
         std::hint::black_box(block.height());
         count += 1;
     }
@@ -195,12 +199,13 @@ where
 /// the channel, which unblocks and unwinds the reader's spawned worker.
 fn run_bounded<F>(limit: usize, mut f: F) -> Result<FullRun>
 where
-    F: FnMut() -> Result<Receiver<ReadBlock>>,
+    F: FnMut() -> Result<BlockStream>,
 {
     let start = Instant::now();
     let recv = f()?;
     let mut count = 0;
     for block in recv.iter().take(limit) {
+        let block = block?;
         std::hint::black_box(block.height());
         count += 1;
     }

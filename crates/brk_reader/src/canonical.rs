@@ -1,36 +1,28 @@
-//! `CanonicalRange`: a pre-fetched map from canonical block hash to
-//! offset-from-`start`. The reader uses this as the authoritative
-//! filter for "is this block on the main chain?".
-//!
-//! Every canonical hash in the target height window is fetched from
-//! bitcoind up front via [`get_block_hashes_range`], so the scan
-//! pipeline never needs a per-block RPC call (which is what caused the
-//! original silent-drop reorg bug).
-//!
-//! [`get_block_hashes_range`]: brk_rpc::Client::get_block_hashes_range
+//! `CanonicalRange`: every canonical block hash in a height window,
+//! pre-fetched once via [`brk_rpc::Client::get_block_hashes_range`].
+//! Used as the authoritative "is this block on the main chain?"
+//! filter so the scan pipeline never needs a per-block RPC call.
 
 use brk_error::Result;
 use brk_rpc::Client;
-use brk_types::{BlockHash, BlockHashPrefix, Height};
+use brk_types::{BlockHash, Height};
 use rustc_hash::FxHashMap;
 
-/// Every canonical block hash in a contiguous height window, resolved
-/// from bitcoind once up front. `hashes[i]` is the canonical hash at
-/// height `start + i`. Lookups by hash go through `by_prefix` (8-byte
-/// key, same scheme as `brk_store`) and verify the full hash on hit.
+/// Keyed on the full 32-byte hash because a prefix collision would
+/// silently drop both blocks; the ~24 MB extra RAM is negligible
+/// against the 128 MB blk reads happening in parallel.
 pub struct CanonicalRange {
     pub start: Height,
-    hashes: Vec<BlockHash>,
-    by_prefix: FxHashMap<BlockHashPrefix, u32>,
+    by_hash: FxHashMap<BlockHash, u32>,
 }
 
 impl CanonicalRange {
     /// Resolves canonical hashes for every height strictly after
     /// `anchor` up to `tip` inclusive. `anchor = None` starts at
     /// genesis.
-    pub fn walk(client: &Client, anchor: Option<BlockHash>, tip: Height) -> Result<Self> {
+    pub fn walk(client: &Client, anchor: Option<&BlockHash>, tip: Height) -> Result<Self> {
         let start = match anchor {
-            Some(hash) => Height::from(client.get_block_header_info(&hash)?.height + 1),
+            Some(hash) => Height::from(client.get_block_header_info(hash)?.height + 1),
             None => Height::ZERO,
         };
         Self::between(client, start, tip)
@@ -41,43 +33,29 @@ impl CanonicalRange {
         if start > end {
             return Ok(Self {
                 start,
-                hashes: Vec::new(),
-                by_prefix: FxHashMap::default(),
+                by_hash: FxHashMap::default(),
             });
         }
-
-        let hashes = client.get_block_hashes_range(*start, *end)?;
-        let mut by_prefix =
-            FxHashMap::with_capacity_and_hasher(hashes.len(), Default::default());
-        by_prefix.extend(
-            hashes
-                .iter()
-                .enumerate()
-                .map(|(i, h)| (BlockHashPrefix::from(h), i as u32)),
-        );
-
-        Ok(Self {
-            start,
-            hashes,
-            by_prefix,
-        })
+        let by_hash = client
+            .get_block_hashes_range(*start, *end)?
+            .into_iter()
+            .enumerate()
+            .map(|(i, h)| (h, i as u32))
+            .collect();
+        Ok(Self { start, by_hash })
     }
 
     pub fn len(&self) -> usize {
-        self.hashes.len()
+        self.by_hash.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.hashes.is_empty()
+        self.by_hash.is_empty()
     }
 
-    /// Returns the offset-from-`start` of `hash` iff it matches the
-    /// canonical chain in this range. A prefix hit is verified against
-    /// the full hash so prefix collisions from orphaned blocks are
-    /// rejected.
+    /// Offset-from-`start` of `hash` iff it's on the canonical chain.
     #[inline]
     pub(crate) fn offset_of(&self, hash: &BlockHash) -> Option<u32> {
-        let offset = *self.by_prefix.get(&BlockHashPrefix::from(hash))?;
-        (self.hashes[offset as usize] == *hash).then_some(offset)
+        self.by_hash.get(hash).copied()
     }
 }

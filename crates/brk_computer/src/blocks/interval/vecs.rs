@@ -8,5 +8,5 @@ use crate::internal::PerBlockRollingAverage;
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct Vecs<M: StorageMode = Rw>(
-    #[traversable(flatten)] pub PerBlockRollingAverage<Timestamp, M>,
+    #[traversable(flatten)] pub PerBlockRollingAverage<Timestamp, Timestamp, M>,
 );

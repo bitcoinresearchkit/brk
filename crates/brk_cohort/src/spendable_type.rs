@@ -116,6 +116,23 @@ impl<T> SpendableType<T> {
         })
     }
 
+    pub fn get(&self, output_type: OutputType) -> &T {
+        match output_type {
+            OutputType::P2PK65 => &self.p2pk65,
+            OutputType::P2PK33 => &self.p2pk33,
+            OutputType::P2PKH => &self.p2pkh,
+            OutputType::P2MS => &self.p2ms,
+            OutputType::P2SH => &self.p2sh,
+            OutputType::P2WPKH => &self.p2wpkh,
+            OutputType::P2WSH => &self.p2wsh,
+            OutputType::P2TR => &self.p2tr,
+            OutputType::P2A => &self.p2a,
+            OutputType::Unknown => &self.unknown,
+            OutputType::Empty => &self.empty,
+            _ => unreachable!(),
+        }
+    }
+
     pub fn get_mut(&mut self, output_type: OutputType) -> &mut T {
         match output_type {
             OutputType::P2PK65 => &mut self.p2pk65,

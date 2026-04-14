@@ -22,7 +22,7 @@ import {
   satsBtcUsd,
   satsBtcUsdFullTree,
   mapCohortsWithAll,
-  groupedWindowsCumulative,
+  groupedWindowsCumulativeWithAll,
   groupedWindowsCumulativeSatsBtcUsd,
 } from "../shared.js";
 import { colors } from "../../utils/colors.js";
@@ -481,7 +481,7 @@ function groupedVolumeFolderWithAdjusted(list, all, title, getTransferVolume, ge
       ...groupedVolumeTree(list, all, title, getTransferVolume),
       {
         name: "Adjusted",
-        tree: groupedWindowsCumulative({
+        tree: groupedWindowsCumulativeWithAll({
           list, all, title, metricTitle: "Adjusted Transfer Volume",
           getWindowSeries: (c, key) => getAdjustedTransferVolume(c).sum[key],
           getCumulativeSeries: (c) => getAdjustedTransferVolume(c).cumulative,
@@ -532,7 +532,7 @@ function groupedSoprCharts(list, all, getRatio, title, prefix = "") {
  * @returns {PartialOptionsTree}
  */
 function groupedValueDestroyedTree(list, all, title, getValueDestroyed) {
-  return groupedWindowsCumulative({
+  return groupedWindowsCumulativeWithAll({
     list, all, title, metricTitle: "Value Destroyed",
     getWindowSeries: (c, key) => getValueDestroyed(c).sum[key],
     getCumulativeSeries: (c) => getValueDestroyed(c).cumulative,
@@ -637,7 +637,7 @@ function groupedActivitySharedItems(list, all, title) {
   return [
     {
       name: "Coindays Destroyed",
-      tree: groupedWindowsCumulative({
+      tree: groupedWindowsCumulativeWithAll({
         list,
         all,
         title,

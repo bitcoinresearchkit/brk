@@ -15,6 +15,7 @@ fn main() -> Result<()> {
     // Stream all blocks from genesis to the current tip.
     let i = std::time::Instant::now();
     for block in reader.after(None)?.iter() {
+        let block = block?;
         println!("{}: {}", block.height(), block.hash());
     }
     println!("Full read: {:?}", i.elapsed());

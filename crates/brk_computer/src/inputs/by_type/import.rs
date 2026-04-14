@@ -39,18 +39,28 @@ impl Vecs {
             cached_starts,
         )?;
 
-        let tx_percent = SpendableType::try_new(|_, name| {
+        let input_share = SpendableType::try_new(|_, name| {
             PercentCumulativeRolling::forced_import(
                 db,
-                &format!("tx_percent_with_{name}_prevout"),
+                &format!("{name}_prevout_share"),
+                version,
+                indexes,
+            )
+        })?;
+
+        let tx_share = SpendableType::try_new(|_, name| {
+            PercentCumulativeRolling::forced_import(
+                db,
+                &format!("tx_share_with_{name}_prevout"),
                 version,
                 indexes,
             )
         })?;
         Ok(Self {
             input_count,
+            input_share,
             tx_count,
-            tx_percent,
+            tx_share,
         })
     }
 }

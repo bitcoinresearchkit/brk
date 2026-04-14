@@ -38,7 +38,7 @@ use super::{
     },
 };
 
-const VERSION: Version = Version::new(22);
+const VERSION: Version = Version::new(23);
 
 #[derive(Traversable)]
 pub struct AddrMetricsVecs<M: StorageMode = Rw> {
@@ -151,7 +151,7 @@ impl Vecs {
         let empty_addr_count =
             AddrCountsVecs::forced_import(&db, "empty_addr_count", version, indexes)?;
         let addr_activity =
-            AddrActivityVecs::forced_import(&db, "addr_activity", version, indexes, cached_starts)?;
+            AddrActivityVecs::forced_import(&db, version, indexes, cached_starts)?;
 
         // Stored total = addr_count + empty_addr_count (global + per-type, with all derived indexes)
         let total_addr_count = TotalAddrCountVecs::forced_import(&db, version, indexes)?;
@@ -470,9 +470,12 @@ impl Vecs {
         // 6b. Compute address count sum (by addr_type -> all)
         self.addrs.funded.compute_rest(starting_indexes, exit)?;
         self.addrs.empty.compute_rest(starting_indexes, exit)?;
-        self.addrs
-            .reused
-            .compute_rest(starting_indexes, &outputs.by_type, exit)?;
+        self.addrs.reused.compute_rest(
+            starting_indexes,
+            &outputs.by_type,
+            &inputs.by_type,
+            exit,
+        )?;
         self.addrs
             .exposed
             .compute_rest(starting_indexes, prices, exit)?;

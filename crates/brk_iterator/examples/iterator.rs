@@ -19,16 +19,10 @@ fn main() -> Result<()> {
     let blocks = Blocks::new(&client, &reader);
 
     let i = Instant::now();
-    blocks
-        .range(Height::new(920040), Height::new(920041))?
-        // .start(Height::new(920040))?
-        // .end(Height::new(10))?
-        // .after(brk_types::BlockHash::try_from(
-        //     "00000000000000000000840d205cac2728740e0e7c5dc92a04c52503017c6241",
-        // )?)?
-        .for_each(|b| {
-            dbg!(b.height());
-        });
+    for block in blocks.range(Height::new(920040), Height::new(920041))? {
+        let block = block?;
+        dbg!(block.height());
+    }
     dbg!(i.elapsed());
 
     Ok(())

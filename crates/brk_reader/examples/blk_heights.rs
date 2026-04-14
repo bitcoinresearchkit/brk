@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_reader::Reader;
+use brk_reader::{BlkIndexToBlkPath, Reader};
 use brk_rpc::{Auth, Client};
 
 fn main() -> Result<()> {
@@ -11,7 +11,7 @@ fn main() -> Result<()> {
 
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
     let xor_bytes = reader.xor_bytes();
-    let blk_map = reader.blk_index_to_blk_path();
+    let blk_map = BlkIndexToBlkPath::scan(reader.blocks_dir())?;
 
     let mut prev_height: Option<u32> = None;
     let mut max_drop: u32 = 0;

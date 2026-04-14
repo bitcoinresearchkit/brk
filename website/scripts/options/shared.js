@@ -782,23 +782,22 @@ export function createPriceRatioCharts({
 // ============================================================================
 
 /**
- * Generic: rolling window charts + cumulative for grouped cohorts
- * @template {{ name: string, color: Color }} T
- * @template {{ name: string, color: Color }} A
+ * List-only primitive: rolling window charts + cumulative for a flat
+ * cohort list, no "All" aggregate. Each cohort's `defaultActive` (if
+ * present) is forwarded to `seriesFn`.
+ * @template {{ name: string, color: Color, defaultActive?: boolean }} T
  * @param {Object} args
  * @param {readonly T[]} args.list
- * @param {A} args.all
  * @param {(name: string) => string} args.title
  * @param {string} args.metricTitle
- * @param {(c: T | A, windowKey: "_24h" | "_1w" | "_1m" | "_1y") => AnySeriesPattern} args.getWindowSeries
- * @param {(c: T | A) => AnySeriesPattern} args.getCumulativeSeries
- * @param {(args: { series: AnySeriesPattern, name: string, color: Color, unit: Unit }) => AnyFetchedSeriesBlueprint} args.seriesFn
+ * @param {(c: T, windowKey: "_24h" | "_1w" | "_1m" | "_1y") => AnySeriesPattern} args.getWindowSeries
+ * @param {(c: T) => AnySeriesPattern} args.getCumulativeSeries
+ * @param {(args: { series: AnySeriesPattern, name: string, color: Color, unit: Unit, defaultActive?: boolean }) => AnyFetchedSeriesBlueprint} args.seriesFn
  * @param {Unit} args.unit
  * @returns {PartialOptionsTree}
  */
 export function groupedWindowsCumulative({
   list,
-  all,
   title,
   metricTitle,
   getWindowSeries,
@@ -810,28 +809,68 @@ export function groupedWindowsCumulative({
     ...ROLLING_WINDOWS.map((w) => ({
       name: w.name,
       title: title(`${w.title} ${metricTitle}`),
-      bottom: mapCohortsWithAll(list, all, (c) =>
+      bottom: list.map((c) =>
         seriesFn({
           series: getWindowSeries(c, w.key),
           name: c.name,
           color: c.color,
           unit,
+          defaultActive: c.defaultActive,
         }),
       ),
     })),
     {
       name: "Cumulative",
       title: title(`Cumulative ${metricTitle}`),
-      bottom: mapCohortsWithAll(list, all, (c) =>
+      bottom: list.map((c) =>
         seriesFn({
           series: getCumulativeSeries(c),
           name: c.name,
           color: c.color,
           unit,
+          defaultActive: c.defaultActive,
         }),
       ),
     },
   ];
+}
+
+/**
+ * "With all" variant: same as {@link groupedWindowsCumulative} plus an
+ * "All" aggregate appended to each chart with `defaultActive: false`.
+ * Composes on top of the primitive.
+ * @template {{ name: string, color: Color }} T
+ * @template {{ name: string, color: Color }} A
+ * @param {Object} args
+ * @param {readonly T[]} args.list
+ * @param {A} args.all
+ * @param {(name: string) => string} args.title
+ * @param {string} args.metricTitle
+ * @param {(c: T | A, windowKey: "_24h" | "_1w" | "_1m" | "_1y") => AnySeriesPattern} args.getWindowSeries
+ * @param {(c: T | A) => AnySeriesPattern} args.getCumulativeSeries
+ * @param {(args: { series: AnySeriesPattern, name: string, color: Color, unit: Unit, defaultActive?: boolean }) => AnyFetchedSeriesBlueprint} args.seriesFn
+ * @param {Unit} args.unit
+ * @returns {PartialOptionsTree}
+ */
+export function groupedWindowsCumulativeWithAll({
+  list,
+  all,
+  title,
+  metricTitle,
+  getWindowSeries,
+  getCumulativeSeries,
+  seriesFn,
+  unit,
+}) {
+  return groupedWindowsCumulative({
+    list: [...list, { ...all, name: "All", defaultActive: false }],
+    title,
+    metricTitle,
+    getWindowSeries,
+    getCumulativeSeries,
+    seriesFn,
+    unit,
+  });
 }
 
 /**
@@ -855,7 +894,7 @@ export function groupedWindowsCumulativeUsd({
   getMetric,
   seriesFn = line,
 }) {
-  return groupedWindowsCumulative({
+  return groupedWindowsCumulativeWithAll({
     list,
     all,
     title,

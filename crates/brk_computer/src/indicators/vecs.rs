@@ -7,7 +7,7 @@ use crate::internal::{PerBlock, PercentPerBlock, RatioPerBlock};
 
 #[derive(Traversable)]
 pub struct DormancyVecs<M: StorageMode = Rw> {
-    pub supply_adjusted: PerBlock<StoredF32, M>,
+    pub supply_adj: PerBlock<StoredF32, M>,
     pub flow: PerBlock<StoredF32, M>,
 }
 
@@ -20,8 +20,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub gini: PercentPerBlock<BasisPoints16, M>,
     pub rhodl_ratio: RatioPerBlock<BasisPoints32, M>,
     pub thermo_cap_multiple: RatioPerBlock<BasisPoints32, M>,
-    pub coindays_destroyed_supply_adjusted: PerBlock<StoredF32, M>,
-    pub coinyears_destroyed_supply_adjusted: PerBlock<StoredF32, M>,
+    pub coindays_destroyed_supply_adj: PerBlock<StoredF32, M>,
+    pub coinyears_destroyed_supply_adj: PerBlock<StoredF32, M>,
     pub dormancy: DormancyVecs<M>,
     pub stock_to_flow: PerBlock<StoredF32, M>,
     pub seller_exhaustion: PerBlock<StoredF32, M>,

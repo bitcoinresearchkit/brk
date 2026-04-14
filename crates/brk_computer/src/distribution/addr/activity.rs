@@ -7,12 +7,13 @@
 //! | `receiving` | Unique addresses that received this block |
 //! | `sending` | Unique addresses that sent this block |
 //! | `reactivated` | Addresses that were empty and now have funds |
-//! | `both` | Addresses that both sent AND received same block |
+//! | `bidirectional` | Addresses that both sent AND received in same block |
+//! | `active` | Distinct addresses involved (sent ∪ received) |
 
 use brk_cohort::ByAddrType;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, StoredU32, Version};
+use brk_types::{Height, StoredU32, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
@@ -28,7 +29,7 @@ pub struct BlockActivityCounts {
     pub reactivated: u32,
     pub sending: u32,
     pub receiving: u32,
-    pub both: u32,
+    pub bidirectional: u32,
 }
 
 impl BlockActivityCounts {
@@ -56,7 +57,7 @@ impl AddrTypeToActivityCounts {
             total.reactivated += counts.reactivated;
             total.sending += counts.sending;
             total.receiving += counts.receiving;
-            total.both += counts.both;
+            total.bidirectional += counts.bidirectional;
         }
         total
     }
@@ -65,16 +66,25 @@ impl AddrTypeToActivityCounts {
 /// Activity count vectors for a single category (e.g., one address type or "all").
 #[derive(Traversable)]
 pub struct ActivityCountVecs<M: StorageMode = Rw> {
-    pub reactivated: PerBlockRollingAverage<StoredU32, M>,
-    pub sending: PerBlockRollingAverage<StoredU32, M>,
-    pub receiving: PerBlockRollingAverage<StoredU32, M>,
-    pub both: PerBlockRollingAverage<StoredU32, M>,
+    pub reactivated: PerBlockRollingAverage<StoredU32, StoredU64, M>,
+    pub sending: PerBlockRollingAverage<StoredU32, StoredU64, M>,
+    pub receiving: PerBlockRollingAverage<StoredU32, StoredU64, M>,
+    pub bidirectional: PerBlockRollingAverage<StoredU32, StoredU64, M>,
+    /// Distinct addresses involved in this block (sent ∪ received),
+    /// computed at push time as `sending + receiving - bidirectional`
+    /// via inclusion-exclusion. For per-type instances this is
+    /// per-type. For the `all` aggregate it's the cross-type total.
+    pub active: PerBlockRollingAverage<StoredU32, StoredU64, M>,
 }
 
 impl ActivityCountVecs {
+    /// `prefix` is prepended to each field's disk name. Use `""` for the
+    /// "all" aggregate and `"{type}_"` for per-address-type instances.
+    /// Field names are suffixed with `_addrs` so the final disk series
+    /// are e.g. `active_addrs`, `p2tr_bidirectional_addrs`.
     pub(crate) fn forced_import(
         db: &Database,
-        name: &str,
+        prefix: &str,
         version: Version,
         indexes: &indexes::Vecs,
         cached_starts: &Windows<&WindowStartVec>,
@@ -82,28 +92,35 @@ impl ActivityCountVecs {
         Ok(Self {
             reactivated: PerBlockRollingAverage::forced_import(
                 db,
-                &format!("{name}_reactivated"),
+                &format!("{prefix}reactivated_addrs"),
                 version,
                 indexes,
                 cached_starts,
             )?,
             sending: PerBlockRollingAverage::forced_import(
                 db,
-                &format!("{name}_sending"),
+                &format!("{prefix}sending_addrs"),
                 version,
                 indexes,
                 cached_starts,
             )?,
             receiving: PerBlockRollingAverage::forced_import(
                 db,
-                &format!("{name}_receiving"),
+                &format!("{prefix}receiving_addrs"),
                 version,
                 indexes,
                 cached_starts,
             )?,
-            both: PerBlockRollingAverage::forced_import(
+            bidirectional: PerBlockRollingAverage::forced_import(
                 db,
-                &format!("{name}_both"),
+                &format!("{prefix}bidirectional_addrs"),
+                version,
+                indexes,
+                cached_starts,
+            )?,
+            active: PerBlockRollingAverage::forced_import(
+                db,
+                &format!("{prefix}active_addrs"),
                 version,
                 indexes,
                 cached_starts,
@@ -117,7 +134,8 @@ impl ActivityCountVecs {
             .len()
             .min(self.sending.block.len())
             .min(self.receiving.block.len())
-            .min(self.both.block.len())
+            .min(self.bidirectional.block.len())
+            .min(self.active.block.len())
     }
 
     pub(crate) fn par_iter_height_mut(
@@ -125,9 +143,10 @@ impl ActivityCountVecs {
     ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
             &mut self.reactivated.block as &mut dyn AnyStoredVec,
-            &mut self.sending.block as &mut dyn AnyStoredVec,
-            &mut self.receiving.block as &mut dyn AnyStoredVec,
-            &mut self.both.block as &mut dyn AnyStoredVec,
+            &mut self.sending.block,
+            &mut self.receiving.block,
+            &mut self.bidirectional.block,
+            &mut self.active.block,
         ]
         .into_par_iter()
     }
@@ -136,7 +155,8 @@ impl ActivityCountVecs {
         self.reactivated.block.reset()?;
         self.sending.block.reset()?;
         self.receiving.block.reset()?;
-        self.both.block.reset()?;
+        self.bidirectional.block.reset()?;
+        self.active.block.reset()?;
         Ok(())
     }
 
@@ -145,14 +165,19 @@ impl ActivityCountVecs {
         self.reactivated.block.push(counts.reactivated.into());
         self.sending.block.push(counts.sending.into());
         self.receiving.block.push(counts.receiving.into());
-        self.both.block.push(counts.both.into());
+        self.bidirectional
+            .block
+            .push(counts.bidirectional.into());
+        let active = counts.sending + counts.receiving - counts.bidirectional;
+        self.active.block.push(active.into());
     }
 
     pub(crate) fn compute_rest(&mut self, max_from: Height, exit: &Exit) -> Result<()> {
         self.reactivated.compute_rest(max_from, exit)?;
         self.sending.compute_rest(max_from, exit)?;
         self.receiving.compute_rest(max_from, exit)?;
-        self.both.compute_rest(max_from, exit)?;
+        self.bidirectional.compute_rest(max_from, exit)?;
+        self.active.compute_rest(max_from, exit)?;
         Ok(())
     }
 }
@@ -171,7 +196,6 @@ impl From<ByAddrType<ActivityCountVecs>> for AddrTypeToActivityCountVecs {
 impl AddrTypeToActivityCountVecs {
     pub(crate) fn forced_import(
         db: &Database,
-        name: &str,
         version: Version,
         indexes: &indexes::Vecs,
         cached_starts: &Windows<&WindowStartVec>,
@@ -180,7 +204,7 @@ impl AddrTypeToActivityCountVecs {
             |type_name| {
                 ActivityCountVecs::forced_import(
                     db,
-                    &format!("{type_name}_{name}"),
+                    &format!("{type_name}_"),
                     version,
                     indexes,
                     cached_starts,
@@ -205,7 +229,8 @@ impl AddrTypeToActivityCountVecs {
             vecs.push(&mut type_vecs.reactivated.block);
             vecs.push(&mut type_vecs.sending.block);
             vecs.push(&mut type_vecs.receiving.block);
-            vecs.push(&mut type_vecs.both.block);
+            vecs.push(&mut type_vecs.bidirectional.block);
+            vecs.push(&mut type_vecs.active.block);
         }
         vecs.into_par_iter()
     }
@@ -243,16 +268,14 @@ pub struct AddrActivityVecs<M: StorageMode = Rw> {
 impl AddrActivityVecs {
     pub(crate) fn forced_import(
         db: &Database,
-        name: &str,
         version: Version,
         indexes: &indexes::Vecs,
         cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
         Ok(Self {
-            all: ActivityCountVecs::forced_import(db, name, version, indexes, cached_starts)?,
+            all: ActivityCountVecs::forced_import(db, "", version, indexes, cached_starts)?,
             by_addr_type: AddrTypeToActivityCountVecs::forced_import(
                 db,
-                name,
                 version,
                 indexes,
                 cached_starts,

@@ -25,7 +25,7 @@ import {
   flatMapCohorts,
   mapCohortsWithAll,
   flatMapCohortsWithAll,
-  groupedWindowsCumulative,
+  groupedWindowsCumulativeWithAll,
 } from "../shared.js";
 import { colors } from "../../utils/colors.js";
 import { priceLines } from "../constants.js";
@@ -67,7 +67,7 @@ function groupedOutputsFolder(list, all, title) {
       },
       {
         name: "Spent",
-        tree: groupedWindowsCumulative({
+        tree: groupedWindowsCumulativeWithAll({
           list, all, title, metricTitle: "Spent UTXO Count",
           getWindowSeries: (c, key) => c.tree.outputs.spentCount.sum[key],
           getCumulativeSeries: (c) => c.tree.outputs.spentCount.cumulative,

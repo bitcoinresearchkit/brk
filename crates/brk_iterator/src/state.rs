@@ -12,8 +12,7 @@ pub enum State {
         prev_hash: Option<BlockHash>,
     },
     Reader {
-        receiver: Receiver<ReadBlock>,
-        after_hash: Option<BlockHash>,
+        receiver: Receiver<Result<ReadBlock>>,
     },
 }
 
@@ -36,15 +35,26 @@ impl State {
         }
     }
 
+    /// `after_hash` selects between the two Reader entry points:
+    ///
+    /// * `Some(anchor)` → [`Reader::after`], which seeds the pipeline's
+    ///   continuity check with `anchor` so the very first emitted
+    ///   block is verified against it. This is what stops a stale
+    ///   anchor (tip of a reorged-out chain) from silently producing
+    ///   a stitched stream.
+    /// * `None` → [`Reader::range`], which has no anchor to verify
+    ///   against and just streams the canonical blocks at the given
+    ///   heights.
     pub fn new_reader(
         reader: Reader,
         start: Height,
         end: Height,
         after_hash: Option<BlockHash>,
     ) -> Result<Self> {
-        Ok(State::Reader {
-            receiver: reader.range(start, end)?,
-            after_hash,
-        })
+        let receiver = match after_hash {
+            Some(hash) => reader.after(Some(hash))?,
+            None => reader.range(start, end)?,
+        };
+        Ok(State::Reader { receiver })
     }
 }

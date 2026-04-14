@@ -85,8 +85,17 @@ impl Vecs {
                 .compute_rest(starting_indexes.height, exit)?;
         }
 
+        for (otype, source) in self.input_count.by_type.iter_typed() {
+            self.input_share.get_mut(otype).compute_count_ratio(
+                source,
+                &self.input_count.all,
+                starting_indexes.height,
+                exit,
+            )?;
+        }
+
         for (otype, source) in self.tx_count.by_type.iter_typed() {
-            self.tx_percent.get_mut(otype).compute_count_ratio(
+            self.tx_share.get_mut(otype).compute_count_ratio(
                 source,
                 &self.tx_count.all,
                 starting_indexes.height,

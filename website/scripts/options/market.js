@@ -1059,7 +1059,7 @@ export function createMarketSection() {
                 title: "Dormancy",
                 bottom: [
                   line({
-                    series: indicators.dormancy.supplyAdjusted,
+                    series: indicators.dormancy.supplyAdj,
                     name: "Supply Adjusted",
                     color: colors.bitcoin,
                     unit: Unit.ratio,
@@ -1090,7 +1090,7 @@ export function createMarketSection() {
                 title: "Coindays Destroyed (Supply Adjusted)",
                 bottom: [
                   line({
-                    series: indicators.coindaysDestroyedSupplyAdjusted,
+                    series: indicators.coindaysDestroyedSupplyAdj,
                     name: "CDD SA",
                     color: colors.bitcoin,
                     unit: Unit.ratio,
@@ -1102,7 +1102,7 @@ export function createMarketSection() {
                 title: "Coinyears Destroyed (Supply Adjusted)",
                 bottom: [
                   line({
-                    series: indicators.coinyearsDestroyedSupplyAdjusted,
+                    series: indicators.coinyearsDestroyedSupplyAdj,
                     name: "CYD SA",
                     color: colors.bitcoin,
                     unit: Unit.ratio,

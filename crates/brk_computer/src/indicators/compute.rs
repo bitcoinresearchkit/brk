@@ -90,7 +90,7 @@ impl Vecs {
         let supply_total_sats = &all_metrics.supply.total.sats.height;
 
         // Supply-Adjusted CDD = sum_24h(CDD) / circulating_supply_btc
-        self.coindays_destroyed_supply_adjusted
+        self.coindays_destroyed_supply_adj
             .height
             .compute_transform2(
                 starting_indexes.height,
@@ -108,7 +108,7 @@ impl Vecs {
             )?;
 
         // Supply-Adjusted CYD = CYD / circulating_supply_btc
-        self.coinyears_destroyed_supply_adjusted
+        self.coinyears_destroyed_supply_adj
             .height
             .compute_transform2(
                 starting_indexes.height,
@@ -126,7 +126,7 @@ impl Vecs {
             )?;
 
         // Supply-Adjusted Dormancy = dormancy / circulating_supply_btc
-        self.dormancy.supply_adjusted.height.compute_transform2(
+        self.dormancy.supply_adj.height.compute_transform2(
             starting_indexes.height,
             &all_activity.dormancy._24h.height,
             supply_total_sats,

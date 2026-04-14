@@ -14,7 +14,7 @@ use brk_rpc::Client;
 use brk_types::{BlockHash, Height};
 use fjall::PersistMode;
 use parking_lot::RwLock;
-use tracing::{debug, info};
+use tracing::{debug, error, info};
 use vecdb::{
     Exit, RawDBError, ReadOnlyClone, ReadableVec, Ro, Rw, StorageMode, WritableVec, unlikely,
 };
@@ -237,6 +237,18 @@ impl Indexer {
         let stores = &mut self.stores;
 
         for block in reader.after(prev_hash)?.iter() {
+            let block = match block {
+                Ok(block) => block,
+                Err(e) => {
+                    // The reader hit an unrecoverable mid-stream issue
+                    // (chain break, parse failure, missing blocks).
+                    // Stop cleanly so what we've already indexed gets
+                    // flushed in the post-loop export — the next
+                    // `index` call will resume from the new tip.
+                    error!("Reader stream stopped early: {e}");
+                    break;
+                }
+            };
             let height = block.height();
 
             if unlikely(height.is_multiple_of(100)) {

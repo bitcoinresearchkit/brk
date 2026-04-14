@@ -2653,6 +2653,24 @@ class CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern:
     """Pattern struct for repeated tree structure."""
     pass
 
+class EmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.empty: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'empty_outputs_output'))
+        self.op_return: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'op_return_output'))
+        self.p2a: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2a_output'))
+        self.p2ms: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2ms_output'))
+        self.p2pk33: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2pk33_output'))
+        self.p2pk65: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2pk65_output'))
+        self.p2pkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2pkh_output'))
+        self.p2sh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2sh_output'))
+        self.p2tr: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2tr_output'))
+        self.p2wpkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2wpkh_output'))
+        self.p2wsh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2wsh_output'))
+        self.unknown: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'unknown_outputs_output'))
+
 class AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -2669,6 +2687,23 @@ class AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
         self.pct75: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, _m(acc, 'pct75'))
         self.pct90: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, _m(acc, 'pct90'))
         self.sum: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, _m(acc, 'sum'))
+
+class EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.empty: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'empty_outputs_prevout'))
+        self.p2a: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2a_prevout'))
+        self.p2ms: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2ms_prevout'))
+        self.p2pk33: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2pk33_prevout'))
+        self.p2pk65: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2pk65_prevout'))
+        self.p2pkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2pkh_prevout'))
+        self.p2sh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2sh_prevout'))
+        self.p2tr: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2tr_prevout'))
+        self.p2wpkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2wpkh_prevout'))
+        self.p2wsh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2wsh_prevout'))
+        self.unknown: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'unknown_outputs_prevout'))
 
 class AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
@@ -2716,6 +2751,21 @@ class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3:
         self.p2tr: SeriesPattern1[StoredU64] = SeriesPattern1(client, _p('p2tr', acc))
         self.p2wpkh: SeriesPattern1[StoredU64] = SeriesPattern1(client, _p('p2wpkh', acc))
         self.p2wsh: SeriesPattern1[StoredU64] = SeriesPattern1(client, _p('p2wsh', acc))
+
+class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.all: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, acc)
+        self.p2a: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _p('p2a', acc))
+        self.p2pk33: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _p('p2pk33', acc))
+        self.p2pk65: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _p('p2pk65', acc))
+        self.p2pkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _p('p2pkh', acc))
+        self.p2sh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _p('p2sh', acc))
+        self.p2tr: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _p('p2tr', acc))
+        self.p2wpkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _p('p2wpkh', acc))
+        self.p2wsh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _p('p2wsh', acc))
 
 class AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
     """Pattern struct for repeated tree structure."""
@@ -2949,6 +2999,17 @@ class _1m1w1y24hBlockPattern:
         self._1y: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'average_1y'))
         self._24h: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'average_24h'))
         self.block: SeriesPattern18[StoredU32] = SeriesPattern18(client, acc)
+
+class ActiveBidirectionalReactivatedReceivingSendingPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.active: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, _m(acc, 'active_addrs'))
+        self.bidirectional: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, _m(acc, 'bidirectional_addrs'))
+        self.reactivated: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, _m(acc, 'reactivated_addrs'))
+        self.receiving: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, _m(acc, 'receiving_addrs'))
+        self.sending: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, _m(acc, 'sending_addrs'))
 
 class ActivityOutputsRealizedSupplyUnrealizedPattern:
     """Pattern struct for repeated tree structure."""
@@ -3199,16 +3260,6 @@ class BlockCumulativeDeltaSumPattern:
         self.cumulative: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'cumulative'))
         self.delta: AbsoluteRatePattern2 = AbsoluteRatePattern2(client, _m(acc, 'delta'))
         self.sum: _1m1w1y24hPattern5 = _1m1w1y24hPattern5(client, _m(acc, 'sum'))
-
-class BothReactivatedReceivingSendingPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.both: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, _m(acc, 'both'))
-        self.reactivated: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, _m(acc, 'reactivated'))
-        self.receiving: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, _m(acc, 'receiving'))
-        self.sending: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, _m(acc, 'sending'))
 
 class BtcCentsSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
@@ -3930,6 +3981,22 @@ class SeriesTree_Inputs_ByType_InputCount:
         self.unknown: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'unknown_outputs_prevout_count')
         self.empty: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'empty_outputs_prevout_count')
 
+class SeriesTree_Inputs_ByType_InputShare:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.p2pk65: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pk65_prevout_share')
+        self.p2pk33: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pk33_prevout_share')
+        self.p2pkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pkh_prevout_share')
+        self.p2ms: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2ms_prevout_share')
+        self.p2sh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2sh_prevout_share')
+        self.p2wpkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2wpkh_prevout_share')
+        self.p2wsh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2wsh_prevout_share')
+        self.p2tr: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2tr_prevout_share')
+        self.p2a: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2a_prevout_share')
+        self.unknown: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'unknown_outputs_prevout_share')
+        self.empty: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'empty_outputs_prevout_share')
+
 class SeriesTree_Inputs_ByType_TxCount:
     """Series tree node."""
     
@@ -3947,29 +4014,14 @@ class SeriesTree_Inputs_ByType_TxCount:
         self.unknown: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'tx_count_with_unknown_outputs_prevout')
         self.empty: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'tx_count_with_empty_outputs_prevout')
 
-class SeriesTree_Inputs_ByType_TxPercent:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.p2pk65: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2pk65_prevout')
-        self.p2pk33: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2pk33_prevout')
-        self.p2pkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2pkh_prevout')
-        self.p2ms: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2ms_prevout')
-        self.p2sh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2sh_prevout')
-        self.p2wpkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2wpkh_prevout')
-        self.p2wsh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2wsh_prevout')
-        self.p2tr: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2tr_prevout')
-        self.p2a: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2a_prevout')
-        self.unknown: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_unknown_outputs_prevout')
-        self.empty: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_empty_outputs_prevout')
-
 class SeriesTree_Inputs_ByType:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.input_count: SeriesTree_Inputs_ByType_InputCount = SeriesTree_Inputs_ByType_InputCount(client)
+        self.input_share: SeriesTree_Inputs_ByType_InputShare = SeriesTree_Inputs_ByType_InputShare(client)
         self.tx_count: SeriesTree_Inputs_ByType_TxCount = SeriesTree_Inputs_ByType_TxCount(client)
-        self.tx_percent: SeriesTree_Inputs_ByType_TxPercent = SeriesTree_Inputs_ByType_TxPercent(client)
+        self.tx_share: EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2 = EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2(client, 'tx_share_with')
 
 class SeriesTree_Inputs:
     """Series tree node."""
@@ -4027,30 +4079,32 @@ class SeriesTree_Outputs_ByType_OutputCount:
         self.empty: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'empty_outputs_output_count')
         self.op_return: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'op_return_output_count')
 
-class SeriesTree_Outputs_ByType_TxPercent:
+class SeriesTree_Outputs_ByType_OutputShare:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.p2pk65: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2pk65_output')
-        self.p2pk33: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2pk33_output')
-        self.p2pkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2pkh_output')
-        self.p2ms: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2ms_output')
-        self.p2sh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2sh_output')
-        self.p2wpkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2wpkh_output')
-        self.p2wsh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2wsh_output')
-        self.p2tr: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2tr_output')
-        self.p2a: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_p2a_output')
-        self.unknown: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_unknown_outputs_output')
-        self.empty: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_empty_outputs_output')
-        self.op_return: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'tx_percent_with_op_return_output')
+        self.p2pk65: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pk65_output_share')
+        self.p2pk33: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pk33_output_share')
+        self.p2pkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pkh_output_share')
+        self.p2ms: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2ms_output_share')
+        self.p2sh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2sh_output_share')
+        self.p2wpkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2wpkh_output_share')
+        self.p2wsh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2wsh_output_share')
+        self.p2tr: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2tr_output_share')
+        self.p2a: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2a_output_share')
+        self.unknown: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'unknown_outputs_output_share')
+        self.empty: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'empty_outputs_output_share')
+        self.op_return: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'op_return_output_share')
 
 class SeriesTree_Outputs_ByType:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.output_count: SeriesTree_Outputs_ByType_OutputCount = SeriesTree_Outputs_ByType_OutputCount(client)
+        self.spendable_output_count: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'spendable_output_count')
+        self.output_share: SeriesTree_Outputs_ByType_OutputShare = SeriesTree_Outputs_ByType_OutputShare(client)
         self.tx_count: AllEmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern = AllEmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern(client, 'tx_count')
-        self.tx_percent: SeriesTree_Outputs_ByType_TxPercent = SeriesTree_Outputs_ByType_TxPercent(client)
+        self.tx_share: EmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2 = EmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2(client, 'tx_share_with')
 
 class SeriesTree_Outputs_Value:
     """Series tree node."""
@@ -4161,47 +4215,58 @@ class SeriesTree_Addrs_Data:
         self.funded: SeriesPattern34[FundedAddrData] = SeriesPattern34(client, 'funded_addr_data')
         self.empty: SeriesPattern35[EmptyAddrData] = SeriesPattern35(client, 'empty_addr_data')
 
+class SeriesTree_Addrs_Activity_All:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.reactivated: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, 'reactivated_addrs')
+        self.sending: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, 'sending_addrs')
+        self.receiving: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, 'receiving_addrs')
+        self.bidirectional: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, 'bidirectional_addrs')
+        self.active: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, 'active_addrs')
+
 class SeriesTree_Addrs_Activity:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.all: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'addr_activity')
-        self.p2pk65: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2pk65_addr_activity')
-        self.p2pk33: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2pk33_addr_activity')
-        self.p2pkh: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2pkh_addr_activity')
-        self.p2sh: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2sh_addr_activity')
-        self.p2wpkh: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2wpkh_addr_activity')
-        self.p2wsh: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2wsh_addr_activity')
-        self.p2tr: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2tr_addr_activity')
-        self.p2a: BothReactivatedReceivingSendingPattern = BothReactivatedReceivingSendingPattern(client, 'p2a_addr_activity')
+        self.all: SeriesTree_Addrs_Activity_All = SeriesTree_Addrs_Activity_All(client)
+        self.p2pk65: ActiveBidirectionalReactivatedReceivingSendingPattern = ActiveBidirectionalReactivatedReceivingSendingPattern(client, 'p2pk65')
+        self.p2pk33: ActiveBidirectionalReactivatedReceivingSendingPattern = ActiveBidirectionalReactivatedReceivingSendingPattern(client, 'p2pk33')
+        self.p2pkh: ActiveBidirectionalReactivatedReceivingSendingPattern = ActiveBidirectionalReactivatedReceivingSendingPattern(client, 'p2pkh')
+        self.p2sh: ActiveBidirectionalReactivatedReceivingSendingPattern = ActiveBidirectionalReactivatedReceivingSendingPattern(client, 'p2sh')
+        self.p2wpkh: ActiveBidirectionalReactivatedReceivingSendingPattern = ActiveBidirectionalReactivatedReceivingSendingPattern(client, 'p2wpkh')
+        self.p2wsh: ActiveBidirectionalReactivatedReceivingSendingPattern = ActiveBidirectionalReactivatedReceivingSendingPattern(client, 'p2wsh')
+        self.p2tr: ActiveBidirectionalReactivatedReceivingSendingPattern = ActiveBidirectionalReactivatedReceivingSendingPattern(client, 'p2tr')
+        self.p2a: ActiveBidirectionalReactivatedReceivingSendingPattern = ActiveBidirectionalReactivatedReceivingSendingPattern(client, 'p2a')
 
-class SeriesTree_Addrs_Reused_Uses_ReusedAddrUsePercent:
+class SeriesTree_Addrs_Reused_Events_ActiveReusedAddrShare:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.all: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'reused_addr_use_percent')
-        self.p2pk65: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pk65_reused_addr_use_percent')
-        self.p2pk33: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pk33_reused_addr_use_percent')
-        self.p2pkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pkh_reused_addr_use_percent')
-        self.p2sh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2sh_reused_addr_use_percent')
-        self.p2wpkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2wpkh_reused_addr_use_percent')
-        self.p2wsh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2wsh_reused_addr_use_percent')
-        self.p2tr: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2tr_reused_addr_use_percent')
-        self.p2a: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2a_reused_addr_use_percent')
+        self.block: SeriesPattern18[StoredF32] = SeriesPattern18(client, 'active_reused_addr_share')
+        self._24h: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'active_reused_addr_share_average_24h')
+        self._1w: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'active_reused_addr_share_average_1w')
+        self._1m: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'active_reused_addr_share_average_1m')
+        self._1y: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'active_reused_addr_share_average_1y')
 
-class SeriesTree_Addrs_Reused_Uses:
+class SeriesTree_Addrs_Reused_Events:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.reused_addr_use_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(client, 'reused_addr_use_count')
-        self.reused_addr_use_percent: SeriesTree_Addrs_Reused_Uses_ReusedAddrUsePercent = SeriesTree_Addrs_Reused_Uses_ReusedAddrUsePercent(client)
+        self.output_to_reused_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(client, 'output_to_reused_addr_count')
+        self.output_to_reused_addr_share: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(client, 'output_to_reused_addr_share')
+        self.spendable_output_to_reused_addr_share: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'spendable_output_to_reused_addr_share')
+        self.input_from_reused_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(client, 'input_from_reused_addr_count')
+        self.input_from_reused_addr_share: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(client, 'input_from_reused_addr_share')
+        self.active_reused_addr_count: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, 'active_reused_addr_count')
+        self.active_reused_addr_share: SeriesTree_Addrs_Reused_Events_ActiveReusedAddrShare = SeriesTree_Addrs_Reused_Events_ActiveReusedAddrShare(client)
 
 class SeriesTree_Addrs_Reused:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
         self.count: FundedTotalPattern = FundedTotalPattern(client, 'reused_addr_count')
-        self.uses: SeriesTree_Addrs_Reused_Uses = SeriesTree_Addrs_Reused_Uses(client)
+        self.events: SeriesTree_Addrs_Reused_Events = SeriesTree_Addrs_Reused_Events(client)
 
 class SeriesTree_Addrs_Exposed_Supply:
     """Series tree node."""
@@ -4748,7 +4813,7 @@ class SeriesTree_Indicators_Dormancy:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.supply_adjusted: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'dormancy_supply_adjusted')
+        self.supply_adj: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'dormancy_supply_adj')
         self.flow: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'dormancy_flow')
 
 class SeriesTree_Indicators_RealizedEnvelope:
@@ -4775,8 +4840,8 @@ class SeriesTree_Indicators:
         self.gini: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, 'gini')
         self.rhodl_ratio: BpsRatioPattern2 = BpsRatioPattern2(client, 'rhodl_ratio')
         self.thermo_cap_multiple: BpsRatioPattern2 = BpsRatioPattern2(client, 'thermo_cap_multiple')
-        self.coindays_destroyed_supply_adjusted: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'coindays_destroyed_supply_adjusted')
-        self.coinyears_destroyed_supply_adjusted: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'coinyears_destroyed_supply_adjusted')
+        self.coindays_destroyed_supply_adj: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'coindays_destroyed_supply_adj')
+        self.coinyears_destroyed_supply_adj: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'coinyears_destroyed_supply_adj')
         self.dormancy: SeriesTree_Indicators_Dormancy = SeriesTree_Indicators_Dormancy(client)
         self.stock_to_flow: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'stock_to_flow')
         self.seller_exhaustion: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'seller_exhaustion')

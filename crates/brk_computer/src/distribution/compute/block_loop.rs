@@ -13,7 +13,8 @@ use crate::{
     distribution::{
         addr::{
             AddrTypeToActivityCounts, AddrTypeToAddrCount, AddrTypeToExposedAddrCount,
-            AddrTypeToExposedAddrSupply, AddrTypeToReusedAddrCount, AddrTypeToReusedAddrUseCount,
+            AddrTypeToExposedAddrSupply, AddrTypeToReusedAddrCount,
+            AddrTypeToReusedAddrEventCount,
         },
         block::{
             AddrCache, InputsResult, process_inputs, process_outputs, process_received,
@@ -228,8 +229,16 @@ pub(crate) fn process_blocks(
 
     // Track activity counts - reset each block
     let mut activity_counts = AddrTypeToActivityCounts::default();
-    // Reused-use count - per-block flow, reset each block
-    let mut reused_addr_use_counts = AddrTypeToReusedAddrUseCount::default();
+    // Reused-addr event counts (receive + spend side). Per-block
+    // flow, reset each block.
+    let mut output_to_reused_addr_counts = AddrTypeToReusedAddrEventCount::default();
+    let mut input_from_reused_addr_counts = AddrTypeToReusedAddrEventCount::default();
+    // Distinct addresses active this block whose lifetime
+    // funded_txo_count > 1 after this block's events. Incremented in
+    // process_received for every receiver that ends up reused, and in
+    // process_sent for every sender that's reused AND didn't also
+    // receive this block (deduped via `received_addrs`).
+    let mut active_reused_addr_counts = AddrTypeToReusedAddrEventCount::default();
 
     debug!("creating AddrCache");
     let mut cache = AddrCache::new();
@@ -302,7 +311,9 @@ pub(crate) fn process_blocks(
 
         // Reset per-block activity counts
         activity_counts.reset();
-        reused_addr_use_counts.reset();
+        output_to_reused_addr_counts.reset();
+        input_from_reused_addr_counts.reset();
+        active_reused_addr_counts.reset();
 
         // Process outputs, inputs, and tick-tock in parallel via rayon::join.
         // Collection (build tx_index mappings + bulk mmap reads) is merged into the
@@ -474,7 +485,8 @@ pub(crate) fn process_blocks(
                     &mut activity_counts,
                     &mut reused_addr_counts,
                     &mut total_reused_addr_counts,
-                    &mut reused_addr_use_counts,
+                    &mut output_to_reused_addr_counts,
+                    &mut active_reused_addr_counts,
                     &mut exposed_addr_counts,
                     &mut total_exposed_addr_counts,
                     &mut exposed_addr_supply,
@@ -491,6 +503,8 @@ pub(crate) fn process_blocks(
                     &mut empty_addr_counts,
                     &mut activity_counts,
                     &mut reused_addr_counts,
+                    &mut input_from_reused_addr_counts,
+                    &mut active_reused_addr_counts,
                     &mut exposed_addr_counts,
                     &mut total_exposed_addr_counts,
                     &mut exposed_addr_supply,
@@ -524,7 +538,16 @@ pub(crate) fn process_blocks(
             total_reused_addr_counts.sum(),
             total_reused_addr_counts.values().copied(),
         );
-        vecs.addrs.reused.uses.push_height(&reused_addr_use_counts);
+        let activity_totals = activity_counts.totals();
+        let active_addr_count = activity_totals.sending + activity_totals.receiving
+            - activity_totals.bidirectional;
+        let active_reused = u32::try_from(active_reused_addr_counts.sum()).unwrap();
+        vecs.addrs.reused.events.push_height(
+            &output_to_reused_addr_counts,
+            &input_from_reused_addr_counts,
+            active_addr_count,
+            active_reused,
+        );
         vecs.addrs.exposed.count.funded.push_height(
             exposed_addr_counts.sum(),
             exposed_addr_counts.values().copied(),
@@ -609,7 +632,7 @@ fn push_cohort_states(
     height: Height,
     height_price: Cents,
 ) {
-    // Phase 1: push + unrealized (no reset yet — states still needed for aggregation)
+    // Phase 1: push + unrealized (no reset yet; states still needed for aggregation)
     rayon::join(
         || {
             utxo_cohorts.par_iter_separate_mut().for_each(|v| {
