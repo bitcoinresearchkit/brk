@@ -4,13 +4,12 @@ use brk_types::{Cents, Height, Indexes, StoredI8, Version};
 use vecdb::{AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
-    cointime, distribution, indexes,
+    indexes,
     internal::{PerBlock, Price, RatioPerBlockPercentiles},
-    prices,
 };
 
 #[derive(Traversable)]
-pub struct RealizedEnvelope<M: StorageMode = Rw> {
+pub struct RarityMeterInner<M: StorageMode = Rw> {
     pub pct0_5: Price<PerBlock<Cents, M>>,
     pub pct1: Price<PerBlock<Cents, M>>,
     pub pct2: Price<PerBlock<Cents, M>>,
@@ -23,113 +22,85 @@ pub struct RealizedEnvelope<M: StorageMode = Rw> {
     pub score: PerBlock<StoredI8, M>,
 }
 
-const VERSION: Version = Version::new(3);
-
-impl RealizedEnvelope {
+impl RarityMeterInner {
     pub(crate) fn forced_import(
         db: &Database,
+        prefix: &str,
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let v = version + VERSION;
         Ok(Self {
-            pct0_5: Price::forced_import(db, "realized_envelope_pct0_5", v, indexes)?,
-            pct1: Price::forced_import(db, "realized_envelope_pct01", v, indexes)?,
-            pct2: Price::forced_import(db, "realized_envelope_pct02", v, indexes)?,
-            pct5: Price::forced_import(db, "realized_envelope_pct05", v, indexes)?,
-            pct95: Price::forced_import(db, "realized_envelope_pct95", v, indexes)?,
-            pct98: Price::forced_import(db, "realized_envelope_pct98", v, indexes)?,
-            pct99: Price::forced_import(db, "realized_envelope_pct99", v, indexes)?,
-            pct99_5: Price::forced_import(db, "realized_envelope_pct99_5", v, indexes)?,
-            index: PerBlock::forced_import(db, "realized_envelope_index", v, indexes)?,
-            score: PerBlock::forced_import(db, "realized_envelope_score", v, indexes)?,
+            pct0_5: Price::forced_import(db, &format!("{prefix}_pct0_5"), version, indexes)?,
+            pct1: Price::forced_import(db, &format!("{prefix}_pct01"), version, indexes)?,
+            pct2: Price::forced_import(db, &format!("{prefix}_pct02"), version, indexes)?,
+            pct5: Price::forced_import(db, &format!("{prefix}_pct05"), version, indexes)?,
+            pct95: Price::forced_import(db, &format!("{prefix}_pct95"), version, indexes)?,
+            pct98: Price::forced_import(db, &format!("{prefix}_pct98"), version, indexes)?,
+            pct99: Price::forced_import(db, &format!("{prefix}_pct99"), version, indexes)?,
+            pct99_5: Price::forced_import(db, &format!("{prefix}_pct99_5"), version, indexes)?,
+            index: PerBlock::forced_import(db, &format!("{prefix}_index"), version, indexes)?,
+            score: PerBlock::forced_import(db, &format!("{prefix}_score"), version, indexes)?,
         })
     }
 
-    pub(crate) fn compute(
+    pub(super) fn compute(
         &mut self,
-        distribution: &distribution::Vecs,
-        cointime: &cointime::Vecs,
-        prices: &prices::Vecs,
+        models: &[&RatioPerBlockPercentiles],
+        spot: &impl ReadableVec<Height, Cents>,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let realized = &distribution.utxo_cohorts.all.metrics.realized;
-        let ct = &cointime.prices;
-
-        let sth_realized = &distribution.utxo_cohorts.sth.metrics.realized;
-        let lth_realized = &distribution.utxo_cohorts.lth.metrics.realized;
-
-        let models: [&RatioPerBlockPercentiles; 10] = [
-            &realized.price_ratio_percentiles,
-            &realized.investor.price.percentiles,
-            &sth_realized.price_ratio_percentiles,
-            &sth_realized.investor.price.percentiles,
-            &lth_realized.price_ratio_percentiles,
-            &lth_realized.investor.price.percentiles,
-            &ct.vaulted.percentiles,
-            &ct.active.percentiles,
-            &ct.true_market_mean.percentiles,
-            &ct.cointime.percentiles,
-        ];
-
-        macro_rules! sources {
-            ($pct:ident) => {
-                models.each_ref().map(|m| &m.$pct.price.cents.height)
-            };
-        }
+        let gather = |f: fn(&RatioPerBlockPercentiles) -> &_| -> Vec<_> {
+            models.iter().map(|m| f(m)).collect()
+        };
 
         // Lower percentiles: max across all models (tightest lower bound)
         self.pct0_5.cents.height.compute_max_of_others(
             starting_indexes.height,
-            &sources!(pct0_5),
+            &gather(|m| &m.pct0_5.price.cents.height),
             exit,
         )?;
         self.pct1.cents.height.compute_max_of_others(
             starting_indexes.height,
-            &sources!(pct1),
+            &gather(|m| &m.pct1.price.cents.height),
             exit,
         )?;
         self.pct2.cents.height.compute_max_of_others(
             starting_indexes.height,
-            &sources!(pct2),
+            &gather(|m| &m.pct2.price.cents.height),
             exit,
         )?;
         self.pct5.cents.height.compute_max_of_others(
             starting_indexes.height,
-            &sources!(pct5),
+            &gather(|m| &m.pct5.price.cents.height),
             exit,
         )?;
 
         // Upper percentiles: min across all models (tightest upper bound)
         self.pct95.cents.height.compute_min_of_others(
             starting_indexes.height,
-            &sources!(pct95),
+            &gather(|m| &m.pct95.price.cents.height),
             exit,
         )?;
         self.pct98.cents.height.compute_min_of_others(
             starting_indexes.height,
-            &sources!(pct98),
+            &gather(|m| &m.pct98.price.cents.height),
             exit,
         )?;
         self.pct99.cents.height.compute_min_of_others(
             starting_indexes.height,
-            &sources!(pct99),
+            &gather(|m| &m.pct99.price.cents.height),
             exit,
         )?;
         self.pct99_5.cents.height.compute_min_of_others(
             starting_indexes.height,
-            &sources!(pct99_5),
+            &gather(|m| &m.pct99_5.price.cents.height),
             exit,
         )?;
 
-        let spot = &prices.spot.cents.height;
-
-        // Zone: spot vs own envelope bands (-4 to +4)
         self.compute_index(spot, starting_indexes, exit)?;
 
-        // Temperature: per-model band crossings (-40 to +40)
-        self.compute_score(&models, spot, starting_indexes, exit)?;
+        self.compute_score(models, spot, starting_indexes, exit)?;
 
         Ok(())
     }
@@ -140,7 +111,7 @@ impl RealizedEnvelope {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
-        let bands: [&_; 8] = [
+        let bands = [
             &self.pct0_5.cents.height,
             &self.pct1.cents.height,
             &self.pct2.cents.height,
@@ -213,7 +184,7 @@ impl RealizedEnvelope {
 
     fn compute_score(
         &mut self,
-        models: &[&RatioPerBlockPercentiles; 10],
+        models: &[&RatioPerBlockPercentiles],
         spot: &impl ReadableVec<Height, Cents>,
         starting_indexes: &Indexes,
         exit: &Exit,

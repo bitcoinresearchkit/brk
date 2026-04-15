@@ -25,6 +25,7 @@ import {
 } from "../series.js";
 import { Unit } from "../../utils/units.js";
 import { colors } from "../../utils/colors.js";
+import { brk } from "../../utils/client.js";
 
 // Section builders
 import {
@@ -741,5 +742,21 @@ export function createUtxoProfitabilitySection({ range, profit, loss }) {
         ],
       },
     ],
+  };
+}
+
+/**
+ * Gini leaf for Distribution > Address Balance
+ * @returns {AnyPartialOption}
+ */
+export function createAddressBalanceGiniLeaf() {
+  return {
+    name: "Gini",
+    title: "Address Balance Gini Coefficient",
+    bottom: percentRatio({
+      pattern: brk.series.indicators.gini,
+      name: "Gini",
+      color: colors.loss,
+    }),
   };
 }

@@ -4,14 +4,14 @@ import { brk } from "../../utils/client.js";
 
 /** @type {readonly AddressableType[]} */
 const ADDRESSABLE_TYPES = [
-  "p2pk65",
-  "p2pk33",
-  "p2pkh",
-  "p2sh",
-  "p2wpkh",
-  "p2wsh",
-  "p2tr",
   "p2a",
+  "p2tr",
+  "p2wsh",
+  "p2wpkh",
+  "p2sh",
+  "p2pkh",
+  "p2pk33",
+  "p2pk65",
 ];
 
 /** @type {(key: SpendableType) => key is AddressableType} */
@@ -162,12 +162,13 @@ export function buildCohortData() {
     },
   );
 
-  const typeAddressable = ADDRESSABLE_TYPES.map((key, i, arr) => {
+  const typeAddressable = ADDRESSABLE_TYPES.map((key) => {
     const names = SPENDABLE_TYPE_NAMES[key];
     return {
+      key,
       name: names.short,
       title: names.short,
-      color: colors.at(i, arr.length),
+      color: colors.scriptType[key],
       tree: utxoCohorts.type[key],
       addressCount: {
         base: addrs.funded[key],
@@ -178,10 +179,11 @@ export function buildCohortData() {
 
   const typeOther = entries(SPENDABLE_TYPE_NAMES)
     .filter(([key]) => !isAddressable(key))
-    .map(([key, names], i, arr) => ({
+    .map(([key, names]) => ({
+      key,
       name: names.short,
       title: names.short,
-      color: colors.at(i, arr.length),
+      color: colors.scriptType[key],
       tree: utxoCohorts.type[key],
     }));
 

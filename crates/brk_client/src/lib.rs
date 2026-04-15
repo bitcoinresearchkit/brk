@@ -1278,6 +1278,38 @@ impl<T: DeserializeOwned> AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90S
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern {
+    pub index: SeriesPattern1<StoredI8>,
+    pub pct0_5: CentsSatsUsdPattern,
+    pub pct1: CentsSatsUsdPattern,
+    pub pct2: CentsSatsUsdPattern,
+    pub pct5: CentsSatsUsdPattern,
+    pub pct95: CentsSatsUsdPattern,
+    pub pct98: CentsSatsUsdPattern,
+    pub pct99: CentsSatsUsdPattern,
+    pub pct99_5: CentsSatsUsdPattern,
+    pub score: SeriesPattern1<StoredI8>,
+}
+
+impl IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern {
+    /// Create a new pattern node with accumulated series name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            index: SeriesPattern1::new(client.clone(), _m(&acc, "index")),
+            pct0_5: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct0_5")),
+            pct1: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct01")),
+            pct2: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct02")),
+            pct5: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct05")),
+            pct95: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct95")),
+            pct98: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct98")),
+            pct99: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct99")),
+            pct99_5: CentsSatsUsdPattern::new(client.clone(), _m(&acc, "pct99_5")),
+            score: SeriesPattern1::new(client.clone(), _m(&acc, "score")),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5 {
     pub all: AverageBlockCumulativeSumPattern<StoredU64>,
     pub p2a: AverageBlockCumulativeSumPattern<StoredU64>,
@@ -5619,7 +5651,7 @@ pub struct SeriesTree_Indicators {
     pub dormancy: SeriesTree_Indicators_Dormancy,
     pub stock_to_flow: SeriesPattern1<StoredF32>,
     pub seller_exhaustion: SeriesPattern1<StoredF32>,
-    pub realized_envelope: SeriesTree_Indicators_RealizedEnvelope,
+    pub rarity_meter: SeriesTree_Indicators_RarityMeter,
 }
 
 impl SeriesTree_Indicators {
@@ -5635,7 +5667,7 @@ impl SeriesTree_Indicators {
             dormancy: SeriesTree_Indicators_Dormancy::new(client.clone(), format!("{base_path}_dormancy")),
             stock_to_flow: SeriesPattern1::new(client.clone(), "stock_to_flow".to_string()),
             seller_exhaustion: SeriesPattern1::new(client.clone(), "seller_exhaustion".to_string()),
-            realized_envelope: SeriesTree_Indicators_RealizedEnvelope::new(client.clone(), format!("{base_path}_realized_envelope")),
+            rarity_meter: SeriesTree_Indicators_RarityMeter::new(client.clone(), format!("{base_path}_rarity_meter")),
         }
     }
 }
@@ -5656,32 +5688,18 @@ impl SeriesTree_Indicators_Dormancy {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Indicators_RealizedEnvelope {
-    pub pct0_5: CentsSatsUsdPattern,
-    pub pct1: CentsSatsUsdPattern,
-    pub pct2: CentsSatsUsdPattern,
-    pub pct5: CentsSatsUsdPattern,
-    pub pct95: CentsSatsUsdPattern,
-    pub pct98: CentsSatsUsdPattern,
-    pub pct99: CentsSatsUsdPattern,
-    pub pct99_5: CentsSatsUsdPattern,
-    pub index: SeriesPattern1<StoredI8>,
-    pub score: SeriesPattern1<StoredI8>,
+pub struct SeriesTree_Indicators_RarityMeter {
+    pub full: IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern,
+    pub local: IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern,
+    pub cycle: IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern,
 }
 
-impl SeriesTree_Indicators_RealizedEnvelope {
+impl SeriesTree_Indicators_RarityMeter {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            pct0_5: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct0_5".to_string()),
-            pct1: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct01".to_string()),
-            pct2: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct02".to_string()),
-            pct5: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct05".to_string()),
-            pct95: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct95".to_string()),
-            pct98: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct98".to_string()),
-            pct99: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct99".to_string()),
-            pct99_5: CentsSatsUsdPattern::new(client.clone(), "realized_envelope_pct99_5".to_string()),
-            index: SeriesPattern1::new(client.clone(), "realized_envelope_index".to_string()),
-            score: SeriesPattern1::new(client.clone(), "realized_envelope_score".to_string()),
+            full: IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern::new(client.clone(), "rarity_meter".to_string()),
+            local: IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern::new(client.clone(), "local_rarity_meter".to_string()),
+            cycle: IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern::new(client.clone(), "cycle_rarity_meter".to_string()),
         }
     }
 }

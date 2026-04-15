@@ -53,7 +53,7 @@ pub(crate) fn first_block_height(
     }
     xor_i.bytes(&mut buf[magic_end..header_end], xor_bytes);
 
-    let header = Header::consensus_decode(&mut &buf[magic_end + 4..header_end])?;
+    let header = Header::consensus_decode_from_finite_reader(&mut &buf[magic_end + 4..header_end])?;
     let height = client.get_block_info(&header.block_hash())?.height as u32;
 
     Ok(Height::new(height))

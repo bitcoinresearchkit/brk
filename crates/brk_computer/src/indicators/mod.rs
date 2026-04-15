@@ -1,7 +1,7 @@
 mod compute;
 mod gini;
 mod import;
-pub mod realized_envelope;
+pub mod rarity_meter;
 mod vecs;
 
 pub use vecs::Vecs;

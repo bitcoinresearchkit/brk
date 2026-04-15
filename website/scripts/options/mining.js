@@ -190,9 +190,10 @@ export function createMiningSection() {
   /**
    * @param {string} groupTitle
    * @param {typeof majorPoolData} poolList
+   * @param {string} [name]
    */
-  const createPoolCompare = (groupTitle, poolList) => ({
-    name: "Compare",
+  const createPoolCompare = (groupTitle, poolList, name = "Compare") => ({
+    name,
     tree: [
       {
         name: "Dominance",
@@ -602,7 +603,7 @@ export function createMiningSection() {
       {
         name: "Pools",
         tree: [
-          createPoolCompare("Major Pools", featuredPools),
+          createPoolCompare("Major Pools", featuredPools, "Featured"),
           {
             name: "AntPool & Friends",
             tree: [

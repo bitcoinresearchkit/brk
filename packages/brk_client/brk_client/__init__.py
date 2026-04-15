@@ -2722,6 +2722,22 @@ class AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(Generic[T]
         self.pct90: _1m1w1y24hPattern[T] = _1m1w1y24hPattern(client, _m(acc, 'pct90'))
         self.sum: _1m1w1y24hPattern[T] = _1m1w1y24hPattern(client, _m(acc, 'sum'))
 
+class IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.index: SeriesPattern1[StoredI8] = SeriesPattern1(client, _m(acc, 'index'))
+        self.pct0_5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct0_5'))
+        self.pct1: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct01'))
+        self.pct2: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct02'))
+        self.pct5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct05'))
+        self.pct95: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct95'))
+        self.pct98: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct98'))
+        self.pct99: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct99'))
+        self.pct99_5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct99_5'))
+        self.score: SeriesPattern1[StoredI8] = SeriesPattern1(client, _m(acc, 'score'))
+
 class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5:
     """Pattern struct for repeated tree structure."""
     
@@ -4816,20 +4832,13 @@ class SeriesTree_Indicators_Dormancy:
         self.supply_adj: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'dormancy_supply_adj')
         self.flow: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'dormancy_flow')
 
-class SeriesTree_Indicators_RealizedEnvelope:
+class SeriesTree_Indicators_RarityMeter:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.pct0_5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct0_5')
-        self.pct1: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct01')
-        self.pct2: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct02')
-        self.pct5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct05')
-        self.pct95: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct95')
-        self.pct98: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct98')
-        self.pct99: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct99')
-        self.pct99_5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_envelope_pct99_5')
-        self.index: SeriesPattern1[StoredI8] = SeriesPattern1(client, 'realized_envelope_index')
-        self.score: SeriesPattern1[StoredI8] = SeriesPattern1(client, 'realized_envelope_score')
+        self.full: IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern = IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern(client, 'rarity_meter')
+        self.local: IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern = IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern(client, 'local_rarity_meter')
+        self.cycle: IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern = IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern(client, 'cycle_rarity_meter')
 
 class SeriesTree_Indicators:
     """Series tree node."""
@@ -4845,7 +4854,7 @@ class SeriesTree_Indicators:
         self.dormancy: SeriesTree_Indicators_Dormancy = SeriesTree_Indicators_Dormancy(client)
         self.stock_to_flow: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'stock_to_flow')
         self.seller_exhaustion: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'seller_exhaustion')
-        self.realized_envelope: SeriesTree_Indicators_RealizedEnvelope = SeriesTree_Indicators_RealizedEnvelope(client)
+        self.rarity_meter: SeriesTree_Indicators_RarityMeter = SeriesTree_Indicators_RarityMeter(client)
 
 class SeriesTree_Investing_Period_DcaCostBasis:
     """Series tree node."""

@@ -2255,6 +2255,41 @@ function createAverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(c
 }
 
 /**
+ * @typedef {Object} IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern
+ * @property {SeriesPattern1<StoredI8>} index
+ * @property {CentsSatsUsdPattern} pct05
+ * @property {CentsSatsUsdPattern} pct1
+ * @property {CentsSatsUsdPattern} pct2
+ * @property {CentsSatsUsdPattern} pct5
+ * @property {CentsSatsUsdPattern} pct95
+ * @property {CentsSatsUsdPattern} pct98
+ * @property {CentsSatsUsdPattern} pct99
+ * @property {CentsSatsUsdPattern} pct995
+ * @property {SeriesPattern1<StoredI8>} score
+ */
+
+/**
+ * Create a IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern}
+ */
+function createIndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern(client, acc) {
+  return {
+    index: createSeriesPattern1(client, _m(acc, 'index')),
+    pct05: createCentsSatsUsdPattern(client, _m(acc, 'pct0_5')),
+    pct1: createCentsSatsUsdPattern(client, _m(acc, 'pct01')),
+    pct2: createCentsSatsUsdPattern(client, _m(acc, 'pct02')),
+    pct5: createCentsSatsUsdPattern(client, _m(acc, 'pct05')),
+    pct95: createCentsSatsUsdPattern(client, _m(acc, 'pct95')),
+    pct98: createCentsSatsUsdPattern(client, _m(acc, 'pct98')),
+    pct99: createCentsSatsUsdPattern(client, _m(acc, 'pct99')),
+    pct995: createCentsSatsUsdPattern(client, _m(acc, 'pct99_5')),
+    score: createSeriesPattern1(client, _m(acc, 'score')),
+  };
+}
+
+/**
  * @typedef {Object} AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5
  * @property {AverageBlockCumulativeSumPattern<StoredU64>} all
  * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2a
@@ -5597,7 +5632,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Indicators_Dormancy} dormancy
  * @property {SeriesPattern1<StoredF32>} stockToFlow
  * @property {SeriesPattern1<StoredF32>} sellerExhaustion
- * @property {SeriesTree_Indicators_RealizedEnvelope} realizedEnvelope
+ * @property {SeriesTree_Indicators_RarityMeter} rarityMeter
  */
 
 /**
@@ -5607,17 +5642,10 @@ function createTransferPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} SeriesTree_Indicators_RealizedEnvelope
- * @property {CentsSatsUsdPattern} pct05
- * @property {CentsSatsUsdPattern} pct1
- * @property {CentsSatsUsdPattern} pct2
- * @property {CentsSatsUsdPattern} pct5
- * @property {CentsSatsUsdPattern} pct95
- * @property {CentsSatsUsdPattern} pct98
- * @property {CentsSatsUsdPattern} pct99
- * @property {CentsSatsUsdPattern} pct995
- * @property {SeriesPattern1<StoredI8>} index
- * @property {SeriesPattern1<StoredI8>} score
+ * @typedef {Object} SeriesTree_Indicators_RarityMeter
+ * @property {IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern} full
+ * @property {IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern} local
+ * @property {IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern} cycle
  */
 
 /**
@@ -8808,17 +8836,10 @@ class BrkClient extends BrkClientBase {
         },
         stockToFlow: createSeriesPattern1(this, 'stock_to_flow'),
         sellerExhaustion: createSeriesPattern1(this, 'seller_exhaustion'),
-        realizedEnvelope: {
-          pct05: createCentsSatsUsdPattern(this, 'realized_envelope_pct0_5'),
-          pct1: createCentsSatsUsdPattern(this, 'realized_envelope_pct01'),
-          pct2: createCentsSatsUsdPattern(this, 'realized_envelope_pct02'),
-          pct5: createCentsSatsUsdPattern(this, 'realized_envelope_pct05'),
-          pct95: createCentsSatsUsdPattern(this, 'realized_envelope_pct95'),
-          pct98: createCentsSatsUsdPattern(this, 'realized_envelope_pct98'),
-          pct99: createCentsSatsUsdPattern(this, 'realized_envelope_pct99'),
-          pct995: createCentsSatsUsdPattern(this, 'realized_envelope_pct99_5'),
-          index: createSeriesPattern1(this, 'realized_envelope_index'),
-          score: createSeriesPattern1(this, 'realized_envelope_score'),
+        rarityMeter: {
+          full: createIndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern(this, 'rarity_meter'),
+          local: createIndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern(this, 'local_rarity_meter'),
+          cycle: createIndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern(this, 'cycle_rarity_meter'),
         },
       },
       investing: {

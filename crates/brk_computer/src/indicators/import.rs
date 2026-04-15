@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_error::Result;
 use brk_types::Version;
 
-use super::{Vecs, realized_envelope::RealizedEnvelope};
+use super::{Vecs, rarity_meter::RarityMeter};
 use crate::{
     indexes,
     internal::{
@@ -40,7 +40,7 @@ impl Vecs {
         let stock_to_flow = PerBlock::forced_import(&db, "stock_to_flow", v, indexes)?;
         let seller_exhaustion = PerBlock::forced_import(&db, "seller_exhaustion", v, indexes)?;
 
-        let realized_envelope = RealizedEnvelope::forced_import(&db, v, indexes)?;
+        let rarity_meter = RarityMeter::forced_import(&db, v, indexes)?;
 
         let this = Self {
             db,
@@ -54,7 +54,7 @@ impl Vecs {
             dormancy,
             stock_to_flow,
             seller_exhaustion,
-            realized_envelope,
+            rarity_meter,
         };
         finalize_db(&this.db, &this)?;
         Ok(this)

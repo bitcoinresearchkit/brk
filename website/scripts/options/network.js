@@ -6,6 +6,7 @@ import { Unit } from "../utils/units.js";
 import { entries } from "../utils/array.js";
 import {
   line,
+  baseline,
   fromSupplyPattern,
   chartsFromFull,
   chartsFromFullPerBlock,
@@ -14,6 +15,7 @@ import {
   chartsFromPercentCumulative,
   chartsFromPercentCumulativeEntries,
   chartsFromAggregatedPerBlock,
+  distributionWindowsTree,
   averagesArray,
   simpleDeltaTree,
   ROLLING_WINDOWS,
@@ -89,39 +91,6 @@ export function createNetworkSection() {
     { key: "receiving", name: "Receiving" },
     { key: "bidirectional", name: "Bidirectional" },
     { key: "reactivated", name: "Reactivated" },
-  ]);
-
-  const countTypes = /** @type {const} */ ([
-    {
-      name: "Funded",
-      title: "Address Count by Type",
-      /** @param {AddressableType} t */
-      getSeries: (t) => addrs.funded[t],
-    },
-    {
-      name: "Empty",
-      title: "Empty Address Count by Type",
-      /** @param {AddressableType} t */
-      getSeries: (t) => addrs.empty[t],
-    },
-    {
-      name: "Total",
-      title: "Total Address Count by Type",
-      /** @param {AddressableType} t */
-      getSeries: (t) => addrs.total[t],
-    },
-    {
-      name: "Funded Reused",
-      title: "Funded Reused Address Count by Type",
-      /** @param {AddressableType} t */
-      getSeries: (t) => addrs.reused.count.funded[t],
-    },
-    {
-      name: "Total Reused",
-      title: "Total Reused Address Count by Type",
-      /** @param {AddressableType} t */
-      getSeries: (t) => addrs.reused.count.total[t],
-    },
   ]);
 
   const countMetrics = /** @type {const} */ ([
@@ -544,6 +513,261 @@ export function createNetworkSection() {
     };
 
   /**
+   * Mirror of the per-type singles tree, but every leaf is a cross-type
+   * comparison chart (same metric, same unit, one line per addr type).
+   * Structure parallels `createAddressSeriesTreeForType` section-by-section
+   * so users can compare anything they can view on a single type.
+   */
+  const createAddressByTypeCompare = () => {
+    const typeLines =
+      /**
+       * @param {(t: (typeof addressTypes)[number]) => AnySeriesPattern} getSeries
+       * @param {Unit} [unit]
+       */
+      (getSeries, unit = Unit.count) =>
+        addressTypes.map((t) =>
+          line({
+            series: getSeries(t),
+            name: t.name,
+            color: t.color,
+            unit,
+            defaultActive: t.defaultActive,
+          }),
+        );
+
+    const typeBaselines =
+      /**
+       * @param {(t: (typeof addressTypes)[number]) => AnySeriesPattern} getSeries
+       * @param {Unit} [unit]
+       */
+      (getSeries, unit = Unit.count) =>
+        addressTypes.map((t) =>
+          baseline({
+            series: getSeries(t),
+            name: t.name,
+            color: t.color,
+            unit,
+            defaultActive: t.defaultActive,
+          }),
+        );
+
+    return {
+      name: "Compare",
+      tree: [
+        // Count (lifetime Funded/Empty/Total)
+        {
+          name: "Count",
+          tree: countMetrics.map((m) => ({
+            name: m.name,
+            title: `${m.name} Address Count by Type`,
+            bottom: typeLines((t) => addrs[m.key][t.key]),
+          })),
+        },
+
+        // New (rolling sums + cumulative)
+        {
+          name: "New",
+          tree: groupedWindowsCumulative({
+            list: addressTypes,
+            title: (s) => s,
+            metricTitle: "New Addresses by Type",
+            getWindowSeries: (t, key) => addrs.new[t.key].sum[key],
+            getCumulativeSeries: (t) => addrs.new[t.key].cumulative,
+            seriesFn: line,
+            unit: Unit.count,
+          }),
+        },
+
+        // Change (rolling deltas, signed, baseline)
+        {
+          name: "Change",
+          tree: ROLLING_WINDOWS.map((w) => ({
+            name: w.name,
+            title: `${w.title} Address Count Change by Type`,
+            bottom: typeBaselines(
+              (t) => addrs.delta[t.key].absolute[w.key],
+            ),
+          })),
+        },
+
+        // Growth Rate (rolling percent rates)
+        {
+          name: "Growth Rate",
+          tree: ROLLING_WINDOWS.map((w) => ({
+            name: w.name,
+            title: `${w.title} Address Growth Rate by Type`,
+            bottom: typeLines(
+              (t) => addrs.delta[t.key].rate[w.key].percent,
+              Unit.percentage,
+            ),
+          })),
+        },
+
+        // Activity (per activity type, per window)
+        {
+          name: "Activity",
+          tree: activityTypes.map((a) => ({
+            name: a.name,
+            tree: ROLLING_WINDOWS.map((w) => ({
+              name: w.name,
+              title: `${w.title} ${a.name} Addresses by Type`,
+              bottom: typeLines(
+                (t) => addrs.activity[t.key][a.key][w.key],
+              ),
+            })),
+          })),
+        },
+
+        // Reused
+        {
+          name: "Reused",
+          tree: [
+            {
+              name: "Funded",
+              title: "Funded Reused Address Count by Type",
+              bottom: typeLines((t) => addrs.reused.count.funded[t.key]),
+            },
+            {
+              name: "Total",
+              title: "Total Reused Address Count by Type",
+              bottom: typeLines((t) => addrs.reused.count.total[t.key]),
+            },
+            {
+              name: "Outputs",
+              tree: [
+                {
+                  name: "Count",
+                  tree: groupedWindowsCumulative({
+                    list: addressTypes,
+                    title: (s) => s,
+                    metricTitle:
+                      "Transaction Outputs to Reused Addresses by Type",
+                    getWindowSeries: (t, key) =>
+                      addrs.reused.events.outputToReusedAddrCount[t.key].sum[
+                        key
+                      ],
+                    getCumulativeSeries: (t) =>
+                      addrs.reused.events.outputToReusedAddrCount[t.key]
+                        .cumulative,
+                    seriesFn: line,
+                    unit: Unit.count,
+                  }),
+                },
+                {
+                  name: "Share",
+                  tree: [
+                    ...ROLLING_WINDOWS.map((w) => ({
+                      name: w.name,
+                      title: `${w.title} Share of Transaction Outputs to Reused Addresses by Type`,
+                      bottom: typeLines(
+                        (t) =>
+                          addrs.reused.events.outputToReusedAddrShare[t.key][
+                            w.key
+                          ].percent,
+                        Unit.percentage,
+                      ),
+                    })),
+                    {
+                      name: "Cumulative",
+                      title:
+                        "Cumulative Share of Transaction Outputs to Reused Addresses by Type",
+                      bottom: typeLines(
+                        (t) =>
+                          addrs.reused.events.outputToReusedAddrShare[t.key]
+                            .percent,
+                        Unit.percentage,
+                      ),
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              name: "Inputs",
+              tree: [
+                {
+                  name: "Count",
+                  tree: groupedWindowsCumulative({
+                    list: addressTypes,
+                    title: (s) => s,
+                    metricTitle:
+                      "Transaction Inputs from Reused Addresses by Type",
+                    getWindowSeries: (t, key) =>
+                      addrs.reused.events.inputFromReusedAddrCount[t.key].sum[
+                        key
+                      ],
+                    getCumulativeSeries: (t) =>
+                      addrs.reused.events.inputFromReusedAddrCount[t.key]
+                        .cumulative,
+                    seriesFn: line,
+                    unit: Unit.count,
+                  }),
+                },
+                {
+                  name: "Share",
+                  tree: [
+                    ...ROLLING_WINDOWS.map((w) => ({
+                      name: w.name,
+                      title: `${w.title} Share of Transaction Inputs from Reused Addresses by Type`,
+                      bottom: typeLines(
+                        (t) =>
+                          addrs.reused.events.inputFromReusedAddrShare[t.key][
+                            w.key
+                          ].percent,
+                        Unit.percentage,
+                      ),
+                    })),
+                    {
+                      name: "Cumulative",
+                      title:
+                        "Cumulative Share of Transaction Inputs from Reused Addresses by Type",
+                      bottom: typeLines(
+                        (t) =>
+                          addrs.reused.events.inputFromReusedAddrShare[t.key]
+                            .percent,
+                        Unit.percentage,
+                      ),
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+
+        // Exposed
+        {
+          name: "Exposed",
+          tree: [
+            {
+              name: "Funded",
+              title: "Funded Exposed Address Count by Type",
+              bottom: typeLines((t) => addrs.exposed.count.funded[t.key]),
+            },
+            {
+              name: "Total",
+              title: "Total Exposed Address Count by Type",
+              bottom: typeLines((t) => addrs.exposed.count.total[t.key]),
+            },
+            {
+              name: "Supply",
+              title: "Supply in Exposed Addresses by Type",
+              bottom: addressTypes.flatMap((t) =>
+                satsBtcUsd({
+                  pattern: addrs.exposed.supply[t.key],
+                  name: t.name,
+                  color: t.color,
+                  defaultActive: t.defaultActive,
+                }),
+              ),
+            },
+          ],
+        },
+      ],
+    };
+  };
+
+  /**
    * Build a "By Type" subtree: Compare (count / tx count / tx %) plus a
    * per-type drill-down with the same three metrics.
    *
@@ -754,7 +978,7 @@ export function createNetworkSection() {
             name: "Unspendable",
             tree: [
               {
-                name: "Total",
+                name: "All",
                 title: "Unspendable Supply",
                 bottom: satsBtcUsdFrom({
                   source: supply.burned,
@@ -1002,19 +1226,74 @@ export function createNetworkSection() {
         tree: [
           {
             name: "Count",
-            tree: chartsFromAggregatedPerBlock({
-              pattern: outputs.count.total,
-              metric: "Output Count",
-              unit: Unit.count,
-            }),
-          },
-          {
-            name: "Spendable",
-            tree: chartsFromCount({
-              pattern: outputs.byType.spendableOutputCount,
-              metric: "Spendable Output Count",
-              unit: Unit.count,
-            }),
+            tree: [
+              {
+                name: "Compare",
+                title: "Output Count",
+                bottom: ROLLING_WINDOWS.map((w) =>
+                  line({
+                    series: outputs.count.total.rolling.average[w.key],
+                    name: w.name,
+                    color: w.color,
+                    unit: Unit.count,
+                  }),
+                ),
+              },
+              ...ROLLING_WINDOWS.map((w) => ({
+                name: w.name,
+                title: `${w.title} Output Count`,
+                bottom: [
+                  line({
+                    series: outputs.count.total.rolling.sum[w.key],
+                    name: "Total (Sum)",
+                    color: w.color,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    series: outputs.byType.spendableOutputCount.sum[w.key],
+                    name: "Spendable (Sum)",
+                    color: colors.gray,
+                    unit: Unit.count,
+                  }),
+                  line({
+                    series: outputs.count.total.rolling.average[w.key],
+                    name: "Total (Avg)",
+                    color: w.color,
+                    unit: Unit.count,
+                    defaultActive: false,
+                  }),
+                  line({
+                    series: outputs.byType.spendableOutputCount.average[w.key],
+                    name: "Spendable (Avg)",
+                    color: colors.gray,
+                    unit: Unit.count,
+                    defaultActive: false,
+                  }),
+                ],
+              })),
+              {
+                name: "Cumulative",
+                title: "Cumulative Output Count",
+                bottom: [
+                  line({
+                    series: outputs.count.total.cumulative,
+                    name: "Total",
+                    unit: Unit.count,
+                  }),
+                  line({
+                    series: outputs.byType.spendableOutputCount.cumulative,
+                    name: "Spendable",
+                    color: colors.gray,
+                    unit: Unit.count,
+                  }),
+                ],
+              },
+              distributionWindowsTree({
+                pattern: outputs.count.total.rolling,
+                metric: "Output Count per Block",
+                unit: Unit.count,
+              }),
+            ],
           },
           {
             name: "Per Second",
@@ -1105,22 +1384,7 @@ export function createNetworkSection() {
           {
             name: "By Type",
             tree: [
-              {
-                name: "Compare",
-                tree: countTypes.map((c) => ({
-                  name: c.name,
-                  title: c.title,
-                  bottom: addressTypes.map((t) =>
-                    line({
-                      series: c.getSeries(t.key),
-                      name: t.name,
-                      color: t.color,
-                      unit: Unit.count,
-                      defaultActive: t.defaultActive,
-                    }),
-                  ),
-                })),
-              },
+              createAddressByTypeCompare(),
               ...addressTypes.map((t) => ({
                 name: t.name,
                 tree: createAddressSeriesTreeForType(t.key, t.name),

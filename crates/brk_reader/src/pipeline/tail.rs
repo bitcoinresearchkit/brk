@@ -1,10 +1,10 @@
 //! Tail pipeline: single-threaded reverse scan of the newest blk
-//! files until every canonical hash is matched, then forward-emit
-//! with an inline chain check. Avoids the forward pipeline's
-//! bisection + out-of-order backoff (~2.7 GB of reads) for any
-//! tip-clustered catchup.
+//! files, reading each file in `TAIL_CHUNK`-sized slices from tail
+//! to head so we only touch bytes covering the canonical window.
+//! Matches fill offset slots and are emitted forward with an inline
+//! chain check.
 
-use std::{fs, ops::ControlFlow};
+use std::{fs::File, ops::ControlFlow, os::unix::fs::FileExt};
 
 use brk_error::{Error, Result};
 use brk_rpc::Client;
@@ -17,6 +17,8 @@ use crate::{
     parse::{parse_canonical_body, peek_canonical},
     scan::scan_bytes,
 };
+
+const TAIL_CHUNK: usize = 8 * 1024 * 1024;
 
 pub(super) fn pipeline_tail(
     client: &Client,
@@ -34,7 +36,7 @@ pub(super) fn pipeline_tail(
     // miss doesn't scan the entire chain in reverse.
     let mut below_floor_streak: usize = 0;
 
-    for (&blk_index, path) in paths.iter().rev() {
+    'files: for (&blk_index, path) in paths.iter().rev() {
         // If this file's first block is below the lowest still-missing
         // canonical height, we've walked past the window.
         if let Some(missing_idx) = slots.iter().position(Option::is_none)
@@ -53,51 +55,85 @@ pub(super) fn pipeline_tail(
             }
         }
 
-        let mut bytes = fs::read(path)?;
-        scan_bytes(
-            &mut bytes,
-            blk_index,
-            xor_bytes,
-            |metadata, block_bytes, xor_state| {
-                let Some((offset, header)) =
-                    peek_canonical(block_bytes, xor_state, xor_bytes, canonical)
-                else {
-                    return ControlFlow::Continue(());
-                };
-                if slots[offset as usize].is_some() {
-                    return ControlFlow::Continue(());
-                }
-                let height = Height::from(*canonical.start + offset);
-                match parse_canonical_body(
-                    block_bytes.to_vec(),
-                    metadata,
-                    xor_state,
-                    xor_bytes,
-                    height,
-                    header,
-                ) {
-                    Ok(block) => {
-                        slots[offset as usize] = Some(block);
-                        remaining -= 1;
-                    }
-                    Err(e) => {
-                        parse_failure = Some(e);
-                        return ControlFlow::Break(());
-                    }
-                }
-                if remaining == 0 {
-                    ControlFlow::Break(())
-                } else {
-                    ControlFlow::Continue(())
-                }
-            },
-        );
-
-        if let Some(e) = parse_failure {
-            return Err(e);
+        let file = File::open(path)?;
+        let file_len = file.metadata()?.len() as usize;
+        if file_len == 0 {
+            continue;
         }
-        if remaining == 0 {
-            break;
+
+        // Chunked reverse read. `end` is the file position we've
+        // already covered (exclusive). Each iteration reads
+        // [end - TAIL_CHUNK..end] and prepends it to any `spillover`
+        // carried from the previous iteration — the pre-first-magic
+        // bytes of that chunk, which must belong to a block that
+        // started in this earlier region.
+        let mut end = file_len;
+        let mut spillover: Vec<u8> = Vec::new();
+
+        while end > 0 && remaining > 0 {
+            let start = end.saturating_sub(TAIL_CHUNK);
+            let chunk_len = end - start;
+            let mut buf = vec![0u8; chunk_len + spillover.len()];
+            file.read_exact_at(&mut buf[..chunk_len], start as u64)?;
+            buf[chunk_len..].copy_from_slice(&spillover);
+            spillover.clear();
+
+            // `buf` now represents file bytes [start..start + buf.len()].
+            let result = scan_bytes(
+                &mut buf,
+                blk_index,
+                start,
+                xor_bytes,
+                |metadata, block_bytes, xor_state| {
+                    let Some((offset, header)) =
+                        peek_canonical(block_bytes, xor_state, xor_bytes, canonical)
+                    else {
+                        return ControlFlow::Continue(());
+                    };
+                    if slots[offset as usize].is_some() {
+                        return ControlFlow::Continue(());
+                    }
+                    let height = Height::from(*canonical.start + offset);
+                    match parse_canonical_body(
+                        block_bytes.to_vec(),
+                        metadata,
+                        xor_state,
+                        xor_bytes,
+                        height,
+                        header,
+                    ) {
+                        Ok(block) => {
+                            slots[offset as usize] = Some(block);
+                            remaining -= 1;
+                        }
+                        Err(e) => {
+                            parse_failure = Some(e);
+                            return ControlFlow::Break(());
+                        }
+                    }
+                    if remaining == 0 {
+                        ControlFlow::Break(())
+                    } else {
+                        ControlFlow::Continue(())
+                    }
+                },
+            );
+
+            if let Some(e) = parse_failure {
+                return Err(e);
+            }
+            if remaining == 0 {
+                break 'files;
+            }
+
+            // Carry pre-first-magic bytes into the next (earlier)
+            // chunk so a block that straddled this chunk's start is
+            // stitched back together.
+            end = start;
+            if end > 0 {
+                let prefix_len = result.first_magic.unwrap_or(buf.len());
+                spillover.extend_from_slice(&buf[..prefix_len]);
+            }
         }
     }
 

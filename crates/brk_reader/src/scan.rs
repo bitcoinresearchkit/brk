@@ -8,7 +8,7 @@ const MAGIC_BYTES: [u8; 4] = [0xF9, 0xBE, 0xB4, 0xD9];
 
 /// Returns the position **immediately after** the matched magic, or
 /// `None` if no match. Advances `xor_i` by the bytes consumed either
-/// way.
+/// way. First-byte fast-fail keeps the inner loop tight.
 pub(crate) fn find_magic(bytes: &[u8], xor_i: &mut XORIndex, xor_bytes: XORBytes) -> Option<usize> {
     let len = bytes.len();
     if len < MAGIC_BYTES.len() {
@@ -42,36 +42,51 @@ pub(crate) fn find_magic(bytes: &[u8], xor_i: &mut XORIndex, xor_bytes: XORBytes
     None
 }
 
-/// Scans `buf` (the full contents of one blk file) for blocks,
-/// calling `on_block` for each. The block bytes are passed as a
-/// mutable borrow so the callback can clone (to ship to a parser
-/// thread) or process in place (to peek the header).
+/// Position (relative to `buf`) of the first matched magic byte.
+/// Used by the chunked tail pipeline to carry pre-first-magic bytes
+/// into the next (earlier) chunk.
+pub(crate) struct ScanResult {
+    pub first_magic: Option<usize>,
+}
+
+/// Scans `buf` for blocks and calls `on_block` for each. `file_offset`
+/// is the absolute file position of `buf[0]` — used to seed the XOR
+/// phase and to report absolute `BlkPosition`s so the chunked tail
+/// pipeline can read mid-file slices.
 pub(crate) fn scan_bytes(
     buf: &mut [u8],
     blk_index: u16,
+    file_offset: usize,
     xor_bytes: XORBytes,
     mut on_block: impl FnMut(BlkMetadata, &mut [u8], XORIndex) -> ControlFlow<()>,
-) {
-    let mut xor_i = XORIndex::default();
+) -> ScanResult {
+    let mut xor_i = XORIndex::at_offset(file_offset);
+    let mut first_magic: Option<usize> = None;
     let mut i = 0;
 
     while let Some(off) = find_magic(&buf[i..], &mut xor_i, xor_bytes) {
+        first_magic.get_or_insert(i + off - MAGIC_BYTES.len());
         i += off;
         if i + 4 > buf.len() {
-            return;
+            break;
         }
         let mut size_bytes = [buf[i], buf[i + 1], buf[i + 2], buf[i + 3]];
         xor_i.bytes(&mut size_bytes, xor_bytes);
         let len = u32::from_le_bytes(size_bytes) as usize;
         i += 4;
         if i + len > buf.len() {
-            return;
+            break;
         }
-        let metadata = BlkMetadata::new(BlkPosition::new(blk_index, i as u32), len as u32);
+        let metadata = BlkMetadata::new(
+            BlkPosition::new(blk_index, (file_offset + i) as u32),
+            len as u32,
+        );
         if on_block(metadata, &mut buf[i..i + len], xor_i).is_break() {
-            return;
+            break;
         }
         i += len;
         xor_i.add_assign(len);
     }
+
+    ScanResult { first_magic }
 }

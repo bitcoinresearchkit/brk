@@ -27,7 +27,7 @@ pub(crate) fn peek_canonical(
     let mut header_buf = [0u8; HEADER_LEN];
     header_buf.copy_from_slice(&bytes[..HEADER_LEN]);
     xor_state.bytes(&mut header_buf, xor_bytes);
-    let header = Header::consensus_decode(&mut &header_buf[..]).ok()?;
+    let header = Header::consensus_decode_from_finite_reader(&mut &header_buf[..]).ok()?;
     let offset = canonical.offset_of(&BlockHash::from(header.block_hash()))?;
     Some((offset, header))
 }
@@ -52,14 +52,20 @@ pub(crate) fn parse_canonical_body(
     let mut cursor = Cursor::new(bytes);
     cursor.set_position(HEADER_LEN as u64);
 
-    let tx_count = VarInt::consensus_decode(&mut cursor)?.0 as usize;
+    // `consensus_decode_from_finite_reader` skips the `Take<R>` wrap
+    // that `consensus_decode` applies to every nested field for
+    // memory-safety — our cursor is already a bounded `Vec<u8>`, so
+    // the extra wrapping is pure overhead. Per the crate docs it's
+    // "marginally faster", but for a ~2000-tx block the per-field
+    // compounding adds up.
+    let tx_count = VarInt::consensus_decode_from_finite_reader(&mut cursor)?.0 as usize;
     let mut txdata = Vec::with_capacity(tx_count);
     let mut tx_metadata = Vec::with_capacity(tx_count);
     let mut tx_offsets = Vec::with_capacity(tx_count);
     for _ in 0..tx_count {
         let tx_start = cursor.position() as u32;
         tx_offsets.push(tx_start);
-        let tx = Transaction::consensus_decode(&mut cursor)?;
+        let tx = Transaction::consensus_decode_from_finite_reader(&mut cursor)?;
         let tx_len = cursor.position() as u32 - tx_start;
         txdata.push(tx);
         tx_metadata.push(BlkMetadata::new(metadata.position() + tx_start, tx_len));

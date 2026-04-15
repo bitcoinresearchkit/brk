@@ -467,9 +467,8 @@ impl Computer {
             Ok(())
         })?;
 
-        self.indicators.realized_envelope.compute(
+        self.indicators.rarity_meter.compute(
             &self.distribution,
-            &self.cointime,
             &self.prices,
             &starting_indexes,
             exit,

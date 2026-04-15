@@ -354,6 +354,17 @@ export function createCointimeSection() {
         name: "Indicators",
         tree: [
           {
+            name: "AVIV",
+            title: "AVIV Ratio",
+            bottom: [
+              line({
+                series: cap.aviv.ratio,
+                name: "AVIV",
+                unit: Unit.ratio,
+              }),
+            ],
+          },
+          {
             name: "Reserve Risk",
             title: "Reserve Risk",
             bottom: [
@@ -365,22 +376,11 @@ export function createCointimeSection() {
               }),
             ],
           },
-          {
-            name: "AVIV",
-            title: "AVIV Ratio",
-            bottom: [
-              line({
-                series: cap.aviv.ratio,
-                name: "AVIV",
-                unit: Unit.ratio,
-              }),
-            ],
-          },
         ],
       },
 
       {
-        name: "Cointime-Adjusted",
+        name: "Adjusted",
         tree: [
           {
             name: "Inflation",

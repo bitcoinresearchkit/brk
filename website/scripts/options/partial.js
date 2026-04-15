@@ -18,6 +18,7 @@ import {
   createGroupedCohortFolderAddress,
   createGroupedAddressCohortFolder,
   createUtxoProfitabilitySection,
+  createAddressBalanceGiniLeaf,
 } from "./distribution/index.js";
 import { createMarketSection } from "./market.js";
 import { createNetworkSection } from "./network.js";
@@ -91,7 +92,7 @@ export function createPartialOptions() {
               name: "UTXO Age",
               tree: [
                 {
-                  name: "Younger Than",
+                  name: "Under",
                   tree: [
                     createGroupedCohortFolderWithAdjusted({
                       name: "Compare",
@@ -103,7 +104,7 @@ export function createPartialOptions() {
                   ],
                 },
                 {
-                  name: "Older Than",
+                  name: "Over",
                   tree: [
                     createGroupedCohortFolderWithAdjusted({
                       name: "Compare",
@@ -133,7 +134,7 @@ export function createPartialOptions() {
               name: "UTXO Size",
               tree: [
                 {
-                  name: "Less Than",
+                  name: "Under",
                   tree: [
                     createGroupedCohortFolderBasicWithMarketCap({
                       name: "Compare",
@@ -147,7 +148,7 @@ export function createPartialOptions() {
                   ],
                 },
                 {
-                  name: "More Than",
+                  name: "Over",
                   tree: [
                     createGroupedCohortFolderBasicWithMarketCap({
                       name: "Compare",
@@ -187,7 +188,7 @@ export function createPartialOptions() {
               name: "Address Balance",
               tree: [
                 {
-                  name: "Less Than",
+                  name: "Under",
                   tree: [
                     createGroupedAddressCohortFolder({
                       name: "Compare",
@@ -199,7 +200,7 @@ export function createPartialOptions() {
                   ],
                 },
                 {
-                  name: "More Than",
+                  name: "Over",
                   tree: [
                     createGroupedAddressCohortFolder({
                       name: "Compare",
@@ -222,6 +223,7 @@ export function createPartialOptions() {
                     ...addressesAmountRange.map(createAddressCohortFolder),
                   ],
                 },
+                createAddressBalanceGiniLeaf(),
               ],
             },
 
@@ -234,8 +236,25 @@ export function createPartialOptions() {
                   list: typeAddressable,
                   all: cohortAll,
                 }),
-                ...typeAddressable.map(createCohortFolderAddress),
-                ...typeOther.map(createCohortFolderWithoutRelative),
+                .../** @satisfies {readonly SpendableType[]} */ ([
+                  "p2a",
+                  "p2tr",
+                  "p2wsh",
+                  "p2wpkh",
+                  "p2sh",
+                  "p2ms",
+                  "p2pkh",
+                  "p2pk33",
+                  "p2pk65",
+                  "empty",
+                  "unknown",
+                ]).flatMap((key) => {
+                  const addr = typeAddressable.find((t) => t.key === key);
+                  if (addr) return [createCohortFolderAddress(addr)];
+                  const other = typeOther.find((t) => t.key === key);
+                  if (other) return [createCohortFolderWithoutRelative(other)];
+                  return [];
+                }),
               ],
             },
 
