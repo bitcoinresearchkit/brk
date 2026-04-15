@@ -1610,13 +1610,15 @@ class BrkClientBase {
   }
 
   /**
-   * Make a GET request - races cache vs network, first to resolve calls onUpdate
+   * Make a GET request - races cache vs network, first to resolve calls onUpdate.
+   * Shared implementation backing `getJson` and `getText`.
    * @template T
    * @param {string} path
+   * @param {(res: Response) => Promise<T>} parse - Response body reader
    * @param {{ onUpdate?: (value: T) => void, signal?: AbortSignal }} [options]
    * @returns {Promise<T>}
    */
-  async getJson(path, { onUpdate, signal } = {}) {
+  async _getCached(path, parse, { onUpdate, signal } = {}) {
     const url = `${this.baseUrl}${path}`;
     const cache = this._cache ?? await this._cachePromise;
 
@@ -1628,52 +1630,61 @@ class BrkClientBase {
     const cachePromise = cache?.match(url).then(async (res) => {
       cachedRes = res ?? null;
       if (!res) return null;
-      const json = _addCamelGetters(await res.json());
+      const value = await parse(res);
       if (!resolved && onUpdate) {
         resolved = true;
-        onUpdate(json);
+        onUpdate(value);
       }
-      return json;
+      return value;
     });
 
     const networkPromise = this.get(path, { signal }).then(async (res) => {
       const cloned = res.clone();
-      const json = _addCamelGetters(await res.json());
+      const value = await parse(res);
       // Skip update if ETag matches and cache already delivered
       if (cachedRes?.headers.get('ETag') === res.headers.get('ETag')) {
         if (!resolved && onUpdate) {
           resolved = true;
-          onUpdate(json);
+          onUpdate(value);
         }
-        return json;
+        return value;
       }
       resolved = true;
-      if (onUpdate) {
-        onUpdate(json);
-      }
+      if (onUpdate) onUpdate(value);
       if (cache) _runIdle(() => cache.put(url, cloned));
-      return json;
+      return value;
     });
 
     try {
       return await networkPromise;
     } catch (e) {
       // Network failed - wait for cache
-      const cachedJson = await cachePromise?.catch(() => null);
-      if (cachedJson) return cachedJson;
+      const cachedValue = await cachePromise?.catch(() => null);
+      if (cachedValue != null) return cachedValue;
       throw e;
     }
   }
 
   /**
-   * Make a GET request and return raw text (for CSV responses)
+   * Make a GET request expecting a JSON response. Cached and supports `onUpdate`.
+   * @template T
    * @param {string} path
-   * @param {{ signal?: AbortSignal }} [options]
+   * @param {{ onUpdate?: (value: T) => void, signal?: AbortSignal }} [options]
+   * @returns {Promise<T>}
+   */
+  getJson(path, options) {
+    return this._getCached(path, async (res) => _addCamelGetters(await res.json()), options);
+  }
+
+  /**
+   * Make a GET request expecting a text response (text/plain, text/csv, ...).
+   * Cached and supports `onUpdate`, same as `getJson`.
+   * @param {string} path
+   * @param {{ onUpdate?: (value: string) => void, signal?: AbortSignal }} [options]
    * @returns {Promise<string>}
    */
-  async getText(path, { signal } = {}) {
-    const res = await this.get(path, { signal });
-    return res.text();
+  getText(path, options) {
+    return this._getCached(path, (res) => res.text(), options);
   }
 
   /**
@@ -9935,7 +9946,7 @@ class BrkClient extends BrkClientBase {
    */
   async getApi({ signal, onUpdate } = {}) {
     const path = `/api.json`;
-    return this.getText(path, { signal });
+    return this.getText(path, { signal, onUpdate });
   }
 
   /**
@@ -10051,7 +10062,7 @@ class BrkClient extends BrkClientBase {
    */
   async getBlockByHeight(height, { signal, onUpdate } = {}) {
     const path = `/api/block-height/${height}`;
-    return this.getText(path, { signal });
+    return this.getText(path, { signal, onUpdate });
   }
 
   /**
@@ -10087,7 +10098,7 @@ class BrkClient extends BrkClientBase {
    */
   async getBlockHeader(hash, { signal, onUpdate } = {}) {
     const path = `/api/block/${hash}/header`;
-    return this.getText(path, { signal });
+    return this.getText(path, { signal, onUpdate });
   }
 
   /**
@@ -10105,7 +10116,7 @@ class BrkClient extends BrkClientBase {
    */
   async getBlockRaw(hash, { signal, onUpdate } = {}) {
     const path = `/api/block/${hash}/raw`;
-    return this.getText(path, { signal });
+    return this.getText(path, { signal, onUpdate });
   }
 
   /**
@@ -10142,7 +10153,7 @@ class BrkClient extends BrkClientBase {
    */
   async getBlockTxid(hash, index, { signal, onUpdate } = {}) {
     const path = `/api/block/${hash}/txid/${index}`;
-    return this.getText(path, { signal });
+    return this.getText(path, { signal, onUpdate });
   }
 
   /**
@@ -10229,7 +10240,7 @@ class BrkClient extends BrkClientBase {
    */
   async getBlockTipHash({ signal, onUpdate } = {}) {
     const path = `/api/blocks/tip/hash`;
-    return this.getText(path, { signal });
+    return this.getText(path, { signal, onUpdate });
   }
 
   /**
@@ -10245,7 +10256,7 @@ class BrkClient extends BrkClientBase {
    */
   async getBlockTipHeight({ signal, onUpdate } = {}) {
     const path = `/api/blocks/tip/height`;
-    return this.getText(path, { signal });
+    return this.getText(path, { signal, onUpdate });
   }
 
   /**
@@ -10368,7 +10379,7 @@ class BrkClient extends BrkClientBase {
     if (format !== undefined) params.set('format', String(format));
     const query = params.toString();
     const path = `/api/series/bulk${query ? '?' + query : ''}`;
-    if (format === 'csv') return this.getText(path, { signal });
+    if (format === 'csv') return this.getText(path, { signal, onUpdate });
     return this.getJson(path, { signal, onUpdate });
   }
 
@@ -10539,7 +10550,7 @@ class BrkClient extends BrkClientBase {
     if (format !== undefined) params.set('format', String(format));
     const query = params.toString();
     const path = `/api/series/${series}/${index}${query ? '?' + query : ''}`;
-    if (format === 'csv') return this.getText(path, { signal });
+    if (format === 'csv') return this.getText(path, { signal, onUpdate });
     return this.getJson(path, { signal, onUpdate });
   }
 
@@ -10567,7 +10578,7 @@ class BrkClient extends BrkClientBase {
     if (format !== undefined) params.set('format', String(format));
     const query = params.toString();
     const path = `/api/series/${series}/${index}/data${query ? '?' + query : ''}`;
-    if (format === 'csv') return this.getText(path, { signal });
+    if (format === 'csv') return this.getText(path, { signal, onUpdate });
     return this.getJson(path, { signal, onUpdate });
   }
 
@@ -10585,7 +10596,7 @@ class BrkClient extends BrkClientBase {
    */
   async getSeriesLatest(series, index, { signal, onUpdate } = {}) {
     const path = `/api/series/${series}/${index}/latest`;
-    return this.getText(path, { signal });
+    return this.getText(path, { signal, onUpdate });
   }
 
   /**
@@ -10663,7 +10674,7 @@ class BrkClient extends BrkClientBase {
    */
   async getTxByIndex(index, { signal, onUpdate } = {}) {
     const path = `/api/tx-index/${index}`;
-    return this.getText(path, { signal });
+    return this.getText(path, { signal, onUpdate });
   }
 
   /**
@@ -10699,7 +10710,7 @@ class BrkClient extends BrkClientBase {
    */
   async getTxHex(txid, { signal, onUpdate } = {}) {
     const path = `/api/tx/${txid}/hex`;
-    return this.getText(path, { signal });
+    return this.getText(path, { signal, onUpdate });
   }
 
   /**
@@ -10735,7 +10746,7 @@ class BrkClient extends BrkClientBase {
    */
   async getTxMerkleblockProof(txid, { signal, onUpdate } = {}) {
     const path = `/api/tx/${txid}/merkleblock-proof`;
-    return this.getText(path, { signal });
+    return this.getText(path, { signal, onUpdate });
   }
 
   /**
@@ -10790,7 +10801,7 @@ class BrkClient extends BrkClientBase {
    */
   async getTxRaw(txid, { signal, onUpdate } = {}) {
     const path = `/api/tx/${txid}/raw`;
-    return this.getText(path, { signal });
+    return this.getText(path, { signal, onUpdate });
   }
 
   /**
@@ -11358,7 +11369,7 @@ class BrkClient extends BrkClientBase {
    */
   async getOpenapi({ signal, onUpdate } = {}) {
     const path = `/openapi.json`;
-    return this.getText(path, { signal });
+    return this.getText(path, { signal, onUpdate });
   }
 
   /**

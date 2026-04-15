@@ -91,7 +91,7 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         let fetch_call = if endpoint.returns_json() {
             "this.getJson(path, { signal, onUpdate })"
         } else {
-            "this.getText(path, { signal })"
+            "this.getText(path, { signal, onUpdate })"
         };
 
         if endpoint.query_params.is_empty() {
@@ -126,7 +126,7 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         }
 
         if endpoint.supports_csv {
-            writeln!(output, "    if (format === 'csv') return this.getText(path, {{ signal }});").unwrap();
+            writeln!(output, "    if (format === 'csv') return this.getText(path, {{ signal, onUpdate }});").unwrap();
         }
         writeln!(output, "    return {};", fetch_call).unwrap();
 

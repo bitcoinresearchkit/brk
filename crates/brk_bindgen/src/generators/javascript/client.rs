@@ -417,13 +417,15 @@ class BrkClientBase {{
   }}
 
   /**
-   * Make a GET request - races cache vs network, first to resolve calls onUpdate
+   * Make a GET request - races cache vs network, first to resolve calls onUpdate.
+   * Shared implementation backing `getJson` and `getText`.
    * @template T
    * @param {{string}} path
+   * @param {{(res: Response) => Promise<T>}} parse - Response body reader
    * @param {{{{ onUpdate?: (value: T) => void, signal?: AbortSignal }}}} [options]
    * @returns {{Promise<T>}}
    */
-  async getJson(path, {{ onUpdate, signal }} = {{}}) {{
+  async _getCached(path, parse, {{ onUpdate, signal }} = {{}}) {{
     const url = `${{this.baseUrl}}${{path}}`;
     const cache = this._cache ?? await this._cachePromise;
 
@@ -435,52 +437,61 @@ class BrkClientBase {{
     const cachePromise = cache?.match(url).then(async (res) => {{
       cachedRes = res ?? null;
       if (!res) return null;
-      const json = _addCamelGetters(await res.json());
+      const value = await parse(res);
       if (!resolved && onUpdate) {{
         resolved = true;
-        onUpdate(json);
+        onUpdate(value);
       }}
-      return json;
+      return value;
     }});
 
     const networkPromise = this.get(path, {{ signal }}).then(async (res) => {{
       const cloned = res.clone();
-      const json = _addCamelGetters(await res.json());
+      const value = await parse(res);
       // Skip update if ETag matches and cache already delivered
       if (cachedRes?.headers.get('ETag') === res.headers.get('ETag')) {{
         if (!resolved && onUpdate) {{
           resolved = true;
-          onUpdate(json);
+          onUpdate(value);
         }}
-        return json;
+        return value;
       }}
       resolved = true;
-      if (onUpdate) {{
-        onUpdate(json);
-      }}
+      if (onUpdate) onUpdate(value);
       if (cache) _runIdle(() => cache.put(url, cloned));
-      return json;
+      return value;
     }});
 
     try {{
       return await networkPromise;
     }} catch (e) {{
       // Network failed - wait for cache
-      const cachedJson = await cachePromise?.catch(() => null);
-      if (cachedJson) return cachedJson;
+      const cachedValue = await cachePromise?.catch(() => null);
+      if (cachedValue != null) return cachedValue;
       throw e;
     }}
   }}
 
   /**
-   * Make a GET request and return raw text (for CSV responses)
+   * Make a GET request expecting a JSON response. Cached and supports `onUpdate`.
+   * @template T
    * @param {{string}} path
-   * @param {{{{ signal?: AbortSignal }}}} [options]
+   * @param {{{{ onUpdate?: (value: T) => void, signal?: AbortSignal }}}} [options]
+   * @returns {{Promise<T>}}
+   */
+  getJson(path, options) {{
+    return this._getCached(path, async (res) => _addCamelGetters(await res.json()), options);
+  }}
+
+  /**
+   * Make a GET request expecting a text response (text/plain, text/csv, ...).
+   * Cached and supports `onUpdate`, same as `getJson`.
+   * @param {{string}} path
+   * @param {{{{ onUpdate?: (value: string) => void, signal?: AbortSignal }}}} [options]
    * @returns {{Promise<string>}}
    */
-  async getText(path, {{ signal }} = {{}}) {{
-    const res = await this.get(path, {{ signal }});
-    return res.text();
+  getText(path, options) {{
+    return this._getCached(path, (res) => res.text(), options);
   }}
 
   /**
