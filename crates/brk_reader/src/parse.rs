@@ -1,6 +1,3 @@
-//! Block parsing — XOR decoding, header peek, full body parse. Split
-//! so the scan loop can reject non-canonical blocks before copying.
-
 use std::io::Cursor;
 
 use bitcoin::{Transaction, VarInt, block::Header, consensus::Decodable};
@@ -11,10 +8,8 @@ use crate::{XORBytes, XORIndex, canonical::CanonicalRange};
 
 pub(crate) const HEADER_LEN: usize = 80;
 
-/// Cheap canonical-membership check. Decodes the header onto a stack
-/// buffer so `bytes` stays untouched (the parser later re-XORs the
-/// full block from the original phase). Returning the parsed header
-/// lets the body parse skip a second decode.
+/// Decodes the header onto a stack buffer so `bytes` stays untouched:
+/// the body parse later re-XORs the full block from the original phase.
 pub(crate) fn peek_canonical(
     bytes: &[u8],
     mut xor_state: XORIndex,
@@ -32,8 +27,6 @@ pub(crate) fn peek_canonical(
     Some((offset, header))
 }
 
-/// Full XOR-decode + body parse. Takes the previously-parsed `header`
-/// from `peek_canonical` so we don't re-parse it.
 pub(crate) fn parse_canonical_body(
     mut bytes: Vec<u8>,
     metadata: BlkMetadata,
@@ -52,12 +45,10 @@ pub(crate) fn parse_canonical_body(
     let mut cursor = Cursor::new(bytes);
     cursor.set_position(HEADER_LEN as u64);
 
-    // `consensus_decode_from_finite_reader` skips the `Take<R>` wrap
-    // that `consensus_decode` applies to every nested field for
-    // memory-safety — our cursor is already a bounded `Vec<u8>`, so
-    // the extra wrapping is pure overhead. Per the crate docs it's
-    // "marginally faster", but for a ~2000-tx block the per-field
-    // compounding adds up.
+    // `from_finite_reader` skips the `Take<R>` wrap that
+    // `consensus_decode` applies to every nested field for memory
+    // safety: our cursor is already a bounded `Vec<u8>`, so the
+    // wrapping is pure overhead and compounds across ~2000 tx fields.
     let tx_count = VarInt::consensus_decode_from_finite_reader(&mut cursor)?.0 as usize;
     let mut txdata = Vec::with_capacity(tx_count);
     let mut tx_metadata = Vec::with_capacity(tx_count);

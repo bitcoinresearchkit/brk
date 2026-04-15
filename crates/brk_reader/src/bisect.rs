@@ -1,7 +1,3 @@
-//! Helpers for picking where to start scanning: probe the first
-//! block of a file ([`first_block_height`]) and bisect the blk-index
-//! map for a target height ([`find_start_blk_index`]).
-
 use std::{fs::File, io::Read, path::Path};
 
 use bitcoin::{block::Header, consensus::Decodable};
@@ -17,8 +13,6 @@ use crate::{
 
 const PROBE_BUF_LEN: usize = 4096;
 
-/// Decodes the first block in `blk_path` and resolves its height via
-/// RPC. One short read + one RPC.
 pub(crate) fn first_block_height(
     client: &Client,
     blk_path: &Path,
@@ -32,15 +26,11 @@ pub(crate) fn first_block_height(
     let magic_end = find_magic(&buf[..n], &mut xor_i, xor_bytes)
         .ok_or_else(|| Error::NotFound("No magic bytes found".into()))?;
 
-    // Decode the 4-byte size + 80-byte header in one pass; the size
-    // is discarded. Bounds-check first so a corrupt file whose only
-    // magic-shaped bytes sit at the end of the probe doesn't index
-    // past `n`.
     let header_end = magic_end + 4 + HEADER_LEN;
     if header_end > n {
         warn!(
             "first_block_height: {} has magic-shaped bytes at offset {} but \
-             not enough room in the {}-byte probe to decode the header — \
+             not enough room in the {}-byte probe to decode the header, \
              the file is probably corrupt",
             blk_path.display(),
             magic_end - 4,
@@ -59,15 +49,11 @@ pub(crate) fn first_block_height(
     Ok(Height::new(height))
 }
 
-/// Bisects the map for the file whose first block height is ≤
-/// `target_start`, then backs off [`OUT_OF_ORDER_FILE_BACKOFF`] files.
-/// Always returns a valid blk index — read errors mid-search log and
-/// fall through to the backoff (or to 0 if the map is empty).
-///
-/// On a transient read error we **break** rather than `left = mid + 1`:
-/// the height bound at `mid` is unknown, so any further bisection on
-/// that side could skip valid lower indices. Falling through to the
-/// backoff still gives a safe lower bound.
+/// Bisects for the file whose first block height is <= `target_start`,
+/// then backs off [`OUT_OF_ORDER_FILE_BACKOFF`] files. A transient
+/// read error mid-bisect breaks out rather than narrowing further:
+/// the bound at `mid` is unknown, so any further step could skip
+/// valid lower indices. The backoff still provides a safe lower bound.
 pub(crate) fn find_start_blk_index(
     client: &Client,
     target_start: Height,

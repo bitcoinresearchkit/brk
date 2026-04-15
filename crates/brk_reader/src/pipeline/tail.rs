@@ -1,18 +1,12 @@
-//! Tail pipeline: single-threaded reverse scan of the newest blk
-//! files, reading each file in `TAIL_CHUNK`-sized slices from tail
-//! to head so we only touch bytes covering the canonical window.
-//! Matches fill offset slots and are emitted forward with an inline
-//! chain check.
-
 use std::{fs::File, ops::ControlFlow, os::unix::fs::FileExt};
 
 use brk_error::{Error, Result};
 use brk_rpc::Client;
-use brk_types::{Height, ReadBlock};
+use brk_types::{BlockHash, Height, ReadBlock};
 use crossbeam::channel::Sender;
 
 use crate::{
-    BlkIndexToBlkPath, BlockHash, OUT_OF_ORDER_FILE_BACKOFF, XORBytes, bisect,
+    BlkIndexToBlkPath, OUT_OF_ORDER_FILE_BACKOFF, XORBytes, bisect,
     canonical::CanonicalRange,
     parse::{parse_canonical_body, peek_canonical},
     scan::scan_bytes,
@@ -25,20 +19,14 @@ pub(super) fn pipeline_tail(
     paths: &BlkIndexToBlkPath,
     xor_bytes: XORBytes,
     canonical: &CanonicalRange,
-    anchor: Option<BlockHash>,
     send: &Sender<Result<ReadBlock>>,
 ) -> Result<()> {
     let mut slots: Vec<Option<ReadBlock>> = (0..canonical.len()).map(|_| None).collect();
     let mut remaining = canonical.len();
     let mut parse_failure: Option<Error> = None;
-    // Bailout streak: gives up after OUT_OF_ORDER_FILE_BACKOFF
-    // consecutive files below the canonical window so a permanent
-    // miss doesn't scan the entire chain in reverse.
     let mut below_floor_streak: usize = 0;
 
     'files: for (&blk_index, path) in paths.iter().rev() {
-        // If this file's first block is below the lowest still-missing
-        // canonical height, we've walked past the window.
         if let Some(missing_idx) = slots.iter().position(Option::is_none)
             && let Ok(first_height) = bisect::first_block_height(client, path, xor_bytes)
         {
@@ -61,12 +49,6 @@ pub(super) fn pipeline_tail(
             continue;
         }
 
-        // Chunked reverse read. `end` is the file position we've
-        // already covered (exclusive). Each iteration reads
-        // [end - TAIL_CHUNK..end] and prepends it to any `spillover`
-        // carried from the previous iteration — the pre-first-magic
-        // bytes of that chunk, which must belong to a block that
-        // started in this earlier region.
         let mut end = file_len;
         let mut spillover: Vec<u8> = Vec::new();
 
@@ -78,7 +60,6 @@ pub(super) fn pipeline_tail(
             buf[chunk_len..].copy_from_slice(&spillover);
             spillover.clear();
 
-            // `buf` now represents file bytes [start..start + buf.len()].
             let result = scan_bytes(
                 &mut buf,
                 blk_index,
@@ -92,6 +73,14 @@ pub(super) fn pipeline_tail(
                     };
                     if slots[offset as usize].is_some() {
                         return ControlFlow::Continue(());
+                    }
+                    if !canonical
+                        .verify_prev(offset, &BlockHash::from(header.prev_blockhash))
+                    {
+                        parse_failure = Some(Error::Internal(
+                            "tail pipeline: canonical batch stitched across a reorg",
+                        ));
+                        return ControlFlow::Break(());
                     }
                     let height = Height::from(*canonical.start + offset);
                     match parse_canonical_body(
@@ -126,9 +115,8 @@ pub(super) fn pipeline_tail(
                 break 'files;
             }
 
-            // Carry pre-first-magic bytes into the next (earlier)
-            // chunk so a block that straddled this chunk's start is
-            // stitched back together.
+            // Carry pre-first-magic bytes into the earlier chunk so a
+            // block straddling the boundary is stitched back together.
             end = start;
             if end > 0 {
                 let prefix_len = result.first_magic.unwrap_or(buf.len());
@@ -143,22 +131,10 @@ pub(super) fn pipeline_tail(
         ));
     }
 
-    // Inline chain check; ReorderState would be 130 lines of
-    // machinery for the single-threaded path.
-    let mut last_hash: Option<BlockHash> = anchor;
     for slot in slots {
         let block = slot.expect("tail pipeline left a slot empty after `remaining == 0`");
-        if let Some(prev) = &last_hash {
-            let actual_prev = BlockHash::from(block.header.prev_blockhash);
-            if actual_prev != *prev {
-                return Err(Error::Internal(
-                    "tail pipeline: canonical batch stitched across a reorg",
-                ));
-            }
-        }
-        last_hash = Some(block.hash().clone());
         if send.send(Ok(block)).is_err() {
-            return Ok(()); // consumer dropped — clean exit
+            return Ok(());
         }
     }
     Ok(())

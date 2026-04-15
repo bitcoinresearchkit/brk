@@ -1,38 +1,32 @@
-//! `CanonicalRange`: every canonical block hash in a height window,
-//! pre-fetched once via [`brk_rpc::Client::get_block_hashes_range`].
-//! Used as the authoritative "is this block on the main chain?"
-//! filter so the scan pipeline never needs a per-block RPC call.
-
 use brk_error::Result;
 use brk_rpc::Client;
 use brk_types::{BlockHash, Height};
 use rustc_hash::FxHashMap;
 
-/// Keyed on the full 32-byte hash because a prefix collision would
-/// silently drop both blocks; the ~24 MB extra RAM is negligible
-/// against the 128 MB blk reads happening in parallel.
+/// Keyed on the full 32-byte hash: a prefix collision would
+/// silently drop both blocks.
 pub struct CanonicalRange {
     pub start: Height,
+    anchor: Option<BlockHash>,
     by_hash: FxHashMap<BlockHash, u32>,
 }
 
 impl CanonicalRange {
-    /// Resolves canonical hashes for every height strictly after
-    /// `anchor` up to `tip` inclusive. `anchor = None` starts at
-    /// genesis.
     pub fn walk(client: &Client, anchor: Option<&BlockHash>, tip: Height) -> Result<Self> {
         let start = match anchor {
             Some(hash) => Height::from(client.get_block_header_info(hash)?.height + 1),
             None => Height::ZERO,
         };
-        Self::between(client, start, tip)
+        let mut range = Self::between(client, start, tip)?;
+        range.anchor = anchor.cloned();
+        Ok(range)
     }
 
-    /// Resolves canonical hashes for every height in `start..=end`.
     pub fn between(client: &Client, start: Height, end: Height) -> Result<Self> {
         if start > end {
             return Ok(Self {
                 start,
+                anchor: None,
                 by_hash: FxHashMap::default(),
             });
         }
@@ -42,7 +36,11 @@ impl CanonicalRange {
             .enumerate()
             .map(|(i, h)| (h, i as u32))
             .collect();
-        Ok(Self { start, by_hash })
+        Ok(Self {
+            start,
+            anchor: None,
+            by_hash,
+        })
     }
 
     pub fn len(&self) -> usize {
@@ -53,9 +51,18 @@ impl CanonicalRange {
         self.by_hash.is_empty()
     }
 
-    /// Offset-from-`start` of `hash` iff it's on the canonical chain.
     #[inline]
     pub(crate) fn offset_of(&self, hash: &BlockHash) -> Option<u32> {
         self.by_hash.get(hash).copied()
+    }
+
+    /// `prev_hash` must match the canonical hash at `offset - 1`, or
+    /// the anchor when `offset == 0`.
+    #[inline]
+    pub(crate) fn verify_prev(&self, offset: u32, prev_hash: &BlockHash) -> bool {
+        match offset {
+            0 => self.anchor.as_ref().is_none_or(|a| a == prev_hash),
+            _ => self.offset_of(prev_hash) == Some(offset - 1),
+        }
     }
 }

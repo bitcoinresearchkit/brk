@@ -53,15 +53,15 @@ export function createNetworkSection() {
     { key: "p2pk65", name: "P2PK65", color: st.p2pk65, defaultActive: false },
   ]);
 
-  // Non-addressable script types
+  // Non-addressable script types, reverse creation with catch-alls at tail
   const nonAddressableTypes = /** @type {const} */ ([
-    { key: "p2ms", name: "P2MS", color: st.p2ms, defaultActive: false },
     {
       key: "opReturn",
       name: "OP_RETURN",
       color: st.opReturn,
       defaultActive: true,
     },
+    { key: "p2ms", name: "P2MS", color: st.p2ms, defaultActive: false },
     {
       key: "empty",
       name: "Empty",
