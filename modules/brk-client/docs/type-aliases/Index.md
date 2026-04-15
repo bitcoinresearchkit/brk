@@ -8,6 +8,6 @@
 
 > **Index** = `"minute10"` \| `"minute30"` \| `"hour1"` \| `"hour4"` \| `"hour12"` \| `"day1"` \| `"day3"` \| `"week1"` \| `"month1"` \| `"month3"` \| `"month6"` \| `"year1"` \| `"year10"` \| `"halving"` \| `"epoch"` \| `"height"` \| `"tx_index"` \| `"txin_index"` \| `"txout_index"` \| `"empty_output_index"` \| `"op_return_index"` \| `"p2a_addr_index"` \| `"p2ms_output_index"` \| `"p2pk33_addr_index"` \| `"p2pk65_addr_index"` \| `"p2pkh_addr_index"` \| `"p2sh_addr_index"` \| `"p2tr_addr_index"` \| `"p2wpkh_addr_index"` \| `"p2wsh_addr_index"` \| `"unknown_output_index"` \| `"funded_addr_index"` \| `"empty_addr_index"`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:592](https://github.com/bitcoinresearchkit/brk/blob/1ddb3385e298de5498f1b3bf48bb88ed008d8e17/modules/brk-client/index.js#L592)
+Defined in: [Developer/brk/modules/brk-client/index.js:593](https://github.com/bitcoinresearchkit/brk/blob/75a97b4da99e60fce9ac789d118004f9b3db3ee5/modules/brk-client/index.js#L593)
 
 ## Type Parameters

@@ -63,6 +63,7 @@
     * [get\_series\_version](#brk_client.BrkClient.get_series_version)
     * [get\_disk\_usage](#brk_client.BrkClient.get_disk_usage)
     * [get\_sync\_status](#brk_client.BrkClient.get_sync_status)
+    * [get\_tx\_by\_index](#brk_client.BrkClient.get_tx_by_index)
     * [get\_tx](#brk_client.BrkClient.get_tx)
     * [get\_tx\_hex](#brk_client.BrkClient.get_tx_hex)
     * [get\_tx\_merkle\_proof](#brk_client.BrkClient.get_tx_merkle_proof)
@@ -863,6 +864,20 @@ Sync status.
 Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.
 
 Endpoint: `GET /api/server/sync`
+
+<a id="brk_client.BrkClient.get_tx_by_index"></a>
+
+#### get\_tx\_by\_index
+
+```python
+def get_tx_by_index(index: TxIndex) -> str
+```
+
+Txid by index.
+
+Retrieve the transaction ID (txid) at a given global transaction index. Returns the txid as plain text.
+
+Endpoint: `GET /api/tx-index/{index}`
 
 <a id="brk_client.BrkClient.get_tx"></a>
 

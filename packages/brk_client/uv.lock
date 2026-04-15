@@ -50,7 +50,7 @@ wheels = [
 
 [[package]]
 name = "brk-client"
-version = "0.3.0a0"
+version = "0.3.0b1"
 source = { editable = "." }
 
 [package.dev-dependencies]

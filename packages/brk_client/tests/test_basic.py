@@ -39,7 +39,7 @@ def test_fetch_typed_series():
     # Using new idiomatic API: tail(10).fetch() or [-10:].fetch()
     a = client.series.constants._0.by.day1().tail(10).fetch()
     print(a)
-    b = client.series.outputs.count.unspent.by.height().tail(10).fetch()
+    b = client.series.outputs.unspent.count.by.height().tail(10).fetch()
     print(b)
     c = client.series.prices.split.close.usd.by.day1().tail(10).fetch()
     print(c)

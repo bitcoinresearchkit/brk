@@ -8,6 +8,6 @@
 
 > **RawLockTime** = `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:859](https://github.com/bitcoinresearchkit/brk/blob/1ddb3385e298de5498f1b3bf48bb88ed008d8e17/modules/brk-client/index.js#L859)
+Defined in: [Developer/brk/modules/brk-client/index.js:860](https://github.com/bitcoinresearchkit/brk/blob/75a97b4da99e60fce9ac789d118004f9b3db3ee5/modules/brk-client/index.js#L860)
 
 ## Type Parameters

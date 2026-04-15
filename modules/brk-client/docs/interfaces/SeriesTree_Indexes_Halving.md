@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Indexes\_Halving
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5136](https://github.com/bitcoinresearchkit/brk/blob/1ddb3385e298de5498f1b3bf48bb88ed008d8e17/modules/brk-client/index.js#L5136)
+Defined in: [Developer/brk/modules/brk-client/index.js:5534](https://github.com/bitcoinresearchkit/brk/blob/75a97b4da99e60fce9ac789d118004f9b3db3ee5/modules/brk-client/index.js#L5534)
 
 ## Properties
 
@@ -14,12 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5136](https://github.com/
 
 > **firstHeight**: [`SeriesPattern16`](../type-aliases/SeriesPattern16.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5138](https://github.com/bitcoinresearchkit/brk/blob/1ddb3385e298de5498f1b3bf48bb88ed008d8e17/modules/brk-client/index.js#L5138)
-
-***
-
-### identity
-
-> **identity**: [`SeriesPattern16`](../type-aliases/SeriesPattern16.md)\<`number`\>
-
-Defined in: [Developer/brk/modules/brk-client/index.js:5137](https://github.com/bitcoinresearchkit/brk/blob/1ddb3385e298de5498f1b3bf48bb88ed008d8e17/modules/brk-client/index.js#L5137)
+Defined in: [Developer/brk/modules/brk-client/index.js:5535](https://github.com/bitcoinresearchkit/brk/blob/75a97b4da99e60fce9ac789d118004f9b3db3ee5/modules/brk-client/index.js#L5535)
