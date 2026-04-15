@@ -82,3 +82,39 @@ impl HeaderMapExtended for HeaderMap {
         self.insert("Sunset", sunset.parse().unwrap());
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use axum::http::header::{ETAG, IF_NONE_MATCH};
+
+    use super::HeaderMapExtended;
+
+    #[test]
+    fn has_etag_matches_quoted_and_unquoted_values() {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(IF_NONE_MATCH, "\"abc123\"".parse().unwrap());
+
+        assert!(headers.has_etag("abc123"));
+        assert!(!headers.has_etag("different"));
+    }
+
+    #[test]
+    fn insert_etag_wraps_value_in_quotes() {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert_etag("abc123");
+
+        assert_eq!(headers.get(ETAG).unwrap(), "\"abc123\"");
+    }
+
+    #[test]
+    fn insert_deprecation_sets_expected_headers() {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert_deprecation("Wed, 01 Jan 2027 00:00:00 GMT");
+
+        assert_eq!(headers.get("Deprecation").unwrap(), "true");
+        assert_eq!(
+            headers.get("Sunset").unwrap(),
+            "Wed, 01 Jan 2027 00:00:00 GMT",
+        );
+    }
+}
