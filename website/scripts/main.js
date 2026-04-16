@@ -198,19 +198,20 @@ onFirstIntersection(navElement, () => {
 function initResizeBar() {
   const bar = getElementById("resize-bar");
   const key = "bar-width";
+  const root = document.documentElement;
   const max = () => parseFloat(style.getPropertyValue("--max-main-width")) / 100 * window.innerWidth;
 
   const saved = readStored(key);
-  if (saved) mainElement.style.width = `${saved}px`;
+  if (saved) root.style.setProperty("--sidebar-width", `${saved}px`);
 
   /** @param {number | null} width */
   function setWidth(width) {
     if (width != null) {
       const clamped = Math.min(width, max());
-      mainElement.style.width = `${clamped}px`;
+      root.style.setProperty("--sidebar-width", `${clamped}px`);
       writeToStorage(key, String(clamped));
     } else {
-      mainElement.style.width = "";
+      root.style.removeProperty("--sidebar-width");
       removeStored(key);
     }
   }

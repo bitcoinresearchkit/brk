@@ -76,7 +76,9 @@ body {
   position: relative;
 
   html[data-layout="split"] & {
-    grid-template-columns: minmax(min-content, auto) 1fr;
+    grid-template-columns:
+      minmax(min-content, var(--sidebar-width, max-content))
+      1fr;
 
     html[data-display="standalone"] & {
       border-top: 1px;
@@ -266,7 +268,6 @@ summary {
     }
   }
 }
-
 
 html[data-layout="split"] .full-only {
   display: none !important;

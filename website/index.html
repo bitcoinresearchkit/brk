@@ -76,9 +76,23 @@
       }
 
       let storedLayout;
-      try { storedLayout = localStorage.getItem("split-view"); } catch (_) {}
-      const isSplit = storedLayout !== "false" && window.matchMedia("(min-width: 768px)").matches;
+      try {
+        storedLayout = localStorage.getItem("split-view");
+      } catch (_) {}
+      const isSplit =
+        storedLayout !== "false" &&
+        window.matchMedia("(min-width: 768px)").matches;
       document.documentElement.dataset.layout = isSplit ? "split" : "full";
+
+      try {
+        const savedWidth = localStorage.getItem("bar-width");
+        if (savedWidth) {
+          window.document.documentElement.style.setProperty(
+            "--sidebar-width",
+            `${savedWidth}px`,
+          );
+        }
+      } catch (_) {}
     </script>
     <script type="module" src="/scripts/entry.js"></script>
 
@@ -111,7 +125,6 @@
         </header>
         <ul id="search-results"></ul>
       </search>
-
     </main>
     <div id="resize-bar"></div>
     <aside id="aside">
@@ -127,12 +140,7 @@
           title="View sidebar"
           class="full-only"
         >
-          <input
-            type="radio"
-            name="frame"
-            id="aside-selector"
-            value="aside"
-          />
+          <input type="radio" name="frame" id="aside-selector" value="aside" />
           View
         </label>
 
@@ -141,11 +149,7 @@
           Browse
         </label>
 
-        <label
-          id="search-selector-label"
-          for="search-selector"
-          title="Search"
-        >
+        <label id="search-selector-label" for="search-selector" title="Search">
           <input
             type="radio"
             name="frame"
@@ -166,17 +170,5 @@
         <a id="share-anchor" href="/"></a>
       </div>
     </div>
-
-    <script>
-      try {
-        // Prevent width jumping
-        const savedWidth = localStorage.getItem("bar-width");
-        if (savedWidth) {
-          const main = window.document.getElementById("main");
-          if (!main) throw "Should exist";
-          main.style.width = `${savedWidth}px`;
-        }
-      } catch (_) {}
-    </script>
   </body>
 </html>

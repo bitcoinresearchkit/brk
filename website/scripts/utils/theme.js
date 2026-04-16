@@ -23,8 +23,12 @@ export function onChange(callback) {
 function setDark(value) {
   if (dark === value) return;
   dark = value;
-  apply(value);
-  callbacks.forEach((cb) => cb());
+  const swap = () => {
+    apply(value);
+    callbacks.forEach((cb) => cb());
+  };
+  if (document.startViewTransition) document.startViewTransition(swap);
+  else swap();
 }
 
 /** @param {boolean} isDark */
