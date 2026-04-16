@@ -177,13 +177,11 @@ impl MempoolInner {
             let prev_txid: Txid = txin.previous_output.txid.into();
             if !mempool_txs.contains_key(&prev_txid)
                 && !parent_cache.contains_key(&prev_txid)
-            {
-                if let Ok(prev) = self
+                && let Ok(prev) = self
                     .client
                     .get_raw_transaction(&prev_txid, None as Option<&BlockHash>)
-                {
-                    parent_cache.insert(prev_txid, prev.output);
-                }
+            {
+                parent_cache.insert(prev_txid, prev.output);
             }
         }
 
