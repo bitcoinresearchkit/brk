@@ -162,6 +162,7 @@ export const colors = {
   // Valuations
   realized: palette.orange,
   investor: palette.fuchsia,
+  capitalized: palette.green,
   thermo: palette.emerald,
   trueMarketMean: palette.blue,
   vocdd: palette.purple,

@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap;
 
 use crate::distribution::{
     addr::{
-        AddrTypeToActivityCounts, AddrTypeToExposedAddrCount, AddrTypeToExposedAddrSupply,
+        AddrTypeToActivityCounts, AddrTypeToExposedAddrCount, AddrTypeToExposedSupply,
         AddrTypeToReusedAddrCount, AddrTypeToReusedAddrEventCount, AddrTypeToVec,
     },
     cohorts::AddrCohorts,
@@ -34,7 +34,7 @@ pub(crate) fn process_received(
     active_reused_addr_count: &mut AddrTypeToReusedAddrEventCount,
     exposed_addr_count: &mut AddrTypeToExposedAddrCount,
     total_exposed_addr_count: &mut AddrTypeToExposedAddrCount,
-    exposed_addr_supply: &mut AddrTypeToExposedAddrSupply,
+    exposed_supply: &mut AddrTypeToExposedSupply,
 ) {
     let max_type_len = received_data
         .iter()
@@ -56,11 +56,10 @@ pub(crate) fn process_received(
         let type_reused_count = reused_addr_count.get_mut(output_type).unwrap();
         let type_total_reused_count = total_reused_addr_count.get_mut(output_type).unwrap();
         let type_output_to_reused_count = output_to_reused_addr_count.get_mut(output_type).unwrap();
-        let type_active_reused_count =
-            active_reused_addr_count.get_mut(output_type).unwrap();
+        let type_active_reused_count = active_reused_addr_count.get_mut(output_type).unwrap();
         let type_exposed_count = exposed_addr_count.get_mut(output_type).unwrap();
         let type_total_exposed_count = total_exposed_addr_count.get_mut(output_type).unwrap();
-        let type_exposed_supply = exposed_addr_supply.get_mut(output_type).unwrap();
+        let type_exposed_supply = exposed_supply.get_mut(output_type).unwrap();
 
         // Aggregate receives by address - each address processed exactly once
         for (type_index, value) in vec {
@@ -206,15 +205,12 @@ pub(crate) fn process_received(
             if !was_funded && was_pubkey_exposed {
                 *type_exposed_count += 1;
             }
-            if output_type.pubkey_exposed_at_funding()
-                && matches!(status, TrackingStatus::New)
-            {
+            if output_type.pubkey_exposed_at_funding() && matches!(status, TrackingStatus::New) {
                 *type_total_exposed_count += 1;
             }
 
             // Update exposed supply via post-receive contribution delta.
-            let exposed_contribution_after =
-                addr_data.exposed_supply_contribution(output_type);
+            let exposed_contribution_after = addr_data.exposed_supply_contribution(output_type);
             // Receives can only add to balance and membership, so the delta
             // is always non-negative.
             *type_exposed_supply += exposed_contribution_after - exposed_contribution_before;

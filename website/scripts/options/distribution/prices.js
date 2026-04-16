@@ -4,11 +4,11 @@
  * Structure (single cohort):
  * - Compare: Both prices on one chart
  * - Realized: Price + Ratio (MVRV) + Z-Scores (for full cohorts)
- * - Investor: Price + Ratio + Z-Scores (for full cohorts)
+ * - Capitalized: Price + Ratio + Z-Scores (for full cohorts)
  *
  * Structure (grouped cohorts):
  * - Realized: Price + Ratio comparison across cohorts
- * - Investor: Price + Ratio comparison across cohorts
+ * - Capitalized: Price + Ratio comparison across cohorts
  *
  * For cohorts WITHOUT full ratio patterns: basic Price/Ratio charts only (no Z-Scores)
  */
@@ -34,7 +34,7 @@ export function createPricesSectionFull({ cohort, title }) {
         title: title("Realized Prices"),
         top: [
           price({ series: tree.realized.price, name: "Realized", color: colors.realized }),
-          price({ series: tree.realized.investor.price, name: "Investor", color: colors.investor }),
+          price({ series: tree.realized.capitalized.price, name: "Capitalized", color: colors.capitalized }),
         ],
       },
       {
@@ -50,12 +50,12 @@ export function createPricesSectionFull({ cohort, title }) {
         }),
       },
       {
-        name: "Investor",
+        name: "Capitalized",
         tree: priceRatioPercentilesTree({
-          pattern: tree.realized.investor.price,
-          title: title("Investor Price"),
-          ratioTitle: title("Investor Price Ratio"),
-          legend: "Investor",
+          pattern: tree.realized.capitalized.price,
+          title: title("Capitalized Price"),
+          ratioTitle: title("Capitalized Price Ratio"),
+          legend: "Capitalized",
           color,
         }),
       },
@@ -150,20 +150,20 @@ export function createGroupedPricesSectionFull({ list, all, title }) {
     tree: [
       ...groupedRealizedPriceItems(list, all, title),
       {
-        name: "Investor",
+        name: "Capitalized",
         tree: [
           {
             name: "Price",
-            title: title("Investor Price"),
+            title: title("Capitalized Price"),
             top: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              price({ series: tree.realized.investor.price, name, color }),
+              price({ series: tree.realized.capitalized.price, name, color }),
             ),
           },
           {
             name: "Ratio",
-            title: title("Investor Price Ratio"),
+            title: title("Capitalized Price Ratio"),
             bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) =>
-              baseline({ series: tree.realized.investor.price.ratio, name, color, unit: Unit.ratio, base: 1 }),
+              baseline({ series: tree.realized.capitalized.price.ratio, name, color, unit: Unit.ratio, base: 1 }),
             ),
           },
         ],

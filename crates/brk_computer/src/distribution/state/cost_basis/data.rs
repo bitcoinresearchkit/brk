@@ -12,7 +12,7 @@ use rustc_hash::FxHashMap;
 use vecdb::{Bytes, unlikely};
 
 use super::{Accumulate, CachedUnrealizedState, UnrealizedState};
-use crate::distribution::state::pending::{PendingCapDelta, PendingDelta, PendingInvestorCapDelta};
+use crate::distribution::state::pending::{PendingCapDelta, PendingDelta, PendingCapitalizedCapRawDelta};
 
 /// Type alias for the price-to-sats map used in cost basis data.
 pub(super) type CostBasisMap = BTreeMap<CentsCompact, Sats>;
@@ -27,20 +27,20 @@ pub trait CostBasisOps: Send + Sync + 'static {
     fn with_price_rounding(self, digits: i32) -> Self;
     fn import_at_or_before(&mut self, height: Height) -> Result<Height>;
     fn cap_raw(&self) -> CentsSats;
-    fn investor_cap_raw(&self) -> CentsSquaredSats;
+    fn capitalized_cap_raw(&self) -> CentsSquaredSats;
     fn increment(
         &mut self,
         price: Cents,
         sats: Sats,
         price_sats: CentsSats,
-        investor_cap: CentsSquaredSats,
+        capitalized_cap: CentsSquaredSats,
     );
     fn decrement(
         &mut self,
         price: Cents,
         sats: Sats,
         price_sats: CentsSats,
-        investor_cap: CentsSquaredSats,
+        capitalized_cap: CentsSquaredSats,
     );
     fn apply_pending(&mut self);
     fn init(&mut self);
@@ -182,7 +182,7 @@ impl CostBasisOps for CostBasisRaw {
         self.state.as_ref().unwrap().cap_raw
     }
 
-    fn investor_cap_raw(&self) -> CentsSquaredSats {
+    fn capitalized_cap_raw(&self) -> CentsSquaredSats {
         CentsSquaredSats::ZERO
     }
 
@@ -192,7 +192,7 @@ impl CostBasisOps for CostBasisRaw {
         _price: Cents,
         _sats: Sats,
         price_sats: CentsSats,
-        _investor_cap: CentsSquaredSats,
+        _capitalized_cap: CentsSquaredSats,
     ) {
         self.pending_cap.inc += price_sats;
     }
@@ -203,7 +203,7 @@ impl CostBasisOps for CostBasisRaw {
         _price: Cents,
         _sats: Sats,
         price_sats: CentsSats,
-        _investor_cap: CentsSquaredSats,
+        _capitalized_cap: CentsSquaredSats,
     ) {
         self.pending_cap.dec += price_sats;
     }
@@ -240,7 +240,7 @@ impl CostBasisOps for CostBasisRaw {
 /// Composes `CostBasisRaw` for scalar tracking, adds map, pending, and cache.
 ///
 /// Generic over the accumulator `S`:
-/// - `WithCapital`: tracks all fields including invested capital + investor cap (128 bytes)
+/// - `WithCapital`: tracks all fields including invested capital + capitalized cap (128 bytes)
 /// - `WithoutCapital`: tracks only supply + unrealized profit/loss (64 bytes, 1 cache line)
 #[derive(Clone, Debug)]
 pub struct CostBasisData<S: Accumulate> {
@@ -249,8 +249,8 @@ pub struct CostBasisData<S: Accumulate> {
     pending: FxHashMap<CentsCompact, PendingDelta>,
     cache: Option<CachedUnrealizedState<S>>,
     rounding_digits: Option<i32>,
-    investor_cap_raw: CentsSquaredSats,
-    pending_investor_cap: PendingInvestorCapDelta,
+    capitalized_cap_raw: CentsSquaredSats,
+    pending_capitalized_cap: PendingCapitalizedCapRawDelta,
 }
 
 impl<S: Accumulate> CostBasisData<S> {
@@ -351,8 +351,8 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
             pending: FxHashMap::default(),
             cache: None,
             rounding_digits: None,
-            investor_cap_raw: CentsSquaredSats::ZERO,
-            pending_investor_cap: PendingInvestorCapDelta::default(),
+            capitalized_cap_raw: CentsSquaredSats::ZERO,
+            pending_capitalized_cap: PendingCapitalizedCapRawDelta::default(),
         }
     }
 
@@ -375,10 +375,10 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
             "CostBasisData state too short: {} bytes",
             rest.len()
         );
-        self.investor_cap_raw = CentsSquaredSats::from_bytes(&rest[16..32])?;
+        self.capitalized_cap_raw = CentsSquaredSats::from_bytes(&rest[16..32])?;
         self.pending.clear();
         self.raw.pending_cap = PendingCapDelta::default();
-        self.pending_investor_cap = PendingInvestorCapDelta::default();
+        self.pending_capitalized_cap = PendingCapitalizedCapRawDelta::default();
         self.cache = None;
         Ok(height)
     }
@@ -387,8 +387,8 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
         self.raw.cap_raw()
     }
 
-    fn investor_cap_raw(&self) -> CentsSquaredSats {
-        self.investor_cap_raw
+    fn capitalized_cap_raw(&self) -> CentsSquaredSats {
+        self.capitalized_cap_raw
     }
 
     #[inline]
@@ -397,13 +397,13 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
         price: Cents,
         sats: Sats,
         price_sats: CentsSats,
-        investor_cap: CentsSquaredSats,
+        capitalized_cap: CentsSquaredSats,
     ) {
         let price = self.round_price(price);
         self.pending.entry(price.into()).or_default().inc += sats;
         self.raw.pending_cap.inc += price_sats;
-        if investor_cap != CentsSquaredSats::ZERO {
-            self.pending_investor_cap.inc += investor_cap;
+        if capitalized_cap != CentsSquaredSats::ZERO {
+            self.pending_capitalized_cap.inc += capitalized_cap;
         }
         if let Some(cache) = self.cache.as_mut() {
             cache.on_receive(price, sats);
@@ -416,13 +416,13 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
         price: Cents,
         sats: Sats,
         price_sats: CentsSats,
-        investor_cap: CentsSquaredSats,
+        capitalized_cap: CentsSquaredSats,
     ) {
         let price = self.round_price(price);
         self.pending.entry(price.into()).or_default().dec += sats;
         self.raw.pending_cap.dec += price_sats;
-        if investor_cap != CentsSquaredSats::ZERO {
-            self.pending_investor_cap.dec += investor_cap;
+        if capitalized_cap != CentsSquaredSats::ZERO {
+            self.pending_capitalized_cap.dec += capitalized_cap;
         }
         if let Some(cache) = self.cache.as_mut() {
             cache.on_send(price, sats);
@@ -432,19 +432,19 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
     fn apply_pending(&mut self) {
         self.apply_map_pending();
         self.raw.apply_pending_cap();
-        self.investor_cap_raw += self.pending_investor_cap.inc;
+        self.capitalized_cap_raw += self.pending_capitalized_cap.inc;
         debug_assert!(
-            self.investor_cap_raw >= self.pending_investor_cap.dec,
-            "CostBasis investor_cap_raw underflow!\n\
+            self.capitalized_cap_raw >= self.pending_capitalized_cap.dec,
+            "CostBasis capitalized_cap_raw underflow!\n\
             Path: {:?}\n\
             Current (after increments): {:?}\n\
             Trying to decrement by: {:?}",
             self.raw.pathbuf,
-            self.investor_cap_raw,
-            self.pending_investor_cap.dec
+            self.capitalized_cap_raw,
+            self.pending_capitalized_cap.dec
         );
-        self.investor_cap_raw -= self.pending_investor_cap.dec;
-        self.pending_investor_cap = PendingInvestorCapDelta::default();
+        self.capitalized_cap_raw -= self.pending_capitalized_cap.dec;
+        self.pending_capitalized_cap = PendingCapitalizedCapRawDelta::default();
     }
 
     fn init(&mut self) {
@@ -452,8 +452,8 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
         self.map.replace(CostBasisDistribution::default());
         self.pending.clear();
         self.cache = None;
-        self.investor_cap_raw = CentsSquaredSats::ZERO;
-        self.pending_investor_cap = PendingInvestorCapDelta::default();
+        self.capitalized_cap_raw = CentsSquaredSats::ZERO;
+        self.pending_capitalized_cap = PendingCapitalizedCapRawDelta::default();
     }
 
     fn clean(&mut self) -> Result<()> {
@@ -469,7 +469,7 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
         let raw_state = self.raw.state.as_ref().unwrap();
         let mut buffer = self.map.as_ref().unwrap().serialize()?;
         buffer.extend(raw_state.cap_raw.to_bytes());
-        buffer.extend(self.investor_cap_raw.to_bytes());
+        buffer.extend(self.capitalized_cap_raw.to_bytes());
         fs::write(self.raw.path_state(height), buffer)?;
 
         Ok(())

@@ -6,7 +6,7 @@ use vecdb::{Bytes, Formattable};
 use crate::{Cents, CentsSats, CentsSquaredSats, EmptyAddrData, OutputType, Sats, SupplyState};
 
 /// Snapshot of cost basis related state.
-/// Uses CentsSats (u64) for single-UTXO values, CentsSquaredSats (u128) for investor cap.
+/// Uses CentsSats (u64) for single-UTXO values, CentsSquaredSats (u128) for capitalized cap.
 #[derive(Clone, Debug)]
 pub struct CostBasisSnapshot {
     pub realized_price: Cents,
@@ -14,7 +14,7 @@ pub struct CostBasisSnapshot {
     /// price × sats (fits u64 for individual UTXOs)
     pub price_sats: CentsSats,
     /// price² × sats (needs u128)
-    pub investor_cap: CentsSquaredSats,
+    pub capitalized_cap_raw: CentsSquaredSats,
 }
 
 impl CostBasisSnapshot {
@@ -26,7 +26,7 @@ impl CostBasisSnapshot {
             realized_price: price,
             supply_state: *supply,
             price_sats,
-            investor_cap: price_sats.to_investor_cap(price),
+            capitalized_cap_raw: price_sats.to_capitalized_cap(price),
         }
     }
 }
@@ -49,8 +49,8 @@ pub struct FundedAddrData {
     pub sent: Sats,
     /// The realized capitalization: Σ(price × sats)
     pub realized_cap_raw: CentsSats,
-    /// The investor capitalization: Σ(price² × sats)
-    pub investor_cap_raw: CentsSquaredSats,
+    /// The capitalized cap: Σ(price² × sats)
+    pub capitalized_cap_raw: CentsSquaredSats,
 }
 
 impl FundedAddrData {
@@ -72,7 +72,7 @@ impl FundedAddrData {
             },
             // Use exact value to avoid rounding errors from realized_price × balance
             price_sats: CentsSats::new(self.realized_cap_raw.inner()),
-            investor_cap: self.investor_cap_raw,
+            capitalized_cap_raw: self.capitalized_cap_raw,
         }
     }
 
@@ -137,11 +137,11 @@ impl FundedAddrData {
     /// This address's contribution (in sats) to the "funds at quantum risk"
     /// supply: its balance if currently in the funded-exposed set, else 0.
     #[inline]
-    pub fn exposed_supply_contribution(&self, output_type: OutputType) -> u64 {
+    pub fn exposed_supply_contribution(&self, output_type: OutputType) -> Sats {
         if self.is_funded_with_exposed_pubkey(output_type) {
-            u64::from(self.balance())
+            self.balance()
         } else {
-            0
+            Sats::ZERO
         }
     }
 
@@ -154,7 +154,7 @@ impl FundedAddrData {
         self.funded_txo_count += output_count;
         let ps = CentsSats::from_price_sats(price, amount);
         self.realized_cap_raw += ps;
-        self.investor_cap_raw += ps.to_investor_cap(price);
+        self.capitalized_cap_raw += ps.to_capitalized_cap(price);
     }
 
     pub fn send(&mut self, amount: Sats, previous_price: Cents) -> Result<()> {
@@ -165,7 +165,7 @@ impl FundedAddrData {
         self.spent_txo_count += 1;
         let ps = CentsSats::from_price_sats(previous_price, amount);
         self.realized_cap_raw -= ps;
-        self.investor_cap_raw -= ps.to_investor_cap(previous_price);
+        self.capitalized_cap_raw -= ps.to_capitalized_cap(previous_price);
         Ok(())
     }
 }
@@ -188,7 +188,7 @@ impl From<&EmptyAddrData> for FundedAddrData {
             received: value.transfered,
             sent: value.transfered,
             realized_cap_raw: CentsSats::ZERO,
-            investor_cap_raw: CentsSquaredSats::ZERO,
+            capitalized_cap_raw: CentsSquaredSats::ZERO,
         }
     }
 }
@@ -197,14 +197,14 @@ impl std::fmt::Display for FundedAddrData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "tx_count: {}, funded_txo_count: {}, spent_txo_count: {}, received: {}, sent: {}, realized_cap_raw: {}, investor_cap_raw: {}",
+            "tx_count: {}, funded_txo_count: {}, spent_txo_count: {}, received: {}, sent: {}, realized_cap_raw: {}, capitalized_cap_raw: {}",
             self.tx_count,
             self.funded_txo_count,
             self.spent_txo_count,
             self.received,
             self.sent,
             self.realized_cap_raw,
-            self.investor_cap_raw,
+            self.capitalized_cap_raw,
         )
     }
 }
@@ -246,7 +246,7 @@ impl Bytes for FundedAddrData {
         arr[16..24].copy_from_slice(self.received.to_bytes().as_ref());
         arr[24..32].copy_from_slice(self.sent.to_bytes().as_ref());
         arr[32..48].copy_from_slice(self.realized_cap_raw.to_bytes().as_ref());
-        arr[48..64].copy_from_slice(self.investor_cap_raw.to_bytes().as_ref());
+        arr[48..64].copy_from_slice(self.capitalized_cap_raw.to_bytes().as_ref());
         arr
     }
 
@@ -259,7 +259,7 @@ impl Bytes for FundedAddrData {
             received: Sats::from_bytes(&bytes[16..24])?,
             sent: Sats::from_bytes(&bytes[24..32])?,
             realized_cap_raw: CentsSats::from_bytes(&bytes[32..48])?,
-            investor_cap_raw: CentsSquaredSats::from_bytes(&bytes[48..64])?,
+            capitalized_cap_raw: CentsSquaredSats::from_bytes(&bytes[48..64])?,
         })
     }
 }

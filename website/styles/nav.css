@@ -28,6 +28,10 @@ nav {
       padding: 0.25rem 0;
     }
 
+    a:visited {
+      color: transparent;
+    }
+
     ul {
       color: var(--off-color);
       overflow: hidden;

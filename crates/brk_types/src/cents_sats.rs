@@ -53,9 +53,9 @@ impl CentsSats {
         Cents::new(result.min(u32::MAX as u128) as u64)
     }
 
-    /// Compute investor cap (price² × sats) = price × (price × sats)
+    /// Compute capitalized cap (price² × sats) = price × (price × sats)
     #[inline(always)]
-    pub fn to_investor_cap(self, price: Cents) -> CentsSquaredSats {
+    pub fn to_capitalized_cap(self, price: Cents) -> CentsSquaredSats {
         CentsSquaredSats::new(price.inner() as u128 * self.0)
     }
 }

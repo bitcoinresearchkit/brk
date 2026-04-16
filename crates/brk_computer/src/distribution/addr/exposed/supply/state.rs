@@ -1,5 +1,5 @@
 use brk_cohort::ByAddrType;
-use brk_types::Height;
+use brk_types::{Height, Sats};
 use derive_more::{Deref, DerefMut};
 use vecdb::ReadableVec;
 
@@ -10,22 +10,21 @@ use super::vecs::ExposedAddrSupplyVecs;
 /// Runtime running counter for the total balance (sats) held by funded
 /// exposed addresses, per address type.
 #[derive(Debug, Default, Deref, DerefMut)]
-pub struct AddrTypeToExposedAddrSupply(ByAddrType<u64>);
+pub struct AddrTypeToExposedSupply(ByAddrType<Sats>);
 
-impl AddrTypeToExposedAddrSupply {
+impl AddrTypeToExposedSupply {
     #[inline]
-    pub(crate) fn sum(&self) -> u64 {
-        self.0.values().sum()
+    pub(crate) fn sum(&self) -> Sats {
+        self.0.values().copied().sum()
     }
 }
 
-impl From<(&ExposedAddrSupplyVecs, Height)> for AddrTypeToExposedAddrSupply {
+impl From<(&ExposedAddrSupplyVecs, Height)> for AddrTypeToExposedSupply {
     #[inline]
     fn from((vecs, starting_height): (&ExposedAddrSupplyVecs, Height)) -> Self {
         if let Some(prev_height) = starting_height.decremented() {
-            let read = |v: &AmountPerBlock| -> u64 {
-                u64::from(v.sats.height.collect_one(prev_height).unwrap())
-            };
+            let read =
+                |v: &AmountPerBlock| -> Sats { v.sats.height.collect_one(prev_height).unwrap() };
             Self(ByAddrType {
                 p2pk65: read(&vecs.by_addr_type.p2pk65),
                 p2pk33: read(&vecs.by_addr_type.p2pk33),

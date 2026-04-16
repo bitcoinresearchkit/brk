@@ -830,26 +830,26 @@ impl UTXOCohorts<Rw> {
         let mut sth_acc = RealizedFullAccum::default();
         let mut lth_acc = RealizedFullAccum::default();
 
-        let mut all_icap = (0u128, 0u128);
-        let mut sth_icap = (0u128, 0u128);
-        let mut lth_icap = (0u128, 0u128);
+        let mut all_ccap = (0u128, 0u128);
+        let mut sth_ccap = (0u128, 0u128);
+        let mut lth_ccap = (0u128, 0u128);
 
         for ar in age_range.iter_mut() {
             if let Some(state) = ar.state.as_mut() {
                 all_acc.add(&state.realized);
 
                 let u = state.compute_unrealized_state(height_price);
-                all_icap.0 += u.investor_cap_in_profit_raw;
-                all_icap.1 += u.investor_cap_in_loss_raw;
+                all_ccap.0 += u.capitalized_cap_in_profit_raw;
+                all_ccap.1 += u.capitalized_cap_in_loss_raw;
 
                 if sth_filter.includes(&ar.metrics.filter) {
                     sth_acc.add(&state.realized);
-                    sth_icap.0 += u.investor_cap_in_profit_raw;
-                    sth_icap.1 += u.investor_cap_in_loss_raw;
+                    sth_ccap.0 += u.capitalized_cap_in_profit_raw;
+                    sth_ccap.1 += u.capitalized_cap_in_loss_raw;
                 } else {
                     lth_acc.add(&state.realized);
-                    lth_icap.0 += u.investor_cap_in_profit_raw;
-                    lth_icap.1 += u.investor_cap_in_loss_raw;
+                    lth_ccap.0 += u.capitalized_cap_in_profit_raw;
+                    lth_ccap.1 += u.capitalized_cap_in_loss_raw;
                 }
             }
         }
@@ -860,28 +860,28 @@ impl UTXOCohorts<Rw> {
 
         all.metrics
             .unrealized
-            .investor_cap_in_profit_raw
-            .push(CentsSquaredSats::new(all_icap.0));
+            .capitalized_cap_in_profit_raw
+            .push(CentsSquaredSats::new(all_ccap.0));
         all.metrics
             .unrealized
-            .investor_cap_in_loss_raw
-            .push(CentsSquaredSats::new(all_icap.1));
+            .capitalized_cap_in_loss_raw
+            .push(CentsSquaredSats::new(all_ccap.1));
         sth.metrics
             .unrealized
-            .investor_cap_in_profit_raw
-            .push(CentsSquaredSats::new(sth_icap.0));
+            .capitalized_cap_in_profit_raw
+            .push(CentsSquaredSats::new(sth_ccap.0));
         sth.metrics
             .unrealized
-            .investor_cap_in_loss_raw
-            .push(CentsSquaredSats::new(sth_icap.1));
+            .capitalized_cap_in_loss_raw
+            .push(CentsSquaredSats::new(sth_ccap.1));
         lth.metrics
             .unrealized
-            .investor_cap_in_profit_raw
-            .push(CentsSquaredSats::new(lth_icap.0));
+            .capitalized_cap_in_profit_raw
+            .push(CentsSquaredSats::new(lth_ccap.0));
         lth.metrics
             .unrealized
-            .investor_cap_in_loss_raw
-            .push(CentsSquaredSats::new(lth_icap.1));
+            .capitalized_cap_in_loss_raw
+            .push(CentsSquaredSats::new(lth_ccap.1));
     }
 }
 

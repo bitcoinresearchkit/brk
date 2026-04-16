@@ -13,13 +13,9 @@ pub use activity::{AddrActivityVecs, AddrTypeToActivityCounts};
 pub use addr_count::{AddrCountsVecs, AddrTypeToAddrCount};
 pub use data::AddrsDataVecs;
 pub use delta::DeltaVecs;
-pub use exposed::{
-    AddrTypeToExposedAddrCount, AddrTypeToExposedAddrSupply, ExposedAddrVecs,
-};
+pub use exposed::{AddrTypeToExposedAddrCount, AddrTypeToExposedSupply, ExposedAddrVecs,};
 pub use indexes::AnyAddrIndexesVecs;
 pub use new_addr_count::NewAddrCountVecs;
-pub use reused::{
-    AddrTypeToReusedAddrCount, AddrTypeToReusedAddrEventCount, ReusedAddrVecs,
-};
+pub use reused::{AddrTypeToReusedAddrCount, AddrTypeToReusedAddrEventCount, ReusedAddrVecs};
 pub use total_addr_count::TotalAddrCountVecs;
 pub use type_map::{AddrTypeToTypeIndexMap, AddrTypeToVec, HeightToAddrTypeToVec};

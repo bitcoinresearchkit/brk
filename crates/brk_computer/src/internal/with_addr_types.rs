@@ -13,7 +13,8 @@ use vecdb::{AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, WritableVec}
 use crate::{indexes, prices};
 
 use super::{
-    AmountPerBlock, NumericValue, PerBlock, PerBlockCumulativeRolling, WindowStartVec, Windows,
+    AmountPerBlock, BpsType, NumericValue, PerBlock, PerBlockCumulativeRolling, PercentPerBlock,
+    WindowStartVec, Windows,
 };
 
 /// `all` aggregate plus per-`AddrType` breakdown.
@@ -240,6 +241,29 @@ impl WithAddrTypes<AmountPerBlock> {
         self.all.compute(prices, max_from, exit)?;
         for v in self.by_addr_type.values_mut() {
             v.compute(prices, max_from, exit)?;
+        }
+        Ok(())
+    }
+}
+
+impl<B: BpsType> WithAddrTypes<PercentPerBlock<B>> {
+    pub(crate) fn forced_import(
+        db: &Database,
+        name: &str,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
+        let all = PercentPerBlock::forced_import(db, name, version, indexes)?;
+        let by_addr_type = ByAddrType::new_with_name(|type_name| {
+            PercentPerBlock::forced_import(db, &format!("{type_name}_{name}"), version, indexes)
+        })?;
+        Ok(Self { all, by_addr_type })
+    }
+
+    pub(crate) fn reset_height(&mut self) -> Result<()> {
+        self.all.bps.height.reset()?;
+        for v in self.by_addr_type.values_mut() {
+            v.bps.height.reset()?;
         }
         Ok(())
     }

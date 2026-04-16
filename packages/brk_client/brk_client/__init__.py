@@ -77,8 +77,8 @@ CentsSats = int
 # Used for profit/loss calculations, deltas, etc.
 CentsSigned = int
 # Raw cents squared (u128) - stores cents² × sats without division.
-# Used for precise accumulation of investor cap values: Σ(price² × sats).
-# investor_price = investor_cap_raw / realized_cap_raw
+# Used for precise accumulation of capitalized cap values: Σ(price² × sats).
+# capitalized_price = capitalized_cap_raw / realized_cap_raw
 CentsSquaredSats = int
 # Closing price value for a time period
 Close = Dollars
@@ -843,7 +843,7 @@ class FundedAddrData(TypedDict):
         received: Satoshis received by this address
         sent: Satoshis sent by this address
         realized_cap_raw: The realized capitalization: Σ(price × sats)
-        investor_cap_raw: The investor capitalization: Σ(price² × sats)
+        capitalized_cap_raw: The capitalized cap: Σ(price² × sats)
     """
     tx_count: int
     funded_txo_count: int
@@ -851,7 +851,7 @@ class FundedAddrData(TypedDict):
     received: Sats
     sent: Sats
     realized_cap_raw: CentsSats
-    investor_cap_raw: CentsSquaredSats
+    capitalized_cap_raw: CentsSquaredSats
 
 class HashrateEntry(TypedDict):
     """
@@ -2649,7 +2649,7 @@ class AllEmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern:
     """Pattern struct for repeated tree structure."""
     pass
 
-class CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern:
+class CapCapitalizedGrossLossMvrvNetPeakPriceProfitSellSoprPattern:
     """Pattern struct for repeated tree structure."""
     pass
 
@@ -2798,15 +2798,15 @@ class AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
         self.pct90: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, _m(acc, 'pct90'))
         self.sum: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, _m(acc, 'sum'))
 
-class GrossInvestedInvestorLossNetNuplProfitSentimentPattern2:
+class CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated series name."""
+        self.capitalized_cap_in_loss_raw: SeriesPattern18[CentsSquaredSats] = SeriesPattern18(client, _m(acc, 'capitalized_cap_in_loss_raw'))
+        self.capitalized_cap_in_profit_raw: SeriesPattern18[CentsSquaredSats] = SeriesPattern18(client, _m(acc, 'capitalized_cap_in_profit_raw'))
         self.gross_pnl: CentsUsdPattern3 = CentsUsdPattern3(client, _m(acc, 'unrealized_gross_pnl'))
         self.invested_capital: InPattern = InPattern(client, _m(acc, 'invested_capital_in'))
-        self.investor_cap_in_loss_raw: SeriesPattern18[CentsSquaredSats] = SeriesPattern18(client, _m(acc, 'investor_cap_in_loss_raw'))
-        self.investor_cap_in_profit_raw: SeriesPattern18[CentsSquaredSats] = SeriesPattern18(client, _m(acc, 'investor_cap_in_profit_raw'))
         self.loss: CentsNegativeToUsdPattern2 = CentsNegativeToUsdPattern2(client, _m(acc, 'unrealized_loss'))
         self.net_pnl: CentsToUsdPattern3 = CentsToUsdPattern3(client, _m(acc, 'net_unrealized_pnl'))
         self.nupl: BpsRatioPattern = BpsRatioPattern(client, _m(acc, 'nupl'))
@@ -4284,19 +4284,34 @@ class SeriesTree_Addrs_Reused:
         self.count: FundedTotalPattern = FundedTotalPattern(client, 'reused_addr_count')
         self.events: SeriesTree_Addrs_Reused_Events = SeriesTree_Addrs_Reused_Events(client)
 
+class SeriesTree_Addrs_Exposed_Supply_Share:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.all: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, 'exposed_supply_share')
+        self.p2pk65: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, 'p2pk65_exposed_supply_share')
+        self.p2pk33: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, 'p2pk33_exposed_supply_share')
+        self.p2pkh: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, 'p2pkh_exposed_supply_share')
+        self.p2sh: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, 'p2sh_exposed_supply_share')
+        self.p2wpkh: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, 'p2wpkh_exposed_supply_share')
+        self.p2wsh: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, 'p2wsh_exposed_supply_share')
+        self.p2tr: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, 'p2tr_exposed_supply_share')
+        self.p2a: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, 'p2a_exposed_supply_share')
+
 class SeriesTree_Addrs_Exposed_Supply:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.all: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'exposed_addr_supply')
-        self.p2pk65: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2pk65_exposed_addr_supply')
-        self.p2pk33: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2pk33_exposed_addr_supply')
-        self.p2pkh: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2pkh_exposed_addr_supply')
-        self.p2sh: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2sh_exposed_addr_supply')
-        self.p2wpkh: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2wpkh_exposed_addr_supply')
-        self.p2wsh: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2wsh_exposed_addr_supply')
-        self.p2tr: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2tr_exposed_addr_supply')
-        self.p2a: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2a_exposed_addr_supply')
+        self.all: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'exposed_supply')
+        self.p2pk65: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2pk65_exposed_supply')
+        self.p2pk33: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2pk33_exposed_supply')
+        self.p2pkh: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2pkh_exposed_supply')
+        self.p2sh: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2sh_exposed_supply')
+        self.p2wpkh: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2wpkh_exposed_supply')
+        self.p2wsh: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2wsh_exposed_supply')
+        self.p2tr: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2tr_exposed_supply')
+        self.p2a: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2a_exposed_supply')
+        self.share: SeriesTree_Addrs_Exposed_Supply_Share = SeriesTree_Addrs_Exposed_Supply_Share(client)
 
 class SeriesTree_Addrs_Exposed:
     """Series tree node."""
@@ -5585,7 +5600,7 @@ class SeriesTree_Cohorts_Utxo_All_Realized:
         self.gross_pnl: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'realized_gross_pnl')
         self.sell_side_risk_ratio: _1m1w1y24hPattern7 = _1m1w1y24hPattern7(client, 'sell_side_risk_ratio')
         self.peak_regret: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'realized_peak_regret')
-        self.investor: PricePattern = PricePattern(client, 'investor_price')
+        self.capitalized: PricePattern = PricePattern(client, 'capitalized_price')
         self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'realized_profit_to_loss_ratio')
 
 class SeriesTree_Cohorts_Utxo_All_CostBasis:
@@ -5645,8 +5660,8 @@ class SeriesTree_Cohorts_Utxo_All_Unrealized:
         self.net_pnl: SeriesTree_Cohorts_Utxo_All_Unrealized_NetPnl = SeriesTree_Cohorts_Utxo_All_Unrealized_NetPnl(client)
         self.gross_pnl: CentsUsdPattern3 = CentsUsdPattern3(client, 'unrealized_gross_pnl')
         self.invested_capital: InPattern = InPattern(client, 'invested_capital_in')
-        self.investor_cap_in_profit_raw: SeriesPattern18[CentsSquaredSats] = SeriesPattern18(client, 'investor_cap_in_profit_raw')
-        self.investor_cap_in_loss_raw: SeriesPattern18[CentsSquaredSats] = SeriesPattern18(client, 'investor_cap_in_loss_raw')
+        self.capitalized_cap_in_profit_raw: SeriesPattern18[CentsSquaredSats] = SeriesPattern18(client, 'capitalized_cap_in_profit_raw')
+        self.capitalized_cap_in_loss_raw: SeriesPattern18[CentsSquaredSats] = SeriesPattern18(client, 'capitalized_cap_in_loss_raw')
         self.sentiment: SeriesTree_Cohorts_Utxo_All_Unrealized_Sentiment = SeriesTree_Cohorts_Utxo_All_Unrealized_Sentiment(client)
 
 class SeriesTree_Cohorts_Utxo_All:
@@ -5776,7 +5791,7 @@ class SeriesTree_Cohorts_Utxo_Sth_Realized:
         self.gross_pnl: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'sth_realized_gross_pnl')
         self.sell_side_risk_ratio: _1m1w1y24hPattern7 = _1m1w1y24hPattern7(client, 'sth_sell_side_risk_ratio')
         self.peak_regret: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'sth_realized_peak_regret')
-        self.investor: PricePattern = PricePattern(client, 'sth_investor_price')
+        self.capitalized: PricePattern = PricePattern(client, 'sth_capitalized_price')
         self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'sth_realized_profit_to_loss_ratio')
 
 class SeriesTree_Cohorts_Utxo_Sth:
@@ -5788,7 +5803,7 @@ class SeriesTree_Cohorts_Utxo_Sth:
         self.activity: CoindaysCoinyearsDormancyTransferPattern = CoindaysCoinyearsDormancyTransferPattern(client, 'sth')
         self.realized: SeriesTree_Cohorts_Utxo_Sth_Realized = SeriesTree_Cohorts_Utxo_Sth_Realized(client)
         self.cost_basis: InMaxMinPerSupplyPattern = InMaxMinPerSupplyPattern(client, 'sth')
-        self.unrealized: GrossInvestedInvestorLossNetNuplProfitSentimentPattern2 = GrossInvestedInvestorLossNetNuplProfitSentimentPattern2(client, 'sth')
+        self.unrealized: CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2 = CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2(client, 'sth')
 
 class SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_All:
     """Series tree node."""
@@ -5913,7 +5928,7 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized:
         self.gross_pnl: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'lth_realized_gross_pnl')
         self.sell_side_risk_ratio: _1m1w1y24hPattern7 = _1m1w1y24hPattern7(client, 'lth_sell_side_risk_ratio')
         self.peak_regret: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'lth_realized_peak_regret')
-        self.investor: PricePattern = PricePattern(client, 'lth_investor_price')
+        self.capitalized: PricePattern = PricePattern(client, 'lth_capitalized_price')
         self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'lth_realized_profit_to_loss_ratio')
 
 class SeriesTree_Cohorts_Utxo_Lth:
@@ -5925,7 +5940,7 @@ class SeriesTree_Cohorts_Utxo_Lth:
         self.activity: CoindaysCoinyearsDormancyTransferPattern = CoindaysCoinyearsDormancyTransferPattern(client, 'lth')
         self.realized: SeriesTree_Cohorts_Utxo_Lth_Realized = SeriesTree_Cohorts_Utxo_Lth_Realized(client)
         self.cost_basis: InMaxMinPerSupplyPattern = InMaxMinPerSupplyPattern(client, 'lth')
-        self.unrealized: GrossInvestedInvestorLossNetNuplProfitSentimentPattern2 = GrossInvestedInvestorLossNetNuplProfitSentimentPattern2(client, 'lth')
+        self.unrealized: CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2 = CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2(client, 'lth')
 
 class SeriesTree_Cohorts_Utxo_AgeRange:
     """Series tree node."""

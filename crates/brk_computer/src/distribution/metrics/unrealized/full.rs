@@ -33,8 +33,8 @@ pub struct UnrealizedFull<M: StorageMode = Rw> {
     pub gross_pnl: FiatPerBlock<Cents, M>,
     pub invested_capital: UnrealizedInvestedCapital<M>,
 
-    pub investor_cap_in_profit_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
-    pub investor_cap_in_loss_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
+    pub capitalized_cap_in_profit_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
+    pub capitalized_cap_in_loss_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
 
     pub sentiment: UnrealizedSentiment<M>,
 }
@@ -53,8 +53,8 @@ impl UnrealizedFull {
             in_loss: cfg.import("invested_capital_in_loss", v1)?,
         };
 
-        let investor_cap_in_profit_raw = cfg.import("investor_cap_in_profit_raw", v0)?;
-        let investor_cap_in_loss_raw = cfg.import("investor_cap_in_loss_raw", v0)?;
+        let capitalized_cap_in_profit_raw = cfg.import("capitalized_cap_in_profit_raw", v0)?;
+        let capitalized_cap_in_loss_raw = cfg.import("capitalized_cap_in_loss_raw", v0)?;
 
         let sentiment = UnrealizedSentiment {
             pain_index: cfg.import("pain_index", v1)?,
@@ -66,33 +66,33 @@ impl UnrealizedFull {
             inner,
             gross_pnl,
             invested_capital,
-            investor_cap_in_profit_raw,
-            investor_cap_in_loss_raw,
+            capitalized_cap_in_profit_raw,
+            capitalized_cap_in_loss_raw,
             sentiment,
         })
     }
 
     pub(crate) fn min_stateful_len(&self) -> usize {
-        // Only check per-block pushed vecs (investor_cap_raw).
+        // Only check per-block pushed vecs (capitalized_cap_raw).
         // Core-level vecs (profit/loss) are aggregated from age_range, not stateful.
-        self.investor_cap_in_profit_raw
+        self.capitalized_cap_in_profit_raw
             .len()
-            .min(self.investor_cap_in_loss_raw.len())
+            .min(self.capitalized_cap_in_loss_raw.len())
     }
 
     #[inline(always)]
     pub(crate) fn push_state_all(&mut self, state: &UnrealizedState) {
         self.inner.push_state(state);
-        self.investor_cap_in_profit_raw
-            .push(CentsSquaredSats::new(state.investor_cap_in_profit_raw));
-        self.investor_cap_in_loss_raw
-            .push(CentsSquaredSats::new(state.investor_cap_in_loss_raw));
+        self.capitalized_cap_in_profit_raw
+            .push(CentsSquaredSats::new(state.capitalized_cap_in_profit_raw));
+        self.capitalized_cap_in_loss_raw
+            .push(CentsSquaredSats::new(state.capitalized_cap_in_loss_raw));
     }
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.inner.collect_vecs_mut();
-        vecs.push(&mut self.investor_cap_in_profit_raw as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.investor_cap_in_loss_raw as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.capitalized_cap_in_profit_raw as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.capitalized_cap_in_loss_raw as &mut dyn AnyStoredVec);
         vecs
     }
 
@@ -154,7 +154,7 @@ impl UnrealizedFull {
         Ok(())
     }
 
-    /// Compute sentiment using investor_price (original formula).
+    /// Compute sentiment using capitalized_price (original formula).
     /// Called after cost_basis.in_profit/loss are computed at the cohort level.
     pub(crate) fn compute_sentiment(
         &mut self,
@@ -162,45 +162,45 @@ impl UnrealizedFull {
         spot: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
-        // greed = spot - investor_price_winners
-        // investor_price = investor_cap / invested_cap
+        // greed = spot - capitalized_price_winners
+        // capitalized_price = capitalized_cap / invested_cap
         // invested_cap is in Cents (already / ONE_BTC), multiply back for CentsSats scale
         self.sentiment.greed_index.cents.height.compute_transform3(
             starting_indexes.height,
-            &self.investor_cap_in_profit_raw,
+            &self.capitalized_cap_in_profit_raw,
             &self.invested_capital.in_profit.cents.height,
             spot,
-            |(h, investor_cap, invested_cap_cents, spot, ..)| {
+            |(h, capitalized_cap, invested_cap_cents, spot, ..)| {
                 let invested_cap_raw = invested_cap_cents.as_u128() * Sats::ONE_BTC_U128;
                 if invested_cap_raw == 0 {
                     return (h, Cents::ZERO);
                 }
-                let investor_price = investor_cap.inner() / invested_cap_raw;
+                let capitalized_price = capitalized_cap.inner() / invested_cap_raw;
                 let spot_u128 = spot.as_u128();
                 (
                     h,
-                    Cents::new(spot_u128.saturating_sub(investor_price) as u64),
+                    Cents::new(spot_u128.saturating_sub(capitalized_price) as u64),
                 )
             },
             exit,
         )?;
 
-        // pain = investor_price_losers - spot
+        // pain = capitalized_price_losers - spot
         self.sentiment.pain_index.cents.height.compute_transform3(
             starting_indexes.height,
-            &self.investor_cap_in_loss_raw,
+            &self.capitalized_cap_in_loss_raw,
             &self.invested_capital.in_loss.cents.height,
             spot,
-            |(h, investor_cap, invested_cap_cents, spot, ..)| {
+            |(h, capitalized_cap, invested_cap_cents, spot, ..)| {
                 let invested_cap_raw = invested_cap_cents.as_u128() * Sats::ONE_BTC_U128;
                 if invested_cap_raw == 0 {
                     return (h, Cents::ZERO);
                 }
-                let investor_price = investor_cap.inner() / invested_cap_raw;
+                let capitalized_price = capitalized_cap.inner() / invested_cap_raw;
                 let spot_u128 = spot.as_u128();
                 (
                     h,
-                    Cents::new(investor_price.saturating_sub(spot_u128) as u64),
+                    Cents::new(capitalized_price.saturating_sub(spot_u128) as u64),
                 )
             },
             exit,

@@ -117,12 +117,13 @@ function appendNewerBlocks(blocks) {
   for (let i = blocks.length - 1; i >= 0; i--) {
     const b = blocks[i];
     if (b.height > newestHeight) {
-      blocksEl.append(createBlockCube(b));
+      appendCube(createBlockCube(b));
     } else {
       blocksByHash.set(b.id, b);
     }
   }
   newestHeight = Math.max(newestHeight, blocks[0].height);
+
   if (anchor && anchorRect) {
     const r = anchor.getBoundingClientRect();
     chainEl.scrollTop += r.top - anchorRect.top;
@@ -139,11 +140,12 @@ async function loadInitial(height) {
       : await brk.getBlocksV1();
 
   clear();
-  for (const b of blocks) blocksEl.prepend(createBlockCube(b));
+  for (const b of blocks) prependCube(createBlockCube(b));
   newestHeight = blocks[0].height;
   oldestHeight = blocks[blocks.length - 1].height;
   reachedTip = height == null;
   observeOldestEdge();
+
   if (!reachedTip) await loadNewer();
   return blocks[0].id;
 }
@@ -197,11 +199,12 @@ async function loadOlder() {
   loadingOlder = true;
   try {
     const blocks = await brk.getBlocksV1FromHeight(oldestHeight - 1);
-    for (const block of blocks) blocksEl.prepend(createBlockCube(block));
+    for (const block of blocks) prependCube(createBlockCube(block));
     if (blocks.length) {
       oldestHeight = blocks[blocks.length - 1].height;
       observeOldestEdge();
     }
+  
   } catch (e) {
     console.error("explorer loadOlder:", e);
   }
@@ -227,6 +230,8 @@ function createBlockCube(block) {
 
   cubeElement.dataset.hash = block.id;
   cubeElement.dataset.height = String(block.height);
+  cubeElement.dataset.timestamp = String(block.timestamp);
+  cubeElement.style.setProperty("--fill", String(Math.min(1, block.weight / 3_990_000)));
   blocksByHash.set(block.id, block);
   cubeElement.addEventListener("click", () => onCubeClick(cubeElement));
 
@@ -268,6 +273,9 @@ function createBlockCube(block) {
 function createCube() {
   const cubeElement = document.createElement("div");
   cubeElement.classList.add("cube");
+  const innerTopElement = document.createElement("div");
+  innerTopElement.classList.add("face", "inner-top");
+  cubeElement.append(innerTopElement);
   const rightFaceElement = document.createElement("div");
   rightFaceElement.classList.add("face", "right");
   cubeElement.append(rightFaceElement);
@@ -279,3 +287,25 @@ function createCube() {
   cubeElement.append(topFaceElement);
   return { cubeElement, leftFaceElement, rightFaceElement, topFaceElement };
 }
+
+/** @param {HTMLElement} cube */
+function setGap(cube) {
+  const prev = /** @type {HTMLElement | null} */ (cube.previousElementSibling);
+  if (!prev) return;
+  const dt = Math.max(0, Number(cube.dataset.timestamp) - Number(prev.dataset.timestamp));
+  cube.style.setProperty("--dt", String(dt));
+}
+
+/** @param {HTMLDivElement} cube */
+function prependCube(cube) {
+  const next = /** @type {HTMLElement | null} */ (blocksEl.firstElementChild);
+  blocksEl.prepend(cube);
+  if (next) setGap(next);
+}
+
+/** @param {HTMLDivElement} cube */
+function appendCube(cube) {
+  blocksEl.append(cube);
+  setGap(cube);
+}
+

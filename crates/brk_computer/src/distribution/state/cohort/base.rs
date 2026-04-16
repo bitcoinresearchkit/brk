@@ -18,7 +18,7 @@ pub struct SendPrecomputed {
     pub current_ps: CentsSats,
     pub prev_ps: CentsSats,
     pub ath_ps: CentsSats,
-    pub prev_investor_cap: CentsSquaredSats,
+    pub prev_capitalized_cap: CentsSquaredSats,
 }
 
 impl SendPrecomputed {
@@ -42,7 +42,7 @@ impl SendPrecomputed {
         } else {
             CentsSats::from_price_sats(ath, sats)
         };
-        let prev_investor_cap = prev_ps.to_investor_cap(prev_price);
+        let prev_capitalized_cap = prev_ps.to_capitalized_cap(prev_price);
         Some(Self {
             sats,
             prev_price,
@@ -50,7 +50,7 @@ impl SendPrecomputed {
             current_ps,
             prev_ps,
             ath_ps,
-            prev_investor_cap,
+            prev_capitalized_cap,
         })
     }
 }
@@ -90,7 +90,7 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
     pub(crate) fn restore_realized_cap(&mut self) {
         self.realized.set_cap_raw(self.cost_basis.cap_raw());
         self.realized
-            .set_investor_cap_raw(self.cost_basis.investor_cap_raw());
+            .set_capitalized_cap_raw(self.cost_basis.capitalized_cap_raw());
     }
 
     pub(crate) fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
@@ -117,12 +117,12 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
 
         if s.supply_state.value > Sats::ZERO {
             self.realized
-                .increment_snapshot(s.price_sats, s.investor_cap);
+                .increment_snapshot(s.price_sats, s.capitalized_cap_raw);
             self.cost_basis.increment(
                 s.realized_price,
                 s.supply_state.value,
                 s.price_sats,
-                s.investor_cap,
+                s.capitalized_cap_raw,
             );
         }
     }
@@ -132,12 +132,12 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
 
         if s.supply_state.value > Sats::ZERO {
             self.realized
-                .decrement_snapshot(s.price_sats, s.investor_cap);
+                .decrement_snapshot(s.price_sats, s.capitalized_cap_raw);
             self.cost_basis.decrement(
                 s.realized_price,
                 s.supply_state.value,
                 s.price_sats,
-                s.investor_cap,
+                s.capitalized_cap_raw,
             );
         }
     }
@@ -162,7 +162,7 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
                 snapshot.realized_price,
                 supply.value,
                 snapshot.price_sats,
-                snapshot.investor_cap,
+                snapshot.capitalized_cap_raw,
             );
         }
     }
@@ -184,7 +184,7 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
                     current.realized_price,
                     current.supply_state.value,
                     current.price_sats,
-                    current.investor_cap,
+                    current.capitalized_cap_raw,
                 );
             }
 
@@ -193,7 +193,7 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
                     prev.realized_price,
                     prev.supply_state.value,
                     prev.price_sats,
-                    prev.investor_cap,
+                    prev.capitalized_cap_raw,
                 );
             }
         }
@@ -212,11 +212,11 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
             pre.current_ps,
             pre.prev_ps,
             pre.ath_ps,
-            pre.prev_investor_cap,
+            pre.prev_capitalized_cap,
         );
 
         self.cost_basis
-            .decrement(pre.prev_price, pre.sats, pre.prev_ps, pre.prev_investor_cap);
+            .decrement(pre.prev_price, pre.sats, pre.prev_ps, pre.prev_capitalized_cap);
     }
 
     pub(crate) fn send_utxo(
@@ -265,17 +265,17 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
             let current_ps = CentsSats::from_price_sats(current_price, sats);
             let prev_ps = CentsSats::from_price_sats(prev_price, sats);
             let ath_ps = CentsSats::from_price_sats(ath, sats);
-            let prev_investor_cap = prev_ps.to_investor_cap(prev_price);
+            let prev_capitalized_cap = prev_ps.to_capitalized_cap(prev_price);
 
             self.realized
-                .send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
+                .send(sats, current_ps, prev_ps, ath_ps, prev_capitalized_cap);
 
             if current.supply_state.value.is_not_zero() {
                 self.cost_basis.increment(
                     current.realized_price,
                     current.supply_state.value,
                     current.price_sats,
-                    current.investor_cap,
+                    current.capitalized_cap_raw,
                 );
             }
 
@@ -284,7 +284,7 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
                     prev.realized_price,
                     prev.supply_state.value,
                     prev.price_sats,
-                    prev.investor_cap,
+                    prev.capitalized_cap_raw,
                 );
             }
         }

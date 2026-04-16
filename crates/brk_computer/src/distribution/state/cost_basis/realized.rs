@@ -18,11 +18,11 @@ pub trait RealizedOps: Default + Clone + Send + Sync + 'static {
         Sats::ZERO
     }
     fn set_cap_raw(&mut self, cap_raw: CentsSats);
-    fn set_investor_cap_raw(&mut self, investor_cap_raw: CentsSquaredSats);
+    fn set_capitalized_cap_raw(&mut self, capitalized_cap_raw: CentsSquaredSats);
     fn reset_single_iteration_values(&mut self);
     fn increment(&mut self, price: Cents, sats: Sats);
-    fn increment_snapshot(&mut self, price_sats: CentsSats, investor_cap: CentsSquaredSats);
-    fn decrement_snapshot(&mut self, price_sats: CentsSats, investor_cap: CentsSquaredSats);
+    fn increment_snapshot(&mut self, price_sats: CentsSats, capitalized_cap: CentsSquaredSats);
+    fn decrement_snapshot(&mut self, price_sats: CentsSats, capitalized_cap: CentsSquaredSats);
     fn receive(&mut self, price: Cents, sats: Sats) {
         self.increment(price, sats);
     }
@@ -32,7 +32,7 @@ pub trait RealizedOps: Default + Clone + Send + Sync + 'static {
         current_ps: CentsSats,
         prev_ps: CentsSats,
         ath_ps: CentsSats,
-        prev_investor_cap: CentsSquaredSats,
+        prev_capitalized_cap: CentsSquaredSats,
     );
 }
 
@@ -85,7 +85,7 @@ impl RealizedOps for MinimalRealizedState {
     }
 
     #[inline]
-    fn set_investor_cap_raw(&mut self, _investor_cap_raw: CentsSquaredSats) {}
+    fn set_capitalized_cap_raw(&mut self, _capitalized_cap_raw: CentsSquaredSats) {}
 
     #[inline]
     fn reset_single_iteration_values(&mut self) {
@@ -104,12 +104,12 @@ impl RealizedOps for MinimalRealizedState {
     }
 
     #[inline]
-    fn increment_snapshot(&mut self, price_sats: CentsSats, _investor_cap: CentsSquaredSats) {
+    fn increment_snapshot(&mut self, price_sats: CentsSats, _capitalized_cap: CentsSquaredSats) {
         self.cap_raw += price_sats.as_u128();
     }
 
     #[inline]
-    fn decrement_snapshot(&mut self, price_sats: CentsSats, _investor_cap: CentsSquaredSats) {
+    fn decrement_snapshot(&mut self, price_sats: CentsSats, _capitalized_cap: CentsSquaredSats) {
         self.cap_raw -= price_sats.as_u128();
     }
 
@@ -120,7 +120,7 @@ impl RealizedOps for MinimalRealizedState {
         current_ps: CentsSats,
         prev_ps: CentsSats,
         _ath_ps: CentsSats,
-        _prev_investor_cap: CentsSquaredSats,
+        _prev_capitalized_cap: CentsSquaredSats,
     ) {
         match current_ps.cmp(&prev_ps) {
             Ordering::Greater => {
@@ -184,7 +184,7 @@ impl RealizedOps for CoreRealizedState {
     }
 
     #[inline]
-    fn set_investor_cap_raw(&mut self, _investor_cap_raw: CentsSquaredSats) {}
+    fn set_capitalized_cap_raw(&mut self, _capitalized_cap_raw: CentsSquaredSats) {}
 
     #[inline]
     fn reset_single_iteration_values(&mut self) {
@@ -199,13 +199,13 @@ impl RealizedOps for CoreRealizedState {
     }
 
     #[inline]
-    fn increment_snapshot(&mut self, price_sats: CentsSats, _investor_cap: CentsSquaredSats) {
-        self.minimal.increment_snapshot(price_sats, _investor_cap);
+    fn increment_snapshot(&mut self, price_sats: CentsSats, _capitalized_cap: CentsSquaredSats) {
+        self.minimal.increment_snapshot(price_sats, _capitalized_cap);
     }
 
     #[inline]
-    fn decrement_snapshot(&mut self, price_sats: CentsSats, _investor_cap: CentsSquaredSats) {
-        self.minimal.decrement_snapshot(price_sats, _investor_cap);
+    fn decrement_snapshot(&mut self, price_sats: CentsSats, _capitalized_cap: CentsSquaredSats) {
+        self.minimal.decrement_snapshot(price_sats, _capitalized_cap);
     }
 
     #[inline]
@@ -215,10 +215,10 @@ impl RealizedOps for CoreRealizedState {
         current_ps: CentsSats,
         prev_ps: CentsSats,
         ath_ps: CentsSats,
-        prev_investor_cap: CentsSquaredSats,
+        prev_capitalized_cap: CentsSquaredSats,
     ) {
         self.minimal
-            .send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
+            .send(sats, current_ps, prev_ps, ath_ps, prev_capitalized_cap);
         match current_ps.cmp(&prev_ps) {
             Ordering::Greater | Ordering::Equal => {
                 self.sent_in_profit += sats;
@@ -242,8 +242,8 @@ impl CoreRealizedState {
 #[derive(Debug, Default, Clone)]
 pub struct RealizedState {
     core: CoreRealizedState,
-    /// Raw investor cap: Σ(price² × sats)
-    investor_cap_raw: CentsSquaredSats,
+    /// Raw capitalized cap: Σ(price² × sats)
+    capitalized_cap_raw: CentsSquaredSats,
     /// Raw realized peak regret: Σ((peak - sell_price) × sats)
     peak_regret_raw: u128,
 }
@@ -287,8 +287,8 @@ impl RealizedOps for RealizedState {
     }
 
     #[inline]
-    fn set_investor_cap_raw(&mut self, investor_cap_raw: CentsSquaredSats) {
-        self.investor_cap_raw = investor_cap_raw;
+    fn set_capitalized_cap_raw(&mut self, capitalized_cap_raw: CentsSquaredSats) {
+        self.capitalized_cap_raw = capitalized_cap_raw;
     }
 
     #[inline]
@@ -301,20 +301,20 @@ impl RealizedOps for RealizedState {
     fn increment(&mut self, price: Cents, sats: Sats) {
         self.core.increment(price, sats);
         if sats.is_not_zero() {
-            self.investor_cap_raw += CentsSats::from_price_sats(price, sats).to_investor_cap(price);
+            self.capitalized_cap_raw += CentsSats::from_price_sats(price, sats).to_capitalized_cap(price);
         }
     }
 
     #[inline]
-    fn increment_snapshot(&mut self, price_sats: CentsSats, investor_cap: CentsSquaredSats) {
-        self.core.increment_snapshot(price_sats, investor_cap);
-        self.investor_cap_raw += investor_cap;
+    fn increment_snapshot(&mut self, price_sats: CentsSats, capitalized_cap: CentsSquaredSats) {
+        self.core.increment_snapshot(price_sats, capitalized_cap);
+        self.capitalized_cap_raw += capitalized_cap;
     }
 
     #[inline]
-    fn decrement_snapshot(&mut self, price_sats: CentsSats, investor_cap: CentsSquaredSats) {
-        self.core.decrement_snapshot(price_sats, investor_cap);
-        self.investor_cap_raw -= investor_cap;
+    fn decrement_snapshot(&mut self, price_sats: CentsSats, capitalized_cap: CentsSquaredSats) {
+        self.core.decrement_snapshot(price_sats, capitalized_cap);
+        self.capitalized_cap_raw -= capitalized_cap;
     }
 
     #[inline]
@@ -324,26 +324,26 @@ impl RealizedOps for RealizedState {
         current_ps: CentsSats,
         prev_ps: CentsSats,
         ath_ps: CentsSats,
-        prev_investor_cap: CentsSquaredSats,
+        prev_capitalized_cap: CentsSquaredSats,
     ) {
         self.core
-            .send(sats, current_ps, prev_ps, ath_ps, prev_investor_cap);
+            .send(sats, current_ps, prev_ps, ath_ps, prev_capitalized_cap);
 
         self.peak_regret_raw += (ath_ps - current_ps).as_u128();
-        self.investor_cap_raw -= prev_investor_cap;
+        self.capitalized_cap_raw -= prev_capitalized_cap;
     }
 }
 
 impl RealizedState {
-    /// Get investor price as CentsUnsigned.
-    /// investor_price = Σ(price² × sats) / Σ(price × sats)
+    /// Get capitalized price as CentsUnsigned.
+    /// capitalized_price = Σ(price² × sats) / Σ(price × sats)
     #[inline]
-    pub(crate) fn investor_price(&self) -> Cents {
+    pub(crate) fn capitalized_price(&self) -> Cents {
         let cap_raw = self.core.cap_raw_u128();
         if cap_raw == 0 {
             return Cents::ZERO;
         }
-        Cents::new((self.investor_cap_raw / cap_raw) as u64)
+        Cents::new((self.capitalized_cap_raw / cap_raw) as u64)
     }
 
     /// Get raw realized cap for aggregation.
@@ -352,10 +352,10 @@ impl RealizedState {
         CentsSats::new(self.core.cap_raw_u128())
     }
 
-    /// Get raw investor cap for aggregation.
+    /// Get raw capitalized cap for aggregation.
     #[inline]
-    pub(crate) fn investor_cap_raw(&self) -> CentsSquaredSats {
-        self.investor_cap_raw
+    pub(crate) fn capitalized_cap_raw(&self) -> CentsSquaredSats {
+        self.capitalized_cap_raw
     }
 
     /// Get realized peak regret as CentsUnsigned.

@@ -314,8 +314,8 @@ Matches mempool.space/bitcoin-cli behavior.
  */
 /**
  * Raw cents squared (u128) - stores cents² × sats without division.
- * Used for precise accumulation of investor cap values: Σ(price² × sats).
- * investor_price = investor_cap_raw / realized_cap_raw
+ * Used for precise accumulation of capitalized cap values: Σ(price² × sats).
+ * capitalized_price = capitalized_cap_raw / realized_cap_raw
  *
  * @typedef {number} CentsSquaredSats
  */
@@ -516,7 +516,7 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {Sats} received - Satoshis received by this address
  * @property {Sats} sent - Satoshis sent by this address
  * @property {CentsSats} realizedCapRaw - The realized capitalization: Σ(price × sats)
- * @property {CentsSquaredSats} investorCapRaw - The investor capitalization: Σ(price² × sats)
+ * @property {CentsSquaredSats} capitalizedCapRaw - The capitalized cap: Σ(price² × sats)
  */
 /** @typedef {TypeIndex} FundedAddrIndex */
 /** @typedef {number} Halving */
@@ -2098,10 +2098,10 @@ function create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, acc) {
  */
 
 /**
- * @typedef {Object} CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern
+ * @typedef {Object} CapCapitalizedGrossLossMvrvNetPeakPriceProfitSellSoprPattern
  * @property {CentsDeltaToUsdPattern} cap
+ * @property {PricePattern} capitalized
  * @property {BlockCumulativeSumPattern} grossPnl
- * @property {PricePattern} investor
  * @property {BlockCumulativeNegativeSumPattern} loss
  * @property {SeriesPattern1<StoredF32>} mvrv
  * @property {BlockChangeCumulativeDeltaSumPattern} netPnl
@@ -2433,11 +2433,11 @@ function createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} GrossInvestedInvestorLossNetNuplProfitSentimentPattern2
+ * @typedef {Object} CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2
+ * @property {SeriesPattern18<CentsSquaredSats>} capitalizedCapInLossRaw
+ * @property {SeriesPattern18<CentsSquaredSats>} capitalizedCapInProfitRaw
  * @property {CentsUsdPattern3} grossPnl
  * @property {InPattern} investedCapital
- * @property {SeriesPattern18<CentsSquaredSats>} investorCapInLossRaw
- * @property {SeriesPattern18<CentsSquaredSats>} investorCapInProfitRaw
  * @property {CentsNegativeToUsdPattern2} loss
  * @property {CentsToUsdPattern3} netPnl
  * @property {BpsRatioPattern} nupl
@@ -2446,17 +2446,17 @@ function createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc) {
  */
 
 /**
- * Create a GrossInvestedInvestorLossNetNuplProfitSentimentPattern2 pattern node
+ * Create a CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated series name
- * @returns {GrossInvestedInvestorLossNetNuplProfitSentimentPattern2}
+ * @returns {CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2}
  */
-function createGrossInvestedInvestorLossNetNuplProfitSentimentPattern2(client, acc) {
+function createCapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2(client, acc) {
   return {
+    capitalizedCapInLossRaw: createSeriesPattern18(client, _m(acc, 'capitalized_cap_in_loss_raw')),
+    capitalizedCapInProfitRaw: createSeriesPattern18(client, _m(acc, 'capitalized_cap_in_profit_raw')),
     grossPnl: createCentsUsdPattern3(client, _m(acc, 'unrealized_gross_pnl')),
     investedCapital: createInPattern(client, _m(acc, 'invested_capital_in')),
-    investorCapInLossRaw: createSeriesPattern18(client, _m(acc, 'investor_cap_in_loss_raw')),
-    investorCapInProfitRaw: createSeriesPattern18(client, _m(acc, 'investor_cap_in_profit_raw')),
     loss: createCentsNegativeToUsdPattern2(client, _m(acc, 'unrealized_loss')),
     netPnl: createCentsToUsdPattern3(client, _m(acc, 'net_unrealized_pnl')),
     nupl: createBpsRatioPattern(client, _m(acc, 'nupl')),
@@ -5183,6 +5183,20 @@ function createTransferPattern(client, acc) {
  * @property {BtcCentsSatsUsdPattern} p2wsh
  * @property {BtcCentsSatsUsdPattern} p2tr
  * @property {BtcCentsSatsUsdPattern} p2a
+ * @property {SeriesTree_Addrs_Exposed_Supply_Share} share
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Addrs_Exposed_Supply_Share
+ * @property {BpsPercentRatioPattern2} all
+ * @property {BpsPercentRatioPattern2} p2pk65
+ * @property {BpsPercentRatioPattern2} p2pk33
+ * @property {BpsPercentRatioPattern2} p2pkh
+ * @property {BpsPercentRatioPattern2} p2sh
+ * @property {BpsPercentRatioPattern2} p2wpkh
+ * @property {BpsPercentRatioPattern2} p2wsh
+ * @property {BpsPercentRatioPattern2} p2tr
+ * @property {BpsPercentRatioPattern2} p2a
  */
 
 /**
@@ -6261,7 +6275,7 @@ function createTransferPattern(client, acc) {
  * @property {BlockCumulativeSumPattern} grossPnl
  * @property {_1m1w1y24hPattern7} sellSideRiskRatio
  * @property {BlockCumulativeSumPattern} peakRegret
- * @property {PricePattern} investor
+ * @property {PricePattern} capitalized
  * @property {_1m1w1y24hPattern<StoredF64>} profitToLossRatio
  */
 
@@ -6394,8 +6408,8 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Cohorts_Utxo_All_Unrealized_NetPnl} netPnl
  * @property {CentsUsdPattern3} grossPnl
  * @property {InPattern} investedCapital
- * @property {SeriesPattern18<CentsSquaredSats>} investorCapInProfitRaw
- * @property {SeriesPattern18<CentsSquaredSats>} investorCapInLossRaw
+ * @property {SeriesPattern18<CentsSquaredSats>} capitalizedCapInProfitRaw
+ * @property {SeriesPattern18<CentsSquaredSats>} capitalizedCapInLossRaw
  * @property {SeriesTree_Cohorts_Utxo_All_Unrealized_Sentiment} sentiment
  */
 
@@ -6437,7 +6451,7 @@ function createTransferPattern(client, acc) {
  * @property {CoindaysCoinyearsDormancyTransferPattern} activity
  * @property {SeriesTree_Cohorts_Utxo_Sth_Realized} realized
  * @property {InMaxMinPerSupplyPattern} costBasis
- * @property {GrossInvestedInvestorLossNetNuplProfitSentimentPattern2} unrealized
+ * @property {CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2} unrealized
  */
 
 /**
@@ -6452,7 +6466,7 @@ function createTransferPattern(client, acc) {
  * @property {BlockCumulativeSumPattern} grossPnl
  * @property {_1m1w1y24hPattern7} sellSideRiskRatio
  * @property {BlockCumulativeSumPattern} peakRegret
- * @property {PricePattern} investor
+ * @property {PricePattern} capitalized
  * @property {_1m1w1y24hPattern<StoredF64>} profitToLossRatio
  */
 
@@ -6559,7 +6573,7 @@ function createTransferPattern(client, acc) {
  * @property {CoindaysCoinyearsDormancyTransferPattern} activity
  * @property {SeriesTree_Cohorts_Utxo_Lth_Realized} realized
  * @property {InMaxMinPerSupplyPattern} costBasis
- * @property {GrossInvestedInvestorLossNetNuplProfitSentimentPattern2} unrealized
+ * @property {CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2} unrealized
  */
 
 /**
@@ -6574,7 +6588,7 @@ function createTransferPattern(client, acc) {
  * @property {BlockCumulativeSumPattern} grossPnl
  * @property {_1m1w1y24hPattern7} sellSideRiskRatio
  * @property {BlockCumulativeSumPattern} peakRegret
- * @property {PricePattern} investor
+ * @property {PricePattern} capitalized
  * @property {_1m1w1y24hPattern<StoredF64>} profitToLossRatio
  */
 
@@ -8543,15 +8557,26 @@ class BrkClient extends BrkClientBase {
         exposed: {
           count: createFundedTotalPattern(this, 'exposed_addr_count'),
           supply: {
-            all: createBtcCentsSatsUsdPattern(this, 'exposed_addr_supply'),
-            p2pk65: createBtcCentsSatsUsdPattern(this, 'p2pk65_exposed_addr_supply'),
-            p2pk33: createBtcCentsSatsUsdPattern(this, 'p2pk33_exposed_addr_supply'),
-            p2pkh: createBtcCentsSatsUsdPattern(this, 'p2pkh_exposed_addr_supply'),
-            p2sh: createBtcCentsSatsUsdPattern(this, 'p2sh_exposed_addr_supply'),
-            p2wpkh: createBtcCentsSatsUsdPattern(this, 'p2wpkh_exposed_addr_supply'),
-            p2wsh: createBtcCentsSatsUsdPattern(this, 'p2wsh_exposed_addr_supply'),
-            p2tr: createBtcCentsSatsUsdPattern(this, 'p2tr_exposed_addr_supply'),
-            p2a: createBtcCentsSatsUsdPattern(this, 'p2a_exposed_addr_supply'),
+            all: createBtcCentsSatsUsdPattern(this, 'exposed_supply'),
+            p2pk65: createBtcCentsSatsUsdPattern(this, 'p2pk65_exposed_supply'),
+            p2pk33: createBtcCentsSatsUsdPattern(this, 'p2pk33_exposed_supply'),
+            p2pkh: createBtcCentsSatsUsdPattern(this, 'p2pkh_exposed_supply'),
+            p2sh: createBtcCentsSatsUsdPattern(this, 'p2sh_exposed_supply'),
+            p2wpkh: createBtcCentsSatsUsdPattern(this, 'p2wpkh_exposed_supply'),
+            p2wsh: createBtcCentsSatsUsdPattern(this, 'p2wsh_exposed_supply'),
+            p2tr: createBtcCentsSatsUsdPattern(this, 'p2tr_exposed_supply'),
+            p2a: createBtcCentsSatsUsdPattern(this, 'p2a_exposed_supply'),
+            share: {
+              all: createBpsPercentRatioPattern2(this, 'exposed_supply_share'),
+              p2pk65: createBpsPercentRatioPattern2(this, 'p2pk65_exposed_supply_share'),
+              p2pk33: createBpsPercentRatioPattern2(this, 'p2pk33_exposed_supply_share'),
+              p2pkh: createBpsPercentRatioPattern2(this, 'p2pkh_exposed_supply_share'),
+              p2sh: createBpsPercentRatioPattern2(this, 'p2sh_exposed_supply_share'),
+              p2wpkh: createBpsPercentRatioPattern2(this, 'p2wpkh_exposed_supply_share'),
+              p2wsh: createBpsPercentRatioPattern2(this, 'p2wsh_exposed_supply_share'),
+              p2tr: createBpsPercentRatioPattern2(this, 'p2tr_exposed_supply_share'),
+              p2a: createBpsPercentRatioPattern2(this, 'p2a_exposed_supply_share'),
+            },
           },
         },
         delta: {
@@ -9394,7 +9419,7 @@ class BrkClient extends BrkClientBase {
               grossPnl: createBlockCumulativeSumPattern(this, 'realized_gross_pnl'),
               sellSideRiskRatio: create_1m1w1y24hPattern7(this, 'sell_side_risk_ratio'),
               peakRegret: createBlockCumulativeSumPattern(this, 'realized_peak_regret'),
-              investor: createPricePattern(this, 'investor_price'),
+              capitalized: createPricePattern(this, 'capitalized_price'),
               profitToLossRatio: create_1m1w1y24hPattern(this, 'realized_profit_to_loss_ratio'),
             },
             costBasis: {
@@ -9428,8 +9453,8 @@ class BrkClient extends BrkClientBase {
               },
               grossPnl: createCentsUsdPattern3(this, 'unrealized_gross_pnl'),
               investedCapital: createInPattern(this, 'invested_capital_in'),
-              investorCapInProfitRaw: createSeriesPattern18(this, 'investor_cap_in_profit_raw'),
-              investorCapInLossRaw: createSeriesPattern18(this, 'investor_cap_in_loss_raw'),
+              capitalizedCapInProfitRaw: createSeriesPattern18(this, 'capitalized_cap_in_profit_raw'),
+              capitalizedCapInLossRaw: createSeriesPattern18(this, 'capitalized_cap_in_loss_raw'),
               sentiment: {
                 painIndex: createCentsUsdPattern3(this, 'pain_index'),
                 greedIndex: createCentsUsdPattern3(this, 'greed_index'),
@@ -9530,11 +9555,11 @@ class BrkClient extends BrkClientBase {
               grossPnl: createBlockCumulativeSumPattern(this, 'sth_realized_gross_pnl'),
               sellSideRiskRatio: create_1m1w1y24hPattern7(this, 'sth_sell_side_risk_ratio'),
               peakRegret: createBlockCumulativeSumPattern(this, 'sth_realized_peak_regret'),
-              investor: createPricePattern(this, 'sth_investor_price'),
+              capitalized: createPricePattern(this, 'sth_capitalized_price'),
               profitToLossRatio: create_1m1w1y24hPattern(this, 'sth_realized_profit_to_loss_ratio'),
             },
             costBasis: createInMaxMinPerSupplyPattern(this, 'sth'),
-            unrealized: createGrossInvestedInvestorLossNetNuplProfitSentimentPattern2(this, 'sth'),
+            unrealized: createCapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2(this, 'sth'),
           },
           lth: {
             supply: createDeltaHalfInToTotalPattern2(this, 'lth_supply'),
@@ -9632,11 +9657,11 @@ class BrkClient extends BrkClientBase {
               grossPnl: createBlockCumulativeSumPattern(this, 'lth_realized_gross_pnl'),
               sellSideRiskRatio: create_1m1w1y24hPattern7(this, 'lth_sell_side_risk_ratio'),
               peakRegret: createBlockCumulativeSumPattern(this, 'lth_realized_peak_regret'),
-              investor: createPricePattern(this, 'lth_investor_price'),
+              capitalized: createPricePattern(this, 'lth_capitalized_price'),
               profitToLossRatio: create_1m1w1y24hPattern(this, 'lth_realized_profit_to_loss_ratio'),
             },
             costBasis: createInMaxMinPerSupplyPattern(this, 'lth'),
-            unrealized: createGrossInvestedInvestorLossNetNuplProfitSentimentPattern2(this, 'lth'),
+            unrealized: createCapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2(this, 'lth'),
           },
           ageRange: {
             under1h: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_1h_old'),

@@ -8,10 +8,7 @@ use std::{
 
 use bitcoin::consensus::encode;
 use brk_error::{Error, Result};
-use brk_types::{
-    BlockHash, Height, MempoolEntryInfo, Sats, Transaction, TxIn, TxOut, TxStatus, TxWithHex, Txid,
-    Vout,
-};
+use brk_types::{BlockHash, Height, MempoolEntryInfo, Sats, Txid, Vout};
 
 pub mod backend;
 
@@ -128,69 +125,13 @@ impl Client {
         Ok(tx)
     }
 
-    pub fn get_mempool_transaction(&self, txid: &Txid) -> Result<TxWithHex> {
-        // Get hex first, then deserialize from it
+    pub fn get_mempool_raw_tx(
+        &self,
+        txid: &Txid,
+    ) -> Result<(bitcoin::Transaction, String)> {
         let hex = self.get_raw_transaction_hex(txid, None as Option<&BlockHash>)?;
-        let mut tx = encode::deserialize_hex::<bitcoin::Transaction>(&hex)?;
-
-        let input = mem::take(&mut tx.input)
-            .into_iter()
-            .map(|txin| -> Result<TxIn> {
-                let txout_result = self.get_tx_out(
-                    (&txin.previous_output.txid).into(),
-                    txin.previous_output.vout.into(),
-                    Some(true),
-                )?;
-
-                let is_coinbase = txout_result.as_ref().is_none_or(|r| r.coinbase);
-
-                let txout = if let Some(txout_result) = txout_result {
-                    Some(TxOut::from((
-                        txout_result.script_pub_key,
-                        txout_result.value,
-                    )))
-                } else {
-                    None
-                };
-
-                let witness = txin
-                    .witness
-                    .iter()
-                    .map(bitcoin::hex::DisplayHex::to_lower_hex_string)
-                    .collect();
-
-                Ok(TxIn {
-                    is_coinbase,
-                    prevout: txout,
-                    txid: txin.previous_output.txid.into(),
-                    vout: txin.previous_output.vout.into(),
-                    script_sig: txin.script_sig,
-                    script_sig_asm: (),
-                    witness,
-                    sequence: txin.sequence.into(),
-                    inner_redeem_script_asm: (),
-                    inner_witness_script_asm: (),
-                })
-            })
-            .collect::<Result<Vec<_>>>()?;
-
-        let mut tx = Transaction {
-            index: None,
-            txid: txid.clone(),
-            version: tx.version.into(),
-            total_sigop_cost: tx.total_sigop_cost(|_| None),
-            weight: tx.weight().into(),
-            lock_time: tx.lock_time.into(),
-            total_size: tx.total_size(),
-            fee: Sats::default(),
-            input,
-            output: tx.output.into_iter().map(TxOut::from).collect(),
-            status: TxStatus::UNCONFIRMED,
-        };
-
-        tx.compute_fee();
-
-        Ok(TxWithHex::new(tx, hex))
+        let tx = encode::deserialize_hex::<bitcoin::Transaction>(&hex)?;
+        Ok((tx, hex))
     }
 
     pub fn get_tx_out(

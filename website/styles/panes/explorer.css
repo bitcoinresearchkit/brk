@@ -40,13 +40,16 @@
     .blocks {
       display: flex;
       flex-direction: column-reverse;
-      --gap: 0.8;
-      gap: calc(var(--cube) * var(--gap));
+      --min-gap: 0rem;
+      --max-gap: calc(var(--cube) * 6);
+      --min-dt: 0;
+      --max-dt: 10800;
       margin-right: var(--cube);
       margin-top: calc(var(--cube) * -0.25);
 
       @media (max-width: 767px) {
-        --gap: 1.25;
+        --min-gap: 0rem;
+        --max-gap: calc(var(--cube) * 1.5);
         flex-direction: row-reverse;
         height: 11.5rem;
         width: max-content;
@@ -58,7 +61,32 @@
     }
 
     .cube {
-      margin-top: -0.375rem;
+      --t: pow(
+        clamp(
+          0,
+          (var(--dt, 600) - var(--min-dt)) / (var(--max-dt) - var(--min-dt)),
+          1
+        ),
+        0.7
+      );
+      --block-gap: calc(
+        var(--min-gap) + var(--t) * (var(--max-gap) - var(--min-gap))
+      );
+      --empty-alpha: 0.5;
+      --face-step: 0.033;
+      --face-right-color: light-dark(
+        oklch(from var(--face-color) calc(l - var(--face-step) * 2) c h),
+        var(--face-color)
+      );
+      --face-left-color: light-dark(
+        oklch(from var(--face-color) calc(l - var(--face-step)) c h),
+        oklch(from var(--face-color) calc(l + var(--face-step)) c h)
+      );
+      --face-top-color: light-dark(
+        var(--face-color),
+        oklch(from var(--face-color) calc(l + var(--face-step) * 2) c h)
+      );
+      /*margin-top: -0.375rem;*/
       margin-left: calc(var(--cube) * -0.25);
       flex-shrink: 0;
       position: relative;
@@ -116,17 +144,40 @@
         width: var(--cube);
         height: var(--cube);
         padding: 0.1rem;
+        backdrop-filter: blur(4px);
+      }
+
+      .inner-top {
+        backdrop-filter: none;
+        background-color: var(--face-top-color);
+        /*-webkit-mask-image: linear-gradient(transparent, black 0.5rem, black calc(100% - 0.5rem), transparent);
+        mask-image: linear-gradient(transparent, black 0.5rem, black calc(100% - 0.5rem), transparent);*/
+        transform: rotate(30deg) skew(-30deg)
+          translate(
+            calc(var(--cube) * (1.99 - var(--fill, 1))),
+            calc(var(--cube) * (0.599 - 0.864 * var(--fill, 1)))
+          )
+          scaleY(0.864);
       }
 
       .right {
-        background-color: oklch(from var(--face-color) calc(l - 0.05) c h);
+        background: linear-gradient(
+          to top,
+          var(--face-right-color) calc(var(--fill, 1) * 100%),
+          oklch(from var(--face-right-color) l c h / var(--empty-alpha))
+            calc(var(--fill, 1) * 100%)
+        );
         transform: rotate(-30deg) skewX(-30deg)
           translate(calc(var(--cube) * 1.3), calc(var(--cube) * 1.725))
           scaleY(0.864);
       }
 
       .top {
-        background-color: oklch(from var(--face-color) calc(l + 0.05) c h);
+        --is-full: round(down, calc(var(--fill, 1) + 0.0025), 1);
+        background-color: oklch(
+          from var(--face-top-color) l c h /
+            calc(var(--empty-alpha) + var(--is-full) * (1 - var(--empty-alpha)))
+        );
         transform: rotate(30deg) skew(-30deg)
           translate(calc(var(--cube) * 0.99), calc(var(--cube) * -0.265))
           scaleY(0.864);
@@ -143,7 +194,12 @@
       .left {
         font-size: var(--font-size-xs);
         line-height: var(--line-height-xs);
-        background-color: var(--face-color);
+        background: linear-gradient(
+          to top,
+          var(--face-left-color) calc(var(--fill, 1) * 100%),
+          oklch(from var(--face-left-color) l c h / var(--empty-alpha))
+            calc(var(--fill, 1) * 100%)
+        );
         transform: rotate(30deg) skewX(30deg)
           translate(calc(var(--cube) * 0.3), calc(var(--cube) * 0.6))
           scaleY(0.864);
@@ -151,7 +207,9 @@
 
       &.skeleton {
         pointer-events: none;
-        .face { color: transparent; }
+        .face {
+          color: transparent;
+        }
       }
 
       .fees {
@@ -160,6 +218,35 @@
         height: 100%;
         justify-content: center;
         align-items: center;
+      }
+
+      & + & {
+        margin-bottom: var(--block-gap);
+
+        &::before {
+          content: "";
+          position: absolute;
+          top: calc(var(--cube) * 1.75);
+          left: calc(var(--cube) * 1.12);
+          width: 1px;
+          height: var(--block-gap);
+          background: var(--border-color);
+          z-index: -1;
+        }
+
+        @media (max-width: 767px) {
+          margin-bottom: 0;
+          margin-right: var(--block-gap);
+
+          &::before {
+            bottom: auto;
+            left: auto;
+            right: calc(-1 * var(--block-gap));
+            top: 50%;
+            width: var(--block-gap);
+            height: 1px;
+          }
+        }
       }
     }
   }

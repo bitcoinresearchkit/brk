@@ -45,7 +45,7 @@ pub struct RealizedPeakRegret<M: StorageMode = Rw> {
 }
 
 #[derive(Traversable)]
-pub struct RealizedInvestor<M: StorageMode = Rw> {
+pub struct RealizedCapitalized<M: StorageMode = Rw> {
     pub price: PriceWithRatioExtendedPerBlock<M>,
     #[traversable(hidden)]
     pub cap_raw: M::Stored<BytesVec<Height, CentsSquaredSats>>,
@@ -63,7 +63,7 @@ pub struct RealizedFull<M: StorageMode = Rw> {
     pub net_pnl: RealizedNetPnl<M>,
     pub sopr: RealizedSopr<M>,
     pub peak_regret: RealizedPeakRegret<M>,
-    pub investor: RealizedInvestor<M>,
+    pub capitalized: RealizedCapitalized<M>,
 
     pub profit_to_loss_ratio: RollingWindows<StoredF64, M>,
 
@@ -108,10 +108,10 @@ impl RealizedFull {
             value: cfg.import("realized_peak_regret", Version::new(3))?,
         };
 
-        // Investor
-        let investor = RealizedInvestor {
-            price: cfg.import("investor_price", v0)?,
-            cap_raw: cfg.import("investor_cap_raw", v0)?,
+        // Capitalized
+        let capitalized = RealizedCapitalized {
+            price: cfg.import("capitalized_price", v0)?,
+            cap_raw: cfg.import("capitalized_cap_raw", v0)?,
         };
 
         // Price ratio stats
@@ -125,7 +125,7 @@ impl RealizedFull {
             net_pnl,
             sopr,
             peak_regret,
-            investor,
+            capitalized,
             profit_to_loss_ratio: cfg.import("realized_profit_to_loss_ratio", v1)?,
             cap_raw: cfg.import("cap_raw", v0)?,
             cap_to_own_mcap: cfg.import("realized_cap_to_own_mcap", v1)?,
@@ -151,13 +151,13 @@ impl RealizedFull {
     }
 
     pub(crate) fn min_stateful_len(&self) -> usize {
-        self.investor
+        self.capitalized
             .price
             .cents
             .height
             .len()
             .min(self.cap_raw.len())
-            .min(self.investor.cap_raw.len())
+            .min(self.capitalized.cap_raw.len())
             .min(self.peak_regret.value.block.cents.len())
     }
 
@@ -167,15 +167,15 @@ impl RealizedFull {
         state: &CohortState<RealizedState, CostBasisData<WithCapital>>,
     ) {
         self.core.push_state(state);
-        self.investor
+        self.capitalized
             .price
             .cents
             .height
-            .push(state.realized.investor_price());
+            .push(state.realized.capitalized_price());
         self.cap_raw.push(state.realized.cap_raw());
-        self.investor
+        self.capitalized
             .cap_raw
-            .push(state.realized.investor_cap_raw());
+            .push(state.realized.capitalized_cap_raw());
         self.peak_regret
             .value
             .block
@@ -185,9 +185,9 @@ impl RealizedFull {
 
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.core.collect_vecs_mut();
-        vecs.push(&mut self.investor.price.cents.height);
+        vecs.push(&mut self.capitalized.price.cents.height);
         vecs.push(&mut self.cap_raw as &mut dyn AnyStoredVec);
-        vecs.push(&mut self.investor.cap_raw as &mut dyn AnyStoredVec);
+        vecs.push(&mut self.capitalized.cap_raw as &mut dyn AnyStoredVec);
         vecs.push(&mut self.peak_regret.value.block.cents);
         vecs
     }
@@ -207,17 +207,17 @@ impl RealizedFull {
     #[inline(always)]
     pub(crate) fn push_accum(&mut self, accum: &RealizedFullAccum) {
         self.cap_raw.push(accum.cap_raw);
-        self.investor.cap_raw.push(accum.investor_cap_raw);
+        self.capitalized.cap_raw.push(accum.capitalized_cap_raw);
 
-        let investor_price = {
+        let capitalized_price = {
             let cap = accum.cap_raw.as_u128();
             if cap == 0 {
                 Cents::ZERO
             } else {
-                Cents::new((accum.investor_cap_raw / cap) as u64)
+                Cents::new((accum.capitalized_cap_raw / cap) as u64)
             }
         };
-        self.investor.price.cents.height.push(investor_price);
+        self.capitalized.price.cents.height.push(capitalized_price);
 
         self.peak_regret.value.block.cents.push(accum.peak_regret());
     }
@@ -298,8 +298,8 @@ impl RealizedFull {
                 exit,
             )?;
 
-        // Investor price ratio, percentiles and bands
-        self.investor
+        // Capitalized price ratio, percentiles and bands
+        self.capitalized
             .price
             .compute_rest(prices, starting_indexes, exit)?;
 
@@ -374,14 +374,14 @@ impl RealizedFull {
 #[derive(Default)]
 pub struct RealizedFullAccum {
     pub(crate) cap_raw: CentsSats,
-    pub(crate) investor_cap_raw: CentsSquaredSats,
+    pub(crate) capitalized_cap_raw: CentsSquaredSats,
     peak_regret: CentsSats,
 }
 
 impl RealizedFullAccum {
     pub(crate) fn add(&mut self, state: &RealizedState) {
         self.cap_raw += state.cap_raw();
-        self.investor_cap_raw += state.investor_cap_raw();
+        self.capitalized_cap_raw += state.capitalized_cap_raw();
         self.peak_regret += CentsSats::new(state.peak_regret_raw());
     }
 

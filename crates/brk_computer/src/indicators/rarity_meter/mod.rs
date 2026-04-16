@@ -44,15 +44,15 @@ impl RarityMeter {
         let lth_realized = &distribution.utxo_cohorts.lth.metrics.realized;
         let spot = &prices.spot.cents.height;
 
-        // Full: all + sth + lth (rp + ip), 6 models
+        // Full: all + sth + lth (rp + cp), 6 models
         self.full.compute(
             &[
                 &realized.price_ratio_percentiles,
-                &realized.investor.price.percentiles,
+                &realized.capitalized.price.percentiles,
                 &sth_realized.price_ratio_percentiles,
-                &sth_realized.investor.price.percentiles,
+                &sth_realized.capitalized.price.percentiles,
                 &lth_realized.price_ratio_percentiles,
-                &lth_realized.investor.price.percentiles,
+                &lth_realized.capitalized.price.percentiles,
             ],
             spot,
             starting_indexes,
@@ -63,7 +63,7 @@ impl RarityMeter {
         self.local.compute(
             &[
                 &sth_realized.price_ratio_percentiles,
-                &sth_realized.investor.price.percentiles,
+                &sth_realized.capitalized.price.percentiles,
             ],
             spot,
             starting_indexes,
@@ -74,9 +74,9 @@ impl RarityMeter {
         self.cycle.compute(
             &[
                 &realized.price_ratio_percentiles,
-                &realized.investor.price.percentiles,
+                &realized.capitalized.price.percentiles,
                 &lth_realized.price_ratio_percentiles,
-                &lth_realized.investor.price.percentiles,
+                &lth_realized.capitalized.price.percentiles,
             ],
             spot,
             starting_indexes,

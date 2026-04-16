@@ -1124,10 +1124,10 @@ pub struct AllEmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern {
+pub struct CapCapitalizedGrossLossMvrvNetPeakPriceProfitSellSoprPattern {
     pub cap: CentsDeltaToUsdPattern,
+    pub capitalized: PricePattern,
     pub gross_pnl: BlockCumulativeSumPattern,
-    pub investor: PricePattern,
     pub loss: BlockCumulativeNegativeSumPattern,
     pub mvrv: SeriesPattern1<StoredF32>,
     pub net_pnl: BlockChangeCumulativeDeltaSumPattern,
@@ -1430,11 +1430,11 @@ impl AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct GrossInvestedInvestorLossNetNuplProfitSentimentPattern2 {
+pub struct CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2 {
+    pub capitalized_cap_in_loss_raw: SeriesPattern18<CentsSquaredSats>,
+    pub capitalized_cap_in_profit_raw: SeriesPattern18<CentsSquaredSats>,
     pub gross_pnl: CentsUsdPattern3,
     pub invested_capital: InPattern,
-    pub investor_cap_in_loss_raw: SeriesPattern18<CentsSquaredSats>,
-    pub investor_cap_in_profit_raw: SeriesPattern18<CentsSquaredSats>,
     pub loss: CentsNegativeToUsdPattern2,
     pub net_pnl: CentsToUsdPattern3,
     pub nupl: BpsRatioPattern,
@@ -1442,14 +1442,14 @@ pub struct GrossInvestedInvestorLossNetNuplProfitSentimentPattern2 {
     pub sentiment: GreedNetPainPattern,
 }
 
-impl GrossInvestedInvestorLossNetNuplProfitSentimentPattern2 {
+impl CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2 {
     /// Create a new pattern node with accumulated series name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
+            capitalized_cap_in_loss_raw: SeriesPattern18::new(client.clone(), _m(&acc, "capitalized_cap_in_loss_raw")),
+            capitalized_cap_in_profit_raw: SeriesPattern18::new(client.clone(), _m(&acc, "capitalized_cap_in_profit_raw")),
             gross_pnl: CentsUsdPattern3::new(client.clone(), _m(&acc, "unrealized_gross_pnl")),
             invested_capital: InPattern::new(client.clone(), _m(&acc, "invested_capital_in")),
-            investor_cap_in_loss_raw: SeriesPattern18::new(client.clone(), _m(&acc, "investor_cap_in_loss_raw")),
-            investor_cap_in_profit_raw: SeriesPattern18::new(client.clone(), _m(&acc, "investor_cap_in_profit_raw")),
             loss: CentsNegativeToUsdPattern2::new(client.clone(), _m(&acc, "unrealized_loss")),
             net_pnl: CentsToUsdPattern3::new(client.clone(), _m(&acc, "net_unrealized_pnl")),
             nupl: BpsRatioPattern::new(client.clone(), _m(&acc, "nupl")),
@@ -4555,20 +4555,51 @@ pub struct SeriesTree_Addrs_Exposed_Supply {
     pub p2wsh: BtcCentsSatsUsdPattern,
     pub p2tr: BtcCentsSatsUsdPattern,
     pub p2a: BtcCentsSatsUsdPattern,
+    pub share: SeriesTree_Addrs_Exposed_Supply_Share,
 }
 
 impl SeriesTree_Addrs_Exposed_Supply {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            all: BtcCentsSatsUsdPattern::new(client.clone(), "exposed_addr_supply".to_string()),
-            p2pk65: BtcCentsSatsUsdPattern::new(client.clone(), "p2pk65_exposed_addr_supply".to_string()),
-            p2pk33: BtcCentsSatsUsdPattern::new(client.clone(), "p2pk33_exposed_addr_supply".to_string()),
-            p2pkh: BtcCentsSatsUsdPattern::new(client.clone(), "p2pkh_exposed_addr_supply".to_string()),
-            p2sh: BtcCentsSatsUsdPattern::new(client.clone(), "p2sh_exposed_addr_supply".to_string()),
-            p2wpkh: BtcCentsSatsUsdPattern::new(client.clone(), "p2wpkh_exposed_addr_supply".to_string()),
-            p2wsh: BtcCentsSatsUsdPattern::new(client.clone(), "p2wsh_exposed_addr_supply".to_string()),
-            p2tr: BtcCentsSatsUsdPattern::new(client.clone(), "p2tr_exposed_addr_supply".to_string()),
-            p2a: BtcCentsSatsUsdPattern::new(client.clone(), "p2a_exposed_addr_supply".to_string()),
+            all: BtcCentsSatsUsdPattern::new(client.clone(), "exposed_supply".to_string()),
+            p2pk65: BtcCentsSatsUsdPattern::new(client.clone(), "p2pk65_exposed_supply".to_string()),
+            p2pk33: BtcCentsSatsUsdPattern::new(client.clone(), "p2pk33_exposed_supply".to_string()),
+            p2pkh: BtcCentsSatsUsdPattern::new(client.clone(), "p2pkh_exposed_supply".to_string()),
+            p2sh: BtcCentsSatsUsdPattern::new(client.clone(), "p2sh_exposed_supply".to_string()),
+            p2wpkh: BtcCentsSatsUsdPattern::new(client.clone(), "p2wpkh_exposed_supply".to_string()),
+            p2wsh: BtcCentsSatsUsdPattern::new(client.clone(), "p2wsh_exposed_supply".to_string()),
+            p2tr: BtcCentsSatsUsdPattern::new(client.clone(), "p2tr_exposed_supply".to_string()),
+            p2a: BtcCentsSatsUsdPattern::new(client.clone(), "p2a_exposed_supply".to_string()),
+            share: SeriesTree_Addrs_Exposed_Supply_Share::new(client.clone(), format!("{base_path}_share")),
+        }
+    }
+}
+
+/// Series tree node.
+pub struct SeriesTree_Addrs_Exposed_Supply_Share {
+    pub all: BpsPercentRatioPattern2,
+    pub p2pk65: BpsPercentRatioPattern2,
+    pub p2pk33: BpsPercentRatioPattern2,
+    pub p2pkh: BpsPercentRatioPattern2,
+    pub p2sh: BpsPercentRatioPattern2,
+    pub p2wpkh: BpsPercentRatioPattern2,
+    pub p2wsh: BpsPercentRatioPattern2,
+    pub p2tr: BpsPercentRatioPattern2,
+    pub p2a: BpsPercentRatioPattern2,
+}
+
+impl SeriesTree_Addrs_Exposed_Supply_Share {
+    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
+        Self {
+            all: BpsPercentRatioPattern2::new(client.clone(), "exposed_supply_share".to_string()),
+            p2pk65: BpsPercentRatioPattern2::new(client.clone(), "p2pk65_exposed_supply_share".to_string()),
+            p2pk33: BpsPercentRatioPattern2::new(client.clone(), "p2pk33_exposed_supply_share".to_string()),
+            p2pkh: BpsPercentRatioPattern2::new(client.clone(), "p2pkh_exposed_supply_share".to_string()),
+            p2sh: BpsPercentRatioPattern2::new(client.clone(), "p2sh_exposed_supply_share".to_string()),
+            p2wpkh: BpsPercentRatioPattern2::new(client.clone(), "p2wpkh_exposed_supply_share".to_string()),
+            p2wsh: BpsPercentRatioPattern2::new(client.clone(), "p2wsh_exposed_supply_share".to_string()),
+            p2tr: BpsPercentRatioPattern2::new(client.clone(), "p2tr_exposed_supply_share".to_string()),
+            p2a: BpsPercentRatioPattern2::new(client.clone(), "p2a_exposed_supply_share".to_string()),
         }
     }
 }
@@ -7028,7 +7059,7 @@ pub struct SeriesTree_Cohorts_Utxo_All_Realized {
     pub gross_pnl: BlockCumulativeSumPattern,
     pub sell_side_risk_ratio: _1m1w1y24hPattern7,
     pub peak_regret: BlockCumulativeSumPattern,
-    pub investor: PricePattern,
+    pub capitalized: PricePattern,
     pub profit_to_loss_ratio: _1m1w1y24hPattern<StoredF64>,
 }
 
@@ -7045,7 +7076,7 @@ impl SeriesTree_Cohorts_Utxo_All_Realized {
             gross_pnl: BlockCumulativeSumPattern::new(client.clone(), "realized_gross_pnl".to_string()),
             sell_side_risk_ratio: _1m1w1y24hPattern7::new(client.clone(), "sell_side_risk_ratio".to_string()),
             peak_regret: BlockCumulativeSumPattern::new(client.clone(), "realized_peak_regret".to_string()),
-            investor: PricePattern::new(client.clone(), "investor_price".to_string()),
+            capitalized: PricePattern::new(client.clone(), "capitalized_price".to_string()),
             profit_to_loss_ratio: _1m1w1y24hPattern::new(client.clone(), "realized_profit_to_loss_ratio".to_string()),
         }
     }
@@ -7328,8 +7359,8 @@ pub struct SeriesTree_Cohorts_Utxo_All_Unrealized {
     pub net_pnl: SeriesTree_Cohorts_Utxo_All_Unrealized_NetPnl,
     pub gross_pnl: CentsUsdPattern3,
     pub invested_capital: InPattern,
-    pub investor_cap_in_profit_raw: SeriesPattern18<CentsSquaredSats>,
-    pub investor_cap_in_loss_raw: SeriesPattern18<CentsSquaredSats>,
+    pub capitalized_cap_in_profit_raw: SeriesPattern18<CentsSquaredSats>,
+    pub capitalized_cap_in_loss_raw: SeriesPattern18<CentsSquaredSats>,
     pub sentiment: SeriesTree_Cohorts_Utxo_All_Unrealized_Sentiment,
 }
 
@@ -7342,8 +7373,8 @@ impl SeriesTree_Cohorts_Utxo_All_Unrealized {
             net_pnl: SeriesTree_Cohorts_Utxo_All_Unrealized_NetPnl::new(client.clone(), format!("{base_path}_net_pnl")),
             gross_pnl: CentsUsdPattern3::new(client.clone(), "unrealized_gross_pnl".to_string()),
             invested_capital: InPattern::new(client.clone(), "invested_capital_in".to_string()),
-            investor_cap_in_profit_raw: SeriesPattern18::new(client.clone(), "investor_cap_in_profit_raw".to_string()),
-            investor_cap_in_loss_raw: SeriesPattern18::new(client.clone(), "investor_cap_in_loss_raw".to_string()),
+            capitalized_cap_in_profit_raw: SeriesPattern18::new(client.clone(), "capitalized_cap_in_profit_raw".to_string()),
+            capitalized_cap_in_loss_raw: SeriesPattern18::new(client.clone(), "capitalized_cap_in_loss_raw".to_string()),
             sentiment: SeriesTree_Cohorts_Utxo_All_Unrealized_Sentiment::new(client.clone(), format!("{base_path}_sentiment")),
         }
     }
@@ -7430,7 +7461,7 @@ pub struct SeriesTree_Cohorts_Utxo_Sth {
     pub activity: CoindaysCoinyearsDormancyTransferPattern,
     pub realized: SeriesTree_Cohorts_Utxo_Sth_Realized,
     pub cost_basis: InMaxMinPerSupplyPattern,
-    pub unrealized: GrossInvestedInvestorLossNetNuplProfitSentimentPattern2,
+    pub unrealized: CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2,
 }
 
 impl SeriesTree_Cohorts_Utxo_Sth {
@@ -7441,7 +7472,7 @@ impl SeriesTree_Cohorts_Utxo_Sth {
             activity: CoindaysCoinyearsDormancyTransferPattern::new(client.clone(), "sth".to_string()),
             realized: SeriesTree_Cohorts_Utxo_Sth_Realized::new(client.clone(), format!("{base_path}_realized")),
             cost_basis: InMaxMinPerSupplyPattern::new(client.clone(), "sth".to_string()),
-            unrealized: GrossInvestedInvestorLossNetNuplProfitSentimentPattern2::new(client.clone(), "sth".to_string()),
+            unrealized: CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2::new(client.clone(), "sth".to_string()),
         }
     }
 }
@@ -7458,7 +7489,7 @@ pub struct SeriesTree_Cohorts_Utxo_Sth_Realized {
     pub gross_pnl: BlockCumulativeSumPattern,
     pub sell_side_risk_ratio: _1m1w1y24hPattern7,
     pub peak_regret: BlockCumulativeSumPattern,
-    pub investor: PricePattern,
+    pub capitalized: PricePattern,
     pub profit_to_loss_ratio: _1m1w1y24hPattern<StoredF64>,
 }
 
@@ -7475,7 +7506,7 @@ impl SeriesTree_Cohorts_Utxo_Sth_Realized {
             gross_pnl: BlockCumulativeSumPattern::new(client.clone(), "sth_realized_gross_pnl".to_string()),
             sell_side_risk_ratio: _1m1w1y24hPattern7::new(client.clone(), "sth_sell_side_risk_ratio".to_string()),
             peak_regret: BlockCumulativeSumPattern::new(client.clone(), "sth_realized_peak_regret".to_string()),
-            investor: PricePattern::new(client.clone(), "sth_investor_price".to_string()),
+            capitalized: PricePattern::new(client.clone(), "sth_capitalized_price".to_string()),
             profit_to_loss_ratio: _1m1w1y24hPattern::new(client.clone(), "sth_realized_profit_to_loss_ratio".to_string()),
         }
     }
@@ -7698,7 +7729,7 @@ pub struct SeriesTree_Cohorts_Utxo_Lth {
     pub activity: CoindaysCoinyearsDormancyTransferPattern,
     pub realized: SeriesTree_Cohorts_Utxo_Lth_Realized,
     pub cost_basis: InMaxMinPerSupplyPattern,
-    pub unrealized: GrossInvestedInvestorLossNetNuplProfitSentimentPattern2,
+    pub unrealized: CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2,
 }
 
 impl SeriesTree_Cohorts_Utxo_Lth {
@@ -7709,7 +7740,7 @@ impl SeriesTree_Cohorts_Utxo_Lth {
             activity: CoindaysCoinyearsDormancyTransferPattern::new(client.clone(), "lth".to_string()),
             realized: SeriesTree_Cohorts_Utxo_Lth_Realized::new(client.clone(), format!("{base_path}_realized")),
             cost_basis: InMaxMinPerSupplyPattern::new(client.clone(), "lth".to_string()),
-            unrealized: GrossInvestedInvestorLossNetNuplProfitSentimentPattern2::new(client.clone(), "lth".to_string()),
+            unrealized: CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2::new(client.clone(), "lth".to_string()),
         }
     }
 }
@@ -7726,7 +7757,7 @@ pub struct SeriesTree_Cohorts_Utxo_Lth_Realized {
     pub gross_pnl: BlockCumulativeSumPattern,
     pub sell_side_risk_ratio: _1m1w1y24hPattern7,
     pub peak_regret: BlockCumulativeSumPattern,
-    pub investor: PricePattern,
+    pub capitalized: PricePattern,
     pub profit_to_loss_ratio: _1m1w1y24hPattern<StoredF64>,
 }
 
@@ -7743,7 +7774,7 @@ impl SeriesTree_Cohorts_Utxo_Lth_Realized {
             gross_pnl: BlockCumulativeSumPattern::new(client.clone(), "lth_realized_gross_pnl".to_string()),
             sell_side_risk_ratio: _1m1w1y24hPattern7::new(client.clone(), "lth_sell_side_risk_ratio".to_string()),
             peak_regret: BlockCumulativeSumPattern::new(client.clone(), "lth_realized_peak_regret".to_string()),
-            investor: PricePattern::new(client.clone(), "lth_investor_price".to_string()),
+            capitalized: PricePattern::new(client.clone(), "lth_capitalized_price".to_string()),
             profit_to_loss_ratio: _1m1w1y24hPattern::new(client.clone(), "lth_realized_profit_to_loss_ratio".to_string()),
         }
     }
@@ -8676,7 +8707,7 @@ pub struct BrkClient {
 
 impl BrkClient {
     /// Client version.
-    pub const VERSION: &'static str = "v0.3.0-beta.1";
+    pub const VERSION: &'static str = "v0.3.0-beta.2";
 
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {

@@ -42,7 +42,7 @@ function percentileSeries(p, n = (x) => x) {
 /**
  * Per Coin or Per Dollar folder for a single cohort
  * @param {Object} args
- * @param {AnyPricePattern} args.avgPrice - realized price (per coin) or investor price (per dollar)
+ * @param {AnyPricePattern} args.avgPrice - realized price (per coin) or capitalized price (per dollar)
  * @param {string} args.avgName
  * @param {AnyPricePattern} args.inProfit
  * @param {AnyPricePattern} args.inLoss
@@ -100,7 +100,7 @@ export function createCostBasisSectionWithPercentiles({ cohort, title }) {
       {
         name: "Per Dollar",
         tree: singleWeightFolder({
-          avgPrice: tree.realized.investor.price, avgName: "All",
+          avgPrice: tree.realized.capitalized.price, avgName: "All",
           inProfit: cb.inProfit.perDollar, inLoss: cb.inLoss.perDollar,
           percentiles: cb.perDollar, color, weightLabel: "USD-weighted", title,
         }),
@@ -192,7 +192,7 @@ export function createGroupedCostBasisSectionWithPercentiles({ list, all, title 
         name: "Per Dollar",
         tree: groupedWeightFolder({
           list, all, title,
-          getAvgPrice: (c) => c.tree.realized.investor.price,
+          getAvgPrice: (c) => c.tree.realized.capitalized.price,
           getInProfit: (c) => c.tree.costBasis.inProfit.perDollar,
           getInLoss: (c) => c.tree.costBasis.inLoss.perDollar,
           getPercentiles: (c) => c.tree.costBasis.perDollar,

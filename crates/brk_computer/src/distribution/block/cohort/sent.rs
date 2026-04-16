@@ -6,7 +6,7 @@ use vecdb::VecIndex;
 
 use crate::distribution::{
     addr::{
-        AddrTypeToActivityCounts, AddrTypeToExposedAddrCount, AddrTypeToExposedAddrSupply,
+        AddrTypeToActivityCounts, AddrTypeToExposedAddrCount, AddrTypeToExposedSupply,
         AddrTypeToReusedAddrCount, AddrTypeToReusedAddrEventCount, HeightToAddrTypeToVec,
     },
     cohorts::AddrCohorts,
@@ -43,7 +43,7 @@ pub(crate) fn process_sent(
     active_reused_addr_count: &mut AddrTypeToReusedAddrEventCount,
     exposed_addr_count: &mut AddrTypeToExposedAddrCount,
     total_exposed_addr_count: &mut AddrTypeToExposedAddrCount,
-    exposed_addr_supply: &mut AddrTypeToExposedAddrSupply,
+    exposed_supply: &mut AddrTypeToExposedSupply,
     received_addrs: &ByAddrType<FxHashSet<TypeIndex>>,
     height_to_price: &[Cents],
     height_to_timestamp: &[Timestamp],
@@ -69,11 +69,10 @@ pub(crate) fn process_sent(
             let type_reused_count = reused_addr_count.get_mut(output_type).unwrap();
             let type_input_from_reused_count =
                 input_from_reused_addr_count.get_mut(output_type).unwrap();
-            let type_active_reused_count =
-                active_reused_addr_count.get_mut(output_type).unwrap();
+            let type_active_reused_count = active_reused_addr_count.get_mut(output_type).unwrap();
             let type_exposed_count = exposed_addr_count.get_mut(output_type).unwrap();
             let type_total_exposed_count = total_exposed_addr_count.get_mut(output_type).unwrap();
-            let type_exposed_supply = exposed_addr_supply.get_mut(output_type).unwrap();
+            let type_exposed_supply = exposed_supply.get_mut(output_type).unwrap();
             let type_received = received_addrs.get(output_type);
             let type_seen = seen_senders.get_mut_unwrap(output_type);
 
@@ -96,8 +95,7 @@ pub(crate) fn process_sent(
                 if type_seen.insert(type_index) {
                     type_activity.sending += 1;
 
-                    let also_received =
-                        type_received.is_some_and(|s| s.contains(&type_index));
+                    let also_received = type_received.is_some_and(|s| s.contains(&type_index));
                     // Track "bidirectional": addresses that sent AND
                     // received this block.
                     if also_received {
@@ -136,12 +134,13 @@ pub(crate) fn process_sent(
                 // addr_data.spent_txo_count is now incremented by 1.
 
                 // Update exposed supply via post-spend contribution delta.
-                let exposed_contribution_after =
-                    addr_data.exposed_supply_contribution(output_type);
+                let exposed_contribution_after = addr_data.exposed_supply_contribution(output_type);
                 if exposed_contribution_after >= exposed_contribution_before {
-                    *type_exposed_supply += exposed_contribution_after - exposed_contribution_before;
+                    *type_exposed_supply +=
+                        exposed_contribution_after - exposed_contribution_before;
                 } else {
-                    *type_exposed_supply -= exposed_contribution_before - exposed_contribution_after;
+                    *type_exposed_supply -=
+                        exposed_contribution_before - exposed_contribution_after;
                 }
 
                 // Update exposed counts on first-ever pubkey exposure.

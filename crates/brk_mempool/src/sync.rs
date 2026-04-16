@@ -1,5 +1,6 @@
 use std::{
     hash::{DefaultHasher, Hash, Hasher},
+    mem,
     sync::{
         Arc,
         atomic::{AtomicBool, AtomicU64, Ordering},
@@ -8,9 +9,13 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
+use bitcoin::hex::DisplayHex;
 use brk_error::Result;
 use brk_rpc::Client;
-use brk_types::{AddrBytes, MempoolEntryInfo, MempoolInfo, TxWithHex, Txid, TxidPrefix};
+use brk_types::{
+    AddrBytes, BlockHash, MempoolEntryInfo, MempoolInfo, Transaction, TxIn, TxOut, TxStatus,
+    TxWithHex, Txid, TxidPrefix, Vout,
+};
 use derive_more::Deref;
 use parking_lot::{RwLock, RwLockReadGuard};
 use rustc_hash::FxHashMap;
@@ -142,26 +147,99 @@ impl MempoolInner {
 
     /// Fetch full transaction data for new txids (needed for address tracking).
     fn fetch_new_txs(&self, entries_info: &[MempoolEntryInfo]) -> FxHashMap<Txid, TxWithHex> {
-        let txids_to_fetch: Vec<Txid> = {
-            let txs = self.txs.read();
-            entries_info
-                .iter()
-                .map(|e| &e.txid)
-                .filter(|txid| !txs.contains(txid))
-                .take(MAX_TX_FETCHES_PER_CYCLE)
-                .cloned()
-                .collect()
-        };
-
-        txids_to_fetch
-            .into_iter()
-            .filter_map(|txid| {
-                self.client
-                    .get_mempool_transaction(&txid)
+        let txs = self.txs.read();
+        entries_info
+            .iter()
+            .filter(|e| !txs.contains(&e.txid))
+            .take(MAX_TX_FETCHES_PER_CYCLE)
+            .filter_map(|entry| {
+                self.build_transaction(entry, &txs)
                     .ok()
-                    .map(|tx| (txid, tx))
+                    .map(|tx| (entry.txid.clone(), tx))
             })
             .collect()
+    }
+
+    fn build_transaction(
+        &self,
+        entry: &MempoolEntryInfo,
+        mempool_txs: &TxStore,
+    ) -> Result<TxWithHex> {
+        let (mut btc_tx, hex) = self.client.get_mempool_raw_tx(&entry.txid)?;
+
+        let total_size = hex.len() / 2;
+        let total_sigop_cost = btc_tx.total_sigop_cost(|_| None);
+
+        // Collect unique parent txids not in the mempool store,
+        // fetch each once instead of one get_tx_out per input
+        let mut parent_cache: FxHashMap<Txid, Vec<bitcoin::TxOut>> = FxHashMap::default();
+        for txin in &btc_tx.input {
+            let prev_txid: Txid = txin.previous_output.txid.into();
+            if !mempool_txs.contains_key(&prev_txid)
+                && !parent_cache.contains_key(&prev_txid)
+            {
+                if let Ok(prev) = self
+                    .client
+                    .get_raw_transaction(&prev_txid, None as Option<&BlockHash>)
+                {
+                    parent_cache.insert(prev_txid, prev.output);
+                }
+            }
+        }
+
+        let input = mem::take(&mut btc_tx.input)
+            .into_iter()
+            .map(|txin| {
+                let prev_txid: Txid = txin.previous_output.txid.into();
+                let prev_vout = usize::from(Vout::from(txin.previous_output.vout));
+
+                let prevout = if let Some(prev) = mempool_txs.get(&prev_txid) {
+                    prev.tx()
+                        .output
+                        .get(prev_vout)
+                        .map(|o| TxOut::from((o.script_pubkey.clone(), o.value)))
+                } else if let Some(outputs) = parent_cache.get(&prev_txid) {
+                    outputs
+                        .get(prev_vout)
+                        .map(|o| TxOut::from((o.script_pubkey.clone(), o.value.into())))
+                } else {
+                    None
+                };
+
+                TxIn {
+                    is_coinbase: prevout.is_none(),
+                    prevout,
+                    txid: prev_txid,
+                    vout: txin.previous_output.vout.into(),
+                    script_sig: txin.script_sig,
+                    script_sig_asm: (),
+                    witness: txin
+                        .witness
+                        .iter()
+                        .map(|w| w.to_lower_hex_string())
+                        .collect(),
+                    sequence: txin.sequence.into(),
+                    inner_redeem_script_asm: (),
+                    inner_witness_script_asm: (),
+                }
+            })
+            .collect();
+
+        let tx = Transaction {
+            index: None,
+            txid: entry.txid.clone(),
+            version: btc_tx.version.into(),
+            total_sigop_cost,
+            weight: entry.weight.into(),
+            lock_time: btc_tx.lock_time.into(),
+            total_size,
+            fee: entry.fee,
+            input,
+            output: btc_tx.output.into_iter().map(TxOut::from).collect(),
+            status: TxStatus::UNCONFIRMED,
+        };
+
+        Ok(TxWithHex::new(tx, hex))
     }
 
     /// Apply transaction additions and removals. Returns true if there were changes.

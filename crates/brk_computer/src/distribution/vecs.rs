@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use brk_cohort::{ByAddrType, Filter};
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
@@ -476,9 +477,18 @@ impl Vecs {
             &inputs.by_type,
             exit,
         )?;
-        self.addrs
-            .exposed
-            .compute_rest(starting_indexes, prices, exit)?;
+        let t = &self.utxo_cohorts.type_;
+        let type_supply_sats = ByAddrType::new(|filter| {
+            let Filter::Type(ot) = filter else { unreachable!() };
+            &t.get(ot).metrics.supply.total.sats.height
+        });
+        self.addrs.exposed.compute_rest(
+            starting_indexes,
+            prices,
+            &self.utxo_cohorts.all.metrics.supply.total.sats.height,
+            &type_supply_sats,
+            exit,
+        )?;
 
         // 6c. Compute total_addr_count = addr_count + empty_addr_count
         self.addrs.total.compute(

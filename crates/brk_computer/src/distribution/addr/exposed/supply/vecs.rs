@@ -26,7 +26,7 @@ impl ExposedAddrSupplyVecs {
     ) -> Result<Self> {
         Ok(Self(WithAddrTypes::<AmountPerBlock>::forced_import(
             db,
-            "exposed_addr_supply",
+            "exposed_supply",
             version,
             indexes,
         )?))

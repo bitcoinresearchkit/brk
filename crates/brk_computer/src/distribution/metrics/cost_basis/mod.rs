@@ -153,8 +153,8 @@ impl CostBasis {
         invested_cap_in_loss: &impl ReadableVec<Height, Cents>,
         supply_in_profit_sats: &impl ReadableVec<Height, Sats>,
         supply_in_loss_sats: &impl ReadableVec<Height, Sats>,
-        investor_cap_in_profit_raw: &impl ReadableVec<Height, CentsSquaredSats>,
-        investor_cap_in_loss_raw: &impl ReadableVec<Height, CentsSquaredSats>,
+        capitalized_cap_in_profit_raw: &impl ReadableVec<Height, CentsSquaredSats>,
+        capitalized_cap_in_loss_raw: &impl ReadableVec<Height, CentsSquaredSats>,
         exit: &Exit,
     ) -> Result<()> {
         self.in_profit.per_coin.cents.height.compute_transform3(
@@ -193,29 +193,29 @@ impl CostBasis {
         )?;
         self.in_profit.per_dollar.cents.height.compute_transform3(
             starting_indexes.height,
-            investor_cap_in_profit_raw,
+            capitalized_cap_in_profit_raw,
             invested_cap_in_profit,
             spot,
-            |(h, investor_cap, invested_cents, spot, ..)| {
+            |(h, capitalized_cap, invested_cents, spot, ..)| {
                 let invested_raw = invested_cents.as_u128() * Sats::ONE_BTC_U128;
                 if invested_raw == 0 {
                     return (h, spot);
                 }
-                (h, Cents::new((investor_cap.inner() / invested_raw) as u64))
+                (h, Cents::new((capitalized_cap.inner() / invested_raw) as u64))
             },
             exit,
         )?;
         self.in_loss.per_dollar.cents.height.compute_transform3(
             starting_indexes.height,
-            investor_cap_in_loss_raw,
+            capitalized_cap_in_loss_raw,
             invested_cap_in_loss,
             spot,
-            |(h, investor_cap, invested_cents, spot, ..)| {
+            |(h, capitalized_cap, invested_cents, spot, ..)| {
                 let invested_raw = invested_cents.as_u128() * Sats::ONE_BTC_U128;
                 if invested_raw == 0 {
                     return (h, spot);
                 }
-                (h, Cents::new((investor_cap.inner() / invested_raw) as u64))
+                (h, Cents::new((capitalized_cap.inner() / invested_raw) as u64))
             },
             exit,
         )?;

@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use vecdb::{Bytes, Formattable};
 
 /// Raw cents squared (u128) - stores cents² × sats without division.
-/// Used for precise accumulation of investor cap values: Σ(price² × sats).
-/// investor_price = investor_cap_raw / realized_cap_raw
+/// Used for precise accumulation of capitalized cap values: Σ(price² × sats).
+/// capitalized_price = capitalized_cap_raw / realized_cap_raw
 #[derive(
     Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]

@@ -37,22 +37,25 @@ mod count;
 mod supply;
 
 pub use count::{AddrTypeToExposedAddrCount, ExposedAddrCountsVecs};
-pub use supply::{AddrTypeToExposedAddrSupply, ExposedAddrSupplyVecs};
+pub use supply::{AddrTypeToExposedSupply, ExposedAddrSupplyVecs, ExposedSupplyShareVecs};
 
+use brk_cohort::ByAddrType;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Indexes, Version};
+use brk_types::{Height, Indexes, Sats, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Exit, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{indexes, prices};
+use crate::{indexes, internal::RatioSatsBp16, prices};
 
 /// Top-level container for all exposed address tracking: counts (funded +
-/// total) plus the funded supply.
+/// total), the funded supply, and share of supply.
 #[derive(Traversable)]
 pub struct ExposedAddrVecs<M: StorageMode = Rw> {
     pub count: ExposedAddrCountsVecs<M>,
     pub supply: ExposedAddrSupplyVecs<M>,
+    #[traversable(wrap = "supply", rename = "share")]
+    pub supply_share: ExposedSupplyShareVecs<M>,
 }
 
 impl ExposedAddrVecs {
@@ -64,6 +67,7 @@ impl ExposedAddrVecs {
         Ok(Self {
             count: ExposedAddrCountsVecs::forced_import(db, version, indexes)?,
             supply: ExposedAddrSupplyVecs::forced_import(db, version, indexes)?,
+            supply_share: ExposedSupplyShareVecs::forced_import(db, version, indexes)?,
         })
     }
 
@@ -84,6 +88,7 @@ impl ExposedAddrVecs {
     pub(crate) fn reset_height(&mut self) -> Result<()> {
         self.count.reset_height()?;
         self.supply.reset_height()?;
+        self.supply_share.reset_height()?;
         Ok(())
     }
 
@@ -91,11 +96,39 @@ impl ExposedAddrVecs {
         &mut self,
         starting_indexes: &Indexes,
         prices: &prices::Vecs,
+        all_supply_sats: &impl ReadableVec<Height, Sats>,
+        type_supply_sats: &ByAddrType<&impl ReadableVec<Height, Sats>>,
         exit: &Exit,
     ) -> Result<()> {
         self.count.compute_rest(starting_indexes, exit)?;
         self.supply
             .compute_rest(starting_indexes.height, prices, exit)?;
+
+        let max_from = starting_indexes.height;
+
+        self.supply_share
+            .all
+            .compute_binary::<Sats, Sats, RatioSatsBp16>(
+                max_from,
+                &self.supply.all.sats.height,
+                all_supply_sats,
+                exit,
+            )?;
+
+        for ((_, share), ((_, exposed), (_, denom))) in self
+            .supply_share
+            .by_addr_type
+            .iter_mut()
+            .zip(self.supply.by_addr_type.iter().zip(type_supply_sats.iter()))
+        {
+            share.compute_binary::<Sats, Sats, RatioSatsBp16>(
+                max_from,
+                &exposed.sats.height,
+                *denom,
+                exit,
+            )?;
+        }
+
         Ok(())
     }
 }

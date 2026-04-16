@@ -86,7 +86,7 @@
  * Profitability bucket pattern (supply + realized_cap + unrealized_pnl + nupl)
  * @typedef {Brk.NuplRealizedSupplyUnrealizedPattern} RealizedSupplyPattern
  *
- * Realized pattern (full: cap + gross + investor + loss + mvrv + net + peak + price + profit + sell + sopr)
+ * Realized pattern (full: cap + gross + capitalized + loss + mvrv + net + peak + price + profit + sell + sopr)
  * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern
  *
  * Transfer volume pattern (block + cumulative + inProfit/inLoss + sum windows)
@@ -256,9 +256,9 @@
  * @typedef {Brk.AbsoluteRatePattern} DeltaPattern
  * @typedef {Brk.AbsoluteRatePattern2} FiatDeltaPattern
  *
- * Investor price percentiles (pct1/2/5/95/98/99)
- * @typedef {Brk.Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern} InvestorPercentilesPattern
- * @typedef {Brk.BpsPriceRatioPattern} InvestorPercentileEntry
+ * Capitalized price percentiles (pct1/2/5/95/98/99)
+ * @typedef {Brk.Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern} CapitalizedPercentilesPattern
+ * @typedef {Brk.BpsPriceRatioPattern} CapitalizedPercentileEntry
  *
  * Generic tree node type for walking
  * @typedef {AnySeriesPattern | Record<string, unknown>} TreeNode

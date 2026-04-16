@@ -10,8 +10,8 @@ pub struct UnrealizedState {
     pub supply_in_loss: Sats,
     pub unrealized_profit: Cents,
     pub unrealized_loss: Cents,
-    pub investor_cap_in_profit_raw: u128,
-    pub investor_cap_in_loss_raw: u128,
+    pub capitalized_cap_in_profit_raw: u128,
+    pub capitalized_cap_in_loss_raw: u128,
 }
 
 impl UnrealizedState {
@@ -20,8 +20,8 @@ impl UnrealizedState {
         supply_in_loss: Sats::ZERO,
         unrealized_profit: Cents::ZERO,
         unrealized_loss: Cents::ZERO,
-        investor_cap_in_profit_raw: 0,
-        investor_cap_in_loss_raw: 0,
+        capitalized_cap_in_profit_raw: 0,
+        capitalized_cap_in_loss_raw: 0,
     };
 }
 
@@ -34,12 +34,12 @@ pub struct WithoutCapital {
     pub(crate) unrealized_loss: u128,
 }
 
-/// Full cache state: core + investor cap (for sentiment computation).
+/// Full cache state: core + capitalized cap (for sentiment computation).
 #[derive(Debug, Default, Clone)]
 pub struct WithCapital {
     core: WithoutCapital,
-    investor_cap_in_profit: u128,
-    investor_cap_in_loss: u128,
+    capitalized_cap_in_profit: u128,
+    capitalized_cap_in_loss: u128,
 }
 
 #[inline(always)]
@@ -116,8 +116,8 @@ impl Accumulate for WithoutCapital {
 impl Accumulate for WithCapital {
     fn to_output(&self) -> UnrealizedState {
         UnrealizedState {
-            investor_cap_in_profit_raw: self.investor_cap_in_profit,
-            investor_cap_in_loss_raw: self.investor_cap_in_loss,
+            capitalized_cap_in_profit_raw: self.capitalized_cap_in_profit,
+            capitalized_cap_in_loss_raw: self.capitalized_cap_in_loss,
             ..Accumulate::to_output(&self.core)
         }
     }
@@ -133,25 +133,25 @@ impl Accumulate for WithCapital {
     fn accumulate_profit(&mut self, price_u128: u128, sats: Sats) {
         self.core.supply_in_profit += sats;
         let invested = price_u128 * sats.as_u128();
-        self.investor_cap_in_profit += price_u128 * invested;
+        self.capitalized_cap_in_profit += price_u128 * invested;
     }
     #[inline(always)]
     fn accumulate_loss(&mut self, price_u128: u128, sats: Sats) {
         self.core.supply_in_loss += sats;
         let invested = price_u128 * sats.as_u128();
-        self.investor_cap_in_loss += price_u128 * invested;
+        self.capitalized_cap_in_loss += price_u128 * invested;
     }
     #[inline(always)]
     fn deaccumulate_profit(&mut self, price_u128: u128, sats: Sats) {
         self.core.supply_in_profit -= sats;
         let invested = price_u128 * sats.as_u128();
-        self.investor_cap_in_profit -= price_u128 * invested;
+        self.capitalized_cap_in_profit -= price_u128 * invested;
     }
     #[inline(always)]
     fn deaccumulate_loss(&mut self, price_u128: u128, sats: Sats) {
         self.core.supply_in_loss -= sats;
         let invested = price_u128 * sats.as_u128();
-        self.investor_cap_in_loss -= price_u128 * invested;
+        self.capitalized_cap_in_loss -= price_u128 * invested;
     }
 }
 

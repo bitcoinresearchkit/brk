@@ -13,7 +13,7 @@ impl PendingCapDelta {
 }
 
 #[derive(Clone, Debug, Default)]
-pub(crate) struct PendingInvestorCapDelta {
+pub(crate) struct PendingCapitalizedCapRawDelta {
     pub inc: CentsSquaredSats,
     pub dec: CentsSquaredSats,
 }

@@ -178,9 +178,9 @@ export function createCointimeSection() {
                 color: colors.realized,
               }),
               price({
-                series: all.realized.investor.price,
-                name: "Investor",
-                color: colors.investor,
+                series: all.realized.capitalized.price,
+                name: "Capitalized",
+                color: colors.capitalized,
               }),
               ...prices.map(({ pattern, name, color, defaultActive }) =>
                 price({ series: pattern, name, color, defaultActive }),

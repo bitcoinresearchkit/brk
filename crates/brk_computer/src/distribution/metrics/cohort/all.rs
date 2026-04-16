@@ -144,8 +144,8 @@ impl AllCohortMetrics {
             &self.unrealized.invested_capital.in_loss.cents.height,
             &self.supply.in_profit.sats.height,
             &self.supply.in_loss.sats.height,
-            &self.unrealized.investor_cap_in_profit_raw,
-            &self.unrealized.investor_cap_in_loss_raw,
+            &self.unrealized.capitalized_cap_in_profit_raw,
+            &self.unrealized.capitalized_cap_in_loss_raw,
             exit,
         )?;
 
