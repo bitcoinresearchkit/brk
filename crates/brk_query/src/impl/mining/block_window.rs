@@ -80,7 +80,7 @@ impl BlockWindow {
             .prices
             .spot.cents.height
             .collect_range_at(self.start, self.end);
-        let read_start = self.start.saturating_sub(1).max(0);
+        let read_start = self.start.saturating_sub(1);
         let all_cum = cumulative.collect_range_at(read_start, self.end);
         let offset = if self.start > 0 { 1 } else { 0 };
 
@@ -91,19 +91,19 @@ impl BlockWindow {
         while pos < total {
             let window_end = (pos + self.window).min(total);
             let block_count = (window_end - pos) as u64;
-            if block_count > 0 {
-                let mid = (pos + window_end) / 2;
-                let cum_end = all_cum[window_end - 1 + offset];
-                let cum_start = if pos + offset > 0 {
-                    all_cum[pos + offset - 1]
-                } else {
-                    Sats::ZERO
-                };
-                let total_sats = cum_end - cum_start;
+            let mid = (pos + window_end) / 2;
+            let cum_end = all_cum[window_end - 1 + offset];
+            let cum_start = if pos + offset > 0 {
+                all_cum[pos + offset - 1]
+            } else {
+                Sats::ZERO
+            };
+            let total_sats = cum_end - cum_start;
+            if let Some(avg) = (*total_sats).checked_div(block_count) {
                 results.push(WindowAvg {
                     avg_height: Height::from(self.start + mid),
                     timestamp: all_ts[mid],
-                    avg_value: Sats::from(*total_sats / block_count),
+                    avg_value: Sats::from(avg),
                     usd: Dollars::from(all_prices[mid]),
                 });
             }

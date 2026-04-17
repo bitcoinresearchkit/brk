@@ -542,17 +542,14 @@ impl UTXOCohorts<Rw> {
     }
 
     /// Second phase of post-processing: compute relative metrics.
-    pub(crate) fn compute_rest_part2<HM>(
+    pub(crate) fn compute_rest_part2(
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
-        height_to_market_cap: &HM,
+        height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
-    ) -> Result<()>
-    where
-        HM: ReadableVec<Height, Dollars> + Sync,
-    {
+    ) -> Result<()> {
         // Get under_1h value sources for adjusted computation (cloned to avoid borrow conflicts).
         let under_1h_value_created = self
             .age_range

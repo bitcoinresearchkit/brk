@@ -25,7 +25,7 @@ use crate::{
     },
     indexes, inputs,
     internal::{
-        PerBlockCumulativeRolling, WindowStartVec, Windows,
+        PerBlockCumulativeRolling, WindowStartVec, Windows, WithAddrTypes,
         db_utils::{finalize_db, open_db},
     },
     outputs, prices, transactions,
@@ -37,6 +37,7 @@ use super::{
         AddrActivityVecs, AddrCountsVecs, DeltaVecs, ExposedAddrVecs, NewAddrCountVecs,
         ReusedAddrVecs, TotalAddrCountVecs,
     },
+    metrics::AvgAmountMetrics,
 };
 
 const VERSION: Version = Version::new(23);
@@ -51,6 +52,7 @@ pub struct AddrMetricsVecs<M: StorageMode = Rw> {
     pub reused: ReusedAddrVecs<M>,
     pub exposed: ExposedAddrVecs<M>,
     pub delta: DeltaVecs,
+    pub avg_amount: WithAddrTypes<AvgAmountMetrics<M>>,
     #[traversable(wrap = "indexes", rename = "funded")]
     pub funded_index:
         LazyVecFrom1<FundedAddrIndex, FundedAddrIndex, FundedAddrIndex, FundedAddrData>,
@@ -170,6 +172,9 @@ impl Vecs {
         // Growth rate: delta change + rate (global + per-type)
         let delta = DeltaVecs::new(version, &addr_count, cached_starts, indexes);
 
+        // Average amount (supply / utxo_count, supply / funded_addr_count) for `all` and per addr type.
+        let avg_amount = WithAddrTypes::<AvgAmountMetrics>::forced_import(&db, version, indexes)?;
+
         let this = Self {
             supply_state: BytesVec::forced_import_with(
                 vecdb::ImportOptions::new(&db, "supply_state", version)
@@ -185,6 +190,7 @@ impl Vecs {
                 reused: reused_addr_count,
                 exposed: exposed_addr_vecs,
                 delta,
+                avg_amount,
                 funded_index: funded_addr_index,
                 empty_index: empty_addr_index,
             },
@@ -302,6 +308,7 @@ impl Vecs {
             self.addrs.activity.reset_height()?;
             self.addrs.reused.reset_height()?;
             self.addrs.exposed.reset_height()?;
+            self.addrs.avg_amount.reset_height()?;
             reset_state(
                 &mut self.any_addr_indexes,
                 &mut self.addrs_data,
@@ -489,6 +496,34 @@ impl Vecs {
             &type_supply_sats,
             exit,
         )?;
+
+        // Average amount (supply / utxo_count, supply / funded_addr_count) for `all` and per addr type.
+        let all_m = &self.utxo_cohorts.all.metrics;
+        self.addrs.avg_amount.all.compute(
+            prices,
+            &all_m.supply.total.sats.height,
+            &all_m.outputs.unspent_count.height,
+            &self.addrs.funded.all.height,
+            starting_indexes.height,
+            exit,
+        )?;
+        for ((ot, avg), (_, funded)) in self
+            .addrs
+            .avg_amount
+            .by_addr_type
+            .iter_mut()
+            .zip(self.addrs.funded.by_addr_type.iter())
+        {
+            let type_m = &t.get(ot).metrics;
+            avg.compute(
+                prices,
+                &type_m.supply.total.sats.height,
+                &type_m.outputs.unspent_count.height,
+                &funded.height,
+                starting_indexes.height,
+                exit,
+            )?;
+        }
 
         // 6c. Compute total_addr_count = addr_count + empty_addr_count
         self.addrs.total.compute(

@@ -258,6 +258,7 @@ pub(crate) fn process_blocks(
             .chain(vecs.addrs.activity.par_iter_height_mut())
             .chain(vecs.addrs.reused.par_iter_height_mut())
             .chain(vecs.addrs.exposed.par_iter_height_mut())
+            .chain(vecs.addrs.avg_amount.par_iter_height_mut())
             .chain(rayon::iter::once(
                 &mut vecs.coinblocks_destroyed.block as &mut dyn AnyStoredVec,
             ))

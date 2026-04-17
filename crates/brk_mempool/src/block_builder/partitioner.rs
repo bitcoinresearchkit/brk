@@ -1,3 +1,5 @@
+use std::cmp::Reverse;
+
 use super::{BLOCK_VSIZE, package::Package};
 use crate::types::SelectedTx;
 
@@ -13,7 +15,7 @@ pub fn partition_into_blocks(
     mut packages: Vec<Package>,
     num_blocks: usize,
 ) -> Vec<Vec<SelectedTx>> {
-    packages.sort_unstable_by(|a, b| b.fee_rate.cmp(&a.fee_rate));
+    packages.sort_unstable_by_key(|p| Reverse(p.fee_rate));
 
     let mut blocks: Vec<Vec<SelectedTx>> = Vec::with_capacity(num_blocks);
     let mut current_block: Vec<SelectedTx> = Vec::new();

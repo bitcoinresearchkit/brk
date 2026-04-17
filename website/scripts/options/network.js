@@ -21,6 +21,7 @@ import {
   ROLLING_WINDOWS,
   chartsFromBlockAnd6b,
   multiSeriesTree,
+  percentRatio,
   percentRatioDots,
 } from "./series.js";
 import {
@@ -29,6 +30,9 @@ import {
   satsBtcUsdFullTree,
   formatCohortTitle,
   groupedWindowsCumulative,
+  avgHoldingsSubtree,
+  exposedSubtree,
+  reusedSubtree,
 } from "./shared.js";
 
 /**
@@ -210,34 +214,6 @@ export function createNetworkSection() {
       ],
     });
 
-  const reusedOutputsSubtreeForType =
-    /**
-     * @param {AddressableType} key
-     * @param {(name: string) => string} title
-     */
-    (key, title) => ({
-      name: "Outputs",
-      tree: [
-        {
-          name: "Count",
-          tree: chartsFromCount({
-            pattern: addrs.reused.events.outputToReusedAddrCount[key],
-            title,
-            metric: "Transaction Outputs to Reused Addresses",
-            unit: Unit.count,
-          }),
-        },
-        {
-          name: "Share",
-          tree: chartsFromPercentCumulative({
-            pattern: addrs.reused.events.outputToReusedAddrShare[key],
-            title,
-            metric: "Share of Transaction Outputs to Reused Addresses",
-          }),
-        },
-      ],
-    });
-
   const reusedActiveSubtreeForAll =
     /** @param {(name: string) => string} title */
     (title) => ({
@@ -276,19 +252,6 @@ export function createNetworkSection() {
       ],
     });
 
-  const reusedSubtreeForType =
-    /**
-     * @param {AddressableType} key
-     * @param {(name: string) => string} title
-     */
-    (key, title) => ({
-      name: "Reused",
-      tree: [
-        ...reusedSetEntries(key, title),
-        reusedOutputsSubtreeForType(key, title),
-        reusedInputsSubtree(key, title),
-      ],
-    });
 
   const countSubtree =
     /**
@@ -324,64 +287,6 @@ export function createNetworkSection() {
       ],
     });
 
-  const exposedSubtree =
-    /**
-     * @param {AddressableType | "all"} key
-     * @param {(name: string) => string} title
-     */
-    (key, title) => ({
-      name: "Exposed",
-      tree: [
-        {
-          name: "Compare",
-          title: title("Exposed Address Count"),
-          bottom: [
-            line({
-              series: addrs.exposed.count.funded[key],
-              name: "Funded",
-              unit: Unit.count,
-            }),
-            line({
-              series: addrs.exposed.count.total[key],
-              name: "Total",
-              color: colors.gray,
-              unit: Unit.count,
-            }),
-          ],
-        },
-        {
-          name: "Funded",
-          title: title("Funded Exposed Address Count"),
-          bottom: [
-            line({
-              series: addrs.exposed.count.funded[key],
-              name: "Funded Exposed",
-              unit: Unit.count,
-            }),
-          ],
-        },
-        {
-          name: "Total",
-          title: title("Total Exposed Address Count"),
-          bottom: [
-            line({
-              series: addrs.exposed.count.total[key],
-              name: "Total Exposed",
-              color: colors.gray,
-              unit: Unit.count,
-            }),
-          ],
-        },
-        {
-          name: "Supply",
-          title: title("Supply in Exposed Addresses"),
-          bottom: satsBtcUsd({
-            pattern: addrs.exposed.supply[key],
-            name: "Supply",
-          }),
-        },
-      ],
-    });
 
   const activityPerTypeEntries =
     /**
@@ -478,7 +383,8 @@ export function createNetworkSection() {
       }),
       activitySubtreeForAll(title),
       reusedSubtreeForAll(title),
-      exposedSubtree("all", title),
+      exposedSubtree(addrs.exposed, "all", title),
+      avgHoldingsSubtree(addrs.avgAmount.all, title),
     ];
   };
 
@@ -507,8 +413,9 @@ export function createNetworkSection() {
           unit: Unit.count,
         }),
         activitySubtreeForType(addrType, title),
-        reusedSubtreeForType(addrType, title),
-        exposedSubtree(addrType, title),
+        reusedSubtree(addrs.reused, addrType, title),
+        exposedSubtree(addrs.exposed, addrType, title),
+        avgHoldingsSubtree(addrs.avgAmount[addrType], title),
       ];
     };
 
@@ -755,6 +662,49 @@ export function createNetworkSection() {
               bottom: addressTypes.flatMap((t) =>
                 satsBtcUsd({
                   pattern: addrs.exposed.supply[t.key],
+                  name: t.name,
+                  color: t.color,
+                  defaultActive: t.defaultActive,
+                }),
+              ),
+            },
+            {
+              name: "Share",
+              title: "Share of Supply in Exposed Addresses by Type",
+              bottom: addressTypes.flatMap((t) =>
+                percentRatio({
+                  pattern: addrs.exposed.supply.share[t.key],
+                  name: t.name,
+                  color: t.color,
+                  defaultActive: t.defaultActive,
+                }),
+              ),
+            },
+          ],
+        },
+
+        // Average Holdings
+        {
+          name: "Average Holdings",
+          tree: [
+            {
+              name: "Per UTXO",
+              title: "Average Holdings per UTXO by Type",
+              bottom: addressTypes.flatMap((t) =>
+                satsBtcUsd({
+                  pattern: addrs.avgAmount[t.key].utxo,
+                  name: t.name,
+                  color: t.color,
+                  defaultActive: t.defaultActive,
+                }),
+              ),
+            },
+            {
+              name: "Per Address",
+              title: "Average Holdings per Funded Address by Type",
+              bottom: addressTypes.flatMap((t) =>
+                satsBtcUsd({
+                  pattern: addrs.avgAmount[t.key].addr,
                   name: t.name,
                   color: t.color,
                   defaultActive: t.defaultActive,

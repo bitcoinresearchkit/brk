@@ -17,6 +17,8 @@ use super::{
     WindowStartVec, Windows,
 };
 
+use crate::distribution::metrics::AvgAmountMetrics;
+
 /// `all` aggregate plus per-`AddrType` breakdown.
 #[derive(Clone, Traversable)]
 pub struct WithAddrTypes<T> {
@@ -241,6 +243,42 @@ impl WithAddrTypes<AmountPerBlock> {
         self.all.compute(prices, max_from, exit)?;
         for v in self.by_addr_type.values_mut() {
             v.compute(prices, max_from, exit)?;
+        }
+        Ok(())
+    }
+}
+
+impl WithAddrTypes<AvgAmountMetrics> {
+    pub(crate) fn forced_import(
+        db: &Database,
+        version: Version,
+        indexes: &indexes::Vecs,
+    ) -> Result<Self> {
+        let all = AvgAmountMetrics::forced_import(db, "", version, indexes)?;
+        let by_addr_type = ByAddrType::new_with_name(|type_name| {
+            AvgAmountMetrics::forced_import(db, type_name, version, indexes)
+        })?;
+        Ok(Self { all, by_addr_type })
+    }
+
+    pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        let mut vecs = self.all.collect_vecs_mut();
+        for v in self.by_addr_type.values_mut() {
+            vecs.extend(v.collect_vecs_mut());
+        }
+        vecs
+    }
+
+    pub(crate) fn par_iter_height_mut(
+        &mut self,
+    ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        self.collect_vecs_mut().into_par_iter()
+    }
+
+    pub(crate) fn reset_height(&mut self) -> Result<()> {
+        self.all.reset_height()?;
+        for v in self.by_addr_type.values_mut() {
+            v.reset_height()?;
         }
         Ok(())
     }

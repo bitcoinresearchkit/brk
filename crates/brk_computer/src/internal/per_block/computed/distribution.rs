@@ -267,7 +267,7 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
                         vec.push(zero);
                     }
                 } else {
-                    weighted.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+                    weighted.sort_unstable_by_key(|a| a.0);
 
                     max.push(weighted.last().unwrap().0);
                     pct90.push(get_weighted_percentile(&weighted, 0.90));

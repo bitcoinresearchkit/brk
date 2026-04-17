@@ -1,3 +1,5 @@
+use std::cmp::Reverse;
+
 use brk_error::{Error, Result};
 use brk_types::{
     BlockInfoV1, Day1, Height, Pool, PoolBlockCounts, PoolBlockShares, PoolDetail, PoolDetailInfo,
@@ -89,7 +91,7 @@ impl Query {
         }
 
         // Sort by block count descending
-        pool_data.sort_by(|a, b| b.1.cmp(&a.1));
+        pool_data.sort_by_key(|p| Reverse(p.1));
 
         let total_blocks: u64 = pool_data.iter().map(|(_, count)| count).sum();
 

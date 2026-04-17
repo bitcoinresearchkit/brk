@@ -2738,7 +2738,7 @@ class IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern:
         self.pct99_5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct99_5'))
         self.score: SeriesPattern1[StoredI8] = SeriesPattern1(client, _m(acc, 'score'))
 
-class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5:
+class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
@@ -2753,7 +2753,7 @@ class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5:
         self.p2wpkh: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, _p('p2wpkh', acc))
         self.p2wsh: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, _p('p2wsh', acc))
 
-class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3:
+class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
@@ -2768,7 +2768,7 @@ class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3:
         self.p2wpkh: SeriesPattern1[StoredU64] = SeriesPattern1(client, _p('p2wpkh', acc))
         self.p2wsh: SeriesPattern1[StoredU64] = SeriesPattern1(client, _p('p2wsh', acc))
 
-class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6:
+class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
@@ -2806,7 +2806,7 @@ class CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2:
         self.capitalized_cap_in_loss_raw: SeriesPattern18[CentsSquaredSats] = SeriesPattern18(client, _m(acc, 'capitalized_cap_in_loss_raw'))
         self.capitalized_cap_in_profit_raw: SeriesPattern18[CentsSquaredSats] = SeriesPattern18(client, _m(acc, 'capitalized_cap_in_profit_raw'))
         self.gross_pnl: CentsUsdPattern3 = CentsUsdPattern3(client, _m(acc, 'unrealized_gross_pnl'))
-        self.invested_capital: InPattern = InPattern(client, _m(acc, 'invested_capital_in'))
+        self.invested_capital: InPattern2 = InPattern2(client, _m(acc, 'invested_capital_in'))
         self.loss: CentsNegativeToUsdPattern2 = CentsNegativeToUsdPattern2(client, _m(acc, 'unrealized_loss'))
         self.net_pnl: CentsToUsdPattern3 = CentsToUsdPattern3(client, _m(acc, 'net_unrealized_pnl'))
         self.nupl: BpsRatioPattern = BpsRatioPattern(client, _m(acc, 'nupl'))
@@ -3066,7 +3066,7 @@ class BlockChangeCumulativeDeltaSumPattern:
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated series name."""
         self.block: CentsUsdPattern4 = CentsUsdPattern4(client, _m(acc, 'realized_pnl'))
-        self.change_1m: ToPattern = ToPattern(client, _m(acc, 'pnl_change_1m_to'))
+        self.change_1m: ToPattern2 = ToPattern2(client, _m(acc, 'pnl_change_1m_to'))
         self.cumulative: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'realized_pnl_cumulative'))
         self.delta: AbsoluteRatePattern2 = AbsoluteRatePattern2(client, _m(acc, 'realized_pnl_delta'))
         self.sum: _1m1w1y24hPattern5 = _1m1w1y24hPattern5(client, _m(acc, 'realized_pnl_sum'))
@@ -3564,6 +3564,14 @@ class AbsoluteRatePattern2:
         self.absolute: _1m1w1y24hPattern5 = _1m1w1y24hPattern5(client, acc)
         self.rate: _1m1w1y24hPattern2 = _1m1w1y24hPattern2(client, acc)
 
+class AddrUtxoPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.addr: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'addr_amount'))
+        self.utxo: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'utxo_amount'))
+
 class AllSthPattern2:
     """Pattern struct for repeated tree structure."""
     
@@ -3681,16 +3689,24 @@ class FundedTotalPattern:
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated series name."""
-        self.funded: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, acc)
-        self.total: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, _p('total', acc))
+        self.funded: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4(client, acc)
+        self.total: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4(client, _p('total', acc))
 
-class InPattern:
+class InPattern2:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated series name."""
         self.in_loss: CentsUsdPattern3 = CentsUsdPattern3(client, _m(acc, 'loss'))
         self.in_profit: CentsUsdPattern3 = CentsUsdPattern3(client, _m(acc, 'profit'))
+
+class InPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.in_loss: ToPattern = ToPattern(client, _m(acc, 'loss_to_own'))
+        self.in_profit: ToPattern = ToPattern(client, _m(acc, 'profit_to_own'))
 
 class PerPattern:
     """Pattern struct for repeated tree structure."""
@@ -3720,7 +3736,7 @@ class SdSmaPattern:
     """Pattern struct for repeated tree structure."""
     pass
 
-class ToPattern:
+class ToPattern2:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
@@ -3748,6 +3764,13 @@ class PricePattern:
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated series name."""
         self.price: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, acc)
+
+class ToPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.to_own: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, acc)
 
 class TransferPattern:
     """Pattern struct for repeated tree structure."""
@@ -4269,11 +4292,11 @@ class SeriesTree_Addrs_Reused_Events:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.output_to_reused_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(client, 'output_to_reused_addr_count')
-        self.output_to_reused_addr_share: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(client, 'output_to_reused_addr_share')
+        self.output_to_reused_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(client, 'output_to_reused_addr_count')
+        self.output_to_reused_addr_share: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7(client, 'output_to_reused_addr_share')
         self.spendable_output_to_reused_addr_share: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'spendable_output_to_reused_addr_share')
-        self.input_from_reused_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(client, 'input_from_reused_addr_count')
-        self.input_from_reused_addr_share: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(client, 'input_from_reused_addr_share')
+        self.input_from_reused_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(client, 'input_from_reused_addr_count')
+        self.input_from_reused_addr_share: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7(client, 'input_from_reused_addr_share')
         self.active_reused_addr_count: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, 'active_reused_addr_count')
         self.active_reused_addr_share: SeriesTree_Addrs_Reused_Events_ActiveReusedAddrShare = SeriesTree_Addrs_Reused_Events_ActiveReusedAddrShare(client)
 
@@ -4334,6 +4357,20 @@ class SeriesTree_Addrs_Delta:
         self.p2tr: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2tr_addr_count')
         self.p2a: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2a_addr_count')
 
+class SeriesTree_Addrs_AvgAmount:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClientBase, base_path: str = ''):
+        self.all: AddrUtxoPattern = AddrUtxoPattern(client, 'avg')
+        self.p2pk65: AddrUtxoPattern = AddrUtxoPattern(client, 'p2pk65_avg')
+        self.p2pk33: AddrUtxoPattern = AddrUtxoPattern(client, 'p2pk33_avg')
+        self.p2pkh: AddrUtxoPattern = AddrUtxoPattern(client, 'p2pkh_avg')
+        self.p2sh: AddrUtxoPattern = AddrUtxoPattern(client, 'p2sh_avg')
+        self.p2wpkh: AddrUtxoPattern = AddrUtxoPattern(client, 'p2wpkh_avg')
+        self.p2wsh: AddrUtxoPattern = AddrUtxoPattern(client, 'p2wsh_avg')
+        self.p2tr: AddrUtxoPattern = AddrUtxoPattern(client, 'p2tr_avg')
+        self.p2a: AddrUtxoPattern = AddrUtxoPattern(client, 'p2a_avg')
+
 class SeriesTree_Addrs:
     """Series tree node."""
     
@@ -4341,14 +4378,15 @@ class SeriesTree_Addrs:
         self.raw: SeriesTree_Addrs_Raw = SeriesTree_Addrs_Raw(client)
         self.indexes: SeriesTree_Addrs_Indexes = SeriesTree_Addrs_Indexes(client)
         self.data: SeriesTree_Addrs_Data = SeriesTree_Addrs_Data(client)
-        self.funded: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, 'addr_count')
-        self.empty: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, 'empty_addr_count')
+        self.funded: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4(client, 'addr_count')
+        self.empty: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4(client, 'empty_addr_count')
         self.activity: SeriesTree_Addrs_Activity = SeriesTree_Addrs_Activity(client)
-        self.total: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, 'total_addr_count')
-        self.new: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(client, 'new_addr_count')
+        self.total: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4(client, 'total_addr_count')
+        self.new: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(client, 'new_addr_count')
         self.reused: SeriesTree_Addrs_Reused = SeriesTree_Addrs_Reused(client)
         self.exposed: SeriesTree_Addrs_Exposed = SeriesTree_Addrs_Exposed(client)
         self.delta: SeriesTree_Addrs_Delta = SeriesTree_Addrs_Delta(client)
+        self.avg_amount: SeriesTree_Addrs_AvgAmount = SeriesTree_Addrs_AvgAmount(client)
 
 class SeriesTree_Scripts_Raw_Empty:
     """Series tree node."""
@@ -5659,7 +5697,7 @@ class SeriesTree_Cohorts_Utxo_All_Unrealized:
         self.loss: SeriesTree_Cohorts_Utxo_All_Unrealized_Loss = SeriesTree_Cohorts_Utxo_All_Unrealized_Loss(client)
         self.net_pnl: SeriesTree_Cohorts_Utxo_All_Unrealized_NetPnl = SeriesTree_Cohorts_Utxo_All_Unrealized_NetPnl(client)
         self.gross_pnl: CentsUsdPattern3 = CentsUsdPattern3(client, 'unrealized_gross_pnl')
-        self.invested_capital: InPattern = InPattern(client, 'invested_capital_in')
+        self.invested_capital: InPattern2 = InPattern2(client, 'invested_capital_in')
         self.capitalized_cap_in_profit_raw: SeriesPattern18[CentsSquaredSats] = SeriesPattern18(client, 'capitalized_cap_in_profit_raw')
         self.capitalized_cap_in_loss_raw: SeriesPattern18[CentsSquaredSats] = SeriesPattern18(client, 'capitalized_cap_in_loss_raw')
         self.sentiment: SeriesTree_Cohorts_Utxo_All_Unrealized_Sentiment = SeriesTree_Cohorts_Utxo_All_Unrealized_Sentiment(client)
@@ -5674,6 +5712,7 @@ class SeriesTree_Cohorts_Utxo_All:
         self.realized: SeriesTree_Cohorts_Utxo_All_Realized = SeriesTree_Cohorts_Utxo_All_Realized(client)
         self.cost_basis: SeriesTree_Cohorts_Utxo_All_CostBasis = SeriesTree_Cohorts_Utxo_All_CostBasis(client)
         self.unrealized: SeriesTree_Cohorts_Utxo_All_Unrealized = SeriesTree_Cohorts_Utxo_All_Unrealized(client)
+        self.invested_capital: InPattern = InPattern(client, 'invested_capital_in')
 
 class SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_All:
     """Series tree node."""
@@ -5804,6 +5843,7 @@ class SeriesTree_Cohorts_Utxo_Sth:
         self.realized: SeriesTree_Cohorts_Utxo_Sth_Realized = SeriesTree_Cohorts_Utxo_Sth_Realized(client)
         self.cost_basis: InMaxMinPerSupplyPattern = InMaxMinPerSupplyPattern(client, 'sth')
         self.unrealized: CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2 = CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2(client, 'sth')
+        self.invested_capital: InPattern = InPattern(client, 'sth_invested_capital_in')
 
 class SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_All:
     """Series tree node."""
@@ -5941,6 +5981,7 @@ class SeriesTree_Cohorts_Utxo_Lth:
         self.realized: SeriesTree_Cohorts_Utxo_Lth_Realized = SeriesTree_Cohorts_Utxo_Lth_Realized(client)
         self.cost_basis: InMaxMinPerSupplyPattern = InMaxMinPerSupplyPattern(client, 'lth')
         self.unrealized: CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2 = CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2(client, 'lth')
+        self.invested_capital: InPattern = InPattern(client, 'lth_invested_capital_in')
 
 class SeriesTree_Cohorts_Utxo_AgeRange:
     """Series tree node."""

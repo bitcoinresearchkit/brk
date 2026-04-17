@@ -14,6 +14,9 @@ import {
   formatCohortTitle,
   satsBtcUsd,
   satsBtcUsdFullTree,
+  avgHoldingsSubtree,
+  exposedSubtree,
+  reusedSubtree,
 } from "../shared.js";
 import {
   ROLLING_WINDOWS,
@@ -103,6 +106,7 @@ export function createCohortFolderAll(cohort) {
       createCostBasisSectionWithPercentiles({ cohort, title }),
       createProfitabilitySectionAll({ cohort, title }),
       createActivitySectionWithAdjusted({ cohort, title }),
+      avgHoldingsSubtree(cohort.avgAmount, title),
     ],
   };
 }
@@ -259,6 +263,9 @@ export function createCohortFolderAddress(cohort) {
       createPricesSectionBasic({ cohort, title }),
       createProfitabilitySectionWithProfitLoss({ cohort, title }),
       createActivitySectionMinimal({ cohort, title }),
+      avgHoldingsSubtree(cohort.avgAmount, title),
+      reusedSubtree(cohort.reused, cohort.key, title),
+      exposedSubtree(cohort.exposed, cohort.key, title),
     ],
   };
 }

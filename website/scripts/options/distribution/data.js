@@ -47,6 +47,7 @@ export function buildCohortData() {
       base: addrs.funded.all,
       delta: addrs.delta.all,
     },
+    avgAmount: addrs.avgAmount.all,
   };
 
   const shortNames = TERM_NAMES.short;
@@ -174,6 +175,9 @@ export function buildCohortData() {
         base: addrs.funded[key],
         delta: addrs.delta[key],
       },
+      avgAmount: addrs.avgAmount[key],
+      exposed: addrs.exposed,
+      reused: addrs.reused,
     };
   });
 

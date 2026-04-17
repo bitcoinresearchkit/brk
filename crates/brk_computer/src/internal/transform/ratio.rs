@@ -43,6 +43,19 @@ impl BinaryTransform<Cents, Cents, BasisPoints32> for RatioCentsBp32 {
     }
 }
 
+pub struct RatioCentsBp16;
+
+impl BinaryTransform<Cents, Cents, BasisPoints16> for RatioCentsBp16 {
+    #[inline(always)]
+    fn apply(numerator: Cents, denominator: Cents) -> BasisPoints16 {
+        if denominator == Cents::ZERO {
+            BasisPoints16::ZERO
+        } else {
+            BasisPoints16::from(numerator.inner() as f64 / denominator.inner() as f64)
+        }
+    }
+}
+
 pub struct RatioDollarsBp16;
 
 impl BinaryTransform<Dollars, Dollars, BasisPoints16> for RatioDollarsBp16 {

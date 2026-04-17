@@ -72,7 +72,11 @@
       --block-gap: calc(
         var(--min-gap) + var(--t) * (var(--max-gap) - var(--min-gap))
       );
-      --empty-alpha: 0.5;
+      --empty-alpha: 0.3;
+      --iso-scale: 0.866;
+      --ox: 0.3;
+      --oy: 0.6;
+      --fill-pct: calc(var(--fill, 1) * 100%);
       --face-step: 0.033;
       --face-right-color: light-dark(
         oklch(from var(--face-color) calc(l - var(--face-step) * 2) c h),
@@ -86,7 +90,6 @@
         var(--face-color),
         oklch(from var(--face-color) calc(l + var(--face-step) * 2) c h)
       );
-      /*margin-top: -0.375rem;*/
       margin-left: calc(var(--cube) * -0.25);
       flex-shrink: 0;
       position: relative;
@@ -97,29 +100,9 @@
       line-height: var(--line-height-sm);
       --face-color: var(--border-color);
       color: var(--color);
-      transition:
-        color,
-        background-color,
-        border-color,
-        outline-color,
-        text-decoration-color,
-        fill,
-        stroke,
-        opacity,
-        box-shadow,
-        transform,
-        translate,
-        scale,
-        rotate,
-        filter,
-        -webkit-backdrop-filter,
-        backdrop-filter,
-        display,
-        content-visibility,
-        overlay,
-        pointer-events;
-      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-property: color, background-color;
       transition-duration: 50ms;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       user-select: none;
       pointer-events: none;
 
@@ -143,33 +126,74 @@
         position: absolute;
         width: var(--cube);
         height: var(--cube);
+      }
+
+      .right,
+      .left,
+      .top {
         padding: 0.1rem;
         backdrop-filter: blur(4px);
       }
 
-      .inner-top {
-        backdrop-filter: none;
-        background-color: var(--face-top-color);
-        /*-webkit-mask-image: linear-gradient(transparent, black 0.5rem, black calc(100% - 0.5rem), transparent);
-        mask-image: linear-gradient(transparent, black 0.5rem, black calc(100% - 0.5rem), transparent);*/
+      .right,
+      .left,
+      .rear-right,
+      .rear-left {
+        background: linear-gradient(
+          to top,
+          var(--fc) var(--fill-pct),
+          oklch(from var(--fc) l c h / var(--empty-alpha)) var(--fill-pct)
+        );
+      }
+
+      .bottom {
+        background-color: var(--face-color);
         transform: rotate(30deg) skew(-30deg)
           translate(
-            calc(var(--cube) * (1.99 - var(--fill, 1))),
-            calc(var(--cube) * (0.599 - 0.864 * var(--fill, 1)))
+            calc(var(--cube) * (var(--ox) + 1 + var(--oy) / var(--iso-scale))),
+            calc(var(--cube) * var(--oy))
           )
-          scaleY(0.864);
+          scaleY(var(--iso-scale));
+      }
+
+      .rear-right {
+        --fc: var(--face-left-color);
+        transform: rotate(30deg) skewX(30deg)
+          translate(
+            calc(var(--cube) * (var(--ox) + 1)),
+            calc(var(--cube) * (var(--oy) - var(--iso-scale)))
+          )
+          scaleY(var(--iso-scale));
+      }
+
+      .rear-left {
+        --fc: var(--face-top-color);
+        transform: rotate(-30deg) skewX(-30deg)
+          translate(
+            calc(var(--cube) * (var(--ox) + 1)),
+            calc(var(--cube) * (var(--ox) * var(--iso-scale) + var(--oy)))
+          )
+          scale(-1, var(--iso-scale));
+      }
+
+      .inner-top {
+        background-color: var(--face-top-color);
+        transform: rotate(30deg) skew(-30deg)
+          translate(
+            calc(var(--cube) * (var(--ox) + 1 + var(--oy) / var(--iso-scale) - var(--fill, 1))),
+            calc(var(--cube) * (var(--oy) - var(--iso-scale) * var(--fill, 1)))
+          )
+          scaleY(var(--iso-scale));
       }
 
       .right {
-        background: linear-gradient(
-          to top,
-          var(--face-right-color) calc(var(--fill, 1) * 100%),
-          oklch(from var(--face-right-color) l c h / var(--empty-alpha))
-            calc(var(--fill, 1) * 100%)
-        );
+        --fc: var(--face-right-color);
         transform: rotate(-30deg) skewX(-30deg)
-          translate(calc(var(--cube) * 1.3), calc(var(--cube) * 1.725))
-          scaleY(0.864);
+          translate(
+            calc(var(--cube) * (var(--ox) + 1)),
+            calc(var(--cube) * ((var(--ox) + 1) * var(--iso-scale) + var(--oy)))
+          )
+          scaleY(var(--iso-scale));
       }
 
       .top {
@@ -179,8 +203,11 @@
             calc(var(--empty-alpha) + var(--is-full) * (1 - var(--empty-alpha)))
         );
         transform: rotate(30deg) skew(-30deg)
-          translate(calc(var(--cube) * 0.99), calc(var(--cube) * -0.265))
-          scaleY(0.864);
+          translate(
+            calc(var(--cube) * (var(--ox) + var(--oy) / var(--iso-scale))),
+            calc(var(--cube) * (var(--oy) - var(--iso-scale)))
+          )
+          scaleY(var(--iso-scale));
         justify-content: center;
         align-items: center;
         text-align: center;
@@ -192,17 +219,15 @@
       }
 
       .left {
+        --fc: var(--face-left-color);
         font-size: var(--font-size-xs);
         line-height: var(--line-height-xs);
-        background: linear-gradient(
-          to top,
-          var(--face-left-color) calc(var(--fill, 1) * 100%),
-          oklch(from var(--face-left-color) l c h / var(--empty-alpha))
-            calc(var(--fill, 1) * 100%)
-        );
         transform: rotate(30deg) skewX(30deg)
-          translate(calc(var(--cube) * 0.3), calc(var(--cube) * 0.6))
-          scaleY(0.864);
+          translate(
+            calc(var(--cube) * var(--ox)),
+            calc(var(--cube) * var(--oy))
+          )
+          scaleY(var(--iso-scale));
       }
 
       &.skeleton {

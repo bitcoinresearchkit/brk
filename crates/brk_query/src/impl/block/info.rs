@@ -375,11 +375,7 @@ impl Query {
                     slug: pool_slug,
                     miner_names,
                 },
-                avg_fee: Sats::from(if non_coinbase > 0 {
-                    total_fees_u64 / non_coinbase
-                } else {
-                    0
-                }),
+                avg_fee: Sats::from(total_fees_u64.checked_div(non_coinbase).unwrap_or(0)),
                 avg_fee_rate: FeeRate::from((total_fees, VSize::from(vsize))),
                 coinbase_raw,
                 coinbase_address,

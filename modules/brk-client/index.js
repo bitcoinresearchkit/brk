@@ -2301,7 +2301,7 @@ function createIndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern(client, acc) {
 }
 
 /**
- * @typedef {Object} AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5
+ * @typedef {Object} AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6
  * @property {AverageBlockCumulativeSumPattern<StoredU64>} all
  * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2a
  * @property {AverageBlockCumulativeSumPattern<StoredU64>} p2pk33
@@ -2314,12 +2314,12 @@ function createIndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern(client, acc) {
  */
 
 /**
- * Create a AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5 pattern node
+ * Create a AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated series name
- * @returns {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5}
+ * @returns {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6}
  */
-function createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(client, acc) {
+function createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(client, acc) {
   return {
     all: createAverageBlockCumulativeSumPattern(client, acc),
     p2a: createAverageBlockCumulativeSumPattern(client, _p('p2a', acc)),
@@ -2334,7 +2334,7 @@ function createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(client, acc) {
 }
 
 /**
- * @typedef {Object} AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3
+ * @typedef {Object} AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4
  * @property {SeriesPattern1<StoredU64>} all
  * @property {SeriesPattern1<StoredU64>} p2a
  * @property {SeriesPattern1<StoredU64>} p2pk33
@@ -2347,12 +2347,12 @@ function createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(client, acc) {
  */
 
 /**
- * Create a AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3 pattern node
+ * Create a AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated series name
- * @returns {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3}
+ * @returns {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4}
  */
-function createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, acc) {
+function createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4(client, acc) {
   return {
     all: createSeriesPattern1(client, acc),
     p2a: createSeriesPattern1(client, _p('p2a', acc)),
@@ -2367,7 +2367,7 @@ function createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, acc) {
 }
 
 /**
- * @typedef {Object} AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6
+ * @typedef {Object} AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7
  * @property {_1m1w1y24hBpsPercentRatioPattern} all
  * @property {_1m1w1y24hBpsPercentRatioPattern} p2a
  * @property {_1m1w1y24hBpsPercentRatioPattern} p2pk33
@@ -2380,12 +2380,12 @@ function createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, acc) {
  */
 
 /**
- * Create a AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6 pattern node
+ * Create a AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated series name
- * @returns {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6}
+ * @returns {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7}
  */
-function createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(client, acc) {
+function createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7(client, acc) {
   return {
     all: create_1m1w1y24hBpsPercentRatioPattern(client, acc),
     p2a: create_1m1w1y24hBpsPercentRatioPattern(client, _p('p2a', acc)),
@@ -2437,7 +2437,7 @@ function createAverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc) {
  * @property {SeriesPattern18<CentsSquaredSats>} capitalizedCapInLossRaw
  * @property {SeriesPattern18<CentsSquaredSats>} capitalizedCapInProfitRaw
  * @property {CentsUsdPattern3} grossPnl
- * @property {InPattern} investedCapital
+ * @property {InPattern2} investedCapital
  * @property {CentsNegativeToUsdPattern2} loss
  * @property {CentsToUsdPattern3} netPnl
  * @property {BpsRatioPattern} nupl
@@ -2456,7 +2456,7 @@ function createCapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2(client
     capitalizedCapInLossRaw: createSeriesPattern18(client, _m(acc, 'capitalized_cap_in_loss_raw')),
     capitalizedCapInProfitRaw: createSeriesPattern18(client, _m(acc, 'capitalized_cap_in_profit_raw')),
     grossPnl: createCentsUsdPattern3(client, _m(acc, 'unrealized_gross_pnl')),
-    investedCapital: createInPattern(client, _m(acc, 'invested_capital_in')),
+    investedCapital: createInPattern2(client, _m(acc, 'invested_capital_in')),
     loss: createCentsNegativeToUsdPattern2(client, _m(acc, 'unrealized_loss')),
     netPnl: createCentsToUsdPattern3(client, _m(acc, 'net_unrealized_pnl')),
     nupl: createBpsRatioPattern(client, _m(acc, 'nupl')),
@@ -3028,7 +3028,7 @@ function createActivityOutputsRealizedSupplyUnrealizedPattern2(client, acc) {
 /**
  * @typedef {Object} BlockChangeCumulativeDeltaSumPattern
  * @property {CentsUsdPattern4} block
- * @property {ToPattern} change1m
+ * @property {ToPattern2} change1m
  * @property {CentsUsdPattern} cumulative
  * @property {AbsoluteRatePattern2} delta
  * @property {_1m1w1y24hPattern5} sum
@@ -3043,7 +3043,7 @@ function createActivityOutputsRealizedSupplyUnrealizedPattern2(client, acc) {
 function createBlockChangeCumulativeDeltaSumPattern(client, acc) {
   return {
     block: createCentsUsdPattern4(client, _m(acc, 'realized_pnl')),
-    change1m: createToPattern(client, _m(acc, 'pnl_change_1m_to')),
+    change1m: createToPattern2(client, _m(acc, 'pnl_change_1m_to')),
     cumulative: createCentsUsdPattern(client, _m(acc, 'realized_pnl_cumulative')),
     delta: createAbsoluteRatePattern2(client, _m(acc, 'realized_pnl_delta')),
     sum: create_1m1w1y24hPattern5(client, _m(acc, 'realized_pnl_sum')),
@@ -4196,6 +4196,25 @@ function createAbsoluteRatePattern2(client, acc) {
 }
 
 /**
+ * @typedef {Object} AddrUtxoPattern
+ * @property {BtcCentsSatsUsdPattern} addr
+ * @property {BtcCentsSatsUsdPattern} utxo
+ */
+
+/**
+ * Create a AddrUtxoPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {AddrUtxoPattern}
+ */
+function createAddrUtxoPattern(client, acc) {
+  return {
+    addr: createBtcCentsSatsUsdPattern(client, _m(acc, 'addr_amount')),
+    utxo: createBtcCentsSatsUsdPattern(client, _m(acc, 'utxo_amount')),
+  };
+}
+
+/**
  * @typedef {Object} AllSthPattern2
  * @property {BtcCentsDeltaSatsUsdPattern} all
  * @property {BtcCentsSatsUsdPattern} sth
@@ -4464,8 +4483,8 @@ function createDeltaTotalPattern(client, acc) {
 
 /**
  * @typedef {Object} FundedTotalPattern
- * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} funded
- * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} total
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4} funded
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4} total
  */
 
 /**
@@ -4476,15 +4495,34 @@ function createDeltaTotalPattern(client, acc) {
  */
 function createFundedTotalPattern(client, acc) {
   return {
-    funded: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, acc),
-    total: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(client, _p('total', acc)),
+    funded: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4(client, acc),
+    total: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4(client, _p('total', acc)),
+  };
+}
+
+/**
+ * @typedef {Object} InPattern2
+ * @property {CentsUsdPattern3} inLoss
+ * @property {CentsUsdPattern3} inProfit
+ */
+
+/**
+ * Create a InPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {InPattern2}
+ */
+function createInPattern2(client, acc) {
+  return {
+    inLoss: createCentsUsdPattern3(client, _m(acc, 'loss')),
+    inProfit: createCentsUsdPattern3(client, _m(acc, 'profit')),
   };
 }
 
 /**
  * @typedef {Object} InPattern
- * @property {CentsUsdPattern3} inLoss
- * @property {CentsUsdPattern3} inProfit
+ * @property {ToPattern} inLoss
+ * @property {ToPattern} inProfit
  */
 
 /**
@@ -4495,8 +4533,8 @@ function createFundedTotalPattern(client, acc) {
  */
 function createInPattern(client, acc) {
   return {
-    inLoss: createCentsUsdPattern3(client, _m(acc, 'loss')),
-    inProfit: createCentsUsdPattern3(client, _m(acc, 'profit')),
+    inLoss: createToPattern(client, _m(acc, 'loss_to_own')),
+    inProfit: createToPattern(client, _m(acc, 'profit_to_own')),
   };
 }
 
@@ -4565,18 +4603,18 @@ function createRatioValuePattern(client, acc) {
  */
 
 /**
- * @typedef {Object} ToPattern
+ * @typedef {Object} ToPattern2
  * @property {BpsPercentRatioPattern} toMcap
  * @property {BpsPercentRatioPattern} toRcap
  */
 
 /**
- * Create a ToPattern pattern node
+ * Create a ToPattern2 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated series name
- * @returns {ToPattern}
+ * @returns {ToPattern2}
  */
-function createToPattern(client, acc) {
+function createToPattern2(client, acc) {
   return {
     toMcap: createBpsPercentRatioPattern(client, _m(acc, 'mcap')),
     toRcap: createBpsPercentRatioPattern(client, _m(acc, 'rcap')),
@@ -4631,6 +4669,23 @@ function createNuplPattern(client, acc) {
 function createPricePattern(client, acc) {
   return {
     price: createBpsCentsPercentilesRatioSatsUsdPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} ToPattern
+ * @property {BpsPercentRatioPattern2} toOwn
+ */
+
+/**
+ * Create a ToPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {ToPattern}
+ */
+function createToPattern(client, acc) {
+  return {
+    toOwn: createBpsPercentRatioPattern2(client, acc),
   };
 }
 
@@ -5028,14 +5083,15 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Addrs_Raw} raw
  * @property {SeriesTree_Addrs_Indexes} indexes
  * @property {SeriesTree_Addrs_Data} data
- * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} funded
- * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} empty
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4} funded
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4} empty
  * @property {SeriesTree_Addrs_Activity} activity
- * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3} total
- * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5} new
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4} total
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6} new
  * @property {SeriesTree_Addrs_Reused} reused
  * @property {SeriesTree_Addrs_Exposed} exposed
  * @property {SeriesTree_Addrs_Delta} delta
+ * @property {SeriesTree_Addrs_AvgAmount} avgAmount
  */
 
 /**
@@ -5148,11 +5204,11 @@ function createTransferPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Addrs_Reused_Events
- * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5} outputToReusedAddrCount
- * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6} outputToReusedAddrShare
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6} outputToReusedAddrCount
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7} outputToReusedAddrShare
  * @property {_1m1w1y24hBpsPercentRatioPattern} spendableOutputToReusedAddrShare
- * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5} inputFromReusedAddrCount
- * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6} inputFromReusedAddrShare
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6} inputFromReusedAddrCount
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7} inputFromReusedAddrShare
  * @property {_1m1w1y24hBlockPattern} activeReusedAddrCount
  * @property {SeriesTree_Addrs_Reused_Events_ActiveReusedAddrShare} activeReusedAddrShare
  */
@@ -5210,6 +5266,19 @@ function createTransferPattern(client, acc) {
  * @property {AbsoluteRatePattern} p2wsh
  * @property {AbsoluteRatePattern} p2tr
  * @property {AbsoluteRatePattern} p2a
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Addrs_AvgAmount
+ * @property {AddrUtxoPattern} all
+ * @property {AddrUtxoPattern} p2pk65
+ * @property {AddrUtxoPattern} p2pk33
+ * @property {AddrUtxoPattern} p2pkh
+ * @property {AddrUtxoPattern} p2sh
+ * @property {AddrUtxoPattern} p2wpkh
+ * @property {AddrUtxoPattern} p2wsh
+ * @property {AddrUtxoPattern} p2tr
+ * @property {AddrUtxoPattern} p2a
  */
 
 /**
@@ -6237,6 +6306,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Cohorts_Utxo_All_Realized} realized
  * @property {SeriesTree_Cohorts_Utxo_All_CostBasis} costBasis
  * @property {SeriesTree_Cohorts_Utxo_All_Unrealized} unrealized
+ * @property {InPattern} investedCapital
  */
 
 /**
@@ -6407,7 +6477,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Cohorts_Utxo_All_Unrealized_Loss} loss
  * @property {SeriesTree_Cohorts_Utxo_All_Unrealized_NetPnl} netPnl
  * @property {CentsUsdPattern3} grossPnl
- * @property {InPattern} investedCapital
+ * @property {InPattern2} investedCapital
  * @property {SeriesPattern18<CentsSquaredSats>} capitalizedCapInProfitRaw
  * @property {SeriesPattern18<CentsSquaredSats>} capitalizedCapInLossRaw
  * @property {SeriesTree_Cohorts_Utxo_All_Unrealized_Sentiment} sentiment
@@ -6452,6 +6522,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Cohorts_Utxo_Sth_Realized} realized
  * @property {InMaxMinPerSupplyPattern} costBasis
  * @property {CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2} unrealized
+ * @property {InPattern} investedCapital
  */
 
 /**
@@ -6574,6 +6645,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Cohorts_Utxo_Lth_Realized} realized
  * @property {InMaxMinPerSupplyPattern} costBasis
  * @property {CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2} unrealized
+ * @property {InPattern} investedCapital
  */
 
 /**
@@ -8515,8 +8587,8 @@ class BrkClient extends BrkClientBase {
           funded: createSeriesPattern34(this, 'funded_addr_data'),
           empty: createSeriesPattern35(this, 'empty_addr_data'),
         },
-        funded: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(this, 'addr_count'),
-        empty: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(this, 'empty_addr_count'),
+        funded: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4(this, 'addr_count'),
+        empty: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4(this, 'empty_addr_count'),
         activity: {
           all: {
             reactivated: create_1m1w1y24hBlockPattern(this, 'reactivated_addrs'),
@@ -8534,16 +8606,16 @@ class BrkClient extends BrkClientBase {
           p2tr: createActiveBidirectionalReactivatedReceivingSendingPattern(this, 'p2tr'),
           p2a: createActiveBidirectionalReactivatedReceivingSendingPattern(this, 'p2a'),
         },
-        total: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern3(this, 'total_addr_count'),
-        new: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(this, 'new_addr_count'),
+        total: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4(this, 'total_addr_count'),
+        new: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(this, 'new_addr_count'),
         reused: {
           count: createFundedTotalPattern(this, 'reused_addr_count'),
           events: {
-            outputToReusedAddrCount: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(this, 'output_to_reused_addr_count'),
-            outputToReusedAddrShare: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(this, 'output_to_reused_addr_share'),
+            outputToReusedAddrCount: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(this, 'output_to_reused_addr_count'),
+            outputToReusedAddrShare: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7(this, 'output_to_reused_addr_share'),
             spendableOutputToReusedAddrShare: create_1m1w1y24hBpsPercentRatioPattern(this, 'spendable_output_to_reused_addr_share'),
-            inputFromReusedAddrCount: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(this, 'input_from_reused_addr_count'),
-            inputFromReusedAddrShare: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(this, 'input_from_reused_addr_share'),
+            inputFromReusedAddrCount: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(this, 'input_from_reused_addr_count'),
+            inputFromReusedAddrShare: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7(this, 'input_from_reused_addr_share'),
             activeReusedAddrCount: create_1m1w1y24hBlockPattern(this, 'active_reused_addr_count'),
             activeReusedAddrShare: {
               block: createSeriesPattern18(this, 'active_reused_addr_share'),
@@ -8589,6 +8661,17 @@ class BrkClient extends BrkClientBase {
           p2wsh: createAbsoluteRatePattern(this, 'p2wsh_addr_count'),
           p2tr: createAbsoluteRatePattern(this, 'p2tr_addr_count'),
           p2a: createAbsoluteRatePattern(this, 'p2a_addr_count'),
+        },
+        avgAmount: {
+          all: createAddrUtxoPattern(this, 'avg'),
+          p2pk65: createAddrUtxoPattern(this, 'p2pk65_avg'),
+          p2pk33: createAddrUtxoPattern(this, 'p2pk33_avg'),
+          p2pkh: createAddrUtxoPattern(this, 'p2pkh_avg'),
+          p2sh: createAddrUtxoPattern(this, 'p2sh_avg'),
+          p2wpkh: createAddrUtxoPattern(this, 'p2wpkh_avg'),
+          p2wsh: createAddrUtxoPattern(this, 'p2wsh_avg'),
+          p2tr: createAddrUtxoPattern(this, 'p2tr_avg'),
+          p2a: createAddrUtxoPattern(this, 'p2a_avg'),
         },
       },
       scripts: {
@@ -9452,7 +9535,7 @@ class BrkClient extends BrkClientBase {
                 toOwnGrossPnl: createBpsPercentRatioPattern(this, 'net_unrealized_pnl_to_own_gross_pnl'),
               },
               grossPnl: createCentsUsdPattern3(this, 'unrealized_gross_pnl'),
-              investedCapital: createInPattern(this, 'invested_capital_in'),
+              investedCapital: createInPattern2(this, 'invested_capital_in'),
               capitalizedCapInProfitRaw: createSeriesPattern18(this, 'capitalized_cap_in_profit_raw'),
               capitalizedCapInLossRaw: createSeriesPattern18(this, 'capitalized_cap_in_loss_raw'),
               sentiment: {
@@ -9461,6 +9544,7 @@ class BrkClient extends BrkClientBase {
                 net: createCentsUsdPattern(this, 'net_sentiment'),
               },
             },
+            investedCapital: createInPattern(this, 'invested_capital_in'),
           },
           sth: {
             supply: createDeltaHalfInToTotalPattern2(this, 'sth_supply'),
@@ -9560,6 +9644,7 @@ class BrkClient extends BrkClientBase {
             },
             costBasis: createInMaxMinPerSupplyPattern(this, 'sth'),
             unrealized: createCapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2(this, 'sth'),
+            investedCapital: createInPattern(this, 'sth_invested_capital_in'),
           },
           lth: {
             supply: createDeltaHalfInToTotalPattern2(this, 'lth_supply'),
@@ -9662,6 +9747,7 @@ class BrkClient extends BrkClientBase {
             },
             costBasis: createInMaxMinPerSupplyPattern(this, 'lth'),
             unrealized: createCapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2(this, 'lth'),
+            investedCapital: createInPattern(this, 'lth_invested_capital_in'),
           },
           ageRange: {
             under1h: createActivityOutputsRealizedSupplyUnrealizedPattern(this, 'utxos_under_1h_old'),

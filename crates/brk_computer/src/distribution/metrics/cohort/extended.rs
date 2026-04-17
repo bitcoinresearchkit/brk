@@ -132,6 +132,7 @@ impl ExtendedCohortMetrics {
             starting_indexes.height,
             &self.supply,
             &self.unrealized,
+            &self.realized,
             height_to_market_cap,
             all_supply_sats,
             &self.supply.total.usd.height,

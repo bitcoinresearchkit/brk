@@ -4,9 +4,12 @@ use brk_types::{Dollars, Height, Sats};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::distribution::metrics::{ImportConfig, SupplyCore, UnrealizedFull};
+use crate::distribution::metrics::{ImportConfig, RealizedFull, SupplyCore, UnrealizedFull};
 
-use super::{RelativeExtendedOwnMarketCap, RelativeExtendedOwnPnl, RelativeFull, RelativeToAll};
+use super::{
+    RelativeExtendedOwnMarketCap, RelativeExtendedOwnPnl, RelativeFull, RelativeInvestedCapital,
+    RelativeToAll,
+};
 
 /// Full extended relative metrics (base + rel_to_all + own_market_cap + own_pnl).
 /// Used by: sth, lth cohorts.
@@ -22,6 +25,8 @@ pub struct RelativeWithExtended<M: StorageMode = Rw> {
     pub extended_own_market_cap: RelativeExtendedOwnMarketCap<M>,
     #[traversable(flatten)]
     pub extended_own_pnl: RelativeExtendedOwnPnl<M>,
+    #[traversable(flatten)]
+    pub invested_capital: RelativeInvestedCapital<M>,
 }
 
 impl RelativeWithExtended {
@@ -31,6 +36,7 @@ impl RelativeWithExtended {
             rel_to_all: RelativeToAll::forced_import(cfg)?,
             extended_own_market_cap: RelativeExtendedOwnMarketCap::forced_import(cfg)?,
             extended_own_pnl: RelativeExtendedOwnPnl::forced_import(cfg)?,
+            invested_capital: RelativeInvestedCapital::forced_import(cfg)?,
         })
     }
 
@@ -40,6 +46,7 @@ impl RelativeWithExtended {
         max_from: Height,
         supply: &SupplyCore,
         unrealized: &UnrealizedFull,
+        realized: &RealizedFull,
         market_cap: &impl ReadableVec<Height, Dollars>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         own_market_cap: &impl ReadableVec<Height, Dollars>,
@@ -57,6 +64,8 @@ impl RelativeWithExtended {
             &unrealized.gross_pnl.usd.height,
             exit,
         )?;
+        self.invested_capital
+            .compute(max_from, unrealized, realized, exit)?;
         Ok(())
     }
 }

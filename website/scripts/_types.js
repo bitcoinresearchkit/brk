@@ -128,6 +128,9 @@
  *
  * Address count pattern (base + delta with absolute + rate)
  * @typedef {Brk.BaseDeltaPattern} AddrCountPattern
+ * @typedef {Brk.AddrUtxoPattern} AvgAmountPattern
+ * @typedef {Brk.SeriesTree_Addrs_Exposed} ExposedTree
+ * @typedef {Brk.SeriesTree_Addrs_Reused} ReusedTree
  */
 
 /**

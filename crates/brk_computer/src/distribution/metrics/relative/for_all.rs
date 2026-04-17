@@ -4,9 +4,9 @@ use brk_types::{Dollars, Height};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
-use crate::distribution::metrics::{ImportConfig, SupplyCore, UnrealizedFull};
+use crate::distribution::metrics::{ImportConfig, RealizedFull, SupplyCore, UnrealizedFull};
 
-use super::{RelativeExtendedOwnPnl, RelativeFull};
+use super::{RelativeExtendedOwnPnl, RelativeFull, RelativeInvestedCapital};
 
 /// Relative metrics for the "all" cohort (base + own_pnl, NO rel_to_all).
 #[derive(Deref, DerefMut, Traversable)]
@@ -17,6 +17,8 @@ pub struct RelativeForAll<M: StorageMode = Rw> {
     pub base: RelativeFull<M>,
     #[traversable(flatten)]
     pub extended_own_pnl: RelativeExtendedOwnPnl<M>,
+    #[traversable(flatten)]
+    pub invested_capital: RelativeInvestedCapital<M>,
 }
 
 impl RelativeForAll {
@@ -24,6 +26,7 @@ impl RelativeForAll {
         Ok(Self {
             base: RelativeFull::forced_import(cfg)?,
             extended_own_pnl: RelativeExtendedOwnPnl::forced_import(cfg)?,
+            invested_capital: RelativeInvestedCapital::forced_import(cfg)?,
         })
     }
 
@@ -32,6 +35,7 @@ impl RelativeForAll {
         max_from: Height,
         supply: &SupplyCore,
         unrealized: &UnrealizedFull,
+        realized: &RealizedFull,
         market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
@@ -43,6 +47,8 @@ impl RelativeForAll {
             &unrealized.gross_pnl.usd.height,
             exit,
         )?;
+        self.invested_capital
+            .compute(max_from, unrealized, realized, exit)?;
         Ok(())
     }
 }

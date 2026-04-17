@@ -49,7 +49,7 @@ impl SupplyBase {
     pub(crate) fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         vec![
             &mut self.total.sats.height as &mut dyn AnyStoredVec,
-            &mut self.total.cents.height as &mut dyn AnyStoredVec,
+            &mut self.total.cents.height,
         ]
     }
 

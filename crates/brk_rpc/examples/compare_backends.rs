@@ -3,6 +3,7 @@
 //! Run with:
 //!   cargo run -p brk_rpc --example compare_backends --features corepc
 
+#[cfg(all(feature = "bitcoincore-rpc", feature = "corepc"))]
 use std::time::{Duration, Instant};
 
 #[cfg(not(all(feature = "bitcoincore-rpc", feature = "corepc")))]
@@ -260,6 +261,7 @@ fn main() {
     println!("=== All checks passed ===");
 }
 
+#[cfg(all(feature = "bitcoincore-rpc", feature = "corepc"))]
 fn timed<T>(f: impl FnOnce() -> T) -> (Duration, T) {
     let start = Instant::now();
     let result = f();

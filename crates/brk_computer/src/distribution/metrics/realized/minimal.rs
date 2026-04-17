@@ -118,11 +118,11 @@ impl RealizedMinimal {
                     |(i, cap_cents, supply, ..)| {
                         let cap = cap_cents.as_u128();
                         let supply_sats = Sats::from(supply).as_u128();
-                        if supply_sats == 0 {
-                            (i, Cents::ZERO)
-                        } else {
-                            (i, Cents::from(cap * Sats::ONE_BTC_U128 / supply_sats))
-                        }
+                        let cents = (cap * Sats::ONE_BTC_U128)
+                            .checked_div(supply_sats)
+                            .map(Cents::from)
+                            .unwrap_or(Cents::ZERO);
+                        (i, cents)
                     },
                     exit,
                 )?)

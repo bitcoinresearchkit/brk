@@ -31,7 +31,7 @@ impl ClientConstants {
 
         let pools = pools();
         let mut sorted_pools: Vec<_> = pools.iter().collect();
-        sorted_pools.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        sorted_pools.sort_by_key(|p| p.name.to_lowercase());
         let pool_map: BTreeMap<PoolSlug, &'static str> =
             sorted_pools.iter().map(|p| (p.slug(), p.name)).collect();
 

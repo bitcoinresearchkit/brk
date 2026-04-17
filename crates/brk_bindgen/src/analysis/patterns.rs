@@ -3,7 +3,10 @@
 //! This module detects repeating tree structures and analyzes them
 //! using the bottom-up name deconstruction algorithm.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::{
+    cmp::Reverse,
+    collections::{BTreeMap, BTreeSet},
+};
 
 use brk_types::{TreeNode, extract_json_type};
 
@@ -111,7 +114,7 @@ pub fn detect_structural_patterns(
     // Also collects node bases for each tree path
     let node_bases = analyze_pattern_modes(tree, &mut patterns, &pattern_lookup);
 
-    patterns.sort_by(|a, b| b.fields.len().cmp(&a.fields.len()));
+    patterns.sort_by_key(|p| Reverse(p.fields.len()));
     (patterns, concrete_to_pattern, type_mappings, node_bases)
 }
 

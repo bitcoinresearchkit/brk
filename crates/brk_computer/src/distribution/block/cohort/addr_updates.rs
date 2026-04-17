@@ -67,14 +67,14 @@ pub(crate) fn process_funded_addrs(
 
     // Pure pushes - no holes remain
     addrs_data.funded.reserve_pushed(pushes_iter.len());
-    let mut next_index = addrs_data.funded.len();
-    for (addr_type, type_index, data) in pushes_iter {
+    for (next_index, (addr_type, type_index, data)) in
+        (addrs_data.funded.len()..).zip(pushes_iter)
+    {
         addrs_data.funded.push(data);
         result.get_mut(addr_type).unwrap().insert(
             type_index,
             AnyAddrIndex::from(FundedAddrIndex::from(next_index)),
         );
-        next_index += 1;
     }
 
     Ok(result)
@@ -138,14 +138,14 @@ pub(crate) fn process_empty_addrs(
 
     // Pure pushes - no holes remain
     addrs_data.empty.reserve_pushed(pushes_iter.len());
-    let mut next_index = addrs_data.empty.len();
-    for (addr_type, type_index, data) in pushes_iter {
+    for (next_index, (addr_type, type_index, data)) in
+        (addrs_data.empty.len()..).zip(pushes_iter)
+    {
         addrs_data.empty.push(data);
         result.get_mut(addr_type).unwrap().insert(
             type_index,
             AnyAddrIndex::from(EmptyAddrIndex::from(next_index)),
         );
-        next_index += 1;
     }
 
     Ok(result)

@@ -156,6 +156,7 @@ impl AllCohortMetrics {
             starting_indexes.height,
             &self.supply,
             &self.unrealized,
+            &self.realized,
             height_to_market_cap,
             exit,
         )?;

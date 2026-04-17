@@ -6,6 +6,7 @@ import { Unit } from "../../utils/units.js";
 import { colors } from "../../utils/colors.js";
 import { ROLLING_WINDOWS, line, baseline, mapWindows, sumsTreeBaseline, rollingPercentRatioTree, percentRatio, percentRatioBaseline } from "../series.js";
 import { ratioBottomSeries, mapCohortsWithAll, flatMapCohortsWithAll } from "../shared.js";
+import { priceLine } from "../constants.js";
 
 // ============================================================================
 // Shared building blocks
@@ -80,11 +81,26 @@ export function createValuationSectionFull({ cohort, title }) {
       { name: "Total", title: title("Realized Cap"), bottom: [line({ series: tree.realized.cap.usd, name: "Realized Cap", color, unit: Unit.usd })] },
       {
         name: "Profitability",
-        title: title("Invested Capital"),
-        bottom: [
-          line({ series: tree.realized.cap.usd, name: "Total", color: colors.default, unit: Unit.usd }),
-          line({ series: tree.unrealized.investedCapital.inProfit.usd, name: "In Profit", color: colors.profit, unit: Unit.usd }),
-          line({ series: tree.unrealized.investedCapital.inLoss.usd, name: "In Loss", color: colors.loss, unit: Unit.usd }),
+        tree: [
+          {
+            name: "Amount",
+            title: title("Invested Capital"),
+            bottom: [
+              line({ series: tree.realized.cap.usd, name: "Total", color: colors.default, unit: Unit.usd }),
+              line({ series: tree.unrealized.investedCapital.inProfit.usd, name: "In Profit", color: colors.profit, unit: Unit.usd }),
+              line({ series: tree.unrealized.investedCapital.inLoss.usd, name: "In Loss", color: colors.loss, unit: Unit.usd }),
+            ],
+          },
+          {
+            name: "Share",
+            title: title("Invested Capital Profitability"),
+            bottom: [
+              ...percentRatio({ pattern: tree.investedCapital.inProfit.toOwn, name: "In Profit", color: colors.profit }),
+              ...percentRatio({ pattern: tree.investedCapital.inLoss.toOwn, name: "In Loss", color: colors.loss }),
+              priceLine({ number: 100, color: colors.default, style: 0, unit: Unit.percentage }),
+              priceLine({ number: 50, unit: Unit.percentage }),
+            ],
+          },
         ],
       },
       { name: "MVRV", title: title("MVRV"), bottom: ratioBottomSeries(tree.realized.price) },

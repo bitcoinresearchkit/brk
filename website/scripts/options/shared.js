@@ -6,6 +6,9 @@ import {
   line,
   baseline,
   price,
+  percentRatio,
+  chartsFromCount,
+  chartsFromPercentCumulative,
   sumsAndAveragesCumulativeWith,
 } from "./series.js";
 import { priceLine, priceLines } from "./constants.js";
@@ -241,6 +244,198 @@ export function satsBtcUsdFullTree({ pattern, title, metric, color }) {
     series: ({ pattern, name, color, defaultActive }) =>
       satsBtcUsd({ pattern, name, color, defaultActive }),
   });
+}
+
+/**
+ * "Exposed" subtree (quantum-risk / revealed-pubkey addresses).
+ * Shape: Compare (funded + total) / Funded / Total / Supply / Share.
+ * Shared between Network and Distribution (per-type cohort view).
+ * @param {ExposedTree} exposed
+ * @param {AddressableType | "all"} key
+ * @param {(name: string) => string} title
+ * @returns {PartialOptionsGroup}
+ */
+export function exposedSubtree(exposed, key, title) {
+  return {
+    name: "Exposed",
+    tree: [
+      {
+        name: "Compare",
+        title: title("Exposed Address Count"),
+        bottom: [
+          line({ series: exposed.count.funded[key], name: "Funded", unit: Unit.count }),
+          line({
+            series: exposed.count.total[key],
+            name: "Total",
+            color: colors.gray,
+            unit: Unit.count,
+          }),
+        ],
+      },
+      {
+        name: "Funded",
+        title: title("Funded Exposed Address Count"),
+        bottom: [
+          line({ series: exposed.count.funded[key], name: "Funded Exposed", unit: Unit.count }),
+        ],
+      },
+      {
+        name: "Total",
+        title: title("Total Exposed Address Count"),
+        bottom: [
+          line({
+            series: exposed.count.total[key],
+            name: "Total Exposed",
+            color: colors.gray,
+            unit: Unit.count,
+          }),
+        ],
+      },
+      {
+        name: "Supply",
+        title: title("Supply in Exposed Addresses"),
+        bottom: satsBtcUsd({ pattern: exposed.supply[key], name: "Supply" }),
+      },
+      {
+        name: "Share",
+        title: title("Share of Supply in Exposed Addresses"),
+        bottom: percentRatio({ pattern: exposed.supply.share[key], name: "Supply" }),
+      },
+    ],
+  };
+}
+
+/**
+ * "Reused" subtree (per-type / per-cohort — no "Active" window, since that
+ * data is only tracked globally). Shape:
+ *   Compare (funded + total) / Funded / Total / Outputs / Inputs.
+ * @param {ReusedTree} reused
+ * @param {AddressableType | "all"} key
+ * @param {(name: string) => string} title
+ * @returns {PartialOptionsGroup}
+ */
+export function reusedSubtree(reused, key, title) {
+  return {
+    name: "Reused",
+    tree: [
+      {
+        name: "Compare",
+        title: title("Reused Address Count"),
+        bottom: [
+          line({ series: reused.count.funded[key], name: "Funded", unit: Unit.count }),
+          line({
+            series: reused.count.total[key],
+            name: "Total",
+            color: colors.gray,
+            unit: Unit.count,
+          }),
+        ],
+      },
+      {
+        name: "Funded",
+        title: title("Funded Reused Addresses"),
+        bottom: [
+          line({ series: reused.count.funded[key], name: "Funded Reused", unit: Unit.count }),
+        ],
+      },
+      {
+        name: "Total",
+        title: title("Total Reused Addresses"),
+        bottom: [
+          line({
+            series: reused.count.total[key],
+            name: "Total Reused",
+            color: colors.gray,
+            unit: Unit.count,
+          }),
+        ],
+      },
+      {
+        name: "Outputs",
+        tree: [
+          {
+            name: "Count",
+            tree: chartsFromCount({
+              pattern: reused.events.outputToReusedAddrCount[key],
+              title,
+              metric: "Transaction Outputs to Reused Addresses",
+              unit: Unit.count,
+            }),
+          },
+          {
+            name: "Share",
+            tree: chartsFromPercentCumulative({
+              pattern: reused.events.outputToReusedAddrShare[key],
+              title,
+              metric: "Share of Transaction Outputs to Reused Addresses",
+            }),
+          },
+        ],
+      },
+      {
+        name: "Inputs",
+        tree: [
+          {
+            name: "Count",
+            tree: chartsFromCount({
+              pattern: reused.events.inputFromReusedAddrCount[key],
+              title,
+              metric: "Transaction Inputs from Reused Addresses",
+              unit: Unit.count,
+            }),
+          },
+          {
+            name: "Share",
+            tree: chartsFromPercentCumulative({
+              pattern: reused.events.inputFromReusedAddrShare[key],
+              title,
+              metric: "Share of Transaction Inputs from Reused Addresses",
+            }),
+          },
+        ],
+      },
+    ],
+  };
+}
+
+/**
+ * "Average Holdings" subtree: Compare (both) + Per UTXO + Per Funded Address.
+ * Shared between Network and Distribution.
+ * @param {AvgAmountPattern} pattern
+ * @param {(name: string) => string} title
+ * @returns {PartialOptionsGroup}
+ */
+export function avgHoldingsSubtree(pattern, title) {
+  return {
+    name: "Average Holdings",
+    tree: [
+      {
+        name: "Compare",
+        title: title("Average Holdings"),
+        bottom: [
+          ...satsBtcUsd({ pattern: pattern.utxo, name: "Per UTXO" }),
+          ...satsBtcUsd({
+            pattern: pattern.addr,
+            name: "Per Funded Address",
+            color: colors.gray,
+          }),
+        ],
+      },
+      {
+        name: "Per UTXO",
+        title: title("Average Holdings per UTXO"),
+        bottom: satsBtcUsd({ pattern: pattern.utxo, name: "Per UTXO" }),
+      },
+      {
+        name: "Per Address",
+        title: title("Average Holdings per Funded Address"),
+        bottom: satsBtcUsd({
+          pattern: pattern.addr,
+          name: "Per Funded Address",
+        }),
+      },
+    ],
+  };
 }
 
 /**

@@ -273,6 +273,15 @@ function createBlockCube(block) {
 function createCube() {
   const cubeElement = document.createElement("div");
   cubeElement.classList.add("cube");
+  const bottomElement = document.createElement("div");
+  bottomElement.classList.add("face", "bottom");
+  cubeElement.append(bottomElement);
+  const rearRightElement = document.createElement("div");
+  rearRightElement.classList.add("face", "rear-right");
+  cubeElement.append(rearRightElement);
+  const rearLeftElement = document.createElement("div");
+  rearLeftElement.classList.add("face", "rear-left");
+  cubeElement.append(rearLeftElement);
   const innerTopElement = document.createElement("div");
   innerTopElement.classList.add("face", "inner-top");
   cubeElement.append(innerTopElement);

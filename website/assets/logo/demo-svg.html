@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>bitview logo (svg)</title>
+  <style>
+    /* Website's Lilex (the site's --font-mono). */
+    @font-face {
+      font-family: Lilex;
+      src: url("../fonts/Lilex[wght]-v2_620.woff2") format("woff2");
+      font-style: normal;
+      font-weight: 100 700;
+      font-display: block;
+    }
+    @font-face {
+      font-family: Lilex;
+      src: url("../fonts/Lilex-Italic[wght]-v2_620.woff2.woff2") format("woff2");
+      font-style: italic;
+      font-weight: 100 700;
+      font-display: block;
+    }
+
+    :root {
+      color-scheme: light dark;
+      --cube: 4.5rem;
+      --orange: oklch(67.64% 0.191 44.41);
+      --white: oklch(95% 0 0);
+      --black: oklch(15% 0 0);
+      --light-gray: oklch(90% 0 0);
+      --dark-gray: oklch(20% 0 0);
+      --border-color:      light-dark(var(--light-gray), var(--dark-gray));
+      --background-color:  light-dark(var(--white),      var(--black));
+      --fill: 0.5;
+      --empty-alpha: 0.3;
+      --face-step: 0.033;
+      --iso-scale: 0.866;
+      --blur-stddev: 3;
+      --font-size-xs: 0.75rem;
+      --font-size-sm: 0.875rem;
+    }
+
+    /* ---- page chrome ---- */
+    html, body { margin: 0; padding: 0; }
+    body {
+      font: 14px/1.4 -apple-system, system-ui, sans-serif;
+      color: #111;
+      background: #f7f8fa;
+    }
+    .wrap { max-width: 1440px; margin: 0 auto; padding: 40px 24px 80px; }
+    section { margin: 0 0 12px; }
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .controls {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      margin: 0 0 24px;
+      font-size: 13px;
+      color: #444;
+    }
+    .controls select { font-size: 13px; padding: 2px 6px; }
+    .tile {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 14px;
+      display: grid; place-items: center;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+    }
+    .tile .label {
+      position: absolute; left: 10px; bottom: 8px;
+      font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: rgba(0,0,0,0.55);
+      background: rgba(255,255,255,0.7); padding: 2px 6px; border-radius: 4px;
+      backdrop-filter: blur(6px);
+    }
+    .tile.scheme-light { color-scheme: light; }
+    .tile.scheme-dark  { color-scheme: dark; color: #e8e8ea; }
+    .tile.scheme-dark .label { color: rgba(255,255,255,0.75); background: rgba(0,0,0,0.4); }
+    .bg-auto     { background: var(--background-color); }
+    .bg-paper    { background: light-dark(#f0ece3, #2a2823); }
+    .bg-gradient { background: linear-gradient(135deg, oklch(70% 0.16 260), oklch(72% 0.19 330)); }
+    .bg-image-1  { background: url('https://picsum.photos/seed/brk1/440/440') center/cover; }
+    .bg-image-2  { background: url('https://picsum.photos/seed/brk2/440/440') center/cover; }
+
+    /* ---- cube slot: just holds the svg ---- */
+    .logo-slot {
+      position: relative;
+      width: 160px; height: 160px;
+      display: grid; place-items: center;
+    }
+    .logo-slot svg {
+      /* Iso cube silhouette is 2·iso × 2 (taller than wide, aspect
+         sqrt(3)/2 : 1). The viewBox is square 0 0 200 200 for clean
+         polygon coordinates; preserveAspectRatio="none" stretches it
+         into the right aspect at render time. */
+      width:  calc(var(--cube) * var(--iso-scale) * 2);
+      height: calc(var(--cube) * 2);
+      /* Frost: backdrop-filter on the non-transformed <svg> (Safari
+         honours it) clipped to the hex silhouette so the blur only
+         shows where the cube's translucent faces show through. */
+      clip-path: polygon(
+        50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%
+      );
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+    }
+
+    /* ---- cube face colors (derived from --face-color, same logic
+            as website/styles/panes/explorer.css) ---- */
+    svg.cube {
+      --face-color: var(--orange);
+      --face-right: light-dark(
+        oklch(from var(--face-color) calc(l - var(--face-step) * 2) c h),
+        var(--face-color)
+      );
+      --face-left: light-dark(
+        oklch(from var(--face-color) calc(l - var(--face-step)) c h),
+        oklch(from var(--face-color) calc(l + var(--face-step)) c h)
+      );
+      --face-top: light-dark(
+        var(--face-color),
+        oklch(from var(--face-color) calc(l + var(--face-step) * 2) c h)
+      );
+      --face-bottom: oklch(from var(--face-color) calc(l - var(--face-step) * 3) c h);
+      color: light-dark(var(--black), var(--white));
+    }
+
+    /* Glass fills — translucent (--empty-alpha).
+       Front faces (visible in iso): top, right, left.
+       Rear faces (hidden in iso but visible through the translucent
+       fronts as "interior depth"): bottom (y-), rear-left (x-),
+       rear-right (z-). Colors mirror the HTML demo:
+         rear bottom      → face-bottom
+         rear-left (x-)   → face-top
+         rear-right (z-)  → face-left
+       Liquid polygons are opaque, drawn between rear and front. */
+    svg.cube .glass-top        { fill: var(--face-top);    fill-opacity: var(--empty-alpha); }
+    svg.cube .glass-right      { fill: var(--face-right);  fill-opacity: var(--empty-alpha); }
+    svg.cube .glass-left       { fill: var(--face-left);   fill-opacity: var(--empty-alpha); }
+    svg.cube .glass-bottom     { fill: var(--face-bottom); fill-opacity: var(--empty-alpha); }
+    svg.cube .glass-rear-left  { fill: var(--face-top);    fill-opacity: var(--empty-alpha); }
+    svg.cube .glass-rear-right { fill: var(--face-left);   fill-opacity: var(--empty-alpha); }
+    svg.cube .liquid-top   { fill: var(--face-top); }
+    svg.cube .liquid-right { fill: var(--face-right); }
+    svg.cube .liquid-left  { fill: var(--face-left); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="controls">
+      <span>SVG cube — blur via SVG <code>feGaussianBlur</code> with <code>BackgroundImage</code>.</span>
+    </div>
+
+    <!-- Cube template.
+         viewBox 0 0 200 200, hex center = (100, 100), iso half-width = 86.6.
+         Points: V_top=(100,0) VR_upper=(187,50) VR_lower=(187,150)
+                 V_bottom=(100,200) VL_lower=(13,150) VL_upper=(13,50)
+                 V_center=(100,100)
+         Face polygons (3 visible):
+           top   = V_upper_left, V_top, V_upper_right, V_center
+           right = V_upper_right, V_lower_right, V_bottom, V_center
+           left  = V_upper_left, V_lower_left, V_bottom, V_center
+         Liquid surface at fill f in [0,1] — 4 corners:
+           (13, 150 - 100f) (187, 150 - 100f) (100, 100 - 100f) (100, 200 - 100f)
+         JS computes liquid sub-polygons per tile based on --fill. -->
+    <template id="logo-template">
+      <div class="logo-slot">
+        <svg class="cube" viewBox="0 0 200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Rear glass (hidden 3D faces at their iso positions).
+               Drawn first so translucent front faces composite over
+               them for a "depth" look. -->
+          <g class="glass-rear">
+            <polygon class="glass-bottom"     points="100,100 200,150 100,200 0,150"/>
+            <polygon class="glass-rear-left"  points="100,100 0,150 0,50 100,0"/>
+            <polygon class="glass-rear-right" points="100,100 200,150 200,50 100,0"/>
+          </g>
+          <!-- Liquid (opaque): JS injects polygons sized from --fill. -->
+          <g class="liquid"></g>
+          <!-- Front glass (visible 3D faces). -->
+          <g class="glass-front">
+            <polygon class="glass-top"   points="0,50 100,0 200,50 100,100"/>
+            <polygon class="glass-right" points="200,50 200,150 100,200 100,100"/>
+            <polygon class="glass-left"  points="0,50 0,150 100,200 100,100"/>
+          </g>
+        </svg>
+      </div>
+    </template>
+
+    <section>
+      <div class="row" id="row"></div>
+    </section>
+    <section>
+      <div class="row" id="fills"></div>
+    </section>
+  </div>
+
+  <script>
+    // Liquid surface at fill f in [0,1]: horizontal cross-section of
+    // the cube at y=f, projected to viewBox (hex fills 200×200).
+    const surface = (f) => ({
+      tl:    [0,   150 - 100 * f],  // left side at surface
+      tr:    [200, 150 - 100 * f],  // right side at surface
+      back:  [100, 100 - 100 * f],  // back vertex (upper)
+      front: [100, 200 - 100 * f],  // front vertex (lower)
+    });
+
+    // Liquid = 3 sub-polygons of the 3 visible faces, clipped at the
+    // surface line. The surface rhombus has 4 corners:
+    //   back   — back vertex of the cross-section
+    //   tr/tl  — right/left side vertices of the cross-section (shared
+    //            with the right/left visible faces)
+    //   front  — front vertex of the cross-section (shared with both
+    //            side faces' front edge)
+    // Each side face's upper edge at the surface runs from its side
+    // corner (tr or tl) to the shared front corner.
+    const liquidPolygons = (f) => {
+      if (f <= 0) return [];
+      const s = surface(f);
+      return [
+        { cls: 'liquid-top',   pts: [s.back, s.tr, s.front, s.tl] },
+        { cls: 'liquid-right', pts: [s.tr, [200, 150], [100, 200], s.front] },
+        { cls: 'liquid-left',  pts: [s.tl, [0, 150], [100, 200], s.front] },
+      ];
+    };
+
+    const template = document.getElementById('logo-template');
+    const SVGNS = 'http://www.w3.org/2000/svg';
+
+    const makeLogo = ({ fill = 0.5, faceColor, cubeScheme } = {}) => {
+      const slot = template.content.cloneNode(true).firstElementChild;
+      const svg = slot.querySelector('svg');
+      svg.style.setProperty('--fill', String(fill));
+      if (faceColor) svg.style.setProperty('--face-color', faceColor);
+      svg.style.setProperty('color-scheme', cubeScheme ?? 'light');
+
+      const liquid = svg.querySelector('.liquid');
+      for (const { cls, pts } of liquidPolygons(fill)) {
+        const poly = document.createElementNS(SVGNS, 'polygon');
+        poly.setAttribute('class', cls);
+        poly.setAttribute('points', pts.map(p => p.join(',')).join(' '));
+        liquid.appendChild(poly);
+      }
+      return slot;
+    };
+
+    const makeTile = (cls, label, content) => {
+      const tile = document.createElement('div');
+      tile.className = `tile ${cls}`;
+      tile.appendChild(content);
+      const lbl = document.createElement('span');
+      lbl.className = 'label';
+      lbl.textContent = label;
+      tile.appendChild(lbl);
+      return tile;
+    };
+
+    // Row 1: cube on each background.
+    const row = document.getElementById('row');
+    row.appendChild(makeTile('bg-auto scheme-light', 'light',    makeLogo()));
+    row.appendChild(makeTile('bg-auto scheme-dark',  'dark',     makeLogo()));
+    row.appendChild(makeTile('bg-paper scheme-light', 'paper',   makeLogo()));
+    row.appendChild(makeTile('bg-gradient scheme-light', 'gradient', makeLogo()));
+    row.appendChild(makeTile('bg-image-1 scheme-light',  'img 1',    makeLogo()));
+    row.appendChild(makeTile('bg-image-2 scheme-light',  'img 2',    makeLogo()));
+
+    // Row 2: fill levels.
+    const fills = document.getElementById('fills');
+    for (const f of [0, 0.1, 0.25, 0.5, 0.75, 1])
+      fills.appendChild(makeTile('bg-auto scheme-light', `fill ${f}`, makeLogo({ fill: f })));
+  </script>
+</body>
+</html>

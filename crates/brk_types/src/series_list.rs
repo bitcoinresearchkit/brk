@@ -99,10 +99,8 @@ fn sanitize(dirty: impl Iterator<Item = String>) -> Vec<String> {
         let mut current = String::new();
         for c in s.to_lowercase().chars() {
             match c {
-                ' ' | ',' | '+' => {
-                    if !current.is_empty() {
-                        clean.push(mem::take(&mut current));
-                    }
+                ' ' | ',' | '+' if !current.is_empty() => {
+                    clean.push(mem::take(&mut current));
                 }
                 '-' => current.push('_'),
                 c if c.is_alphanumeric() || c == '_' => current.push(c),

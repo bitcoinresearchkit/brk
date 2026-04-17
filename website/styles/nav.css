@@ -29,7 +29,8 @@ nav {
     }
 
     a:visited {
-      color: transparent;
+      font-style: italic;
+      /*color: var(--orange);*/
     }
 
     ul {

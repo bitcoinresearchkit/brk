@@ -9,7 +9,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, SaturatingAdd};
 
-use crate::StoredF64;
+use crate::{StoredF64, StoredU64};
 
 use super::{Bitcoin, Cents, Dollars, Height};
 
@@ -204,35 +204,34 @@ impl Sum for Sats {
 
 impl Div<Dollars> for Sats {
     type Output = Self;
+    #[allow(clippy::suspicious_arithmetic_impl, reason = "cents-precision upscale before division")]
     fn div(self, rhs: Dollars) -> Self::Output {
         let raw_cents = u64::from(Cents::from(rhs));
-        if raw_cents != 0 {
-            Self(self.0 * 100 / raw_cents)
-        } else {
-            Self::MAX
-        }
+        (self.0 * 100)
+            .checked_div(raw_cents)
+            .map(Self)
+            .unwrap_or(Self::MAX)
     }
 }
 
 impl Div<Sats> for Sats {
     type Output = Self;
     fn div(self, rhs: Sats) -> Self::Output {
-        if rhs.0 == 0 {
-            Self(0)
-        } else {
-            Self(self.0 / rhs.0)
-        }
+        Self(self.0.checked_div(rhs.0).unwrap_or(0))
     }
 }
 
 impl Div<usize> for Sats {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
-        if rhs == 0 {
-            Self::ZERO
-        } else {
-            Self(self.0 / rhs as u64)
-        }
+        Self(self.0.checked_div(rhs as u64).unwrap_or(0))
+    }
+}
+
+impl Div<StoredU64> for Sats {
+    type Output = Self;
+    fn div(self, rhs: StoredU64) -> Self::Output {
+        Self(self.0.checked_div(u64::from(rhs)).unwrap_or(0))
     }
 }
 
