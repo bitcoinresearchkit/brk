@@ -132,7 +132,7 @@ pub use profitability::ProfitabilityMetrics;
 pub use realized::{
     AdjustedSopr, RealizedCore, RealizedFull, RealizedFullAccum, RealizedLike, RealizedMinimal,
 };
-pub use relative::{RelativeForAll, RelativeToAll, RelativeWithExtended};
+pub use relative::{RelativeForAll, RelativeWithExtended};
 pub use supply::{AvgAmountMetrics, SupplyBase, SupplyCore};
 pub use unrealized::{
     UnrealizedBasic, UnrealizedCore, UnrealizedFull, UnrealizedLike, UnrealizedMinimal,

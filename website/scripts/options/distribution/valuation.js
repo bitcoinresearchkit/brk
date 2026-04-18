@@ -92,11 +92,11 @@ export function createValuationSectionFull({ cohort, title }) {
             ],
           },
           {
-            name: "Share",
-            title: title("Invested Capital Profitability"),
+            name: "Composition",
+            title: title("Invested Capital Composition"),
             bottom: [
-              ...percentRatio({ pattern: tree.investedCapital.inProfit.toOwn, name: "In Profit", color: colors.profit }),
-              ...percentRatio({ pattern: tree.investedCapital.inLoss.toOwn, name: "In Loss", color: colors.loss }),
+              ...percentRatio({ pattern: tree.investedCapital.inProfit.share, name: "In Profit", color: colors.profit }),
+              ...percentRatio({ pattern: tree.investedCapital.inLoss.share, name: "In Loss", color: colors.loss }),
               priceLine({ number: 100, color: colors.default, style: 0, unit: Unit.percentage }),
               priceLine({ number: 50, unit: Unit.percentage }),
             ],

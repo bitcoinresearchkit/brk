@@ -15,6 +15,28 @@
   }
 
   --cube: 4.5rem;
+  --face-step: 0.033;
+
+  /* Cube face-color derivations, resolved once at the #explorer
+     level so .cube state changes (hover / selected) don't force
+     Safari to re-evaluate `oklch(from var …)` on every paint — a
+     known source of jank there. Each interaction state gets its own
+     set; the .cube rule below just swaps which set --face-right /
+     --face-left / --face-top / --face-bottom reference. */
+  --cube-neutral-right:  light-dark(oklch(from var(--light-gray) calc(l - var(--face-step) * 2) c h), var(--dark-gray));
+  --cube-neutral-left:   light-dark(oklch(from var(--light-gray) calc(l - var(--face-step))     c h), oklch(from var(--dark-gray)  calc(l + var(--face-step))     c h));
+  --cube-neutral-top:    light-dark(var(--light-gray),                                                oklch(from var(--dark-gray)  calc(l + var(--face-step) * 2) c h));
+  --cube-neutral-bottom: oklch(from var(--border-color)     calc(l - var(--face-step) * 3) c h);
+
+  --cube-hover-right:    light-dark(oklch(from var(--dark-gray)  calc(l - var(--face-step) * 2) c h), var(--light-gray));
+  --cube-hover-left:     light-dark(oklch(from var(--dark-gray)  calc(l - var(--face-step))     c h), oklch(from var(--light-gray) calc(l + var(--face-step))     c h));
+  --cube-hover-top:      light-dark(var(--dark-gray),                                                 oklch(from var(--light-gray) calc(l + var(--face-step) * 2) c h));
+  --cube-hover-bottom:   oklch(from var(--inv-border-color) calc(l - var(--face-step) * 3) c h);
+
+  --cube-selected-right:  light-dark(oklch(from var(--orange) calc(l - var(--face-step) * 2) c h), var(--orange));
+  --cube-selected-left:   light-dark(oklch(from var(--orange) calc(l - var(--face-step))     c h), oklch(from var(--orange) calc(l + var(--face-step))     c h));
+  --cube-selected-top:    light-dark(var(--orange),                                                oklch(from var(--orange) calc(l + var(--face-step) * 2) c h));
+  --cube-selected-bottom: oklch(from var(--orange) calc(l - var(--face-step) * 3) c h);
 
   > * {
     padding: 0 var(--main-padding);
@@ -48,7 +70,6 @@
       margin-top: calc(var(--cube) * -0.25);
 
       @media (max-width: 767px) {
-        --min-gap: 0rem;
         --max-gap: calc(var(--cube) * 1.5);
         flex-direction: row-reverse;
         height: 11.5rem;
@@ -72,177 +93,205 @@
       --block-gap: calc(
         var(--min-gap) + var(--t) * (var(--max-gap) - var(--min-gap))
       );
-      --empty-alpha: 0.3;
-      --iso-scale: 0.866;
+      /* Iso projection constants. Changing these reshapes the whole
+         cube — they drive the per-face transforms below. */
+      --iso-scale: cos(30deg);
       --ox: 0.3;
       --oy: 0.6;
-      --fill-pct: calc(var(--fill, 1) * 100%);
-      --face-step: 0.033;
-      --face-right-color: light-dark(
-        oklch(from var(--face-color) calc(l - var(--face-step) * 2) c h),
-        var(--face-color)
-      );
-      --face-left-color: light-dark(
-        oklch(from var(--face-color) calc(l - var(--face-step)) c h),
-        oklch(from var(--face-color) calc(l + var(--face-step)) c h)
-      );
-      --face-top-color: light-dark(
-        var(--face-color),
-        oklch(from var(--face-color) calc(l + var(--face-step) * 2) c h)
-      );
+      --empty-alpha: 0.4;
+
+      /* Face colors reference the precomputed sets on #explorer
+         (see top of file). Hover / selected rules just switch which
+         set each --face-* points at. */
+      --face-right:  var(--cube-neutral-right);
+      --face-left:   var(--cube-neutral-left);
+      --face-top:    var(--cube-neutral-top);
+      --face-bottom: var(--cube-neutral-bottom);
+
+      /* Fill-driven state. --liquid-y is the liquid's vertical scale;
+         --glass-y the glass-above-liquid's. --is-full / --is-empty
+         round to 0 or 1 and drive opacity so scaled-to-0 faces
+         vanish cleanly (no hairline AA seams). */
+      --liquid-y: calc(var(--iso-scale) * var(--fill));
+      --glass-y: calc(var(--iso-scale) * (1 - var(--fill)));
+      --is-full: round(down, calc(var(--fill) + 0.0025), 1);
+      --is-empty: round(down, calc(1.0025 - var(--fill)), 1);
+
       margin-left: calc(var(--cube) * -0.25);
       flex-shrink: 0;
       position: relative;
       cursor: pointer;
       width: var(--cube);
       height: var(--cube);
-      font-size: var(--font-size-sm);
-      line-height: var(--line-height-sm);
-      --face-color: var(--border-color);
+      /* .cube is an <a>; reset the global anchor styles in
+         elements.css that would clip the iso silhouette
+         (overflow:hidden) and underline the empty link. */
+      overflow: visible;
+      text-decoration: none;
+      --state-ease: 50ms cubic-bezier(0.4, 0, 0.2, 1);
       color: var(--color);
-      transition-property: color, background-color;
-      transition-duration: 50ms;
-      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition: color var(--state-ease);
       user-select: none;
       pointer-events: none;
 
       &:hover {
-        --face-color: var(--inv-border-color);
         color: var(--background-color);
+        --face-right:  var(--cube-hover-right);
+        --face-left:   var(--cube-hover-left);
+        --face-top:    var(--cube-hover-top);
+        --face-bottom: var(--cube-hover-bottom);
       }
 
       &:active,
       &.selected {
         color: var(--black);
-        --face-color: var(--orange);
+        --face-right:  var(--cube-selected-right);
+        --face-left:   var(--cube-selected-left);
+        --face-top:    var(--cube-selected-top);
+        --face-bottom: var(--cube-selected-bottom);
       }
 
-      > * {
+      /* Skeleton state (cube painted but data is stale while a new
+         chunk loads): hide text AND the pool logo. Using visibility
+         rather than color:transparent so the raw <img> logo hides too. */
+      &.skeleton .face-text { visibility: hidden; }
+
+      /* Shared face-transform template. Each face div sets --orient,
+         --x, --y, --sx, --sy and its role (liquid/glass/face-text)
+         supplies --y-offset. Faces extend outside .cube's layout box
+         — the iso silhouette spans ~2·iso·cube × 2·cube, offset into
+         what would be the next cube's space. Clicks land only on the
+         transformed face rectangles, not the .cube's empty corners. */
+      .face {
+        position: absolute;
+        transform-origin: 0 0;
+        box-sizing: border-box;
+        width: var(--cube);
+        height: var(--cube);
+        transform: var(--orient)
+          translate(calc(var(--cube) * var(--x)), calc(var(--cube) * var(--y)))
+          scale(var(--sx, 1), var(--sy));
         pointer-events: auto;
       }
 
-      .face {
-        transform-origin: 0 0;
-        position: absolute;
-        width: var(--cube);
-        height: var(--cube);
+      /* Roles:
+           .liquid  opaque liquid (scales with fill)
+           .glass  translucent glass shell
+           .face-text  text overlay spanning the full rhombus
+         will-change is on the painted roles only (not .face-text,
+         whose background never changes) so each liquid/glass gets its
+         own compositor layer for snappy hover/select repaints. */
+      .liquid, .glass {
+        will-change: background-color;
+        transition: background-color var(--state-ease);
       }
+      .liquid {
+        background: var(--fc);
+        opacity: calc(1 - var(--is-empty));
+        --sy: var(--liquid-y);
+        --y-offset: var(--glass-y);
+      }
+      .glass {
+        background: oklch(from var(--fc) l c h / var(--empty-alpha));
+        --sy: var(--glass-y);
+        --y-offset: 0;
+      }
+      .glass.top { opacity: calc(1 - var(--is-full)); }
 
-      .right,
-      .left,
-      .top {
+      .face-text {
+        --sy: var(--iso-scale);
+        --y-offset: 0;
+        pointer-events: none;
         padding: 0.1rem;
-        backdrop-filter: blur(4px);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-xs);
+        font-weight: 450;
       }
-
-      .right,
-      .left,
-      .rear-right,
-      .rear-left {
-        background: linear-gradient(
-          to top,
-          var(--fc) var(--fill-pct),
-          oklch(from var(--fc) l c h / var(--empty-alpha)) var(--fill-pct)
-        );
-      }
-
-      .bottom {
-        background-color: var(--face-color);
-        transform: rotate(30deg) skew(-30deg)
-          translate(
-            calc(var(--cube) * (var(--ox) + 1 + var(--oy) / var(--iso-scale))),
-            calc(var(--cube) * var(--oy))
-          )
-          scaleY(var(--iso-scale));
-      }
-
-      .rear-right {
-        --fc: var(--face-left-color);
-        transform: rotate(30deg) skewX(30deg)
-          translate(
-            calc(var(--cube) * (var(--ox) + 1)),
-            calc(var(--cube) * (var(--oy) - var(--iso-scale)))
-          )
-          scaleY(var(--iso-scale));
-      }
-
-      .rear-left {
-        --fc: var(--face-top-color);
-        transform: rotate(-30deg) skewX(-30deg)
-          translate(
-            calc(var(--cube) * (var(--ox) + 1)),
-            calc(var(--cube) * (var(--ox) * var(--iso-scale) + var(--oy)))
-          )
-          scale(-1, var(--iso-scale));
-      }
-
-      .inner-top {
-        background-color: var(--face-top-color);
-        transform: rotate(30deg) skew(-30deg)
-          translate(
-            calc(var(--cube) * (var(--ox) + 1 + var(--oy) / var(--iso-scale) - var(--fill, 1))),
-            calc(var(--cube) * (var(--oy) - var(--iso-scale) * var(--fill, 1)))
-          )
-          scaleY(var(--iso-scale));
-      }
-
-      .right {
-        --fc: var(--face-right-color);
-        transform: rotate(-30deg) skewX(-30deg)
-          translate(
-            calc(var(--cube) * (var(--ox) + 1)),
-            calc(var(--cube) * ((var(--ox) + 1) * var(--iso-scale) + var(--oy)))
-          )
-          scaleY(var(--iso-scale));
-      }
-
-      .top {
-        --is-full: round(down, calc(var(--fill, 1) + 0.0025), 1);
-        background-color: oklch(
-          from var(--face-top-color) l c h /
-            calc(var(--empty-alpha) + var(--is-full) * (1 - var(--empty-alpha)))
-        );
-        transform: rotate(30deg) skew(-30deg)
-          translate(
-            calc(var(--cube) * (var(--ox) + var(--oy) / var(--iso-scale))),
-            calc(var(--cube) * (var(--oy) - var(--iso-scale)))
-          )
-          scaleY(var(--iso-scale));
-        justify-content: center;
+      .face-text.top,
+      .face-text.right {
+        display: flex;
+        flex-direction: column;
         align-items: center;
         text-align: center;
-        display: flex;
-        font-weight: 900;
-        text-transform: uppercase;
-        font-size: var(--font-size-xs);
-        line-height: var(--line-height-xs);
       }
-
-      .left {
-        --fc: var(--face-left-color);
-        font-size: var(--font-size-xs);
-        line-height: var(--line-height-xs);
-        transform: rotate(30deg) skewX(30deg)
-          translate(
-            calc(var(--cube) * var(--ox)),
-            calc(var(--cube) * var(--oy))
-          )
-          scaleY(var(--iso-scale));
+      .face-text.top   { justify-content: center; text-transform: uppercase; }
+      .face-text.right { justify-content: space-between; }
+      .face-text p { margin: 0; }
+      .face-text .height {
+        font-size: var(--font-size-sm);
+        font-weight: normal;
       }
-
-      &.skeleton {
-        pointer-events: none;
-        .face {
-          color: transparent;
-        }
-      }
-
-      .fees {
+      .face-text .fees {
         display: flex;
         flex-direction: column;
         height: 100%;
         justify-content: center;
         align-items: center;
+      }
+      /* Pool line: raw (un-tinted) logo + miner name, ellipsis-clipped. */
+      .face-text .pool {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.1em;
+        width: 100%;
+      }
+      .face-text .pool img {
+        width: 1.25em;
+        height: 1.25em;
+        flex-shrink: 0;
+      }
+      .face-text .pool span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1;
+      }
+
+      /* Per-face geometry. The 3 unique orientations each cover two
+         faces (top+bottom share the iso-squash orient; right/left and
+         their rear twins share the side-face orients). --sy is only
+         shared on the top/bottom pair (always full iso rhombus);
+         side faces inherit --sy from their role (liquid/glass/face-text). */
+      .top, .bottom {
+        --orient: rotate(30deg) skewX(-30deg);
+        --sy: var(--iso-scale);
+      }
+      .right, .rear-left { --orient: rotate(-30deg) skewX(-30deg); }
+      .left, .rear-right { --orient: rotate(30deg) skewX(30deg); }
+
+      .bottom {
+        --fc: var(--face-bottom);
+        --x: calc(var(--ox) + 1 + var(--oy) / var(--iso-scale));
+        --y: var(--oy);
+      }
+      .top {
+        --fc: var(--face-top);
+        --x: calc(var(--ox) + var(--top-x-shift, 0) + var(--oy) / var(--iso-scale));
+        --y: calc(var(--oy) - var(--iso-scale) + var(--y-offset));
+      }
+      .liquid.top { --top-x-shift: calc(1 - var(--fill)); }
+      .right {
+        --fc: var(--face-right);
+        --x: calc(var(--ox) + 1);
+        --y: calc((var(--ox) + 1) * var(--iso-scale) + var(--oy) + var(--y-offset));
+      }
+      .left {
+        --fc: var(--face-left);
+        --x: var(--ox);
+        --y: calc(var(--oy) + var(--y-offset));
+      }
+      .rear-right {
+        --fc: var(--face-left);
+        --x: calc(var(--ox) + 1);
+        --y: calc(var(--oy) - var(--iso-scale) + var(--y-offset));
+      }
+      .rear-left {
+        --fc: var(--face-top);
+        --sx: -1;
+        --x: calc(var(--ox) + 1);
+        --y: calc(var(--ox) * var(--iso-scale) + var(--oy) + var(--y-offset));
       }
 
       & + & {

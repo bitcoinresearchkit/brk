@@ -560,6 +560,15 @@ impl Vecs {
             exit,
         )?;
 
+        let all_supply_sats = self
+            .utxo_cohorts
+            .all
+            .metrics
+            .supply
+            .total
+            .sats
+            .height
+            .read_only_clone();
         let all_utxo_count = self
             .utxo_cohorts
             .all
@@ -568,8 +577,13 @@ impl Vecs {
             .unspent_count
             .height
             .read_only_clone();
-        self.addr_cohorts
-            .compute_rest_part2(prices, starting_indexes, &all_utxo_count, exit)?;
+        self.addr_cohorts.compute_rest_part2(
+            prices,
+            starting_indexes,
+            &all_supply_sats,
+            &all_utxo_count,
+            exit,
+        )?;
 
         let exit = exit.clone();
         self.db.run_bg(move |db| {

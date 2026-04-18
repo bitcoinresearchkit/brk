@@ -1,22 +1,26 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPointsSigned32, Height, Indexes, Sats, SatsSigned, Version};
-use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
+use brk_types::{BasisPoints16, BasisPointsSigned32, Height, Indexes, Sats, SatsSigned, Version};
+use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
     distribution::state::{CohortState, CostBasisOps, RealizedOps},
     prices,
 };
 
-use crate::internal::{AmountPerBlock, LazyRollingDeltasFromHeight};
+use crate::internal::{
+    AmountPerBlock, LazyRollingDeltasFromHeight, PercentPerBlock, RatioSatsBp16,
+};
 
 use crate::distribution::metrics::ImportConfig;
 
-/// Base supply metrics: total supply only (2 stored vecs).
+/// Base supply metrics: total supply + dominance (share of circulating).
 #[derive(Traversable)]
 pub struct SupplyBase<M: StorageMode = Rw> {
     pub total: AmountPerBlock<M>,
     pub delta: LazyRollingDeltasFromHeight<Sats, SatsSigned, BasisPointsSigned32>,
+    #[traversable(rename = "dominance")]
+    pub dominance: PercentPerBlock<BasisPoints16, M>,
 }
 
 impl SupplyBase {
@@ -31,9 +35,12 @@ impl SupplyBase {
             cfg.indexes,
         );
 
+        let dominance = cfg.import("supply_dominance", Version::ZERO)?;
+
         Ok(Self {
             total: supply,
             delta,
+            dominance,
         })
     }
 
@@ -50,6 +57,7 @@ impl SupplyBase {
         vec![
             &mut self.total.sats.height as &mut dyn AnyStoredVec,
             &mut self.total.cents.height,
+            &mut self.dominance.bps.height,
         ]
     }
 
@@ -60,6 +68,21 @@ impl SupplyBase {
         exit: &Exit,
     ) -> Result<()> {
         self.total.compute(prices, max_from, exit)
+    }
+
+    pub(crate) fn compute_dominance(
+        &mut self,
+        max_from: Height,
+        all_supply_sats: &impl ReadableVec<Height, Sats>,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.dominance
+            .compute_binary::<Sats, Sats, RatioSatsBp16>(
+                max_from,
+                &self.total.sats.height,
+                all_supply_sats,
+                exit,
+            )
     }
 
     pub(crate) fn compute_from_stateful(

@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::{Cents, Height, Indexes, StoredU64, Version};
+use brk_types::{Cents, Height, Indexes, Sats, StoredU64, Version};
 use vecdb::{Exit, ReadableVec};
 
 use crate::prices;
@@ -62,6 +62,7 @@ pub trait CohortVecs: DynCohortVecs {
         &mut self,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
+        all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,
         exit: &Exit,
     ) -> Result<()>;

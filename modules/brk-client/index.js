@@ -2717,7 +2717,7 @@ function create_1m1w1y2y4yAllPattern(client, acc) {
  * @property {BaseDeltaPattern} addrCount
  * @property {SpendingSpentUnspentPattern} outputs
  * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {DeltaTotalPattern} supply
+ * @property {DeltaDominanceTotalPattern} supply
  * @property {NuplPattern} unrealized
  */
 
@@ -2733,7 +2733,7 @@ function createActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, acc) {
     addrCount: createBaseDeltaPattern(client, _m(acc, 'addr_count')),
     outputs: createSpendingSpentUnspentPattern(client, acc),
     realized: createCapLossMvrvPriceProfitPattern(client, acc),
-    supply: createDeltaTotalPattern(client, _m(acc, 'supply')),
+    supply: createDeltaDominanceTotalPattern(client, _m(acc, 'supply')),
     unrealized: createNuplPattern(client, _m(acc, 'nupl')),
   };
 }
@@ -2793,33 +2793,6 @@ function createBpsCentsPercentilesRatioSatsUsdPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} BtcCentsSatsToUsdPattern3
- * @property {SeriesPattern1<Bitcoin>} btc
- * @property {SeriesPattern1<Cents>} cents
- * @property {SeriesPattern1<Sats>} sats
- * @property {BpsPercentRatioPattern2} toCirculating
- * @property {BpsPercentRatioPattern2} toOwn
- * @property {SeriesPattern1<Dollars>} usd
- */
-
-/**
- * Create a BtcCentsSatsToUsdPattern3 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated series name
- * @returns {BtcCentsSatsToUsdPattern3}
- */
-function createBtcCentsSatsToUsdPattern3(client, acc) {
-  return {
-    btc: createSeriesPattern1(client, acc),
-    cents: createSeriesPattern1(client, _m(acc, 'cents')),
-    sats: createSeriesPattern1(client, _m(acc, 'sats')),
-    toCirculating: createBpsPercentRatioPattern2(client, _m(acc, 'to_circulating')),
-    toOwn: createBpsPercentRatioPattern2(client, _m(acc, 'to_own')),
-    usd: createSeriesPattern1(client, _m(acc, 'usd')),
-  };
-}
-
-/**
  * @typedef {Object} CentsNegativeToUsdPattern2
  * @property {SeriesPattern1<Cents>} cents
  * @property {SeriesPattern1<Dollars>} negative
@@ -2847,55 +2820,55 @@ function createCentsNegativeToUsdPattern2(client, acc) {
 }
 
 /**
- * @typedef {Object} DeltaHalfInToTotalPattern
+ * @typedef {Object} DeltaDominanceHalfInTotalPattern2
  * @property {AbsoluteRatePattern} delta
+ * @property {BpsPercentRatioPattern2} dominance
  * @property {BtcCentsSatsUsdPattern} half
- * @property {BtcCentsSatsToUsdPattern} inLoss
- * @property {BtcCentsSatsToUsdPattern} inProfit
- * @property {BpsPercentRatioPattern2} toCirculating
+ * @property {BtcCentsSatsShareUsdPattern} inLoss
+ * @property {BtcCentsSatsShareUsdPattern} inProfit
  * @property {BtcCentsSatsUsdPattern} total
  */
 
 /**
- * Create a DeltaHalfInToTotalPattern pattern node
+ * Create a DeltaDominanceHalfInTotalPattern2 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated series name
- * @returns {DeltaHalfInToTotalPattern}
+ * @returns {DeltaDominanceHalfInTotalPattern2}
  */
-function createDeltaHalfInToTotalPattern(client, acc) {
+function createDeltaDominanceHalfInTotalPattern2(client, acc) {
   return {
     delta: createAbsoluteRatePattern(client, _m(acc, 'delta')),
+    dominance: createBpsPercentRatioPattern2(client, _m(acc, 'dominance')),
     half: createBtcCentsSatsUsdPattern(client, _m(acc, 'half')),
-    inLoss: createBtcCentsSatsToUsdPattern(client, _m(acc, 'in_loss')),
-    inProfit: createBtcCentsSatsToUsdPattern(client, _m(acc, 'in_profit')),
-    toCirculating: createBpsPercentRatioPattern2(client, _m(acc, 'to_circulating')),
+    inLoss: createBtcCentsSatsShareUsdPattern(client, _m(acc, 'in_loss')),
+    inProfit: createBtcCentsSatsShareUsdPattern(client, _m(acc, 'in_profit')),
     total: createBtcCentsSatsUsdPattern(client, acc),
   };
 }
 
 /**
- * @typedef {Object} DeltaHalfInToTotalPattern2
+ * @typedef {Object} DeltaDominanceHalfInTotalPattern
  * @property {AbsoluteRatePattern} delta
+ * @property {BpsPercentRatioPattern2} dominance
  * @property {BtcCentsSatsUsdPattern} half
- * @property {BtcCentsSatsToUsdPattern3} inLoss
- * @property {BtcCentsSatsToUsdPattern3} inProfit
- * @property {BpsPercentRatioPattern2} toCirculating
+ * @property {BtcCentsSatsUsdPattern} inLoss
+ * @property {BtcCentsSatsUsdPattern} inProfit
  * @property {BtcCentsSatsUsdPattern} total
  */
 
 /**
- * Create a DeltaHalfInToTotalPattern2 pattern node
+ * Create a DeltaDominanceHalfInTotalPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated series name
- * @returns {DeltaHalfInToTotalPattern2}
+ * @returns {DeltaDominanceHalfInTotalPattern}
  */
-function createDeltaHalfInToTotalPattern2(client, acc) {
+function createDeltaDominanceHalfInTotalPattern(client, acc) {
   return {
     delta: createAbsoluteRatePattern(client, _m(acc, 'delta')),
+    dominance: createBpsPercentRatioPattern2(client, _m(acc, 'dominance')),
     half: createBtcCentsSatsUsdPattern(client, _m(acc, 'half')),
-    inLoss: createBtcCentsSatsToUsdPattern3(client, _m(acc, 'in_loss')),
-    inProfit: createBtcCentsSatsToUsdPattern3(client, _m(acc, 'in_profit')),
-    toCirculating: createBpsPercentRatioPattern2(client, _m(acc, 'to_circulating')),
+    inLoss: createBtcCentsSatsUsdPattern(client, _m(acc, 'in_loss')),
+    inProfit: createBtcCentsSatsUsdPattern(client, _m(acc, 'in_profit')),
     total: createBtcCentsSatsUsdPattern(client, acc),
   };
 }
@@ -2955,7 +2928,7 @@ function createActiveBidirectionalReactivatedReceivingSendingPattern(client, acc
  * @property {CoindaysTransferPattern} activity
  * @property {SpendingSpentUnspentPattern} outputs
  * @property {CapLossMvrvNetPriceProfitSoprPattern} realized
- * @property {DeltaHalfInToTotalPattern} supply
+ * @property {DeltaDominanceHalfInTotalPattern} supply
  * @property {LossNetNuplProfitPattern} unrealized
  */
 
@@ -2970,7 +2943,7 @@ function createActivityOutputsRealizedSupplyUnrealizedPattern(client, acc) {
     activity: createCoindaysTransferPattern(client, acc),
     outputs: createSpendingSpentUnspentPattern(client, acc),
     realized: createCapLossMvrvNetPriceProfitSoprPattern(client, acc),
-    supply: createDeltaHalfInToTotalPattern(client, _m(acc, 'supply')),
+    supply: createDeltaDominanceHalfInTotalPattern(client, _m(acc, 'supply')),
     unrealized: createLossNetNuplProfitPattern(client, acc),
   };
 }
@@ -2980,7 +2953,7 @@ function createActivityOutputsRealizedSupplyUnrealizedPattern(client, acc) {
  * @property {TransferPattern} activity
  * @property {SpendingSpentUnspentPattern} outputs
  * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {DeltaHalfInTotalPattern2} supply
+ * @property {DeltaDominanceHalfInTotalPattern} supply
  * @property {LossNuplProfitPattern} unrealized
  */
 
@@ -2995,7 +2968,7 @@ function createActivityOutputsRealizedSupplyUnrealizedPattern3(client, acc) {
     activity: createTransferPattern(client, _m(acc, 'transfer_volume')),
     outputs: createSpendingSpentUnspentPattern(client, acc),
     realized: createCapLossMvrvPriceProfitPattern(client, acc),
-    supply: createDeltaHalfInTotalPattern2(client, _m(acc, 'supply')),
+    supply: createDeltaDominanceHalfInTotalPattern(client, _m(acc, 'supply')),
     unrealized: createLossNuplProfitPattern(client, acc),
   };
 }
@@ -3005,7 +2978,7 @@ function createActivityOutputsRealizedSupplyUnrealizedPattern3(client, acc) {
  * @property {TransferPattern} activity
  * @property {SpendingSpentUnspentPattern} outputs
  * @property {CapLossMvrvPriceProfitPattern} realized
- * @property {DeltaTotalPattern} supply
+ * @property {DeltaDominanceTotalPattern} supply
  * @property {NuplPattern} unrealized
  */
 
@@ -3020,7 +2993,7 @@ function createActivityOutputsRealizedSupplyUnrealizedPattern2(client, acc) {
     activity: createTransferPattern(client, _m(acc, 'transfer_volume')),
     outputs: createSpendingSpentUnspentPattern(client, acc),
     realized: createCapLossMvrvPriceProfitPattern(client, acc),
-    supply: createDeltaTotalPattern(client, _m(acc, 'supply')),
+    supply: createDeltaDominanceTotalPattern(client, _m(acc, 'supply')),
     unrealized: createNuplPattern(client, _m(acc, 'nupl')),
   };
 }
@@ -3101,51 +3074,26 @@ function createBtcCentsDeltaSatsUsdPattern(client, acc) {
 }
 
 /**
- * @typedef {Object} BtcCentsSatsToUsdPattern
+ * @typedef {Object} BtcCentsSatsShareUsdPattern
  * @property {SeriesPattern1<Bitcoin>} btc
  * @property {SeriesPattern1<Cents>} cents
  * @property {SeriesPattern1<Sats>} sats
- * @property {BpsPercentRatioPattern2} toCirculating
+ * @property {BpsPercentRatioPattern2} share
  * @property {SeriesPattern1<Dollars>} usd
  */
 
 /**
- * Create a BtcCentsSatsToUsdPattern pattern node
+ * Create a BtcCentsSatsShareUsdPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated series name
- * @returns {BtcCentsSatsToUsdPattern}
+ * @returns {BtcCentsSatsShareUsdPattern}
  */
-function createBtcCentsSatsToUsdPattern(client, acc) {
+function createBtcCentsSatsShareUsdPattern(client, acc) {
   return {
     btc: createSeriesPattern1(client, acc),
     cents: createSeriesPattern1(client, _m(acc, 'cents')),
     sats: createSeriesPattern1(client, _m(acc, 'sats')),
-    toCirculating: createBpsPercentRatioPattern2(client, _m(acc, 'to_circulating')),
-    usd: createSeriesPattern1(client, _m(acc, 'usd')),
-  };
-}
-
-/**
- * @typedef {Object} BtcCentsSatsToUsdPattern2
- * @property {SeriesPattern1<Bitcoin>} btc
- * @property {SeriesPattern1<Cents>} cents
- * @property {SeriesPattern1<Sats>} sats
- * @property {BpsPercentRatioPattern2} toOwn
- * @property {SeriesPattern1<Dollars>} usd
- */
-
-/**
- * Create a BtcCentsSatsToUsdPattern2 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated series name
- * @returns {BtcCentsSatsToUsdPattern2}
- */
-function createBtcCentsSatsToUsdPattern2(client, acc) {
-  return {
-    btc: createSeriesPattern1(client, acc),
-    cents: createSeriesPattern1(client, _m(acc, 'cents')),
-    sats: createSeriesPattern1(client, _m(acc, 'sats')),
-    toOwn: createBpsPercentRatioPattern2(client, _m(acc, 'to_own')),
+    share: createBpsPercentRatioPattern2(client, _m(acc, 'share')),
     usd: createSeriesPattern1(client, _m(acc, 'usd')),
   };
 }
@@ -3197,31 +3145,6 @@ function createCentsToUsdPattern4(client, acc) {
     toOwnGrossPnl: createBpsPercentRatioPattern2(client, _m(acc, 'to_own_gross_pnl')),
     toOwnMcap: createBpsPercentRatioPattern2(client, _m(acc, 'to_own_mcap')),
     usd: createSeriesPattern1(client, acc),
-  };
-}
-
-/**
- * @typedef {Object} DeltaHalfInTotalPattern2
- * @property {AbsoluteRatePattern} delta
- * @property {BtcCentsSatsUsdPattern} half
- * @property {BtcCentsSatsUsdPattern} inLoss
- * @property {BtcCentsSatsUsdPattern} inProfit
- * @property {BtcCentsSatsUsdPattern} total
- */
-
-/**
- * Create a DeltaHalfInTotalPattern2 pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated series name
- * @returns {DeltaHalfInTotalPattern2}
- */
-function createDeltaHalfInTotalPattern2(client, acc) {
-  return {
-    delta: createAbsoluteRatePattern(client, _m(acc, 'delta')),
-    half: createBtcCentsSatsUsdPattern(client, _m(acc, 'half')),
-    inLoss: createBtcCentsSatsUsdPattern(client, _m(acc, 'in_loss')),
-    inProfit: createBtcCentsSatsUsdPattern(client, _m(acc, 'in_profit')),
-    total: createBtcCentsSatsUsdPattern(client, acc),
   };
 }
 
@@ -4029,6 +3952,27 @@ function createCumulativeRollingSumPattern(client, acc) {
 }
 
 /**
+ * @typedef {Object} DeltaDominanceTotalPattern
+ * @property {AbsoluteRatePattern} delta
+ * @property {BpsPercentRatioPattern2} dominance
+ * @property {BtcCentsSatsUsdPattern} total
+ */
+
+/**
+ * Create a DeltaDominanceTotalPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {DeltaDominanceTotalPattern}
+ */
+function createDeltaDominanceTotalPattern(client, acc) {
+  return {
+    delta: createAbsoluteRatePattern(client, _m(acc, 'delta')),
+    dominance: createBpsPercentRatioPattern2(client, _m(acc, 'dominance')),
+    total: createBtcCentsSatsUsdPattern(client, acc),
+  };
+}
+
+/**
  * @typedef {Object} GreedNetPainPattern
  * @property {CentsUsdPattern3} greedIndex
  * @property {CentsUsdPattern} net
@@ -4459,25 +4403,6 @@ function createCoindaysTransferPattern(client, acc) {
   return {
     coindaysDestroyed: createAverageBlockCumulativeSumPattern(client, _m(acc, 'coindays_destroyed')),
     transferVolume: createAverageBlockCumulativeInSumPattern(client, _m(acc, 'transfer_volume')),
-  };
-}
-
-/**
- * @typedef {Object} DeltaTotalPattern
- * @property {AbsoluteRatePattern} delta
- * @property {BtcCentsSatsUsdPattern} total
- */
-
-/**
- * Create a DeltaTotalPattern pattern node
- * @param {BrkClientBase} client
- * @param {string} acc - Accumulated series name
- * @returns {DeltaTotalPattern}
- */
-function createDeltaTotalPattern(client, acc) {
-  return {
-    delta: createAbsoluteRatePattern(client, _m(acc, 'delta')),
-    total: createBtcCentsSatsUsdPattern(client, acc),
   };
 }
 
@@ -6300,22 +6225,13 @@ function createTransferPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Utxo_All
- * @property {SeriesTree_Cohorts_Utxo_All_Supply} supply
+ * @property {DeltaDominanceHalfInTotalPattern2} supply
  * @property {SeriesTree_Cohorts_Utxo_All_Outputs} outputs
  * @property {SeriesTree_Cohorts_Utxo_All_Activity} activity
  * @property {SeriesTree_Cohorts_Utxo_All_Realized} realized
  * @property {SeriesTree_Cohorts_Utxo_All_CostBasis} costBasis
  * @property {SeriesTree_Cohorts_Utxo_All_Unrealized} unrealized
  * @property {InPattern} investedCapital
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Utxo_All_Supply
- * @property {BtcCentsSatsUsdPattern} total
- * @property {AbsoluteRatePattern} delta
- * @property {BtcCentsSatsUsdPattern} half
- * @property {BtcCentsSatsToUsdPattern2} inProfit
- * @property {BtcCentsSatsToUsdPattern2} inLoss
  */
 
 /**
@@ -6516,7 +6432,7 @@ function createTransferPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Utxo_Sth
- * @property {DeltaHalfInToTotalPattern2} supply
+ * @property {DeltaDominanceHalfInTotalPattern2} supply
  * @property {SpendingSpentUnspentPattern} outputs
  * @property {CoindaysCoinyearsDormancyTransferPattern} activity
  * @property {SeriesTree_Cohorts_Utxo_Sth_Realized} realized
@@ -6639,7 +6555,7 @@ function createTransferPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Utxo_Lth
- * @property {DeltaHalfInToTotalPattern2} supply
+ * @property {DeltaDominanceHalfInTotalPattern2} supply
  * @property {SpendingSpentUnspentPattern} outputs
  * @property {CoindaysCoinyearsDormancyTransferPattern} activity
  * @property {SeriesTree_Cohorts_Utxo_Lth_Realized} realized
@@ -9387,13 +9303,7 @@ class BrkClient extends BrkClientBase {
       cohorts: {
         utxo: {
           all: {
-            supply: {
-              total: createBtcCentsSatsUsdPattern(this, 'supply'),
-              delta: createAbsoluteRatePattern(this, 'supply_delta'),
-              half: createBtcCentsSatsUsdPattern(this, 'supply_half'),
-              inProfit: createBtcCentsSatsToUsdPattern2(this, 'supply_in_profit'),
-              inLoss: createBtcCentsSatsToUsdPattern2(this, 'supply_in_loss'),
-            },
+            supply: createDeltaDominanceHalfInTotalPattern2(this, 'supply'),
             outputs: {
               unspentCount: createBaseDeltaPattern(this, 'utxo_count'),
               spentCount: createAverageBlockCumulativeSumPattern2(this, 'spent_utxo_count'),
@@ -9547,7 +9457,7 @@ class BrkClient extends BrkClientBase {
             investedCapital: createInPattern(this, 'invested_capital_in'),
           },
           sth: {
-            supply: createDeltaHalfInToTotalPattern2(this, 'sth_supply'),
+            supply: createDeltaDominanceHalfInTotalPattern2(this, 'sth_supply'),
             outputs: createSpendingSpentUnspentPattern(this, 'sth'),
             activity: createCoindaysCoinyearsDormancyTransferPattern(this, 'sth'),
             realized: {
@@ -9647,7 +9557,7 @@ class BrkClient extends BrkClientBase {
             investedCapital: createInPattern(this, 'sth_invested_capital_in'),
           },
           lth: {
-            supply: createDeltaHalfInToTotalPattern2(this, 'lth_supply'),
+            supply: createDeltaDominanceHalfInTotalPattern2(this, 'lth_supply'),
             outputs: createSpendingSpentUnspentPattern(this, 'lth'),
             activity: createCoindaysCoinyearsDormancyTransferPattern(this, 'lth'),
             realized: {

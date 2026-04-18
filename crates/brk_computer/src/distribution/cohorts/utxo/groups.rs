@@ -660,7 +660,7 @@ impl UTXOCohorts<Rw> {
             Box::new(|| {
                 over_amount.par_iter_mut().try_for_each(|v| {
                     v.metrics
-                        .compute_rest_part2(prices, starting_indexes, au, exit)
+                        .compute_rest_part2(prices, starting_indexes, ss, au, exit)
                 })
             }),
             Box::new(|| {
@@ -678,19 +678,19 @@ impl UTXOCohorts<Rw> {
             Box::new(|| {
                 amount_range.par_iter_mut().try_for_each(|v| {
                     v.metrics
-                        .compute_rest_part2(prices, starting_indexes, au, exit)
+                        .compute_rest_part2(prices, starting_indexes, ss, au, exit)
                 })
             }),
             Box::new(|| {
                 under_amount.par_iter_mut().try_for_each(|v| {
                     v.metrics
-                        .compute_rest_part2(prices, starting_indexes, au, exit)
+                        .compute_rest_part2(prices, starting_indexes, ss, au, exit)
                 })
             }),
             Box::new(|| {
                 type_.par_iter_mut().try_for_each(|v| {
                     v.metrics
-                        .compute_rest_part2(prices, starting_indexes, au, exit)
+                        .compute_rest_part2(prices, starting_indexes, ss, au, exit)
                 })
             }),
         ];

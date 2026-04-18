@@ -1,14 +1,15 @@
 import { brk } from "../utils/client.js";
+import { createCube } from "./cube.js";
 import { createHeightElement, formatFeeRate } from "./render.js";
 
 const LOOKAHEAD = 15;
 
 /** @type {HTMLDivElement} */ let chainEl;
 /** @type {HTMLDivElement} */ let blocksEl;
-/** @type {HTMLDivElement | null} */ let selectedCube = null;
+/** @type {HTMLAnchorElement | null} */ let selectedCube = null;
 /** @type {IntersectionObserver} */ let olderObserver;
 /** @type {(block: BlockInfoV1) => void} */ let onSelect = () => {};
-/** @type {(cube: HTMLDivElement) => void} */ let onCubeClick = () => {};
+/** @type {(cube: HTMLAnchorElement) => void} */ let onCubeClick = () => {};
 
 /** @type {Map<BlockHash, BlockInfoV1>} */
 const blocksByHash = new Map();
@@ -21,7 +22,7 @@ let reachedTip = false;
 
 /**
  * @param {HTMLElement} parent
- * @param {{ onSelect: (block: BlockInfoV1) => void, onCubeClick: (cube: HTMLDivElement) => void }} callbacks
+ * @param {{ onSelect: (block: BlockInfoV1) => void, onCubeClick: (cube: HTMLAnchorElement) => void }} callbacks
  */
 export function initChain(parent, callbacks) {
   onSelect = callbacks.onSelect;
@@ -60,11 +61,11 @@ export function initChain(parent, callbacks) {
 function findCube(hashOrHeight) {
   if (hashOrHeight == null) {
     return reachedTip && newestHeight >= 0
-      ? /** @type {HTMLDivElement | null} */ (blocksEl.lastElementChild)
+      ? /** @type {HTMLAnchorElement | null} */ (blocksEl.lastElementChild)
       : null;
   }
   const attr = typeof hashOrHeight === "number" ? "height" : "hash";
-  return /** @type {HTMLDivElement | null} */ (
+  return /** @type {HTMLAnchorElement | null} */ (
     blocksEl.querySelector(`[data-${attr}="${hashOrHeight}"]`)
   );
 }
@@ -74,7 +75,7 @@ export function deselectCube() {
   selectedCube = null;
 }
 
-/** @param {HTMLDivElement} cube @param {{ scroll?: "smooth" | "instant", silent?: boolean }} [opts] */
+/** @param {HTMLAnchorElement} cube @param {{ scroll?: "smooth" | "instant", silent?: boolean }} [opts] */
 export function selectCube(cube, { scroll, silent } = {}) {
   const changed = cube !== selectedCube;
   if (changed) {
@@ -181,7 +182,7 @@ export async function goToCube(hashOrHeight, { silent } = {}) {
   } catch (e) {
     try { startHash = await loadInitial(null); } catch (_) { return; }
   }
-  selectCube(/** @type {HTMLDivElement} */ (findCube(startHash)), { scroll: "instant", silent });
+  selectCube(/** @type {HTMLAnchorElement} */ (findCube(startHash)), { scroll: "instant", silent });
 }
 
 export async function poll() {
@@ -223,78 +224,101 @@ async function loadNewer() {
   loadingNewer = false;
 }
 
+/** @param {string} name */
+const poolSlug = (name) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+/** @param {number} unixSec */
+function formatShortDate(unixSec) {
+  const d = new Date(unixSec * 1000);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+}
+
+/** @param {number} unixSec */
+function formatHHMM(unixSec) {
+  const d = new Date(unixSec * 1000);
+  return [String(d.getHours()).padStart(2, "0"), String(d.getMinutes()).padStart(2, "0")];
+}
+
+/** @param {string} text @param {string} [cls] */
+function span(text, cls) {
+  const s = document.createElement("span");
+  if (cls) s.classList.add(cls);
+  s.textContent = text;
+  return s;
+}
+
 /** @param {BlockInfoV1} block */
 function createBlockCube(block) {
-  const { cubeElement, leftFaceElement, rightFaceElement, topFaceElement } =
-    createCube();
-
+  const cubeElement = document.createElement("a");
+  cubeElement.classList.add("cube");
+  cubeElement.href = `/block/${block.id}`;
   cubeElement.dataset.hash = block.id;
   cubeElement.dataset.height = String(block.height);
   cubeElement.dataset.timestamp = String(block.timestamp);
-  cubeElement.style.setProperty("--fill", String(Math.min(1, block.weight / 3_990_000)));
+
+  const fill = Math.min(1, block.weight / 3_990_000);
+  const { topFace, rightFace, leftFace } = createCube(cubeElement, fill);
   blocksByHash.set(block.id, block);
-  cubeElement.addEventListener("click", () => onCubeClick(cubeElement));
+  // Intercept plain left-clicks for SPA nav; let modified clicks
+  // (cmd/ctrl/shift/middle) and right-click fall through so the
+  // anchor's native open-in-new-tab / context-menu behavior works.
+  cubeElement.addEventListener("click", (e) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    onCubeClick(cubeElement);
+  });
 
-  const heightEl = document.createElement("p");
-  heightEl.append(createHeightElement(block.height));
-  rightFaceElement.append(heightEl);
+  const extras = block.extras;
+  const minerName = extras ? extras.pool.name : "Unknown";
+  const medianFee = extras ? extras.medianFee : 0;
+  const feeRange  = extras ? extras.feeRange  : [0, 0, 0, 0, 0, 0, 0];
 
+  // Top: short date / HH:MM (colon dimmed).
+  const dateP = document.createElement("p");
+  dateP.textContent = formatShortDate(block.timestamp);
+  const [hh, mm] = formatHHMM(block.timestamp);
+  const timeP = document.createElement("p");
+  timeP.append(hh, span(":", "dim"), mm);
+  topFace.append(dateP, timeP);
+
+  // Right: block height / raw pool-logo + miner name.
+  const heightP = document.createElement("p");
+  heightP.classList.add("height");
+  heightP.append(createHeightElement(block.height));
+  const poolDiv = document.createElement("div");
+  poolDiv.classList.add("pool");
+  const logo = document.createElement("img");
+  logo.src = `/assets/pools/${poolSlug(minerName)}.svg`;
+  logo.alt = "";
+  logo.onerror = () => {
+    logo.onerror = null;
+    logo.src = "/assets/pools/default.svg";
+  };
+  const nameSpan = document.createElement("span");
+  nameSpan.textContent = minerName.replace(/\s+(Pool|USA)$/i, "").trim();
+  poolDiv.append(logo, nameSpan);
+  rightFace.append(heightP, poolDiv);
+
+  // Left: ~median / min-max / sat/vB fees stack.
   const feesEl = document.createElement("div");
   feesEl.classList.add("fees");
-  leftFaceElement.append(feesEl);
-  const extras = block.extras;
-  const medianFee = extras ? extras.medianFee : 0;
-  const feeRange = extras ? extras.feeRange : [0, 0, 0, 0, 0, 0, 0];
   const avg = document.createElement("p");
-  avg.innerHTML = `~${formatFeeRate(medianFee)}`;
-  feesEl.append(avg);
+  avg.textContent = `~${formatFeeRate(medianFee)}`;
   const range = document.createElement("p");
-  const min = document.createElement("span");
-  min.innerHTML = formatFeeRate(feeRange[0]);
-  const dash = document.createElement("span");
-  dash.classList.add("dim");
-  dash.innerHTML = `-`;
-  const max = document.createElement("span");
-  max.innerHTML = formatFeeRate(feeRange[6]);
-  range.append(min, dash, max);
-  feesEl.append(range);
+  range.append(
+    formatFeeRate(feeRange[0]),
+    span("-", "dim"),
+    formatFeeRate(feeRange[6]),
+  );
   const unit = document.createElement("p");
   unit.classList.add("dim");
-  unit.innerHTML = `sat/vB`;
-  feesEl.append(unit);
-
-  const miner = document.createElement("span");
-  miner.innerHTML = extras ? extras.pool.name : "Unknown";
-  topFaceElement.append(miner);
+  unit.textContent = "sat/vB";
+  feesEl.append(avg, range, unit);
+  leftFace.append(feesEl);
 
   return cubeElement;
-}
-
-function createCube() {
-  const cubeElement = document.createElement("div");
-  cubeElement.classList.add("cube");
-  const bottomElement = document.createElement("div");
-  bottomElement.classList.add("face", "bottom");
-  cubeElement.append(bottomElement);
-  const rearRightElement = document.createElement("div");
-  rearRightElement.classList.add("face", "rear-right");
-  cubeElement.append(rearRightElement);
-  const rearLeftElement = document.createElement("div");
-  rearLeftElement.classList.add("face", "rear-left");
-  cubeElement.append(rearLeftElement);
-  const innerTopElement = document.createElement("div");
-  innerTopElement.classList.add("face", "inner-top");
-  cubeElement.append(innerTopElement);
-  const rightFaceElement = document.createElement("div");
-  rightFaceElement.classList.add("face", "right");
-  cubeElement.append(rightFaceElement);
-  const leftFaceElement = document.createElement("div");
-  leftFaceElement.classList.add("face", "left");
-  cubeElement.append(leftFaceElement);
-  const topFaceElement = document.createElement("div");
-  topFaceElement.classList.add("face", "top");
-  cubeElement.append(topFaceElement);
-  return { cubeElement, leftFaceElement, rightFaceElement, topFaceElement };
 }
 
 /** @param {HTMLElement} cube */
@@ -305,14 +329,14 @@ function setGap(cube) {
   cube.style.setProperty("--dt", String(dt));
 }
 
-/** @param {HTMLDivElement} cube */
+/** @param {HTMLAnchorElement} cube */
 function prependCube(cube) {
   const next = /** @type {HTMLElement | null} */ (blocksEl.firstElementChild);
   blocksEl.prepend(cube);
   if (next) setGap(next);
 }
 
-/** @param {HTMLDivElement} cube */
+/** @param {HTMLAnchorElement} cube */
 function appendCube(cube) {
   blocksEl.append(cube);
   setGap(cube);

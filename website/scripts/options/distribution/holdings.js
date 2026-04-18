@@ -2,9 +2,9 @@
  * Holdings section builders
  *
  * Supply pattern capabilities by cohort type:
- * - DeltaHalfInRelTotalPattern2 (STH/LTH): inProfit + inLoss + toCirculating + toOwn
- * - SeriesTree_Cohorts_Utxo_All_Supply (All): inProfit + inLoss + toOwn (no toCirculating)
- * - DeltaHalfInRelTotalPattern (AgeRange/MaxAge/Epoch): inProfit + inLoss + toCirculating (no toOwn)
+ * - DeltaHalfInRelTotalPattern2 (STH/LTH): inProfit + inLoss + dominance + share
+ * - SeriesTree_Cohorts_Utxo_All_Supply (All): inProfit + inLoss + share (no dominance)
+ * - DeltaHalfInRelTotalPattern (AgeRange/MaxAge/Epoch): inProfit + inLoss + dominance (no share)
  * - DeltaHalfInTotalPattern2 (Type.*): inProfit + inLoss (no rel)
  * - DeltaHalfTotalPattern (Empty/UtxoAmount/AddrAmount): total + half only
  */
@@ -184,18 +184,18 @@ function profitabilityAmountChart(supply, title) {
 }
 
 /**
- * Share chart: in profit / in loss as % of own supply.
- * @param {{ inProfit: { toOwn: { percent: AnySeriesPattern, ratio: AnySeriesPattern } }, inLoss: { toOwn: { percent: AnySeriesPattern, ratio: AnySeriesPattern } } }} supply
+ * Composition chart: in profit / in loss as % of own supply.
+ * @param {{ inProfit: { share: { percent: AnySeriesPattern, ratio: AnySeriesPattern } }, inLoss: { share: { percent: AnySeriesPattern, ratio: AnySeriesPattern } } }} supply
  * @param {(name: string) => string} title
  * @returns {PartialChartOption}
  */
-function profitabilityShareChart(supply, title) {
+function profitabilityCompositionChart(supply, title) {
   return {
-    name: "Share",
-    title: title("Supply Profitability"),
+    name: "Composition",
+    title: title("Supply Profitability Composition"),
     bottom: [
-      ...percentRatio({ pattern: supply.inProfit.toOwn, name: "In Profit", color: colors.profit }),
-      ...percentRatio({ pattern: supply.inLoss.toOwn, name: "In Loss", color: colors.loss }),
+      ...percentRatio({ pattern: supply.inProfit.share, name: "In Profit", color: colors.profit }),
+      ...percentRatio({ pattern: supply.inLoss.share, name: "In Loss", color: colors.loss }),
       priceLine({ number: 100, color: colors.default, style: 0, unit: Unit.percentage }),
       priceLine({ number: 50, unit: Unit.percentage }),
     ],
@@ -204,19 +204,16 @@ function profitabilityShareChart(supply, title) {
 
 
 /**
- * @param {{ toCirculating: PercentRatioPattern, inProfit: { toCirculating: PercentRatioPattern }, inLoss: { toCirculating: PercentRatioPattern } }} supply
+ * @param {{ dominance: PercentRatioPattern }} supply
+ * @param {Color} color
  * @param {(name: string) => string} title
  * @returns {PartialChartOption}
  */
-function circulatingChart(supply, title) {
+function dominanceChart(supply, color, title) {
   return {
     name: "Dominance",
     title: title("Supply Dominance"),
-    bottom: [
-      ...percentRatio({ pattern: supply.toCirculating, name: "Total", color: colors.default }),
-      ...percentRatio({ pattern: supply.inProfit.toCirculating, name: "In Profit", color: colors.profit }),
-      ...percentRatio({ pattern: supply.inLoss.toCirculating, name: "In Loss", color: colors.loss }),
-    ],
+    bottom: percentRatio({ pattern: supply.dominance, name: "Dominance", color }),
   };
 }
 
@@ -294,6 +291,7 @@ export function createHoldingsSection({ cohort, title }) {
           title: title("Supply"),
           bottom: simpleSupplySeries(supply),
         },
+        dominanceChart(supply, cohort.color, title),
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
       ],
     },
@@ -320,7 +318,7 @@ export function createHoldingsSectionAll({ cohort, title }) {
           name: "Profitability",
           tree: [
             profitabilityAmountChart(supply, title),
-            profitabilityShareChart(supply, title),
+            profitabilityCompositionChart(supply, title),
           ],
         },
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
@@ -346,12 +344,12 @@ export function createHoldingsSectionWithRelative({ cohort, title }) {
           title: title("Supply"),
           bottom: simpleSupplySeries(supply),
         },
+        dominanceChart(supply, cohort.color, title),
         {
           name: "Profitability",
           tree: [
             profitabilityAmountChart(supply, title),
-            profitabilityShareChart(supply, title),
-            circulatingChart(supply, title),
+            profitabilityCompositionChart(supply, title),
           ],
         },
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
@@ -376,12 +374,10 @@ export function createHoldingsSectionWithOwnSupply({ cohort, title }) {
           title: title("Supply"),
           bottom: simpleSupplySeries(supply),
         },
+        dominanceChart(supply, cohort.color, title),
         {
           name: "Profitability",
-          tree: [
-            profitabilityAmountChart(supply, title),
-            circulatingChart(supply, title),
-          ],
+          tree: [profitabilityAmountChart(supply, title)],
         },
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
       ],
@@ -405,6 +401,7 @@ export function createHoldingsSectionWithProfitLoss({ cohort, title }) {
           title: title("Supply"),
           bottom: simpleSupplySeries(supply),
         },
+        dominanceChart(supply, cohort.color, title),
         {
           name: "Profitability",
           tree: [profitabilityAmountChart(supply, title)],
@@ -431,6 +428,7 @@ export function createHoldingsSectionAddress({ cohort, title }) {
           title: title("Supply"),
           bottom: simpleSupplySeries(supply),
         },
+        dominanceChart(supply, cohort.color, title),
         {
           name: "Profitability",
           tree: [profitabilityAmountChart(supply, title)],
@@ -458,6 +456,7 @@ export function createHoldingsSectionAddressAmount({ cohort, title }) {
           title: title("Supply"),
           bottom: simpleSupplySeries(supply),
         },
+        dominanceChart(supply, cohort.color, title),
         ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
       ],
     },
@@ -495,6 +494,22 @@ function groupedSupplyProfitLoss(list, all, title) {
   ];
 }
 
+/**
+ * @template {{ name: string, color: Color, tree: { supply: { dominance: PercentRatioPattern } } }} T
+ * @param {readonly T[]} list
+ * @param {(name: string) => string} title
+ * @returns {PartialChartOption}
+ */
+function groupedDominanceChart(list, title) {
+  return {
+    name: "Dominance",
+    title: title("Supply Dominance"),
+    bottom: flatMapCohorts(list, ({ name, color, tree }) =>
+      percentRatio({ pattern: tree.supply.dominance, name, color }),
+    ),
+  };
+}
+
 // ============================================================================
 // Grouped Cohort Holdings Sections
 // ============================================================================
@@ -509,6 +524,7 @@ export function createGroupedHoldingsSectionAddress({ list, all, title }) {
       name: "Supply",
       tree: [
         groupedSupplyTotal(list, all, title),
+        groupedDominanceChart(list, title),
         {
           name: "Profitability",
           tree: groupedSupplyProfitLoss(list, all, title),
@@ -563,6 +579,7 @@ export function createGroupedHoldingsSectionAddressAmount({ list, all, title }) 
       name: "Supply",
       tree: [
         groupedSupplyTotal(list, all, title),
+        groupedDominanceChart(list, title),
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },
@@ -590,6 +607,7 @@ export function createGroupedHoldingsSection({ list, all, title }) {
       name: "Supply",
       tree: [
         groupedSupplyTotal(list, all, title),
+        groupedDominanceChart(list, title),
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },
@@ -604,7 +622,11 @@ export function createGroupedHoldingsSectionWithProfitLoss({ list, all, title })
       name: "Supply",
       tree: [
         groupedSupplyTotal(list, all, title),
-        ...groupedSupplyProfitLoss(list, all, title),
+        groupedDominanceChart(list, title),
+        {
+          name: "Profitability",
+          tree: groupedSupplyProfitLoss(list, all, title),
+        },
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },
@@ -619,8 +641,11 @@ export function createGroupedHoldingsSectionWithOwnSupply({ list, all, title }) 
       name: "Supply",
       tree: [
         groupedSupplyTotal(list, all, title),
-        ...groupedSupplyProfitLoss(list, all, title),
-        { name: "% of Circulating", title: title("Supply (% of Circulating)"), bottom: flatMapCohorts(list, ({ name, color, tree }) => percentRatio({ pattern: tree.supply.toCirculating, name, color })) },
+        groupedDominanceChart(list, title),
+        {
+          name: "Profitability",
+          tree: groupedSupplyProfitLoss(list, all, title),
+        },
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },
@@ -629,7 +654,7 @@ export function createGroupedHoldingsSectionWithOwnSupply({ list, all, title }) 
 }
 
 /**
- * Grouped holdings with full relative series (toCirculating + toOwn)
+ * Grouped holdings with full relative series (dominance + share)
  * For: CohortFull, CohortLongTerm
  * @param {{ list: readonly (CohortFull | CohortLongTerm)[], all: CohortAll, title: (name: string) => string }} args
  * @returns {PartialOptionsTree}
@@ -640,9 +665,20 @@ export function createGroupedHoldingsSectionWithRelative({ list, all, title }) {
       name: "Supply",
       tree: [
         groupedSupplyTotal(list, all, title),
-        ...groupedSupplyProfitLoss(list, all, title),
-        { name: "% of Circulating", title: title("Supply (% of Circulating)"), bottom: flatMapCohorts(list, ({ name, color, tree }) => percentRatio({ pattern: tree.supply.toCirculating, name, color })) },
-        { name: "% of Own Supply", title: title("Supply (% of Own)"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.supply.inProfit.toOwn.percent, name, color, unit: Unit.percentage })) },
+        groupedDominanceChart(list, title),
+        {
+          name: "Profitability",
+          tree: [
+            ...groupedSupplyProfitLoss(list, all, title),
+            {
+              name: "Composition",
+              tree: [
+                { name: "In Profit", title: title("Supply In Profit Composition"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.supply.inProfit.share.percent, name, color, unit: Unit.percentage })) },
+                { name: "In Loss", title: title("Supply In Loss Composition"), bottom: mapCohortsWithAll(list, all, ({ name, color, tree }) => line({ series: tree.supply.inLoss.share.percent, name, color, unit: Unit.percentage })) },
+              ],
+            },
+          ],
+        },
         ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
       ],
     },

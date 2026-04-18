@@ -128,13 +128,15 @@ impl ExtendedCohortMetrics {
         self.unrealized
             .compute_sentiment(starting_indexes, &prices.spot.cents.height, exit)?;
 
+        self.supply
+            .compute_dominance(starting_indexes.height, all_supply_sats, exit)?;
+
         self.relative.compute(
             starting_indexes.height,
             &self.supply,
             &self.unrealized,
             &self.realized,
             height_to_market_cap,
-            all_supply_sats,
             &self.supply.total.usd.height,
             exit,
         )?;

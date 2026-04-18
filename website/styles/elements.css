@@ -256,7 +256,7 @@ summary {
     &,
     *,
     &::after {
-      color: var(--color) !important;
+      color: var(--color);
     }
   }
 
@@ -264,7 +264,7 @@ summary {
     &,
     *,
     &::after {
-      color: var(--orange) !important;
+      color: var(--orange);
     }
   }
 }

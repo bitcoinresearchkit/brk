@@ -2930,7 +2930,7 @@ class ActivityAddrOutputsRealizedSupplyUnrealizedPattern:
         self.addr_count: BaseDeltaPattern = BaseDeltaPattern(client, _m(acc, 'addr_count'))
         self.outputs: SpendingSpentUnspentPattern = SpendingSpentUnspentPattern(client, acc)
         self.realized: CapLossMvrvPriceProfitPattern = CapLossMvrvPriceProfitPattern(client, acc)
-        self.supply: DeltaTotalPattern = DeltaTotalPattern(client, _m(acc, 'supply'))
+        self.supply: DeltaDominanceTotalPattern = DeltaDominanceTotalPattern(client, _m(acc, 'supply'))
         self.unrealized: NuplPattern = NuplPattern(client, _m(acc, 'nupl'))
 
 class AverageBlockCumulativeInSumPattern:
@@ -2957,18 +2957,6 @@ class BpsCentsPercentilesRatioSatsUsdPattern:
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, _m(acc, 'sats'))
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, acc)
 
-class BtcCentsSatsToUsdPattern3:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.btc: SeriesPattern1[Bitcoin] = SeriesPattern1(client, acc)
-        self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
-        self.sats: SeriesPattern1[Sats] = SeriesPattern1(client, _m(acc, 'sats'))
-        self.to_circulating: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'to_circulating'))
-        self.to_own: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'to_own'))
-        self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, _m(acc, 'usd'))
-
 class CentsNegativeToUsdPattern2:
     """Pattern struct for repeated tree structure."""
     
@@ -2981,28 +2969,28 @@ class CentsNegativeToUsdPattern2:
         self.to_own_mcap: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, _m(acc, 'to_own_mcap'))
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, acc)
 
-class DeltaHalfInToTotalPattern:
+class DeltaDominanceHalfInTotalPattern2:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated series name."""
         self.delta: AbsoluteRatePattern = AbsoluteRatePattern(client, _m(acc, 'delta'))
+        self.dominance: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'dominance'))
         self.half: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'half'))
-        self.in_loss: BtcCentsSatsToUsdPattern = BtcCentsSatsToUsdPattern(client, _m(acc, 'in_loss'))
-        self.in_profit: BtcCentsSatsToUsdPattern = BtcCentsSatsToUsdPattern(client, _m(acc, 'in_profit'))
-        self.to_circulating: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'to_circulating'))
+        self.in_loss: BtcCentsSatsShareUsdPattern = BtcCentsSatsShareUsdPattern(client, _m(acc, 'in_loss'))
+        self.in_profit: BtcCentsSatsShareUsdPattern = BtcCentsSatsShareUsdPattern(client, _m(acc, 'in_profit'))
         self.total: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, acc)
 
-class DeltaHalfInToTotalPattern2:
+class DeltaDominanceHalfInTotalPattern:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated series name."""
         self.delta: AbsoluteRatePattern = AbsoluteRatePattern(client, _m(acc, 'delta'))
+        self.dominance: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'dominance'))
         self.half: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'half'))
-        self.in_loss: BtcCentsSatsToUsdPattern3 = BtcCentsSatsToUsdPattern3(client, _m(acc, 'in_loss'))
-        self.in_profit: BtcCentsSatsToUsdPattern3 = BtcCentsSatsToUsdPattern3(client, _m(acc, 'in_profit'))
-        self.to_circulating: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'to_circulating'))
+        self.in_loss: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'in_loss'))
+        self.in_profit: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'in_profit'))
         self.total: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, acc)
 
 class _1m1w1y24hBlockPattern:
@@ -3035,7 +3023,7 @@ class ActivityOutputsRealizedSupplyUnrealizedPattern:
         self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, acc)
         self.outputs: SpendingSpentUnspentPattern = SpendingSpentUnspentPattern(client, acc)
         self.realized: CapLossMvrvNetPriceProfitSoprPattern = CapLossMvrvNetPriceProfitSoprPattern(client, acc)
-        self.supply: DeltaHalfInToTotalPattern = DeltaHalfInToTotalPattern(client, _m(acc, 'supply'))
+        self.supply: DeltaDominanceHalfInTotalPattern = DeltaDominanceHalfInTotalPattern(client, _m(acc, 'supply'))
         self.unrealized: LossNetNuplProfitPattern = LossNetNuplProfitPattern(client, acc)
 
 class ActivityOutputsRealizedSupplyUnrealizedPattern3:
@@ -3046,7 +3034,7 @@ class ActivityOutputsRealizedSupplyUnrealizedPattern3:
         self.activity: TransferPattern = TransferPattern(client, _m(acc, 'transfer_volume'))
         self.outputs: SpendingSpentUnspentPattern = SpendingSpentUnspentPattern(client, acc)
         self.realized: CapLossMvrvPriceProfitPattern = CapLossMvrvPriceProfitPattern(client, acc)
-        self.supply: DeltaHalfInTotalPattern2 = DeltaHalfInTotalPattern2(client, _m(acc, 'supply'))
+        self.supply: DeltaDominanceHalfInTotalPattern = DeltaDominanceHalfInTotalPattern(client, _m(acc, 'supply'))
         self.unrealized: LossNuplProfitPattern = LossNuplProfitPattern(client, acc)
 
 class ActivityOutputsRealizedSupplyUnrealizedPattern2:
@@ -3057,7 +3045,7 @@ class ActivityOutputsRealizedSupplyUnrealizedPattern2:
         self.activity: TransferPattern = TransferPattern(client, _m(acc, 'transfer_volume'))
         self.outputs: SpendingSpentUnspentPattern = SpendingSpentUnspentPattern(client, acc)
         self.realized: CapLossMvrvPriceProfitPattern = CapLossMvrvPriceProfitPattern(client, acc)
-        self.supply: DeltaTotalPattern = DeltaTotalPattern(client, _m(acc, 'supply'))
+        self.supply: DeltaDominanceTotalPattern = DeltaDominanceTotalPattern(client, _m(acc, 'supply'))
         self.unrealized: NuplPattern = NuplPattern(client, _m(acc, 'nupl'))
 
 class BlockChangeCumulativeDeltaSumPattern:
@@ -3093,7 +3081,7 @@ class BtcCentsDeltaSatsUsdPattern:
         self.sats: SeriesPattern1[Sats] = SeriesPattern1(client, _m(acc, 'sats'))
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, _m(acc, 'usd'))
 
-class BtcCentsSatsToUsdPattern:
+class BtcCentsSatsShareUsdPattern:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
@@ -3101,18 +3089,7 @@ class BtcCentsSatsToUsdPattern:
         self.btc: SeriesPattern1[Bitcoin] = SeriesPattern1(client, acc)
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
         self.sats: SeriesPattern1[Sats] = SeriesPattern1(client, _m(acc, 'sats'))
-        self.to_circulating: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'to_circulating'))
-        self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, _m(acc, 'usd'))
-
-class BtcCentsSatsToUsdPattern2:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.btc: SeriesPattern1[Bitcoin] = SeriesPattern1(client, acc)
-        self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
-        self.sats: SeriesPattern1[Sats] = SeriesPattern1(client, _m(acc, 'sats'))
-        self.to_own: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'to_own'))
+        self.share: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'share'))
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, _m(acc, 'usd'))
 
 class CapLossMvrvPriceProfitPattern:
@@ -3136,17 +3113,6 @@ class CentsToUsdPattern4:
         self.to_own_gross_pnl: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'to_own_gross_pnl'))
         self.to_own_mcap: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'to_own_mcap'))
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, acc)
-
-class DeltaHalfInTotalPattern2:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.delta: AbsoluteRatePattern = AbsoluteRatePattern(client, _m(acc, 'delta'))
-        self.half: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'half'))
-        self.in_loss: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'in_loss'))
-        self.in_profit: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'in_profit'))
-        self.total: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, acc)
 
 class EmaHistogramLineSignalPattern:
     """Pattern struct for repeated tree structure."""
@@ -3494,6 +3460,15 @@ class CumulativeRollingSumPattern:
         self.rolling: AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc)
         self.sum: SeriesPattern18[StoredU64] = SeriesPattern18(client, _m(acc, 'sum'))
 
+class DeltaDominanceTotalPattern:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClientBase, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.delta: AbsoluteRatePattern = AbsoluteRatePattern(client, _m(acc, 'delta'))
+        self.dominance: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'dominance'))
+        self.total: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, acc)
+
 class GreedNetPainPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -3675,14 +3650,6 @@ class CoindaysTransferPattern:
         """Create pattern node with accumulated series name."""
         self.coindays_destroyed: AverageBlockCumulativeSumPattern[StoredF64] = AverageBlockCumulativeSumPattern(client, _m(acc, 'coindays_destroyed'))
         self.transfer_volume: AverageBlockCumulativeInSumPattern = AverageBlockCumulativeInSumPattern(client, _m(acc, 'transfer_volume'))
-
-class DeltaTotalPattern:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BrkClientBase, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.delta: AbsoluteRatePattern = AbsoluteRatePattern(client, _m(acc, 'delta'))
-        self.total: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, acc)
 
 class FundedTotalPattern:
     """Pattern struct for repeated tree structure."""
@@ -5479,16 +5446,6 @@ class SeriesTree_Supply:
         self.market_minus_realized_cap_growth_rate: _1m1w1y24hPattern[BasisPointsSigned32] = _1m1w1y24hPattern(client, 'market_minus_realized_cap_growth_rate')
         self.hodled_or_lost: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'hodled_or_lost_supply')
 
-class SeriesTree_Cohorts_Utxo_All_Supply:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.total: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'supply')
-        self.delta: AbsoluteRatePattern = AbsoluteRatePattern(client, 'supply_delta')
-        self.half: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'supply_half')
-        self.in_profit: BtcCentsSatsToUsdPattern2 = BtcCentsSatsToUsdPattern2(client, 'supply_in_profit')
-        self.in_loss: BtcCentsSatsToUsdPattern2 = BtcCentsSatsToUsdPattern2(client, 'supply_in_loss')
-
 class SeriesTree_Cohorts_Utxo_All_Outputs:
     """Series tree node."""
     
@@ -5706,7 +5663,7 @@ class SeriesTree_Cohorts_Utxo_All:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.supply: SeriesTree_Cohorts_Utxo_All_Supply = SeriesTree_Cohorts_Utxo_All_Supply(client)
+        self.supply: DeltaDominanceHalfInTotalPattern2 = DeltaDominanceHalfInTotalPattern2(client, 'supply')
         self.outputs: SeriesTree_Cohorts_Utxo_All_Outputs = SeriesTree_Cohorts_Utxo_All_Outputs(client)
         self.activity: SeriesTree_Cohorts_Utxo_All_Activity = SeriesTree_Cohorts_Utxo_All_Activity(client)
         self.realized: SeriesTree_Cohorts_Utxo_All_Realized = SeriesTree_Cohorts_Utxo_All_Realized(client)
@@ -5837,7 +5794,7 @@ class SeriesTree_Cohorts_Utxo_Sth:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.supply: DeltaHalfInToTotalPattern2 = DeltaHalfInToTotalPattern2(client, 'sth_supply')
+        self.supply: DeltaDominanceHalfInTotalPattern2 = DeltaDominanceHalfInTotalPattern2(client, 'sth_supply')
         self.outputs: SpendingSpentUnspentPattern = SpendingSpentUnspentPattern(client, 'sth')
         self.activity: CoindaysCoinyearsDormancyTransferPattern = CoindaysCoinyearsDormancyTransferPattern(client, 'sth')
         self.realized: SeriesTree_Cohorts_Utxo_Sth_Realized = SeriesTree_Cohorts_Utxo_Sth_Realized(client)
@@ -5975,7 +5932,7 @@ class SeriesTree_Cohorts_Utxo_Lth:
     """Series tree node."""
     
     def __init__(self, client: BrkClientBase, base_path: str = ''):
-        self.supply: DeltaHalfInToTotalPattern2 = DeltaHalfInToTotalPattern2(client, 'lth_supply')
+        self.supply: DeltaDominanceHalfInTotalPattern2 = DeltaDominanceHalfInTotalPattern2(client, 'lth_supply')
         self.outputs: SpendingSpentUnspentPattern = SpendingSpentUnspentPattern(client, 'lth')
         self.activity: CoindaysCoinyearsDormancyTransferPattern = CoindaysCoinyearsDormancyTransferPattern(client, 'lth')
         self.realized: SeriesTree_Cohorts_Utxo_Lth_Realized = SeriesTree_Cohorts_Utxo_Lth_Realized(client)

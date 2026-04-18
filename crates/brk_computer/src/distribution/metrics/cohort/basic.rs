@@ -6,14 +6,13 @@ use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     distribution::metrics::{
-        ActivityCore, CohortMetricsBase, ImportConfig, OutputsBase, RealizedCore, RelativeToAll,
-        SupplyCore, UnrealizedCore,
+        ActivityCore, CohortMetricsBase, ImportConfig, OutputsBase, RealizedCore, SupplyCore,
+        UnrealizedCore,
     },
     prices,
 };
 
-/// Basic cohort metrics: no extensions, with relative (rel_to_all).
-/// Used by: age_range cohorts.
+/// Basic cohort metrics: no extensions, used by age_range cohorts.
 #[derive(Traversable)]
 pub struct BasicCohortMetrics<M: StorageMode = Rw> {
     #[traversable(skip)]
@@ -23,8 +22,6 @@ pub struct BasicCohortMetrics<M: StorageMode = Rw> {
     pub activity: Box<ActivityCore<M>>,
     pub realized: Box<RealizedCore<M>>,
     pub unrealized: Box<UnrealizedCore<M>>,
-    #[traversable(flatten)]
-    pub relative: Box<RelativeToAll<M>>,
 }
 
 impl CohortMetricsBase for BasicCohortMetrics {
@@ -51,8 +48,6 @@ impl BasicCohortMetrics {
         let unrealized = UnrealizedCore::forced_import(cfg)?;
         let realized = RealizedCore::forced_import(cfg)?;
 
-        let relative = RelativeToAll::forced_import(cfg)?;
-
         Ok(Self {
             filter: cfg.filter.clone(),
             supply: Box::new(supply),
@@ -60,7 +55,6 @@ impl BasicCohortMetrics {
             activity: Box::new(ActivityCore::forced_import(cfg)?),
             realized: Box::new(realized),
             unrealized: Box::new(unrealized),
-            relative: Box::new(relative),
         })
     }
 
@@ -87,8 +81,8 @@ impl BasicCohortMetrics {
             exit,
         )?;
 
-        self.relative
-            .compute(starting_indexes.height, &self.supply, all_supply_sats, exit)?;
+        self.supply
+            .compute_dominance(starting_indexes.height, all_supply_sats, exit)?;
 
         self.outputs
             .compute_part2(starting_indexes.height, all_utxo_count, exit)?;

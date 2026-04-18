@@ -78,8 +78,7 @@ export function init(selected) {
       showPanel("block");
     },
     onCubeClick: (cube) => {
-      const hash = cube.dataset.hash;
-      if (hash) history.pushState(null, "", `/block/${hash}`);
+      history.pushState(null, "", cube.href);
       navigate();
       selectCube(cube);
     },

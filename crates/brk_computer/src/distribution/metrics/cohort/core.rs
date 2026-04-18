@@ -6,8 +6,8 @@ use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
     distribution::metrics::{
-        ActivityCore, CohortMetricsBase, ImportConfig, OutputsBase, RealizedCore, RelativeToAll,
-        SupplyCore, UnrealizedCore,
+        ActivityCore, CohortMetricsBase, ImportConfig, OutputsBase, RealizedCore, SupplyCore,
+        UnrealizedCore,
     },
     prices,
 };
@@ -21,8 +21,6 @@ pub struct CoreCohortMetrics<M: StorageMode = Rw> {
     pub activity: Box<ActivityCore<M>>,
     pub realized: Box<RealizedCore<M>>,
     pub unrealized: Box<UnrealizedCore<M>>,
-    #[traversable(flatten)]
-    pub relative: Box<RelativeToAll<M>>,
 }
 
 impl CoreCohortMetrics {
@@ -34,7 +32,6 @@ impl CoreCohortMetrics {
             activity: Box::new(ActivityCore::forced_import(cfg)?),
             realized: Box::new(RealizedCore::forced_import(cfg)?),
             unrealized: Box::new(UnrealizedCore::forced_import(cfg)?),
-            relative: Box::new(RelativeToAll::forced_import(cfg)?),
         })
     }
 
@@ -145,8 +142,8 @@ impl CoreCohortMetrics {
             exit,
         )?;
 
-        self.relative
-            .compute(starting_indexes.height, &self.supply, all_supply_sats, exit)?;
+        self.supply
+            .compute_dominance(starting_indexes.height, all_supply_sats, exit)?;
 
         self.outputs
             .compute_part2(starting_indexes.height, all_utxo_count, exit)?;

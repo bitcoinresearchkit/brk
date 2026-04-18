@@ -1,7 +1,7 @@
 use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, StoredU64};
+use brk_types::{Height, Indexes, Sats, StoredU64};
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
@@ -112,6 +112,7 @@ impl MinimalCohortMetrics {
         &mut self,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
+        all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,
         exit: &Exit,
     ) -> Result<()> {
@@ -128,6 +129,9 @@ impl MinimalCohortMetrics {
             &self.realized.price.cents.height,
             exit,
         )?;
+
+        self.supply
+            .compute_dominance(starting_indexes.height, all_supply_sats, exit)?;
 
         self.outputs
             .compute_part2(starting_indexes.height, all_utxo_count, exit)?;

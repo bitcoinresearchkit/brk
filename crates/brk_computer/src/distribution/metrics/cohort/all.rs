@@ -2,8 +2,7 @@ use brk_cohort::Filter;
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{Cents, Dollars, Height, Indexes, Version};
-use vecdb::AnyStoredVec;
-use vecdb::{Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode};
 
 use crate::{
     blocks,
@@ -151,6 +150,10 @@ impl AllCohortMetrics {
 
         self.unrealized
             .compute_sentiment(starting_indexes, &prices.spot.cents.height, exit)?;
+
+        let own_supply_sats = self.supply.total.sats.height.read_only_clone();
+        self.supply
+            .compute_dominance(starting_indexes.height, &own_supply_sats, exit)?;
 
         self.relative.compute(
             starting_indexes.height,

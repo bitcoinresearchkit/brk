@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_cohort::{AddrGroups, AmountRange, Filter, Filtered, OverAmount, UnderAmount};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, StoredU64, Version};
+use brk_types::{Height, Indexes, Sats, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
@@ -109,12 +109,19 @@ impl AddrCohorts {
         &mut self,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
+        all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,
         exit: &Exit,
     ) -> Result<()> {
-        self.0
-            .par_iter_mut()
-            .try_for_each(|v| v.compute_rest_part2(prices, starting_indexes, all_utxo_count, exit))
+        self.0.par_iter_mut().try_for_each(|v| {
+            v.compute_rest_part2(
+                prices,
+                starting_indexes,
+                all_supply_sats,
+                all_utxo_count,
+                exit,
+            )
+        })
     }
 
     /// Returns a parallel iterator over all vecs for parallel writing.

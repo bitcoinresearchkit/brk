@@ -1685,7 +1685,7 @@ pub struct ActivityAddrOutputsRealizedSupplyUnrealizedPattern {
     pub addr_count: BaseDeltaPattern,
     pub outputs: SpendingSpentUnspentPattern,
     pub realized: CapLossMvrvPriceProfitPattern,
-    pub supply: DeltaTotalPattern,
+    pub supply: DeltaDominanceTotalPattern,
     pub unrealized: NuplPattern,
 }
 
@@ -1697,7 +1697,7 @@ impl ActivityAddrOutputsRealizedSupplyUnrealizedPattern {
             addr_count: BaseDeltaPattern::new(client.clone(), _m(&acc, "addr_count")),
             outputs: SpendingSpentUnspentPattern::new(client.clone(), acc.clone()),
             realized: CapLossMvrvPriceProfitPattern::new(client.clone(), acc.clone()),
-            supply: DeltaTotalPattern::new(client.clone(), _m(&acc, "supply")),
+            supply: DeltaDominanceTotalPattern::new(client.clone(), _m(&acc, "supply")),
             unrealized: NuplPattern::new(client.clone(), _m(&acc, "nupl")),
         }
     }
@@ -1752,30 +1752,6 @@ impl BpsCentsPercentilesRatioSatsUsdPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct BtcCentsSatsToUsdPattern3 {
-    pub btc: SeriesPattern1<Bitcoin>,
-    pub cents: SeriesPattern1<Cents>,
-    pub sats: SeriesPattern1<Sats>,
-    pub to_circulating: BpsPercentRatioPattern2,
-    pub to_own: BpsPercentRatioPattern2,
-    pub usd: SeriesPattern1<Dollars>,
-}
-
-impl BtcCentsSatsToUsdPattern3 {
-    /// Create a new pattern node with accumulated series name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            btc: SeriesPattern1::new(client.clone(), acc.clone()),
-            cents: SeriesPattern1::new(client.clone(), _m(&acc, "cents")),
-            sats: SeriesPattern1::new(client.clone(), _m(&acc, "sats")),
-            to_circulating: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "to_circulating")),
-            to_own: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "to_own")),
-            usd: SeriesPattern1::new(client.clone(), _m(&acc, "usd")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
 pub struct CentsNegativeToUsdPattern2 {
     pub cents: SeriesPattern1<Cents>,
     pub negative: SeriesPattern1<Dollars>,
@@ -1800,48 +1776,48 @@ impl CentsNegativeToUsdPattern2 {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct DeltaHalfInToTotalPattern {
+pub struct DeltaDominanceHalfInTotalPattern2 {
     pub delta: AbsoluteRatePattern,
+    pub dominance: BpsPercentRatioPattern2,
     pub half: BtcCentsSatsUsdPattern,
-    pub in_loss: BtcCentsSatsToUsdPattern,
-    pub in_profit: BtcCentsSatsToUsdPattern,
-    pub to_circulating: BpsPercentRatioPattern2,
+    pub in_loss: BtcCentsSatsShareUsdPattern,
+    pub in_profit: BtcCentsSatsShareUsdPattern,
     pub total: BtcCentsSatsUsdPattern,
 }
 
-impl DeltaHalfInToTotalPattern {
+impl DeltaDominanceHalfInTotalPattern2 {
     /// Create a new pattern node with accumulated series name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             delta: AbsoluteRatePattern::new(client.clone(), _m(&acc, "delta")),
+            dominance: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "dominance")),
             half: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "half")),
-            in_loss: BtcCentsSatsToUsdPattern::new(client.clone(), _m(&acc, "in_loss")),
-            in_profit: BtcCentsSatsToUsdPattern::new(client.clone(), _m(&acc, "in_profit")),
-            to_circulating: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "to_circulating")),
+            in_loss: BtcCentsSatsShareUsdPattern::new(client.clone(), _m(&acc, "in_loss")),
+            in_profit: BtcCentsSatsShareUsdPattern::new(client.clone(), _m(&acc, "in_profit")),
             total: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
         }
     }
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct DeltaHalfInToTotalPattern2 {
+pub struct DeltaDominanceHalfInTotalPattern {
     pub delta: AbsoluteRatePattern,
+    pub dominance: BpsPercentRatioPattern2,
     pub half: BtcCentsSatsUsdPattern,
-    pub in_loss: BtcCentsSatsToUsdPattern3,
-    pub in_profit: BtcCentsSatsToUsdPattern3,
-    pub to_circulating: BpsPercentRatioPattern2,
+    pub in_loss: BtcCentsSatsUsdPattern,
+    pub in_profit: BtcCentsSatsUsdPattern,
     pub total: BtcCentsSatsUsdPattern,
 }
 
-impl DeltaHalfInToTotalPattern2 {
+impl DeltaDominanceHalfInTotalPattern {
     /// Create a new pattern node with accumulated series name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             delta: AbsoluteRatePattern::new(client.clone(), _m(&acc, "delta")),
+            dominance: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "dominance")),
             half: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "half")),
-            in_loss: BtcCentsSatsToUsdPattern3::new(client.clone(), _m(&acc, "in_loss")),
-            in_profit: BtcCentsSatsToUsdPattern3::new(client.clone(), _m(&acc, "in_profit")),
-            to_circulating: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "to_circulating")),
+            in_loss: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "in_loss")),
+            in_profit: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "in_profit")),
             total: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
         }
     }
@@ -1896,7 +1872,7 @@ pub struct ActivityOutputsRealizedSupplyUnrealizedPattern {
     pub activity: CoindaysTransferPattern,
     pub outputs: SpendingSpentUnspentPattern,
     pub realized: CapLossMvrvNetPriceProfitSoprPattern,
-    pub supply: DeltaHalfInToTotalPattern,
+    pub supply: DeltaDominanceHalfInTotalPattern,
     pub unrealized: LossNetNuplProfitPattern,
 }
 
@@ -1907,7 +1883,7 @@ impl ActivityOutputsRealizedSupplyUnrealizedPattern {
             activity: CoindaysTransferPattern::new(client.clone(), acc.clone()),
             outputs: SpendingSpentUnspentPattern::new(client.clone(), acc.clone()),
             realized: CapLossMvrvNetPriceProfitSoprPattern::new(client.clone(), acc.clone()),
-            supply: DeltaHalfInToTotalPattern::new(client.clone(), _m(&acc, "supply")),
+            supply: DeltaDominanceHalfInTotalPattern::new(client.clone(), _m(&acc, "supply")),
             unrealized: LossNetNuplProfitPattern::new(client.clone(), acc.clone()),
         }
     }
@@ -1918,7 +1894,7 @@ pub struct ActivityOutputsRealizedSupplyUnrealizedPattern3 {
     pub activity: TransferPattern,
     pub outputs: SpendingSpentUnspentPattern,
     pub realized: CapLossMvrvPriceProfitPattern,
-    pub supply: DeltaHalfInTotalPattern2,
+    pub supply: DeltaDominanceHalfInTotalPattern,
     pub unrealized: LossNuplProfitPattern,
 }
 
@@ -1929,7 +1905,7 @@ impl ActivityOutputsRealizedSupplyUnrealizedPattern3 {
             activity: TransferPattern::new(client.clone(), _m(&acc, "transfer_volume")),
             outputs: SpendingSpentUnspentPattern::new(client.clone(), acc.clone()),
             realized: CapLossMvrvPriceProfitPattern::new(client.clone(), acc.clone()),
-            supply: DeltaHalfInTotalPattern2::new(client.clone(), _m(&acc, "supply")),
+            supply: DeltaDominanceHalfInTotalPattern::new(client.clone(), _m(&acc, "supply")),
             unrealized: LossNuplProfitPattern::new(client.clone(), acc.clone()),
         }
     }
@@ -1940,7 +1916,7 @@ pub struct ActivityOutputsRealizedSupplyUnrealizedPattern2 {
     pub activity: TransferPattern,
     pub outputs: SpendingSpentUnspentPattern,
     pub realized: CapLossMvrvPriceProfitPattern,
-    pub supply: DeltaTotalPattern,
+    pub supply: DeltaDominanceTotalPattern,
     pub unrealized: NuplPattern,
 }
 
@@ -1951,7 +1927,7 @@ impl ActivityOutputsRealizedSupplyUnrealizedPattern2 {
             activity: TransferPattern::new(client.clone(), _m(&acc, "transfer_volume")),
             outputs: SpendingSpentUnspentPattern::new(client.clone(), acc.clone()),
             realized: CapLossMvrvPriceProfitPattern::new(client.clone(), acc.clone()),
-            supply: DeltaTotalPattern::new(client.clone(), _m(&acc, "supply")),
+            supply: DeltaDominanceTotalPattern::new(client.clone(), _m(&acc, "supply")),
             unrealized: NuplPattern::new(client.clone(), _m(&acc, "nupl")),
         }
     }
@@ -2024,44 +2000,22 @@ impl BtcCentsDeltaSatsUsdPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct BtcCentsSatsToUsdPattern {
+pub struct BtcCentsSatsShareUsdPattern {
     pub btc: SeriesPattern1<Bitcoin>,
     pub cents: SeriesPattern1<Cents>,
     pub sats: SeriesPattern1<Sats>,
-    pub to_circulating: BpsPercentRatioPattern2,
+    pub share: BpsPercentRatioPattern2,
     pub usd: SeriesPattern1<Dollars>,
 }
 
-impl BtcCentsSatsToUsdPattern {
+impl BtcCentsSatsShareUsdPattern {
     /// Create a new pattern node with accumulated series name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             btc: SeriesPattern1::new(client.clone(), acc.clone()),
             cents: SeriesPattern1::new(client.clone(), _m(&acc, "cents")),
             sats: SeriesPattern1::new(client.clone(), _m(&acc, "sats")),
-            to_circulating: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "to_circulating")),
-            usd: SeriesPattern1::new(client.clone(), _m(&acc, "usd")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct BtcCentsSatsToUsdPattern2 {
-    pub btc: SeriesPattern1<Bitcoin>,
-    pub cents: SeriesPattern1<Cents>,
-    pub sats: SeriesPattern1<Sats>,
-    pub to_own: BpsPercentRatioPattern2,
-    pub usd: SeriesPattern1<Dollars>,
-}
-
-impl BtcCentsSatsToUsdPattern2 {
-    /// Create a new pattern node with accumulated series name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            btc: SeriesPattern1::new(client.clone(), acc.clone()),
-            cents: SeriesPattern1::new(client.clone(), _m(&acc, "cents")),
-            sats: SeriesPattern1::new(client.clone(), _m(&acc, "sats")),
-            to_own: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "to_own")),
+            share: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "share")),
             usd: SeriesPattern1::new(client.clone(), _m(&acc, "usd")),
         }
     }
@@ -2107,28 +2061,6 @@ impl CentsToUsdPattern4 {
             to_own_gross_pnl: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "to_own_gross_pnl")),
             to_own_mcap: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "to_own_mcap")),
             usd: SeriesPattern1::new(client.clone(), acc.clone()),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct DeltaHalfInTotalPattern2 {
-    pub delta: AbsoluteRatePattern,
-    pub half: BtcCentsSatsUsdPattern,
-    pub in_loss: BtcCentsSatsUsdPattern,
-    pub in_profit: BtcCentsSatsUsdPattern,
-    pub total: BtcCentsSatsUsdPattern,
-}
-
-impl DeltaHalfInTotalPattern2 {
-    /// Create a new pattern node with accumulated series name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            delta: AbsoluteRatePattern::new(client.clone(), _m(&acc, "delta")),
-            half: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "half")),
-            in_loss: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "in_loss")),
-            in_profit: BtcCentsSatsUsdPattern::new(client.clone(), _m(&acc, "in_profit")),
-            total: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -2827,6 +2759,24 @@ impl CumulativeRollingSumPattern {
 }
 
 /// Pattern struct for repeated tree structure.
+pub struct DeltaDominanceTotalPattern {
+    pub delta: AbsoluteRatePattern,
+    pub dominance: BpsPercentRatioPattern2,
+    pub total: BtcCentsSatsUsdPattern,
+}
+
+impl DeltaDominanceTotalPattern {
+    /// Create a new pattern node with accumulated series name.
+    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
+        Self {
+            delta: AbsoluteRatePattern::new(client.clone(), _m(&acc, "delta")),
+            dominance: BpsPercentRatioPattern2::new(client.clone(), _m(&acc, "dominance")),
+            total: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
+        }
+    }
+}
+
+/// Pattern struct for repeated tree structure.
 pub struct GreedNetPainPattern {
     pub greed_index: CentsUsdPattern3,
     pub net: CentsUsdPattern,
@@ -3186,22 +3136,6 @@ impl CoindaysTransferPattern {
         Self {
             coindays_destroyed: AverageBlockCumulativeSumPattern::new(client.clone(), _m(&acc, "coindays_destroyed")),
             transfer_volume: AverageBlockCumulativeInSumPattern::new(client.clone(), _m(&acc, "transfer_volume")),
-        }
-    }
-}
-
-/// Pattern struct for repeated tree structure.
-pub struct DeltaTotalPattern {
-    pub delta: AbsoluteRatePattern,
-    pub total: BtcCentsSatsUsdPattern,
-}
-
-impl DeltaTotalPattern {
-    /// Create a new pattern node with accumulated series name.
-    pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
-        Self {
-            delta: AbsoluteRatePattern::new(client.clone(), _m(&acc, "delta")),
-            total: BtcCentsSatsUsdPattern::new(client.clone(), acc.clone()),
         }
     }
 }
@@ -7046,7 +6980,7 @@ impl SeriesTree_Cohorts_Utxo {
 
 /// Series tree node.
 pub struct SeriesTree_Cohorts_Utxo_All {
-    pub supply: SeriesTree_Cohorts_Utxo_All_Supply,
+    pub supply: DeltaDominanceHalfInTotalPattern2,
     pub outputs: SeriesTree_Cohorts_Utxo_All_Outputs,
     pub activity: SeriesTree_Cohorts_Utxo_All_Activity,
     pub realized: SeriesTree_Cohorts_Utxo_All_Realized,
@@ -7058,34 +6992,13 @@ pub struct SeriesTree_Cohorts_Utxo_All {
 impl SeriesTree_Cohorts_Utxo_All {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            supply: SeriesTree_Cohorts_Utxo_All_Supply::new(client.clone(), format!("{base_path}_supply")),
+            supply: DeltaDominanceHalfInTotalPattern2::new(client.clone(), "supply".to_string()),
             outputs: SeriesTree_Cohorts_Utxo_All_Outputs::new(client.clone(), format!("{base_path}_outputs")),
             activity: SeriesTree_Cohorts_Utxo_All_Activity::new(client.clone(), format!("{base_path}_activity")),
             realized: SeriesTree_Cohorts_Utxo_All_Realized::new(client.clone(), format!("{base_path}_realized")),
             cost_basis: SeriesTree_Cohorts_Utxo_All_CostBasis::new(client.clone(), format!("{base_path}_cost_basis")),
             unrealized: SeriesTree_Cohorts_Utxo_All_Unrealized::new(client.clone(), format!("{base_path}_unrealized")),
             invested_capital: InPattern::new(client.clone(), "invested_capital_in".to_string()),
-        }
-    }
-}
-
-/// Series tree node.
-pub struct SeriesTree_Cohorts_Utxo_All_Supply {
-    pub total: BtcCentsSatsUsdPattern,
-    pub delta: AbsoluteRatePattern,
-    pub half: BtcCentsSatsUsdPattern,
-    pub in_profit: BtcCentsSatsToUsdPattern2,
-    pub in_loss: BtcCentsSatsToUsdPattern2,
-}
-
-impl SeriesTree_Cohorts_Utxo_All_Supply {
-    pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
-        Self {
-            total: BtcCentsSatsUsdPattern::new(client.clone(), "supply".to_string()),
-            delta: AbsoluteRatePattern::new(client.clone(), "supply_delta".to_string()),
-            half: BtcCentsSatsUsdPattern::new(client.clone(), "supply_half".to_string()),
-            in_profit: BtcCentsSatsToUsdPattern2::new(client.clone(), "supply_in_profit".to_string()),
-            in_loss: BtcCentsSatsToUsdPattern2::new(client.clone(), "supply_in_loss".to_string()),
         }
     }
 }
@@ -7535,7 +7448,7 @@ impl SeriesTree_Cohorts_Utxo_All_Unrealized_Sentiment {
 
 /// Series tree node.
 pub struct SeriesTree_Cohorts_Utxo_Sth {
-    pub supply: DeltaHalfInToTotalPattern2,
+    pub supply: DeltaDominanceHalfInTotalPattern2,
     pub outputs: SpendingSpentUnspentPattern,
     pub activity: CoindaysCoinyearsDormancyTransferPattern,
     pub realized: SeriesTree_Cohorts_Utxo_Sth_Realized,
@@ -7547,7 +7460,7 @@ pub struct SeriesTree_Cohorts_Utxo_Sth {
 impl SeriesTree_Cohorts_Utxo_Sth {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            supply: DeltaHalfInToTotalPattern2::new(client.clone(), "sth_supply".to_string()),
+            supply: DeltaDominanceHalfInTotalPattern2::new(client.clone(), "sth_supply".to_string()),
             outputs: SpendingSpentUnspentPattern::new(client.clone(), "sth".to_string()),
             activity: CoindaysCoinyearsDormancyTransferPattern::new(client.clone(), "sth".to_string()),
             realized: SeriesTree_Cohorts_Utxo_Sth_Realized::new(client.clone(), format!("{base_path}_realized")),
@@ -7805,7 +7718,7 @@ impl SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_1y {
 
 /// Series tree node.
 pub struct SeriesTree_Cohorts_Utxo_Lth {
-    pub supply: DeltaHalfInToTotalPattern2,
+    pub supply: DeltaDominanceHalfInTotalPattern2,
     pub outputs: SpendingSpentUnspentPattern,
     pub activity: CoindaysCoinyearsDormancyTransferPattern,
     pub realized: SeriesTree_Cohorts_Utxo_Lth_Realized,
@@ -7817,7 +7730,7 @@ pub struct SeriesTree_Cohorts_Utxo_Lth {
 impl SeriesTree_Cohorts_Utxo_Lth {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            supply: DeltaHalfInToTotalPattern2::new(client.clone(), "lth_supply".to_string()),
+            supply: DeltaDominanceHalfInTotalPattern2::new(client.clone(), "lth_supply".to_string()),
             outputs: SpendingSpentUnspentPattern::new(client.clone(), "lth".to_string()),
             activity: CoindaysCoinyearsDormancyTransferPattern::new(client.clone(), "lth".to_string()),
             realized: SeriesTree_Cohorts_Utxo_Lth_Realized::new(client.clone(), format!("{base_path}_realized")),

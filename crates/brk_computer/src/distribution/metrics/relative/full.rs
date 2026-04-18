@@ -11,10 +11,10 @@ use crate::{
 /// Full relative metrics (sth/lth/all tier).
 #[derive(Traversable)]
 pub struct RelativeFull<M: StorageMode = Rw> {
-    #[traversable(wrap = "supply/in_profit", rename = "to_own")]
-    pub supply_in_profit_to_own: PercentPerBlock<BasisPoints16, M>,
-    #[traversable(wrap = "supply/in_loss", rename = "to_own")]
-    pub supply_in_loss_to_own: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "supply/in_profit", rename = "share")]
+    pub supply_in_profit_share: PercentPerBlock<BasisPoints16, M>,
+    #[traversable(wrap = "supply/in_loss", rename = "share")]
+    pub supply_in_loss_share: PercentPerBlock<BasisPoints16, M>,
 
     #[traversable(wrap = "unrealized/profit", rename = "to_mcap")]
     pub unrealized_profit_to_mcap: PercentPerBlock<BasisPoints16, M>,
@@ -28,8 +28,8 @@ impl RelativeFull {
         let v2 = Version::new(2);
 
         Ok(Self {
-            supply_in_profit_to_own: cfg.import("supply_in_profit_to_own", v1)?,
-            supply_in_loss_to_own: cfg.import("supply_in_loss_to_own", v1)?,
+            supply_in_profit_share: cfg.import("supply_in_profit_share", v1)?,
+            supply_in_loss_share: cfg.import("supply_in_loss_share", v1)?,
             unrealized_profit_to_mcap: cfg.import("unrealized_profit_to_mcap", v2)?,
             unrealized_loss_to_mcap: cfg.import("unrealized_loss_to_mcap", v2)?,
         })
@@ -43,14 +43,14 @@ impl RelativeFull {
         market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,
     ) -> Result<()> {
-        self.supply_in_profit_to_own
+        self.supply_in_profit_share
             .compute_binary::<Sats, Sats, RatioSatsBp16>(
                 max_from,
                 &supply.in_profit.sats.height,
                 &supply.total.sats.height,
                 exit,
             )?;
-        self.supply_in_loss_to_own
+        self.supply_in_loss_share
             .compute_binary::<Sats, Sats, RatioSatsBp16>(
                 max_from,
                 &supply.in_loss.sats.height,

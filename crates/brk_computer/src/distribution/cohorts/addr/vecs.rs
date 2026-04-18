@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_cohort::{CohortContext, Filter, Filtered};
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{BasisPointsSigned32, Cents, Height, Indexes, StoredI64, StoredU64, Version};
+use brk_types::{BasisPointsSigned32, Cents, Height, Indexes, Sats, StoredI64, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
@@ -230,10 +230,16 @@ impl CohortVecs for AddrCohortVecs {
         &mut self,
         prices: &prices::Vecs,
         starting_indexes: &Indexes,
+        all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,
         exit: &Exit,
     ) -> Result<()> {
-        self.metrics
-            .compute_rest_part2(prices, starting_indexes, all_utxo_count, exit)
+        self.metrics.compute_rest_part2(
+            prices,
+            starting_indexes,
+            all_supply_sats,
+            all_utxo_count,
+            exit,
+        )
     }
 }
