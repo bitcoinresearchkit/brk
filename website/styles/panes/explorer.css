@@ -15,6 +15,14 @@
   }
 
   --cube: 4.5rem;
+  /* Iso geometry. --iso-scale is the half-width ratio of the hex
+     silhouette (= cos(30deg) = sqrt(3)/2); the silhouette spans
+     2·iso-scale wide and 2 tall in cube-face units. The per-face
+     transforms use the HTML-demo math with ox=oy=0, so the outer
+     compensation on `.face` is just translateY(50%). */
+  --iso-scale: calc(sqrt(3) / 2);
+  --cube-w: calc(var(--cube) * 2 * var(--iso-scale));
+  --cube-h: calc(var(--cube) * 2);
   --face-step: 0.033;
 
   /* Cube face-color derivations, resolved once at the #explorer
@@ -95,21 +103,18 @@
     .blocks {
       display: flex;
       flex-direction: column-reverse;
-      --min-gap: 0rem;
+      --min-gap: calc(var(--cube) * -1);
       --max-gap: calc(var(--cube) * 6);
       --min-dt: 0;
       --max-dt: 10800;
-      margin-right: var(--cube);
 
       @container aside (max-width: 767px) {
+        --min-gap: 0rem;
         flex-direction: row-reverse;
-        align-items: center;
-        height: 11.5rem;
         width: max-content;
       }
 
       @container aside (min-width: 768px) {
-        margin-top: calc(var(--cube) * -0.25);
         padding-bottom: 6rem;
       }
     }
@@ -126,11 +131,6 @@
       --block-gap: calc(
         var(--min-gap) + var(--t) * (var(--max-gap) - var(--min-gap))
       );
-      /* Iso projection constants. Changing these reshapes the whole
-         cube — they drive the per-face transforms below. */
-      --iso-scale: cos(30deg);
-      --ox: 0.3;
-      --oy: 0.6;
       --empty-alpha: 0.4;
 
       /* Face colors reference the precomputed sets on #explorer
@@ -143,19 +143,18 @@
 
       /* Fill-driven state. --liquid-y is the liquid's vertical scale;
          --glass-y the glass-above-liquid's. --is-full / --is-empty
-         round to 0 or 1 and drive opacity so scaled-to-0 faces
-         vanish cleanly (no hairline AA seams). */
+         are 1 only at the exact endpoints (fill == 1 / fill == 0)
+         and drive opacity so those roles hide cleanly there. */
       --liquid-y: calc(var(--iso-scale) * var(--fill));
       --glass-y: calc(var(--iso-scale) * (1 - var(--fill)));
-      --is-full: round(down, calc(var(--fill) + 0.0025), 1);
-      --is-empty: round(down, calc(1.0025 - var(--fill)), 1);
+      --is-full: round(down, var(--fill), 1);
+      --is-empty: round(down, calc(1 - var(--fill)), 1);
 
-      margin-left: calc(var(--cube) * -0.25);
       flex-shrink: 0;
       position: relative;
       cursor: pointer;
-      width: var(--cube);
-      height: var(--cube);
+      width: var(--cube-w);
+      height: var(--cube-h);
       /* .cube is an <a>; reset the global anchor styles in
          elements.css that would clip the iso silhouette
          (overflow:hidden) and underline the empty link. */
@@ -203,7 +202,9 @@
         box-sizing: border-box;
         width: var(--cube);
         height: var(--cube);
-        transform: var(--orient)
+        transform:
+          translateY(50%)
+          var(--orient)
           translate(calc(var(--cube) * var(--x)), calc(var(--cube) * var(--y)))
           scale(var(--sx, 1), var(--sy));
         pointer-events: auto;
@@ -294,11 +295,8 @@
         line-height: 1;
       }
 
-      /* Per-face geometry. The 3 unique orientations each cover two
-         faces (top+bottom share the iso-squash orient; right/left and
-         their rear twins share the side-face orients). --sy is only
-         shared on the top/bottom pair (always full iso rhombus);
-         side faces inherit --sy from their role (liquid/glass/face-text). */
+      /* Per-face geometry. 3 orientations × 4 vertical anchors. Each
+         face picks one of each (plus its color/horizontal anchor). */
       .top,
       .bottom {
         --orient: rotate(30deg) skewX(-30deg);
@@ -313,44 +311,32 @@
         --orient: rotate(30deg) skewX(30deg);
       }
 
-      .bottom {
-        --fc: var(--face-bottom);
-        --x: calc(var(--ox) + 1 + var(--oy) / var(--iso-scale));
-        --y: var(--oy);
+      /* Vertical anchors (cube-face units from the layout origin).
+         --y-offset is the role-specific fill shift (liquid sides
+         get glass-y, everything else 0). */
+      .top,
+      .rear-right {
+        --y: calc(var(--y-offset) - var(--iso-scale));
       }
-      .top {
-        --fc: var(--face-top);
-        --x: calc(
-          var(--ox) + var(--top-x-shift, 0) + var(--oy) / var(--iso-scale)
-        );
-        --y: calc(var(--oy) - var(--iso-scale) + var(--y-offset));
-      }
-      .liquid.top {
-        --top-x-shift: calc(1 - var(--fill));
+      .left,
+      .rear-left {
+        --y: var(--y-offset);
       }
       .right {
-        --fc: var(--face-right);
-        --x: calc(var(--ox) + 1);
-        --y: calc(
-          (var(--ox) + 1) * var(--iso-scale) + var(--oy) + var(--y-offset)
-        );
+        --y: calc(var(--y-offset) + var(--iso-scale));
       }
-      .left {
-        --fc: var(--face-left);
-        --x: var(--ox);
-        --y: calc(var(--oy) + var(--y-offset));
+      .bottom {
+        --y: 0;
       }
-      .rear-right {
-        --fc: var(--face-left);
-        --x: calc(var(--ox) + 1);
-        --y: calc(var(--oy) - var(--iso-scale) + var(--y-offset));
-      }
-      .rear-left {
-        --fc: var(--face-top);
-        --sx: -1;
-        --x: calc(var(--ox) + 1);
-        --y: calc(var(--ox) * var(--iso-scale) + var(--oy) + var(--y-offset));
-      }
+
+      /* Per-face color + horizontal anchor. */
+      .top        { --fc: var(--face-top);    --x: var(--top-x-shift, 0); }
+      .bottom     { --fc: var(--face-bottom); --x: 1; }
+      .right      { --fc: var(--face-right);  --x: 1; }
+      .left       { --fc: var(--face-left);   --x: 0; }
+      .rear-right { --fc: var(--face-left);   --x: 1; }
+      .rear-left  { --fc: var(--face-top);    --x: 1; --sx: -1; }
+      .liquid.top { --top-x-shift: calc(1 - var(--fill)); }
 
       & + & {
         margin-bottom: var(--block-gap);
@@ -358,8 +344,8 @@
         &::before {
           content: "";
           position: absolute;
-          top: calc(var(--cube) * 1.75);
-          left: calc(var(--cube) * 1.12);
+          top: 100%;
+          left: 50%;
           width: 1px;
           height: var(--block-gap);
           background: var(--border-color);

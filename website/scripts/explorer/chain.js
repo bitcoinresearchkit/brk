@@ -260,7 +260,8 @@ function createBlockCube(block) {
   cubeElement.dataset.height = String(block.height);
   cubeElement.dataset.timestamp = String(block.timestamp);
 
-  const fill = Math.min(1, block.weight / 3_990_000);
+  const vsize = block.extras?.virtualSize ?? block.weight / 4;
+  const fill = Math.min(1, vsize / 1_000_000);
   const { topFace, rightFace, leftFace } = createCube(cubeElement, fill);
   blocksByHash.set(block.id, block);
   // Intercept plain left-clicks for SPA nav; let modified clicks
