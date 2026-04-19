@@ -1936,7 +1936,7 @@ impl ActivityOutputsRealizedSupplyUnrealizedPattern2 {
 /// Pattern struct for repeated tree structure.
 pub struct BlockChangeCumulativeDeltaSumPattern {
     pub block: CentsUsdPattern4,
-    pub change_1m: ToPattern2,
+    pub change_1m: ToPattern,
     pub cumulative: CentsUsdPattern,
     pub delta: AbsoluteRatePattern2,
     pub sum: _1m1w1y24hPattern5,
@@ -1947,7 +1947,7 @@ impl BlockChangeCumulativeDeltaSumPattern {
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
             block: CentsUsdPattern4::new(client.clone(), _m(&acc, "realized_pnl")),
-            change_1m: ToPattern2::new(client.clone(), _m(&acc, "pnl_change_1m_to")),
+            change_1m: ToPattern::new(client.clone(), _m(&acc, "pnl_change_1m_to")),
             cumulative: CentsUsdPattern::new(client.clone(), _m(&acc, "realized_pnl_cumulative")),
             delta: AbsoluteRatePattern2::new(client.clone(), _m(&acc, "realized_pnl_delta")),
             sum: _1m1w1y24hPattern5::new(client.clone(), _m(&acc, "realized_pnl_sum")),
@@ -3174,16 +3174,16 @@ impl InPattern2 {
 
 /// Pattern struct for repeated tree structure.
 pub struct InPattern {
-    pub in_loss: ToPattern,
-    pub in_profit: ToPattern,
+    pub in_loss: SharePattern,
+    pub in_profit: SharePattern,
 }
 
 impl InPattern {
     /// Create a new pattern node with accumulated series name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            in_loss: ToPattern::new(client.clone(), _m(&acc, "loss_to_own")),
-            in_profit: ToPattern::new(client.clone(), _m(&acc, "profit_to_own")),
+            in_loss: SharePattern::new(client.clone(), _m(&acc, "loss_share")),
+            in_profit: SharePattern::new(client.clone(), _m(&acc, "profit_share")),
         }
     }
 }
@@ -3243,12 +3243,12 @@ pub struct SdSmaPattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct ToPattern2 {
+pub struct ToPattern {
     pub to_mcap: BpsPercentRatioPattern,
     pub to_rcap: BpsPercentRatioPattern,
 }
 
-impl ToPattern2 {
+impl ToPattern {
     /// Create a new pattern node with accumulated series name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
@@ -3301,15 +3301,15 @@ impl PricePattern {
 }
 
 /// Pattern struct for repeated tree structure.
-pub struct ToPattern {
-    pub to_own: BpsPercentRatioPattern2,
+pub struct SharePattern {
+    pub share: BpsPercentRatioPattern2,
 }
 
-impl ToPattern {
+impl SharePattern {
     /// Create a new pattern node with accumulated series name.
     pub fn new(client: Arc<BrkClientBase>, acc: String) -> Self {
         Self {
-            to_own: BpsPercentRatioPattern2::new(client.clone(), acc.clone()),
+            share: BpsPercentRatioPattern2::new(client.clone(), acc.clone()),
         }
     }
 }

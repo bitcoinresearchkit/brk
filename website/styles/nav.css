@@ -61,7 +61,6 @@ li[data-highlight] {
 
   > a::after,
   > details:not([open]) > summary::after {
-    color: var(--orange) !important;
     content: "";
     background-color: var(--orange);
     width: 0.375rem;

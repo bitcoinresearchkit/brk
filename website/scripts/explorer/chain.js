@@ -38,6 +38,7 @@ export function initChain(parent, callbacks) {
 
   olderObserver = new IntersectionObserver(
     (entries) => {
+      return; // edge fetching disabled for layout debugging
       if (entries[0].isIntersecting) loadOlder();
     },
     { root: chainEl },
@@ -46,6 +47,7 @@ export function initChain(parent, callbacks) {
   chainEl.addEventListener(
     "scroll",
     () => {
+      return; // edge fetching disabled for layout debugging
       const nearStart =
         (chainEl.scrollHeight > chainEl.clientHeight &&
           chainEl.scrollTop <= 50) ||

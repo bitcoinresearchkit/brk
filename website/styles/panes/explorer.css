@@ -8,7 +8,7 @@
     opacity: 0.5;
   }
 
-  @media (max-width: 767px) {
+  @container aside (max-width: 767px) {
     overflow-y: auto;
     padding: var(--main-padding) 0;
     flex-direction: column;
@@ -23,25 +23,58 @@
      known source of jank there. Each interaction state gets its own
      set; the .cube rule below just swaps which set --face-right /
      --face-left / --face-top / --face-bottom reference. */
-  --cube-neutral-right:  light-dark(oklch(from var(--light-gray) calc(l - var(--face-step) * 2) c h), var(--dark-gray));
-  --cube-neutral-left:   light-dark(oklch(from var(--light-gray) calc(l - var(--face-step))     c h), oklch(from var(--dark-gray)  calc(l + var(--face-step))     c h));
-  --cube-neutral-top:    light-dark(var(--light-gray),                                                oklch(from var(--dark-gray)  calc(l + var(--face-step) * 2) c h));
-  --cube-neutral-bottom: oklch(from var(--border-color)     calc(l - var(--face-step) * 3) c h);
+  --cube-neutral-right: light-dark(
+    oklch(from var(--light-gray) calc(l - var(--face-step) * 2) c h),
+    var(--dark-gray)
+  );
+  --cube-neutral-left: light-dark(
+    oklch(from var(--light-gray) calc(l - var(--face-step)) c h),
+    oklch(from var(--dark-gray) calc(l + var(--face-step)) c h)
+  );
+  --cube-neutral-top: light-dark(
+    var(--light-gray),
+    oklch(from var(--dark-gray) calc(l + var(--face-step) * 2) c h)
+  );
+  --cube-neutral-bottom: oklch(
+    from var(--border-color) calc(l - var(--face-step) * 3) c h
+  );
 
-  --cube-hover-right:    light-dark(oklch(from var(--dark-gray)  calc(l - var(--face-step) * 2) c h), var(--light-gray));
-  --cube-hover-left:     light-dark(oklch(from var(--dark-gray)  calc(l - var(--face-step))     c h), oklch(from var(--light-gray) calc(l + var(--face-step))     c h));
-  --cube-hover-top:      light-dark(var(--dark-gray),                                                 oklch(from var(--light-gray) calc(l + var(--face-step) * 2) c h));
-  --cube-hover-bottom:   oklch(from var(--inv-border-color) calc(l - var(--face-step) * 3) c h);
+  --cube-hover-right: light-dark(
+    oklch(from var(--dark-gray) calc(l - var(--face-step) * 2) c h),
+    var(--light-gray)
+  );
+  --cube-hover-left: light-dark(
+    oklch(from var(--dark-gray) calc(l - var(--face-step)) c h),
+    oklch(from var(--light-gray) calc(l + var(--face-step)) c h)
+  );
+  --cube-hover-top: light-dark(
+    var(--dark-gray),
+    oklch(from var(--light-gray) calc(l + var(--face-step) * 2) c h)
+  );
+  --cube-hover-bottom: oklch(
+    from var(--inv-border-color) calc(l - var(--face-step) * 3) c h
+  );
 
-  --cube-selected-right:  light-dark(oklch(from var(--orange) calc(l - var(--face-step) * 2) c h), var(--orange));
-  --cube-selected-left:   light-dark(oklch(from var(--orange) calc(l - var(--face-step))     c h), oklch(from var(--orange) calc(l + var(--face-step))     c h));
-  --cube-selected-top:    light-dark(var(--orange),                                                oklch(from var(--orange) calc(l + var(--face-step) * 2) c h));
-  --cube-selected-bottom: oklch(from var(--orange) calc(l - var(--face-step) * 3) c h);
+  --cube-selected-right: light-dark(
+    oklch(from var(--orange) calc(l - var(--face-step) * 2) c h),
+    var(--orange)
+  );
+  --cube-selected-left: light-dark(
+    oklch(from var(--orange) calc(l - var(--face-step)) c h),
+    oklch(from var(--orange) calc(l + var(--face-step)) c h)
+  );
+  --cube-selected-top: light-dark(
+    var(--orange),
+    oklch(from var(--orange) calc(l + var(--face-step) * 2) c h)
+  );
+  --cube-selected-bottom: oklch(
+    from var(--orange) calc(l - var(--face-step) * 3) c h
+  );
 
   > * {
     padding: 0 var(--main-padding);
 
-    @media (min-width: 768px) {
+    @container aside (min-width: 768px) {
       padding: var(--main-padding);
     }
   }
@@ -49,11 +82,11 @@
   #chain {
     flex-shrink: 0;
 
-    @media (max-width: 767px) {
+    @container aside (max-width: 767px) {
       overflow-x: auto;
     }
 
-    @media (min-width: 768px) {
+    @container aside (min-width: 768px) {
       height: 100%;
       overflow-y: auto;
       padding-right: calc(var(--main-padding) / 2);
@@ -67,16 +100,16 @@
       --min-dt: 0;
       --max-dt: 10800;
       margin-right: var(--cube);
-      margin-top: calc(var(--cube) * -0.25);
 
-      @media (max-width: 767px) {
-        --max-gap: calc(var(--cube) * 1.5);
+      @container aside (max-width: 767px) {
         flex-direction: row-reverse;
+        align-items: center;
         height: 11.5rem;
         width: max-content;
       }
 
-      @media (min-width: 768px) {
+      @container aside (min-width: 768px) {
+        margin-top: calc(var(--cube) * -0.25);
         padding-bottom: 6rem;
       }
     }
@@ -103,9 +136,9 @@
       /* Face colors reference the precomputed sets on #explorer
          (see top of file). Hover / selected rules just switch which
          set each --face-* points at. */
-      --face-right:  var(--cube-neutral-right);
-      --face-left:   var(--cube-neutral-left);
-      --face-top:    var(--cube-neutral-top);
+      --face-right: var(--cube-neutral-right);
+      --face-left: var(--cube-neutral-left);
+      --face-top: var(--cube-neutral-top);
       --face-bottom: var(--cube-neutral-bottom);
 
       /* Fill-driven state. --liquid-y is the liquid's vertical scale;
@@ -136,25 +169,27 @@
 
       &:hover {
         color: var(--background-color);
-        --face-right:  var(--cube-hover-right);
-        --face-left:   var(--cube-hover-left);
-        --face-top:    var(--cube-hover-top);
+        --face-right: var(--cube-hover-right);
+        --face-left: var(--cube-hover-left);
+        --face-top: var(--cube-hover-top);
         --face-bottom: var(--cube-hover-bottom);
       }
 
       &:active,
       &.selected {
         color: var(--black);
-        --face-right:  var(--cube-selected-right);
-        --face-left:   var(--cube-selected-left);
-        --face-top:    var(--cube-selected-top);
+        --face-right: var(--cube-selected-right);
+        --face-left: var(--cube-selected-left);
+        --face-top: var(--cube-selected-top);
         --face-bottom: var(--cube-selected-bottom);
       }
 
       /* Skeleton state (cube painted but data is stale while a new
          chunk loads): hide text AND the pool logo. Using visibility
          rather than color:transparent so the raw <img> logo hides too. */
-      &.skeleton .face-text { visibility: hidden; }
+      &.skeleton .face-text {
+        visibility: hidden;
+      }
 
       /* Shared face-transform template. Each face div sets --orient,
          --x, --y, --sx, --sy and its role (liquid/glass/face-text)
@@ -181,7 +216,8 @@
          will-change is on the painted roles only (not .face-text,
          whose background never changes) so each liquid/glass gets its
          own compositor layer for snappy hover/select repaints. */
-      .liquid, .glass {
+      .liquid,
+      .glass {
         will-change: background-color;
         transition: background-color var(--state-ease);
       }
@@ -196,7 +232,9 @@
         --sy: var(--glass-y);
         --y-offset: 0;
       }
-      .glass.top { opacity: calc(1 - var(--is-full)); }
+      .glass.top {
+        opacity: calc(1 - var(--is-full));
+      }
 
       .face-text {
         --sy: var(--iso-scale);
@@ -214,9 +252,16 @@
         align-items: center;
         text-align: center;
       }
-      .face-text.top   { justify-content: center; text-transform: uppercase; }
-      .face-text.right { justify-content: space-between; }
-      .face-text p { margin: 0; }
+      .face-text.top {
+        justify-content: center;
+        text-transform: uppercase;
+      }
+      .face-text.right {
+        justify-content: space-between;
+      }
+      .face-text p {
+        margin: 0;
+      }
       .face-text .height {
         font-size: var(--font-size-sm);
         font-weight: normal;
@@ -254,12 +299,19 @@
          their rear twins share the side-face orients). --sy is only
          shared on the top/bottom pair (always full iso rhombus);
          side faces inherit --sy from their role (liquid/glass/face-text). */
-      .top, .bottom {
+      .top,
+      .bottom {
         --orient: rotate(30deg) skewX(-30deg);
         --sy: var(--iso-scale);
       }
-      .right, .rear-left { --orient: rotate(-30deg) skewX(-30deg); }
-      .left, .rear-right { --orient: rotate(30deg) skewX(30deg); }
+      .right,
+      .rear-left {
+        --orient: rotate(-30deg) skewX(-30deg);
+      }
+      .left,
+      .rear-right {
+        --orient: rotate(30deg) skewX(30deg);
+      }
 
       .bottom {
         --fc: var(--face-bottom);
@@ -268,14 +320,20 @@
       }
       .top {
         --fc: var(--face-top);
-        --x: calc(var(--ox) + var(--top-x-shift, 0) + var(--oy) / var(--iso-scale));
+        --x: calc(
+          var(--ox) + var(--top-x-shift, 0) + var(--oy) / var(--iso-scale)
+        );
         --y: calc(var(--oy) - var(--iso-scale) + var(--y-offset));
       }
-      .liquid.top { --top-x-shift: calc(1 - var(--fill)); }
+      .liquid.top {
+        --top-x-shift: calc(1 - var(--fill));
+      }
       .right {
         --fc: var(--face-right);
         --x: calc(var(--ox) + 1);
-        --y: calc((var(--ox) + 1) * var(--iso-scale) + var(--oy) + var(--y-offset));
+        --y: calc(
+          (var(--ox) + 1) * var(--iso-scale) + var(--oy) + var(--y-offset)
+        );
       }
       .left {
         --fc: var(--face-left);
@@ -308,7 +366,7 @@
           z-index: -1;
         }
 
-        @media (max-width: 767px) {
+        @container aside (max-width: 767px) {
           margin-bottom: 0;
           margin-right: var(--block-gap);
 
@@ -332,7 +390,7 @@
     font-size: var(--font-size-sm);
     line-height: var(--line-height-sm);
 
-    @media (min-width: 768px) {
+    @container aside (min-width: 768px) {
       overflow-y: auto;
       padding-left: calc(var(--main-padding) / 2);
     }
@@ -342,7 +400,7 @@
 
       code {
         font-size: 1.5rem;
-        font-weight: 300 !important;
+        font-weight: 300;
         font-family: Lilex;
         color: var(--off-color);
         letter-spacing: -0.05rem;

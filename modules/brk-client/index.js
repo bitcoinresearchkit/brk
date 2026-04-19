@@ -3001,7 +3001,7 @@ function createActivityOutputsRealizedSupplyUnrealizedPattern2(client, acc) {
 /**
  * @typedef {Object} BlockChangeCumulativeDeltaSumPattern
  * @property {CentsUsdPattern4} block
- * @property {ToPattern2} change1m
+ * @property {ToPattern} change1m
  * @property {CentsUsdPattern} cumulative
  * @property {AbsoluteRatePattern2} delta
  * @property {_1m1w1y24hPattern5} sum
@@ -3016,7 +3016,7 @@ function createActivityOutputsRealizedSupplyUnrealizedPattern2(client, acc) {
 function createBlockChangeCumulativeDeltaSumPattern(client, acc) {
   return {
     block: createCentsUsdPattern4(client, _m(acc, 'realized_pnl')),
-    change1m: createToPattern2(client, _m(acc, 'pnl_change_1m_to')),
+    change1m: createToPattern(client, _m(acc, 'pnl_change_1m_to')),
     cumulative: createCentsUsdPattern(client, _m(acc, 'realized_pnl_cumulative')),
     delta: createAbsoluteRatePattern2(client, _m(acc, 'realized_pnl_delta')),
     sum: create_1m1w1y24hPattern5(client, _m(acc, 'realized_pnl_sum')),
@@ -4446,8 +4446,8 @@ function createInPattern2(client, acc) {
 
 /**
  * @typedef {Object} InPattern
- * @property {ToPattern} inLoss
- * @property {ToPattern} inProfit
+ * @property {SharePattern} inLoss
+ * @property {SharePattern} inProfit
  */
 
 /**
@@ -4458,8 +4458,8 @@ function createInPattern2(client, acc) {
  */
 function createInPattern(client, acc) {
   return {
-    inLoss: createToPattern(client, _m(acc, 'loss_to_own')),
-    inProfit: createToPattern(client, _m(acc, 'profit_to_own')),
+    inLoss: createSharePattern(client, _m(acc, 'loss_share')),
+    inProfit: createSharePattern(client, _m(acc, 'profit_share')),
   };
 }
 
@@ -4528,18 +4528,18 @@ function createRatioValuePattern(client, acc) {
  */
 
 /**
- * @typedef {Object} ToPattern2
+ * @typedef {Object} ToPattern
  * @property {BpsPercentRatioPattern} toMcap
  * @property {BpsPercentRatioPattern} toRcap
  */
 
 /**
- * Create a ToPattern2 pattern node
+ * Create a ToPattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated series name
- * @returns {ToPattern2}
+ * @returns {ToPattern}
  */
-function createToPattern2(client, acc) {
+function createToPattern(client, acc) {
   return {
     toMcap: createBpsPercentRatioPattern(client, _m(acc, 'mcap')),
     toRcap: createBpsPercentRatioPattern(client, _m(acc, 'rcap')),
@@ -4598,19 +4598,19 @@ function createPricePattern(client, acc) {
 }
 
 /**
- * @typedef {Object} ToPattern
- * @property {BpsPercentRatioPattern2} toOwn
+ * @typedef {Object} SharePattern
+ * @property {BpsPercentRatioPattern2} share
  */
 
 /**
- * Create a ToPattern pattern node
+ * Create a SharePattern pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated series name
- * @returns {ToPattern}
+ * @returns {SharePattern}
  */
-function createToPattern(client, acc) {
+function createSharePattern(client, acc) {
   return {
-    toOwn: createBpsPercentRatioPattern2(client, acc),
+    share: createBpsPercentRatioPattern2(client, acc),
   };
 }
 
@@ -8188,15 +8188,14 @@ class BrkClient extends BrkClientBase {
   constructor(options) {
     super(options);
     /** @type {SeriesTree} */
-    this.series = this._buildTree('');
+    this.series = this._buildTree();
   }
 
   /**
    * @private
-   * @param {string} basePath
    * @returns {SeriesTree}
    */
-  _buildTree(basePath) {
+  _buildTree() {
     return {
       blocks: {
         blockhash: createSeriesPattern18(this, 'blockhash'),

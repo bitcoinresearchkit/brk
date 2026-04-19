@@ -38,32 +38,37 @@ export function createCointimeSection() {
     },
   ]);
 
-  const prices = /** @type {const} */ ([
+  /** @type {readonly { pattern: PriceRatioPercentilesPattern, name: string, title: (name: string) => string, color: Color, defaultActive: boolean }[]} */
+  const prices = [
     {
       pattern: cointimePrices.trueMarketMean,
       name: "True Market Mean",
+      title: (name) => name,
       color: colors.trueMarketMean,
       defaultActive: true,
     },
     {
       pattern: cointimePrices.vaulted,
       name: "Vaulted",
+      title: (name) => `${name} Price`,
       color: colors.vaulted,
       defaultActive: true,
     },
     {
       pattern: cointimePrices.active,
       name: "Active",
+      title: (name) => `${name} Price`,
       color: colors.active,
       defaultActive: true,
     },
     {
       pattern: cointimePrices.cointime,
       name: "Cointime",
+      title: (name) => `${name} Price`,
       color: colors.cointime,
       defaultActive: true,
     },
-  ]);
+  ];
 
   const caps = /** @type {const} */ ([
     {
@@ -187,11 +192,11 @@ export function createCointimeSection() {
               ),
             ],
           },
-          ...prices.map(({ pattern, name, color }) => ({
+          ...prices.map(({ pattern, name, title, color }) => ({
             name,
             tree: priceRatioPercentilesTree({
               pattern,
-              title: `${name} Price`,
+              title: title(name),
               legend: name,
               color,
               priceReferences: [

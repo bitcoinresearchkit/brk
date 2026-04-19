@@ -70,7 +70,7 @@
         pointer-events: auto;
       }
 
-      > span {
+      > *:nth-child(2) {
         color: var(--gray);
         padding: 0 0.75rem;
       }
@@ -105,7 +105,7 @@
 
           > label {
             > span {
-              display: flex !important;
+              display: flex;
             }
 
             &:has(input:not(:checked)) {
@@ -115,11 +115,11 @@
 
               &:hover {
                 * {
-                  color: var(--off-color) !important;
+                  color: var(--off-color);
                 }
 
                 > span.main > span.name {
-                  text-decoration-color: var(--orange) !important;
+                  text-decoration-color: var(--orange);
                 }
               }
 

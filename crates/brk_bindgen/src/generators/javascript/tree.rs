@@ -108,15 +108,14 @@ pub fn generate_main_client(
     writeln!(output, "  constructor(options) {{").unwrap();
     writeln!(output, "    super(options);").unwrap();
     writeln!(output, "    /** @type {{SeriesTree}} */").unwrap();
-    writeln!(output, "    this.series = this._buildTree('');").unwrap();
+    writeln!(output, "    this.series = this._buildTree();").unwrap();
     writeln!(output, "  }}\n").unwrap();
 
     writeln!(output, "  /**").unwrap();
     writeln!(output, "   * @private").unwrap();
-    writeln!(output, "   * @param {{string}} basePath").unwrap();
     writeln!(output, "   * @returns {{SeriesTree}}").unwrap();
     writeln!(output, "   */").unwrap();
-    writeln!(output, "  _buildTree(basePath) {{").unwrap();
+    writeln!(output, "  _buildTree() {{").unwrap();
     writeln!(output, "    return {{").unwrap();
     let mut generated = BTreeSet::new();
     generate_tree_initializer(

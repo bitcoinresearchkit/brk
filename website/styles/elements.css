@@ -30,18 +30,28 @@ a {
     text-decoration-color: inherit;
   }
 
-  &[target="_blank"]::after {
-    color: var(--off-color);
-    content: "↗";
-    font-weight: 400;
-    font-size: 1rem;
+  &[target="_blank"] {
+    &::after {
+      color: var(--off-color);
+      content: "↗";
+      font-weight: 400;
+      font-size: 1rem;
 
-    margin-top: 0.1rem;
-    margin-left: 0.375rem;
-    line-height: 1;
+      margin-top: 0.1rem;
+      margin-left: 0.375rem;
+      line-height: 1;
 
-    &:hover {
-      text-decoration: none;
+      &:hover {
+        text-decoration: none;
+      }
+    }
+
+    &:hover::after {
+      color: var(--color);
+    }
+
+    &:active::after {
+      color: var(--orange);
     }
   }
 }
@@ -55,6 +65,8 @@ aside {
   z-index: 1;
   overflow: hidden;
   background: var(--background-color);
+  container-type: inline-size;
+  container-name: aside;
 
   html[data-layout="split"] & {
     grid-column: 2;
@@ -208,11 +220,6 @@ select {
   outline: none;
 }
 
-summary > small {
-  margin-left: 0.375rem;
-  opacity: 0.5;
-}
-
 small {
   color: var(--off-color);
   font-weight: var(--font-weight-base);
@@ -249,28 +256,33 @@ summary {
   &::-webkit-details-marker {
     display: none;
   }
+
+  > small {
+    margin-left: 0.375rem;
+    opacity: 0.5;
+  }
+
+  &:hover > small {
+    color: var(--color);
+  }
+
+  &:active > small {
+    color: var(--orange);
+  }
 }
 
 :is(a, button, summary) {
   &:hover {
-    &,
-    *,
-    &::after {
-      color: var(--color);
-    }
+    color: var(--color);
   }
 
   &:active {
-    &,
-    *,
-    &::after {
-      color: var(--orange);
-    }
+    color: var(--orange);
   }
 }
 
 html[data-layout="split"] .full-only {
-  display: none !important;
+  display: none;
 }
 
 #layout-button {

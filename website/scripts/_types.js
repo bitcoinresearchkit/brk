@@ -81,13 +81,13 @@
  * Relative patterns by capability:
  * Unrealized patterns by capability level
  * @typedef {Brk.LossNetNuplProfitPattern} BasicRelativePattern
- * @typedef {Brk.GrossInvestedInvestorLossNetNuplProfitSentimentPattern2} FullRelativePattern
+ * @typedef {Brk.CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2} FullRelativePattern
  *
  * Profitability bucket pattern (supply + realized_cap + unrealized_pnl + nupl)
  * @typedef {Brk.NuplRealizedSupplyUnrealizedPattern} RealizedSupplyPattern
  *
  * Realized pattern (full: cap + gross + capitalized + loss + mvrv + net + peak + price + profit + sell + sopr)
- * @typedef {Brk.CapGrossInvestorLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern
+ * @typedef {Brk.CapCapitalizedGrossLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern
  *
  * Transfer volume pattern (block + cumulative + inProfit/inLoss + sum windows)
  * @typedef {Brk.AverageBlockCumulativeInSumPattern} TransferVolumePattern
@@ -241,19 +241,6 @@
  * Cohorts with nupl + percentiles (CohortFull and CohortLongTerm both have nupl and percentiles)
  * @typedef {CohortFull | CohortLongTerm} CohortWithNuplPercentiles
  * @typedef {{ name: string, title: string, list: readonly CohortWithNuplPercentiles[], all: CohortAll }} CohortGroupWithNuplPercentiles
- *
- * Cohorts with RealizedWithExtras (realizedCapRelToOwnMarketCap + realizedProfitToLossRatio)
- * @typedef {CohortAll | CohortFull | CohortWithPercentiles} CohortWithRealizedExtras
- *
- * Cohorts with circulating supply relative series (supplyRelToCirculatingSupply etc.)
- * These have GlobalRelativePattern or FullRelativePattern (same as RelativeWithMarketCap/RelativeWithNupl)
- * @typedef {CohortFull | CohortLongTerm | CohortWithAdjusted | CohortBasicWithMarketCap} UtxoCohortWithCirculatingSupplyRelative
- *
- * Address cohorts with circulating supply relative series (all address amount cohorts have these)
- * @typedef {AddrCohortObject} AddrCohortWithCirculatingSupplyRelative
- *
- * All cohorts with circulating supply relative series
- * @typedef {UtxoCohortWithCirculatingSupplyRelative | AddrCohortWithCirculatingSupplyRelative} CohortWithCirculatingSupplyRelative
  *
  * Delta patterns with absolute + rate rolling windows
  * @typedef {Brk.AbsoluteRatePattern} DeltaPattern

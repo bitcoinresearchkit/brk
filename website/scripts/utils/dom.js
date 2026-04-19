@@ -254,9 +254,6 @@ export function createSelect({
     ? unsortedChoices.toSorted((a, b) => toLabel(a).localeCompare(toLabel(b)))
     : unsortedChoices;
 
-  const field = window.document.createElement("div");
-  field.classList.add("field");
-
   const initialKey = toKey(initialValue);
 
   /** @param {string} key */
@@ -266,55 +263,58 @@ export function createSelect({
   if (choices.length === 1) {
     const span = window.document.createElement("span");
     span.textContent = toLabel(choices[0]);
-    field.append(span);
-  } else {
-    const select = window.document.createElement("select");
-    select.id = id ?? "";
-    select.name = id ?? "";
-    field.append(select);
-
-    /** @param {T} choice */
-    const createOption = (choice) => {
-      const option = window.document.createElement("option");
-      option.value = toKey(choice);
-      option.textContent = toLabel(choice);
-      if (toKey(choice) === initialKey) {
-        option.selected = true;
-      }
-      return option;
-    };
-
-    if (groups) {
-      groups.forEach(({ label, items }) => {
-        const optgroup = window.document.createElement("optgroup");
-        optgroup.label = label;
-        items.forEach((choice) => optgroup.append(createOption(choice)));
-        select.append(optgroup);
-      });
-    } else {
-      choices.forEach((choice) => select.append(createOption(choice)));
-    }
-
-    select.addEventListener("change", () => {
-      onChange?.(fromKey(select.value));
-    });
-
-    const remaining = choices.length - 1;
-    if (remaining > 0) {
-      const small = window.document.createElement("small");
-      small.textContent = `+${remaining}`;
-      field.append(small);
-      const arrow = window.document.createElement("span");
-      arrow.textContent = "↓";
-      field.append(arrow);
-    }
-
-    field.addEventListener("click", (e) => {
-      if (e.target !== select) {
-        select.showPicker();
-      }
-    });
+    return span;
   }
+
+  const field = window.document.createElement("div");
+  field.classList.add("field");
+
+  const select = window.document.createElement("select");
+  select.id = id ?? "";
+  select.name = id ?? "";
+  field.append(select);
+
+  /** @param {T} choice */
+  const createOption = (choice) => {
+    const option = window.document.createElement("option");
+    option.value = toKey(choice);
+    option.textContent = toLabel(choice);
+    if (toKey(choice) === initialKey) {
+      option.selected = true;
+    }
+    return option;
+  };
+
+  if (groups) {
+    groups.forEach(({ label, items }) => {
+      const optgroup = window.document.createElement("optgroup");
+      optgroup.label = label;
+      items.forEach((choice) => optgroup.append(createOption(choice)));
+      select.append(optgroup);
+    });
+  } else {
+    choices.forEach((choice) => select.append(createOption(choice)));
+  }
+
+  select.addEventListener("change", () => {
+    onChange?.(fromKey(select.value));
+  });
+
+  const remaining = choices.length - 1;
+  if (remaining > 0) {
+    const small = window.document.createElement("small");
+    small.textContent = `+${remaining}`;
+    field.append(small);
+    const arrow = window.document.createElement("span");
+    arrow.textContent = "↓";
+    field.append(arrow);
+  }
+
+  field.addEventListener("click", (e) => {
+    if (e.target !== select) {
+      select.showPicker();
+    }
+  });
 
   return field;
 }

@@ -3054,7 +3054,7 @@ class BlockChangeCumulativeDeltaSumPattern:
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated series name."""
         self.block: CentsUsdPattern4 = CentsUsdPattern4(client, _m(acc, 'realized_pnl'))
-        self.change_1m: ToPattern2 = ToPattern2(client, _m(acc, 'pnl_change_1m_to'))
+        self.change_1m: ToPattern = ToPattern(client, _m(acc, 'pnl_change_1m_to'))
         self.cumulative: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'realized_pnl_cumulative'))
         self.delta: AbsoluteRatePattern2 = AbsoluteRatePattern2(client, _m(acc, 'realized_pnl_delta'))
         self.sum: _1m1w1y24hPattern5 = _1m1w1y24hPattern5(client, _m(acc, 'realized_pnl_sum'))
@@ -3672,8 +3672,8 @@ class InPattern:
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated series name."""
-        self.in_loss: ToPattern = ToPattern(client, _m(acc, 'loss_to_own'))
-        self.in_profit: ToPattern = ToPattern(client, _m(acc, 'profit_to_own'))
+        self.in_loss: SharePattern = SharePattern(client, _m(acc, 'loss_share'))
+        self.in_profit: SharePattern = SharePattern(client, _m(acc, 'profit_share'))
 
 class PerPattern:
     """Pattern struct for repeated tree structure."""
@@ -3703,7 +3703,7 @@ class SdSmaPattern:
     """Pattern struct for repeated tree structure."""
     pass
 
-class ToPattern2:
+class ToPattern:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
@@ -3732,12 +3732,12 @@ class PricePattern:
         """Create pattern node with accumulated series name."""
         self.price: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, acc)
 
-class ToPattern:
+class SharePattern:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BrkClientBase, acc: str):
         """Create pattern node with accumulated series name."""
-        self.to_own: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, acc)
+        self.share: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, acc)
 
 class TransferPattern:
     """Pattern struct for repeated tree structure."""
