@@ -1,12 +1,12 @@
 import { brk } from "../utils/client.js";
 import { createMapCache } from "../utils/cache.js";
 import { createPersistedValue } from "../utils/persisted.js";
-import { formatFeeRate, renderTx, showPanel, hidePanel, TX_PAGE_SIZE } from "./render.js";
+import { createRow, formatFeeRate, formatHeightPrefix, renderTx, showPanel, hidePanel, TX_PAGE_SIZE } from "./render.js";
 
 /** @typedef {[string, (b: BlockInfoV1) => string | null, ((b: BlockInfoV1) => string | null)?]} RowDef */
 
-/** @param {(x: NonNullable<BlockInfoV1["extras"]>) => string | null} fn @returns {(b: BlockInfoV1) => string | null} */
-const ext = (fn) => (b) => (b.extras ? fn(b.extras) : null);
+/** @param {(x: BlockInfoV1["extras"]) => string | null} fn @returns {(b: BlockInfoV1) => string | null} */
+const ext = (fn) => (b) => fn(b.extras);
 
 /** @type {RowDef[]} */
 const ROW_DEFS = [
@@ -33,7 +33,7 @@ const ROW_DEFS = [
   ["Avg Fee Rate", ext((x) => `${formatFeeRate(x.avgFeeRate)} sat/vB`)],
   ["Avg Fee", ext((x) => `${x.avgFee.toLocaleString()} sat`)],
   ["Median Fee", ext((x) => `${x.medianFeeAmt.toLocaleString()} sat`)],
-  ["Fee Range", ext((x) => x.feeRange.map((f) => formatFeeRate(f)).join(", ") + " sat/vB")],
+  ["Fee Range", ext((x) => x.feeRange.map(formatFeeRate).join(", ") + " sat/vB")],
   ["Fee Percentiles", ext((x) => x.feePercentiles.map((f) => f.toLocaleString()).join(", ") + " sat")],
   ["Avg Tx Size", ext((x) => `${x.avgTxSize.toLocaleString()} B`)],
   ["Virtual Size", ext((x) => `${x.virtualSize.toLocaleString()} vB`)],
@@ -59,11 +59,11 @@ const ROW_DEFS = [
 /** @type {HTMLDivElement} */ let el;
 /** @type {HTMLSpanElement} */ let heightPrefix;
 /** @type {HTMLSpanElement} */ let heightNum;
-/** @type {{ row: HTMLDivElement, valueEl: HTMLSpanElement }[]} */ let detailRows;
+/** @type {{ row: HTMLDivElement, valueEl: HTMLElement }[]} */ let detailRows;
 /** @type {HTMLDivElement} */ let txList;
 /** @type {HTMLDivElement} */ let txSection;
 /** @type {IntersectionObserver} */ let txObserver;
-/** @type {TxNav[]} */ let txNavs = [];
+/** @type {TxNav[]} */ const txNavs = [];
 /** @type {BlockInfoV1 | null} */ let txBlock = null;
 let txTotalPages = 0;
 let txLoading = false;
@@ -99,14 +99,7 @@ export function initBlockDetails(parent, linkHandler) {
   el.addEventListener("click", linkHandler);
 
   detailRows = ROW_DEFS.map(([label, , linkFn]) => {
-    const row = document.createElement("div");
-    row.classList.add("row");
-    const labelEl = document.createElement("span");
-    labelEl.classList.add("label");
-    labelEl.textContent = label;
-    const valueEl = document.createElement(linkFn ? "a" : "span");
-    valueEl.classList.add("value");
-    row.append(labelEl, valueEl);
+    const { row, valueEl } = createRow(label, Boolean(linkFn));
     el.append(row);
     return { row, valueEl };
   });
@@ -170,9 +163,8 @@ function updateTxNavs(page) {
 
 /** @param {BlockInfoV1} block */
 export function update(block) {
-  const str = block.height.toString();
-  heightPrefix.textContent = "#" + "0".repeat(7 - str.length);
-  heightNum.textContent = str;
+  heightPrefix.textContent = formatHeightPrefix(block.height);
+  heightNum.textContent = block.height.toString();
 
   ROW_DEFS.forEach(([, getter, linkFn], i) => {
     const value = getter(block);
@@ -202,18 +194,19 @@ export function hide() { hidePanel(el); }
 
 /** @param {number} page @param {boolean} [pushUrl] */
 async function loadTxPage(page, pushUrl = true) {
-  if (txLoading || !txBlock || page < 0 || page >= txTotalPages) return;
+  const block = txBlock;
+  if (txLoading || !block || page < 0 || page >= txTotalPages) return;
   txLoading = true;
   txLoaded = true;
   if (pushUrl) txPageParam.setImmediate(page);
   updateTxNavs(page);
-  const key = `${txBlock.id}:${page}`;
+  const key = `${block.id}:${page}`;
   try {
-    const cached = txPageCache.get(key);
-    const txs = cached ?? await brk.getBlockTxsFromIndex(txBlock.id, page * TX_PAGE_SIZE);
-    if (!cached) txPageCache.set(key, txs);
+    const txs = await txPageCache.fetch(key, () =>
+      brk.getBlockTxsFromIndex(block.id, page * TX_PAGE_SIZE),
+    );
     txList.innerHTML = "";
-    const ascii = txBlock.extras?.coinbaseSignatureAscii;
+    const ascii = block.extras.coinbaseSignatureAscii;
     for (const tx of txs) txList.append(renderTx(tx, ascii));
   } catch (e) {
     console.error("explorer txs:", e);

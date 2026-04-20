@@ -1,10 +1,10 @@
 import { brk } from "../utils/client.js";
 import { createMapCache } from "../utils/cache.js";
 import { latestPrice } from "../utils/price.js";
-import { formatBtc, renderTx, showPanel, hidePanel, TX_PAGE_SIZE } from "./render.js";
+import { createRow, formatBtc, renderTx, showPanel, hidePanel, TX_PAGE_SIZE } from "./render.js";
 
 /** @type {HTMLDivElement} */ let el;
-/** @type {HTMLSpanElement[]} */ let valueEls;
+/** @type {HTMLElement[]} */ let valueEls;
 /** @type {HTMLDivElement} */ let txSection;
 /** @type {string} */ let currentAddr = "";
 
@@ -36,14 +36,7 @@ export function initAddrDetails(parent, linkHandler) {
   el.append(title);
 
   valueEls = ROW_LABELS.map((label) => {
-    const row = document.createElement("div");
-    row.classList.add("row");
-    const labelEl = document.createElement("span");
-    labelEl.classList.add("label");
-    labelEl.textContent = label;
-    const valueEl = document.createElement("span");
-    valueEl.classList.add("value");
-    row.append(labelEl, valueEl);
+    const { row, valueEl } = createRow(label);
     el.append(row);
     return valueEl;
   });
@@ -70,9 +63,9 @@ export async function update(address, signal) {
   while (txSection.children.length > 1) txSection.lastChild?.remove();
 
   try {
-    const cached = statsCache.get(address);
-    const stats = cached ?? (await brk.getAddress(address, { signal }));
-    if (!cached) statsCache.set(address, stats);
+    const stats = await statsCache.fetch(address, () =>
+      brk.getAddress(address, { signal }),
+    );
     if (signal.aborted || currentAddr !== address) return;
 
     const chain = stats.chainStats;
@@ -97,9 +90,7 @@ export async function update(address, signal) {
       pendingUtxos.toLocaleString(),
       `${formatBtc(chain.fundedTxoSum)} BTC`,
       chain.txCount.toLocaleString(),
-      (/** @type {any} */ (stats).addrType ?? "unknown")
-        .replace(/^v\d+_/, "")
-        .toUpperCase(),
+      stats.addrType.replace(/^v\d+_/, "").toUpperCase(),
       chain.realizedPrice
         ? `$${Number(chain.realizedPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         : "N/A",
@@ -129,10 +120,9 @@ export async function update(address, signal) {
       loading = true;
       const key = `${address}:${pageIndex}`;
       try {
-        const cached = txCache.get(key);
-        const txs =
-          cached ?? (await brk.getAddressTxs(address, afterTxid, { signal }));
-        if (!cached) txCache.set(key, txs);
+        const txs = await txCache.fetch(key, () =>
+          brk.getAddressTxs(address, afterTxid, { signal }),
+        );
         if (currentAddr !== address) return;
         for (const tx of txs) txSection.append(renderTx(tx));
         pageIndex++;

@@ -18,6 +18,9 @@ export function formatBtc(sats) {
 
 /** @param {number} rate */
 export function formatFeeRate(rate) {
+  if (rate >= 1_000_000) return `${(rate / 1_000_000).toFixed(1)}M`;
+  if (rate >= 100_000) return `${Math.round(rate / 1_000)}k`;
+  if (rate >= 1_000) return `${(rate / 1_000).toFixed(1)}k`;
   if (rate >= 100) return Math.round(rate).toLocaleString();
   if (rate >= 10) return rate.toFixed(1);
   return rate.toFixed(2);
@@ -40,17 +43,39 @@ export function setAddrContent(text, el) {
 }
 
 /** @param {number} height */
+export function formatHeightPrefix(height) {
+  return "#" + "0".repeat(Math.max(0, 7 - String(height).length));
+}
+
+/** @param {number} height */
 export function createHeightElement(height) {
   const container = document.createElement("span");
   const str = height.toString();
   const prefix = document.createElement("span");
   prefix.classList.add("dim");
   prefix.style.userSelect = "none";
-  prefix.textContent = "#" + "0".repeat(7 - str.length);
+  prefix.textContent = formatHeightPrefix(height);
   const num = document.createElement("span");
   num.textContent = str;
   container.append(prefix, num);
   return container;
+}
+
+/**
+ * @param {string} label
+ * @param {boolean} [isLink]
+ * @returns {{ row: HTMLDivElement, valueEl: HTMLElement }}
+ */
+export function createRow(label, isLink = false) {
+  const row = document.createElement("div");
+  row.classList.add("row");
+  const labelEl = document.createElement("span");
+  labelEl.classList.add("label");
+  labelEl.textContent = label;
+  const valueEl = document.createElement(isLink ? "a" : "span");
+  valueEl.classList.add("value");
+  row.append(labelEl, valueEl);
+  return { row, valueEl };
 }
 
 /**
@@ -59,16 +84,9 @@ export function createHeightElement(height) {
  */
 export function renderRows(rows, parent) {
   for (const [label, value, href] of rows) {
-    const row = document.createElement("div");
-    row.classList.add("row");
-    const labelEl = document.createElement("span");
-    labelEl.classList.add("label");
-    labelEl.textContent = label;
-    const valueEl = document.createElement(href ? "a" : "span");
-    valueEl.classList.add("value");
+    const { row, valueEl } = createRow(label, Boolean(href));
     valueEl.textContent = value;
     if (href) /** @type {HTMLAnchorElement} */ (valueEl).href = href;
-    row.append(labelEl, valueEl);
     parent.append(row);
   }
 }

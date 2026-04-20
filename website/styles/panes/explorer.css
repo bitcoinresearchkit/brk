@@ -92,6 +92,7 @@
 
     @container aside (max-width: 767px) {
       overflow-x: auto;
+      padding-bottom: 1rem;
     }
 
     @container aside (min-width: 768px) {

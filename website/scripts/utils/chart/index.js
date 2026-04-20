@@ -74,6 +74,8 @@ const lineWidth = /** @type {1} */ (/** @type {unknown} */ (1.5));
 
 const MAX_SIZE = 10_000;
 
+let hintShown = false;
+
 /** @typedef {{ label: string, index: IndexLabel, from: number }} RangePreset */
 
 /** @returns {RangePreset[]} */
@@ -1676,6 +1678,20 @@ export function createChart({ parent, brk, fitContent }) {
     });
   });
   chartEl.append(captureButton);
+
+  if (!hintShown) {
+    hintShown = true;
+    const hint = document.createElement("div");
+    hint.className = "chart-hint";
+    hint.textContent = matchMedia("(pointer: coarse)").matches
+      ? "pinch to zoom · swipe to pan"
+      : "scroll to zoom · drag to pan";
+    root.append(hint);
+
+    const dismiss = () => hint.classList.add("done");
+    chartEl.addEventListener("wheel", dismiss, { once: true, passive: true });
+    chartEl.addEventListener("pointerdown", dismiss, { once: true });
+  }
 
   return chart;
 }

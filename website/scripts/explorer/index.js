@@ -28,11 +28,6 @@ import {
   hide as hideAddr,
 } from "./address.js";
 
-/** @returns {string[]} */
-function pathSegments() {
-  return window.location.pathname.split("/").filter((v) => v);
-}
-
 /** @type {number | undefined} */ let pollInterval;
 let navController = new AbortController();
 const txCache = createMapCache(50);
@@ -111,7 +106,7 @@ export function init(selected) {
 function startPolling() {
   stopPolling();
   poll();
-  pollInterval = setInterval(poll, 15_000);
+  pollInterval = setInterval(poll, 5_000);
 }
 
 function stopPolling() {
@@ -124,14 +119,13 @@ function stopPolling() {
 async function load() {
   const signal = navigate();
   try {
-    const [kind, value] = pathSegments();
+    const [kind, value] = window.location.pathname.split("/").filter(Boolean);
 
     if (kind === "tx" && value) {
       const txid = await resolveTxid(value, { signal });
       if (signal.aborted) return;
-      const tx = txCache.get(txid) ?? (await brk.getTx(txid, { signal }));
+      const tx = await txCache.fetch(txid, () => brk.getTx(txid, { signal }));
       if (signal.aborted) return;
-      txCache.set(txid, tx);
       await goToCube(tx.status?.blockHash ?? tx.status?.blockHeight ?? null, { silent: true });
       updateTx(tx);
       showPanel("tx");
@@ -155,9 +149,8 @@ async function load() {
 
 /** @param {string} hashOrHeight */
 async function navigateToBlock(hashOrHeight) {
-  const signal = navigate();
+  navigate();
   await goToCube(hashOrHeight);
-  if (!signal.aborted) showPanel("block");
 }
 
 /** @param {Txid | TxIndex} value @param {{ signal?: AbortSignal }} [options] */
@@ -175,9 +168,8 @@ async function navigateToTx(txidOrIndex) {
   try {
     const txid = await resolveTxid(txidOrIndex, { signal });
     if (signal.aborted) return;
-    const tx = txCache.get(txid) ?? (await brk.getTx(txid, { signal }));
+    const tx = await txCache.fetch(txid, () => brk.getTx(txid, { signal }));
     if (signal.aborted) return;
-    txCache.set(txid, tx);
     await goToCube(tx.status?.blockHash ?? tx.status?.blockHeight ?? null, { silent: true });
     updateTx(tx);
   } catch (e) {

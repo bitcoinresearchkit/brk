@@ -279,4 +279,36 @@
       color: var(--off-color);
     }
   }
+
+  > div.chart-hint {
+    position: absolute;
+    bottom: 4rem;
+    left: 50%;
+    transform: translateX(-50%);
+    height: auto;
+    margin: 0;
+    z-index: 40;
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-xs);
+    color: var(--off-color);
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 0;
+    animation: chart-hint 4s 0.2s ease-in-out both;
+
+    &.done {
+      animation: none;
+      opacity: 0;
+      transition: opacity 250ms ease;
+    }
+  }
+}
+
+@keyframes chart-hint {
+  0%, 100% {
+    opacity: 0;
+  }
+  15%, 85% {
+    opacity: 0.85;
+  }
 }

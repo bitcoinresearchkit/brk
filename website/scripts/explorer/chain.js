@@ -38,7 +38,6 @@ export function initChain(parent, callbacks) {
 
   olderObserver = new IntersectionObserver(
     (entries) => {
-      return; // edge fetching disabled for layout debugging
       if (entries[0].isIntersecting) loadOlder();
     },
     { root: chainEl },
@@ -47,13 +46,8 @@ export function initChain(parent, callbacks) {
   chainEl.addEventListener(
     "scroll",
     () => {
-      return; // edge fetching disabled for layout debugging
-      const nearStart =
-        (chainEl.scrollHeight > chainEl.clientHeight &&
-          chainEl.scrollTop <= 50) ||
-        (chainEl.scrollWidth > chainEl.clientWidth &&
-          chainEl.scrollLeft <= 50);
-      if (nearStart && !reachedTip && !loadingNewer) loadNewer();
+      if (reachedTip || loadingNewer) return;
+      if (chainEl.scrollTop <= 50 && chainEl.scrollLeft <= 50) loadNewer();
     },
     { passive: true },
   );
@@ -85,7 +79,9 @@ export function selectCube(cube, { scroll, silent } = {}) {
     selectedCube = cube;
     cube.classList.add("selected");
   }
-  if (scroll) cube.scrollIntoView({ behavior: scroll });
+  if (scroll) {
+    cube.scrollIntoView({ behavior: scroll, block: "center", inline: "center" });
+  }
   if (!silent) {
     const hash = cube.dataset.hash;
     if (hash) {
@@ -218,8 +214,11 @@ async function loadNewer() {
   if (loadingNewer || newestHeight === -1 || reachedTip) return;
   loadingNewer = true;
   try {
+    const prevNewest = newestHeight;
     const blocks = await brk.getBlocksV1FromHeight(newestHeight + LOOKAHEAD);
-    if (!appendNewerBlocks(blocks)) reachedTip = true;
+    if (!appendNewerBlocks(blocks) || newestHeight === prevNewest) {
+      reachedTip = true;
+    }
   } catch (e) {
     console.error("explorer loadNewer:", e);
   }
@@ -260,8 +259,8 @@ function createBlockCube(block) {
   cubeElement.dataset.height = String(block.height);
   cubeElement.dataset.timestamp = String(block.timestamp);
 
-  const vsize = block.extras?.virtualSize ?? block.weight / 4;
-  const fill = Math.min(1, vsize / 1_000_000);
+  const { pool, medianFee, feeRange, virtualSize } = block.extras;
+  const fill = Math.min(1, virtualSize / 1_000_000);
   const { topFace, rightFace, leftFace } = createCube(cubeElement, fill);
   blocksByHash.set(block.id, block);
   // Intercept plain left-clicks for SPA nav; let modified clicks
@@ -273,10 +272,7 @@ function createBlockCube(block) {
     onCubeClick(cubeElement);
   });
 
-  const extras = block.extras;
-  const minerName = extras ? extras.pool.name : "Unknown";
-  const medianFee = extras ? extras.medianFee : 0;
-  const feeRange  = extras ? extras.feeRange  : [0, 0, 0, 0, 0, 0, 0];
+  const minerName = pool.name;
 
   // Top: short date / HH:MM (colon dimmed).
   const dateP = document.createElement("p");
@@ -308,7 +304,7 @@ function createBlockCube(block) {
   const feesEl = document.createElement("div");
   feesEl.classList.add("fees");
   const avg = document.createElement("p");
-  avg.textContent = `~${formatFeeRate(medianFee)}`;
+  avg.append(span("~", "dim"), formatFeeRate(medianFee));
   const range = document.createElement("p");
   range.append(
     formatFeeRate(feeRange[0]),
