@@ -13,8 +13,8 @@ use bitcoin::hex::DisplayHex;
 use brk_error::Result;
 use brk_rpc::Client;
 use brk_types::{
-    AddrBytes, BlockHash, MempoolEntryInfo, MempoolInfo, Transaction, TxIn, TxOut, TxStatus,
-    TxWithHex, Txid, TxidPrefix, Vout,
+    AddrBytes, BlockHash, MempoolEntryInfo, MempoolInfo, Timestamp, Transaction, TxIn, TxOut,
+    TxStatus, TxWithHex, Txid, TxidPrefix, VSize, Vout,
 };
 use derive_more::Deref;
 use parking_lot::{RwLock, RwLockReadGuard};
@@ -286,7 +286,19 @@ impl MempoolInner {
 
             info.add(tx, entry_info.fee);
             addrs.add_tx(tx, txid);
-            entries.insert(prefix, Entry::from_info(entry_info));
+            entries.insert(
+                prefix,
+                Entry {
+                    txid: entry_info.txid.clone(),
+                    fee: entry_info.fee,
+                    vsize: VSize::from(entry_info.vsize),
+                    size: tx.total_size as u64,
+                    ancestor_fee: entry_info.ancestor_fee,
+                    ancestor_vsize: VSize::from(entry_info.ancestor_size),
+                    depends: entry_info.depends.iter().map(TxidPrefix::from).collect(),
+                    first_seen: Timestamp::now(),
+                },
+            );
         }
         txs.extend(new_txs);
 

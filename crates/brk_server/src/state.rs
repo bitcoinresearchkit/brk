@@ -14,13 +14,14 @@ use axum::{
 };
 use brk_query::AsyncQuery;
 use brk_types::{
-    Addr, BlockHash, BlockHashPrefix, Height, ONE_HOUR_IN_SEC, Timestamp as BrkTimestamp, Txid,
-    Version,
+    Addr, BlockHash, BlockHashPrefix, Date, Height, ONE_HOUR_IN_SEC, Timestamp as BrkTimestamp,
+    Txid, Version,
 };
 use derive_more::Deref;
 use jiff::Timestamp;
 use quick_cache::sync::{Cache, GuardResult};
 use serde::Serialize;
+use vecdb::ReadableVec;
 
 use crate::{
     CacheParams, CacheStrategy, Error, Website,
@@ -57,6 +58,28 @@ impl AppState {
         } else {
             CacheStrategy::Tip
         }
+    }
+
+    /// `Immutable` if `date` is strictly before the indexed tip's date, `Tip` otherwise.
+    /// For per-date files that keep being rewritten while the tip is still within the
+    /// date's day, then settle once the tip crosses the day boundary.
+    pub fn date_cache(&self, version: Version, date: Date) -> CacheStrategy {
+        self.sync(|q| {
+            let height = q.indexed_height();
+            q.indexer()
+                .vecs
+                .blocks
+                .timestamp
+                .collect_one(height)
+                .map(|ts| {
+                    if date < Date::from(ts) {
+                        CacheStrategy::Immutable(version)
+                    } else {
+                        CacheStrategy::Tip
+                    }
+                })
+                .unwrap_or(CacheStrategy::Tip)
+        })
     }
 
     /// Smart address caching: checks mempool activity first (unless `chain_only`), then on-chain.

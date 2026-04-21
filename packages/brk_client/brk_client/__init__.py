@@ -967,7 +967,7 @@ class MempoolBlock(TypedDict):
     Block info in a mempool.space like format for fee estimation.
 
     Attributes:
-        blockSize: Total block size in weight units
+        blockSize: Total serialized block size in bytes (witness + non-witness).
         blockVSize: Total block virtual size in vbytes
         nTx: Number of transactions in the projected block
         totalFees: Total fees in satoshis

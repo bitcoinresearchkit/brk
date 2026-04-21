@@ -1,11 +1,13 @@
 use brk_types::{FeeRate, Sats, VSize};
 
-use crate::{entry::Entry, types::SelectedTx};
+use crate::{block_builder::Package, entry::Entry};
 
 /// Statistics for a single projected block.
 #[derive(Debug, Clone, Default)]
 pub struct BlockStats {
     pub tx_count: u32,
+    /// Total serialized size of all txs in bytes (witness + non-witness).
+    pub total_size: u64,
     pub total_vsize: VSize,
     pub total_fee: Sats,
     /// Fee rate percentiles: [0%, 10%, 25%, 50%, 75%, 90%, 100%]
@@ -26,28 +28,36 @@ impl BlockStats {
     }
 }
 
-/// Compute statistics for a single block using effective fee rates from selection time.
-pub fn compute_block_stats(selected: &[SelectedTx], entries: &[Option<Entry>]) -> BlockStats {
-    if selected.is_empty() {
+/// Compute statistics for a single block. Each tx contributes its
+/// containing package's `fee_rate` to the percentile distribution,
+/// since that's the rate the miner collects per vsize.
+pub fn compute_block_stats(block: &[Package], entries: &[Option<Entry>]) -> BlockStats {
+    if block.is_empty() {
         return BlockStats::default();
     }
 
     let mut total_fee = Sats::default();
     let mut total_vsize = VSize::default();
-    let mut fee_rates: Vec<FeeRate> = Vec::with_capacity(selected.len());
+    let mut total_size: u64 = 0;
+    let mut fee_rates: Vec<FeeRate> = Vec::new();
 
-    for sel in selected {
-        if let Some(entry) = &entries[sel.tx_index.as_usize()] {
-            total_fee += entry.fee;
-            total_vsize += entry.vsize;
-            fee_rates.push(sel.effective_fee_rate);
+    for pkg in block {
+        for &tx_index in &pkg.txs {
+            if let Some(entry) = &entries[tx_index.as_usize()] {
+                total_fee += entry.fee;
+                total_vsize += entry.vsize;
+                total_size += entry.size;
+                fee_rates.push(pkg.fee_rate);
+            }
         }
     }
 
+    let tx_count = fee_rates.len() as u32;
     fee_rates.sort_unstable();
 
     BlockStats {
-        tx_count: selected.len() as u32,
+        tx_count,
+        total_size,
         total_vsize,
         total_fee,
         fee_range: [

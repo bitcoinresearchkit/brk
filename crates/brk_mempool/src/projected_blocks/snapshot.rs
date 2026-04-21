@@ -6,36 +6,31 @@ use super::{
     fees,
     stats::{self, BlockStats},
 };
-use crate::{
-    entry::Entry,
-    types::{SelectedTx, TxIndex},
-};
+use crate::{block_builder::Package, entry::Entry, types::TxIndex};
 
 /// Immutable snapshot of projected blocks.
 #[derive(Debug, Clone, Default)]
 pub struct Snapshot {
-    /// Block structure: indices into entries Vec
+    /// Block structure: indices into the mempool entries Vec, in the
+    /// order they'd appear in the block.
     pub blocks: Vec<Vec<TxIndex>>,
-    /// Pre-computed stats per block
     pub block_stats: Vec<BlockStats>,
-    /// Pre-computed fee recommendations
     pub fees: RecommendedFees,
 }
 
 impl Snapshot {
-    /// Build snapshot from selected transactions and entries.
-    pub fn build(blocks: Vec<Vec<SelectedTx>>, entries: &[Option<Entry>]) -> Self {
+    /// Build a snapshot from packages grouped by projected block.
+    pub fn build(blocks: Vec<Vec<Package>>, entries: &[Option<Entry>]) -> Self {
         let block_stats: Vec<BlockStats> = blocks
             .iter()
-            .map(|selected| stats::compute_block_stats(selected, entries))
+            .map(|block| stats::compute_block_stats(block, entries))
             .collect();
 
         let fees = fees::compute_recommended_fees(&block_stats);
 
-        // Extract just the indices from selected transactions
         let blocks = blocks
             .into_iter()
-            .map(|selected| selected.into_iter().map(|s| s.tx_index).collect())
+            .map(|block| block.into_iter().flat_map(|pkg| pkg.txs).collect())
             .collect();
 
         Self {

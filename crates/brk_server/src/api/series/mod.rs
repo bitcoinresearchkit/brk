@@ -10,7 +10,7 @@ use axum::{
 use brk_traversable::TreeNode;
 use brk_types::{
     CostBasisFormatted, DataRangeFormat, Date, IndexInfo, PaginatedSeries, Pagination, SearchQuery,
-    SeriesCount, SeriesData, SeriesInfo, SeriesNameWithIndex, SeriesSelection,
+    SeriesCount, SeriesData, SeriesInfo, SeriesNameWithIndex, SeriesSelection, Version,
 };
 
 use crate::{
@@ -383,8 +383,9 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                        Path(params): Path<CostBasisParams>,
                        Query(query): Query<CostBasisQuery>,
                        State(state): State<AppState>| {
+                    let strategy = state.date_cache(Version::ONE, params.date);
                     state
-                        .cached_json(&headers, CacheStrategy::Static, &uri, move |q| {
+                        .cached_json(&headers, strategy, &uri, move |q| {
                             q.cost_basis_formatted(
                                 &params.cohort,
                                 params.date,

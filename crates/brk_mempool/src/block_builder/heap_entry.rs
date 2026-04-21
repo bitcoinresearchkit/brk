@@ -7,10 +7,13 @@ use crate::types::PoolIndex;
 
 /// Entry in the priority heap for transaction selection.
 ///
-/// Stores a snapshot of the score at insertion time.
+/// Stores a snapshot of the score at insertion time. The `generation` field
+/// lets the selector detect and skip stale entries after descendants are
+/// re-pushed with updated ancestor totals.
 #[derive(Clone, Copy)]
 pub struct HeapEntry {
     pub pool_index: PoolIndex,
+    pub generation: u32,
     ancestor_fee: Sats,
     ancestor_vsize: VSize,
 }
@@ -19,6 +22,7 @@ impl HeapEntry {
     pub fn new(node: &TxNode) -> Self {
         Self {
             pool_index: node.pool_index,
+            generation: node.generation,
             ancestor_fee: node.ancestor_fee,
             ancestor_vsize: node.ancestor_vsize,
         }
@@ -39,7 +43,7 @@ impl HeapEntry {
 
 impl PartialEq for HeapEntry {
     fn eq(&self, other: &Self) -> bool {
-        self.pool_index == other.pool_index
+        self.cmp(other).is_eq()
     }
 }
 

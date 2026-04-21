@@ -1,4 +1,4 @@
-use brk_types::{FeeRate, MempoolEntryInfo, Sats, Timestamp, Txid, TxidPrefix, VSize};
+use brk_types::{FeeRate, Sats, Timestamp, Txid, TxidPrefix, VSize};
 use smallvec::SmallVec;
 
 /// A mempool transaction entry.
@@ -10,6 +10,8 @@ pub struct Entry {
     pub txid: Txid,
     pub fee: Sats,
     pub vsize: VSize,
+    /// Serialized tx size in bytes (witness + non-witness), from the raw tx.
+    pub size: u64,
     /// Pre-computed ancestor fee (self + all ancestors, no double-counting)
     pub ancestor_fee: Sats,
     /// Pre-computed ancestor vsize (self + all ancestors, no double-counting)
@@ -21,18 +23,6 @@ pub struct Entry {
 }
 
 impl Entry {
-    pub fn from_info(info: &MempoolEntryInfo) -> Self {
-        Self {
-            txid: info.txid.clone(),
-            fee: info.fee,
-            vsize: VSize::from(info.vsize),
-            ancestor_fee: info.ancestor_fee,
-            ancestor_vsize: VSize::from(info.ancestor_size),
-            depends: info.depends.iter().map(TxidPrefix::from).collect(),
-            first_seen: Timestamp::now(),
-        }
-    }
-
     #[inline]
     pub fn fee_rate(&self) -> FeeRate {
         FeeRate::from((self.fee, self.vsize))

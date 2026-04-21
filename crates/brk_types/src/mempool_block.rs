@@ -7,8 +7,8 @@ use crate::{FeeRate, Sats, VSize};
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct MempoolBlock {
-    /// Total block size in weight units
-    #[schemars(example = 3993472)]
+    /// Total serialized block size in bytes (witness + non-witness).
+    #[schemars(example = 1604417)]
     pub block_size: u64,
 
     /// Total block virtual size in vbytes
@@ -47,14 +47,14 @@ fn example_fee_range() -> [FeeRate; 7] {
 impl MempoolBlock {
     pub fn new(
         tx_count: u32,
+        total_size: u64,
         total_vsize: VSize,
         total_fee: Sats,
         fee_range: [FeeRate; 7],
     ) -> Self {
-        let vsize_f64 = *total_vsize as f64;
         Self {
-            block_size: *total_vsize * 4, // weight = vsize * 4
-            block_v_size: vsize_f64,
+            block_size: total_size,
+            block_v_size: *total_vsize as f64,
             n_tx: tx_count,
             total_fees: total_fee,
             median_fee: fee_range[3],

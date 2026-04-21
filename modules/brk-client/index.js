@@ -626,7 +626,7 @@ Matches mempool.space/bitcoin-cli behavior.
  * Block info in a mempool.space like format for fee estimation.
  *
  * @typedef {Object} MempoolBlock
- * @property {number} blockSize - Total block size in weight units
+ * @property {number} blockSize - Total serialized block size in bytes (witness + non-witness).
  * @property {number} blockVSize - Total block virtual size in vbytes
  * @property {number} nTx - Number of transactions in the projected block
  * @property {Sats} totalFees - Total fees in satoshis

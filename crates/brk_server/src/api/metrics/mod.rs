@@ -9,12 +9,11 @@ use axum::{
 };
 use brk_traversable::TreeNode;
 use brk_types::{
-    CostBasisFormatted, DataRangeFormat, Date, DetailedSeriesCount, Index, IndexInfo,
-    PaginatedSeries, Pagination, SearchQuery, SeriesData, SeriesInfo, SeriesList, SeriesName,
-    SeriesSelection, SeriesSelectionLegacy,
+    DataRangeFormat, DetailedSeriesCount, Index, IndexInfo, PaginatedSeries, Pagination,
+    SearchQuery, SeriesData, SeriesInfo, SeriesList, SeriesName, SeriesSelection,
+    SeriesSelectionLegacy,
 };
 
-use crate::params::{CostBasisCohortParam, CostBasisParams, CostBasisQuery};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -345,91 +344,6 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                     )
                     .json_response::<brk_types::Version>()
                     .not_found(),
-            ),
-        )
-        // --- Deprecated cost basis routes ---
-        .api_route(
-            "/api/metrics/cost-basis",
-            get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
-                    state
-                        .cached_json(&headers, CacheStrategy::Static, &uri, |q| q.cost_basis_cohorts())
-                        .await
-                },
-                |op| {
-                    op.id("get_cost_basis_cohorts_deprecated")
-                        .metrics_tag()
-                        .deprecated()
-                        .summary("Available cost basis cohorts (deprecated)")
-                        .description(
-                            "**DEPRECATED** - Use `/api/series/cost-basis` instead.\n\n\
-                            Sunset date: 2027-01-01."
-                        )
-                        .json_response::<Vec<String>>()
-                        .server_error()
-                },
-            ),
-        )
-        .api_route(
-            "/api/metrics/cost-basis/{cohort}/dates",
-            get_with(
-                async |uri: Uri,
-                       headers: HeaderMap,
-                       Path(params): Path<CostBasisCohortParam>,
-                       State(state): State<AppState>| {
-                    state
-                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
-                            q.cost_basis_dates(&params.cohort)
-                        })
-                        .await
-                },
-                |op| {
-                    op.id("get_cost_basis_dates_deprecated")
-                        .metrics_tag()
-                        .deprecated()
-                        .summary("Available cost basis dates (deprecated)")
-                        .description(
-                            "**DEPRECATED** - Use `/api/series/cost-basis/{cohort}/dates` instead.\n\n\
-                            Sunset date: 2027-01-01."
-                        )
-                        .json_response::<Vec<Date>>()
-                        .not_found()
-                        .server_error()
-                },
-            ),
-        )
-        .api_route(
-            "/api/metrics/cost-basis/{cohort}/{date}",
-            get_with(
-                async |uri: Uri,
-                       headers: HeaderMap,
-                       Path(params): Path<CostBasisParams>,
-                       Query(query): Query<CostBasisQuery>,
-                       State(state): State<AppState>| {
-                    state
-                        .cached_json(&headers, CacheStrategy::Static, &uri, move |q| {
-                            q.cost_basis_formatted(
-                                &params.cohort,
-                                params.date,
-                                query.bucket,
-                                query.value,
-                            )
-                        })
-                        .await
-                },
-                |op| {
-                    op.id("get_cost_basis_deprecated")
-                        .metrics_tag()
-                        .deprecated()
-                        .summary("Cost basis distribution (deprecated)")
-                        .description(
-                            "**DEPRECATED** - Use `/api/series/cost-basis/{cohort}/{date}` instead.\n\n\
-                            Sunset date: 2027-01-01."
-                        )
-                        .json_response::<CostBasisFormatted>()
-                        .not_found()
-                        .server_error()
-                },
             ),
         )
         // --- Deprecated /api/vecs/ routes (moved from series module) ---

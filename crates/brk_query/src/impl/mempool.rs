@@ -36,6 +36,7 @@ impl Query {
             .map(|stats| {
                 MempoolBlock::new(
                     stats.tx_count,
+                    stats.total_size,
                     stats.total_vsize,
                     stats.total_fee,
                     stats.fee_range,
