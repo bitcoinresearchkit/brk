@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Indicators\_RarityMeter
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5664](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5664)
+Defined in: [Developer/brk/modules/brk-client/index.js:5763](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5763)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5664](https://github.com/
 
 > **cycle**: [`IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern`](IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5667](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5667)
+Defined in: [Developer/brk/modules/brk-client/index.js:5766](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5766)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5667](https://github.com/
 
 > **full**: [`IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern`](IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5665](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5665)
+Defined in: [Developer/brk/modules/brk-client/index.js:5764](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5764)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5665](https://github.com/
 
 > **local**: [`IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern`](IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5666](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5666)
+Defined in: [Developer/brk/modules/brk-client/index.js:5765](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5765)

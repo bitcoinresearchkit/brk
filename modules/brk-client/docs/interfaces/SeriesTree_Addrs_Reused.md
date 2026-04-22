@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Addrs\_Reused
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5125](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5125)
+Defined in: [Developer/brk/modules/brk-client/index.js:5224](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5224)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5125](https://github.com/
 
 > **count**: [`FundedTotalPattern`](FundedTotalPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5126](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5126)
+Defined in: [Developer/brk/modules/brk-client/index.js:5225](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5225)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5126](https://github.com/
 
 > **events**: [`SeriesTree_Addrs_Reused_Events`](SeriesTree_Addrs_Reused_Events.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5127](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5127)
+Defined in: [Developer/brk/modules/brk-client/index.js:5226](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5226)

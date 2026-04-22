@@ -48,9 +48,6 @@
     * [get\_mempool\_txids](#brk_client.BrkClient.get_mempool_txids)
     * [get\_series\_tree](#brk_client.BrkClient.get_series_tree)
     * [get\_series\_bulk](#brk_client.BrkClient.get_series_bulk)
-    * [get\_cost\_basis\_cohorts](#brk_client.BrkClient.get_cost_basis_cohorts)
-    * [get\_cost\_basis\_dates](#brk_client.BrkClient.get_cost_basis_dates)
-    * [get\_cost\_basis](#brk_client.BrkClient.get_cost_basis)
     * [get\_series\_count](#brk_client.BrkClient.get_series_count)
     * [get\_indexes](#brk_client.BrkClient.get_indexes)
     * [list\_series](#brk_client.BrkClient.list_series)
@@ -72,6 +69,10 @@
     * [get\_tx\_outspends](#brk_client.BrkClient.get_tx_outspends)
     * [get\_tx\_raw](#brk_client.BrkClient.get_tx_raw)
     * [get\_tx\_status](#brk_client.BrkClient.get_tx_status)
+    * [list\_urpd\_cohorts](#brk_client.BrkClient.list_urpd_cohorts)
+    * [get\_urpd](#brk_client.BrkClient.get_urpd)
+    * [list\_urpd\_dates](#brk_client.BrkClient.list_urpd_dates)
+    * [get\_urpd\_at](#brk_client.BrkClient.get_urpd_at)
     * [get\_block\_v1](#brk_client.BrkClient.get_block_v1)
     * [get\_blocks\_v1](#brk_client.BrkClient.get_blocks_v1)
     * [get\_blocks\_v1\_from\_height](#brk_client.BrkClient.get_blocks_v1_from_height)
@@ -637,55 +638,6 @@ Fetch multiple series in a single request. Supports filtering by index and date 
 
 Endpoint: `GET /api/series/bulk`
 
-<a id="brk_client.BrkClient.get_cost_basis_cohorts"></a>
-
-#### get\_cost\_basis\_cohorts
-
-```python
-def get_cost_basis_cohorts() -> List[str]
-```
-
-Available cost basis cohorts.
-
-List available cohorts for cost basis distribution.
-
-Endpoint: `GET /api/series/cost-basis`
-
-<a id="brk_client.BrkClient.get_cost_basis_dates"></a>
-
-#### get\_cost\_basis\_dates
-
-```python
-def get_cost_basis_dates(cohort: Cohort) -> List[Date]
-```
-
-Available cost basis dates.
-
-List available dates for a cohort's cost basis distribution.
-
-Endpoint: `GET /api/series/cost-basis/{cohort}/dates`
-
-<a id="brk_client.BrkClient.get_cost_basis"></a>
-
-#### get\_cost\_basis
-
-```python
-def get_cost_basis(cohort: Cohort,
-                   date: str,
-                   bucket: Optional[CostBasisBucket] = None,
-                   value: Optional[CostBasisValue] = None) -> dict
-```
-
-Cost basis distribution.
-
-Get the cost basis distribution for a cohort on a specific date.
-
-Query params:
-- `bucket`: raw (default), lin200, lin500, lin1000, log10, log50, log100
-- `value`: supply (default, in BTC), realized (USD), unrealized (USD)
-
-Endpoint: `GET /api/series/cost-basis/{cohort}/{date}`
-
 <a id="brk_client.BrkClient.get_series_count"></a>
 
 #### get\_series\_count
@@ -1006,6 +958,68 @@ Retrieve the confirmation status of a transaction. Returns whether the transacti
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-status)*
 
 Endpoint: `GET /api/tx/{txid}/status`
+
+<a id="brk_client.BrkClient.list_urpd_cohorts"></a>
+
+#### list\_urpd\_cohorts
+
+```python
+def list_urpd_cohorts() -> List[Cohort]
+```
+
+Available URPD cohorts.
+
+Cohorts for which URPD data is available. Returns names like `all`, `sth`, `lth`, `utxos_under_1h_old`.
+
+Endpoint: `GET /api/urpd`
+
+<a id="brk_client.BrkClient.get_urpd"></a>
+
+#### get\_urpd
+
+```python
+def get_urpd(cohort: Cohort, agg: Optional[UrpdAggregation] = None) -> Urpd
+```
+
+Latest URPD.
+
+URPD for the most recent available date in the cohort. The response's `date` field echoes which date was served.
+
+See the URPD tag description for the response shape and `agg` options.
+
+Endpoint: `GET /api/urpd/{cohort}`
+
+<a id="brk_client.BrkClient.list_urpd_dates"></a>
+
+#### list\_urpd\_dates
+
+```python
+def list_urpd_dates(cohort: Cohort) -> List[Date]
+```
+
+Available URPD dates.
+
+Dates for which a URPD snapshot is available for the cohort. One entry per UTC day, sorted ascending.
+
+Endpoint: `GET /api/urpd/{cohort}/dates`
+
+<a id="brk_client.BrkClient.get_urpd_at"></a>
+
+#### get\_urpd\_at
+
+```python
+def get_urpd_at(cohort: Cohort,
+                date: str,
+                agg: Optional[UrpdAggregation] = None) -> Urpd
+```
+
+URPD at date.
+
+URPD for a (cohort, date) pair. Returns `{ cohort, date, aggregation, close, total_supply, buckets }` where each bucket is `{ price_floor, supply, realized_cap, unrealized_pnl }`.
+
+See the URPD tag description for unit conventions and `agg` options.
+
+Endpoint: `GET /api/urpd/{cohort}/{date}`
 
 <a id="brk_client.BrkClient.get_block_v1"></a>
 

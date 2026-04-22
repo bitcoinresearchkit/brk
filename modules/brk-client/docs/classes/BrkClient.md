@@ -6,7 +6,7 @@
 
 # Class: BrkClient
 
-Defined in: [Developer/brk/modules/brk-client/index.js:7009](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L7009)
+Defined in: [Developer/brk/modules/brk-client/index.js:7108](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L7108)
 
 Main BRK client with series tree and API methods
 
@@ -20,7 +20,7 @@ Main BRK client with series tree and API methods
 
 > **new BrkClient**(`options`): `BrkClient`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:8188](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L8188)
+Defined in: [Developer/brk/modules/brk-client/index.js:8287](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L8287)
 
 #### Parameters
 
@@ -42,7 +42,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:8188](https://github.com/
 
 > **\_cache**: `Cache` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1594](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L1594)
+Defined in: [Developer/brk/modules/brk-client/index.js:1632](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L1632)
 
 #### Inherited from
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1594](https://github.com/
 
 > **\_cachePromise**: `Promise`\<`Cache` \| `null`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1592](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L1592)
+Defined in: [Developer/brk/modules/brk-client/index.js:1630](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L1630)
 
 #### Inherited from
 
@@ -66,7 +66,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1592](https://github.com/
 
 > **series**: [`SeriesTree`](../interfaces/SeriesTree.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:8191](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L8191)
+Defined in: [Developer/brk/modules/brk-client/index.js:8290](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L8290)
 
 ## Methods
 
@@ -74,7 +74,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:8191](https://github.com/
 
 > **\_fetchSeriesData**\<`T`\>(`path`, `onUpdate?`): `Promise`\<[`DateSeriesData`](../type-aliases/DateSeriesData.md)\<`T`\>\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1697](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L1697)
+Defined in: [Developer/brk/modules/brk-client/index.js:1735](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L1735)
 
 Fetch series data and wrap with helper methods (internal)
 
@@ -108,7 +108,7 @@ Fetch series data and wrap with helper methods (internal)
 
 > **\_getCached**\<`T`\>(`path`, `parse`, `options?`): `Promise`\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1621](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L1621)
+Defined in: [Developer/brk/modules/brk-client/index.js:1659](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L1659)
 
 Make a GET request - races cache vs network, first to resolve calls onUpdate.
 Shared implementation backing `getJson` and `getText`.
@@ -155,7 +155,7 @@ Response body reader
 
 > **dateToIndex**(`index`, `d`): `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:8180](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L8180)
+Defined in: [Developer/brk/modules/brk-client/index.js:8279](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L8279)
 
 Convert a Date to an index value for date-based indexes.
 
@@ -183,7 +183,7 @@ The date to convert
 
 > **get**(`path`, `options?`): `Promise`\<`Response`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1603](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L1603)
+Defined in: [Developer/brk/modules/brk-client/index.js:1641](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L1641)
 
 #### Parameters
 
@@ -211,7 +211,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1603](https://github.com/
 
 > **getAddress**(`address`, `options?`): `Promise`\<[`AddrStats`](../interfaces/AddrStats.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:9985](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L9985)
+Defined in: [Developer/brk/modules/brk-client/index.js:10084](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10084)
 
 Address information
 
@@ -247,7 +247,7 @@ Endpoint: `GET /api/address/{address}`
 
 > **getAddressConfirmedTxs**(`address`, `after_txid?`, `options?`): `Promise`\<[`Transaction`](../interfaces/Transaction.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10026](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10026)
+Defined in: [Developer/brk/modules/brk-client/index.js:10125](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10125)
 
 Address confirmed transactions
 
@@ -289,7 +289,7 @@ Txid to paginate from (return transactions before this one)
 
 > **getAddressMempoolTxs**(`address`, `options?`): `Promise`\<`string`[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10047](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10047)
+Defined in: [Developer/brk/modules/brk-client/index.js:10146](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10146)
 
 Address mempool transactions
 
@@ -325,7 +325,7 @@ Endpoint: `GET /api/address/{address}/txs/mempool`
 
 > **getAddressTxs**(`address`, `after_txid?`, `options?`): `Promise`\<[`Transaction`](../interfaces/Transaction.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10004](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10004)
+Defined in: [Developer/brk/modules/brk-client/index.js:10103](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10103)
 
 Address transactions
 
@@ -367,7 +367,7 @@ Txid to paginate from (return transactions before this one)
 
 > **getAddressUtxos**(`address`, `options?`): `Promise`\<[`Utxo`](../interfaces/Utxo.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10065](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10065)
+Defined in: [Developer/brk/modules/brk-client/index.js:10164](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10164)
 
 Address UTXOs
 
@@ -403,7 +403,7 @@ Endpoint: `GET /api/address/{address}/utxo`
 
 > **getApi**(`options?`): `Promise`\<`any`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:9967](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L9967)
+Defined in: [Developer/brk/modules/brk-client/index.js:10066](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10066)
 
 Compact OpenAPI specification
 
@@ -433,7 +433,7 @@ Endpoint: `GET /api.json`
 
 > **getBlock**(`hash`, `options?`): `Promise`\<[`BlockInfo`](../interfaces/BlockInfo.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10101](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10101)
+Defined in: [Developer/brk/modules/brk-client/index.js:10200](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10200)
 
 Block information
 
@@ -469,7 +469,7 @@ Endpoint: `GET /api/block/{hash}`
 
 > **getBlockByHeight**(`height`, `options?`): `Promise`\<`any`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10083](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10083)
+Defined in: [Developer/brk/modules/brk-client/index.js:10182](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10182)
 
 Block hash by height
 
@@ -505,7 +505,7 @@ Endpoint: `GET /api/block-height/{height}`
 
 > **getBlockByTimestamp**(`timestamp`, `options?`): `Promise`\<[`BlockTimestamp`](../interfaces/BlockTimestamp.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11085](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11085)
+Defined in: [Developer/brk/modules/brk-client/index.js:11202](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11202)
 
 Block by timestamp
 
@@ -541,7 +541,7 @@ Endpoint: `GET /api/v1/mining/blocks/timestamp/{timestamp}`
 
 > **getBlockFeeRates**(`time_period`, `options?`): `Promise`\<[`BlockFeeRatesEntry`](../interfaces/BlockFeeRatesEntry.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11013](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11013)
+Defined in: [Developer/brk/modules/brk-client/index.js:11130](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11130)
 
 Block fee rates
 
@@ -577,7 +577,7 @@ Endpoint: `GET /api/v1/mining/blocks/fee-rates/{time_period}`
 
 > **getBlockFees**(`time_period`, `options?`): `Promise`\<[`BlockFeesEntry`](../interfaces/BlockFeesEntry.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11031](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11031)
+Defined in: [Developer/brk/modules/brk-client/index.js:11148](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11148)
 
 Block fees
 
@@ -613,7 +613,7 @@ Endpoint: `GET /api/v1/mining/blocks/fees/{time_period}`
 
 > **getBlockHeader**(`hash`, `options?`): `Promise`\<`any`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10119](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10119)
+Defined in: [Developer/brk/modules/brk-client/index.js:10218](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10218)
 
 Block header
 
@@ -649,7 +649,7 @@ Endpoint: `GET /api/block/{hash}/header`
 
 > **getBlockRaw**(`hash`, `options?`): `Promise`\<`any`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10137](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10137)
+Defined in: [Developer/brk/modules/brk-client/index.js:10236](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10236)
 
 Raw block
 
@@ -685,7 +685,7 @@ Endpoint: `GET /api/block/{hash}/raw`
 
 > **getBlockRewards**(`time_period`, `options?`): `Promise`\<[`BlockRewardsEntry`](../interfaces/BlockRewardsEntry.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11049](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11049)
+Defined in: [Developer/brk/modules/brk-client/index.js:11166](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11166)
 
 Block rewards
 
@@ -721,7 +721,7 @@ Endpoint: `GET /api/v1/mining/blocks/rewards/{time_period}`
 
 > **getBlocks**(`options?`): `Promise`\<[`BlockInfo`](../interfaces/BlockInfo.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10245](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10245)
+Defined in: [Developer/brk/modules/brk-client/index.js:10344](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10344)
 
 Recent blocks
 
@@ -753,7 +753,7 @@ Endpoint: `GET /api/blocks`
 
 > **getBlocksFromHeight**(`height`, `options?`): `Promise`\<[`BlockInfo`](../interfaces/BlockInfo.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10295](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10295)
+Defined in: [Developer/brk/modules/brk-client/index.js:10394](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10394)
 
 Blocks from height
 
@@ -789,7 +789,7 @@ Endpoint: `GET /api/blocks/{height}`
 
 > **getBlockSizesWeights**(`time_period`, `options?`): `Promise`\<[`BlockSizesWeights`](../interfaces/BlockSizesWeights.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11067](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11067)
+Defined in: [Developer/brk/modules/brk-client/index.js:11184](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11184)
 
 Block sizes and weights
 
@@ -825,7 +825,7 @@ Endpoint: `GET /api/v1/mining/blocks/sizes-weights/{time_period}`
 
 > **getBlockStatus**(`hash`, `options?`): `Promise`\<[`BlockStatus`](../interfaces/BlockStatus.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10155](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10155)
+Defined in: [Developer/brk/modules/brk-client/index.js:10254](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10254)
 
 Block status
 
@@ -861,7 +861,7 @@ Endpoint: `GET /api/block/{hash}/status`
 
 > **getBlocksV1**(`options?`): `Promise`\<[`BlockInfoV1`](../interfaces/BlockInfoV1.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10874](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10874)
+Defined in: [Developer/brk/modules/brk-client/index.js:10991](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10991)
 
 Recent blocks with extras
 
@@ -893,7 +893,7 @@ Endpoint: `GET /api/v1/blocks`
 
 > **getBlocksV1FromHeight**(`height`, `options?`): `Promise`\<[`BlockInfoV1`](../interfaces/BlockInfoV1.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10892](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10892)
+Defined in: [Developer/brk/modules/brk-client/index.js:11009](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11009)
 
 Blocks from height with extras
 
@@ -929,7 +929,7 @@ Endpoint: `GET /api/v1/blocks/{height}`
 
 > **getBlockTipHash**(`options?`): `Promise`\<`any`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10261](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10261)
+Defined in: [Developer/brk/modules/brk-client/index.js:10360](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10360)
 
 Block tip hash
 
@@ -961,7 +961,7 @@ Endpoint: `GET /api/blocks/tip/hash`
 
 > **getBlockTipHeight**(`options?`): `Promise`\<`any`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10277](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10277)
+Defined in: [Developer/brk/modules/brk-client/index.js:10376](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10376)
 
 Block tip height
 
@@ -993,7 +993,7 @@ Endpoint: `GET /api/blocks/tip/height`
 
 > **getBlockTxid**(`hash`, `index`, `options?`): `Promise`\<`any`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10174](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10174)
+Defined in: [Developer/brk/modules/brk-client/index.js:10273](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10273)
 
 Transaction ID at index
 
@@ -1037,7 +1037,7 @@ Transaction index within the block (0-based)
 
 > **getBlockTxids**(`hash`, `options?`): `Promise`\<`string`[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10192](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10192)
+Defined in: [Developer/brk/modules/brk-client/index.js:10291](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10291)
 
 Block transaction IDs
 
@@ -1073,7 +1073,7 @@ Endpoint: `GET /api/block/{hash}/txids`
 
 > **getBlockTxs**(`hash`, `options?`): `Promise`\<[`Transaction`](../interfaces/Transaction.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10210](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10210)
+Defined in: [Developer/brk/modules/brk-client/index.js:10309](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10309)
 
 Block transactions
 
@@ -1109,7 +1109,7 @@ Endpoint: `GET /api/block/{hash}/txs`
 
 > **getBlockTxsFromIndex**(`hash`, `start_index`, `options?`): `Promise`\<[`Transaction`](../interfaces/Transaction.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10229](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10229)
+Defined in: [Developer/brk/modules/brk-client/index.js:10328](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10328)
 
 Block transactions (paginated)
 
@@ -1153,7 +1153,7 @@ Starting transaction index within the block (0-based)
 
 > **getBlockV1**(`hash`, `options?`): `Promise`\<[`BlockInfoV1`](../interfaces/BlockInfoV1.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10858](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10858)
+Defined in: [Developer/brk/modules/brk-client/index.js:10975](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10975)
 
 Block (v1)
 
@@ -1185,129 +1185,11 @@ Endpoint: `GET /api/v1/block/{hash}`
 
 ***
 
-### getCostBasis()
-
-> **getCostBasis**(`cohort`, `date`, `bucket?`, `value?`, `options?`): `Promise`\<`Object`\>
-
-Defined in: [Developer/brk/modules/brk-client/index.js:10454](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10454)
-
-Cost basis distribution
-
-Get the cost basis distribution for a cohort on a specific date.
-
-Query params:
-- `bucket`: raw (default), lin200, lin500, lin1000, log10, log50, log100
-- `value`: supply (default, in BTC), realized (USD), unrealized (USD)
-
-Endpoint: `GET /api/series/cost-basis/{cohort}/{date}`
-
-#### Parameters
-
-##### cohort
-
-[`Cohort`](../type-aliases/Cohort.md)
-
-##### date
-
-`string`
-
-##### bucket?
-
-[`CostBasisBucket`](../type-aliases/CostBasisBucket.md)
-
-Bucket type for aggregation. Default: raw (no aggregation).
-
-##### value?
-
-[`CostBasisValue`](../type-aliases/CostBasisValue.md)
-
-Value type to return. Default: supply.
-
-##### options?
-
-###### onUpdate?
-
-(`value`) => `void`
-
-###### signal?
-
-`AbortSignal`
-
-#### Returns
-
-`Promise`\<`Object`\>
-
-***
-
-### getCostBasisCohorts()
-
-> **getCostBasisCohorts**(`options?`): `Promise`\<`string`[]\>
-
-Defined in: [Developer/brk/modules/brk-client/index.js:10415](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10415)
-
-Available cost basis cohorts
-
-List available cohorts for cost basis distribution.
-
-Endpoint: `GET /api/series/cost-basis`
-
-#### Parameters
-
-##### options?
-
-###### onUpdate?
-
-(`value`) => `void`
-
-###### signal?
-
-`AbortSignal`
-
-#### Returns
-
-`Promise`\<`string`[]\>
-
-***
-
-### getCostBasisDates()
-
-> **getCostBasisDates**(`cohort`, `options?`): `Promise`\<`number`[]\>
-
-Defined in: [Developer/brk/modules/brk-client/index.js:10431](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10431)
-
-Available cost basis dates
-
-List available dates for a cohort's cost basis distribution.
-
-Endpoint: `GET /api/series/cost-basis/{cohort}/dates`
-
-#### Parameters
-
-##### cohort
-
-[`Cohort`](../type-aliases/Cohort.md)
-
-##### options?
-
-###### onUpdate?
-
-(`value`) => `void`
-
-###### signal?
-
-`AbortSignal`
-
-#### Returns
-
-`Promise`\<`number`[]\>
-
-***
-
 ### getCpfp()
 
 > **getCpfp**(`txid`, `options?`): `Promise`\<[`CpfpInfo`](../interfaces/CpfpInfo.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10910](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10910)
+Defined in: [Developer/brk/modules/brk-client/index.js:11027](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11027)
 
 CPFP info
 
@@ -1343,7 +1225,7 @@ Endpoint: `GET /api/v1/cpfp/{txid}`
 
 > **getDifficultyAdjustment**(`options?`): `Promise`\<[`DifficultyAdjustment`](../interfaces/DifficultyAdjustment.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10926](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10926)
+Defined in: [Developer/brk/modules/brk-client/index.js:11043](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11043)
 
 Difficulty adjustment
 
@@ -1375,7 +1257,7 @@ Endpoint: `GET /api/v1/difficulty-adjustment`
 
 > **getDifficultyAdjustments**(`options?`): `Promise`\<[`DifficultyAdjustmentEntry`](../interfaces/DifficultyAdjustmentEntry.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11101](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11101)
+Defined in: [Developer/brk/modules/brk-client/index.js:11218](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11218)
 
 Difficulty adjustments (all time)
 
@@ -1407,7 +1289,7 @@ Endpoint: `GET /api/v1/mining/difficulty-adjustments`
 
 > **getDifficultyAdjustmentsByPeriod**(`time_period`, `options?`): `Promise`\<[`DifficultyAdjustmentEntry`](../interfaces/DifficultyAdjustmentEntry.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11119](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11119)
+Defined in: [Developer/brk/modules/brk-client/index.js:11236](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11236)
 
 Difficulty adjustments
 
@@ -1443,7 +1325,7 @@ Endpoint: `GET /api/v1/mining/difficulty-adjustments/{time_period}`
 
 > **getDiskUsage**(`options?`): `Promise`\<[`DiskUsage`](../interfaces/DiskUsage.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10665](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10665)
+Defined in: [Developer/brk/modules/brk-client/index.js:10707](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10707)
 
 Disk usage
 
@@ -1473,7 +1355,7 @@ Endpoint: `GET /api/server/disk`
 
 > **getHashrate**(`options?`): `Promise`\<[`HashrateSummary`](../interfaces/HashrateSummary.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11135](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11135)
+Defined in: [Developer/brk/modules/brk-client/index.js:11252](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11252)
 
 Network hashrate (all time)
 
@@ -1505,7 +1387,7 @@ Endpoint: `GET /api/v1/mining/hashrate`
 
 > **getHashrateByPeriod**(`time_period`, `options?`): `Promise`\<[`HashrateSummary`](../interfaces/HashrateSummary.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11187](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11187)
+Defined in: [Developer/brk/modules/brk-client/index.js:11304](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11304)
 
 Network hashrate
 
@@ -1541,7 +1423,7 @@ Endpoint: `GET /api/v1/mining/hashrate/{time_period}`
 
 > **getHealth**(`options?`): `Promise`\<[`Health`](../interfaces/Health.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11376](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11376)
+Defined in: [Developer/brk/modules/brk-client/index.js:11493](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11493)
 
 Health check
 
@@ -1571,7 +1453,7 @@ Endpoint: `GET /health`
 
 > **getHistoricalPrice**(`timestamp?`, `options?`): `Promise`\<[`HistoricalPrice`](../interfaces/HistoricalPrice.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10992](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10992)
+Defined in: [Developer/brk/modules/brk-client/index.js:11109](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11109)
 
 Historical price
 
@@ -1607,7 +1489,7 @@ Endpoint: `GET /api/v1/historical-price`
 
 > **getIndexes**(`options?`): `Promise`\<[`IndexInfo`](../interfaces/IndexInfo.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10486](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10486)
+Defined in: [Developer/brk/modules/brk-client/index.js:10528](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10528)
 
 List available indexes
 
@@ -1637,7 +1519,7 @@ Endpoint: `GET /api/series/indexes`
 
 > **getJson**\<`T`\>(`path`, `options?`): `Promise`\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1675](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L1675)
+Defined in: [Developer/brk/modules/brk-client/index.js:1713](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L1713)
 
 Make a GET request expecting a JSON response. Cached and supports `onUpdate`.
 
@@ -1677,7 +1559,7 @@ Make a GET request expecting a JSON response. Cached and supports `onUpdate`.
 
 > **getLivePrice**(`options?`): `Promise`\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10325](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10325)
+Defined in: [Developer/brk/modules/brk-client/index.js:10424](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10424)
 
 Live BTC/USD price
 
@@ -1707,7 +1589,7 @@ Endpoint: `GET /api/mempool/price`
 
 > **getMempool**(`options?`): `Promise`\<[`MempoolInfo`](../interfaces/MempoolInfo.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10311](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10311)
+Defined in: [Developer/brk/modules/brk-client/index.js:10410](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10410)
 
 Mempool statistics
 
@@ -1739,7 +1621,7 @@ Endpoint: `GET /api/mempool`
 
 > **getMempoolBlocks**(`options?`): `Promise`\<[`MempoolBlock`](../interfaces/MempoolBlock.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10942](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10942)
+Defined in: [Developer/brk/modules/brk-client/index.js:11059](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11059)
 
 Projected mempool blocks
 
@@ -1771,7 +1653,7 @@ Endpoint: `GET /api/v1/fees/mempool-blocks`
 
 > **getMempoolRecent**(`options?`): `Promise`\<[`MempoolRecentTx`](../interfaces/MempoolRecentTx.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10341](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10341)
+Defined in: [Developer/brk/modules/brk-client/index.js:10440](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10440)
 
 Recent mempool transactions
 
@@ -1803,7 +1685,7 @@ Endpoint: `GET /api/mempool/recent`
 
 > **getMempoolTxids**(`options?`): `Promise`\<`string`[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10357](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10357)
+Defined in: [Developer/brk/modules/brk-client/index.js:10456](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10456)
 
 Mempool transaction IDs
 
@@ -1835,7 +1717,7 @@ Endpoint: `GET /api/mempool/txids`
 
 > **getOpenapi**(`options?`): `Promise`\<`any`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11390](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11390)
+Defined in: [Developer/brk/modules/brk-client/index.js:11507](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11507)
 
 OpenAPI specification
 
@@ -1865,7 +1747,7 @@ Endpoint: `GET /openapi.json`
 
 > **getPool**(`slug`, `options?`): `Promise`\<[`PoolDetail`](../interfaces/PoolDetail.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11205](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11205)
+Defined in: [Developer/brk/modules/brk-client/index.js:11322](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11322)
 
 Mining pool details
 
@@ -1901,7 +1783,7 @@ Endpoint: `GET /api/v1/mining/pool/{slug}`
 
 > **getPoolBlocks**(`slug`, `options?`): `Promise`\<[`BlockInfoV1`](../interfaces/BlockInfoV1.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11223](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11223)
+Defined in: [Developer/brk/modules/brk-client/index.js:11340](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11340)
 
 Mining pool blocks
 
@@ -1937,7 +1819,7 @@ Endpoint: `GET /api/v1/mining/pool/{slug}/blocks`
 
 > **getPoolBlocksFrom**(`slug`, `height`, `options?`): `Promise`\<[`BlockInfoV1`](../interfaces/BlockInfoV1.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11242](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11242)
+Defined in: [Developer/brk/modules/brk-client/index.js:11359](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11359)
 
 Mining pool blocks from height
 
@@ -1977,7 +1859,7 @@ Endpoint: `GET /api/v1/mining/pool/{slug}/blocks/{height}`
 
 > **getPoolHashrate**(`slug`, `options?`): `Promise`\<[`PoolHashrateEntry`](../interfaces/PoolHashrateEntry.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11260](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11260)
+Defined in: [Developer/brk/modules/brk-client/index.js:11377](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11377)
 
 Mining pool hashrate
 
@@ -2013,7 +1895,7 @@ Endpoint: `GET /api/v1/mining/pool/{slug}/hashrate`
 
 > **getPools**(`options?`): `Promise`\<[`PoolInfo`](../interfaces/PoolInfo.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11276](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11276)
+Defined in: [Developer/brk/modules/brk-client/index.js:11393](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11393)
 
 List all mining pools
 
@@ -2045,7 +1927,7 @@ Endpoint: `GET /api/v1/mining/pools`
 
 > **getPoolsHashrate**(`options?`): `Promise`\<[`PoolHashrateEntry`](../interfaces/PoolHashrateEntry.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11151](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11151)
+Defined in: [Developer/brk/modules/brk-client/index.js:11268](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11268)
 
 All pools hashrate (all time)
 
@@ -2077,7 +1959,7 @@ Endpoint: `GET /api/v1/mining/hashrate/pools`
 
 > **getPoolsHashrateByPeriod**(`time_period`, `options?`): `Promise`\<[`PoolHashrateEntry`](../interfaces/PoolHashrateEntry.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11169](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11169)
+Defined in: [Developer/brk/modules/brk-client/index.js:11286](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11286)
 
 All pools hashrate
 
@@ -2113,7 +1995,7 @@ Endpoint: `GET /api/v1/mining/hashrate/pools/{time_period}`
 
 > **getPoolStats**(`time_period`, `options?`): `Promise`\<[`PoolsSummary`](../interfaces/PoolsSummary.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11294](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11294)
+Defined in: [Developer/brk/modules/brk-client/index.js:11411](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11411)
 
 Mining pool statistics
 
@@ -2149,7 +2031,7 @@ Endpoint: `GET /api/v1/mining/pools/{time_period}`
 
 > **getPreciseFees**(`options?`): `Promise`\<[`RecommendedFees`](../interfaces/RecommendedFees.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10958](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10958)
+Defined in: [Developer/brk/modules/brk-client/index.js:11075](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11075)
 
 Precise recommended fees
 
@@ -2181,7 +2063,7 @@ Endpoint: `GET /api/v1/fees/precise`
 
 > **getPrices**(`options?`): `Promise`\<[`Prices`](../interfaces/Prices.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11328](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11328)
+Defined in: [Developer/brk/modules/brk-client/index.js:11445](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11445)
 
 Current BTC price
 
@@ -2213,7 +2095,7 @@ Endpoint: `GET /api/v1/prices`
 
 > **getRecommendedFees**(`options?`): `Promise`\<[`RecommendedFees`](../interfaces/RecommendedFees.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10974](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10974)
+Defined in: [Developer/brk/modules/brk-client/index.js:11091](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11091)
 
 Recommended fees
 
@@ -2245,7 +2127,7 @@ Endpoint: `GET /api/v1/fees/recommended`
 
 > **getRewardStats**(`block_count`, `options?`): `Promise`\<[`RewardStats`](../interfaces/RewardStats.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11312](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11312)
+Defined in: [Developer/brk/modules/brk-client/index.js:11429](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11429)
 
 Mining reward statistics
 
@@ -2283,7 +2165,7 @@ Number of recent blocks to include
 
 > **getSeries**(`series`, `index`, `start?`, `end?`, `limit?`, `format?`, `options?`): `Promise`\<`string` \| [`AnySeriesData`](../type-aliases/AnySeriesData.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10565](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10565)
+Defined in: [Developer/brk/modules/brk-client/index.js:10607](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10607)
 
 Get series data
 
@@ -2349,7 +2231,7 @@ Format of the output
 
 > **getSeriesBulk**(`series?`, `index?`, `start?`, `end?`, `limit?`, `format?`, `options?`): `Promise`\<`string` \| [`AnySeriesData`](../type-aliases/AnySeriesData.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10392](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10392)
+Defined in: [Developer/brk/modules/brk-client/index.js:10491](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10491)
 
 Bulk series data
 
@@ -2415,7 +2297,7 @@ Format of the output
 
 > **getSeriesCount**(`options?`): `Promise`\<[`SeriesCount`](../interfaces/SeriesCount.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10472](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10472)
+Defined in: [Developer/brk/modules/brk-client/index.js:10514](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10514)
 
 Series count
 
@@ -2445,7 +2327,7 @@ Endpoint: `GET /api/series/count`
 
 > **getSeriesData**(`series`, `index`, `start?`, `end?`, `limit?`, `format?`, `options?`): `Promise`\<`string` \| `boolean`[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10593](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10593)
+Defined in: [Developer/brk/modules/brk-client/index.js:10635](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10635)
 
 Get raw series data
 
@@ -2511,7 +2393,7 @@ Format of the output
 
 > **getSeriesInfo**(`series`, `options?`): `Promise`\<[`SeriesInfo`](../interfaces/SeriesInfo.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10544](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10544)
+Defined in: [Developer/brk/modules/brk-client/index.js:10586](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10586)
 
 Get series info
 
@@ -2545,7 +2427,7 @@ Endpoint: `GET /api/series/{series}`
 
 > **getSeriesLatest**(`series`, `index`, `options?`): `Promise`\<`any`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10617](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10617)
+Defined in: [Developer/brk/modules/brk-client/index.js:10659](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10659)
 
 Get latest series value
 
@@ -2587,7 +2469,7 @@ Aggregation index
 
 > **getSeriesLen**(`series`, `index`, `options?`): `Promise`\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10634](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10634)
+Defined in: [Developer/brk/modules/brk-client/index.js:10676](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10676)
 
 Get series data length
 
@@ -2629,7 +2511,7 @@ Aggregation index
 
 > **getSeriesTree**(`options?`): `Promise`\<[`TreeNode`](../type-aliases/TreeNode.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10371](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10371)
+Defined in: [Developer/brk/modules/brk-client/index.js:10470](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10470)
 
 Series catalog
 
@@ -2659,7 +2541,7 @@ Endpoint: `GET /api/series`
 
 > **getSeriesVersion**(`series`, `index`, `options?`): `Promise`\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10651](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10651)
+Defined in: [Developer/brk/modules/brk-client/index.js:10693](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10693)
 
 Get series version
 
@@ -2701,7 +2583,7 @@ Aggregation index
 
 > **getSyncStatus**(`options?`): `Promise`\<[`SyncStatus`](../interfaces/SyncStatus.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10679](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10679)
+Defined in: [Developer/brk/modules/brk-client/index.js:10721](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10721)
 
 Sync status
 
@@ -2731,7 +2613,7 @@ Endpoint: `GET /api/server/sync`
 
 > **getText**(`path`, `options?`): `Promise`\<`string`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1686](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L1686)
+Defined in: [Developer/brk/modules/brk-client/index.js:1724](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L1724)
 
 Make a GET request expecting a text response (text/plain, text/csv, ...).
 Cached and supports `onUpdate`, same as `getJson`.
@@ -2766,7 +2648,7 @@ Cached and supports `onUpdate`, same as `getJson`.
 
 > **getTransactionTimes**(`options?`): `Promise`\<`number`[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11344](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11344)
+Defined in: [Developer/brk/modules/brk-client/index.js:11461](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11461)
 
 Transaction first-seen times
 
@@ -2798,7 +2680,7 @@ Endpoint: `GET /api/v1/transaction-times`
 
 > **getTx**(`txid`, `options?`): `Promise`\<[`Transaction`](../interfaces/Transaction.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10713](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10713)
+Defined in: [Developer/brk/modules/brk-client/index.js:10755](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10755)
 
 Transaction information
 
@@ -2834,7 +2716,7 @@ Endpoint: `GET /api/tx/{txid}`
 
 > **getTxByIndex**(`index`, `options?`): `Promise`\<`any`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10695](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10695)
+Defined in: [Developer/brk/modules/brk-client/index.js:10737](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10737)
 
 Txid by index
 
@@ -2868,7 +2750,7 @@ Endpoint: `GET /api/tx-index/{index}`
 
 > **getTxHex**(`txid`, `options?`): `Promise`\<`any`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10731](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10731)
+Defined in: [Developer/brk/modules/brk-client/index.js:10773](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10773)
 
 Transaction hex
 
@@ -2904,7 +2786,7 @@ Endpoint: `GET /api/tx/{txid}/hex`
 
 > **getTxMerkleblockProof**(`txid`, `options?`): `Promise`\<`any`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10767](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10767)
+Defined in: [Developer/brk/modules/brk-client/index.js:10809](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10809)
 
 Transaction merkleblock proof
 
@@ -2940,7 +2822,7 @@ Endpoint: `GET /api/tx/{txid}/merkleblock-proof`
 
 > **getTxMerkleProof**(`txid`, `options?`): `Promise`\<[`MerkleProof`](../interfaces/MerkleProof.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10749](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10749)
+Defined in: [Developer/brk/modules/brk-client/index.js:10791](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10791)
 
 Transaction merkle proof
 
@@ -2976,7 +2858,7 @@ Endpoint: `GET /api/tx/{txid}/merkle-proof`
 
 > **getTxOutspend**(`txid`, `vout`, `options?`): `Promise`\<[`TxOutspend`](../interfaces/TxOutspend.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10786](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10786)
+Defined in: [Developer/brk/modules/brk-client/index.js:10828](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10828)
 
 Output spend status
 
@@ -3020,7 +2902,7 @@ Output index
 
 > **getTxOutspends**(`txid`, `options?`): `Promise`\<[`TxOutspend`](../interfaces/TxOutspend.md)[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10804](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10804)
+Defined in: [Developer/brk/modules/brk-client/index.js:10846](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10846)
 
 All output spend statuses
 
@@ -3056,7 +2938,7 @@ Endpoint: `GET /api/tx/{txid}/outspends`
 
 > **getTxRaw**(`txid`, `options?`): `Promise`\<`any`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10822](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10822)
+Defined in: [Developer/brk/modules/brk-client/index.js:10864](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10864)
 
 Transaction raw
 
@@ -3092,7 +2974,7 @@ Endpoint: `GET /api/tx/{txid}/raw`
 
 > **getTxStatus**(`txid`, `options?`): `Promise`\<[`TxStatus`](../interfaces/TxStatus.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10840](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10840)
+Defined in: [Developer/brk/modules/brk-client/index.js:10882](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10882)
 
 Transaction status
 
@@ -3124,11 +3006,99 @@ Endpoint: `GET /api/tx/{txid}/status`
 
 ***
 
+### getUrpd()
+
+> **getUrpd**(`cohort`, `agg?`, `options?`): `Promise`\<[`Urpd`](../interfaces/Urpd.md)\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:10915](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10915)
+
+Latest URPD
+
+URPD for the most recent available date in the cohort. The response's `date` field echoes which date was served.
+
+See the URPD tag description for the response shape and `agg` options.
+
+Endpoint: `GET /api/urpd/{cohort}`
+
+#### Parameters
+
+##### cohort
+
+[`Cohort`](../type-aliases/Cohort.md)
+
+##### agg?
+
+[`UrpdAggregation`](../type-aliases/UrpdAggregation.md)
+
+Aggregation strategy. Default: raw (no aggregation). Accepts `bucket` as alias.
+
+##### options?
+
+###### onUpdate?
+
+(`value`) => `void`
+
+###### signal?
+
+`AbortSignal`
+
+#### Returns
+
+`Promise`\<[`Urpd`](../interfaces/Urpd.md)\>
+
+***
+
+### getUrpdAt()
+
+> **getUrpdAt**(`cohort`, `date`, `agg?`, `options?`): `Promise`\<[`Urpd`](../interfaces/Urpd.md)\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:10954](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10954)
+
+URPD at date
+
+URPD for a (cohort, date) pair. Returns `{ cohort, date, aggregation, close, total_supply, buckets }` where each bucket is `{ price_floor, supply, realized_cap, unrealized_pnl }`.
+
+See the URPD tag description for unit conventions and `agg` options.
+
+Endpoint: `GET /api/urpd/{cohort}/{date}`
+
+#### Parameters
+
+##### cohort
+
+[`Cohort`](../type-aliases/Cohort.md)
+
+##### date
+
+`string`
+
+##### agg?
+
+[`UrpdAggregation`](../type-aliases/UrpdAggregation.md)
+
+Aggregation strategy. Default: raw (no aggregation). Accepts `bucket` as alias.
+
+##### options?
+
+###### onUpdate?
+
+(`value`) => `void`
+
+###### signal?
+
+`AbortSignal`
+
+#### Returns
+
+`Promise`\<[`Urpd`](../interfaces/Urpd.md)\>
+
+***
+
 ### getVersion()
 
 > **getVersion**(`options?`): `Promise`\<`string`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11404](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11404)
+Defined in: [Developer/brk/modules/brk-client/index.js:11521](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11521)
 
 API version
 
@@ -3158,7 +3128,7 @@ Endpoint: `GET /version`
 
 > **indexToDate**(`index`, `i`): `Date`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:8170](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L8170)
+Defined in: [Developer/brk/modules/brk-client/index.js:8269](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L8269)
 
 Convert an index value to a Date for date-based indexes.
 
@@ -3186,7 +3156,7 @@ The index value
 
 > **listSeries**(`page?`, `per_page?`, `options?`): `Promise`\<[`PaginatedSeries`](../interfaces/PaginatedSeries.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10503](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10503)
+Defined in: [Developer/brk/modules/brk-client/index.js:10545](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10545)
 
 Series list
 
@@ -3224,11 +3194,75 @@ Results per page (default: 1000, max: 1000)
 
 ***
 
+### listUrpdCohorts()
+
+> **listUrpdCohorts**(`options?`): `Promise`\<[`Cohort`](../type-aliases/Cohort.md)[]\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:10896](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10896)
+
+Available URPD cohorts
+
+Cohorts for which URPD data is available. Returns names like `all`, `sth`, `lth`, `utxos_under_1h_old`.
+
+Endpoint: `GET /api/urpd`
+
+#### Parameters
+
+##### options?
+
+###### onUpdate?
+
+(`value`) => `void`
+
+###### signal?
+
+`AbortSignal`
+
+#### Returns
+
+`Promise`\<[`Cohort`](../type-aliases/Cohort.md)[]\>
+
+***
+
+### listUrpdDates()
+
+> **listUrpdDates**(`cohort`, `options?`): `Promise`\<`number`[]\>
+
+Defined in: [Developer/brk/modules/brk-client/index.js:10934](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10934)
+
+Available URPD dates
+
+Dates for which a URPD snapshot is available for the cohort. One entry per UTC day, sorted ascending.
+
+Endpoint: `GET /api/urpd/{cohort}/dates`
+
+#### Parameters
+
+##### cohort
+
+[`Cohort`](../type-aliases/Cohort.md)
+
+##### options?
+
+###### onUpdate?
+
+(`value`) => `void`
+
+###### signal?
+
+`AbortSignal`
+
+#### Returns
+
+`Promise`\<`number`[]\>
+
+***
+
 ### searchSeries()
 
 > **searchSeries**(`q?`, `limit?`, `options?`): `Promise`\<`string`[]\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:10524](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L10524)
+Defined in: [Developer/brk/modules/brk-client/index.js:10566](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10566)
 
 Search series
 
@@ -3270,7 +3304,7 @@ Maximum number of results
 
 > **seriesEndpoint**(`series`, `index`): [`SeriesEndpoint`](../interfaces/SeriesEndpoint.md)\<`unknown`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:9954](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L9954)
+Defined in: [Developer/brk/modules/brk-client/index.js:10053](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L10053)
 
 Create a dynamic series endpoint builder for any series/index combination.
 
@@ -3301,7 +3335,7 @@ The index name
 
 > **validateAddress**(`address`, `options?`): `Promise`\<[`AddrValidation`](../interfaces/AddrValidation.md)\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:11362](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L11362)
+Defined in: [Developer/brk/modules/brk-client/index.js:11479](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L11479)
 
 Validate address
 

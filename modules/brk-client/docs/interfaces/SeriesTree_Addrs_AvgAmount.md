@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Addrs\_AvgAmount
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5197](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5197)
+Defined in: [Developer/brk/modules/brk-client/index.js:5296](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5296)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5197](https://github.com/
 
 > **all**: [`AddrUtxoPattern`](AddrUtxoPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5198](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5198)
+Defined in: [Developer/brk/modules/brk-client/index.js:5297](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5297)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5198](https://github.com/
 
 > **p2a**: [`AddrUtxoPattern`](AddrUtxoPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5206](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5206)
+Defined in: [Developer/brk/modules/brk-client/index.js:5305](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5305)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5206](https://github.com/
 
 > **p2pk33**: [`AddrUtxoPattern`](AddrUtxoPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5200](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5200)
+Defined in: [Developer/brk/modules/brk-client/index.js:5299](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5299)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5200](https://github.com/
 
 > **p2pk65**: [`AddrUtxoPattern`](AddrUtxoPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5199](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5199)
+Defined in: [Developer/brk/modules/brk-client/index.js:5298](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5298)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5199](https://github.com/
 
 > **p2pkh**: [`AddrUtxoPattern`](AddrUtxoPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5201](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5201)
+Defined in: [Developer/brk/modules/brk-client/index.js:5300](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5300)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5201](https://github.com/
 
 > **p2sh**: [`AddrUtxoPattern`](AddrUtxoPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5202](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5202)
+Defined in: [Developer/brk/modules/brk-client/index.js:5301](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5301)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5202](https://github.com/
 
 > **p2tr**: [`AddrUtxoPattern`](AddrUtxoPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5205](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5205)
+Defined in: [Developer/brk/modules/brk-client/index.js:5304](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5304)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5205](https://github.com/
 
 > **p2wpkh**: [`AddrUtxoPattern`](AddrUtxoPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5203](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5203)
+Defined in: [Developer/brk/modules/brk-client/index.js:5302](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5302)
 
 ***
 
@@ -78,4 +78,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5203](https://github.com/
 
 > **p2wsh**: [`AddrUtxoPattern`](AddrUtxoPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5204](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5204)
+Defined in: [Developer/brk/modules/brk-client/index.js:5303](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5303)

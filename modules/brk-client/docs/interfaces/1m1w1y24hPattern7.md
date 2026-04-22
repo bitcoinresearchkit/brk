@@ -6,36 +6,36 @@
 
 # Interface: \_1m1w1y24hPattern7
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3209](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L3209)
+Defined in: [Developer/brk/modules/brk-client/index.js:3316](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L3316)
 
 ## Properties
 
 ### \_1m
 
-> **\_1m**: [`BpsPercentRatioPattern4`](BpsPercentRatioPattern4.md)
+> **\_1m**: [`BtcSatsPattern`](BtcSatsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3210](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L3210)
+Defined in: [Developer/brk/modules/brk-client/index.js:3317](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L3317)
 
 ***
 
 ### \_1w
 
-> **\_1w**: [`BpsPercentRatioPattern4`](BpsPercentRatioPattern4.md)
+> **\_1w**: [`BtcSatsPattern`](BtcSatsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3211](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L3211)
+Defined in: [Developer/brk/modules/brk-client/index.js:3318](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L3318)
 
 ***
 
 ### \_1y
 
-> **\_1y**: [`BpsPercentRatioPattern4`](BpsPercentRatioPattern4.md)
+> **\_1y**: [`BtcSatsPattern`](BtcSatsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3212](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L3212)
+Defined in: [Developer/brk/modules/brk-client/index.js:3319](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L3319)
 
 ***
 
 ### \_24h
 
-> **\_24h**: [`BpsPercentRatioPattern4`](BpsPercentRatioPattern4.md)
+> **\_24h**: [`BtcSatsPattern`](BtcSatsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3213](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L3213)
+Defined in: [Developer/brk/modules/brk-client/index.js:3320](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L3320)

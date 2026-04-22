@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Scripts
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5210](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5210)
+Defined in: [Developer/brk/modules/brk-client/index.js:5309](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5309)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5210](https://github.com/
 
 > **raw**: [`SeriesTree_Scripts_Raw`](SeriesTree_Scripts_Raw.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5211](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L5211)
+Defined in: [Developer/brk/modules/brk-client/index.js:5310](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L5310)

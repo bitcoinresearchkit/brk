@@ -6,17 +6,15 @@
 
 # Interface: CostBasisQuery
 
-Defined in: [Developer/brk/modules/brk-client/index.js:366](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L366)
+Defined in: [Developer/brk/modules/brk-client/index.js:353](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L353)
 
 ## Properties
 
 ### bucket?
 
-> `optional` **bucket?**: [`CostBasisBucket`](../type-aliases/CostBasisBucket.md)
+> `optional` **bucket?**: [`UrpdAggregation`](../type-aliases/UrpdAggregation.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:367](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L367)
-
-Bucket type for aggregation. Default: raw (no aggregation).
+Defined in: [Developer/brk/modules/brk-client/index.js:354](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L354)
 
 ***
 
@@ -24,6 +22,4 @@ Bucket type for aggregation. Default: raw (no aggregation).
 
 > `optional` **value?**: [`CostBasisValue`](../type-aliases/CostBasisValue.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:368](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L368)
-
-Value type to return. Default: supply.
+Defined in: [Developer/brk/modules/brk-client/index.js:355](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L355)
