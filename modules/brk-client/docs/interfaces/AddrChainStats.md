@@ -6,7 +6,7 @@
 
 # Interface: AddrChainStats
 
-Defined in: [Developer/brk/modules/brk-client/index.js:16](https://github.com/bitcoinresearchkit/brk/blob/75a97b4da99e60fce9ac789d118004f9b3db3ee5/modules/brk-client/index.js#L16)
+Defined in: [Developer/brk/modules/brk-client/index.js:16](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L16)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:16](https://github.com/bi
 
 > **fundedTxoCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:17](https://github.com/bitcoinresearchkit/brk/blob/75a97b4da99e60fce9ac789d118004f9b3db3ee5/modules/brk-client/index.js#L17)
+Defined in: [Developer/brk/modules/brk-client/index.js:17](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L17)
 
 Total number of transaction outputs that funded this address
 
@@ -24,7 +24,7 @@ Total number of transaction outputs that funded this address
 
 > **fundedTxoSum**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:18](https://github.com/bitcoinresearchkit/brk/blob/75a97b4da99e60fce9ac789d118004f9b3db3ee5/modules/brk-client/index.js#L18)
+Defined in: [Developer/brk/modules/brk-client/index.js:18](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L18)
 
 Total amount in satoshis received by this address across all funded outputs
 
@@ -34,7 +34,7 @@ Total amount in satoshis received by this address across all funded outputs
 
 > **realizedPrice**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:23](https://github.com/bitcoinresearchkit/brk/blob/75a97b4da99e60fce9ac789d118004f9b3db3ee5/modules/brk-client/index.js#L23)
+Defined in: [Developer/brk/modules/brk-client/index.js:23](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L23)
 
 Realized price (average cost basis) in USD
 
@@ -44,7 +44,7 @@ Realized price (average cost basis) in USD
 
 > **spentTxoCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:19](https://github.com/bitcoinresearchkit/brk/blob/75a97b4da99e60fce9ac789d118004f9b3db3ee5/modules/brk-client/index.js#L19)
+Defined in: [Developer/brk/modules/brk-client/index.js:19](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L19)
 
 Total number of transaction outputs spent from this address
 
@@ -54,7 +54,7 @@ Total number of transaction outputs spent from this address
 
 > **spentTxoSum**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:20](https://github.com/bitcoinresearchkit/brk/blob/75a97b4da99e60fce9ac789d118004f9b3db3ee5/modules/brk-client/index.js#L20)
+Defined in: [Developer/brk/modules/brk-client/index.js:20](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L20)
 
 Total amount in satoshis spent from this address
 
@@ -64,7 +64,7 @@ Total amount in satoshis spent from this address
 
 > **txCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:21](https://github.com/bitcoinresearchkit/brk/blob/75a97b4da99e60fce9ac789d118004f9b3db3ee5/modules/brk-client/index.js#L21)
+Defined in: [Developer/brk/modules/brk-client/index.js:21](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L21)
 
 Total number of confirmed transactions involving this address
 
@@ -74,6 +74,6 @@ Total number of confirmed transactions involving this address
 
 > **typeIndex**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:22](https://github.com/bitcoinresearchkit/brk/blob/75a97b4da99e60fce9ac789d118004f9b3db3ee5/modules/brk-client/index.js#L22)
+Defined in: [Developer/brk/modules/brk-client/index.js:22](https://github.com/bitcoinresearchkit/brk/blob/bdc3ba1df62c3c70339afe14f39c8c9a5a094c37/modules/brk-client/index.js#L22)
 
 Index of this address within its type on the blockchain

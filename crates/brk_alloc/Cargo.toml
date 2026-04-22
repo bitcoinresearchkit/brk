@@ -8,5 +8,5 @@ homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
-libmimalloc-sys = { version = "0.1.46", features = ["extended"] }
-mimalloc = { version = "0.1.49" }
+libmimalloc-sys = { version = "0.1.47", features = ["extended"] }
+mimalloc = { version = "0.1.50" }
