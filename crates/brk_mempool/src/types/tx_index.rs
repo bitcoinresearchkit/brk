@@ -15,3 +15,10 @@ impl From<usize> for TxIndex {
         Self(value as u32)
     }
 }
+
+impl From<TxIndex> for u64 {
+    #[inline]
+    fn from(value: TxIndex) -> Self {
+        u64::from(value.0)
+    }
+}

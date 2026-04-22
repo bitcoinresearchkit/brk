@@ -5,7 +5,7 @@ use super::{BLOCK_VSIZE, package::Package};
 /// How many packages to look ahead when the current one doesn't fit.
 const LOOK_AHEAD_COUNT: usize = 100;
 
-/// Partition packages into blocks by placement rate.
+/// Partition packages into blocks by fee rate.
 ///
 /// The first `num_blocks - 1` blocks are packed greedily into ~`BLOCK_VSIZE`
 /// chunks. The final block is a catch-all containing every remaining
@@ -15,10 +15,11 @@ pub fn partition_into_blocks(
     mut packages: Vec<Package>,
     num_blocks: usize,
 ) -> Vec<Vec<Package>> {
-    // Stable sort for deterministic output across equal placement rates.
-    // Topology across dependent packages is already enforced by the
-    // placement_rate cap in the selector.
-    packages.sort_by_key(|p| Reverse(p.placement_rate));
+    // Stable sort for deterministic output across equal fee rates. SFL
+    // guarantees chunks within a cluster come in non-increasing rate
+    // order, so stable sorting by fee_rate preserves intra-cluster
+    // topology automatically.
+    packages.sort_by_key(|p| Reverse(p.fee_rate));
 
     let mut slots: Vec<Option<Package>> = packages.into_iter().map(Some).collect();
     let mut blocks: Vec<Vec<Package>> = Vec::with_capacity(num_blocks);

@@ -1,6 +1,8 @@
-use brk_types::{MempoolRecentTx, TxWithHex, Txid};
+use brk_types::{MempoolRecentTx, Txid};
 use derive_more::Deref;
 use rustc_hash::FxHashMap;
+
+use crate::types::TxWithHex;
 
 const RECENT_CAP: usize = 10;
 

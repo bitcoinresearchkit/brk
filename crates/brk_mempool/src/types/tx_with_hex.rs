@@ -1,4 +1,4 @@
-use crate::Transaction;
+use brk_types::Transaction;
 
 /// A transaction with its raw hex representation
 #[derive(Debug, Clone)]

@@ -1,8 +1,7 @@
 mod graph;
-mod heap_entry;
+mod linearize;
 mod package;
 mod partitioner;
-mod selector;
 mod tx_node;
 
 pub use package::Package;
@@ -22,12 +21,12 @@ const NUM_BLOCKS: usize = 8;
 /// descending; the final block is a catch-all containing every remaining
 /// package (matches mempool.space behavior).
 pub fn build_projected_blocks(entries: &[Option<Entry>]) -> Vec<Vec<Package>> {
-    let mut graph = graph::build_graph(entries);
+    let graph = graph::build_graph(entries);
 
     if graph.is_empty() {
         return Vec::new();
     }
 
-    let packages = selector::select_packages(&mut graph);
+    let packages = linearize::linearize_clusters(&graph);
     partitioner::partition_into_blocks(packages, NUM_BLOCKS)
 }

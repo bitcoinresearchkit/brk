@@ -1,6 +1,7 @@
 use std::{cmp::Reverse, collections::BinaryHeap, fs, path::Path};
 
-use brk_cohort::{Filtered, PROFITABILITY_RANGE_COUNT, TERM_NAMES};
+use brk_cohort::{AGE_RANGE_NAMES, Filtered, PROFITABILITY_RANGE_COUNT, TERM_NAMES};
+use rayon::prelude::*;
 use brk_error::Result;
 use brk_types::{BasisPoints16, Cents, CentsCompact, CostBasisDistribution, Date, Dollars, Sats};
 
@@ -57,6 +58,29 @@ impl UTXOCohorts {
     fn write_disk_distributions(&mut self, date: Date, states_path: &Path) -> Result<()> {
         let sth_filter = self.sth.metrics.filter.clone();
 
+        self.age_range
+            .iter()
+            .zip(AGE_RANGE_NAMES.iter())
+            .collect::<Vec<_>>()
+            .into_par_iter()
+            .try_for_each(|(sub, name)| -> Result<()> {
+                let Some(state) = sub.state.as_ref() else {
+                    return Ok(());
+                };
+                let mut merged: Vec<(CentsCompact, Sats)> = Vec::new();
+                for (&price, &sats) in state.cost_basis_map().iter() {
+                    let rounded = price.round_to_dollar(COST_BASIS_PRICE_DIGITS);
+                    if let Some(last) = merged.last_mut()
+                        && last.0 == rounded
+                    {
+                        last.1 += sats;
+                    } else {
+                        merged.push((rounded, sats));
+                    }
+                }
+                write_distribution(states_path, name.id, date, merged)
+            })?;
+
         let maps: Vec<_> = self
             .age_range
             .iter()
@@ -84,9 +108,13 @@ impl UTXOCohorts {
 
         merge_k_way(&maps, &mut targets);
 
-        write_distribution(states_path, "all", date, targets.all.merged)?;
-        write_distribution(states_path, TERM_NAMES.short.id, date, targets.sth.merged)?;
-        write_distribution(states_path, TERM_NAMES.long.id, date, targets.lth.merged)?;
+        [
+            ("all", targets.all.merged),
+            (TERM_NAMES.short.id, targets.sth.merged),
+            (TERM_NAMES.long.id, targets.lth.merged),
+        ]
+        .into_par_iter()
+        .try_for_each(|(name, merged)| write_distribution(states_path, name, date, merged))?;
 
         Ok(())
     }

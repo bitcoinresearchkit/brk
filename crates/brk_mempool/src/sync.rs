@@ -14,7 +14,7 @@ use brk_error::Result;
 use brk_rpc::Client;
 use brk_types::{
     AddrBytes, BlockHash, MempoolEntryInfo, MempoolInfo, Timestamp, Transaction, TxIn, TxOut,
-    TxStatus, TxWithHex, Txid, TxidPrefix, VSize, Vout,
+    TxStatus, Txid, TxidPrefix, VSize, Vout,
 };
 use derive_more::Deref;
 use parking_lot::{RwLock, RwLockReadGuard};
@@ -28,6 +28,7 @@ use crate::{
     entry_pool::EntryPool,
     projected_blocks::{BlockStats, RecommendedFees, Snapshot},
     tx_store::TxStore,
+    types::TxWithHex,
 };
 
 /// Max new txs to fetch full data for per update cycle (for address tracking).
