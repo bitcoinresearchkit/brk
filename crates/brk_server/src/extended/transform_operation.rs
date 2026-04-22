@@ -15,6 +15,7 @@ pub trait TransformResponseExtended<'t> {
     fn transactions_tag(self) -> Self;
     fn server_tag(self) -> Self;
     fn series_tag(self) -> Self;
+    fn urpd_tag(self) -> Self;
     fn metrics_tag(self) -> Self;
 
     /// Mark operation as deprecated
@@ -80,6 +81,10 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
 
     fn series_tag(self) -> Self {
         self.tag("Series")
+    }
+
+    fn urpd_tag(self) -> Self {
+        self.tag("URPD")
     }
 
     fn metrics_tag(self) -> Self {

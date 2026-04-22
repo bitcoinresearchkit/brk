@@ -4,7 +4,7 @@ use strum::Display;
 
 use crate::Cents;
 
-/// Bucket type for cost basis aggregation.
+/// Aggregation strategy for URPD buckets.
 /// Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
 /// log10/log50/log100/log200 (logarithmic with 10/50/100/200 buckets per decade).
 #[derive(
@@ -12,7 +12,7 @@ use crate::Cents;
 )]
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
-pub enum CostBasisBucket {
+pub enum UrpdAggregation {
     #[default]
     Raw,
     Lin200,
@@ -24,7 +24,7 @@ pub enum CostBasisBucket {
     Log200,
 }
 
-impl CostBasisBucket {
+impl UrpdAggregation {
     /// Returns the linear bucket size in cents, if this is a linear bucket type.
     fn linear_size_cents(&self) -> Option<u64> {
         match self {

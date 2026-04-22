@@ -125,6 +125,7 @@ function seq(keys) {
 export const colors = {
   transparent: createColor(() => "transparent"),
   default: createColor(() => getLightDarkValue("--color")),
+  background: createColor(() => getLightDarkValue("--background-color")),
   gray: createColor(() => getColor("gray")),
   border: createColor(() => getLightDarkValue("--border-color")),
   offBorder: createColor(() => getLightDarkValue("--off-border-color")),

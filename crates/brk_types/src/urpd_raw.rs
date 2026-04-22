@@ -1,7 +1,5 @@
 use std::collections::BTreeMap;
 
-use rustc_hash::FxHashMap;
-
 use brk_error::Result;
 use pco::{
     ChunkConfig,
@@ -11,25 +9,21 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::Bytes;
 
-use crate::{Bitcoin, Cents, CentsCompact, CostBasisBucket, CostBasisValue, Dollars, Sats};
+use crate::{CentsCompact, Sats};
 
-/// Cost basis distribution: a map of price (cents) to sats.
+/// Raw on-disk URPD: a map of price (cents) to supply (sats).
+/// Processed into [`crate::Urpd`] for API responses.
 #[derive(Debug, Clone, Default, Serialize, JsonSchema)]
-pub struct CostBasisDistribution {
+pub struct UrpdRaw {
     pub map: BTreeMap<CentsCompact, Sats>,
 }
 
-/// Formatted cost basis output.
-/// Key: price floor in USD (dollars).
-/// Value: BTC (for supply) or USD (for realized/unrealized).
-pub type CostBasisFormatted = BTreeMap<Dollars, f64>;
-
-impl CostBasisDistribution {
+impl UrpdRaw {
     /// Deserialize from the pco-compressed format, returning remaining bytes.
     pub fn deserialize_with_rest(data: &[u8]) -> Result<(Self, &[u8])> {
         if data.len() < 24 {
             return Err(brk_error::Error::Deserialization(format!(
-                "CostBasisDistribution: data too short ({} bytes, need >= 24)",
+                "UrpdRaw: data too short ({} bytes, need >= 24)",
                 data.len()
             )));
         }
@@ -43,7 +37,7 @@ impl CostBasisDistribution {
 
         if data.len() < rest_start {
             return Err(brk_error::Error::Deserialization(format!(
-                "CostBasisDistribution: data too short ({} bytes, need >= {})",
+                "UrpdRaw: data too short ({} bytes, need >= {})",
                 data.len(),
                 rest_start
             )));
@@ -91,55 +85,5 @@ impl CostBasisDistribution {
         buffer.extend(compressed_values);
 
         Ok(buffer)
-    }
-
-    /// Format the distribution with optional bucketing and value transformation.
-    ///
-    /// - `bucket`: How to aggregate prices (raw, linear, or logarithmic)
-    /// - `value`: What value to compute (supply, realized, or unrealized)
-    /// - `spot_cents`: Current spot price in cents (required for unrealized)
-    pub fn format(
-        &self,
-        bucket: CostBasisBucket,
-        value: CostBasisValue,
-        spot_cents: Cents,
-    ) -> CostBasisFormatted {
-        let spot = Dollars::from(spot_cents);
-        let needs_realized = value == CostBasisValue::Realized;
-        let mut result: FxHashMap<Cents, (Sats, Dollars)> =
-            FxHashMap::with_capacity_and_hasher(self.map.len(), Default::default());
-
-        // Aggregate into buckets
-        for (&price_cents, &sats) in &self.map {
-            let price_cents_u = Cents::from(price_cents);
-
-            let bucket_key = match bucket {
-                CostBasisBucket::Raw => price_cents_u,
-                _ => bucket.bucket_floor(price_cents_u).unwrap_or(price_cents_u),
-            };
-
-            let entry = result
-                .entry(bucket_key)
-                .or_insert((Sats::ZERO, Dollars::ZERO));
-            entry.0 += sats;
-            // Only compute realized value if needed
-            if needs_realized {
-                entry.1 += Dollars::from(price_cents_u) * sats;
-            }
-        }
-
-        // Convert to final output based on value type
-        result
-            .into_iter()
-            .map(|(cents, (sats, realized))| {
-                let k = Dollars::from(cents);
-                let v = match value {
-                    CostBasisValue::Supply => f64::from(Bitcoin::from(sats)),
-                    CostBasisValue::Realized => f64::from(realized),
-                    CostBasisValue::Unrealized => f64::from((spot - k) * sats),
-                };
-                (k, v)
-            })
-            .collect()
     }
 }

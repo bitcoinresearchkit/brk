@@ -176,8 +176,26 @@ All errors return structured JSON with a consistent format:
             ..Default::default()
         },
         Tag {
+            name: "URPD".to_string(),
+            description: Some(
+                "UTXO Realized Price Distribution. For each (cohort, date) pair, supply is \
+                grouped by the close price at which each UTXO was last moved. One snapshot is \
+                emitted per UTC day.\n\n\
+                Each bucket carries `supply` (BTC), `realized_cap` (USD, = `price_floor * supply`), \
+                and `unrealized_pnl` (USD, = `(close - price_floor) * supply`, can be negative).\n\n\
+                Aggregate with the `agg` query parameter (alias `bucket`):\n\
+                - `raw`: one bucket per rounded price (default).\n\
+                - `lin200` / `lin500` / `lin1000`: linear buckets, $200 / $500 / $1000 wide.\n\
+                - `log10` / `log50` / `log100` / `log200`: logarithmic buckets, N bins per price decade.\n\n\
+                Discovery flow: `GET /api/urpd` (cohorts), `GET /api/urpd/{cohort}` (latest), \
+                `GET /api/urpd/{cohort}/dates` (history), `GET /api/urpd/{cohort}/{date}` (specific)."
+                    .to_string(),
+            ),
+            ..Default::default()
+        },
+        Tag {
             name: "Metrics".to_string(),
-            description: Some("Deprecated — use Series".to_string()),
+            description: Some("Deprecated - use Series".to_string()),
             extensions: [("deprecated".to_string(), serde_json::Value::Bool(true))].into(),
             ..Default::default()
         },

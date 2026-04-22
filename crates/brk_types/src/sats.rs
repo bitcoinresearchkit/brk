@@ -62,6 +62,7 @@ impl Sats {
     pub const FIFTY_BTC: Self = Self(50_00_000_000);
     pub const ONE_BTC_U64: u64 = 1_00_000_000;
     pub const ONE_BTC_U128: u128 = 1_00_000_000;
+    pub const ONE_BTC_I128: i128 = 1_00_000_000;
 
     pub fn new(sats: u64) -> Self {
         Self(sats)
@@ -78,6 +79,11 @@ impl Sats {
     #[inline(always)]
     pub const fn as_u128(self) -> u128 {
         self.0 as u128
+    }
+
+    #[inline(always)]
+    pub const fn as_i128(self) -> i128 {
+        self.0 as i128
     }
 
     pub fn is_max(&self) -> bool {

@@ -840,13 +840,13 @@ export function createChart({ parent, brk, fitContent }) {
       defaultActive,
       options,
     }) {
-      const upColor = customColors?.[0] ?? colors.bi.p1[0];
-      const downColor = customColors?.[1] ?? colors.bi.p1[1];
+      const upColor = customColors?.[0] ?? colors.background;
+      const downColor = customColors?.[1] ?? colors.default;
 
       const candlestickISeries = /** @type {CandlestickISeries} */ (
         ichart.addSeries(
           /** @type {SeriesDefinition<'Candlestick'>} */ (CandlestickSeries),
-          { visible: false, borderVisible: false, ...options },
+          { visible: false, borderVisible: true, ...options },
           paneIndex,
         )
       );
@@ -889,10 +889,13 @@ export function createChart({ parent, brk, fitContent }) {
           candlestickISeries.applyOptions({
             visible: active && !showLine,
             lastValueVisible: highlighted,
+            priceLineColor: colors.default.highlight(highlighted),
             upColor: upColor.highlight(highlighted),
             downColor: downColor.highlight(highlighted),
-            wickUpColor: upColor.highlight(highlighted),
-            wickDownColor: downColor.highlight(highlighted),
+            wickUpColor: colors.default.highlight(highlighted),
+            wickDownColor: colors.default.highlight(highlighted),
+            borderUpColor: colors.default.highlight(highlighted),
+            borderDownColor: colors.default.highlight(highlighted),
           });
           lineISeries.applyOptions({
             visible: active && showLine,

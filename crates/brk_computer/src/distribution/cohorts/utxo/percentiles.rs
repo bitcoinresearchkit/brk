@@ -1,9 +1,9 @@
 use std::{cmp::Reverse, collections::BinaryHeap, fs, path::Path};
 
-use brk_cohort::{AGE_RANGE_NAMES, Filtered, PROFITABILITY_RANGE_COUNT, TERM_NAMES};
+use brk_cohort::{AGE_RANGE_NAMES, CohortContext, Filtered, PROFITABILITY_RANGE_COUNT, TERM_NAMES};
 use rayon::prelude::*;
 use brk_error::Result;
-use brk_types::{BasisPoints16, Cents, CentsCompact, CostBasisDistribution, Date, Dollars, Sats};
+use brk_types::{BasisPoints16, Cents, CentsCompact, UrpdRaw, Date, Dollars, Sats};
 
 use crate::distribution::metrics::{CostBasis, ProfitabilityMetrics};
 
@@ -78,7 +78,8 @@ impl UTXOCohorts {
                         merged.push((rounded, sats));
                     }
                 }
-                write_distribution(states_path, name.id, date, merged)
+                let full = CohortContext::Utxo.prefixed(name.id);
+                write_distribution(states_path, &full, date, merged)
             })?;
 
         let maps: Vec<_> = self
@@ -150,15 +151,15 @@ fn push_profitability(
 
 fn write_distribution(
     states_path: &Path,
-    name: &str,
+    full_name: &str,
     date: Date,
     merged: Vec<(CentsCompact, Sats)>,
 ) -> Result<()> {
-    let dir = states_path.join(format!("utxo_{name}_cost_basis/by_date"));
+    let dir = states_path.join(full_name).join("urpd");
     fs::create_dir_all(&dir)?;
     fs::write(
         dir.join(date.to_string()),
-        CostBasisDistribution::serialize_iter(merged.into_iter())?,
+        UrpdRaw::serialize_iter(merged.into_iter())?,
     )?;
     Ok(())
 }

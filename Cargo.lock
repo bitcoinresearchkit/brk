@@ -694,6 +694,7 @@ dependencies = [
  "flate2",
  "jiff",
  "quick_cache",
+ "rustc-hash",
  "schemars",
  "serde",
  "serde_json",

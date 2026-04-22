@@ -9097,42 +9097,6 @@ impl BrkClient {
         }
     }
 
-    /// Available cost basis cohorts
-    ///
-    /// List available cohorts for cost basis distribution.
-    ///
-    /// Endpoint: `GET /api/series/cost-basis`
-    pub fn get_cost_basis_cohorts(&self) -> Result<Vec<String>> {
-        self.base.get_json(&format!("/api/series/cost-basis"))
-    }
-
-    /// Available cost basis dates
-    ///
-    /// List available dates for a cohort's cost basis distribution.
-    ///
-    /// Endpoint: `GET /api/series/cost-basis/{cohort}/dates`
-    pub fn get_cost_basis_dates(&self, cohort: Cohort) -> Result<Vec<Date>> {
-        self.base.get_json(&format!("/api/series/cost-basis/{cohort}/dates"))
-    }
-
-    /// Cost basis distribution
-    ///
-    /// Get the cost basis distribution for a cohort on a specific date.
-    ///
-    /// Query params:
-    /// - `bucket`: raw (default), lin200, lin500, lin1000, log10, log50, log100
-    /// - `value`: supply (default, in BTC), realized (USD), unrealized (USD)
-    ///
-    /// Endpoint: `GET /api/series/cost-basis/{cohort}/{date}`
-    pub fn get_cost_basis(&self, cohort: Cohort, date: &str, bucket: Option<CostBasisBucket>, value: Option<CostBasisValue>) -> Result<serde_json::Value> {
-        let mut query = Vec::new();
-        if let Some(v) = bucket { query.push(format!("bucket={}", v)); }
-        if let Some(v) = value { query.push(format!("value={}", v)); }
-        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
-        let path = format!("/api/series/cost-basis/{cohort}/{date}{}", query_str);
-        self.base.get_json(&path)
-    }
-
     /// Series count
     ///
     /// Returns the number of series available per index type.
@@ -9368,6 +9332,54 @@ impl BrkClient {
     /// Endpoint: `GET /api/tx/{txid}/status`
     pub fn get_tx_status(&self, txid: Txid) -> Result<TxStatus> {
         self.base.get_json(&format!("/api/tx/{txid}/status"))
+    }
+
+    /// Available URPD cohorts
+    ///
+    /// Cohorts for which URPD data is available. Returns names like `all`, `sth`, `lth`, `utxos_under_1h_old`.
+    ///
+    /// Endpoint: `GET /api/urpd`
+    pub fn list_urpd_cohorts(&self) -> Result<Vec<Cohort>> {
+        self.base.get_json(&format!("/api/urpd"))
+    }
+
+    /// Latest URPD
+    ///
+    /// URPD for the most recent available date in the cohort. The response's `date` field echoes which date was served.
+    ///
+    /// See the URPD tag description for the response shape and `agg` options.
+    ///
+    /// Endpoint: `GET /api/urpd/{cohort}`
+    pub fn get_urpd(&self, cohort: Cohort, agg: Option<UrpdAggregation>) -> Result<Urpd> {
+        let mut query = Vec::new();
+        if let Some(v) = agg { query.push(format!("agg={}", v)); }
+        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
+        let path = format!("/api/urpd/{cohort}{}", query_str);
+        self.base.get_json(&path)
+    }
+
+    /// Available URPD dates
+    ///
+    /// Dates for which a URPD snapshot is available for the cohort. One entry per UTC day, sorted ascending.
+    ///
+    /// Endpoint: `GET /api/urpd/{cohort}/dates`
+    pub fn list_urpd_dates(&self, cohort: Cohort) -> Result<Vec<Date>> {
+        self.base.get_json(&format!("/api/urpd/{cohort}/dates"))
+    }
+
+    /// URPD at date
+    ///
+    /// URPD for a (cohort, date) pair. Returns `{ cohort, date, aggregation, close, total_supply, buckets }` where each bucket is `{ price_floor, supply, realized_cap, unrealized_pnl }`.
+    ///
+    /// See the URPD tag description for unit conventions and `agg` options.
+    ///
+    /// Endpoint: `GET /api/urpd/{cohort}/{date}`
+    pub fn get_urpd_at(&self, cohort: Cohort, date: &str, agg: Option<UrpdAggregation>) -> Result<Urpd> {
+        let mut query = Vec::new();
+        if let Some(v) = agg { query.push(format!("agg={}", v)); }
+        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
+        let path = format!("/api/urpd/{cohort}/{date}{}", query_str);
+        self.base.get_json(&path)
     }
 
     /// Block (v1)

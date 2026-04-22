@@ -6,7 +6,7 @@ use std::{
 
 use brk_error::{Error, Result};
 use brk_types::{
-    Cents, CentsCompact, CentsSats, CentsSquaredSats, CostBasisDistribution, Height, Sats,
+    Cents, CentsCompact, CentsSats, CentsSquaredSats, UrpdRaw, Height, Sats,
 };
 use rustc_hash::FxHashMap;
 use vecdb::{Bytes, unlikely};
@@ -78,23 +78,18 @@ pub struct CostBasisRaw {
 }
 
 impl CostBasisRaw {
-    pub(super) fn path_by_height(&self) -> PathBuf {
-        self.pathbuf.join("by_height")
-    }
-
     pub(super) fn path_state(&self, height: Height) -> PathBuf {
-        self.path_by_height().join(height.to_string())
+        self.pathbuf.join(height.to_string())
     }
 
     pub(super) fn read_dir(
         &self,
         keep_only_before: Option<Height>,
     ) -> Result<BTreeMap<Height, PathBuf>> {
-        let by_height = self.path_by_height();
-        if !by_height.exists() {
+        if !self.pathbuf.exists() {
             return Ok(BTreeMap::new());
         }
-        Ok(fs::read_dir(&by_height)?
+        Ok(fs::read_dir(&self.pathbuf)?
             .filter_map(|entry| {
                 let path = entry.ok()?.path();
                 let name = path.file_name()?.to_str()?;
@@ -150,7 +145,7 @@ impl CostBasisRaw {
 impl CostBasisOps for CostBasisRaw {
     fn create(path: &Path, name: &str) -> Self {
         Self {
-            pathbuf: path.join(format!("{name}_cost_basis")),
+            pathbuf: path.join(name).join("cost_basis"),
             state: None,
             pending_cap: PendingCapDelta::default(),
         }
@@ -170,7 +165,7 @@ impl CostBasisOps for CostBasisRaw {
         self.state = Some(if data.len() == 16 {
             RawState::deserialize(&data)?
         } else {
-            let (_, rest) = CostBasisDistribution::deserialize_with_rest(&data)?;
+            let (_, rest) = UrpdRaw::deserialize_with_rest(&data)?;
             RawState::deserialize(rest)?
         });
         self.pending_cap = PendingCapDelta::default();
@@ -219,7 +214,7 @@ impl CostBasisOps for CostBasisRaw {
 
     fn clean(&mut self) -> Result<()> {
         let _ = fs::remove_dir_all(&self.pathbuf);
-        fs::create_dir_all(self.path_by_height())?;
+        fs::create_dir_all(&self.pathbuf)?;
         Ok(())
     }
 
@@ -245,7 +240,7 @@ impl CostBasisOps for CostBasisRaw {
 #[derive(Clone, Debug)]
 pub struct CostBasisData<S: Accumulate> {
     raw: CostBasisRaw,
-    map: Option<CostBasisDistribution>,
+    map: Option<UrpdRaw>,
     pending: FxHashMap<CentsCompact, PendingDelta>,
     cache: Option<CachedUnrealizedState<S>>,
     rounding_digits: Option<i32>,
@@ -367,7 +362,7 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
             "No cost basis state found at or before height".into(),
         ))?;
         let data = fs::read(path)?;
-        let (base, rest) = CostBasisDistribution::deserialize_with_rest(&data)?;
+        let (base, rest) = UrpdRaw::deserialize_with_rest(&data)?;
         self.map = Some(base);
         self.raw.state = Some(RawState::deserialize(rest)?);
         debug_assert!(
@@ -449,7 +444,7 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
 
     fn init(&mut self) {
         self.raw.init();
-        self.map.replace(CostBasisDistribution::default());
+        self.map.replace(UrpdRaw::default());
         self.pending.clear();
         self.cache = None;
         self.capitalized_cap_raw = CentsSquaredSats::ZERO;

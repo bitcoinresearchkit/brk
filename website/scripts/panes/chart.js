@@ -58,7 +58,7 @@ export function init() {
         title: "Price",
         series: spot.sats,
         ohlcSeries: ohlc.sats,
-        colors: /** @type {const} */ ([colors.bi.p1[1], colors.bi.p1[0]]),
+        colors: /** @type {const} */ ([colors.default, colors.background]),
       }),
       ...(optionTop.get(Unit.sats) ?? []),
     ]);

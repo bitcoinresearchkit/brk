@@ -9,20 +9,22 @@ use axum::{
 };
 use brk_traversable::TreeNode;
 use brk_types::{
-    CostBasisFormatted, DataRangeFormat, Date, IndexInfo, PaginatedSeries, Pagination, SearchQuery,
-    SeriesCount, SeriesData, SeriesInfo, SeriesNameWithIndex, SeriesSelection, Version,
+    DataRangeFormat, IndexInfo, PaginatedSeries, Pagination, SearchQuery, SeriesCount, SeriesData,
+    SeriesInfo, SeriesNameWithIndex, SeriesSelection,
 };
 
 use crate::{
     CacheStrategy,
     cache::CACHE_CONTROL,
     extended::TransformResponseExtended,
-    params::{CostBasisCohortParam, CostBasisParams, CostBasisQuery, SeriesParam},
+    params::SeriesParam,
 };
 
+use self::cost_basis::ApiCostBasisLegacyRoutes;
 use super::AppState;
 
 mod bulk;
+mod cost_basis;
 mod data;
 pub mod legacy;
 
@@ -330,87 +332,6 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     .not_modified(),
             ),
         )
-        // Cost basis distribution endpoints
-        .api_route(
-            "/api/series/cost-basis",
-            get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
-                    state
-                        .cached_json(&headers, CacheStrategy::Static, &uri, |q| q.cost_basis_cohorts())
-                        .await
-                },
-                |op| {
-                    op.id("get_cost_basis_cohorts")
-                        .series_tag()
-                        .summary("Available cost basis cohorts")
-                        .description("List available cohorts for cost basis distribution.")
-                        .json_response::<Vec<String>>()
-                        .not_modified()
-                        .server_error()
-                },
-            ),
-        )
-        .api_route(
-            "/api/series/cost-basis/{cohort}/dates",
-            get_with(
-                async |uri: Uri,
-                       headers: HeaderMap,
-                       Path(params): Path<CostBasisCohortParam>,
-                       State(state): State<AppState>| {
-                    state
-                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
-                            q.cost_basis_dates(&params.cohort)
-                        })
-                        .await
-                },
-                |op| {
-                    op.id("get_cost_basis_dates")
-                        .series_tag()
-                        .summary("Available cost basis dates")
-                        .description("List available dates for a cohort's cost basis distribution.")
-                        .json_response::<Vec<Date>>()
-                        .not_modified()
-                        .not_found()
-                        .server_error()
-                },
-            ),
-        )
-        .api_route(
-            "/api/series/cost-basis/{cohort}/{date}",
-            get_with(
-                async |uri: Uri,
-                       headers: HeaderMap,
-                       Path(params): Path<CostBasisParams>,
-                       Query(query): Query<CostBasisQuery>,
-                       State(state): State<AppState>| {
-                    let strategy = state.date_cache(Version::ONE, params.date);
-                    state
-                        .cached_json(&headers, strategy, &uri, move |q| {
-                            q.cost_basis_formatted(
-                                &params.cohort,
-                                params.date,
-                                query.bucket,
-                                query.value,
-                            )
-                        })
-                        .await
-                },
-                |op| {
-                    op.id("get_cost_basis")
-                        .series_tag()
-                        .summary("Cost basis distribution")
-                        .description(
-                            "Get the cost basis distribution for a cohort on a specific date.\n\n\
-                            Query params:\n\
-                            - `bucket`: raw (default), lin200, lin500, lin1000, log10, log50, log100\n\
-                            - `value`: supply (default, in BTC), realized (USD), unrealized (USD)",
-                        )
-                        .json_response::<CostBasisFormatted>()
-                        .not_modified()
-                        .not_found()
-                        .server_error()
-                },
-            ),
-        )
+        .add_cost_basis_legacy_routes()
     }
 }

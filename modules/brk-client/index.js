@@ -325,9 +325,9 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {Dollars} Close
  */
 /**
- * Cohort identifier for cost basis distribution.
+ * URPD cohort identifier. Use `GET /api/urpd` to list available cohorts.
  *
- * @typedef {("all"|"sth"|"lth"|"under_1h_old"|"1h_to_1d_old"|"1d_to_1w_old"|"1w_to_1m_old"|"1m_to_2m_old"|"2m_to_3m_old"|"3m_to_4m_old"|"4m_to_5m_old"|"5m_to_6m_old"|"6m_to_1y_old"|"1y_to_2y_old"|"2y_to_3y_old"|"3y_to_4y_old"|"4y_to_5y_old"|"5y_to_6y_old"|"6y_to_7y_old"|"7y_to_8y_old"|"8y_to_10y_old"|"10y_to_12y_old"|"12y_to_15y_old"|"over_15y_old")} Cohort
+ * @typedef {("all"|"sth"|"lth"|"utxos_under_1h_old"|"utxos_1h_to_1d_old"|"utxos_1d_to_1w_old"|"utxos_1w_to_1m_old"|"utxos_1m_to_2m_old"|"utxos_2m_to_3m_old"|"utxos_3m_to_4m_old"|"utxos_4m_to_5m_old"|"utxos_5m_to_6m_old"|"utxos_6m_to_1y_old"|"utxos_1y_to_2y_old"|"utxos_2y_to_3y_old"|"utxos_3y_to_4y_old"|"utxos_4y_to_5y_old"|"utxos_5y_to_6y_old"|"utxos_6y_to_7y_old"|"utxos_7y_to_8y_old"|"utxos_8y_to_10y_old"|"utxos_10y_to_12y_old"|"utxos_12y_to_15y_old"|"utxos_over_15y_old")} Cohort
  */
 /**
  * Coinbase scriptSig tag for pool identification.
@@ -341,35 +341,21 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {string} CoinbaseTag
  */
 /**
- * Bucket type for cost basis aggregation.
- * Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
- * log10/log50/log100/log200 (logarithmic with 10/50/100/200 buckets per decade).
- *
- * @typedef {("raw"|"lin200"|"lin500"|"lin1000"|"log10"|"log50"|"log100"|"log200")} CostBasisBucket
- */
-/**
- * Path parameters for cost basis dates endpoint.
- *
  * @typedef {Object} CostBasisCohortParam
  * @property {Cohort} cohort
  */
 /**
- * Path parameters for cost basis distribution endpoint.
- *
  * @typedef {Object} CostBasisParams
  * @property {Cohort} cohort
  * @property {string} date
  */
 /**
- * Query parameters for cost basis distribution endpoint.
- *
  * @typedef {Object} CostBasisQuery
- * @property {CostBasisBucket=} bucket - Bucket type for aggregation. Default: raw (no aggregation).
- * @property {CostBasisValue=} value - Value type to return. Default: supply.
+ * @property {UrpdAggregation=} bucket
+ * @property {CostBasisValue=} value
  */
 /**
- * Value type for cost basis distribution.
- * Options: supply (BTC), realized (USD, price × supply), unrealized (USD, spot × supply).
+ * Value type for the deprecated cost-basis distribution output.
  *
  * @typedef {("supply"|"realized"|"unrealized")} CostBasisValue
  */
@@ -1159,6 +1145,58 @@ Matches mempool.space/bitcoin-cli behavior.
 /** @typedef {number[]} U8x33 */
 /** @typedef {number[]} U8x65 */
 /** @typedef {TypeIndex} UnknownOutputIndex */
+/**
+ * UTXO Realized Price Distribution for a cohort on a specific date.
+ *
+ * Supply is grouped by the close price at which each UTXO was last moved.
+ * Each bucket exposes three values derived from the same `(price_floor, supply)`
+ * pairs: supply in BTC, realized cap contribution in USD (`price_floor * supply`),
+ * and unrealized P&L against that date's close in USD
+ * (`(close - price_floor) * supply`, can be negative).
+ *
+ * @typedef {Object} Urpd
+ * @property {Cohort} cohort
+ * @property {Date} date
+ * @property {UrpdAggregation} aggregation - Aggregation strategy applied to the buckets.
+ * @property {Dollars} close - Close price on `date`, in USD. Anchor for `unrealized_pnl`.
+ * @property {Bitcoin} totalSupply - Sum of `supply` across all buckets, in BTC.
+ * @property {UrpdBucket[]} buckets
+ */
+/**
+ * Aggregation strategy for URPD buckets.
+ * Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
+ * log10/log50/log100/log200 (logarithmic with 10/50/100/200 buckets per decade).
+ *
+ * @typedef {("raw"|"lin200"|"lin500"|"lin1000"|"log10"|"log50"|"log100"|"log200")} UrpdAggregation
+ */
+/**
+ * A single bucket in a URPD snapshot.
+ *
+ * @typedef {Object} UrpdBucket
+ * @property {Dollars} priceFloor - Inclusive lower bound of the bucket, in USD.
+ * @property {Bitcoin} supply - Supply held with a last-move price inside this bucket, in BTC.
+ * @property {Dollars} realizedCap - Realized cap contribution in USD: `price_floor * supply`.
+ * @property {Dollars} unrealizedPnl - Unrealized P&L in USD against the close on the snapshot date: `(close - price_floor) * supply`. Can be negative.
+ */
+/**
+ * Path parameters for per-cohort URPD endpoints.
+ *
+ * @typedef {Object} UrpdCohortParam
+ * @property {Cohort} cohort
+ */
+/**
+ * Path parameters for `/api/urpd/{cohort}/{date}`.
+ *
+ * @typedef {Object} UrpdParams
+ * @property {Cohort} cohort
+ * @property {string} date
+ */
+/**
+ * Query parameters for URPD endpoints.
+ *
+ * @typedef {Object} UrpdQuery
+ * @property {UrpdAggregation=} agg - Aggregation strategy. Default: raw (no aggregation). Accepts `bucket` as alias.
+ */
 /**
  * Unspent transaction output
  *
@@ -10465,63 +10503,6 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
-   * Available cost basis cohorts
-   *
-   * List available cohorts for cost basis distribution.
-   *
-   * Endpoint: `GET /api/series/cost-basis`
-   * @param {{ signal?: AbortSignal, onUpdate?: (value: string[]) => void }} [options]
-   * @returns {Promise<string[]>}
-   */
-  async getCostBasisCohorts({ signal, onUpdate } = {}) {
-    const path = `/api/series/cost-basis`;
-    return this.getJson(path, { signal, onUpdate });
-  }
-
-  /**
-   * Available cost basis dates
-   *
-   * List available dates for a cohort's cost basis distribution.
-   *
-   * Endpoint: `GET /api/series/cost-basis/{cohort}/dates`
-   *
-   * @param {Cohort} cohort
-   * @param {{ signal?: AbortSignal, onUpdate?: (value: Date[]) => void }} [options]
-   * @returns {Promise<Date[]>}
-   */
-  async getCostBasisDates(cohort, { signal, onUpdate } = {}) {
-    const path = `/api/series/cost-basis/${cohort}/dates`;
-    return this.getJson(path, { signal, onUpdate });
-  }
-
-  /**
-   * Cost basis distribution
-   *
-   * Get the cost basis distribution for a cohort on a specific date.
-   *
-   * Query params:
-   * - `bucket`: raw (default), lin200, lin500, lin1000, log10, log50, log100
-   * - `value`: supply (default, in BTC), realized (USD), unrealized (USD)
-   *
-   * Endpoint: `GET /api/series/cost-basis/{cohort}/{date}`
-   *
-   * @param {Cohort} cohort
-   * @param {string} date
-   * @param {CostBasisBucket=} [bucket] - Bucket type for aggregation. Default: raw (no aggregation).
-   * @param {CostBasisValue=} [value] - Value type to return. Default: supply.
-   * @param {{ signal?: AbortSignal, onUpdate?: (value: Object) => void }} [options]
-   * @returns {Promise<Object>}
-   */
-  async getCostBasis(cohort, date, bucket, value, { signal, onUpdate } = {}) {
-    const params = new URLSearchParams();
-    if (bucket !== undefined) params.set('bucket', String(bucket));
-    if (value !== undefined) params.set('value', String(value));
-    const query = params.toString();
-    const path = `/api/series/cost-basis/${cohort}/${date}${query ? '?' + query : ''}`;
-    return this.getJson(path, { signal, onUpdate });
-  }
-
-  /**
    * Series count
    *
    * Returns the number of series available per index type.
@@ -10900,6 +10881,81 @@ class BrkClient extends BrkClientBase {
    */
   async getTxStatus(txid, { signal, onUpdate } = {}) {
     const path = `/api/tx/${txid}/status`;
+    return this.getJson(path, { signal, onUpdate });
+  }
+
+  /**
+   * Available URPD cohorts
+   *
+   * Cohorts for which URPD data is available. Returns names like `all`, `sth`, `lth`, `utxos_under_1h_old`.
+   *
+   * Endpoint: `GET /api/urpd`
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Cohort[]) => void }} [options]
+   * @returns {Promise<Cohort[]>}
+   */
+  async listUrpdCohorts({ signal, onUpdate } = {}) {
+    const path = `/api/urpd`;
+    return this.getJson(path, { signal, onUpdate });
+  }
+
+  /**
+   * Latest URPD
+   *
+   * URPD for the most recent available date in the cohort. The response's `date` field echoes which date was served.
+   *
+   * See the URPD tag description for the response shape and `agg` options.
+   *
+   * Endpoint: `GET /api/urpd/{cohort}`
+   *
+   * @param {Cohort} cohort
+   * @param {UrpdAggregation=} [agg] - Aggregation strategy. Default: raw (no aggregation). Accepts `bucket` as alias.
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Urpd) => void }} [options]
+   * @returns {Promise<Urpd>}
+   */
+  async getUrpd(cohort, agg, { signal, onUpdate } = {}) {
+    const params = new URLSearchParams();
+    if (agg !== undefined) params.set('agg', String(agg));
+    const query = params.toString();
+    const path = `/api/urpd/${cohort}${query ? '?' + query : ''}`;
+    return this.getJson(path, { signal, onUpdate });
+  }
+
+  /**
+   * Available URPD dates
+   *
+   * Dates for which a URPD snapshot is available for the cohort. One entry per UTC day, sorted ascending.
+   *
+   * Endpoint: `GET /api/urpd/{cohort}/dates`
+   *
+   * @param {Cohort} cohort
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Date[]) => void }} [options]
+   * @returns {Promise<Date[]>}
+   */
+  async listUrpdDates(cohort, { signal, onUpdate } = {}) {
+    const path = `/api/urpd/${cohort}/dates`;
+    return this.getJson(path, { signal, onUpdate });
+  }
+
+  /**
+   * URPD at date
+   *
+   * URPD for a (cohort, date) pair. Returns `{ cohort, date, aggregation, close, total_supply, buckets }` where each bucket is `{ price_floor, supply, realized_cap, unrealized_pnl }`.
+   *
+   * See the URPD tag description for unit conventions and `agg` options.
+   *
+   * Endpoint: `GET /api/urpd/{cohort}/{date}`
+   *
+   * @param {Cohort} cohort
+   * @param {string} date
+   * @param {UrpdAggregation=} [agg] - Aggregation strategy. Default: raw (no aggregation). Accepts `bucket` as alias.
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: Urpd) => void }} [options]
+   * @returns {Promise<Urpd>}
+   */
+  async getUrpdAt(cohort, date, agg, { signal, onUpdate } = {}) {
+    const params = new URLSearchParams();
+    if (agg !== undefined) params.set('agg', String(agg));
+    const query = params.toString();
+    const path = `/api/urpd/${cohort}/${date}${query ? '?' + query : ''}`;
     return this.getJson(path, { signal, onUpdate });
   }
 

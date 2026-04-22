@@ -82,8 +82,8 @@ CentsSigned = int
 CentsSquaredSats = int
 # Closing price value for a time period
 Close = Dollars
-# Cohort identifier for cost basis distribution.
-Cohort = Literal["all", "sth", "lth", "under_1h_old", "1h_to_1d_old", "1d_to_1w_old", "1w_to_1m_old", "1m_to_2m_old", "2m_to_3m_old", "3m_to_4m_old", "4m_to_5m_old", "5m_to_6m_old", "6m_to_1y_old", "1y_to_2y_old", "2y_to_3y_old", "3y_to_4y_old", "4y_to_5y_old", "5y_to_6y_old", "6y_to_7y_old", "7y_to_8y_old", "8y_to_10y_old", "10y_to_12y_old", "12y_to_15y_old", "over_15y_old"]
+# URPD cohort identifier. Use `GET /api/urpd` to list available cohorts.
+Cohort = Literal["all", "sth", "lth", "utxos_under_1h_old", "utxos_1h_to_1d_old", "utxos_1d_to_1w_old", "utxos_1w_to_1m_old", "utxos_1m_to_2m_old", "utxos_2m_to_3m_old", "utxos_3m_to_4m_old", "utxos_4m_to_5m_old", "utxos_5m_to_6m_old", "utxos_6m_to_1y_old", "utxos_1y_to_2y_old", "utxos_2y_to_3y_old", "utxos_3y_to_4y_old", "utxos_4y_to_5y_old", "utxos_5y_to_6y_old", "utxos_6y_to_7y_old", "utxos_7y_to_8y_old", "utxos_8y_to_10y_old", "utxos_10y_to_12y_old", "utxos_12y_to_15y_old", "utxos_over_15y_old"]
 # Coinbase scriptSig tag for pool identification.
 # 
 # Stored as a fixed 101-byte record (1 byte length + 100 bytes data).
@@ -92,13 +92,12 @@ Cohort = Literal["all", "sth", "lth", "under_1h_old", "1h_to_1d_old", "1d_to_1w_
 # 
 # Bitcoin consensus limits coinbase scriptSig to 2-100 bytes.
 CoinbaseTag = str
-# Bucket type for cost basis aggregation.
+# Value type for the deprecated cost-basis distribution output.
+CostBasisValue = Literal["supply", "realized", "unrealized"]
+# Aggregation strategy for URPD buckets.
 # Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
 # log10/log50/log100/log200 (logarithmic with 10/50/100/200 buckets per decade).
-CostBasisBucket = Literal["raw", "lin200", "lin500", "lin1000", "log10", "log50", "log100", "log200"]
-# Value type for cost basis distribution.
-# Options: supply (BTC), realized (USD, price × supply), unrealized (USD, spot × supply).
-CostBasisValue = Literal["supply", "realized", "unrealized"]
+UrpdAggregation = Literal["raw", "lin200", "lin500", "lin1000", "log10", "log50", "log100", "log200"]
 # Virtual size in vbytes (weight / 4, rounded up). Max block vsize is ~1,000,000 vB.
 VSize = int
 # Date in YYYYMMDD format stored as u32
@@ -622,27 +621,14 @@ class BlockTimestamp(TypedDict):
     timestamp: str
 
 class CostBasisCohortParam(TypedDict):
-    """
-    Path parameters for cost basis dates endpoint.
-    """
     cohort: Cohort
 
 class CostBasisParams(TypedDict):
-    """
-    Path parameters for cost basis distribution endpoint.
-    """
     cohort: Cohort
     date: str
 
 class CostBasisQuery(TypedDict):
-    """
-    Query parameters for cost basis distribution endpoint.
-
-    Attributes:
-        bucket: Bucket type for aggregation. Default: raw (no aggregation).
-        value: Value type to return. Default: supply.
-    """
-    bucket: CostBasisBucket
+    bucket: UrpdAggregation
     value: CostBasisValue
 
 class CpfpEntry(TypedDict):
@@ -1510,6 +1496,65 @@ class TxidVout(TypedDict):
     """
     txid: Txid
     vout: Vout
+
+class UrpdBucket(TypedDict):
+    """
+    A single bucket in a URPD snapshot.
+
+    Attributes:
+        price_floor: Inclusive lower bound of the bucket, in USD.
+        supply: Supply held with a last-move price inside this bucket, in BTC.
+        realized_cap: Realized cap contribution in USD: `price_floor * supply`.
+        unrealized_pnl: Unrealized P&L in USD against the close on the snapshot date: `(close - price_floor) * supply`. Can be negative.
+    """
+    price_floor: Dollars
+    supply: Bitcoin
+    realized_cap: Dollars
+    unrealized_pnl: Dollars
+
+class Urpd(TypedDict):
+    """
+    UTXO Realized Price Distribution for a cohort on a specific date.
+    
+    Supply is grouped by the close price at which each UTXO was last moved.
+    Each bucket exposes three values derived from the same `(price_floor, supply)`
+    pairs: supply in BTC, realized cap contribution in USD (`price_floor * supply`),
+    and unrealized P&L against that date's close in USD
+    (`(close - price_floor) * supply`, can be negative).
+
+    Attributes:
+        aggregation: Aggregation strategy applied to the buckets.
+        close: Close price on `date`, in USD. Anchor for `unrealized_pnl`.
+        total_supply: Sum of `supply` across all buckets, in BTC.
+    """
+    cohort: Cohort
+    date: Date
+    aggregation: UrpdAggregation
+    close: Dollars
+    total_supply: Bitcoin
+    buckets: List[UrpdBucket]
+
+class UrpdCohortParam(TypedDict):
+    """
+    Path parameters for per-cohort URPD endpoints.
+    """
+    cohort: Cohort
+
+class UrpdParams(TypedDict):
+    """
+    Path parameters for `/api/urpd/{cohort}/{date}`.
+    """
+    cohort: Cohort
+    date: str
+
+class UrpdQuery(TypedDict):
+    """
+    Query parameters for URPD endpoints.
+
+    Attributes:
+        agg: Aggregation strategy. Default: raw (no aggregation). Accepts `bucket` as alias.
+    """
+    agg: UrpdAggregation
 
 class Utxo(TypedDict):
     """
@@ -7790,39 +7835,6 @@ class BrkClient(BrkClientBase):
             return self.get_text(path)
         return self.get_json(path)
 
-    def get_cost_basis_cohorts(self) -> List[str]:
-        """Available cost basis cohorts.
-
-        List available cohorts for cost basis distribution.
-
-        Endpoint: `GET /api/series/cost-basis`"""
-        return self.get_json('/api/series/cost-basis')
-
-    def get_cost_basis_dates(self, cohort: Cohort) -> List[Date]:
-        """Available cost basis dates.
-
-        List available dates for a cohort's cost basis distribution.
-
-        Endpoint: `GET /api/series/cost-basis/{cohort}/dates`"""
-        return self.get_json(f'/api/series/cost-basis/{cohort}/dates')
-
-    def get_cost_basis(self, cohort: Cohort, date: str, bucket: Optional[CostBasisBucket] = None, value: Optional[CostBasisValue] = None) -> dict:
-        """Cost basis distribution.
-
-        Get the cost basis distribution for a cohort on a specific date.
-
-        Query params:
-        - `bucket`: raw (default), lin200, lin500, lin1000, log10, log50, log100
-        - `value`: supply (default, in BTC), realized (USD), unrealized (USD)
-
-        Endpoint: `GET /api/series/cost-basis/{cohort}/{date}`"""
-        params = []
-        if bucket is not None: params.append(f'bucket={bucket}')
-        if value is not None: params.append(f'value={value}')
-        query = '&'.join(params)
-        path = f'/api/series/cost-basis/{cohort}/{date}{"?" + query if query else ""}'
-        return self.get_json(path)
-
     def get_series_count(self) -> List[SeriesCount]:
         """Series count.
 
@@ -8034,6 +8046,50 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/tx/{txid}/status`"""
         return self.get_json(f'/api/tx/{txid}/status')
+
+    def list_urpd_cohorts(self) -> List[Cohort]:
+        """Available URPD cohorts.
+
+        Cohorts for which URPD data is available. Returns names like `all`, `sth`, `lth`, `utxos_under_1h_old`.
+
+        Endpoint: `GET /api/urpd`"""
+        return self.get_json('/api/urpd')
+
+    def get_urpd(self, cohort: Cohort, agg: Optional[UrpdAggregation] = None) -> Urpd:
+        """Latest URPD.
+
+        URPD for the most recent available date in the cohort. The response's `date` field echoes which date was served.
+
+        See the URPD tag description for the response shape and `agg` options.
+
+        Endpoint: `GET /api/urpd/{cohort}`"""
+        params = []
+        if agg is not None: params.append(f'agg={agg}')
+        query = '&'.join(params)
+        path = f'/api/urpd/{cohort}{"?" + query if query else ""}'
+        return self.get_json(path)
+
+    def list_urpd_dates(self, cohort: Cohort) -> List[Date]:
+        """Available URPD dates.
+
+        Dates for which a URPD snapshot is available for the cohort. One entry per UTC day, sorted ascending.
+
+        Endpoint: `GET /api/urpd/{cohort}/dates`"""
+        return self.get_json(f'/api/urpd/{cohort}/dates')
+
+    def get_urpd_at(self, cohort: Cohort, date: str, agg: Optional[UrpdAggregation] = None) -> Urpd:
+        """URPD at date.
+
+        URPD for a (cohort, date) pair. Returns `{ cohort, date, aggregation, close, total_supply, buckets }` where each bucket is `{ price_floor, supply, realized_cap, unrealized_pnl }`.
+
+        See the URPD tag description for unit conventions and `agg` options.
+
+        Endpoint: `GET /api/urpd/{cohort}/{date}`"""
+        params = []
+        if agg is not None: params.append(f'agg={agg}')
+        query = '&'.join(params)
+        path = f'/api/urpd/{cohort}/{date}{"?" + query if query else ""}'
+        return self.get_json(path)
 
     def get_block_v1(self, hash: BlockHash) -> BlockInfoV1:
         """Block (v1).
