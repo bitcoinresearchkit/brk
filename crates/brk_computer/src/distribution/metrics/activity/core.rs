@@ -9,7 +9,7 @@ use crate::{
         metrics::ImportConfig,
         state::{CohortState, CostBasisOps, RealizedOps},
     },
-    internal::{AmountPerBlockCumulativeRolling, PerBlockCumulativeRolling},
+    internal::{ValuePerBlockCumulativeRolling, PerBlockCumulativeRolling},
     prices,
 };
 
@@ -24,9 +24,9 @@ pub struct ActivityCore<M: StorageMode = Rw> {
 
     pub coindays_destroyed: PerBlockCumulativeRolling<StoredF64, StoredF64, M>,
     #[traversable(wrap = "transfer_volume", rename = "in_profit")]
-    pub transfer_volume_in_profit: AmountPerBlockCumulativeRolling<M>,
+    pub transfer_volume_in_profit: ValuePerBlockCumulativeRolling<M>,
     #[traversable(wrap = "transfer_volume", rename = "in_loss")]
-    pub transfer_volume_in_loss: AmountPerBlockCumulativeRolling<M>,
+    pub transfer_volume_in_loss: ValuePerBlockCumulativeRolling<M>,
 }
 
 impl ActivityCore {

@@ -87,6 +87,65 @@ export const formatCohortTitle = (cohortTitle) => (name) =>
   cohortTitle ? `${name}: ${cohortTitle}` : name;
 
 /**
+ * Create line series from an amount pattern (sats stored + lazy btc).
+ * @param {Object} args
+ * @param {AmountPattern} args.pattern
+ * @param {string} args.name
+ * @param {Color} [args.color]
+ * @param {boolean} [args.defaultActive]
+ * @param {number} [args.style]
+ * @returns {FetchedLineSeriesBlueprint[]}
+ */
+export function amount({ pattern, name, color, defaultActive, style }) {
+  return [
+    line({
+      series: pattern.btc,
+      name,
+      color,
+      unit: Unit.btc,
+      defaultActive,
+      style,
+    }),
+    line({
+      series: pattern.sats,
+      name,
+      color,
+      unit: Unit.sats,
+      defaultActive,
+      style,
+    }),
+  ];
+}
+
+/**
+ * Create baseline series from an amount pattern (sats stored + lazy btc).
+ * @param {Object} args
+ * @param {AmountPattern} args.pattern
+ * @param {string} args.name
+ * @param {Color} [args.color]
+ * @param {boolean} [args.defaultActive]
+ * @returns {FetchedBaselineSeriesBlueprint[]}
+ */
+export function amountBaseline({ pattern, name, color, defaultActive }) {
+  return [
+    baseline({
+      series: pattern.btc,
+      name,
+      color,
+      unit: Unit.btc,
+      defaultActive,
+    }),
+    baseline({
+      series: pattern.sats,
+      name,
+      color,
+      unit: Unit.sats,
+      defaultActive,
+    }),
+  ];
+}
+
+/**
  * Create sats/btc/usd line series from a pattern with .sats/.btc/.usd
  * @param {Object} args
  * @param {AnyValuePattern} args.pattern

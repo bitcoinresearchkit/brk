@@ -5,16 +5,16 @@ use vecdb::{
     Database, EagerVec, ImportableVec, LazyVecFrom1, PcoVec, ReadableCloneableVec, Rw, StorageMode,
 };
 
-use super::CentsType;
+use super::FiatType;
 
 /// Raw per-block fiat data: cents (stored) + usd (lazy), no resolutions.
 #[derive(Traversable)]
-pub struct FiatBlock<C: CentsType, M: StorageMode = Rw> {
+pub struct FiatBlock<C: FiatType, M: StorageMode = Rw> {
     pub usd: LazyVecFrom1<Height, Dollars, Height, C>,
     pub cents: M::Stored<EagerVec<PcoVec<Height, C>>>,
 }
 
-impl<C: CentsType> FiatBlock<C> {
+impl<C: FiatType> FiatBlock<C> {
     pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         let cents: EagerVec<PcoVec<Height, C>> =
             EagerVec::forced_import(db, &format!("{name}_cents"), version)?;

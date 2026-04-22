@@ -7,7 +7,7 @@ use vecdb::{BinaryTransform, Database, Exit, ReadableVec, Rw, StorageMode, Versi
 use crate::{
     blocks, indexes,
     internal::{
-        AmountPerBlockCumulativeRolling, MaskSats, PercentRollingWindows, RatioU64Bp16,
+        ValuePerBlockCumulativeRolling, MaskSats, PercentRollingWindows, RatioU64Bp16,
         WindowStartVec, Windows,
     },
     mining, prices,
@@ -22,7 +22,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub base: minor::Vecs<M>,
 
-    pub rewards: AmountPerBlockCumulativeRolling<M>,
+    pub rewards: ValuePerBlockCumulativeRolling<M>,
     #[traversable(rename = "dominance")]
     pub dominance_rolling: PercentRollingWindows<BasisPoints16, M>,
 }
@@ -39,7 +39,7 @@ impl Vecs {
 
         let base = minor::Vecs::forced_import(db, slug, version, indexes, cached_starts)?;
 
-        let rewards = AmountPerBlockCumulativeRolling::forced_import(
+        let rewards = ValuePerBlockCumulativeRolling::forced_import(
             db,
             &suffix("rewards"),
             version,

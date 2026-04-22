@@ -25,7 +25,7 @@ use crate::{
         state::UTXOCohortState,
     },
     indexes,
-    internal::{AmountPerBlockCumulativeRolling, WindowStartVec, Windows},
+    internal::{ValuePerBlockCumulativeRolling, WindowStartVec, Windows},
     prices,
 };
 
@@ -50,7 +50,7 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     #[traversable(rename = "type")]
     pub type_: SpendableType<UTXOCohortVecs<TypeCohortMetrics<M>>>,
     pub profitability: ProfitabilityMetrics<M>,
-    pub matured: AgeRange<AmountPerBlockCumulativeRolling<M>>,
+    pub matured: AgeRange<ValuePerBlockCumulativeRolling<M>>,
     #[traversable(skip)]
     pub(super) caches: UTXOCohortsTransientState,
 }
@@ -264,8 +264,8 @@ impl UTXOCohorts<Rw> {
         let prefix = CohortContext::Utxo.prefix();
         let matured = AgeRange::try_new(&|_f: Filter,
                                           name: &'static str|
-         -> Result<AmountPerBlockCumulativeRolling> {
-            AmountPerBlockCumulativeRolling::forced_import(
+         -> Result<ValuePerBlockCumulativeRolling> {
+            ValuePerBlockCumulativeRolling::forced_import(
                 db,
                 &format!("{prefix}_{name}_matured_supply"),
                 v,

@@ -1,23 +1,40 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
-use vecdb::{Database, Exit, ReadableCloneableVec, Rw, StorageMode};
+use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, SatsSigned, Version};
+use schemars::JsonSchema;
+use vecdb::{Database, Exit, ReadableCloneableVec, Rw, StorageMode, UnaryTransform};
 
 use crate::{
     indexes,
-    internal::{CentsUnsignedToDollars, LazyPerBlock, PerBlock, SatsToBitcoin, SatsToCents},
+    internal::{
+        CentsUnsignedToDollars, LazyPerBlock, NumericValue, PerBlock, SatsSignedToBitcoin,
+        SatsToBitcoin, SatsToCents,
+    },
     prices,
 };
 
+/// Trait that associates a sats type with its transform to Bitcoin.
+pub trait AmountType: NumericValue + JsonSchema {
+    type ToBitcoin: UnaryTransform<Self, Bitcoin>;
+}
+
+impl AmountType for Sats {
+    type ToBitcoin = SatsToBitcoin;
+}
+
+impl AmountType for SatsSigned {
+    type ToBitcoin = SatsSignedToBitcoin;
+}
+
 #[derive(Traversable)]
-pub struct AmountPerBlock<M: StorageMode = Rw> {
+pub struct ValuePerBlock<M: StorageMode = Rw> {
     pub btc: LazyPerBlock<Bitcoin, Sats>,
     pub sats: PerBlock<Sats, M>,
     pub usd: LazyPerBlock<Dollars, Cents>,
     pub cents: PerBlock<Cents, M>,
 }
 
-impl AmountPerBlock {
+impl ValuePerBlock {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,

@@ -9,7 +9,7 @@ use crate::{
 };
 
 use crate::internal::{
-    AmountPerBlock, LazyRollingDeltasFromHeight, PercentPerBlock, RatioSatsBp16,
+    LazyRollingDeltasAmountFromHeight, PercentPerBlock, RatioSatsBp16, ValuePerBlock,
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -17,17 +17,17 @@ use crate::distribution::metrics::ImportConfig;
 /// Base supply metrics: total supply + dominance (share of circulating).
 #[derive(Traversable)]
 pub struct SupplyBase<M: StorageMode = Rw> {
-    pub total: AmountPerBlock<M>,
-    pub delta: LazyRollingDeltasFromHeight<Sats, SatsSigned, BasisPointsSigned32>,
+    pub total: ValuePerBlock<M>,
+    pub delta: LazyRollingDeltasAmountFromHeight<Sats, SatsSigned, BasisPointsSigned32>,
     #[traversable(rename = "dominance")]
     pub dominance: PercentPerBlock<BasisPoints16, M>,
 }
 
 impl SupplyBase {
     pub(crate) fn forced_import(cfg: &ImportConfig) -> Result<Self> {
-        let supply: AmountPerBlock = cfg.import("supply", Version::ZERO)?;
+        let supply: ValuePerBlock = cfg.import("supply", Version::ZERO)?;
 
-        let delta = LazyRollingDeltasFromHeight::new(
+        let delta = LazyRollingDeltasAmountFromHeight::new(
             &cfg.name("supply_delta"),
             cfg.version + Version::ONE,
             &supply.sats.height,

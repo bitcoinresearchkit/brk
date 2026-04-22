@@ -5,19 +5,19 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{AmountBlock, AmountPerBlock},
+    internal::{ValueBlock, ValuePerBlock},
     prices,
 };
 
 #[derive(Traversable)]
-pub struct AmountPerBlockCumulative<M: StorageMode = Rw> {
-    pub block: AmountBlock<M>,
-    pub cumulative: AmountPerBlock<M>,
+pub struct ValuePerBlockCumulative<M: StorageMode = Rw> {
+    pub block: ValueBlock<M>,
+    pub cumulative: ValuePerBlock<M>,
 }
 
 const VERSION: Version = Version::ONE;
 
-impl AmountPerBlockCumulative {
+impl ValuePerBlockCumulative {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -27,8 +27,8 @@ impl AmountPerBlockCumulative {
         let v = version + VERSION;
 
         Ok(Self {
-            block: AmountBlock::forced_import(db, name, v)?,
-            cumulative: AmountPerBlock::forced_import(
+            block: ValueBlock::forced_import(db, name, v)?,
+            cumulative: ValuePerBlock::forced_import(
                 db,
                 &format!("{name}_cumulative"),
                 v,

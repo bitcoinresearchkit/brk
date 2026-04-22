@@ -6,24 +6,24 @@ use vecdb::{DeltaSub, LazyDeltaVec, LazyVecFrom1, ReadOnlyClone, ReadableCloneab
 use crate::{
     indexes,
     internal::{
-        CentsType, DerivedResolutions, LazyPerBlock, LazyRollingSumFromHeight, Resolutions,
+        FiatType, DerivedResolutions, LazyPerBlock, LazyRollingSumFromHeight, Resolutions,
         WindowStartVec, Windows,
     },
 };
 
 #[derive(Clone, Traversable)]
-pub struct LazyRollingSumFiatFromHeight<C: CentsType> {
+pub struct LazyRollingSumFiatFromHeight<C: FiatType> {
     pub usd: LazyPerBlock<Dollars, C>,
     pub cents: LazyRollingSumFromHeight<C>,
 }
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct LazyRollingSumsFiatFromHeight<C: CentsType>(
+pub struct LazyRollingSumsFiatFromHeight<C: FiatType>(
     pub Windows<LazyRollingSumFiatFromHeight<C>>,
 );
 
-impl<C: CentsType> LazyRollingSumsFiatFromHeight<C> {
+impl<C: FiatType> LazyRollingSumsFiatFromHeight<C> {
     pub fn new(
         name: &str,
         version: Version,

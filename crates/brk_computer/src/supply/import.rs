@@ -6,7 +6,7 @@ use brk_types::Version;
 use crate::{
     cointime, distribution, indexes,
     internal::{
-        LazyAmountPerBlock, LazyFiatPerBlock, LazyRollingDeltasFiatFromHeight, PercentPerBlock,
+        LazyValuePerBlock, LazyFiatPerBlock, LazyRollingDeltasFiatFromHeight, PercentPerBlock,
         RollingWindows, WindowStartVec, Windows,
         db_utils::{finalize_db, open_db},
     },
@@ -32,7 +32,7 @@ impl Vecs {
         let supply_metrics = &distribution.utxo_cohorts.all.metrics.supply;
 
         let circulating =
-            LazyAmountPerBlock::identity("circulating_supply", &supply_metrics.total, version);
+            LazyValuePerBlock::identity("circulating_supply", &supply_metrics.total, version);
 
         let burned = burned::Vecs::forced_import(&db, version, indexes)?;
 
@@ -63,7 +63,7 @@ impl Vecs {
             indexes,
         )?;
 
-        let hodled_or_lost = LazyAmountPerBlock::identity(
+        let hodled_or_lost = LazyValuePerBlock::identity(
             "hodled_or_lost_supply",
             &cointime.supply.vaulted,
             version,

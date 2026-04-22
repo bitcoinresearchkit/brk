@@ -13,7 +13,7 @@ use vecdb::{AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, WritableVec}
 use crate::{indexes, prices};
 
 use super::{
-    AmountPerBlock, BpsType, NumericValue, PerBlock, PerBlockCumulativeRolling, PercentPerBlock,
+    ValuePerBlock, BpsType, NumericValue, PerBlock, PerBlockCumulativeRolling, PercentPerBlock,
     WindowStartVec, Windows,
 };
 
@@ -176,16 +176,16 @@ where
     }
 }
 
-impl WithAddrTypes<AmountPerBlock> {
+impl WithAddrTypes<ValuePerBlock> {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        let all = AmountPerBlock::forced_import(db, name, version, indexes)?;
+        let all = ValuePerBlock::forced_import(db, name, version, indexes)?;
         let by_addr_type = ByAddrType::new_with_name(|type_name| {
-            AmountPerBlock::forced_import(db, &format!("{type_name}_{name}"), version, indexes)
+            ValuePerBlock::forced_import(db, &format!("{type_name}_{name}"), version, indexes)
         })?;
         Ok(Self { all, by_addr_type })
     }

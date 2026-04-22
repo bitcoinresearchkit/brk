@@ -7,7 +7,7 @@ use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 use crate::{
     indexes,
     internal::{
-        AmountPerBlock, AmountPerBlockWithDeltas, PerBlock, RatioPerBlock, WindowStartVec, Windows,
+        ValuePerBlock, ValuePerBlockWithDeltas, PerBlock, RatioPerBlock, WindowStartVec, Windows,
     },
     prices,
 };
@@ -20,7 +20,7 @@ pub struct WithSth<All, Sth = All> {
 
 #[derive(Traversable)]
 pub struct ProfitabilityBucket<M: StorageMode = Rw> {
-    pub supply: WithSth<AmountPerBlockWithDeltas<M>, AmountPerBlock<M>>,
+    pub supply: WithSth<ValuePerBlockWithDeltas<M>, ValuePerBlock<M>>,
     pub realized_cap: WithSth<PerBlock<Dollars, M>>,
     pub unrealized_pnl: WithSth<PerBlock<Dollars, M>>,
     pub nupl: RatioPerBlock<BasisPointsSigned32, M>,
@@ -47,14 +47,14 @@ impl ProfitabilityBucket {
     ) -> Result<Self> {
         Ok(Self {
             supply: WithSth {
-                all: AmountPerBlockWithDeltas::forced_import(
+                all: ValuePerBlockWithDeltas::forced_import(
                     db,
                     &format!("{name}_supply"),
                     version,
                     indexes,
                     cached_starts,
                 )?,
-                sth: AmountPerBlock::forced_import(
+                sth: ValuePerBlock::forced_import(
                     db,
                     &format!("{name}_sth_supply"),
                     version,

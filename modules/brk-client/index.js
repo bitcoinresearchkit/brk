@@ -2109,7 +2109,7 @@ function create_10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, acc) {
  * @property {BpsCentsPercentilesRatioSatsSmaStdUsdPattern} price
  * @property {BlockCumulativeSumPattern} profit
  * @property {_1m1w1y24hPattern<StoredF64>} profitToLossRatio
- * @property {_1m1w1y24hPattern7} sellSideRiskRatio
+ * @property {_1m1w1y24hPattern8} sellSideRiskRatio
  * @property {AdjustedRatioValuePattern} sopr
  */
 
@@ -2821,7 +2821,7 @@ function createCentsNegativeToUsdPattern2(client, acc) {
 
 /**
  * @typedef {Object} DeltaDominanceHalfInTotalPattern2
- * @property {AbsoluteRatePattern} delta
+ * @property {AbsoluteRatePattern3} delta
  * @property {BpsPercentRatioPattern2} dominance
  * @property {BtcCentsSatsUsdPattern} half
  * @property {BtcCentsSatsShareUsdPattern} inLoss
@@ -2837,7 +2837,7 @@ function createCentsNegativeToUsdPattern2(client, acc) {
  */
 function createDeltaDominanceHalfInTotalPattern2(client, acc) {
   return {
-    delta: createAbsoluteRatePattern(client, _m(acc, 'delta')),
+    delta: createAbsoluteRatePattern3(client, _m(acc, 'delta')),
     dominance: createBpsPercentRatioPattern2(client, _m(acc, 'dominance')),
     half: createBtcCentsSatsUsdPattern(client, _m(acc, 'half')),
     inLoss: createBtcCentsSatsShareUsdPattern(client, _m(acc, 'in_loss')),
@@ -2848,7 +2848,7 @@ function createDeltaDominanceHalfInTotalPattern2(client, acc) {
 
 /**
  * @typedef {Object} DeltaDominanceHalfInTotalPattern
- * @property {AbsoluteRatePattern} delta
+ * @property {AbsoluteRatePattern3} delta
  * @property {BpsPercentRatioPattern2} dominance
  * @property {BtcCentsSatsUsdPattern} half
  * @property {BtcCentsSatsUsdPattern} inLoss
@@ -2864,7 +2864,7 @@ function createDeltaDominanceHalfInTotalPattern2(client, acc) {
  */
 function createDeltaDominanceHalfInTotalPattern(client, acc) {
   return {
-    delta: createAbsoluteRatePattern(client, _m(acc, 'delta')),
+    delta: createAbsoluteRatePattern3(client, _m(acc, 'delta')),
     dominance: createBpsPercentRatioPattern2(client, _m(acc, 'dominance')),
     half: createBtcCentsSatsUsdPattern(client, _m(acc, 'half')),
     inLoss: createBtcCentsSatsUsdPattern(client, _m(acc, 'in_loss')),
@@ -3052,7 +3052,7 @@ function createBpsCentsRatioSatsUsdPattern(client, acc) {
  * @typedef {Object} BtcCentsDeltaSatsUsdPattern
  * @property {SeriesPattern1<Bitcoin>} btc
  * @property {SeriesPattern1<Cents>} cents
- * @property {AbsoluteRatePattern} delta
+ * @property {AbsoluteRatePattern3} delta
  * @property {SeriesPattern1<Sats>} sats
  * @property {SeriesPattern1<Dollars>} usd
  */
@@ -3067,7 +3067,7 @@ function createBtcCentsDeltaSatsUsdPattern(client, acc) {
   return {
     btc: createSeriesPattern1(client, acc),
     cents: createSeriesPattern1(client, _m(acc, 'cents')),
-    delta: createAbsoluteRatePattern(client, _m(acc, 'delta')),
+    delta: createAbsoluteRatePattern3(client, _m(acc, 'delta')),
     sats: createSeriesPattern1(client, _m(acc, 'sats')),
     usd: createSeriesPattern1(client, _m(acc, 'usd')),
   };
@@ -3206,7 +3206,7 @@ function create_1m1w1y24hPattern2(client, acc) {
 }
 
 /**
- * @typedef {Object} _1m1w1y24hPattern7
+ * @typedef {Object} _1m1w1y24hPattern8
  * @property {BpsPercentRatioPattern4} _1m
  * @property {BpsPercentRatioPattern4} _1w
  * @property {BpsPercentRatioPattern4} _1y
@@ -3214,12 +3214,12 @@ function create_1m1w1y24hPattern2(client, acc) {
  */
 
 /**
- * Create a _1m1w1y24hPattern7 pattern node
+ * Create a _1m1w1y24hPattern8 pattern node
  * @param {BrkClientBase} client
  * @param {string} acc - Accumulated series name
- * @returns {_1m1w1y24hPattern7}
+ * @returns {_1m1w1y24hPattern8}
  */
-function create_1m1w1y24hPattern7(client, acc) {
+function create_1m1w1y24hPattern8(client, acc) {
   return {
     _1m: createBpsPercentRatioPattern4(client, _m(acc, '1m')),
     _1w: createBpsPercentRatioPattern4(client, _m(acc, '1w')),
@@ -3271,6 +3271,29 @@ function create_1m1w1y24hPattern3(client, acc) {
     _1w: createBtcCentsSatsUsdPattern2(client, _m(acc, '1w')),
     _1y: createBtcCentsSatsUsdPattern2(client, _m(acc, '1y')),
     _24h: createBtcCentsSatsUsdPattern2(client, _m(acc, '24h')),
+  };
+}
+
+/**
+ * @typedef {Object} _1m1w1y24hPattern7
+ * @property {BtcSatsPattern} _1m
+ * @property {BtcSatsPattern} _1w
+ * @property {BtcSatsPattern} _1y
+ * @property {BtcSatsPattern} _24h
+ */
+
+/**
+ * Create a _1m1w1y24hPattern7 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {_1m1w1y24hPattern7}
+ */
+function create_1m1w1y24hPattern7(client, acc) {
+  return {
+    _1m: createBtcSatsPattern(client, _m(acc, '1m')),
+    _1w: createBtcSatsPattern(client, _m(acc, '1w')),
+    _1y: createBtcSatsPattern(client, _m(acc, '1y')),
+    _24h: createBtcSatsPattern(client, _m(acc, '24h')),
   };
 }
 
@@ -3953,7 +3976,7 @@ function createCumulativeRollingSumPattern(client, acc) {
 
 /**
  * @typedef {Object} DeltaDominanceTotalPattern
- * @property {AbsoluteRatePattern} delta
+ * @property {AbsoluteRatePattern3} delta
  * @property {BpsPercentRatioPattern2} dominance
  * @property {BtcCentsSatsUsdPattern} total
  */
@@ -3966,7 +3989,7 @@ function createCumulativeRollingSumPattern(client, acc) {
  */
 function createDeltaDominanceTotalPattern(client, acc) {
   return {
-    delta: createAbsoluteRatePattern(client, _m(acc, 'delta')),
+    delta: createAbsoluteRatePattern3(client, _m(acc, 'delta')),
     dominance: createBpsPercentRatioPattern2(client, _m(acc, 'dominance')),
     total: createBtcCentsSatsUsdPattern(client, acc),
   };
@@ -4140,6 +4163,25 @@ function createAbsoluteRatePattern2(client, acc) {
 }
 
 /**
+ * @typedef {Object} AbsoluteRatePattern3
+ * @property {_1m1w1y24hPattern7} absolute
+ * @property {_1m1w1y24hPattern2} rate
+ */
+
+/**
+ * Create a AbsoluteRatePattern3 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {AbsoluteRatePattern3}
+ */
+function createAbsoluteRatePattern3(client, acc) {
+  return {
+    absolute: create_1m1w1y24hPattern7(client, acc),
+    rate: create_1m1w1y24hPattern2(client, acc),
+  };
+}
+
+/**
  * @typedef {Object} AddrUtxoPattern
  * @property {BtcCentsSatsUsdPattern} addr
  * @property {BtcCentsSatsUsdPattern} utxo
@@ -4308,6 +4350,25 @@ function createBpsRatioPattern(client, acc) {
   return {
     bps: createSeriesPattern1(client, _m(acc, 'bps')),
     ratio: createSeriesPattern1(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} BtcSatsPattern
+ * @property {SeriesPattern1<Bitcoin>} btc
+ * @property {SeriesPattern1<SatsSigned>} sats
+ */
+
+/**
+ * Create a BtcSatsPattern pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {BtcSatsPattern}
+ */
+function createBtcSatsPattern(client, acc) {
+  return {
+    btc: createSeriesPattern1(client, acc),
+    sats: createSeriesPattern1(client, _m(acc, 'sats')),
   };
 }
 
@@ -6259,7 +6320,7 @@ function createTransferPattern(client, acc) {
  * @property {BlockChangeCumulativeDeltaSumPattern} netPnl
  * @property {SeriesTree_Cohorts_Utxo_All_Realized_Sopr} sopr
  * @property {BlockCumulativeSumPattern} grossPnl
- * @property {_1m1w1y24hPattern7} sellSideRiskRatio
+ * @property {_1m1w1y24hPattern8} sellSideRiskRatio
  * @property {BlockCumulativeSumPattern} peakRegret
  * @property {PricePattern} capitalized
  * @property {_1m1w1y24hPattern<StoredF64>} profitToLossRatio
@@ -6451,7 +6512,7 @@ function createTransferPattern(client, acc) {
  * @property {BlockChangeCumulativeDeltaSumPattern} netPnl
  * @property {AdjustedRatioValuePattern} sopr
  * @property {BlockCumulativeSumPattern} grossPnl
- * @property {_1m1w1y24hPattern7} sellSideRiskRatio
+ * @property {_1m1w1y24hPattern8} sellSideRiskRatio
  * @property {BlockCumulativeSumPattern} peakRegret
  * @property {PricePattern} capitalized
  * @property {_1m1w1y24hPattern<StoredF64>} profitToLossRatio
@@ -6574,7 +6635,7 @@ function createTransferPattern(client, acc) {
  * @property {BlockChangeCumulativeDeltaSumPattern} netPnl
  * @property {SeriesTree_Cohorts_Utxo_Lth_Realized_Sopr} sopr
  * @property {BlockCumulativeSumPattern} grossPnl
- * @property {_1m1w1y24hPattern7} sellSideRiskRatio
+ * @property {_1m1w1y24hPattern8} sellSideRiskRatio
  * @property {BlockCumulativeSumPattern} peakRegret
  * @property {PricePattern} capitalized
  * @property {_1m1w1y24hPattern<StoredF64>} profitToLossRatio
@@ -7007,7 +7068,7 @@ function createTransferPattern(client, acc) {
  * @extends BrkClientBase
  */
 class BrkClient extends BrkClientBase {
-  VERSION = "v0.3.0-beta.2";
+  VERSION = "v0.3.0-beta.3";
 
   INDEXES = /** @type {const} */ ([
     "minute10",
@@ -9409,7 +9470,7 @@ class BrkClient extends BrkClientBase {
                 },
               },
               grossPnl: createBlockCumulativeSumPattern(this, 'realized_gross_pnl'),
-              sellSideRiskRatio: create_1m1w1y24hPattern7(this, 'sell_side_risk_ratio'),
+              sellSideRiskRatio: create_1m1w1y24hPattern8(this, 'sell_side_risk_ratio'),
               peakRegret: createBlockCumulativeSumPattern(this, 'realized_peak_regret'),
               capitalized: createPricePattern(this, 'capitalized_price'),
               profitToLossRatio: create_1m1w1y24hPattern(this, 'realized_profit_to_loss_ratio'),
@@ -9546,7 +9607,7 @@ class BrkClient extends BrkClientBase {
               netPnl: createBlockChangeCumulativeDeltaSumPattern(this, 'sth_net'),
               sopr: createAdjustedRatioValuePattern(this, 'sth'),
               grossPnl: createBlockCumulativeSumPattern(this, 'sth_realized_gross_pnl'),
-              sellSideRiskRatio: create_1m1w1y24hPattern7(this, 'sth_sell_side_risk_ratio'),
+              sellSideRiskRatio: create_1m1w1y24hPattern8(this, 'sth_sell_side_risk_ratio'),
               peakRegret: createBlockCumulativeSumPattern(this, 'sth_realized_peak_regret'),
               capitalized: createPricePattern(this, 'sth_capitalized_price'),
               profitToLossRatio: create_1m1w1y24hPattern(this, 'sth_realized_profit_to_loss_ratio'),
@@ -9649,7 +9710,7 @@ class BrkClient extends BrkClientBase {
                 ratio: create_1m1w1y24hPattern(this, 'lth_sopr'),
               },
               grossPnl: createBlockCumulativeSumPattern(this, 'lth_realized_gross_pnl'),
-              sellSideRiskRatio: create_1m1w1y24hPattern7(this, 'lth_sell_side_risk_ratio'),
+              sellSideRiskRatio: create_1m1w1y24hPattern8(this, 'lth_sell_side_risk_ratio'),
               peakRegret: createBlockCumulativeSumPattern(this, 'lth_realized_peak_regret'),
               capitalized: createPricePattern(this, 'lth_capitalized_price'),
               profitToLossRatio: create_1m1w1y24hPattern(this, 'lth_realized_profit_to_loss_ratio'),

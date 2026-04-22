@@ -15,12 +15,14 @@ import {
   line,
   baseline,
   sumsTreeBaseline,
+  amountSumsTreeBaseline,
   rollingPercentRatioTree,
   percentRatio,
   percentRatioBaseline,
   chartsFromCount,
 } from "../series.js";
 import {
+  amountBaseline,
   satsBtcUsd,
   flatMapCohorts,
   mapCohortsWithAll,
@@ -160,6 +162,79 @@ function groupedDeltaItems(list, all, getDelta, unit, title, name) {
   ];
 }
 
+/**
+ * Amount-valued single-cohort delta: Change exposes sats + lazy btc per window.
+ * @param {AmountDeltaPattern} delta
+ * @param {(name: string) => string} title
+ * @param {string} name
+ * @returns {PartialOptionsTree}
+ */
+function singleAmountDeltaItems(delta, title, name) {
+  return [
+    {
+      ...amountSumsTreeBaseline({
+        windows: delta.absolute,
+        title,
+        metric: `${name} Change`,
+        legend: "Change",
+      }),
+      name: "Change",
+    },
+    {
+      ...rollingPercentRatioTree({
+        windows: delta.rate,
+        title,
+        metric: `${name} Growth Rate`,
+      }),
+      name: "Growth Rate",
+    },
+  ];
+}
+
+/**
+ * Amount-valued grouped-cohort delta: Change exposes sats + lazy btc per window.
+ * @template {{ name: string, color: Color }} T
+ * @template {{ name: string, color: Color }} A
+ * @param {readonly T[]} list
+ * @param {A} all
+ * @param {(c: T | A) => AmountDeltaPattern} getDelta
+ * @param {(name: string) => string} title
+ * @param {string} name
+ * @returns {PartialOptionsTree}
+ */
+function groupedAmountDeltaItems(list, all, getDelta, title, name) {
+  return [
+    {
+      name: "Change",
+      tree: ROLLING_WINDOWS.map((w) => ({
+        name: w.name,
+        title: title(`${w.title} ${name} Change`),
+        bottom: flatMapCohortsWithAll(list, all, (c) =>
+          amountBaseline({
+            pattern: getDelta(c).absolute[w.key],
+            name: c.name,
+            color: c.color,
+          }),
+        ),
+      })),
+    },
+    {
+      name: "Growth Rate",
+      tree: ROLLING_WINDOWS.map((w) => ({
+        name: w.name,
+        title: title(`${w.title} ${name} Growth Rate`),
+        bottom: flatMapCohortsWithAll(list, all, (c) =>
+          percentRatioBaseline({
+            pattern: getDelta(c).rate[w.key],
+            name: c.name,
+            color: c.color,
+          }),
+        ),
+      })),
+    },
+  ];
+}
+
 // ============================================================================
 // Single Cohort Composable Builders
 // ============================================================================
@@ -292,7 +367,7 @@ export function createHoldingsSection({ cohort, title }) {
           bottom: simpleSupplySeries(supply),
         },
         dominanceChart(supply, cohort.color, title),
-        ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
+        ...singleAmountDeltaItems(supply.delta, title, "Supply"),
       ],
     },
     outputsFolder(cohort.tree.outputs, cohort.color, title),
@@ -321,7 +396,7 @@ export function createHoldingsSectionAll({ cohort, title }) {
             profitabilityCompositionChart(supply, title),
           ],
         },
-        ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
+        ...singleAmountDeltaItems(supply.delta, title, "Supply"),
       ],
     },
     outputsFolder(cohort.tree.outputs, cohort.color, title),
@@ -352,7 +427,7 @@ export function createHoldingsSectionWithRelative({ cohort, title }) {
             profitabilityCompositionChart(supply, title),
           ],
         },
-        ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
+        ...singleAmountDeltaItems(supply.delta, title, "Supply"),
       ],
     },
     outputsFolder(cohort.tree.outputs, cohort.color, title),
@@ -379,7 +454,7 @@ export function createHoldingsSectionWithOwnSupply({ cohort, title }) {
           name: "Profitability",
           tree: [profitabilityAmountChart(supply, title)],
         },
-        ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
+        ...singleAmountDeltaItems(supply.delta, title, "Supply"),
       ],
     },
     outputsFolder(cohort.tree.outputs, cohort.color, title),
@@ -406,7 +481,7 @@ export function createHoldingsSectionWithProfitLoss({ cohort, title }) {
           name: "Profitability",
           tree: [profitabilityAmountChart(supply, title)],
         },
-        ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
+        ...singleAmountDeltaItems(supply.delta, title, "Supply"),
       ],
     },
     outputsFolder(cohort.tree.outputs, cohort.color, title),
@@ -433,7 +508,7 @@ export function createHoldingsSectionAddress({ cohort, title }) {
           name: "Profitability",
           tree: [profitabilityAmountChart(supply, title)],
         },
-        ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
+        ...singleAmountDeltaItems(supply.delta, title, "Supply"),
       ],
     },
     outputsFolder(cohort.tree.outputs, cohort.color, title),
@@ -457,7 +532,7 @@ export function createHoldingsSectionAddressAmount({ cohort, title }) {
           bottom: simpleSupplySeries(supply),
         },
         dominanceChart(supply, cohort.color, title),
-        ...singleDeltaItems(supply.delta, Unit.sats, title, "Supply"),
+        ...singleAmountDeltaItems(supply.delta, title, "Supply"),
       ],
     },
     outputsFolder(cohort.tree.outputs, cohort.color, title),
@@ -529,7 +604,7 @@ export function createGroupedHoldingsSectionAddress({ list, all, title }) {
           name: "Profitability",
           tree: groupedSupplyProfitLoss(list, all, title),
         },
-        ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
+        ...groupedAmountDeltaItems(list, all, (c) => c.tree.supply.delta, title, "Supply"),
       ],
     },
     groupedOutputsFolder(list, all, title),
@@ -580,7 +655,7 @@ export function createGroupedHoldingsSectionAddressAmount({ list, all, title }) 
       tree: [
         groupedSupplyTotal(list, all, title),
         groupedDominanceChart(list, title),
-        ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
+        ...groupedAmountDeltaItems(list, all, (c) => c.tree.supply.delta, title, "Supply"),
       ],
     },
     groupedOutputsFolder(list, all, title),
@@ -608,7 +683,7 @@ export function createGroupedHoldingsSection({ list, all, title }) {
       tree: [
         groupedSupplyTotal(list, all, title),
         groupedDominanceChart(list, title),
-        ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
+        ...groupedAmountDeltaItems(list, all, (c) => c.tree.supply.delta, title, "Supply"),
       ],
     },
     groupedOutputsFolder(list, all, title),
@@ -627,7 +702,7 @@ export function createGroupedHoldingsSectionWithProfitLoss({ list, all, title })
           name: "Profitability",
           tree: groupedSupplyProfitLoss(list, all, title),
         },
-        ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
+        ...groupedAmountDeltaItems(list, all, (c) => c.tree.supply.delta, title, "Supply"),
       ],
     },
     groupedOutputsFolder(list, all, title),
@@ -646,7 +721,7 @@ export function createGroupedHoldingsSectionWithOwnSupply({ list, all, title }) 
           name: "Profitability",
           tree: groupedSupplyProfitLoss(list, all, title),
         },
-        ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
+        ...groupedAmountDeltaItems(list, all, (c) => c.tree.supply.delta, title, "Supply"),
       ],
     },
     groupedOutputsFolder(list, all, title),
@@ -679,7 +754,7 @@ export function createGroupedHoldingsSectionWithRelative({ list, all, title }) {
             },
           ],
         },
-        ...groupedDeltaItems(list, all, (c) => c.tree.supply.delta, Unit.sats, title, "Supply"),
+        ...groupedAmountDeltaItems(list, all, (c) => c.tree.supply.delta, title, "Supply"),
       ],
     },
     groupedOutputsFolder(list, all, title),

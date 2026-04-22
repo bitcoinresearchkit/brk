@@ -9,13 +9,13 @@ use crate::{
     internal::{BpsType, LazyRollingDeltasFiatFromHeight, WindowStartVec, Windows},
 };
 
-use super::{CentsType, FiatPerBlockCumulativeWithSums};
+use super::{FiatType, FiatPerBlockCumulativeWithSums};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct FiatPerBlockCumulativeWithSumsAndDeltas<C, CS, B, M: StorageMode = Rw>
 where
-    C: CentsType + Into<f64>,
-    CS: CentsType + From<f64>,
+    C: FiatType + Into<f64>,
+    CS: FiatType + From<f64>,
     B: BpsType + From<f64>,
 {
     #[deref]
@@ -27,8 +27,8 @@ where
 
 impl<C, CS, B> FiatPerBlockCumulativeWithSumsAndDeltas<C, CS, B>
 where
-    C: CentsType + Into<f64>,
-    CS: CentsType + From<f64>,
+    C: FiatType + Into<f64>,
+    CS: FiatType + From<f64>,
     B: BpsType + From<f64>,
 {
     pub(crate) fn forced_import(

@@ -6,18 +6,18 @@ use vecdb::{Database, Exit, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        CentsType, FiatBlock, FiatPerBlock, LazyRollingSumsFiatFromHeight, WindowStartVec, Windows,
+        FiatType, FiatBlock, FiatPerBlock, LazyRollingSumsFiatFromHeight, WindowStartVec, Windows,
     },
 };
 
 #[derive(Traversable)]
-pub struct FiatPerBlockCumulativeWithSums<C: CentsType, M: StorageMode = Rw> {
+pub struct FiatPerBlockCumulativeWithSums<C: FiatType, M: StorageMode = Rw> {
     pub block: FiatBlock<C, M>,
     pub cumulative: FiatPerBlock<C, M>,
     pub sum: LazyRollingSumsFiatFromHeight<C>,
 }
 
-impl<C: CentsType> FiatPerBlockCumulativeWithSums<C> {
+impl<C: FiatType> FiatPerBlockCumulativeWithSums<C> {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,

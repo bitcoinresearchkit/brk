@@ -7,7 +7,7 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        AmountPerBlock, DistributionStats, WindowStarts, Windows,
+        ValuePerBlock, DistributionStats, WindowStarts, Windows,
         algo::compute_rolling_distribution_from_starts,
     },
 };
@@ -18,11 +18,11 @@ use crate::{
 /// Series: `{name}_average_24h`, `{name}_max_24h`, etc.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
-pub struct RollingDistributionAmountPerBlock<M: StorageMode = Rw>(
-    pub DistributionStats<Windows<AmountPerBlock<M>>>,
+pub struct RollingDistributionValuePerBlock<M: StorageMode = Rw>(
+    pub DistributionStats<Windows<ValuePerBlock<M>>>,
 );
 
-impl RollingDistributionAmountPerBlock {
+impl RollingDistributionValuePerBlock {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -31,7 +31,7 @@ impl RollingDistributionAmountPerBlock {
     ) -> Result<Self> {
         Ok(Self(DistributionStats::try_from_fn(|stat_suffix| {
             Windows::try_from_fn(|window_suffix| {
-                AmountPerBlock::forced_import(
+                ValuePerBlock::forced_import(
                     db,
                     &format!("{name}_{stat_suffix}_{window_suffix}"),
                     version,

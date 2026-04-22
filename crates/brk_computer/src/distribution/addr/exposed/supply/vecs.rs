@@ -6,7 +6,7 @@ use vecdb::{Database, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{AmountPerBlock, WithAddrTypes},
+    internal::{ValuePerBlock, WithAddrTypes},
 };
 
 /// Exposed address supply (sats/btc/cents/usd) — `all` + per-address-type.
@@ -15,7 +15,7 @@ use crate::{
 /// post-hoc from sats × spot price.
 #[derive(Deref, DerefMut, Traversable)]
 pub struct ExposedAddrSupplyVecs<M: StorageMode = Rw>(
-    #[traversable(flatten)] pub WithAddrTypes<AmountPerBlock<M>>,
+    #[traversable(flatten)] pub WithAddrTypes<ValuePerBlock<M>>,
 );
 
 impl ExposedAddrSupplyVecs {
@@ -24,7 +24,7 @@ impl ExposedAddrSupplyVecs {
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
-        Ok(Self(WithAddrTypes::<AmountPerBlock>::forced_import(
+        Ok(Self(WithAddrTypes::<ValuePerBlock>::forced_import(
             db,
             "exposed_supply",
             version,

@@ -1,5 +1,4 @@
 pub(crate) mod algo;
-mod amount;
 mod block_walker;
 mod cache_budget;
 mod containers;
@@ -9,9 +8,9 @@ mod per_block;
 mod per_tx;
 mod traits;
 mod transform;
+mod value;
 mod with_addr_types;
 
-pub(crate) use amount::*;
 pub(crate) use block_walker::*;
 pub(crate) use cache_budget::*;
 pub(crate) use containers::*;
@@ -20,4 +19,5 @@ pub(crate) use per_block::*;
 pub(crate) use per_tx::*;
 pub(crate) use traits::*;
 pub use transform::*;
+pub(crate) use value::*;
 pub(crate) use with_addr_types::*;

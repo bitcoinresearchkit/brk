@@ -3,7 +3,7 @@ use brk_types::{Height, Sats};
 use derive_more::{Deref, DerefMut};
 use vecdb::ReadableVec;
 
-use crate::internal::AmountPerBlock;
+use crate::internal::ValuePerBlock;
 
 use super::vecs::ExposedAddrSupplyVecs;
 
@@ -24,7 +24,7 @@ impl From<(&ExposedAddrSupplyVecs, Height)> for AddrTypeToExposedSupply {
     fn from((vecs, starting_height): (&ExposedAddrSupplyVecs, Height)) -> Self {
         if let Some(prev_height) = starting_height.decremented() {
             let read =
-                |v: &AmountPerBlock| -> Sats { v.sats.height.collect_one(prev_height).unwrap() };
+                |v: &ValuePerBlock| -> Sats { v.sats.height.collect_one(prev_height).unwrap() };
             Self(ByAddrType {
                 p2pk65: read(&vecs.by_addr_type.p2pk65),
                 p2pk33: read(&vecs.by_addr_type.p2pk33),

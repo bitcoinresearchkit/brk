@@ -13,14 +13,14 @@ use crate::{
 
 /// Raw per-block amount data: sats + cents (stored), btc + usd (lazy), no resolutions.
 #[derive(Traversable)]
-pub struct AmountBlock<M: StorageMode = Rw> {
+pub struct ValueBlock<M: StorageMode = Rw> {
     pub btc: LazyVecFrom1<Height, Bitcoin, Height, Sats>,
     pub sats: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
     pub usd: LazyVecFrom1<Height, Dollars, Height, Cents>,
     pub cents: M::Stored<EagerVec<PcoVec<Height, Cents>>>,
 }
 
-impl AmountBlock {
+impl ValueBlock {
     pub(crate) fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         let sats: EagerVec<PcoVec<Height, Sats>> =
             EagerVec::forced_import(db, &format!("{name}_sats"), version)?;

@@ -630,6 +630,39 @@ export function sumsTreeBaseline({ windows, title = (s) => s, metric, unit, lege
 }
 
 /**
+ * Rolling tree with baseline series for an amount pattern (sats + lazy btc per window).
+ * @param {Object} args
+ * @param {{ _24h: AmountPattern, _1w: AmountPattern, _1m: AmountPattern, _1y: AmountPattern }} args.windows
+ * @param {(metric: string) => string} [args.title]
+ * @param {string} args.metric
+ * @param {string} [args.legend]
+ * @returns {PartialOptionsGroup}
+ */
+export function amountSumsTreeBaseline({ windows, title = (s) => s, metric, legend = "Sum" }) {
+  return {
+    name: "Sums",
+    tree: [
+      {
+        name: "Compare",
+        title: title(metric),
+        bottom: ROLLING_WINDOWS.flatMap((w) => [
+          baseline({ series: windows[w.key].btc, name: w.name, color: w.color, unit: Unit.btc }),
+          baseline({ series: windows[w.key].sats, name: w.name, color: w.color, unit: Unit.sats }),
+        ]),
+      },
+      ...ROLLING_WINDOWS.map((w) => ({
+        name: w.name,
+        title: title(`${w.title} ${metric}`),
+        bottom: [
+          baseline({ series: windows[w.key].btc, name: legend, unit: Unit.btc }),
+          baseline({ series: windows[w.key].sats, name: legend, unit: Unit.sats }),
+        ],
+      })),
+    ],
+  };
+}
+
+/**
  * Flat array of per-window average charts
  * @param {Object} args
  * @param {{ _24h: AnySeriesPattern, _1w: AnySeriesPattern, _1m: AnySeriesPattern, _1y: AnySeriesPattern }} args.windows

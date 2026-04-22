@@ -2,17 +2,17 @@ use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Sats, Version};
 use vecdb::UnaryTransform;
 
-use crate::internal::{AmountPerBlock, DerivedResolutions};
+use crate::internal::{ValuePerBlock, DerivedResolutions};
 
 #[derive(Clone, Traversable)]
-pub struct LazyAmountDerivedResolutions {
+pub struct LazyValueDerivedResolutions {
     pub btc: DerivedResolutions<Bitcoin, Sats>,
     pub sats: DerivedResolutions<Sats, Sats>,
     pub usd: DerivedResolutions<Dollars, Dollars>,
     pub cents: DerivedResolutions<Cents, Cents>,
 }
 
-impl LazyAmountDerivedResolutions {
+impl LazyValueDerivedResolutions {
     pub(crate) fn from_block_source<
         SatsTransform,
         BitcoinTransform,
@@ -20,7 +20,7 @@ impl LazyAmountDerivedResolutions {
         DollarsTransform,
     >(
         name: &str,
-        source: &AmountPerBlock,
+        source: &ValuePerBlock,
         version: Version,
     ) -> Self
     where

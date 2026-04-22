@@ -3,17 +3,17 @@ use brk_types::{BasisPoints16, BasisPoints32, Height, Sats};
 use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use crate::internal::{
-    AmountPerBlockCumulative, AmountPerBlockCumulativeRolling, AmountPerBlockFull,
+    ValuePerBlockCumulative, ValuePerBlockCumulativeRolling, ValuePerBlockFull,
     LazyPercentCumulativeRolling, PercentCumulativeRolling, RatioRollingWindows,
 };
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    pub coinbase: AmountPerBlockCumulativeRolling<M>,
-    pub subsidy: AmountPerBlockCumulativeRolling<M>,
-    pub fees: AmountPerBlockFull<M>,
+    pub coinbase: ValuePerBlockCumulativeRolling<M>,
+    pub subsidy: ValuePerBlockCumulativeRolling<M>,
+    pub fees: ValuePerBlockFull<M>,
     pub output_volume: M::Stored<EagerVec<PcoVec<Height, Sats>>>,
-    pub unclaimed: AmountPerBlockCumulative<M>,
+    pub unclaimed: ValuePerBlockCumulative<M>,
     #[traversable(wrap = "fees", rename = "dominance")]
     pub fee_dominance: PercentCumulativeRolling<BasisPoints16, M>,
     #[traversable(wrap = "subsidy", rename = "dominance")]

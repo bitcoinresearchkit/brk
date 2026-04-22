@@ -12,27 +12,27 @@ use crate::{
 };
 
 /// Trait that associates a cents type with its transform to Dollars.
-pub trait CentsType: NumericValue + JsonSchema {
+pub trait FiatType: NumericValue + JsonSchema {
     type ToDollars: UnaryTransform<Self, Dollars>;
 }
 
-impl CentsType for Cents {
+impl FiatType for Cents {
     type ToDollars = CentsUnsignedToDollars;
 }
 
-impl CentsType for CentsSigned {
+impl FiatType for CentsSigned {
     type ToDollars = CentsSignedToDollars;
 }
 
 /// Height-indexed fiat monetary value: cents (eager, integer) + usd (lazy, float).
 /// Generic over `C` to support both `Cents` (unsigned) and `CentsSigned` (signed).
 #[derive(Traversable)]
-pub struct FiatPerBlock<C: CentsType, M: StorageMode = Rw> {
+pub struct FiatPerBlock<C: FiatType, M: StorageMode = Rw> {
     pub usd: LazyPerBlock<Dollars, C>,
     pub cents: PerBlock<C, M>,
 }
 
-impl<C: CentsType> FiatPerBlock<C> {
+impl<C: FiatType> FiatPerBlock<C> {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,

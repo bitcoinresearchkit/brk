@@ -1,4 +1,4 @@
-//! Lazy value wrapper for AmountPerBlock - all transforms are lazy.
+//! Lazy value wrapper for ValuePerBlock - all transforms are lazy.
 
 use brk_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
@@ -6,22 +6,22 @@ use derive_more::{Deref, DerefMut};
 use vecdb::UnaryTransform;
 
 use crate::internal::{
-    AmountPerBlock, Identity, LazyAmount, LazyAmountDerivedResolutions, SatsToBitcoin,
+    ValuePerBlock, Identity, LazyValue, LazyValueDerivedResolutions, SatsToBitcoin,
 };
 
-/// Lazy value wrapper with height + all derived last transforms from AmountPerBlock.
+/// Lazy value wrapper with height + all derived last transforms from ValuePerBlock.
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct LazyAmountPerBlock {
+pub struct LazyValuePerBlock {
     #[traversable(flatten)]
-    pub height: LazyAmount<Height>,
+    pub height: LazyValue<Height>,
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub resolutions: Box<LazyAmountDerivedResolutions>,
+    pub resolutions: Box<LazyValueDerivedResolutions>,
 }
 
-impl LazyAmountPerBlock {
+impl LazyValuePerBlock {
     pub(crate) fn from_block_source<
         SatsTransform,
         BitcoinTransform,
@@ -29,7 +29,7 @@ impl LazyAmountPerBlock {
         DollarsTransform,
     >(
         name: &str,
-        source: &AmountPerBlock,
+        source: &ValuePerBlock,
         version: Version,
     ) -> Self
     where
@@ -38,14 +38,14 @@ impl LazyAmountPerBlock {
         CentsTransform: UnaryTransform<Cents, Cents>,
         DollarsTransform: UnaryTransform<Dollars, Dollars>,
     {
-        let height = LazyAmount::from_block_source::<
+        let height = LazyValue::from_block_source::<
             SatsTransform,
             BitcoinTransform,
             CentsTransform,
             DollarsTransform,
         >(name, source, version);
 
-        let resolutions = LazyAmountDerivedResolutions::from_block_source::<
+        let resolutions = LazyValueDerivedResolutions::from_block_source::<
             SatsTransform,
             BitcoinTransform,
             CentsTransform,
@@ -58,7 +58,7 @@ impl LazyAmountPerBlock {
         }
     }
 
-    pub(crate) fn identity(name: &str, source: &AmountPerBlock, version: Version) -> Self {
+    pub(crate) fn identity(name: &str, source: &ValuePerBlock, version: Version) -> Self {
         Self::from_block_source::<Identity<Sats>, SatsToBitcoin, Identity<Cents>, Identity<Dollars>>(
             name, source, version,
         )

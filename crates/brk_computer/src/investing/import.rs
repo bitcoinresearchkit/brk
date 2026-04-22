@@ -9,7 +9,7 @@ use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod, Vecs};
 use crate::{
     indexes,
     internal::{
-        AmountPerBlock, PercentPerBlock, Price,
+        ValuePerBlock, PercentPerBlock, Price,
         db_utils::{finalize_db, open_db},
     },
 };
@@ -23,7 +23,7 @@ impl Vecs {
         let db = open_db(parent_path, super::DB_NAME, 50_000)?;
         let version = parent_version;
         let stack = ByDcaPeriod::try_new(|name, _days| {
-            AmountPerBlock::forced_import(&db, &format!("dca_stack_{name}"), version, indexes)
+            ValuePerBlock::forced_import(&db, &format!("dca_stack_{name}"), version, indexes)
         })?;
 
         let cost_basis = ByDcaPeriod::try_new(|name, _days| {
@@ -39,7 +39,7 @@ impl Vecs {
         })?;
 
         let lump_sum_stack = ByDcaPeriod::try_new(|name, _days| {
-            AmountPerBlock::forced_import(&db, &format!("lump_sum_stack_{name}"), version, indexes)
+            ValuePerBlock::forced_import(&db, &format!("lump_sum_stack_{name}"), version, indexes)
         })?;
 
         let lump_sum_return = ByDcaPeriod::try_new(|name, _days| {
@@ -52,7 +52,7 @@ impl Vecs {
         })?;
 
         let class_stack = ByDcaClass::try_new(|name, _year, _day1| {
-            AmountPerBlock::forced_import(&db, &format!("dca_stack_{name}"), version, indexes)
+            ValuePerBlock::forced_import(&db, &format!("dca_stack_{name}"), version, indexes)
         })?;
 
         let class_cost_basis = ByDcaClass::try_new(|name, _year, _day1| {

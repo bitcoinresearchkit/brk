@@ -144,7 +144,7 @@
  */
 /**
  * Sell side risk rolling windows pattern
- * @typedef {Brk._1m1w1y24hPattern7} SellSideRiskPattern
+ * @typedef {Brk._1m1w1y24hPattern8} SellSideRiskPattern
  */
 /**
  * Stats pattern: min, max, median, percentiles
@@ -245,6 +245,8 @@
  * Delta patterns with absolute + rate rolling windows
  * @typedef {Brk.AbsoluteRatePattern} DeltaPattern
  * @typedef {Brk.AbsoluteRatePattern2} FiatDeltaPattern
+ * @typedef {Brk.AbsoluteRatePattern3} AmountDeltaPattern
+ * @typedef {Brk.BtcSatsPattern} AmountPattern
  *
  * Capitalized price percentiles (pct1/2/5/95/98/99)
  * @typedef {Brk.Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern} CapitalizedPercentilesPattern

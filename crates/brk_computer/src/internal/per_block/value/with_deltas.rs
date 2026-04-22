@@ -6,19 +6,19 @@ use vecdb::{Database, Rw, StorageMode};
 
 use crate::{
     indexes,
-    internal::{AmountPerBlock, LazyRollingDeltasFromHeight, WindowStartVec, Windows},
+    internal::{LazyRollingDeltasAmountFromHeight, ValuePerBlock, WindowStartVec, Windows},
 };
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct AmountPerBlockWithDeltas<M: StorageMode = Rw> {
+pub struct ValuePerBlockWithDeltas<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub inner: AmountPerBlock<M>,
-    pub delta: LazyRollingDeltasFromHeight<Sats, SatsSigned, BasisPointsSigned32>,
+    pub inner: ValuePerBlock<M>,
+    pub delta: LazyRollingDeltasAmountFromHeight<Sats, SatsSigned, BasisPointsSigned32>,
 }
 
-impl AmountPerBlockWithDeltas {
+impl ValuePerBlockWithDeltas {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -26,9 +26,9 @@ impl AmountPerBlockWithDeltas {
         indexes: &indexes::Vecs,
         cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
-        let inner = AmountPerBlock::forced_import(db, name, version, indexes)?;
+        let inner = ValuePerBlock::forced_import(db, name, version, indexes)?;
 
-        let delta = LazyRollingDeltasFromHeight::new(
+        let delta = LazyRollingDeltasAmountFromHeight::new(
             &format!("{name}_delta"),
             version + Version::ONE,
             &inner.sats.height,

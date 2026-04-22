@@ -7,25 +7,25 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        AmountPerBlockCumulative, LazyRollingAvgsAmountFromHeight, LazyRollingSumsAmountFromHeight,
+        ValuePerBlockCumulative, LazyRollingAvgsAmountFromHeight, LazyRollingSumsAmountFromHeight,
         WindowStartVec, Windows,
     },
     prices,
 };
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct AmountPerBlockCumulativeRolling<M: StorageMode = Rw> {
+pub struct ValuePerBlockCumulativeRolling<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub inner: AmountPerBlockCumulative<M>,
+    pub inner: ValuePerBlockCumulative<M>,
     pub sum: LazyRollingSumsAmountFromHeight,
     pub average: LazyRollingAvgsAmountFromHeight,
 }
 
 const VERSION: Version = Version::TWO;
 
-impl AmountPerBlockCumulativeRolling {
+impl ValuePerBlockCumulativeRolling {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -35,7 +35,7 @@ impl AmountPerBlockCumulativeRolling {
     ) -> Result<Self> {
         let v = version + VERSION;
 
-        let inner = AmountPerBlockCumulative::forced_import(db, name, v, indexes)?;
+        let inner = ValuePerBlockCumulative::forced_import(db, name, v, indexes)?;
         let sum = LazyRollingSumsAmountFromHeight::new(
             &format!("{name}_sum"),
             v,

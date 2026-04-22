@@ -12,6 +12,7 @@
 
 import {
   formatCohortTitle,
+  amountBaseline,
   satsBtcUsd,
   satsBtcUsdFullTree,
   avgHoldingsSubtree,
@@ -21,9 +22,8 @@ import {
 import {
   ROLLING_WINDOWS,
   line,
-  baseline,
   percentRatio,
-  sumsTreeBaseline,
+  amountSumsTreeBaseline,
   rollingPercentRatioTree,
 } from "../series.js";
 import { Unit } from "../../utils/units.js";
@@ -528,11 +528,10 @@ function singleBucketFolder({ name, color, pattern }, parentName) {
             ],
           },
           {
-            ...sumsTreeBaseline({
+            ...amountSumsTreeBaseline({
               windows: pattern.supply.all.delta.absolute,
               title,
               metric: "Supply Change",
-              unit: Unit.sats,
               legend: "Change",
             }),
             name: "Change",
@@ -622,12 +621,11 @@ function groupedBucketCharts(list, groupTitle) {
           tree: ROLLING_WINDOWS.map((w) => ({
             name: w.name,
             title: title(`${w.title} Supply Change`),
-            bottom: list.map(({ name, color, pattern }) =>
-              baseline({
-                series: pattern.supply.all.delta.absolute[w.key],
+            bottom: list.flatMap(({ name, color, pattern }) =>
+              amountBaseline({
+                pattern: pattern.supply.all.delta.absolute[w.key],
                 name,
                 color,
-                unit: Unit.sats,
               }),
             ),
           })),

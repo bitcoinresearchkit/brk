@@ -8,13 +8,13 @@ use crate::{
         metrics::ImportConfig,
         state::{CohortState, CostBasisOps, RealizedOps},
     },
-    internal::AmountPerBlockCumulativeRolling,
+    internal::ValuePerBlockCumulativeRolling,
     prices,
 };
 
 #[derive(Traversable)]
 pub struct ActivityMinimal<M: StorageMode = Rw> {
-    pub transfer_volume: AmountPerBlockCumulativeRolling<M>,
+    pub transfer_volume: ValuePerBlockCumulativeRolling<M>,
 }
 
 impl ActivityMinimal {

@@ -7,25 +7,25 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        AmountPerBlockCumulativeRolling, RollingDistributionAmountPerBlock, WindowStartVec,
+        ValuePerBlockCumulativeRolling, RollingDistributionValuePerBlock, WindowStartVec,
         WindowStarts, Windows,
     },
     prices,
 };
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct AmountPerBlockFull<M: StorageMode = Rw> {
+pub struct ValuePerBlockFull<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub inner: AmountPerBlockCumulativeRolling<M>,
+    pub inner: ValuePerBlockCumulativeRolling<M>,
     #[traversable(flatten)]
-    pub distribution: RollingDistributionAmountPerBlock<M>,
+    pub distribution: RollingDistributionValuePerBlock<M>,
 }
 
 const VERSION: Version = Version::TWO;
 
-impl AmountPerBlockFull {
+impl ValuePerBlockFull {
     pub(crate) fn forced_import(
         db: &Database,
         name: &str,
@@ -36,8 +36,8 @@ impl AmountPerBlockFull {
         let v = version + VERSION;
 
         let inner =
-            AmountPerBlockCumulativeRolling::forced_import(db, name, v, indexes, cached_starts)?;
-        let distribution = RollingDistributionAmountPerBlock::forced_import(db, name, v, indexes)?;
+            ValuePerBlockCumulativeRolling::forced_import(db, name, v, indexes, cached_starts)?;
+        let distribution = RollingDistributionValuePerBlock::forced_import(db, name, v, indexes)?;
 
         Ok(Self {
             inner,

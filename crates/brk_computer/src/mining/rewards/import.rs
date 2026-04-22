@@ -6,7 +6,7 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        AmountPerBlockCumulative, AmountPerBlockCumulativeRolling, AmountPerBlockFull,
+        ValuePerBlockCumulative, ValuePerBlockCumulativeRolling, ValuePerBlockFull,
         LazyPercentCumulativeRolling, OneMinusBp16, PercentCumulativeRolling, RatioRollingWindows,
         WindowStartVec, Windows,
     },
@@ -29,23 +29,23 @@ impl Vecs {
         );
 
         Ok(Self {
-            coinbase: AmountPerBlockCumulativeRolling::forced_import(
+            coinbase: ValuePerBlockCumulativeRolling::forced_import(
                 db,
                 "coinbase",
                 version,
                 indexes,
                 cached_starts,
             )?,
-            subsidy: AmountPerBlockCumulativeRolling::forced_import(
+            subsidy: ValuePerBlockCumulativeRolling::forced_import(
                 db,
                 "subsidy",
                 version,
                 indexes,
                 cached_starts,
             )?,
-            fees: AmountPerBlockFull::forced_import(db, "fees", version, indexes, cached_starts)?,
+            fees: ValuePerBlockFull::forced_import(db, "fees", version, indexes, cached_starts)?,
             output_volume: EagerVec::forced_import(db, "output_volume", version)?,
-            unclaimed: AmountPerBlockCumulative::forced_import(
+            unclaimed: ValuePerBlockCumulative::forced_import(
                 db,
                 "unclaimed_rewards",
                 version,

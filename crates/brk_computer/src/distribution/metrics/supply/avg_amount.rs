@@ -3,15 +3,15 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Sats, StoredU64, Version};
 use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
-use crate::{indexes, internal::AmountPerBlock, prices};
+use crate::{indexes, internal::ValuePerBlock, prices};
 
 /// Average amount held per UTXO and per funded address.
 ///
 /// `utxo = supply / utxo_count`, `addr = supply / funded_addr_count`.
 #[derive(Traversable)]
 pub struct AvgAmountMetrics<M: StorageMode = Rw> {
-    pub utxo: AmountPerBlock<M>,
-    pub addr: AmountPerBlock<M>,
+    pub utxo: ValuePerBlock<M>,
+    pub addr: ValuePerBlock<M>,
 }
 
 impl AvgAmountMetrics {
@@ -29,8 +29,8 @@ impl AvgAmountMetrics {
             }
         };
         Ok(Self {
-            utxo: AmountPerBlock::forced_import(db, &name("avg_utxo_amount"), version, indexes)?,
-            addr: AmountPerBlock::forced_import(db, &name("avg_addr_amount"), version, indexes)?,
+            utxo: ValuePerBlock::forced_import(db, &name("avg_utxo_amount"), version, indexes)?,
+            addr: ValuePerBlock::forced_import(db, &name("avg_addr_amount"), version, indexes)?,
         })
     }
 

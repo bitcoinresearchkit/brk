@@ -3,7 +3,7 @@ use brk_types::Version;
 use vecdb::Database;
 
 use super::Vecs;
-use crate::{indexes, internal::AmountPerBlock};
+use crate::{indexes, internal::ValuePerBlock};
 
 impl Vecs {
     pub(crate) fn forced_import(
@@ -12,8 +12,8 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            vaulted: AmountPerBlock::forced_import(db, "vaulted_supply", version, indexes)?,
-            active: AmountPerBlock::forced_import(db, "active_supply", version, indexes)?,
+            vaulted: ValuePerBlock::forced_import(db, "vaulted_supply", version, indexes)?,
+            active: ValuePerBlock::forced_import(db, "active_supply", version, indexes)?,
         })
     }
 }

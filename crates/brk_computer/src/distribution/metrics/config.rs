@@ -7,7 +7,7 @@ use vecdb::{BytesVec, BytesVecValue, Database, ImportableVec};
 use crate::{
     indexes,
     internal::{
-        AmountPerBlock, AmountPerBlockCumulative, AmountPerBlockCumulativeRolling, CentsType,
+        ValuePerBlock, ValuePerBlockCumulative, ValuePerBlockCumulativeRolling, FiatType,
         FiatPerBlock, FiatPerBlockCumulativeWithSums, NumericValue, PerBlock,
         PerBlockCumulativeRolling, PercentPerBlock, PercentRollingWindows, Price,
         PriceWithRatioExtendedPerBlock, PriceWithRatioPerBlock, RatioPerBlock,
@@ -35,8 +35,8 @@ macro_rules! impl_config_import {
 
 // Non-generic types
 impl_config_import!(
-    AmountPerBlock,
-    AmountPerBlockCumulative,
+    ValuePerBlock,
+    ValuePerBlockCumulative,
     PriceWithRatioPerBlock,
     PriceWithRatioExtendedPerBlock,
     RatioPerBlock<BasisPoints32>,
@@ -79,7 +79,7 @@ impl<T: NumericValue + JsonSchema> ConfigImport for RollingWindow24hPerBlock<T> 
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }
 }
-impl ConfigImport for AmountPerBlockCumulativeRolling {
+impl ConfigImport for ValuePerBlockCumulativeRolling {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(
             cfg.db,
@@ -90,7 +90,7 @@ impl ConfigImport for AmountPerBlockCumulativeRolling {
         )
     }
 }
-impl<C: CentsType> ConfigImport for FiatPerBlockCumulativeWithSums<C> {
+impl<C: FiatType> ConfigImport for FiatPerBlockCumulativeWithSums<C> {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(
             cfg.db,
@@ -106,7 +106,7 @@ impl<T: NumericValue + JsonSchema> ConfigImport for RollingWindowsFrom1w<T> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }
 }
-impl<C: CentsType> ConfigImport for FiatPerBlock<C> {
+impl<C: FiatType> ConfigImport for FiatPerBlock<C> {
     fn config_import(cfg: &ImportConfig, suffix: &str, offset: Version) -> Result<Self> {
         Self::forced_import(cfg.db, &cfg.name(suffix), cfg.version + offset, cfg.indexes)
     }

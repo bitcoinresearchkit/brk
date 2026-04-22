@@ -3,21 +3,21 @@ use brk_types::{BasisPointsSigned32, Cents, Height, Sats};
 use vecdb::{Database, EagerVec, PcoVec, Rw, StorageMode};
 
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod};
-use crate::internal::{AmountPerBlock, PerBlock, PercentPerBlock, Price};
+use crate::internal::{ValuePerBlock, PerBlock, PercentPerBlock, Price};
 
 #[derive(Traversable)]
 pub struct PeriodVecs<M: StorageMode = Rw> {
-    pub dca_stack: ByDcaPeriod<AmountPerBlock<M>>,
+    pub dca_stack: ByDcaPeriod<ValuePerBlock<M>>,
     pub dca_cost_basis: ByDcaPeriod<Price<PerBlock<Cents, M>>>,
     pub dca_return: ByDcaPeriod<PercentPerBlock<BasisPointsSigned32, M>>,
     pub dca_cagr: ByDcaCagr<PercentPerBlock<BasisPointsSigned32, M>>,
-    pub lump_sum_stack: ByDcaPeriod<AmountPerBlock<M>>,
+    pub lump_sum_stack: ByDcaPeriod<ValuePerBlock<M>>,
     pub lump_sum_return: ByDcaPeriod<PercentPerBlock<BasisPointsSigned32, M>>,
 }
 
 #[derive(Traversable)]
 pub struct ClassVecs<M: StorageMode = Rw> {
-    pub dca_stack: ByDcaClass<AmountPerBlock<M>>,
+    pub dca_stack: ByDcaClass<ValuePerBlock<M>>,
     pub dca_cost_basis: ByDcaClass<Price<PerBlock<Cents, M>>>,
     pub dca_return: ByDcaClass<PercentPerBlock<BasisPointsSigned32, M>>,
 }

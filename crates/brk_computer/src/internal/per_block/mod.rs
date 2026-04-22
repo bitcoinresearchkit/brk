@@ -1,4 +1,3 @@
-mod amount;
 mod computed;
 mod fiat;
 mod lazy;
@@ -8,8 +7,8 @@ mod price;
 mod ratio;
 mod rolling;
 mod stddev;
+mod value;
 
-pub use amount::*;
 pub use computed::*;
 pub use fiat::*;
 pub use lazy::*;
@@ -19,3 +18,4 @@ pub use price::*;
 pub use ratio::*;
 pub use rolling::*;
 pub use stddev::*;
+pub use value::*;
