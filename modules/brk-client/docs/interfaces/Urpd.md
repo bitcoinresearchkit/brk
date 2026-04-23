@@ -6,7 +6,7 @@
 
 # Interface: Urpd
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1157](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L1157)
+Defined in: [Developer/brk/modules/brk-client/index.js:1157](https://github.com/bitcoinresearchkit/brk/blob/e4496742a4964a986078f3a65d3bfdc1e47a5eba/modules/brk-client/index.js#L1157)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1157](https://github.com/
 
 > **aggregation**: [`UrpdAggregation`](../type-aliases/UrpdAggregation.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1160](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L1160)
+Defined in: [Developer/brk/modules/brk-client/index.js:1160](https://github.com/bitcoinresearchkit/brk/blob/e4496742a4964a986078f3a65d3bfdc1e47a5eba/modules/brk-client/index.js#L1160)
 
 Aggregation strategy applied to the buckets.
 
@@ -24,7 +24,7 @@ Aggregation strategy applied to the buckets.
 
 > **buckets**: [`UrpdBucket`](UrpdBucket.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1163](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L1163)
+Defined in: [Developer/brk/modules/brk-client/index.js:1163](https://github.com/bitcoinresearchkit/brk/blob/e4496742a4964a986078f3a65d3bfdc1e47a5eba/modules/brk-client/index.js#L1163)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1163](https://github.com/
 
 > **close**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1161](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L1161)
+Defined in: [Developer/brk/modules/brk-client/index.js:1161](https://github.com/bitcoinresearchkit/brk/blob/e4496742a4964a986078f3a65d3bfdc1e47a5eba/modules/brk-client/index.js#L1161)
 
 Close price on `date`, in USD. Anchor for `unrealized_pnl`.
 
@@ -42,7 +42,7 @@ Close price on `date`, in USD. Anchor for `unrealized_pnl`.
 
 > **cohort**: [`Cohort`](../type-aliases/Cohort.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1158](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L1158)
+Defined in: [Developer/brk/modules/brk-client/index.js:1158](https://github.com/bitcoinresearchkit/brk/blob/e4496742a4964a986078f3a65d3bfdc1e47a5eba/modules/brk-client/index.js#L1158)
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1158](https://github.com/
 
 > **date**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1159](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L1159)
+Defined in: [Developer/brk/modules/brk-client/index.js:1159](https://github.com/bitcoinresearchkit/brk/blob/e4496742a4964a986078f3a65d3bfdc1e47a5eba/modules/brk-client/index.js#L1159)
 
 ***
 
@@ -58,6 +58,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1159](https://github.com/
 
 > **totalSupply**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1162](https://github.com/bitcoinresearchkit/brk/blob/3faa989691a1f662d8f7f98dbce612dc66a737c7/modules/brk-client/index.js#L1162)
+Defined in: [Developer/brk/modules/brk-client/index.js:1162](https://github.com/bitcoinresearchkit/brk/blob/e4496742a4964a986078f3a65d3bfdc1e47a5eba/modules/brk-client/index.js#L1162)
 
 Sum of `supply` across all buckets, in BTC.
