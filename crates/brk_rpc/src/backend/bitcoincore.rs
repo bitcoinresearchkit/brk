@@ -1,13 +1,19 @@
 use std::{thread::sleep, time::Duration};
 
-use bitcoincore_rpc::{Client as CoreClient, Error as RpcError, RpcApi, jsonrpc};
+use bitcoincore_rpc::{
+    Client as CoreClient, Error as RpcError, RpcApi,
+    json::{GetBlockTemplateCapabilities, GetBlockTemplateModes, GetBlockTemplateRules},
+    jsonrpc,
+};
 use brk_error::{Error, Result};
-use brk_types::Sats;
+use brk_types::{Sats, Txid};
 use parking_lot::RwLock;
 use serde_json::value::RawValue;
 use tracing::info;
 
-use super::{Auth, BlockHeaderInfo, BlockInfo, BlockchainInfo, RawMempoolEntry, TxOutInfo};
+use super::{
+    Auth, BlockHeaderInfo, BlockInfo, BlockTemplateTx, BlockchainInfo, RawMempoolEntry, TxOutInfo,
+};
 
 /// Per-batch request count for `get_block_hashes_range`. Sized so the
 /// JSON request body stays well under a megabyte and bitcoind doesn't
@@ -309,5 +315,24 @@ impl ClientInner {
 
     pub fn send_raw_transaction(&self, hex: &str) -> Result<bitcoin::Txid> {
         Ok(self.call_once(|c| c.send_raw_transaction(hex))?)
+    }
+
+    /// Transactions Bitcoin Core would include in the next block it would
+    /// mine. Core requires the `segwit` rule to be declared.
+    pub fn get_block_template_txs(&self) -> Result<Vec<BlockTemplateTx>> {
+        let r = self.call_with_retry(|c| {
+            c.get_block_template(
+                GetBlockTemplateModes::Template,
+                &[GetBlockTemplateRules::SegWit],
+                &[] as &[GetBlockTemplateCapabilities],
+            )
+        })?;
+        Ok(r.transactions
+            .into_iter()
+            .map(|t| BlockTemplateTx {
+                txid: Txid::from(t.txid),
+                fee: Sats::from(t.fee.to_sat()),
+            })
+            .collect())
     }
 }

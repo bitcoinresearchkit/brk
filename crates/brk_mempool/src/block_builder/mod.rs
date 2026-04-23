@@ -9,7 +9,7 @@ pub use package::Package;
 use crate::entry::Entry;
 
 /// Target vsize per block (~1MB, derived from 4MW weight limit).
-const BLOCK_VSIZE: u64 = 1_000_000;
+pub(crate) const BLOCK_VSIZE: u64 = 1_000_000;
 
 /// Number of projected blocks to build (last one is a catch-all overflow).
 const NUM_BLOCKS: usize = 8;

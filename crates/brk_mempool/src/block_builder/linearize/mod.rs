@@ -45,13 +45,14 @@ pub fn linearize_clusters(graph: &Graph) -> Vec<Package> {
     let clusters = find_components(graph);
     let mut packages: Vec<Package> = Vec::with_capacity(clusters.len());
 
-    for cluster in clusters {
+    for (cluster_id, cluster) in clusters.into_iter().enumerate() {
+        let cluster_id = cluster_id as u32;
         if cluster.nodes.len() == 1 {
-            packages.push(singleton_package(&cluster));
+            packages.push(singleton_package(&cluster, cluster_id));
             continue;
         }
-        for chunk in sfl::linearize(&cluster) {
-            packages.push(chunk_to_package(&cluster, &chunk));
+        for (chunk_order, chunk) in sfl::linearize(&cluster).iter().enumerate() {
+            packages.push(chunk_to_package(&cluster, chunk, cluster_id, chunk_order as u32));
         }
     }
 
@@ -168,19 +169,24 @@ fn kahn_topo_rank(nodes: &[ClusterNode]) -> Vec<u32> {
 }
 
 /// Build a one-tx `Package` for a cluster of size 1.
-fn singleton_package(cluster: &Cluster) -> Package {
+fn singleton_package(cluster: &Cluster, cluster_id: u32) -> Package {
     let node = &cluster.nodes[0];
     let fee_rate = FeeRate::from((node.fee, node.vsize));
-    let mut package = Package::new(fee_rate);
+    let mut package = Package::new(fee_rate, cluster_id, 0);
     package.add_tx(node.tx_index, u64::from(node.vsize));
     package
 }
 
 /// Convert an SFL-emitted chunk (set of local indices) into a `Package`.
 /// Txs inside the package are ordered parents-first by `topo_rank`.
-fn chunk_to_package(cluster: &Cluster, chunk: &sfl::Chunk) -> Package {
+fn chunk_to_package(
+    cluster: &Cluster,
+    chunk: &sfl::Chunk,
+    cluster_id: u32,
+    chunk_order: u32,
+) -> Package {
     let fee_rate = FeeRate::from((Sats::from(chunk.fee), VSize::from(chunk.vsize)));
-    let mut package = Package::new(fee_rate);
+    let mut package = Package::new(fee_rate, cluster_id, chunk_order);
 
     let mut ordered: SmallVec<[LocalIdx; 8]> = chunk.nodes.iter().copied().collect();
     ordered.sort_by_key(|&local| cluster.topo_rank[local as usize]);

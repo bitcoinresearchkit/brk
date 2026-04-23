@@ -343,6 +343,10 @@ impl MempoolInner {
         let entries_slice = entries.entries();
 
         let blocks = build_projected_blocks(entries_slice);
+
+        #[cfg(debug_assertions)]
+        crate::projected_blocks::verify::Verifier::check(&self.client, &blocks, entries_slice);
+
         let snapshot = Snapshot::build(blocks, entries_slice);
 
         *self.snapshot.write() = snapshot;

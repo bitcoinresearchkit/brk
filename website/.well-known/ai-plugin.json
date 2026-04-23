@@ -9,7 +9,7 @@
     "type": "openapi",
     "url": "https://bitview.space/openapi.json"
   },
-  "logo_url": "https://bitview.space/assets/favicon-196.png",
+  "logo_url": "https://bitview.space/assets/favicon/web-app-manifest-512x512.png",
   "contact_email": "hello@bitcoinresearchkit.org",
   "legal_info_url": "https://github.com/bitcoinresearchkit/brk/blob/main/docs/LICENSE.md"
 }

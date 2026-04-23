@@ -264,7 +264,7 @@ export function createCohortFolderAddress(cohort) {
       createProfitabilitySectionWithProfitLoss({ cohort, title }),
       createActivitySectionMinimal({ cohort, title }),
       avgHoldingsSubtree(cohort.avgAmount, title),
-      reusedSubtree(cohort.reused, cohort.key, title),
+      reusedSubtree(cohort.reused, cohort.respent, cohort.key, title),
       exposedSubtree(cohort.exposed, cohort.key, title),
     ],
   };

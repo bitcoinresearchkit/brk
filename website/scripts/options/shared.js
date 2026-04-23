@@ -7,8 +7,7 @@ import {
   baseline,
   price,
   percentRatio,
-  chartsFromCount,
-  chartsFromPercentCumulative,
+  chartsFromPercentCumulativeEntries,
   sumsAndAveragesCumulativeWith,
 } from "./series.js";
 import { priceLine, priceLines } from "./constants.js";
@@ -365,45 +364,78 @@ export function exposedSubtree(exposed, key, title) {
 }
 
 /**
- * "Reused" subtree (per-type / per-cohort — no "Active" window, since that
- * data is only tracked globally). Shape:
- *   Compare (funded + total) / Funded / Total / Outputs / Inputs.
+ * "Reused" subtree (per-type / per-cohort, no "Active" window since that
+ * data is only tracked globally). Respent (addresses whose outputs have
+ * been spent more than once) is a subset of reused, so each chart layers
+ * both series in two colors: reused in the primary color, respent in
+ * gray. Shape: Funded / Total / Outputs / Inputs / Supply / Share.
  * @param {ReusedTree} reused
+ * @param {RespentTree} respent
  * @param {AddressableType | "all"} key
  * @param {(name: string) => string} title
  * @returns {PartialOptionsGroup}
  */
-export function reusedSubtree(reused, key, title) {
+export function reusedSubtree(reused, respent, key, title) {
+  /**
+   * Windowed sums + cumulative, overlaying reused (primary) and respent (gray).
+   * @param {CountPattern<number>} reusedPattern
+   * @param {CountPattern<number>} respentPattern
+   * @param {string} metric
+   * @returns {PartialOptionsTree}
+   */
+  const countPair = (reusedPattern, respentPattern, metric) => [
+    ...ROLLING_WINDOWS.map((w) => ({
+      name: w.name,
+      title: title(`${w.title} ${metric}`),
+      bottom: [
+        line({ series: reusedPattern.sum[w.key], name: "2+ Funded", unit: Unit.count }),
+        line({
+          series: respentPattern.sum[w.key],
+          name: "2+ Spent",
+          color: colors.gray,
+          unit: Unit.count,
+        }),
+      ],
+    })),
+    {
+      name: "Cumulative",
+      title: title(`Cumulative ${metric}`),
+      bottom: [
+        line({ series: reusedPattern.cumulative, name: "2+ Funded", unit: Unit.count }),
+        line({
+          series: respentPattern.cumulative,
+          name: "2+ Spent",
+          color: colors.gray,
+          unit: Unit.count,
+        }),
+      ],
+    },
+  ];
+
   return {
     name: "Reused",
     tree: [
       {
-        name: "Compare",
-        title: title("Reused Address Count"),
+        name: "Funded",
+        title: title("Funded Reused Addresses"),
         bottom: [
-          line({ series: reused.count.funded[key], name: "Funded", unit: Unit.count }),
+          line({ series: reused.count.funded[key], name: "2+ Funded", unit: Unit.count }),
           line({
-            series: reused.count.total[key],
-            name: "Total",
+            series: respent.count.funded[key],
+            name: "2+ Spent",
             color: colors.gray,
             unit: Unit.count,
           }),
         ],
       },
       {
-        name: "Funded",
-        title: title("Funded Reused Addresses"),
-        bottom: [
-          line({ series: reused.count.funded[key], name: "Funded Reused", unit: Unit.count }),
-        ],
-      },
-      {
         name: "Total",
         title: title("Total Reused Addresses"),
         bottom: [
+          line({ series: reused.count.total[key], name: "2+ Funded", unit: Unit.count }),
           line({
-            series: reused.count.total[key],
-            name: "Total Reused",
+            series: respent.count.total[key],
+            name: "2+ Spent",
             color: colors.gray,
             unit: Unit.count,
           }),
@@ -414,17 +446,26 @@ export function reusedSubtree(reused, key, title) {
         tree: [
           {
             name: "Count",
-            tree: chartsFromCount({
-              pattern: reused.events.outputToReusedAddrCount[key],
-              title,
-              metric: "Transaction Outputs to Reused Addresses",
-              unit: Unit.count,
-            }),
+            tree: countPair(
+              reused.events.outputToReusedAddrCount[key],
+              respent.events.outputToReusedAddrCount[key],
+              "Transaction Outputs to Reused Addresses",
+            ),
           },
           {
             name: "Share",
-            tree: chartsFromPercentCumulative({
-              pattern: reused.events.outputToReusedAddrShare[key],
+            tree: chartsFromPercentCumulativeEntries({
+              entries: [
+                {
+                  name: "2+ Funded",
+                  pattern: reused.events.outputToReusedAddrShare[key],
+                },
+                {
+                  name: "2+ Spent",
+                  pattern: respent.events.outputToReusedAddrShare[key],
+                  color: colors.gray,
+                },
+              ],
               title,
               metric: "Share of Transaction Outputs to Reused Addresses",
             }),
@@ -436,21 +477,54 @@ export function reusedSubtree(reused, key, title) {
         tree: [
           {
             name: "Count",
-            tree: chartsFromCount({
-              pattern: reused.events.inputFromReusedAddrCount[key],
-              title,
-              metric: "Transaction Inputs from Reused Addresses",
-              unit: Unit.count,
-            }),
+            tree: countPair(
+              reused.events.inputFromReusedAddrCount[key],
+              respent.events.inputFromReusedAddrCount[key],
+              "Transaction Inputs from Reused Addresses",
+            ),
           },
           {
             name: "Share",
-            tree: chartsFromPercentCumulative({
-              pattern: reused.events.inputFromReusedAddrShare[key],
+            tree: chartsFromPercentCumulativeEntries({
+              entries: [
+                {
+                  name: "2+ Funded",
+                  pattern: reused.events.inputFromReusedAddrShare[key],
+                },
+                {
+                  name: "2+ Spent",
+                  pattern: respent.events.inputFromReusedAddrShare[key],
+                  color: colors.gray,
+                },
+              ],
               title,
               metric: "Share of Transaction Inputs from Reused Addresses",
             }),
           },
+        ],
+      },
+      {
+        name: "Supply",
+        title: title("Supply in Reused Addresses"),
+        bottom: [
+          ...satsBtcUsd({ pattern: reused.supply[key], name: "2+ Funded" }),
+          ...satsBtcUsd({
+            pattern: respent.supply[key],
+            name: "2+ Spent",
+            color: colors.gray,
+          }),
+        ],
+      },
+      {
+        name: "Share",
+        title: title("Share of Supply in Reused Addresses"),
+        bottom: [
+          ...percentRatio({ pattern: reused.supply.share[key], name: "2+ Funded" }),
+          ...percentRatio({
+            pattern: respent.supply.share[key],
+            name: "2+ Spent",
+            color: colors.gray,
+          }),
         ],
       },
     ],

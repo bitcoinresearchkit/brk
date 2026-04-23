@@ -26,16 +26,9 @@
       --cube: calc(var(--cube-rem) * 1rem);
       --cube-px: calc(var(--cube-rem) * 16);
       --face-scale: calc(100 / var(--cube-px));
-      --orange: oklch(67.64% 0.191 44.41);
       --white: oklch(95% 0 0);
       --black: oklch(15% 0 0);
-      --light-gray: oklch(90% 0 0);
-      --dark-gray: oklch(20% 0 0);
-      --border-color:      light-dark(var(--light-gray), var(--dark-gray));
       --background-color:  light-dark(var(--white),      var(--black));
-      --fill: 0.5;
-      --empty-alpha: 0.4;
-      --face-step: 0.033;
       --iso-scale: 0.866;
       --font-size-xs: 0.75rem;
       --font-size-sm: 0.875rem;
@@ -113,6 +106,8 @@
       font-weight: 500;
       pointer-events: none;
     }
+    .face-text                         { color: var(--black); }
+    svg[data-theme="dark"]  .face-text { color: var(--white); }
     .face-text.top,
     .face-text.right {
       display: flex;
@@ -165,51 +160,65 @@
     .face-text .pool img.marapool   { content: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgdmlld0JveD0iMCAwIDI1NiAyNTYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0wIDMuNjAwOEMwIDIuMzQzMTMgMCAxLjcxNDMgMC4yNDQ3NTcgMS4yMzM5NEMwLjQ2MDA1MiAwLjgxMTQgMC44MDM1ODcgMC40Njc4NjQgMS4yMjYxMyAwLjI1MjU3QzEuNzA2NDkgMC4wMDc4MTI1IDIuMzM1MzIgMC4wMDc4MTI1IDMuNTkyOTggMC4wMDc4MTI1SDI1Mi40MDdDMjUzLjY2NSAwLjAwNzgxMjUgMjU0LjI5NCAwLjAwNzgxMjUgMjU0Ljc3NCAwLjI1MjU3QzI1NS4xOTYgMC40Njc4NjQgMjU1LjU0IDAuODExNCAyNTUuNzU1IDEuMjMzOTRDMjU2IDEuNzE0MyAyNTYgMi4zNDMxMyAyNTYgMy42MDA4VjI1Mi40MTVDMjU2IDI1My42NzIgMjU2IDI1NC4zMDEgMjU1Ljc1NSAyNTQuNzgyQzI1NS41NCAyNTUuMjA0IDI1NS4xOTYgMjU1LjU0OCAyNTQuNzc0IDI1NS43NjNDMjU0LjI5NCAyNTYuMDA4IDI1My42NjUgMjU2LjAwOCAyNTIuNDA3IDI1Ni4wMDhIMy41OTI5OUMyLjMzNTMyIDI1Ni4wMDggMS43MDY0OSAyNTYuMDA4IDEuMjI2MTMgMjU1Ljc2M0MwLjgwMzU4NyAyNTUuNTQ4IDAuNDYwMDUyIDI1NS4yMDQgMC4yNDQ3NTcgMjU0Ljc4MkMwIDI1NC4zMDEgMCAyNTMuNjcyIDAgMjUyLjQxNVYzLjYwMDhaIiBmaWxsPSIjMjcyNTI1Ii8+CjxwYXRoIGQ9Ik01OS4yODUgNDguMDYyNUM1OC43ODg5IDQ4LjA2MjUgNTguMzg2NyA0OC40NjQ3IDU4LjM4NjcgNDguOTYwN1YxNTkuNDQ1QzU4LjM4NjcgMTU5Ljk0MSA1OC43ODg5IDE2MC4zNDMgNTkuMjg1IDE2MC4zNDNIODAuMDc0OUM4MC41NzA5IDE2MC4zNDMgODAuOTczMSAxNTkuOTQxIDgwLjk3MzEgMTU5LjQ0NVY4Mi4zODlIODQuNjMzNUwxMTcuNjQ5IDE1OS43OTdDMTE3Ljc5IDE2MC4xMjggMTE4LjExNiAxNjAuMzQzIDExOC40NzUgMTYwLjM0M0gxMzcuODA5QzEzOC4xNjkgMTYwLjM0MyAxMzguNDk0IDE2MC4xMjggMTM4LjYzNSAxNTkuNzk3TDE3MS42NTEgODIuMzg5SDE3NS4zMTFWMTU5LjQ0NUMxNzUuMzExIDE1OS45NDEgMTc1LjcxNCAxNjAuMzQzIDE3Ni4yMSAxNjAuMzQzSDE5N0MxOTcuNDk2IDE2MC4zNDMgMTk3Ljg5OCAxNTkuOTQxIDE5Ny44OTggMTU5LjQ0NVY0OC45NjA3QzE5Ny44OTggNDguNDY0NyAxOTcuNDk2IDQ4LjA2MjUgMTk3IDQ4LjA2MjVIMTY0LjI5QzE2My45MzEgNDguMDYyNSAxNjMuNjA1IDQ4LjI3NzMgMTYzLjQ2NCA0OC42MDg0TDEyOS45NzIgMTI3LjE0SDEyNi4zMTJMOTIuODIwMiA0OC42MDg0QzkyLjY3OSA0OC4yNzczIDkyLjM1MzkgNDguMDYyNSA5MS45OTQgNDguMDYyNUg1OS4yODVaIiBmaWxsPSIjRUVFQ0U4Ii8+CjxwYXRoIGQ9Ik01OC4zODY3IDE5NC45MjZDNTguMzg2NyAxOTQuNDMgNTguNzg4OSAxOTQuMDI3IDU5LjI4NSAxOTQuMDI3SDE5Ni45OTlDMTk3LjQ5NiAxOTQuMDI3IDE5Ny44OTggMTk0LjQzIDE5Ny44OTggMTk0LjkyNlYyMTUuNTg1QzE5Ny44OTggMjE2LjA4MSAxOTcuNDk2IDIxNi40ODQgMTk2Ljk5OSAyMTYuNDg0SDU5LjI4NUM1OC43ODg5IDIxNi40ODQgNTguMzg2NyAyMTYuMDgxIDU4LjM4NjcgMjE1LjU4NVYxOTQuOTI2WiIgZmlsbD0iI0YyQTkwMCIvPgo8L3N2Zz4K"); }
     .face-text .pool img.unknown    { content: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjUuMjcgMyAxMy40OCAxOCI+IDxwYXRoIGQ9Ik01LjY0MTcgMTguMzY5NkM1LjE1ODM0IDE3Ljg4NzEgNS4xNTgzMyAxNy4xMTMgNS42NDE2OSAxNi42MzA0QzcuMjY5OTIgMTUuMDA1MSA5LjUxNzYxIDE0IDEyIDE0QzE0LjQ4MjUgMTQgMTYuNzMwMSAxNS4wMDUgMTguMzU4MyAxNi42MzA0QzE4Ljg0MTcgMTcuMTEyOSAxOC44NDE3IDE3Ljg4NzEgMTguMzU4NCAxOC4zNjk2QzE2LjczMDEgMTkuOTk0OSAxNC40ODI0IDIxIDEyIDIxQzkuNTE3NTkgMjEgNy4yNjk5MyAxOS45OTUgNS42NDE3IDE4LjM2OTZaIiBmaWxsPSIjYjRiNGI0Ij48L3BhdGg+IDxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNOC41MDAwMyA3LjVIMTUuNVY4SDE2QzE2IDEwLjYzNzIgMTQuMzE4OCAxMyAxMiAxM0M5LjY4MTIzIDEzIDguMDAwMDMgMTAuNjM3MiA4LjAwMDAzIDhIOC41MDAwM1Y3LjVaTTkuMDIyNzMgOC41QzkuMjEyNjYgMTAuNTY3OCAxMC41NjU4IDEyIDEyIDEyQzEzLjQzNDMgMTIgMTQuNzg3NCAxMC41Njc4IDE0Ljk3NzMgOC41SDkuMDIyNzNaIiBmaWxsPSIjYjRiNGI0Ij48L3BhdGg+IDxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNMTIgM0MxNC40ODUzIDMgMTYuNSA1LjIzODU4IDE2LjUgOEg3LjUwMDAzQzcuNTAwMDMgNS4yMzg1OCA5LjUxNDc1IDMgMTIgM1pNMTIgNy41QzEyLjgyODUgNy41IDEzLjUgNi44Mjg0MyAxMy41IDZDMTMuNSA1LjE3MTU3IDEyLjgyODUgNC41IDEyIDQuNUMxMS4xNzE2IDQuNSAxMC41IDUuMTcxNTcgMTAuNSA2QzEwLjUgNi44Mjg0MyAxMS4xNzE2IDcuNSAxMiA3LjVaIiBmaWxsPSIjYjRiNGI0Ij48L3BhdGg+IDxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNNi41MDAwMyA4LjVDNi41MDAwMyA4LjIyMzg2IDYuNzIzODkgOCA3LjAwMDAzIDhIMTdDMTcuMjc2MiA4IDE3LjUgOC4yMjM4NiAxNy41IDguNUMxNy41IDguNzc2MTQgMTcuMjc2MiA5IDE3IDlINy4wMDAwM0M2LjcyMzg5IDkgNi41MDAwMyA4Ljc3NjE0IDYuNTAwMDMgOC41WiIgZmlsbD0iI2I0YjRiNCI+PC9wYXRoPiA8L3N2Zz4="); }
 
-    /* ---- cube face colors (derived from --face-color, same logic
-            as website/styles/panes/explorer.css) ---- */
-    svg.cube {
-      --face-color: var(--orange);
-      --face-right: light-dark(
-        oklch(from var(--face-color) calc(l - var(--face-step) * 2) c h),
-        var(--face-color)
-      );
-      --face-left: light-dark(
-        oklch(from var(--face-color) calc(l - var(--face-step)) c h),
-        oklch(from var(--face-color) calc(l + var(--face-step)) c h)
-      );
-      --face-top: light-dark(
-        var(--face-color),
-        oklch(from var(--face-color) calc(l + var(--face-step) * 2) c h)
-      );
-      --face-bottom: oklch(from var(--face-color) calc(l - var(--face-step) * 3) c h);
-      color: light-dark(var(--black), var(--white));
-    }
-
-    /* Glass polygons: translucent. Liquid polygons: opaque. Rear-face
-       colors mirror demo.html (bottom → face-bottom, rear-left →
-       face-top, rear-right → face-left). */
-    svg.cube .glass { fill-opacity: var(--empty-alpha); }
-
-    svg.cube .glass-top,   svg.cube .liquid-top   { fill: var(--face-top); }
-    svg.cube .glass-right, svg.cube .liquid-right { fill: var(--face-right); }
-    svg.cube .glass-left,  svg.cube .liquid-left  { fill: var(--face-left); }
-    svg.cube .glass-bottom     { fill: var(--face-bottom); }
-    svg.cube .glass-rear-left  { fill: var(--face-top); }
-    svg.cube .glass-rear-right { fill: var(--face-left); }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <!-- SVG shell. All polygons + text-face transforms are generated
-         in JS from the cube constants (ISO, OX, OY, CUBE), so the
-         geometry has a single source of truth. DOM order defines
-         z-order: rear polygons, liquid, front polygons, text. -->
-    <template id="logo-template">
-      <div class="logo-slot">
-        <svg class="cube"></svg>
-      </div>
-    </template>
+  <template id="logo-template"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 173.2 200" role="img" aria-label="bitview">
+    <title>bitview</title>
+    <style>
+      svg {
+        --fill: 0.5;
+        --face-top:    oklch(67.64% 0.191 44.41);
+        --face-left:   oklch(64.34% 0.191 44.41);
+        --face-right:  oklch(61.04% 0.191 44.41);
+        --face-bottom: oklch(57.74% 0.191 44.41);
+      }
+      svg[data-theme="light"] {
+        --face-top:    oklch(90% 0 0);
+        --face-left:   oklch(86.7% 0 0);
+        --face-right:  oklch(83.4% 0 0);
+        --face-bottom: oklch(80.1% 0 0);
+      }
+      svg[data-theme="dark"] {
+        --face-top:    oklch(26.6% 0 0);
+        --face-left:   oklch(23.3% 0 0);
+        --face-right:  oklch(20% 0 0);
+        --face-bottom: oklch(10.1% 0 0);
+      }
+      .glass { fill-opacity: 0.4; }
+      .glass-top,       .liquid-top   { fill: var(--face-top); }
+      .glass-right,     .liquid-right { fill: var(--face-right); }
+      .glass-left,      .liquid-left  { fill: var(--face-left); }
+      .glass-bottom                   { fill: var(--face-bottom); }
+      .glass-rear-left                { fill: var(--face-top); }
+      .glass-rear-right               { fill: var(--face-left); }
+      .liquid {
+        transform-box: view-box;
+        transform: translateY(calc((1 - var(--fill)) * 50%));
+        opacity: ceil(var(--fill));
+      }
+    </style>
+    <defs>
+      <clipPath id="hex" clipPathUnits="userSpaceOnUse">
+        <polygon points="86.6,0 173.2,50 173.2,150 86.6,200 0,150 0,50"/>
+      </clipPath>
+    </defs>
+    <polygon class="glass glass-bottom"     points="86.6,100 173.2,150 86.6,200 0,150"/>
+    <polygon class="glass glass-rear-left"  points="86.6,100 0,150 0,50 86.6,0"/>
+    <polygon class="glass glass-rear-right" points="86.6,100 173.2,150 173.2,50 86.6,0"/>
+    <g clip-path="url(#hex)">
+      <g class="liquid">
+        <polygon class="liquid-top"   points="86.6,0 173.2,50 86.6,100 0,50"/>
+        <polygon class="liquid-right" points="173.2,50 173.2,150 86.6,200 86.6,100"/>
+        <polygon class="liquid-left"  points="0,50 0,150 86.6,200 86.6,100"/>
+      </g>
+    </g>
+    <polygon class="glass glass-top"   points="0,50 86.6,0 173.2,50 86.6,100"/>
+    <polygon class="glass glass-right" points="173.2,50 173.2,150 86.6,200 86.6,100"/>
+    <polygon class="glass glass-left"  points="0,50 0,150 86.6,200 86.6,100"/>
+  </svg></template>
 
+  <div class="wrap">
     <section>
       <div class="row" id="row"></div>
     </section>
@@ -224,61 +233,18 @@
     </section>
   </div>
 
-  <script>
-    // --- Cube geometry: everything derives from these 4 constants.
-    // Change ISO/OX/OY/CUBE and the entire cube reprojects. ---
+  <script type="module">
     const ISO = 0.866, OX = 0.3, OY = 0.6, CUBE = 100;
-    const W = 2 * ISO * CUBE, H = 2 * CUBE;   // viewBox 173.2 × 200
+    const W = 2 * ISO * CUBE, H = 2 * CUBE;
 
-    // Hex vertices (iso projection of the 8 cube vertices; parallel
-    // pairs collapse into V.C, then these 7 outline the silhouette).
-    const V = {
-      T:  [W/2, 0     ],
-      UR: [W,   H/4   ], UL: [0, H/4   ],
-      C:  [W/2, H/2   ],
-      LR: [W,   3*H/4 ], LL: [0, 3*H/4 ],
-      B:  [W/2, H     ],
-    };
-    const lerp = ([ax,ay], [bx,by], t) => [ax + (bx-ax)*t, ay + (by-ay)*t];
-
-    // Static glass polygons. DOM order sets z-order (rear polygons
-    // first, then liquid, then front). All share the .glass class so
-    // the single fill-opacity rule applies to both rear and front.
-    const GLASS_REAR = [
-      { cls: 'glass glass-bottom',     pts: [V.C, V.LR, V.B, V.LL] },
-      { cls: 'glass glass-rear-left',  pts: [V.C, V.LL, V.UL, V.T] },
-      { cls: 'glass glass-rear-right', pts: [V.C, V.LR, V.UR, V.T] },
-    ];
-    const GLASS_FRONT = [
-      { cls: 'glass glass-top',   pts: [V.UL, V.T, V.UR, V.C] },
-      { cls: 'glass glass-right', pts: [V.UR, V.LR, V.B, V.C] },
-      { cls: 'glass glass-left',  pts: [V.UL, V.LL, V.B, V.C] },
-    ];
-
-    // Liquid surface at fill f is a linear interp of the cube's
-    // bottom-face corners (f=0) toward its top-face corners (f=1).
-    // The 3 liquid sub-polygons clip the visible front faces at it.
-    const surface = (f) => ({
-      back:  lerp(V.C,  V.T,  f),
-      tr:    lerp(V.LR, V.UR, f),
-      front: lerp(V.B,  V.C,  f),
-      tl:    lerp(V.LL, V.UL, f),
-    });
-    const liquidPolygons = (f) => {
-      if (f <= 0) return [];
-      const s = surface(f);
-      return [
-        { cls: 'liquid-top',   pts: [s.back, s.tr,  s.front, s.tl]    },
-        { cls: 'liquid-right', pts: [s.tr,   V.LR,  V.B,     s.front] },
-        { cls: 'liquid-left',  pts: [s.tl,   V.LL,  V.B,     s.front] },
-      ];
+    const SVGNS = 'http://www.w3.org/2000/svg';
+    const XHTMLNS = 'http://www.w3.org/1999/xhtml';
+    const svgEl = (tag, attrs = {}) => {
+      const e = document.createElementNS(SVGNS, tag);
+      for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
+      return e;
     };
 
-    // Face-text transforms: outer translate re-anchors the cube
-    // origin (HTML demo's (0,0)) to the viewBox, then per-face
-    // `rotate skewX translate scaleY(ISO)` matches the HTML demo.
-    // Composed into a single transform per face and set directly on
-    // each <foreignObject> — no wrapping <g>.
     const OUTER_TF =
       `translate(${W/2 - ISO*(OX+1)*CUBE} ${H/2 - (0.5*(OX+1) + OY/ISO)*CUBE})`;
     const tf = (rot, skew, tx, ty) =>
@@ -289,38 +255,15 @@
       ['left',  tf( 30,  30, OX * CUBE,            OY * CUBE)],
     ];
 
-    const SVGNS = 'http://www.w3.org/2000/svg';
-    const XHTMLNS = 'http://www.w3.org/1999/xhtml';
-    const svgEl = (tag, attrs = {}) => {
-      const e = document.createElementNS(SVGNS, tag);
-      for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
-      return e;
-    };
-    const ptsAttr = (pts) => pts.map(p => p.join(',')).join(' ');
-    const addPoly = (parent, cls, pts) =>
-      parent.appendChild(svgEl('polygon', { class: cls, points: ptsAttr(pts) }));
+    const logoSvg = document.getElementById('logo-template').content.querySelector('svg');
 
-    const template = document.getElementById('logo-template');
-
-    const makeLogo = ({ fill = 0.5, faceColor, cubeScheme } = {}) => {
-      const slot = template.content.cloneNode(true).firstElementChild;
-      const svg = slot.querySelector('svg');
-      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-      svg.style.setProperty('--fill', String(fill));
-      if (faceColor) svg.style.setProperty('--face-color', faceColor);
-      svg.style.setProperty('color-scheme', cubeScheme ?? 'light');
-
-      for (const f of GLASS_REAR)            addPoly(svg, f.cls, f.pts);
-      for (const f of liquidPolygons(fill))  addPoly(svg, f.cls, f.pts);
-      for (const f of GLASS_FRONT)           addPoly(svg, f.cls, f.pts);
-
-      for (const [face, transform] of TEXT_FACES) {
-        const fo = svgEl('foreignObject', { width: CUBE, height: CUBE, transform });
-        const div = document.createElementNS(XHTMLNS, 'div');
-        div.setAttribute('class', `face-text ${face}`);
-        fo.appendChild(div);
-        svg.appendChild(fo);
-      }
+    const makeLogo = ({ fill, theme } = {}) => {
+      const slot = document.createElement('div');
+      slot.className = 'logo-slot';
+      const svg = logoSvg.cloneNode(true);
+      if (fill !== undefined) svg.style.setProperty('--fill', String(fill));
+      if (theme) svg.setAttribute('data-theme', theme);
+      slot.appendChild(svg);
       return slot;
     };
 
@@ -335,37 +278,30 @@
       return tile;
     };
 
-    // Row 1: cube on each background.
     const row = document.getElementById('row');
-    row.appendChild(makeTile('bg-auto scheme-light', 'light',    makeLogo()));
-    row.appendChild(makeTile('bg-auto scheme-dark',  'dark',     makeLogo()));
-    row.appendChild(makeTile('bg-paper scheme-light', 'paper',   makeLogo()));
+    row.appendChild(makeTile('bg-auto scheme-light',     'light',    makeLogo()));
+    row.appendChild(makeTile('bg-auto scheme-dark',      'dark',     makeLogo()));
+    row.appendChild(makeTile('bg-paper scheme-light',    'paper',    makeLogo()));
     row.appendChild(makeTile('bg-gradient scheme-light', 'gradient', makeLogo()));
     row.appendChild(makeTile('bg-image-1 scheme-light',  'img 1',    makeLogo()));
     row.appendChild(makeTile('bg-image-2 scheme-light',  'img 2',    makeLogo()));
 
-    // Row 2: fill levels.
     const fills = document.getElementById('fills');
     for (const f of [0, 0.1, 0.25, 0.5, 0.75, 1])
       fills.appendChild(makeTile('bg-auto scheme-light', `fill ${f}`, makeLogo({ fill: f })));
 
-    // Row 3: cube variants × bg theme (same matrix as demo.html).
     const variants = document.getElementById('variants');
-    const neutLight = { faceColor: 'var(--border-color)', cubeScheme: 'light' };
-    const neutDark  = { faceColor: 'var(--border-color)', cubeScheme: 'dark' };
     const variantTiles = [
-      { label: 'light / light',  bg: 'scheme-light', opts: neutLight },
-      { label: 'light / dark',   bg: 'scheme-dark',  opts: neutLight },
-      { label: 'dark / light',   bg: 'scheme-light', opts: neutDark  },
-      { label: 'dark / dark',    bg: 'scheme-dark',  opts: neutDark  },
+      { label: 'light / light',  bg: 'scheme-light', opts: { theme: 'light' } },
+      { label: 'light / dark',   bg: 'scheme-dark',  opts: { theme: 'light' } },
+      { label: 'dark / light',   bg: 'scheme-light', opts: { theme: 'dark'  } },
+      { label: 'dark / dark',    bg: 'scheme-dark',  opts: { theme: 'dark'  } },
       { label: 'orange / light', bg: 'scheme-light', opts: {} },
       { label: 'orange / dark',  bg: 'scheme-dark',  opts: {} },
     ];
     for (const v of variantTiles)
       variants.appendChild(makeTile(`bg-auto ${v.bg}`, v.label, makeLogo(v.opts)));
 
-    // Row 4: text-in-cube — same variant matrix as row 3 with realistic
-    // block content (same as demo.html's `with-text` section).
     const sampleBlocks = [
       { height: 912345, date: '2026-04-17', time: '12:00:00', miner: 'Foundry USA', mid:  12, min:   1, max:  64 },
       { height: 912346, date: '2026-04-17', time: '12:10:23', miner: 'AntPool',     mid:   8, min:   2, max:  21 },
@@ -379,19 +315,16 @@
       const [, m, d] = iso.split('-').map(Number);
       return `${MONTHS[m - 1]} ${d}`;
     };
-    // Tiny DOM builders.
     const el = (tag, cls, text) => {
       const e = document.createElement(tag);
       if (cls)  e.className = cls;
       if (text != null) e.textContent = text;
       return e;
     };
-    const p      = (text, cls) => el('p', cls, text);
-    const span   = (text, cls) => el('span', cls, text);
-    const slug   = (s) => s.toLowerCase().replace(/\s+/g, '');
+    const p    = (text, cls) => el('p', cls, text);
+    const span = (text, cls) => el('span', cls, text);
+    const slug = (s) => s.toLowerCase().replace(/\s+/g, '');
 
-    // Mirror of website/scripts/explorer/render.js createHeightElement:
-    // dimmed "#000…" prefix padding the height to 7 digits.
     const heightSpan = (h) => {
       const s = String(h);
       const prefix = span('#' + '0'.repeat(Math.max(0, 7 - s.length)), 'dim');
@@ -403,37 +336,44 @@
 
     const makeBlockCube = (opts, block) => {
       const slot = makeLogo(opts);
-      const q = (sel) => slot.querySelector(sel);
-      const [hh, mm] = block.time.slice(0, 5).split(':');
+      const svg = slot.querySelector('svg');
 
-      // Top: date / HH:MM (colon dimmed).
+      const faces = {};
+      for (const [face, transform] of TEXT_FACES) {
+        const fo = svgEl('foreignObject', { width: CUBE, height: CUBE, transform });
+        const div = document.createElementNS(XHTMLNS, 'div');
+        div.setAttribute('class', `face-text ${face}`);
+        fo.appendChild(div);
+        svg.appendChild(fo);
+        faces[face] = div;
+      }
+
+      const [hh, mm] = block.time.slice(0, 5).split(':');
       const timeP = p();
       timeP.append(hh, span(':', 'dim'), mm);
-      q('.face-text.top').append(p(shortDate(block.date)), timeP);
+      faces.top.append(p(shortDate(block.date)), timeP);
 
-      // Right: height (sm) / raw pool-logo + miner name (ellipsis-clipped).
       const heightP = p(null, 'height');
       heightP.appendChild(heightSpan(block.height));
       const poolDiv = el('div', 'pool');
       const logo = el('img', slug(block.miner));
       const nameSpan = span(block.miner.replace(/\s+(Pool|USA)$/i, '').trim());
       poolDiv.append(logo, nameSpan);
-      q('.face-text.right').append(heightP, poolDiv);
+      faces.right.append(heightP, poolDiv);
 
-      // Left: ~median / min-max / sat/vB (dash + unit dimmed).
       const range = p();
       range.append(String(block.min), span('-', 'dim'), String(block.max));
       const fees = el('div', 'fees');
       fees.append(p(`~${block.mid}`), range, p('sat/vB', 'dim'));
-      q('.face-text.left').append(fees);
+      faces.left.append(fees);
 
       return slot;
     };
+
     const withText = document.getElementById('with-text');
     variantTiles.forEach((v, i) =>
       withText.appendChild(makeTile(`bg-auto ${v.bg}`, v.label, makeBlockCube(v.opts, sampleBlocks[i])))
     );
-
   </script>
 </body>
 </html>

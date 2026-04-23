@@ -14,7 +14,7 @@ use crate::{
     outputs,
 };
 
-use super::state::AddrTypeToReusedAddrEventCount;
+use super::state::AddrTypeToAddrEventCount;
 
 /// Per-block reused-address event metrics. Holds three families of
 /// signals: output-level (use), input-level (spend), and address-level
@@ -63,7 +63,7 @@ use super::state::AddrTypeToReusedAddrEventCount;
 /// distinct-address counts would be misleading because the same
 /// address can appear in multiple blocks.
 #[derive(Traversable)]
-pub struct ReusedAddrEventsVecs<M: StorageMode = Rw> {
+pub struct AddrEventsVecs<M: StorageMode = Rw> {
     pub output_to_reused_addr_count:
         WithAddrTypes<PerBlockCumulativeRolling<StoredU64, StoredU64, M>>,
     pub output_to_reused_addr_share: WithAddrTypes<PercentCumulativeRolling<BasisPoints16, M>>,
@@ -75,9 +75,10 @@ pub struct ReusedAddrEventsVecs<M: StorageMode = Rw> {
     pub active_reused_addr_share: PerBlockRollingAverage<StoredF32, StoredF32, M>,
 }
 
-impl ReusedAddrEventsVecs {
+impl AddrEventsVecs {
     pub(crate) fn forced_import(
         db: &Database,
+        name: &str,
         version: Version,
         indexes: &indexes::Vecs,
         cached_starts: &Windows<&WindowStartVec>,
@@ -107,27 +108,31 @@ impl ReusedAddrEventsVecs {
             })
         };
 
-        let output_to_reused_addr_count = import_count("output_to_reused_addr_count")?;
-        let output_to_reused_addr_share = import_percent("output_to_reused_addr_share")?;
+        let output_to_reused_addr_count =
+            import_count(&format!("output_to_{name}_addr_count"))?;
+        let output_to_reused_addr_share =
+            import_percent(&format!("output_to_{name}_addr_share"))?;
         let spendable_output_to_reused_addr_share = PercentCumulativeRolling::forced_import(
             db,
-            "spendable_output_to_reused_addr_share",
+            &format!("spendable_output_to_{name}_addr_share"),
             version,
             indexes,
         )?;
-        let input_from_reused_addr_count = import_count("input_from_reused_addr_count")?;
-        let input_from_reused_addr_share = import_percent("input_from_reused_addr_share")?;
+        let input_from_reused_addr_count =
+            import_count(&format!("input_from_{name}_addr_count"))?;
+        let input_from_reused_addr_share =
+            import_percent(&format!("input_from_{name}_addr_share"))?;
 
         let active_reused_addr_count = PerBlockRollingAverage::forced_import(
             db,
-            "active_reused_addr_count",
+            &format!("active_{name}_addr_count"),
             version,
             indexes,
             cached_starts,
         )?;
         let active_reused_addr_share = PerBlockRollingAverage::forced_import(
             db,
-            "active_reused_addr_share",
+            &format!("active_{name}_addr_share"),
             version,
             indexes,
             cached_starts,
@@ -175,8 +180,8 @@ impl ReusedAddrEventsVecs {
     #[inline(always)]
     pub(crate) fn push_height(
         &mut self,
-        uses: &AddrTypeToReusedAddrEventCount,
-        spends: &AddrTypeToReusedAddrEventCount,
+        uses: &AddrTypeToAddrEventCount,
+        spends: &AddrTypeToAddrEventCount,
         active_addr_count: u32,
         active_reused_addr_count: u32,
     ) {

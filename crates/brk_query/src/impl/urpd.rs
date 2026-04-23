@@ -22,7 +22,8 @@ impl Query {
             })
             .collect();
 
-        cohorts.sort_by(|a, b| a.to_string().cmp(&b.to_string()));
+        cohorts.sort_by_key(|a| a.to_string());
+
         Ok(cohorts)
     }
 
@@ -76,12 +77,7 @@ impl Query {
     }
 
     /// URPD for a cohort on a specific date.
-    pub fn urpd_at(
-        &self,
-        cohort: &Cohort,
-        date: Date,
-        agg: UrpdAggregation,
-    ) -> Result<Urpd> {
+    pub fn urpd_at(&self, cohort: &Cohort, date: Date, agg: UrpdAggregation) -> Result<Urpd> {
         let raw = self.urpd_raw(cohort, date)?;
         let day1 = Day1::try_from(date).map_err(|e| Error::Parse(e.to_string()))?;
         let close = self
@@ -99,9 +95,9 @@ impl Query {
     /// URPD for the most recently available date in a cohort.
     pub fn urpd_latest(&self, cohort: &Cohort, agg: UrpdAggregation) -> Result<Urpd> {
         let dates = self.urpd_dates(cohort)?;
-        let date = *dates.last().ok_or_else(|| {
-            Error::NotFound(format!("No URPD available for cohort '{cohort}'"))
-        })?;
+        let date = *dates
+            .last()
+            .ok_or_else(|| Error::NotFound(format!("No URPD available for cohort '{cohort}'")))?;
         self.urpd_at(cohort, date, agg)
     }
 }

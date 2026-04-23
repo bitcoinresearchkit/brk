@@ -1,13 +1,15 @@
 use std::{thread::sleep, time::Duration};
 
 use brk_error::{Error, Result};
-use brk_types::Sats;
+use brk_types::{Sats, Txid};
 use corepc_client::client_sync::Auth as CorepcAuth;
 use parking_lot::RwLock;
 use serde_json::value::RawValue;
 use tracing::info;
 
-use super::{Auth, BlockHeaderInfo, BlockInfo, BlockchainInfo, RawMempoolEntry, TxOutInfo};
+use super::{
+    Auth, BlockHeaderInfo, BlockInfo, BlockTemplateTx, BlockchainInfo, RawMempoolEntry, TxOutInfo,
+};
 
 type CoreClient = corepc_client::client_sync::v30::Client;
 type CoreError = corepc_client::client_sync::Error;
@@ -186,11 +188,7 @@ impl ClientInner {
     /// a 50 MB request body or hold every response in memory at once.
     ///
     /// Returns hashes in canonical order (`start`, `start+1`, …, `end`).
-    pub fn get_block_hashes_range(
-        &self,
-        start: u64,
-        end: u64,
-    ) -> Result<Vec<bitcoin::BlockHash>> {
+    pub fn get_block_hashes_range(&self, start: u64, end: u64) -> Result<Vec<bitcoin::BlockHash>> {
         if end < start {
             return Ok(Vec::new());
         }
@@ -370,6 +368,22 @@ impl ClientInner {
             c.call("sendrawtransaction", &args)
         })?)
     }
+
+    /// Transactions Bitcoin Core would include in the next block it would
+    /// mine. Core requires the `segwit` rule to be declared.
+    pub fn get_block_template_txs(&self) -> Result<Vec<BlockTemplateTx>> {
+        let args = [serde_json::json!({ "rules": ["segwit"] })];
+        let r: GetBlockTemplateResponse =
+            self.call_with_retry(|c| c.call("getblocktemplate", &args))?;
+
+        Ok(r.transactions
+            .into_iter()
+            .map(|t| BlockTemplateTx {
+                txid: Txid::from(t.txid),
+                fee: Sats::from(t.fee),
+            })
+            .collect())
+    }
 }
 
 // Local deserialization structs for raw RPC responses
@@ -385,4 +399,15 @@ struct TxOutResponse {
 #[derive(serde::Deserialize)]
 struct TxOutScriptPubKey {
     hex: String,
+}
+
+#[derive(serde::Deserialize)]
+struct GetBlockTemplateResponse {
+    transactions: Vec<GetBlockTemplateTx>,
+}
+
+#[derive(serde::Deserialize)]
+struct GetBlockTemplateTx {
+    txid: bitcoin::Txid,
+    fee: u64,
 }

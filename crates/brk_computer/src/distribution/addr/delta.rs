@@ -26,7 +26,7 @@ impl DeltaVecs {
         let all = LazyRollingDeltasFromHeight::new(
             "addr_count",
             version,
-            &addr_count.all.0.height,
+            &addr_count.all.height,
             cached_starts,
             indexes,
         );
@@ -35,7 +35,7 @@ impl DeltaVecs {
             LazyRollingDeltasFromHeight::new(
                 &format!("{name}_addr_count"),
                 version,
-                &addr.0.height,
+                &addr.height,
                 cached_starts,
                 indexes,
             )

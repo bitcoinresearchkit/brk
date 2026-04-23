@@ -39,14 +39,14 @@ impl TotalAddrCountVecs {
         empty_addr_count: &AddrCountsVecs,
         exit: &Exit,
     ) -> Result<()> {
-        self.0.all.height.compute_add(
+        self.all.height.compute_add(
             max_from,
             &addr_count.all.height,
             &empty_addr_count.all.height,
             exit,
         )?;
 
-        for ((_, total), ((_, addr), (_, empty))) in self.0.by_addr_type.iter_mut().zip(
+        for ((_, total), ((_, addr), (_, empty))) in self.by_addr_type.iter_mut().zip(
             addr_count
                 .by_addr_type
                 .iter()

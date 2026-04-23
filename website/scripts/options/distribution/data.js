@@ -178,6 +178,7 @@ export function buildCohortData() {
       avgAmount: addrs.avgAmount[key],
       exposed: addrs.exposed,
       reused: addrs.reused,
+      respent: addrs.respent,
     };
   });
 

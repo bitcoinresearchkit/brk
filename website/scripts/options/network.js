@@ -103,154 +103,254 @@ export function createNetworkSection() {
     { key: "total", name: "Total", color: colors.default },
   ]);
 
-  const reusedSetEntries =
-    /**
-     * @param {AddressableType | "all"} key
-     * @param {(name: string) => string} title
-     */
-    (key, title) => [
-      {
-        name: "Compare",
-        title: title("Reused Address Count"),
-        bottom: [
-          line({
-            series: addrs.reused.count.funded[key],
-            name: "Funded",
-            unit: Unit.count,
-          }),
-          line({
-            series: addrs.reused.count.total[key],
-            name: "Total",
-            color: colors.gray,
-            unit: Unit.count,
-          }),
-        ],
-      },
-      {
-        name: "Funded",
-        title: title("Funded Reused Addresses"),
-        bottom: [
-          line({
-            series: addrs.reused.count.funded[key],
-            name: "Funded Reused",
-            unit: Unit.count,
-          }),
-        ],
-      },
-      {
-        name: "Total",
-        title: title("Total Reused Addresses"),
-        bottom: [
-          line({
-            series: addrs.reused.count.total[key],
-            name: "Total Reused",
-            color: colors.gray,
-            unit: Unit.count,
-          }),
-        ],
-      },
-    ];
-
-  const reusedInputsSubtree =
-    /**
-     * @param {AddressableType | "all"} key
-     * @param {(name: string) => string} title
-     */
-    (key, title) => ({
-      name: "Inputs",
-      tree: [
-        {
-          name: "Count",
-          tree: chartsFromCount({
-            pattern: addrs.reused.events.inputFromReusedAddrCount[key],
-            title,
-            metric: "Transaction Inputs from Reused Addresses",
-            unit: Unit.count,
-          }),
-        },
-        {
-          name: "Share",
-          tree: chartsFromPercentCumulative({
-            pattern: addrs.reused.events.inputFromReusedAddrShare[key],
-            title,
-            metric: "Share of Transaction Inputs from Reused Addresses",
-          }),
-        },
-      ],
-    });
-
-  const reusedOutputsSubtreeForAll =
-    /** @param {(name: string) => string} title */
-    (title) => ({
-      name: "Outputs",
-      tree: [
-        {
-          name: "Count",
-          tree: chartsFromCount({
-            pattern: addrs.reused.events.outputToReusedAddrCount.all,
-            title,
-            metric: "Transaction Outputs to Reused Addresses",
-            unit: Unit.count,
-          }),
-        },
-        {
-          name: "Share",
-          tree: chartsFromPercentCumulativeEntries({
-            entries: [
-              {
-                name: "All",
-                pattern: addrs.reused.events.outputToReusedAddrShare.all,
-              },
-              {
-                name: "Spendable",
-                pattern: addrs.reused.events.spendableOutputToReusedAddrShare,
-                color: colors.gray,
-              },
-            ],
-            title,
-            metric: "Share of Transaction Outputs to Reused Addresses",
-          }),
-        },
-      ],
-    });
-
-  const reusedActiveSubtreeForAll =
-    /** @param {(name: string) => string} title */
-    (title) => ({
-      name: "Active",
-      tree: [
-        {
-          name: "Count",
-          tree: averagesArray({
-            windows: addrs.reused.events.activeReusedAddrCount,
-            title,
-            metric: "Active Reused Addresses",
-            unit: Unit.count,
-          }),
-        },
-        {
-          name: "Share",
-          tree: averagesArray({
-            windows: addrs.reused.events.activeReusedAddrShare,
-            title,
-            metric: "Active Reused Address Share",
-            unit: Unit.percentage,
-          }),
-        },
-      ],
-    });
-
   const reusedSubtreeForAll =
     /** @param {(name: string) => string} title */
-    (title) => ({
-      name: "Reused",
-      tree: [
-        ...reusedSetEntries("all", title),
-        reusedActiveSubtreeForAll(title),
-        reusedOutputsSubtreeForAll(title),
-        reusedInputsSubtree("all", title),
-      ],
-    });
+    (title) => {
+      const reused = addrs.reused;
+      const respent = addrs.respent;
+      const key = /** @type {const} */ ("all");
+
+      /**
+       * Windowed sums + cumulative, overlaying reused (primary) and respent (gray).
+       * @param {CountPattern<number>} reusedPattern
+       * @param {CountPattern<number>} respentPattern
+       * @param {string} metric
+       * @returns {PartialOptionsTree}
+       */
+      const countPair = (reusedPattern, respentPattern, metric) => [
+        ...ROLLING_WINDOWS.map((w) => ({
+          name: w.name,
+          title: title(`${w.title} ${metric}`),
+          bottom: [
+            line({
+              series: reusedPattern.sum[w.key],
+              name: "2+ Funded",
+              unit: Unit.count,
+            }),
+            line({
+              series: respentPattern.sum[w.key],
+              name: "2+ Spent",
+              color: colors.gray,
+              unit: Unit.count,
+            }),
+          ],
+        })),
+        {
+          name: "Cumulative",
+          title: title(`Cumulative ${metric}`),
+          bottom: [
+            line({
+              series: reusedPattern.cumulative,
+              name: "2+ Funded",
+              unit: Unit.count,
+            }),
+            line({
+              series: respentPattern.cumulative,
+              name: "2+ Spent",
+              color: colors.gray,
+              unit: Unit.count,
+            }),
+          ],
+        },
+      ];
+
+      return {
+        name: "Reused",
+        tree: [
+          {
+            name: "Funded",
+            title: title("Funded Reused Addresses"),
+            bottom: [
+              line({
+                series: reused.count.funded[key],
+                name: "2+ Funded",
+                unit: Unit.count,
+              }),
+              line({
+                series: respent.count.funded[key],
+                name: "2+ Spent",
+                color: colors.gray,
+                unit: Unit.count,
+              }),
+            ],
+          },
+          {
+            name: "Total",
+            title: title("Total Reused Addresses"),
+            bottom: [
+              line({
+                series: reused.count.total[key],
+                name: "2+ Funded",
+                unit: Unit.count,
+              }),
+              line({
+                series: respent.count.total[key],
+                name: "2+ Spent",
+                color: colors.gray,
+                unit: Unit.count,
+              }),
+            ],
+          },
+          {
+            name: "Active",
+            tree: [
+              {
+                name: "Count",
+                tree: ROLLING_WINDOWS.map((w) => ({
+                  name: w.name,
+                  title: title(`${w.title} Active Reused Addresses`),
+                  bottom: [
+                    line({
+                      series: reused.events.activeReusedAddrCount[w.key],
+                      name: "2+ Funded",
+                      unit: Unit.count,
+                    }),
+                    line({
+                      series: respent.events.activeReusedAddrCount[w.key],
+                      name: "2+ Spent",
+                      color: colors.gray,
+                      unit: Unit.count,
+                    }),
+                  ],
+                })),
+              },
+              {
+                name: "Share",
+                tree: ROLLING_WINDOWS.map((w) => ({
+                  name: w.name,
+                  title: title(`${w.title} Active Reused Address Share`),
+                  bottom: [
+                    line({
+                      series: reused.events.activeReusedAddrShare[w.key],
+                      name: "2+ Funded",
+                      unit: Unit.percentage,
+                    }),
+                    line({
+                      series: respent.events.activeReusedAddrShare[w.key],
+                      name: "2+ Spent",
+                      color: colors.gray,
+                      unit: Unit.percentage,
+                    }),
+                  ],
+                })),
+              },
+            ],
+          },
+          {
+            name: "Outputs",
+            tree: [
+              {
+                name: "Count",
+                tree: countPair(
+                  reused.events.outputToReusedAddrCount[key],
+                  respent.events.outputToReusedAddrCount[key],
+                  "Transaction Outputs to Reused Addresses",
+                ),
+              },
+              {
+                name: "Share",
+                tree: [
+                  {
+                    name: "All",
+                    tree: chartsFromPercentCumulativeEntries({
+                      entries: [
+                        {
+                          name: "2+ Funded",
+                          pattern: reused.events.outputToReusedAddrShare[key],
+                        },
+                        {
+                          name: "2+ Spent",
+                          pattern: respent.events.outputToReusedAddrShare[key],
+                          color: colors.gray,
+                        },
+                      ],
+                      title,
+                      metric: "Share of Transaction Outputs to Reused Addresses",
+                    }),
+                  },
+                  {
+                    name: "Spendable",
+                    tree: chartsFromPercentCumulativeEntries({
+                      entries: [
+                        {
+                          name: "2+ Funded",
+                          pattern: reused.events.spendableOutputToReusedAddrShare,
+                        },
+                        {
+                          name: "2+ Spent",
+                          pattern: respent.events.spendableOutputToReusedAddrShare,
+                          color: colors.gray,
+                        },
+                      ],
+                      title,
+                      metric: "Share of Spendable Transaction Outputs to Reused Addresses",
+                    }),
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "Inputs",
+            tree: [
+              {
+                name: "Count",
+                tree: countPair(
+                  reused.events.inputFromReusedAddrCount[key],
+                  respent.events.inputFromReusedAddrCount[key],
+                  "Transaction Inputs from Reused Addresses",
+                ),
+              },
+              {
+                name: "Share",
+                tree: chartsFromPercentCumulativeEntries({
+                  entries: [
+                    {
+                      name: "2+ Funded",
+                      pattern: reused.events.inputFromReusedAddrShare[key],
+                    },
+                    {
+                      name: "2+ Spent",
+                      pattern: respent.events.inputFromReusedAddrShare[key],
+                      color: colors.gray,
+                    },
+                  ],
+                  title,
+                  metric: "Share of Transaction Inputs from Reused Addresses",
+                }),
+              },
+            ],
+          },
+          {
+            name: "Supply",
+            title: title("Supply in Reused Addresses"),
+            bottom: [
+              ...satsBtcUsd({ pattern: reused.supply[key], name: "2+ Funded" }),
+              ...satsBtcUsd({
+                pattern: respent.supply[key],
+                name: "2+ Spent",
+                color: colors.gray,
+              }),
+            ],
+          },
+          {
+            name: "Share",
+            title: title("Share of Supply in Reused Addresses"),
+            bottom: [
+              ...percentRatio({
+                pattern: reused.supply.share[key],
+                name: "2+ Funded",
+              }),
+              ...percentRatio({
+                pattern: respent.supply.share[key],
+                name: "2+ Spent",
+                color: colors.gray,
+              }),
+            ],
+          },
+        ],
+      };
+    };
 
 
   const countSubtree =
@@ -326,6 +426,12 @@ export function createNetworkSection() {
               line({
                 series: addrs.reused.events.activeReusedAddrShare[w.key],
                 name: "Reused Share",
+                unit: Unit.percentage,
+              }),
+              line({
+                series: addrs.respent.events.activeReusedAddrShare[w.key],
+                name: "Respent Share",
+                color: colors.gray,
                 unit: Unit.percentage,
               }),
             ],
@@ -413,7 +519,7 @@ export function createNetworkSection() {
           unit: Unit.count,
         }),
         activitySubtreeForType(addrType, title),
-        reusedSubtree(addrs.reused, addrType, title),
+        reusedSubtree(addrs.reused, addrs.respent, addrType, title),
         exposedSubtree(addrs.exposed, addrType, title),
         avgHoldingsSubtree(addrs.avgAmount[addrType], title),
       ];
@@ -457,6 +563,113 @@ export function createNetworkSection() {
             defaultActive: t.defaultActive,
           }),
         );
+
+    const reuseCompareByTypeFolder =
+      /**
+       * @param {string} label - "Reused" or "Respent"
+       * @param {ReusedTree | RespentTree} tree
+       * @returns {PartialOptionsGroup}
+       */
+      (label, tree) => ({
+        name: label,
+        tree: [
+          {
+            name: "Funded",
+            title: `Funded ${label} Address Count by Type`,
+            bottom: typeLines((t) => tree.count.funded[t.key]),
+          },
+          {
+            name: "Total",
+            title: `Total ${label} Address Count by Type`,
+            bottom: typeLines((t) => tree.count.total[t.key]),
+          },
+          {
+            name: "Outputs",
+            tree: [
+              {
+                name: "Count",
+                tree: groupedWindowsCumulative({
+                  list: addressTypes,
+                  title: (s) => s,
+                  metricTitle: `Transaction Outputs to ${label} Addresses by Type`,
+                  getWindowSeries: (t, key) =>
+                    tree.events.outputToReusedAddrCount[t.key].sum[key],
+                  getCumulativeSeries: (t) =>
+                    tree.events.outputToReusedAddrCount[t.key].cumulative,
+                  seriesFn: line,
+                  unit: Unit.count,
+                }),
+              },
+              {
+                name: "Share",
+                tree: [
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `${w.title} Share of Transaction Outputs to ${label} Addresses by Type`,
+                    bottom: typeLines(
+                      (t) =>
+                        tree.events.outputToReusedAddrShare[t.key][w.key]
+                          .percent,
+                      Unit.percentage,
+                    ),
+                  })),
+                  {
+                    name: "Cumulative",
+                    title: `Cumulative Share of Transaction Outputs to ${label} Addresses by Type`,
+                    bottom: typeLines(
+                      (t) =>
+                        tree.events.outputToReusedAddrShare[t.key].percent,
+                      Unit.percentage,
+                    ),
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "Inputs",
+            tree: [
+              {
+                name: "Count",
+                tree: groupedWindowsCumulative({
+                  list: addressTypes,
+                  title: (s) => s,
+                  metricTitle: `Transaction Inputs from ${label} Addresses by Type`,
+                  getWindowSeries: (t, key) =>
+                    tree.events.inputFromReusedAddrCount[t.key].sum[key],
+                  getCumulativeSeries: (t) =>
+                    tree.events.inputFromReusedAddrCount[t.key].cumulative,
+                  seriesFn: line,
+                  unit: Unit.count,
+                }),
+              },
+              {
+                name: "Share",
+                tree: [
+                  ...ROLLING_WINDOWS.map((w) => ({
+                    name: w.name,
+                    title: `${w.title} Share of Transaction Inputs from ${label} Addresses by Type`,
+                    bottom: typeLines(
+                      (t) =>
+                        tree.events.inputFromReusedAddrShare[t.key][w.key]
+                          .percent,
+                      Unit.percentage,
+                    ),
+                  })),
+                  {
+                    name: "Cumulative",
+                    title: `Cumulative Share of Transaction Inputs from ${label} Addresses by Type`,
+                    bottom: typeLines(
+                      (t) => tree.events.inputFromReusedAddrShare[t.key].percent,
+                      Unit.percentage,
+                    ),
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
 
     return {
       name: "Compare",
@@ -525,120 +738,12 @@ export function createNetworkSection() {
           })),
         },
 
-        // Reused
+        // Address Reuse: receive-side (Reused) + spend-side (Respent)
         {
-          name: "Reused",
+          name: "Address Reuse",
           tree: [
-            {
-              name: "Funded",
-              title: "Funded Reused Address Count by Type",
-              bottom: typeLines((t) => addrs.reused.count.funded[t.key]),
-            },
-            {
-              name: "Total",
-              title: "Total Reused Address Count by Type",
-              bottom: typeLines((t) => addrs.reused.count.total[t.key]),
-            },
-            {
-              name: "Outputs",
-              tree: [
-                {
-                  name: "Count",
-                  tree: groupedWindowsCumulative({
-                    list: addressTypes,
-                    title: (s) => s,
-                    metricTitle:
-                      "Transaction Outputs to Reused Addresses by Type",
-                    getWindowSeries: (t, key) =>
-                      addrs.reused.events.outputToReusedAddrCount[t.key].sum[
-                        key
-                      ],
-                    getCumulativeSeries: (t) =>
-                      addrs.reused.events.outputToReusedAddrCount[t.key]
-                        .cumulative,
-                    seriesFn: line,
-                    unit: Unit.count,
-                  }),
-                },
-                {
-                  name: "Share",
-                  tree: [
-                    ...ROLLING_WINDOWS.map((w) => ({
-                      name: w.name,
-                      title: `${w.title} Share of Transaction Outputs to Reused Addresses by Type`,
-                      bottom: typeLines(
-                        (t) =>
-                          addrs.reused.events.outputToReusedAddrShare[t.key][
-                            w.key
-                          ].percent,
-                        Unit.percentage,
-                      ),
-                    })),
-                    {
-                      name: "Cumulative",
-                      title:
-                        "Cumulative Share of Transaction Outputs to Reused Addresses by Type",
-                      bottom: typeLines(
-                        (t) =>
-                          addrs.reused.events.outputToReusedAddrShare[t.key]
-                            .percent,
-                        Unit.percentage,
-                      ),
-                    },
-                  ],
-                },
-              ],
-            },
-            {
-              name: "Inputs",
-              tree: [
-                {
-                  name: "Count",
-                  tree: groupedWindowsCumulative({
-                    list: addressTypes,
-                    title: (s) => s,
-                    metricTitle:
-                      "Transaction Inputs from Reused Addresses by Type",
-                    getWindowSeries: (t, key) =>
-                      addrs.reused.events.inputFromReusedAddrCount[t.key].sum[
-                        key
-                      ],
-                    getCumulativeSeries: (t) =>
-                      addrs.reused.events.inputFromReusedAddrCount[t.key]
-                        .cumulative,
-                    seriesFn: line,
-                    unit: Unit.count,
-                  }),
-                },
-                {
-                  name: "Share",
-                  tree: [
-                    ...ROLLING_WINDOWS.map((w) => ({
-                      name: w.name,
-                      title: `${w.title} Share of Transaction Inputs from Reused Addresses by Type`,
-                      bottom: typeLines(
-                        (t) =>
-                          addrs.reused.events.inputFromReusedAddrShare[t.key][
-                            w.key
-                          ].percent,
-                        Unit.percentage,
-                      ),
-                    })),
-                    {
-                      name: "Cumulative",
-                      title:
-                        "Cumulative Share of Transaction Inputs from Reused Addresses by Type",
-                      bottom: typeLines(
-                        (t) =>
-                          addrs.reused.events.inputFromReusedAddrShare[t.key]
-                            .percent,
-                        Unit.percentage,
-                      ),
-                    },
-                  ],
-                },
-              ],
-            },
+            reuseCompareByTypeFolder("Reused", addrs.reused),
+            reuseCompareByTypeFolder("Respent", addrs.respent),
           ],
         },
 

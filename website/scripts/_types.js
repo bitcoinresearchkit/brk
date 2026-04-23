@@ -131,6 +131,7 @@
  * @typedef {Brk.AddrUtxoPattern} AvgAmountPattern
  * @typedef {Brk.SeriesTree_Addrs_Exposed} ExposedTree
  * @typedef {Brk.SeriesTree_Addrs_Reused} ReusedTree
+ * @typedef {Brk.SeriesTree_Addrs_Respent} RespentTree
  */
 
 /**

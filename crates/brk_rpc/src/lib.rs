@@ -12,7 +12,7 @@ use brk_types::{BlockHash, Height, MempoolEntryInfo, Sats, Txid, Vout};
 
 pub mod backend;
 
-pub use backend::{Auth, BlockHeaderInfo, BlockInfo, BlockchainInfo, TxOutInfo};
+pub use backend::{Auth, BlockHeaderInfo, BlockInfo, BlockTemplateTx, BlockchainInfo, TxOutInfo};
 
 use backend::ClientInner;
 use tracing::{debug, info};
@@ -199,6 +199,12 @@ impl Client {
 
     pub fn send_raw_transaction(&self, hex: &str) -> Result<Txid> {
         self.0.send_raw_transaction(hex).map(Txid::from)
+    }
+
+    /// Transactions (txid + fee) Bitcoin Core would include in the next
+    /// block it would mine, via `getblocktemplate`.
+    pub fn get_block_template_txs(&self) -> Result<Vec<BlockTemplateTx>> {
+        self.0.get_block_template_txs()
     }
 
     /// Checks if a block is in the main chain (has positive confirmations)

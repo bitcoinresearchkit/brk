@@ -252,7 +252,7 @@
  * ============================================================================
  *
  * Addressable cohort with address count (for "type" cohorts - uses OutputsRealizedSupplyUnrealizedPattern2)
- * @typedef {{ name: string, key: AddressableType, title: string, color: Color, tree: EmptyPattern, addressCount: AddrCountPattern, avgAmount: AvgAmountPattern, exposed: ExposedTree, reused: ReusedTree }} CohortAddr
+ * @typedef {{ name: string, key: AddressableType, title: string, color: Color, tree: EmptyPattern, addressCount: AddrCountPattern, avgAmount: AvgAmountPattern, exposed: ExposedTree, reused: ReusedTree, respent: RespentTree }} CohortAddr
  *
  * ============================================================================
  * Cohort Group Types (by capability)

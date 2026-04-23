@@ -266,10 +266,14 @@ impl Computer {
             }
 
             if let Some(name) = entry.file_name().to_str()
+                && !name.starts_with('_')
                 && !EXPECTED_DBS.contains(&name)
             {
                 info!("Removing obsolete database folder: {}", name);
-                fs::remove_dir_all(entry.path())?;
+                let path = entry.path();
+                fs::remove_dir_all(&path).map_err(|e| {
+                    std::io::Error::other(format!("remove_dir_all {path:?}: {e}"))
+                })?;
             }
         }
 

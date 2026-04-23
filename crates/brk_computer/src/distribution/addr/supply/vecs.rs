@@ -9,26 +9,34 @@ use crate::{
     internal::{ValuePerBlock, WithAddrTypes},
 };
 
-/// Exposed address supply (sats/btc/cents/usd) — `all` + per-address-type.
-/// Tracks the total balance held by addresses currently in the funded
-/// exposed set. Sats are pushed stateful per block; cents/usd are derived
-/// post-hoc from sats × spot price.
+use super::AddrTypeToSupply;
+
+/// Per-addr-type running supply (sats/btc/cents/usd) with an aggregated `all`.
+/// Shared across predicate-based supply categories (exposed, reused, respent).
+/// Sats are pushed stateful per block; cents/usd are derived post-hoc from
+/// sats × spot price.
 #[derive(Deref, DerefMut, Traversable)]
-pub struct ExposedAddrSupplyVecs<M: StorageMode = Rw>(
+pub struct AddrSupplyVecs<M: StorageMode = Rw>(
     #[traversable(flatten)] pub WithAddrTypes<ValuePerBlock<M>>,
 );
 
-impl ExposedAddrSupplyVecs {
+impl AddrSupplyVecs {
     pub(crate) fn forced_import(
         db: &Database,
+        name: &str,
         version: Version,
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self(WithAddrTypes::<ValuePerBlock>::forced_import(
             db,
-            "exposed_supply",
+            &format!("{name}_addr_supply"),
             version,
             indexes,
         )?))
+    }
+
+    #[inline(always)]
+    pub(crate) fn push_supply(&mut self, supply: &AddrTypeToSupply) {
+        self.push_height(supply.sum(), supply.values().copied());
     }
 }

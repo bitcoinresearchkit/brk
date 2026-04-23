@@ -10,7 +10,7 @@ exclude = ["examples/"]
 
 [features]
 default = ["corepc"]
-bitcoincore-rpc = ["dep:bitcoincore-rpc", "brk_error/bitcoincore-rpc"]
+bitcoincore-rpc = ["dep:bitcoincore-rpc", "dep:serde_json", "brk_error/bitcoincore-rpc"]
 corepc = ["dep:corepc-client", "dep:corepc-jsonrpc", "dep:serde_json", "dep:serde", "brk_error/corepc"]
 
 [dependencies]

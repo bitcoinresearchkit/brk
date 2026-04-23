@@ -76,11 +76,7 @@ pub(crate) fn write(
     vecs.any_addr_indexes
         .par_iter_mut()
         .chain(vecs.addrs_data.par_iter_mut())
-        .chain(vecs.addrs.funded.par_iter_height_mut())
-        .chain(vecs.addrs.empty.par_iter_height_mut())
-        .chain(vecs.addrs.activity.par_iter_height_mut())
-        .chain(vecs.addrs.reused.par_iter_height_mut())
-        .chain(vecs.addrs.exposed.par_iter_height_mut())
+        .chain(vecs.addrs.par_iter_stateful_height_mut())
         .chain(
             [
                 &mut vecs.supply_state as &mut dyn AnyStoredVec,

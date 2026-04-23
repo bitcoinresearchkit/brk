@@ -5,29 +5,20 @@ use rustc_hash::FxHashSet;
 use vecdb::VecIndex;
 
 use crate::distribution::{
-    addr::{
-        AddrTypeToActivityCounts, AddrTypeToExposedAddrCount, AddrTypeToExposedSupply,
-        AddrTypeToReusedAddrCount, AddrTypeToReusedAddrEventCount, HeightToAddrTypeToVec,
-    },
+    addr::{AddrMetricsState, AddrSendPreState, HeightToAddrTypeToVec},
     cohorts::AddrCohorts,
     compute::PriceRangeMax,
 };
 
 use super::super::cache::AddrLookup;
 
-/// Process sent outputs for address cohorts.
+/// Process sent UTXOs for address cohorts: age metrics, cohort membership,
+/// and empty-address transitions.
 ///
-/// For each spent UTXO:
-/// 1. Look up address data
-/// 2. Calculate age metrics
-/// 3. Update address balance and cohort membership
-/// 4. Handle addresses becoming empty
-///
-/// Note: Takes separate price/timestamp slices instead of chain_state to allow
-/// parallel execution with UTXO cohort processing (which mutates chain_state).
-///
-/// `price_range_max` is used to compute the peak price during each UTXO's holding period
-/// for accurate peak regret calculation.
+/// Takes separate price/timestamp slices rather than `chain_state` so it can
+/// run in parallel with UTXO cohort processing (which mutates `chain_state`).
+/// `price_range_max` feeds peak-regret computation via max price during
+/// each UTXO's holding period.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn process_sent(
     sent_data: HeightToAddrTypeToVec<(TypeIndex, Sats)>,
@@ -35,15 +26,7 @@ pub(crate) fn process_sent(
     lookup: &mut AddrLookup<'_>,
     current_price: Cents,
     price_range_max: &PriceRangeMax,
-    addr_count: &mut ByAddrType<u64>,
-    empty_addr_count: &mut ByAddrType<u64>,
-    activity_counts: &mut AddrTypeToActivityCounts,
-    reused_addr_count: &mut AddrTypeToReusedAddrCount,
-    input_from_reused_addr_count: &mut AddrTypeToReusedAddrEventCount,
-    active_reused_addr_count: &mut AddrTypeToReusedAddrEventCount,
-    exposed_addr_count: &mut AddrTypeToExposedAddrCount,
-    total_exposed_addr_count: &mut AddrTypeToExposedAddrCount,
-    exposed_supply: &mut AddrTypeToExposedSupply,
+    state: &mut AddrMetricsState,
     received_addrs: &ByAddrType<FxHashSet<TypeIndex>>,
     height_to_price: &[Cents],
     height_to_timestamp: &[Timestamp],
@@ -57,68 +40,22 @@ pub(crate) fn process_sent(
         let prev_price = height_to_price[receive_height.to_usize()];
         let prev_timestamp = height_to_timestamp[receive_height.to_usize()];
         let age = Age::new(current_timestamp, prev_timestamp);
-
-        // Compute peak spot price during holding period for peak regret
         let peak_price = price_range_max.max_between(receive_height, current_height);
 
         for (output_type, vec) in by_type.unwrap().into_iter() {
-            // Cache mutable refs for this address type
-            let type_addr_count = addr_count.get_mut(output_type).unwrap();
-            let type_empty_count = empty_addr_count.get_mut(output_type).unwrap();
-            let type_activity = activity_counts.get_mut_unwrap(output_type);
-            let type_reused_count = reused_addr_count.get_mut(output_type).unwrap();
-            let type_input_from_reused_count =
-                input_from_reused_addr_count.get_mut(output_type).unwrap();
-            let type_active_reused_count = active_reused_addr_count.get_mut(output_type).unwrap();
-            let type_exposed_count = exposed_addr_count.get_mut(output_type).unwrap();
-            let type_total_exposed_count = total_exposed_addr_count.get_mut(output_type).unwrap();
-            let type_exposed_supply = exposed_supply.get_mut(output_type).unwrap();
             let type_received = received_addrs.get(output_type);
             let type_seen = seen_senders.get_mut_unwrap(output_type);
 
             for (type_index, value) in vec {
                 let addr_data = lookup.get_for_send(output_type, type_index);
-
-                // "Input from a reused address" event: the sending
-                // address is in the reused set (lifetime
-                // funded_txo_count > 1). Checked once per input. The
-                // spend itself doesn't touch funded_txo_count so the
-                // predicate is stable before/after `cohort_state.send`.
-                if addr_data.is_reused() {
-                    *type_input_from_reused_count += 1;
-                }
+                let pre = AddrSendPreState::capture(addr_data, output_type);
 
                 let prev_balance = addr_data.balance();
                 let new_balance = prev_balance.checked_sub(value).unwrap();
-
-                // On first encounter of this address this block, track activity
-                if type_seen.insert(type_index) {
-                    type_activity.sending += 1;
-
-                    let also_received = type_received.is_some_and(|s| s.contains(&type_index));
-                    // Track "bidirectional": addresses that sent AND
-                    // received this block.
-                    if also_received {
-                        type_activity.bidirectional += 1;
-                    }
-
-                    // Block-level "active reused address" count: count
-                    // every distinct sender that's reused, but skip
-                    // those that also received this block (already
-                    // counted in process_received).
-                    if !also_received && addr_data.is_reused() {
-                        *type_active_reused_count += 1;
-                    }
-                }
-
+                let is_first_encounter = type_seen.insert(type_index);
+                let also_received = type_received.is_some_and(|s| s.contains(&type_index));
                 let will_be_empty = addr_data.has_1_utxos();
 
-                // Capture exposed state BEFORE the spend mutates spent_txo_count.
-                let was_pubkey_exposed = addr_data.is_pubkey_exposed(output_type);
-                let exposed_contribution_before =
-                    addr_data.exposed_supply_contribution(output_type);
-
-                // Compute buckets once
                 let prev_bucket = AmountBucket::from(prev_balance);
                 let new_bucket = AmountBucket::from(new_balance);
                 let crossing_boundary = prev_bucket != new_bucket;
@@ -130,50 +67,21 @@ pub(crate) fn process_sent(
                     .as_mut()
                     .unwrap();
 
+                // Mutates addr_data.spent_txo_count (+= 1). on_send_applied reads the post-spend view.
                 cohort_state.send(addr_data, value, current_price, prev_price, peak_price, age)?;
-                // addr_data.spent_txo_count is now incremented by 1.
+                state.on_send_applied(
+                    output_type,
+                    addr_data,
+                    &pre,
+                    is_first_encounter,
+                    also_received,
+                    will_be_empty,
+                );
 
-                // Update exposed supply via post-spend contribution delta.
-                let exposed_contribution_after = addr_data.exposed_supply_contribution(output_type);
-                if exposed_contribution_after >= exposed_contribution_before {
-                    *type_exposed_supply +=
-                        exposed_contribution_after - exposed_contribution_before;
-                } else {
-                    *type_exposed_supply -=
-                        exposed_contribution_before - exposed_contribution_after;
-                }
-
-                // Update exposed counts on first-ever pubkey exposure.
-                // For non-pk-exposed types this fires on the first spend; for
-                // pk-exposed types it never fires here (was_pubkey_exposed was
-                // already true at first receive in process_received).
-                if !was_pubkey_exposed {
-                    *type_total_exposed_count += 1;
-                    if !will_be_empty {
-                        *type_exposed_count += 1;
-                    }
-                }
-
-                // If crossing a bucket boundary, remove the (now-updated) address from old bucket
                 if will_be_empty || crossing_boundary {
                     cohort_state.subtract(addr_data);
                 }
-
-                // Migrate address to new bucket or mark as empty
                 if will_be_empty {
-                    *type_addr_count -= 1;
-                    *type_empty_count += 1;
-                    // Reused addr leaving the funded reused set
-                    if addr_data.is_reused() {
-                        *type_reused_count -= 1;
-                    }
-                    // Exposed addr leaving the funded exposed set: was in set
-                    // iff its pubkey was exposed pre-spend (since it was funded
-                    // to be in process_sent in the first place), and now leaves
-                    // because it's empty.
-                    if was_pubkey_exposed {
-                        *type_exposed_count -= 1;
-                    }
                     lookup.move_to_empty(output_type, type_index);
                 } else if crossing_boundary {
                     cohorts

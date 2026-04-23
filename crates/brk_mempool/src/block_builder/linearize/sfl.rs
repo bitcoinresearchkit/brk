@@ -35,7 +35,11 @@ pub fn linearize(cluster: &Cluster) -> Vec<Chunk> {
     if n == 0 {
         return Vec::new();
     }
-    assert!(n <= BITMASK_LIMIT, "cluster size {} exceeds u128 capacity", n);
+    assert!(
+        n <= BITMASK_LIMIT,
+        "cluster size {} exceeds u128 capacity",
+        n
+    );
 
     let mut parents_mask: Vec<u128> = vec![0; n];
     let mut ancestor_incl: Vec<u128> = vec![0; n];
@@ -97,6 +101,7 @@ fn best_subset(
     best
 }
 
+#[allow(clippy::too_many_arguments)]
 fn recurse(
     idx: usize,
     topo_order: &[LocalIdx],
@@ -120,18 +125,34 @@ fn recurse(
 
     // Not in remaining, or a parent (within remaining) is excluded:
     // this node is forced-excluded, no branching.
-    if (bit & remaining) == 0
-        || (parents_mask[node as usize] & remaining & !included) != 0
-    {
+    if (bit & remaining) == 0 || (parents_mask[node as usize] & remaining & !included) != 0 {
         recurse(
-            idx + 1, topo_order, parents_mask, remaining, included, f, v, fee_of, vsize_of, best,
+            idx + 1,
+            topo_order,
+            parents_mask,
+            remaining,
+            included,
+            f,
+            v,
+            fee_of,
+            vsize_of,
+            best,
         );
         return;
     }
 
     // Exclude
     recurse(
-        idx + 1, topo_order, parents_mask, remaining, included, f, v, fee_of, vsize_of, best,
+        idx + 1,
+        topo_order,
+        parents_mask,
+        remaining,
+        included,
+        f,
+        v,
+        fee_of,
+        vsize_of,
+        best,
     );
     // Include
     recurse(

@@ -8,9 +8,10 @@ use brk_types::{
     Cents, EmptyAddrData, EmptyAddrIndex, FundedAddrData, FundedAddrIndex, Height, Indexes,
     StoredF64, SupplyState, Timestamp, TxIndex, Version,
 };
+use rayon::prelude::*;
 use tracing::{debug, info};
 use vecdb::{
-    AnyVec, BytesVec, Database, Exit, ImportableVec, LazyVecFrom1, ReadOnlyClone,
+    AnyStoredVec, AnyVec, BytesVec, Database, Exit, ImportableVec, LazyVecFrom1, ReadOnlyClone,
     ReadableCloneableVec, ReadableVec, Rw, Stamp, StorageMode, WritableVec,
 };
 
@@ -34,8 +35,8 @@ use crate::{
 use super::{
     AddrCohorts, AddrsDataVecs, AnyAddrIndexesVecs, RangeMap, UTXOCohorts,
     addr::{
-        AddrActivityVecs, AddrCountsVecs, DeltaVecs, ExposedAddrVecs, NewAddrCountVecs,
-        ReusedAddrVecs, TotalAddrCountVecs,
+        AddrActivityVecs, AddrCountsVecs, AddrMetricsState, DeltaVecs, ExposedAddrVecs,
+        NewAddrCountVecs, ReusedAddrVecs, TotalAddrCountVecs,
     },
     metrics::AvgAmountMetrics,
 };
@@ -50,6 +51,7 @@ pub struct AddrMetricsVecs<M: StorageMode = Rw> {
     pub total: TotalAddrCountVecs<M>,
     pub new: NewAddrCountVecs<M>,
     pub reused: ReusedAddrVecs<M>,
+    pub respent: ReusedAddrVecs<M>,
     pub exposed: ExposedAddrVecs<M>,
     pub delta: DeltaVecs,
     pub avg_amount: WithAddrTypes<AvgAmountMetrics<M>>,
@@ -58,6 +60,71 @@ pub struct AddrMetricsVecs<M: StorageMode = Rw> {
         LazyVecFrom1<FundedAddrIndex, FundedAddrIndex, FundedAddrIndex, FundedAddrData>,
     #[traversable(wrap = "indexes", rename = "empty")]
     pub empty_index: LazyVecFrom1<EmptyAddrIndex, EmptyAddrIndex, EmptyAddrIndex, EmptyAddrData>,
+}
+
+impl AddrMetricsVecs {
+    pub(crate) fn reset_height(&mut self) -> Result<()> {
+        self.funded.reset_height()?;
+        self.empty.reset_height()?;
+        self.activity.reset_height()?;
+        self.reused.reset_height()?;
+        self.respent.reset_height()?;
+        self.exposed.reset_height()?;
+        self.avg_amount.reset_height()?;
+        Ok(())
+    }
+
+    pub(crate) fn min_stateful_len(&self) -> usize {
+        self.funded
+            .min_stateful_len()
+            .min(self.empty.min_stateful_len())
+            .min(self.activity.min_stateful_len())
+            .min(self.reused.min_stateful_len())
+            .min(self.respent.min_stateful_len())
+            .min(self.exposed.min_stateful_len())
+    }
+
+    /// Stateful vecs pushed per block. Mirrors [`Self::push_height`] and
+    /// [`Self::min_stateful_len`]. Used by the stamped write path.
+    pub(crate) fn par_iter_stateful_height_mut(
+        &mut self,
+    ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        self.funded
+            .par_iter_height_mut()
+            .chain(self.empty.par_iter_height_mut())
+            .chain(self.activity.par_iter_height_mut())
+            .chain(self.reused.par_iter_height_mut())
+            .chain(self.respent.par_iter_height_mut())
+            .chain(self.exposed.par_iter_height_mut())
+    }
+
+    /// All height-indexed vecs including derived (`avg_amount`). Used for
+    /// bulk truncation, where derived vecs must follow the stateful ones.
+    pub(crate) fn par_iter_height_mut(
+        &mut self,
+    ) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        self.funded
+            .par_iter_height_mut()
+            .chain(self.empty.par_iter_height_mut())
+            .chain(self.activity.par_iter_height_mut())
+            .chain(self.reused.par_iter_height_mut())
+            .chain(self.respent.par_iter_height_mut())
+            .chain(self.exposed.par_iter_height_mut())
+            .chain(self.avg_amount.par_iter_height_mut())
+    }
+
+    /// Push one block's worth of per-addr-type running totals to all
+    /// height-indexed vecs. `active_addr_count` is the block-level total
+    /// of active addresses (sending + receiving - bidirectional).
+    #[inline(always)]
+    pub(crate) fn push_height(&mut self, state: &AddrMetricsState, active_addr_count: u32) {
+        self.funded.push_counts(&state.funded);
+        self.empty.push_counts(&state.empty);
+        self.activity.push_height(&state.activity);
+        self.exposed.push_height(&state.exposed);
+        self.reused.push_height(&state.reused, active_addr_count);
+        self.respent.push_height(&state.respent, active_addr_count);
+    }
 }
 
 #[derive(Traversable)]
@@ -162,9 +229,14 @@ impl Vecs {
         // Per-block delta of total (global + per-type)
         let new_addr_count = NewAddrCountVecs::forced_import(&db, version, indexes, cached_starts)?;
 
-        // Reused address tracking (counts + per-block uses + percent)
+        // Reused address tracking (counts + per-block uses + percent).
+        // `reused_*` uses the receive-side predicate (funded_txo_count > 1,
+        // industry standard). `respent_*` uses the spend-side counterpart
+        // (spent_txo_count > 1, strictly more restrictive).
         let reused_addr_count =
-            ReusedAddrVecs::forced_import(&db, version, indexes, cached_starts)?;
+            ReusedAddrVecs::forced_import(&db, "reused", version, indexes, cached_starts)?;
+        let respent_addr_count =
+            ReusedAddrVecs::forced_import(&db, "respent", version, indexes, cached_starts)?;
 
         // Exposed address tracking (counts + supply) - quantum / pubkey-exposure sense
         let exposed_addr_vecs = ExposedAddrVecs::forced_import(&db, version, indexes)?;
@@ -188,6 +260,7 @@ impl Vecs {
                 total: total_addr_count,
                 new: new_addr_count,
                 reused: reused_addr_count,
+                respent: respent_addr_count,
                 exposed: exposed_addr_vecs,
                 delta,
                 avg_amount,
@@ -303,12 +376,7 @@ impl Vecs {
 
         if needs_fresh_start {
             self.supply_state.reset()?;
-            self.addrs.funded.reset_height()?;
-            self.addrs.empty.reset_height()?;
-            self.addrs.activity.reset_height()?;
-            self.addrs.reused.reset_height()?;
-            self.addrs.exposed.reset_height()?;
-            self.addrs.avg_amount.reset_height()?;
+            self.addrs.reset_height()?;
             reset_state(
                 &mut self.any_addr_indexes,
                 &mut self.addrs_data,
@@ -478,21 +546,34 @@ impl Vecs {
         // 6b. Compute address count sum (by addr_type -> all)
         self.addrs.funded.compute_rest(starting_indexes, exit)?;
         self.addrs.empty.compute_rest(starting_indexes, exit)?;
-        self.addrs.reused.compute_rest(
-            starting_indexes,
-            &outputs.by_type,
-            &inputs.by_type,
-            exit,
-        )?;
         let t = &self.utxo_cohorts.type_;
         let type_supply_sats = ByAddrType::new(|filter| {
             let Filter::Type(ot) = filter else { unreachable!() };
             &t.get(ot).metrics.supply.total.sats.height
         });
+        let all_supply_sats = &self.utxo_cohorts.all.metrics.supply.total.sats.height;
+        self.addrs.reused.compute_rest(
+            starting_indexes,
+            &outputs.by_type,
+            &inputs.by_type,
+            prices,
+            all_supply_sats,
+            &type_supply_sats,
+            exit,
+        )?;
+        self.addrs.respent.compute_rest(
+            starting_indexes,
+            &outputs.by_type,
+            &inputs.by_type,
+            prices,
+            all_supply_sats,
+            &type_supply_sats,
+            exit,
+        )?;
         self.addrs.exposed.compute_rest(
             starting_indexes,
             prices,
-            &self.utxo_cohorts.all.metrics.supply.total.sats.height,
+            all_supply_sats,
             &type_supply_sats,
             exit,
         )?;
@@ -605,11 +686,7 @@ impl Vecs {
             .min(Height::from(self.supply_state.len()))
             .min(self.any_addr_indexes.min_stamped_len())
             .min(self.addrs_data.min_stamped_len())
-            .min(Height::from(self.addrs.funded.min_stateful_len()))
-            .min(Height::from(self.addrs.empty.min_stateful_len()))
-            .min(Height::from(self.addrs.activity.min_stateful_len()))
-            .min(Height::from(self.addrs.reused.min_stateful_len()))
-            .min(Height::from(self.addrs.exposed.min_stateful_len()))
+            .min(Height::from(self.addrs.min_stateful_len()))
             .min(Height::from(self.coinblocks_destroyed.block.len()))
     }
 }

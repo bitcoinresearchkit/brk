@@ -12,7 +12,7 @@
 //! - **P2PKH, P2SH, P2WPKH, P2WSH**: the locking script contains a hash of
 //!   the pubkey/script. The pubkey is only revealed when spending. Note that
 //!   even the spending tx itself exposes the pubkey while the address still
-//!   holds funds — during the mempool window between broadcast and confirmation,
+//!   holds funds, during the mempool window between broadcast and confirmation,
 //!   the pubkey is visible while the UTXO being spent is still unspent on-chain.
 //!   So every spent address of these types has had at least one moment with
 //!   funds at quantum risk.
@@ -30,14 +30,8 @@
 //! sums these, giving "Bitcoin addresses currently with funds at quantum risk".
 //!
 //! All metrics are tracked as running counters and require no extra fields
-//! on the address data — they're maintained via delta detection in
+//! on the address data. They're maintained via delta detection in
 //! `process_received` and `process_sent`.
-
-mod count;
-mod supply;
-
-pub use count::{AddrTypeToExposedAddrCount, ExposedAddrCountsVecs};
-pub use supply::{AddrTypeToExposedSupply, ExposedAddrSupplyVecs, ExposedSupplyShareVecs};
 
 use brk_cohort::ByAddrType;
 use brk_error::Result;
@@ -46,16 +40,24 @@ use brk_types::{Height, Indexes, Sats, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
 
-use crate::{indexes, internal::RatioSatsBp16, prices};
+use super::{
+    count::AddrCountFundedTotalVecs,
+    supply::{AddrSupplyShareVecs, AddrSupplyVecs},
+};
+use crate::{indexes, prices};
+
+mod state;
+
+pub use state::ExposedAddrState;
 
 /// Top-level container for all exposed address tracking: counts (funded +
 /// total), the funded supply, and share of supply.
 #[derive(Traversable)]
 pub struct ExposedAddrVecs<M: StorageMode = Rw> {
-    pub count: ExposedAddrCountsVecs<M>,
-    pub supply: ExposedAddrSupplyVecs<M>,
+    pub count: AddrCountFundedTotalVecs<M>,
+    pub supply: AddrSupplyVecs<M>,
     #[traversable(wrap = "supply", rename = "share")]
-    pub supply_share: ExposedSupplyShareVecs<M>,
+    pub supply_share: AddrSupplyShareVecs<M>,
 }
 
 impl ExposedAddrVecs {
@@ -65,9 +67,9 @@ impl ExposedAddrVecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         Ok(Self {
-            count: ExposedAddrCountsVecs::forced_import(db, version, indexes)?,
-            supply: ExposedAddrSupplyVecs::forced_import(db, version, indexes)?,
-            supply_share: ExposedSupplyShareVecs::forced_import(db, version, indexes)?,
+            count: AddrCountFundedTotalVecs::forced_import(db, "exposed", version, indexes)?,
+            supply: AddrSupplyVecs::forced_import(db, "exposed", version, indexes)?,
+            supply_share: AddrSupplyShareVecs::forced_import(db, "exposed", version, indexes)?,
         })
     }
 
@@ -92,6 +94,12 @@ impl ExposedAddrVecs {
         Ok(())
     }
 
+    #[inline(always)]
+    pub(crate) fn push_height(&mut self, state: &ExposedAddrState) {
+        self.count.push_counts(&state.funded, &state.total);
+        self.supply.push_supply(&state.supply);
+    }
+
     pub(crate) fn compute_rest(
         &mut self,
         starting_indexes: &Indexes,
@@ -103,32 +111,13 @@ impl ExposedAddrVecs {
         self.count.compute_rest(starting_indexes, exit)?;
         self.supply
             .compute_rest(starting_indexes.height, prices, exit)?;
-
-        let max_from = starting_indexes.height;
-
-        self.supply_share
-            .all
-            .compute_binary::<Sats, Sats, RatioSatsBp16>(
-                max_from,
-                &self.supply.all.sats.height,
-                all_supply_sats,
-                exit,
-            )?;
-
-        for ((_, share), ((_, exposed), (_, denom))) in self
-            .supply_share
-            .by_addr_type
-            .iter_mut()
-            .zip(self.supply.by_addr_type.iter().zip(type_supply_sats.iter()))
-        {
-            share.compute_binary::<Sats, Sats, RatioSatsBp16>(
-                max_from,
-                &exposed.sats.height,
-                *denom,
-                exit,
-            )?;
-        }
-
+        self.supply_share.compute_rest(
+            starting_indexes.height,
+            &self.supply,
+            all_supply_sats,
+            type_supply_sats,
+            exit,
+        )?;
         Ok(())
     }
 }

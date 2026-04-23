@@ -111,12 +111,23 @@ impl FundedAddrData {
     }
 
     /// Whether this address has received more than one output over its
-    /// lifetime — the simplest proxy for address reuse (close to but not
-    /// exactly "received in 2+ distinct transactions"; over-counts the rare
-    /// case of multi-output funding to the same address in one tx).
+    /// lifetime: the receive-side proxy for address reuse (close to but
+    /// not exactly "received in 2+ distinct transactions"; over-counts
+    /// the rare case of multi-output funding to the same address in one
+    /// tx). Matches the industry-standard "address reuse" signal.
     #[inline]
     pub fn is_reused(&self) -> bool {
         self.funded_txo_count > 1
+    }
+
+    /// Whether this address has spent more than one output over its
+    /// lifetime: the spend-side counterpart to `is_reused`. Captures
+    /// "demonstrated reuse via actual spending" and excludes addresses
+    /// that received multiple outputs but have not yet been drawn from
+    /// more than once.
+    #[inline]
+    pub fn is_respent(&self) -> bool {
+        self.spent_txo_count > 1
     }
 
     /// Whether this address's public key has been revealed in the chain.
@@ -139,6 +150,28 @@ impl FundedAddrData {
     #[inline]
     pub fn exposed_supply_contribution(&self, output_type: OutputType) -> Sats {
         if self.is_funded_with_exposed_pubkey(output_type) {
+            self.balance()
+        } else {
+            Sats::ZERO
+        }
+    }
+
+    /// This address's contribution (in sats) to the funded-reused supply:
+    /// its balance if currently funded AND reused (received ≥ 2), else 0.
+    #[inline]
+    pub fn reused_supply_contribution(&self) -> Sats {
+        if self.is_funded() && self.is_reused() {
+            self.balance()
+        } else {
+            Sats::ZERO
+        }
+    }
+
+    /// This address's contribution (in sats) to the funded-respent supply:
+    /// its balance if currently funded AND respent (spent ≥ 2), else 0.
+    #[inline]
+    pub fn respent_supply_contribution(&self) -> Sats {
+        if self.is_funded() && self.is_respent() {
             self.balance()
         } else {
             Sats::ZERO

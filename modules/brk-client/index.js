@@ -2304,6 +2304,20 @@ function createAverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(c
 }
 
 /**
+ * @typedef {Object} AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshSharePattern
+ * @property {BtcCentsSatsUsdPattern} all
+ * @property {BtcCentsSatsUsdPattern} p2a
+ * @property {BtcCentsSatsUsdPattern} p2pk33
+ * @property {BtcCentsSatsUsdPattern} p2pk65
+ * @property {BtcCentsSatsUsdPattern} p2pkh
+ * @property {BtcCentsSatsUsdPattern} p2sh
+ * @property {BtcCentsSatsUsdPattern} p2tr
+ * @property {BtcCentsSatsUsdPattern} p2wpkh
+ * @property {BtcCentsSatsUsdPattern} p2wsh
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5} share
+ */
+
+/**
  * @typedef {Object} IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern
  * @property {SeriesPattern1<StoredI8>} index
  * @property {CentsSatsUsdPattern} pct05
@@ -2368,6 +2382,39 @@ function createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(client, acc) {
     p2tr: createAverageBlockCumulativeSumPattern(client, _p('p2tr', acc)),
     p2wpkh: createAverageBlockCumulativeSumPattern(client, _p('p2wpkh', acc)),
     p2wsh: createAverageBlockCumulativeSumPattern(client, _p('p2wsh', acc)),
+  };
+}
+
+/**
+ * @typedef {Object} AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5
+ * @property {BpsPercentRatioPattern2} all
+ * @property {BpsPercentRatioPattern2} p2a
+ * @property {BpsPercentRatioPattern2} p2pk33
+ * @property {BpsPercentRatioPattern2} p2pk65
+ * @property {BpsPercentRatioPattern2} p2pkh
+ * @property {BpsPercentRatioPattern2} p2sh
+ * @property {BpsPercentRatioPattern2} p2tr
+ * @property {BpsPercentRatioPattern2} p2wpkh
+ * @property {BpsPercentRatioPattern2} p2wsh
+ */
+
+/**
+ * Create a AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5}
+ */
+function createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(client, acc) {
+  return {
+    all: createBpsPercentRatioPattern2(client, acc),
+    p2a: createBpsPercentRatioPattern2(client, _p('p2a', acc)),
+    p2pk33: createBpsPercentRatioPattern2(client, _p('p2pk33', acc)),
+    p2pk65: createBpsPercentRatioPattern2(client, _p('p2pk65', acc)),
+    p2pkh: createBpsPercentRatioPattern2(client, _p('p2pkh', acc)),
+    p2sh: createBpsPercentRatioPattern2(client, _p('p2sh', acc)),
+    p2tr: createBpsPercentRatioPattern2(client, _p('p2tr', acc)),
+    p2wpkh: createBpsPercentRatioPattern2(client, _p('p2wpkh', acc)),
+    p2wsh: createBpsPercentRatioPattern2(client, _p('p2wsh', acc)),
   };
 }
 
@@ -2603,6 +2650,17 @@ function create_1m1w1y24hBpsPercentRatioPattern(client, acc) {
     ratio: createSeriesPattern1(client, _m(acc, 'ratio')),
   };
 }
+
+/**
+ * @typedef {Object} ActiveInputOutputSpendablePattern
+ * @property {_1m1w1y24hBlockPattern} activeReusedAddrCount
+ * @property {_1m1w1y24hBlockPattern2} activeReusedAddrShare
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6} inputFromReusedAddrCount
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7} inputFromReusedAddrShare
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6} outputToReusedAddrCount
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7} outputToReusedAddrShare
+ * @property {_1m1w1y24hBpsPercentRatioPattern} spendableOutputToReusedAddrShare
+ */
 
 /**
  * @typedef {Object} CapLossMvrvNetPriceProfitSoprPattern
@@ -2908,6 +2966,31 @@ function createDeltaDominanceHalfInTotalPattern(client, acc) {
     inLoss: createBtcCentsSatsUsdPattern(client, _m(acc, 'in_loss')),
     inProfit: createBtcCentsSatsUsdPattern(client, _m(acc, 'in_profit')),
     total: createBtcCentsSatsUsdPattern(client, acc),
+  };
+}
+
+/**
+ * @typedef {Object} _1m1w1y24hBlockPattern2
+ * @property {SeriesPattern1<StoredF32>} _1m
+ * @property {SeriesPattern1<StoredF32>} _1w
+ * @property {SeriesPattern1<StoredF32>} _1y
+ * @property {SeriesPattern1<StoredF32>} _24h
+ * @property {SeriesPattern18<StoredF32>} block
+ */
+
+/**
+ * Create a _1m1w1y24hBlockPattern2 pattern node
+ * @param {BrkClientBase} client
+ * @param {string} acc - Accumulated series name
+ * @returns {_1m1w1y24hBlockPattern2}
+ */
+function create_1m1w1y24hBlockPattern2(client, acc) {
+  return {
+    _1m: createSeriesPattern1(client, _m(acc, 'average_1m')),
+    _1w: createSeriesPattern1(client, _m(acc, 'average_1w')),
+    _1y: createSeriesPattern1(client, _m(acc, 'average_1y')),
+    _24h: createSeriesPattern1(client, _m(acc, 'average_24h')),
+    block: createSeriesPattern18(client, acc),
   };
 }
 
@@ -3990,6 +4073,13 @@ function createCentsSatsUsdPattern(client, acc) {
     usd: createSeriesPattern1(client, acc),
   };
 }
+
+/**
+ * @typedef {Object} CountEventsSupplyPattern
+ * @property {FundedTotalPattern} count
+ * @property {ActiveInputOutputSpendablePattern} events
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshSharePattern} supply
+ */
 
 /**
  * @typedef {Object} CumulativeRollingSumPattern
@@ -5113,6 +5203,7 @@ function createTransferPattern(client, acc) {
  * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4} total
  * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6} new
  * @property {SeriesTree_Addrs_Reused} reused
+ * @property {SeriesTree_Addrs_Respent} respent
  * @property {SeriesTree_Addrs_Exposed} exposed
  * @property {SeriesTree_Addrs_Delta} delta
  * @property {SeriesTree_Addrs_AvgAmount} avgAmount
@@ -5224,6 +5315,7 @@ function createTransferPattern(client, acc) {
  * @typedef {Object} SeriesTree_Addrs_Reused
  * @property {FundedTotalPattern} count
  * @property {SeriesTree_Addrs_Reused_Events} events
+ * @property {SeriesTree_Addrs_Reused_Supply} supply
  */
 
 /**
@@ -5234,16 +5326,53 @@ function createTransferPattern(client, acc) {
  * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6} inputFromReusedAddrCount
  * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7} inputFromReusedAddrShare
  * @property {_1m1w1y24hBlockPattern} activeReusedAddrCount
- * @property {SeriesTree_Addrs_Reused_Events_ActiveReusedAddrShare} activeReusedAddrShare
+ * @property {_1m1w1y24hBlockPattern2} activeReusedAddrShare
  */
 
 /**
- * @typedef {Object} SeriesTree_Addrs_Reused_Events_ActiveReusedAddrShare
- * @property {SeriesPattern18<StoredF32>} block
- * @property {SeriesPattern1<StoredF32>} _24h
- * @property {SeriesPattern1<StoredF32>} _1w
- * @property {SeriesPattern1<StoredF32>} _1m
- * @property {SeriesPattern1<StoredF32>} _1y
+ * @typedef {Object} SeriesTree_Addrs_Reused_Supply
+ * @property {BtcCentsSatsUsdPattern} all
+ * @property {BtcCentsSatsUsdPattern} p2pk65
+ * @property {BtcCentsSatsUsdPattern} p2pk33
+ * @property {BtcCentsSatsUsdPattern} p2pkh
+ * @property {BtcCentsSatsUsdPattern} p2sh
+ * @property {BtcCentsSatsUsdPattern} p2wpkh
+ * @property {BtcCentsSatsUsdPattern} p2wsh
+ * @property {BtcCentsSatsUsdPattern} p2tr
+ * @property {BtcCentsSatsUsdPattern} p2a
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5} share
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Addrs_Respent
+ * @property {FundedTotalPattern} count
+ * @property {SeriesTree_Addrs_Respent_Events} events
+ * @property {SeriesTree_Addrs_Respent_Supply} supply
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Addrs_Respent_Events
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6} outputToReusedAddrCount
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7} outputToReusedAddrShare
+ * @property {_1m1w1y24hBpsPercentRatioPattern} spendableOutputToReusedAddrShare
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6} inputFromReusedAddrCount
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7} inputFromReusedAddrShare
+ * @property {_1m1w1y24hBlockPattern} activeReusedAddrCount
+ * @property {_1m1w1y24hBlockPattern2} activeReusedAddrShare
+ */
+
+/**
+ * @typedef {Object} SeriesTree_Addrs_Respent_Supply
+ * @property {BtcCentsSatsUsdPattern} all
+ * @property {BtcCentsSatsUsdPattern} p2pk65
+ * @property {BtcCentsSatsUsdPattern} p2pk33
+ * @property {BtcCentsSatsUsdPattern} p2pkh
+ * @property {BtcCentsSatsUsdPattern} p2sh
+ * @property {BtcCentsSatsUsdPattern} p2wpkh
+ * @property {BtcCentsSatsUsdPattern} p2wsh
+ * @property {BtcCentsSatsUsdPattern} p2tr
+ * @property {BtcCentsSatsUsdPattern} p2a
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5} share
  */
 
 /**
@@ -5263,20 +5392,7 @@ function createTransferPattern(client, acc) {
  * @property {BtcCentsSatsUsdPattern} p2wsh
  * @property {BtcCentsSatsUsdPattern} p2tr
  * @property {BtcCentsSatsUsdPattern} p2a
- * @property {SeriesTree_Addrs_Exposed_Supply_Share} share
- */
-
-/**
- * @typedef {Object} SeriesTree_Addrs_Exposed_Supply_Share
- * @property {BpsPercentRatioPattern2} all
- * @property {BpsPercentRatioPattern2} p2pk65
- * @property {BpsPercentRatioPattern2} p2pk33
- * @property {BpsPercentRatioPattern2} p2pkh
- * @property {BpsPercentRatioPattern2} p2sh
- * @property {BpsPercentRatioPattern2} p2wpkh
- * @property {BpsPercentRatioPattern2} p2wsh
- * @property {BpsPercentRatioPattern2} p2tr
- * @property {BpsPercentRatioPattern2} p2a
+ * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5} share
  */
 
 /**
@@ -8631,38 +8747,58 @@ class BrkClient extends BrkClientBase {
             inputFromReusedAddrCount: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(this, 'input_from_reused_addr_count'),
             inputFromReusedAddrShare: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7(this, 'input_from_reused_addr_share'),
             activeReusedAddrCount: create_1m1w1y24hBlockPattern(this, 'active_reused_addr_count'),
-            activeReusedAddrShare: {
-              block: createSeriesPattern18(this, 'active_reused_addr_share'),
-              _24h: createSeriesPattern1(this, 'active_reused_addr_share_average_24h'),
-              _1w: createSeriesPattern1(this, 'active_reused_addr_share_average_1w'),
-              _1m: createSeriesPattern1(this, 'active_reused_addr_share_average_1m'),
-              _1y: createSeriesPattern1(this, 'active_reused_addr_share_average_1y'),
-            },
+            activeReusedAddrShare: create_1m1w1y24hBlockPattern2(this, 'active_reused_addr_share'),
+          },
+          supply: {
+            all: createBtcCentsSatsUsdPattern(this, 'reused_addr_supply'),
+            p2pk65: createBtcCentsSatsUsdPattern(this, 'p2pk65_reused_addr_supply'),
+            p2pk33: createBtcCentsSatsUsdPattern(this, 'p2pk33_reused_addr_supply'),
+            p2pkh: createBtcCentsSatsUsdPattern(this, 'p2pkh_reused_addr_supply'),
+            p2sh: createBtcCentsSatsUsdPattern(this, 'p2sh_reused_addr_supply'),
+            p2wpkh: createBtcCentsSatsUsdPattern(this, 'p2wpkh_reused_addr_supply'),
+            p2wsh: createBtcCentsSatsUsdPattern(this, 'p2wsh_reused_addr_supply'),
+            p2tr: createBtcCentsSatsUsdPattern(this, 'p2tr_reused_addr_supply'),
+            p2a: createBtcCentsSatsUsdPattern(this, 'p2a_reused_addr_supply'),
+            share: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(this, 'reused_addr_supply_share'),
+          },
+        },
+        respent: {
+          count: createFundedTotalPattern(this, 'respent_addr_count'),
+          events: {
+            outputToReusedAddrCount: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(this, 'output_to_respent_addr_count'),
+            outputToReusedAddrShare: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7(this, 'output_to_respent_addr_share'),
+            spendableOutputToReusedAddrShare: create_1m1w1y24hBpsPercentRatioPattern(this, 'spendable_output_to_respent_addr_share'),
+            inputFromReusedAddrCount: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(this, 'input_from_respent_addr_count'),
+            inputFromReusedAddrShare: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7(this, 'input_from_respent_addr_share'),
+            activeReusedAddrCount: create_1m1w1y24hBlockPattern(this, 'active_respent_addr_count'),
+            activeReusedAddrShare: create_1m1w1y24hBlockPattern2(this, 'active_respent_addr_share'),
+          },
+          supply: {
+            all: createBtcCentsSatsUsdPattern(this, 'respent_addr_supply'),
+            p2pk65: createBtcCentsSatsUsdPattern(this, 'p2pk65_respent_addr_supply'),
+            p2pk33: createBtcCentsSatsUsdPattern(this, 'p2pk33_respent_addr_supply'),
+            p2pkh: createBtcCentsSatsUsdPattern(this, 'p2pkh_respent_addr_supply'),
+            p2sh: createBtcCentsSatsUsdPattern(this, 'p2sh_respent_addr_supply'),
+            p2wpkh: createBtcCentsSatsUsdPattern(this, 'p2wpkh_respent_addr_supply'),
+            p2wsh: createBtcCentsSatsUsdPattern(this, 'p2wsh_respent_addr_supply'),
+            p2tr: createBtcCentsSatsUsdPattern(this, 'p2tr_respent_addr_supply'),
+            p2a: createBtcCentsSatsUsdPattern(this, 'p2a_respent_addr_supply'),
+            share: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(this, 'respent_addr_supply_share'),
           },
         },
         exposed: {
           count: createFundedTotalPattern(this, 'exposed_addr_count'),
           supply: {
-            all: createBtcCentsSatsUsdPattern(this, 'exposed_supply'),
-            p2pk65: createBtcCentsSatsUsdPattern(this, 'p2pk65_exposed_supply'),
-            p2pk33: createBtcCentsSatsUsdPattern(this, 'p2pk33_exposed_supply'),
-            p2pkh: createBtcCentsSatsUsdPattern(this, 'p2pkh_exposed_supply'),
-            p2sh: createBtcCentsSatsUsdPattern(this, 'p2sh_exposed_supply'),
-            p2wpkh: createBtcCentsSatsUsdPattern(this, 'p2wpkh_exposed_supply'),
-            p2wsh: createBtcCentsSatsUsdPattern(this, 'p2wsh_exposed_supply'),
-            p2tr: createBtcCentsSatsUsdPattern(this, 'p2tr_exposed_supply'),
-            p2a: createBtcCentsSatsUsdPattern(this, 'p2a_exposed_supply'),
-            share: {
-              all: createBpsPercentRatioPattern2(this, 'exposed_supply_share'),
-              p2pk65: createBpsPercentRatioPattern2(this, 'p2pk65_exposed_supply_share'),
-              p2pk33: createBpsPercentRatioPattern2(this, 'p2pk33_exposed_supply_share'),
-              p2pkh: createBpsPercentRatioPattern2(this, 'p2pkh_exposed_supply_share'),
-              p2sh: createBpsPercentRatioPattern2(this, 'p2sh_exposed_supply_share'),
-              p2wpkh: createBpsPercentRatioPattern2(this, 'p2wpkh_exposed_supply_share'),
-              p2wsh: createBpsPercentRatioPattern2(this, 'p2wsh_exposed_supply_share'),
-              p2tr: createBpsPercentRatioPattern2(this, 'p2tr_exposed_supply_share'),
-              p2a: createBpsPercentRatioPattern2(this, 'p2a_exposed_supply_share'),
-            },
+            all: createBtcCentsSatsUsdPattern(this, 'exposed_addr_supply'),
+            p2pk65: createBtcCentsSatsUsdPattern(this, 'p2pk65_exposed_addr_supply'),
+            p2pk33: createBtcCentsSatsUsdPattern(this, 'p2pk33_exposed_addr_supply'),
+            p2pkh: createBtcCentsSatsUsdPattern(this, 'p2pkh_exposed_addr_supply'),
+            p2sh: createBtcCentsSatsUsdPattern(this, 'p2sh_exposed_addr_supply'),
+            p2wpkh: createBtcCentsSatsUsdPattern(this, 'p2wpkh_exposed_addr_supply'),
+            p2wsh: createBtcCentsSatsUsdPattern(this, 'p2wsh_exposed_addr_supply'),
+            p2tr: createBtcCentsSatsUsdPattern(this, 'p2tr_exposed_addr_supply'),
+            p2a: createBtcCentsSatsUsdPattern(this, 'p2a_exposed_addr_supply'),
+            share: createAllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5(this, 'exposed_addr_supply_share'),
           },
         },
         delta: {

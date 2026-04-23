@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use bitcoin::ScriptBuf;
-use brk_types::Sats;
+use brk_types::{Sats, Txid};
 
 #[derive(Debug, Clone)]
 pub struct BlockchainInfo {
@@ -27,6 +27,12 @@ pub struct TxOutInfo {
     pub coinbase: bool,
     pub value: Sats,
     pub script_pub_key: ScriptBuf,
+}
+
+#[derive(Debug, Clone)]
+pub struct BlockTemplateTx {
+    pub txid: Txid,
+    pub fee: Sats,
 }
 
 #[derive(Debug, Clone)]
