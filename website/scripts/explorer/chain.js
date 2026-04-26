@@ -1,15 +1,19 @@
 import { brk } from "../utils/client.js";
+import { onPlainClick } from "../utils/dom.js";
 import { createCube } from "./cube.js";
 import { createHeightElement, formatFeeRate } from "./render.js";
 
 const LOOKAHEAD = 15;
 
 /** @type {HTMLDivElement} */ let chainEl;
+/** @type {HTMLDivElement} */ let scrollEl;
 /** @type {HTMLDivElement} */ let blocksEl;
 /** @type {HTMLAnchorElement | null} */ let selectedCube = null;
 /** @type {IntersectionObserver} */ let olderObserver;
 /** @type {(block: BlockInfoV1) => void} */ let onSelect = () => {};
 /** @type {(cube: HTMLAnchorElement) => void} */ let onCubeClick = () => {};
+/** @type {() => void} */ let onTip = () => {};
+/** @type {() => void} */ let onGenesis = () => {};
 
 /** @type {Map<BlockHash, BlockInfoV1>} */
 const blocksByHash = new Map();
@@ -22,32 +26,51 @@ let reachedTip = false;
 
 /**
  * @param {HTMLElement} parent
- * @param {{ onSelect: (block: BlockInfoV1) => void, onCubeClick: (cube: HTMLAnchorElement) => void }} callbacks
+ * @param {{
+ *   onSelect: (block: BlockInfoV1) => void,
+ *   onCubeClick: (cube: HTMLAnchorElement) => void,
+ *   onTip: () => void,
+ *   onGenesis: () => void,
+ * }} callbacks
  */
 export function initChain(parent, callbacks) {
   onSelect = callbacks.onSelect;
   onCubeClick = callbacks.onCubeClick;
+  onTip = callbacks.onTip;
+  onGenesis = callbacks.onGenesis;
 
   chainEl = document.createElement("div");
   chainEl.id = "chain";
   parent.append(chainEl);
 
+  chainEl.append(
+    createControlLink("tip", "/block/tip", "Jump to chain tip", onTip),
+  );
+
+  chainEl.append(
+    createControlLink("gen", "/block/0", "Jump to genesis block", onGenesis),
+  );
+
+  scrollEl = document.createElement("div");
+  scrollEl.classList.add("chain-scroll");
+  chainEl.append(scrollEl);
+
   blocksEl = document.createElement("div");
   blocksEl.classList.add("blocks");
-  chainEl.append(blocksEl);
+  scrollEl.append(blocksEl);
 
   olderObserver = new IntersectionObserver(
     (entries) => {
       if (entries[0].isIntersecting) loadOlder();
     },
-    { root: chainEl },
+    { root: scrollEl },
   );
 
-  chainEl.addEventListener(
+  scrollEl.addEventListener(
     "scroll",
     () => {
       if (reachedTip || loadingNewer) return;
-      if (chainEl.scrollTop <= 50 && chainEl.scrollLeft <= 50) loadNewer();
+      if (scrollEl.scrollTop <= 50 && scrollEl.scrollLeft <= 50) loadNewer();
     },
     { passive: true },
   );
@@ -125,8 +148,8 @@ function appendNewerBlocks(blocks) {
 
   if (anchor && anchorRect) {
     const r = anchor.getBoundingClientRect();
-    chainEl.scrollTop += r.top - anchorRect.top;
-    chainEl.scrollLeft += r.left - anchorRect.left;
+    scrollEl.scrollTop += r.top - anchorRect.top;
+    scrollEl.scrollLeft += r.left - anchorRect.left;
   }
   return true;
 }
@@ -164,6 +187,7 @@ async function resolveHeight(hashOrHeight) {
 
 /** @param {BlockHash | Height | string | null} [hashOrHeight] @param {{ silent?: boolean }} [options] */
 export async function goToCube(hashOrHeight, { silent } = {}) {
+  if (hashOrHeight === "tip") hashOrHeight = null;
   if (typeof hashOrHeight === "string" && /^\d+$/.test(hashOrHeight)) {
     hashOrHeight = Number(hashOrHeight);
   }
@@ -263,14 +287,7 @@ function createBlockCube(block) {
   const fill = Math.min(1, virtualSize / 1_000_000);
   const { topFace, rightFace, leftFace } = createCube(cubeElement, fill);
   blocksByHash.set(block.id, block);
-  // Intercept plain left-clicks for SPA nav; let modified clicks
-  // (cmd/ctrl/shift/middle) and right-click fall through so the
-  // anchor's native open-in-new-tab / context-menu behavior works.
-  cubeElement.addEventListener("click", (e) => {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-    e.preventDefault();
-    onCubeClick(cubeElement);
-  });
+  onPlainClick(cubeElement, () => onCubeClick(cubeElement));
 
   const minerName = pool.name;
 
@@ -339,5 +356,16 @@ function prependCube(cube) {
 function appendCube(cube) {
   blocksEl.append(cube);
   setGap(cube);
+}
+
+/** @param {"tip" | "gen"} label @param {string} href @param {string} title @param {() => void} handler */
+function createControlLink(label, href, title, handler) {
+  const a = document.createElement("a");
+  a.classList.add("chain-edge", label);
+  a.href = href;
+  a.title = title;
+  a.textContent = label;
+  onPlainClick(a, handler);
+  return a;
 }
 

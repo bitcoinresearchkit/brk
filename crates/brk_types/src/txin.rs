@@ -1,5 +1,5 @@
-use crate::{TxOut, Txid, Vout};
-use bitcoin::ScriptBuf;
+use crate::{TxOut, Txid, Vout, Witness};
+use bitcoin::{Script, ScriptBuf, Sequence, transaction::OutPoint};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeStruct};
 
@@ -26,8 +26,8 @@ pub struct TxIn {
     #[schemars(rename = "scriptsig_asm", with = "String")]
     pub script_sig_asm: (),
 
-    /// Witness data (hex-encoded stack items, present for SegWit inputs)
-    pub witness: Vec<String>,
+    /// Witness data (stack items, present for SegWit inputs; hex-encoded on the wire)
+    pub witness: Witness,
 
     /// Whether this input is a coinbase (block reward) input
     #[schemars(example = false)]
@@ -44,6 +44,24 @@ pub struct TxIn {
     /// Inner witnessscript in assembly (for P2WSH: last witness item decoded as script)
     #[schemars(rename = "inner_witnessscript_asm", with = "String")]
     pub inner_witness_script_asm: (),
+}
+
+/// Reconstruct a canonical `bitcoin::TxIn` from the stored brk shape.
+/// Mempool txs are never coinbase, so `vout` (u16 in brk) always fits
+/// the bitcoin protocol's u32 vout field via widening.
+impl From<&TxIn> for bitcoin::TxIn {
+    #[inline]
+    fn from(txin: &TxIn) -> Self {
+        Self {
+            previous_output: OutPoint {
+                txid: (&txin.txid).into(),
+                vout: u32::from(txin.vout),
+            },
+            script_sig: txin.script_sig.clone(),
+            sequence: Sequence(txin.sequence),
+            witness: (&txin.witness).into(),
+        }
+    }
 }
 
 impl Serialize for TxIn {
@@ -75,17 +93,14 @@ impl Serialize for TxIn {
             .as_ref()
             .is_some_and(|p| p.script_pubkey.is_p2tr());
         let inner_witness = if has_witness && self.witness.len() > 2 {
-            let script_hex = if is_p2tr {
-                self.witness.get(self.witness.len() - 2)
+            let script_bytes = if is_p2tr {
+                self.witness.second_to_last()
             } else {
                 self.witness.last()
             };
-            if let Some(hex) = script_hex {
-                let bytes: Vec<u8> = bitcoin::hex::FromHex::from_hex(hex).unwrap_or_default();
-                ScriptBuf::from(bytes).to_asm_string()
-            } else {
-                String::new()
-            }
+            script_bytes
+                .map(|b| Script::from_bytes(b).to_asm_string())
+                .unwrap_or_default()
         } else {
             String::new()
         };

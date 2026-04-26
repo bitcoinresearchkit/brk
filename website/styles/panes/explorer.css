@@ -89,16 +89,65 @@
 
   #chain {
     flex-shrink: 0;
-
-    @container aside (max-width: 767px) {
-      overflow-x: auto;
-      padding-bottom: 1rem;
-    }
+    position: relative;
+    padding: 0;
 
     @container aside (min-width: 768px) {
       height: 100%;
-      overflow-y: auto;
-      padding-right: calc(var(--main-padding) / 2);
+    }
+
+    .chain-scroll {
+      padding: 0 var(--main-padding);
+
+      @container aside (max-width: 767px) {
+        padding-bottom: 1rem;
+        overflow-x: auto;
+      }
+
+      @container aside (min-width: 768px) {
+        padding: var(--main-padding);
+        padding-right: calc(var(--main-padding) / 2);
+        height: 100%;
+        overflow-y: auto;
+      }
+    }
+
+    .chain-edge {
+      position: absolute;
+      font-size: var(--font-size-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 500;
+
+      @container aside (max-width: 767px) {
+        display: flex;
+        height: 100%;
+        width: var(--main-padding);
+        justify-content: center;
+        align-items: center;
+        writing-mode: vertical-lr;
+        text-orientation: upright;
+        text-decoration: none;
+      }
+
+      @container aside (min-width: 768px) {
+        display: flex;
+        width: 100%;
+        height: var(--main-padding);
+        justify-content: center;
+        align-items: center;
+        padding-left: calc(var(--main-padding) / 2);
+      }
+    }
+
+    .tip {
+      @container aside (min-width: 768px) { top: 0; }
+      @container aside (max-width: 767px) { left: 0; }
+    }
+
+    .gen {
+      @container aside (min-width: 768px) { bottom: 0; }
+      @container aside (max-width: 767px) { top: 0; right: 0; }
     }
 
     .blocks {

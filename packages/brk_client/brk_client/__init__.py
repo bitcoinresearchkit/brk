@@ -21,14 +21,10 @@ T = TypeVar('T')
 Addr = str
 # US Dollar amount
 Dollars = float
-# Amount in satoshis (1 BTC = 100,000,000 sats)
-Sats = int
 # Index within its type (e.g., 0 for first P2WPKH address)
 TypeIndex = int
 # Type (P2PKH, P2WPKH, P2SH, P2TR, etc.)
 OutputType = Literal["p2pk", "p2pk", "p2pkh", "multisig", "p2sh", "op_return", "v0_p2wpkh", "v0_p2wsh", "v1_p2tr", "p2a", "empty", "unknown"]
-# Transaction ID (hash)
-Txid = str
 # Unified index for any address type (funded or empty)
 AnyAddrIndex = TypeIndex
 # Unsigned basis points stored as u16.
@@ -55,14 +51,10 @@ BasisPointsSigned32 = int
 Bitcoin = float
 # URL-friendly mining pool identifier
 PoolSlug = Literal["unknown", "blockfills", "ultimuspool", "terrapool", "luxor", "onethash", "btccom", "bitfarms", "huobipool", "wayicn", "canoepool", "btctop", "bitcoincom", "pool175btc", "gbminers", "axbt", "asicminer", "bitminter", "bitcoinrussia", "btcserv", "simplecoinus", "btcguild", "eligius", "ozcoin", "eclipsemc", "maxbtc", "triplemining", "coinlab", "pool50btc", "ghashio", "stminingcorp", "bitparking", "mmpool", "polmine", "kncminer", "bitalo", "f2pool", "hhtt", "megabigpower", "mtred", "nmcbit", "yourbtcnet", "givemecoins", "braiinspool", "antpool", "multicoinco", "bcpoolio", "cointerra", "kanopool", "solock", "ckpool", "nicehash", "bitclub", "bitcoinaffiliatenetwork", "btcc", "bwpool", "exxbw", "bitsolo", "bitfury", "twentyoneinc", "digitalbtc", "eightbaochi", "mybtccoinpool", "tbdice", "hashpool", "nexious", "bravomining", "hotpool", "okexpool", "bcmonster", "onehash", "bixin", "tatmaspool", "viabtc", "connectbtc", "batpool", "waterhole", "dcexploration", "dcex", "btpool", "fiftyeightcoin", "bitcoinindia", "shawnp0wers", "phashio", "rigpool", "haozhuzhu", "sevenpool", "miningkings", "hashbx", "dpool", "rawpool", "haominer", "helix", "bitcoinukraine", "poolin", "secretsuperstar", "tigerpoolnet", "sigmapoolcom", "okpooltop", "hummerpool", "tangpool", "bytepool", "spiderpool", "novablock", "miningcity", "binancepool", "minerium", "lubiancom", "okkong", "aaopool", "emcdpool", "foundryusa", "sbicrypto", "arkpool", "purebtccom", "marapool", "kucoinpool", "entrustcharitypool", "okminer", "titan", "pegapool", "btcnuggets", "cloudhashing", "digitalxmintsy", "telco214", "btcpoolparty", "multipool", "transactioncoinmining", "btcdig", "trickysbtcpool", "btcmp", "eobot", "unomp", "patels", "gogreenlight", "bitcoinindiapool", "ekanembtc", "canoe", "tiger", "onem1x", "zulupool", "secpool", "ocean", "whitepool", "wiz", "wk057", "futurebitapollosolo", "carbonnegative", "portlandhodl", "phoenix", "neopool", "maxipool", "bitfufupool", "gdpool", "miningdutch", "publicpool", "miningsquared", "innopolistech", "btclab", "parasite", "redrockpool", "est3lar", "braiinssolo", "solopool"]
-# Fee rate in sat/vB
-FeeRate = float
 # Weight in weight units (WU). Max block weight is 4,000,000 WU.
 Weight = int
 # Block height
 Height = int
-# UNIX timestamp in seconds
-Timestamp = int
 # Block hash
 BlockHash = str
 # Transaction index within a block (0 = coinbase)
@@ -98,8 +90,6 @@ CostBasisValue = Literal["supply", "realized", "unrealized"]
 # Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
 # log10/log50/log100/log200 (logarithmic with 10/50/100/200 buckets per decade).
 UrpdAggregation = Literal["raw", "lin200", "lin500", "lin1000", "log10", "log50", "log100", "log200"]
-# Virtual size in vbytes (weight / 4, rounded up). Max block vsize is ~1,000,000 vB.
-VSize = int
 # Date in YYYYMMDD format stored as u32
 Date = int
 # Output format for API responses
@@ -199,6 +189,14 @@ StoredU64 = int
 TimePeriod = Literal["24h", "3d", "1w", "1m", "3m", "6m", "1y", "2y", "3y", "all"]
 # Index of the output being spent in the previous transaction
 Vout = int
+# Transaction witness: a stack of byte arrays, one per witness item.
+# 
+# Wraps `bitcoin::Witness` (single-buffer layout with offsets, much
+# more compact than `Vec<Vec<u8>>`). Serializes as a JSON array of
+# hex strings - the format used by Bitcoin Core REST and mempool.space
+# and matching brk's `script_sig: ScriptBuf` (bytes internally, hex
+# on the wire).
+Witness = List[str]
 # Raw transaction version (i32) from Bitcoin protocol.
 # Unlike TxVersion (u8, indexed), this preserves non-standard values
 # used in coinbase txs for miner signaling/branding.
@@ -213,11 +211,21 @@ UnknownOutputIndex = TypeIndex
 Week1 = int
 Year1 = int
 Year10 = int
+# Fee rate in sat/vB
+FeeRate = float
 # Aggregation dimension for querying series. Includes time-based (date, week, month, year),
 # block-based (height, tx_index), and address/output type indexes.
 Index = Literal["minute10", "minute30", "hour1", "hour4", "hour12", "day1", "day3", "week1", "month1", "month3", "month6", "year1", "year10", "halving", "epoch", "height", "tx_index", "txin_index", "txout_index", "empty_output_index", "op_return_index", "p2a_addr_index", "p2ms_output_index", "p2pk33_addr_index", "p2pk65_addr_index", "p2pkh_addr_index", "p2sh_addr_index", "p2tr_addr_index", "p2wpkh_addr_index", "p2wsh_addr_index", "unknown_output_index", "funded_addr_index", "empty_addr_index"]
+# Amount in satoshis (1 BTC = 100,000,000 sats)
+Sats = int
+# UNIX timestamp in seconds
+Timestamp = int
 # Hierarchical tree node for organizing series into categories
 TreeNode = Union[dict[str, "TreeNode"], "SeriesLeafWithSchema"]
+# Transaction ID (hash)
+Txid = str
+# Virtual size in vbytes (weight / 4, rounded up). Max block vsize is ~1,000,000 vB.
+VSize = int
 class AddrChainStats(TypedDict):
     """
     Address statistics on the blockchain (confirmed transactions only)
@@ -1233,6 +1241,15 @@ class Prices(TypedDict):
     time: Timestamp
     USD: Dollars
 
+class RbfResponse(TypedDict):
+    """
+    Response body for `GET /api/v1/tx/:txid/rbf`. Both fields are null
+    when the tx has no known RBF history within the mempool monitor's
+    graveyard retention window.
+    """
+    replacements: Union[ReplacementNode, None]
+    replaces: Optional[List[Txid]]
+
 class RecommendedFees(TypedDict):
     """
     Recommended fee rates in sat/vB
@@ -1398,7 +1415,7 @@ class TxIn(TypedDict):
         prevout: Information about the previous output being spent
         scriptsig: Signature script (hex, for non-SegWit inputs)
         scriptsig_asm: Signature script in assembly format
-        witness: Witness data (hex-encoded stack items, present for SegWit inputs)
+        witness: Witness data (stack items, present for SegWit inputs; hex-encoded on the wire)
         is_coinbase: Whether this input is a coinbase (block reward) input
         sequence: Input sequence number
         inner_redeemscript_asm: Inner redeemscript in assembly (for P2SH-wrapped SegWit: scriptsig + witness both present)
@@ -1409,7 +1426,7 @@ class TxIn(TypedDict):
     prevout: Union[TxOut, None]
     scriptsig: str
     scriptsig_asm: str
-    witness: List[str]
+    witness: Witness
     is_coinbase: bool
     sequence: int
     inner_redeemscript_asm: str
@@ -1577,6 +1594,45 @@ class ValidateAddrParam(TypedDict):
         address: Bitcoin address to validate (can be any string)
     """
     address: str
+
+class RbfTx(TypedDict):
+    """
+    Transaction summary carried inside an RBF replacement node. Shape
+    matches mempool.space's `/api/v1/tx/:txid/rbf` and
+    `/api/v1/replacements` responses.
+
+    Attributes:
+        value: Sum of output amounts.
+        rbf: BIP-125 signaling: at least one input has sequence < 0xffffffff-1.
+        fullRbf: Only populated on the root `tx` of an RBF response. `true` iff
+this tx displaced at least one non-signaling predecessor.
+    """
+    txid: Txid
+    fee: Sats
+    vsize: VSize
+    value: Sats
+    rate: FeeRate
+    time: Timestamp
+    rbf: bool
+    fullRbf: Optional[bool]
+
+class ReplacementNode(TypedDict):
+    """
+    One node in an RBF replacement tree. The node's `tx` replaced each
+    entry in `replaces`, recursively.
+
+    Attributes:
+        time: First-seen timestamp, duplicated here to match mempool.space's
+on-the-wire shape.
+        fullRbf: Any predecessor in this subtree was non-signaling.
+        interval: Seconds between this node's `time` and the successor that
+replaced it. Omitted on the root of an RBF response.
+    """
+    tx: RbfTx
+    time: Timestamp
+    fullRbf: bool
+    interval: Optional[int]
+    replaces: List["ReplacementNode"]
 
 class SeriesLeafWithSchema(TypedDict):
     """
@@ -8450,6 +8506,16 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/v1/transaction-times`"""
         return self.get_json('/api/v1/transaction-times')
+
+    def get_tx_rbf(self, txid: Txid) -> RbfResponse:
+        """RBF replacement history.
+
+        Returns the RBF replacement tree for a transaction, if any. Both `replacements` and `replaces` are null when the tx has no known RBF history within the mempool monitor's retention window.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-rbf-history)*
+
+        Endpoint: `GET /api/v1/tx/{txid}/rbf`"""
+        return self.get_json(f'/api/v1/tx/{txid}/rbf')
 
     def validate_address(self, address: str) -> AddrValidation:
         """Validate address.

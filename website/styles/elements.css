@@ -125,7 +125,7 @@ h3 {
 html {
   background-color: var(--background-color);
   color: var(--color);
-  scrollbar-color: var(--off-color) var(--background-color);
+  scrollbar-color: var(--off-color) transparent;
   scrollbar-width: thin;
   overflow: hidden;
 }

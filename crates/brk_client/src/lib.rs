@@ -8897,7 +8897,7 @@ pub struct BrkClient {
 
 impl BrkClient {
     /// Client version.
-    pub const VERSION: &'static str = "v0.3.0-beta.4";
+    pub const VERSION: &'static str = "v0.3.0-beta.5";
 
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {
@@ -9845,6 +9845,17 @@ impl BrkClient {
     /// Endpoint: `GET /api/v1/transaction-times`
     pub fn get_transaction_times(&self) -> Result<Vec<f64>> {
         self.base.get_json(&format!("/api/v1/transaction-times"))
+    }
+
+    /// RBF replacement history
+    ///
+    /// Returns the RBF replacement tree for a transaction, if any. Both `replacements` and `replaces` are null when the tx has no known RBF history within the mempool monitor's retention window.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-rbf-history)*
+    ///
+    /// Endpoint: `GET /api/v1/tx/{txid}/rbf`
+    pub fn get_tx_rbf(&self, txid: Txid) -> Result<RbfResponse> {
+        self.base.get_json(&format!("/api/v1/tx/{txid}/rbf"))
     }
 
     /// Validate address

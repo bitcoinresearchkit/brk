@@ -46,3 +46,10 @@ impl From<Vin> for u64 {
         value.0 as u64
     }
 }
+
+impl From<Vin> for usize {
+    #[inline]
+    fn from(value: Vin) -> Self {
+        value.0 as usize
+    }
+}

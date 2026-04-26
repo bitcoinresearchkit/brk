@@ -3,7 +3,7 @@ use std::{collections::BTreeMap, sync::LazyLock};
 use brk_error::{Error, Result};
 use brk_traversable::TreeNode;
 use brk_types::{
-    BlockHashPrefix, Date, DetailedSeriesCount, Epoch, Etag, Format, Halving, Height, Index,
+    BlockHashPrefix, Date, DetailedSeriesCount, Epoch, Format, Halving, Height, Index,
     IndexInfo, LegacyValue, Limit, Output, OutputLegacy, PaginatedSeries, Pagination,
     PaginationIndex, RangeIndex, RangeMap, SearchQuery, SeriesData, SeriesInfo, SeriesName,
     SeriesOutput, SeriesOutputLegacy, SeriesSelection, Timestamp, Version,
@@ -449,7 +449,8 @@ impl Query {
 }
 
 /// A resolved series query ready for formatting.
-/// Contains the vecs and metadata needed to build an ETag or format the output.
+/// Carries the vecs plus the metadata (version, total, end, hash_prefix) callers
+/// need to derive an etag or cache policy.
 pub struct ResolvedQuery {
     pub vecs: Vec<&'static dyn AnyExportableVec>,
     pub format: Format,
@@ -462,10 +463,6 @@ pub struct ResolvedQuery {
 }
 
 impl ResolvedQuery {
-    pub fn etag(&self) -> Etag {
-        Etag::from_series(self.version, self.total, self.end, self.hash_prefix)
-    }
-
     pub fn format(&self) -> Format {
         self.format
     }

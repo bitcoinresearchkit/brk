@@ -18,7 +18,7 @@ brk_error = { workspace = true, features = ["jiff", "vecdb"] }
 brk_indexer = { workspace = true }
 brk_mempool = { workspace = true }
 brk_reader = { workspace = true }
-brk_rpc = { workspace = true, features = ["corepc"] }
+brk_rpc = { workspace = true }
 brk_traversable = { workspace = true }
 brk_types = { workspace = true }
 derive_more = { workspace = true }

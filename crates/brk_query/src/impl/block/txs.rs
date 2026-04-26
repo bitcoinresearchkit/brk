@@ -1,6 +1,6 @@
 use std::io::Cursor;
 
-use bitcoin::{consensus::Decodable, hex::DisplayHex};
+use bitcoin::consensus::Decodable;
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
     BlkPosition, BlockHash, Height, OutPoint, OutputType, RawLockTime, Sats, StoredU32,
@@ -217,11 +217,7 @@ impl Query {
                         (prev_txid, outpoint.vout(), Some(prev_txout))
                     };
 
-                    let witness = txin
-                        .witness
-                        .iter()
-                        .map(|w| w.to_lower_hex_string())
-                        .collect();
+                    let witness = txin.witness.clone().into();
 
                     Ok(TxIn {
                         txid: prev_txid,

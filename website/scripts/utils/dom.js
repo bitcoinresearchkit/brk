@@ -96,6 +96,18 @@ export function createAnchorElement({
   return anchor;
 }
 
+// Intercept plain left-clicks for SPA nav; let modified clicks
+// (cmd/ctrl/shift/middle) and right-click fall through so the
+// anchor's native open-in-new-tab / context-menu behavior works.
+/** @param {HTMLElement} el @param {() => void} handler */
+export function onPlainClick(el, handler) {
+  el.addEventListener("click", (e) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    handler();
+  });
+}
+
 /**
  * @param {Object} arg
  * @param {string | HTMLElement} arg.inside

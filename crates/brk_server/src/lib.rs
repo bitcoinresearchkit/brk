@@ -3,10 +3,12 @@
 use std::{
     any::Any,
     net::SocketAddr,
-    path::PathBuf,
     sync::{Arc, atomic::AtomicU64},
     time::{Duration, Instant},
 };
+
+#[cfg(feature = "bindgen")]
+use std::path::PathBuf;
 
 use aide::axum::ApiRouter;
 use axum::{
@@ -33,17 +35,23 @@ use tower_layer::Layer;
 use tracing::{error, info};
 
 mod api;
-pub mod cache;
+mod cache;
+mod config;
 mod error;
+mod etag;
 mod extended;
-pub mod params;
+mod params;
 mod state;
 
 pub use api::ApiRoutes;
 use api::*;
 pub use brk_types::Port;
 pub use brk_website::Website;
-pub use cache::{CacheParams, CacheStrategy};
+pub use cache::CdnCacheMode;
+use cache::{CacheParams, CacheStrategy};
+pub use config::{
+    DEFAULT_CACHE_SIZE, DEFAULT_MAX_WEIGHT, DEFAULT_MAX_WEIGHT_LOCALHOST, ServerConfig,
+};
 pub use error::{Error, Result};
 use state::*;
 
@@ -52,16 +60,19 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub struct Server(AppState);
 
 impl Server {
-    pub fn new(query: &AsyncQuery, data_path: PathBuf, website: Website) -> Self {
-        website.log();
+    pub fn new(query: &AsyncQuery, config: ServerConfig) -> Self {
+        config.website.log();
+        cache::init(config.cdn_cache_mode);
         Self(AppState {
             query: query.clone(),
-            data_path,
-            website,
-            cache: Arc::new(Cache::new(1_000)),
+            data_path: config.data_path,
+            website: config.website,
+            cache: Arc::new(Cache::new(config.cache_size)),
             last_tip: Arc::new(AtomicU64::new(0)),
             started_at: jiff::Timestamp::now(),
             started_instant: Instant::now(),
+            max_weight: config.max_weight,
+            max_weight_localhost: config.max_weight_localhost,
         })
     }
 

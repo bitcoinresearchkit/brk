@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use crate::{CacheStrategy, Error, extended::TransformResponseExtended};
 
 use super::AppState;
-use super::series::legacy;
+use super::series_legacy;
 
 /// Legacy path parameter for `/api/metric/{metric}`
 #[derive(Deserialize, JsonSchema)]
@@ -47,7 +47,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
             "/api/metrics",
             get_with(
                 async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::Static, &uri, |q| Ok(q.series_catalog().clone())).await
+                    state.cached_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.series_catalog().clone())).await
                 },
                 |op| op
                     .id("get_metrics_tree_deprecated")
@@ -70,7 +70,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                     headers: HeaderMap,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, &uri, |q| Ok(q.series_count())).await
+                    state.cached_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.series_count())).await
                 },
                 |op| op
                     .id("get_metrics_count_deprecated")
@@ -93,7 +93,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                     headers: HeaderMap,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, &uri, |q| Ok(q.indexes().to_vec())).await
+                    state.cached_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.indexes().to_vec())).await
                 },
                 |op| op
                     .id("get_indexes_deprecated")
@@ -117,7 +117,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                     State(state): State<AppState>,
                     Query(pagination): Query<Pagination>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| Ok(q.series_list(pagination))).await
+                    state.cached_json(&headers, CacheStrategy::Deploy, &uri, move |q| Ok(q.series_list(pagination))).await
                 },
                 |op| op
                     .id("list_metrics_deprecated")
@@ -141,7 +141,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                     State(state): State<AppState>,
                     Query(query): Query<SearchQuery>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| Ok(q.search_series(&query))).await
+                    state.cached_json(&headers, CacheStrategy::Deploy, &uri, move |q| Ok(q.search_series(&query))).await
                 },
                 |op| op
                     .id("search_metrics_deprecated")
@@ -161,7 +161,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
             "/api/metrics/bulk",
             get_with(
                 |uri: Uri, headers: HeaderMap, addr: Extension<SocketAddr>, query: Query<SeriesSelection>, state: State<AppState>| async move {
-                    legacy::handler(uri, headers, addr, query, state)
+                    series_legacy::handler(uri, headers, addr, query, state)
                         .await
                         .into_response()
                 },
@@ -189,7 +189,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                     State(state): State<AppState>,
                     Path(path): Path<LegacySeriesParam>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Static, &uri, move |q| {
+                    state.cached_json(&headers, CacheStrategy::Deploy, &uri, move |q| {
                         q.series_info(&path.metric).ok_or_else(|| q.series_not_found_error(&path.metric))
                     }).await
                 },
@@ -219,7 +219,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                        Query(range): Query<DataRangeFormat>|
                        -> Response {
                     let params = SeriesSelection::from((path.index, path.metric, range));
-                    legacy::handler(uri, headers, addr, Query(params), state)
+                    series_legacy::handler(uri, headers, addr, Query(params), state)
                         .await
                         .into_response()
                 },
@@ -249,7 +249,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                        Query(range): Query<DataRangeFormat>|
                        -> Response {
                     let params = SeriesSelection::from((path.index, path.metric, range));
-                    legacy::handler(uri, headers, addr, Query(params), state)
+                    series_legacy::handler(uri, headers, addr, Query(params), state)
                         .await
                         .into_response()
                 },
@@ -373,7 +373,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                         SeriesList::from(split.collect::<Vec<_>>().join(separator)),
                         range,
                     ));
-                    legacy::handler(uri, headers, addr, Query(params), state)
+                    series_legacy::handler(uri, headers, addr, Query(params), state)
                         .await
                         .into_response()
                 },
@@ -401,7 +401,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                        state: State<AppState>|
                        -> Response {
                     let params: SeriesSelection = params.into();
-                    legacy::handler(uri, headers, addr, Query(params), state)
+                    series_legacy::handler(uri, headers, addr, Query(params), state)
                         .await
                         .into_response()
                 },

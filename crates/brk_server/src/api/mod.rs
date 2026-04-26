@@ -15,7 +15,8 @@ use crate::{
     Error,
     api::{
         mempool_space::MempoolSpaceRoutes, metrics::ApiMetricsLegacyRoutes,
-        series::ApiSeriesRoutes, server::ServerRoutes, urpd::ApiUrpdRoutes,
+        series::ApiSeriesRoutes, series_legacy::ApiSeriesLegacyRoutes, server::ServerRoutes,
+        urpd::ApiUrpdRoutes,
     },
     extended::{ResponseExtended, TransformResponseExtended},
 };
@@ -26,6 +27,7 @@ mod mempool_space;
 mod metrics;
 mod openapi;
 mod series;
+mod series_legacy;
 mod server;
 mod urpd;
 
@@ -39,6 +41,7 @@ impl ApiRoutes for ApiRouter<AppState> {
     fn add_api_routes(self) -> Self {
         self.add_server_routes()
             .add_series_routes()
+            .add_series_legacy_routes()
             .add_urpd_routes()
             .add_metrics_legacy_routes()
             .add_mempool_space_routes()

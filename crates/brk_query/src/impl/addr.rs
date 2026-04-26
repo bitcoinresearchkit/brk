@@ -85,13 +85,8 @@ impl Query {
                 tx_count: addr_data.tx_count,
                 realized_price,
             },
-            mempool_stats: self.mempool().map(|mempool| {
-                mempool
-                    .get_addrs()
-                    .get(&bytes)
-                    .map(|(stats, _)| stats)
-                    .cloned()
-                    .unwrap_or_default()
+            mempool_stats: self.mempool().and_then(|m| {
+                m.addrs().get(&bytes).map(|(stats, _)| stats.clone())
             }),
         })
     }
@@ -221,21 +216,17 @@ impl Query {
         let Ok(bytes) = AddrBytes::from_str(addr) else {
             return 0;
         };
-        mempool.addr_hash(&bytes)
+        mempool.addr_state_hash(&bytes)
     }
 
     pub fn addr_mempool_txids(&self, addr: Addr) -> Result<Vec<Txid>> {
-        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
-
         let bytes = AddrBytes::from_str(&addr)?;
-        let addrs = mempool.get_addrs();
-
-        let txids: Vec<Txid> = addrs
+        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
+        Ok(mempool
+            .addrs()
             .get(&bytes)
             .map(|(_, txids)| txids.iter().take(MAX_MEMPOOL_TXIDS).cloned().collect())
-            .unwrap_or_default();
-
-        Ok(txids)
+            .unwrap_or_default())
     }
 
     /// Height of the last on-chain activity for an address (last tx_index → height).

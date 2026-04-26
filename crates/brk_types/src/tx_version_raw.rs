@@ -21,3 +21,10 @@ impl From<bitcoin::transaction::Version> for TxVersionRaw {
         Self(value.0)
     }
 }
+
+impl From<TxVersionRaw> for bitcoin::transaction::Version {
+    #[inline]
+    fn from(value: TxVersionRaw) -> Self {
+        Self(value.0)
+    }
+}

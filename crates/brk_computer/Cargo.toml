@@ -15,7 +15,7 @@ brk_cohort = { workspace = true }
 brk_indexer = { workspace = true }
 brk_oracle = { workspace = true }
 brk_logger = { workspace = true }
-brk_rpc = { workspace = true, features = ["corepc"] }
+brk_rpc = { workspace = true }
 brk_traversable = { workspace = true }
 brk_types = { workspace = true }
 derive_more = { workspace = true }

@@ -5,7 +5,9 @@ use std::{
 
 use brk_error::{Error, Result};
 use brk_rpc::{Auth, Client};
-use brk_server::Website;
+use brk_server::{
+    CdnCacheMode, DEFAULT_CACHE_SIZE, DEFAULT_MAX_WEIGHT, DEFAULT_MAX_WEIGHT_LOCALHOST, Website,
+};
 use brk_types::Port;
 use owo_colors::OwoColorize;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -22,6 +24,18 @@ pub struct Config {
 
     #[serde(default, deserialize_with = "default_on_error")]
     website: Option<Website>,
+
+    #[serde(default, deserialize_with = "default_on_error")]
+    cdn: Option<bool>,
+
+    #[serde(default, deserialize_with = "default_on_error")]
+    maxweight: Option<usize>,
+
+    #[serde(default, deserialize_with = "default_on_error")]
+    maxweightlocal: Option<usize>,
+
+    #[serde(default, deserialize_with = "default_on_error")]
+    cachesize: Option<usize>,
 
     #[serde(default, deserialize_with = "default_on_error")]
     bitcoindir: Option<String>,
@@ -65,6 +79,18 @@ impl Config {
         }
         if let Some(v) = config_args.website {
             config.website = Some(v);
+        }
+        if let Some(v) = config_args.cdn {
+            config.cdn = Some(v);
+        }
+        if let Some(v) = config_args.maxweight {
+            config.maxweight = Some(v);
+        }
+        if let Some(v) = config_args.maxweightlocal {
+            config.maxweightlocal = Some(v);
+        }
+        if let Some(v) = config_args.cachesize {
+            config.cachesize = Some(v);
         }
         if let Some(v) = config_args.bitcoindir {
             config.bitcoindir = Some(v);
@@ -112,6 +138,16 @@ impl Config {
                 Long("brkdir") => config.brkdir = Some(parser.value().unwrap().parse().unwrap()),
                 Long("brkport") => config.brkport = Some(parser.value().unwrap().parse().unwrap()),
                 Long("website") => config.website = Some(parser.value().unwrap().parse().unwrap()),
+                Long("cdn") => config.cdn = Some(parser.value().unwrap().parse().unwrap()),
+                Long("maxweight") => {
+                    config.maxweight = Some(parser.value().unwrap().parse().unwrap())
+                }
+                Long("maxweightlocal") => {
+                    config.maxweightlocal = Some(parser.value().unwrap().parse().unwrap())
+                }
+                Long("cachesize") => {
+                    config.cachesize = Some(parser.value().unwrap().parse().unwrap())
+                }
                 Long("bitcoindir") => {
                     config.bitcoindir = Some(parser.value().unwrap().parse().unwrap())
                 }
@@ -170,6 +206,26 @@ impl Config {
             "    --website {}     Website {}",
             "<BOOL|PATH>".bright_black(),
             "[true]".bright_black()
+        );
+        println!(
+            "    --cdn {}              Aggressive CDN cache, requires purge on deploy {}",
+            "<BOOL>".bright_black(),
+            "[false]".bright_black()
+        );
+        println!(
+            "    --maxweight {}       Max series response weight in bytes for external clients {}",
+            "<BYTES>".bright_black(),
+            format!("[{}]", DEFAULT_MAX_WEIGHT).bright_black()
+        );
+        println!(
+            "    --maxweightlocal {}  Max series response weight in bytes for loopback clients {}",
+            "<BYTES>".bright_black(),
+            format!("[{}]", DEFAULT_MAX_WEIGHT_LOCALHOST).bright_black()
+        );
+        println!(
+            "    --cachesize {}     LRU capacity for the in-process response cache {}",
+            "<ENTRIES>".bright_black(),
+            format!("[{}]", DEFAULT_CACHE_SIZE).bright_black()
         );
         println!();
         println!(
@@ -331,6 +387,26 @@ Finally, you can run the program with '-h' for help."
 
     pub fn website(&self) -> Website {
         self.website.clone().unwrap_or_default()
+    }
+
+    pub fn cdn_cache_mode(&self) -> CdnCacheMode {
+        if self.cdn.unwrap_or(false) {
+            CdnCacheMode::Aggressive
+        } else {
+            CdnCacheMode::Live
+        }
+    }
+
+    pub fn max_weight(&self) -> usize {
+        self.maxweight.unwrap_or(DEFAULT_MAX_WEIGHT)
+    }
+
+    pub fn max_weight_localhost(&self) -> usize {
+        self.maxweightlocal.unwrap_or(DEFAULT_MAX_WEIGHT_LOCALHOST)
+    }
+
+    pub fn cache_size(&self) -> usize {
+        self.cachesize.unwrap_or(DEFAULT_CACHE_SIZE)
     }
 
     pub fn brkport(&self) -> Option<Port> {

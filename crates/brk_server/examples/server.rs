@@ -7,7 +7,7 @@ use brk_mempool::Mempool;
 use brk_query::AsyncQuery;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use brk_server::{Server, Website};
+use brk_server::{Server, ServerConfig, Website};
 use tracing::info;
 use vecdb::Exit;
 
@@ -43,7 +43,14 @@ pub fn main() -> Result<()> {
 
     // Option 1: block_on to run and properly propagate errors
     runtime.block_on(async move {
-        let server = Server::new(&query, outputs_dir, Website::Disabled);
+        let server = Server::new(
+            &query,
+            ServerConfig {
+                data_path: outputs_dir,
+                website: Website::Disabled,
+                ..Default::default()
+            },
+        );
 
         let handle = tokio::spawn(async move { server.serve(None).await });
 

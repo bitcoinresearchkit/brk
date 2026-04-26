@@ -26,13 +26,9 @@ pub enum Error {
     #[error(transparent)]
     IO(#[from] io::Error),
 
-    #[cfg(feature = "bitcoincore-rpc")]
-    #[error(transparent)]
-    BitcoinRPC(#[from] bitcoincore_rpc::Error),
-
     #[cfg(feature = "corepc")]
     #[error(transparent)]
-    CorepcRPC(#[from] corepc_client::client_sync::Error),
+    CorepcRPC(#[from] corepc_jsonrpc::error::Error),
 
     #[cfg(feature = "jiff")]
     #[error(transparent)]

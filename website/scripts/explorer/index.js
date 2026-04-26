@@ -77,6 +77,16 @@ export function init(selected) {
       navigate();
       selectCube(cube);
     },
+    onTip: () => {
+      history.pushState(null, "", "/block/tip");
+      navigate();
+      goToCube(null);
+    },
+    onGenesis: () => {
+      history.pushState(null, "", "/block/0");
+      navigate();
+      goToCube(0);
+    },
   });
 
   initBlockDetails(explorerElement, handleLinkClick);

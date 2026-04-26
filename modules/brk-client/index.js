@@ -846,6 +846,31 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {number} RawLockTime
  */
 /**
+ * Response body for `GET /api/v1/tx/:txid/rbf`. Both fields are null
+ * when the tx has no known RBF history within the mempool monitor's
+ * graveyard retention window.
+ *
+ * @typedef {Object} RbfResponse
+ * @property {(ReplacementNode|null)=} replacements
+ * @property {?Txid[]=} replaces
+ */
+/**
+ * Transaction summary carried inside an RBF replacement node. Shape
+ * matches mempool.space's `/api/v1/tx/:txid/rbf` and
+ * `/api/v1/replacements` responses.
+ *
+ * @typedef {Object} RbfTx
+ * @property {Txid} txid
+ * @property {Sats} fee
+ * @property {VSize} vsize
+ * @property {Sats} value - Sum of output amounts.
+ * @property {FeeRate} rate
+ * @property {Timestamp} time
+ * @property {boolean} rbf - BIP-125 signaling: at least one input has sequence < 0xffffffff-1.
+ * @property {?boolean=} fullRbf - Only populated on the root `tx` of an RBF response. `true` iff
+this tx displaced at least one non-signaling predecessor.
+ */
+/**
  * Recommended fee rates in sat/vB
  *
  * @typedef {Object} RecommendedFees
@@ -854,6 +879,19 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {FeeRate} hourFee - Fee rate for confirmation within ~1 hour (6 blocks)
  * @property {FeeRate} economyFee - Fee rate for economical confirmation
  * @property {FeeRate} minimumFee - Minimum relay fee rate
+ */
+/**
+ * One node in an RBF replacement tree. The node's `tx` replaced each
+ * entry in `replaces`, recursively.
+ *
+ * @typedef {Object} ReplacementNode
+ * @property {RbfTx} tx
+ * @property {Timestamp} time - First-seen timestamp, duplicated here to match mempool.space's
+on-the-wire shape.
+ * @property {boolean} fullRbf - Any predecessor in this subtree was non-signaling.
+ * @property {?number=} interval - Seconds between this node's `time` and the successor that
+replaced it. Omitted on the root of an RBF response.
+ * @property {ReplacementNode[]} replaces
  */
 /**
  * Block reward statistics over a range of blocks
@@ -1060,7 +1098,7 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {(TxOut|null)=} prevout - Information about the previous output being spent
  * @property {string} scriptsig - Signature script (hex, for non-SegWit inputs)
  * @property {string} scriptsigAsm - Signature script in assembly format
- * @property {string[]} witness - Witness data (hex-encoded stack items, present for SegWit inputs)
+ * @property {Witness} witness - Witness data (stack items, present for SegWit inputs; hex-encoded on the wire)
  * @property {boolean} isCoinbase - Whether this input is a coinbase (block reward) input
  * @property {number} sequence - Input sequence number
  * @property {string} innerRedeemscriptAsm - Inner redeemscript in assembly (for P2SH-wrapped SegWit: scriptsig + witness both present)
@@ -1239,6 +1277,17 @@ Matches mempool.space/bitcoin-cli behavior.
  * Weight in weight units (WU). Max block weight is 4,000,000 WU.
  *
  * @typedef {number} Weight
+ */
+/**
+ * Transaction witness: a stack of byte arrays, one per witness item.
+ *
+ * Wraps `bitcoin::Witness` (single-buffer layout with offsets, much
+ * more compact than `Vec<Vec<u8>>`). Serializes as a JSON array of
+ * hex strings - the format used by Bitcoin Core REST and mempool.space
+ * and matching brk's `script_sig: ScriptBuf` (bytes internally, hex
+ * on the wire).
+ *
+ * @typedef {string[]} Witness
  */
 /** @typedef {number} Year1 */
 /** @typedef {number} Year10 */
@@ -11596,6 +11645,24 @@ class BrkClient extends BrkClientBase {
    */
   async getTransactionTimes({ signal, onUpdate } = {}) {
     const path = `/api/v1/transaction-times`;
+    return this.getJson(path, { signal, onUpdate });
+  }
+
+  /**
+   * RBF replacement history
+   *
+   * Returns the RBF replacement tree for a transaction, if any. Both `replacements` and `replaces` are null when the tx has no known RBF history within the mempool monitor's retention window.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-rbf-history)*
+   *
+   * Endpoint: `GET /api/v1/tx/{txid}/rbf`
+   *
+   * @param {Txid} txid
+   * @param {{ signal?: AbortSignal, onUpdate?: (value: RbfResponse) => void }} [options]
+   * @returns {Promise<RbfResponse>}
+   */
+  async getTxRbf(txid, { signal, onUpdate } = {}) {
+    const path = `/api/v1/tx/${txid}/rbf`;
     return this.getJson(path, { signal, onUpdate });
   }
 

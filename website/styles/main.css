@@ -145,7 +145,6 @@ footer {
     display: flex;
     gap: 1.125rem;
     overflow-x: auto;
-    scrollbar-width: thin;
     min-width: 0;
     margin: -0.5rem 0;
     padding: 0.5rem var(--main-padding);

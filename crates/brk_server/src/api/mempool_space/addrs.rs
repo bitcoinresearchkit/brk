@@ -142,7 +142,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Path(path): Path<ValidateAddrParam>,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Static, &uri, move |_q| Ok(AddrValidation::from_addr(&path.addr))).await
+                state.cached_json(&headers, CacheStrategy::Deploy, &uri, move |_q| Ok(AddrValidation::from_addr(&path.addr))).await
             }, |op| op
                 .id("validate_address")
                 .addrs_tag()

@@ -17,7 +17,7 @@ brk_logger = { workspace = true }
 brk_mempool = { workspace = true }
 brk_query = { workspace = true }
 brk_reader = { workspace = true }
-brk_rpc = { workspace = true, features = ["corepc"] }
+brk_rpc = { workspace = true }
 brk_server = { workspace = true }
 brk_types = { workspace = true }
 lexopt = "0.3"

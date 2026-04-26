@@ -24,7 +24,7 @@ impl ApiUrpdRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Static, &uri, |q| q.urpd_cohorts())
+                        .cached_json(&headers, CacheStrategy::Deploy, &uri, |q| q.urpd_cohorts())
                         .await
                 },
                 |op| {

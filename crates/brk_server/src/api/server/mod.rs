@@ -57,7 +57,7 @@ impl ServerRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Static, &uri, |_| {
+                        .cached_json(&headers, CacheStrategy::Deploy, &uri, |_| {
                             Ok(env!("CARGO_PKG_VERSION"))
                         })
                         .await

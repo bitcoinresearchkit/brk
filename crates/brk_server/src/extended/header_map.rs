@@ -10,7 +10,7 @@ pub trait HeaderMapExtended {
     fn insert_etag(&mut self, etag: &str);
 
     fn insert_cache_control(&mut self, value: &str);
-    fn insert_cache_control_must_revalidate(&mut self);
+    fn insert_cdn_cache_control(&mut self, value: &str);
 
     fn insert_content_disposition_attachment(&mut self, filename: &str);
 
@@ -45,8 +45,11 @@ impl HeaderMapExtended for HeaderMap {
         self.insert(header::CACHE_CONTROL, value.parse().unwrap());
     }
 
-    fn insert_cache_control_must_revalidate(&mut self) {
-        self.insert_cache_control("public, max-age=1, must-revalidate");
+    fn insert_cdn_cache_control(&mut self, value: &str) {
+        self.insert(
+            axum::http::HeaderName::from_static("cdn-cache-control"),
+            value.parse().unwrap(),
+        );
     }
 
     fn insert_content_disposition_attachment(&mut self, filename: &str) {

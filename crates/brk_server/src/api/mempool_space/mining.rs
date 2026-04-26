@@ -31,8 +31,8 @@ impl MiningRoutes for ApiRouter<AppState> {
             "/api/v1/mining/pools",
             get_with(
                 async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
-                    // Pool list is static, only changes on code update
-                    state.cached_json(&headers, CacheStrategy::Static, &uri, |q| Ok(q.all_pools())).await
+                    // Pool list is compiled-in, only changes on deploy
+                    state.cached_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.all_pools())).await
                 },
                 |op| {
                     op.id("get_pools")

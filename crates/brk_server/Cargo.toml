@@ -23,7 +23,7 @@ brk_indexer = { workspace = true }
 brk_logger = { workspace = true }
 brk_query = { workspace = true }
 brk_reader = { workspace = true }
-brk_rpc = { workspace = true, features = ["corepc"] }
+brk_rpc = { workspace = true }
 brk_types = { workspace = true }
 brk_traversable = { workspace = true }
 brk_website = { workspace = true }

@@ -6,12 +6,13 @@ use axum::{
     extract::{Path, State},
     http::{HeaderMap, Uri},
 };
-use brk_types::{CpfpInfo, MerkleProof, Transaction, TxOutspend, TxStatus, Txid, Version};
+use brk_types::{
+    CpfpInfo, MerkleProof, RbfResponse, Transaction, TxOutspend, TxStatus, Txid, Version,
+};
 
 use crate::{
     AppState, CacheStrategy,
-    cache::CacheParams,
-    extended::{ResponseExtended, TransformResponseExtended},
+    extended::TransformResponseExtended,
     params::{TxIndexParam, TxidParam, TxidVout, TxidsParam},
 };
 
@@ -52,6 +53,24 @@ impl TxRoutes for ApiRouter<AppState> {
                     .summary("CPFP info")
                     .description("Returns ancestors and descendants for a CPFP (Child Pays For Parent) transaction, including the effective fee rate of the package.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*")
                     .json_response::<CpfpInfo>()
+                    .not_modified()
+                    .bad_request()
+                    .not_found()
+                    .server_error(),
+            ),
+        )
+        .api_route(
+            "/api/v1/tx/{txid}/rbf",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, Path(param): Path<TxidParam>, State(state): State<AppState>| {
+                    state.cached_json(&headers, state.mempool_cache(), &uri, move |q| q.tx_rbf(&param.txid)).await
+                },
+                |op| op
+                    .id("get_tx_rbf")
+                    .transactions_tag()
+                    .summary("RBF replacement history")
+                    .description("Returns the RBF replacement tree for a transaction, if any. Both `replacements` and `replaces` are null when the tx has no known RBF history within the mempool monitor's retention window.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-rbf-history)*")
+                    .json_response::<RbfResponse>()
                     .not_modified()
                     .bad_request()
                     .not_found()
@@ -154,15 +173,15 @@ impl TxRoutes for ApiRouter<AppState> {
                     State(state): State<AppState>
                 | {
                     let v = Version::ONE;
-                    let immutable = CacheParams::immutable(v);
-                    if immutable.matches_etag(&headers) {
-                        return ResponseExtended::new_not_modified_with(&immutable);
-                    }
-                    let outspend = state.run(move |q| q.outspend(&path.txid, path.vout)).await;
-                    let height = state.sync(|q| q.height());
-                    let is_deep = outspend.as_ref().is_ok_and(|o| o.is_deeply_spent(height));
-                    let strategy = if is_deep { CacheStrategy::Immutable(v) } else { CacheStrategy::Tip };
-                    state.cached_json(&headers, strategy, &uri, move |_| outspend).await
+                    state.cached_json_optimistic(&headers, CacheStrategy::Immutable(v), &uri, move |q| {
+                        let outspend = q.outspend(&path.txid, path.vout)?;
+                        let strategy = if outspend.is_deeply_spent(q.height()) {
+                            CacheStrategy::Immutable(v)
+                        } else {
+                            CacheStrategy::Tip
+                        };
+                        Ok((outspend, strategy))
+                    }).await
                 },
                 |op| op
                     .id("get_tx_outspend")
@@ -188,15 +207,13 @@ impl TxRoutes for ApiRouter<AppState> {
                     State(state): State<AppState>
                 | {
                     let v = Version::ONE;
-                    let immutable = CacheParams::immutable(v);
-                    if immutable.matches_etag(&headers) {
-                        return ResponseExtended::new_not_modified_with(&immutable);
-                    }
-                    let outspends = state.run(move |q| q.outspends(&param.txid)).await;
-                    let height = state.sync(|q| q.height());
-                    let all_deep = outspends.as_ref().is_ok_and(|os| os.iter().all(|o| o.is_deeply_spent(height)));
-                    let strategy = if all_deep { CacheStrategy::Immutable(v) } else { CacheStrategy::Tip };
-                    state.cached_json(&headers, strategy, &uri, move |_| outspends).await
+                    state.cached_json_optimistic(&headers, CacheStrategy::Immutable(v), &uri, move |q| {
+                        let outspends = q.outspends(&param.txid)?;
+                        let height = q.height();
+                        let all_deep = outspends.iter().all(|o| o.is_deeply_spent(height));
+                        let strategy = if all_deep { CacheStrategy::Immutable(v) } else { CacheStrategy::Tip };
+                        Ok((outspends, strategy))
+                    }).await
                 },
                 |op| op
                     .id("get_tx_outspends")

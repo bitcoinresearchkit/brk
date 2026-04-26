@@ -13,7 +13,7 @@ use brk_indexer::Indexer;
 use brk_mempool::Mempool;
 use brk_query::AsyncQuery;
 use brk_reader::Reader;
-use brk_server::Server;
+use brk_server::{Server, ServerConfig};
 use tracing::info;
 use vecdb::Exit;
 
@@ -60,21 +60,29 @@ pub fn main() -> anyhow::Result<()> {
 
     let mempool = Mempool::new(&client);
 
+    let query = AsyncQuery::build(&reader, &indexer, &computer, Some(mempool.clone()));
+
     let mempool_clone = mempool.clone();
+    let query_clone = query.clone();
     thread::spawn(move || {
-        mempool_clone.start();
+        mempool_clone.start_with(|| {
+            query_clone.sync(|q| q.fill_mempool_prevouts());
+        });
     });
 
-    let query = AsyncQuery::build(&reader, &indexer, &computer, Some(mempool));
-
-    let data_path = config.brkdir();
-
-    let website = config.website();
+    let server_config = ServerConfig {
+        data_path: config.brkdir(),
+        website: config.website(),
+        cdn_cache_mode: config.cdn_cache_mode(),
+        max_weight: config.max_weight(),
+        max_weight_localhost: config.max_weight_localhost(),
+        cache_size: config.cache_size(),
+    };
 
     let port = config.brkport();
 
     let future = async move {
-        let server = Server::new(&query, data_path, website);
+        let server = Server::new(&query, server_config);
 
         tokio::spawn(async move {
             server.serve(port).await.unwrap();

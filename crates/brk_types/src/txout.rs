@@ -74,6 +74,16 @@ impl From<bitcoin::TxOut> for TxOut {
     }
 }
 
+impl From<&TxOut> for bitcoin::TxOut {
+    #[inline]
+    fn from(txout: &TxOut) -> Self {
+        Self {
+            value: txout.value.into(),
+            script_pubkey: txout.script_pubkey.clone(),
+        }
+    }
+}
+
 impl From<(ScriptBuf, Sats)> for TxOut {
     #[inline]
     fn from((script, value): (ScriptBuf, Sats)) -> Self {

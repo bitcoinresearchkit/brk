@@ -1,4 +1,4 @@
-use bitcoin::hex::{DisplayHex, FromHex};
+use bitcoin::hex::DisplayHex;
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
     BlockHash, Height, MerkleProof, Timestamp, Transaction, TxInIndex, TxIndex, TxOutIndex,
@@ -87,15 +87,15 @@ impl Query {
 
     pub fn transaction(&self, txid: &Txid) -> Result<Transaction> {
         if let Some(mempool) = self.mempool()
-            && let Some(tx_with_hex) = mempool.get_txs().get(txid)
+            && let Some(tx) = mempool.txs().get(txid)
         {
-            return Ok(tx_with_hex.tx().clone());
+            return Ok(tx.clone());
         }
         self.transaction_by_index(self.resolve_tx_index(txid)?)
     }
 
     pub fn transaction_status(&self, txid: &Txid) -> Result<TxStatus> {
-        if self.mempool().is_some_and(|m| m.get_txs().contains_key(txid)) {
+        if self.mempool().is_some_and(|m| m.txs().contains_key(txid)) {
             return Ok(TxStatus::UNCONFIRMED);
         }
         self.confirmed_status(self.resolve_tx_index(txid)?)
@@ -103,19 +103,18 @@ impl Query {
 
     pub fn transaction_raw(&self, txid: &Txid) -> Result<Vec<u8>> {
         if let Some(mempool) = self.mempool()
-            && let Some(tx_with_hex) = mempool.get_txs().get(txid)
+            && let Some(tx) = mempool.txs().get(txid)
         {
-            return Vec::from_hex(tx_with_hex.hex())
-                .map_err(|_| Error::Parse("Failed to decode mempool tx hex".into()));
+            return Ok(tx.encode_bytes());
         }
         self.transaction_raw_by_index(self.resolve_tx_index(txid)?)
     }
 
     pub fn transaction_hex(&self, txid: &Txid) -> Result<String> {
         if let Some(mempool) = self.mempool()
-            && let Some(tx_with_hex) = mempool.get_txs().get(txid)
+            && let Some(tx) = mempool.txs().get(txid)
         {
-            return Ok(tx_with_hex.hex().to_string());
+            return Ok(tx.encode_bytes().to_lower_hex_string());
         }
         self.transaction_hex_by_index(self.resolve_tx_index(txid)?)
     }
@@ -123,7 +122,7 @@ impl Query {
     // ── Outspend queries ───────────────────────────────────────────
 
     pub fn outspend(&self, txid: &Txid, vout: Vout) -> Result<TxOutspend> {
-        if self.mempool().is_some_and(|m| m.get_txs().contains_key(txid)) {
+        if self.mempool().is_some_and(|m| m.txs().contains_key(txid)) {
             return Ok(TxOutspend::UNSPENT);
         }
         let (_, first_txout, output_count) = self.resolve_tx_outputs(txid)?;
@@ -135,9 +134,9 @@ impl Query {
 
     pub fn outspends(&self, txid: &Txid) -> Result<Vec<TxOutspend>> {
         if let Some(mempool) = self.mempool()
-            && let Some(tx_with_hex) = mempool.get_txs().get(txid)
+            && let Some(tx) = mempool.txs().get(txid)
         {
-            return Ok(vec![TxOutspend::UNSPENT; tx_with_hex.tx().output.len()]);
+            return Ok(vec![TxOutspend::UNSPENT; tx.output.len()]);
         }
         let (_, first_txout, output_count) = self.resolve_tx_outputs(txid)?;
         self.resolve_outspends(first_txout, output_count)

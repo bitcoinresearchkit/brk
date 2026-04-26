@@ -26,8 +26,8 @@ fn main() -> Result<()> {
         thread::sleep(Duration::from_secs(5));
 
         // Basic mempool info
-        let info = mempool.get_info();
-        let block_stats = mempool.get_block_stats();
+        let info = mempool.info();
+        let block_stats = mempool.block_stats();
         let total_fees: u64 = block_stats.iter().map(|s| u64::from(s.total_fee)).sum();
         println!("\n=== Mempool Info ===");
         println!("  Transactions: {}", info.count);
@@ -38,7 +38,7 @@ fn main() -> Result<()> {
         );
 
         // Fee recommendations (like mempool.space)
-        let fees = mempool.get_fees();
+        let fees = mempool.fees();
         println!("\n=== Recommended Fees (sat/vB) ===");
         println!("  No Priority     {:.4}", f64::from(fees.economy_fee));
         println!("  Low Priority    {:.4}", f64::from(fees.hour_fee));
@@ -63,7 +63,7 @@ fn main() -> Result<()> {
         }
 
         // Address tracking stats
-        let addrs = mempool.get_addrs();
+        let addrs = mempool.addrs();
         println!("\n=== Address Tracking ===");
         println!("  Addresses with pending txs: {}", addrs.len());
 
