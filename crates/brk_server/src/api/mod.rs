@@ -14,24 +14,36 @@ use axum::{
 use crate::{
     Error,
     api::{
-        mempool_space::MempoolSpaceRoutes, metrics::ApiMetricsLegacyRoutes,
-        series::ApiSeriesRoutes, series_legacy::ApiSeriesLegacyRoutes, server::ServerRoutes,
-        urpd::ApiUrpdRoutes,
+        metrics::ApiMetricsLegacyRoutes, series::ApiSeriesRoutes,
+        series_legacy::ApiSeriesLegacyRoutes, server::ServerRoutes, urpd::ApiUrpdRoutes,
     },
     extended::{ResponseExtended, TransformResponseExtended},
 };
 
 use super::AppState;
 
-mod mempool_space;
+mod addrs;
+mod blocks;
+mod fees;
+mod general;
+mod mempool;
 mod metrics;
+mod mining;
 mod openapi;
 mod series;
 mod series_legacy;
 mod server;
+mod transactions;
 mod urpd;
 
+use addrs::AddrRoutes;
+use blocks::BlockRoutes;
+use fees::FeesRoutes;
+use general::GeneralRoutes;
+use mempool::MempoolRoutes;
+use mining::MiningRoutes;
 pub use openapi::*;
+use transactions::TxRoutes;
 
 pub trait ApiRoutes {
     fn add_api_routes(self) -> Self;
@@ -44,7 +56,13 @@ impl ApiRoutes for ApiRouter<AppState> {
             .add_series_legacy_routes()
             .add_urpd_routes()
             .add_metrics_legacy_routes()
-            .add_mempool_space_routes()
+            .add_general_routes()
+            .add_addr_routes()
+            .add_block_routes()
+            .add_mining_routes()
+            .add_fees_routes()
+            .add_mempool_routes()
+            .add_tx_routes()
             .route("/api/server", get(Redirect::temporary("/api#tag/server")))
             .api_route(
                 "/openapi.json",

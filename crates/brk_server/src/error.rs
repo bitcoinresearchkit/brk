@@ -7,11 +7,7 @@ use brk_error::Error as BrkError;
 use schemars::JsonSchema;
 use serde::Serialize;
 
-use crate::{
-    cache::{CC_ERROR, CacheParams},
-    etag::Etag,
-    extended::HeaderMapExtended,
-};
+use crate::{cache::CacheParams, etag::Etag};
 
 /// Server result type with Error that implements IntoResponse.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -145,7 +141,13 @@ impl Error {
 
     pub(crate) fn into_response_with_etag(self, etag: Etag) -> Response {
         let params = CacheParams::error(etag);
-        let mut response = self.into_response();
+        let body = build_error_body(self.status, self.code, self.message);
+        let mut response = (
+            self.status,
+            [(header::CONTENT_TYPE, "application/problem+json")],
+            body,
+        )
+            .into_response();
         params.apply_to(response.headers_mut());
         response
     }
@@ -174,9 +176,7 @@ impl IntoResponse for Error {
             body,
         )
             .into_response();
-        let h = response.headers_mut();
-        h.insert_cache_control(CC_ERROR);
-        h.insert_cdn_cache_control(CC_ERROR);
+        CacheParams::apply_error_cache_control(response.headers_mut());
         response
     }
 }

@@ -17,4 +17,3 @@ pub use params::CacheParams;
 pub use strategy::CacheStrategy;
 
 pub(crate) use mode::init;
-pub(crate) use params::CC_ERROR;

@@ -14,7 +14,7 @@ const CC: &str = "public, no-cache, stale-if-error=86400";
 
 // Errors: short, must-revalidate, no `stale-if-error` (we don't want a 24h-old
 // error served when origin recovers). Same string for browser and CDN.
-pub(crate) const CC_ERROR: &str = "public, max-age=1, must-revalidate";
+const CC_ERROR: &str = "public, max-age=1, must-revalidate";
 
 /// Resolved cache parameters: an ETag plus the two Cache-Control directives.
 pub struct CacheParams {
@@ -95,6 +95,13 @@ impl CacheParams {
             cache_control: CC_ERROR,
             cdn_cache_control: CC_ERROR,
         }
+    }
+
+    /// Apply error cache-control headers without an ETag. Used for synthesized
+    /// errors (panics, fallback handlers) that have no resource etag.
+    pub fn apply_error_cache_control(headers: &mut HeaderMap) {
+        headers.insert_cache_control(CC_ERROR);
+        headers.insert_cdn_cache_control(CC_ERROR);
     }
 
     pub fn matches_etag(&self, headers: &HeaderMap) -> bool {
