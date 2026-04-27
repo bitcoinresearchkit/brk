@@ -110,8 +110,9 @@ fn topological_sort_schemas(schemas: &TypeSchemas) -> Vec<String> {
     for (name, schema) in schemas {
         let mut type_deps = BTreeSet::new();
         collect_schema_refs(schema, &mut type_deps);
-        // Only keep deps that are in our schemas
-        type_deps.retain(|d| schemas.contains_key(d));
+        // Only keep deps that are in our schemas, and drop self-references
+        // (handled at emit time by quoting via current_type)
+        type_deps.retain(|d| schemas.contains_key(d) && d != name);
         deps.insert(name.clone(), type_deps);
     }
 

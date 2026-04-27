@@ -1,5 +1,5 @@
 use std::{
-    fs,
+    fs, io,
     path::{Path, PathBuf},
 };
 
@@ -10,52 +10,53 @@ use brk_server::{
 };
 use brk_types::Port;
 use owo_colors::OwoColorize;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::{default_brk_path, dot_brk_path, fix_user_path};
 
 #[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct Config {
-    #[serde(default, deserialize_with = "default_on_error")]
+    #[serde(default)]
     brkdir: Option<String>,
 
-    #[serde(default, deserialize_with = "default_on_error")]
+    #[serde(default)]
     brkport: Option<Port>,
 
-    #[serde(default, deserialize_with = "default_on_error")]
+    #[serde(default)]
     website: Option<Website>,
 
-    #[serde(default, deserialize_with = "default_on_error")]
+    #[serde(default)]
     cdn: Option<bool>,
 
-    #[serde(default, deserialize_with = "default_on_error")]
+    #[serde(default)]
     maxweight: Option<usize>,
 
-    #[serde(default, deserialize_with = "default_on_error")]
+    #[serde(default)]
     maxweightlocal: Option<usize>,
 
-    #[serde(default, deserialize_with = "default_on_error")]
+    #[serde(default)]
     cachesize: Option<usize>,
 
-    #[serde(default, deserialize_with = "default_on_error")]
+    #[serde(default)]
     bitcoindir: Option<String>,
 
-    #[serde(default, deserialize_with = "default_on_error")]
+    #[serde(default)]
     blocksdir: Option<String>,
 
-    #[serde(default, deserialize_with = "default_on_error")]
+    #[serde(default)]
     rpcconnect: Option<String>,
 
-    #[serde(default, deserialize_with = "default_on_error")]
+    #[serde(default)]
     rpcport: Option<u16>,
 
-    #[serde(default, deserialize_with = "default_on_error")]
+    #[serde(default)]
     rpccookiefile: Option<String>,
 
-    #[serde(default, deserialize_with = "default_on_error")]
+    #[serde(default)]
     rpcuser: Option<String>,
 
-    #[serde(default, deserialize_with = "default_on_error")]
+    #[serde(default)]
     rpcpassword: Option<String>,
 }
 
@@ -319,10 +320,18 @@ Finally, you can run the program with '-h' for help."
     }
 
     fn read(path: &Path) -> Self {
-        fs::read_to_string(path).map_or_else(
-            |_| Config::default(),
-            |contents| toml::from_str(&contents).unwrap_or_default(),
-        )
+        let contents = match fs::read_to_string(path) {
+            Ok(contents) => contents,
+            Err(e) if e.kind() == io::ErrorKind::NotFound => return Config::default(),
+            Err(e) => {
+                eprintln!("Cannot read {}: {e}", path.display());
+                std::process::exit(1);
+            }
+        };
+        toml::from_str(&contents).unwrap_or_else(|e| {
+            eprintln!("Invalid {}:\n{e}", path.display());
+            std::process::exit(1);
+        })
     }
 
     pub fn rpc(&self) -> Result<Client> {
@@ -411,16 +420,5 @@ Finally, you can run the program with '-h' for help."
 
     pub fn brkport(&self) -> Option<Port> {
         self.brkport
-    }
-}
-
-fn default_on_error<'de, D, T>(deserializer: D) -> Result<T, D::Error>
-where
-    D: Deserializer<'de>,
-    T: Deserialize<'de> + Default,
-{
-    match T::deserialize(deserializer) {
-        Ok(v) => Ok(v),
-        Err(_) => Ok(T::default()),
     }
 }

@@ -70,6 +70,7 @@ struct CostBasisCohortParam {
 }
 
 #[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 struct CostBasisQuery {
     #[serde(default)]
     bucket: UrpdAggregation,

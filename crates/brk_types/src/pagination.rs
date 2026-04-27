@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 /// Pagination parameters for paginated API endpoints
 #[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct Pagination {
     /// Pagination index
     #[serde(default, alias = "p")]
