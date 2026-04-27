@@ -10,7 +10,9 @@ use std::{
 };
 
 use brk_rpc::Client;
+use brk_types::FeeRate;
 use parking_lot::RwLock;
+use tracing::warn;
 
 #[cfg(debug_assertions)]
 use self::projected_blocks::verify::Verifier;
@@ -72,6 +74,11 @@ impl Rebuilder {
 
         self.dirty.store(false, Ordering::Release);
 
+        let min_fee = client.get_mempool_min_fee().unwrap_or_else(|e| {
+            warn!("getmempoolinfo failed, falling back to FeeRate::MIN: {e}");
+            FeeRate::MIN
+        });
+
         let built = {
             let entries = entries.read();
             let entries_slice = entries.entries();
@@ -82,7 +89,7 @@ impl Rebuilder {
             #[cfg(not(debug_assertions))]
             let _ = client;
 
-            Snapshot::build(blocks, entries_slice)
+            Snapshot::build(blocks, entries_slice, min_fee)
         };
 
         *self.snapshot.write() = Arc::new(built);

@@ -46,26 +46,24 @@ impl UrpdAggregation {
         }
     }
 
-    /// Compute bucket floor for a given price in cents.
-    /// Returns None for Raw (no bucketing).
-    pub fn bucket_floor(&self, price_cents: Cents) -> Option<Cents> {
+    /// Compute the bucket floor for a price in cents.
+    /// `Raw` is the identity (no bucketing).
+    pub fn bucket_floor(&self, price_cents: Cents) -> Cents {
         match self {
-            Self::Raw => None,
+            Self::Raw => price_cents,
             Self::Lin200 | Self::Lin500 | Self::Lin1000 => {
                 let size = self.linear_size_cents().unwrap();
-                Some((price_cents / size) * size)
+                (price_cents / size) * size
             }
             Self::Log10 | Self::Log50 | Self::Log100 | Self::Log200 => {
                 if price_cents == Cents::ZERO {
-                    return Some(Cents::ZERO);
+                    return Cents::ZERO;
                 }
                 let n = self.log_buckets_per_decade().unwrap();
-                // Bucket index = floor(n * log10(price))
-                // Floor = 10^(bucket_index / n)
                 let log_price = f64::from(price_cents).log10();
                 let bucket_idx = (n as f64 * log_price).floor() as i32;
                 let floor = 10_f64.powf(bucket_idx as f64 / n as f64);
-                Some(Cents::from(floor.round() as u64))
+                Cents::from(floor.round() as u64)
             }
         }
     }

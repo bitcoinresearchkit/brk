@@ -1,4 +1,7 @@
-use std::hash::{DefaultHasher, Hash, Hasher};
+use std::{
+    collections::hash_map::Entry as MapEntry,
+    hash::{DefaultHasher, Hash, Hasher},
+};
 
 use brk_types::{AddrBytes, AddrMempoolStats, Transaction, TxOut, Txid};
 use derive_more::Deref;
@@ -51,7 +54,6 @@ impl AddrTracker {
     }
 
     fn update(&mut self, tx: &Transaction, txid: &Txid, is_addition: bool) {
-        // Inputs: track sending
         for txin in &tx.input {
             let Some(prevout) = txin.prevout.as_ref() else {
                 continue;
@@ -59,33 +61,57 @@ impl AddrTracker {
             let Some(bytes) = prevout.addr_bytes() else {
                 continue;
             };
-
-            let (stats, txids) = self.0.entry(bytes).or_default();
-            if is_addition {
-                txids.insert(txid.clone());
-                stats.sending(prevout);
-            } else {
-                txids.remove(txid);
-                stats.sent(prevout);
-            }
-            stats.update_tx_count(txids.len() as u32);
+            self.apply(bytes, txid, is_addition, |stats| {
+                if is_addition {
+                    stats.sending(prevout);
+                } else {
+                    stats.sent(prevout);
+                }
+            });
         }
 
-        // Outputs: track receiving
         for txout in &tx.output {
             let Some(bytes) = txout.addr_bytes() else {
                 continue;
             };
+            self.apply(bytes, txid, is_addition, |stats| {
+                if is_addition {
+                    stats.receiving(txout);
+                } else {
+                    stats.received(txout);
+                }
+            });
+        }
+    }
 
-            let (stats, txids) = self.0.entry(bytes).or_default();
-            if is_addition {
-                txids.insert(txid.clone());
-                stats.receiving(txout);
-            } else {
-                txids.remove(txid);
-                stats.received(txout);
+    fn apply(
+        &mut self,
+        bytes: AddrBytes,
+        txid: &Txid,
+        is_addition: bool,
+        update_stats: impl FnOnce(&mut AddrMempoolStats),
+    ) {
+        let mut entry = match self.0.entry(bytes) {
+            MapEntry::Occupied(e) => e,
+            MapEntry::Vacant(v) => {
+                if !is_addition {
+                    return;
+                }
+                v.insert_entry(Default::default())
             }
-            stats.update_tx_count(txids.len() as u32);
+        };
+        let (stats, txids) = entry.get_mut();
+        if is_addition {
+            txids.insert(txid.clone());
+        } else {
+            txids.remove(txid);
+        }
+        update_stats(stats);
+        let len = txids.len();
+        if len == 0 {
+            entry.remove();
+        } else {
+            stats.update_tx_count(len as u32);
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::{
     cmp::Ordering,
-    ops::{Add, AddAssign, Div},
+    ops::{Add, AddAssign, Div, Mul},
 };
 
 use schemars::JsonSchema;
@@ -24,8 +24,34 @@ pub struct FeeRate(f64);
 impl FeeRate {
     pub const MIN: Self = Self(0.1);
 
-    pub fn new(fr: f64) -> Self {
+    pub const fn new(fr: f64) -> Self {
         Self(fr)
+    }
+
+    /// Round up to the nearest multiple of `nearest`.
+    #[inline]
+    pub fn ceil_to(self, nearest: Self) -> Self {
+        Self((self.0 / nearest.0).ceil() * nearest.0)
+    }
+
+    /// Round to the nearest multiple of `nearest`.
+    #[inline]
+    pub fn round_to(self, nearest: Self) -> Self {
+        Self((self.0 / nearest.0).round() * nearest.0)
+    }
+
+    /// Round to 3 decimal places via `(x * 1000).round() / 1000`.
+    /// Divide-by-integer at the end is more numerically stable
+    /// than `round_to(0.001)`'s closing `* 0.001`.
+    #[inline]
+    pub fn round_milli(self) -> Self {
+        Self((self.0 * 1000.0).round() / 1000.0)
+    }
+
+    /// Arithmetic mean of two rates.
+    #[inline]
+    pub fn mean(a: Self, b: Self) -> Self {
+        Self((a.0 + b.0) / 2.0)
     }
 }
 
@@ -85,6 +111,20 @@ impl Div<usize> for FeeRate {
         } else {
             Self(self.0 / rhs as f64)
         }
+    }
+}
+
+impl Div<f64> for FeeRate {
+    type Output = Self;
+    fn div(self, rhs: f64) -> Self::Output {
+        Self(self.0 / rhs)
+    }
+}
+
+impl Mul<f64> for FeeRate {
+    type Output = Self;
+    fn mul(self, rhs: f64) -> Self::Output {
+        Self(self.0 * rhs)
     }
 }
 

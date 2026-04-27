@@ -1187,10 +1187,9 @@ replaced it. Omitted on the root of an RBF response.
  * UTXO Realized Price Distribution for a cohort on a specific date.
  *
  * Supply is grouped by the close price at which each UTXO was last moved.
- * Each bucket exposes three values derived from the same `(price_floor, supply)`
- * pairs: supply in BTC, realized cap contribution in USD (`price_floor * supply`),
- * and unrealized P&L against that date's close in USD
- * (`(close - price_floor) * supply`, can be negative).
+ * Each bucket exposes three values: supply in BTC, realized cap contribution
+ * in USD (sum of `realized_price * supply` over the coins in the bucket), and
+ * unrealized P&L in USD (`close * supply - realized_cap`, can be negative).
  *
  * @typedef {Object} Urpd
  * @property {Cohort} cohort
@@ -1211,10 +1210,10 @@ replaced it. Omitted on the root of an RBF response.
  * A single bucket in a URPD snapshot.
  *
  * @typedef {Object} UrpdBucket
- * @property {Dollars} priceFloor - Inclusive lower bound of the bucket, in USD.
+ * @property {Dollars} priceFloor - Lower bound of the bucket, in USD. Equals the exact realized price for `Raw`.
  * @property {Bitcoin} supply - Supply held with a last-move price inside this bucket, in BTC.
- * @property {Dollars} realizedCap - Realized cap contribution in USD: `price_floor * supply`.
- * @property {Dollars} unrealizedPnl - Unrealized P&L in USD against the close on the snapshot date: `(close - price_floor) * supply`. Can be negative.
+ * @property {Dollars} realizedCap - Realized cap contribution in USD: sum of `realized_price * supply` over the coins in this bucket.
+ * @property {Dollars} unrealizedPnl - Unrealized P&L in USD against the close on the snapshot date: `close * supply - realized_cap`. Can be negative.
  */
 /**
  * Path parameters for per-cohort URPD endpoints.
@@ -7272,7 +7271,7 @@ function createTransferPattern(client, acc) {
  * @extends BrkClientBase
  */
 class BrkClient extends BrkClientBase {
-  VERSION = "v0.3.0-beta.6";
+  VERSION = "v0.3.0-beta.7";
 
   INDEXES = /** @type {const} */ ([
     "minute10",

@@ -1,6 +1,6 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use brk_types::RecommendedFees;
+use brk_types::{FeeRate, RecommendedFees};
 
 use super::{
     super::block_builder::Package,
@@ -27,13 +27,15 @@ pub struct Snapshot {
 
 impl Snapshot {
     /// Build a snapshot from packages grouped by projected block.
-    pub fn build(blocks: Vec<Vec<Package>>, entries: &[Option<Entry>]) -> Self {
+    /// `min_fee` is bitcoind's live `mempoolminfee`, used as the floor
+    /// for every recommended-fee tier.
+    pub fn build(blocks: Vec<Vec<Package>>, entries: &[Option<Entry>], min_fee: FeeRate) -> Self {
         let block_stats: Vec<BlockStats> = blocks
             .iter()
             .map(|block| stats::compute_block_stats(block, entries))
             .collect();
 
-        let fees = fees::compute_recommended_fees(&block_stats);
+        let fees = fees::compute_recommended_fees(&block_stats, min_fee);
 
         let blocks: Vec<Vec<TxIndex>> = blocks
             .into_iter()

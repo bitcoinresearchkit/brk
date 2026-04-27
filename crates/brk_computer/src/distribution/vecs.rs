@@ -41,7 +41,7 @@ use super::{
     metrics::AvgAmountMetrics,
 };
 
-const VERSION: Version = Version::new(23);
+const VERSION: Version = Version::new(24);
 
 #[derive(Traversable)]
 pub struct AddrMetricsVecs<M: StorageMode = Rw> {

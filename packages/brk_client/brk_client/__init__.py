@@ -1573,10 +1573,10 @@ class UrpdBucket(TypedDict):
     A single bucket in a URPD snapshot.
 
     Attributes:
-        price_floor: Inclusive lower bound of the bucket, in USD.
+        price_floor: Lower bound of the bucket, in USD. Equals the exact realized price for `Raw`.
         supply: Supply held with a last-move price inside this bucket, in BTC.
-        realized_cap: Realized cap contribution in USD: `price_floor * supply`.
-        unrealized_pnl: Unrealized P&L in USD against the close on the snapshot date: `(close - price_floor) * supply`. Can be negative.
+        realized_cap: Realized cap contribution in USD: sum of `realized_price * supply` over the coins in this bucket.
+        unrealized_pnl: Unrealized P&L in USD against the close on the snapshot date: `close * supply - realized_cap`. Can be negative.
     """
     price_floor: Dollars
     supply: Bitcoin
@@ -1588,10 +1588,9 @@ class Urpd(TypedDict):
     UTXO Realized Price Distribution for a cohort on a specific date.
     
     Supply is grouped by the close price at which each UTXO was last moved.
-    Each bucket exposes three values derived from the same `(price_floor, supply)`
-    pairs: supply in BTC, realized cap contribution in USD (`price_floor * supply`),
-    and unrealized P&L against that date's close in USD
-    (`(close - price_floor) * supply`, can be negative).
+    Each bucket exposes three values: supply in BTC, realized cap contribution
+    in USD (sum of `realized_price * supply` over the coins in the bucket), and
+    unrealized P&L in USD (`close * supply - realized_cap`, can be negative).
 
     Attributes:
         aggregation: Aggregation strategy applied to the buckets.
@@ -6523,7 +6522,7 @@ class SeriesTree:
 class BrkClient(BrkClientBase):
     """Main BRK client with series tree and API methods."""
 
-    VERSION = "v0.3.0-beta.6"
+    VERSION = "v0.3.0-beta.7"
 
     INDEXES = [
       "minute10",

@@ -2,10 +2,11 @@ use std::{thread::sleep, time::Duration};
 
 use bitcoin::{consensus::encode, hex::FromHex};
 use brk_error::{Error, Result};
-use brk_types::{Bitcoin, BlockHash, Height, MempoolEntryInfo, Sats, Txid, Vout};
+use brk_types::{Bitcoin, BlockHash, FeeRate, Height, MempoolEntryInfo, Sats, Txid, Vout};
 use corepc_types::v30::{
     GetBlockCount, GetBlockHash, GetBlockHeader, GetBlockHeaderVerbose, GetBlockVerboseOne,
-    GetBlockVerboseZero, GetBlockchainInfo, GetRawMempool, GetRawMempoolVerbose, GetTxOut,
+    GetBlockVerboseZero, GetBlockchainInfo, GetMempoolInfo, GetRawMempool, GetRawMempoolVerbose,
+    GetTxOut,
 };
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
@@ -170,6 +171,15 @@ impl Client {
             }
             None => Ok(None),
         }
+    }
+
+    /// Live `mempoolminfee` in sat/vB, already maxed against `minrelaytxfee`
+    /// per Core's contract. Wallets must pay at least this rate or bitcoind
+    /// will reject the broadcast; rises above the relay floor when the
+    /// mempool is purging by fee.
+    pub fn get_mempool_min_fee(&self) -> Result<FeeRate> {
+        let r: GetMempoolInfo = self.0.call_with_retry("getmempoolinfo", &[])?;
+        Ok(FeeRate::from(r.mempool_min_fee * 100_000.0))
     }
 
     /// Get txids of all transactions in a memory pool

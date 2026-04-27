@@ -119,10 +119,7 @@ fn cost_basis_formatted(
         FxHashMap::with_capacity_and_hasher(raw.map.len(), Default::default());
     for (&price_cents, &sats) in &raw.map {
         let price = Cents::from(price_cents);
-        let key = match agg {
-            UrpdAggregation::Raw => price,
-            _ => agg.bucket_floor(price).unwrap_or(price),
-        };
+        let key = agg.bucket_floor(price);
         let entry = bucketed.entry(key).or_insert((Sats::ZERO, Dollars::ZERO));
         entry.0 += sats;
         if needs_realized {
