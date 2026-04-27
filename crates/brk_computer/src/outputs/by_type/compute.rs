@@ -68,10 +68,14 @@ impl Vecs {
                     Ok(())
                 },
                 |agg| {
-                    push_block(&mut self.output_count, agg.entries_all, &agg.entries_per_type);
+                    push_block(
+                        &mut self.output_count,
+                        agg.entries_all,
+                        &agg.entries_per_type,
+                    );
                     push_block(&mut self.tx_count, agg.txs_all, &agg.txs_per_type);
-                    let spendable_total = agg.entries_all
-                        - agg.entries_per_type[OutputType::OpReturn as usize];
+                    let spendable_total =
+                        agg.entries_all - agg.entries_per_type[OutputType::OpReturn as usize];
                     self.spendable_output_count
                         .block
                         .push(StoredU64::from(spendable_total));
@@ -97,8 +101,7 @@ impl Vecs {
                 .compute_rest(starting_indexes.height, exit)?;
             self.spendable_output_count
                 .compute_rest(starting_indexes.height, exit)?;
-            self.tx_count
-                .compute_rest(starting_indexes.height, exit)?;
+            self.tx_count.compute_rest(starting_indexes.height, exit)?;
         }
 
         for (otype, source) in self.output_count.by_type.iter_typed() {

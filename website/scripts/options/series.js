@@ -518,7 +518,7 @@ export function sumsAndAveragesCumulativeWith({
   return [
     {
       name: "Compare",
-      title: title(metric),
+      title: title(`Average ${metric}`),
       bottom: ROLLING_WINDOWS.flatMap((w) =>
         series({
           pattern: average[w.key],

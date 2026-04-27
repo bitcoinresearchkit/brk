@@ -52,9 +52,5 @@ pub(crate) fn init(mode: CdnCacheMode) {
 /// Cached-tier directive for stable responses. Defaults to `Live` if [`init`]
 /// was never called (tests, library use without a `Server`).
 pub(super) fn cdn_cached() -> &'static str {
-    CDN_CACHE_MODE
-        .get()
-        .copied()
-        .unwrap_or_default()
-        .as_str()
+    CDN_CACHE_MODE.get().copied().unwrap_or_default().as_str()
 }

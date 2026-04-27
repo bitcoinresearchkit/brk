@@ -46,12 +46,7 @@ where
                 starts_version,
                 move || cached.cached(),
             );
-            let resolutions = Resolutions::forced_import(
-                &full_name,
-                avg.clone(),
-                version,
-                indexes,
-            );
+            let resolutions = Resolutions::forced_import(&full_name, avg.clone(), version, indexes);
             LazyRollingAvgFromHeight {
                 height: avg,
                 resolutions: Box::new(resolutions),

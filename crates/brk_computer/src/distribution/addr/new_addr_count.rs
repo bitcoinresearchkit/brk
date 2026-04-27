@@ -14,8 +14,7 @@ use super::TotalAddrCountVecs;
 /// New address count per block (global + per-type).
 #[derive(Deref, DerefMut, Traversable)]
 pub struct NewAddrCountVecs<M: StorageMode = Rw>(
-    #[traversable(flatten)]
-    pub WithAddrTypes<PerBlockCumulativeRolling<StoredU64, StoredU64, M>>,
+    #[traversable(flatten)] pub WithAddrTypes<PerBlockCumulativeRolling<StoredU64, StoredU64, M>>,
 );
 
 impl NewAddrCountVecs {
@@ -28,7 +27,11 @@ impl NewAddrCountVecs {
         Ok(Self(WithAddrTypes::<
             PerBlockCumulativeRolling<StoredU64, StoredU64>,
         >::forced_import(
-            db, "new_addr_count", version, indexes, cached_starts
+            db,
+            "new_addr_count",
+            version,
+            indexes,
+            cached_starts,
         )?))
     }
 

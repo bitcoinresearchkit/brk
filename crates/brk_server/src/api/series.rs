@@ -25,7 +25,7 @@ use brk_types::{
 use crate::{
     AppState, CacheParams, CacheStrategy, Result,
     extended::{HeaderMapExtended, TransformResponseExtended},
-    params::SeriesParam,
+    params::{Empty, SeriesParam},
 };
 
 /// Shared response pipeline for every series endpoint.
@@ -42,9 +42,7 @@ pub(super) async fn serve(
     to_bytes: impl FnOnce(&BrkQuery, ResolvedQuery) -> BrkResult<Bytes> + Send + 'static,
 ) -> Result<Response> {
     let max_weight = state.max_weight_for(&addr);
-    let resolved = state
-        .run(move |q| q.resolve(params, max_weight))
-        .await?;
+    let resolved = state.run(move |q| q.resolve(params, max_weight)).await?;
 
     let format = resolved.format();
     let csv_filename = resolved.csv_filename();
@@ -114,7 +112,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
         self.api_route(
             "/api/series",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state.cached_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.series_catalog().clone())).await
                 },
                 |op| op
@@ -135,6 +133,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                 async |
                     uri: Uri,
                     headers: HeaderMap,
+                    _: Empty,
                     State(state): State<AppState>
                 | {
                     state.cached_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.series_count())).await
@@ -154,6 +153,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                 async |
                     uri: Uri,
                     headers: HeaderMap,
+                    _: Empty,
                     State(state): State<AppState>
                 | {
                     state.cached_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.indexes().to_vec())).await
@@ -216,6 +216,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                 async |
                     uri: Uri,
                     headers: HeaderMap,
+                    _: Empty,
                     State(state): State<AppState>,
                     Path(path): Path<SeriesParam>
                 | {
@@ -309,6 +310,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
+                       _: Empty,
                        State(state): State<AppState>,
                        Path(path): Path<SeriesNameWithIndex>| {
                     state
@@ -334,6 +336,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
+                       _: Empty,
                        State(state): State<AppState>,
                        Path(path): Path<SeriesNameWithIndex>| {
                     state
@@ -357,6 +360,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
+                       _: Empty,
                        State(state): State<AppState>,
                        Path(path): Path<SeriesNameWithIndex>| {
                     state

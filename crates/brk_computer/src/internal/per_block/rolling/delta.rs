@@ -369,12 +369,8 @@ where
                     move || cached.cached()
                 },
             );
-            let change_resolutions = Resolutions::forced_import(
-                &cents_name,
-                change_vec.clone(),
-                version,
-                indexes,
-            );
+            let change_resolutions =
+                Resolutions::forced_import(&cents_name, change_vec.clone(), version, indexes);
             let cents = LazyDeltaFromHeight {
                 height: change_vec,
                 resolutions: Box::new(change_resolutions),

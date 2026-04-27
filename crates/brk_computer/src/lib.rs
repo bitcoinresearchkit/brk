@@ -87,9 +87,8 @@ impl Computer {
 
         let cached_starts = blocks.lookback.cached_window_starts();
 
-        let (inputs, outputs, mining, transactions, pools, cointime) = timed(
-            "Imported inputs/outputs/mining/tx/pools/cointime",
-            || {
+        let (inputs, outputs, mining, transactions, pools, cointime) =
+            timed("Imported inputs/outputs/mining/tx/pools/cointime", || {
                 thread::scope(|s| -> Result<_> {
                     let inputs_handle = big_thread().spawn_scoped(s, || -> Result<_> {
                         Ok(Box::new(inputs::Vecs::forced_import(
@@ -152,8 +151,7 @@ impl Computer {
 
                     Ok((inputs, outputs, mining, transactions, pools, cointime))
                 })
-            },
-        )?;
+            })?;
 
         // Market, indicators, and distribution are independent; import in parallel.
         // Supply depends on distribution so it runs after.
@@ -271,9 +269,8 @@ impl Computer {
             {
                 info!("Removing obsolete database folder: {}", name);
                 let path = entry.path();
-                fs::remove_dir_all(&path).map_err(|e| {
-                    std::io::Error::other(format!("remove_dir_all {path:?}: {e}"))
-                })?;
+                fs::remove_dir_all(&path)
+                    .map_err(|e| std::io::Error::other(format!("remove_dir_all {path:?}: {e}")))?;
             }
         }
 

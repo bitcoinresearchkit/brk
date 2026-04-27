@@ -12,7 +12,9 @@ use serde::Deserialize;
 use serde_json::Value;
 use tracing::{debug, info};
 
-use crate::{BlockHeaderInfo, BlockInfo, BlockTemplateTx, BlockchainInfo, Client, RawTx, TxOutInfo};
+use crate::{
+    BlockHeaderInfo, BlockInfo, BlockTemplateTx, BlockchainInfo, Client, RawTx, TxOutInfo,
+};
 
 /// Per-batch request count for `get_block_hashes_range`. Sized so the
 /// JSON request body stays well under a megabyte and bitcoind doesn't
@@ -44,10 +46,9 @@ impl Client {
         &'a H: Into<&'a bitcoin::BlockHash>,
     {
         let hash: &bitcoin::BlockHash = hash.into();
-        let r: GetBlockVerboseZero = self.0.call_with_retry(
-            "getblock",
-            &[serde_json::to_value(hash)?, Value::from(0u8)],
-        )?;
+        let r: GetBlockVerboseZero = self
+            .0
+            .call_with_retry("getblock", &[serde_json::to_value(hash)?, Value::from(0u8)])?;
         r.block()
             .map_err(|e| Error::Parse(format!("decode getblock: {e}")))
     }
@@ -57,10 +58,9 @@ impl Client {
         &'a H: Into<&'a bitcoin::BlockHash>,
     {
         let hash: &bitcoin::BlockHash = hash.into();
-        let r: GetBlockVerboseOne = self.0.call_with_retry(
-            "getblock",
-            &[serde_json::to_value(hash)?, Value::from(1u8)],
-        )?;
+        let r: GetBlockVerboseOne = self
+            .0
+            .call_with_retry("getblock", &[serde_json::to_value(hash)?, Value::from(1u8)])?;
         Ok(BlockInfo {
             height: r.height as usize,
             confirmations: r.confirmations,
@@ -241,7 +241,10 @@ impl Client {
     pub fn get_mempool_raw_tx(&self, txid: &Txid) -> Result<RawTx> {
         let hex = self.get_raw_transaction_hex(txid, None as Option<&BlockHash>)?;
         let tx = encode::deserialize_hex::<bitcoin::Transaction>(&hex)?;
-        Ok(RawTx { tx, hex: hex.into() })
+        Ok(RawTx {
+            tx,
+            hex: hex.into(),
+        })
     }
 
     /// Batched `getrawtransaction` over a slice of txids. Returns a map keyed
@@ -250,10 +253,7 @@ impl Client {
     /// are logged and dropped so a single bad entry doesn't kill the batch.
     ///
     /// Chunked at `BATCH_CHUNK` requests per round-trip.
-    pub fn get_raw_transactions(
-        &self,
-        txids: &[Txid],
-    ) -> Result<FxHashMap<Txid, RawTx>> {
+    pub fn get_raw_transactions(&self, txids: &[Txid]) -> Result<FxHashMap<Txid, RawTx>> {
         let mut out: FxHashMap<Txid, RawTx> =
             FxHashMap::with_capacity_and_hasher(txids.len(), Default::default());
 
@@ -271,7 +271,10 @@ impl Client {
             for (txid, res) in chunk.iter().zip(results) {
                 match res.and_then(|hex| {
                     let tx = encode::deserialize_hex::<bitcoin::Transaction>(&hex)?;
-                    Ok::<_, Error>(RawTx { tx, hex: hex.into() })
+                    Ok::<_, Error>(RawTx {
+                        tx,
+                        hex: hex.into(),
+                    })
                 }) {
                     Ok(raw) => {
                         out.insert(txid.clone(), raw);
@@ -279,7 +282,9 @@ impl Client {
                     // Silenced: users without `-txindex` expect -5 for
                     // every confirmed tx. Downgraded so the mempool
                     // parent-fetch loop doesn't spam the log each cycle.
-                    Err(e) => debug!(txid = %txid, error = %e, "getrawtransaction batch: item failed"),
+                    Err(e) => {
+                        debug!(txid = %txid, error = %e, "getrawtransaction batch: item failed")
+                    }
                 }
             }
         }

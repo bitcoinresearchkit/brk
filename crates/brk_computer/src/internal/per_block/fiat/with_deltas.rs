@@ -10,7 +10,7 @@ use crate::{
     internal::{BpsType, LazyRollingDeltasFiatFromHeight, WindowStartVec, Windows},
 };
 
-use super::{FiatType, FiatPerBlock};
+use super::{FiatPerBlock, FiatType};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct FiatPerBlockWithDeltas<C, CS, B, M: StorageMode = Rw>

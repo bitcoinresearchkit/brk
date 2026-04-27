@@ -4,7 +4,7 @@ use vecdb::{Database, Rw, StorageMode};
 
 use super::{burned, velocity};
 use crate::internal::{
-    LazyValuePerBlock, LazyFiatPerBlock, LazyRollingDeltasFiatFromHeight, PercentPerBlock,
+    LazyFiatPerBlock, LazyRollingDeltasFiatFromHeight, LazyValuePerBlock, PercentPerBlock,
     RollingWindows,
 };
 

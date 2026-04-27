@@ -197,10 +197,9 @@ impl AppState {
         let encoding = ContentEncoding::negotiate(headers);
         let cache_key = format!("{}-{}-{}", uri, params.etag, encoding.as_str());
         let result = self
-            .get_or_insert(
-                &cache_key,
-                async move { self.run(move |q| f(q, encoding)).await },
-            )
+            .get_or_insert(&cache_key, async move {
+                self.run(move |q| f(q, encoding)).await
+            })
             .await;
 
         match result {
@@ -296,7 +295,10 @@ impl AppState {
             uri,
             params,
             |h| {
-                h.insert(header::CONTENT_TYPE, HeaderValue::from_static("application/json"));
+                h.insert(
+                    header::CONTENT_TYPE,
+                    HeaderValue::from_static("application/json"),
+                );
             },
             move |_q, enc| {
                 let value = value_result?;

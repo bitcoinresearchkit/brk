@@ -9,7 +9,7 @@ use crate::{
     internal::{BpsType, LazyRollingDeltasFiatFromHeight, WindowStartVec, Windows},
 };
 
-use super::{FiatType, FiatPerBlockCumulativeWithSums};
+use super::{FiatPerBlockCumulativeWithSums, FiatType};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct FiatPerBlockCumulativeWithSumsAndDeltas<C, CS, B, M: StorageMode = Rw>

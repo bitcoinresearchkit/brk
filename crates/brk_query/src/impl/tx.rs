@@ -190,16 +190,15 @@ impl Query {
             let spending_txid = txid_reader.get(spending_tx_index.to_usize());
             let spending_height: Height = tx_heights.get_shared(spending_tx_index).data()?;
 
-            let (block_hash, block_time) =
-                if let Some((h, ref bh, bt)) = cached_status
-                    && h == spending_height
-                {
-                    (bh.clone(), bt)
-                } else {
-                    let (bh, bt) = self.block_hash_and_time(spending_height)?;
-                    cached_status = Some((spending_height, bh.clone(), bt));
-                    (bh, bt)
-                };
+            let (block_hash, block_time) = if let Some((h, ref bh, bt)) = cached_status
+                && h == spending_height
+            {
+                (bh.clone(), bt)
+            } else {
+                let (bh, bt) = self.block_hash_and_time(spending_height)?;
+                cached_status = Some((spending_height, bh.clone(), bt));
+                (bh, bt)
+            };
 
             outspends.push(TxOutspend {
                 spent: true,

@@ -5,7 +5,7 @@ use vecdb::Database;
 use super::Vecs;
 use crate::{
     indexes,
-    internal::{ValuePerBlockCumulativeRolling, PerBlock, WindowStartVec, Windows},
+    internal::{PerBlock, ValuePerBlockCumulativeRolling, WindowStartVec, Windows},
 };
 
 impl Vecs {

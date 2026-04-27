@@ -85,9 +85,9 @@ impl Query {
                 tx_count: addr_data.tx_count,
                 realized_price,
             },
-            mempool_stats: self.mempool().and_then(|m| {
-                m.addrs().get(&bytes).map(|(stats, _)| stats.clone())
-            }),
+            mempool_stats: self
+                .mempool()
+                .and_then(|m| m.addrs().get(&bytes).map(|(stats, _)| stats.clone())),
         })
     }
 

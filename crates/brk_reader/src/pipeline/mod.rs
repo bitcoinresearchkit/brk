@@ -5,10 +5,7 @@ use brk_rpc::Client;
 use brk_types::{Height, ReadBlock};
 use crossbeam::channel::{Receiver, bounded};
 
-use crate::{
-    BlkIndexToBlkPath, ReaderInner, XORBytes, bisect,
-    canonical::CanonicalRange,
-};
+use crate::{BlkIndexToBlkPath, ReaderInner, XORBytes, bisect, canonical::CanonicalRange};
 
 mod forward;
 mod reorder;

@@ -27,8 +27,7 @@ impl<B: BpsType> LazyPercentCumulativeRolling<B> {
         version: Version,
         source: &PercentCumulativeRolling<B>,
     ) -> Self {
-        let cumulative =
-            LazyPercentPerBlock::from_percent::<F>(name, version, &source.cumulative);
+        let cumulative = LazyPercentPerBlock::from_percent::<F>(name, version, &source.cumulative);
         let rolling = LazyPercentRollingWindows::from_rolling::<F>(name, version, &source.rolling);
         Self {
             cumulative,

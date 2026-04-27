@@ -47,8 +47,14 @@ pub(super) fn pipeline_forward(
         }
         drop(parser_recv);
 
-        let read_result =
-            read_and_dispatch(paths, first_blk_index, xor_bytes, canonical, &parser_send, &stop);
+        let read_result = read_and_dispatch(
+            paths,
+            first_blk_index,
+            xor_bytes,
+            canonical,
+            &parser_send,
+            &stop,
+        );
         drop(parser_send);
         read_result
     })?;
@@ -125,8 +131,7 @@ fn read_and_dispatch(
                 else {
                     return ControlFlow::Continue(());
                 };
-                if !canonical
-                    .verify_prev(canonical_offset, &BlockHash::from(header.prev_blockhash))
+                if !canonical.verify_prev(canonical_offset, &BlockHash::from(header.prev_blockhash))
                 {
                     let _ = stop.set(Stop::Failed(Error::Internal(
                         "forward pipeline: canonical batch stitched across a reorg",

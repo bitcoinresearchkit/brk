@@ -3,10 +3,10 @@ use std::{collections::BTreeMap, sync::LazyLock};
 use brk_error::{Error, Result};
 use brk_traversable::TreeNode;
 use brk_types::{
-    BlockHashPrefix, Date, DetailedSeriesCount, Epoch, Format, Halving, Height, Index,
-    IndexInfo, LegacyValue, Limit, Output, OutputLegacy, PaginatedSeries, Pagination,
-    PaginationIndex, RangeIndex, RangeMap, SearchQuery, SeriesData, SeriesInfo, SeriesName,
-    SeriesOutput, SeriesOutputLegacy, SeriesSelection, Timestamp, Version,
+    BlockHashPrefix, Date, DetailedSeriesCount, Epoch, Format, Halving, Height, Index, IndexInfo,
+    LegacyValue, Limit, Output, OutputLegacy, PaginatedSeries, Pagination, PaginationIndex,
+    RangeIndex, RangeMap, SearchQuery, SeriesData, SeriesInfo, SeriesName, SeriesOutput,
+    SeriesOutputLegacy, SeriesSelection, Timestamp, Version,
 };
 use parking_lot::RwLock;
 use vecdb::{AnyExportableVec, ReadableVec};

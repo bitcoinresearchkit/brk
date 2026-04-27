@@ -5,14 +5,14 @@ use std::{
 };
 
 use brk_error::{Error, Result};
-use brk_types::{
-    Cents, CentsCompact, CentsSats, CentsSquaredSats, UrpdRaw, Height, Sats,
-};
+use brk_types::{Cents, CentsCompact, CentsSats, CentsSquaredSats, Height, Sats, UrpdRaw};
 use rustc_hash::FxHashMap;
 use vecdb::{Bytes, unlikely};
 
 use super::{Accumulate, CachedUnrealizedState, UnrealizedState};
-use crate::distribution::state::pending::{PendingCapDelta, PendingDelta, PendingCapitalizedCapRawDelta};
+use crate::distribution::state::pending::{
+    PendingCapDelta, PendingCapitalizedCapRawDelta, PendingDelta,
+};
 
 /// Type alias for the price-to-sats map used in cost basis data.
 pub(super) type CostBasisMap = BTreeMap<CentsCompact, Sats>;

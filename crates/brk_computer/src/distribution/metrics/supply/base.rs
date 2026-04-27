@@ -76,13 +76,12 @@ impl SupplyBase {
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         exit: &Exit,
     ) -> Result<()> {
-        self.dominance
-            .compute_binary::<Sats, Sats, RatioSatsBp16>(
-                max_from,
-                &self.total.sats.height,
-                all_supply_sats,
-                exit,
-            )
+        self.dominance.compute_binary::<Sats, Sats, RatioSatsBp16>(
+            max_from,
+            &self.total.sats.height,
+            all_supply_sats,
+            exit,
+        )
     }
 
     pub(crate) fn compute_from_stateful(

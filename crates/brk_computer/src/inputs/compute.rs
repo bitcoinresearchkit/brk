@@ -20,8 +20,7 @@ impl Vecs {
         self.spent.compute(indexer, starting_indexes, exit)?;
         self.count
             .compute(indexer, indexes, blocks, starting_indexes, exit)?;
-        self.per_sec
-            .compute(&self.count, starting_indexes, exit)?;
+        self.per_sec.compute(&self.count, starting_indexes, exit)?;
         self.by_type.compute(indexer, starting_indexes, exit)?;
 
         let exit = exit.clone();

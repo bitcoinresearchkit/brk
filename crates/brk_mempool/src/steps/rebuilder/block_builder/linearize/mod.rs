@@ -52,7 +52,12 @@ pub fn linearize_clusters(graph: &Graph) -> Vec<Package> {
             continue;
         }
         for (chunk_order, chunk) in sfl::linearize(&cluster).iter().enumerate() {
-            packages.push(chunk_to_package(&cluster, chunk, cluster_id, chunk_order as u32));
+            packages.push(chunk_to_package(
+                &cluster,
+                chunk,
+                cluster_id,
+                chunk_order as u32,
+            ));
         }
     }
 

@@ -8,7 +8,9 @@ use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{Indexes, TxIndex, VSize};
 use schemars::JsonSchema;
-use vecdb::{Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode, Version};
+use vecdb::{
+    Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode, Version,
+};
 
 use crate::{
     indexes,

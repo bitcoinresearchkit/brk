@@ -89,21 +89,17 @@ impl<T> ByType<T> {
     }
 
     pub fn iter_typed(&self) -> impl Iterator<Item = (OutputType, &T)> {
-        self.spendable
-            .iter_typed()
-            .chain(std::iter::once((
-                OutputType::OpReturn,
-                &self.unspendable.op_return,
-            )))
+        self.spendable.iter_typed().chain(std::iter::once((
+            OutputType::OpReturn,
+            &self.unspendable.op_return,
+        )))
     }
 
     pub fn iter_typed_mut(&mut self) -> impl Iterator<Item = (OutputType, &mut T)> {
-        self.spendable
-            .iter_typed_mut()
-            .chain(std::iter::once((
-                OutputType::OpReturn,
-                &mut self.unspendable.op_return,
-            )))
+        self.spendable.iter_typed_mut().chain(std::iter::once((
+            OutputType::OpReturn,
+            &mut self.unspendable.op_return,
+        )))
     }
 }
 

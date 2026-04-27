@@ -1,4 +1,7 @@
-#![allow(unreachable_patterns, reason = "P2PK65 and P2PK33 both serialize as 'p2pk'")]
+#![allow(
+    unreachable_patterns,
+    reason = "P2PK65 and P2PK33 both serialize as 'p2pk'"
+)]
 
 use bitcoin::{AddressType, ScriptBuf, opcodes::all::OP_PUSHBYTES_2};
 use brk_error::Error;

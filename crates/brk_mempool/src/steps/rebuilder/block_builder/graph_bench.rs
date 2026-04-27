@@ -37,12 +37,9 @@ fn synthetic_mempool(n: usize) -> Vec<Option<Entry>> {
             _ if i > 1 => {
                 let p1 = (i.wrapping_mul(7919)) % i;
                 let p2 = (i.wrapping_mul(6151)) % i;
-                [
-                    TxidPrefix::from(&txids[p1]),
-                    TxidPrefix::from(&txids[p2]),
-                ]
-                .into_iter()
-                .collect()
+                [TxidPrefix::from(&txids[p1]), TxidPrefix::from(&txids[p2])]
+                    .into_iter()
+                    .collect()
             }
             _ => SmallVec::new(),
         };

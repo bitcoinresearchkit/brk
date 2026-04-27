@@ -15,7 +15,12 @@ pub struct Tombstone {
 }
 
 impl Tombstone {
-    pub(super) fn new(tx: Transaction, entry: Entry, removal: Removal, removed_at: Instant) -> Self {
+    pub(super) fn new(
+        tx: Transaction,
+        entry: Entry,
+        removal: Removal,
+        removed_at: Instant,
+    ) -> Self {
         Self {
             tx,
             entry,

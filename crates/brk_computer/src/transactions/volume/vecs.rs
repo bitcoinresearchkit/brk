@@ -2,7 +2,7 @@ use brk_traversable::Traversable;
 use brk_types::StoredF32;
 use vecdb::{Rw, StorageMode};
 
-use crate::internal::{ValuePerBlockCumulativeRolling, PerBlock, Windows};
+use crate::internal::{PerBlock, ValuePerBlockCumulativeRolling, Windows};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

@@ -8,7 +8,7 @@ use brk_types::{Cohort, Date, Urpd, Version};
 use crate::{
     CacheStrategy,
     extended::TransformResponseExtended,
-    params::{UrpdCohortParam, UrpdParams, UrpdQuery},
+    params::{Empty, UrpdCohortParam, UrpdParams, UrpdQuery},
 };
 
 use super::AppState;
@@ -22,7 +22,7 @@ impl ApiUrpdRoutes for ApiRouter<AppState> {
         self.api_route(
             "/api/urpd",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .cached_json(&headers, CacheStrategy::Deploy, &uri, |q| q.urpd_cohorts())
                         .await
@@ -47,6 +47,7 @@ impl ApiUrpdRoutes for ApiRouter<AppState> {
                 async |uri: Uri,
                        headers: HeaderMap,
                        Path(params): Path<UrpdCohortParam>,
+                       _: Empty,
                        State(state): State<AppState>| {
                     state
                         .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {

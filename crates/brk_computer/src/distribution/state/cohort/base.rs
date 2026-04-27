@@ -215,8 +215,12 @@ impl<R: RealizedOps, C: CostBasisOps> CohortState<R, C> {
             pre.prev_capitalized_cap,
         );
 
-        self.cost_basis
-            .decrement(pre.prev_price, pre.sats, pre.prev_ps, pre.prev_capitalized_cap);
+        self.cost_basis.decrement(
+            pre.prev_price,
+            pre.sats,
+            pre.prev_ps,
+            pre.prev_capitalized_cap,
+        );
     }
 
     pub(crate) fn send_utxo(

@@ -210,7 +210,10 @@ impl Sum for Sats {
 
 impl Div<Dollars> for Sats {
     type Output = Self;
-    #[allow(clippy::suspicious_arithmetic_impl, reason = "cents-precision upscale before division")]
+    #[allow(
+        clippy::suspicious_arithmetic_impl,
+        reason = "cents-precision upscale before division"
+    )]
     fn div(self, rhs: Dollars) -> Self::Output {
         let raw_cents = u64::from(Cents::from(rhs));
         (self.0 * 100)

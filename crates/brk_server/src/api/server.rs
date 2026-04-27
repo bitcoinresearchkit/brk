@@ -7,7 +7,7 @@ use axum::{
 };
 use brk_types::{DiskUsage, Health, SyncStatus};
 
-use crate::{CacheStrategy, VERSION, extended::TransformResponseExtended};
+use crate::{CacheStrategy, VERSION, extended::TransformResponseExtended, params::Empty};
 
 use super::AppState;
 
@@ -20,7 +20,7 @@ impl ServerRoutes for ApiRouter<AppState> {
         self.api_route(
             "/health",
             get_with(
-                async |State(state): State<AppState>| -> axum::Json<Health> {
+                async |_: Empty, State(state): State<AppState>| -> axum::Json<Health> {
                     let uptime = state.started_instant.elapsed();
                     let started_at = state.started_at.to_string();
                     let sync = state
@@ -55,7 +55,7 @@ impl ServerRoutes for ApiRouter<AppState> {
         .api_route(
             "/version",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .cached_json(&headers, CacheStrategy::Deploy, &uri, |_| {
                             Ok(env!("CARGO_PKG_VERSION"))
@@ -75,7 +75,7 @@ impl ServerRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/server/sync",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             let tip_height = q.client().get_last_height()?;
@@ -99,7 +99,7 @@ impl ServerRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/server/disk",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     let brk_path = state.data_path.clone();
                     state
                         .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {

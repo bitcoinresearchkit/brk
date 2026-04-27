@@ -16,26 +16,24 @@ impl Vecs {
         indexes: &indexes::Vecs,
         cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
-        let output_count = WithOutputTypes::<
-            PerBlockCumulativeRolling<StoredU64, StoredU64>,
-        >::forced_import_with(
-            db,
-            "output_count_bis",
-            |t| format!("{t}_output_count"),
-            version,
-            indexes,
-            cached_starts,
-        )?;
-        let tx_count = WithOutputTypes::<
-            PerBlockCumulativeRolling<StoredU64, StoredU64>,
-        >::forced_import_with(
-            db,
-            "tx_count_bis",
-            |t| format!("tx_count_with_{t}_output"),
-            version,
-            indexes,
-            cached_starts,
-        )?;
+        let output_count =
+            WithOutputTypes::<PerBlockCumulativeRolling<StoredU64, StoredU64>>::forced_import_with(
+                db,
+                "output_count_bis",
+                |t| format!("{t}_output_count"),
+                version,
+                indexes,
+                cached_starts,
+            )?;
+        let tx_count =
+            WithOutputTypes::<PerBlockCumulativeRolling<StoredU64, StoredU64>>::forced_import_with(
+                db,
+                "tx_count_bis",
+                |t| format!("tx_count_with_{t}_output"),
+                version,
+                indexes,
+                cached_starts,
+            )?;
 
         let spendable_output_count = PerBlockCumulativeRolling::forced_import(
             db,

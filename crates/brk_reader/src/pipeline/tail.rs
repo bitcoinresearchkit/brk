@@ -74,9 +74,7 @@ pub(super) fn pipeline_tail(
                     if slots[offset as usize].is_some() {
                         return ControlFlow::Continue(());
                     }
-                    if !canonical
-                        .verify_prev(offset, &BlockHash::from(header.prev_blockhash))
-                    {
+                    if !canonical.verify_prev(offset, &BlockHash::from(header.prev_blockhash)) {
                         parse_failure = Some(Error::Internal(
                             "tail pipeline: canonical batch stitched across a reorg",
                         ));

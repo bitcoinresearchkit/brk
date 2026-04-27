@@ -140,7 +140,11 @@ impl<I: Ord + Copy + Default + Into<usize>, V: From<usize> + Copy + Default> Ran
             return None;
         }
         let pos = self.first_indexes.partition_point(|&first| first <= index);
-        if pos > 0 { Some(V::from(pos - 1)) } else { None }
+        if pos > 0 {
+            Some(V::from(pos - 1))
+        } else {
+            None
+        }
     }
 
     #[inline]

@@ -126,7 +126,11 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         }
 
         if endpoint.supports_csv {
-            writeln!(output, "    if (format === 'csv') return this.getText(path, {{ signal, onUpdate }});").unwrap();
+            writeln!(
+                output,
+                "    if (format === 'csv') return this.getText(path, {{ signal, onUpdate }});"
+            )
+            .unwrap();
         }
         writeln!(output, "    return {};", fetch_call).unwrap();
 

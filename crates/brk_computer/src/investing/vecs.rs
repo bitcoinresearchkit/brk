@@ -3,7 +3,7 @@ use brk_types::{BasisPointsSigned32, Cents, Height, Sats};
 use vecdb::{Database, EagerVec, PcoVec, Rw, StorageMode};
 
 use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod};
-use crate::internal::{ValuePerBlock, PerBlock, PercentPerBlock, Price};
+use crate::internal::{PerBlock, PercentPerBlock, Price, ValuePerBlock};
 
 #[derive(Traversable)]
 pub struct PeriodVecs<M: StorageMode = Rw> {

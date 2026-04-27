@@ -61,7 +61,11 @@ impl Vecs {
                     Ok(())
                 },
                 |agg| {
-                    push_block(&mut self.input_count, agg.entries_all, &agg.entries_per_type);
+                    push_block(
+                        &mut self.input_count,
+                        agg.entries_all,
+                        &agg.entries_per_type,
+                    );
                     push_block(&mut self.tx_count, agg.txs_all, &agg.txs_per_type);
 
                     if self.input_count.all.block.batch_limit_reached() {
@@ -81,8 +85,7 @@ impl Vecs {
 
             self.input_count
                 .compute_rest(starting_indexes.height, exit)?;
-            self.tx_count
-                .compute_rest(starting_indexes.height, exit)?;
+            self.tx_count.compute_rest(starting_indexes.height, exit)?;
         }
 
         for (otype, source) in self.input_count.by_type.iter_typed() {

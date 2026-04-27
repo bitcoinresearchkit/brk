@@ -68,7 +68,9 @@ where
         dep_version: Version,
         at_height: Height,
     ) -> Result<()> {
-        self.all.block.validate_and_truncate(dep_version, at_height)?;
+        self.all
+            .block
+            .validate_and_truncate(dep_version, at_height)?;
         for v in self.by_type.iter_mut() {
             v.block.validate_and_truncate(dep_version, at_height)?;
         }

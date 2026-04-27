@@ -2,9 +2,7 @@ use brk_types::{FundedAddrData, Height, OutputType, Sats};
 
 use crate::distribution::{block::TrackingStatus, vecs::AddrMetricsVecs};
 
-use super::{
-    AddrTypeToActivityCounts, AddrTypeToAddrCount, ExposedAddrState, ReusedAddrState,
-};
+use super::{AddrTypeToActivityCounts, AddrTypeToAddrCount, ExposedAddrState, ReusedAddrState};
 
 /// Bundle of per-block runtime state for the full address-metrics pipeline.
 /// Feeds `process_received` / `process_sent` and is pushed to [`AddrMetricsVecs`]
@@ -162,7 +160,8 @@ impl AddrMetricsState {
             also_received,
             will_be_empty,
         );
-        self.exposed.on_send(output_type, addr_data, pre, will_be_empty);
+        self.exposed
+            .on_send(output_type, addr_data, pre, will_be_empty);
     }
 }
 

@@ -22,8 +22,7 @@ impl Vecs {
 
         self.count
             .compute(indexer, indexes, blocks, starting_indexes, exit)?;
-        self.per_sec
-            .compute(&self.count, starting_indexes, exit)?;
+        self.per_sec.compute(&self.count, starting_indexes, exit)?;
         self.value
             .compute(indexer, prices, starting_indexes, exit)?;
         self.by_type.compute(indexer, starting_indexes, exit)?;

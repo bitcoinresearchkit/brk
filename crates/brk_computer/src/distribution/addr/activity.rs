@@ -165,9 +165,7 @@ impl ActivityCountVecs {
         self.reactivated.block.push(counts.reactivated.into());
         self.sending.block.push(counts.sending.into());
         self.receiving.block.push(counts.receiving.into());
-        self.bidirectional
-            .block
-            .push(counts.bidirectional.into());
+        self.bidirectional.block.push(counts.bidirectional.into());
         let active = counts.sending + counts.receiving - counts.bidirectional;
         self.active.block.push(active.into());
     }

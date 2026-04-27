@@ -10,7 +10,9 @@ use vecdb::{BinaryTransform, Database, Exit, ReadableVec, Rw, StorageMode, VecVa
 
 use crate::{
     indexes,
-    internal::{BpsType, PerBlockCumulativeRolling, PercentPerBlock, PercentRollingWindows, RatioU64Bp16},
+    internal::{
+        BpsType, PerBlockCumulativeRolling, PercentPerBlock, PercentRollingWindows, RatioU64Bp16,
+    },
 };
 
 #[derive(Traversable)]

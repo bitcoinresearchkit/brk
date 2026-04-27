@@ -7,7 +7,7 @@ use vecdb::{BinaryTransform, Database, Exit, ReadableVec, Rw, StorageMode, Versi
 use crate::{
     blocks, indexes,
     internal::{
-        ValuePerBlockCumulativeRolling, MaskSats, PercentRollingWindows, RatioU64Bp16,
+        MaskSats, PercentRollingWindows, RatioU64Bp16, ValuePerBlockCumulativeRolling,
         WindowStartVec, Windows,
     },
     mining, prices,

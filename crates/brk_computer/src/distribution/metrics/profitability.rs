@@ -7,7 +7,7 @@ use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 use crate::{
     indexes,
     internal::{
-        ValuePerBlock, ValuePerBlockWithDeltas, PerBlock, RatioPerBlock, WindowStartVec, Windows,
+        PerBlock, RatioPerBlock, ValuePerBlock, ValuePerBlockWithDeltas, WindowStartVec, Windows,
     },
     prices,
 };

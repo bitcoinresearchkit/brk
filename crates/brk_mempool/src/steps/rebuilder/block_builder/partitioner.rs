@@ -15,10 +15,7 @@ const LOOK_AHEAD_COUNT: usize = 100;
 /// Look-ahead respects intra-cluster order: a chunk is only taken once
 /// every earlier-rate chunk of the same cluster has been placed, so a
 /// child chunk never lands in an earlier block than its parent chunk.
-pub fn partition_into_blocks(
-    mut packages: Vec<Package>,
-    num_blocks: usize,
-) -> Vec<Vec<Package>> {
+pub fn partition_into_blocks(mut packages: Vec<Package>, num_blocks: usize) -> Vec<Vec<Package>> {
     // Stable sort preserves SFL's per-cluster non-increasing-rate emission
     // order in the global list, which is what `cluster_next` relies on.
     packages.sort_by_key(|p| Reverse(p.fee_rate));
@@ -67,7 +64,13 @@ fn fill_normal_blocks(
         let remaining_space = BLOCK_VSIZE.saturating_sub(current_vsize);
 
         if pkg.vsize <= remaining_space {
-            take(slots, idx, &mut current_block, &mut current_vsize, cluster_next);
+            take(
+                slots,
+                idx,
+                &mut current_block,
+                &mut current_vsize,
+                cluster_next,
+            );
             idx += 1;
             continue;
         }
@@ -75,7 +78,13 @@ fn fill_normal_blocks(
         if current_block.is_empty() {
             // Oversized package with no partial block to preserve; take it
             // anyway so we don't stall on a package larger than BLOCK_VSIZE.
-            take(slots, idx, &mut current_block, &mut current_vsize, cluster_next);
+            take(
+                slots,
+                idx,
+                &mut current_block,
+                &mut current_vsize,
+                cluster_next,
+            );
             idx += 1;
             continue;
         }

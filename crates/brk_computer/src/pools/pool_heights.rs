@@ -14,9 +14,7 @@ impl PoolHeights {
         let mut map: FxHashMap<PoolSlug, Vec<Height>> = FxHashMap::default();
         let reader = pool.reader();
         for h in 0..len {
-            map.entry(reader.get(h))
-                .or_default()
-                .push(Height::from(h));
+            map.entry(reader.get(h)).or_default().push(Height::from(h));
         }
         Self(Arc::new(RwLock::new(map)))
     }

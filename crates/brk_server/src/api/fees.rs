@@ -5,7 +5,7 @@ use axum::{
 };
 use brk_types::{MempoolBlock, RecommendedFees};
 
-use crate::{AppState, extended::TransformResponseExtended};
+use crate::{AppState, extended::TransformResponseExtended, params::Empty};
 
 pub trait FeesRoutes {
     fn add_fees_routes(self) -> Self;
@@ -16,7 +16,7 @@ impl FeesRoutes for ApiRouter<AppState> {
         self.api_route(
             "/api/v1/fees/mempool-blocks",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .cached_json(&headers, state.mempool_cache(), &uri, |q| {
                             q.mempool_blocks()
@@ -37,7 +37,7 @@ impl FeesRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/fees/recommended",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .cached_json(&headers, state.mempool_cache(), &uri, |q| {
                             q.recommended_fees()
@@ -58,7 +58,7 @@ impl FeesRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/fees/precise",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .cached_json(&headers, state.mempool_cache(), &uri, |q| {
                             q.recommended_fees()

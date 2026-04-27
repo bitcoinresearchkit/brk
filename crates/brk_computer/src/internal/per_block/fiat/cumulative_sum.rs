@@ -6,7 +6,7 @@ use vecdb::{Database, Exit, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        FiatType, FiatBlock, FiatPerBlock, LazyRollingSumsFiatFromHeight, WindowStartVec, Windows,
+        FiatBlock, FiatPerBlock, FiatType, LazyRollingSumsFiatFromHeight, WindowStartVec, Windows,
     },
 };
 

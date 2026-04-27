@@ -7,7 +7,7 @@ use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        ValuePerBlock, DistributionStats, WindowStarts, Windows,
+        DistributionStats, ValuePerBlock, WindowStarts, Windows,
         algo::compute_rolling_distribution_from_starts,
     },
 };

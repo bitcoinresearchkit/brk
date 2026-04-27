@@ -6,7 +6,9 @@ use axum::{
 use brk_types::{DifficultyAdjustment, HistoricalPrice, Prices, Timestamp, Version};
 
 use crate::{
-    AppState, CacheStrategy, extended::TransformResponseExtended, params::OptionalTimestampParam,
+    AppState, CacheStrategy,
+    extended::TransformResponseExtended,
+    params::{Empty, OptionalTimestampParam},
 };
 
 pub trait GeneralRoutes {
@@ -18,7 +20,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
         self.api_route(
             "/api/v1/difficulty-adjustment",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .cached_json(&headers, CacheStrategy::Tip, &uri, |q| {
                             q.difficulty_adjustment()
@@ -39,7 +41,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/prices",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .cached_json(&headers, state.mempool_cache(), &uri, |q| {
                             Ok(Prices {

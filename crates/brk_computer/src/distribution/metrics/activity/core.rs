@@ -9,7 +9,7 @@ use crate::{
         metrics::ImportConfig,
         state::{CohortState, CostBasisOps, RealizedOps},
     },
-    internal::{ValuePerBlockCumulativeRolling, PerBlockCumulativeRolling},
+    internal::{PerBlockCumulativeRolling, ValuePerBlockCumulativeRolling},
     prices,
 };
 

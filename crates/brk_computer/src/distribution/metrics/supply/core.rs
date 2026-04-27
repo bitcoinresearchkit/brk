@@ -7,7 +7,7 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 use crate::{distribution::state::UnrealizedState, prices};
 
 use crate::internal::{
-    ValuePerBlock, HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyValuePerBlock,
+    HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyValuePerBlock, ValuePerBlock,
 };
 
 use crate::distribution::metrics::ImportConfig;

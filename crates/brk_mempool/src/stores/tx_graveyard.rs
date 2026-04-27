@@ -36,9 +36,9 @@ impl TxGraveyard {
         &'a self,
         replacer: &'a Txid,
     ) -> impl Iterator<Item = (&'a Txid, &'a Tombstone)> {
-        self.tombstones
-            .iter()
-            .filter_map(move |(txid, ts)| (ts.replaced_by() == Some(replacer)).then_some((txid, ts)))
+        self.tombstones.iter().filter_map(move |(txid, ts)| {
+            (ts.replaced_by() == Some(replacer)).then_some((txid, ts))
+        })
     }
 
     pub fn bury(&mut self, txid: Txid, tx: Transaction, entry: Entry, removal: Removal) {

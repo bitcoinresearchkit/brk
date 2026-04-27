@@ -6,9 +6,9 @@ use super::Vecs;
 use crate::{
     indexes,
     internal::{
-        ValuePerBlockCumulative, ValuePerBlockCumulativeRolling, ValuePerBlockFull,
         LazyPercentCumulativeRolling, OneMinusBp16, PercentCumulativeRolling, RatioRollingWindows,
-        WindowStartVec, Windows,
+        ValuePerBlockCumulative, ValuePerBlockCumulativeRolling, ValuePerBlockFull, WindowStartVec,
+        Windows,
     },
 };
 

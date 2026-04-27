@@ -6,7 +6,7 @@ use derive_more::{Deref, DerefMut};
 use vecdb::UnaryTransform;
 
 use crate::internal::{
-    ValuePerBlock, Identity, LazyValue, LazyValueDerivedResolutions, SatsToBitcoin,
+    Identity, LazyValue, LazyValueDerivedResolutions, SatsToBitcoin, ValuePerBlock,
 };
 
 /// Lazy value wrapper with height + all derived last transforms from ValuePerBlock.

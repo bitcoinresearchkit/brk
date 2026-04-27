@@ -327,7 +327,10 @@ fn random_dag(n: usize, seed: u64) -> FvAndEdges {
     (fees_vsizes, edges)
 }
 
-#[expect(dead_code, reason = "kept for ad-hoc oracle sweeps; called via uncommented stress tests")]
+#[expect(
+    dead_code,
+    reason = "kept for ad-hoc oracle sweeps; called via uncommented stress tests"
+)]
 fn assert_optimal_on_random(n: usize, seed: u64) {
     let (fv, edges) = random_dag(n, seed);
     let cluster = super::make_cluster(&fv, &edges);
@@ -376,7 +379,11 @@ fn optimality_gap_of(got: &[(u64, u64)], want: &[(u64, u64)]) -> Option<u128> {
             worst_gap = worst_gap.max(fb - fa);
         }
     }
-    if worst_gap == 0 { None } else { Some(worst_gap) }
+    if worst_gap == 0 {
+        None
+    } else {
+        Some(worst_gap)
+    }
 }
 
 /// Gap for the production linearizer on one random DAG.
@@ -479,10 +486,7 @@ fn perf_linearize() {
         } else {
             format!("{} ns", avg_ns)
         };
-        eprintln!(
-            "  {:<4} {:<8}  {:<10} {:.2?}",
-            n, calls, pretty, elapsed
-        );
+        eprintln!("  {:<4} {:<8}  {:<10} {:.2?}", n, calls, pretty, elapsed);
     }
     eprintln!();
 }

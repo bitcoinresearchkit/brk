@@ -7,7 +7,7 @@ use crate::PoolSlug;
 use super::Pool;
 
 const JSON_DATA: &str = include_str!("../pools-v2.json");
-const POOL_COUNT: usize = 170;
+const POOL_COUNT: usize = 171;
 const TESTNET_IDS: &[u16] = &[145, 146, 149, 150, 156, 163];
 
 #[derive(Deserialize)]

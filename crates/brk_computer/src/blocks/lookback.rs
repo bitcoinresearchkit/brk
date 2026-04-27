@@ -41,7 +41,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub _9m: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 270d
     pub _350d: M::Stored<EagerVec<PcoVec<Height, Height>>>,
     pub _12m: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 360d
-    pub _1y: CachedVec<M::Stored<EagerVec<PcoVec<Height, Height>>>>,  // 365d
+    pub _1y: CachedVec<M::Stored<EagerVec<PcoVec<Height, Height>>>>, // 365d
     pub _14m: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 420d
     pub _2y: M::Stored<EagerVec<PcoVec<Height, Height>>>,  // 730d
     pub _26m: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 780d

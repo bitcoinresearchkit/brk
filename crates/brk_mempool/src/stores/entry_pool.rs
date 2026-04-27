@@ -60,7 +60,10 @@ impl EntryPool {
     /// Remove an entry by its txid prefix, returning it if present.
     pub fn remove(&mut self, prefix: &TxidPrefix) -> Option<Entry> {
         let idx = self.prefix_to_idx.remove(prefix)?;
-        let entry = self.entries.get_mut(idx.as_usize()).and_then(Option::take)?;
+        let entry = self
+            .entries
+            .get_mut(idx.as_usize())
+            .and_then(Option::take)?;
         self.free_slots.push(idx);
         Some(entry)
     }

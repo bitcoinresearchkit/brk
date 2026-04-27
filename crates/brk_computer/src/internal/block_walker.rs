@@ -81,4 +81,3 @@ pub(crate) fn walk_blocks(
 
     Ok(())
 }
-

@@ -78,7 +78,9 @@ impl BlockWindow {
             .collect_range_at(self.start, self.end);
         let all_prices: Vec<Cents> = computer
             .prices
-            .spot.cents.height
+            .spot
+            .cents
+            .height
             .collect_range_at(self.start, self.end);
         let read_start = self.start.saturating_sub(1);
         let all_cum = cumulative.collect_range_at(read_start, self.end);

@@ -7,8 +7,8 @@ use brk_types::Height;
 use tracing::warn;
 
 use crate::{
-    BlkIndexToBlkPath, OUT_OF_ORDER_FILE_BACKOFF, XORBytes, XORIndex,
-    parse::HEADER_LEN, scan::find_magic,
+    BlkIndexToBlkPath, OUT_OF_ORDER_FILE_BACKOFF, XORBytes, XORIndex, parse::HEADER_LEN,
+    scan::find_magic,
 };
 
 const PROBE_BUF_LEN: usize = 4096;

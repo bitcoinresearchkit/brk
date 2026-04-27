@@ -44,7 +44,9 @@ where
         Self {
             height: LazyVecFrom1::transformed::<F>(name, version, height_source),
             resolutions: Box::new(DerivedResolutions::from_derived_computed::<F>(
-                name, version, resolutions,
+                name,
+                version,
+                resolutions,
             )),
         }
     }

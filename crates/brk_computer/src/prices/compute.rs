@@ -84,7 +84,11 @@ impl Vecs {
             .height
             .len()
             .min(starting_indexes.height.to_usize());
-        self.spot.cents.height.inner.truncate_if_needed_at(truncate_to)?;
+        self.spot
+            .cents
+            .height
+            .inner
+            .truncate_if_needed_at(truncate_to)?;
 
         if self.spot.cents.height.len() < START_HEIGHT {
             for line in brk_oracle::PRICES

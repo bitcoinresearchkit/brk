@@ -1,9 +1,9 @@
 use std::{cmp::Reverse, collections::BinaryHeap, fs, path::Path};
 
 use brk_cohort::{AGE_RANGE_NAMES, CohortContext, Filtered, PROFITABILITY_RANGE_COUNT, TERM_NAMES};
-use rayon::prelude::*;
 use brk_error::Result;
-use brk_types::{BasisPoints16, Cents, CentsCompact, UrpdRaw, Date, Dollars, Sats};
+use brk_types::{BasisPoints16, Cents, CentsCompact, Date, Dollars, Sats, UrpdRaw};
+use rayon::prelude::*;
 
 use crate::distribution::metrics::{CostBasis, ProfitabilityMetrics};
 

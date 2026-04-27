@@ -28,7 +28,9 @@ impl BlkIndexToBlkPath {
             let Some(file_name) = path.file_name().and_then(|n| n.to_str()) else {
                 continue;
             };
-            let Some(index_str) = file_name.strip_prefix(BLK).and_then(|s| s.strip_suffix(DOT_DAT))
+            let Some(index_str) = file_name
+                .strip_prefix(BLK)
+                .and_then(|s| s.strip_suffix(DOT_DAT))
             else {
                 continue;
             };

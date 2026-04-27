@@ -7,7 +7,7 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{
-        ValuePerBlockCumulativeRolling, RollingDistributionValuePerBlock, WindowStartVec,
+        RollingDistributionValuePerBlock, ValuePerBlockCumulativeRolling, WindowStartVec,
         WindowStarts, Windows,
     },
     prices,

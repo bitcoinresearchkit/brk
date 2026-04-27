@@ -220,8 +220,7 @@ impl Vecs {
         let addr_count = AddrCountsVecs::forced_import(&db, "addr_count", version, indexes)?;
         let empty_addr_count =
             AddrCountsVecs::forced_import(&db, "empty_addr_count", version, indexes)?;
-        let addr_activity =
-            AddrActivityVecs::forced_import(&db, version, indexes, cached_starts)?;
+        let addr_activity = AddrActivityVecs::forced_import(&db, version, indexes, cached_starts)?;
 
         // Stored total = addr_count + empty_addr_count (global + per-type, with all derived indexes)
         let total_addr_count = TotalAddrCountVecs::forced_import(&db, version, indexes)?;
@@ -548,7 +547,9 @@ impl Vecs {
         self.addrs.empty.compute_rest(starting_indexes, exit)?;
         let t = &self.utxo_cohorts.type_;
         let type_supply_sats = ByAddrType::new(|filter| {
-            let Filter::Type(ot) = filter else { unreachable!() };
+            let Filter::Type(ot) = filter else {
+                unreachable!()
+            };
             &t.get(ot).metrics.supply.total.sats.height
         });
         let all_supply_sats = &self.utxo_cohorts.all.metrics.supply.total.sats.height;

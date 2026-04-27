@@ -45,12 +45,7 @@ impl Verifier {
         }
     }
 
-    fn live_entry(
-        entries: &[Option<Entry>],
-        tx_index: TxIndex,
-        b: usize,
-        p: usize,
-    ) -> &Entry {
+    fn live_entry(entries: &[Option<Entry>], tx_index: TxIndex, b: usize, p: usize) -> &Entry {
         entries[tx_index.as_usize()]
             .as_ref()
             .unwrap_or_else(|| panic!("block {b} pkg {p}: dead tx_index {tx_index:?}"))
@@ -65,10 +60,7 @@ impl Verifier {
     ) {
         for parent in &entry.depends {
             if in_pool.contains(parent) && !placed.contains(parent) {
-                panic!(
-                    "block {b} pkg {p}: {} placed before its parent",
-                    entry.txid
-                );
+                panic!("block {b} pkg {p}: {} placed before its parent", entry.txid);
             }
         }
     }

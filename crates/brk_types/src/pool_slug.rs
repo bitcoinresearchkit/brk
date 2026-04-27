@@ -201,8 +201,7 @@ pub enum PoolSlug {
     Est3lar,
     BraiinsSolo,
     SoloPool,
-    #[serde(skip)]
-    Dummy170,
+    Noderunners,
     #[serde(skip)]
     Dummy171,
     #[serde(skip)]

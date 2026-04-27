@@ -29,6 +29,7 @@ use vecdb::ReadableOptionVec;
 use crate::{
     AppState, CacheStrategy, Result,
     extended::{HeaderMapExtended, TransformResponseExtended},
+    params::Empty,
 };
 
 pub const SUNSET: &str = "2027-01-01T00:00:00Z";
@@ -43,7 +44,8 @@ pub async fn handler(
     Query(params): Query<SeriesSelection>,
     State(state): State<AppState>,
 ) -> Result<Response> {
-    let mut response = super::series::serve(state, uri, headers, addr, params, legacy_bytes).await?;
+    let mut response =
+        super::series::serve(state, uri, headers, addr, params, legacy_bytes).await?;
     if response.status() == StatusCode::OK {
         response.headers_mut().insert_deprecation(SUNSET);
     }
@@ -151,7 +153,7 @@ impl ApiSeriesLegacyRoutes for ApiRouter<AppState> {
         self.api_route(
             "/api/series/cost-basis",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .cached_json(&headers, CacheStrategy::Deploy, &uri, |q| q.urpd_cohorts())
                         .await
@@ -177,6 +179,7 @@ impl ApiSeriesLegacyRoutes for ApiRouter<AppState> {
                 async |uri: Uri,
                        headers: HeaderMap,
                        Path(params): Path<CostBasisCohortParam>,
+                       _: Empty,
                        State(state): State<AppState>| {
                     state
                         .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {

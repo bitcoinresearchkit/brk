@@ -200,12 +200,14 @@ impl RealizedOps for CoreRealizedState {
 
     #[inline]
     fn increment_snapshot(&mut self, price_sats: CentsSats, _capitalized_cap: CentsSquaredSats) {
-        self.minimal.increment_snapshot(price_sats, _capitalized_cap);
+        self.minimal
+            .increment_snapshot(price_sats, _capitalized_cap);
     }
 
     #[inline]
     fn decrement_snapshot(&mut self, price_sats: CentsSats, _capitalized_cap: CentsSquaredSats) {
-        self.minimal.decrement_snapshot(price_sats, _capitalized_cap);
+        self.minimal
+            .decrement_snapshot(price_sats, _capitalized_cap);
     }
 
     #[inline]
@@ -301,7 +303,8 @@ impl RealizedOps for RealizedState {
     fn increment(&mut self, price: Cents, sats: Sats) {
         self.core.increment(price, sats);
         if sats.is_not_zero() {
-            self.capitalized_cap_raw += CentsSats::from_price_sats(price, sats).to_capitalized_cap(price);
+            self.capitalized_cap_raw +=
+                CentsSats::from_price_sats(price, sats).to_capitalized_cap(price);
         }
     }
 

@@ -5,7 +5,7 @@ use axum::{
 };
 use brk_types::{Dollars, MempoolInfo, MempoolRecentTx, Txid};
 
-use crate::{AppState, extended::TransformResponseExtended};
+use crate::{AppState, extended::TransformResponseExtended, params::Empty};
 
 pub trait MempoolRoutes {
     fn add_mempool_routes(self) -> Self;
@@ -16,7 +16,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
         self.api_route(
             "/api/mempool",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .cached_json(&headers, state.mempool_cache(), &uri, |q| q.mempool_info())
                         .await
@@ -35,7 +35,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/mempool/txids",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .cached_json(&headers, state.mempool_cache(), &uri, |q| q.mempool_txids())
                         .await
@@ -54,7 +54,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/mempool/recent",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .cached_json(&headers, state.mempool_cache(), &uri, |q| q.mempool_recent())
                         .await
@@ -73,7 +73,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/mempool/price",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .cached_json(&headers, state.mempool_cache(), &uri, |q| q.live_price())
                         .await

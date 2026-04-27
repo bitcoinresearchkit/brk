@@ -17,7 +17,7 @@ use brk_types::{
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{CacheStrategy, Error, extended::TransformResponseExtended};
+use crate::{CacheStrategy, Error, extended::TransformResponseExtended, params::Empty};
 
 use super::AppState;
 use super::series_legacy;
@@ -46,7 +46,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/metrics",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| {
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state.cached_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.series_catalog().clone())).await
                 },
                 |op| op
@@ -68,6 +68,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                 async |
                     uri: Uri,
                     headers: HeaderMap,
+                    _: Empty,
                     State(state): State<AppState>
                 | {
                     state.cached_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.series_count())).await
@@ -91,6 +92,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                 async |
                     uri: Uri,
                     headers: HeaderMap,
+                    _: Empty,
                     State(state): State<AppState>
                 | {
                     state.cached_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.indexes().to_vec())).await
@@ -186,6 +188,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                 async |
                     uri: Uri,
                     headers: HeaderMap,
+                    _: Empty,
                     State(state): State<AppState>,
                     Path(path): Path<LegacySeriesParam>
                 | {
@@ -273,6 +276,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
+                       _: Empty,
                        State(state): State<AppState>,
                        Path(path): Path<LegacySeriesWithIndex>| {
                     state
@@ -299,6 +303,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
+                       _: Empty,
                        State(state): State<AppState>,
                        Path(path): Path<LegacySeriesWithIndex>| {
                     state
@@ -325,6 +330,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
+                       _: Empty,
                        State(state): State<AppState>,
                        Path(path): Path<LegacySeriesWithIndex>| {
                     state

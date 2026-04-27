@@ -62,10 +62,7 @@ impl Fetcher {
 
     /// Parent txids referenced by `new_raws` inputs that aren't already
     /// resolvable: not in the mempool store, not in `new_raws` itself.
-    fn unique_confirmed_parents(
-        new_raws: &FxHashMap<Txid, RawTx>,
-        known: &TxStore,
-    ) -> Vec<Txid> {
+    fn unique_confirmed_parents(new_raws: &FxHashMap<Txid, RawTx>, known: &TxStore) -> Vec<Txid> {
         let mut set: FxHashSet<Txid> = FxHashSet::default();
         for raw in new_raws.values() {
             for txin in &raw.tx.input {

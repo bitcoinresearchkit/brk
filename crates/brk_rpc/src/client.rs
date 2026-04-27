@@ -1,9 +1,7 @@
 use std::{thread::sleep, time::Duration};
 
 use brk_error::{Error, Result};
-use corepc_jsonrpc::{
-    Client as JsonRpcClient, Request, error::Error as JsonRpcError, simple_http,
-};
+use corepc_jsonrpc::{Client as JsonRpcClient, Request, error::Error as JsonRpcError, simple_http};
 use parking_lot::RwLock;
 use serde::Deserialize;
 use serde_json::{Value, value::RawValue};

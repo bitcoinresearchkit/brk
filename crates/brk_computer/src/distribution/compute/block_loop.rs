@@ -190,7 +190,10 @@ pub(crate) fn process_blocks(
         .first_index
         .collect_range_at(start_usize, end_usize);
 
-    debug!("recovering addr metrics state from height {}", starting_height);
+    debug!(
+        "recovering addr metrics state from height {}",
+        starting_height
+    );
     let mut state = AddrMetricsState::from((&vecs.addrs, starting_height));
     debug!("addr metrics state recovered");
 

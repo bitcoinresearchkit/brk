@@ -10,7 +10,7 @@ use brk_types::{AddrStats, AddrValidation, Transaction, Txid, Utxo, Version};
 use crate::{
     AppState, CacheStrategy,
     extended::TransformResponseExtended,
-    params::{AddrParam, AddrTxidsParam, ValidateAddrParam},
+    params::{AddrParam, AddrTxidsParam, Empty, ValidateAddrParam},
 };
 
 pub trait AddrRoutes {
@@ -28,6 +28,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 uri: Uri,
                 headers: HeaderMap,
                 Path(path): Path<AddrParam>,
+                _: Empty,
                 State(state): State<AppState>
             | {
                 let strategy = state.addr_cache(Version::ONE, &path.addr, false);
@@ -96,6 +97,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 uri: Uri,
                 headers: HeaderMap,
                 Path(path): Path<AddrParam>,
+                _: Empty,
                 State(state): State<AppState>
             | {
                 let hash = state.sync(|q| q.addr_mempool_hash(&path.addr));
@@ -118,6 +120,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 uri: Uri,
                 headers: HeaderMap,
                 Path(path): Path<AddrParam>,
+                _: Empty,
                 State(state): State<AppState>
             | {
                 let strategy = state.addr_cache(Version::ONE, &path.addr, false);
@@ -140,6 +143,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 uri: Uri,
                 headers: HeaderMap,
                 Path(path): Path<ValidateAddrParam>,
+                _: Empty,
                 State(state): State<AppState>
             | {
                 state.cached_json(&headers, CacheStrategy::Deploy, &uri, move |_q| Ok(AddrValidation::from_addr(&path.addr))).await

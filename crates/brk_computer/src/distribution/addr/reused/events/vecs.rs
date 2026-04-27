@@ -92,34 +92,30 @@ impl AddrEventsVecs {
                 cached_starts,
             )
         };
-        let import_percent = |name: &str| -> Result<WithAddrTypes<
-            PercentCumulativeRolling<BasisPoints16>,
-        >> {
-            Ok(WithAddrTypes {
-                all: PercentCumulativeRolling::forced_import(db, name, version, indexes)?,
-                by_addr_type: ByAddrType::new_with_name(|type_name| {
-                    PercentCumulativeRolling::forced_import(
-                        db,
-                        &format!("{type_name}_{name}"),
-                        version,
-                        indexes,
-                    )
-                })?,
-            })
-        };
+        let import_percent =
+            |name: &str| -> Result<WithAddrTypes<PercentCumulativeRolling<BasisPoints16>>> {
+                Ok(WithAddrTypes {
+                    all: PercentCumulativeRolling::forced_import(db, name, version, indexes)?,
+                    by_addr_type: ByAddrType::new_with_name(|type_name| {
+                        PercentCumulativeRolling::forced_import(
+                            db,
+                            &format!("{type_name}_{name}"),
+                            version,
+                            indexes,
+                        )
+                    })?,
+                })
+            };
 
-        let output_to_reused_addr_count =
-            import_count(&format!("output_to_{name}_addr_count"))?;
-        let output_to_reused_addr_share =
-            import_percent(&format!("output_to_{name}_addr_share"))?;
+        let output_to_reused_addr_count = import_count(&format!("output_to_{name}_addr_count"))?;
+        let output_to_reused_addr_share = import_percent(&format!("output_to_{name}_addr_share"))?;
         let spendable_output_to_reused_addr_share = PercentCumulativeRolling::forced_import(
             db,
             &format!("spendable_output_to_{name}_addr_share"),
             version,
             indexes,
         )?;
-        let input_from_reused_addr_count =
-            import_count(&format!("input_from_{name}_addr_count"))?;
+        let input_from_reused_addr_count = import_count(&format!("input_from_{name}_addr_count"))?;
         let input_from_reused_addr_share =
             import_percent(&format!("input_from_{name}_addr_share"))?;
 
@@ -229,12 +225,13 @@ impl AddrEventsVecs {
             starting_indexes.height,
             exit,
         )?;
-        self.spendable_output_to_reused_addr_share.compute_count_ratio(
-            &self.output_to_reused_addr_count.all,
-            &outputs_by_type.spendable_output_count,
-            starting_indexes.height,
-            exit,
-        )?;
+        self.spendable_output_to_reused_addr_share
+            .compute_count_ratio(
+                &self.output_to_reused_addr_count.all,
+                &outputs_by_type.spendable_output_count,
+                starting_indexes.height,
+                exit,
+            )?;
         self.input_from_reused_addr_share.all.compute_count_ratio(
             &self.input_from_reused_addr_count.all,
             &inputs_by_type.input_count.all,
@@ -246,7 +243,9 @@ impl AddrEventsVecs {
                 .by_addr_type
                 .get_mut_unwrap(otype)
                 .compute_count_ratio(
-                    self.output_to_reused_addr_count.by_addr_type.get_unwrap(otype),
+                    self.output_to_reused_addr_count
+                        .by_addr_type
+                        .get_unwrap(otype),
                     outputs_by_type.output_count.by_type.get(otype),
                     starting_indexes.height,
                     exit,
@@ -255,7 +254,9 @@ impl AddrEventsVecs {
                 .by_addr_type
                 .get_mut_unwrap(otype)
                 .compute_count_ratio(
-                    self.input_from_reused_addr_count.by_addr_type.get_unwrap(otype),
+                    self.input_from_reused_addr_count
+                        .by_addr_type
+                        .get_unwrap(otype),
                     inputs_by_type.input_count.by_type.get(otype),
                     starting_indexes.height,
                     exit,

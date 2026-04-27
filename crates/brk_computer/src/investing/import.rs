@@ -9,7 +9,7 @@ use super::{ByDcaCagr, ByDcaClass, ByDcaPeriod, Vecs};
 use crate::{
     indexes,
     internal::{
-        ValuePerBlock, PercentPerBlock, Price,
+        PercentPerBlock, Price, ValuePerBlock,
         db_utils::{finalize_db, open_db},
     },
 };

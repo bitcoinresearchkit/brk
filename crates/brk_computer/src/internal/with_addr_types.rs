@@ -13,7 +13,7 @@ use vecdb::{AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, WritableVec}
 use crate::{indexes, prices};
 
 use super::{
-    ValuePerBlock, BpsType, NumericValue, PerBlock, PerBlockCumulativeRolling, PercentPerBlock,
+    BpsType, NumericValue, PerBlock, PerBlockCumulativeRolling, PercentPerBlock, ValuePerBlock,
     WindowStartVec, Windows,
 };
 
@@ -83,11 +83,7 @@ where
     }
 
     /// Compute `all.height` as the per-block sum of the per-type vecs.
-    pub(crate) fn compute_rest(
-        &mut self,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
+    pub(crate) fn compute_rest(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
         let sources: Vec<&EagerVec<PcoVec<Height, T>>> =
             self.by_addr_type.values().map(|v| &v.height).collect();
         self.all
@@ -109,13 +105,8 @@ where
         indexes: &indexes::Vecs,
         cached_starts: &Windows<&WindowStartVec>,
     ) -> Result<Self> {
-        let all = PerBlockCumulativeRolling::forced_import(
-            db,
-            name,
-            version,
-            indexes,
-            cached_starts,
-        )?;
+        let all =
+            PerBlockCumulativeRolling::forced_import(db, name, version, indexes, cached_starts)?;
         let by_addr_type = ByAddrType::new_with_name(|type_name| {
             PerBlockCumulativeRolling::forced_import(
                 db,

@@ -1,23 +1,21 @@
-use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{DataRangeFormat, Index, SeriesList, SeriesName};
+use crate::{DataRangeFormat, Index, SeriesList, SeriesName, with_range_format::with_range_format};
 
-/// Selection of series to query
-#[derive(Debug, Deref, Deserialize, JsonSchema)]
-pub struct SeriesSelection {
-    /// Requested series
-    #[serde(alias = "m", alias = "metrics")]
-    pub series: SeriesList,
+with_range_format! {
+    /// Selection of series to query
+    #[derive(Debug, Deserialize, JsonSchema)]
+    #[serde(deny_unknown_fields)]
+    pub struct SeriesSelection {
+        /// Requested series
+        #[serde(alias = "m", alias = "metrics")]
+        pub series: SeriesList,
 
-    /// Index to query
-    #[serde(alias = "i")]
-    pub index: Index,
-
-    #[deref]
-    #[serde(flatten)]
-    pub range: DataRangeFormat,
+        /// Index to query
+        #[serde(alias = "i")]
+        pub index: Index,
+    }
 }
 
 impl From<(Index, SeriesName, DataRangeFormat)> for SeriesSelection {
@@ -26,7 +24,10 @@ impl From<(Index, SeriesName, DataRangeFormat)> for SeriesSelection {
         Self {
             index,
             series: SeriesList::from(series),
-            range,
+            start: range.start(),
+            end: range.end(),
+            limit: range.limit(),
+            format: range.format(),
         }
     }
 }
@@ -37,7 +38,10 @@ impl From<(Index, SeriesList, DataRangeFormat)> for SeriesSelection {
         Self {
             index,
             series,
-            range,
+            start: range.start(),
+            end: range.end(),
+            limit: range.limit(),
+            format: range.format(),
         }
     }
 }

@@ -57,12 +57,7 @@ impl Query {
         }
 
         let height = Height::from(best_height);
-        let blockhash = indexer
-            .vecs
-            .blocks
-            .blockhash
-            .collect_one(height)
-            .data()?;
+        let blockhash = indexer.vecs.blocks.blockhash.collect_one(height).data()?;
 
         // Convert timestamp to ISO 8601 format
         let ts_secs: i64 = (*best_ts).into();

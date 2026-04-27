@@ -7,11 +7,11 @@ use vecdb::{BytesVec, BytesVecValue, Database, ImportableVec};
 use crate::{
     indexes,
     internal::{
-        ValuePerBlock, ValuePerBlockCumulative, ValuePerBlockCumulativeRolling, FiatType,
-        FiatPerBlock, FiatPerBlockCumulativeWithSums, NumericValue, PerBlock,
+        FiatPerBlock, FiatPerBlockCumulativeWithSums, FiatType, NumericValue, PerBlock,
         PerBlockCumulativeRolling, PercentPerBlock, PercentRollingWindows, Price,
         PriceWithRatioExtendedPerBlock, PriceWithRatioPerBlock, RatioPerBlock,
-        RollingWindow24hPerBlock, RollingWindows, RollingWindowsFrom1w, WindowStartVec, Windows,
+        RollingWindow24hPerBlock, RollingWindows, RollingWindowsFrom1w, ValuePerBlock,
+        ValuePerBlockCumulative, ValuePerBlockCumulativeRolling, WindowStartVec, Windows,
     },
 };
 

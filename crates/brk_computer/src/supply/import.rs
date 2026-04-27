@@ -6,7 +6,7 @@ use brk_types::Version;
 use crate::{
     cointime, distribution, indexes,
     internal::{
-        LazyValuePerBlock, LazyFiatPerBlock, LazyRollingDeltasFiatFromHeight, PercentPerBlock,
+        LazyFiatPerBlock, LazyRollingDeltasFiatFromHeight, LazyValuePerBlock, PercentPerBlock,
         RollingWindows, WindowStartVec, Windows,
         db_utils::{finalize_db, open_db},
     },
@@ -63,11 +63,8 @@ impl Vecs {
             indexes,
         )?;
 
-        let hodled_or_lost = LazyValuePerBlock::identity(
-            "hodled_or_lost_supply",
-            &cointime.supply.vaulted,
-            version,
-        );
+        let hodled_or_lost =
+            LazyValuePerBlock::identity("hodled_or_lost_supply", &cointime.supply.vaulted, version);
 
         let this = Self {
             db,

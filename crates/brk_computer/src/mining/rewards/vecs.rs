@@ -3,8 +3,8 @@ use brk_types::{BasisPoints16, BasisPoints32, Height, Sats};
 use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use crate::internal::{
-    ValuePerBlockCumulative, ValuePerBlockCumulativeRolling, ValuePerBlockFull,
     LazyPercentCumulativeRolling, PercentCumulativeRolling, RatioRollingWindows,
+    ValuePerBlockCumulative, ValuePerBlockCumulativeRolling, ValuePerBlockFull,
 };
 
 #[derive(Traversable)]

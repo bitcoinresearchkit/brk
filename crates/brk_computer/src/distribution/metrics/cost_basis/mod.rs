@@ -201,7 +201,10 @@ impl CostBasis {
                 if invested_raw == 0 {
                     return (h, spot);
                 }
-                (h, Cents::new((capitalized_cap.inner() / invested_raw) as u64))
+                (
+                    h,
+                    Cents::new((capitalized_cap.inner() / invested_raw) as u64),
+                )
             },
             exit,
         )?;
@@ -215,7 +218,10 @@ impl CostBasis {
                 if invested_raw == 0 {
                     return (h, spot);
                 }
-                (h, Cents::new((capitalized_cap.inner() / invested_raw) as u64))
+                (
+                    h,
+                    Cents::new((capitalized_cap.inner() / invested_raw) as u64),
+                )
             },
             exit,
         )?;
