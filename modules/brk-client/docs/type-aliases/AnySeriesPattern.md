@@ -8,6 +8,6 @@
 
 > **AnySeriesPattern** = [`SeriesPattern`](../interfaces/SeriesPattern.md)\<`any`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1537](https://github.com/bitcoinresearchkit/brk/blob/e4496742a4964a986078f3a65d3bfdc1e47a5eba/modules/brk-client/index.js#L1537)
+Defined in: [Developer/brk/modules/brk-client/index.js:1586](https://github.com/bitcoinresearchkit/brk/blob/07bc2d42b87ba62f766e714bbde023393049d4b7/modules/brk-client/index.js#L1586)
 
 ## Type Parameters

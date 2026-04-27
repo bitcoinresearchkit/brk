@@ -102,6 +102,7 @@
     * [get\_reward\_stats](#brk_client.BrkClient.get_reward_stats)
     * [get\_prices](#brk_client.BrkClient.get_prices)
     * [get\_transaction\_times](#brk_client.BrkClient.get_transaction_times)
+    * [get\_tx\_rbf](#brk_client.BrkClient.get_tx_rbf)
     * [validate\_address](#brk_client.BrkClient.validate_address)
     * [get\_health](#brk_client.BrkClient.get_health)
     * [get\_openapi](#brk_client.BrkClient.get_openapi)
@@ -1487,6 +1488,22 @@ Returns timestamps when transactions were first seen in the mempool. Returns 0 f
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*
 
 Endpoint: `GET /api/v1/transaction-times`
+
+<a id="brk_client.BrkClient.get_tx_rbf"></a>
+
+#### get\_tx\_rbf
+
+```python
+def get_tx_rbf(txid: Txid) -> RbfResponse
+```
+
+RBF replacement history.
+
+Returns the RBF replacement tree for a transaction, if any. Both `replacements` and `replaces` are null when the tx has no known RBF history within the mempool monitor's retention window.
+
+*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-rbf-history)*
+
+Endpoint: `GET /api/v1/tx/{txid}/rbf`
 
 <a id="brk_client.BrkClient.validate_address"></a>
 
