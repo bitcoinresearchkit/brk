@@ -2,8 +2,6 @@
 
 use std::{
     any::Any,
-    net::SocketAddr,
-    sync::{Arc, atomic::AtomicU64},
     time::{Duration, Instant},
 };
 
@@ -16,7 +14,7 @@ use axum::{
     body::Body,
     http::{
         Request, Response, StatusCode, Uri,
-        header::{CONTENT_TYPE, VARY},
+        header::{ALLOW, CONTENT_TYPE, VARY},
     },
     middleware::Next,
     response::{IntoResponse, Redirect},
@@ -24,12 +22,15 @@ use axum::{
     serve,
 };
 use brk_query::AsyncQuery;
-use quick_cache::sync::Cache;
 use tokio::net::TcpListener;
 use tower_http::{
-    catch_panic::CatchPanicLayer, classify::ServerErrorsFailureClass,
-    compression::CompressionLayer, cors::CorsLayer, normalize_path::NormalizePathLayer,
-    timeout::TimeoutLayer, trace::TraceLayer,
+    catch_panic::CatchPanicLayer,
+    classify::ServerErrorsFailureClass,
+    compression::{CompressionLayer, CompressionLevel},
+    cors::CorsLayer,
+    normalize_path::NormalizePathLayer,
+    timeout::TimeoutLayer,
+    trace::TraceLayer,
 };
 use tower_layer::Layer;
 use tracing::{error, info};
@@ -49,13 +50,26 @@ pub use brk_types::Port;
 pub use brk_website::Website;
 pub use cache::CdnCacheMode;
 use cache::{CacheParams, CacheStrategy};
-pub use config::{
-    DEFAULT_CACHE_SIZE, DEFAULT_MAX_WEIGHT, DEFAULT_MAX_WEIGHT_LOCALHOST, ServerConfig,
-};
+pub use config::{DEFAULT_MAX_WEIGHT, ServerConfig};
 pub use error::{Error, Result};
 use state::*;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// Cap for buffering an upstream error body before re-wrapping it as JSON.
+/// Larger bodies are truncated; the bound only affects the message we surface.
+const MAX_ERROR_BODY_BYTES: usize = 4096;
+
+/// Per-request timeout. Hits return 504 Gateway Timeout.
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
+
+/// Matches `application/json` and `application/...+json`, ignoring parameters
+/// like `; charset=utf-8`. Used to skip JSON-error rewriting for already-JSON bodies.
+fn is_json_content_type(s: &str) -> bool {
+    let mime = s.split(';').next().unwrap_or("").trim();
+    mime == "application/json"
+        || (mime.starts_with("application/") && mime.ends_with("+json"))
+}
 
 pub struct Server(AppState);
 
@@ -67,12 +81,9 @@ impl Server {
             query: query.clone(),
             data_path: config.data_path,
             website: config.website,
-            cache: Arc::new(Cache::new(config.cache_size)),
-            last_tip: Arc::new(AtomicU64::new(0)),
             started_at: jiff::Timestamp::now(),
             started_instant: Instant::now(),
             max_weight: config.max_weight,
-            max_weight_localhost: config.max_weight_localhost,
         })
     }
 
@@ -82,26 +93,11 @@ impl Server {
         #[cfg(feature = "bindgen")]
         let vecs = state.query.inner().vecs();
 
-        let compression_layer = CompressionLayer::new().br(true).gzip(true).zstd(true);
-
-        let connect_info_layer = axum::middleware::from_fn(
-            async |connect_info: axum::extract::ConnectInfo<SocketAddr>,
-                   mut request: Request<Body>,
-                   next: Next|
-                   -> Response<Body> {
-                let mut addr = connect_info.0;
-
-                // When behind a reverse proxy (e.g. cloudflared), the direct
-                // connection comes from loopback but the request is external.
-                // Mark it as non-loopback so it gets the stricter limit.
-                if addr.ip().is_loopback() && request.headers().contains_key("CF-Connecting-IP") {
-                    addr.set_ip(std::net::Ipv4Addr::UNSPECIFIED.into());
-                }
-
-                request.extensions_mut().insert(addr);
-                next.run(request).await
-            },
-        );
+        let compression_layer = CompressionLayer::new()
+            .br(true)
+            .gzip(true)
+            .zstd(true)
+            .quality(CompressionLevel::Precise(3));
 
         let response_time_layer = axum::middleware::from_fn(
             async |request: Request<Body>, next: Next| -> Response<Body> {
@@ -127,16 +123,18 @@ impl Server {
                 if status.is_success()
                     || status.is_redirection()
                     || status.is_informational()
-                    || response.headers().get(CONTENT_TYPE).is_some_and(|v| {
-                        let b = v.as_bytes();
-                        b.starts_with(b"application/") && b.ends_with(b"json")
-                    })
+                    || response
+                        .headers()
+                        .get(CONTENT_TYPE)
+                        .is_some_and(|v| v.to_str().is_ok_and(is_json_content_type))
                 {
                     return response;
                 }
 
                 let (parts, body) = response.into_parts();
-                let bytes = axum::body::to_bytes(body, 4096).await.unwrap_or_default();
+                let bytes = axum::body::to_bytes(body, MAX_ERROR_BODY_BYTES)
+                    .await
+                    .unwrap_or_default();
                 let msg = String::from_utf8_lossy(&bytes);
                 let (code, msg) = match parts.status {
                     StatusCode::NOT_FOUND => (
@@ -172,6 +170,9 @@ impl Server {
                 let msg = msg.into_owned();
                 let mut response = Error::new(parts.status, code, msg).into_response();
                 response.extensions_mut().extend(parts.extensions);
+                if let Some(allow) = parts.headers.get(ALLOW) {
+                    response.headers_mut().insert(ALLOW, allow.clone());
+                }
                 response
             },
         );
@@ -210,17 +211,9 @@ impl Server {
             .merge(website_router)
             .layer(response_time_layer)
             .layer(trace_layer)
-            .layer(CatchPanicLayer::custom(|panic: Box<dyn Any + Send>| {
-                let msg = panic
-                    .downcast_ref::<String>()
-                    .map(|s| s.as_str())
-                    .or_else(|| panic.downcast_ref::<&str>().copied())
-                    .unwrap_or("Unknown panic");
-                Error::internal(msg).into_response()
-            }))
             .layer(TimeoutLayer::with_status_code(
                 StatusCode::GATEWAY_TIMEOUT,
-                Duration::from_secs(5),
+                REQUEST_TIMEOUT,
             ))
             .layer(json_error_layer)
             .layer(compression_layer)
@@ -242,7 +235,14 @@ impl Server {
                     response
                 },
             ))
-            .layer(connect_info_layer);
+            .layer(CatchPanicLayer::custom(|panic: Box<dyn Any + Send>| {
+                let msg = panic
+                    .downcast_ref::<String>()
+                    .map(|s| s.as_str())
+                    .or_else(|| panic.downcast_ref::<&str>().copied())
+                    .unwrap_or("Unknown panic");
+                Error::internal(msg).into_response()
+            }));
 
         let (listener, port) = match port {
             Some(port) => {
@@ -292,20 +292,14 @@ impl Server {
             }
         }
 
-        let api_json = Arc::new(ApiJson::new(&openapi));
-
         let router = router
-            .layer(Extension(Arc::new(openapi)))
-            .layer(Extension(api_json));
+            .layer(Extension(OpenApiJson::new(&openapi)))
+            .layer(Extension(ApiJson::new(&openapi)));
 
         // NormalizePath must wrap the router (not be a layer) to run before route matching
         let app = NormalizePathLayer::trim_trailing_slash().layer(router);
 
-        serve(
-            listener,
-            ServiceExt::<Request<Body>>::into_make_service_with_connect_info::<SocketAddr>(app),
-        )
-        .await?;
+        serve(listener, ServiceExt::<Request<Body>>::into_make_service(app)).await?;
 
         Ok(())
     }
@@ -329,4 +323,27 @@ pub fn generate_bindings(
     let openapi_json = serde_json::to_string(openapi)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
     brk_bindgen::generate_clients(vecs, &openapi_json, output_paths)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_json_content_type;
+
+    #[test]
+    fn json_content_type_matches() {
+        assert!(is_json_content_type("application/json"));
+        assert!(is_json_content_type("application/json; charset=utf-8"));
+        assert!(is_json_content_type("  application/json  "));
+        assert!(is_json_content_type("application/problem+json"));
+        assert!(is_json_content_type("application/vnd.api+json; charset=utf-8"));
+    }
+
+    #[test]
+    fn json_content_type_rejects_non_json() {
+        assert!(!is_json_content_type("text/plain"));
+        assert!(!is_json_content_type("application/xml"));
+        assert!(!is_json_content_type("application/json+xml"));
+        assert!(!is_json_content_type(""));
+        assert!(!is_json_content_type("text/json"));
+    }
 }

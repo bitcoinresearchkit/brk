@@ -5,11 +5,10 @@
 //!   in legacy mode (registered by metrics endpoints that emit the old format).
 //! - `add_series_legacy_routes`: the deprecated `/api/series/cost-basis/*` URLs.
 
-use std::{collections::BTreeMap, net::SocketAddr};
+use std::collections::BTreeMap;
 
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
-    Extension,
     body::Bytes,
     extract::{Path, Query, State},
     http::{HeaderMap, StatusCode, Uri},
@@ -40,12 +39,11 @@ pub const SUNSET: &str = "2027-01-01T00:00:00Z";
 pub async fn handler(
     uri: Uri,
     headers: HeaderMap,
-    Extension(addr): Extension<SocketAddr>,
     Query(params): Query<SeriesSelection>,
     State(state): State<AppState>,
 ) -> Result<Response> {
     let mut response =
-        super::series::serve(state, uri, headers, addr, params, legacy_bytes).await?;
+        super::series::serve(state, uri, headers, params, legacy_bytes).await?;
     if response.status() == StatusCode::OK {
         response.headers_mut().insert_deprecation(SUNSET);
     }
@@ -152,7 +150,7 @@ impl ApiSeriesLegacyRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Deploy, &uri, |q| q.urpd_cohorts())
+                        .respond_json(&headers, CacheStrategy::Deploy, &uri, |q| q.urpd_cohorts())
                         .await
                 },
                 |op| {
@@ -179,7 +177,7 @@ impl ApiSeriesLegacyRoutes for ApiRouter<AppState> {
                        _: Empty,
                        State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
+                        .respond_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.urpd_dates(&params.cohort)
                         })
                         .await
@@ -208,9 +206,9 @@ impl ApiSeriesLegacyRoutes for ApiRouter<AppState> {
                        Path(params): Path<CostBasisParams>,
                        Query(query): Query<CostBasisQuery>,
                        State(state): State<AppState>| {
-                    let strategy = state.date_cache(Version::ONE, params.date);
+                    let strategy = state.date_strategy(Version::ONE, params.date);
                     state
-                        .cached_json(&headers, strategy, &uri, move |q| {
+                        .respond_json(&headers, strategy, &uri, move |q| {
                             cost_basis_formatted(
                                 q,
                                 &params.cohort,

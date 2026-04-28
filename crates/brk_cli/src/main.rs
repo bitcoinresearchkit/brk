@@ -75,8 +75,6 @@ pub fn main() -> anyhow::Result<()> {
         website: config.website(),
         cdn_cache_mode: config.cdn_cache_mode(),
         max_weight: config.max_weight(),
-        max_weight_localhost: config.max_weight_localhost(),
-        cache_size: config.cache_size(),
     };
 
     let port = config.brkport();

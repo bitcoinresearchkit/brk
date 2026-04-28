@@ -1,13 +1,4 @@
-use std::{
-    future::Future,
-    net::SocketAddr,
-    path::PathBuf,
-    sync::{
-        Arc,
-        atomic::{AtomicU64, Ordering},
-    },
-    time::{Duration, Instant},
-};
+use std::{path::PathBuf, time::Instant};
 
 use axum::{
     body::{Body, Bytes},
@@ -20,14 +11,10 @@ use brk_types::{
 };
 use derive_more::Deref;
 use jiff::Timestamp;
-use quick_cache::sync::{Cache, GuardResult};
 use serde::Serialize;
 use vecdb::ReadableVec;
 
-use crate::{
-    CacheParams, CacheStrategy, Error, Website,
-    extended::{ContentEncoding, HeaderMapExtended, ResponseExtended},
-};
+use crate::{CacheParams, CacheStrategy, Error, Website, extended::ResponseExtended};
 
 #[derive(Clone, Deref)]
 pub struct AppState {
@@ -35,29 +22,14 @@ pub struct AppState {
     pub query: AsyncQuery,
     pub data_path: PathBuf,
     pub website: Website,
-    pub cache: Arc<Cache<String, Bytes>>,
-    pub last_tip: Arc<AtomicU64>,
     pub started_at: Timestamp,
     pub started_instant: Instant,
     pub max_weight: usize,
-    pub max_weight_localhost: usize,
 }
 
 impl AppState {
-    /// Per-request series weight cap: loopback gets `max_weight_localhost`,
-    /// everyone else gets `max_weight`. The `connect_info_layer` rewrites the
-    /// peer to non-loopback when `CF-Connecting-IP` is present, so requests
-    /// proxied through a tunnel are billed at the external rate.
-    pub fn max_weight_for(&self, addr: &SocketAddr) -> usize {
-        if addr.ip().is_loopback() {
-            self.max_weight_localhost
-        } else {
-            self.max_weight
-        }
-    }
-
     /// `Immutable` if height is >6 deep, `Tip` otherwise.
-    pub fn height_cache(&self, version: Version, height: Height) -> CacheStrategy {
+    pub fn height_strategy(&self, version: Version, height: Height) -> CacheStrategy {
         let is_deep = self.sync(|q| (*q.height()).saturating_sub(*height) > 6);
         if is_deep {
             CacheStrategy::Immutable(version)
@@ -67,7 +39,7 @@ impl AppState {
     }
 
     /// `Immutable` if timestamp is >6 hours old (block definitely >6 deep), `Tip` otherwise.
-    pub fn timestamp_cache(&self, version: Version, timestamp: BrkTimestamp) -> CacheStrategy {
+    pub fn timestamp_strategy(&self, version: Version, timestamp: BrkTimestamp) -> CacheStrategy {
         if (*BrkTimestamp::now()).saturating_sub(*timestamp) > 6 * ONE_HOUR_IN_SEC {
             CacheStrategy::Immutable(version)
         } else {
@@ -78,7 +50,7 @@ impl AppState {
     /// `Immutable` if `date` is strictly before the indexed tip's date, `Tip` otherwise.
     /// For per-date files that keep being rewritten while the tip is still within the
     /// date's day, then settle once the tip crosses the day boundary.
-    pub fn date_cache(&self, version: Version, date: Date) -> CacheStrategy {
+    pub fn date_strategy(&self, version: Version, date: Date) -> CacheStrategy {
         self.sync(|q| {
             let height = q.indexed_height();
             q.indexer()
@@ -101,7 +73,7 @@ impl AppState {
     /// - Address has mempool txs → `MempoolHash(addr_specific_hash)`
     /// - No mempool, has on-chain activity → `BlockBound(last_activity_block)`
     /// - Unknown address → `Tip`
-    pub fn addr_cache(&self, version: Version, addr: &Addr, chain_only: bool) -> CacheStrategy {
+    pub fn addr_strategy(&self, version: Version, addr: &Addr, chain_only: bool) -> CacheStrategy {
         self.sync(|q| {
             if !chain_only {
                 let mempool_hash = q.addr_mempool_hash(addr);
@@ -123,7 +95,7 @@ impl AppState {
 
     /// `Immutable` if the block is >6 deep (status stable), `Tip` otherwise.
     /// For block status which changes when the next block arrives.
-    pub fn block_status_cache(&self, version: Version, hash: &BlockHash) -> CacheStrategy {
+    pub fn block_status_strategy(&self, version: Version, hash: &BlockHash) -> CacheStrategy {
         self.sync(|q| {
             q.height_by_hash(hash)
                 .map(|h| {
@@ -138,7 +110,7 @@ impl AppState {
     }
 
     /// `BlockBound` if the block exists (reorg-safe via block hash), `Tip` if not found.
-    pub fn block_cache(&self, version: Version, hash: &BlockHash) -> CacheStrategy {
+    pub fn block_strategy(&self, version: Version, hash: &BlockHash) -> CacheStrategy {
         self.sync(|q| {
             if q.height_by_hash(hash).is_ok() {
                 CacheStrategy::BlockBound(version, BlockHashPrefix::from(hash))
@@ -149,7 +121,7 @@ impl AppState {
     }
 
     /// Mempool → `MempoolHash`, confirmed → `BlockBound`, unknown → `Tip`.
-    pub fn tx_cache(&self, version: Version, txid: &Txid) -> CacheStrategy {
+    pub fn tx_strategy(&self, version: Version, txid: &Txid) -> CacheStrategy {
         self.sync(|q| {
             if let Some(mempool) = q.mempool()
                 && mempool.txs().contains(txid)
@@ -165,58 +137,44 @@ impl AppState {
         })
     }
 
-    pub fn mempool_cache(&self) -> CacheStrategy {
+    pub fn mempool_strategy(&self) -> CacheStrategy {
         let hash = self.sync(|q| q.mempool().map(|m| m.next_block_hash()).unwrap_or(0));
         CacheStrategy::MempoolHash(hash)
     }
 
-    /// Shared response pipeline: tip-clear, etag short-circuit, server-side
-    /// cache lookup, body computation on a blocking thread, header assembly.
-    /// Used by [`AppState::cached`] (strategy-driven) and the series endpoint
-    /// (which builds [`CacheParams`] directly from query resolution).
-    pub(crate) async fn cached_with_params<F>(
+    /// Shared response pipeline: etag short-circuit, body computation on the
+    /// query thread, header assembly. Used by [`AppState::respond`]
+    /// (strategy-driven) and the series endpoint (which builds [`CacheParams`]
+    /// directly from query resolution).
+    pub(crate) async fn respond_with_params<F>(
         &self,
         headers: &HeaderMap,
-        uri: &Uri,
+        _uri: &Uri,
         params: CacheParams,
         apply_content_headers: impl FnOnce(&mut HeaderMap),
         f: F,
     ) -> Response<Body>
     where
-        F: FnOnce(&brk_query::Query, ContentEncoding) -> brk_error::Result<Bytes> + Send + 'static,
+        F: FnOnce(&brk_query::Query) -> brk_error::Result<Bytes> + Send + 'static,
     {
-        let tip = self.sync(|q| q.tip_hash_prefix());
-        if self.last_tip.swap(*tip, Ordering::Relaxed) != *tip {
-            self.cache.clear();
-        }
-
         if params.matches_etag(headers) {
             return ResponseExtended::new_not_modified(&params);
         }
 
-        let encoding = ContentEncoding::negotiate(headers);
-        let cache_key = format!("{}-{}-{}", uri, params.etag, encoding.as_str());
-        let result = self
-            .get_or_insert(&cache_key, async move {
-                self.run(move |q| f(q, encoding)).await
-            })
-            .await;
-
-        match result {
+        match self.run(f).await {
             Ok(bytes) => {
                 let mut response = Response::new(Body::from(bytes));
                 let h = response.headers_mut();
                 apply_content_headers(h);
                 params.apply_to(h);
-                h.insert_content_encoding(encoding);
                 response
             }
             Err(e) => Error::from(e).into_response_with_etag(params.etag.clone()),
         }
     }
 
-    /// Strategy-driven cached response. Compression runs on the blocking thread.
-    async fn cached<F>(
+    /// Strategy-driven cached response.
+    async fn respond<F>(
         &self,
         headers: &HeaderMap,
         strategy: CacheStrategy,
@@ -225,11 +183,11 @@ impl AppState {
         f: F,
     ) -> Response<Body>
     where
-        F: FnOnce(&brk_query::Query, ContentEncoding) -> brk_error::Result<Bytes> + Send + 'static,
+        F: FnOnce(&brk_query::Query) -> brk_error::Result<Bytes> + Send + 'static,
     {
         let tip = self.sync(|q| q.tip_hash_prefix());
         let params = CacheParams::resolve(&strategy, tip);
-        self.cached_with_params(
+        self.respond_with_params(
             headers,
             uri,
             params,
@@ -242,7 +200,7 @@ impl AppState {
     }
 
     /// JSON response with HTTP + server-side caching
-    pub async fn cached_json<T, F>(
+    pub async fn respond_json<T, F>(
         &self,
         headers: &HeaderMap,
         strategy: CacheStrategy,
@@ -253,9 +211,9 @@ impl AppState {
         T: Serialize + Send + 'static,
         F: FnOnce(&brk_query::Query) -> brk_error::Result<T> + Send + 'static,
     {
-        self.cached(headers, strategy, uri, "application/json", move |q, enc| {
+        self.respond(headers, strategy, uri, "application/json", move |q| {
             let value = f(q)?;
-            Ok(enc.compress(Bytes::from(serde_json::to_vec(&value).unwrap())))
+            Ok(Bytes::from(serde_json::to_vec(&value).unwrap()))
         })
         .await
     }
@@ -268,7 +226,7 @@ impl AppState {
     /// confirmed, `Tip` otherwise). Errors fall back to `Tip`. Use for
     /// resources whose freshness category depends on the data itself
     /// (outspends, threshold-based block status).
-    pub async fn cached_json_optimistic<T, F>(
+    pub async fn respond_json_optimistic<T, F>(
         &self,
         headers: &HeaderMap,
         optimistic: CacheStrategy,
@@ -290,7 +248,7 @@ impl AppState {
             Err(e) => (Err(e), CacheStrategy::Tip),
         };
         let params = CacheParams::resolve(&strategy, tip);
-        self.cached_with_params(
+        self.respond_with_params(
             headers,
             uri,
             params,
@@ -300,16 +258,16 @@ impl AppState {
                     HeaderValue::from_static("application/json"),
                 );
             },
-            move |_q, enc| {
+            move |_q| {
                 let value = value_result?;
-                Ok(enc.compress(Bytes::from(serde_json::to_vec(&value).unwrap())))
+                Ok(Bytes::from(serde_json::to_vec(&value).unwrap()))
             },
         )
         .await
     }
 
     /// Text response with HTTP + server-side caching
-    pub async fn cached_text<T, F>(
+    pub async fn respond_text<T, F>(
         &self,
         headers: &HeaderMap,
         strategy: CacheStrategy,
@@ -320,15 +278,15 @@ impl AppState {
         T: AsRef<str> + Send + 'static,
         F: FnOnce(&brk_query::Query) -> brk_error::Result<T> + Send + 'static,
     {
-        self.cached(headers, strategy, uri, "text/plain", move |q, enc| {
+        self.respond(headers, strategy, uri, "text/plain", move |q| {
             let value = f(q)?;
-            Ok(enc.compress(Bytes::from(value.as_ref().as_bytes().to_vec())))
+            Ok(Bytes::from(value.as_ref().as_bytes().to_vec()))
         })
         .await
     }
 
     /// Binary response with HTTP + server-side caching
-    pub async fn cached_bytes<T, F>(
+    pub async fn respond_bytes<T, F>(
         &self,
         headers: &HeaderMap,
         strategy: CacheStrategy,
@@ -339,39 +297,16 @@ impl AppState {
         T: Into<Vec<u8>> + Send + 'static,
         F: FnOnce(&brk_query::Query) -> brk_error::Result<T> + Send + 'static,
     {
-        self.cached(
+        self.respond(
             headers,
             strategy,
             uri,
             "application/octet-stream",
-            move |q, enc| {
+            move |q| {
                 let value = f(q)?;
-                Ok(enc.compress(Bytes::from(value.into())))
+                Ok(Bytes::from(value.into()))
             },
         )
         .await
-    }
-
-    /// Check server-side cache, compute on miss
-    async fn get_or_insert(
-        &self,
-        cache_key: &str,
-        compute: impl Future<Output = brk_error::Result<Bytes>>,
-    ) -> brk_error::Result<Bytes> {
-        let guard_res = self
-            .cache
-            .get_value_or_guard(cache_key, Some(Duration::from_millis(50)));
-
-        if let GuardResult::Value(bytes) = guard_res {
-            return Ok(bytes);
-        }
-
-        let bytes = compute.await?;
-
-        if let GuardResult::Guard(g) = guard_res {
-            let _ = g.insert(bytes.clone());
-        }
-
-        Ok(bytes)
     }
 }

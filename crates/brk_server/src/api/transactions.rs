@@ -28,7 +28,7 @@ impl TxRoutes for ApiRouter<AppState> {
             "/api/tx-index/{index}",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(param): Path<TxIndexParam>, _: Empty, State(state): State<AppState>| {
-                    state.cached_text(&headers, CacheStrategy::Immutable(Version::ONE), &uri, move |q| q.txid_by_index(param.index).map(|t| t.to_string())).await
+                    state.respond_text(&headers, CacheStrategy::Immutable(Version::ONE), &uri, move |q| q.txid_by_index(param.index).map(|t| t.to_string())).await
                 },
                 |op| op
                     .id("get_tx_by_index")
@@ -46,7 +46,7 @@ impl TxRoutes for ApiRouter<AppState> {
             "/api/v1/cpfp/{txid}",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| {
-                    state.cached_json(&headers, state.tx_cache(Version::ONE, &param.txid), &uri, move |q| q.cpfp(&param.txid)).await
+                    state.respond_json(&headers, state.tx_strategy(Version::ONE, &param.txid), &uri, move |q| q.cpfp(&param.txid)).await
                 },
                 |op| op
                     .id("get_cpfp")
@@ -64,7 +64,7 @@ impl TxRoutes for ApiRouter<AppState> {
             "/api/v1/tx/{txid}/rbf",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| {
-                    state.cached_json(&headers, state.mempool_cache(), &uri, move |q| q.tx_rbf(&param.txid)).await
+                    state.respond_json(&headers, state.mempool_strategy(), &uri, move |q| q.tx_rbf(&param.txid)).await
                 },
                 |op| op
                     .id("get_tx_rbf")
@@ -88,7 +88,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     _: Empty,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, state.tx_cache(Version::ONE, &param.txid), &uri, move |q| q.transaction(&param.txid)).await
+                    state.respond_json(&headers, state.tx_strategy(Version::ONE, &param.txid), &uri, move |q| q.transaction(&param.txid)).await
                 },
                 |op| op
                     .id("get_tx")
@@ -114,7 +114,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     _: Empty,
                     State(state): State<AppState>
                 | {
-                    state.cached_text(&headers, state.tx_cache(Version::ONE, &param.txid), &uri, move |q| q.transaction_hex(&param.txid)).await
+                    state.respond_text(&headers, state.tx_strategy(Version::ONE, &param.txid), &uri, move |q| q.transaction_hex(&param.txid)).await
                 },
                 |op| op
                     .id("get_tx_hex")
@@ -134,7 +134,7 @@ impl TxRoutes for ApiRouter<AppState> {
             "/api/tx/{txid}/merkleblock-proof",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| {
-                    state.cached_text(&headers, state.tx_cache(Version::ONE, &param.txid), &uri, move |q| q.merkleblock_proof(&param.txid)).await
+                    state.respond_text(&headers, state.tx_strategy(Version::ONE, &param.txid), &uri, move |q| q.merkleblock_proof(&param.txid)).await
                 },
                 |op| op
                     .id("get_tx_merkleblock_proof")
@@ -152,7 +152,7 @@ impl TxRoutes for ApiRouter<AppState> {
             "/api/tx/{txid}/merkle-proof",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| {
-                    state.cached_json(&headers, state.tx_cache(Version::ONE, &param.txid), &uri, move |q| q.merkle_proof(&param.txid)).await
+                    state.respond_json(&headers, state.tx_strategy(Version::ONE, &param.txid), &uri, move |q| q.merkle_proof(&param.txid)).await
                 },
                 |op| op
                     .id("get_tx_merkle_proof")
@@ -177,7 +177,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     State(state): State<AppState>
                 | {
                     let v = Version::ONE;
-                    state.cached_json_optimistic(&headers, CacheStrategy::Immutable(v), &uri, move |q| {
+                    state.respond_json_optimistic(&headers, CacheStrategy::Immutable(v), &uri, move |q| {
                         let outspend = q.outspend(&path.txid, path.vout)?;
                         let strategy = if outspend.is_deeply_spent(q.height()) {
                             CacheStrategy::Immutable(v)
@@ -212,7 +212,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     State(state): State<AppState>
                 | {
                     let v = Version::ONE;
-                    state.cached_json_optimistic(&headers, CacheStrategy::Immutable(v), &uri, move |q| {
+                    state.respond_json_optimistic(&headers, CacheStrategy::Immutable(v), &uri, move |q| {
                         let outspends = q.outspends(&param.txid)?;
                         let height = q.height();
                         let all_deep = outspends.iter().all(|o| o.is_deeply_spent(height));
@@ -238,7 +238,7 @@ impl TxRoutes for ApiRouter<AppState> {
             "/api/tx/{txid}/raw",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| {
-                    state.cached_bytes(&headers, state.tx_cache(Version::ONE, &param.txid), &uri, move |q| q.transaction_raw(&param.txid)).await
+                    state.respond_bytes(&headers, state.tx_strategy(Version::ONE, &param.txid), &uri, move |q| q.transaction_raw(&param.txid)).await
                 },
                 |op| op
                     .id("get_tx_raw")
@@ -262,7 +262,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     _: Empty,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, state.tx_cache(Version::ONE, &param.txid), &uri, move |q| q.transaction_status(&param.txid)).await
+                    state.respond_json(&headers, state.tx_strategy(Version::ONE, &param.txid), &uri, move |q| q.transaction_status(&param.txid)).await
                 },
                 |op| op
                     .id("get_tx_status")
@@ -284,7 +284,7 @@ impl TxRoutes for ApiRouter<AppState> {
                 async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| -> Result<Response> {
                     let params = TxidsParam::from_query(uri.query().unwrap_or(""))
                         .map_err(Error::bad_request)?;
-                    Ok(state.cached_json(&headers, state.mempool_cache(), &uri, move |q| q.transaction_times(&params.txids)).await)
+                    Ok(state.respond_json(&headers, state.mempool_strategy(), &uri, move |q| q.transaction_times(&params.txids)).await)
                 },
                 |op| op
                     .id("get_transaction_times")

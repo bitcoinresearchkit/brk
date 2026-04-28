@@ -3,8 +3,6 @@ use axum::http::{
     header::{self, IF_NONE_MATCH},
 };
 
-use super::ContentEncoding;
-
 pub trait HeaderMapExtended {
     fn has_etag(&self, etag: &str) -> bool;
     fn insert_etag(&mut self, etag: &str);
@@ -13,8 +11,6 @@ pub trait HeaderMapExtended {
     fn insert_cdn_cache_control(&mut self, value: &str);
 
     fn insert_content_disposition_attachment(&mut self, filename: &str);
-
-    fn insert_content_encoding(&mut self, encoding: ContentEncoding);
 
     fn insert_content_type_application_json(&mut self);
     fn insert_content_type_text_csv(&mut self);
@@ -27,18 +23,17 @@ pub trait HeaderMapExtended {
 impl HeaderMapExtended for HeaderMap {
     fn has_etag(&self, etag: &str) -> bool {
         self.get(IF_NONE_MATCH).is_some_and(|v| {
-            let s = v.as_bytes();
-            // Match both quoted and unquoted: "etag" or etag
-            s == etag.as_bytes()
-                || (s.len() == etag.len() + 2
-                    && s[0] == b'"'
-                    && s[s.len() - 1] == b'"'
-                    && &s[1..s.len() - 1] == etag.as_bytes())
+            let raw = v.as_bytes();
+            let target = etag.as_bytes();
+            raw == b"*"
+                || raw
+                    .split(|&b| b == b',')
+                    .any(|entry| normalize_etag(entry) == target)
         })
     }
 
     fn insert_etag(&mut self, etag: &str) {
-        self.insert(header::ETAG, format!("\"{etag}\"").parse().unwrap());
+        self.insert(header::ETAG, format!("W/\"{etag}\"").parse().unwrap());
     }
 
     fn insert_cache_control(&mut self, value: &str) {
@@ -61,13 +56,6 @@ impl HeaderMapExtended for HeaderMap {
         );
     }
 
-    fn insert_content_encoding(&mut self, encoding: ContentEncoding) {
-        if let Some(value) = encoding.header_value() {
-            self.insert(header::CONTENT_ENCODING, value);
-            self.insert_vary_accept_encoding();
-        }
-    }
-
     fn insert_content_type_application_json(&mut self) {
         self.insert(header::CONTENT_TYPE, "application/json".parse().unwrap());
     }
@@ -83,5 +71,40 @@ impl HeaderMapExtended for HeaderMap {
     fn insert_deprecation(&mut self, sunset: &'static str) {
         self.insert("Deprecation", "true".parse().unwrap());
         self.insert("Sunset", sunset.parse().unwrap());
+    }
+}
+
+fn normalize_etag(entry: &[u8]) -> &[u8] {
+    let s = entry.trim_ascii();
+    let s = s.strip_prefix(b"W/").unwrap_or(s);
+    s.strip_prefix(b"\"")
+        .and_then(|s| s.strip_suffix(b"\""))
+        .unwrap_or(s)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::HeaderValue;
+
+    fn map(if_none_match: &str) -> HeaderMap {
+        let mut h = HeaderMap::new();
+        h.insert(IF_NONE_MATCH, HeaderValue::from_str(if_none_match).unwrap());
+        h
+    }
+
+    #[test]
+    fn matches_weak_strong_wildcard_and_list() {
+        assert!(map("W/\"s1-abc\"").has_etag("s1-abc"));
+        assert!(map("\"s1-abc\"").has_etag("s1-abc"));
+        assert!(map("*").has_etag("anything"));
+        assert!(map("W/\"a\", W/\"s1-abc\"").has_etag("s1-abc"));
+        assert!(map("  W/\"s1-abc\"  ").has_etag("s1-abc"));
+    }
+
+    #[test]
+    fn rejects_mismatch_and_missing() {
+        assert!(!map("W/\"other\"").has_etag("s1-abc"));
+        assert!(!HeaderMap::new().has_etag("s1-abc"));
     }
 }

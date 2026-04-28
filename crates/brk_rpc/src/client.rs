@@ -159,8 +159,10 @@ impl ClientInner {
     }
 
     /// Like `call_batch` but reports per-request success/failure independently,
-    /// so one bad item doesn't nuke an otherwise-healthy chunk. The outer
-    /// `Result` still fails if the HTTP round-trip itself fails.
+    /// so one bad item doesn't nuke an otherwise-healthy chunk. Per-item
+    /// failures preserve the underlying `JsonRpcError` so the caller can
+    /// pattern-match on the RPC error code. The outer `Result` still fails
+    /// if the HTTP round-trip itself fails.
     pub(crate) fn call_batch_per_item<T>(
         &self,
         method: &str,
@@ -188,8 +190,7 @@ impl ClientInner {
             .into_iter()
             .map(|resp| {
                 let resp = resp.ok_or(Error::Internal("Missing response in JSON-RPC batch"))?;
-                resp.result::<T>()
-                    .map_err(|e| Error::Parse(format!("batch {method} result: {e}")))
+                resp.result::<T>().map_err(Error::from)
             })
             .collect())
     }

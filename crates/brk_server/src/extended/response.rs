@@ -1,30 +1,18 @@
 use axum::{
-    body::Body,
+    body::{Body, Bytes},
     http::{HeaderMap, Response, StatusCode, header},
     response::IntoResponse,
 };
-use serde::Serialize;
 
 use super::header_map::HeaderMapExtended;
 use crate::cache::CacheParams;
-
-fn new_json_cached<T: Serialize>(value: T, params: &CacheParams) -> Response<Body> {
-    let bytes = serde_json::to_vec(&value).unwrap();
-    let mut response = Response::builder().body(bytes.into()).unwrap();
-    let h = response.headers_mut();
-    h.insert_content_type_application_json();
-    params.apply_to(h);
-    response
-}
 
 pub trait ResponseExtended
 where
     Self: Sized,
 {
     fn new_not_modified(params: &CacheParams) -> Self;
-    fn static_json<T>(headers: &HeaderMap, value: T) -> Self
-    where
-        T: Serialize;
+    fn static_json_bytes(headers: &HeaderMap, bytes: Bytes) -> Self;
     fn static_bytes(
         headers: &HeaderMap,
         bytes: &'static [u8],
@@ -40,15 +28,16 @@ impl ResponseExtended for Response<Body> {
         response
     }
 
-    fn static_json<T>(headers: &HeaderMap, value: T) -> Self
-    where
-        T: Serialize,
-    {
+    fn static_json_bytes(headers: &HeaderMap, bytes: Bytes) -> Self {
         let params = CacheParams::deploy();
         if params.matches_etag(headers) {
             return Self::new_not_modified(&params);
         }
-        new_json_cached(value, &params)
+        let mut response = Response::new(Body::from(bytes));
+        let h = response.headers_mut();
+        h.insert_content_type_application_json();
+        params.apply_to(h);
+        response
     }
 
     fn static_bytes(

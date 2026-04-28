@@ -125,3 +125,42 @@ impl CacheParams {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn v(n: u32) -> Version {
+        Version::new(n)
+    }
+
+    fn h(n: u64) -> BlockHashPrefix {
+        BlockHashPrefix::from(n)
+    }
+
+    #[test]
+    fn series_tail_uses_tip_hash() {
+        let p = CacheParams::series(v(3), 100, 100, h(0xabcd));
+        assert_eq!(p.etag.as_str(), "s3-abcd");
+    }
+
+    #[test]
+    fn series_historical_uses_total() {
+        let p = CacheParams::series(v(3), 100, 50, h(0xabcd));
+        assert_eq!(p.etag.as_str(), "s3-100");
+    }
+
+    #[test]
+    fn series_historical_ignores_tip_hash() {
+        let a = CacheParams::series(v(3), 100, 50, h(0xabcd));
+        let b = CacheParams::series(v(3), 100, 50, h(0xdead));
+        assert_eq!(a.etag.as_str(), b.etag.as_str());
+    }
+
+    #[test]
+    fn series_tail_changes_with_tip_hash() {
+        let a = CacheParams::series(v(3), 100, 100, h(0xabcd));
+        let b = CacheParams::series(v(3), 100, 100, h(0xdead));
+        assert_ne!(a.etag.as_str(), b.etag.as_str());
+    }
+}

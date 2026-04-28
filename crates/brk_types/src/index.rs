@@ -195,6 +195,44 @@ impl Index {
         }
     }
 
+    /// Number of trailing entries that may still mutate due to a 6-block reorg.
+    /// Used to size the cache invalidation tail: ranges ending within this margin
+    /// of `total` use a tip-bound ETag, others may use the cheaper total-only ETag.
+    ///
+    /// Panics for cohort indexes (per-tx, per-output, per-addr): series queries
+    /// shouldn't reach this codepath under those indexes. If they do, the cache
+    /// strategy needs rethinking.
+    pub const fn safety_margin(&self) -> usize {
+        match self {
+            Self::Minute10 => 6,
+            Self::Minute30 => 2,
+            Self::Hour1 | Self::Hour4 | Self::Hour12 => 1,
+            Self::Day1 | Self::Day3 | Self::Week1 => 1,
+            Self::Month1 | Self::Month3 | Self::Month6 => 1,
+            Self::Year1 | Self::Year10 | Self::Halving | Self::Epoch => 1,
+            Self::Height => 6,
+            Self::TxIndex
+            | Self::TxInIndex
+            | Self::TxOutIndex
+            | Self::EmptyOutputIndex
+            | Self::OpReturnIndex
+            | Self::P2AAddrIndex
+            | Self::P2MSOutputIndex
+            | Self::P2PK33AddrIndex
+            | Self::P2PK65AddrIndex
+            | Self::P2PKHAddrIndex
+            | Self::P2SHAddrIndex
+            | Self::P2TRAddrIndex
+            | Self::P2WPKHAddrIndex
+            | Self::P2WSHAddrIndex
+            | Self::UnknownOutputIndex
+            | Self::FundedAddrIndex
+            | Self::EmptyAddrIndex => {
+                panic!("cohort index has no series cache safety margin")
+            }
+        }
+    }
+
     /// Returns true if this index type is date-based.
     pub const fn is_date_based(&self) -> bool {
         matches!(

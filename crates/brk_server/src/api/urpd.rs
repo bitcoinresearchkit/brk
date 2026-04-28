@@ -24,7 +24,7 @@ impl ApiUrpdRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Deploy, &uri, |q| q.urpd_cohorts())
+                        .respond_json(&headers, CacheStrategy::Deploy, &uri, |q| q.urpd_cohorts())
                         .await
                 },
                 |op| {
@@ -50,7 +50,7 @@ impl ApiUrpdRoutes for ApiRouter<AppState> {
                        _: Empty,
                        State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
+                        .respond_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.urpd_dates(&params.cohort)
                         })
                         .await
@@ -79,7 +79,7 @@ impl ApiUrpdRoutes for ApiRouter<AppState> {
                        Query(query): Query<UrpdQuery>,
                        State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
+                        .respond_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.urpd_latest(&params.cohort, query.aggregation)
                         })
                         .await
@@ -108,9 +108,9 @@ impl ApiUrpdRoutes for ApiRouter<AppState> {
                        Path(params): Path<UrpdParams>,
                        Query(query): Query<UrpdQuery>,
                        State(state): State<AppState>| {
-                    let strategy = state.date_cache(Version::ONE, params.date);
+                    let strategy = state.date_strategy(Version::ONE, params.date);
                     state
-                        .cached_json(&headers, strategy, &uri, move |q| {
+                        .respond_json(&headers, strategy, &uri, move |q| {
                             q.urpd_at(&params.cohort, params.date, query.aggregation)
                         })
                         .await

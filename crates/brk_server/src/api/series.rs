@@ -4,11 +4,8 @@
 //! a formatted body (single + raw + bulk + the legacy module's deprecated
 //! handler in `series_legacy.rs`).
 
-use std::net::SocketAddr;
-
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
-    Extension,
     body::Bytes,
     extract::{Path, Query, State},
     http::{HeaderMap, Uri},
@@ -31,17 +28,16 @@ use crate::{
 /// Shared response pipeline for every series endpoint.
 ///
 /// Resolves the query (which determines the cache key), then delegates to
-/// [`AppState::cached_with_params`] for the etag short-circuit, server-side
+/// [`AppState::respond_with_params`] for the etag short-circuit, server-side
 /// cache lookup, body formatting, and header assembly.
 pub(super) async fn serve(
     state: AppState,
     uri: Uri,
     headers: HeaderMap,
-    addr: SocketAddr,
     params: SeriesSelection,
     to_bytes: impl FnOnce(&BrkQuery, ResolvedQuery) -> BrkResult<Bytes> + Send + 'static,
 ) -> Result<Response> {
-    let max_weight = state.max_weight_for(&addr);
+    let max_weight = state.max_weight;
     let resolved = state.run(move |q| q.resolve(params, max_weight)).await?;
 
     let format = resolved.format();
@@ -54,7 +50,7 @@ pub(super) async fn serve(
     );
 
     Ok(state
-        .cached_with_params(
+        .respond_with_params(
             &headers,
             &uri,
             cache_params,
@@ -65,7 +61,7 @@ pub(super) async fn serve(
                 }
                 Format::JSON => h.insert_content_type_application_json(),
             },
-            move |q, enc| Ok(enc.compress(to_bytes(q, resolved)?)),
+            move |q| to_bytes(q, resolved),
         )
         .await)
 }
@@ -80,11 +76,10 @@ fn output_to_bytes(out: brk_types::SeriesOutput) -> BrkResult<Bytes> {
 async fn data_handler(
     uri: Uri,
     headers: HeaderMap,
-    Extension(addr): Extension<SocketAddr>,
     Query(params): Query<SeriesSelection>,
     State(state): State<AppState>,
 ) -> Result<Response> {
-    serve(state, uri, headers, addr, params, |q, r| {
+    serve(state, uri, headers, params, |q, r| {
         output_to_bytes(q.format(r)?)
     })
     .await
@@ -93,11 +88,10 @@ async fn data_handler(
 async fn data_raw_handler(
     uri: Uri,
     headers: HeaderMap,
-    Extension(addr): Extension<SocketAddr>,
     Query(params): Query<SeriesSelection>,
     State(state): State<AppState>,
 ) -> Result<Response> {
-    serve(state, uri, headers, addr, params, |q, r| {
+    serve(state, uri, headers, params, |q, r| {
         output_to_bytes(q.format_raw(r)?)
     })
     .await
@@ -113,7 +107,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
             "/api/series",
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
-                    state.cached_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.series_catalog().clone())).await
+                    state.respond_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.series_catalog().clone())).await
                 },
                 |op| op
                     .id("get_series_tree")
@@ -136,7 +130,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     _: Empty,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.series_count())).await
+                    state.respond_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.series_count())).await
                 },
                 |op| op
                     .id("get_series_count")
@@ -156,7 +150,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     _: Empty,
                     State(state): State<AppState>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.indexes().to_vec())).await
+                    state.respond_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.indexes().to_vec())).await
                 },
                 |op| op
                     .id("get_indexes")
@@ -178,7 +172,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     State(state): State<AppState>,
                     Query(pagination): Query<Pagination>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Deploy, &uri, move |q| Ok(q.series_list(pagination))).await
+                    state.respond_json(&headers, CacheStrategy::Deploy, &uri, move |q| Ok(q.series_list(pagination))).await
                 },
                 |op| op
                     .id("list_series")
@@ -198,7 +192,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     State(state): State<AppState>,
                     Query(query): Query<SearchQuery>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Deploy, &uri, move |q| Ok(q.search_series(&query))).await
+                    state.respond_json(&headers, CacheStrategy::Deploy, &uri, move |q| Ok(q.search_series(&query))).await
                 },
                 |op| op
                     .id("search_series")
@@ -220,7 +214,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     State(state): State<AppState>,
                     Path(path): Path<SeriesParam>
                 | {
-                    state.cached_json(&headers, CacheStrategy::Deploy, &uri, move |q| {
+                    state.respond_json(&headers, CacheStrategy::Deploy, &uri, move |q| {
                         q.series_info(&path.series).ok_or_else(|| q.series_not_found_error(&path.series))
                     }).await
                 },
@@ -242,7 +236,6 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
-                       addr: Extension<SocketAddr>,
                        state: State<AppState>,
                        Path(path): Path<SeriesNameWithIndex>,
                        Query(range): Query<DataRangeFormat>|
@@ -250,7 +243,6 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     data_handler(
                         uri,
                         headers,
-                        addr,
                         Query(SeriesSelection::from((path.index, path.series, range))),
                         state,
                     )
@@ -276,7 +268,6 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
-                       addr: Extension<SocketAddr>,
                        state: State<AppState>,
                        Path(path): Path<SeriesNameWithIndex>,
                        Query(range): Query<DataRangeFormat>|
@@ -284,7 +275,6 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     data_raw_handler(
                         uri,
                         headers,
-                        addr,
                         Query(SeriesSelection::from((path.index, path.series, range))),
                         state,
                     )
@@ -314,7 +304,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                        State(state): State<AppState>,
                        Path(path): Path<SeriesNameWithIndex>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
+                        .respond_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.latest(&path.series, path.index)
                         })
                         .await
@@ -340,7 +330,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                        State(state): State<AppState>,
                        Path(path): Path<SeriesNameWithIndex>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
+                        .respond_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.len(&path.series, path.index)
                         })
                         .await
@@ -364,7 +354,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                        State(state): State<AppState>,
                        Path(path): Path<SeriesNameWithIndex>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
+                        .respond_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             q.version(&path.series, path.index)
                         })
                         .await
@@ -382,8 +372,8 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/series/bulk",
             get_with(
-                |uri, headers, addr, query, state| async move {
-                    data_handler(uri, headers, addr, query, state).await.into_response()
+                |uri, headers, query, state| async move {
+                    data_handler(uri, headers, query, state).await.into_response()
                 },
                 |op| op
                     .id("get_series_bulk")

@@ -8,7 +8,7 @@
 //!
 //! - [`Resolver::resolve_in_mempool`]: same-cycle parents from the
 //!   live `txs` map. Run by the orchestrator after each successful
-//!   `MempoolState::apply`. No external dependency.
+//!   `Applier::apply`. No external dependency.
 //! - [`Resolver::resolve_external`]: caller-supplied resolver
 //!   (typically the brk indexer). Run on demand by API consumers
 //!   that have a confirmed-tx data source. Lock-free during the
@@ -26,7 +26,7 @@
 
 use brk_types::{TxOut, Txid, Vin, Vout};
 
-use crate::stores::MempoolState;
+use crate::stores::{MempoolState, TxStore};
 
 /// Per-tx fills to apply: (vin index, resolved prevout).
 type Fills = Vec<(Vin, TxOut)>;
@@ -39,34 +39,14 @@ impl Resolver {
     /// Fill prevouts whose parent is also live in the mempool.
     ///
     /// Called by the orchestrator after each successful
-    /// `MempoolState::apply`. Catches parent/child pairs that arrived
-    /// in the same cycle: the Preparer resolves against a snapshot
-    /// taken before the cycle's adds were applied, so neither parent
-    /// nor child is in it; both are in `txs` by the time we run.
+    /// `Applier::apply`. Catches parent/child pairs that arrived in
+    /// the same cycle: the Preparer resolves against a snapshot taken
+    /// before the cycle's adds were applied, so neither parent nor
+    /// child is in it. Both are in `txs` by the time we run.
     pub fn resolve_in_mempool(state: &MempoolState) -> bool {
-        let filled: Vec<(Txid, Fills)> = {
+        let filled = {
             let txs = state.txs.read();
-            if txs.unresolved().is_empty() {
-                return false;
-            }
-            txs.unresolved()
-                .iter()
-                .filter_map(|txid| {
-                    let tx = txs.get(txid)?;
-                    let fills: Fills = tx
-                        .input
-                        .iter()
-                        .enumerate()
-                        .filter(|(_, txin)| txin.prevout.is_none())
-                        .filter_map(|(i, txin)| {
-                            let parent = txs.get(&txin.txid)?;
-                            let out = parent.output.get(usize::from(txin.vout))?;
-                            Some((Vin::from(i), out.clone()))
-                        })
-                        .collect();
-                    (!fills.is_empty()).then_some((txid.clone(), fills))
-                })
-                .collect()
+            Self::gather_in_mempool_fills(&txs)
         };
         Self::write_back(state, filled)
     }
@@ -74,8 +54,8 @@ impl Resolver {
     /// Fill prevouts via an external resolver, typically backed by the
     /// brk indexer for confirmed parents.
     ///
-    /// Phase 1 collects holes under `txs.read()`; phase 2 runs the
-    /// resolver outside any lock; phase 3 writes back. Holes already
+    /// Phase 1 collects holes under `txs.read()`. Phase 2 runs the
+    /// resolver outside any lock. Phase 3 writes back. Holes already
     /// resolvable from in-mempool parents have been filled by
     /// [`Resolver::resolve_in_mempool`] in the preceding `apply`, so
     /// anything reaching the resolver here is genuinely external.
@@ -83,28 +63,63 @@ impl Resolver {
     where
         F: Fn(&Txid, Vout) -> Option<TxOut>,
     {
-        let holes: Vec<(Txid, Holes)> = {
+        let holes = {
             let txs = state.txs.read();
-            if txs.unresolved().is_empty() {
-                return false;
-            }
-            txs.unresolved()
-                .iter()
-                .filter_map(|txid| {
-                    let tx = txs.get(txid)?;
-                    let holes: Holes = tx
-                        .input
-                        .iter()
-                        .enumerate()
-                        .filter(|(_, txin)| txin.prevout.is_none())
-                        .map(|(i, txin)| (Vin::from(i), txin.txid.clone(), txin.vout))
-                        .collect();
-                    (!holes.is_empty()).then_some((txid.clone(), holes))
-                })
-                .collect()
+            Self::gather_holes(&txs)
         };
+        let filled = Self::run_external_resolver(holes, resolver);
+        Self::write_back(state, filled)
+    }
 
-        let filled: Vec<(Txid, Fills)> = holes
+    fn gather_in_mempool_fills(txs: &TxStore) -> Vec<(Txid, Fills)> {
+        if txs.unresolved().is_empty() {
+            return Vec::new();
+        }
+        txs.unresolved()
+            .iter()
+            .filter_map(|txid| {
+                let tx = txs.get(txid)?;
+                let fills: Fills = tx
+                    .input
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, txin)| txin.prevout.is_none())
+                    .filter_map(|(i, txin)| {
+                        let parent = txs.get(&txin.txid)?;
+                        let out = parent.output.get(usize::from(txin.vout))?;
+                        Some((Vin::from(i), out.clone()))
+                    })
+                    .collect();
+                (!fills.is_empty()).then_some((txid.clone(), fills))
+            })
+            .collect()
+    }
+
+    fn gather_holes(txs: &TxStore) -> Vec<(Txid, Holes)> {
+        if txs.unresolved().is_empty() {
+            return Vec::new();
+        }
+        txs.unresolved()
+            .iter()
+            .filter_map(|txid| {
+                let tx = txs.get(txid)?;
+                let holes: Holes = tx
+                    .input
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, txin)| txin.prevout.is_none())
+                    .map(|(i, txin)| (Vin::from(i), txin.txid.clone(), txin.vout))
+                    .collect();
+                (!holes.is_empty()).then_some((txid.clone(), holes))
+            })
+            .collect()
+    }
+
+    fn run_external_resolver<F>(holes: Vec<(Txid, Holes)>, resolver: F) -> Vec<(Txid, Fills)>
+    where
+        F: Fn(&Txid, Vout) -> Option<TxOut>,
+    {
+        holes
             .into_iter()
             .filter_map(|(txid, holes)| {
                 let fills: Fills = holes
@@ -115,9 +130,7 @@ impl Resolver {
                     .collect();
                 (!fills.is_empty()).then_some((txid, fills))
             })
-            .collect();
-
-        Self::write_back(state, filled)
+            .collect()
     }
 
     /// Apply per-tx fills under `txs.write()` + `addrs.write()`.

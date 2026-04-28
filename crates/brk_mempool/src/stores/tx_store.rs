@@ -4,7 +4,6 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 const RECENT_CAP: usize = 10;
 
-/// Store of full transaction data for API access.
 #[derive(Default, Deref)]
 pub struct TxStore {
     #[deref]
@@ -30,15 +29,33 @@ impl TxStore {
     {
         let mut new_recent: Vec<MempoolRecentTx> = Vec::with_capacity(RECENT_CAP);
         for (txid, tx) in items {
-            if new_recent.len() < RECENT_CAP {
-                new_recent.push(MempoolRecentTx::from((&txid, &tx)));
-            }
-            if tx.input.iter().any(|i| i.prevout.is_none()) {
-                self.unresolved.insert(txid.clone());
-            }
+            Self::sample_recent(&mut new_recent, &txid, &tx);
+            self.track_unresolved(&txid, &tx);
             self.txs.insert(txid, tx);
         }
+        self.promote_recent(new_recent);
+    }
 
+    /// Append to the cap-bounded sample buffer if there's room. The
+    /// pre-cap window becomes the next `recent()` value.
+    fn sample_recent(buf: &mut Vec<MempoolRecentTx>, txid: &Txid, tx: &Transaction) {
+        if buf.len() < RECENT_CAP {
+            buf.push(MempoolRecentTx::from((txid, tx)));
+        }
+    }
+
+    /// Record `txid` in the unresolved set if any input lacks a
+    /// prevout. Cleared later by `apply_fills` once all inputs fill.
+    fn track_unresolved(&mut self, txid: &Txid, tx: &Transaction) {
+        if tx.input.iter().any(|i| i.prevout.is_none()) {
+            self.unresolved.insert(txid.clone());
+        }
+    }
+
+    fn promote_recent(&mut self, mut new_recent: Vec<MempoolRecentTx>) {
+        if new_recent.is_empty() {
+            return;
+        }
         let keep = RECENT_CAP.saturating_sub(new_recent.len());
         new_recent.extend(self.recent.drain(..keep.min(self.recent.len())));
         self.recent = new_recent;
@@ -70,6 +87,19 @@ impl TxStore {
         let Some(tx) = self.txs.get_mut(txid) else {
             return Vec::new();
         };
+        let applied = Self::write_prevouts(tx, fills);
+        if applied.is_empty() {
+            return applied;
+        }
+        Self::recompute_sigop(tx);
+        self.refresh_unresolved(txid);
+        applied
+    }
+
+    /// Apply each `(vin, prevout)` to its empty input slot. Skips vins
+    /// that are out of range or already filled. Returns the prevouts
+    /// that were actually written.
+    fn write_prevouts(tx: &mut Transaction, fills: Vec<(Vin, TxOut)>) -> Vec<TxOut> {
         let mut applied = Vec::with_capacity(fills.len());
         for (vin, prevout) in fills {
             if let Some(txin) = tx.input.get_mut(usize::from(vin))
@@ -79,12 +109,24 @@ impl TxStore {
                 applied.push(prevout);
             }
         }
-        if !applied.is_empty() {
-            tx.total_sigop_cost = tx.total_sigop_cost();
-        }
-        if !tx.input.iter().any(|i| i.prevout.is_none()) {
+        applied
+    }
+
+    /// `total_sigop_cost` depends on the P2SH and witness components
+    /// of each prevout, so it must be recomputed after any fill.
+    fn recompute_sigop(tx: &mut Transaction) {
+        tx.total_sigop_cost = tx.total_sigop_cost();
+    }
+
+    /// Drop `txid` from the unresolved set if every input now has a
+    /// prevout. Idempotent if the tx was removed between phases.
+    fn refresh_unresolved(&mut self, txid: &Txid) {
+        if self.txs.get(txid).is_some_and(Self::all_resolved) {
             self.unresolved.remove(txid);
         }
-        applied
+    }
+
+    fn all_resolved(tx: &Transaction) -> bool {
+        tx.input.iter().all(|i| i.prevout.is_some())
     }
 }

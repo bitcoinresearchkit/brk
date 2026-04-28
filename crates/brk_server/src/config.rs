@@ -4,15 +4,9 @@ use brk_website::Website;
 
 use crate::cache::CdnCacheMode;
 
-/// Default max series-query response weight for non-loopback clients.
-/// `4 * 8 * 10_000` = 320 KB (4 vecs x 8 bytes x 10k rows).
-pub const DEFAULT_MAX_WEIGHT: usize = 4 * 8 * 10_000;
-
-/// Default max series-query response weight for loopback clients.
-pub const DEFAULT_MAX_WEIGHT_LOCALHOST: usize = 50 * 1_000_000;
-
-/// Default LRU capacity for the in-process response cache.
-pub const DEFAULT_CACHE_SIZE: usize = 1_000;
+/// Default max series-query response weight.
+/// 50 MB - generous enough for any honest query, low enough to limit cache-buster leverage.
+pub const DEFAULT_MAX_WEIGHT: usize = 50 * 1_000_000;
 
 /// Server-wide configuration set at startup.
 #[derive(Debug, Clone)]
@@ -21,8 +15,6 @@ pub struct ServerConfig {
     pub website: Website,
     pub cdn_cache_mode: CdnCacheMode,
     pub max_weight: usize,
-    pub max_weight_localhost: usize,
-    pub cache_size: usize,
 }
 
 impl Default for ServerConfig {
@@ -32,8 +24,6 @@ impl Default for ServerConfig {
             website: Website::default(),
             cdn_cache_mode: CdnCacheMode::default(),
             max_weight: DEFAULT_MAX_WEIGHT,
-            max_weight_localhost: DEFAULT_MAX_WEIGHT_LOCALHOST,
-            cache_size: DEFAULT_CACHE_SIZE,
         }
     }
 }

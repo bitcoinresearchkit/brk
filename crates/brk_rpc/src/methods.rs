@@ -3,6 +3,7 @@ use std::{thread::sleep, time::Duration};
 use bitcoin::{consensus::encode, hex::FromHex};
 use brk_error::{Error, Result};
 use brk_types::{Bitcoin, BlockHash, FeeRate, Height, MempoolEntryInfo, Sats, Txid, Vout};
+use corepc_jsonrpc::error::Error as JsonRpcError;
 use corepc_types::v30::{
     GetBlockCount, GetBlockHash, GetBlockHeader, GetBlockHeaderVerbose, GetBlockVerboseOne,
     GetBlockVerboseZero, GetBlockchainInfo, GetMempoolInfo, GetRawMempool, GetRawMempoolVerbose,
@@ -12,6 +13,11 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde_json::Value;
 use tracing::{debug, info};
+
+/// Bitcoin Core's `-5` (`RPC_INVALID_ADDRESS_OR_KEY`) is the expected
+/// response when querying a confirmed transaction without `-txindex`.
+/// The mempool fetcher tolerates these per-item failures silently.
+const RPC_NOT_FOUND: i32 = -5;
 
 use crate::{
     BlockHeaderInfo, BlockInfo, BlockTemplateTx, BlockchainInfo, Client, RawTx, TxOutInfo,
@@ -289,9 +295,8 @@ impl Client {
                     Ok(raw) => {
                         out.insert(txid.clone(), raw);
                     }
-                    // Silenced: users without `-txindex` expect -5 for
-                    // every confirmed tx. Downgraded so the mempool
-                    // parent-fetch loop doesn't spam the log each cycle.
+                    Err(Error::CorepcRPC(JsonRpcError::Rpc(rpc)))
+                        if rpc.code == RPC_NOT_FOUND => {}
                     Err(e) => {
                         debug!(txid = %txid, error = %e, "getrawtransaction batch: item failed")
                     }

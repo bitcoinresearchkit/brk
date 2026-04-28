@@ -1,4 +1,7 @@
-use std::ops::{Add, AddAssign, Div, Sub, SubAssign};
+use std::{
+    iter::Sum,
+    ops::{Add, AddAssign, Div, Sub, SubAssign},
+};
 
 use derive_more::Deref;
 use schemars::JsonSchema;
@@ -33,9 +36,17 @@ use crate::Weight;
 pub struct VSize(u64);
 
 impl VSize {
+    /// Maximum block vsize (1M vB), the policy budget the partitioner targets.
+    pub const MAX_BLOCK: Self = Self(1_000_000);
+
     #[inline]
     pub const fn new(value: u64) -> Self {
         Self(value)
+    }
+
+    #[inline]
+    pub fn saturating_sub(self, rhs: Self) -> Self {
+        Self(self.0.saturating_sub(rhs.0))
     }
 }
 
@@ -113,6 +124,12 @@ impl Div<usize> for VSize {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
         Self(self.0 / rhs as u64)
+    }
+}
+
+impl Sum for VSize {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        Self(iter.map(|v| v.0).sum())
     }
 }
 

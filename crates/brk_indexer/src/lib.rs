@@ -196,6 +196,9 @@ impl Indexer {
         debug!("Rollback stores done.");
         self.vecs.rollback_if_needed(&starting_indexes)?;
         debug!("Rollback vecs done.");
+        if let Some(hash) = prev_hash.as_ref() {
+            *self.tip_blockhash.write() = hash.clone();
+        }
         drop(lock);
 
         // Cloned because we want to return starting indexes for the computer

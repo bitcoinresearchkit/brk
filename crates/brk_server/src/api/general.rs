@@ -22,7 +22,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Tip, &uri, |q| {
+                        .respond_json(&headers, CacheStrategy::Tip, &uri, |q| {
                             q.difficulty_adjustment()
                         })
                         .await
@@ -43,7 +43,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, state.mempool_cache(), &uri, |q| {
+                        .respond_json(&headers, state.mempool_strategy(), &uri, |q| {
                             Ok(Prices {
                                 time: Timestamp::now(),
                                 usd: q.live_price()?,
@@ -71,10 +71,10 @@ impl GeneralRoutes for ApiRouter<AppState> {
                        State(state): State<AppState>| {
                     let strategy = params
                         .timestamp
-                        .map(|ts| state.timestamp_cache(Version::ONE, ts))
+                        .map(|ts| state.timestamp_strategy(Version::ONE, ts))
                         .unwrap_or(CacheStrategy::Tip);
                     state
-                        .cached_json(&headers, strategy, &uri, move |q| {
+                        .respond_json(&headers, strategy, &uri, move |q| {
                             q.historical_price(params.timestamp)
                         })
                         .await

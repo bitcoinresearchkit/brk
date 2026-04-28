@@ -1,9 +1,4 @@
-use std::sync::Arc;
-
-use aide::{
-    axum::{ApiRouter, routing::get_with},
-    openapi::OpenApi,
-};
+use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     Extension,
     http::HeaderMap,
@@ -63,13 +58,14 @@ impl ApiRoutes for ApiRouter<AppState> {
             .add_fees_routes()
             .add_mempool_routes()
             .add_tx_routes()
-            .route("/api/server", get(Redirect::temporary("/api#tag/server")))
             .api_route(
                 "/openapi.json",
                 get_with(
                     async |headers: HeaderMap,
-                           Extension(api): Extension<Arc<OpenApi>>|
-                           -> Response { Response::static_json(&headers, &*api) },
+                           Extension(api): Extension<OpenApiJson>|
+                           -> Response {
+                        Response::static_json_bytes(&headers, api.bytes())
+                    },
                     |op| {
                         op.id("get_openapi")
                             .server_tag()
@@ -82,9 +78,9 @@ impl ApiRoutes for ApiRouter<AppState> {
                 "/api.json",
                 get_with(
                     async |headers: HeaderMap,
-                           Extension(api): Extension<Arc<ApiJson>>|
+                           Extension(api): Extension<ApiJson>|
                            -> Response {
-                        Response::static_json(&headers, api.to_json())
+                        Response::static_json_bytes(&headers, api.bytes())
                     },
                     |op| {
                         op.id("get_api")

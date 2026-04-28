@@ -5,38 +5,28 @@ pub use fetched::Fetched;
 use brk_error::Result;
 use brk_rpc::{Client, RawTx};
 use brk_types::{MempoolEntryInfo, Txid};
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
-use crate::stores::{TxGraveyard, TxStore};
+use crate::stores::{MempoolState, TxGraveyard, TxStore};
 
-/// Cap on how many new txs we fetch per cycle (applied before the batch RPC
-/// so we never hand bitcoind an unbounded batch).
+/// Cap before the batch RPC so we never hand bitcoind an unbounded batch.
 const MAX_TX_FETCHES_PER_CYCLE: usize = 10_000;
 
-/// Talks to Bitcoin Core. Three batched round-trips regardless of
-/// mempool size:
-/// 1. `getrawmempool verbose` - authoritative listing
-/// 2. `getrawtransaction` batch - every new tx (txids not in
-///    `known` / `graveyard`, capped at `MAX_TX_FETCHES_PER_CYCLE`)
-/// 3. `getrawtransaction` batch - unique confirmed parents of those
-///    new txs that aren't resolvable from `known` or step 2.
+/// Three batched round-trips per cycle regardless of mempool size:
+/// `getrawmempool verbose`, then `getrawtransaction` for new txs, then
+/// `getrawtransaction` for confirmed parents.
 ///
-/// Step 3 is best-effort: without `-txindex`, Core returns -5 for every
-/// confirmed parent and the batch yields an empty map. `brk_query`
-/// fills missing prevouts at read time from the indexer, so this is
-/// purely a latency optimization when `-txindex` is available.
+/// The third batch is best-effort. Without `-txindex` Core returns -5
+/// for every confirmed parent. `brk_query` fills missing prevouts at
+/// read time from the indexer, so this is purely a latency
+/// optimization when `-txindex` is available.
 pub struct Fetcher;
 
 impl Fetcher {
-    pub fn fetch(client: &Client, known: &TxStore, graveyard: &TxGraveyard) -> Result<Fetched> {
-        let entries_info = client.get_raw_mempool_verbose()?;
-
-        let new_txids = Self::new_txids(&entries_info, known, graveyard);
-        let new_raws = client.get_raw_transactions(&new_txids)?;
-
-        let parent_txids = Self::unique_confirmed_parents(&new_raws, known);
-        let parent_raws = client.get_raw_transactions(&parent_txids)?;
-
+    pub fn fetch(client: &Client, state: &MempoolState) -> Result<Fetched> {
+        let entries_info = Self::list_pool(client)?;
+        let new_raws = Self::fetch_new(client, state, &entries_info)?;
+        let parent_raws = Self::fetch_parents(client, state, &new_raws)?;
         Ok(Fetched {
             entries_info,
             new_raws,
@@ -44,9 +34,35 @@ impl Fetcher {
         })
     }
 
-    /// Txids in the listing that we don't already have cached (live or
-    /// buried) and therefore need to fetch raw bytes for. Order-preserving
-    /// so the batch matches the listing order for debuggability.
+    fn list_pool(client: &Client) -> Result<Vec<MempoolEntryInfo>> {
+        client.get_raw_mempool_verbose()
+    }
+
+    fn fetch_new(
+        client: &Client,
+        state: &MempoolState,
+        entries_info: &[MempoolEntryInfo],
+    ) -> Result<FxHashMap<Txid, RawTx>> {
+        let new_txids = {
+            let known = state.txs.read();
+            let graveyard = state.graveyard.read();
+            Self::new_txids(entries_info, &known, &graveyard)
+        };
+        client.get_raw_transactions(&new_txids)
+    }
+
+    fn fetch_parents(
+        client: &Client,
+        state: &MempoolState,
+        new_raws: &FxHashMap<Txid, RawTx>,
+    ) -> Result<FxHashMap<Txid, RawTx>> {
+        let parent_txids = {
+            let known = state.txs.read();
+            Self::unique_confirmed_parents(new_raws, &known)
+        };
+        client.get_raw_transactions(&parent_txids)
+    }
+
     fn new_txids(
         entries_info: &[MempoolEntryInfo],
         known: &TxStore,
@@ -60,18 +76,14 @@ impl Fetcher {
             .collect()
     }
 
-    /// Parent txids referenced by `new_raws` inputs that aren't already
-    /// resolvable: not in the mempool store, not in `new_raws` itself.
     fn unique_confirmed_parents(new_raws: &FxHashMap<Txid, RawTx>, known: &TxStore) -> Vec<Txid> {
-        let mut set: FxHashSet<Txid> = FxHashSet::default();
-        for raw in new_raws.values() {
-            for txin in &raw.tx.input {
-                let prev: Txid = txin.previous_output.txid.into();
-                if !known.contains_key(&prev) && !new_raws.contains_key(&prev) {
-                    set.insert(prev);
-                }
-            }
-        }
-        set.into_iter().collect()
+        let mut v = new_raws
+            .values()
+            .flat_map(|raw| &raw.tx.input)
+            .map(|txin| Txid::from(txin.previous_output.txid))
+            .filter(|prev| !known.contains(prev) && !new_raws.contains_key(prev))
+            .collect::<Vec<_>>();
+        v.dedup();
+        v
     }
 }

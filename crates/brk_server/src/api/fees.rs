@@ -18,7 +18,7 @@ impl FeesRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, state.mempool_cache(), &uri, |q| {
+                        .respond_json(&headers, state.mempool_strategy(), &uri, |q| {
                             q.mempool_blocks()
                         })
                         .await
@@ -39,7 +39,7 @@ impl FeesRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, state.mempool_cache(), &uri, |q| {
+                        .respond_json(&headers, state.mempool_strategy(), &uri, |q| {
                             q.recommended_fees()
                         })
                         .await
@@ -60,7 +60,7 @@ impl FeesRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, state.mempool_cache(), &uri, |q| {
+                        .respond_json(&headers, state.mempool_strategy(), &uri, |q| {
                             q.recommended_fees()
                         })
                         .await

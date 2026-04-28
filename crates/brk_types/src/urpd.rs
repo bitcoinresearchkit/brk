@@ -61,7 +61,8 @@ impl Urpd {
             .into_iter()
             .map(|(price_floor_cents, slot)| {
                 let realized_cap_cents = slot.realized_cap.to_cents();
-                let close_mc_cents = CentsSats::from_price_sats(close_cents, slot.supply).to_cents();
+                let close_mc_cents =
+                    CentsSats::from_price_sats(close_cents, slot.supply).to_cents();
                 let pnl = CentsSigned::from(close_mc_cents.inner())
                     - CentsSigned::from(realized_cap_cents.inner());
                 UrpdBucket {

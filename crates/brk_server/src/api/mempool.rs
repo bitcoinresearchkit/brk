@@ -18,7 +18,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, state.mempool_cache(), &uri, |q| q.mempool_info())
+                        .respond_json(&headers, state.mempool_strategy(), &uri, |q| q.mempool_info())
                         .await
                 },
                 |op| {
@@ -37,7 +37,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, state.mempool_cache(), &uri, |q| q.mempool_txids())
+                        .respond_json(&headers, state.mempool_strategy(), &uri, |q| q.mempool_txids())
                         .await
                 },
                 |op| {
@@ -56,7 +56,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, state.mempool_cache(), &uri, |q| q.mempool_recent())
+                        .respond_json(&headers, state.mempool_strategy(), &uri, |q| q.mempool_recent())
                         .await
                 },
                 |op| {
@@ -75,7 +75,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, state.mempool_cache(), &uri, |q| q.live_price())
+                        .respond_json(&headers, state.mempool_strategy(), &uri, |q| q.live_price())
                         .await
                 },
                 |op| {

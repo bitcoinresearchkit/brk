@@ -4,10 +4,15 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::State,
     http::{HeaderMap, Uri},
+    response::{IntoResponse, Response},
 };
 use brk_types::{DiskUsage, Health, SyncStatus};
 
-use crate::{CacheStrategy, VERSION, extended::TransformResponseExtended, params::Empty};
+use crate::{
+    CacheStrategy, VERSION,
+    extended::{HeaderMapExtended, TransformResponseExtended},
+    params::Empty,
+};
 
 use super::AppState;
 
@@ -20,7 +25,7 @@ impl ServerRoutes for ApiRouter<AppState> {
         self.api_route(
             "/health",
             get_with(
-                async |_: Empty, State(state): State<AppState>| -> axum::Json<Health> {
+                async |_: Empty, State(state): State<AppState>| -> Response {
                     let uptime = state.started_instant.elapsed();
                     let started_at = state.started_at.to_string();
                     let sync = state
@@ -33,7 +38,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                         })
                         .await
                         .expect("health sync task panicked");
-                    axum::Json(Health {
+                    let mut response = axum::Json(Health {
                         status: Cow::Borrowed("healthy"),
                         service: Cow::Borrowed("brk"),
                         version: Cow::Borrowed(VERSION),
@@ -42,6 +47,11 @@ impl ServerRoutes for ApiRouter<AppState> {
                         uptime_seconds: uptime.as_secs(),
                         sync,
                     })
+                    .into_response();
+                    let h = response.headers_mut();
+                    h.insert_cache_control("no-store");
+                    h.insert_cdn_cache_control("no-store");
+                    response
                 },
                 |op| {
                     op.id("get_health")
@@ -57,7 +67,7 @@ impl ServerRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Deploy, &uri, |_| {
+                        .respond_json(&headers, CacheStrategy::Deploy, &uri, |_| {
                             Ok(env!("CARGO_PKG_VERSION"))
                         })
                         .await
@@ -77,7 +87,7 @@ impl ServerRoutes for ApiRouter<AppState> {
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
+                        .respond_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             let tip_height = q.client().get_last_height()?;
                             Ok(q.sync_status(tip_height))
                         })
@@ -102,7 +112,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     let brk_path = state.data_path.clone();
                     state
-                        .cached_json(&headers, CacheStrategy::Tip, &uri, move |q| {
+                        .respond_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             let brk_bytes = dir_size(&brk_path)?;
                             let bitcoin_bytes = dir_size(q.blocks_dir())?;
                             Ok(DiskUsage::new(brk_bytes, bitcoin_bytes))

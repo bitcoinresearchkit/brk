@@ -87,7 +87,7 @@ impl Query {
             },
             mempool_stats: self
                 .mempool()
-                .and_then(|m| m.addrs().get(&bytes).map(|(stats, _)| stats.clone())),
+                .and_then(|m| m.addrs().get(&bytes).map(|e| e.stats.clone())),
         })
     }
 
@@ -225,7 +225,7 @@ impl Query {
         Ok(mempool
             .addrs()
             .get(&bytes)
-            .map(|(_, txids)| txids.iter().take(MAX_MEMPOOL_TXIDS).cloned().collect())
+            .map(|e| e.txids.iter().take(MAX_MEMPOOL_TXIDS).cloned().collect())
             .unwrap_or_default())
     }
 

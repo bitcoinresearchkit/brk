@@ -11,8 +11,10 @@
 //
 
 mod compact;
+mod full;
 
 pub use compact::ApiJson;
+pub use full::OpenApiJson;
 
 use aide::openapi::{Contact, Info, License, OpenApi, Tag};
 

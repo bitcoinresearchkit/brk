@@ -1,118 +1,106 @@
-pub mod block_builder;
-pub mod projected_blocks;
-
 use std::{
     sync::{
         Arc,
-        atomic::{AtomicBool, AtomicU64, Ordering},
+        atomic::{AtomicBool, Ordering},
     },
-    time::{SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant},
 };
 
 use brk_rpc::Client;
 use brk_types::FeeRate;
-use parking_lot::RwLock;
+use parking_lot::{Mutex, RwLock};
 use tracing::warn;
 
+use graph::Graph;
+use linearize::Linearizer;
+use partition::Partitioner;
 #[cfg(debug_assertions)]
-use self::projected_blocks::verify::Verifier;
-use self::{
-    block_builder::build_projected_blocks,
-    projected_blocks::{BlockStats, RecommendedFees, Snapshot},
-};
-use crate::stores::EntryPool;
+use verify::Verifier;
+use crate::stores::MempoolState;
 
-/// Minimum interval between rebuilds (milliseconds).
-const MIN_REBUILD_INTERVAL_MS: u64 = 1000;
+pub(crate) mod graph;
+pub(crate) mod linearize;
+mod partition;
+mod snapshot;
+#[cfg(debug_assertions)]
+mod verify;
 
-/// Owns the projected-blocks `Snapshot` and the scheduling around its
-/// rebuild.
-///
-/// Internally stateful: a `dirty` flag the Applier nudges after each
-/// state change, a `last_rebuild_ms` throttle so we rebuild at most
-/// once per `MIN_REBUILD_INTERVAL_MS` regardless of churn, and the
-/// `Snapshot` itself swapped behind a cheap `Arc` so readers clone a
-/// pointer, not the vectors inside.
+pub use brk_types::RecommendedFees;
+pub use snapshot::{BlockStats, Snapshot};
+
+const MIN_REBUILD_INTERVAL: Duration = Duration::from_secs(1);
+const NUM_BLOCKS: usize = 8;
+
 #[derive(Default)]
 pub struct Rebuilder {
     snapshot: RwLock<Arc<Snapshot>>,
     dirty: AtomicBool,
-    last_rebuild_ms: AtomicU64,
+    last_rebuild: Mutex<Option<Instant>>,
 }
 
 impl Rebuilder {
-    /// Signal that state has changed and a rebuild is eventually needed.
-    pub fn mark_dirty(&self) {
-        self.dirty.store(true, Ordering::Release);
+    /// Mark dirty if the cycle changed mempool state, then rebuild iff
+    /// the throttle window has elapsed. Marking is sticky: a throttled
+    /// `changed=true` cycle keeps the bit set so a later quiet cycle
+    /// can still trigger the rebuild.
+    pub fn tick(&self, client: &Client, state: &MempoolState, changed: bool) {
+        self.mark_dirty(changed);
+        if !self.try_claim_rebuild() {
+            return;
+        }
+        self.publish(Self::build_snapshot(client, state));
     }
 
-    /// Rebuild iff dirty and enough time has passed since the last
-    /// run. Takes a short read lock on `entries` while building and
-    /// a short write lock on the internal snapshot at swap time.
-    pub fn tick(&self, client: &Client, entries: &RwLock<EntryPool>) {
-        if !self.dirty.load(Ordering::Acquire) {
-            return;
-        }
+    fn build_snapshot(client: &Client, state: &MempoolState) -> Snapshot {
+        let min_fee = Self::fetch_min_fee(client);
+        let entries = state.entries.read();
+        let entries_slice = entries.entries();
 
-        let now_ms = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_millis() as u64)
-            .unwrap_or(0);
+        let nodes = Graph::build(entries_slice);
+        let packages = Linearizer::linearize(&nodes);
+        let blocks = Partitioner::partition(packages, NUM_BLOCKS);
 
-        let last = self.last_rebuild_ms.load(Ordering::Acquire);
-        if now_ms.saturating_sub(last) < MIN_REBUILD_INTERVAL_MS {
-            return;
-        }
+        #[cfg(debug_assertions)]
+        Verifier::check(client, &blocks, entries_slice);
 
-        if self
-            .last_rebuild_ms
-            .compare_exchange(last, now_ms, Ordering::AcqRel, Ordering::Relaxed)
-            .is_err()
-        {
-            return;
-        }
-
-        self.dirty.store(false, Ordering::Release);
-
-        let min_fee = client.get_mempool_min_fee().unwrap_or_else(|e| {
-            warn!("getmempoolinfo failed, falling back to FeeRate::MIN: {e}");
-            FeeRate::MIN
-        });
-
-        let built = {
-            let entries = entries.read();
-            let entries_slice = entries.entries();
-            let blocks = build_projected_blocks(entries_slice);
-
-            #[cfg(debug_assertions)]
-            Verifier::check(client, &blocks, entries_slice);
-            #[cfg(not(debug_assertions))]
-            let _ = client;
-
-            Snapshot::build(blocks, entries_slice, min_fee)
-        };
-
-        *self.snapshot.write() = Arc::new(built);
-    }
-
-    /// Cheap: reader clones an `Arc` pointer and releases the lock.
-    fn current(&self) -> Arc<Snapshot> {
-        self.snapshot.read().clone()
+        Snapshot::build(blocks, entries_slice, min_fee)
     }
 
     pub fn snapshot(&self) -> Arc<Snapshot> {
-        self.current()
+        self.snapshot.read().clone()
     }
 
-    pub fn fees(&self) -> RecommendedFees {
-        self.current().fees.clone()
+    fn mark_dirty(&self, changed: bool) {
+        if changed {
+            self.dirty.store(true, Ordering::Release);
+        }
     }
 
-    pub fn block_stats(&self) -> Vec<BlockStats> {
-        self.current().block_stats.clone()
+    /// Returns true iff dirty and the throttle window has elapsed. On
+    /// success, clears the dirty bit and starts a new throttle window;
+    /// on failure, leaves all state untouched so the next cycle can
+    /// retry.
+    fn try_claim_rebuild(&self) -> bool {
+        if !self.dirty.load(Ordering::Acquire) {
+            return false;
+        }
+        let mut last = self.last_rebuild.lock();
+        if last.is_some_and(|t| t.elapsed() < MIN_REBUILD_INTERVAL) {
+            return false;
+        }
+        *last = Some(Instant::now());
+        self.dirty.store(false, Ordering::Release);
+        true
     }
 
-    pub fn next_block_hash(&self) -> u64 {
-        self.current().next_block_hash
+    fn fetch_min_fee(client: &Client) -> FeeRate {
+        client.get_mempool_min_fee().unwrap_or_else(|e| {
+            warn!("getmempoolinfo failed, falling back to FeeRate::MIN: {e}");
+            FeeRate::MIN
+        })
+    }
+
+    fn publish(&self, snapshot: Snapshot) {
+        *self.snapshot.write() = Arc::new(snapshot);
     }
 }

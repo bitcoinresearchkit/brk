@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
 use brk_error::{Error, Result};
-use brk_mempool::{Entry, EntryPool, Removal, Tombstone, TxGraveyard, TxStore};
+use brk_mempool::{EntryPool, TxEntry, TxGraveyard, TxRemoval, TxStore, TxTombstone};
 use brk_types::{
     CheckedSub, CpfpEntry, CpfpInfo, FeeRate, MempoolBlock, MempoolInfo, MempoolRecentTx,
     OutputType, RbfResponse, RbfTx, RecommendedFees, ReplacementNode, Sats, Timestamp, Transaction,
@@ -178,7 +178,8 @@ impl Query {
         let graveyard = mempool.graveyard();
 
         let mut root_txid = txid.clone();
-        while let Some(Removal::Replaced { by }) = graveyard.get(&root_txid).map(Tombstone::reason)
+        while let Some(TxRemoval::Replaced { by }) =
+            graveyard.get(&root_txid).map(TxTombstone::reason)
         {
             root_txid = by.clone();
         }
@@ -210,7 +211,7 @@ impl Query {
         txs: &'a TxStore,
         entries: &'a EntryPool,
         graveyard: &'a TxGraveyard,
-    ) -> Option<(&'a Transaction, &'a Entry)> {
+    ) -> Option<(&'a Transaction, &'a TxEntry)> {
         if let (Some(tx), Some(entry)) = (txs.get(txid), entries.get(&TxidPrefix::from(txid))) {
             return Some((tx, entry));
         }

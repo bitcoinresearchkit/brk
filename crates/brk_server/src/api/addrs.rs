@@ -2,8 +2,6 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, Query, State},
     http::{HeaderMap, Uri},
-    response::Redirect,
-    routing::get,
 };
 use brk_types::{AddrStats, AddrValidation, Transaction, Txid, Utxo, Version};
 
@@ -19,10 +17,7 @@ pub trait AddrRoutes {
 
 impl AddrRoutes for ApiRouter<AppState> {
     fn add_addr_routes(self) -> Self {
-        self
-            .route("/api/address", get(Redirect::temporary("/api/addresses")))
-            .route("/api/addresses", get(Redirect::temporary("/api#tag/addresses")))
-            .api_route(
+        self.api_route(
             "/api/address/{address}",
             get_with(async |
                 uri: Uri,
@@ -31,8 +26,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 _: Empty,
                 State(state): State<AppState>
             | {
-                let strategy = state.addr_cache(Version::ONE, &path.addr, false);
-                state.cached_json(&headers, strategy, &uri, move |q| q.addr(path.addr)).await
+                let strategy = state.addr_strategy(Version::ONE, &path.addr, false);
+                state.respond_json(&headers, strategy, &uri, move |q| q.addr(path.addr)).await
             }, |op| op
                 .id("get_address")
                 .addrs_tag()
@@ -54,8 +49,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Query(params): Query<AddrTxidsParam>,
                 State(state): State<AppState>
             | {
-                let strategy = state.addr_cache(Version::ONE, &path.addr, false);
-                state.cached_json(&headers, strategy, &uri, move |q| q.addr_txs(path.addr, params.after_txid, 50)).await
+                let strategy = state.addr_strategy(Version::ONE, &path.addr, false);
+                state.respond_json(&headers, strategy, &uri, move |q| q.addr_txs(path.addr, params.after_txid, 50)).await
             }, |op| op
                 .id("get_address_txs")
                 .addrs_tag()
@@ -77,8 +72,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Query(params): Query<AddrTxidsParam>,
                 State(state): State<AppState>
             | {
-                let strategy = state.addr_cache(Version::ONE, &path.addr, true);
-                state.cached_json(&headers, strategy, &uri, move |q| q.addr_txs(path.addr, params.after_txid, 25)).await
+                let strategy = state.addr_strategy(Version::ONE, &path.addr, true);
+                state.respond_json(&headers, strategy, &uri, move |q| q.addr_txs(path.addr, params.after_txid, 25)).await
             }, |op| op
                 .id("get_address_confirmed_txs")
                 .addrs_tag()
@@ -101,7 +96,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 State(state): State<AppState>
             | {
                 let hash = state.sync(|q| q.addr_mempool_hash(&path.addr));
-                state.cached_json(&headers, CacheStrategy::MempoolHash(hash), &uri, move |q| q.addr_mempool_txids(path.addr)).await
+                state.respond_json(&headers, CacheStrategy::MempoolHash(hash), &uri, move |q| q.addr_mempool_txids(path.addr)).await
             }, |op| op
                 .id("get_address_mempool_txs")
                 .addrs_tag()
@@ -123,8 +118,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 _: Empty,
                 State(state): State<AppState>
             | {
-                let strategy = state.addr_cache(Version::ONE, &path.addr, false);
-                state.cached_json(&headers, strategy, &uri, move |q| q.addr_utxos(path.addr)).await
+                let strategy = state.addr_strategy(Version::ONE, &path.addr, false);
+                state.respond_json(&headers, strategy, &uri, move |q| q.addr_utxos(path.addr)).await
             }, |op| op
                 .id("get_address_utxos")
                 .addrs_tag()
@@ -146,7 +141,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 _: Empty,
                 State(state): State<AppState>
             | {
-                state.cached_json(&headers, CacheStrategy::Deploy, &uri, move |_q| Ok(AddrValidation::from_addr(&path.addr))).await
+                state.respond_json(&headers, CacheStrategy::Deploy, &uri, move |_q| Ok(AddrValidation::from_addr(&path.addr))).await
             }, |op| op
                 .id("validate_address")
                 .addrs_tag()

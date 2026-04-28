@@ -1,19 +1,20 @@
 use aide::openapi::OpenApi;
-use derive_more::Deref;
+use axum::body::Bytes;
 use serde_json::{Map, Value};
 
 /// Compact OpenAPI spec optimized for LLM consumption.
-#[derive(Deref)]
-pub struct ApiJson(String);
+/// Pre-serialized at startup, served as raw bytes per request.
+#[derive(Clone)]
+pub struct ApiJson(Bytes);
 
 impl ApiJson {
     pub fn new(openapi: &OpenApi) -> Self {
         let json = serde_json::to_string(openapi).unwrap();
-        Self(compact_json(&json))
+        Self(Bytes::from(compact_json(&json)))
     }
 
-    pub fn to_json(&self) -> serde_json::Value {
-        serde_json::from_str(&self.0).unwrap()
+    pub fn bytes(&self) -> Bytes {
+        self.0.clone()
     }
 }
 
