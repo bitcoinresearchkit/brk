@@ -45,8 +45,7 @@ impl EntryPool {
     }
 
     /// Direct children of a transaction (txs whose `depends` includes
-    /// `prefix`). Derived on demand via a linear scan, called only by
-    /// the CPFP query endpoint, which is not on the hot path.
+    /// `prefix`). Linear scan over all entries.
     pub fn children(&self, prefix: &TxidPrefix) -> SmallVec<[TxidPrefix; 2]> {
         self.entries
             .iter()

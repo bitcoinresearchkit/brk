@@ -42,8 +42,6 @@ impl TxRemoval {
             .collect()
     }
 
-    /// `Replaced` if any of `tx`'s inputs is now claimed by a freshly
-    /// added tx (BIP-125 inferred); otherwise `Vanished`.
     fn find_removal(tx: &Transaction, spent_by: &SpentBy) -> Self {
         tx.input
             .iter()

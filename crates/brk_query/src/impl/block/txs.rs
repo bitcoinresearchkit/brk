@@ -23,7 +23,9 @@ impl Query {
         let (first, tx_count) = self.block_tx_range(height)?;
         let start: usize = start_index.into();
         if start >= tx_count {
-            return Ok(Vec::new());
+            return Err(Error::OutOfRange(
+                "start index past last transaction in block".into(),
+            ));
         }
         let count = BLOCK_TXS_PAGE_SIZE.min(tx_count - start);
         let indices: Vec<TxIndex> = (first + start..first + start + count)

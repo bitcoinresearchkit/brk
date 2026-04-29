@@ -16,12 +16,16 @@ pub fn generate_base_client(output: &mut String) {
  * @typedef {{Object}} BrkClientOptions
  * @property {{string}} baseUrl - Base URL for the API
  * @property {{number}} [timeout] - Request timeout in milliseconds
- * @property {{string|boolean}} [cache] - Enable browser cache with default name (true), custom name (string), or disable (false). No effect in Node.js. Default: true
+ * @property {{string|boolean}} [browserCache] - Enable browser Cache API with default name (true), custom name (string), or disable (false). No effect in Node.js. Default: true
+ * @property {{number|boolean}} [memCache] - In-memory parsed-response cache size (LRU). true/undefined → 1000, false/0 → disabled. Lets 304 responses skip the JSON parse entirely. Default: 1000
  */
 
 const _isBrowser = typeof window !== 'undefined' && 'caches' in window;
 const _runIdle = (/** @type {{VoidFunction}} */ fn) => (globalThis.requestIdleCallback ?? setTimeout)(fn);
-const _defaultCacheName = '__BRK_CLIENT__';
+const _defaultBrowserCacheName = '__BRK_CLIENT__';
+const _DEFAULT_MEM_CACHE_SIZE = 1000;
+
+/** @template T @typedef {{{{ etag: string | null, value: T }}}} _MemEntry */
 /** @param {{*}} v */
 const _addCamelGetters = (v) => {{
   if (Array.isArray(v)) {{ v.forEach(_addCamelGetters); return v; }}
@@ -38,12 +42,12 @@ const _addCamelGetters = (v) => {{
 }};
 
 /**
- * @param {{string|boolean|undefined}} cache
+ * @param {{string|boolean|undefined}} option
  * @returns {{Promise<Cache | null>}}
  */
-const _openCache = (cache) => {{
-  if (!_isBrowser || cache === false) return Promise.resolve(null);
-  const name = typeof cache === 'string' ? cache : _defaultCacheName;
+const _openBrowserCache = (option) => {{
+  if (!_isBrowser || option === false) return Promise.resolve(null);
+  const name = typeof option === 'string' ? option : _defaultBrowserCacheName;
   return caches.open(name).catch(() => null);
 }};
 
@@ -233,7 +237,7 @@ function _wrapSeriesData(raw) {{
  * @property {{(n: number) => RangeBuilder<T>}} first - Get first n items
  * @property {{(n: number) => RangeBuilder<T>}} last - Get last n items
  * @property {{(n: number) => SkippedBuilder<T>}} skip - Skip first n items, chain with take()
- * @property {{(onUpdate?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>}} fetch - Fetch all data
+ * @property {{(onValue?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>}} fetch - Fetch all data
  * @property {{() => Promise<string>}} fetchCsv - Fetch all data as CSV
  * @property {{() => Promise<number>}} len - Get total number of data points
  * @property {{() => Promise<Version>}} version - Get the current version of the series
@@ -249,7 +253,7 @@ function _wrapSeriesData(raw) {{
  * @property {{(n: number) => DateRangeBuilder<T>}} first - Get first n items
  * @property {{(n: number) => DateRangeBuilder<T>}} last - Get last n items
  * @property {{(n: number) => DateSkippedBuilder<T>}} skip - Skip first n items, chain with take()
- * @property {{(onUpdate?: (value: DateSeriesData<T>) => void) => Promise<DateSeriesData<T>>}} fetch - Fetch all data
+ * @property {{(onValue?: (value: DateSeriesData<T>) => void) => Promise<DateSeriesData<T>>}} fetch - Fetch all data
  * @property {{() => Promise<string>}} fetchCsv - Fetch all data as CSV
  * @property {{() => Promise<number>}} len - Get total number of data points
  * @property {{() => Promise<Version>}} version - Get the current version of the series
@@ -260,39 +264,39 @@ function _wrapSeriesData(raw) {{
 /** @typedef {{SeriesEndpoint<any>}} AnySeriesEndpoint */
 
 /** @template T @typedef {{Object}} SingleItemBuilder
- * @property {{(onUpdate?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>}} fetch - Fetch the item
+ * @property {{(onValue?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>}} fetch - Fetch the item
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{Thenable<T>}} then - Thenable
  */
 
 /** @template T @typedef {{Object}} DateSingleItemBuilder
- * @property {{(onUpdate?: (value: DateSeriesData<T>) => void) => Promise<DateSeriesData<T>>}} fetch - Fetch the item
+ * @property {{(onValue?: (value: DateSeriesData<T>) => void) => Promise<DateSeriesData<T>>}} fetch - Fetch the item
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{DateThenable<T>}} then - Thenable
  */
 
 /** @template T @typedef {{Object}} SkippedBuilder
  * @property {{(n: number) => RangeBuilder<T>}} take - Take n items after skipped position
- * @property {{(onUpdate?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>}} fetch - Fetch from skipped position to end
+ * @property {{(onValue?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>}} fetch - Fetch from skipped position to end
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{Thenable<T>}} then - Thenable
  */
 
 /** @template T @typedef {{Object}} DateSkippedBuilder
  * @property {{(n: number) => DateRangeBuilder<T>}} take - Take n items after skipped position
- * @property {{(onUpdate?: (value: DateSeriesData<T>) => void) => Promise<DateSeriesData<T>>}} fetch - Fetch from skipped position to end
+ * @property {{(onValue?: (value: DateSeriesData<T>) => void) => Promise<DateSeriesData<T>>}} fetch - Fetch from skipped position to end
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{DateThenable<T>}} then - Thenable
  */
 
 /** @template T @typedef {{Object}} RangeBuilder
- * @property {{(onUpdate?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>}} fetch - Fetch the range
+ * @property {{(onValue?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>}} fetch - Fetch the range
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{Thenable<T>}} then - Thenable
  */
 
 /** @template T @typedef {{Object}} DateRangeBuilder
- * @property {{(onUpdate?: (value: DateSeriesData<T>) => void) => Promise<DateSeriesData<T>>}} fetch - Fetch the range
+ * @property {{(onValue?: (value: DateSeriesData<T>) => void) => Promise<DateSeriesData<T>>}} fetch - Fetch the range
  * @property {{() => Promise<string>}} fetchCsv - Fetch as CSV
  * @property {{DateThenable<T>}} then - Thenable
  */
@@ -340,7 +344,7 @@ function _endpoint(client, name, index) {{
    * @returns {{DateRangeBuilder<T>}}
    */
   const rangeBuilder = (start, end) => ({{
-    fetch(onUpdate) {{ return client._fetchSeriesData(buildPath(start, end), onUpdate); }},
+    fetch(onValue) {{ return client._fetchSeriesData(buildPath(start, end), onValue); }},
     fetchCsv() {{ return client.getText(buildPath(start, end, 'csv')); }},
     then(resolve, reject) {{ return this.fetch().then(resolve, reject); }},
   }});
@@ -350,7 +354,7 @@ function _endpoint(client, name, index) {{
    * @returns {{DateSingleItemBuilder<T>}}
    */
   const singleItemBuilder = (idx) => ({{
-    fetch(onUpdate) {{ return client._fetchSeriesData(buildPath(idx, idx + 1), onUpdate); }},
+    fetch(onValue) {{ return client._fetchSeriesData(buildPath(idx, idx + 1), onValue); }},
     fetchCsv() {{ return client.getText(buildPath(idx, idx + 1, 'csv')); }},
     then(resolve, reject) {{ return this.fetch().then(resolve, reject); }},
   }});
@@ -361,7 +365,7 @@ function _endpoint(client, name, index) {{
    */
   const skippedBuilder = (start) => ({{
     take(n) {{ return rangeBuilder(start, start + n); }},
-    fetch(onUpdate) {{ return client._fetchSeriesData(buildPath(start, undefined), onUpdate); }},
+    fetch(onValue) {{ return client._fetchSeriesData(buildPath(start, undefined), onValue); }},
     fetchCsv() {{ return client.getText(buildPath(start, undefined, 'csv')); }},
     then(resolve, reject) {{ return this.fetch().then(resolve, reject); }},
   }});
@@ -377,7 +381,7 @@ function _endpoint(client, name, index) {{
     first(n) {{ return rangeBuilder(undefined, n); }},
     last(n) {{ return n === 0 ? rangeBuilder(undefined, 0) : rangeBuilder(-n, undefined); }},
     skip(n) {{ return skippedBuilder(n); }},
-    fetch(onUpdate) {{ return client._fetchSeriesData(buildPath(), onUpdate); }},
+    fetch(onValue) {{ return client._fetchSeriesData(buildPath(), onValue); }},
     fetchCsv() {{ return client.getText(buildPath(undefined, undefined, 'csv')); }},
     len() {{ return client.getSeriesLen(name, index); }},
     version() {{ return client.getSeriesVersion(name, index); }},
@@ -401,10 +405,45 @@ class BrkClientBase {{
     this.baseUrl = rawUrl.endsWith('/') ? rawUrl.slice(0, -1) : rawUrl;
     this.timeout = isString ? 5000 : (options.timeout ?? 5000);
     /** @type {{Promise<Cache | null>}} */
-    this._cachePromise = _openCache(isString ? undefined : options.cache);
+    this._browserCachePromise = _openBrowserCache(isString ? undefined : options.browserCache);
     /** @type {{Cache | null}} */
-    this._cache = null;
-    this._cachePromise.then(c => this._cache = c);
+    this._browserCache = null;
+    this._browserCachePromise.then(c => this._browserCache = c);
+    const memOpt = isString ? undefined : options.memCache;
+    this._memCacheMax = memOpt === false || memOpt === 0
+      ? 0
+      : (typeof memOpt === 'number' ? memOpt : _DEFAULT_MEM_CACHE_SIZE);
+    /** @type {{Map<string, _MemEntry<unknown>>}} */
+    this._memCache = new Map();
+  }}
+
+  /**
+   * @template T
+   * @param {{string}} key
+   * @returns {{_MemEntry<T> | undefined}}
+   */
+  _memGet(key) {{
+    if (!this._memCacheMax) return undefined;
+    const hit = this._memCache.get(key);
+    if (!hit) return undefined;
+    this._memCache.delete(key);
+    this._memCache.set(key, hit);
+    return /** @type {{_MemEntry<T>}} */ (hit);
+  }}
+
+  /**
+   * @param {{string}} key
+   * @param {{string | null}} etag
+   * @param {{unknown}} value
+   */
+  _memSet(key, etag, value) {{
+    if (!this._memCacheMax) return;
+    if (this._memCache.has(key)) this._memCache.delete(key);
+    else if (this._memCache.size >= this._memCacheMax) {{
+      const oldest = this._memCache.keys().next().value;
+      if (oldest !== undefined) this._memCache.delete(oldest);
+    }}
+    this._memCache.set(key, {{ etag, value }});
   }}
 
   /**
@@ -422,66 +461,86 @@ class BrkClientBase {{
   }}
 
   /**
-   * Make a GET request - races cache vs network, first to resolve calls onUpdate.
-   * Shared implementation backing `getJson` and `getText`.
+   * Make a GET request with layered caching.
+   *
+   * Contract:
+   * - The returned Promise resolves with the **freshest** value (post-revalidation).
+   * - `onValue` fires once with the freshest value, or twice if a stale snapshot
+   *   could be shown first (stale-while-revalidate). On a 304 there is no second fire.
+   *
+   * Layers:
+   * - L1 (memCache): in-memory parsed values keyed by URL+ETag. Lets 304s skip the parse entirely.
+   * - L2 (browserCache): Cache API, survives reload and feeds onValue fast on cold start.
+   *
    * @template T
    * @param {{string}} path
    * @param {{(res: Response) => Promise<T>}} parse - Response body reader
-   * @param {{{{ onUpdate?: (value: T) => void, signal?: AbortSignal }}}} [options]
+   * @param {{{{ onValue?: (value: T) => void, signal?: AbortSignal }}}} [options]
    * @returns {{Promise<T>}}
    */
-  async _getCached(path, parse, {{ onUpdate, signal }} = {{}}) {{
+  async _getCached(path, parse, {{ onValue, signal }} = {{}}) {{
     const url = `${{this.baseUrl}}${{path}}`;
-    const cache = this._cache ?? await this._cachePromise;
+    /** @type {{_MemEntry<T> | undefined}} */
+    const memHit = this._memGet(url);
+    const browserCache = this._browserCache ?? await this._browserCachePromise;
 
-    let resolved = false;
-    /** @type {{Response | null}} */
-    let cachedRes = null;
-
-    // Race cache vs network - first to resolve calls onUpdate
-    const cachePromise = cache?.match(url).then(async (res) => {{
-      cachedRes = res ?? null;
-      if (!res) return null;
-      const value = await parse(res);
-      if (!resolved && onUpdate) {{
-        resolved = true;
-        onUpdate(value);
-      }}
-      return value;
-    }});
-
-    const networkPromise = this.get(path, {{ signal }}).then(async (res) => {{
-      const cloned = res.clone();
-      const value = await parse(res);
-      // Skip update if ETag matches and cache already delivered
-      if (cachedRes?.headers.get('ETag') === res.headers.get('ETag')) {{
-        if (!resolved && onUpdate) {{
-          resolved = true;
-          onUpdate(value);
-        }}
+    // L1 fast path: deliver from memCache, revalidate via network.
+    // ETag match → zero parse, zero clone, zero cache write, no second onValue fire.
+    if (memHit) {{
+      if (onValue) onValue(memHit.value);
+      try {{
+        const res = await this.get(path, {{ signal }});
+        const netEtag = res.headers.get('ETag');
+        if (netEtag && netEtag === memHit.etag) return memHit.value;
+        const cloned = browserCache ? res.clone() : null;
+        const value = await parse(res);
+        this._memSet(url, netEtag, value);
+        if (onValue) onValue(value);
+        if (cloned) _runIdle(() => browserCache.put(url, cloned));
         return value;
+      }} catch {{
+        return memHit.value;
       }}
-      resolved = true;
-      if (onUpdate) onUpdate(value);
-      if (cache) _runIdle(() => cache.put(url, cloned));
-      return value;
-    }});
+    }}
+
+    // L1 miss: race browserCache (stale snapshot) vs network (fresh).
+    let networkSettled = false;
+    const stalePromise = onValue && browserCache
+      ? browserCache.match(url).then(async (res) => {{
+          if (!res || networkSettled) return null;
+          const value = await parse(res);
+          if (networkSettled) return value;
+          this._memSet(url, res.headers.get('ETag'), value);
+          onValue(value);
+          return value;
+        }}).catch(() => null)
+      : null;
 
     try {{
-      return await networkPromise;
+      const res = await this.get(path, {{ signal }});
+      networkSettled = true;
+      const netEtag = res.headers.get('ETag');
+      // Stale won and populated memCache with matching ETag → reuse, skip parse + second onValue.
+      const populated = /** @type {{_MemEntry<T> | undefined}} */ (this._memGet(url));
+      if (populated && netEtag && netEtag === populated.etag) return populated.value;
+      const cloned = browserCache ? res.clone() : null;
+      const value = await parse(res);
+      this._memSet(url, netEtag, value);
+      if (onValue) onValue(value);
+      if (cloned) _runIdle(() => browserCache.put(url, cloned));
+      return value;
     }} catch (e) {{
-      // Network failed - wait for cache
-      const cachedValue = await cachePromise?.catch(() => null);
-      if (cachedValue != null) return cachedValue;
+      const stale = await stalePromise;
+      if (stale != null) return stale;
       throw e;
     }}
   }}
 
   /**
-   * Make a GET request expecting a JSON response. Cached and supports `onUpdate`.
+   * Make a GET request expecting a JSON response. Cached and supports `onValue`.
    * @template T
    * @param {{string}} path
-   * @param {{{{ onUpdate?: (value: T) => void, signal?: AbortSignal }}}} [options]
+   * @param {{{{ onValue?: (value: T) => void, signal?: AbortSignal }}}} [options]
    * @returns {{Promise<T>}}
    */
   getJson(path, options) {{
@@ -490,9 +549,9 @@ class BrkClientBase {{
 
   /**
    * Make a GET request expecting a text response (text/plain, text/csv, ...).
-   * Cached and supports `onUpdate`, same as `getJson`.
+   * Cached and supports `onValue`, same as `getJson`.
    * @param {{string}} path
-   * @param {{{{ onUpdate?: (value: string) => void, signal?: AbortSignal }}}} [options]
+   * @param {{{{ onValue?: (value: string) => void, signal?: AbortSignal }}}} [options]
    * @returns {{Promise<string>}}
    */
   getText(path, options) {{
@@ -503,12 +562,12 @@ class BrkClientBase {{
    * Fetch series data and wrap with helper methods (internal)
    * @template T
    * @param {{string}} path
-   * @param {{(value: DateSeriesData<T>) => void}} [onUpdate]
+   * @param {{(value: DateSeriesData<T>) => void}} [onValue]
    * @returns {{Promise<DateSeriesData<T>>}}
    */
-  async _fetchSeriesData(path, onUpdate) {{
-    const wrappedOnUpdate = onUpdate ? (/** @type {{SeriesData<T>}} */ raw) => onUpdate(_wrapSeriesData(raw)) : undefined;
-    const raw = await this.getJson(path, {{ onUpdate: wrappedOnUpdate }});
+  async _fetchSeriesData(path, onValue) {{
+    const wrappedOnValue = onValue ? (/** @type {{SeriesData<T>}} */ raw) => onValue(_wrapSeriesData(raw)) : undefined;
+    const raw = await this.getJson(path, {{ onValue: wrappedOnValue }});
     return _wrapSeriesData(raw);
   }}
 }}

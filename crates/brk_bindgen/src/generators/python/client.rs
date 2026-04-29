@@ -325,13 +325,13 @@ AnyDateSeriesData = DateSeriesData[Any]
 
 class _EndpointConfig:
     """Shared endpoint configuration."""
-    client: BrkClientBase
+    client: BrkClient
     name: str
     index: Index
     start: Optional[int]
     end: Optional[int]
 
-    def __init__(self, client: BrkClientBase, name: str, index: Index,
+    def __init__(self, client: BrkClient, name: str, index: Index,
                  start: Optional[int] = None, end: Optional[int] = None):
         self.client = client
         self.name = name
@@ -365,6 +365,12 @@ class _EndpointConfig:
 
     def get_csv(self) -> str:
         return self.client.get_text(self._build_path(format='csv'))
+
+    def get_len(self) -> int:
+        return self.client.get_series_len(self.name, self.index)
+
+    def get_version(self) -> Version:
+        return self.client.get_series_version(self.name, self.index)
 
 
 class RangeBuilder(Generic[T]):
@@ -449,7 +455,7 @@ class SeriesEndpoint(Generic[T]):
         data = endpoint.skip(100).take(10).fetch()
     """
 
-    def __init__(self, client: BrkClientBase, name: str, index: Index):
+    def __init__(self, client: BrkClient, name: str, index: Index):
         self._config = _EndpointConfig(client, name, index)
 
     @overload
@@ -483,6 +489,14 @@ class SeriesEndpoint(Generic[T]):
         """Fetch all data as CSV."""
         return self._config.get_csv()
 
+    def len(self) -> int:
+        """Total number of data points for this series."""
+        return self._config.get_len()
+
+    def version(self) -> Version:
+        """Current version of the series."""
+        return self._config.get_version()
+
     def path(self) -> str:
         """Get the base endpoint path."""
         return self._config.path()
@@ -500,7 +514,7 @@ class DateSeriesEndpoint(Generic[T]):
         data = endpoint[:10].fetch()
     """
 
-    def __init__(self, client: BrkClientBase, name: str, index: Index):
+    def __init__(self, client: BrkClient, name: str, index: Index):
         self._config = _EndpointConfig(client, name, index)
 
     @overload
@@ -545,6 +559,14 @@ class DateSeriesEndpoint(Generic[T]):
     def fetch_csv(self) -> str:
         """Fetch all data as CSV."""
         return self._config.get_csv()
+
+    def len(self) -> int:
+        """Total number of data points for this series."""
+        return self._config.get_len()
+
+    def version(self) -> Version:
+        """Current version of the series."""
+        return self._config.get_version()
 
     def path(self) -> str:
         """Get the base endpoint path."""
@@ -604,10 +626,10 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
     // Generate helper functions
     writeln!(
         output,
-        r#"def _ep(c: BrkClientBase, n: str, i: Index) -> SeriesEndpoint[Any]:
+        r#"def _ep(c: BrkClient, n: str, i: Index) -> SeriesEndpoint[Any]:
     return SeriesEndpoint(c, n, i)
 
-def _dep(c: BrkClientBase, n: str, i: Index) -> DateSeriesEndpoint[Any]:
+def _dep(c: BrkClient, n: str, i: Index) -> DateSeriesEndpoint[Any]:
     return DateSeriesEndpoint(c, n, i)
 "#
     )
@@ -623,7 +645,7 @@ def _dep(c: BrkClientBase, n: str, i: Index) -> DateSeriesEndpoint[Any]:
         writeln!(output, "class {}(Generic[T]):", by_class_name).unwrap();
         writeln!(
             output,
-            "    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n"
+            "    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n"
         )
         .unwrap();
         for index in &pattern.indexes {
@@ -648,7 +670,7 @@ def _dep(c: BrkClientBase, n: str, i: Index) -> DateSeriesEndpoint[Any]:
         writeln!(output, "    by: {}[T]", by_class_name).unwrap();
         writeln!(
             output,
-            "    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, {}(c, n)",
+            "    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, {}(c, n)",
             by_class_name
         )
         .unwrap();
@@ -705,13 +727,13 @@ pub fn generate_structural_patterns(
         if pattern.is_templated() {
             writeln!(
                 output,
-                "    def __init__(self, client: BrkClientBase, acc: str, disc: str):"
+                "    def __init__(self, client: BrkClient, acc: str, disc: str):"
             )
             .unwrap();
         } else {
             writeln!(
                 output,
-                "    def __init__(self, client: BrkClientBase, acc: str):"
+                "    def __init__(self, client: BrkClient, acc: str):"
             )
             .unwrap();
         }

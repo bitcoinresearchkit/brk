@@ -19,9 +19,10 @@ BRK uses [sparse files](https://en.wikipedia.org/wiki/Sparse_file). Tools like `
 ## Install
 
 ```bash
-rustup update
-RUSTFLAGS="-C target-cpu=native" cargo install --locked brk_cli
+rustup update && RUSTFLAGS="-C target-cpu=native" cargo install --locked brk_cli --version $(cargo search brk_cli | head -1 | awk -F'"' '{print $2}')
 ```
+
+Updates Rust, then builds `brk_cli` with optimizations tuned to your CPU. The `--version $(...)` subshell queries crates.io for the absolute latest published version, including pre-releases (rc/beta/alpha); without it, `cargo install` only picks the latest stable.
 
 Portable build (without native CPU optimizations):
 

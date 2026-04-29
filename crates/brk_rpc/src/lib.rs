@@ -62,11 +62,7 @@ pub enum Auth {
     CookieFile(PathBuf),
 }
 
-///
-/// Bitcoin Core RPC Client
-///
-/// Thread safe and free to clone
-///
+/// Bitcoin Core RPC client. Thread-safe and cheap to clone.
 #[derive(Debug, Clone)]
 pub struct Client(pub(crate) Arc<ClientInner>);
 

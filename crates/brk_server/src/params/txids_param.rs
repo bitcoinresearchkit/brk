@@ -18,7 +18,7 @@ impl TxidsParam {
     /// Rejects unknown keys to prevent cache-busting via injected query params.
     pub fn from_query(query: &str) -> Result<Self, String> {
         if query.is_empty() {
-            return Ok(Self { txids: Vec::new() });
+            return Err("missing required query parameter `txId[]`".into());
         }
         let mut txids = Vec::new();
         for pair in query.split('&') {
@@ -49,8 +49,7 @@ mod tests {
     const T2: &str = "0000000000000000000000000000000000000000000000000000000000000002";
 
     #[test]
-    fn parses_empty_single_and_multi() {
-        assert!(TxidsParam::from_query("").unwrap().txids.is_empty());
+    fn parses_single_and_multi() {
         assert_eq!(TxidsParam::from_query(&format!("txId[]={T1}")).unwrap().txids.len(), 1);
         assert_eq!(
             TxidsParam::from_query(&format!("txId%5B%5D={T1}&txId[]={T2}"))
@@ -62,7 +61,8 @@ mod tests {
     }
 
     #[test]
-    fn rejects_unknown_key_and_invalid_txid() {
+    fn rejects_empty_unknown_key_and_invalid_txid() {
+        assert!(TxidsParam::from_query("").is_err());
         assert!(TxidsParam::from_query("foo=bar").is_err());
         assert!(TxidsParam::from_query("txId[]=notahex").is_err());
         assert!(TxidsParam::from_query("noequals").is_err());

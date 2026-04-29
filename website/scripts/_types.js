@@ -7,7 +7,6 @@
  * @import { Options } from './options/full.js'
  *
  * @import { PersistedValue } from './utils/persisted.js'
- * @import { MapCache } from './utils/cache.js'
  *
  * @import { SingleValueData, CandlestickData, Series, AnySeries, ISeries, HistogramData, LineData, BaselineData, LineSeriesPartialOptions, BaselineSeriesPartialOptions, HistogramSeriesPartialOptions, CandlestickSeriesPartialOptions, Chart, Legend } from "./utils/chart/index.js"
  *

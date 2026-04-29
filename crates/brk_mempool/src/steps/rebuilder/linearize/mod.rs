@@ -43,9 +43,6 @@ impl Linearizer {
             .collect()
     }
 
-    /// Singleton clusters bypass SFL: there's only one ordering. Larger
-    /// clusters are linearized into chunks, each chunk becoming a Package
-    /// with its order index recorded for downstream stability.
     fn pack_cluster(cluster: &Cluster, cluster_id: u32) -> Vec<Package> {
         if cluster.nodes.len() == 1 {
             return vec![Package::singleton(cluster, cluster_id)];

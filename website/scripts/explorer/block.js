@@ -1,5 +1,4 @@
 import { brk } from "../utils/client.js";
-import { createMapCache } from "../utils/cache.js";
 import { createPersistedValue } from "../utils/persisted.js";
 import { createRow, formatFeeRate, formatHeightPrefix, renderTx, showPanel, hidePanel, TX_PAGE_SIZE } from "./render.js";
 
@@ -68,7 +67,6 @@ const ROW_DEFS = [
 let txTotalPages = 0;
 let txLoading = false;
 let txLoaded = false;
-const txPageCache = createMapCache(200);
 
 const txPageParam = createPersistedValue({
   defaultValue: 0,
@@ -200,11 +198,8 @@ async function loadTxPage(page, pushUrl = true) {
   txLoaded = true;
   if (pushUrl) txPageParam.setImmediate(page);
   updateTxNavs(page);
-  const key = `${block.id}:${page}`;
   try {
-    const txs = await txPageCache.fetch(key, () =>
-      brk.getBlockTxsFromIndex(block.id, page * TX_PAGE_SIZE),
-    );
+    const txs = await brk.getBlockTxsFromIndex(block.id, page * TX_PAGE_SIZE);
     txList.innerHTML = "";
     const ascii = block.extras.coinbaseSignatureAscii;
     for (const tx of txs) txList.append(renderTx(tx, ascii));

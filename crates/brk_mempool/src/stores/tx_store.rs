@@ -36,16 +36,12 @@ impl TxStore {
         self.promote_recent(new_recent);
     }
 
-    /// Append to the cap-bounded sample buffer if there's room. The
-    /// pre-cap window becomes the next `recent()` value.
     fn sample_recent(buf: &mut Vec<MempoolRecentTx>, txid: &Txid, tx: &Transaction) {
         if buf.len() < RECENT_CAP {
             buf.push(MempoolRecentTx::from((txid, tx)));
         }
     }
 
-    /// Record `txid` in the unresolved set if any input lacks a
-    /// prevout. Cleared later by `apply_fills` once all inputs fill.
     fn track_unresolved(&mut self, txid: &Txid, tx: &Transaction) {
         if tx.input.iter().any(|i| i.prevout.is_none()) {
             self.unresolved.insert(txid.clone());
@@ -96,9 +92,6 @@ impl TxStore {
         applied
     }
 
-    /// Apply each `(vin, prevout)` to its empty input slot. Skips vins
-    /// that are out of range or already filled. Returns the prevouts
-    /// that were actually written.
     fn write_prevouts(tx: &mut Transaction, fills: Vec<(Vin, TxOut)>) -> Vec<TxOut> {
         let mut applied = Vec::with_capacity(fills.len());
         for (vin, prevout) in fills {
@@ -118,8 +111,6 @@ impl TxStore {
         tx.total_sigop_cost = tx.total_sigop_cost();
     }
 
-    /// Drop `txid` from the unresolved set if every input now has a
-    /// prevout. Idempotent if the tx was removed between phases.
     fn refresh_unresolved(&mut self, txid: &Txid) {
         if self.txs.get(txid).is_some_and(Self::all_resolved) {
             self.unresolved.remove(txid);

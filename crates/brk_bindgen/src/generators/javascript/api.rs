@@ -69,7 +69,7 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
 
         writeln!(
             output,
-            "   * @param {{{{ signal?: AbortSignal, onUpdate?: (value: {}) => void }}}} [options]",
+            "   * @param {{{{ signal?: AbortSignal, onValue?: (value: {}) => void }}}} [options]",
             return_type
         )
         .unwrap();
@@ -78,18 +78,18 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
 
         let params = build_method_params(endpoint);
         let params_with_opts = if params.is_empty() {
-            "{ signal, onUpdate } = {}".to_string()
+            "{ signal, onValue } = {}".to_string()
         } else {
-            format!("{}, {{ signal, onUpdate }} = {{}}", params)
+            format!("{}, {{ signal, onValue }} = {{}}", params)
         };
         writeln!(output, "  async {}({}) {{", method_name, params_with_opts).unwrap();
 
         let path = build_path_template(&endpoint.path, &endpoint.path_params);
 
         let fetch_call = if endpoint.returns_json() {
-            "this.getJson(path, { signal, onUpdate })"
+            "this.getJson(path, { signal, onValue })"
         } else {
-            "this.getText(path, { signal, onUpdate })"
+            "this.getText(path, { signal, onValue })"
         };
 
         if endpoint.query_params.is_empty() {
@@ -126,7 +126,7 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         if endpoint.supports_csv {
             writeln!(
                 output,
-                "    if (format === 'csv') return this.getText(path, {{ signal, onUpdate }});"
+                "    if (format === 'csv') return this.getText(path, {{ signal, onValue }});"
             )
             .unwrap();
         }

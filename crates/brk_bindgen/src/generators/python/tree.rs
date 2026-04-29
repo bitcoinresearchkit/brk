@@ -64,7 +64,7 @@ fn generate_tree_class(
     writeln!(output, "    ").unwrap();
     writeln!(
         output,
-        "    def __init__(self, client: BrkClientBase, base_path: str = ''):"
+        "    def __init__(self, client: BrkClient, base_path: str = ''):"
     )
     .unwrap();
 

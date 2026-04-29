@@ -159,6 +159,14 @@ impl EndpointConfig {
     fn get_text(&self, format: Option<&str>) -> Result<String> {
         self.client.get_text(&self.build_path(format))
     }
+
+    fn get_len(&self) -> Result<i64> {
+        self.client.get_json(&format!("/api/series/{}/{}/len", self.name, self.index.name()))
+    }
+
+    fn get_version(&self) -> Result<Version> {
+        self.client.get_json(&format!("/api/series/{}/{}/version", self.name, self.index.name()))
+    }
 }
 
 /// Builder for series endpoint queries.
@@ -250,6 +258,17 @@ impl<T: DeserializeOwned, D: DeserializeOwned> SeriesEndpoint<T, D> {
     /// Fetch all data as CSV string.
     pub fn fetch_csv(self) -> Result<String> {
         self.config.get_text(Some("csv"))
+    }
+
+    /// Total number of data points for this series.
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> Result<i64> {
+        self.config.get_len()
+    }
+
+    /// Current version of the series.
+    pub fn version(&self) -> Result<Version> {
+        self.config.get_version()
     }
 
     /// Get the base endpoint path.

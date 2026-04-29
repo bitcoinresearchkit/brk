@@ -57,3 +57,17 @@ def test_fetch_typed_series():
     print(e)
     f = client.series.prices.ohlc.usd.by.day1().tail(10).fetch()
     print(f)
+
+
+def test_endpoint_len():
+    client = BrkClient("http://localhost:3110")
+    n = client.series.prices.split.close.usd.by.day1().len()
+    assert isinstance(n, int)
+    assert n > 0
+
+
+def test_endpoint_version():
+    client = BrkClient("http://localhost:3110")
+    v = client.series.prices.split.close.usd.by.day1().version()
+    assert isinstance(v, int)
+    assert v >= 1

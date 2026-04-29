@@ -1,5 +1,4 @@
 import { brk } from "../utils/client.js";
-import { createMapCache } from "../utils/cache.js";
 import { latestPrice } from "../utils/price.js";
 import { createRow, formatBtc, renderTx, showPanel, hidePanel, TX_PAGE_SIZE } from "./render.js";
 
@@ -7,9 +6,6 @@ import { createRow, formatBtc, renderTx, showPanel, hidePanel, TX_PAGE_SIZE } fr
 /** @type {HTMLElement[]} */ let valueEls;
 /** @type {HTMLDivElement} */ let txSection;
 /** @type {string} */ let currentAddr = "";
-
-const statsCache = createMapCache(50);
-const txCache = createMapCache(200);
 
 const ROW_LABELS = [
   "Address",
@@ -63,9 +59,7 @@ export async function update(address, signal) {
   while (txSection.children.length > 1) txSection.lastChild?.remove();
 
   try {
-    const stats = await statsCache.fetch(address, () =>
-      brk.getAddress(address, { signal }),
-    );
+    const stats = await brk.getAddress(address, { signal });
     if (signal.aborted || currentAddr !== address) return;
 
     const chain = stats.chainStats;
@@ -118,11 +112,8 @@ export async function update(address, signal) {
     async function loadMore() {
       if (currentAddr !== address) return;
       loading = true;
-      const key = `${address}:${pageIndex}`;
       try {
-        const txs = await txCache.fetch(key, () =>
-          brk.getAddressTxs(address, afterTxid, { signal }),
-        );
+        const txs = await brk.getAddressTxs(address, afterTxid, { signal });
         if (currentAddr !== address) return;
         for (const tx of txs) txSection.append(renderTx(tx));
         pageIndex++;

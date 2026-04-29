@@ -1916,13 +1916,13 @@ AnyDateSeriesData = DateSeriesData[Any]
 
 class _EndpointConfig:
     """Shared endpoint configuration."""
-    client: BrkClientBase
+    client: BrkClient
     name: str
     index: Index
     start: Optional[int]
     end: Optional[int]
 
-    def __init__(self, client: BrkClientBase, name: str, index: Index,
+    def __init__(self, client: BrkClient, name: str, index: Index,
                  start: Optional[int] = None, end: Optional[int] = None):
         self.client = client
         self.name = name
@@ -1956,6 +1956,12 @@ class _EndpointConfig:
 
     def get_csv(self) -> str:
         return self.client.get_text(self._build_path(format='csv'))
+
+    def get_len(self) -> int:
+        return self.client.get_series_len(self.name, self.index)
+
+    def get_version(self) -> Version:
+        return self.client.get_series_version(self.name, self.index)
 
 
 class RangeBuilder(Generic[T]):
@@ -2040,7 +2046,7 @@ class SeriesEndpoint(Generic[T]):
         data = endpoint.skip(100).take(10).fetch()
     """
 
-    def __init__(self, client: BrkClientBase, name: str, index: Index):
+    def __init__(self, client: BrkClient, name: str, index: Index):
         self._config = _EndpointConfig(client, name, index)
 
     @overload
@@ -2074,6 +2080,14 @@ class SeriesEndpoint(Generic[T]):
         """Fetch all data as CSV."""
         return self._config.get_csv()
 
+    def len(self) -> int:
+        """Total number of data points for this series."""
+        return self._config.get_len()
+
+    def version(self) -> Version:
+        """Current version of the series."""
+        return self._config.get_version()
+
     def path(self) -> str:
         """Get the base endpoint path."""
         return self._config.path()
@@ -2091,7 +2105,7 @@ class DateSeriesEndpoint(Generic[T]):
         data = endpoint[:10].fetch()
     """
 
-    def __init__(self, client: BrkClientBase, name: str, index: Index):
+    def __init__(self, client: BrkClient, name: str, index: Index):
         self._config = _EndpointConfig(client, name, index)
 
     @overload
@@ -2136,6 +2150,14 @@ class DateSeriesEndpoint(Generic[T]):
     def fetch_csv(self) -> str:
         """Fetch all data as CSV."""
         return self._config.get_csv()
+
+    def len(self) -> int:
+        """Total number of data points for this series."""
+        return self._config.get_len()
+
+    def version(self) -> Version:
+        """Current version of the series."""
+        return self._config.get_version()
 
     def path(self) -> str:
         """Get the base endpoint path."""
@@ -2201,16 +2223,16 @@ _i33 = ('unknown_output_index',)
 _i34 = ('funded_addr_index',)
 _i35 = ('empty_addr_index',)
 
-def _ep(c: BrkClientBase, n: str, i: Index) -> SeriesEndpoint[Any]:
+def _ep(c: BrkClient, n: str, i: Index) -> SeriesEndpoint[Any]:
     return SeriesEndpoint(c, n, i)
 
-def _dep(c: BrkClientBase, n: str, i: Index) -> DateSeriesEndpoint[Any]:
+def _dep(c: BrkClient, n: str, i: Index) -> DateSeriesEndpoint[Any]:
     return DateSeriesEndpoint(c, n, i)
 
 # Index accessor classes
 
 class _SeriesPattern1By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def minute10(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'minute10')
     def minute30(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'minute30')
     def hour1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'hour1')
@@ -2230,14 +2252,14 @@ class _SeriesPattern1By(Generic[T]):
 
 class SeriesPattern1(Generic[T]):
     by: _SeriesPattern1By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern1By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern1By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i1)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i1 else None
 
 class _SeriesPattern2By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def minute10(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'minute10')
     def minute30(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'minute30')
     def hour1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'hour1')
@@ -2256,403 +2278,403 @@ class _SeriesPattern2By(Generic[T]):
 
 class SeriesPattern2(Generic[T]):
     by: _SeriesPattern2By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern2By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern2By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i2)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i2 else None
 
 class _SeriesPattern3By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def minute10(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'minute10')
 
 class SeriesPattern3(Generic[T]):
     by: _SeriesPattern3By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern3By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern3By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i3)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i3 else None
 
 class _SeriesPattern4By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def minute30(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'minute30')
 
 class SeriesPattern4(Generic[T]):
     by: _SeriesPattern4By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern4By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern4By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i4)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i4 else None
 
 class _SeriesPattern5By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def hour1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'hour1')
 
 class SeriesPattern5(Generic[T]):
     by: _SeriesPattern5By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern5By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern5By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i5)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i5 else None
 
 class _SeriesPattern6By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def hour4(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'hour4')
 
 class SeriesPattern6(Generic[T]):
     by: _SeriesPattern6By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern6By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern6By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i6)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i6 else None
 
 class _SeriesPattern7By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def hour12(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'hour12')
 
 class SeriesPattern7(Generic[T]):
     by: _SeriesPattern7By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern7By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern7By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i7)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i7 else None
 
 class _SeriesPattern8By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def day1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'day1')
 
 class SeriesPattern8(Generic[T]):
     by: _SeriesPattern8By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern8By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern8By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i8)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i8 else None
 
 class _SeriesPattern9By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def day3(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'day3')
 
 class SeriesPattern9(Generic[T]):
     by: _SeriesPattern9By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern9By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern9By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i9)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i9 else None
 
 class _SeriesPattern10By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def week1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'week1')
 
 class SeriesPattern10(Generic[T]):
     by: _SeriesPattern10By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern10By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern10By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i10)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i10 else None
 
 class _SeriesPattern11By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def month1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'month1')
 
 class SeriesPattern11(Generic[T]):
     by: _SeriesPattern11By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern11By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern11By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i11)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i11 else None
 
 class _SeriesPattern12By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def month3(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'month3')
 
 class SeriesPattern12(Generic[T]):
     by: _SeriesPattern12By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern12By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern12By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i12)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i12 else None
 
 class _SeriesPattern13By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def month6(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'month6')
 
 class SeriesPattern13(Generic[T]):
     by: _SeriesPattern13By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern13By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern13By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i13)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i13 else None
 
 class _SeriesPattern14By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def year1(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'year1')
 
 class SeriesPattern14(Generic[T]):
     by: _SeriesPattern14By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern14By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern14By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i14)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i14 else None
 
 class _SeriesPattern15By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def year10(self) -> DateSeriesEndpoint[T]: return _dep(self._c, self._n, 'year10')
 
 class SeriesPattern15(Generic[T]):
     by: _SeriesPattern15By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern15By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern15By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i15)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i15 else None
 
 class _SeriesPattern16By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def halving(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'halving')
 
 class SeriesPattern16(Generic[T]):
     by: _SeriesPattern16By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern16By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern16By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i16)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i16 else None
 
 class _SeriesPattern17By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def epoch(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'epoch')
 
 class SeriesPattern17(Generic[T]):
     by: _SeriesPattern17By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern17By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern17By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i17)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i17 else None
 
 class _SeriesPattern18By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def height(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'height')
 
 class SeriesPattern18(Generic[T]):
     by: _SeriesPattern18By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern18By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern18By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i18)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i18 else None
 
 class _SeriesPattern19By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def tx_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'tx_index')
 
 class SeriesPattern19(Generic[T]):
     by: _SeriesPattern19By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern19By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern19By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i19)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i19 else None
 
 class _SeriesPattern20By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def txin_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'txin_index')
 
 class SeriesPattern20(Generic[T]):
     by: _SeriesPattern20By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern20By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern20By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i20)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i20 else None
 
 class _SeriesPattern21By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def txout_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'txout_index')
 
 class SeriesPattern21(Generic[T]):
     by: _SeriesPattern21By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern21By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern21By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i21)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i21 else None
 
 class _SeriesPattern22By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def empty_output_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'empty_output_index')
 
 class SeriesPattern22(Generic[T]):
     by: _SeriesPattern22By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern22By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern22By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i22)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i22 else None
 
 class _SeriesPattern23By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def op_return_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'op_return_index')
 
 class SeriesPattern23(Generic[T]):
     by: _SeriesPattern23By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern23By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern23By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i23)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i23 else None
 
 class _SeriesPattern24By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def p2a_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2a_addr_index')
 
 class SeriesPattern24(Generic[T]):
     by: _SeriesPattern24By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern24By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern24By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i24)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i24 else None
 
 class _SeriesPattern25By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def p2ms_output_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2ms_output_index')
 
 class SeriesPattern25(Generic[T]):
     by: _SeriesPattern25By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern25By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern25By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i25)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i25 else None
 
 class _SeriesPattern26By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def p2pk33_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2pk33_addr_index')
 
 class SeriesPattern26(Generic[T]):
     by: _SeriesPattern26By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern26By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern26By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i26)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i26 else None
 
 class _SeriesPattern27By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def p2pk65_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2pk65_addr_index')
 
 class SeriesPattern27(Generic[T]):
     by: _SeriesPattern27By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern27By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern27By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i27)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i27 else None
 
 class _SeriesPattern28By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def p2pkh_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2pkh_addr_index')
 
 class SeriesPattern28(Generic[T]):
     by: _SeriesPattern28By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern28By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern28By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i28)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i28 else None
 
 class _SeriesPattern29By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def p2sh_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2sh_addr_index')
 
 class SeriesPattern29(Generic[T]):
     by: _SeriesPattern29By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern29By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern29By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i29)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i29 else None
 
 class _SeriesPattern30By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def p2tr_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2tr_addr_index')
 
 class SeriesPattern30(Generic[T]):
     by: _SeriesPattern30By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern30By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern30By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i30)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i30 else None
 
 class _SeriesPattern31By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def p2wpkh_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2wpkh_addr_index')
 
 class SeriesPattern31(Generic[T]):
     by: _SeriesPattern31By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern31By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern31By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i31)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i31 else None
 
 class _SeriesPattern32By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def p2wsh_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'p2wsh_addr_index')
 
 class SeriesPattern32(Generic[T]):
     by: _SeriesPattern32By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern32By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern32By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i32)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i32 else None
 
 class _SeriesPattern33By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def unknown_output_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'unknown_output_index')
 
 class SeriesPattern33(Generic[T]):
     by: _SeriesPattern33By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern33By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern33By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i33)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i33 else None
 
 class _SeriesPattern34By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def funded_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'funded_addr_index')
 
 class SeriesPattern34(Generic[T]):
     by: _SeriesPattern34By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern34By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern34By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i34)
     def get(self, index: Index) -> Optional[SeriesEndpoint[T]]: return _ep(self.by._c, self._n, index) if index in _i34 else None
 
 class _SeriesPattern35By(Generic[T]):
-    def __init__(self, c: BrkClientBase, n: str): self._c, self._n = c, n
+    def __init__(self, c: BrkClient, n: str): self._c, self._n = c, n
     def empty_addr_index(self) -> SeriesEndpoint[T]: return _ep(self._c, self._n, 'empty_addr_index')
 
 class SeriesPattern35(Generic[T]):
     by: _SeriesPattern35By[T]
-    def __init__(self, c: BrkClientBase, n: str): self._n, self.by = n, _SeriesPattern35By(c, n)
+    def __init__(self, c: BrkClient, n: str): self._n, self.by = n, _SeriesPattern35By(c, n)
     @property
     def name(self) -> str: return self._n
     def indexes(self) -> List[str]: return list(_i35)
@@ -2663,7 +2685,7 @@ class SeriesPattern35(Generic[T]):
 class Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.pct05: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct05'))
         self.pct10: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct10'))
@@ -2692,7 +2714,7 @@ class _0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern:
 class AllEmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.all: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, _m(acc, 'bis'))
         self.empty: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, _m(acc, 'with_empty_outputs_output'))
@@ -2711,7 +2733,7 @@ class AllEmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern:
 class _10y1m1w1y2y3m3y4y5y6m6y8yPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._10y: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, '10y'))
         self._1m: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, '1m'))
@@ -2729,7 +2751,7 @@ class _10y1m1w1y2y3m3y4y5y6m6y8yPattern2:
 class _10y1m1w1y2y3m3y4y5y6m6y8yPattern3:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._10y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, '10y'))
         self._1m: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, '1m'))
@@ -2755,7 +2777,7 @@ class CapCapitalizedGrossLossMvrvNetPeakPriceProfitSellSoprPattern:
 class EmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.empty: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'empty_outputs_output'))
         self.op_return: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'op_return_output'))
@@ -2773,7 +2795,7 @@ class EmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2:
 class AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.average: _1m1w1y24hPattern[StoredF32] = _1m1w1y24hPattern(client, _m(acc, 'average'))
         self.block: SeriesPattern18[StoredU64] = SeriesPattern18(client, acc)
@@ -2790,7 +2812,7 @@ class AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
 class EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.empty: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'empty_outputs_prevout'))
         self.p2a: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'p2a_prevout'))
@@ -2807,7 +2829,7 @@ class EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2:
 class AverageBaseCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.average: _1m1w1y24hPattern[T] = _1m1w1y24hPattern(client, _m(acc, 'average'))
         self.base: SeriesPattern18[T] = SeriesPattern18(client, acc)
@@ -2828,7 +2850,7 @@ class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshSharePattern:
 class IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.index: SeriesPattern1[StoredI8] = SeriesPattern1(client, _m(acc, 'index'))
         self.pct0_5: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct0_5'))
@@ -2844,7 +2866,7 @@ class IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern:
 class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.all: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, acc)
         self.p2a: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, _p('p2a', acc))
@@ -2859,7 +2881,7 @@ class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6:
 class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.all: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, acc)
         self.p2a: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _p('p2a', acc))
@@ -2874,7 +2896,7 @@ class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5:
 class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.all: SeriesPattern1[StoredU64] = SeriesPattern1(client, acc)
         self.p2a: SeriesPattern1[StoredU64] = SeriesPattern1(client, _p('p2a', acc))
@@ -2889,7 +2911,7 @@ class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4:
 class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.all: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, acc)
         self.p2a: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _p('p2a', acc))
@@ -2904,7 +2926,7 @@ class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7:
 class AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.average: _1m1w1y24hPattern[StoredF32] = _1m1w1y24hPattern(client, _m(acc, 'average'))
         self.max: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, _m(acc, 'max'))
@@ -2919,7 +2941,7 @@ class AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
 class CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.capitalized_cap_in_loss_raw: SeriesPattern18[CentsSquaredSats] = SeriesPattern18(client, _m(acc, 'capitalized_cap_in_loss_raw'))
         self.capitalized_cap_in_profit_raw: SeriesPattern18[CentsSquaredSats] = SeriesPattern18(client, _m(acc, 'capitalized_cap_in_profit_raw'))
@@ -2938,7 +2960,7 @@ class BpsCentsPercentilesRatioSatsSmaStdUsdPattern:
 class Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.pct0_5: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct0_5')
         self.pct1: BpsPriceRatioPattern = BpsPriceRatioPattern(client, acc, 'pct1')
@@ -2952,7 +2974,7 @@ class Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern:
 class _10y2y3y4y5y6y8yPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._10y: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, '10y'))
         self._2y: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, '2y'))
@@ -2965,7 +2987,7 @@ class _10y2y3y4y5y6y8yPattern:
 class _1m1w1y24hBpsPercentRatioPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, '1m'))
         self._1w: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, '1w'))
@@ -2982,7 +3004,7 @@ class ActiveInputOutputSpendablePattern:
 class CapLossMvrvNetPriceProfitSoprPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, _m(acc, 'realized_cap'))
         self.loss: BlockCumulativeNegativeSumPattern = BlockCumulativeNegativeSumPattern(client, _m(acc, 'realized_loss'))
@@ -2995,7 +3017,7 @@ class CapLossMvrvNetPriceProfitSoprPattern:
 class InMaxMinPerSupplyPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.in_loss: PerPattern = PerPattern(client, _m(acc, 'cost_basis_in_loss_per'))
         self.in_profit: PerPattern = PerPattern(client, _m(acc, 'cost_basis_in_profit_per'))
@@ -3008,7 +3030,7 @@ class InMaxMinPerSupplyPattern:
 class MaxMedianMinPct10Pct25Pct75Pct90Pattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.max: SeriesPattern18[Weight] = SeriesPattern18(client, _m(acc, 'max'))
         self.median: SeriesPattern18[Weight] = SeriesPattern18(client, _m(acc, 'median'))
@@ -3021,7 +3043,7 @@ class MaxMedianMinPct10Pct25Pct75Pct90Pattern2:
 class MaxMedianMinPct10Pct25Pct75Pct90Pattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.max: SeriesPattern1[T] = SeriesPattern1(client, _m(acc, 'max'))
         self.median: SeriesPattern1[T] = SeriesPattern1(client, _m(acc, 'median'))
@@ -3034,7 +3056,7 @@ class MaxMedianMinPct10Pct25Pct75Pct90Pattern(Generic[T]):
 class _1m1w1y2y4yAllPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: BpsRatioPattern2 = BpsRatioPattern2(client, _m(acc, '1m'))
         self._1w: BpsRatioPattern2 = BpsRatioPattern2(client, _m(acc, '1w'))
@@ -3046,7 +3068,7 @@ class _1m1w1y2y4yAllPattern:
 class ActivityAddrOutputsRealizedSupplyUnrealizedPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.activity: TransferPattern = TransferPattern(client, _m(acc, 'transfer_volume'))
         self.addr_count: BaseDeltaPattern = BaseDeltaPattern(client, _m(acc, 'addr_count'))
@@ -3058,7 +3080,7 @@ class ActivityAddrOutputsRealizedSupplyUnrealizedPattern:
 class AverageBlockCumulativeInSumPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.average: _1m1w1y24hPattern3 = _1m1w1y24hPattern3(client, _m(acc, 'average'))
         self.block: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, acc)
@@ -3070,7 +3092,7 @@ class AverageBlockCumulativeInSumPattern:
 class BpsCentsPercentilesRatioSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.bps: SeriesPattern1[BasisPoints32] = SeriesPattern1(client, _m(acc, 'ratio_bps'))
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
@@ -3082,7 +3104,7 @@ class BpsCentsPercentilesRatioSatsUsdPattern:
 class CentsNegativeToUsdPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
         self.negative: SeriesPattern1[Dollars] = SeriesPattern1(client, _m(acc, 'neg'))
@@ -3094,7 +3116,7 @@ class CentsNegativeToUsdPattern2:
 class DeltaDominanceHalfInTotalPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.delta: AbsoluteRatePattern3 = AbsoluteRatePattern3(client, _m(acc, 'delta'))
         self.dominance: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'dominance'))
@@ -3106,7 +3128,7 @@ class DeltaDominanceHalfInTotalPattern2:
 class DeltaDominanceHalfInTotalPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.delta: AbsoluteRatePattern3 = AbsoluteRatePattern3(client, _m(acc, 'delta'))
         self.dominance: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'dominance'))
@@ -3118,7 +3140,7 @@ class DeltaDominanceHalfInTotalPattern:
 class _1m1w1y24hBlockPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'average_1m'))
         self._1w: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'average_1w'))
@@ -3129,7 +3151,7 @@ class _1m1w1y24hBlockPattern2:
 class _1m1w1y24hBlockPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'average_1m'))
         self._1w: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'average_1w'))
@@ -3140,7 +3162,7 @@ class _1m1w1y24hBlockPattern:
 class ActiveBidirectionalReactivatedReceivingSendingPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.active: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, _m(acc, 'active_addrs'))
         self.bidirectional: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, _m(acc, 'bidirectional_addrs'))
@@ -3151,7 +3173,7 @@ class ActiveBidirectionalReactivatedReceivingSendingPattern:
 class ActivityOutputsRealizedSupplyUnrealizedPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.activity: CoindaysTransferPattern = CoindaysTransferPattern(client, acc)
         self.outputs: SpendingSpentUnspentPattern = SpendingSpentUnspentPattern(client, acc)
@@ -3162,7 +3184,7 @@ class ActivityOutputsRealizedSupplyUnrealizedPattern:
 class ActivityOutputsRealizedSupplyUnrealizedPattern3:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.activity: TransferPattern = TransferPattern(client, _m(acc, 'transfer_volume'))
         self.outputs: SpendingSpentUnspentPattern = SpendingSpentUnspentPattern(client, acc)
@@ -3173,7 +3195,7 @@ class ActivityOutputsRealizedSupplyUnrealizedPattern3:
 class ActivityOutputsRealizedSupplyUnrealizedPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.activity: TransferPattern = TransferPattern(client, _m(acc, 'transfer_volume'))
         self.outputs: SpendingSpentUnspentPattern = SpendingSpentUnspentPattern(client, acc)
@@ -3184,7 +3206,7 @@ class ActivityOutputsRealizedSupplyUnrealizedPattern2:
 class BlockChangeCumulativeDeltaSumPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.block: CentsUsdPattern4 = CentsUsdPattern4(client, _m(acc, 'realized_pnl'))
         self.change_1m: ToPattern = ToPattern(client, _m(acc, 'pnl_change_1m_to'))
@@ -3195,7 +3217,7 @@ class BlockChangeCumulativeDeltaSumPattern:
 class BpsCentsRatioSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.bps: SeriesPattern1[BasisPoints32] = SeriesPattern1(client, _m(acc, 'ratio_bps'))
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
@@ -3206,7 +3228,7 @@ class BpsCentsRatioSatsUsdPattern:
 class BtcCentsDeltaSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.btc: SeriesPattern1[Bitcoin] = SeriesPattern1(client, acc)
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
@@ -3217,7 +3239,7 @@ class BtcCentsDeltaSatsUsdPattern:
 class BtcCentsSatsShareUsdPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.btc: SeriesPattern1[Bitcoin] = SeriesPattern1(client, acc)
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
@@ -3228,7 +3250,7 @@ class BtcCentsSatsShareUsdPattern:
 class CapLossMvrvPriceProfitPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cap: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, _m(acc, 'realized_cap'))
         self.loss: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, _m(acc, 'realized_loss'))
@@ -3239,7 +3261,7 @@ class CapLossMvrvPriceProfitPattern:
 class CentsToUsdPattern4:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
         self.to_mcap: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'to_mcap'))
@@ -3254,7 +3276,7 @@ class EmaHistogramLineSignalPattern:
 class PhsReboundThsPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.phs: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'phs'))
         self.phs_min: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'phs_min'))
@@ -3265,7 +3287,7 @@ class PhsReboundThsPattern:
 class _1m1w1y24hPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, '1m_rate'))
         self._1w: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, '1w_rate'))
@@ -3275,7 +3297,7 @@ class _1m1w1y24hPattern2:
 class _1m1w1y24hPattern8:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, _m(acc, '1m'))
         self._1w: BpsPercentRatioPattern4 = BpsPercentRatioPattern4(client, _m(acc, '1w'))
@@ -3285,7 +3307,7 @@ class _1m1w1y24hPattern8:
 class _1m1w1y24hPattern4:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, '1m'))
         self._1w: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, '1w'))
@@ -3295,7 +3317,7 @@ class _1m1w1y24hPattern4:
 class _1m1w1y24hPattern3:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: BtcCentsSatsUsdPattern2 = BtcCentsSatsUsdPattern2(client, _m(acc, '1m'))
         self._1w: BtcCentsSatsUsdPattern2 = BtcCentsSatsUsdPattern2(client, _m(acc, '1w'))
@@ -3305,7 +3327,7 @@ class _1m1w1y24hPattern3:
 class _1m1w1y24hPattern7:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: BtcSatsPattern = BtcSatsPattern(client, _m(acc, '1m'))
         self._1w: BtcSatsPattern = BtcSatsPattern(client, _m(acc, '1w'))
@@ -3315,7 +3337,7 @@ class _1m1w1y24hPattern7:
 class _1m1w1y2wPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, '1m'))
         self._1w: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, '1w'))
@@ -3325,7 +3347,7 @@ class _1m1w1y2wPattern:
 class _1m1w1y24hPattern5:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: CentsUsdPattern = CentsUsdPattern(client, _m(acc, '1m'))
         self._1w: CentsUsdPattern = CentsUsdPattern(client, _m(acc, '1w'))
@@ -3335,7 +3357,7 @@ class _1m1w1y24hPattern5:
 class _1m1w1y24hPattern6:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: CentsUsdPattern3 = CentsUsdPattern3(client, _m(acc, '1m'))
         self._1w: CentsUsdPattern3 = CentsUsdPattern3(client, _m(acc, '1w'))
@@ -3349,7 +3371,7 @@ class _1y2y4yAllPattern:
 class AverageBlockCumulativeSumPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.average: _1m1w1y24hPattern[StoredF32] = _1m1w1y24hPattern(client, _m(acc, 'average'))
         self.block: SeriesPattern18[StoredU32] = SeriesPattern18(client, acc)
@@ -3359,7 +3381,7 @@ class AverageBlockCumulativeSumPattern2:
 class AverageBlockCumulativeSumPattern3:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.average: _1m1w1y24hPattern3 = _1m1w1y24hPattern3(client, _m(acc, 'average'))
         self.block: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, acc)
@@ -3369,7 +3391,7 @@ class AverageBlockCumulativeSumPattern3:
 class BlockCumulativeNegativeSumPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.block: CentsUsdPattern2 = CentsUsdPattern2(client, acc)
         self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, _m(acc, 'cumulative'))
@@ -3379,7 +3401,7 @@ class BlockCumulativeNegativeSumPattern:
 class BlockCumulativeDeltaSumPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.block: CentsUsdPattern4 = CentsUsdPattern4(client, acc)
         self.cumulative: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'cumulative'))
@@ -3389,7 +3411,7 @@ class BlockCumulativeDeltaSumPattern:
 class BtcCentsSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.btc: SeriesPattern1[Bitcoin] = SeriesPattern1(client, acc)
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
@@ -3399,7 +3421,7 @@ class BtcCentsSatsUsdPattern:
 class BtcCentsSatsUsdPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.btc: SeriesPattern1[Bitcoin] = SeriesPattern1(client, acc)
         self.cents: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'cents'))
@@ -3409,7 +3431,7 @@ class BtcCentsSatsUsdPattern2:
 class BtcCentsSatsUsdPattern3:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.btc: SeriesPattern18[Bitcoin] = SeriesPattern18(client, acc)
         self.cents: SeriesPattern18[Cents] = SeriesPattern18(client, _m(acc, 'cents'))
@@ -3419,7 +3441,7 @@ class BtcCentsSatsUsdPattern3:
 class CentsDeltaToUsdPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
         self.delta: AbsoluteRatePattern2 = AbsoluteRatePattern2(client, _m(acc, 'delta'))
@@ -3429,7 +3451,7 @@ class CentsDeltaToUsdPattern:
 class CentsToUsdPattern3:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[CentsSigned] = SeriesPattern1(client, _m(acc, 'cents'))
         self.to_own_gross_pnl: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'to_own_gross_pnl'))
@@ -3439,7 +3461,7 @@ class CentsToUsdPattern3:
 class CoindaysCoinyearsDormancyTransferPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.coindays_destroyed: AverageBlockCumulativeSumPattern[StoredF64] = AverageBlockCumulativeSumPattern(client, _m(acc, 'coindays_destroyed'))
         self.coinyears_destroyed: SeriesPattern1[StoredF64] = SeriesPattern1(client, _m(acc, 'coinyears_destroyed'))
@@ -3449,7 +3471,7 @@ class CoindaysCoinyearsDormancyTransferPattern:
 class LossNetNuplProfitPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.loss: CentsNegativeUsdPattern = CentsNegativeUsdPattern(client, _m(acc, 'unrealized_loss'))
         self.net_pnl: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'net_unrealized_pnl'))
@@ -3459,7 +3481,7 @@ class LossNetNuplProfitPattern:
 class NuplRealizedSupplyUnrealizedPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.nupl: BpsRatioPattern = BpsRatioPattern(client, _m(acc, 'nupl'))
         self.realized_cap: AllSthPattern = AllSthPattern(client, acc, 'realized_cap')
@@ -3469,7 +3491,7 @@ class NuplRealizedSupplyUnrealizedPattern:
 class _1m1w1y24hPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: SeriesPattern1[T] = SeriesPattern1(client, _m(acc, '1m'))
         self._1w: SeriesPattern1[T] = SeriesPattern1(client, _m(acc, '1w'))
@@ -3479,7 +3501,7 @@ class _1m1w1y24hPattern(Generic[T]):
 class AverageBlockCumulativeSumPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.average: _1m1w1y24hPattern[T] = _1m1w1y24hPattern(client, _m(acc, 'average'))
         self.block: SeriesPattern18[T] = SeriesPattern18(client, acc)
@@ -3489,7 +3511,7 @@ class AverageBlockCumulativeSumPattern(Generic[T]):
 class AdjustedRatioValuePattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.adjusted: RatioTransferValuePattern = RatioTransferValuePattern(client, acc)
         self.ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, _m(acc, 'sopr'))
@@ -3498,7 +3520,7 @@ class AdjustedRatioValuePattern:
 class BlockCumulativeSumPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.block: CentsUsdPattern2 = CentsUsdPattern2(client, acc)
         self.cumulative: CentsUsdPattern3 = CentsUsdPattern3(client, _m(acc, 'cumulative'))
@@ -3507,7 +3529,7 @@ class BlockCumulativeSumPattern:
 class BlocksDominanceRewardsPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.blocks_mined: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, _m(acc, 'blocks_mined'))
         self.dominance: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, _m(acc, 'dominance'))
@@ -3516,7 +3538,7 @@ class BlocksDominanceRewardsPattern:
 class BpsPercentRatioPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.bps: SeriesPattern1[BasisPoints16] = SeriesPattern1(client, _m(acc, 'bps'))
         self.percent: SeriesPattern1[StoredF32] = SeriesPattern1(client, acc)
@@ -3525,7 +3547,7 @@ class BpsPercentRatioPattern2:
 class BpsPercentRatioPattern4:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.bps: SeriesPattern1[BasisPoints32] = SeriesPattern1(client, _m(acc, 'bps'))
         self.percent: SeriesPattern1[StoredF32] = SeriesPattern1(client, acc)
@@ -3534,7 +3556,7 @@ class BpsPercentRatioPattern4:
 class BpsPriceRatioPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str, disc: str):
+    def __init__(self, client: BrkClient, acc: str, disc: str):
         """Create pattern node with accumulated series name."""
         self.bps: SeriesPattern1[BasisPoints32] = SeriesPattern1(client, _m(acc, f'ratio_{disc}_bps'))
         self.price: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, disc))
@@ -3543,7 +3565,7 @@ class BpsPriceRatioPattern:
 class BpsPercentRatioPattern5:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.bps: SeriesPattern1[BasisPointsSigned16] = SeriesPattern1(client, _m(acc, 'bps'))
         self.percent: SeriesPattern1[StoredF32] = SeriesPattern1(client, acc)
@@ -3552,7 +3574,7 @@ class BpsPercentRatioPattern5:
 class BpsPercentRatioPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.bps: SeriesPattern1[BasisPointsSigned32] = SeriesPattern1(client, _m(acc, 'bps'))
         self.percent: SeriesPattern1[StoredF32] = SeriesPattern1(client, acc)
@@ -3561,7 +3583,7 @@ class BpsPercentRatioPattern:
 class CentsSatsUsdPattern3:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern2[Cents] = SeriesPattern2(client, _m(acc, 'cents'))
         self.sats: SeriesPattern2[Sats] = SeriesPattern2(client, _m(acc, 'sats'))
@@ -3570,7 +3592,7 @@ class CentsSatsUsdPattern3:
 class CentsDeltaUsdPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
         self.delta: AbsoluteRatePattern2 = AbsoluteRatePattern2(client, _m(acc, 'delta'))
@@ -3579,7 +3601,7 @@ class CentsDeltaUsdPattern:
 class CentsNegativeUsdPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
         self.negative: SeriesPattern1[Dollars] = SeriesPattern1(client, _m(acc, 'neg'))
@@ -3588,7 +3610,7 @@ class CentsNegativeUsdPattern:
 class CentsSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, _m(acc, 'sats'))
@@ -3601,7 +3623,7 @@ class CountEventsSupplyPattern:
 class CumulativeRollingSumPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cumulative: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'cumulative'))
         self.rolling: AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, acc)
@@ -3610,7 +3632,7 @@ class CumulativeRollingSumPattern:
 class DeltaDominanceTotalPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.delta: AbsoluteRatePattern3 = AbsoluteRatePattern3(client, _m(acc, 'delta'))
         self.dominance: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'dominance'))
@@ -3619,7 +3641,7 @@ class DeltaDominanceTotalPattern:
 class GreedNetPainPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.greed_index: CentsUsdPattern3 = CentsUsdPattern3(client, _m(acc, 'greed_index'))
         self.net: CentsUsdPattern = CentsUsdPattern(client, _m(acc, 'net_sentiment'))
@@ -3628,7 +3650,7 @@ class GreedNetPainPattern:
 class LossNuplProfitPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.loss: CentsNegativeUsdPattern = CentsNegativeUsdPattern(client, _m(acc, 'unrealized_loss'))
         self.nupl: BpsRatioPattern = BpsRatioPattern(client, _m(acc, 'nupl'))
@@ -3637,7 +3659,7 @@ class LossNuplProfitPattern:
 class RatioTransferValuePattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, _m(acc, 'asopr'))
         self.transfer_volume: AverageBlockCumulativeSumPattern[Cents] = AverageBlockCumulativeSumPattern(client, _m(acc, 'adj_value_created'))
@@ -3646,7 +3668,7 @@ class RatioTransferValuePattern:
 class RsiStochPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str, disc: str):
+    def __init__(self, client: BrkClient, acc: str, disc: str):
         """Create pattern node with accumulated series name."""
         self.rsi: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, disc))
         self.stoch_rsi_d: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, f'stoch_d_{disc}'))
@@ -3655,7 +3677,7 @@ class RsiStochPattern:
 class SpendingSpentUnspentPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.spending_rate: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'spending_rate'))
         self.spent_count: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, _m(acc, 'spent_utxo_count'))
@@ -3664,7 +3686,7 @@ class SpendingSpentUnspentPattern:
 class _6bBlockTxPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._6b: MaxMedianMinPct10Pct25Pct75Pct90Pattern[T] = MaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, '6b'))
         self.block: MaxMedianMinPct10Pct25Pct75Pct90Pattern[T] = MaxMedianMinPct10Pct25Pct75Pct90Pattern(client, acc)
@@ -3673,7 +3695,7 @@ class _6bBlockTxPattern(Generic[T]):
 class AbsoluteRatePattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.absolute: _1m1w1y24hPattern[StoredI64] = _1m1w1y24hPattern(client, acc)
         self.rate: _1m1w1y24hPattern2 = _1m1w1y24hPattern2(client, acc)
@@ -3681,7 +3703,7 @@ class AbsoluteRatePattern:
 class AbsoluteRatePattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.absolute: _1m1w1y24hPattern5 = _1m1w1y24hPattern5(client, acc)
         self.rate: _1m1w1y24hPattern2 = _1m1w1y24hPattern2(client, acc)
@@ -3689,7 +3711,7 @@ class AbsoluteRatePattern2:
 class AbsoluteRatePattern3:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.absolute: _1m1w1y24hPattern7 = _1m1w1y24hPattern7(client, acc)
         self.rate: _1m1w1y24hPattern2 = _1m1w1y24hPattern2(client, acc)
@@ -3697,7 +3719,7 @@ class AbsoluteRatePattern3:
 class AddrUtxoPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.addr: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'addr_amount'))
         self.utxo: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'utxo_amount'))
@@ -3705,7 +3727,7 @@ class AddrUtxoPattern:
 class AllSthPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.all: BtcCentsDeltaSatsUsdPattern = BtcCentsDeltaSatsUsdPattern(client, _m(acc, 'supply'))
         self.sth: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'sth_supply'))
@@ -3713,7 +3735,7 @@ class AllSthPattern2:
 class AllSthPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str, disc: str):
+    def __init__(self, client: BrkClient, acc: str, disc: str):
         """Create pattern node with accumulated series name."""
         self.all: SeriesPattern1[Dollars] = SeriesPattern1(client, _m(acc, disc))
         self.sth: SeriesPattern1[Dollars] = SeriesPattern1(client, _m(acc, f'sth_{disc}'))
@@ -3721,7 +3743,7 @@ class AllSthPattern:
 class BaseSumPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.base: SeriesPattern18[Dollars] = SeriesPattern18(client, acc)
         self.sum: _1m1w1y24hPattern[Dollars] = _1m1w1y24hPattern(client, _m(acc, 'sum'))
@@ -3729,7 +3751,7 @@ class BaseSumPattern:
 class BaseDeltaPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.base: SeriesPattern1[StoredU64] = SeriesPattern1(client, acc)
         self.delta: AbsoluteRatePattern = AbsoluteRatePattern(client, _m(acc, 'delta'))
@@ -3737,7 +3759,7 @@ class BaseDeltaPattern:
 class BlockCumulativePattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.block: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, acc)
         self.cumulative: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, 'cumulative'))
@@ -3745,7 +3767,7 @@ class BlockCumulativePattern:
 class BlocksDominancePattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.blocks_mined: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, _m(acc, 'blocks_mined'))
         self.dominance: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, _m(acc, 'dominance'))
@@ -3753,7 +3775,7 @@ class BlocksDominancePattern:
 class BpsRatioPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.bps: SeriesPattern1[BasisPoints32] = SeriesPattern1(client, _m(acc, 'bps'))
         self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, acc)
@@ -3761,7 +3783,7 @@ class BpsRatioPattern2:
 class BpsRatioPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.bps: SeriesPattern1[BasisPointsSigned32] = SeriesPattern1(client, _m(acc, 'bps'))
         self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, acc)
@@ -3769,7 +3791,7 @@ class BpsRatioPattern:
 class BtcSatsPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.btc: SeriesPattern1[Bitcoin] = SeriesPattern1(client, acc)
         self.sats: SeriesPattern1[SatsSigned] = SeriesPattern1(client, _m(acc, 'sats'))
@@ -3777,7 +3799,7 @@ class BtcSatsPattern:
 class CentsUsdPattern3:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, acc)
@@ -3785,7 +3807,7 @@ class CentsUsdPattern3:
 class CentsUsdPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern18[Cents] = SeriesPattern18(client, _m(acc, 'cents'))
         self.usd: SeriesPattern18[Dollars] = SeriesPattern18(client, acc)
@@ -3793,7 +3815,7 @@ class CentsUsdPattern2:
 class CentsUsdPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[CentsSigned] = SeriesPattern1(client, _m(acc, 'cents'))
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, acc)
@@ -3801,7 +3823,7 @@ class CentsUsdPattern:
 class CentsUsdPattern4:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern18[CentsSigned] = SeriesPattern18(client, _m(acc, 'cents'))
         self.usd: SeriesPattern18[Dollars] = SeriesPattern18(client, acc)
@@ -3809,7 +3831,7 @@ class CentsUsdPattern4:
 class CoindaysTransferPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.coindays_destroyed: AverageBlockCumulativeSumPattern[StoredF64] = AverageBlockCumulativeSumPattern(client, _m(acc, 'coindays_destroyed'))
         self.transfer_volume: AverageBlockCumulativeInSumPattern = AverageBlockCumulativeInSumPattern(client, _m(acc, 'transfer_volume'))
@@ -3817,7 +3839,7 @@ class CoindaysTransferPattern:
 class FundedTotalPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.funded: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4(client, acc)
         self.total: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4(client, _p('total', acc))
@@ -3825,7 +3847,7 @@ class FundedTotalPattern:
 class InPattern2:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.in_loss: CentsUsdPattern3 = CentsUsdPattern3(client, _m(acc, 'loss'))
         self.in_profit: CentsUsdPattern3 = CentsUsdPattern3(client, _m(acc, 'profit'))
@@ -3833,7 +3855,7 @@ class InPattern2:
 class InPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.in_loss: SharePattern = SharePattern(client, _m(acc, 'loss_share'))
         self.in_profit: SharePattern = SharePattern(client, _m(acc, 'profit_share'))
@@ -3841,7 +3863,7 @@ class InPattern:
 class PerPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.per_coin: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'coin'))
         self.per_dollar: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'dollar'))
@@ -3849,7 +3871,7 @@ class PerPattern:
 class PriceRatioPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str, disc: str):
+    def __init__(self, client: BrkClient, acc: str, disc: str):
         """Create pattern node with accumulated series name."""
         self.price: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, disc))
         self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, f'ratio_{disc}'))
@@ -3857,7 +3879,7 @@ class PriceRatioPattern:
 class RatioValuePattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.ratio: _24hPattern = _24hPattern(client, _m(acc, 'sopr_24h'))
         self.value_destroyed: AverageBlockCumulativeSumPattern[Cents] = AverageBlockCumulativeSumPattern(client, _m(acc, 'value_destroyed'))
@@ -3869,7 +3891,7 @@ class SdSmaPattern:
 class ToPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.to_mcap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'mcap'))
         self.to_rcap: BpsPercentRatioPattern = BpsPercentRatioPattern(client, _m(acc, 'rcap'))
@@ -3877,35 +3899,35 @@ class ToPattern:
 class _24hPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._24h: SeriesPattern1[StoredF64] = SeriesPattern1(client, acc)
 
 class NuplPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.nupl: BpsRatioPattern = BpsRatioPattern(client, acc)
 
 class PricePattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.price: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, acc)
 
 class SharePattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.share: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, acc)
 
 class TransferPattern:
     """Pattern struct for repeated tree structure."""
     
-    def __init__(self, client: BrkClientBase, acc: str):
+    def __init__(self, client: BrkClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.transfer_volume: AverageBlockCumulativeSumPattern3 = AverageBlockCumulativeSumPattern3(client, acc)
 
@@ -3914,7 +3936,7 @@ class TransferPattern:
 class SeriesTree_Blocks_Difficulty:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.value: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'difficulty')
         self.hashrate: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'difficulty_hashrate')
         self.adjustment: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'difficulty_adjustment')
@@ -3925,13 +3947,13 @@ class SeriesTree_Blocks_Difficulty:
 class SeriesTree_Blocks_Time:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.timestamp: SeriesPattern18[Timestamp] = SeriesPattern18(client, 'timestamp')
 
 class SeriesTree_Blocks_Size:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.base: SeriesPattern18[StoredU64] = SeriesPattern18(client, 'total_size')
         self.cumulative: SeriesPattern1[StoredU64] = SeriesPattern1(client, 'block_size_cumulative')
         self.sum: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, 'block_size_sum')
@@ -3947,14 +3969,14 @@ class SeriesTree_Blocks_Size:
 class SeriesTree_Blocks_Count:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.target: _1m1w1y24hPattern[StoredU64] = _1m1w1y24hPattern(client, 'block_count_target')
         self.total: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, 'block_count')
 
 class SeriesTree_Blocks_Lookback:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._1h: SeriesPattern18[Height] = SeriesPattern18(client, 'height_1h_ago')
         self._24h: SeriesPattern18[Height] = SeriesPattern18(client, 'height_24h_ago')
         self._3d: SeriesPattern18[Height] = SeriesPattern18(client, 'height_3d_ago')
@@ -4002,7 +4024,7 @@ class SeriesTree_Blocks_Lookback:
 class SeriesTree_Blocks_Interval:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.block: SeriesPattern18[Timestamp] = SeriesPattern18(client, 'block_interval')
         self._24h: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'block_interval_average_24h')
         self._1w: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'block_interval_average_1w')
@@ -4012,7 +4034,7 @@ class SeriesTree_Blocks_Interval:
 class SeriesTree_Blocks_Fullness:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.bps: SeriesPattern18[BasisPoints16] = SeriesPattern18(client, 'block_fullness_bps')
         self.ratio: SeriesPattern18[StoredF32] = SeriesPattern18(client, 'block_fullness_ratio')
         self.percent: SeriesPattern18[StoredF32] = SeriesPattern18(client, 'block_fullness')
@@ -4020,7 +4042,7 @@ class SeriesTree_Blocks_Fullness:
 class SeriesTree_Blocks_Halving:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.epoch: SeriesPattern1[Halving] = SeriesPattern1(client, 'halving_epoch')
         self.blocks_to_halving: SeriesPattern1[StoredU32] = SeriesPattern1(client, 'blocks_to_halving')
         self.days_to_halving: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'days_to_halving')
@@ -4028,7 +4050,7 @@ class SeriesTree_Blocks_Halving:
 class SeriesTree_Blocks:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.blockhash: SeriesPattern18[BlockHash] = SeriesPattern18(client, 'blockhash')
         self.coinbase_tag: SeriesPattern18[CoinbaseTag] = SeriesPattern18(client, 'coinbase_tag')
         self.difficulty: SeriesTree_Blocks_Difficulty = SeriesTree_Blocks_Difficulty(client)
@@ -4048,7 +4070,7 @@ class SeriesTree_Blocks:
 class SeriesTree_Transactions_Raw:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_tx_index: SeriesPattern18[TxIndex] = SeriesPattern18(client, 'first_tx_index')
         self.txid: SeriesPattern19[Txid] = SeriesPattern19(client, 'txid')
         self.tx_version: SeriesPattern19[TxVersion] = SeriesPattern19(client, 'tx_version')
@@ -4062,13 +4084,13 @@ class SeriesTree_Transactions_Raw:
 class SeriesTree_Transactions_Count:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.total: AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern = AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern(client, 'tx_count')
 
 class SeriesTree_Transactions_Size_Weight:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.tx_index: SeriesPattern19[Weight] = SeriesPattern19(client, 'tx_weight')
         self.block: MaxMedianMinPct10Pct25Pct75Pct90Pattern2 = MaxMedianMinPct10Pct25Pct75Pct90Pattern2(client, 'tx_weight')
         self._6b: MaxMedianMinPct10Pct25Pct75Pct90Pattern2 = MaxMedianMinPct10Pct25Pct75Pct90Pattern2(client, 'tx_weight_6b')
@@ -4076,14 +4098,14 @@ class SeriesTree_Transactions_Size_Weight:
 class SeriesTree_Transactions_Size:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.vsize: _6bBlockTxPattern[VSize] = _6bBlockTxPattern(client, 'tx_vsize')
         self.weight: SeriesTree_Transactions_Size_Weight = SeriesTree_Transactions_Size_Weight(client)
 
 class SeriesTree_Transactions_Fees:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.input_value: SeriesPattern19[Sats] = SeriesPattern19(client, 'input_value')
         self.output_value: SeriesPattern19[Sats] = SeriesPattern19(client, 'output_value')
         self.fee: _6bBlockTxPattern[Sats] = _6bBlockTxPattern(client, 'fee')
@@ -4093,7 +4115,7 @@ class SeriesTree_Transactions_Fees:
 class SeriesTree_Transactions_Versions:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.v1: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'tx_v1')
         self.v2: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'tx_v2')
         self.v3: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'tx_v3')
@@ -4101,14 +4123,14 @@ class SeriesTree_Transactions_Versions:
 class SeriesTree_Transactions_Volume:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.transfer_volume: AverageBlockCumulativeSumPattern3 = AverageBlockCumulativeSumPattern3(client, 'transfer_volume_bis')
         self.tx_per_sec: _1m1w1y24hPattern[StoredF32] = _1m1w1y24hPattern(client, 'tx_per_sec')
 
 class SeriesTree_Transactions:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.raw: SeriesTree_Transactions_Raw = SeriesTree_Transactions_Raw(client)
         self.count: SeriesTree_Transactions_Count = SeriesTree_Transactions_Count(client)
         self.size: SeriesTree_Transactions_Size = SeriesTree_Transactions_Size(client)
@@ -4119,7 +4141,7 @@ class SeriesTree_Transactions:
 class SeriesTree_Inputs_Raw:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_txin_index: SeriesPattern18[TxInIndex] = SeriesPattern18(client, 'first_txin_index')
         self.outpoint: SeriesPattern20[OutPoint] = SeriesPattern20(client, 'outpoint')
         self.tx_index: SeriesPattern20[TxIndex] = SeriesPattern20(client, 'tx_index')
@@ -4129,14 +4151,14 @@ class SeriesTree_Inputs_Raw:
 class SeriesTree_Inputs_Spent:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.txout_index: SeriesPattern20[TxOutIndex] = SeriesPattern20(client, 'txout_index')
         self.value: SeriesPattern20[Sats] = SeriesPattern20(client, 'value')
 
 class SeriesTree_Inputs_ByType_InputCount:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'input_count_bis')
         self.p2pk65: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'p2pk65_prevout_count')
         self.p2pk33: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'p2pk33_prevout_count')
@@ -4153,7 +4175,7 @@ class SeriesTree_Inputs_ByType_InputCount:
 class SeriesTree_Inputs_ByType_InputShare:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.p2pk65: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pk65_prevout_share')
         self.p2pk33: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pk33_prevout_share')
         self.p2pkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pkh_prevout_share')
@@ -4169,7 +4191,7 @@ class SeriesTree_Inputs_ByType_InputShare:
 class SeriesTree_Inputs_ByType_TxCount:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'non_coinbase_tx_count')
         self.p2pk65: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'tx_count_with_p2pk65_prevout')
         self.p2pk33: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'tx_count_with_p2pk33_prevout')
@@ -4186,7 +4208,7 @@ class SeriesTree_Inputs_ByType_TxCount:
 class SeriesTree_Inputs_ByType:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.input_count: SeriesTree_Inputs_ByType_InputCount = SeriesTree_Inputs_ByType_InputCount(client)
         self.input_share: SeriesTree_Inputs_ByType_InputShare = SeriesTree_Inputs_ByType_InputShare(client)
         self.tx_count: SeriesTree_Inputs_ByType_TxCount = SeriesTree_Inputs_ByType_TxCount(client)
@@ -4195,7 +4217,7 @@ class SeriesTree_Inputs_ByType:
 class SeriesTree_Inputs:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.raw: SeriesTree_Inputs_Raw = SeriesTree_Inputs_Raw(client)
         self.spent: SeriesTree_Inputs_Spent = SeriesTree_Inputs_Spent(client)
         self.count: CumulativeRollingSumPattern = CumulativeRollingSumPattern(client, 'input_count')
@@ -4205,7 +4227,7 @@ class SeriesTree_Inputs:
 class SeriesTree_Outputs_Raw:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_txout_index: SeriesPattern18[TxOutIndex] = SeriesPattern18(client, 'first_txout_index')
         self.value: SeriesPattern21[Sats] = SeriesPattern21(client, 'value')
         self.output_type: SeriesPattern21[OutputType] = SeriesPattern21(client, 'output_type')
@@ -4215,25 +4237,25 @@ class SeriesTree_Outputs_Raw:
 class SeriesTree_Outputs_Spent:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.txin_index: SeriesPattern21[TxInIndex] = SeriesPattern21(client, 'txin_index')
 
 class SeriesTree_Outputs_Count:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.total: CumulativeRollingSumPattern = CumulativeRollingSumPattern(client, 'output_count')
 
 class SeriesTree_Outputs_Unspent:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.count: SeriesPattern1[StoredU64] = SeriesPattern1(client, 'utxo_count_bis')
 
 class SeriesTree_Outputs_ByType_OutputCount:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'output_count_bis')
         self.p2pk65: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'p2pk65_output_count')
         self.p2pk33: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'p2pk33_output_count')
@@ -4251,7 +4273,7 @@ class SeriesTree_Outputs_ByType_OutputCount:
 class SeriesTree_Outputs_ByType_OutputShare:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.p2pk65: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pk65_output_share')
         self.p2pk33: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pk33_output_share')
         self.p2pkh: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'p2pkh_output_share')
@@ -4268,7 +4290,7 @@ class SeriesTree_Outputs_ByType_OutputShare:
 class SeriesTree_Outputs_ByType:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.output_count: SeriesTree_Outputs_ByType_OutputCount = SeriesTree_Outputs_ByType_OutputCount(client)
         self.spendable_output_count: AverageBlockCumulativeSumPattern[StoredU64] = AverageBlockCumulativeSumPattern(client, 'spendable_output_count')
         self.output_share: SeriesTree_Outputs_ByType_OutputShare = SeriesTree_Outputs_ByType_OutputShare(client)
@@ -4278,13 +4300,13 @@ class SeriesTree_Outputs_ByType:
 class SeriesTree_Outputs_Value:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.op_return: BlockCumulativePattern = BlockCumulativePattern(client, 'op_return_value')
 
 class SeriesTree_Outputs:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.raw: SeriesTree_Outputs_Raw = SeriesTree_Outputs_Raw(client)
         self.spent: SeriesTree_Outputs_Spent = SeriesTree_Outputs_Spent(client)
         self.count: SeriesTree_Outputs_Count = SeriesTree_Outputs_Count(client)
@@ -4296,63 +4318,63 @@ class SeriesTree_Outputs:
 class SeriesTree_Addrs_Raw_P2pk65:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_index: SeriesPattern18[P2PK65AddrIndex] = SeriesPattern18(client, 'first_p2pk65_addr_index')
         self.bytes: SeriesPattern27[P2PK65Bytes] = SeriesPattern27(client, 'p2pk65_bytes')
 
 class SeriesTree_Addrs_Raw_P2pk33:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_index: SeriesPattern18[P2PK33AddrIndex] = SeriesPattern18(client, 'first_p2pk33_addr_index')
         self.bytes: SeriesPattern26[P2PK33Bytes] = SeriesPattern26(client, 'p2pk33_bytes')
 
 class SeriesTree_Addrs_Raw_P2pkh:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_index: SeriesPattern18[P2PKHAddrIndex] = SeriesPattern18(client, 'first_p2pkh_addr_index')
         self.bytes: SeriesPattern28[P2PKHBytes] = SeriesPattern28(client, 'p2pkh_bytes')
 
 class SeriesTree_Addrs_Raw_P2sh:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_index: SeriesPattern18[P2SHAddrIndex] = SeriesPattern18(client, 'first_p2sh_addr_index')
         self.bytes: SeriesPattern29[P2SHBytes] = SeriesPattern29(client, 'p2sh_bytes')
 
 class SeriesTree_Addrs_Raw_P2wpkh:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_index: SeriesPattern18[P2WPKHAddrIndex] = SeriesPattern18(client, 'first_p2wpkh_addr_index')
         self.bytes: SeriesPattern31[P2WPKHBytes] = SeriesPattern31(client, 'p2wpkh_bytes')
 
 class SeriesTree_Addrs_Raw_P2wsh:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_index: SeriesPattern18[P2WSHAddrIndex] = SeriesPattern18(client, 'first_p2wsh_addr_index')
         self.bytes: SeriesPattern32[P2WSHBytes] = SeriesPattern32(client, 'p2wsh_bytes')
 
 class SeriesTree_Addrs_Raw_P2tr:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_index: SeriesPattern18[P2TRAddrIndex] = SeriesPattern18(client, 'first_p2tr_addr_index')
         self.bytes: SeriesPattern30[P2TRBytes] = SeriesPattern30(client, 'p2tr_bytes')
 
 class SeriesTree_Addrs_Raw_P2a:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_index: SeriesPattern18[P2AAddrIndex] = SeriesPattern18(client, 'first_p2a_addr_index')
         self.bytes: SeriesPattern24[P2ABytes] = SeriesPattern24(client, 'p2a_bytes')
 
 class SeriesTree_Addrs_Raw:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.p2pk65: SeriesTree_Addrs_Raw_P2pk65 = SeriesTree_Addrs_Raw_P2pk65(client)
         self.p2pk33: SeriesTree_Addrs_Raw_P2pk33 = SeriesTree_Addrs_Raw_P2pk33(client)
         self.p2pkh: SeriesTree_Addrs_Raw_P2pkh = SeriesTree_Addrs_Raw_P2pkh(client)
@@ -4365,7 +4387,7 @@ class SeriesTree_Addrs_Raw:
 class SeriesTree_Addrs_Indexes:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.p2a: SeriesPattern24[AnyAddrIndex] = SeriesPattern24(client, 'any_addr_index')
         self.p2pk33: SeriesPattern26[AnyAddrIndex] = SeriesPattern26(client, 'any_addr_index')
         self.p2pk65: SeriesPattern27[AnyAddrIndex] = SeriesPattern27(client, 'any_addr_index')
@@ -4380,14 +4402,14 @@ class SeriesTree_Addrs_Indexes:
 class SeriesTree_Addrs_Data:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.funded: SeriesPattern34[FundedAddrData] = SeriesPattern34(client, 'funded_addr_data')
         self.empty: SeriesPattern35[EmptyAddrData] = SeriesPattern35(client, 'empty_addr_data')
 
 class SeriesTree_Addrs_Activity_All:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.reactivated: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, 'reactivated_addrs')
         self.sending: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, 'sending_addrs')
         self.receiving: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, 'receiving_addrs')
@@ -4397,7 +4419,7 @@ class SeriesTree_Addrs_Activity_All:
 class SeriesTree_Addrs_Activity:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: SeriesTree_Addrs_Activity_All = SeriesTree_Addrs_Activity_All(client)
         self.p2pk65: ActiveBidirectionalReactivatedReceivingSendingPattern = ActiveBidirectionalReactivatedReceivingSendingPattern(client, 'p2pk65')
         self.p2pk33: ActiveBidirectionalReactivatedReceivingSendingPattern = ActiveBidirectionalReactivatedReceivingSendingPattern(client, 'p2pk33')
@@ -4411,7 +4433,7 @@ class SeriesTree_Addrs_Activity:
 class SeriesTree_Addrs_Reused_Events:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.output_to_reused_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(client, 'output_to_reused_addr_count')
         self.output_to_reused_addr_share: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7(client, 'output_to_reused_addr_share')
         self.spendable_output_to_reused_addr_share: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'spendable_output_to_reused_addr_share')
@@ -4423,7 +4445,7 @@ class SeriesTree_Addrs_Reused_Events:
 class SeriesTree_Addrs_Reused_Supply:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'reused_addr_supply')
         self.p2pk65: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2pk65_reused_addr_supply')
         self.p2pk33: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2pk33_reused_addr_supply')
@@ -4438,7 +4460,7 @@ class SeriesTree_Addrs_Reused_Supply:
 class SeriesTree_Addrs_Reused:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.count: FundedTotalPattern = FundedTotalPattern(client, 'reused_addr_count')
         self.events: SeriesTree_Addrs_Reused_Events = SeriesTree_Addrs_Reused_Events(client)
         self.supply: SeriesTree_Addrs_Reused_Supply = SeriesTree_Addrs_Reused_Supply(client)
@@ -4446,7 +4468,7 @@ class SeriesTree_Addrs_Reused:
 class SeriesTree_Addrs_Respent_Events:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.output_to_reused_addr_count: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6(client, 'output_to_respent_addr_count')
         self.output_to_reused_addr_share: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7 = AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7(client, 'output_to_respent_addr_share')
         self.spendable_output_to_reused_addr_share: _1m1w1y24hBpsPercentRatioPattern = _1m1w1y24hBpsPercentRatioPattern(client, 'spendable_output_to_respent_addr_share')
@@ -4458,7 +4480,7 @@ class SeriesTree_Addrs_Respent_Events:
 class SeriesTree_Addrs_Respent_Supply:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'respent_addr_supply')
         self.p2pk65: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2pk65_respent_addr_supply')
         self.p2pk33: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2pk33_respent_addr_supply')
@@ -4473,7 +4495,7 @@ class SeriesTree_Addrs_Respent_Supply:
 class SeriesTree_Addrs_Respent:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.count: FundedTotalPattern = FundedTotalPattern(client, 'respent_addr_count')
         self.events: SeriesTree_Addrs_Respent_Events = SeriesTree_Addrs_Respent_Events(client)
         self.supply: SeriesTree_Addrs_Respent_Supply = SeriesTree_Addrs_Respent_Supply(client)
@@ -4481,7 +4503,7 @@ class SeriesTree_Addrs_Respent:
 class SeriesTree_Addrs_Exposed_Supply:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'exposed_addr_supply')
         self.p2pk65: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2pk65_exposed_addr_supply')
         self.p2pk33: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'p2pk33_exposed_addr_supply')
@@ -4496,14 +4518,14 @@ class SeriesTree_Addrs_Exposed_Supply:
 class SeriesTree_Addrs_Exposed:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.count: FundedTotalPattern = FundedTotalPattern(client, 'exposed_addr_count')
         self.supply: SeriesTree_Addrs_Exposed_Supply = SeriesTree_Addrs_Exposed_Supply(client)
 
 class SeriesTree_Addrs_Delta:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: AbsoluteRatePattern = AbsoluteRatePattern(client, 'addr_count')
         self.p2pk65: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2pk65_addr_count')
         self.p2pk33: AbsoluteRatePattern = AbsoluteRatePattern(client, 'p2pk33_addr_count')
@@ -4517,7 +4539,7 @@ class SeriesTree_Addrs_Delta:
 class SeriesTree_Addrs_AvgAmount:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: AddrUtxoPattern = AddrUtxoPattern(client, 'avg')
         self.p2pk65: AddrUtxoPattern = AddrUtxoPattern(client, 'p2pk65_avg')
         self.p2pk33: AddrUtxoPattern = AddrUtxoPattern(client, 'p2pk33_avg')
@@ -4531,7 +4553,7 @@ class SeriesTree_Addrs_AvgAmount:
 class SeriesTree_Addrs:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.raw: SeriesTree_Addrs_Raw = SeriesTree_Addrs_Raw(client)
         self.indexes: SeriesTree_Addrs_Indexes = SeriesTree_Addrs_Indexes(client)
         self.data: SeriesTree_Addrs_Data = SeriesTree_Addrs_Data(client)
@@ -4549,35 +4571,35 @@ class SeriesTree_Addrs:
 class SeriesTree_Scripts_Raw_Empty:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_index: SeriesPattern18[EmptyOutputIndex] = SeriesPattern18(client, 'first_empty_output_index')
         self.to_tx_index: SeriesPattern22[TxIndex] = SeriesPattern22(client, 'tx_index')
 
 class SeriesTree_Scripts_Raw_OpReturn:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_index: SeriesPattern18[OpReturnIndex] = SeriesPattern18(client, 'first_op_return_index')
         self.to_tx_index: SeriesPattern23[TxIndex] = SeriesPattern23(client, 'tx_index')
 
 class SeriesTree_Scripts_Raw_P2ms:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_index: SeriesPattern18[P2MSOutputIndex] = SeriesPattern18(client, 'first_p2ms_output_index')
         self.to_tx_index: SeriesPattern25[TxIndex] = SeriesPattern25(client, 'tx_index')
 
 class SeriesTree_Scripts_Raw_Unknown:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_index: SeriesPattern18[UnknownOutputIndex] = SeriesPattern18(client, 'first_unknown_output_index')
         self.to_tx_index: SeriesPattern33[TxIndex] = SeriesPattern33(client, 'tx_index')
 
 class SeriesTree_Scripts_Raw:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.empty: SeriesTree_Scripts_Raw_Empty = SeriesTree_Scripts_Raw_Empty(client)
         self.op_return: SeriesTree_Scripts_Raw_OpReturn = SeriesTree_Scripts_Raw_OpReturn(client)
         self.p2ms: SeriesTree_Scripts_Raw_P2ms = SeriesTree_Scripts_Raw_P2ms(client)
@@ -4586,13 +4608,13 @@ class SeriesTree_Scripts_Raw:
 class SeriesTree_Scripts:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.raw: SeriesTree_Scripts_Raw = SeriesTree_Scripts_Raw(client)
 
 class SeriesTree_Mining_Rewards_Subsidy:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.block: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'subsidy')
         self.cumulative: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'subsidy_cumulative')
         self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, 'subsidy_sum')
@@ -4602,7 +4624,7 @@ class SeriesTree_Mining_Rewards_Subsidy:
 class SeriesTree_Mining_Rewards_Fees_ToSubsidyRatio:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._24h: BpsRatioPattern2 = BpsRatioPattern2(client, 'fee_to_subsidy_ratio_24h')
         self._1w: BpsRatioPattern2 = BpsRatioPattern2(client, 'fee_to_subsidy_ratio_1w')
         self._1m: BpsRatioPattern2 = BpsRatioPattern2(client, 'fee_to_subsidy_ratio_1m')
@@ -4611,7 +4633,7 @@ class SeriesTree_Mining_Rewards_Fees_ToSubsidyRatio:
 class SeriesTree_Mining_Rewards_Fees:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.block: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, 'fees')
         self.cumulative: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'fees_cumulative')
         self.sum: _1m1w1y24hPattern4 = _1m1w1y24hPattern4(client, 'fees_sum')
@@ -4629,7 +4651,7 @@ class SeriesTree_Mining_Rewards_Fees:
 class SeriesTree_Mining_Rewards:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.coinbase: AverageBlockCumulativeSumPattern3 = AverageBlockCumulativeSumPattern3(client, 'coinbase')
         self.subsidy: SeriesTree_Mining_Rewards_Subsidy = SeriesTree_Mining_Rewards_Subsidy(client)
         self.fees: SeriesTree_Mining_Rewards_Fees = SeriesTree_Mining_Rewards_Fees(client)
@@ -4639,7 +4661,7 @@ class SeriesTree_Mining_Rewards:
 class SeriesTree_Mining_Hashrate_Rate_Sma:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._1w: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'hash_rate_sma_1w')
         self._1m: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'hash_rate_sma_1m')
         self._2m: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'hash_rate_sma_2m')
@@ -4648,7 +4670,7 @@ class SeriesTree_Mining_Hashrate_Rate_Sma:
 class SeriesTree_Mining_Hashrate_Rate:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.base: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'hash_rate')
         self.sma: SeriesTree_Mining_Hashrate_Rate_Sma = SeriesTree_Mining_Hashrate_Rate_Sma(client)
         self.ath: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'hash_rate_ath')
@@ -4657,7 +4679,7 @@ class SeriesTree_Mining_Hashrate_Rate:
 class SeriesTree_Mining_Hashrate:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.rate: SeriesTree_Mining_Hashrate_Rate = SeriesTree_Mining_Hashrate_Rate(client)
         self.price: PhsReboundThsPattern = PhsReboundThsPattern(client, 'hash_price')
         self.value: PhsReboundThsPattern = PhsReboundThsPattern(client, 'hash_value')
@@ -4665,14 +4687,14 @@ class SeriesTree_Mining_Hashrate:
 class SeriesTree_Mining:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.rewards: SeriesTree_Mining_Rewards = SeriesTree_Mining_Rewards(client)
         self.hashrate: SeriesTree_Mining_Hashrate = SeriesTree_Mining_Hashrate(client)
 
 class SeriesTree_Cointime_Activity:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.coinblocks_created: AverageBlockCumulativeSumPattern[StoredF64] = AverageBlockCumulativeSumPattern(client, 'coinblocks_created')
         self.coinblocks_stored: AverageBlockCumulativeSumPattern[StoredF64] = AverageBlockCumulativeSumPattern(client, 'coinblocks_stored')
         self.liveliness: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'liveliness')
@@ -4683,14 +4705,14 @@ class SeriesTree_Cointime_Activity:
 class SeriesTree_Cointime_Supply:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.vaulted: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'vaulted_supply')
         self.active: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'active_supply')
 
 class SeriesTree_Cointime_Value:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.destroyed: AverageBlockCumulativeSumPattern[StoredF64] = AverageBlockCumulativeSumPattern(client, 'cointime_value_destroyed')
         self.created: AverageBlockCumulativeSumPattern[StoredF64] = AverageBlockCumulativeSumPattern(client, 'cointime_value_created')
         self.stored: AverageBlockCumulativeSumPattern[StoredF64] = AverageBlockCumulativeSumPattern(client, 'cointime_value_stored')
@@ -4699,7 +4721,7 @@ class SeriesTree_Cointime_Value:
 class SeriesTree_Cointime_Cap:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.thermo: CentsUsdPattern3 = CentsUsdPattern3(client, 'thermo_cap')
         self.investor: CentsUsdPattern3 = CentsUsdPattern3(client, 'investor_cap')
         self.vaulted: CentsUsdPattern3 = CentsUsdPattern3(client, 'vaulted_cap')
@@ -4710,7 +4732,7 @@ class SeriesTree_Cointime_Cap:
 class SeriesTree_Cointime_Prices:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.vaulted: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, 'vaulted_price')
         self.active: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, 'active_price')
         self.true_market_mean: BpsCentsPercentilesRatioSatsUsdPattern = BpsCentsPercentilesRatioSatsUsdPattern(client, 'true_market_mean')
@@ -4719,7 +4741,7 @@ class SeriesTree_Cointime_Prices:
 class SeriesTree_Cointime_Adjusted:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.inflation_rate: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'cointime_adj_inflation_rate')
         self.tx_velocity_native: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'cointime_adj_tx_velocity_btc')
         self.tx_velocity_fiat: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'cointime_adj_tx_velocity_usd')
@@ -4727,7 +4749,7 @@ class SeriesTree_Cointime_Adjusted:
 class SeriesTree_Cointime_ReserveRisk:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.value: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'reserve_risk')
         self.vocdd_median_1y: SeriesPattern18[StoredF64] = SeriesPattern18(client, 'vocdd_median_1y')
         self.hodl_bank: SeriesPattern18[StoredF64] = SeriesPattern18(client, 'hodl_bank')
@@ -4735,7 +4757,7 @@ class SeriesTree_Cointime_ReserveRisk:
 class SeriesTree_Cointime:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.activity: SeriesTree_Cointime_Activity = SeriesTree_Cointime_Activity(client)
         self.supply: SeriesTree_Cointime_Supply = SeriesTree_Cointime_Supply(client)
         self.value: SeriesTree_Cointime_Value = SeriesTree_Cointime_Value(client)
@@ -4747,7 +4769,7 @@ class SeriesTree_Cointime:
 class SeriesTree_Constants:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._0: SeriesPattern1[StoredU16] = SeriesPattern1(client, 'constant_0')
         self._1: SeriesPattern1[StoredU16] = SeriesPattern1(client, 'constant_1')
         self._2: SeriesPattern1[StoredU16] = SeriesPattern1(client, 'constant_2')
@@ -4770,87 +4792,87 @@ class SeriesTree_Constants:
 class SeriesTree_Indexes_Addr_P2pk33:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern26[P2PK33AddrIndex] = SeriesPattern26(client, 'p2pk33_addr_index')
         self.addr: SeriesPattern26[Addr] = SeriesPattern26(client, 'p2pk33_addr')
 
 class SeriesTree_Indexes_Addr_P2pk65:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern27[P2PK65AddrIndex] = SeriesPattern27(client, 'p2pk65_addr_index')
         self.addr: SeriesPattern27[Addr] = SeriesPattern27(client, 'p2pk65_addr')
 
 class SeriesTree_Indexes_Addr_P2pkh:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern28[P2PKHAddrIndex] = SeriesPattern28(client, 'p2pkh_addr_index')
         self.addr: SeriesPattern28[Addr] = SeriesPattern28(client, 'p2pkh_addr')
 
 class SeriesTree_Indexes_Addr_P2sh:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern29[P2SHAddrIndex] = SeriesPattern29(client, 'p2sh_addr_index')
         self.addr: SeriesPattern29[Addr] = SeriesPattern29(client, 'p2sh_addr')
 
 class SeriesTree_Indexes_Addr_P2tr:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern30[P2TRAddrIndex] = SeriesPattern30(client, 'p2tr_addr_index')
         self.addr: SeriesPattern30[Addr] = SeriesPattern30(client, 'p2tr_addr')
 
 class SeriesTree_Indexes_Addr_P2wpkh:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern31[P2WPKHAddrIndex] = SeriesPattern31(client, 'p2wpkh_addr_index')
         self.addr: SeriesPattern31[Addr] = SeriesPattern31(client, 'p2wpkh_addr')
 
 class SeriesTree_Indexes_Addr_P2wsh:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern32[P2WSHAddrIndex] = SeriesPattern32(client, 'p2wsh_addr_index')
         self.addr: SeriesPattern32[Addr] = SeriesPattern32(client, 'p2wsh_addr')
 
 class SeriesTree_Indexes_Addr_P2a:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern24[P2AAddrIndex] = SeriesPattern24(client, 'p2a_addr_index')
         self.addr: SeriesPattern24[Addr] = SeriesPattern24(client, 'p2a_addr')
 
 class SeriesTree_Indexes_Addr_P2ms:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern25[P2MSOutputIndex] = SeriesPattern25(client, 'p2ms_output_index')
 
 class SeriesTree_Indexes_Addr_Empty:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern22[EmptyOutputIndex] = SeriesPattern22(client, 'empty_output_index')
 
 class SeriesTree_Indexes_Addr_Unknown:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern33[UnknownOutputIndex] = SeriesPattern33(client, 'unknown_output_index')
 
 class SeriesTree_Indexes_Addr_OpReturn:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern23[OpReturnIndex] = SeriesPattern23(client, 'op_return_index')
 
 class SeriesTree_Indexes_Addr:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.p2pk33: SeriesTree_Indexes_Addr_P2pk33 = SeriesTree_Indexes_Addr_P2pk33(client)
         self.p2pk65: SeriesTree_Indexes_Addr_P2pk65 = SeriesTree_Indexes_Addr_P2pk65(client)
         self.p2pkh: SeriesTree_Indexes_Addr_P2pkh = SeriesTree_Indexes_Addr_P2pkh(client)
@@ -4867,7 +4889,7 @@ class SeriesTree_Indexes_Addr:
 class SeriesTree_Indexes_Height:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.minute10: SeriesPattern18[Minute10] = SeriesPattern18(client, 'minute10')
         self.minute30: SeriesPattern18[Minute30] = SeriesPattern18(client, 'minute30')
         self.hour1: SeriesPattern18[Hour1] = SeriesPattern18(client, 'hour1')
@@ -4888,105 +4910,105 @@ class SeriesTree_Indexes_Height:
 class SeriesTree_Indexes_Epoch:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_height: SeriesPattern17[Height] = SeriesPattern17(client, 'first_height')
 
 class SeriesTree_Indexes_Halving:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_height: SeriesPattern16[Height] = SeriesPattern16(client, 'first_height')
 
 class SeriesTree_Indexes_Minute10:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_height: SeriesPattern3[Height] = SeriesPattern3(client, 'first_height')
 
 class SeriesTree_Indexes_Minute30:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_height: SeriesPattern4[Height] = SeriesPattern4(client, 'first_height')
 
 class SeriesTree_Indexes_Hour1:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_height: SeriesPattern5[Height] = SeriesPattern5(client, 'first_height')
 
 class SeriesTree_Indexes_Hour4:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_height: SeriesPattern6[Height] = SeriesPattern6(client, 'first_height')
 
 class SeriesTree_Indexes_Hour12:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.first_height: SeriesPattern7[Height] = SeriesPattern7(client, 'first_height')
 
 class SeriesTree_Indexes_Day1:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.date: SeriesPattern8[Date] = SeriesPattern8(client, 'date')
         self.first_height: SeriesPattern8[Height] = SeriesPattern8(client, 'first_height')
 
 class SeriesTree_Indexes_Day3:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.date: SeriesPattern9[Date] = SeriesPattern9(client, 'date')
         self.first_height: SeriesPattern9[Height] = SeriesPattern9(client, 'first_height')
 
 class SeriesTree_Indexes_Week1:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.date: SeriesPattern10[Date] = SeriesPattern10(client, 'date')
         self.first_height: SeriesPattern10[Height] = SeriesPattern10(client, 'first_height')
 
 class SeriesTree_Indexes_Month1:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.date: SeriesPattern11[Date] = SeriesPattern11(client, 'date')
         self.first_height: SeriesPattern11[Height] = SeriesPattern11(client, 'first_height')
 
 class SeriesTree_Indexes_Month3:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.date: SeriesPattern12[Date] = SeriesPattern12(client, 'date')
         self.first_height: SeriesPattern12[Height] = SeriesPattern12(client, 'first_height')
 
 class SeriesTree_Indexes_Month6:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.date: SeriesPattern13[Date] = SeriesPattern13(client, 'date')
         self.first_height: SeriesPattern13[Height] = SeriesPattern13(client, 'first_height')
 
 class SeriesTree_Indexes_Year1:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.date: SeriesPattern14[Date] = SeriesPattern14(client, 'date')
         self.first_height: SeriesPattern14[Height] = SeriesPattern14(client, 'first_height')
 
 class SeriesTree_Indexes_Year10:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.date: SeriesPattern15[Date] = SeriesPattern15(client, 'date')
         self.first_height: SeriesPattern15[Height] = SeriesPattern15(client, 'first_height')
 
 class SeriesTree_Indexes_TxIndex:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern19[TxIndex] = SeriesPattern19(client, 'tx_index')
         self.input_count: SeriesPattern19[StoredU64] = SeriesPattern19(client, 'input_count')
         self.output_count: SeriesPattern19[StoredU64] = SeriesPattern19(client, 'output_count')
@@ -4994,26 +5016,26 @@ class SeriesTree_Indexes_TxIndex:
 class SeriesTree_Indexes_TxinIndex:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern20[TxInIndex] = SeriesPattern20(client, 'txin_index')
 
 class SeriesTree_Indexes_TxoutIndex:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.identity: SeriesPattern21[TxOutIndex] = SeriesPattern21(client, 'txout_index')
 
 class SeriesTree_Indexes_Timestamp:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.monotonic: SeriesPattern18[Timestamp] = SeriesPattern18(client, 'timestamp_monotonic')
         self.resolutions: SeriesPattern2[Timestamp] = SeriesPattern2(client, 'timestamp')
 
 class SeriesTree_Indexes:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.addr: SeriesTree_Indexes_Addr = SeriesTree_Indexes_Addr(client)
         self.height: SeriesTree_Indexes_Height = SeriesTree_Indexes_Height(client)
         self.epoch: SeriesTree_Indexes_Epoch = SeriesTree_Indexes_Epoch(client)
@@ -5039,14 +5061,14 @@ class SeriesTree_Indexes:
 class SeriesTree_Indicators_Dormancy:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.supply_adj: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'dormancy_supply_adj')
         self.flow: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'dormancy_flow')
 
 class SeriesTree_Indicators_RarityMeter:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.full: IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern = IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern(client, 'rarity_meter')
         self.local: IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern = IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern(client, 'local_rarity_meter')
         self.cycle: IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern = IndexPct0Pct1Pct2Pct5Pct95Pct98Pct99ScorePattern(client, 'cycle_rarity_meter')
@@ -5054,7 +5076,7 @@ class SeriesTree_Indicators_RarityMeter:
 class SeriesTree_Indicators:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.puell_multiple: BpsRatioPattern2 = BpsRatioPattern2(client, 'puell_multiple')
         self.nvt: BpsRatioPattern2 = BpsRatioPattern2(client, 'nvt')
         self.gini: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, 'gini')
@@ -5070,7 +5092,7 @@ class SeriesTree_Indicators:
 class SeriesTree_Investing_Period_DcaCostBasis:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._1w: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_1w')
         self._1m: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_1m')
         self._3m: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_3m')
@@ -5087,7 +5109,7 @@ class SeriesTree_Investing_Period_DcaCostBasis:
 class SeriesTree_Investing_Period:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.dca_stack: _10y1m1w1y2y3m3y4y5y6m6y8yPattern3 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern3(client, 'dca_stack')
         self.dca_cost_basis: SeriesTree_Investing_Period_DcaCostBasis = SeriesTree_Investing_Period_DcaCostBasis(client)
         self.dca_return: _10y1m1w1y2y3m3y4y5y6m6y8yPattern2 = _10y1m1w1y2y3m3y4y5y6m6y8yPattern2(client, 'dca_return')
@@ -5098,7 +5120,7 @@ class SeriesTree_Investing_Period:
 class SeriesTree_Investing_Class_DcaStack:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.from_2015: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'dca_stack_from_2015')
         self.from_2016: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'dca_stack_from_2016')
         self.from_2017: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'dca_stack_from_2017')
@@ -5115,7 +5137,7 @@ class SeriesTree_Investing_Class_DcaStack:
 class SeriesTree_Investing_Class_DcaCostBasis:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.from_2015: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2015')
         self.from_2016: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2016')
         self.from_2017: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'dca_cost_basis_from_2017')
@@ -5132,7 +5154,7 @@ class SeriesTree_Investing_Class_DcaCostBasis:
 class SeriesTree_Investing_Class_DcaReturn:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.from_2015: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2015')
         self.from_2016: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2016')
         self.from_2017: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'dca_return_from_2017')
@@ -5149,7 +5171,7 @@ class SeriesTree_Investing_Class_DcaReturn:
 class SeriesTree_Investing_Class:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.dca_stack: SeriesTree_Investing_Class_DcaStack = SeriesTree_Investing_Class_DcaStack(client)
         self.dca_cost_basis: SeriesTree_Investing_Class_DcaCostBasis = SeriesTree_Investing_Class_DcaCostBasis(client)
         self.dca_return: SeriesTree_Investing_Class_DcaReturn = SeriesTree_Investing_Class_DcaReturn(client)
@@ -5157,7 +5179,7 @@ class SeriesTree_Investing_Class:
 class SeriesTree_Investing:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sats_per_day: SeriesPattern18[Sats] = SeriesPattern18(client, 'dca_sats_per_day')
         self.period: SeriesTree_Investing_Period = SeriesTree_Investing_Period(client)
         self.class_: SeriesTree_Investing_Class = SeriesTree_Investing_Class(client)
@@ -5165,7 +5187,7 @@ class SeriesTree_Investing:
 class SeriesTree_Market_Ath:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.high: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_ath')
         self.drawdown: BpsPercentRatioPattern5 = BpsPercentRatioPattern5(client, 'price_drawdown')
         self.days_since: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'days_since_price_ath')
@@ -5176,7 +5198,7 @@ class SeriesTree_Market_Ath:
 class SeriesTree_Market_Lookback:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._24h: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_past_24h')
         self._1w: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_past_1w')
         self._1m: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_past_1m')
@@ -5194,7 +5216,7 @@ class SeriesTree_Market_Lookback:
 class SeriesTree_Market_Returns_Periods:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._24h: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'price_return_24h')
         self._1w: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'price_return_1w')
         self._1m: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'price_return_1m')
@@ -5212,35 +5234,35 @@ class SeriesTree_Market_Returns_Periods:
 class SeriesTree_Market_Returns_Sd24h_24h:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sma: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_return_24h_sma_24h')
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_return_24h_sd_24h')
 
 class SeriesTree_Market_Returns_Sd24h_1w:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sma: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_return_24h_sma_1w')
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_return_24h_sd_1w')
 
 class SeriesTree_Market_Returns_Sd24h_1m:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sma: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_return_24h_sma_1m')
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_return_24h_sd_1m')
 
 class SeriesTree_Market_Returns_Sd24h_1y:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sma: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_return_24h_sma_1y')
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_return_24h_sd_1y')
 
 class SeriesTree_Market_Returns_Sd24h:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._24h: SeriesTree_Market_Returns_Sd24h_24h = SeriesTree_Market_Returns_Sd24h_24h(client)
         self._1w: SeriesTree_Market_Returns_Sd24h_1w = SeriesTree_Market_Returns_Sd24h_1w(client)
         self._1m: SeriesTree_Market_Returns_Sd24h_1m = SeriesTree_Market_Returns_Sd24h_1m(client)
@@ -5249,7 +5271,7 @@ class SeriesTree_Market_Returns_Sd24h:
 class SeriesTree_Market_Returns:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.periods: SeriesTree_Market_Returns_Periods = SeriesTree_Market_Returns_Periods(client)
         self.cagr: _10y2y3y4y5y6y8yPattern = _10y2y3y4y5y6y8yPattern(client, 'price_cagr')
         self.sd_24h: SeriesTree_Market_Returns_Sd24h = SeriesTree_Market_Returns_Sd24h(client)
@@ -5257,7 +5279,7 @@ class SeriesTree_Market_Returns:
 class SeriesTree_Market_Range:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.min: _1m1w1y2wPattern = _1m1w1y2wPattern(client, 'price_min')
         self.max: _1m1w1y2wPattern = _1m1w1y2wPattern(client, 'price_max')
         self.true_range: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_true_range')
@@ -5267,7 +5289,7 @@ class SeriesTree_Market_Range:
 class SeriesTree_Market_MovingAverage_Sma_200d:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, 'price_sma_200d')
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, 'price_sma_200d_cents')
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, 'price_sma_200d_sats')
@@ -5279,7 +5301,7 @@ class SeriesTree_Market_MovingAverage_Sma_200d:
 class SeriesTree_Market_MovingAverage_Sma_350d:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, 'price_sma_350d')
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, 'price_sma_350d_cents')
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, 'price_sma_350d_sats')
@@ -5290,7 +5312,7 @@ class SeriesTree_Market_MovingAverage_Sma_350d:
 class SeriesTree_Market_MovingAverage_Sma:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._1w: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_sma_1w')
         self._8d: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_sma_8d')
         self._13d: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_sma_13d')
@@ -5311,7 +5333,7 @@ class SeriesTree_Market_MovingAverage_Sma:
 class SeriesTree_Market_MovingAverage_Ema:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._1w: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_ema_1w')
         self._8d: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_ema_8d')
         self._12d: BpsCentsRatioSatsUsdPattern = BpsCentsRatioSatsUsdPattern(client, 'price_ema_12d')
@@ -5332,14 +5354,14 @@ class SeriesTree_Market_MovingAverage_Ema:
 class SeriesTree_Market_MovingAverage:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sma: SeriesTree_Market_MovingAverage_Sma = SeriesTree_Market_MovingAverage_Sma(client)
         self.ema: SeriesTree_Market_MovingAverage_Ema = SeriesTree_Market_MovingAverage_Ema(client)
 
 class SeriesTree_Market_Technical_Rsi:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._24h: RsiStochPattern = RsiStochPattern(client, 'rsi', '24h')
         self._1w: RsiStochPattern = RsiStochPattern(client, 'rsi', '1w')
         self._1m: RsiStochPattern = RsiStochPattern(client, 'rsi', '1m')
@@ -5347,7 +5369,7 @@ class SeriesTree_Market_Technical_Rsi:
 class SeriesTree_Market_Technical_Macd_24h:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.ema_fast: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_ema_fast_24h')
         self.ema_slow: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_ema_slow_24h')
         self.line: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_line_24h')
@@ -5357,7 +5379,7 @@ class SeriesTree_Market_Technical_Macd_24h:
 class SeriesTree_Market_Technical_Macd_1w:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.ema_fast: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_ema_fast_1w')
         self.ema_slow: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_ema_slow_1w')
         self.line: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_line_1w')
@@ -5367,7 +5389,7 @@ class SeriesTree_Market_Technical_Macd_1w:
 class SeriesTree_Market_Technical_Macd_1m:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.ema_fast: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_ema_fast_1m')
         self.ema_slow: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_ema_slow_1m')
         self.line: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'macd_line_1m')
@@ -5377,7 +5399,7 @@ class SeriesTree_Market_Technical_Macd_1m:
 class SeriesTree_Market_Technical_Macd:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._24h: SeriesTree_Market_Technical_Macd_24h = SeriesTree_Market_Technical_Macd_24h(client)
         self._1w: SeriesTree_Market_Technical_Macd_1w = SeriesTree_Market_Technical_Macd_1w(client)
         self._1m: SeriesTree_Market_Technical_Macd_1m = SeriesTree_Market_Technical_Macd_1m(client)
@@ -5385,7 +5407,7 @@ class SeriesTree_Market_Technical_Macd:
 class SeriesTree_Market_Technical:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.rsi: SeriesTree_Market_Technical_Rsi = SeriesTree_Market_Technical_Rsi(client)
         self.pi_cycle: BpsRatioPattern2 = BpsRatioPattern2(client, 'pi_cycle')
         self.macd: SeriesTree_Market_Technical_Macd = SeriesTree_Market_Technical_Macd(client)
@@ -5393,7 +5415,7 @@ class SeriesTree_Market_Technical:
 class SeriesTree_Market:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.ath: SeriesTree_Market_Ath = SeriesTree_Market_Ath(client)
         self.lookback: SeriesTree_Market_Lookback = SeriesTree_Market_Lookback(client)
         self.returns: SeriesTree_Market_Returns = SeriesTree_Market_Returns(client)
@@ -5405,7 +5427,7 @@ class SeriesTree_Market:
 class SeriesTree_Pools_Major:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.unknown: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'unknown')
         self.luxor: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'luxor')
         self.btccom: BlocksDominanceRewardsPattern = BlocksDominanceRewardsPattern(client, 'btccom')
@@ -5432,7 +5454,7 @@ class SeriesTree_Pools_Major:
 class SeriesTree_Pools_Minor:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.blockfills: BlocksDominancePattern = BlocksDominancePattern(client, 'blockfills')
         self.ultimuspool: BlocksDominancePattern = BlocksDominancePattern(client, 'ultimuspool')
         self.terrapool: BlocksDominancePattern = BlocksDominancePattern(client, 'terrapool')
@@ -5580,7 +5602,7 @@ class SeriesTree_Pools_Minor:
 class SeriesTree_Pools:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.pool: SeriesPattern18[PoolSlug] = SeriesPattern18(client, 'pool')
         self.major: SeriesTree_Pools_Major = SeriesTree_Pools_Major(client)
         self.minor: SeriesTree_Pools_Minor = SeriesTree_Pools_Minor(client)
@@ -5588,7 +5610,7 @@ class SeriesTree_Pools:
 class SeriesTree_Prices_Split:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.open: CentsSatsUsdPattern3 = CentsSatsUsdPattern3(client, 'price_open')
         self.high: CentsSatsUsdPattern3 = CentsSatsUsdPattern3(client, 'price_high')
         self.low: CentsSatsUsdPattern3 = CentsSatsUsdPattern3(client, 'price_low')
@@ -5597,7 +5619,7 @@ class SeriesTree_Prices_Split:
 class SeriesTree_Prices_Ohlc:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.usd: SeriesPattern2[OHLCDollars] = SeriesPattern2(client, 'price_ohlc')
         self.cents: SeriesPattern2[OHLCCents] = SeriesPattern2(client, 'price_ohlc_cents')
         self.sats: SeriesPattern2[OHLCSats] = SeriesPattern2(client, 'price_ohlc_sats')
@@ -5605,7 +5627,7 @@ class SeriesTree_Prices_Ohlc:
 class SeriesTree_Prices_Spot:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, 'price')
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, 'price_cents')
         self.sats: SeriesPattern1[Sats] = SeriesPattern1(client, 'price_sats')
@@ -5613,7 +5635,7 @@ class SeriesTree_Prices_Spot:
 class SeriesTree_Prices:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.split: SeriesTree_Prices_Split = SeriesTree_Prices_Split(client)
         self.ohlc: SeriesTree_Prices_Ohlc = SeriesTree_Prices_Ohlc(client)
         self.spot: SeriesTree_Prices_Spot = SeriesTree_Prices_Spot(client)
@@ -5621,14 +5643,14 @@ class SeriesTree_Prices:
 class SeriesTree_Supply_Velocity:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.native: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'velocity_btc')
         self.fiat: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'velocity_usd')
 
 class SeriesTree_Supply:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.state: SeriesPattern18[SupplyState] = SeriesPattern18(client, 'supply_state')
         self.circulating: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'circulating_supply')
         self.burned: BlockCumulativePattern = BlockCumulativePattern(client, 'unspendable_supply')
@@ -5641,7 +5663,7 @@ class SeriesTree_Supply:
 class SeriesTree_Cohorts_Utxo_All_Outputs:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.unspent_count: BaseDeltaPattern = BaseDeltaPattern(client, 'utxo_count')
         self.spent_count: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, 'spent_utxo_count')
         self.spending_rate: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'spending_rate')
@@ -5649,7 +5671,7 @@ class SeriesTree_Cohorts_Utxo_All_Outputs:
 class SeriesTree_Cohorts_Utxo_All_Activity:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.transfer_volume: AverageBlockCumulativeInSumPattern = AverageBlockCumulativeInSumPattern(client, 'transfer_volume')
         self.coindays_destroyed: AverageBlockCumulativeSumPattern[StoredF64] = AverageBlockCumulativeSumPattern(client, 'coindays_destroyed')
         self.coinyears_destroyed: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'coinyears_destroyed')
@@ -5658,7 +5680,7 @@ class SeriesTree_Cohorts_Utxo_All_Activity:
 class SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_All:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'realized_price_ratio_sd')
         self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'realized_price_ratio_zscore')
         self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_price_0sd')
@@ -5678,7 +5700,7 @@ class SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_All:
 class SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_4y:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'realized_price_ratio_sd_4y')
         self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'realized_price_ratio_zscore_4y')
         self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_price_0sd_4y')
@@ -5698,7 +5720,7 @@ class SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_4y:
 class SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_2y:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'realized_price_ratio_sd_2y')
         self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'realized_price_ratio_zscore_2y')
         self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_price_0sd_2y')
@@ -5718,7 +5740,7 @@ class SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_2y:
 class SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_1y:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'realized_price_ratio_sd_1y')
         self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'realized_price_ratio_zscore_1y')
         self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'realized_price_0sd_1y')
@@ -5738,7 +5760,7 @@ class SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_1y:
 class SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_All = SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_All(client)
         self._4y: SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_4y = SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_4y(client)
         self._2y: SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_2y = SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev_2y(client)
@@ -5747,7 +5769,7 @@ class SeriesTree_Cohorts_Utxo_All_Realized_Price_StdDev:
 class SeriesTree_Cohorts_Utxo_All_Realized_Price:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, 'realized_price')
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, 'realized_price_cents')
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, 'realized_price_sats')
@@ -5760,7 +5782,7 @@ class SeriesTree_Cohorts_Utxo_All_Realized_Price:
 class SeriesTree_Cohorts_Utxo_All_Realized_Sopr_Adjusted:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'asopr')
         self.transfer_volume: AverageBlockCumulativeSumPattern[Cents] = AverageBlockCumulativeSumPattern(client, 'adj_value_created')
         self.value_destroyed: AverageBlockCumulativeSumPattern[Cents] = AverageBlockCumulativeSumPattern(client, 'adj_value_destroyed')
@@ -5768,7 +5790,7 @@ class SeriesTree_Cohorts_Utxo_All_Realized_Sopr_Adjusted:
 class SeriesTree_Cohorts_Utxo_All_Realized_Sopr:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.value_destroyed: AverageBlockCumulativeSumPattern[Cents] = AverageBlockCumulativeSumPattern(client, 'value_destroyed')
         self.ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'sopr')
         self.adjusted: SeriesTree_Cohorts_Utxo_All_Realized_Sopr_Adjusted = SeriesTree_Cohorts_Utxo_All_Realized_Sopr_Adjusted(client)
@@ -5776,7 +5798,7 @@ class SeriesTree_Cohorts_Utxo_All_Realized_Sopr:
 class SeriesTree_Cohorts_Utxo_All_Realized:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.cap: CentsDeltaToUsdPattern = CentsDeltaToUsdPattern(client, 'realized_cap')
         self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'realized_profit')
         self.loss: BlockCumulativeNegativeSumPattern = BlockCumulativeNegativeSumPattern(client, 'realized_loss')
@@ -5793,7 +5815,7 @@ class SeriesTree_Cohorts_Utxo_All_Realized:
 class SeriesTree_Cohorts_Utxo_All_CostBasis:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.in_profit: PerPattern = PerPattern(client, 'cost_basis_in_profit_per')
         self.in_loss: PerPattern = PerPattern(client, 'cost_basis_in_loss_per')
         self.min: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'cost_basis_min')
@@ -5805,7 +5827,7 @@ class SeriesTree_Cohorts_Utxo_All_CostBasis:
 class SeriesTree_Cohorts_Utxo_All_Unrealized_Profit:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, 'unrealized_profit')
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, 'unrealized_profit_cents')
         self.to_mcap: BpsPercentRatioPattern2 = BpsPercentRatioPattern2(client, 'unrealized_profit_to_mcap')
@@ -5814,7 +5836,7 @@ class SeriesTree_Cohorts_Utxo_All_Unrealized_Profit:
 class SeriesTree_Cohorts_Utxo_All_Unrealized_Loss:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, 'unrealized_loss')
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, 'unrealized_loss_cents')
         self.negative: SeriesPattern1[Dollars] = SeriesPattern1(client, 'unrealized_loss_neg')
@@ -5824,7 +5846,7 @@ class SeriesTree_Cohorts_Utxo_All_Unrealized_Loss:
 class SeriesTree_Cohorts_Utxo_All_Unrealized_NetPnl:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, 'net_unrealized_pnl')
         self.cents: SeriesPattern1[CentsSigned] = SeriesPattern1(client, 'net_unrealized_pnl_cents')
         self.to_own_gross_pnl: BpsPercentRatioPattern = BpsPercentRatioPattern(client, 'net_unrealized_pnl_to_own_gross_pnl')
@@ -5832,7 +5854,7 @@ class SeriesTree_Cohorts_Utxo_All_Unrealized_NetPnl:
 class SeriesTree_Cohorts_Utxo_All_Unrealized_Sentiment:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.pain_index: CentsUsdPattern3 = CentsUsdPattern3(client, 'pain_index')
         self.greed_index: CentsUsdPattern3 = CentsUsdPattern3(client, 'greed_index')
         self.net: CentsUsdPattern = CentsUsdPattern(client, 'net_sentiment')
@@ -5840,7 +5862,7 @@ class SeriesTree_Cohorts_Utxo_All_Unrealized_Sentiment:
 class SeriesTree_Cohorts_Utxo_All_Unrealized:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.nupl: BpsRatioPattern = BpsRatioPattern(client, 'nupl')
         self.profit: SeriesTree_Cohorts_Utxo_All_Unrealized_Profit = SeriesTree_Cohorts_Utxo_All_Unrealized_Profit(client)
         self.loss: SeriesTree_Cohorts_Utxo_All_Unrealized_Loss = SeriesTree_Cohorts_Utxo_All_Unrealized_Loss(client)
@@ -5854,7 +5876,7 @@ class SeriesTree_Cohorts_Utxo_All_Unrealized:
 class SeriesTree_Cohorts_Utxo_All:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.supply: DeltaDominanceHalfInTotalPattern2 = DeltaDominanceHalfInTotalPattern2(client, 'supply')
         self.outputs: SeriesTree_Cohorts_Utxo_All_Outputs = SeriesTree_Cohorts_Utxo_All_Outputs(client)
         self.activity: SeriesTree_Cohorts_Utxo_All_Activity = SeriesTree_Cohorts_Utxo_All_Activity(client)
@@ -5866,7 +5888,7 @@ class SeriesTree_Cohorts_Utxo_All:
 class SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_All:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'sth_realized_price_ratio_sd')
         self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'sth_realized_price_ratio_zscore')
         self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'sth_realized_price_0sd')
@@ -5886,7 +5908,7 @@ class SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_All:
 class SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_4y:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'sth_realized_price_ratio_sd_4y')
         self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'sth_realized_price_ratio_zscore_4y')
         self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'sth_realized_price_0sd_4y')
@@ -5906,7 +5928,7 @@ class SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_4y:
 class SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_2y:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'sth_realized_price_ratio_sd_2y')
         self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'sth_realized_price_ratio_zscore_2y')
         self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'sth_realized_price_0sd_2y')
@@ -5926,7 +5948,7 @@ class SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_2y:
 class SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_1y:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'sth_realized_price_ratio_sd_1y')
         self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'sth_realized_price_ratio_zscore_1y')
         self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'sth_realized_price_0sd_1y')
@@ -5946,7 +5968,7 @@ class SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_1y:
 class SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_All = SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_All(client)
         self._4y: SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_4y = SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_4y(client)
         self._2y: SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_2y = SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev_2y(client)
@@ -5955,7 +5977,7 @@ class SeriesTree_Cohorts_Utxo_Sth_Realized_Price_StdDev:
 class SeriesTree_Cohorts_Utxo_Sth_Realized_Price:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, 'sth_realized_price')
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, 'sth_realized_price_cents')
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, 'sth_realized_price_sats')
@@ -5968,7 +5990,7 @@ class SeriesTree_Cohorts_Utxo_Sth_Realized_Price:
 class SeriesTree_Cohorts_Utxo_Sth_Realized:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.cap: CentsDeltaToUsdPattern = CentsDeltaToUsdPattern(client, 'sth_realized_cap')
         self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'sth_realized_profit')
         self.loss: BlockCumulativeNegativeSumPattern = BlockCumulativeNegativeSumPattern(client, 'sth_realized_loss')
@@ -5985,7 +6007,7 @@ class SeriesTree_Cohorts_Utxo_Sth_Realized:
 class SeriesTree_Cohorts_Utxo_Sth:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.supply: DeltaDominanceHalfInTotalPattern2 = DeltaDominanceHalfInTotalPattern2(client, 'sth_supply')
         self.outputs: SpendingSpentUnspentPattern = SpendingSpentUnspentPattern(client, 'sth')
         self.activity: CoindaysCoinyearsDormancyTransferPattern = CoindaysCoinyearsDormancyTransferPattern(client, 'sth')
@@ -5997,7 +6019,7 @@ class SeriesTree_Cohorts_Utxo_Sth:
 class SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_All:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'lth_realized_price_ratio_sd')
         self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'lth_realized_price_ratio_zscore')
         self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'lth_realized_price_0sd')
@@ -6017,7 +6039,7 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_All:
 class SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_4y:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'lth_realized_price_ratio_sd_4y')
         self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'lth_realized_price_ratio_zscore_4y')
         self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'lth_realized_price_0sd_4y')
@@ -6037,7 +6059,7 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_4y:
 class SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_2y:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'lth_realized_price_ratio_sd_2y')
         self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'lth_realized_price_ratio_zscore_2y')
         self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'lth_realized_price_0sd_2y')
@@ -6057,7 +6079,7 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_2y:
 class SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_1y:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'lth_realized_price_ratio_sd_1y')
         self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'lth_realized_price_ratio_zscore_1y')
         self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'lth_realized_price_0sd_1y')
@@ -6077,7 +6099,7 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_1y:
 class SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_All = SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_All(client)
         self._4y: SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_4y = SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_4y(client)
         self._2y: SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_2y = SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev_2y(client)
@@ -6086,7 +6108,7 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev:
 class SeriesTree_Cohorts_Utxo_Lth_Realized_Price:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, 'lth_realized_price')
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, 'lth_realized_price_cents')
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, 'lth_realized_price_sats')
@@ -6099,14 +6121,14 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized_Price:
 class SeriesTree_Cohorts_Utxo_Lth_Realized_Sopr:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.value_destroyed: AverageBlockCumulativeSumPattern[Cents] = AverageBlockCumulativeSumPattern(client, 'lth_value_destroyed')
         self.ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'lth_sopr')
 
 class SeriesTree_Cohorts_Utxo_Lth_Realized:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.cap: CentsDeltaToUsdPattern = CentsDeltaToUsdPattern(client, 'lth_realized_cap')
         self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'lth_realized_profit')
         self.loss: BlockCumulativeNegativeSumPattern = BlockCumulativeNegativeSumPattern(client, 'lth_realized_loss')
@@ -6123,7 +6145,7 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized:
 class SeriesTree_Cohorts_Utxo_Lth:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.supply: DeltaDominanceHalfInTotalPattern2 = DeltaDominanceHalfInTotalPattern2(client, 'lth_supply')
         self.outputs: SpendingSpentUnspentPattern = SpendingSpentUnspentPattern(client, 'lth')
         self.activity: CoindaysCoinyearsDormancyTransferPattern = CoindaysCoinyearsDormancyTransferPattern(client, 'lth')
@@ -6135,7 +6157,7 @@ class SeriesTree_Cohorts_Utxo_Lth:
 class SeriesTree_Cohorts_Utxo_AgeRange:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.under_1h: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_1h_old')
         self._1h_to_1d: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_1h_to_1d_old')
         self._1d_to_1w: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_1d_to_1w_old')
@@ -6161,7 +6183,7 @@ class SeriesTree_Cohorts_Utxo_AgeRange:
 class SeriesTree_Cohorts_Utxo_UnderAge:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._1w: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_1w_old')
         self._1m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_1m_old')
         self._2m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_under_2m_old')
@@ -6184,7 +6206,7 @@ class SeriesTree_Cohorts_Utxo_UnderAge:
 class SeriesTree_Cohorts_Utxo_OverAge:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._1d: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_1d_old')
         self._1w: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_1w_old')
         self._1m: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'utxos_over_1m_old')
@@ -6207,7 +6229,7 @@ class SeriesTree_Cohorts_Utxo_OverAge:
 class SeriesTree_Cohorts_Utxo_Epoch:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._0: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'epoch_0')
         self._1: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'epoch_1')
         self._2: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'epoch_2')
@@ -6217,7 +6239,7 @@ class SeriesTree_Cohorts_Utxo_Epoch:
 class SeriesTree_Cohorts_Utxo_Class:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._2009: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2009')
         self._2010: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2010')
         self._2011: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2011')
@@ -6240,7 +6262,7 @@ class SeriesTree_Cohorts_Utxo_Class:
 class SeriesTree_Cohorts_Utxo_OverAmount:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._1sat: ActivityOutputsRealizedSupplyUnrealizedPattern2 = ActivityOutputsRealizedSupplyUnrealizedPattern2(client, 'utxos_over_1sat')
         self._10sats: ActivityOutputsRealizedSupplyUnrealizedPattern2 = ActivityOutputsRealizedSupplyUnrealizedPattern2(client, 'utxos_over_10sats')
         self._100sats: ActivityOutputsRealizedSupplyUnrealizedPattern2 = ActivityOutputsRealizedSupplyUnrealizedPattern2(client, 'utxos_over_100sats')
@@ -6258,7 +6280,7 @@ class SeriesTree_Cohorts_Utxo_OverAmount:
 class SeriesTree_Cohorts_Utxo_AmountRange:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._0sats: ActivityOutputsRealizedSupplyUnrealizedPattern2 = ActivityOutputsRealizedSupplyUnrealizedPattern2(client, 'utxos_0sats')
         self._1sat_to_10sats: ActivityOutputsRealizedSupplyUnrealizedPattern2 = ActivityOutputsRealizedSupplyUnrealizedPattern2(client, 'utxos_1sat_to_10sats')
         self._10sats_to_100sats: ActivityOutputsRealizedSupplyUnrealizedPattern2 = ActivityOutputsRealizedSupplyUnrealizedPattern2(client, 'utxos_10sats_to_100sats')
@@ -6278,7 +6300,7 @@ class SeriesTree_Cohorts_Utxo_AmountRange:
 class SeriesTree_Cohorts_Utxo_UnderAmount:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._10sats: ActivityOutputsRealizedSupplyUnrealizedPattern2 = ActivityOutputsRealizedSupplyUnrealizedPattern2(client, 'utxos_under_10sats')
         self._100sats: ActivityOutputsRealizedSupplyUnrealizedPattern2 = ActivityOutputsRealizedSupplyUnrealizedPattern2(client, 'utxos_under_100sats')
         self._1k_sats: ActivityOutputsRealizedSupplyUnrealizedPattern2 = ActivityOutputsRealizedSupplyUnrealizedPattern2(client, 'utxos_under_1k_sats')
@@ -6296,7 +6318,7 @@ class SeriesTree_Cohorts_Utxo_UnderAmount:
 class SeriesTree_Cohorts_Utxo_Type:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.p2pk65: ActivityOutputsRealizedSupplyUnrealizedPattern3 = ActivityOutputsRealizedSupplyUnrealizedPattern3(client, 'p2pk65')
         self.p2pk33: ActivityOutputsRealizedSupplyUnrealizedPattern3 = ActivityOutputsRealizedSupplyUnrealizedPattern3(client, 'p2pk33')
         self.p2pkh: ActivityOutputsRealizedSupplyUnrealizedPattern3 = ActivityOutputsRealizedSupplyUnrealizedPattern3(client, 'p2pkh')
@@ -6312,7 +6334,7 @@ class SeriesTree_Cohorts_Utxo_Type:
 class SeriesTree_Cohorts_Utxo_Profitability_Range:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.over_1000pct_in_profit: NuplRealizedSupplyUnrealizedPattern = NuplRealizedSupplyUnrealizedPattern(client, 'utxos_over_1000pct_in_profit')
         self._500pct_to_1000pct_in_profit: NuplRealizedSupplyUnrealizedPattern = NuplRealizedSupplyUnrealizedPattern(client, 'utxos_500pct_to_1000pct_in_profit')
         self._300pct_to_500pct_in_profit: NuplRealizedSupplyUnrealizedPattern = NuplRealizedSupplyUnrealizedPattern(client, 'utxos_300pct_to_500pct_in_profit')
@@ -6342,7 +6364,7 @@ class SeriesTree_Cohorts_Utxo_Profitability_Range:
 class SeriesTree_Cohorts_Utxo_Profitability_Profit:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: NuplRealizedSupplyUnrealizedPattern = NuplRealizedSupplyUnrealizedPattern(client, 'utxos_in_profit')
         self._10pct: NuplRealizedSupplyUnrealizedPattern = NuplRealizedSupplyUnrealizedPattern(client, 'utxos_over_10pct_in_profit')
         self._20pct: NuplRealizedSupplyUnrealizedPattern = NuplRealizedSupplyUnrealizedPattern(client, 'utxos_over_20pct_in_profit')
@@ -6361,7 +6383,7 @@ class SeriesTree_Cohorts_Utxo_Profitability_Profit:
 class SeriesTree_Cohorts_Utxo_Profitability_Loss:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: NuplRealizedSupplyUnrealizedPattern = NuplRealizedSupplyUnrealizedPattern(client, 'utxos_in_loss')
         self._10pct: NuplRealizedSupplyUnrealizedPattern = NuplRealizedSupplyUnrealizedPattern(client, 'utxos_over_10pct_in_loss')
         self._20pct: NuplRealizedSupplyUnrealizedPattern = NuplRealizedSupplyUnrealizedPattern(client, 'utxos_over_20pct_in_loss')
@@ -6375,7 +6397,7 @@ class SeriesTree_Cohorts_Utxo_Profitability_Loss:
 class SeriesTree_Cohorts_Utxo_Profitability:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.range: SeriesTree_Cohorts_Utxo_Profitability_Range = SeriesTree_Cohorts_Utxo_Profitability_Range(client)
         self.profit: SeriesTree_Cohorts_Utxo_Profitability_Profit = SeriesTree_Cohorts_Utxo_Profitability_Profit(client)
         self.loss: SeriesTree_Cohorts_Utxo_Profitability_Loss = SeriesTree_Cohorts_Utxo_Profitability_Loss(client)
@@ -6383,7 +6405,7 @@ class SeriesTree_Cohorts_Utxo_Profitability:
 class SeriesTree_Cohorts_Utxo_Matured:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.under_1h: AverageBlockCumulativeSumPattern3 = AverageBlockCumulativeSumPattern3(client, 'utxos_under_1h_old_matured_supply')
         self._1h_to_1d: AverageBlockCumulativeSumPattern3 = AverageBlockCumulativeSumPattern3(client, 'utxos_1h_to_1d_old_matured_supply')
         self._1d_to_1w: AverageBlockCumulativeSumPattern3 = AverageBlockCumulativeSumPattern3(client, 'utxos_1d_to_1w_old_matured_supply')
@@ -6409,7 +6431,7 @@ class SeriesTree_Cohorts_Utxo_Matured:
 class SeriesTree_Cohorts_Utxo:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.all: SeriesTree_Cohorts_Utxo_All = SeriesTree_Cohorts_Utxo_All(client)
         self.sth: SeriesTree_Cohorts_Utxo_Sth = SeriesTree_Cohorts_Utxo_Sth(client)
         self.lth: SeriesTree_Cohorts_Utxo_Lth = SeriesTree_Cohorts_Utxo_Lth(client)
@@ -6428,7 +6450,7 @@ class SeriesTree_Cohorts_Utxo:
 class SeriesTree_Cohorts_Addr_OverAmount:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._1sat: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_1sat')
         self._10sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_10sats')
         self._100sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_over_100sats')
@@ -6446,7 +6468,7 @@ class SeriesTree_Cohorts_Addr_OverAmount:
 class SeriesTree_Cohorts_Addr_AmountRange:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._0sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_0sats')
         self._1sat_to_10sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_1sat_to_10sats')
         self._10sats_to_100sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_10sats_to_100sats')
@@ -6466,7 +6488,7 @@ class SeriesTree_Cohorts_Addr_AmountRange:
 class SeriesTree_Cohorts_Addr_UnderAmount:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self._10sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_10sats')
         self._100sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_100sats')
         self._1k_sats: ActivityAddrOutputsRealizedSupplyUnrealizedPattern = ActivityAddrOutputsRealizedSupplyUnrealizedPattern(client, 'addrs_under_1k_sats')
@@ -6484,7 +6506,7 @@ class SeriesTree_Cohorts_Addr_UnderAmount:
 class SeriesTree_Cohorts_Addr:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.over_amount: SeriesTree_Cohorts_Addr_OverAmount = SeriesTree_Cohorts_Addr_OverAmount(client)
         self.amount_range: SeriesTree_Cohorts_Addr_AmountRange = SeriesTree_Cohorts_Addr_AmountRange(client)
         self.under_amount: SeriesTree_Cohorts_Addr_UnderAmount = SeriesTree_Cohorts_Addr_UnderAmount(client)
@@ -6492,14 +6514,14 @@ class SeriesTree_Cohorts_Addr:
 class SeriesTree_Cohorts:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.utxo: SeriesTree_Cohorts_Utxo = SeriesTree_Cohorts_Utxo(client)
         self.addr: SeriesTree_Cohorts_Addr = SeriesTree_Cohorts_Addr(client)
 
 class SeriesTree:
     """Series tree node."""
     
-    def __init__(self, client: BrkClientBase, base_path: str = ''):
+    def __init__(self, client: BrkClient, base_path: str = ''):
         self.blocks: SeriesTree_Blocks = SeriesTree_Blocks(client)
         self.transactions: SeriesTree_Transactions = SeriesTree_Transactions(client)
         self.inputs: SeriesTree_Inputs = SeriesTree_Inputs(client)

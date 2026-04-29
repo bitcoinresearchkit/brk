@@ -106,7 +106,6 @@ impl Client {
         })
     }
 
-    /// Get block hash at a given height
     pub fn get_block_hash<H>(&self, height: H) -> Result<BlockHash>
     where
         H: Into<u64> + Copy,
@@ -188,7 +187,6 @@ impl Client {
         Ok(FeeRate::from(r.mempool_min_fee * 100_000.0))
     }
 
-    /// Get txids of all transactions in a memory pool
     pub fn get_raw_mempool(&self) -> Result<Vec<Txid>> {
         let r: GetRawMempool = self.0.call_with_retry("getrawmempool", &[])?;
         r.0.iter()
@@ -310,7 +308,19 @@ impl Client {
     pub fn send_raw_transaction(&self, hex: &str) -> Result<Txid> {
         let txid: bitcoin::Txid = self
             .0
-            .call_once("sendrawtransaction", &[Value::String(hex.to_string())])?;
+            .call_once("sendrawtransaction", &[Value::String(hex.to_string())])
+            .map_err(|e| {
+                // Bitcoin Core returns RPC error codes for client-side problems
+                // (decode failed, verification failed, already in chain, etc.).
+                // Surface these as 400 (Parse) so HTTP callers see a 4xx, matching
+                // mempool.space's POST /api/tx behavior.
+                if let Error::CorepcRPC(JsonRpcError::Rpc(rpc)) = &e
+                    && matches!(rpc.code, -22 | -25 | -26 | -27)
+                {
+                    return Error::Parse(rpc.message.clone());
+                }
+                e
+            })?;
         Ok(Txid::from(txid))
     }
 

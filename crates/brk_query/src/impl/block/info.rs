@@ -279,6 +279,7 @@ impl Query {
                 coinbase_signature,
                 coinbase_signature_ascii,
                 scriptsig_bytes,
+                coinbase_total_size,
             ) = match reader.reader_at(positions[i]) {
                 Ok(mut blk) => {
                     let mut header_buf = [0u8; HEADER_SIZE];
@@ -291,6 +292,7 @@ impl Query {
                             String::new(),
                             String::new(),
                             vec![],
+                            0,
                         )
                     } else {
                         // Skip tx count varint
@@ -299,7 +301,7 @@ impl Query {
                         let coinbase = Self::parse_coinbase_from_read(blk);
                         (
                             header_buf, coinbase.0, coinbase.1, coinbase.2, coinbase.3, coinbase.4,
-                            coinbase.5,
+                            coinbase.5, coinbase.6,
                         )
                     }
                 }
@@ -311,6 +313,7 @@ impl Query {
                     String::new(),
                     String::new(),
                     vec![],
+                    0,
                 ),
             };
             let header = Self::decode_header(&raw_header)?;
@@ -382,8 +385,11 @@ impl Query {
                 coinbase_addresses,
                 coinbase_signature,
                 coinbase_signature_ascii,
-                avg_tx_size: if tx_count > 0 {
-                    size as f64 / tx_count as f64
+                avg_tx_size: if tx_count > 0 && coinbase_total_size > 0 {
+                    let non_coinbase_total = (size as usize)
+                        .saturating_sub(HEADER_SIZE + varint_len + coinbase_total_size);
+                    let raw = non_coinbase_total as f64 / tx_count as f64;
+                    (raw * 100.0).round() / 100.0
                 } else {
                     0.0
                 },
@@ -542,7 +548,15 @@ impl Query {
 
     fn parse_coinbase_from_read(
         reader: impl Read,
-    ) -> (String, Option<String>, Vec<String>, String, String, Vec<u8>) {
+    ) -> (
+        String,
+        Option<String>,
+        Vec<String>,
+        String,
+        String,
+        Vec<u8>,
+        usize,
+    ) {
         let empty = (
             String::new(),
             None,
@@ -550,6 +564,7 @@ impl Query {
             String::new(),
             String::new(),
             vec![],
+            0,
         );
 
         let tx =
@@ -557,6 +572,8 @@ impl Query {
                 Ok(tx) => tx,
                 Err(_) => return empty,
             };
+
+        let coinbase_total_size = tx.total_size();
 
         let scriptsig_bytes: Vec<u8> = tx
             .input
@@ -595,6 +612,7 @@ impl Query {
             coinbase_signature,
             coinbase_signature_ascii,
             scriptsig_bytes,
+            coinbase_total_size,
         )
     }
 }
