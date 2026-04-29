@@ -20,8 +20,6 @@ pub struct SeriesData<T = Value> {
     /// Value type (e.g. "f32", "u64", "Sats")
     #[serde(rename = "type", default)]
     pub value_type: String,
-    /// Total number of data points in the series
-    pub total: usize,
     /// Start index (inclusive) of the returned range
     pub start: usize,
     /// End index (exclusive) of the returned range
@@ -33,7 +31,8 @@ pub struct SeriesData<T = Value> {
 }
 
 impl SeriesData {
-    /// Write series data as JSON to buffer: `{"version":N,"index":"...","total":N,"start":N,"end":N,"stamp":"...","data":[...]}`
+    /// Write series data as JSON to buffer: `{"version":N,"index":"...","start":N,"end":N,"stamp":"...","data":[...]}`.
+    /// `total` is omitted so historical-range bodies stay cacheable across appends. Clients call `/len` for the live count.
     pub fn serialize(
         vec: &dyn AnySerializableVec,
         index: Index,
@@ -53,9 +52,7 @@ impl SeriesData {
         buf.extend_from_slice(index.name().as_bytes());
         buf.extend_from_slice(b"\",\"type\":\"");
         buf.extend_from_slice(vec.value_type_to_string().as_bytes());
-        buf.extend_from_slice(b"\",\"total\":");
-        buf.extend_from_slice(itoa_buf.format(total).as_bytes());
-        buf.extend_from_slice(b",\"start\":");
+        buf.extend_from_slice(b"\",\"start\":");
         buf.extend_from_slice(itoa_buf.format(start).as_bytes());
         buf.extend_from_slice(b",\"end\":");
         buf.extend_from_slice(itoa_buf.format(end).as_bytes());

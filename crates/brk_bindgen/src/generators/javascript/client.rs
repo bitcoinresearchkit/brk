@@ -198,7 +198,6 @@ function _wrapSeriesData(raw) {{
  * @property {{number}} version - Version of the series data
  * @property {{Index}} index - The index type used for this query
  * @property {{string}} type - Value type (e.g. "f32", "u64", "Sats")
- * @property {{number}} total - Total number of data points
  * @property {{number}} start - Start index (inclusive)
  * @property {{number}} end - End index (exclusive)
  * @property {{string}} stamp - ISO 8601 timestamp of when the response was generated
@@ -236,6 +235,8 @@ function _wrapSeriesData(raw) {{
  * @property {{(n: number) => SkippedBuilder<T>}} skip - Skip first n items, chain with take()
  * @property {{(onUpdate?: (value: SeriesData<T>) => void) => Promise<SeriesData<T>>}} fetch - Fetch all data
  * @property {{() => Promise<string>}} fetchCsv - Fetch all data as CSV
+ * @property {{() => Promise<number>}} len - Get total number of data points
+ * @property {{() => Promise<Version>}} version - Get the current version of the series
  * @property {{Thenable<T>}} then - Thenable (await endpoint)
  * @property {{string}} path - The endpoint path
  */
@@ -250,6 +251,8 @@ function _wrapSeriesData(raw) {{
  * @property {{(n: number) => DateSkippedBuilder<T>}} skip - Skip first n items, chain with take()
  * @property {{(onUpdate?: (value: DateSeriesData<T>) => void) => Promise<DateSeriesData<T>>}} fetch - Fetch all data
  * @property {{() => Promise<string>}} fetchCsv - Fetch all data as CSV
+ * @property {{() => Promise<number>}} len - Get total number of data points
+ * @property {{() => Promise<Version>}} version - Get the current version of the series
  * @property {{DateThenable<T>}} then - Thenable (await endpoint)
  * @property {{string}} path - The endpoint path
  */
@@ -308,7 +311,7 @@ function _wrapSeriesData(raw) {{
 /**
  * Create a series endpoint builder with typestate pattern.
  * @template T
- * @param {{BrkClientBase}} client
+ * @param {{BrkClient}} client
  * @param {{string}} name - The series vec name
  * @param {{Index}} index - The index name
  * @returns {{DateSeriesEndpoint<T>}}
@@ -376,6 +379,8 @@ function _endpoint(client, name, index) {{
     skip(n) {{ return skippedBuilder(n); }},
     fetch(onUpdate) {{ return client._fetchSeriesData(buildPath(), onUpdate); }},
     fetchCsv() {{ return client.getText(buildPath(undefined, undefined, 'csv')); }},
+    len() {{ return client.getSeriesLen(name, index); }},
+    version() {{ return client.getSeriesVersion(name, index); }},
     then(resolve, reject) {{ return this.fetch().then(resolve, reject); }},
     get path() {{ return p; }},
   }};
@@ -626,7 +631,7 @@ pub fn generate_index_accessors(output: &mut String, patterns: &[IndexSetPattern
         r#"/**
  * Generic series pattern factory.
  * @template T
- * @param {{BrkClientBase}} client
+ * @param {{BrkClient}} client
  * @param {{string}} name - The series vec name
  * @param {{readonly Index[]}} indexes - The supported indexes
  */
@@ -679,7 +684,7 @@ function _mp(client, name, indexes) {{
         // Generate thin wrapper that calls the generic factory
         writeln!(
             output,
-            "/** @template T @param {{BrkClientBase}} client @param {{string}} name @returns {{{}<T>}} */",
+            "/** @template T @param {{BrkClient}} client @param {{string}} name @returns {{{}<T>}} */",
             pattern.name
         )
         .unwrap();
@@ -741,7 +746,7 @@ pub fn generate_structural_patterns(
         if pattern.is_generic {
             writeln!(output, " * @template T").unwrap();
         }
-        writeln!(output, " * @param {{BrkClientBase}} client").unwrap();
+        writeln!(output, " * @param {{BrkClient}} client").unwrap();
         writeln!(output, " * @param {{string}} acc - Accumulated series name").unwrap();
         if pattern.is_templated() {
             writeln!(output, " * @param {{string}} disc - Discriminator suffix").unwrap();

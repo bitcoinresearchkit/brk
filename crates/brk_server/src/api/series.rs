@@ -44,8 +44,9 @@ pub(super) async fn serve(
     let csv_filename = resolved.csv_filename();
     let cache_params = CacheParams::series(
         resolved.version,
-        resolved.total,
+        resolved.start,
         resolved.end,
+        resolved.stable_count,
         resolved.hash_prefix,
     );
 

@@ -3,10 +3,10 @@ use std::{collections::BTreeMap, sync::LazyLock};
 use brk_error::{Error, Result};
 use brk_traversable::TreeNode;
 use brk_types::{
-    BlockHashPrefix, Date, DetailedSeriesCount, Epoch, Format, Halving, Height, Index, IndexInfo,
-    LegacyValue, Limit, Output, OutputLegacy, PaginatedSeries, Pagination, PaginationIndex,
-    RangeIndex, RangeMap, SearchQuery, SeriesData, SeriesInfo, SeriesName, SeriesOutput,
-    SeriesOutputLegacy, SeriesSelection, Timestamp, Version,
+    BlockHashPrefix, CacheClass, Date, DetailedSeriesCount, Epoch, Format, Halving, Height, Index,
+    IndexInfo, LegacyValue, Limit, Output, OutputLegacy, PaginatedSeries, Pagination,
+    PaginationIndex, RangeIndex, RangeMap, SearchQuery, SeriesData, SeriesInfo, SeriesName,
+    SeriesOutput, SeriesOutputLegacy, SeriesSelection, Timestamp, Version,
 };
 use parking_lot::RwLock;
 use vecdb::{AnyExportableVec, ReadableVec};
@@ -196,6 +196,13 @@ impl Query {
             });
         }
 
+        // Snapshot tip-derived state together so the historical-branch ETag stays
+        // self-consistent: stable_count is computed from tip_height, hash_prefix
+        // is the live tip.
+        let tip_height = self.indexed_height();
+        let hash_prefix = self.tip_hash_prefix();
+        let stable_count = self.stable_count(params.index, total, tip_height);
+
         Ok(ResolvedQuery {
             vecs,
             format: params.format(),
@@ -204,8 +211,56 @@ impl Query {
             total,
             start,
             end,
-            hash_prefix: self.tip_hash_prefix(),
+            hash_prefix,
+            stable_count,
         })
+    }
+
+    /// Count of leading entries provably immutable across a 6-block reorg, used
+    /// to gate the historical-branch series ETag.
+    ///
+    /// - Bucketed indexes: `total - margin`.
+    /// - Entity indexes: `first_X_index[tip_height - 6]`, falling back to 0 if
+    ///   the tip is shallower than 6 blocks. Clamped to `total` so a query
+    ///   whose vecs are shorter than the entity-type's own count never marks
+    ///   its live tail as stable.
+    /// - Mutable (Funded/Empty addr): `None`. No immutable region exists, so
+    ///   the caller must use the tip-bound ETag for every range.
+    pub fn stable_count(
+        &self,
+        index: Index,
+        total: usize,
+        tip_height: Height,
+    ) -> Option<usize> {
+        match index.cache_class() {
+            CacheClass::Bucket { margin } => Some(total.saturating_sub(margin)),
+            CacheClass::Entity => {
+                let h = Height::from((*tip_height).saturating_sub(6));
+                let v = &self.indexer().vecs;
+                let n = match index {
+                    Index::TxIndex => v.transactions.first_tx_index.collect_one(h).map(usize::from),
+                    Index::TxInIndex => v.inputs.first_txin_index.collect_one(h).map(usize::from),
+                    Index::TxOutIndex => v.outputs.first_txout_index.collect_one(h).map(usize::from),
+                    Index::EmptyOutputIndex => v.scripts.empty.first_index.collect_one(h).map(usize::from),
+                    Index::OpReturnIndex => v.scripts.op_return.first_index.collect_one(h).map(usize::from),
+                    Index::P2MSOutputIndex => v.scripts.p2ms.first_index.collect_one(h).map(usize::from),
+                    Index::UnknownOutputIndex => v.scripts.unknown.first_index.collect_one(h).map(usize::from),
+                    Index::P2AAddrIndex => v.addrs.p2a.first_index.collect_one(h).map(usize::from),
+                    Index::P2PK33AddrIndex => v.addrs.p2pk33.first_index.collect_one(h).map(usize::from),
+                    Index::P2PK65AddrIndex => v.addrs.p2pk65.first_index.collect_one(h).map(usize::from),
+                    Index::P2PKHAddrIndex => v.addrs.p2pkh.first_index.collect_one(h).map(usize::from),
+                    Index::P2SHAddrIndex => v.addrs.p2sh.first_index.collect_one(h).map(usize::from),
+                    Index::P2TRAddrIndex => v.addrs.p2tr.first_index.collect_one(h).map(usize::from),
+                    Index::P2WPKHAddrIndex => v.addrs.p2wpkh.first_index.collect_one(h).map(usize::from),
+                    Index::P2WSHAddrIndex => v.addrs.p2wsh.first_index.collect_one(h).map(usize::from),
+                    _ => unreachable!("non-entity index in CacheClass::Entity arm"),
+                }
+                .unwrap_or(0)
+                .min(total);
+                Some(n)
+            }
+            CacheClass::Mutable => None,
+        }
     }
 
     /// Format a resolved query (expensive).
@@ -449,8 +504,9 @@ impl Query {
 }
 
 /// A resolved series query ready for formatting.
-/// Carries the vecs plus the metadata (version, total, end, hash_prefix) callers
-/// need to derive an etag or cache policy.
+/// Carries the vecs plus the metadata callers need to derive an etag or cache
+/// policy. `stable_count` is `None` for indexes whose entries can mutate
+/// retroactively (Funded/Empty addr).
 pub struct ResolvedQuery {
     pub vecs: Vec<&'static dyn AnyExportableVec>,
     pub format: Format,
@@ -460,6 +516,7 @@ pub struct ResolvedQuery {
     pub start: usize,
     pub end: usize,
     pub hash_prefix: BlockHashPrefix,
+    pub stable_count: Option<usize>,
 }
 
 impl ResolvedQuery {

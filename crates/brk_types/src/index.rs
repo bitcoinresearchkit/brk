@@ -73,6 +73,23 @@ pub enum Index {
     EmptyAddrIndex,
 }
 
+/// How the trailing edge of an [`Index`] mutates over time. Drives the series
+/// cache: bucketed indexes have a small fixed volatile tail, entity indexes
+/// derive their stable count from a height→first-index mapping, and mutable
+/// addr indexes have no immutable region (entries change retroactively).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CacheClass {
+    /// Append-only with `margin` trailing entries volatile per ≥6-block reorg.
+    Bucket { margin: usize },
+    /// Append-only entity index (one number per tx / input / output / typed
+    /// addr). Stable count must be looked up via the indexer's
+    /// `first_X_index[tip - 6]` mapping.
+    Entity,
+    /// Retroactively mutable: no immutable region (`FundedAddrIndex`,
+    /// `EmptyAddrIndex`).
+    Mutable,
+}
+
 impl Index {
     pub const fn all() -> [Self; 33] {
         [
@@ -195,22 +212,19 @@ impl Index {
         }
     }
 
-    /// Number of trailing entries that may still mutate due to a 6-block reorg.
-    /// Used to size the cache invalidation tail: ranges ending within this margin
-    /// of `total` use a tip-bound ETag, others may use the cheaper total-only ETag.
-    ///
-    /// Panics for cohort indexes (per-tx, per-output, per-addr): series queries
-    /// shouldn't reach this codepath under those indexes. If they do, the cache
-    /// strategy needs rethinking.
-    pub const fn safety_margin(&self) -> usize {
+    /// Classifies how the trailing edge of an index mutates, so the series cache
+    /// can pick the right stable-count strategy.
+    pub const fn cache_class(&self) -> CacheClass {
         match self {
-            Self::Minute10 => 6,
-            Self::Minute30 => 2,
-            Self::Hour1 | Self::Hour4 | Self::Hour12 => 1,
-            Self::Day1 | Self::Day3 | Self::Week1 => 1,
-            Self::Month1 | Self::Month3 | Self::Month6 => 1,
-            Self::Year1 | Self::Year10 | Self::Halving | Self::Epoch => 1,
-            Self::Height => 6,
+            Self::Minute10 => CacheClass::Bucket { margin: 8 },
+            Self::Minute30 => CacheClass::Bucket { margin: 3 },
+            Self::Hour1 | Self::Hour4 | Self::Hour12 => CacheClass::Bucket { margin: 2 },
+            Self::Day1 | Self::Day3 | Self::Week1 => CacheClass::Bucket { margin: 2 },
+            Self::Month1 | Self::Month3 | Self::Month6 => CacheClass::Bucket { margin: 1 },
+            Self::Year1 | Self::Year10 | Self::Halving | Self::Epoch => {
+                CacheClass::Bucket { margin: 1 }
+            }
+            Self::Height => CacheClass::Bucket { margin: 6 },
             Self::TxIndex
             | Self::TxInIndex
             | Self::TxOutIndex
@@ -225,11 +239,8 @@ impl Index {
             | Self::P2TRAddrIndex
             | Self::P2WPKHAddrIndex
             | Self::P2WSHAddrIndex
-            | Self::UnknownOutputIndex
-            | Self::FundedAddrIndex
-            | Self::EmptyAddrIndex => {
-                panic!("cohort index has no series cache safety margin")
-            }
+            | Self::UnknownOutputIndex => CacheClass::Entity,
+            Self::FundedAddrIndex | Self::EmptyAddrIndex => CacheClass::Mutable,
         }
     }
 

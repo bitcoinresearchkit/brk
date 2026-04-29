@@ -221,7 +221,6 @@ class SeriesData(Generic[T]):
     version: int
     index: Index
     type: str
-    total: int
     start: int
     end: int
     stamp: str

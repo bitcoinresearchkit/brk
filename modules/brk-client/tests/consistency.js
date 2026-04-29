@@ -77,7 +77,7 @@ async function testConsistency() {
 
       try {
         const result = await endpoint.last(0);
-        const total = result.total;
+        const total = result.end;
 
         if (!byIndex.has(idxName)) {
           byIndex.set(idxName, []);

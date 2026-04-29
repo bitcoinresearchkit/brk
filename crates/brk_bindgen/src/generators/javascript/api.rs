@@ -4,7 +4,7 @@ use std::fmt::Write;
 
 use crate::{
     Endpoint, Parameter,
-    generators::{normalize_return_type, write_description},
+    generators::{javascript::types::jsdoc_normalize, normalize_return_type, write_description},
     to_camel_case,
 };
 
@@ -16,8 +16,9 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         }
 
         let method_name = endpoint_to_method_name(endpoint);
-        let base_return_type =
-            normalize_return_type(endpoint.response_type.as_deref().unwrap_or("*"));
+        let base_return_type = jsdoc_normalize(&normalize_return_type(
+            endpoint.response_type.as_deref().unwrap_or("*"),
+        ));
         let return_type = if endpoint.supports_csv {
             format!("{} | string", base_return_type)
         } else {
@@ -51,20 +52,17 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
 
         for param in &endpoint.path_params {
             let desc = format_param_desc(param.description.as_deref());
-            writeln!(
-                output,
-                "   * @param {{{}}} {}{}",
-                param.param_type, param.name, desc
-            )
-            .unwrap();
+            let ty = jsdoc_normalize(&param.param_type);
+            writeln!(output, "   * @param {{{}}} {}{}", ty, param.name, desc).unwrap();
         }
         for param in &endpoint.query_params {
             let optional = if param.required { "" } else { "=" };
             let desc = format_param_desc(param.description.as_deref());
+            let ty = jsdoc_normalize(&param.param_type);
             writeln!(
                 output,
                 "   * @param {{{}{}}} [{}]{}",
-                param.param_type, optional, param.name, desc
+                ty, optional, param.name, desc
             )
             .unwrap();
         }

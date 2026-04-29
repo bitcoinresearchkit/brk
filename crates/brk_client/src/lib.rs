@@ -9350,7 +9350,7 @@ impl BrkClient {
     /// Returns the total number of data points for a series at the given index.
     ///
     /// Endpoint: `GET /api/series/{series}/{index}/len`
-    pub fn get_series_len(&self, series: SeriesName, index: Index) -> Result<f64> {
+    pub fn get_series_len(&self, series: SeriesName, index: Index) -> Result<i64> {
         self.base.get_json(&format!("/api/series/{series}/{}/len", index.name()))
     }
 
@@ -9845,7 +9845,7 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*
     ///
     /// Endpoint: `GET /api/v1/transaction-times`
-    pub fn get_transaction_times(&self) -> Result<Vec<f64>> {
+    pub fn get_transaction_times(&self) -> Result<Vec<i64>> {
         self.base.get_json(&format!("/api/v1/transaction-times"))
     }
 

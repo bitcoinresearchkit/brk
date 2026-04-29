@@ -31,10 +31,6 @@ impl Applier {
         }
     }
 
-    /// Move one tx from the live mempool into the graveyard. Removes
-    /// from every store + tracker, then hands the body to
-    /// `graveyard.bury`. Silently bails if the entry or tx body is
-    /// already gone (idempotent under repeated removals).
     fn bury_one(s: &mut LockedState, prefix: &TxidPrefix, reason: TxRemoval) {
         let Some(entry) = s.entries.remove(prefix) else {
             return;
@@ -58,9 +54,6 @@ impl Applier {
         s.txs.extend(to_store);
     }
 
-    /// Materialize a `TxAddition` into the (tx, entry) pair the Applier
-    /// will publish. Fresh additions are already-decoded; Revived ones
-    /// pull the cached body out of the graveyard and skip if it's gone.
     fn resolve_addition(
         s: &mut LockedState,
         addition: TxAddition,
@@ -74,9 +67,6 @@ impl Applier {
         }
     }
 
-    /// Publish one tx into the live mempool: fold its fee into info,
-    /// register addr deltas, store the entry. Returns `(txid, tx)` for
-    /// the caller to batch into `txs.extend` once at the end.
     fn publish_one(s: &mut LockedState, tx: Transaction, entry: TxEntry) -> (Txid, Transaction) {
         s.info.add(&tx, entry.fee);
         s.addrs.add_tx(&tx, &entry.txid);

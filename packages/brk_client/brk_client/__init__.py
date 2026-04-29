@@ -1812,7 +1812,6 @@ class SeriesData(Generic[T]):
     version: int
     index: Index
     type: str
-    total: int
     start: int
     end: int
     stamp: str
@@ -7974,7 +7973,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/series/indexes`"""
         return self.get_json('/api/series/indexes')
 
-    def list_series(self, page: Optional[float] = None, per_page: Optional[float] = None) -> PaginatedSeries:
+    def list_series(self, page: Optional[int] = None, per_page: Optional[int] = None) -> PaginatedSeries:
         """Series list.
 
         Paginated flat list of all available series names. Use `page` query param for pagination.
@@ -8050,7 +8049,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/series/{series}/{index}/latest`"""
         return self.get_text(f'/api/series/{series}/{index}/latest')
 
-    def get_series_len(self, series: SeriesName, index: Index) -> float:
+    def get_series_len(self, series: SeriesName, index: Index) -> int:
         """Get series data length.
 
         Returns the total number of data points for a series at the given index.
@@ -8478,7 +8477,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/v1/mining/pools/{time_period}`"""
         return self.get_json(f'/api/v1/mining/pools/{time_period}')
 
-    def get_reward_stats(self, block_count: float) -> RewardStats:
+    def get_reward_stats(self, block_count: int) -> RewardStats:
         """Mining reward statistics.
 
         Get mining reward statistics for the last N blocks including total rewards, fees, and transaction count.
@@ -8498,7 +8497,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/v1/prices`"""
         return self.get_json('/api/v1/prices')
 
-    def get_transaction_times(self) -> List[float]:
+    def get_transaction_times(self) -> List[int]:
         """Transaction first-seen times.
 
         Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.

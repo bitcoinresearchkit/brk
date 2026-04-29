@@ -7,48 +7,44 @@ console.log("Testing idiomatic API...\n");
 // Test getter access (property)
 console.log("1. Getter access (.by.dateindex):");
 const all = await client.series.prices.split.close.usd.by.day1;
-console.log(`   Total: ${all.total}, Got: ${all.data.length} items\n`);
+console.log(`   Got: ${all.data.length} items\n`);
 
 // Test dynamic access (bracket notation)
 console.log("2. Dynamic access (.by['dateindex']):");
 const allDynamic = await client.series.prices.split.close.usd.by.day1;
-console.log(
-  `   Total: ${allDynamic.total}, Got: ${allDynamic.data.length} items\n`,
-);
+console.log(`   Got: ${allDynamic.data.length} items\n`);
 
 // Test fetch all (explicit .fetch())
 console.log("3. Explicit .fetch():");
 const allExplicit = await client.series.prices.split.close.usd.by.day1.fetch();
-console.log(
-  `   Total: ${allExplicit.total}, Got: ${allExplicit.data.length} items\n`,
-);
+console.log(`   Got: ${allExplicit.data.length} items\n`);
 
 // Test first(n)
 console.log("4. First 5 items (.first(5)):");
 const first5 = await client.series.prices.split.close.usd.by.day1.first(5);
 console.log(
-  `   Total: ${first5.total}, Start: ${first5.start}, End: ${first5.end}, Got: ${first5.data.length} items\n`,
+  `   Start: ${first5.start}, End: ${first5.end}, Got: ${first5.data.length} items\n`,
 );
 
 // Test last(n)
 console.log("5. Last 5 items (.last(5)):");
 const last5 = await client.series.prices.split.close.usd.by.day1.last(5);
 console.log(
-  `   Total: ${last5.total}, Start: ${last5.start}, End: ${last5.end}, Got: ${last5.data.length} items\n`,
+  `   Start: ${last5.start}, End: ${last5.end}, Got: ${last5.data.length} items\n`,
 );
 
 // Test slice(start, end)
 console.log("6. Slice 10-20 (.slice(10, 20)):");
 const sliced = await client.series.prices.split.close.usd.by.day1.slice(10, 20);
 console.log(
-  `   Total: ${sliced.total}, Start: ${sliced.start}, End: ${sliced.end}, Got: ${sliced.data.length} items\n`,
+  `   Start: ${sliced.start}, End: ${sliced.end}, Got: ${sliced.data.length} items\n`,
 );
 
 // Test get(index) - single item
 console.log("7. Single item (.get(100)):");
 const single = await client.series.prices.split.close.usd.by.day1.get(100);
 console.log(
-  `   Total: ${single.total}, Start: ${single.start}, End: ${single.end}, Got: ${single.data.length} item(s)\n`,
+  `   Start: ${single.start}, End: ${single.end}, Got: ${single.data.length} item(s)\n`,
 );
 
 // Test skip(n).take(m) chaining
@@ -57,7 +53,7 @@ const skipTake = await client.series.prices.split.close.usd.by.day1
   .skip(100)
   .take(10);
 console.log(
-  `   Total: ${skipTake.total}, Start: ${skipTake.start}, End: ${skipTake.end}, Got: ${skipTake.data.length} items\n`,
+  `   Start: ${skipTake.start}, End: ${skipTake.end}, Got: ${skipTake.data.length} items\n`,
 );
 
 // Test fetchCsv

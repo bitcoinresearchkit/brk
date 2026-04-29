@@ -364,7 +364,7 @@ fn single_type_to_name(t: &SchemaType, schema: &ObjectSchema) -> Option<String> 
     match t {
         SchemaType::String => Some("string".to_string()),
         SchemaType::Number => Some("number".to_string()),
-        SchemaType::Integer => Some("number".to_string()),
+        SchemaType::Integer => Some("integer".to_string()),
         SchemaType::Boolean => Some("boolean".to_string()),
         SchemaType::Array => {
             let inner = match &schema.items {

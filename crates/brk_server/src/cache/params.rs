@@ -67,23 +67,39 @@ impl CacheParams {
         }
     }
 
-    /// Series query: tail-bound (`end >= total`) gets LIVE, historical gets CACHED.
-    /// Etag distinguishes the two: tail uses tip hash (per-block + reorgs),
-    /// historical uses total length (only changes when new data is appended).
-    pub fn series(version: Version, total: usize, end: usize, hash: BlockHashPrefix) -> Self {
+    /// Series query: tail-bound gets LIVE, historical gets CACHED.
+    ///
+    /// `stable_count` is the count of leading entries provably immutable across
+    /// a 6-block reorg (per `Index::cache_class()` + `Query::stable_count`).
+    /// `None` (Funded/Empty addr indexes) forces the tail branch for every range.
+    ///
+    /// Etag shapes:
+    /// - historical (`end <= stable_count`): `s{v}-h{start}-{end}`. Pure
+    ///   range, stable across appends and reorgs of the volatile tail.
+    /// - tail (`end > stable_count` or `stable_count.is_none()`):
+    ///   `s{v}-t{tip_hash:x}`. Invalidates per-block, reorg-safe.
+    ///
+    /// The `h`/`t` discriminator after `s{v}-` prevents collision with old
+    /// `s{v}-{number}` ETags from before the migration.
+    pub fn series(
+        version: Version,
+        start: usize,
+        end: usize,
+        stable_count: Option<usize>,
+        hash: BlockHashPrefix,
+    ) -> Self {
         let v = u32::from(version);
-        if end >= total {
-            Self {
-                etag: format!("s{v}-{:x}", *hash).into(),
-                cache_control: CC,
-                cdn_cache_control: CDN_LIVE,
-            }
-        } else {
-            Self {
-                etag: format!("s{v}-{total}").into(),
+        match stable_count {
+            Some(s) if end <= s => Self {
+                etag: format!("s{v}-h{start}-{end}").into(),
                 cache_control: CC,
                 cdn_cache_control: cdn_cached(),
-            }
+            },
+            _ => Self {
+                etag: format!("s{v}-t{:x}", *hash).into(),
+                cache_control: CC,
+                cdn_cache_control: CDN_LIVE,
+            },
         }
     }
 
@@ -139,28 +155,55 @@ mod tests {
     }
 
     #[test]
-    fn series_tail_uses_tip_hash() {
-        let p = CacheParams::series(v(3), 100, 100, h(0xabcd));
-        assert_eq!(p.etag.as_str(), "s3-abcd");
+    fn series_tail_when_end_exceeds_stable_count() {
+        let p = CacheParams::series(v(3), 0, 60, Some(50), h(0xabcd));
+        assert_eq!(p.etag.as_str(), "s3-tabcd");
     }
 
     #[test]
-    fn series_historical_uses_total() {
-        let p = CacheParams::series(v(3), 100, 50, h(0xabcd));
-        assert_eq!(p.etag.as_str(), "s3-100");
+    fn series_historical_when_end_at_or_below_stable_count() {
+        let p = CacheParams::series(v(3), 10, 50, Some(50), h(0xabcd));
+        assert_eq!(p.etag.as_str(), "s3-h10-50");
     }
 
     #[test]
     fn series_historical_ignores_tip_hash() {
-        let a = CacheParams::series(v(3), 100, 50, h(0xabcd));
-        let b = CacheParams::series(v(3), 100, 50, h(0xdead));
+        let a = CacheParams::series(v(3), 0, 50, Some(100), h(0xabcd));
+        let b = CacheParams::series(v(3), 0, 50, Some(100), h(0xdead));
         assert_eq!(a.etag.as_str(), b.etag.as_str());
     }
 
     #[test]
     fn series_tail_changes_with_tip_hash() {
-        let a = CacheParams::series(v(3), 100, 100, h(0xabcd));
-        let b = CacheParams::series(v(3), 100, 100, h(0xdead));
+        let a = CacheParams::series(v(3), 0, 100, Some(50), h(0xabcd));
+        let b = CacheParams::series(v(3), 0, 100, Some(50), h(0xdead));
+        assert_ne!(a.etag.as_str(), b.etag.as_str());
+    }
+
+    #[test]
+    fn series_mutable_class_always_tail() {
+        let small = CacheParams::series(v(3), 0, 5, None, h(0xabcd));
+        let large = CacheParams::series(v(3), 0, 1_000_000, None, h(0xabcd));
+        assert_eq!(small.etag.as_str(), "s3-tabcd");
+        assert_eq!(large.etag.as_str(), "s3-tabcd");
+    }
+
+    #[test]
+    fn series_at_stable_boundary_is_historical() {
+        let p = CacheParams::series(v(3), 0, 50, Some(50), h(0xabcd));
+        assert_eq!(p.etag.as_str(), "s3-h0-50");
+    }
+
+    #[test]
+    fn series_just_past_stable_boundary_is_tail() {
+        let p = CacheParams::series(v(3), 0, 51, Some(50), h(0xabcd));
+        assert_eq!(p.etag.as_str(), "s3-tabcd");
+    }
+
+    #[test]
+    fn series_different_ranges_get_different_etags() {
+        let a = CacheParams::series(v(3), 0, 50, Some(100), h(0xabcd));
+        let b = CacheParams::series(v(3), 10, 50, Some(100), h(0xabcd));
         assert_ne!(a.etag.as_str(), b.etag.as_str());
     }
 }

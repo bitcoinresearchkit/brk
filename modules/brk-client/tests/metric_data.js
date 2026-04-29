@@ -12,9 +12,7 @@ console.log("Testing MetricData helpers...\n");
 // Fetch a date-based metric
 console.log("1. Fetching price data (day1):");
 const price = await client.series.prices.split.close.usd.by.day1.first(5);
-console.log(
-  `   Total: ${price.total}, Start: ${price.start}, End: ${price.end}`,
-);
+console.log(`   Start: ${price.start}, End: ${price.end}`);
 
 // Test isDateBased
 console.log("\n2. isDateBased:");
@@ -98,9 +96,7 @@ if (count !== 5) throw new Error("Expected 5 iterations");
 // Test with non-date-based index (height)
 console.log("\n11. Testing height-based metric:");
 const heightMetric = await client.series.prices.spot.usd.by.height.last(3);
-console.log(
-  `   Total: ${heightMetric.total}, Start: ${heightMetric.start}, End: ${heightMetric.end}`,
-);
+console.log(`   Start: ${heightMetric.start}, End: ${heightMetric.end}`);
 if (heightMetric.isDateBased)
   throw new Error("height should not be date-based");
 
