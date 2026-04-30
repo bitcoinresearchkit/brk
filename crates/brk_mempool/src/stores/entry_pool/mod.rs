@@ -1,6 +1,5 @@
 use brk_types::TxidPrefix;
 use rustc_hash::FxHashMap;
-use smallvec::SmallVec;
 
 mod tx_index;
 
@@ -40,19 +39,18 @@ impl EntryPool {
     }
 
     pub fn get(&self, prefix: &TxidPrefix) -> Option<&TxEntry> {
-        let idx = self.prefix_to_idx.get(prefix)?;
-        self.entries.get(idx.as_usize())?.as_ref()
+        self.slot(self.idx_of(prefix)?)
     }
 
-    /// Direct children of a transaction (txs whose `depends` includes
-    /// `prefix`). Linear scan over all entries.
-    pub fn children(&self, prefix: &TxidPrefix) -> SmallVec<[TxidPrefix; 2]> {
-        self.entries
-            .iter()
-            .flatten()
-            .filter(|e| e.depends.iter().any(|p| p == prefix))
-            .map(TxEntry::txid_prefix)
-            .collect()
+    /// Slot index for a prefix, or `None` if not in the pool.
+    pub fn idx_of(&self, prefix: &TxidPrefix) -> Option<TxIndex> {
+        self.prefix_to_idx.get(prefix).copied()
+    }
+
+    /// Direct slot read by index. `None` if the slot is empty or the
+    /// index is out of range.
+    pub fn slot(&self, idx: TxIndex) -> Option<&TxEntry> {
+        self.entries.get(idx.as_usize())?.as_ref()
     }
 
     pub fn remove(&mut self, prefix: &TxidPrefix) -> Option<TxEntry> {

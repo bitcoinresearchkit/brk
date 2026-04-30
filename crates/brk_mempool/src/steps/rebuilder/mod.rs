@@ -26,7 +26,7 @@ mod snapshot;
 mod verify;
 
 pub use brk_types::RecommendedFees;
-pub use snapshot::{BlockStats, Snapshot};
+pub use snapshot::{BlkIndex, BlockStats, Snapshot};
 
 const MIN_REBUILD_INTERVAL: Duration = Duration::from_secs(1);
 const NUM_BLOCKS: usize = 8;

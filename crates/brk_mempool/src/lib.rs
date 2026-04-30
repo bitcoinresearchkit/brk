@@ -21,13 +21,14 @@ use brk_types::{AddrBytes, MempoolInfo, TxOut, Txid, Vout};
 use parking_lot::RwLockReadGuard;
 use tracing::error;
 
+mod cpfp;
 pub(crate) mod steps;
 pub(crate) mod stores;
 #[cfg(test)]
 mod tests;
 
 use steps::{Applier, Fetcher, Preparer, Rebuilder, Resolver};
-pub use steps::{BlockStats, RecommendedFees, Snapshot, TxEntry, TxRemoval};
+pub use steps::{BlkIndex, BlockStats, RecommendedFees, Snapshot, TxEntry, TxRemoval};
 use stores::{AddrTracker, MempoolState};
 pub use stores::{EntryPool, TxGraveyard, TxStore, TxTombstone};
 

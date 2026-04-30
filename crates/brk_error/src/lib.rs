@@ -153,6 +153,9 @@ pub enum Error {
     #[error("Request weight {requested} exceeds maximum {max}")]
     WeightExceeded { requested: usize, max: usize },
 
+    #[error("Too many unspent transaction outputs (>500). Contact support to raise limits.")]
+    TooManyUtxos,
+
     #[error("Deserialization error: {0}")]
     Deserialization(String),
 

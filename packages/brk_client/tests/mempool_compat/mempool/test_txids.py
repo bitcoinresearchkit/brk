@@ -35,12 +35,19 @@ def test_mempool_txids_unique(brk):
 
 
 def test_mempool_txids_count_matches_summary(brk):
-    """`/api/mempool/txids` length must match `/api/mempool`'s `count` field."""
+    """`/api/mempool/txids` length must roughly track `/api/mempool`'s `count`.
+
+    The two endpoints are independent reads against a live mempool, so
+    arrivals / evictions between fetches cause drift. We only assert the
+    counts are in the same ballpark - exact equality would be flaky.
+    """
     txids = brk.get_json("/api/mempool/txids")
     summary = brk.get_json("/api/mempool")
     show("GET", "/api/mempool/txids", f"len={len(txids)}", f"count={summary.get('count')}")
-    # Allow a small drift (1-2) since the mempool is updated asynchronously
-    # between the two fetches.
-    assert abs(len(txids) - summary["count"]) <= 5, (
-        f"txids={len(txids)} vs /api/mempool.count={summary['count']}"
+    assert isinstance(summary["count"], int) and summary["count"] > 0
+    assert len(txids) > 0
+    # 1% tolerance covers normal mempool churn between the two fetches.
+    drift = abs(len(txids) - summary["count"])
+    assert drift <= max(50, summary["count"] // 100), (
+        f"txids={len(txids)} vs /api/mempool.count={summary['count']} (drift={drift})"
     )

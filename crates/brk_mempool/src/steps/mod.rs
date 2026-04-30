@@ -9,5 +9,5 @@ mod resolver;
 pub use applier::Applier;
 pub use fetcher::Fetcher;
 pub use preparer::{Preparer, TxEntry, TxRemoval};
-pub use rebuilder::{BlockStats, Rebuilder, RecommendedFees, Snapshot};
+pub use rebuilder::{BlkIndex, BlockStats, Rebuilder, RecommendedFees, Snapshot};
 pub use resolver::Resolver;

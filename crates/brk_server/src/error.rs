@@ -53,7 +53,8 @@ fn error_status(e: &BrkError) -> StatusCode {
         | BrkError::Parse(_)
         | BrkError::NoSeries
         | BrkError::SeriesUnsupportedIndex { .. }
-        | BrkError::WeightExceeded { .. } => StatusCode::BAD_REQUEST,
+        | BrkError::WeightExceeded { .. }
+        | BrkError::TooManyUtxos => StatusCode::BAD_REQUEST,
 
         BrkError::UnknownAddr
         | BrkError::UnknownTxid
@@ -79,6 +80,7 @@ fn error_code(e: &BrkError) -> &'static str {
         BrkError::NoSeries => "no_series",
         BrkError::SeriesUnsupportedIndex { .. } => "series_unsupported_index",
         BrkError::WeightExceeded { .. } => "weight_exceeded",
+        BrkError::TooManyUtxos => "too_many_utxos",
         BrkError::UnknownAddr => "unknown_addr",
         BrkError::UnknownTxid => "unknown_txid",
         BrkError::NotFound(_) => "not_found",
