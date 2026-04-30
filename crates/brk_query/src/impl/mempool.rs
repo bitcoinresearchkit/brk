@@ -378,6 +378,50 @@ impl Query {
         })
     }
 
+    /// Recent RBF replacements across the whole mempool, matching
+    /// mempool.space's `GET /api/v1/replacements` and
+    /// `GET /api/v1/fullrbf/replacements`. Each entry is a complete
+    /// replacement tree rooted at the latest replacer; same shape as
+    /// `tx_rbf().replacements`. Sorted most-recent-first by root
+    /// `time`. When `full_rbf_only` is true, only trees with at least
+    /// one non-signaling predecessor are returned.
+    pub fn recent_replacements(&self, full_rbf_only: bool) -> Result<Vec<ReplacementNode>> {
+        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
+        let txs = mempool.txs();
+        let entries = mempool.entries();
+        let graveyard = mempool.graveyard();
+
+        // Collect every distinct tree-root replacer. A predecessor's
+        // `by` may itself have been replaced; walk forward through
+        // chained Replaced tombstones until reaching a tx that's no
+        // longer flagged as replaced (live, Vanished, or unknown).
+        let mut roots: FxHashSet<Txid> = FxHashSet::default();
+        for (_, by) in graveyard.replaced_iter() {
+            let mut root = by.clone();
+            while let Some(TxRemoval::Replaced { by: next }) =
+                graveyard.get(&root).map(TxTombstone::reason)
+            {
+                root = next.clone();
+            }
+            roots.insert(root);
+        }
+
+        let mut trees: Vec<ReplacementNode> = roots
+            .iter()
+            .filter_map(|root| {
+                Self::build_rbf_node(root, None, &txs, &entries, &graveyard).map(|mut node| {
+                    node.tx.full_rbf = Some(node.full_rbf);
+                    node.interval = None;
+                    node
+                })
+            })
+            .filter(|node| !full_rbf_only || node.full_rbf)
+            .collect();
+
+        trees.sort_by(|a, b| b.time.cmp(&a.time));
+        Ok(trees)
+    }
+
     pub fn transaction_times(&self, txids: &[Txid]) -> Result<Vec<u64>> {
         let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
         let entries = mempool.entries();

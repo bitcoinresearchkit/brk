@@ -143,13 +143,8 @@ impl Sfl {
                     if nrate <= rate {
                         continue;
                     }
-                    match picked {
-                        None => picked = Some((add, nf, nv, nrate)),
-                        Some((_, _, _, prate)) => {
-                            if nrate > prate {
-                                picked = Some((add, nf, nv, nrate));
-                            }
-                        }
+                    if picked.is_none_or(|(_, _, _, prate)| nrate > prate) {
+                        picked = Some((add, nf, nv, nrate));
                     }
                 }
                 match picked {

@@ -28,6 +28,8 @@ from typing import Any
 import pytest
 import requests
 
+from brk_client import BrkClient
+
 # Make `_lib` and `_endpoints` importable from any nested test file.
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -118,7 +120,16 @@ class LiveData:
 
 @pytest.fixture(scope="session")
 def brk():
-    return ApiClient(BRK_BASE, "brk")
+    """Typed brk_client SDK pointed at the brk server under test.
+
+    All tests must go through this fixture's typed methods (e.g.
+    `brk.get_difficulty_adjustment()`). If a typed method is missing or
+    broken, that's an SDK finding — fix the bindgen before adapting the
+    test. Never reach into raw HTTP from a compat test.
+    """
+    client = BrkClient(BRK_BASE)
+    yield client
+    client.close()
 
 
 @pytest.fixture(scope="session")
@@ -127,12 +138,12 @@ def mempool():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def check_servers(brk, mempool):
+def check_servers(mempool):
     """Fail fast if either server is unreachable."""
     try:
-        brk.get("/api/blocks/tip/height")
+        BrkClient(BRK_BASE).get_text("/api/blocks/tip/height")
     except Exception as e:
-        pytest.exit(f"brk server not reachable at {brk.base_url}: {e}")
+        pytest.exit(f"brk server not reachable at {BRK_BASE}: {e}")
     try:
         mempool.get("/api/blocks/tip/height")
     except Exception as e:

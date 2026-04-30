@@ -173,9 +173,8 @@ impl Query {
 
         let prefix = u32::from(type_index).to_be_bytes();
 
-        // Match mempool.space's electrs cap: refuse addresses with >500 UTXOs.
         // Bounds worst-case work and response size, prevents heavy-address DDoS.
-        const MAX_UTXOS: usize = 500;
+        const MAX_UTXOS: usize = 1000;
         let outpoints: Vec<(TxIndex, Vout)> = store
             .prefix(prefix)
             .map(|(key, _): (AddrIndexOutPoint, Unit)| (key.tx_index(), key.vout()))

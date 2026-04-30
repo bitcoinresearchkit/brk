@@ -9,7 +9,7 @@ use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_rpc::Client;
 use brk_types::{BlockHash, BlockHashPrefix, Height, SyncStatus};
-use vecdb::{AnyVec, ReadOnlyClone, ReadableVec, Ro};
+use vecdb::{ReadOnlyClone, ReadableVec, Ro};
 
 #[cfg(feature = "tokio")]
 mod r#async;
@@ -63,8 +63,7 @@ impl Query {
 
     /// Current computed height (series)
     pub fn computed_height(&self) -> Height {
-        let len = self.computer().distribution.supply_state.len();
-        Height::from(len.saturating_sub(1))
+        Height::from(self.computer().distribution.supply_state.stamp())
     }
 
     /// Minimum of indexed and computed heights
@@ -73,11 +72,13 @@ impl Query {
     }
 
     /// Tip block hash, cached in the indexer.
+    #[inline]
     pub fn tip_blockhash(&self) -> BlockHash {
         self.indexer().tip_blockhash()
     }
 
     /// Tip block hash prefix for cache etags.
+    #[inline]
     pub fn tip_hash_prefix(&self) -> BlockHashPrefix {
         BlockHashPrefix::from(&self.tip_blockhash())
     }

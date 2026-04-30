@@ -43,6 +43,15 @@ impl TxGraveyard {
         })
     }
 
+    /// Every `Replaced` tombstone, yielded as (predecessor_txid,
+    /// replacer_txid). Caller walks the replacer chain forward to find
+    /// each tree's terminal replacer.
+    pub fn replaced_iter(&self) -> impl Iterator<Item = (&Txid, &Txid)> {
+        self.tombstones
+            .iter()
+            .filter_map(|(txid, ts)| ts.replaced_by().map(|by| (txid, by)))
+    }
+
     pub fn bury(&mut self, txid: Txid, tx: Transaction, entry: TxEntry, removal: TxRemoval) {
         let now = Instant::now();
         self.tombstones
