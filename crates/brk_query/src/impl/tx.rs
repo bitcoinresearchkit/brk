@@ -1,4 +1,7 @@
-use bitcoin::hex::DisplayHex;
+use bitcoin::{
+    hashes::{Hash, sha256d},
+    hex::DisplayHex,
+};
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
     BlockHash, Height, MerkleProof, Timestamp, Transaction, TxInIndex, TxIndex, TxOutIndex,
@@ -17,17 +20,12 @@ impl Query {
         self.indexer()
             .stores
             .txid_prefix_to_tx_index
-            .get(&TxidPrefix::from(txid))
-            .map_err(|_| Error::UnknownTxid)?
+            .get(&TxidPrefix::from(txid))?
             .map(|cow| cow.into_owned())
             .ok_or(Error::UnknownTxid)
     }
 
     pub fn txid_by_index(&self, index: TxIndex) -> Result<Txid> {
-        let len = self.indexer().vecs.transactions.txid.len();
-        if index.to_usize() >= len {
-            return Err(Error::OutOfRange("Transaction index out of range".into()));
-        }
         self.indexer()
             .vecs
             .transactions
@@ -55,23 +53,11 @@ impl Query {
             .data()
     }
 
-    /// Full confirmed TxStatus from a tx_index.
-    #[inline]
-    pub(crate) fn confirmed_status(&self, tx_index: TxIndex) -> Result<TxStatus> {
-        let height = self.confirmed_status_height(tx_index)?;
-        self.confirmed_status_at(height)
-    }
-
     /// Full confirmed TxStatus from a known height.
     #[inline]
     pub(crate) fn confirmed_status_at(&self, height: Height) -> Result<TxStatus> {
         let (block_hash, block_time) = self.block_hash_and_time(height)?;
-        Ok(TxStatus {
-            confirmed: true,
-            block_height: Some(height),
-            block_hash: Some(block_hash),
-            block_time: Some(block_time),
-        })
+        Ok(TxStatus::confirmed(height, block_hash, block_time))
     }
 
     /// Block hash + timestamp for a height (cached vecs, fast).
@@ -85,11 +71,15 @@ impl Query {
 
     // ── Transaction queries ────────────────────────────────────────
 
+    /// Map a mempool transaction by txid through `f`, returning `None`
+    /// if no mempool is attached or the txid is not in mempool.
+    fn map_mempool_tx<R>(&self, txid: &Txid, f: impl FnOnce(&Transaction) -> R) -> Option<R> {
+        self.mempool()?.txs().get(txid).map(f)
+    }
+
     pub fn transaction(&self, txid: &Txid) -> Result<Transaction> {
-        if let Some(mempool) = self.mempool()
-            && let Some(tx) = mempool.txs().get(txid)
-        {
-            return Ok(tx.clone());
+        if let Some(tx) = self.map_mempool_tx(txid, Transaction::clone) {
+            return Ok(tx);
         }
         self.transaction_by_index(self.resolve_tx_index(txid)?)
     }
@@ -98,23 +88,20 @@ impl Query {
         if self.mempool().is_some_and(|m| m.txs().contains_key(txid)) {
             return Ok(TxStatus::UNCONFIRMED);
         }
-        self.confirmed_status(self.resolve_tx_index(txid)?)
+        let (_, height) = self.resolve_tx(txid)?;
+        self.confirmed_status_at(height)
     }
 
     pub fn transaction_raw(&self, txid: &Txid) -> Result<Vec<u8>> {
-        if let Some(mempool) = self.mempool()
-            && let Some(tx) = mempool.txs().get(txid)
-        {
-            return Ok(tx.encode_bytes());
+        if let Some(bytes) = self.map_mempool_tx(txid, Transaction::encode_bytes) {
+            return Ok(bytes);
         }
         self.transaction_raw_by_index(self.resolve_tx_index(txid)?)
     }
 
     pub fn transaction_hex(&self, txid: &Txid) -> Result<String> {
-        if let Some(mempool) = self.mempool()
-            && let Some(tx) = mempool.txs().get(txid)
-        {
-            return Ok(tx.encode_bytes().to_lower_hex_string());
+        if let Some(hex) = self.map_mempool_tx(txid, |tx| tx.encode_bytes().to_lower_hex_string()) {
+            return Ok(hex);
         }
         self.transaction_hex_by_index(self.resolve_tx_index(txid)?)
     }
@@ -123,23 +110,49 @@ impl Query {
 
     pub fn outspend(&self, txid: &Txid, vout: Vout) -> Result<TxOutspend> {
         if self.mempool().is_some_and(|m| m.txs().contains_key(txid)) {
-            return Ok(TxOutspend::UNSPENT);
+            return Ok(self.mempool_outspend(txid, vout));
         }
         let (_, first_txout, output_count) = self.resolve_tx_outputs(txid)?;
         if usize::from(vout) >= output_count {
             return Ok(TxOutspend::UNSPENT);
         }
-        self.resolve_outspend(first_txout + vout)
+        let confirmed = self.resolve_outspend(first_txout + vout)?;
+        if confirmed.spent {
+            return Ok(confirmed);
+        }
+        Ok(self.mempool_outspend(txid, vout))
     }
 
     pub fn outspends(&self, txid: &Txid) -> Result<Vec<TxOutspend>> {
         if let Some(mempool) = self.mempool()
-            && let Some(tx) = mempool.txs().get(txid)
+            && let Some(output_count) = mempool.txs().get(txid).map(|tx| tx.output.len())
         {
-            return Ok(vec![TxOutspend::UNSPENT; tx.output.len()]);
+            return Ok((0..output_count)
+                .map(|i| self.mempool_outspend(txid, Vout::from(i)))
+                .collect());
         }
         let (_, first_txout, output_count) = self.resolve_tx_outputs(txid)?;
-        self.resolve_outspends(first_txout, output_count)
+        let mut spends = self.resolve_outspends(first_txout, output_count)?;
+        for (i, spend) in spends.iter_mut().enumerate() {
+            if !spend.spent {
+                *spend = self.mempool_outspend(txid, Vout::from(i));
+            }
+        }
+        Ok(spends)
+    }
+
+    fn mempool_outspend(&self, txid: &Txid, vout: Vout) -> TxOutspend {
+        let Some((spender_txid, vin)) =
+            self.mempool().and_then(|m| m.lookup_spender(txid, vout))
+        else {
+            return TxOutspend::UNSPENT;
+        };
+        TxOutspend {
+            spent: true,
+            txid: Some(spender_txid),
+            vin: Some(vin),
+            status: Some(TxStatus::UNCONFIRMED),
+        }
     }
 
     /// Resolve spend status for a single output. Minimal reads.
@@ -204,12 +217,7 @@ impl Query {
                 spent: true,
                 txid: Some(spending_txid),
                 vin: Some(vin),
-                status: Some(TxStatus {
-                    confirmed: true,
-                    block_height: Some(spending_height),
-                    block_hash: Some(block_hash),
-                    block_time: Some(block_time),
-                }),
+                status: Some(TxStatus::confirmed(spending_height, block_hash, block_time)),
             });
         }
 
@@ -223,7 +231,7 @@ impl Query {
             .vecs
             .inputs
             .tx_index
-            .collect_one_at(usize::from(txin_index))
+            .collect_one(txin_index)
             .data()?;
         let spending_first_txin: TxInIndex = indexer
             .vecs
@@ -236,8 +244,8 @@ impl Query {
             .vecs
             .transactions
             .txid
-            .reader()
-            .get(spending_tx_index.to_usize());
+            .collect_one(spending_tx_index)
+            .data()?;
         let spending_height = self.confirmed_status_height(spending_tx_index)?;
         let (block_hash, block_time) = self.block_hash_and_time(spending_height)?;
 
@@ -245,12 +253,7 @@ impl Query {
             spent: true,
             txid: Some(spending_txid),
             vin: Some(vin),
-            status: Some(TxStatus {
-                confirmed: true,
-                block_height: Some(spending_height),
-                block_hash: Some(block_hash),
-                block_time: Some(block_time),
-            }),
+            status: Some(TxStatus::confirmed(spending_height, block_hash, block_time)),
         })
     }
 
@@ -258,26 +261,25 @@ impl Query {
     fn resolve_tx_outputs(&self, txid: &Txid) -> Result<(TxIndex, TxOutIndex, usize)> {
         let tx_index = self.resolve_tx_index(txid)?;
         let indexer = self.indexer();
-        let first = indexer
-            .vecs
-            .transactions
-            .first_txout_index
-            .read_once(tx_index)?;
-        let next = indexer
-            .vecs
-            .transactions
-            .first_txout_index
-            .read_once(tx_index.incremented())?;
+        let first_txout_vec = &indexer.vecs.transactions.first_txout_index;
+        let first = first_txout_vec.read_once(tx_index)?;
+        let next_tx = tx_index.incremented();
+        let next = if next_tx.to_usize() < first_txout_vec.len() {
+            first_txout_vec.read_once(next_tx)?
+        } else {
+            TxOutIndex::from(indexer.vecs.outputs.value.len())
+        };
         Ok((tx_index, first, usize::from(next) - usize::from(first)))
     }
 
     // === Helper methods ===
 
-    pub fn transaction_by_index(&self, tx_index: TxIndex) -> Result<Transaction> {
-        self.transactions_by_indices(&[tx_index])?
+    fn transaction_by_index(&self, tx_index: TxIndex) -> Result<Transaction> {
+        Ok(self
+            .transactions_by_indices(&[tx_index])?
             .into_iter()
             .next()
-            .ok_or(Error::NotFound("Transaction not found".into()))
+            .expect("transactions_by_indices returns one tx per input index"))
     }
 
     fn transaction_raw_by_index(&self, tx_index: TxIndex) -> Result<Vec<u8>> {
@@ -328,7 +330,7 @@ impl Query {
             .transactions
             .first_tx_index
             .collect_one(height)
-            .ok_or(Error::NotFound("Block not found".into()))?;
+            .data()?;
         let pos = tx_index.to_usize() - first_tx.to_usize();
         let txids = self.block_txids_by_height(height)?;
 
@@ -341,12 +343,10 @@ impl Query {
 }
 
 fn merkle_path(txids: &[Txid], pos: usize) -> Vec<String> {
-    use bitcoin::hashes::{Hash, sha256d};
-
     // Txid bytes are in internal order (same layout as bitcoin::Txid)
     let mut hashes: Vec<[u8; 32]> = txids
         .iter()
-        .map(|t| bitcoin::Txid::from(t).to_byte_array())
+        .map(|t| <&bitcoin::Txid>::from(t).to_byte_array())
         .collect();
 
     let mut proof = Vec::new();
@@ -357,7 +357,7 @@ fn merkle_path(txids: &[Txid], pos: usize) -> Vec<String> {
         // Display order: reverse bytes for hex output
         let mut display = hashes[sibling];
         display.reverse();
-        proof.push(bitcoin::hex::DisplayHex::to_lower_hex_string(&display));
+        proof.push(display.to_lower_hex_string());
 
         hashes = hashes
             .chunks(2)

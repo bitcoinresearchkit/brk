@@ -99,6 +99,28 @@ class BrkClientBase:
         """Make a GET request and return text."""
         return self.get(path).decode()
 
+    def post(self, path: str, body: str) -> bytes:
+        """Make a POST request with a string body and return raw bytes."""
+        try:
+            conn = self._connect()
+            conn.request("POST", path, body=body)
+            res = conn.getresponse()
+            data = res.read()
+            if res.status >= 400:
+                raise BrkError(f"HTTP error: {{res.status}}", res.status)
+            return data
+        except (ConnectionError, OSError, TimeoutError) as e:
+            self._conn = None
+            raise BrkError(str(e))
+
+    def post_json(self, path: str, body: str) -> Any:
+        """Make a POST request and return JSON."""
+        return json.loads(self.post(path, body))
+
+    def post_text(self, path: str, body: str) -> str:
+        """Make a POST request and return text."""
+        return self.post(path, body).decode()
+
     def close(self) -> None:
         """Close the HTTP client."""
         if self._conn:

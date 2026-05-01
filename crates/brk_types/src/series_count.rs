@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 
-use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -19,22 +18,6 @@ pub struct SeriesCount {
     /// Number of eager (stored on disk) series-index combinations
     #[schemars(example = 16000)]
     pub stored_endpoints: usize,
-    #[serde(skip)]
-    seen: FxHashSet<String>,
-}
-
-impl SeriesCount {
-    pub fn add_endpoint(&mut self, name: &str, is_lazy: bool) {
-        self.total_endpoints += 1;
-        if is_lazy {
-            self.lazy_endpoints += 1;
-        } else {
-            self.stored_endpoints += 1;
-        }
-        if self.seen.insert(name.to_string()) {
-            self.distinct_series += 1;
-        }
-    }
 }
 
 /// Detailed series count with per-database breakdown

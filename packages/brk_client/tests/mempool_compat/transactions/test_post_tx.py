@@ -1,40 +1,55 @@
 """POST /api/tx (broadcast)
 
-We can't actually broadcast a real transaction in a test, so we send a
-clearly malformed payload and verify both servers reject it with 4xx. The
-goal is to confirm the endpoint exists and behaves like a transaction
-broadcaster — not to push live transactions.
+Live broadcast can't be tested in CI — instead we feed every form of
+*invalid* payload and verify both servers reject it identically with 400.
 """
+
+import pytest
+from brk_client import BrkError
 
 from _lib import show
 
 
-def test_post_tx_invalid_hex(brk, mempool):
-    """Both servers must reject an obviously invalid hex payload with 4xx."""
+@pytest.mark.parametrize("label,body", [
+    ("empty", ""),
+    ("whitespace", "    "),
+    ("padded_garbage", "  deadbeef  "),
+    ("garbage_short", "deadbeef"),
+    ("non_hex", "not-hex-zzzz"),
+    ("single_byte", "00"),
+])
+def test_post_tx_invalid_body_rejected(brk, mempool, label, body):
+    """Invalid body must be rejected with 400 on both servers."""
     path = "/api/tx"
-    bad_hex = "deadbeef"  # too short to be a valid serialized transaction
-
-    b = brk.session.post(f"{brk.base_url}{path}", data=bad_hex, timeout=15)
+    with pytest.raises(BrkError) as ei:
+        brk.post_tx(body)
+    assert ei.value.status == 400, label
     mempool._wait()
-    m = mempool.session.post(f"{mempool.base_url}{path}", data=bad_hex, timeout=15)
-    show("POST", path, f"brk={b.status_code}", f"mempool={m.status_code}")
-
-    assert 400 <= b.status_code < 500, (
-        f"brk POST /api/tx with garbage should 4xx, got {b.status_code}: {b.text!r}"
-    )
-    assert 400 <= m.status_code < 500, (
-        f"mempool POST /api/tx with garbage should 4xx, got {m.status_code}: {m.text!r}"
-    )
+    m = mempool.session.post(f"{mempool.base_url}{path}", data=body, timeout=15)
+    show("POST", f"{path} ({label})", "brk=400", f"mempool={m.status_code}")
+    assert m.status_code == 400, f"{label}: mempool={m.status_code}"
 
 
-def test_post_tx_empty_body(brk, mempool):
-    """Both servers must reject an empty body with 4xx."""
-    path = "/api/tx"
-
-    b = brk.session.post(f"{brk.base_url}{path}", data="", timeout=15)
+def test_post_tx_coinbase_rejected(brk, mempool, block):
+    """Re-broadcasting a coinbase tx is rejected with 400 on both servers (multi-era)."""
+    coinbase_hex = mempool.get_text(f"/api/tx/{block.coinbase_txid}/hex")
+    with pytest.raises(BrkError) as ei:
+        brk.post_tx(coinbase_hex)
+    assert ei.value.status == 400
     mempool._wait()
-    m = mempool.session.post(f"{mempool.base_url}{path}", data="", timeout=15)
-    show("POST", path, f"brk={b.status_code}", f"mempool={m.status_code}")
+    m = mempool.session.post(f"{mempool.base_url}/api/tx", data=coinbase_hex, timeout=15)
+    show("POST", f"/api/tx (coinbase h={block.height})", "brk=400", f"mempool={m.status_code}")
+    assert m.status_code == 400
 
-    assert 400 <= b.status_code < 500
-    assert 400 <= m.status_code < 500
+
+def test_post_tx_already_confirmed_rejected(brk, mempool, live):
+    """Re-broadcasting an already-confirmed regular tx is rejected with 400 on both."""
+    sample = live.blocks[-1]
+    tx_hex = mempool.get_text(f"/api/tx/{sample.txid}/hex")
+    with pytest.raises(BrkError) as ei:
+        brk.post_tx(tx_hex)
+    assert ei.value.status == 400
+    mempool._wait()
+    m = mempool.session.post(f"{mempool.base_url}/api/tx", data=tx_hex, timeout=15)
+    show("POST", f"/api/tx (confirmed h={sample.height})", "brk=400", f"mempool={m.status_code}")
+    assert m.status_code == 400

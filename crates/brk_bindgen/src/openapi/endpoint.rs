@@ -1,5 +1,14 @@
 use crate::openapi::{Parameter, ResponseKind};
 
+/// Request body shape for POST/PUT/PATCH endpoints.
+#[derive(Debug, Clone)]
+pub struct RequestBody {
+    /// Body content type as a name (e.g. "string" for text/plain, "Foo" for an `application/json` $ref).
+    pub body_type: String,
+    /// Whether the body is required.
+    pub required: bool,
+}
+
 /// Endpoint information extracted from OpenAPI spec.
 #[derive(Debug, Clone)]
 pub struct Endpoint {
@@ -17,6 +26,8 @@ pub struct Endpoint {
     pub path_params: Vec<Parameter>,
     /// Query parameters
     pub query_params: Vec<Parameter>,
+    /// Request body, if any (POST/PUT/PATCH).
+    pub request_body: Option<RequestBody>,
     /// Body kind for the 200 response.
     pub response_kind: ResponseKind,
     /// Whether this endpoint is deprecated
@@ -27,9 +38,9 @@ pub struct Endpoint {
 
 impl Endpoint {
     /// Returns true if this endpoint should be included in client generation.
-    /// Only non-deprecated GET endpoints are included.
+    /// Non-deprecated GET and POST endpoints are included.
     pub fn should_generate(&self) -> bool {
-        self.method == "GET" && !self.deprecated
+        !self.deprecated && (self.method == "GET" || self.method == "POST")
     }
 
     /// Returns true if this endpoint returns JSON.

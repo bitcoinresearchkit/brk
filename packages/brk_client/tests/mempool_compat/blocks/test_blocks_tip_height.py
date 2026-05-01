@@ -1,32 +1,47 @@
 """GET /api/blocks/tip/height"""
 
+import re
+
 from _lib import show
 
 
+HEX_HASH_RE = re.compile(r"^[0-9a-f]{64}$")
+
+
 def test_blocks_tip_height_close(brk, mempool):
-    """Tip heights must be within a few blocks of each other."""
+    """brk and mempool tips must be within 3 blocks (live-race tolerance)."""
     path = "/api/blocks/tip/height"
-    b = int(brk.get_text(path))
+    b = brk.get_block_tip_height()
     m = int(mempool.get_text(path))
     show("GET", path, b, m)
-    assert abs(b - m) <= 3, f"Tip heights differ by {abs(b - m)}: brk={b}, mempool={m}"
+    assert isinstance(b, int) and b >= 0, f"tip height not a non-negative int: {b!r}"
+    assert abs(b - m) <= 3, f"tip heights differ by {abs(b - m)}: brk={b} mempool={m}"
 
 
 def test_blocks_tip_height_resolves_to_hash(brk):
-    """`tip/height` must resolve to a valid hash via `block-height/{tip}`."""
-    h = int(brk.get_text("/api/blocks/tip/height"))
-    bh = brk.get_text(f"/api/block-height/{h}")
+    """tip/height must resolve to a 64-char hex hash via /api/block-height/{tip}."""
+    h = brk.get_block_tip_height()
+    bh = brk.get_block_by_height(h)
     show("GET", "/api/blocks/tip/height", h, bh)
-    assert len(bh) == 64 and all(c in "0123456789abcdef" for c in bh.lower()), (
-        f"block-height/{h} returned non-hash: {bh!r}"
+    assert HEX_HASH_RE.match(bh), f"block-height/{h} returned non-hash: {bh!r}"
+
+
+def test_blocks_tip_height_matches_tip_hash(brk):
+    """tip/height and tip/hash must point to the same block."""
+    h = brk.get_block_tip_height()
+    tip_hash = brk.get_block_tip_hash()
+    blk = brk.get_block(tip_hash)
+    show("GET", "/api/blocks/tip/height", h, f"tip_hash={tip_hash} block.height={blk['height']}")
+    assert blk["height"] == h, (
+        f"tip/height={h} but /block/{tip_hash}.height={blk['height']}"
     )
 
 
 def test_blocks_tip_height_matches_recent(brk):
-    """`tip/height` must equal the first element's height in `/api/blocks`."""
-    h = int(brk.get_text("/api/blocks/tip/height"))
-    blocks = brk.get_json("/api/blocks")
+    """tip/height must equal /api/blocks[0].height."""
+    h = brk.get_block_tip_height()
+    blocks = brk.get_blocks()
     show("GET", "/api/blocks/tip/height", h, blocks[0]["height"])
-    assert blocks and blocks[0]["height"] == h, (
+    assert blocks[0]["height"] == h, (
         f"tip/height={h} but /api/blocks[0].height={blocks[0]['height']}"
     )

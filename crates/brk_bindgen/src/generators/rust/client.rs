@@ -111,6 +111,30 @@ impl BrkClientBase {{
             .and_then(|mut r| r.body_mut().read_to_vec())
             .map_err(|e| BrkError {{ message: e.to_string() }})
     }}
+
+    /// Make a POST request and deserialize JSON response.
+    pub fn post_json<T: DeserializeOwned>(&self, path: &str, body: &str) -> Result<T> {{
+        self.agent.post(&self.url(path))
+            .send(body)
+            .and_then(|mut r| r.body_mut().read_json())
+            .map_err(|e| BrkError {{ message: e.to_string() }})
+    }}
+
+    /// Make a POST request and return raw text response.
+    pub fn post_text(&self, path: &str, body: &str) -> Result<String> {{
+        self.agent.post(&self.url(path))
+            .send(body)
+            .and_then(|mut r| r.body_mut().read_to_string())
+            .map_err(|e| BrkError {{ message: e.to_string() }})
+    }}
+
+    /// Make a POST request and return raw bytes response.
+    pub fn post_bytes(&self, path: &str, body: &str) -> Result<Vec<u8>> {{
+        self.agent.post(&self.url(path))
+            .send(body)
+            .and_then(|mut r| r.body_mut().read_to_vec())
+            .map_err(|e| BrkError {{ message: e.to_string() }})
+    }}
 }}
 
 /// Build series name with suffix.

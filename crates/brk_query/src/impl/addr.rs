@@ -4,15 +4,12 @@ use bitcoin::{Network, PublicKey, ScriptBuf};
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
     Addr, AddrBytes, AddrChainStats, AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, AddrStats,
-    AnyAddrDataIndexEnum, Dollars, Height, OutputType, Transaction, TxIndex, TxStatus, Txid,
-    TypeIndex, Unit, Utxo, Vout,
+    AnyAddrDataIndexEnum, Dollars, Height, OutputType, Timestamp, Transaction, TxIndex, TxStatus,
+    Txid, TxidPrefix, TypeIndex, Unit, Utxo, Vout,
 };
 use vecdb::VecIndex;
 
 use crate::Query;
-
-/// Maximum number of mempool txids to return
-const MAX_MEMPOOL_TXIDS: usize = 50;
 
 impl Query {
     pub fn addr(&self, addr: Addr) -> Result<AddrStats> {
@@ -36,14 +33,12 @@ impl Query {
         let Ok(bytes) = AddrBytes::try_from((&script, output_type)) else {
             return Err(Error::InvalidAddr);
         };
-        let addr_type = output_type;
         let hash = AddrHash::from(&bytes);
 
-        let Some(store) = stores.addr_type_to_addr_hash_to_addr_index.get(addr_type) else {
+        let Some(store) = stores.addr_type_to_addr_hash_to_addr_index.get(output_type) else {
             return Err(Error::InvalidAddr);
         };
-        let Ok(Some(type_index)) = store.get(&hash).map(|opt| opt.map(|cow| cow.into_owned()))
-        else {
+        let Some(type_index) = store.get(&hash)?.map(|cow| cow.into_owned()) else {
             return Err(Error::UnknownAddr);
         };
 
@@ -52,30 +47,32 @@ impl Query {
             .any_addr_indexes
             .get_once(output_type, type_index)?;
 
-        let addr_data = match any_addr_index.to_enum() {
-            AnyAddrDataIndexEnum::Funded(index) => computer
-                .distribution
-                .addrs_data
-                .funded
-                .reader()
-                .get(usize::from(index)),
-            AnyAddrDataIndexEnum::Empty(index) => computer
-                .distribution
-                .addrs_data
-                .empty
-                .reader()
-                .get(usize::from(index))
-                .into(),
-        };
-
-        let realized_price = match &any_addr_index.to_enum() {
-            AnyAddrDataIndexEnum::Funded(_) => addr_data.realized_price().to_dollars(),
-            AnyAddrDataIndexEnum::Empty(_) => Dollars::default(),
+        let (addr_data, realized_price) = match any_addr_index.to_enum() {
+            AnyAddrDataIndexEnum::Funded(index) => {
+                let data = computer
+                    .distribution
+                    .addrs_data
+                    .funded
+                    .reader()
+                    .get(usize::from(index));
+                let price = data.realized_price().to_dollars();
+                (data, price)
+            }
+            AnyAddrDataIndexEnum::Empty(index) => {
+                let data = computer
+                    .distribution
+                    .addrs_data
+                    .empty
+                    .reader()
+                    .get(usize::from(index))
+                    .into();
+                (data, Dollars::default())
+            }
         };
 
         Ok(AddrStats {
             addr,
-            addr_type,
+            addr_type: output_type,
             chain_stats: AddrChainStats {
                 type_index,
                 funded_txo_count: addr_data.funded_txo_count,
@@ -85,22 +82,38 @@ impl Query {
                 tx_count: addr_data.tx_count,
                 realized_price,
             },
-            mempool_stats: self.mempool().map(|m| {
-                m.addrs()
-                    .get(&bytes)
-                    .map(|e| e.stats.clone())
-                    .unwrap_or_default()
-            }),
+            mempool_stats: self
+                .mempool()
+                .and_then(|m| m.addrs().get(&bytes).map(|e| e.stats.clone()))
+                .unwrap_or_default(),
         })
     }
 
+    /// Esplora `/address/:address/txs` first page: up to `mempool_limit`
+    /// mempool (newest first) followed by the first `chain_limit`
+    /// confirmed. Pagination is path-style via `/txs/chain/:after_txid`.
     pub fn addr_txs(
         &self,
         addr: Addr,
+        mempool_limit: usize,
+        chain_limit: usize,
+    ) -> Result<Vec<Transaction>> {
+        let mut out = if self.mempool().is_some() {
+            self.addr_mempool_txs(&addr, mempool_limit)?
+        } else {
+            Vec::new()
+        };
+        out.extend(self.addr_txs_chain(&addr, None, chain_limit)?);
+        Ok(out)
+    }
+
+    pub fn addr_txs_chain(
+        &self,
+        addr: &Addr,
         after_txid: Option<Txid>,
         limit: usize,
     ) -> Result<Vec<Transaction>> {
-        let txindices = self.addr_txindices(&addr, after_txid, limit)?;
+        let txindices = self.addr_txindices(addr, after_txid, limit)?;
         self.transactions_by_indices(&txindices)
     }
 
@@ -112,11 +125,10 @@ impl Query {
     ) -> Result<Vec<Txid>> {
         let txindices = self.addr_txindices(&addr, after_txid, limit)?;
         let txid_reader = self.indexer().vecs.transactions.txid.reader();
-        let txids = txindices
+        Ok(txindices
             .into_iter()
             .map(|tx_index| txid_reader.get(tx_index.to_usize()))
-            .collect();
-        Ok(txids)
+            .collect())
     }
 
     fn addr_txindices(
@@ -125,8 +137,7 @@ impl Query {
         after_txid: Option<Txid>,
         limit: usize,
     ) -> Result<Vec<TxIndex>> {
-        let indexer = self.indexer();
-        let stores = &indexer.stores;
+        let stores = &self.indexer().stores;
 
         let (output_type, type_index) = self.resolve_addr(addr)?;
 
@@ -137,8 +148,6 @@ impl Query {
 
         if let Some(after_txid) = after_txid {
             let after_tx_index = self.resolve_tx_index(&after_txid)?;
-
-            // Seek directly to after_tx_index and iterate backward — O(limit)
             let min = AddrIndexTxIndex::min_for_addr(type_index);
             let bound = AddrIndexTxIndex::from((type_index, after_tx_index));
             Ok(store
@@ -148,7 +157,6 @@ impl Query {
                 .map(|(key, _): (AddrIndexTxIndex, Unit)| key.tx_index())
                 .collect())
         } else {
-            // No pagination — scan from end of prefix
             let prefix = u32::from(type_index).to_be_bytes();
             Ok(store
                 .prefix(prefix)
@@ -159,7 +167,7 @@ impl Query {
         }
     }
 
-    pub fn addr_utxos(&self, addr: Addr) -> Result<Vec<Utxo>> {
+    pub fn addr_utxos(&self, addr: Addr, max_utxos: usize) -> Result<Vec<Utxo>> {
         let indexer = self.indexer();
         let stores = &indexer.stores;
         let vecs = &indexer.vecs;
@@ -173,14 +181,12 @@ impl Query {
 
         let prefix = u32::from(type_index).to_be_bytes();
 
-        // Bounds worst-case work and response size, prevents heavy-address DDoS.
-        const MAX_UTXOS: usize = 1000;
         let outpoints: Vec<(TxIndex, Vout)> = store
             .prefix(prefix)
             .map(|(key, _): (AddrIndexOutPoint, Unit)| (key.tx_index(), key.vout()))
-            .take(MAX_UTXOS + 1)
+            .take(max_utxos + 1)
             .collect();
-        if outpoints.len() > MAX_UTXOS {
+        if outpoints.len() > max_utxos {
             return Err(Error::TooManyUtxos);
         }
 
@@ -218,24 +224,38 @@ impl Query {
         Ok(utxos)
     }
 
-    pub fn addr_mempool_hash(&self, addr: &Addr) -> u64 {
-        let Some(mempool) = self.mempool() else {
-            return 0;
-        };
-        let Ok(bytes) = AddrBytes::from_str(addr) else {
-            return 0;
-        };
-        mempool.addr_state_hash(&bytes)
+    pub fn addr_mempool_hash(&self, addr: &Addr) -> Option<u64> {
+        let mempool = self.mempool()?;
+        let bytes = AddrBytes::from_str(addr).ok()?;
+        Some(mempool.addr_state_hash(&bytes))
     }
 
-    pub fn addr_mempool_txids(&self, addr: Addr) -> Result<Vec<Txid>> {
-        let bytes = AddrBytes::from_str(&addr)?;
+    pub fn addr_mempool_txs(&self, addr: &Addr, limit: usize) -> Result<Vec<Transaction>> {
+        let bytes = AddrBytes::from_str(addr)?;
         let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
-        Ok(mempool
-            .addrs()
-            .get(&bytes)
-            .map(|e| e.txids.iter().take(MAX_MEMPOOL_TXIDS).cloned().collect())
-            .unwrap_or_default())
+        let addrs = mempool.addrs();
+        let Some(entry) = addrs.get(&bytes) else {
+            return Ok(vec![]);
+        };
+        let entries = mempool.entries();
+        let mut ordered: Vec<(Timestamp, &Txid)> = entry
+            .txids
+            .iter()
+            .map(|txid| {
+                let first_seen = entries
+                    .get(&TxidPrefix::from(txid))
+                    .map(|e| e.first_seen)
+                    .unwrap_or_default();
+                (first_seen, txid)
+            })
+            .collect();
+        ordered.sort_unstable_by(|a, b| b.0.cmp(&a.0));
+        let txs = mempool.txs();
+        Ok(ordered
+            .into_iter()
+            .filter_map(|(_, txid)| txs.get(txid).cloned())
+            .take(limit)
+            .collect())
     }
 
     /// Height of the last on-chain activity for an address (last tx_index → height).
@@ -253,14 +273,9 @@ impl Query {
             .next_back()
             .map(|(key, _): (AddrIndexTxIndex, Unit)| key.tx_index())
             .ok_or(Error::UnknownAddr)?;
-        self.computer()
-            .indexes
-            .tx_heights
-            .get_shared(last_tx_index)
-            .ok_or(Error::UnknownAddr)
+        self.confirmed_status_height(last_tx_index)
     }
 
-    /// Resolve an address string to its output type and type_index
     fn resolve_addr(&self, addr: &Addr) -> Result<(OutputType, TypeIndex)> {
         let stores = &self.indexer().stores;
 
@@ -268,12 +283,12 @@ impl Query {
         let output_type = OutputType::from(&bytes);
         let hash = AddrHash::from(&bytes);
 
-        let Ok(Some(type_index)) = stores
+        let Some(type_index) = stores
             .addr_type_to_addr_hash_to_addr_index
             .get(output_type)
             .data()?
-            .get(&hash)
-            .map(|opt| opt.map(|cow| cow.into_owned()))
+            .get(&hash)?
+            .map(|cow| cow.into_owned())
         else {
             return Err(Error::UnknownAddr);
         };

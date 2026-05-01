@@ -19,5 +19,5 @@ pub struct AddrStats {
     pub chain_stats: AddrChainStats,
 
     /// Statistics for unconfirmed transactions in the mempool
-    pub mempool_stats: Option<AddrMempoolStats>,
+    pub mempool_stats: AddrMempoolStats,
 }

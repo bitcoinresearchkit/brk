@@ -4,13 +4,13 @@ use brk_computer::Computer;
 use brk_indexer::Indexer;
 use brk_traversable::{Traversable, TreeNode};
 use brk_types::{
-    Index, IndexInfo, Limit, PaginatedSeries, Pagination, PaginationIndex, SeriesCount, SeriesName,
+    Index, IndexInfo, Limit, PaginatedSeries, Pagination, SeriesCount, SeriesInfo, SeriesName,
 };
 use derive_more::{Deref, DerefMut};
 use quickmatch::{QuickMatch, QuickMatchConfig};
+use rustc_hash::{FxHashMap, FxHashSet};
 use vecdb::{AnyExportableVec, Ro};
 
-#[derive(Default)]
 pub struct Vecs<'a> {
     pub series_to_index_to_vec: BTreeMap<&'a str, IndexToVec<'a>>,
     pub index_to_series_to_vec: BTreeMap<Index, SeriesToVec<'a>>,
@@ -18,10 +18,9 @@ pub struct Vecs<'a> {
     pub indexes: Vec<IndexInfo>,
     pub counts: SeriesCount,
     pub counts_by_db: BTreeMap<String, SeriesCount>,
-    catalog: Option<TreeNode>,
-    matcher: Option<QuickMatch<'a>>,
+    catalog: TreeNode,
+    matcher: QuickMatch<'a>,
     series_to_indexes: BTreeMap<&'a str, Vec<Index>>,
-    index_to_series: BTreeMap<Index, Vec<&'a str>>,
 }
 
 impl<'a> Vecs<'a> {
@@ -49,39 +48,26 @@ impl<'a> Vecs<'a> {
         computed_vecs: impl Iterator<Item = (&'static str, &'a dyn AnyExportableVec)>,
         computed_tree: TreeNode,
     ) -> Self {
-        let mut this = Vecs::default();
-
-        indexed_vecs.for_each(|vec| this.insert(vec, "indexed"));
-        computed_vecs.for_each(|(db, vec)| this.insert(vec, db));
-
-        let mut ids = this
-            .series_to_index_to_vec
-            .keys()
-            .copied()
-            .collect::<Vec<_>>();
+        let mut builder = Builder::default();
+        indexed_vecs.for_each(|vec| builder.insert(vec, "indexed"));
+        computed_vecs.for_each(|(db, vec)| builder.insert(vec, db));
+        builder.counts.distinct_series = builder.series_to_index_to_vec.len();
+        let Builder {
+            series_to_index_to_vec,
+            index_to_series_to_vec,
+            counts,
+            counts_by_db,
+            ..
+        } = builder;
 
         let sort_ids = |ids: &mut Vec<&str>| {
             ids.sort_unstable_by(|a, b| a.len().cmp(&b.len()).then_with(|| a.cmp(b)))
         };
 
-        sort_ids(&mut ids);
+        let mut series = series_to_index_to_vec.keys().copied().collect::<Vec<_>>();
+        sort_ids(&mut series);
 
-        this.series = ids;
-        this.counts.distinct_series = this.series_to_index_to_vec.len();
-        this.counts.total_endpoints = this
-            .index_to_series_to_vec
-            .values()
-            .map(|tree| tree.len())
-            .sum::<usize>();
-        this.counts.lazy_endpoints = this
-            .index_to_series_to_vec
-            .values()
-            .flat_map(|tree| tree.values())
-            .filter(|vec| vec.region_names().is_empty())
-            .count();
-        this.counts.stored_endpoints = this.counts.total_endpoints - this.counts.lazy_endpoints;
-        this.indexes = this
-            .index_to_series_to_vec
+        let indexes = index_to_series_to_vec
             .keys()
             .map(|i| IndexInfo {
                 index: *i,
@@ -93,60 +79,35 @@ impl<'a> Vecs<'a> {
             })
             .collect();
 
-        this.series_to_indexes = this
-            .series_to_index_to_vec
+        let series_to_indexes = series_to_index_to_vec
             .iter()
             .map(|(id, index_to_vec)| (*id, index_to_vec.keys().copied().collect::<Vec<_>>()))
             .collect();
-        this.index_to_series = this
-            .index_to_series_to_vec
-            .iter()
-            .map(|(index, id_to_vec)| (*index, id_to_vec.keys().copied().collect::<Vec<_>>()))
-            .collect();
-        this.index_to_series.values_mut().for_each(sort_ids);
-        this.catalog.replace(
-            TreeNode::Branch(
-                [
-                    ("indexed".to_string(), indexed_tree),
-                    ("computed".to_string(), computed_tree),
-                ]
-                .into_iter()
-                .collect(),
-            )
-            .merge_branches()
-            .expect("indexed/computed catalog merge: same series leaf with incompatible schemas"),
-        );
-        this.matcher = Some(QuickMatch::new(&this.series));
 
-        this
-    }
+        let catalog = TreeNode::Branch(
+            [
+                ("indexed".to_string(), indexed_tree),
+                ("computed".to_string(), computed_tree),
+            ]
+            .into_iter()
+            .collect(),
+        )
+        .merge_branches()
+        .expect("indexed/computed catalog merge: same series leaf with incompatible schemas");
 
-    fn insert(&mut self, vec: &'a dyn AnyExportableVec, db: &str) {
-        let name = vec.name();
-        let serialized_index = vec.index_type_to_string();
-        let index = Index::try_from(serialized_index)
-            .unwrap_or_else(|_| panic!("Unknown index type: {serialized_index}"));
+        let matcher = QuickMatch::new(&series);
 
-        let prev = self
-            .series_to_index_to_vec
-            .entry(name)
-            .or_default()
-            .insert(index, vec);
-        assert!(
-            prev.is_none(),
-            "Duplicate series: {name} for index {index:?}"
-        );
-
-        self.index_to_series_to_vec
-            .entry(index)
-            .or_default()
-            .insert(name, vec);
-
-        let is_lazy = vec.region_names().is_empty();
-        self.counts_by_db
-            .entry(db.to_string())
-            .or_default()
-            .add_endpoint(name, is_lazy);
+        Self {
+            series_to_index_to_vec,
+            index_to_series_to_vec,
+            series,
+            indexes,
+            counts,
+            counts_by_db,
+            catalog,
+            matcher,
+            series_to_indexes,
+        }
     }
 
     pub fn series(&'static self, pagination: Pagination) -> PaginatedSeries {
@@ -170,25 +131,21 @@ impl<'a> Vecs<'a> {
     }
 
     pub fn series_to_indexes(&self, series: &SeriesName) -> Option<&Vec<Index>> {
-        self.series_to_indexes
-            .get(series.replace("-", "_").as_str())
+        self.series_to_indexes.get(series.normalize().as_ref())
     }
 
-    pub fn index_to_ids(
-        &self,
-        PaginationIndex { index, pagination }: PaginationIndex,
-    ) -> Option<&[&'a str]> {
-        let vec = self.index_to_series.get(&index)?;
-
-        let len = vec.len();
-        let start = pagination.start(len);
-        let end = pagination.end(len);
-
-        Some(&vec[start..end])
+    pub fn series_info(&self, series: &SeriesName) -> Option<SeriesInfo> {
+        let index_to_vec = self.series_to_index_to_vec.get(series.normalize().as_ref())?;
+        let value_type = index_to_vec.values().next()?.value_type_to_string();
+        let indexes = index_to_vec.keys().copied().collect();
+        Some(SeriesInfo {
+            indexes,
+            value_type: value_type.into(),
+        })
     }
 
     pub fn catalog(&self) -> &TreeNode {
-        self.catalog.as_ref().expect("catalog not initialized")
+        &self.catalog
     }
 
     pub fn matches(&self, series: &SeriesName, limit: Limit) -> Vec<&'_ str> {
@@ -196,16 +153,13 @@ impl<'a> Vecs<'a> {
             return Vec::new();
         }
         self.matcher
-            .as_ref()
-            .expect("matcher not initialized")
             .matches_with(series, &QuickMatchConfig::new().with_limit(*limit))
     }
 
-    /// Look up a vec by series name and index
+    /// Look up a vec by series name and index. `series` is normalized (`-` → `_`, lowercased).
     pub fn get(&self, series: &SeriesName, index: Index) -> Option<&'a dyn AnyExportableVec> {
-        let series_name = series.replace("-", "_");
         self.series_to_index_to_vec
-            .get(series_name.as_str())
+            .get(series.normalize().as_ref())
             .and_then(|index_to_vec| index_to_vec.get(&index).copied())
     }
 }
@@ -215,3 +169,48 @@ pub struct IndexToVec<'a>(BTreeMap<Index, &'a dyn AnyExportableVec>);
 
 #[derive(Default, Deref, DerefMut)]
 pub struct SeriesToVec<'a>(BTreeMap<&'a str, &'a dyn AnyExportableVec>);
+
+#[derive(Default)]
+struct Builder<'a> {
+    series_to_index_to_vec: BTreeMap<&'a str, IndexToVec<'a>>,
+    index_to_series_to_vec: BTreeMap<Index, SeriesToVec<'a>>,
+    counts: SeriesCount,
+    counts_by_db: BTreeMap<String, SeriesCount>,
+    seen_by_db: FxHashMap<&'a str, FxHashSet<&'a str>>,
+}
+
+impl<'a> Builder<'a> {
+    fn insert(&mut self, vec: &'a dyn AnyExportableVec, db: &'a str) {
+        let name = vec.name();
+        let serialized_index = vec.index_type_to_string();
+        let index = Index::try_from(serialized_index)
+            .unwrap_or_else(|_| panic!("Unknown index type: {serialized_index}"));
+
+        let prev = self
+            .series_to_index_to_vec
+            .entry(name)
+            .or_default()
+            .insert(index, vec);
+        assert!(prev.is_none(), "Duplicate series: {name} for index {index:?}");
+
+        self.index_to_series_to_vec
+            .entry(index)
+            .or_default()
+            .insert(name, vec);
+
+        let is_lazy = vec.region_names().is_empty();
+        let by_db = self.counts_by_db.entry(db.to_string()).or_default();
+        self.counts.total_endpoints += 1;
+        by_db.total_endpoints += 1;
+        if is_lazy {
+            self.counts.lazy_endpoints += 1;
+            by_db.lazy_endpoints += 1;
+        } else {
+            self.counts.stored_endpoints += 1;
+            by_db.stored_endpoints += 1;
+        }
+        if self.seen_by_db.entry(db).or_default().insert(name) {
+            by_db.distinct_series += 1;
+        }
+    }
+}

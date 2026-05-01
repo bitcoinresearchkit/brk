@@ -19,6 +19,8 @@ T = TypeVar('T')
 
 # Bitcoin address string
 Addr = str
+# Transaction ID (hash)
+Txid = str
 # US Dollar amount
 Dollars = float
 # Amount in satoshis (1 BTC = 100,000,000 sats)
@@ -27,8 +29,6 @@ Sats = int
 TypeIndex = int
 # Type (P2PKH, P2WPKH, P2SH, P2TR, etc.)
 OutputType = Literal["p2pk", "p2pk", "p2pkh", "multisig", "p2sh", "op_return", "v0_p2wpkh", "v0_p2wsh", "v1_p2tr", "p2a", "empty", "unknown"]
-# Transaction ID (hash)
-Txid = str
 # Unified index for any address type (funded or empty)
 AnyAddrIndex = TypeIndex
 # Unsigned basis points stored as u16.
@@ -54,7 +54,7 @@ BasisPointsSigned32 = int
 # Bitcoin amount as floating point (1 BTC = 100,000,000 satoshis)
 Bitcoin = float
 # URL-friendly mining pool identifier
-PoolSlug = Literal["unknown", "blockfills", "ultimuspool", "terrapool", "luxor", "onethash", "btccom", "bitfarms", "huobipool", "wayicn", "canoepool", "btctop", "bitcoincom", "pool175btc", "gbminers", "axbt", "asicminer", "bitminter", "bitcoinrussia", "btcserv", "simplecoinus", "btcguild", "eligius", "ozcoin", "eclipsemc", "maxbtc", "triplemining", "coinlab", "pool50btc", "ghashio", "stminingcorp", "bitparking", "mmpool", "polmine", "kncminer", "bitalo", "f2pool", "hhtt", "megabigpower", "mtred", "nmcbit", "yourbtcnet", "givemecoins", "braiinspool", "antpool", "multicoinco", "bcpoolio", "cointerra", "kanopool", "solock", "ckpool", "nicehash", "bitclub", "bitcoinaffiliatenetwork", "btcc", "bwpool", "exxbw", "bitsolo", "bitfury", "twentyoneinc", "digitalbtc", "eightbaochi", "mybtccoinpool", "tbdice", "hashpool", "nexious", "bravomining", "hotpool", "okexpool", "bcmonster", "onehash", "bixin", "tatmaspool", "viabtc", "connectbtc", "batpool", "waterhole", "dcexploration", "dcex", "btpool", "fiftyeightcoin", "bitcoinindia", "shawnp0wers", "phashio", "rigpool", "haozhuzhu", "sevenpool", "miningkings", "hashbx", "dpool", "rawpool", "haominer", "helix", "bitcoinukraine", "poolin", "secretsuperstar", "tigerpoolnet", "sigmapoolcom", "okpooltop", "hummerpool", "tangpool", "bytepool", "spiderpool", "novablock", "miningcity", "binancepool", "minerium", "lubiancom", "okkong", "aaopool", "emcdpool", "foundryusa", "sbicrypto", "arkpool", "purebtccom", "marapool", "kucoinpool", "entrustcharitypool", "okminer", "titan", "pegapool", "btcnuggets", "cloudhashing", "digitalxmintsy", "telco214", "btcpoolparty", "multipool", "transactioncoinmining", "btcdig", "trickysbtcpool", "btcmp", "eobot", "unomp", "patels", "gogreenlight", "bitcoinindiapool", "ekanembtc", "canoe", "tiger", "onem1x", "zulupool", "secpool", "ocean", "whitepool", "wiz", "wk057", "futurebitapollosolo", "carbonnegative", "portlandhodl", "phoenix", "neopool", "maxipool", "bitfufupool", "gdpool", "miningdutch", "publicpool", "miningsquared", "innopolistech", "btclab", "parasite", "redrockpool", "est3lar", "braiinssolo", "solopool", "noderunners"]
+PoolSlug = Literal["unknown", "blockfills", "ultimuspool", "terrapool", "luxor", "1thash", "btccom", "bitfarms", "huobipool", "wayicn", "canoepool", "btctop", "bitcoincom", "175btc", "gbminers", "axbt", "asicminer", "bitminter", "bitcoinrussia", "btcserv", "simplecoinus", "btcguild", "eligius", "ozcoin", "eclipsemc", "maxbtc", "triplemining", "coinlab", "50btc", "ghashio", "stminingcorp", "bitparking", "mmpool", "polmine", "kncminer", "bitalo", "f2pool", "hhtt", "megabigpower", "mtred", "nmcbit", "yourbtcnet", "givemecoins", "braiinspool", "antpool", "multicoinco", "bcpoolio", "cointerra", "kanopool", "solock", "ckpool", "nicehash", "bitclub", "bitcoinaffiliatenetwork", "btcc", "bwpool", "exxbw", "bitsolo", "bitfury", "21inc", "digitalbtc", "8baochi", "mybtccoinpool", "tbdice", "hashpool", "nexious", "bravomining", "hotpool", "okexpool", "bcmonster", "1hash", "bixin", "tatmaspool", "viabtc", "connectbtc", "batpool", "waterhole", "dcexploration", "dcex", "btpool", "58coin", "bitcoinindia", "shawnp0wers", "phashio", "rigpool", "haozhuzhu", "7pool", "miningkings", "hashbx", "dpool", "rawpool", "haominer", "helix", "bitcoinukraine", "poolin", "secretsuperstar", "tigerpoolnet", "sigmapoolcom", "okpooltop", "hummerpool", "tangpool", "bytepool", "spiderpool", "novablock", "miningcity", "binancepool", "minerium", "lubiancom", "okkong", "aaopool", "emcdpool", "foundryusa", "sbicrypto", "arkpool", "purebtccom", "marapool", "kucoinpool", "entrustcharitypool", "okminer", "titan", "pegapool", "btcnuggets", "cloudhashing", "digitalxmintsy", "telco214", "btcpoolparty", "multipool", "transactioncoinmining", "btcdig", "trickysbtcpool", "btcmp", "eobot", "unomp", "patels", "gogreenlight", "bitcoinindiapool", "ekanembtc", "canoe", "tiger", "1m1x", "zulupool", "secpool", "ocean", "whitepool", "wiz", "wk057", "futurebitapollosolo", "carbonnegative", "portlandhodl", "phoenix", "neopool", "maxipool", "bitfufupool", "gdpool", "miningdutch", "publicpool", "miningsquared", "innopolistech", "btclab", "parasite", "redrockpool", "est3lar", "braiinssolo", "solopoolcom", "noderunners"]
 # Fee rate in sat/vB
 FeeRate = float
 # Weight in weight units (WU). Max block weight is 4,000,000 WU.
@@ -83,6 +83,10 @@ CentsSquaredSats = int
 # Closing price value for a time period
 Close = Dollars
 # URPD cohort identifier. Use `GET /api/urpd` to list available cohorts.
+# 
+# Validated at construction: non-empty, ASCII `[a-z0-9_]+`. Matches the
+# schemars enum value set; the type therefore proves "this is a valid
+# cohort name" wherever a `Cohort` is held.
 Cohort = Literal["all", "sth", "lth", "utxos_under_1h_old", "utxos_1h_to_1d_old", "utxos_1d_to_1w_old", "utxos_1w_to_1m_old", "utxos_1m_to_2m_old", "utxos_2m_to_3m_old", "utxos_3m_to_4m_old", "utxos_4m_to_5m_old", "utxos_5m_to_6m_old", "utxos_6m_to_1y_old", "utxos_1y_to_2y_old", "utxos_2y_to_3y_old", "utxos_3y_to_4y_old", "utxos_4y_to_5y_old", "utxos_5y_to_6y_old", "utxos_6y_to_7y_old", "utxos_7y_to_8y_old", "utxos_8y_to_10y_old", "utxos_10y_to_12y_old", "utxos_12y_to_15y_old", "utxos_over_15y_old"]
 # Coinbase scriptSig tag for pool identification.
 # 
@@ -230,6 +234,16 @@ UnknownOutputIndex = TypeIndex
 Week1 = int
 Year1 = int
 Year10 = int
+class AddrAfterTxidParam(TypedDict):
+    """
+    Bitcoin address + last-seen txid path parameters (Esplora-style pagination)
+
+    Attributes:
+        after_txid: Last txid from the previous page (return transactions strictly older than this)
+    """
+    address: Addr
+    after_txid: Txid
+
 class AddrChainStats(TypedDict):
     """
     Address statistics on the blockchain (confirmed transactions only)
@@ -291,14 +305,7 @@ class AddrStats(TypedDict):
     address: Addr
     addr_type: OutputType
     chain_stats: AddrChainStats
-    mempool_stats: Union[AddrMempoolStats, None]
-
-class AddrTxidsParam(TypedDict):
-    """
-    Attributes:
-        after_txid: Txid to paginate from (return transactions before this one)
-    """
-    after_txid: Union[Txid, None]
+    mempool_stats: AddrMempoolStats
 
 class AddrValidation(TypedDict):
     """
@@ -1722,6 +1729,28 @@ class BrkClientBase:
     def get_text(self, path: str) -> str:
         """Make a GET request and return text."""
         return self.get(path).decode()
+
+    def post(self, path: str, body: str) -> bytes:
+        """Make a POST request with a string body and return raw bytes."""
+        try:
+            conn = self._connect()
+            conn.request("POST", path, body=body)
+            res = conn.getresponse()
+            data = res.read()
+            if res.status >= 400:
+                raise BrkError(f"HTTP error: {res.status}", res.status)
+            return data
+        except (ConnectionError, OSError, TimeoutError) as e:
+            self._conn = None
+            raise BrkError(str(e))
+
+    def post_json(self, path: str, body: str) -> Any:
+        """Make a POST request and return JSON."""
+        return json.loads(self.post(path, body))
+
+    def post_text(self, path: str, body: str) -> str:
+        """Make a POST request and return text."""
+        return self.post(path, body).decode()
 
     def close(self) -> None:
         """Close the HTTP client."""
@@ -7761,38 +7790,40 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/address/{address}`"""
         return self.get_json(f'/api/address/{address}')
 
-    def get_address_txs(self, address: Addr, after_txid: Optional[Txid] = None) -> List[Transaction]:
+    def get_address_txs(self, address: Addr) -> List[Transaction]:
         """Address transactions.
 
-        Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. Use ?after_txid=<txid> for pagination.
+        Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
 
         Endpoint: `GET /api/address/{address}/txs`"""
-        params = []
-        if after_txid is not None: params.append(f'after_txid={after_txid}')
-        query = '&'.join(params)
-        path = f'/api/address/{address}/txs{"?" + query if query else ""}'
-        return self.get_json(path)
+        return self.get_json(f'/api/address/{address}/txs')
 
-    def get_address_confirmed_txs(self, address: Addr, after_txid: Optional[Txid] = None) -> List[Transaction]:
+    def get_address_confirmed_txs(self, address: Addr) -> List[Transaction]:
         """Address confirmed transactions.
 
-        Get confirmed transactions for an address, 25 per page. Use ?after_txid=<txid> for pagination.
+        Get the first 25 confirmed transactions for an address. For pagination, use the path-style form `/txs/chain/{last_seen_txid}`.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
 
         Endpoint: `GET /api/address/{address}/txs/chain`"""
-        params = []
-        if after_txid is not None: params.append(f'after_txid={after_txid}')
-        query = '&'.join(params)
-        path = f'/api/address/{address}/txs/chain{"?" + query if query else ""}'
-        return self.get_json(path)
+        return self.get_json(f'/api/address/{address}/txs/chain')
 
-    def get_address_mempool_txs(self, address: Addr) -> List[Txid]:
+    def get_address_confirmed_txs_after(self, address: Addr, after_txid: Txid) -> List[Transaction]:
+        """Address confirmed transactions (paginated).
+
+        Get the next 25 confirmed transactions strictly older than `after_txid` (Esplora-canonical pagination form, matches mempool.space).
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
+
+        Endpoint: `GET /api/address/{address}/txs/chain/{after_txid}`"""
+        return self.get_json(f'/api/address/{address}/txs/chain/{after_txid}')
+
+    def get_address_mempool_txs(self, address: Addr) -> List[Transaction]:
         """Address mempool transactions.
 
-        Get unconfirmed transaction IDs for an address from the mempool (up to 50).
+        Get unconfirmed transactions for an address from the mempool, newest first (up to 50).
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-mempool)*
 
@@ -8127,6 +8158,16 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/server/sync`"""
         return self.get_json('/api/server/sync')
+
+    def post_tx(self, body: str) -> Txid:
+        """Broadcast transaction.
+
+        Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
+
+        Endpoint: `POST /api/tx`"""
+        return self.post_json('/api/tx', body)
 
     def get_tx_by_index(self, index: TxIndex) -> Txid:
         """Txid by index.

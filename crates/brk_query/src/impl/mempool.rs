@@ -94,24 +94,25 @@ impl Query {
         Ok(mempool.txs().recent().to_vec())
     }
 
+    /// CPFP cluster for `txid`. Returns the mempool cluster when the txid is
+    /// unconfirmed; otherwise reconstructs the confirmed same-block cluster
+    /// from indexer state. Works even when the mempool feature is off.
     pub fn cpfp(&self, txid: &Txid) -> Result<CpfpInfo> {
-        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
         let prefix = TxidPrefix::from(txid);
-        Ok(mempool
-            .cpfp_info(&prefix)
-            .unwrap_or_else(|| self.confirmed_cpfp(txid)))
+        let mempool_cluster = self.mempool().and_then(|m| m.cpfp_info(&prefix));
+        Ok(mempool_cluster.unwrap_or_else(|| self.confirmed_cpfp(txid)))
     }
 
     /// CPFP cluster for a confirmed tx: the connected component of
-    /// same-block parent/child edges, reconstructed by BFS on demand.
-    /// Walks entirely in `TxIndex` space using direct vec reads (height,
-    /// weight, fee) - skips full `Transaction` reconstruction and avoids
-    /// `txid -> tx_index` lookups by reading `OutPoint`'s packed
-    /// `tx_index` directly. Capped at 25 each side to match Bitcoin
-    /// Core's default mempool chain limits and mempool.space's own
-    /// truncation. `effectiveFeePerVsize` is the simple package rate;
-    /// mempool's `calculateGoodBlockCpfp` chunk-rate algorithm is not
-    /// ported.
+    /// same-block parent/child edges, reconstructed by a depth-first
+    /// walk on demand. Walks entirely in `TxIndex` space using direct
+    /// vec reads (height, weight, fee) - skips full `Transaction`
+    /// reconstruction and avoids `txid -> tx_index` lookups by reading
+    /// `OutPoint`'s packed `tx_index` directly. Capped at 25 each side
+    /// to match Bitcoin Core's default mempool chain limits and
+    /// mempool.space's own truncation. `effectiveFeePerVsize` is the
+    /// simple package rate; mempool's `calculateGoodBlockCpfp`
+    /// chunk-rate algorithm is not ported.
     fn confirmed_cpfp(&self, txid: &Txid) -> CpfpInfo {
         const MAX: usize = 25;
         let Ok(seed_idx) = self.resolve_tx_index(txid) else {

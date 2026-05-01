@@ -14,20 +14,19 @@ impl Query {
         let mut cohorts: Vec<Cohort> = fs::read_dir(states_path)?
             .filter_map(|entry| {
                 let name = entry.ok()?.file_name().into_string().ok()?;
-                states_path
-                    .join(&name)
-                    .join("urpd")
-                    .exists()
-                    .then(|| Cohort::from(name))
+                if !states_path.join(&name).join("urpd").exists() {
+                    return None;
+                }
+                Cohort::new(name)
             })
             .collect();
 
-        cohorts.sort_by_key(|a| a.to_string());
+        cohorts.sort_unstable();
 
         Ok(cohorts)
     }
 
-    pub(crate) fn urpd_dir(&self, cohort: &str) -> Result<PathBuf> {
+    pub(crate) fn urpd_dir(&self, cohort: &Cohort) -> Result<PathBuf> {
         let dir = self
             .computer()
             .distribution
@@ -59,7 +58,7 @@ impl Query {
             .filter_map(|entry| entry.ok()?.file_name().to_str()?.parse().ok())
             .collect();
 
-        dates.sort();
+        dates.sort_unstable();
         Ok(dates)
     }
 
@@ -79,7 +78,7 @@ impl Query {
     /// URPD for a cohort on a specific date.
     pub fn urpd_at(&self, cohort: &Cohort, date: Date, agg: UrpdAggregation) -> Result<Urpd> {
         let raw = self.urpd_raw(cohort, date)?;
-        let day1 = Day1::try_from(date).map_err(|e| Error::Parse(e.to_string()))?;
+        let day1 = Day1::try_from(date)?;
         let close = self
             .computer()
             .prices

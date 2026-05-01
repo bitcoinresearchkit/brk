@@ -9,6 +9,13 @@
  * @typedef {string} Addr
  */
 /**
+ * Bitcoin address + last-seen txid path parameters (Esplora-style pagination)
+ *
+ * @typedef {Object} AddrAfterTxidParam
+ * @property {Addr} address
+ * @property {Txid} afterTxid - Last txid from the previous page (return transactions strictly older than this)
+ */
+/**
  * Address statistics on the blockchain (confirmed transactions only)
  *
  * Based on mempool.space's format with type_index extension.
@@ -47,11 +54,7 @@
  * @property {Addr} address - Bitcoin address string
  * @property {OutputType} addrType - Address type (p2pkh, p2sh, v0_p2wpkh, v0_p2wsh, v1_p2tr, etc.)
  * @property {AddrChainStats} chainStats - Statistics for confirmed transactions on the blockchain
- * @property {(AddrMempoolStats|null)=} mempoolStats - Statistics for unconfirmed transactions in the mempool
- */
-/**
- * @typedef {Object} AddrTxidsParam
- * @property {(Txid|null)=} afterTxid - Txid to paginate from (return transactions before this one)
+ * @property {AddrMempoolStats} mempoolStats - Statistics for unconfirmed transactions in the mempool
  */
 /**
  * Address validation result
@@ -326,6 +329,10 @@ Matches mempool.space/bitcoin-cli behavior.
  */
 /**
  * URPD cohort identifier. Use `GET /api/urpd` to list available cohorts.
+ *
+ * Validated at construction: non-empty, ASCII `[a-z0-9_]+`. Matches the
+ * schemars enum value set; the type therefore proves "this is a valid
+ * cohort name" wherever a `Cohort` is held.
  *
  * @typedef {("all"|"sth"|"lth"|"utxos_under_1h_old"|"utxos_1h_to_1d_old"|"utxos_1d_to_1w_old"|"utxos_1w_to_1m_old"|"utxos_1m_to_2m_old"|"utxos_2m_to_3m_old"|"utxos_3m_to_4m_old"|"utxos_4m_to_5m_old"|"utxos_5m_to_6m_old"|"utxos_6m_to_1y_old"|"utxos_1y_to_2y_old"|"utxos_2y_to_3y_old"|"utxos_3y_to_4y_old"|"utxos_4y_to_5y_old"|"utxos_5y_to_6y_old"|"utxos_6y_to_7y_old"|"utxos_7y_to_8y_old"|"utxos_8y_to_10y_old"|"utxos_10y_to_12y_old"|"utxos_12y_to_15y_old"|"utxos_over_15y_old")} Cohort
  */
@@ -796,7 +803,7 @@ Matches mempool.space/bitcoin-cli behavior.
 /**
  * URL-friendly mining pool identifier
  *
- * @typedef {("unknown"|"blockfills"|"ultimuspool"|"terrapool"|"luxor"|"onethash"|"btccom"|"bitfarms"|"huobipool"|"wayicn"|"canoepool"|"btctop"|"bitcoincom"|"pool175btc"|"gbminers"|"axbt"|"asicminer"|"bitminter"|"bitcoinrussia"|"btcserv"|"simplecoinus"|"btcguild"|"eligius"|"ozcoin"|"eclipsemc"|"maxbtc"|"triplemining"|"coinlab"|"pool50btc"|"ghashio"|"stminingcorp"|"bitparking"|"mmpool"|"polmine"|"kncminer"|"bitalo"|"f2pool"|"hhtt"|"megabigpower"|"mtred"|"nmcbit"|"yourbtcnet"|"givemecoins"|"braiinspool"|"antpool"|"multicoinco"|"bcpoolio"|"cointerra"|"kanopool"|"solock"|"ckpool"|"nicehash"|"bitclub"|"bitcoinaffiliatenetwork"|"btcc"|"bwpool"|"exxbw"|"bitsolo"|"bitfury"|"twentyoneinc"|"digitalbtc"|"eightbaochi"|"mybtccoinpool"|"tbdice"|"hashpool"|"nexious"|"bravomining"|"hotpool"|"okexpool"|"bcmonster"|"onehash"|"bixin"|"tatmaspool"|"viabtc"|"connectbtc"|"batpool"|"waterhole"|"dcexploration"|"dcex"|"btpool"|"fiftyeightcoin"|"bitcoinindia"|"shawnp0wers"|"phashio"|"rigpool"|"haozhuzhu"|"sevenpool"|"miningkings"|"hashbx"|"dpool"|"rawpool"|"haominer"|"helix"|"bitcoinukraine"|"poolin"|"secretsuperstar"|"tigerpoolnet"|"sigmapoolcom"|"okpooltop"|"hummerpool"|"tangpool"|"bytepool"|"spiderpool"|"novablock"|"miningcity"|"binancepool"|"minerium"|"lubiancom"|"okkong"|"aaopool"|"emcdpool"|"foundryusa"|"sbicrypto"|"arkpool"|"purebtccom"|"marapool"|"kucoinpool"|"entrustcharitypool"|"okminer"|"titan"|"pegapool"|"btcnuggets"|"cloudhashing"|"digitalxmintsy"|"telco214"|"btcpoolparty"|"multipool"|"transactioncoinmining"|"btcdig"|"trickysbtcpool"|"btcmp"|"eobot"|"unomp"|"patels"|"gogreenlight"|"bitcoinindiapool"|"ekanembtc"|"canoe"|"tiger"|"onem1x"|"zulupool"|"secpool"|"ocean"|"whitepool"|"wiz"|"wk057"|"futurebitapollosolo"|"carbonnegative"|"portlandhodl"|"phoenix"|"neopool"|"maxipool"|"bitfufupool"|"gdpool"|"miningdutch"|"publicpool"|"miningsquared"|"innopolistech"|"btclab"|"parasite"|"redrockpool"|"est3lar"|"braiinssolo"|"solopool"|"noderunners")} PoolSlug
+ * @typedef {("unknown"|"blockfills"|"ultimuspool"|"terrapool"|"luxor"|"1thash"|"btccom"|"bitfarms"|"huobipool"|"wayicn"|"canoepool"|"btctop"|"bitcoincom"|"175btc"|"gbminers"|"axbt"|"asicminer"|"bitminter"|"bitcoinrussia"|"btcserv"|"simplecoinus"|"btcguild"|"eligius"|"ozcoin"|"eclipsemc"|"maxbtc"|"triplemining"|"coinlab"|"50btc"|"ghashio"|"stminingcorp"|"bitparking"|"mmpool"|"polmine"|"kncminer"|"bitalo"|"f2pool"|"hhtt"|"megabigpower"|"mtred"|"nmcbit"|"yourbtcnet"|"givemecoins"|"braiinspool"|"antpool"|"multicoinco"|"bcpoolio"|"cointerra"|"kanopool"|"solock"|"ckpool"|"nicehash"|"bitclub"|"bitcoinaffiliatenetwork"|"btcc"|"bwpool"|"exxbw"|"bitsolo"|"bitfury"|"21inc"|"digitalbtc"|"8baochi"|"mybtccoinpool"|"tbdice"|"hashpool"|"nexious"|"bravomining"|"hotpool"|"okexpool"|"bcmonster"|"1hash"|"bixin"|"tatmaspool"|"viabtc"|"connectbtc"|"batpool"|"waterhole"|"dcexploration"|"dcex"|"btpool"|"58coin"|"bitcoinindia"|"shawnp0wers"|"phashio"|"rigpool"|"haozhuzhu"|"7pool"|"miningkings"|"hashbx"|"dpool"|"rawpool"|"haominer"|"helix"|"bitcoinukraine"|"poolin"|"secretsuperstar"|"tigerpoolnet"|"sigmapoolcom"|"okpooltop"|"hummerpool"|"tangpool"|"bytepool"|"spiderpool"|"novablock"|"miningcity"|"binancepool"|"minerium"|"lubiancom"|"okkong"|"aaopool"|"emcdpool"|"foundryusa"|"sbicrypto"|"arkpool"|"purebtccom"|"marapool"|"kucoinpool"|"entrustcharitypool"|"okminer"|"titan"|"pegapool"|"btcnuggets"|"cloudhashing"|"digitalxmintsy"|"telco214"|"btcpoolparty"|"multipool"|"transactioncoinmining"|"btcdig"|"trickysbtcpool"|"btcmp"|"eobot"|"unomp"|"patels"|"gogreenlight"|"bitcoinindiapool"|"ekanembtc"|"canoe"|"tiger"|"1m1x"|"zulupool"|"secpool"|"ocean"|"whitepool"|"wiz"|"wk057"|"futurebitapollosolo"|"carbonnegative"|"portlandhodl"|"phoenix"|"neopool"|"maxipool"|"bitfufupool"|"gdpool"|"miningdutch"|"publicpool"|"miningsquared"|"innopolistech"|"btclab"|"parasite"|"redrockpool"|"est3lar"|"braiinssolo"|"solopoolcom"|"noderunners")} PoolSlug
  */
 /**
  * Mining pool slug + block height path parameters
@@ -1869,6 +1876,67 @@ class BrkClientBase {
    */
   getBytes(path, options) {
     return this._getCached(path, async (res) => new Uint8Array(await res.arrayBuffer()), options);
+  }
+
+  /**
+   * Make a POST request with a string body.
+   *
+   * POST responses are uncached and never invoke `onValue` — every call hits
+   * the network with the same body and returns the upstream response.
+   *
+   * @param {string} path
+   * @param {string} body
+   * @param {{ signal?: AbortSignal }} [options]
+   * @returns {Promise<Response>}
+   */
+  async post(path, body, { signal } = {}) {
+    const url = `${this.baseUrl}${path}`;
+    const signals = [AbortSignal.timeout(this.timeout)];
+    if (signal) signals.push(signal);
+    const res = await fetch(url, {
+      method: 'POST',
+      body,
+      signal: AbortSignal.any(signals),
+    });
+    if (!res.ok) throw new BrkError(`HTTP ${res.status}: ${url}`, res.status);
+    return res;
+  }
+
+  /**
+   * Make a POST request expecting a JSON response.
+   * @template T
+   * @param {string} path
+   * @param {string} body
+   * @param {{ signal?: AbortSignal }} [options]
+   * @returns {Promise<T>}
+   */
+  async postJson(path, body, options) {
+    const res = await this.post(path, body, options);
+    return _addCamelGetters(await res.json());
+  }
+
+  /**
+   * Make a POST request expecting a text response.
+   * @param {string} path
+   * @param {string} body
+   * @param {{ signal?: AbortSignal }} [options]
+   * @returns {Promise<string>}
+   */
+  async postText(path, body, options) {
+    const res = await this.post(path, body, options);
+    return res.text();
+  }
+
+  /**
+   * Make a POST request expecting binary data (application/octet-stream).
+   * @param {string} path
+   * @param {string} body
+   * @param {{ signal?: AbortSignal }} [options]
+   * @returns {Promise<Uint8Array>}
+   */
+  async postBytes(path, body, options) {
+    const res = await this.post(path, body, options);
+    return new Uint8Array(await res.arrayBuffer());
   }
 
   /**
@@ -7413,7 +7481,7 @@ class BrkClient extends BrkClientBase {
     "ultimuspool": "ULTIMUSPOOL",
     "terrapool": "Terra Pool",
     "luxor": "Luxor",
-    "onethash": "1THash",
+    "1thash": "1THash",
     "btccom": "BTC.com",
     "bitfarms": "Bitfarms",
     "huobipool": "Huobi.pool",
@@ -7421,7 +7489,7 @@ class BrkClient extends BrkClientBase {
     "canoepool": "CanoePool",
     "btctop": "BTC.TOP",
     "bitcoincom": "Bitcoin.com",
-    "pool175btc": "175btc",
+    "175btc": "175btc",
     "gbminers": "GBMiners",
     "axbt": "A-XBT",
     "asicminer": "ASICMiner",
@@ -7436,7 +7504,7 @@ class BrkClient extends BrkClientBase {
     "maxbtc": "MaxBTC",
     "triplemining": "TripleMining",
     "coinlab": "CoinLab",
-    "pool50btc": "50BTC",
+    "50btc": "50BTC",
     "ghashio": "GHash.IO",
     "stminingcorp": "ST Mining Corp",
     "bitparking": "Bitparking",
@@ -7467,9 +7535,9 @@ class BrkClient extends BrkClientBase {
     "exxbw": "EXX&BW",
     "bitsolo": "Bitsolo",
     "bitfury": "BitFury",
-    "twentyoneinc": "21 Inc.",
+    "21inc": "21 Inc.",
     "digitalbtc": "digitalBTC",
-    "eightbaochi": "8baochi",
+    "8baochi": "8baochi",
     "mybtccoinpool": "myBTCcoin Pool",
     "tbdice": "TBDice",
     "hashpool": "HASHPOOL",
@@ -7478,7 +7546,7 @@ class BrkClient extends BrkClientBase {
     "hotpool": "HotPool",
     "okexpool": "OKExPool",
     "bcmonster": "BCMonster",
-    "onehash": "1Hash",
+    "1hash": "1Hash",
     "bixin": "Bixin",
     "tatmaspool": "TATMAS Pool",
     "viabtc": "ViaBTC",
@@ -7488,13 +7556,13 @@ class BrkClient extends BrkClientBase {
     "dcexploration": "DCExploration",
     "dcex": "DCEX",
     "btpool": "BTPOOL",
-    "fiftyeightcoin": "58COIN",
+    "58coin": "58COIN",
     "bitcoinindia": "Bitcoin India",
     "shawnp0wers": "shawnp0wers",
     "phashio": "PHash.IO",
     "rigpool": "RigPool",
     "haozhuzhu": "HAOZHUZHU",
-    "sevenpool": "7pool",
+    "7pool": "7pool",
     "miningkings": "MiningKings",
     "hashbx": "HashBX",
     "dpool": "DPOOL",
@@ -7547,7 +7615,7 @@ class BrkClient extends BrkClientBase {
     "ekanembtc": "EkanemBTC",
     "canoe": "CANOE",
     "tiger": "tiger",
-    "onem1x": "1M1X",
+    "1m1x": "1M1X",
     "zulupool": "Zulupool",
     "secpool": "SECPOOL",
     "ocean": "OCEAN",
@@ -7571,7 +7639,7 @@ class BrkClient extends BrkClientBase {
     "redrockpool": "RedRock Pool",
     "est3lar": "Est3lar",
     "braiinssolo": "Braiins Solo",
-    "solopool": "SoloPool.com",
+    "solopoolcom": "SoloPool.com",
     "noderunners": "Noderunners"
   });
 
@@ -10374,59 +10442,70 @@ class BrkClient extends BrkClientBase {
   /**
    * Address transactions
    *
-   * Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. Use ?after_txid=<txid> for pagination.
+   * Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
    *
    * Endpoint: `GET /api/address/{address}/txs`
    *
    * @param {Addr} address
-   * @param {Txid=} [after_txid] - Txid to paginate from (return transactions before this one)
    * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
    * @returns {Promise<Transaction[]>}
    */
-  async getAddressTxs(address, after_txid, { signal, onValue } = {}) {
-    const params = new URLSearchParams();
-    if (after_txid !== undefined) params.set('after_txid', String(after_txid));
-    const query = params.toString();
-    const path = `/api/address/${address}/txs${query ? '?' + query : ''}`;
+  async getAddressTxs(address, { signal, onValue } = {}) {
+    const path = `/api/address/${address}/txs`;
     return this.getJson(path, { signal, onValue });
   }
 
   /**
    * Address confirmed transactions
    *
-   * Get confirmed transactions for an address, 25 per page. Use ?after_txid=<txid> for pagination.
+   * Get the first 25 confirmed transactions for an address. For pagination, use the path-style form `/txs/chain/{last_seen_txid}`.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
    *
    * Endpoint: `GET /api/address/{address}/txs/chain`
    *
    * @param {Addr} address
-   * @param {Txid=} [after_txid] - Txid to paginate from (return transactions before this one)
    * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
    * @returns {Promise<Transaction[]>}
    */
-  async getAddressConfirmedTxs(address, after_txid, { signal, onValue } = {}) {
-    const params = new URLSearchParams();
-    if (after_txid !== undefined) params.set('after_txid', String(after_txid));
-    const query = params.toString();
-    const path = `/api/address/${address}/txs/chain${query ? '?' + query : ''}`;
+  async getAddressConfirmedTxs(address, { signal, onValue } = {}) {
+    const path = `/api/address/${address}/txs/chain`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Address confirmed transactions (paginated)
+   *
+   * Get the next 25 confirmed transactions strictly older than `after_txid` (Esplora-canonical pagination form, matches mempool.space).
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
+   *
+   * Endpoint: `GET /api/address/{address}/txs/chain/{after_txid}`
+   *
+   * @param {Addr} address
+   * @param {Txid} after_txid - Last txid from the previous page (return transactions strictly older than this)
+   * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
+   * @returns {Promise<Transaction[]>}
+   */
+  async getAddressConfirmedTxsAfter(address, after_txid, { signal, onValue } = {}) {
+    const path = `/api/address/${address}/txs/chain/${after_txid}`;
     return this.getJson(path, { signal, onValue });
   }
 
   /**
    * Address mempool transactions
    *
-   * Get unconfirmed transaction IDs for an address from the mempool (up to 50).
+   * Get unconfirmed transactions for an address from the mempool, newest first (up to 50).
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-mempool)*
    *
    * Endpoint: `GET /api/address/{address}/txs/mempool`
    *
    * @param {Addr} address
-   * @param {{ signal?: AbortSignal, onValue?: (value: Txid[]) => void }} [options]
-   * @returns {Promise<Txid[]>}
+   * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
+   * @returns {Promise<Transaction[]>}
    */
   async getAddressMempoolTxs(address, { signal, onValue } = {}) {
     const path = `/api/address/${address}/txs/mempool`;
@@ -11006,6 +11085,24 @@ class BrkClient extends BrkClientBase {
   async getSyncStatus({ signal, onValue } = {}) {
     const path = `/api/server/sync`;
     return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Broadcast transaction
+   *
+   * Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
+   *
+   * Endpoint: `POST /api/tx`
+   *
+   * @param {string} body - Request body
+   * @param {{ signal?: AbortSignal }} [options]
+   * @returns {Promise<Txid>}
+   */
+  async postTx(body, { signal } = {}) {
+    const path = `/api/tx`;
+    return this.postJson(path, body, { signal });
   }
 
   /**

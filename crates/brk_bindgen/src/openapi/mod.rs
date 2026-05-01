@@ -3,7 +3,7 @@ mod parameter;
 mod response_kind;
 mod text_schema;
 
-pub use endpoint::Endpoint;
+pub use endpoint::{Endpoint, RequestBody};
 pub use parameter::Parameter;
 pub use response_kind::ResponseKind;
 pub use text_schema::TextSchema;
@@ -129,6 +129,7 @@ fn extract_endpoint(
     let query_params = extract_parameters(operation, ParameterIn::Query);
 
     let response_kind = extract_response_kind(operation, spec);
+    let request_body = extract_request_body(operation);
     let supports_csv = check_csv_support(operation);
 
     Some(Endpoint {
@@ -139,9 +140,35 @@ fn extract_endpoint(
         description: operation.description.clone(),
         path_params,
         query_params,
+        request_body,
         response_kind,
         deprecated: operation.deprecated.unwrap_or(false),
         supports_csv,
+    })
+}
+
+/// Extract the request body shape, if any.
+/// Prefers `text/plain` (string) over `application/json` (typed).
+fn extract_request_body(operation: &Operation) -> Option<RequestBody> {
+    let req = operation.request_body.as_ref()?;
+    let req = match req {
+        ObjectOrReference::Object(rb) => rb,
+        ObjectOrReference::Ref { .. } => return None,
+    };
+
+    let body_type = if req.content.contains_key("text/plain; charset=utf-8")
+        || req.content.contains_key("text/plain")
+    {
+        "string".to_string()
+    } else if let Some(content) = req.content.get("application/json") {
+        schema_name_from_content(content).unwrap_or_else(|| "Object".to_string())
+    } else {
+        "string".to_string()
+    };
+
+    Some(RequestBody {
+        body_type,
+        required: req.required.unwrap_or(false),
     })
 }
 

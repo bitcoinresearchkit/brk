@@ -21,10 +21,11 @@ pub struct EntryPool {
 }
 
 impl EntryPool {
-    pub fn insert(&mut self, entry: TxEntry) {
+    pub fn insert(&mut self, entry: TxEntry) -> TxIndex {
         let prefix = entry.txid_prefix();
         let idx = self.claim_slot(entry);
         self.prefix_to_idx.insert(prefix, idx);
+        idx
     }
 
     fn claim_slot(&mut self, entry: TxEntry) -> TxIndex {
@@ -53,11 +54,11 @@ impl EntryPool {
         self.entries.get(idx.as_usize())?.as_ref()
     }
 
-    pub fn remove(&mut self, prefix: &TxidPrefix) -> Option<TxEntry> {
+    pub fn remove(&mut self, prefix: &TxidPrefix) -> Option<(TxIndex, TxEntry)> {
         let idx = self.prefix_to_idx.remove(prefix)?;
         let entry = self.entries.get_mut(idx.as_usize())?.take()?;
         self.free_slots.push(idx);
-        Some(entry)
+        Some((idx, entry))
     }
 
     pub fn entries(&self) -> &[Option<TxEntry>] {

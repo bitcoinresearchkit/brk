@@ -3,40 +3,37 @@
 from _lib import assert_same_structure, show
 
 
-EXPECTED_FEE_KEYS = [
-    "fastestFee", "halfHourFee", "hourFee", "economyFee", "minimumFee",
-]
+EXPECTED_FEE_KEYS = ["fastestFee", "halfHourFee", "hourFee", "economyFee", "minimumFee"]
 
 
 def test_fees_precise_structure(brk, mempool):
-    """Precise fees must have the same structure as recommended."""
+    """Precise fees envelope must match mempool's keys and numeric types."""
     path = "/api/v1/fees/precise"
-    b = brk.get_json(path)
+    b = brk.get_precise_fees()
     m = mempool.get_json(path)
     show("GET", path, b, m)
     assert_same_structure(b, m)
+
+
+def test_fees_precise_invariants(brk):
+    """All tiers numeric, positive, and monotonically non-increasing."""
+    b = brk.get_precise_fees()
+    show("GET", "/api/v1/fees/precise", b, "-")
     for key in EXPECTED_FEE_KEYS:
-        assert key in b
+        assert key in b, f"missing '{key}'"
+        assert isinstance(b[key], (int, float)), f"'{key}' not numeric: {type(b[key])}"
+        assert b[key] > 0, f"'{key}' must be positive, got {b[key]}"
+    assert b["fastestFee"] >= b["halfHourFee"] >= b["hourFee"], (
+        f"fast tiers not ordered: {b}"
+    )
+    assert b["hourFee"] >= b["economyFee"] >= b["minimumFee"], (
+        f"slow tiers not ordered: {b}"
+    )
 
 
-def test_fees_precise_ordering(brk, mempool):
-    """Precise fee tiers must be ordered: fastest >= halfHour >= hour >= economy >= minimum."""
-    path = "/api/v1/fees/precise"
-    for label, client in [("brk", brk), ("mempool", mempool)]:
-        d = client.get_json(path)
-        assert d["fastestFee"] >= d["halfHourFee"] >= d["hourFee"], (
-            f"{label}: precise fee ordering violated {d}"
-        )
-        assert d["hourFee"] >= d["economyFee"] >= d["minimumFee"], (
-            f"{label}: precise fee ordering violated {d}"
-        )
-
-
-def test_fees_precise_numeric(brk):
-    """Each tier in /precise must be a non-negative number."""
-    d = brk.get_json("/api/v1/fees/precise")
-    show("GET", "/api/v1/fees/precise", d, "—")
-    for key in EXPECTED_FEE_KEYS:
-        v = d[key]
-        assert isinstance(v, (int, float)), f"{key} not numeric: {type(v).__name__}"
-        assert v >= 0, f"{key} is negative: {v}"
+def test_fees_precise_mempool_ordering_sanity(mempool):
+    """Sanity: mempool itself follows the documented ordering."""
+    d = mempool.get_json("/api/v1/fees/precise")
+    assert d["fastestFee"] >= d["halfHourFee"] >= d["hourFee"] >= d["economyFee"] >= d["minimumFee"], (
+        f"mempool tiers not ordered: {d}"
+    )

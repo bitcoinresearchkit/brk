@@ -1,14 +1,14 @@
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::{HeaderMap, Uri},
 };
-use brk_types::{AddrStats, AddrValidation, Transaction, Txid, Utxo, Version};
+use brk_types::{AddrStats, AddrValidation, Transaction, Utxo, Version};
 
 use crate::{
     AppState, CacheStrategy,
     extended::TransformResponseExtended,
-    params::{AddrParam, AddrTxidsParam, Empty, ValidateAddrParam},
+    params::{AddrAfterTxidParam, AddrParam, Empty, ValidateAddrParam},
 };
 
 pub trait AddrRoutes {
@@ -46,16 +46,16 @@ impl AddrRoutes for ApiRouter<AppState> {
                 uri: Uri,
                 headers: HeaderMap,
                 Path(path): Path<AddrParam>,
-                Query(params): Query<AddrTxidsParam>,
+                _: Empty,
                 State(state): State<AppState>
             | {
                 let strategy = state.addr_strategy(Version::ONE, &path.addr, false);
-                state.respond_json(&headers, strategy, &uri, move |q| q.addr_txs(path.addr, params.after_txid, 50)).await
+                state.respond_json(&headers, strategy, &uri, move |q| q.addr_txs(path.addr, 50, 25)).await
             }, |op| op
                 .id("get_address_txs")
                 .addrs_tag()
                 .summary("Address transactions")
-                .description("Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. Use ?after_txid=<txid> for pagination.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*")
+                .description("Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*")
                 .json_response::<Vec<Transaction>>()
                 .not_modified()
                 .bad_request()
@@ -69,16 +69,39 @@ impl AddrRoutes for ApiRouter<AppState> {
                 uri: Uri,
                 headers: HeaderMap,
                 Path(path): Path<AddrParam>,
-                Query(params): Query<AddrTxidsParam>,
+                _: Empty,
                 State(state): State<AppState>
             | {
                 let strategy = state.addr_strategy(Version::ONE, &path.addr, true);
-                state.respond_json(&headers, strategy, &uri, move |q| q.addr_txs(path.addr, params.after_txid, 25)).await
+                state.respond_json(&headers, strategy, &uri, move |q| q.addr_txs_chain(&path.addr, None, 25)).await
             }, |op| op
                 .id("get_address_confirmed_txs")
                 .addrs_tag()
                 .summary("Address confirmed transactions")
-                .description("Get confirmed transactions for an address, 25 per page. Use ?after_txid=<txid> for pagination.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*")
+                .description("Get the first 25 confirmed transactions for an address. For pagination, use the path-style form `/txs/chain/{last_seen_txid}`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*")
+                .json_response::<Vec<Transaction>>()
+                .not_modified()
+                .bad_request()
+                .not_found()
+                .server_error()
+            ),
+        )
+        .api_route(
+            "/api/address/{address}/txs/chain/{after_txid}",
+            get_with(async |
+                uri: Uri,
+                headers: HeaderMap,
+                Path(path): Path<AddrAfterTxidParam>,
+                _: Empty,
+                State(state): State<AppState>
+            | {
+                let strategy = state.addr_strategy(Version::ONE, &path.addr, true);
+                state.respond_json(&headers, strategy, &uri, move |q| q.addr_txs_chain(&path.addr, Some(path.after_txid), 25)).await
+            }, |op| op
+                .id("get_address_confirmed_txs_after")
+                .addrs_tag()
+                .summary("Address confirmed transactions (paginated)")
+                .description("Get the next 25 confirmed transactions strictly older than `after_txid` (Esplora-canonical pagination form, matches mempool.space).\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*")
                 .json_response::<Vec<Transaction>>()
                 .not_modified()
                 .bad_request()
@@ -95,14 +118,14 @@ impl AddrRoutes for ApiRouter<AppState> {
                 _: Empty,
                 State(state): State<AppState>
             | {
-                let hash = state.sync(|q| q.addr_mempool_hash(&path.addr));
-                state.respond_json(&headers, CacheStrategy::MempoolHash(hash), &uri, move |q| q.addr_mempool_txids(path.addr)).await
+                let hash = state.sync(|q| q.addr_mempool_hash(&path.addr)).unwrap_or(0);
+                state.respond_json(&headers, CacheStrategy::MempoolHash(hash), &uri, move |q| q.addr_mempool_txs(&path.addr, 50)).await
             }, |op| op
                 .id("get_address_mempool_txs")
                 .addrs_tag()
                 .summary("Address mempool transactions")
-                .description("Get unconfirmed transaction IDs for an address from the mempool (up to 50).\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-mempool)*")
-                .json_response::<Vec<Txid>>()
+                .description("Get unconfirmed transactions for an address from the mempool, newest first (up to 50).\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-mempool)*")
+                .json_response::<Vec<Transaction>>()
                 .not_modified()
                 .bad_request()
                 .not_found()
@@ -119,7 +142,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 State(state): State<AppState>
             | {
                 let strategy = state.addr_strategy(Version::ONE, &path.addr, false);
-                state.respond_json(&headers, strategy, &uri, move |q| q.addr_utxos(path.addr)).await
+                state.respond_json(&headers, strategy, &uri, move |q| q.addr_utxos(path.addr, 1000)).await
             }, |op| op
                 .id("get_address_utxos")
                 .addrs_tag()

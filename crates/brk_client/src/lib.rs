@@ -99,6 +99,30 @@ impl BrkClientBase {
             .and_then(|mut r| r.body_mut().read_to_vec())
             .map_err(|e| BrkError { message: e.to_string() })
     }
+
+    /// Make a POST request and deserialize JSON response.
+    pub fn post_json<T: DeserializeOwned>(&self, path: &str, body: &str) -> Result<T> {
+        self.agent.post(&self.url(path))
+            .send(body)
+            .and_then(|mut r| r.body_mut().read_json())
+            .map_err(|e| BrkError { message: e.to_string() })
+    }
+
+    /// Make a POST request and return raw text response.
+    pub fn post_text(&self, path: &str, body: &str) -> Result<String> {
+        self.agent.post(&self.url(path))
+            .send(body)
+            .and_then(|mut r| r.body_mut().read_to_string())
+            .map_err(|e| BrkError { message: e.to_string() })
+    }
+
+    /// Make a POST request and return raw bytes response.
+    pub fn post_bytes(&self, path: &str, body: &str) -> Result<Vec<u8>> {
+        self.agent.post(&self.url(path))
+            .send(body)
+            .and_then(|mut r| r.body_mut().read_to_vec())
+            .map_err(|e| BrkError { message: e.to_string() })
+    }
 }
 
 /// Build series name with suffix.
@@ -9002,42 +9026,45 @@ impl BrkClient {
 
     /// Address transactions
     ///
-    /// Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. Use ?after_txid=<txid> for pagination.
+    /// Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
     ///
     /// Endpoint: `GET /api/address/{address}/txs`
-    pub fn get_address_txs(&self, address: Addr, after_txid: Option<Txid>) -> Result<Vec<Transaction>> {
-        let mut query = Vec::new();
-        if let Some(v) = after_txid { query.push(format!("after_txid={}", v)); }
-        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
-        let path = format!("/api/address/{address}/txs{}", query_str);
-        self.base.get_json(&path)
+    pub fn get_address_txs(&self, address: Addr) -> Result<Vec<Transaction>> {
+        self.base.get_json(&format!("/api/address/{address}/txs"))
     }
 
     /// Address confirmed transactions
     ///
-    /// Get confirmed transactions for an address, 25 per page. Use ?after_txid=<txid> for pagination.
+    /// Get the first 25 confirmed transactions for an address. For pagination, use the path-style form `/txs/chain/{last_seen_txid}`.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
     ///
     /// Endpoint: `GET /api/address/{address}/txs/chain`
-    pub fn get_address_confirmed_txs(&self, address: Addr, after_txid: Option<Txid>) -> Result<Vec<Transaction>> {
-        let mut query = Vec::new();
-        if let Some(v) = after_txid { query.push(format!("after_txid={}", v)); }
-        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
-        let path = format!("/api/address/{address}/txs/chain{}", query_str);
-        self.base.get_json(&path)
+    pub fn get_address_confirmed_txs(&self, address: Addr) -> Result<Vec<Transaction>> {
+        self.base.get_json(&format!("/api/address/{address}/txs/chain"))
+    }
+
+    /// Address confirmed transactions (paginated)
+    ///
+    /// Get the next 25 confirmed transactions strictly older than `after_txid` (Esplora-canonical pagination form, matches mempool.space).
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
+    ///
+    /// Endpoint: `GET /api/address/{address}/txs/chain/{after_txid}`
+    pub fn get_address_confirmed_txs_after(&self, address: Addr, after_txid: Txid) -> Result<Vec<Transaction>> {
+        self.base.get_json(&format!("/api/address/{address}/txs/chain/{after_txid}"))
     }
 
     /// Address mempool transactions
     ///
-    /// Get unconfirmed transaction IDs for an address from the mempool (up to 50).
+    /// Get unconfirmed transactions for an address from the mempool, newest first (up to 50).
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-mempool)*
     ///
     /// Endpoint: `GET /api/address/{address}/txs/mempool`
-    pub fn get_address_mempool_txs(&self, address: Addr) -> Result<Vec<Txid>> {
+    pub fn get_address_mempool_txs(&self, address: Addr) -> Result<Vec<Transaction>> {
         self.base.get_json(&format!("/api/address/{address}/txs/mempool"))
     }
 
@@ -9406,6 +9433,17 @@ impl BrkClient {
     /// Endpoint: `GET /api/server/sync`
     pub fn get_sync_status(&self) -> Result<SyncStatus> {
         self.base.get_json(&format!("/api/server/sync"))
+    }
+
+    /// Broadcast transaction
+    ///
+    /// Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
+    ///
+    /// Endpoint: `POST /api/tx`
+    pub fn post_tx(&self, body: &str) -> Result<Txid> {
+        self.base.post_json(&format!("/api/tx"), body)
     }
 
     /// Txid by index

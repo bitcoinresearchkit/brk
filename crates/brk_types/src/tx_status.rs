@@ -30,4 +30,13 @@ impl TxStatus {
         block_height: None,
         block_time: None,
     };
+
+    pub fn confirmed(height: Height, block_hash: BlockHash, block_time: Timestamp) -> Self {
+        Self {
+            confirmed: true,
+            block_height: Some(height),
+            block_hash: Some(block_hash),
+            block_time: Some(block_time),
+        }
+    }
 }

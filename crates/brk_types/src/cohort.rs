@@ -1,10 +1,14 @@
-use std::{fmt, ops::Deref};
+use std::{fmt, ops::Deref, path::Path};
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 /// URPD cohort identifier. Use `GET /api/urpd` to list available cohorts.
-#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+///
+/// Validated at construction: non-empty, ASCII `[a-z0-9_]+`. Matches the
+/// schemars enum value set; the type therefore proves "this is a valid
+/// cohort name" wherever a `Cohort` is held.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, JsonSchema)]
 #[schemars(extend("enum" = [
     "all", "sth", "lth",
     "utxos_under_1h_old", "utxos_1h_to_1d_old", "utxos_1d_to_1w_old", "utxos_1w_to_1m_old",
@@ -16,15 +20,20 @@ use serde::{Deserialize, Serialize};
 ]))]
 pub struct Cohort(String);
 
-impl fmt::Display for Cohort {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.0)
+impl Cohort {
+    /// Returns `Some(Cohort)` iff `s` is non-empty ASCII `[a-z0-9_]+`.
+    pub fn new(s: impl Into<String>) -> Option<Self> {
+        let s = s.into();
+        if s.is_empty() || !s.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_') {
+            return None;
+        }
+        Some(Self(s))
     }
 }
 
-impl<T: Into<String>> From<T> for Cohort {
-    fn from(s: T) -> Self {
-        Self(s.into())
+impl fmt::Display for Cohort {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
     }
 }
 
@@ -32,5 +41,26 @@ impl Deref for Cohort {
     type Target = str;
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl AsRef<str> for Cohort {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl AsRef<Path> for Cohort {
+    fn as_ref(&self) -> &Path {
+        Path::new(&self.0)
+    }
+}
+
+impl<'de> Deserialize<'de> for Cohort {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(d)?;
+        Self::new(s).ok_or_else(|| {
+            serde::de::Error::custom("invalid cohort: expected non-empty [a-z0-9_]+")
+        })
     }
 }

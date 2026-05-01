@@ -75,11 +75,10 @@ impl AppState {
     /// - Unknown address → `Tip`
     pub fn addr_strategy(&self, version: Version, addr: &Addr, chain_only: bool) -> CacheStrategy {
         self.sync(|q| {
-            if !chain_only {
-                let mempool_hash = q.addr_mempool_hash(addr);
-                if mempool_hash != 0 {
-                    return CacheStrategy::MempoolHash(mempool_hash);
-                }
+            if !chain_only
+                && let Some(mempool_hash) = q.addr_mempool_hash(addr)
+            {
+                return CacheStrategy::MempoolHash(mempool_hash);
             }
             q.addr_last_activity_height(addr)
                 .and_then(|h| {

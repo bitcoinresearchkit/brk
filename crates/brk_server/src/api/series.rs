@@ -40,7 +40,7 @@ pub(super) async fn serve(
     let max_weight = state.max_weight;
     let resolved = state.run(move |q| q.resolve(params, max_weight)).await?;
 
-    let format = resolved.format();
+    let format = resolved.format;
     let csv_filename = resolved.csv_filename();
     let cache_params = CacheParams::series(
         resolved.version,

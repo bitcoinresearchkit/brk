@@ -30,19 +30,14 @@ impl From<SeriesName> for SeriesList {
 impl From<String> for SeriesList {
     #[inline]
     fn from(value: String) -> Self {
-        Self::from(SeriesName::from(value.replace("-", "_").to_lowercase()))
+        Self::from(SeriesName::from(value))
     }
 }
 
 impl<'a> From<Vec<&'a str>> for SeriesList {
     #[inline]
     fn from(value: Vec<&'a str>) -> Self {
-        Self(
-            value
-                .iter()
-                .map(|s| SeriesName::from(s.replace("-", "_").to_lowercase()))
-                .collect::<Vec<_>>(),
-        )
+        Self(value.into_iter().map(SeriesName::from).collect())
     }
 }
 

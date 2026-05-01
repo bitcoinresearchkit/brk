@@ -2,67 +2,97 @@
 
 import pytest
 
-from _lib import assert_same_structure, show
+from brk_client import BrkError
+
+from _lib import assert_same_values, show
 
 
-def test_block_txs_start_index_25(brk, mempool, block):
-    """Paginated txs from index 25 must match (skip small blocks)."""
-    txids = mempool.get_json(f"/api/block/{block.hash}/txids")
-    if len(txids) <= 25:
-        pytest.skip(f"block has only {len(txids)} txs")
-    path = f"/api/block/{block.hash}/txs/25"
-    b = brk.get_json(path)
-    m = mempool.get_json(path)
-    show("GET", path, f"({len(b)} txs)", f"({len(m)} txs)")
-    assert len(b) == len(m)
-    if b and m:
-        assert_same_structure(b[0], m[0])
+SIGOPS_DIFF = {"sigops"}
+PAGE_SIZE = 25
 
 
-def test_block_txs_start_index_zero(brk, mempool, block):
-    """`/txs/0` must mirror `/txs` (the default page) in length and structure."""
-    path0 = f"/api/block/{block.hash}/txs/0"
-    pathx = f"/api/block/{block.hash}/txs"
-    b0 = brk.get_json(path0)
-    bx = brk.get_json(pathx)
-    show("GET", path0, f"({len(b0)} txs)", f"vs /txs ({len(bx)} txs)")
-    assert len(b0) == len(bx)
-    if b0 and bx:
-        assert b0[0]["txid"] == bx[0]["txid"]
+def test_block_txs_start_default(brk, block):
+    """/txs/0 must equal /txs (the default page)."""
+    b0 = brk.get_block_txs_from_index(block.hash, 0)
+    bx = brk.get_block_txs(block.hash)
+    show("GET", f"/api/block/{block.hash}/txs/0", f"({len(b0)} txs)", f"vs /txs ({len(bx)} txs)")
+    assert b0 == bx
 
 
-def test_block_txs_start_aligned_pagination(brk, mempool, block):
-    """Pages at 0, 25, 50 must each be aligned slices of the full txid list."""
-    txids = mempool.get_json(f"/api/block/{block.hash}/txids")
-    if len(txids) <= 50:
-        pytest.skip(f"block has only {len(txids)} txs")
-    # mempool.space orders txids tip-first inside the block payload, but
-    # /txids returns them in block order (coinbase-first). Paged /txs follows
-    # the same coinbase-first order — so page N starts at offset N.
-    page0 = brk.get_json(f"/api/block/{block.hash}/txs/0")
-    page25 = brk.get_json(f"/api/block/{block.hash}/txs/25")
-    page50 = brk.get_json(f"/api/block/{block.hash}/txs/50")
-    show("GET", f"/api/block/{block.hash}/txs/{{0,25,50}}",
-         f"page0={len(page0)} page25={len(page25)} page50={len(page50)}", "—")
-    # The paging origin is what mempool.space does; verify against the live
-    # /txids list rather than re-deriving the order ourselves.
-    assert page0 and page0[0]["txid"] == txids[0]
-    assert page25 and page25[0]["txid"] == txids[25]
-    assert page50 and page50[0]["txid"] == txids[50]
-
-
-def test_block_txs_start_past_end(brk, mempool, block):
-    """A start index past the last tx must produce the same response on both servers."""
-    txids = mempool.get_json(f"/api/block/{block.hash}/txids")
-    past = len(txids) + 1000
-    path = f"/api/block/{block.hash}/txs/{past}"
-    b_resp = brk.get_raw(path)
-    m_resp = mempool.get_raw(path)
-    show("GET", path, f"brk={b_resp.status_code}", f"mempool={m_resp.status_code}")
-    assert b_resp.status_code == m_resp.status_code, (
-        f"past-end status differs: brk={b_resp.status_code} vs mempool={m_resp.status_code}"
-    )
-    if b_resp.status_code == 200:
-        assert b_resp.json() == m_resp.json(), (
-            f"past-end body differs: brk={b_resp.json()} vs mempool={m_resp.json()}"
+def test_block_txs_start_aligned(brk, block):
+    """Every aligned page is the matching slice of /txids; no overlap, no gaps."""
+    txids = brk.get_block_txids(block.hash)
+    n = len(txids)
+    for start in range(0, n, PAGE_SIZE):
+        page = brk.get_block_txs_from_index(block.hash, start)
+        end = min(start + PAGE_SIZE, n)
+        assert [t["txid"] for t in page] == txids[start:end], (
+            f"page at start={start} txids do not match /txids[{start}:{end}]"
         )
+
+
+def test_block_txs_start_last_partial_page(brk, block):
+    """The final page returns exactly the trailing remainder."""
+    txids = brk.get_block_txids(block.hash)
+    n = len(txids)
+    last_start = ((n - 1) // PAGE_SIZE) * PAGE_SIZE
+    expected = n - last_start
+    page = brk.get_block_txs_from_index(block.hash, last_start)
+    assert len(page) == expected, (
+        f"last page from start={last_start}: got {len(page)}, expected {expected}"
+    )
+
+
+def test_block_txs_start_against_mempool(brk, mempool, block):
+    """Mid-block page: full body must match mempool tx-for-tx."""
+    txids = brk.get_block_txids(block.hash)
+    if len(txids) <= PAGE_SIZE:
+        pytest.skip(f"block has only {len(txids)} txs (<= page size)")
+    path = f"/api/block/{block.hash}/txs/{PAGE_SIZE}"
+    b = brk.get_block_txs_from_index(block.hash, PAGE_SIZE)
+    m = mempool.get_json(path)
+    show("GET", path, f"({len(b)} txs)", f"({len(m)} txs)", max_lines=4)
+    assert_same_values(b, m, exclude=SIGOPS_DIFF)
+
+
+def test_block_txs_start_genesis(brk, mempool):
+    """Genesis: /txs/0 returns the 1 coinbase tx; /txs/1 must 404."""
+    genesis_hash = mempool.get_text("/api/block-height/0")
+    page0 = brk.get_block_txs_from_index(genesis_hash, 0)
+    assert len(page0) == 1
+    assert page0[0]["txid"] == "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
+    with pytest.raises(BrkError) as exc_info:
+        brk.get_block_txs_from_index(genesis_hash, 1)
+    assert exc_info.value.status == 404, (
+        f"expected status=404 for past-end on genesis, got {exc_info.value.status}"
+    )
+
+
+def test_block_txs_start_past_end(brk, block):
+    """Start past the last tx must produce BrkError(status=404)."""
+    txids = brk.get_block_txids(block.hash)
+    past = len(txids) + 1000
+    with pytest.raises(BrkError) as exc_info:
+        brk.get_block_txs_from_index(block.hash, past)
+    assert exc_info.value.status == 404, (
+        f"expected status=404 for past-end, got {exc_info.value.status}"
+    )
+
+
+def test_block_txs_start_invalid_hash(brk):
+    """Non-hex / wrong-length hash must produce BrkError(status=400)."""
+    with pytest.raises(BrkError) as exc_info:
+        brk.get_block_txs_from_index("notavalidhash", 0)
+    assert exc_info.value.status == 400, (
+        f"expected status=400, got {exc_info.value.status}"
+    )
+
+
+def test_block_txs_start_unknown_hash(brk):
+    """Syntactically valid but unknown hash must produce BrkError(status=404)."""
+    unknown = "0000000000000000000000000000000000000000000000000000000000000001"
+    with pytest.raises(BrkError) as exc_info:
+        brk.get_block_txs_from_index(unknown, 0)
+    assert exc_info.value.status == 404, (
+        f"expected status=404, got {exc_info.value.status}"
+    )

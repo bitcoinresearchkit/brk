@@ -63,9 +63,10 @@ pub fn main() -> Result<()> {
         25
     ));
 
-    let _ = dbg!(query.addr_utxos(Addr::from(
-        "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string()
-    )));
+    let _ = dbg!(query.addr_utxos(
+        Addr::from("bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string()),
+        1000,
+    ));
 
     // dbg!(query.search_and_format(SeriesSelection {
     //     index: Index::Height,

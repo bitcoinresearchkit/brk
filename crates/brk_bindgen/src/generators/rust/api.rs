@@ -87,130 +87,198 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         if !endpoint.should_generate() {
             continue;
         }
-
-        let method_name = endpoint_to_method_name(endpoint);
-        let base_return_type = if endpoint.returns_binary() {
-            "Vec<u8>".to_string()
-        } else if endpoint.returns_text() {
-            // Text bodies arrive as `String`; per-type parsing is left to the caller.
-            "String".to_string()
-        } else {
-            endpoint
-                .schema_name()
-                .map(js_type_to_rust)
-                .unwrap_or_else(|| "String".to_string())
-        };
-
-        let return_type = if endpoint.supports_csv {
-            format!("FormatResponse<{}>", base_return_type)
-        } else {
-            base_return_type.clone()
-        };
-
-        writeln!(
-            output,
-            "    /// {}",
-            endpoint.summary.as_deref().unwrap_or(&method_name)
-        )
-        .unwrap();
-        if let Some(desc) = &endpoint.description
-            && endpoint.summary.as_ref() != Some(desc)
-        {
-            writeln!(output, "    ///").unwrap();
-            write_description(output, desc, "    /// ", "    ///");
+        match endpoint.method.as_str() {
+            "GET" => generate_get_method(output, endpoint),
+            "POST" => generate_post_method(output, endpoint),
+            _ => continue,
         }
-        // Add endpoint path
-        writeln!(output, "    ///").unwrap();
-        writeln!(
-            output,
-            "    /// Endpoint: `{} {}`",
-            endpoint.method.to_uppercase(),
-            endpoint.path
-        )
-        .unwrap();
-
-        let params = build_method_params(endpoint);
-        writeln!(
-            output,
-            "    pub fn {}(&self{}) -> Result<{}> {{",
-            method_name, params, return_type
-        )
-        .unwrap();
-
-        let (path, index_arg) = build_path_template(endpoint);
-        let fetch_method = if endpoint.returns_binary() {
-            "get_bytes"
-        } else if endpoint.returns_json() {
-            "get_json"
-        } else {
-            "get_text"
-        };
-
-        if endpoint.query_params.is_empty() {
-            writeln!(
-                output,
-                "        self.base.{}(&format!(\"{}\"{}))",
-                fetch_method, path, index_arg
-            )
-            .unwrap();
-        } else {
-            writeln!(output, "        let mut query = Vec::new();").unwrap();
-            for param in &endpoint.query_params {
-                let ident = sanitize_ident(&param.name);
-                let is_array = param.param_type.ends_with("[]");
-                if is_array {
-                    writeln!(
-                        output,
-                        "        for v in {} {{ query.push(format!(\"{}={{}}\", v)); }}",
-                        ident, param.name
-                    )
-                    .unwrap();
-                } else if param.required {
-                    writeln!(
-                        output,
-                        "        query.push(format!(\"{}={{}}\", {}));",
-                        param.name, ident
-                    )
-                    .unwrap();
-                } else {
-                    writeln!(
-                        output,
-                        "        if let Some(v) = {} {{ query.push(format!(\"{}={{}}\", v)); }}",
-                        ident, param.name
-                    )
-                    .unwrap();
-                }
-            }
-            writeln!(output, "        let query_str = if query.is_empty() {{ String::new() }} else {{ format!(\"?{{}}\", query.join(\"&\")) }};").unwrap();
-            writeln!(
-                output,
-                "        let path = format!(\"{}{{}}\"{}, query_str);",
-                path, index_arg
-            )
-            .unwrap();
-
-            if endpoint.supports_csv {
-                writeln!(output, "        if format == Some(Format::CSV) {{").unwrap();
-                writeln!(
-                    output,
-                    "            self.base.get_text(&path).map(FormatResponse::Csv)"
-                )
-                .unwrap();
-                writeln!(output, "        }} else {{").unwrap();
-                writeln!(
-                    output,
-                    "            self.base.{}(&path).map(FormatResponse::Json)",
-                    fetch_method
-                )
-                .unwrap();
-                writeln!(output, "        }}").unwrap();
-            } else {
-                writeln!(output, "        self.base.{}(&path)", fetch_method).unwrap();
-            }
-        }
-
-        writeln!(output, "    }}\n").unwrap();
     }
+}
+
+fn generate_get_method(output: &mut String, endpoint: &Endpoint) {
+    let method_name = endpoint_to_method_name(endpoint);
+    let return_type = build_return_type(endpoint);
+
+    write_method_doc(output, endpoint);
+
+    let params = build_method_params(endpoint);
+    writeln!(
+        output,
+        "    pub fn {}(&self{}) -> Result<{}> {{",
+        method_name, params, return_type
+    )
+    .unwrap();
+
+    let (path, index_arg) = build_path_template(endpoint);
+    let fetch_method = if endpoint.returns_binary() {
+        "get_bytes"
+    } else if endpoint.returns_json() {
+        "get_json"
+    } else {
+        "get_text"
+    };
+
+    if endpoint.query_params.is_empty() {
+        writeln!(
+            output,
+            "        self.base.{}(&format!(\"{}\"{}))",
+            fetch_method, path, index_arg
+        )
+        .unwrap();
+    } else {
+        write_query_assembly(output, endpoint, &path, &index_arg);
+
+        if endpoint.supports_csv {
+            writeln!(output, "        if format == Some(Format::CSV) {{").unwrap();
+            writeln!(
+                output,
+                "            self.base.get_text(&path).map(FormatResponse::Csv)"
+            )
+            .unwrap();
+            writeln!(output, "        }} else {{").unwrap();
+            writeln!(
+                output,
+                "            self.base.{}(&path).map(FormatResponse::Json)",
+                fetch_method
+            )
+            .unwrap();
+            writeln!(output, "        }}").unwrap();
+        } else {
+            writeln!(output, "        self.base.{}(&path)", fetch_method).unwrap();
+        }
+    }
+
+    writeln!(output, "    }}\n").unwrap();
+}
+
+fn generate_post_method(output: &mut String, endpoint: &Endpoint) {
+    let method_name = endpoint_to_method_name(endpoint);
+    let return_type = build_return_type(endpoint);
+
+    write_method_doc(output, endpoint);
+
+    let mut params = build_method_params(endpoint);
+    if endpoint.request_body.is_some() {
+        params.push_str(", body: &str");
+    }
+    writeln!(
+        output,
+        "    pub fn {}(&self{}) -> Result<{}> {{",
+        method_name, params, return_type
+    )
+    .unwrap();
+
+    let (path, index_arg) = build_path_template(endpoint);
+    let body_arg = if endpoint.request_body.is_some() {
+        "body"
+    } else {
+        "\"\""
+    };
+    let fetch_method = if endpoint.returns_binary() {
+        "post_bytes"
+    } else if endpoint.returns_json() {
+        "post_json"
+    } else {
+        "post_text"
+    };
+
+    if endpoint.query_params.is_empty() {
+        writeln!(
+            output,
+            "        self.base.{}(&format!(\"{}\"{}), {})",
+            fetch_method, path, index_arg, body_arg
+        )
+        .unwrap();
+    } else {
+        write_query_assembly(output, endpoint, &path, &index_arg);
+        writeln!(
+            output,
+            "        self.base.{}(&path, {})",
+            fetch_method, body_arg
+        )
+        .unwrap();
+    }
+
+    writeln!(output, "    }}\n").unwrap();
+}
+
+fn build_return_type(endpoint: &Endpoint) -> String {
+    let base = if endpoint.returns_binary() {
+        "Vec<u8>".to_string()
+    } else if endpoint.returns_text() {
+        "String".to_string()
+    } else {
+        endpoint
+            .schema_name()
+            .map(js_type_to_rust)
+            .unwrap_or_else(|| "String".to_string())
+    };
+    if endpoint.supports_csv {
+        format!("FormatResponse<{}>", base)
+    } else {
+        base
+    }
+}
+
+fn write_method_doc(output: &mut String, endpoint: &Endpoint) {
+    let method_name = endpoint_to_method_name(endpoint);
+    writeln!(
+        output,
+        "    /// {}",
+        endpoint.summary.as_deref().unwrap_or(&method_name)
+    )
+    .unwrap();
+    if let Some(desc) = &endpoint.description
+        && endpoint.summary.as_ref() != Some(desc)
+    {
+        writeln!(output, "    ///").unwrap();
+        write_description(output, desc, "    /// ", "    ///");
+    }
+    writeln!(output, "    ///").unwrap();
+    writeln!(
+        output,
+        "    /// Endpoint: `{} {}`",
+        endpoint.method.to_uppercase(),
+        endpoint.path
+    )
+    .unwrap();
+}
+
+fn write_query_assembly(output: &mut String, endpoint: &Endpoint, path: &str, index_arg: &str) {
+    writeln!(output, "        let mut query = Vec::new();").unwrap();
+    for param in &endpoint.query_params {
+        let ident = sanitize_ident(&param.name);
+        let is_array = param.param_type.ends_with("[]");
+        if is_array {
+            writeln!(
+                output,
+                "        for v in {} {{ query.push(format!(\"{}={{}}\", v)); }}",
+                ident, param.name
+            )
+            .unwrap();
+        } else if param.required {
+            writeln!(
+                output,
+                "        query.push(format!(\"{}={{}}\", {}));",
+                param.name, ident
+            )
+            .unwrap();
+        } else {
+            writeln!(
+                output,
+                "        if let Some(v) = {} {{ query.push(format!(\"{}={{}}\", v)); }}",
+                ident, param.name
+            )
+            .unwrap();
+        }
+    }
+    writeln!(output, "        let query_str = if query.is_empty() {{ String::new() }} else {{ format!(\"?{{}}\", query.join(\"&\")) }};").unwrap();
+    writeln!(
+        output,
+        "        let path = format!(\"{}{{}}\"{}, query_str);",
+        path, index_arg
+    )
+    .unwrap();
 }
 
 fn endpoint_to_method_name(endpoint: &Endpoint) -> String {

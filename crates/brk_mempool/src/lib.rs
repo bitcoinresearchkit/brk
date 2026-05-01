@@ -17,7 +17,7 @@ use std::{sync::Arc, thread, time::Duration};
 
 use brk_error::Result;
 use brk_rpc::Client;
-use brk_types::{AddrBytes, MempoolInfo, TxOut, Txid, Vout};
+use brk_types::{AddrBytes, MempoolInfo, OutpointPrefix, TxOut, Txid, TxidPrefix, Vin, Vout};
 use parking_lot::RwLockReadGuard;
 use tracing::error;
 
@@ -73,6 +73,25 @@ impl Mempool {
 
     pub fn addr_state_hash(&self, addr: &AddrBytes) -> u64 {
         self.0.state.addrs.read().stats_hash(addr)
+    }
+
+    /// Look up the mempool tx that spends `(txid, vout)`. Returns
+    /// `(spender_txid, vin)` if the outpoint is spent in the mempool,
+    /// `None` otherwise. The spender's input list is walked to rule
+    /// out a `TxidPrefix` collision before returning a match.
+    pub fn lookup_spender(&self, txid: &Txid, vout: Vout) -> Option<(Txid, Vin)> {
+        let key = OutpointPrefix::new(TxidPrefix::from(txid), vout);
+        let txs = self.0.state.txs.read();
+        let entries = self.0.state.entries.read();
+        let outpoint_spends = self.0.state.outpoint_spends.read();
+        let idx = outpoint_spends.get(&key)?;
+        let spender_txid = entries.slot(idx)?.txid.clone();
+        let spender_tx = txs.get(&spender_txid)?;
+        let vin_pos = spender_tx
+            .input
+            .iter()
+            .position(|inp| inp.txid == *txid && inp.vout == vout)?;
+        Some((spender_txid, Vin::from(vin_pos)))
     }
 
     pub fn txs(&self) -> RwLockReadGuard<'_, TxStore> {

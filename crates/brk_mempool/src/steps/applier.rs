@@ -32,7 +32,7 @@ impl Applier {
     }
 
     fn bury_one(s: &mut LockedState, prefix: &TxidPrefix, reason: TxRemoval) {
-        let Some(entry) = s.entries.remove(prefix) else {
+        let Some((idx, entry)) = s.entries.remove(prefix) else {
             return;
         };
         let txid = entry.txid.clone();
@@ -41,6 +41,7 @@ impl Applier {
         };
         s.info.remove(&tx, entry.fee);
         s.addrs.remove_tx(&tx, &txid);
+        s.outpoint_spends.remove_spends(&tx, idx);
         s.graveyard.bury(txid, tx, entry, reason);
     }
 
@@ -71,7 +72,8 @@ impl Applier {
         s.info.add(&tx, entry.fee);
         s.addrs.add_tx(&tx, &entry.txid);
         let txid = entry.txid.clone();
-        s.entries.insert(entry);
+        let idx = s.entries.insert(entry);
+        s.outpoint_spends.insert_spends(&tx, idx);
         (txid, tx)
     }
 }

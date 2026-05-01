@@ -61,6 +61,7 @@ fn error_status(e: &BrkError) -> StatusCode {
         | BrkError::NotFound(_)
         | BrkError::NoData
         | BrkError::OutOfRange(_)
+        | BrkError::UnindexableDate
         | BrkError::SeriesNotFound(_) => StatusCode::NOT_FOUND,
 
         BrkError::AuthFailed => StatusCode::FORBIDDEN,
@@ -85,6 +86,7 @@ fn error_code(e: &BrkError) -> &'static str {
         BrkError::UnknownTxid => "unknown_txid",
         BrkError::NotFound(_) => "not_found",
         BrkError::OutOfRange(_) => "out_of_range",
+        BrkError::UnindexableDate => "unindexable_date",
         BrkError::NoData => "no_data",
         BrkError::SeriesNotFound(_) => "series_not_found",
         BrkError::MempoolNotAvailable => "mempool_not_available",

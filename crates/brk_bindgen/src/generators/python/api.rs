@@ -162,12 +162,20 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         // Build path
         let path = build_path_template(&endpoint.path, &endpoint.path_params);
 
-        let fetch_method = if endpoint.returns_binary() {
-            "get"
-        } else if endpoint.returns_json() {
-            "get_json"
+        let is_post = endpoint.method == "POST";
+        let fetch_method = match (is_post, &endpoint.response_kind) {
+            (false, _) if endpoint.returns_binary() => "get",
+            (false, _) if endpoint.returns_json() => "get_json",
+            (false, _) => "get_text",
+            (true, _) if endpoint.returns_binary() => "post",
+            (true, _) if endpoint.returns_json() => "post_json",
+            (true, _) => "post_text",
+        };
+
+        let body_arg = if is_post && endpoint.request_body.is_some() {
+            ", body"
         } else {
-            "get_text"
+            ""
         };
 
         let (wrap_prefix, wrap_suffix) = if endpoint.response_kind.text_is_numeric() {
@@ -180,15 +188,15 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             if endpoint.path_params.is_empty() {
                 writeln!(
                     output,
-                    "        return {}self.{}('{}'){}",
-                    wrap_prefix, fetch_method, path, wrap_suffix
+                    "        return {}self.{}('{}'{}){}",
+                    wrap_prefix, fetch_method, path, body_arg, wrap_suffix
                 )
                 .unwrap();
             } else {
                 writeln!(
                     output,
-                    "        return {}self.{}(f'{}'){}",
-                    wrap_prefix, fetch_method, path, wrap_suffix
+                    "        return {}self.{}(f'{}'{}){}",
+                    wrap_prefix, fetch_method, path, body_arg, wrap_suffix
                 )
                 .unwrap();
             }
@@ -234,15 +242,15 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
                 writeln!(output, "            return self.get_text(path)").unwrap();
                 writeln!(
                     output,
-                    "        return {}self.{}(path){}",
-                    wrap_prefix, fetch_method, wrap_suffix
+                    "        return {}self.{}(path{}){}",
+                    wrap_prefix, fetch_method, body_arg, wrap_suffix
                 )
                 .unwrap();
             } else {
                 writeln!(
                     output,
-                    "        return {}self.{}(path){}",
-                    wrap_prefix, fetch_method, wrap_suffix
+                    "        return {}self.{}(path{}){}",
+                    wrap_prefix, fetch_method, body_arg, wrap_suffix
                 )
                 .unwrap();
             }
@@ -277,6 +285,14 @@ fn build_method_params(endpoint: &Endpoint) -> String {
             let safe_name = escape_python_keyword(&param.name);
             let py_type = js_type_to_python(&param.param_type);
             params.push(format!(", {}: Optional[{}] = None", safe_name, py_type));
+        }
+    }
+    if let Some(body) = &endpoint.request_body {
+        let py_type = js_type_to_python(&body.body_type);
+        if body.required {
+            params.push(format!(", body: {}", py_type));
+        } else {
+            params.push(format!(", body: Optional[{}] = None", py_type));
         }
     }
     params.join("")

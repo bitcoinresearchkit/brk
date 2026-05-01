@@ -570,6 +570,67 @@ class BrkClientBase {{
   }}
 
   /**
+   * Make a POST request with a string body.
+   *
+   * POST responses are uncached and never invoke `onValue` — every call hits
+   * the network with the same body and returns the upstream response.
+   *
+   * @param {{string}} path
+   * @param {{string}} body
+   * @param {{{{ signal?: AbortSignal }}}} [options]
+   * @returns {{Promise<Response>}}
+   */
+  async post(path, body, {{ signal }} = {{}}) {{
+    const url = `${{this.baseUrl}}${{path}}`;
+    const signals = [AbortSignal.timeout(this.timeout)];
+    if (signal) signals.push(signal);
+    const res = await fetch(url, {{
+      method: 'POST',
+      body,
+      signal: AbortSignal.any(signals),
+    }});
+    if (!res.ok) throw new BrkError(`HTTP ${{res.status}}: ${{url}}`, res.status);
+    return res;
+  }}
+
+  /**
+   * Make a POST request expecting a JSON response.
+   * @template T
+   * @param {{string}} path
+   * @param {{string}} body
+   * @param {{{{ signal?: AbortSignal }}}} [options]
+   * @returns {{Promise<T>}}
+   */
+  async postJson(path, body, options) {{
+    const res = await this.post(path, body, options);
+    return _addCamelGetters(await res.json());
+  }}
+
+  /**
+   * Make a POST request expecting a text response.
+   * @param {{string}} path
+   * @param {{string}} body
+   * @param {{{{ signal?: AbortSignal }}}} [options]
+   * @returns {{Promise<string>}}
+   */
+  async postText(path, body, options) {{
+    const res = await this.post(path, body, options);
+    return res.text();
+  }}
+
+  /**
+   * Make a POST request expecting binary data (application/octet-stream).
+   * @param {{string}} path
+   * @param {{string}} body
+   * @param {{{{ signal?: AbortSignal }}}} [options]
+   * @returns {{Promise<Uint8Array>}}
+   */
+  async postBytes(path, body, options) {{
+    const res = await this.post(path, body, options);
+    return new Uint8Array(await res.arrayBuffer());
+  }}
+
+  /**
    * Fetch series data and wrap with helper methods (internal)
    * @template T
    * @param {{string}} path

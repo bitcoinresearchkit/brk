@@ -30,6 +30,7 @@ pub enum PoolSlug {
     UltimusPool,
     TerraPool,
     Luxor,
+    #[serde(rename = "1thash")]
     OneThash,
     BtcCom,
     Bitfarms,
@@ -38,6 +39,7 @@ pub enum PoolSlug {
     CanoePool,
     BtcTop,
     BitcoinCom,
+    #[serde(rename = "175btc")]
     Pool175btc,
     GbMiners,
     AXbt,
@@ -53,6 +55,7 @@ pub enum PoolSlug {
     MaxBtc,
     TripleMining,
     CoinLab,
+    #[serde(rename = "50btc")]
     Pool50btc,
     GhashIo,
     StMiningCorp,
@@ -84,8 +87,10 @@ pub enum PoolSlug {
     ExxBw,
     Bitsolo,
     BitFury,
+    #[serde(rename = "21inc")]
     TwentyOneInc,
     DigitalBtc,
+    #[serde(rename = "8baochi")]
     EightBaochi,
     MyBtcCoinPool,
     TbDice,
@@ -95,6 +100,7 @@ pub enum PoolSlug {
     HotPool,
     OkExPool,
     BcMonster,
+    #[serde(rename = "1hash")]
     OneHash,
     Bixin,
     TatmasPool,
@@ -105,12 +111,14 @@ pub enum PoolSlug {
     DcExploration,
     Dcex,
     BtPool,
+    #[serde(rename = "58coin")]
     FiftyEightCoin,
     BitcoinIndia,
     ShawnP0wers,
     PHashIo,
     RigPool,
     HaoZhuZhu,
+    #[serde(rename = "7pool")]
     SevenPool,
     MiningKings,
     HashBx,
@@ -164,6 +172,7 @@ pub enum PoolSlug {
     EkanemBtc,
     Canoe,
     Tiger,
+    #[serde(rename = "1m1x")]
     OneM1x,
     Zulupool,
     SecPool,
@@ -200,6 +209,7 @@ pub enum PoolSlug {
     RedRockPool,
     Est3lar,
     BraiinsSolo,
+    #[serde(rename = "solopoolcom")]
     SoloPool,
     Noderunners,
     #[serde(skip)]

@@ -2,51 +2,70 @@
 
 import pytest
 
+from brk_client import BrkError
+
 from _lib import assert_same_values, show
 
 
-@pytest.fixture(params=[
-    "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S",
-    "3D2oetdNuZUqQHPJmcMDDHYoqkyNVsFk9r",
-], ids=["p2pkh", "p2sh"])
-def static_addr(request):
-    return request.param
+# Inactive historical addresses with stable, comparable UTXO sets.
+STABLE_ADDRS = [
+    ("p2pkh", "12cbQLTFMXRnSzktFkuoG3eHoMeFtpTu3S"),
+    ("p2sh", "3D2oetdNuZUqQHPJmcMDDHYoqkyNVsFk9r"),
+]
+
+# Genesis pubkey-hash address: tens of thousands of dust UTXOs — exceeds both
+# brk's 1000-cap and mempool.space's 500-cap, so both indexers must 400.
+HEAVY_ADDR = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
 
 
-def test_address_utxo_static(brk, mempool, static_addr):
-    """UTXO list must match — same txids, values, and statuses."""
-    path = f"/api/address/{static_addr}/utxo"
-    b = brk.get_json(path)
+@pytest.mark.parametrize("atype,addr", STABLE_ADDRS, ids=[a for a, _ in STABLE_ADDRS])
+def test_address_utxo_static(brk, mempool, atype, addr):
+    """Exact UTXO parity (txid+vout+value+status) for stable historical addresses."""
+    path = f"/api/address/{addr}/utxo"
+    b = brk.get_address_utxos(addr)
     m = mempool.get_json(path)
-    show("GET", path, f"({len(b)} utxos)", f"({len(m)} utxos)")
-    assert isinstance(b, list) and isinstance(m, list)
-    key = lambda u: (u.get("txid", ""), u.get("vout", 0))
-    b_sorted = sorted(b, key=key)
-    m_sorted = sorted(m, key=key)
-    assert_same_values(b_sorted, m_sorted)
+    show("GET", f"{path}  [{atype}]", f"({len(b)} utxos)", f"({len(m)} utxos)")
+    key = lambda u: (u["txid"], u["vout"])
+    assert_same_values(sorted(b, key=key), sorted(m, key=key))
 
 
 def test_address_utxo_discovered(brk, mempool, live_addrs):
-    """UTXO list must match for each discovered address type — same txids, values, and statuses."""
+    """Same exact-parity contract over each live-discovered scriptpubkey type."""
     for atype, addr in live_addrs:
         path = f"/api/address/{addr}/utxo"
-        b = brk.get_json(path)
+        b = brk.get_address_utxos(addr)
         m = mempool.get_json(path)
         show("GET", f"{path}  [{atype}]", f"({len(b)} utxos)", f"({len(m)} utxos)")
-        assert isinstance(b, list) and isinstance(m, list)
-        key = lambda u: (u.get("txid", ""), u.get("vout", 0))
+        key = lambda u: (u["txid"], u["vout"])
         assert_same_values(sorted(b, key=key), sorted(m, key=key))
 
 
-def test_address_utxo_fields(brk, live):
-    """Every utxo must carry the core mempool.space fields."""
-    path = f"/api/address/{live.sample_address}/utxo"
-    b = brk.get_json(path)
-    show("GET", path, f"({len(b)} utxos)", "—")
+@pytest.mark.parametrize("atype,addr", STABLE_ADDRS, ids=[a for a, _ in STABLE_ADDRS])
+def test_address_utxo_all_confirmed(brk, atype, addr):
+    """brk's /utxo only returns confirmed UTXOs (mempool-funded ones are excluded by design)."""
+    b = brk.get_address_utxos(addr)
     if not b:
-        pytest.skip("address has no utxos in brk")
-    required = {"txid", "vout", "value", "status"}
-    for u in b[:5]:
-        missing = required - set(u.keys())
-        assert not missing, f"utxo {u.get('txid', '?')}:{u.get('vout', '?')} missing fields: {missing}"
-        assert isinstance(u["value"], int) and u["value"] > 0
+        pytest.skip(f"{addr} has no utxos in brk")
+    unconfirmed = [u for u in b if not u["status"]["confirmed"]]
+    assert not unconfirmed, (
+        f"{addr}: {len(unconfirmed)} unconfirmed UTXO(s) returned: "
+        f"{[(u['txid'], u['vout']) for u in unconfirmed[:3]]}"
+    )
+
+
+def test_address_utxo_too_many(brk):
+    """Heavy address (>1000 UTXOs) must produce BrkError(status=400, code=too_many_utxos)."""
+    with pytest.raises(BrkError) as exc_info:
+        brk.get_address_utxos(HEAVY_ADDR)
+    assert exc_info.value.status == 400, (
+        f"expected status=400, got {exc_info.value.status}"
+    )
+
+
+def test_address_utxo_invalid(brk):
+    """Garbage input must produce a BrkError carrying HTTP 400."""
+    with pytest.raises(BrkError) as exc_info:
+        brk.get_address_utxos("abc")
+    assert exc_info.value.status == 400, (
+        f"expected status=400, got {exc_info.value.status}"
+    )

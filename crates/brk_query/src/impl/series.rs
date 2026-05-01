@@ -1,20 +1,17 @@
-use std::{collections::BTreeMap, sync::LazyLock};
+use std::sync::LazyLock;
 
 use brk_error::{Error, Result};
 use brk_traversable::TreeNode;
 use brk_types::{
     BlockHashPrefix, CacheClass, Date, DetailedSeriesCount, Epoch, Format, Halving, Height, Index,
-    IndexInfo, LegacyValue, Limit, Output, OutputLegacy, PaginatedSeries, Pagination,
-    PaginationIndex, RangeIndex, RangeMap, SearchQuery, SeriesData, SeriesInfo, SeriesName,
-    SeriesOutput, SeriesOutputLegacy, SeriesSelection, Timestamp, Version,
+    IndexInfo, LegacyValue, Limit, Output, OutputLegacy, PaginatedSeries, Pagination, RangeIndex,
+    RangeMap, SearchQuery, SeriesData, SeriesInfo, SeriesName, SeriesOutput, SeriesOutputLegacy,
+    SeriesSelection, Timestamp, Version,
 };
 use parking_lot::RwLock;
 use vecdb::{AnyExportableVec, ReadableVec};
 
-use crate::{
-    Query,
-    vecs::{IndexToVec, SeriesToVec},
-};
+use crate::Query;
 
 /// Monotonic block timestamps → height. Lazily extended as new blocks are indexed.
 static HEIGHT_BY_MONOTONIC_TIMESTAMP: LazyLock<RwLock<RangeMap<Timestamp, Height>>> =
@@ -24,14 +21,17 @@ static HEIGHT_BY_MONOTONIC_TIMESTAMP: LazyLock<RwLock<RangeMap<Timestamp, Height
 const CSV_HEADER_BYTES_PER_COL: usize = 10;
 /// Estimated bytes per cell value
 const CSV_CELL_BYTES: usize = 15;
+/// Estimated bytes per JSON cell value
+const JSON_CELL_BYTES: usize = 12;
 
 impl Query {
     pub fn search_series(&self, query: &SearchQuery) -> Vec<&'static str> {
         self.vecs().matches(&query.q, query.limit)
     }
 
+    /// Returns the error for a missing series: `SeriesUnsupportedIndex` if the name
+    /// exists at other indexes, else `SeriesNotFound` with fuzzy-match suggestions.
     pub fn series_not_found_error(&self, series: &SeriesName) -> Error {
-        // Check if series exists but with different indexes
         if let Some(indexes) = self.vecs().series_to_indexes(series) {
             let supported = indexes
                 .iter()
@@ -44,7 +44,6 @@ impl Query {
             };
         }
 
-        // Series doesn't exist, suggest alternatives
         let matches = self
             .vecs()
             .matches(series, Limit::DEFAULT)
@@ -63,25 +62,8 @@ impl Query {
             return Ok(String::new());
         }
 
-        let from = Some(start as i64);
-        let to = Some(end as i64);
-
-        let num_rows = columns[0].range_count(from, to);
         let num_cols = columns.len();
-
-        let estimated_size =
-            num_cols * CSV_HEADER_BYTES_PER_COL + num_rows * num_cols * CSV_CELL_BYTES;
-        let mut csv = String::with_capacity(estimated_size);
-
-        // Single-column fast path: stream directly, no Vec<T> materialization
-        if num_cols == 1 {
-            let col = columns[0];
-            csv.push_str(col.name());
-            csv.push('\n');
-            col.write_csv_column(Some(start), Some(end), &mut csv)?;
-            return Ok(csv);
-        }
-
+        let mut csv = String::with_capacity(num_cols * CSV_HEADER_BYTES_PER_COL);
         for (i, col) in columns.iter().enumerate() {
             if i > 0 {
                 csv.push(',');
@@ -89,6 +71,17 @@ impl Query {
             csv.push_str(col.name());
         }
         csv.push('\n');
+
+        // Stream a single column without materializing Vec<T>.
+        if num_cols == 1 {
+            columns[0].write_csv_column(Some(start), Some(end), &mut csv)?;
+            return Ok(csv);
+        }
+
+        let from = Some(start as i64);
+        let to = Some(end as i64);
+        let num_rows = columns[0].range_count(from, to);
+        csv.reserve(num_rows * num_cols * CSV_CELL_BYTES);
 
         let mut writers: Vec<_> = columns
             .iter()
@@ -108,31 +101,31 @@ impl Query {
         Ok(csv)
     }
 
+    fn get_vec(
+        &self,
+        series: &SeriesName,
+        index: Index,
+    ) -> Result<&'static dyn AnyExportableVec> {
+        self.vecs()
+            .get(series, index)
+            .ok_or_else(|| self.series_not_found_error(series))
+    }
+
     /// Returns the latest value for a single series as a JSON value.
     pub fn latest(&self, series: &SeriesName, index: Index) -> Result<serde_json::Value> {
-        let vec = self
-            .vecs()
-            .get(series, index)
-            .ok_or_else(|| self.series_not_found_error(series))?;
-        vec.last_json_value().ok_or(Error::NoData)
+        self.get_vec(series, index)?
+            .last_json_value()
+            .ok_or(Error::NoData)
     }
 
     /// Returns the length (total data points) for a single series.
     pub fn len(&self, series: &SeriesName, index: Index) -> Result<usize> {
-        let vec = self
-            .vecs()
-            .get(series, index)
-            .ok_or_else(|| self.series_not_found_error(series))?;
-        Ok(vec.len())
+        Ok(self.get_vec(series, index)?.len())
     }
 
     /// Returns the version for a single series.
     pub fn version(&self, series: &SeriesName, index: Index) -> Result<Version> {
-        let vec = self
-            .vecs()
-            .get(series, index)
-            .ok_or_else(|| self.series_not_found_error(series))?;
-        Ok(vec.version())
+        Ok(self.get_vec(series, index)?.version())
     }
 
     /// Search for vecs matching the given series and index.
@@ -141,14 +134,11 @@ impl Query {
         if params.series.is_empty() {
             return Err(Error::NoSeries);
         }
-        let mut vecs = Vec::with_capacity(params.series.len());
-        for series in params.series.iter() {
-            match self.vecs().get(series, params.index) {
-                Some(vec) => vecs.push(vec),
-                None => return Err(self.series_not_found_error(series)),
-            }
-        }
-        Ok(vecs)
+        params
+            .series
+            .iter()
+            .map(|s| self.get_vec(s, params.index))
+            .collect()
     }
 
     /// Calculate total weight of the vecs for the given range.
@@ -165,25 +155,21 @@ impl Query {
         let version: Version = vecs.iter().map(|v| v.version()).sum();
         let index = params.index;
 
+        let resolve_bound = |ri: RangeIndex, fallback: usize| -> Result<usize> {
+            let i = self.range_index_to_i64(ri, index)?;
+            Ok(vecs.iter().map(|v| v.i64_to_usize(i)).min().unwrap_or(fallback))
+        };
+
         let start = match params.start() {
-            Some(ri) => {
-                let i = self.range_index_to_i64(ri, index)?;
-                vecs.iter().map(|v| v.i64_to_usize(i)).min().unwrap_or(0)
-            }
+            Some(ri) => resolve_bound(ri, 0)?,
             None => 0,
         };
 
         let end = match params.end() {
-            Some(ri) => {
-                let i = self.range_index_to_i64(ri, index)?;
-                vecs.iter()
-                    .map(|v| v.i64_to_usize(i))
-                    .min()
-                    .unwrap_or(total)
-            }
+            Some(ri) => resolve_bound(ri, total)?,
             None => params
                 .limit()
-                .map(|l| (start + *l).min(total))
+                .map(|l| start.saturating_add(*l).min(total))
                 .unwrap_or(total),
         };
 
@@ -236,30 +222,31 @@ impl Query {
             CacheClass::Bucket { margin } => Some(total.saturating_sub(margin)),
             CacheClass::Entity => {
                 let h = Height::from((*tip_height).saturating_sub(6));
-                let v = &self.indexer().vecs;
-                let n = match index {
-                    Index::TxIndex => v.transactions.first_tx_index.collect_one(h).map(usize::from),
-                    Index::TxInIndex => v.inputs.first_txin_index.collect_one(h).map(usize::from),
-                    Index::TxOutIndex => v.outputs.first_txout_index.collect_one(h).map(usize::from),
-                    Index::EmptyOutputIndex => v.scripts.empty.first_index.collect_one(h).map(usize::from),
-                    Index::OpReturnIndex => v.scripts.op_return.first_index.collect_one(h).map(usize::from),
-                    Index::P2MSOutputIndex => v.scripts.p2ms.first_index.collect_one(h).map(usize::from),
-                    Index::UnknownOutputIndex => v.scripts.unknown.first_index.collect_one(h).map(usize::from),
-                    Index::P2AAddrIndex => v.addrs.p2a.first_index.collect_one(h).map(usize::from),
-                    Index::P2PK33AddrIndex => v.addrs.p2pk33.first_index.collect_one(h).map(usize::from),
-                    Index::P2PK65AddrIndex => v.addrs.p2pk65.first_index.collect_one(h).map(usize::from),
-                    Index::P2PKHAddrIndex => v.addrs.p2pkh.first_index.collect_one(h).map(usize::from),
-                    Index::P2SHAddrIndex => v.addrs.p2sh.first_index.collect_one(h).map(usize::from),
-                    Index::P2TRAddrIndex => v.addrs.p2tr.first_index.collect_one(h).map(usize::from),
-                    Index::P2WPKHAddrIndex => v.addrs.p2wpkh.first_index.collect_one(h).map(usize::from),
-                    Index::P2WSHAddrIndex => v.addrs.p2wsh.first_index.collect_one(h).map(usize::from),
-                    _ => unreachable!("non-entity index in CacheClass::Entity arm"),
-                }
-                .unwrap_or(0)
-                .min(total);
-                Some(n)
+                Some(self.entity_index_at(index, h).unwrap_or(0).min(total))
             }
             CacheClass::Mutable => None,
+        }
+    }
+
+    fn entity_index_at(&self, index: Index, h: Height) -> Option<usize> {
+        let v = &self.indexer().vecs;
+        match index {
+            Index::TxIndex => v.transactions.first_tx_index.collect_one(h).map(usize::from),
+            Index::TxInIndex => v.inputs.first_txin_index.collect_one(h).map(usize::from),
+            Index::TxOutIndex => v.outputs.first_txout_index.collect_one(h).map(usize::from),
+            Index::EmptyOutputIndex => v.scripts.empty.first_index.collect_one(h).map(usize::from),
+            Index::OpReturnIndex => v.scripts.op_return.first_index.collect_one(h).map(usize::from),
+            Index::P2MSOutputIndex => v.scripts.p2ms.first_index.collect_one(h).map(usize::from),
+            Index::UnknownOutputIndex => v.scripts.unknown.first_index.collect_one(h).map(usize::from),
+            Index::P2AAddrIndex => v.addrs.p2a.first_index.collect_one(h).map(usize::from),
+            Index::P2PK33AddrIndex => v.addrs.p2pk33.first_index.collect_one(h).map(usize::from),
+            Index::P2PK65AddrIndex => v.addrs.p2pk65.first_index.collect_one(h).map(usize::from),
+            Index::P2PKHAddrIndex => v.addrs.p2pkh.first_index.collect_one(h).map(usize::from),
+            Index::P2SHAddrIndex => v.addrs.p2sh.first_index.collect_one(h).map(usize::from),
+            Index::P2TRAddrIndex => v.addrs.p2tr.first_index.collect_one(h).map(usize::from),
+            Index::P2WPKHAddrIndex => v.addrs.p2wpkh.first_index.collect_one(h).map(usize::from),
+            Index::P2WSHAddrIndex => v.addrs.p2wsh.first_index.collect_one(h).map(usize::from),
+            _ => unreachable!("entity_index_at called for non-Entity Index: {index:?}"),
         }
     }
 
@@ -281,22 +268,9 @@ impl Query {
             Format::CSV => Output::CSV(Self::columns_to_csv(&vecs, start, end)?),
             Format::JSON => {
                 let count = end.saturating_sub(start);
-                if vecs.len() == 1 {
-                    let mut buf = Vec::with_capacity(count * 12 + 256);
-                    SeriesData::serialize(vecs[0], index, start, end, &mut buf)?;
-                    Output::Json(buf)
-                } else {
-                    let mut buf = Vec::with_capacity(count * 12 * vecs.len() + 256);
-                    buf.push(b'[');
-                    for (i, vec) in vecs.iter().enumerate() {
-                        if i > 0 {
-                            buf.push(b',');
-                        }
-                        SeriesData::serialize(*vec, index, start, end, &mut buf)?;
-                    }
-                    buf.push(b']');
-                    Output::Json(buf)
-                }
+                Output::Json(Self::write_json_array(&vecs, count, 256, |v, buf| {
+                    SeriesData::serialize(v, index, start, end, buf)
+                })?)
             }
         };
 
@@ -309,10 +283,11 @@ impl Query {
         })
     }
 
-    /// Format a resolved query as raw data (just the JSON array, no SeriesData wrapper).
+    /// Format a resolved query as raw data (just the JSON values, no SeriesData wrapper).
+    /// Single vec → `[v1,v2,...]`. Multi-vec → `[[v1,v2],[v3,v4],...]`.
     /// CSV output is identical to `format` (no wrapper distinction for CSV).
     pub fn format_raw(&self, resolved: ResolvedQuery) -> Result<SeriesOutput> {
-        if resolved.format() == Format::CSV {
+        if resolved.format == Format::CSV {
             return self.format(resolved);
         }
 
@@ -326,8 +301,9 @@ impl Query {
         } = resolved;
 
         let count = end.saturating_sub(start);
-        let mut buf = Vec::with_capacity(count * 12 + 2);
-        vecs[0].write_json(Some(start), Some(end), &mut buf)?;
+        let buf = Self::write_json_array(&vecs, count, 2, |v, buf| {
+            v.write_json(Some(start), Some(end), buf)
+        })?;
 
         Ok(SeriesOutput {
             output: Output::Json(buf),
@@ -338,12 +314,28 @@ impl Query {
         })
     }
 
-    pub fn series_to_index_to_vec(&self) -> &BTreeMap<&str, IndexToVec<'_>> {
-        &self.vecs().series_to_index_to_vec
-    }
-
-    pub fn index_to_series_to_vec(&self) -> &BTreeMap<Index, SeriesToVec<'_>> {
-        &self.vecs().index_to_series_to_vec
+    fn write_json_array(
+        vecs: &[&dyn AnyExportableVec],
+        cell_count: usize,
+        wrapper_overhead: usize,
+        mut write_one: impl FnMut(&dyn AnyExportableVec, &mut Vec<u8>) -> vecdb::Result<()>,
+    ) -> Result<Vec<u8>> {
+        let multi = vecs.len() > 1;
+        let mut buf =
+            Vec::with_capacity(cell_count * JSON_CELL_BYTES * vecs.len() + wrapper_overhead);
+        if multi {
+            buf.push(b'[');
+        }
+        for (i, vec) in vecs.iter().enumerate() {
+            if i > 0 {
+                buf.push(b',');
+            }
+            write_one(*vec, &mut buf)?;
+        }
+        if multi {
+            buf.push(b']');
+        }
+        Ok(buf)
     }
 
     pub fn series_count(&self) -> DetailedSeriesCount {
@@ -365,25 +357,8 @@ impl Query {
         self.vecs().catalog()
     }
 
-    pub fn index_to_vecids(&self, paginated_index: PaginationIndex) -> Option<&[&str]> {
-        self.vecs().index_to_ids(paginated_index)
-    }
-
     pub fn series_info(&self, series: &SeriesName) -> Option<SeriesInfo> {
-        let index_to_vec = self
-            .vecs()
-            .series_to_index_to_vec
-            .get(series.replace("-", "_").as_str())?;
-        let value_type = index_to_vec.values().next()?.value_type_to_string();
-        let indexes = index_to_vec.keys().copied().collect();
-        Some(SeriesInfo {
-            indexes,
-            value_type: value_type.into(),
-        })
-    }
-
-    pub fn series_to_indexes(&self, series: &SeriesName) -> Option<&Vec<Index>> {
-        self.vecs().series_to_indexes(series)
+        self.vecs().series_info(series)
     }
 
     /// Resolve a RangeIndex to an i64 offset for the given index type.
@@ -396,20 +371,16 @@ impl Query {
     }
 
     fn date_to_i64(&self, date: Date, index: Index) -> Result<i64> {
-        // Direct date-based index conversion (day1, week1, month1, etc.)
         if let Some(idx) = index.date_to_index(date) {
             return Ok(idx as i64);
         }
-        // Fall through to timestamp-based resolution (height, epoch, halving)
         self.timestamp_to_i64(Timestamp::from(date), index)
     }
 
     fn timestamp_to_i64(&self, ts: Timestamp, index: Index) -> Result<i64> {
-        // Direct timestamp-based index conversion (minute10, hour1, etc.)
         if let Some(idx) = index.timestamp_to_index(ts) {
             return Ok(idx as i64);
         }
-        // Height-based indexes: find block height, then convert
         let height = Height::from(self.height_for_timestamp(ts));
         match index {
             Index::Height => Ok(usize::from(height) as i64),
@@ -425,21 +396,22 @@ impl Query {
     /// O(log n) binary search. Lazily rebuilt as new blocks arrive.
     fn height_for_timestamp(&self, ts: Timestamp) -> usize {
         let current_height: usize = self.height().into();
+        let lookup = |map: &RangeMap<Timestamp, Height>| {
+            map.ceil(ts).map(usize::from).unwrap_or(current_height)
+        };
 
-        // Fast path: read lock, ceil is &self
         {
             let map = HEIGHT_BY_MONOTONIC_TIMESTAMP.read();
             if map.len() > current_height {
-                return map.ceil(ts).map(usize::from).unwrap_or(current_height);
+                return lookup(&map);
             }
         }
 
-        // Slow path: rebuild from computer's precomputed monotonic timestamps
         let mut map = HEIGHT_BY_MONOTONIC_TIMESTAMP.write();
         if map.len() <= current_height {
             *map = RangeMap::from(self.computer().indexes.timestamp.monotonic.collect());
         }
-        map.ceil(ts).map(usize::from).unwrap_or(current_height)
+        lookup(&map)
     }
 
     /// Deprecated - format a resolved query as legacy output (expensive).
@@ -520,10 +492,6 @@ pub struct ResolvedQuery {
 }
 
 impl ResolvedQuery {
-    pub fn format(&self) -> Format {
-        self.format
-    }
-
     pub fn csv_filename(&self) -> String {
         let names: Vec<_> = self.vecs.iter().map(|v| v.name()).collect();
         format!("{}-{}.csv", names.join("_"), self.index)
