@@ -1,3 +1,13 @@
+mod endpoint;
+mod parameter;
+mod response_kind;
+mod text_schema;
+
+pub use endpoint::Endpoint;
+pub use parameter::Parameter;
+pub use response_kind::ResponseKind;
+pub use text_schema::TextSchema;
+
 use std::{collections::BTreeMap, io};
 
 use crate::ref_to_type_name;
@@ -10,83 +20,6 @@ use serde_json::Value;
 
 /// Type schema extracted from OpenAPI components
 pub type TypeSchemas = BTreeMap<String, Value>;
-
-/// Endpoint information extracted from OpenAPI spec
-#[derive(Debug, Clone)]
-pub struct Endpoint {
-    /// HTTP method (GET, POST, etc.)
-    pub method: String,
-    /// Path template (e.g., "/blocks/{hash}")
-    pub path: String,
-    /// Operation ID (e.g., "getBlockByHash")
-    pub operation_id: Option<String>,
-    /// Short summary
-    pub summary: Option<String>,
-    /// Detailed description
-    pub description: Option<String>,
-    /// Path parameters
-    pub path_params: Vec<Parameter>,
-    /// Query parameters
-    pub query_params: Vec<Parameter>,
-    /// Response type (simplified)
-    pub response_type: Option<String>,
-    /// Whether this endpoint is deprecated
-    pub deprecated: bool,
-    /// Whether this endpoint supports CSV format (text/csv content type)
-    pub supports_csv: bool,
-}
-
-impl Endpoint {
-    /// Returns true if this endpoint should be included in client generation.
-    /// Only non-deprecated GET endpoints are included.
-    pub fn should_generate(&self) -> bool {
-        self.method == "GET" && !self.deprecated
-    }
-
-    /// Returns true if this endpoint returns JSON (has a response_type extracted from application/json).
-    pub fn returns_json(&self) -> bool {
-        self.response_type.is_some()
-    }
-
-    /// Returns the operation ID or generates one from the path.
-    /// The returned string uses the raw case from the spec (typically camelCase).
-    pub fn operation_name(&self) -> String {
-        if let Some(op_id) = &self.operation_id {
-            return op_id.clone();
-        }
-        // Generate from path: /api/block/{hash} -> "get_block"
-        // Skip "api" prefix, convert hyphens to underscores, avoid redundant param names
-        let mut parts: Vec<String> = Vec::new();
-        let mut prev_segment = "";
-
-        for segment in self.path.split('/').filter(|s| !s.is_empty()) {
-            if segment == "api" {
-                continue;
-            }
-            if let Some(param) = segment.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
-                // Only add "by_{param}" if the previous segment doesn't already contain the param name
-                let prev_normalized = prev_segment.replace('-', "_");
-                if !prev_normalized.ends_with(param) {
-                    parts.push(format!("by_{}", param));
-                }
-            } else {
-                let normalized = segment.replace('-', "_");
-                parts.push(normalized);
-                prev_segment = segment;
-            }
-        }
-        format!("get_{}", parts.join("_"))
-    }
-}
-
-/// Parameter information
-#[derive(Debug, Clone)]
-pub struct Parameter {
-    pub name: String,
-    pub required: bool,
-    pub param_type: String,
-    pub description: Option<String>,
-}
 
 /// Parse OpenAPI spec from JSON string
 ///
@@ -164,7 +97,7 @@ pub fn extract_endpoints(spec: &Spec) -> Vec<Endpoint> {
 
     for (path, path_item) in paths {
         for (method, operation) in get_operations(path_item) {
-            if let Some(endpoint) = extract_endpoint(path, method, operation) {
+            if let Some(endpoint) = extract_endpoint(path, method, operation, spec) {
                 endpoints.push(endpoint);
             }
         }
@@ -186,11 +119,16 @@ fn get_operations(path_item: &PathItem) -> Vec<(&'static str, &Operation)> {
     .collect()
 }
 
-fn extract_endpoint(path: &str, method: &str, operation: &Operation) -> Option<Endpoint> {
+fn extract_endpoint(
+    path: &str,
+    method: &str,
+    operation: &Operation,
+    spec: &Spec,
+) -> Option<Endpoint> {
     let path_params = extract_path_parameters(path, operation);
     let query_params = extract_parameters(operation, ParameterIn::Query);
 
-    let response_type = extract_response_type(operation);
+    let response_kind = extract_response_kind(operation, spec);
     let supports_csv = check_csv_support(operation);
 
     Some(Endpoint {
@@ -201,7 +139,7 @@ fn extract_endpoint(path: &str, method: &str, operation: &Operation) -> Option<E
         description: operation.description.clone(),
         path_params,
         query_params,
-        response_type,
+        response_kind,
         deprecated: operation.deprecated.unwrap_or(false),
         supports_csv,
     })
@@ -272,28 +210,59 @@ fn extract_parameters(operation: &Operation, location: ParameterIn) -> Vec<Param
         .collect()
 }
 
-fn extract_response_type(operation: &Operation) -> Option<String> {
-    let responses = operation.responses.as_ref()?;
+fn extract_response_kind(operation: &Operation, spec: &Spec) -> ResponseKind {
+    let response = operation
+        .responses
+        .as_ref()
+        .and_then(|r| r.get("200"))
+        .and_then(|r| match r {
+            ObjectOrReference::Object(o) => Some(o),
+            ObjectOrReference::Ref { .. } => None,
+        });
+    let Some(response) = response else {
+        return ResponseKind::Text(None);
+    };
 
-    // Look for 200 OK response
-    let response = responses.get("200")?;
-
-    match response {
-        ObjectOrReference::Object(response) => {
-            // Look for JSON content
-            let content = response.content.get("application/json")?;
-
-            match &content.schema {
-                Some(ObjectOrReference::Ref { ref_path, .. }) => {
-                    // Extract type name from reference like "#/components/schemas/Block"
-                    Some(ref_to_type_name(ref_path)?.to_string())
-                }
-                Some(ObjectOrReference::Object(schema)) => schema_to_type_name(schema),
-                None => None,
-            }
-        }
-        ObjectOrReference::Ref { .. } => None,
+    if response.content.contains_key("application/octet-stream") {
+        return ResponseKind::Binary;
     }
+    if let Some(content) = response.content.get("application/json") {
+        return ResponseKind::Json(
+            schema_name_from_content(content).unwrap_or_else(|| "*".to_string()),
+        );
+    }
+    if let Some(content) = response.content.get("text/plain; charset=utf-8") {
+        let schema = schema_name_from_content(content).map(|name| {
+            let is_numeric = is_numeric_schema(spec, &name);
+            TextSchema { name, is_numeric }
+        });
+        return ResponseKind::Text(schema);
+    }
+    ResponseKind::Text(None)
+}
+
+fn schema_name_from_content(content: &oas3::spec::MediaType) -> Option<String> {
+    match content.schema.as_ref()? {
+        ObjectOrReference::Ref { ref_path, .. } => {
+            Some(ref_to_type_name(ref_path)?.to_string())
+        }
+        ObjectOrReference::Object(schema) => schema_to_type_name(schema),
+    }
+}
+
+/// Resolves `name` against `components.schemas` and reports whether the
+/// underlying primitive is `integer` or `number`.
+fn is_numeric_schema(spec: &Spec, name: &str) -> bool {
+    let Some(components) = spec.components.as_ref() else {
+        return false;
+    };
+    let Some(ObjectOrReference::Object(schema)) = components.schemas.get(name) else {
+        return false;
+    };
+    matches!(
+        schema.schema_type.as_ref(),
+        Some(SchemaTypeSet::Single(SchemaType::Integer | SchemaType::Number))
+    )
 }
 
 fn schema_type_from_schema(schema: &Schema) -> Option<String> {

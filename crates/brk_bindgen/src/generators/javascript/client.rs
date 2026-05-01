@@ -559,6 +559,17 @@ class BrkClientBase {{
   }}
 
   /**
+   * Make a GET request expecting binary data (application/octet-stream).
+   * Cached and supports `onValue`, same as `getJson`.
+   * @param {{string}} path
+   * @param {{{{ onValue?: (value: Uint8Array) => void, signal?: AbortSignal }}}} [options]
+   * @returns {{Promise<Uint8Array>}}
+   */
+  getBytes(path, options) {{
+    return this._getCached(path, async (res) => new Uint8Array(await res.arrayBuffer()), options);
+  }}
+
+  /**
    * Fetch series data and wrap with helper methods (internal)
    * @template T
    * @param {{string}} path

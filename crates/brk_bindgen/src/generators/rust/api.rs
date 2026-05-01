@@ -89,11 +89,17 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         }
 
         let method_name = endpoint_to_method_name(endpoint);
-        let base_return_type = endpoint
-            .response_type
-            .as_deref()
-            .map(js_type_to_rust)
-            .unwrap_or_else(|| "String".to_string());
+        let base_return_type = if endpoint.returns_binary() {
+            "Vec<u8>".to_string()
+        } else if endpoint.returns_text() {
+            // Text bodies arrive as `String`; per-type parsing is left to the caller.
+            "String".to_string()
+        } else {
+            endpoint
+                .schema_name()
+                .map(js_type_to_rust)
+                .unwrap_or_else(|| "String".to_string())
+        };
 
         let return_type = if endpoint.supports_csv {
             format!("FormatResponse<{}>", base_return_type)
@@ -132,7 +138,9 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         .unwrap();
 
         let (path, index_arg) = build_path_template(endpoint);
-        let fetch_method = if endpoint.returns_json() {
+        let fetch_method = if endpoint.returns_binary() {
+            "get_bytes"
+        } else if endpoint.returns_json() {
             "get_json"
         } else {
             "get_text"

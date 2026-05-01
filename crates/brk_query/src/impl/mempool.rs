@@ -1,5 +1,5 @@
 use brk_error::{Error, OptionData, Result};
-use brk_mempool::{EntryPool, TxEntry, TxGraveyard, TxRemoval, TxStore, TxTombstone};
+use brk_mempool::{EntryPool, Mempool, TxEntry, TxGraveyard, TxRemoval, TxStore, TxTombstone};
 use brk_types::{
     CheckedSub, CpfpEntry, CpfpInfo, FeeRate, MempoolBlock, MempoolInfo, MempoolRecentTx,
     OutputType, RbfResponse, RbfTx, RecommendedFees, ReplacementNode, Sats, Timestamp, Transaction,
@@ -9,6 +9,8 @@ use rustc_hash::FxHashSet;
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 use crate::Query;
+
+const RECENT_REPLACEMENTS_LIMIT: usize = 25;
 
 impl Query {
     pub fn mempool_info(&self) -> Result<MempoolInfo> {
@@ -305,11 +307,7 @@ impl Query {
         let replaces = (!replaces_vec.is_empty()).then_some(replaces_vec);
 
         let replacements =
-            Self::build_rbf_node(&root_txid, None, &txs, &entries, &graveyard).map(|mut node| {
-                node.tx.full_rbf = Some(node.full_rbf);
-                node.interval = None;
-                node
-            });
+            self.build_rbf_node(&root_txid, None, mempool, &txs, &entries, &graveyard);
 
         Ok(RbfResponse {
             replacements,
@@ -336,9 +334,17 @@ impl Query {
     /// Predecessors are always in the graveyard (that's where
     /// `Removal::Replaced` lives), so the recursion only needs the
     /// graveyard; the live pool is consulted for the root.
+    ///
+    /// `rate` matches mempool.space's `tx.effectiveFeePerVsize`: live
+    /// txs get the live CPFP-cluster effective rate; mined txs get the
+    /// computer's stored same-block-cluster effective rate; never-mined
+    /// replaced predecessors have no recorded effective rate, so we
+    /// fall back to the simple `fee/vsize` snapshotted at burial.
     fn build_rbf_node(
+        &self,
         txid: &Txid,
         successor_time: Option<Timestamp>,
+        mempool: &Mempool,
         txs: &TxStore,
         entries: &EntryPool,
         graveyard: &TxGraveyard,
@@ -348,7 +354,14 @@ impl Query {
         let replaces: Vec<ReplacementNode> = graveyard
             .predecessors_of(txid)
             .filter_map(|(pred_txid, _)| {
-                Self::build_rbf_node(pred_txid, Some(entry.first_seen), txs, entries, graveyard)
+                self.build_rbf_node(
+                    pred_txid,
+                    Some(entry.first_seen),
+                    mempool,
+                    txs,
+                    entries,
+                    graveyard,
+                )
             })
             .collect();
 
@@ -359,6 +372,24 @@ impl Query {
             .map(|d| usize::from(d) as u32);
 
         let value = Sats::from(tx.output.iter().map(|o| u64::from(o.value)).sum::<u64>());
+        let tx_index = self.resolve_tx_index(txid).ok();
+        let mined = tx_index.map(|_| true);
+        let rate = if txs.contains(txid) {
+            mempool
+                .cpfp_info(&TxidPrefix::from(txid))
+                .and_then(|info| info.effective_fee_per_vsize)
+                .unwrap_or_else(|| entry.fee_rate())
+        } else if let Some(idx) = tx_index {
+            self.computer()
+                .transactions
+                .fees
+                .effective_fee_rate
+                .tx_index
+                .collect_one(idx)
+                .unwrap_or_else(|| entry.fee_rate())
+        } else {
+            entry.fee_rate()
+        };
 
         Some(ReplacementNode {
             tx: RbfTx {
@@ -366,14 +397,16 @@ impl Query {
                 fee: entry.fee,
                 vsize: entry.vsize,
                 value,
-                rate: entry.fee_rate(),
+                rate,
                 time: entry.first_seen,
                 rbf: entry.rbf,
-                full_rbf: None,
+                full_rbf: Some(full_rbf),
+                mined,
             },
             time: entry.first_seen,
             full_rbf,
             interval,
+            mined,
             replaces,
         })
     }
@@ -381,45 +414,39 @@ impl Query {
     /// Recent RBF replacements across the whole mempool, matching
     /// mempool.space's `GET /api/v1/replacements` and
     /// `GET /api/v1/fullrbf/replacements`. Each entry is a complete
-    /// replacement tree rooted at the latest replacer; same shape as
-    /// `tx_rbf().replacements`. Sorted most-recent-first by root
-    /// `time`. When `full_rbf_only` is true, only trees with at least
-    /// one non-signaling predecessor are returned.
+    /// replacement tree rooted at the terminal replacer; same shape as
+    /// `tx_rbf().replacements`. Ordered by most-recent replacement
+    /// event first (matches mempool.space's reversed-`replacedBy`
+    /// iteration) and capped at 25 entries. When `full_rbf_only` is
+    /// true, only trees with at least one non-signaling predecessor
+    /// are returned.
     pub fn recent_replacements(&self, full_rbf_only: bool) -> Result<Vec<ReplacementNode>> {
         let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
         let txs = mempool.txs();
         let entries = mempool.entries();
         let graveyard = mempool.graveyard();
 
-        // Collect every distinct tree-root replacer. A predecessor's
-        // `by` may itself have been replaced; walk forward through
-        // chained Replaced tombstones until reaching a tx that's no
-        // longer flagged as replaced (live, Vanished, or unknown).
-        let mut roots: FxHashSet<Txid> = FxHashSet::default();
-        for (_, by) in graveyard.replaced_iter() {
-            let mut root = by.clone();
-            while let Some(TxRemoval::Replaced { by: next }) =
-                graveyard.get(&root).map(TxTombstone::reason)
-            {
-                root = next.clone();
-            }
-            roots.insert(root);
-        }
-
-        let mut trees: Vec<ReplacementNode> = roots
-            .iter()
+        // A predecessor's `by` may itself be replaced; walk the chain
+        // forward to the terminal replacer for each tree, dedup so each
+        // tree is emitted once at its first (most recent) sighting.
+        let mut seen: FxHashSet<Txid> = FxHashSet::default();
+        Ok(graveyard
+            .replaced_iter_recent_first()
+            .filter_map(|(_, by)| {
+                let mut root = by.clone();
+                while let Some(TxRemoval::Replaced { by: next }) =
+                    graveyard.get(&root).map(TxTombstone::reason)
+                {
+                    root = next.clone();
+                }
+                seen.insert(root.clone()).then_some(root)
+            })
             .filter_map(|root| {
-                Self::build_rbf_node(root, None, &txs, &entries, &graveyard).map(|mut node| {
-                    node.tx.full_rbf = Some(node.full_rbf);
-                    node.interval = None;
-                    node
-                })
+                self.build_rbf_node(&root, None, mempool, &txs, &entries, &graveyard)
             })
             .filter(|node| !full_rbf_only || node.full_rbf)
-            .collect();
-
-        trees.sort_by(|a, b| b.time.cmp(&a.time));
-        Ok(trees)
+            .take(RECENT_REPLACEMENTS_LIMIT)
+            .collect())
     }
 
     pub fn transaction_times(&self, txids: &[Txid]) -> Result<Vec<u64>> {

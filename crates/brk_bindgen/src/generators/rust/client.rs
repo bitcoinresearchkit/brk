@@ -103,6 +103,14 @@ impl BrkClientBase {{
             .and_then(|mut r| r.body_mut().read_to_string())
             .map_err(|e| BrkError {{ message: e.to_string() }})
     }}
+
+    /// Make a GET request and return raw bytes response.
+    pub fn get_bytes(&self, path: &str) -> Result<Vec<u8>> {{
+        self.agent.get(&self.url(path))
+            .call()
+            .and_then(|mut r| r.body_mut().read_to_vec())
+            .map_err(|e| BrkError {{ message: e.to_string() }})
+    }}
 }}
 
 /// Build series name with suffix.

@@ -5,7 +5,8 @@ use axum::{
 };
 use brk_query::BLOCK_TXS_PAGE_SIZE;
 use brk_types::{
-    BlockInfo, BlockInfoV1, BlockStatus, BlockTimestamp, Transaction, TxIndex, Txid, Version,
+    BlockHash, BlockInfo, BlockInfoV1, BlockStatus, BlockTimestamp, Height, Hex, Transaction,
+    TxIndex, Txid, Version,
 };
 
 use crate::{
@@ -82,7 +83,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .blocks_tag()
                             .summary("Block header")
                             .description("Returns the hex-encoded 80-byte block header.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*")
-                            .text_response()
+                            .text_response::<Hex>()
                             .not_modified()
                             .bad_request()
                             .not_found()
@@ -106,7 +107,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .description(
                                 "Retrieve the block hash at a given height. Returns the hash as plain text.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*",
                             )
-                            .text_response()
+                            .text_response::<BlockHash>()
                             .not_modified()
                             .bad_request()
                             .not_found()
@@ -196,7 +197,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .blocks_tag()
                             .summary("Block tip height")
                             .description("Returns the height of the last block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*")
-                            .text_response()
+                            .text_response::<Height>()
                             .not_modified()
                             .server_error()
                     },
@@ -213,7 +214,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .blocks_tag()
                             .summary("Block tip hash")
                             .description("Returns the hash of the last block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*")
-                            .text_response()
+                            .text_response::<BlockHash>()
                             .not_modified()
                             .server_error()
                     },
@@ -236,7 +237,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .description(
                                 "Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-id)*",
                             )
-                            .text_response()
+                            .text_response::<Txid>()
                             .not_modified()
                             .bad_request()
                             .not_found()

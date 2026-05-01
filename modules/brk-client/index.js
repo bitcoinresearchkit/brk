@@ -551,6 +551,13 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {Height} height
  */
 /**
+ * Hex-encoded string. Transparent wrapper over `String`: serializes
+ * as a plain JSON string and derefs to `str`, so anywhere `&str` or
+ * `AsRef<[u8]>` is expected the `Hex` "just works".
+ *
+ * @typedef {string} Hex
+ */
+/**
  * Highest price value for a time period
  *
  * @typedef {Dollars} High
@@ -869,6 +876,9 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {boolean} rbf - BIP-125 signaling: at least one input has sequence < 0xffffffff-1.
  * @property {?boolean=} fullRbf - Only populated on the root `tx` of an RBF response. `true` iff
 this tx displaced at least one non-signaling predecessor.
+ * @property {?boolean=} mined - `Some(true)` iff the tx is currently confirmed in the indexed
+chain. Absent on serialization when the tx is still pending or
+has been evicted without confirming.
  */
 /**
  * Recommended fee rates in sat/vB
@@ -891,6 +901,8 @@ on-the-wire shape.
  * @property {boolean} fullRbf - Any predecessor in this subtree was non-signaling.
  * @property {?number=} interval - Seconds between this node's `time` and the successor that
 replaced it. Omitted on the root of an RBF response.
+ * @property {?boolean=} mined - `Some(true)` iff this node's tx is currently confirmed. Absent
+on serialization otherwise.
  * @property {ReplacementNode[]} replaces
  */
 /**
@@ -1171,6 +1183,17 @@ replaced it. Omitted on the root of an RBF response.
  * @typedef {Object} TxidVout
  * @property {Txid} txid - Transaction ID
  * @property {Vout} vout - Output index
+ */
+/**
+ * Query parameter for transaction-times endpoint.
+ *
+ * Extracted manually because `serde_urlencoded` (and serde derive in general)
+ * doesn't support repeated keys like `txId[]=a&txId[]=b`. The schema is still
+ * declared via `JsonSchema` so the OpenAPI spec lists the parameter and the
+ * generated client SDKs see `txids: List[Txid]`.
+ *
+ * @typedef {Object} TxidsParam
+ * @property {Txid[]} txId[] - Transaction IDs to look up (max 250 per request).
  */
 /**
  * Index within its type (e.g., 0 for first P2WPKH address)
@@ -1835,6 +1858,17 @@ class BrkClientBase {
    */
   getText(path, options) {
     return this._getCached(path, (res) => res.text(), options);
+  }
+
+  /**
+   * Make a GET request expecting binary data (application/octet-stream).
+   * Cached and supports `onValue`, same as `getJson`.
+   * @param {string} path
+   * @param {{ onValue?: (value: Uint8Array) => void, signal?: AbortSignal }} [options]
+   * @returns {Promise<Uint8Array>}
+   */
+  getBytes(path, options) {
+    return this._getCached(path, async (res) => new Uint8Array(await res.arrayBuffer()), options);
   }
 
   /**
@@ -10316,7 +10350,7 @@ class BrkClient extends BrkClientBase {
    */
   async getApi({ signal, onValue } = {}) {
     const path = `/api.json`;
-    return this.getText(path, { signal, onValue });
+    return this.getJson(path, { signal, onValue });
   }
 
   /**
@@ -10427,8 +10461,8 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/block-height/{height}`
    *
    * @param {Height} height
-   * @param {{ signal?: AbortSignal, onValue?: (value: *) => void }} [options]
-   * @returns {Promise<*>}
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockHash) => void }} [options]
+   * @returns {Promise<BlockHash>}
    */
   async getBlockByHeight(height, { signal, onValue } = {}) {
     const path = `/api/block-height/${height}`;
@@ -10463,8 +10497,8 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/block/{hash}/header`
    *
    * @param {BlockHash} hash
-   * @param {{ signal?: AbortSignal, onValue?: (value: *) => void }} [options]
-   * @returns {Promise<*>}
+   * @param {{ signal?: AbortSignal, onValue?: (value: Hex) => void }} [options]
+   * @returns {Promise<Hex>}
    */
   async getBlockHeader(hash, { signal, onValue } = {}) {
     const path = `/api/block/${hash}/header`;
@@ -10481,12 +10515,12 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/block/{hash}/raw`
    *
    * @param {BlockHash} hash
-   * @param {{ signal?: AbortSignal, onValue?: (value: *) => void }} [options]
-   * @returns {Promise<*>}
+   * @param {{ signal?: AbortSignal, onValue?: (value: Uint8Array) => void }} [options]
+   * @returns {Promise<Uint8Array>}
    */
   async getBlockRaw(hash, { signal, onValue } = {}) {
     const path = `/api/block/${hash}/raw`;
-    return this.getText(path, { signal, onValue });
+    return this.getBytes(path, { signal, onValue });
   }
 
   /**
@@ -10518,8 +10552,8 @@ class BrkClient extends BrkClientBase {
    *
    * @param {BlockHash} hash - Bitcoin block hash
    * @param {TxIndex} index - Transaction index within the block (0-based)
-   * @param {{ signal?: AbortSignal, onValue?: (value: *) => void }} [options]
-   * @returns {Promise<*>}
+   * @param {{ signal?: AbortSignal, onValue?: (value: Txid) => void }} [options]
+   * @returns {Promise<Txid>}
    */
   async getBlockTxid(hash, index, { signal, onValue } = {}) {
     const path = `/api/block/${hash}/txid/${index}`;
@@ -10605,8 +10639,8 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
    *
    * Endpoint: `GET /api/blocks/tip/hash`
-   * @param {{ signal?: AbortSignal, onValue?: (value: *) => void }} [options]
-   * @returns {Promise<*>}
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockHash) => void }} [options]
+   * @returns {Promise<BlockHash>}
    */
   async getBlockTipHash({ signal, onValue } = {}) {
     const path = `/api/blocks/tip/hash`;
@@ -10621,12 +10655,12 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
    *
    * Endpoint: `GET /api/blocks/tip/height`
-   * @param {{ signal?: AbortSignal, onValue?: (value: *) => void }} [options]
-   * @returns {Promise<*>}
+   * @param {{ signal?: AbortSignal, onValue?: (value: Height) => void }} [options]
+   * @returns {Promise<Height>}
    */
   async getBlockTipHeight({ signal, onValue } = {}) {
     const path = `/api/blocks/tip/height`;
-    return this.getText(path, { signal, onValue });
+    return Number(await this.getText(path, { signal, onValue }));
   }
 
   /**
@@ -10909,7 +10943,7 @@ class BrkClient extends BrkClientBase {
    */
   async getSeriesLatest(series, index, { signal, onValue } = {}) {
     const path = `/api/series/${series}/${index}/latest`;
-    return this.getText(path, { signal, onValue });
+    return this.getJson(path, { signal, onValue });
   }
 
   /**
@@ -10982,8 +11016,8 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx-index/{index}`
    *
    * @param {TxIndex} index
-   * @param {{ signal?: AbortSignal, onValue?: (value: *) => void }} [options]
-   * @returns {Promise<*>}
+   * @param {{ signal?: AbortSignal, onValue?: (value: Txid) => void }} [options]
+   * @returns {Promise<Txid>}
    */
   async getTxByIndex(index, { signal, onValue } = {}) {
     const path = `/api/tx-index/${index}`;
@@ -11018,8 +11052,8 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx/{txid}/hex`
    *
    * @param {Txid} txid
-   * @param {{ signal?: AbortSignal, onValue?: (value: *) => void }} [options]
-   * @returns {Promise<*>}
+   * @param {{ signal?: AbortSignal, onValue?: (value: Hex) => void }} [options]
+   * @returns {Promise<Hex>}
    */
   async getTxHex(txid, { signal, onValue } = {}) {
     const path = `/api/tx/${txid}/hex`;
@@ -11054,8 +11088,8 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx/{txid}/merkleblock-proof`
    *
    * @param {Txid} txid
-   * @param {{ signal?: AbortSignal, onValue?: (value: *) => void }} [options]
-   * @returns {Promise<*>}
+   * @param {{ signal?: AbortSignal, onValue?: (value: Hex) => void }} [options]
+   * @returns {Promise<Hex>}
    */
   async getTxMerkleblockProof(txid, { signal, onValue } = {}) {
     const path = `/api/tx/${txid}/merkleblock-proof`;
@@ -11109,12 +11143,12 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/tx/{txid}/raw`
    *
    * @param {Txid} txid
-   * @param {{ signal?: AbortSignal, onValue?: (value: *) => void }} [options]
-   * @returns {Promise<*>}
+   * @param {{ signal?: AbortSignal, onValue?: (value: Uint8Array) => void }} [options]
+   * @returns {Promise<Uint8Array>}
    */
   async getTxRaw(txid, { signal, onValue } = {}) {
     const path = `/api/tx/${txid}/raw`;
-    return this.getText(path, { signal, onValue });
+    return this.getBytes(path, { signal, onValue });
   }
 
   /**
@@ -11341,6 +11375,22 @@ class BrkClient extends BrkClientBase {
    */
   async getRecommendedFees({ signal, onValue } = {}) {
     const path = `/api/v1/fees/recommended`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Recent full-RBF replacements
+   *
+   * Like `/api/v1/replacements`, but limited to trees where at least one predecessor was non-signaling (full-RBF).
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-fullrbf-replacements)*
+   *
+   * Endpoint: `GET /api/v1/fullrbf/replacements`
+   * @param {{ signal?: AbortSignal, onValue?: (value: ReplacementNode[]) => void }} [options]
+   * @returns {Promise<ReplacementNode[]>}
+   */
+  async getFullrbfReplacements({ signal, onValue } = {}) {
+    const path = `/api/v1/fullrbf/replacements`;
     return this.getJson(path, { signal, onValue });
   }
 
@@ -11699,6 +11749,22 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
+   * Recent RBF replacements
+   *
+   * Returns up to 25 most-recent RBF replacement trees across the whole mempool. Each entry has the same shape as `tx_rbf().replacements`.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-replacements)*
+   *
+   * Endpoint: `GET /api/v1/replacements`
+   * @param {{ signal?: AbortSignal, onValue?: (value: ReplacementNode[]) => void }} [options]
+   * @returns {Promise<ReplacementNode[]>}
+   */
+  async getReplacements({ signal, onValue } = {}) {
+    const path = `/api/v1/replacements`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
    * Transaction first-seen times
    *
    * Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.
@@ -11706,11 +11772,16 @@ class BrkClient extends BrkClientBase {
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*
    *
    * Endpoint: `GET /api/v1/transaction-times`
+   *
+   * @param {Txid[]} [txId[]] - Transaction IDs to look up (max 250 per request).
    * @param {{ signal?: AbortSignal, onValue?: (value: number[]) => void }} [options]
    * @returns {Promise<number[]>}
    */
-  async getTransactionTimes({ signal, onValue } = {}) {
-    const path = `/api/v1/transaction-times`;
+  async getTransactionTimes(txId, { signal, onValue } = {}) {
+    const params = new URLSearchParams();
+    for (const _v of txId) params.append('txId[]', String(_v));
+    const query = params.toString();
+    const path = `/api/v1/transaction-times${query ? '?' + query : ''}`;
     return this.getJson(path, { signal, onValue });
   }
 

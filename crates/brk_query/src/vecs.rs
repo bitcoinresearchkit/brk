@@ -8,7 +8,7 @@ use brk_types::{
 };
 use derive_more::{Deref, DerefMut};
 use quickmatch::{QuickMatch, QuickMatchConfig};
-use vecdb::AnyExportableVec;
+use vecdb::{AnyExportableVec, Ro};
 
 #[derive(Default)]
 pub struct Vecs<'a> {
@@ -25,7 +25,7 @@ pub struct Vecs<'a> {
 }
 
 impl<'a> Vecs<'a> {
-    pub fn build(indexer: &'a Indexer<vecdb::Ro>, computer: &'a Computer<vecdb::Ro>) -> Self {
+    pub fn build(indexer: &'a Indexer<Ro>, computer: &'a Computer<Ro>) -> Self {
         Self::build_from(
             indexer.vecs.iter_any_visible(),
             indexer.vecs.to_tree_node(),
@@ -57,24 +57,17 @@ impl<'a> Vecs<'a> {
         let mut ids = this
             .series_to_index_to_vec
             .keys()
-            .cloned()
+            .copied()
             .collect::<Vec<_>>();
 
         let sort_ids = |ids: &mut Vec<&str>| {
-            ids.sort_unstable_by(|a, b| {
-                let len_cmp = a.len().cmp(&b.len());
-                if len_cmp == std::cmp::Ordering::Equal {
-                    a.cmp(b)
-                } else {
-                    len_cmp
-                }
-            })
+            ids.sort_unstable_by(|a, b| a.len().cmp(&b.len()).then_with(|| a.cmp(b)))
         };
 
         sort_ids(&mut ids);
 
         this.series = ids;
-        this.counts.distinct_series = this.series_to_index_to_vec.keys().count();
+        this.counts.distinct_series = this.series_to_index_to_vec.len();
         this.counts.total_endpoints = this
             .index_to_series_to_vec
             .values()
@@ -108,7 +101,7 @@ impl<'a> Vecs<'a> {
         this.index_to_series = this
             .index_to_series_to_vec
             .iter()
-            .map(|(index, id_to_vec)| (*index, id_to_vec.keys().cloned().collect::<Vec<_>>()))
+            .map(|(index, id_to_vec)| (*index, id_to_vec.keys().copied().collect::<Vec<_>>()))
             .collect();
         this.index_to_series.values_mut().for_each(sort_ids);
         this.catalog.replace(
@@ -121,7 +114,7 @@ impl<'a> Vecs<'a> {
                 .collect(),
             )
             .merge_branches()
-            .unwrap(),
+            .expect("indexed/computed catalog merge: same series leaf with incompatible schemas"),
         );
         this.matcher = Some(QuickMatch::new(&this.series));
 
@@ -144,17 +137,11 @@ impl<'a> Vecs<'a> {
             "Duplicate series: {name} for index {index:?}"
         );
 
-        let prev = self
-            .index_to_series_to_vec
+        self.index_to_series_to_vec
             .entry(index)
             .or_default()
             .insert(name, vec);
-        assert!(
-            prev.is_none(),
-            "Duplicate series: {name} for index {index:?}"
-        );
 
-        // Track per-db counts
         let is_lazy = vec.region_names().is_empty();
         self.counts_by_db
             .entry(db.to_string())
@@ -182,7 +169,7 @@ impl<'a> Vecs<'a> {
         }
     }
 
-    pub fn series_to_indexes(&self, series: SeriesName) -> Option<&Vec<Index>> {
+    pub fn series_to_indexes(&self, series: &SeriesName) -> Option<&Vec<Index>> {
         self.series_to_indexes
             .get(series.replace("-", "_").as_str())
     }

@@ -25,6 +25,7 @@ impl Pagination {
 
     pub fn per_page(&self) -> usize {
         self.per_page
+            .filter(|&n| n > 0)
             .unwrap_or(Self::DEFAULT_PER_PAGE)
             .min(Self::MAX_PER_PAGE)
     }

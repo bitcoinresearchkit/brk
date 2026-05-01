@@ -44,12 +44,20 @@ impl TxGraveyard {
     }
 
     /// Every `Replaced` tombstone, yielded as (predecessor_txid,
-    /// replacer_txid). Caller walks the replacer chain forward to find
+    /// replacer_txid) in reverse bury order (most recent replacement
+    /// event first). Caller walks the replacer chain forward to find
     /// each tree's terminal replacer.
-    pub fn replaced_iter(&self) -> impl Iterator<Item = (&Txid, &Txid)> {
-        self.tombstones
-            .iter()
-            .filter_map(|(txid, ts)| ts.replaced_by().map(|by| (txid, by)))
+    ///
+    /// `order` may carry stale entries (re-buries, prior exhumes); the
+    /// `removed_at == t` check skips those.
+    pub fn replaced_iter_recent_first(&self) -> impl Iterator<Item = (&Txid, &Txid)> {
+        self.order.iter().rev().filter_map(|(t, txid)| {
+            let ts = self.tombstones.get(txid)?;
+            if ts.removed_at() != *t {
+                return None;
+            }
+            Some((txid, ts.replaced_by()?))
+        })
     }
 
     pub fn bury(&mut self, txid: Txid, tx: Transaction, entry: TxEntry, removal: TxRemoval) {

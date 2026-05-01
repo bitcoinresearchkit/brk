@@ -1,9 +1,10 @@
 #![doc = include_str!("../README.md")]
 #![allow(clippy::module_inception)]
 
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use brk_computer::Computer;
+use brk_error::{OptionData, Result};
 use brk_indexer::Indexer;
 use brk_mempool::Mempool;
 use brk_reader::Reader;
@@ -84,7 +85,7 @@ impl Query {
     }
 
     /// Build sync status with the given tip height
-    pub fn sync_status(&self, tip_height: Height) -> SyncStatus {
+    pub fn sync_status(&self, tip_height: Height) -> Result<SyncStatus> {
         let indexed_height = self.indexed_height();
         let computed_height = self.computed_height();
         let blocks_behind = Height::from(tip_height.saturating_sub(*indexed_height));
@@ -94,16 +95,16 @@ impl Query {
             .blocks
             .timestamp
             .collect_one(indexed_height)
-            .unwrap();
+            .data()?;
 
-        SyncStatus {
+        Ok(SyncStatus {
             indexed_height,
             computed_height,
             tip_height,
             blocks_behind,
             last_indexed_at: last_indexed_at_unix.to_iso8601(),
             last_indexed_at_unix,
-        }
+        })
     }
 
     #[inline]
@@ -117,7 +118,7 @@ impl Query {
     }
 
     #[inline]
-    pub fn blocks_dir(&self) -> &std::path::Path {
+    pub fn blocks_dir(&self) -> &Path {
         self.0.reader.blocks_dir()
     }
 

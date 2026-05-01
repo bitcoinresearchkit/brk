@@ -32,7 +32,7 @@ impl Query {
 
     pub fn series_not_found_error(&self, series: &SeriesName) -> Error {
         // Check if series exists but with different indexes
-        if let Some(indexes) = self.vecs().series_to_indexes(series.clone()) {
+        if let Some(indexes) = self.vecs().series_to_indexes(series) {
             let supported = indexes
                 .iter()
                 .map(|i| format!("/api/series/{series}/{}", i.name()))
@@ -382,7 +382,7 @@ impl Query {
         })
     }
 
-    pub fn series_to_indexes(&self, series: SeriesName) -> Option<&Vec<Index>> {
+    pub fn series_to_indexes(&self, series: &SeriesName) -> Option<&Vec<Index>> {
         self.vecs().series_to_indexes(series)
     }
 

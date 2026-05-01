@@ -96,13 +96,16 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         }
 
         let method_name = endpoint_to_method_name(endpoint);
-        let base_return_type = normalize_return_type(
-            &endpoint
-                .response_type
-                .as_deref()
-                .map(js_type_to_python)
-                .unwrap_or_else(|| "str".to_string()),
-        );
+        let base_return_type = if endpoint.returns_binary() {
+            "bytes".to_string()
+        } else {
+            normalize_return_type(
+                &endpoint
+                    .schema_name()
+                    .map(js_type_to_python)
+                    .unwrap_or_else(|| "str".to_string()),
+            )
+        };
 
         let return_type = if endpoint.supports_csv {
             format!("Union[{}, str]", base_return_type)
@@ -159,24 +162,50 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         // Build path
         let path = build_path_template(&endpoint.path, &endpoint.path_params);
 
-        let fetch_method = if endpoint.returns_json() {
+        let fetch_method = if endpoint.returns_binary() {
+            "get"
+        } else if endpoint.returns_json() {
             "get_json"
         } else {
             "get_text"
         };
 
+        let (wrap_prefix, wrap_suffix) = if endpoint.response_kind.text_is_numeric() {
+            ("int(", ")")
+        } else {
+            ("", "")
+        };
+
         if endpoint.query_params.is_empty() {
             if endpoint.path_params.is_empty() {
-                writeln!(output, "        return self.{}('{}')", fetch_method, path).unwrap();
+                writeln!(
+                    output,
+                    "        return {}self.{}('{}'){}",
+                    wrap_prefix, fetch_method, path, wrap_suffix
+                )
+                .unwrap();
             } else {
-                writeln!(output, "        return self.{}(f'{}')", fetch_method, path).unwrap();
+                writeln!(
+                    output,
+                    "        return {}self.{}(f'{}'){}",
+                    wrap_prefix, fetch_method, path, wrap_suffix
+                )
+                .unwrap();
             }
         } else {
             writeln!(output, "        params = []").unwrap();
             for param in &endpoint.query_params {
                 // Use safe name for Python variable, original name for API query parameter
                 let safe_name = escape_python_keyword(&param.name);
-                if param.required {
+                let is_array = param.param_type.ends_with("[]");
+                if is_array {
+                    writeln!(
+                        output,
+                        "        for _v in {}: params.append(f'{}={{_v}}')",
+                        safe_name, param.name
+                    )
+                    .unwrap();
+                } else if param.required {
                     writeln!(
                         output,
                         "        params.append(f'{}={{{}}}')",
@@ -203,9 +232,19 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             if endpoint.supports_csv {
                 writeln!(output, "        if format == 'csv':").unwrap();
                 writeln!(output, "            return self.get_text(path)").unwrap();
-                writeln!(output, "        return self.{}(path)", fetch_method).unwrap();
+                writeln!(
+                    output,
+                    "        return {}self.{}(path){}",
+                    wrap_prefix, fetch_method, wrap_suffix
+                )
+                .unwrap();
             } else {
-                writeln!(output, "        return self.{}(path)", fetch_method).unwrap();
+                writeln!(
+                    output,
+                    "        return {}self.{}(path){}",
+                    wrap_prefix, fetch_method, wrap_suffix
+                )
+                .unwrap();
             }
         }
 

@@ -34,7 +34,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                                 .client()
                                 .get_last_height()
                                 .unwrap_or(q.indexed_height());
-                            Ok(q.sync_status(tip_height))
+                            q.sync_status(tip_height)
                         })
                         .await
                         .expect("health sync task panicked");
@@ -89,7 +89,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                     state
                         .respond_json(&headers, CacheStrategy::Tip, &uri, move |q| {
                             let tip_height = q.client().get_last_height()?;
-                            Ok(q.sync_status(tip_height))
+                            q.sync_status(tip_height)
                         })
                         .await
                 },

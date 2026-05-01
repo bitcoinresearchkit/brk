@@ -3,7 +3,6 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_mempool::Mempool;
 use brk_reader::Reader;
-use brk_rpc::Client;
 use tokio::task::spawn_blocking;
 
 use crate::Query;
@@ -51,11 +50,8 @@ impl AsyncQuery {
         f(&self.0)
     }
 
+    #[inline]
     pub fn inner(&self) -> &Query {
         &self.0
-    }
-
-    pub fn client(&self) -> &Client {
-        self.0.client()
     }
 }

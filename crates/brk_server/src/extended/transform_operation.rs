@@ -3,7 +3,7 @@ use aide::transform::{TransformOperation, TransformResponse};
 use axum::Json;
 use schemars::JsonSchema;
 
-use crate::error::ErrorBody;
+use crate::{error::ErrorBody, extended::TypedText};
 
 pub trait TransformResponseExtended<'t> {
     fn general_tag(self) -> Self;
@@ -30,8 +30,10 @@ pub trait TransformResponseExtended<'t> {
     where
         R: JsonSchema,
         F: FnOnce(TransformResponse<'_, R>) -> TransformResponse<'_, R>;
-    /// 200 with text/plain content type
-    fn text_response(self) -> Self;
+    /// 200 with text/plain content type whose body parses as `T`
+    fn text_response<T>(self) -> Self
+    where
+        T: JsonSchema;
     /// 200 with application/octet-stream content type
     fn binary_response(self) -> Self;
     /// 200 with text/csv content type (adds CSV as alternative response format)
@@ -111,8 +113,11 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
         self.response_with::<200, Json<R>, _>(|res| f(res.description("Successful response")))
     }
 
-    fn text_response(self) -> Self {
-        self.response_with::<200, String, _>(|res| res.description("Successful response"))
+    fn text_response<T>(self) -> Self
+    where
+        T: JsonSchema,
+    {
+        self.response_with::<200, TypedText<T>, _>(|res| res.description("Successful response"))
     }
 
     fn binary_response(self) -> Self {

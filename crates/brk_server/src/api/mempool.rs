@@ -3,7 +3,7 @@ use axum::{
     extract::State,
     http::{HeaderMap, Uri},
 };
-use brk_types::{Dollars, MempoolInfo, MempoolRecentTx, Txid};
+use brk_types::{Dollars, MempoolInfo, MempoolRecentTx, ReplacementNode, Txid};
 
 use crate::{AppState, extended::TransformResponseExtended, params::Empty};
 
@@ -65,6 +65,48 @@ impl MempoolRoutes for ApiRouter<AppState> {
                         .summary("Recent mempool transactions")
                         .description("Get the last 10 transactions to enter the mempool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*")
                         .json_response::<Vec<MempoolRecentTx>>()
+                        .not_modified()
+                        .server_error()
+                },
+            ),
+        )
+        .api_route(
+            "/api/v1/replacements",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                    state
+                        .respond_json(&headers, state.mempool_strategy(), &uri, |q| {
+                            q.recent_replacements(false)
+                        })
+                        .await
+                },
+                |op| {
+                    op.id("get_replacements")
+                        .mempool_tag()
+                        .summary("Recent RBF replacements")
+                        .description("Returns up to 25 most-recent RBF replacement trees across the whole mempool. Each entry has the same shape as `tx_rbf().replacements`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-replacements)*")
+                        .json_response::<Vec<ReplacementNode>>()
+                        .not_modified()
+                        .server_error()
+                },
+            ),
+        )
+        .api_route(
+            "/api/v1/fullrbf/replacements",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                    state
+                        .respond_json(&headers, state.mempool_strategy(), &uri, |q| {
+                            q.recent_replacements(true)
+                        })
+                        .await
+                },
+                |op| {
+                    op.id("get_fullrbf_replacements")
+                        .mempool_tag()
+                        .summary("Recent full-RBF replacements")
+                        .description("Like `/api/v1/replacements`, but limited to trees where at least one predecessor was non-signaling (full-RBF).\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-fullrbf-replacements)*")
+                        .json_response::<Vec<ReplacementNode>>()
                         .not_modified()
                         .server_error()
                 },

@@ -1,14 +1,27 @@
 use std::str::FromStr;
 
+use aide::{
+    OperationInput,
+    operation::{ParamLocation, add_parameters, parameters_from_schema},
+};
+use axum::{extract::FromRequestParts, http::request::Parts};
 use schemars::JsonSchema;
 
 use brk_types::Txid;
 
+use crate::Error;
+
 const MAX_TXIDS: usize = 250;
 
 /// Query parameter for transaction-times endpoint.
+///
+/// Extracted manually because `serde_urlencoded` (and serde derive in general)
+/// doesn't support repeated keys like `txId[]=a&txId[]=b`. The schema is still
+/// declared via `JsonSchema` so the OpenAPI spec lists the parameter and the
+/// generated client SDKs see `txids: List[Txid]`.
 #[derive(JsonSchema)]
 pub struct TxidsParam {
+    /// Transaction IDs to look up (max 250 per request).
     #[serde(rename = "txId[]")]
     pub txids: Vec<Txid>,
 }
@@ -38,6 +51,28 @@ impl TxidsParam {
             }
         }
         Ok(Self { txids })
+    }
+}
+
+impl<S> FromRequestParts<S> for TxidsParam
+where
+    S: Send + Sync,
+{
+    type Rejection = Error;
+
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        Self::from_query(parts.uri.query().unwrap_or("")).map_err(Error::bad_request)
+    }
+}
+
+impl OperationInput for TxidsParam {
+    fn operation_input(
+        ctx: &mut aide::generate::GenContext,
+        operation: &mut aide::openapi::Operation,
+    ) {
+        let schema = ctx.schema.subschema_for::<Self>();
+        let params = parameters_from_schema(ctx, schema, ParamLocation::Query);
+        add_parameters(ctx, operation, params);
     }
 }
 

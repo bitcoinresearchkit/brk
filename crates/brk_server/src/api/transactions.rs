@@ -8,7 +8,7 @@ use axum::{
     response::Response,
 };
 use brk_types::{
-    CpfpInfo, MerkleProof, RbfResponse, Transaction, TxOutspend, TxStatus, Txid, Version,
+    CpfpInfo, Hex, MerkleProof, RbfResponse, Transaction, TxOutspend, TxStatus, Txid, Version,
 };
 
 use crate::{
@@ -35,7 +35,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .transactions_tag()
                     .summary("Txid by index")
                     .description("Retrieve the transaction ID (txid) at a given global transaction index. Returns the txid as plain text.")
-                    .text_response()
+                    .text_response::<Txid>()
                     .not_modified()
                     .bad_request()
                     .not_found()
@@ -123,7 +123,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .description(
                         "Retrieve the raw transaction as a hex-encoded string. Returns the serialized transaction in hexadecimal format.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-hex)*",
                     )
-                    .text_response()
+                    .text_response::<Hex>()
                     .not_modified()
                     .bad_request()
                     .not_found()
@@ -141,7 +141,7 @@ impl TxRoutes for ApiRouter<AppState> {
                     .transactions_tag()
                     .summary("Transaction merkleblock proof")
                     .description("Get the merkleblock proof for a transaction (BIP37 format, hex encoded).\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkleblock-proof)*")
-                    .text_response()
+                    .text_response::<Hex>()
                     .not_modified()
                     .bad_request()
                     .not_found()
@@ -281,9 +281,7 @@ impl TxRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/transaction-times",
             get_with(
-                async |uri: Uri, headers: HeaderMap, State(state): State<AppState>| -> Result<Response> {
-                    let params = TxidsParam::from_query(uri.query().unwrap_or(""))
-                        .map_err(Error::bad_request)?;
+                async |uri: Uri, headers: HeaderMap, params: TxidsParam, State(state): State<AppState>| -> Result<Response> {
                     Ok(state.respond_json(&headers, state.mempool_strategy(), &uri, move |q| q.transaction_times(&params.txids)).await)
                 },
                 |op| op

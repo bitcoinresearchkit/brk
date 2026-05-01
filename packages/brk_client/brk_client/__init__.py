@@ -117,6 +117,10 @@ Epoch = int
 ExchangeRates = dict
 FundedAddrIndex = TypeIndex
 Halving = int
+# Hex-encoded string. Transparent wrapper over `String`: serializes
+# as a plain JSON string and derefs to `str`, so anywhere `&str` or
+# `AsRef<[u8]>` is expected the `Hex` "just works".
+Hex = str
 # Highest price value for a time period
 High = Dollars
 Hour1 = int
@@ -1252,6 +1256,9 @@ class RbfTx(TypedDict):
         rbf: BIP-125 signaling: at least one input has sequence < 0xffffffff-1.
         fullRbf: Only populated on the root `tx` of an RBF response. `true` iff
 this tx displaced at least one non-signaling predecessor.
+        mined: `Some(true)` iff the tx is currently confirmed in the indexed
+chain. Absent on serialization when the tx is still pending or
+has been evicted without confirming.
     """
     txid: Txid
     fee: Sats
@@ -1261,6 +1268,7 @@ this tx displaced at least one non-signaling predecessor.
     time: Timestamp
     rbf: bool
     fullRbf: Optional[bool]
+    mined: Optional[bool]
 
 class ReplacementNode(TypedDict):
     """
@@ -1273,11 +1281,14 @@ on-the-wire shape.
         fullRbf: Any predecessor in this subtree was non-signaling.
         interval: Seconds between this node's `time` and the successor that
 replaced it. Omitted on the root of an RBF response.
+        mined: `Some(true)` iff this node's tx is currently confirmed. Absent
+on serialization otherwise.
     """
     tx: RbfTx
     time: Timestamp
     fullRbf: bool
     interval: Optional[int]
+    mined: Optional[bool]
     replaces: List["ReplacementNode"]
 
 class RbfResponse(TypedDict):
@@ -1567,6 +1578,20 @@ class TxidVout(TypedDict):
     """
     txid: Txid
     vout: Vout
+
+class TxidsParam(TypedDict):
+    """
+    Query parameter for transaction-times endpoint.
+    
+    Extracted manually because `serde_urlencoded` (and serde derive in general)
+    doesn't support repeated keys like `txId[]=a&txId[]=b`. The schema is still
+    declared via `JsonSchema` so the OpenAPI spec lists the parameter and the
+    generated client SDKs see `txids: List[Txid]`.
+
+    Attributes:
+        txId: Transaction IDs to look up (max 250 per request).
+    """
+    txId: List[Txid]
 
 class UrpdBucket(TypedDict):
     """
@@ -7718,13 +7743,13 @@ class BrkClient(BrkClientBase):
         """Convert a date/datetime to an index value for date-based indexes."""
         return _date_to_index(index, d)
 
-    def get_api(self) -> str:
+    def get_api(self) -> Any:
         """Compact OpenAPI specification.
 
         Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. Full spec available at `/openapi.json`.
 
         Endpoint: `GET /api.json`"""
-        return self.get_text('/api.json')
+        return self.get_json('/api.json')
 
     def get_address(self, address: Addr) -> AddrStats:
         """Address information.
@@ -7784,7 +7809,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/address/{address}/utxo`"""
         return self.get_json(f'/api/address/{address}/utxo')
 
-    def get_block_by_height(self, height: Height) -> str:
+    def get_block_by_height(self, height: Height) -> BlockHash:
         """Block hash by height.
 
         Retrieve the block hash at a given height. Returns the hash as plain text.
@@ -7804,7 +7829,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/block/{hash}`"""
         return self.get_json(f'/api/block/{hash}')
 
-    def get_block_header(self, hash: BlockHash) -> str:
+    def get_block_header(self, hash: BlockHash) -> Hex:
         """Block header.
 
         Returns the hex-encoded 80-byte block header.
@@ -7814,7 +7839,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/block/{hash}/header`"""
         return self.get_text(f'/api/block/{hash}/header')
 
-    def get_block_raw(self, hash: BlockHash) -> str:
+    def get_block_raw(self, hash: BlockHash) -> bytes:
         """Raw block.
 
         Returns the raw block data in binary format.
@@ -7822,7 +7847,7 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*
 
         Endpoint: `GET /api/block/{hash}/raw`"""
-        return self.get_text(f'/api/block/{hash}/raw')
+        return self.get(f'/api/block/{hash}/raw')
 
     def get_block_status(self, hash: BlockHash) -> BlockStatus:
         """Block status.
@@ -7834,7 +7859,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/block/{hash}/status`"""
         return self.get_json(f'/api/block/{hash}/status')
 
-    def get_block_txid(self, hash: BlockHash, index: TxIndex) -> str:
+    def get_block_txid(self, hash: BlockHash, index: TxIndex) -> Txid:
         """Transaction ID at index.
 
         Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.
@@ -7884,7 +7909,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/blocks`"""
         return self.get_json('/api/blocks')
 
-    def get_block_tip_hash(self) -> str:
+    def get_block_tip_hash(self) -> BlockHash:
         """Block tip hash.
 
         Returns the hash of the last block.
@@ -7894,7 +7919,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/blocks/tip/hash`"""
         return self.get_text('/api/blocks/tip/hash')
 
-    def get_block_tip_height(self) -> str:
+    def get_block_tip_height(self) -> Height:
         """Block tip height.
 
         Returns the height of the last block.
@@ -7902,7 +7927,7 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
 
         Endpoint: `GET /api/blocks/tip/height`"""
-        return self.get_text('/api/blocks/tip/height')
+        return int(self.get_text('/api/blocks/tip/height'))
 
     def get_blocks_from_height(self, height: Height) -> List[BlockInfo]:
         """Blocks from height.
@@ -8063,13 +8088,13 @@ class BrkClient(BrkClientBase):
             return self.get_text(path)
         return self.get_json(path)
 
-    def get_series_latest(self, series: SeriesName, index: Index) -> str:
+    def get_series_latest(self, series: SeriesName, index: Index) -> Any:
         """Get latest series value.
 
         Returns the single most recent value for a series, unwrapped (not inside a SeriesData object).
 
         Endpoint: `GET /api/series/{series}/{index}/latest`"""
-        return self.get_text(f'/api/series/{series}/{index}/latest')
+        return self.get_json(f'/api/series/{series}/{index}/latest')
 
     def get_series_len(self, series: SeriesName, index: Index) -> int:
         """Get series data length.
@@ -8103,7 +8128,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/server/sync`"""
         return self.get_json('/api/server/sync')
 
-    def get_tx_by_index(self, index: TxIndex) -> str:
+    def get_tx_by_index(self, index: TxIndex) -> Txid:
         """Txid by index.
 
         Retrieve the transaction ID (txid) at a given global transaction index. Returns the txid as plain text.
@@ -8121,7 +8146,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/tx/{txid}`"""
         return self.get_json(f'/api/tx/{txid}')
 
-    def get_tx_hex(self, txid: Txid) -> str:
+    def get_tx_hex(self, txid: Txid) -> Hex:
         """Transaction hex.
 
         Retrieve the raw transaction as a hex-encoded string. Returns the serialized transaction in hexadecimal format.
@@ -8141,7 +8166,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/tx/{txid}/merkle-proof`"""
         return self.get_json(f'/api/tx/{txid}/merkle-proof')
 
-    def get_tx_merkleblock_proof(self, txid: Txid) -> str:
+    def get_tx_merkleblock_proof(self, txid: Txid) -> Hex:
         """Transaction merkleblock proof.
 
         Get the merkleblock proof for a transaction (BIP37 format, hex encoded).
@@ -8171,7 +8196,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/tx/{txid}/outspends`"""
         return self.get_json(f'/api/tx/{txid}/outspends')
 
-    def get_tx_raw(self, txid: Txid) -> str:
+    def get_tx_raw(self, txid: Txid) -> bytes:
         """Transaction raw.
 
         Returns a transaction as binary data.
@@ -8179,7 +8204,7 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-raw)*
 
         Endpoint: `GET /api/tx/{txid}/raw`"""
-        return self.get_text(f'/api/tx/{txid}/raw')
+        return self.get(f'/api/tx/{txid}/raw')
 
     def get_tx_status(self, txid: Txid) -> TxStatus:
         """Transaction status.
@@ -8314,6 +8339,16 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/v1/fees/recommended`"""
         return self.get_json('/api/v1/fees/recommended')
+
+    def get_fullrbf_replacements(self) -> List[ReplacementNode]:
+        """Recent full-RBF replacements.
+
+        Like `/api/v1/replacements`, but limited to trees where at least one predecessor was non-signaling (full-RBF).
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-fullrbf-replacements)*
+
+        Endpoint: `GET /api/v1/fullrbf/replacements`"""
+        return self.get_json('/api/v1/fullrbf/replacements')
 
     def get_historical_price(self, timestamp: Optional[Timestamp] = None) -> HistoricalPrice:
         """Historical price.
@@ -8519,7 +8554,17 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/v1/prices`"""
         return self.get_json('/api/v1/prices')
 
-    def get_transaction_times(self) -> List[int]:
+    def get_replacements(self) -> List[ReplacementNode]:
+        """Recent RBF replacements.
+
+        Returns up to 25 most-recent RBF replacement trees across the whole mempool. Each entry has the same shape as `tx_rbf().replacements`.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-replacements)*
+
+        Endpoint: `GET /api/v1/replacements`"""
+        return self.get_json('/api/v1/replacements')
+
+    def get_transaction_times(self, txId: List[Txid]) -> List[int]:
         """Transaction first-seen times.
 
         Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.
@@ -8527,7 +8572,11 @@ class BrkClient(BrkClientBase):
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*
 
         Endpoint: `GET /api/v1/transaction-times`"""
-        return self.get_json('/api/v1/transaction-times')
+        params = []
+        for _v in txId: params.append(f'txId[]={_v}')
+        query = '&'.join(params)
+        path = f'/api/v1/transaction-times{"?" + query if query else ""}'
+        return self.get_json(path)
 
     def get_tx_rbf(self, txid: Txid) -> RbfResponse:
         """RBF replacement history.

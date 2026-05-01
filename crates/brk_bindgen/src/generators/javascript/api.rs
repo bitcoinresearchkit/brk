@@ -16,9 +16,13 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
         }
 
         let method_name = endpoint_to_method_name(endpoint);
-        let base_return_type = jsdoc_normalize(&normalize_return_type(
-            endpoint.response_type.as_deref().unwrap_or("*"),
-        ));
+        let base_return_type = if endpoint.returns_binary() {
+            "Uint8Array".to_string()
+        } else {
+            jsdoc_normalize(&normalize_return_type(
+                endpoint.schema_name().unwrap_or("*"),
+            ))
+        };
         let return_type = if endpoint.supports_csv {
             format!("{} | string", base_return_type)
         } else {
@@ -86,10 +90,14 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
 
         let path = build_path_template(&endpoint.path, &endpoint.path_params);
 
-        let fetch_call = if endpoint.returns_json() {
-            "this.getJson(path, { signal, onValue })"
+        let fetch_call: String = if endpoint.returns_binary() {
+            "this.getBytes(path, { signal, onValue })".to_string()
+        } else if endpoint.returns_json() {
+            "this.getJson(path, { signal, onValue })".to_string()
+        } else if endpoint.response_kind.text_is_numeric() {
+            "Number(await this.getText(path, { signal, onValue }))".to_string()
         } else {
-            "this.getText(path, { signal, onValue })"
+            "this.getText(path, { signal, onValue })".to_string()
         };
 
         if endpoint.query_params.is_empty() {
@@ -98,7 +106,15 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             writeln!(output, "    const params = new URLSearchParams();").unwrap();
             for param in &endpoint.query_params {
                 let ident = sanitize_ident(&param.name);
-                if param.required {
+                let is_array = param.param_type.ends_with("[]");
+                if is_array {
+                    writeln!(
+                        output,
+                        "    for (const _v of {}) params.append('{}', String(_v));",
+                        ident, param.name
+                    )
+                    .unwrap();
+                } else if param.required {
                     writeln!(
                         output,
                         "    params.set('{}', String({}));",

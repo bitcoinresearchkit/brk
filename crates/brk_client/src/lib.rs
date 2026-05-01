@@ -91,6 +91,14 @@ impl BrkClientBase {
             .and_then(|mut r| r.body_mut().read_to_string())
             .map_err(|e| BrkError { message: e.to_string() })
     }
+
+    /// Make a GET request and return raw bytes response.
+    pub fn get_bytes(&self, path: &str) -> Result<Vec<u8>> {
+        self.agent.get(&self.url(path))
+            .call()
+            .and_then(|mut r| r.body_mut().read_to_vec())
+            .map_err(|e| BrkError { message: e.to_string() })
+    }
 }
 
 /// Build series name with suffix.
@@ -8977,8 +8985,8 @@ impl BrkClient {
     /// Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. Full spec available at `/openapi.json`.
     ///
     /// Endpoint: `GET /api.json`
-    pub fn get_api(&self) -> Result<String> {
-        self.base.get_text(&format!("/api.json"))
+    pub fn get_api(&self) -> Result<serde_json::Value> {
+        self.base.get_json(&format!("/api.json"))
     }
 
     /// Address information
@@ -9084,8 +9092,8 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*
     ///
     /// Endpoint: `GET /api/block/{hash}/raw`
-    pub fn get_block_raw(&self, hash: BlockHash) -> Result<String> {
-        self.base.get_text(&format!("/api/block/{hash}/raw"))
+    pub fn get_block_raw(&self, hash: BlockHash) -> Result<Vec<u8>> {
+        self.base.get_bytes(&format!("/api/block/{hash}/raw"))
     }
 
     /// Block status
@@ -9360,8 +9368,8 @@ impl BrkClient {
     /// Returns the single most recent value for a series, unwrapped (not inside a SeriesData object).
     ///
     /// Endpoint: `GET /api/series/{series}/{index}/latest`
-    pub fn get_series_latest(&self, series: SeriesName, index: Index) -> Result<String> {
-        self.base.get_text(&format!("/api/series/{series}/{}/latest", index.name()))
+    pub fn get_series_latest(&self, series: SeriesName, index: Index) -> Result<serde_json::Value> {
+        self.base.get_json(&format!("/api/series/{series}/{}/latest", index.name()))
     }
 
     /// Get series data length
@@ -9482,8 +9490,8 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-raw)*
     ///
     /// Endpoint: `GET /api/tx/{txid}/raw`
-    pub fn get_tx_raw(&self, txid: Txid) -> Result<String> {
-        self.base.get_text(&format!("/api/tx/{txid}/raw"))
+    pub fn get_tx_raw(&self, txid: Txid) -> Result<Vec<u8>> {
+        self.base.get_bytes(&format!("/api/tx/{txid}/raw"))
     }
 
     /// Transaction status
@@ -9631,6 +9639,17 @@ impl BrkClient {
     /// Endpoint: `GET /api/v1/fees/recommended`
     pub fn get_recommended_fees(&self) -> Result<RecommendedFees> {
         self.base.get_json(&format!("/api/v1/fees/recommended"))
+    }
+
+    /// Recent full-RBF replacements
+    ///
+    /// Like `/api/v1/replacements`, but limited to trees where at least one predecessor was non-signaling (full-RBF).
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-fullrbf-replacements)*
+    ///
+    /// Endpoint: `GET /api/v1/fullrbf/replacements`
+    pub fn get_fullrbf_replacements(&self) -> Result<Vec<ReplacementNode>> {
+        self.base.get_json(&format!("/api/v1/fullrbf/replacements"))
     }
 
     /// Historical price
@@ -9857,6 +9876,17 @@ impl BrkClient {
         self.base.get_json(&format!("/api/v1/prices"))
     }
 
+    /// Recent RBF replacements
+    ///
+    /// Returns up to 25 most-recent RBF replacement trees across the whole mempool. Each entry has the same shape as `tx_rbf().replacements`.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-replacements)*
+    ///
+    /// Endpoint: `GET /api/v1/replacements`
+    pub fn get_replacements(&self) -> Result<Vec<ReplacementNode>> {
+        self.base.get_json(&format!("/api/v1/replacements"))
+    }
+
     /// Transaction first-seen times
     ///
     /// Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.
@@ -9864,8 +9894,12 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-times)*
     ///
     /// Endpoint: `GET /api/v1/transaction-times`
-    pub fn get_transaction_times(&self) -> Result<Vec<i64>> {
-        self.base.get_json(&format!("/api/v1/transaction-times"))
+    pub fn get_transaction_times(&self, txId: &[Txid]) -> Result<Vec<i64>> {
+        let mut query = Vec::new();
+        for v in txId { query.push(format!("txId[]={}", v)); }
+        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
+        let path = format!("/api/v1/transaction-times{}", query_str);
+        self.base.get_json(&path)
     }
 
     /// RBF replacement history

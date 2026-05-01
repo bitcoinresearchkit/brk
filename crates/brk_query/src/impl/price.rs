@@ -1,5 +1,7 @@
 use brk_error::Result;
-use brk_types::{Dollars, ExchangeRates, HistoricalPrice, HistoricalPriceEntry, Hour4, Timestamp};
+use brk_types::{
+    Dollars, ExchangeRates, HistoricalPrice, HistoricalPriceEntry, Hour4, INDEX_EPOCH, Timestamp,
+};
 use vecdb::ReadableVec;
 
 use crate::Query;
@@ -32,6 +34,9 @@ impl Query {
     }
 
     fn price_at(&self, target: Timestamp) -> Result<Vec<HistoricalPriceEntry>> {
+        if *target < INDEX_EPOCH {
+            return Ok(vec![]);
+        }
         let h4 = Hour4::from_timestamp(target);
         let cents = self.computer().prices.spot.cents.hour4.collect_one(h4);
         Ok(vec![HistoricalPriceEntry {
